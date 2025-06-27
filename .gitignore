@@ -1,1 +1,40 @@
+# Rust build artifacts
 /target
+**/*.rs.bk
+
+# IDE/editor settings
+/.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime*
+.DS_Store
+
+# Dependency/package manager files
+Cargo.lock
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
+
+# Config, test, and plugin directories (if created)
+/config/
+/tests/
+/plugins/
+
+# Ignore generated reports and diagrams
+*.md.report
+*.diagram
+
+# Ignore by analysis tools
+.archlintignore
+
+# Misc
+*.old
+
+# Ignore Rust Analyzer metadata
+/.rust-analyzer/
+
+# Ignore docs build artifacts (if any)
+/docs/book/
