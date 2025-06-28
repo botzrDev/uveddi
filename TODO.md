@@ -1,5 +1,7 @@
 # CodeAtlas Development TODO List
 
+**[Update June 28, 2025: Sprint 2 is 100% complete and tested. All Phase 2 tasks are done. See SPRINTS.md for details.]**
+
 This document outlines the major tasks and milestones for the development of CodeAtlas, an AI-powered CLI tool for architectural analysis. It is structured to follow the logical progression of a software project, from foundational setup to deployment and ongoing maintenance.
 
 ## Phase 1: Foundational Setup & Core CLI (Rust)
@@ -37,37 +39,38 @@ This document outlines the major tasks and milestones for the development of Cod
 - [x] Implement simple dependency extraction from Rust `use` statements.
 
 ### 2.2 AST Parsing Module (Tree-sitter Integration)
-- [ ] Integrate `tree-sitter` for AST generation.
-- [ ] Implement parsers for initial supported languages:
-    - [ ] Rust
-    - [ ] Python
-    - [ ] JavaScript/TypeScript
-- [ ] Refactor dependency extraction to use AST instead of regex.
-- [ ] Extract code snippets for detected issues.
-- [ ] Implement severity scoring for issues.
-- [ ] Develop a mechanism to load language grammars dynamically.
-- [ ] Implement caching of parsed ASTs for performance optimization.
+- [x] Integrate `tree-sitter` for AST generation.
+- [x] Implement parsers for initial supported languages:
+    - [x] Rust
+    - [x] Python
+    - [x] JavaScript/TypeScript
+- [x] Refactor dependency extraction to use AST instead of regex.
+- [x] Extract code snippets for detected issues.
+- [x] Implement severity scoring for issues.
+- [x] Develop a mechanism to load language grammars dynamically.
+- [x] Implement caching of parsed ASTs for performance optimization.
 
 ### 2.3 Dependency Graph Builder
-- [ ] Implement logic to traverse ASTs and identify import/dependency statements.
-- [ ] Build an in-memory directed graph representing module/component dependencies.
-- [ ] Optimize graph construction for large codebases.
+- [x] Implement logic to traverse ASTs and identify import/dependency statements.
+- [x] Build an in-memory directed graph representing module/component dependencies.
+- [x] Optimize graph construction for large codebases.
 
 ### 2.4 Deterministic Anti-pattern Detector
-- [ ] Implement algorithms for initial anti-pattern detection based on ASTs and dependency graphs:
-    - [ ] Cyclic Dependency (via graph cycle detection).
-    - [ ] The Blob/God Object (via AST node count heuristics).
-    - [ ] Unstable Interface (via dependency graph fan-in and change frequency heuristics).
-    - [ ] Contextual Code Snippet Extraction for detected issues.
+- [x] Implement algorithms for initial anti-pattern detection based on ASTs and dependency graphs:
+    - [x] Cyclic Dependency (via graph cycle detection).
+    - [x] The Blob/God Object (via AST node count heuristics).
+    - [x] Unstable Interface (via dependency graph fan-in and change frequency heuristics).
+    - [x] Modularity Violation (via simple community detection).
+    - [x] Contextual Code Snippet Extraction for detected issues.
 
 ### 2.5 Error Handling & Recovery
-- [ ] Implement graceful handling of malformed source files
-- [ ] Design recovery mechanisms for partial AST parsing failures
-- [ ] Implement timeout handling for large files/projects
-- [ ] Add detailed error reporting with actionable messages
+- [x] Implement graceful handling of malformed source files
+- [x] Design recovery mechanisms for partial AST parsing failures
+- [x] Implement timeout handling for large files/projects
+- [x] Add detailed error reporting with actionable messages
 
 ### 2.6 Software Architecture Model (SAM)
-- [ ] Build and serialize canonical Software Architecture Model (SAM) graph capturing all nodes (components, classes, functions) and edges (calls, dependencies) with required metadata.
+- [x] Build and serialize canonical Software Architecture Model (SAM) graph capturing all nodes (components, classes, functions) and edges (calls, dependencies) with required metadata.
 
 ## Phase 3: AI Model Integration
 

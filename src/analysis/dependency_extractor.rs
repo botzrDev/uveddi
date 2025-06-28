@@ -52,11 +52,11 @@ impl DependencyExtractor {
             SourceLanguage::JavaScript => (JAVASCRIPT_IMPORTS_QUERY, DependencyType::Import),
         };
 
-        let query = Query::new(parsed_file.tree.language(), query_str)
+        let query = Query::new(parsed_file.tree.as_ref().expect("AST tree missing").language(), query_str)
             .map_err(|e| ExtractionError::QueryError(e.to_string()))?;
 
         let mut cursor = QueryCursor::new();
-        let matches = cursor.matches(&query, parsed_file.tree.root_node(), parsed_file.source.as_bytes());
+        let matches = cursor.matches(&query, parsed_file.tree.as_ref().expect("AST tree missing").root_node(), parsed_file.source.as_bytes());
 
         let mut dependencies = Vec::new();
         for mat in matches {

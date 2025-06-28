@@ -6,12 +6,14 @@ pub mod dependency_graph;
 
 use crate::database::models::{ArchitecturalIssue, AntiPatternType};
 use crate::ast::tree_sitter::ParsedFile;
+use std::any::Any;
 
 /// Core analysis trait for all detectors
 pub trait AnalysisDetector {
     fn detect_issues(&self, file: &ParsedFile) -> Result<Vec<ArchitecturalIssue>, AnalysisError>;
     fn get_anti_pattern_types(&self) -> Vec<AntiPatternType>;
     fn get_detector_name(&self) -> &'static str;
+    fn as_any(&self) -> &dyn Any;
 }
 
 #[derive(Debug, thiserror::Error)]

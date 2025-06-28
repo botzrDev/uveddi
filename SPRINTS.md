@@ -1,6 +1,6 @@
 # CodeAtlas Sprint Planning - Vertical Slices
 
-This document outlines the first three sprints for CodeAtlas development, focusing on vertical slices that deliver end-to-end functionality rather than just building infrastructure.
+**[Update June 28, 2025: Sprint 2 is 100% complete and tested. All tasks and deliverables are done. See TODO.md for next steps.]**
 
 ## Sprint 1: Basic CLI with Simple Analysis (2 weeks)
 **Goal:** Deliver a working CLI that can analyze a simple codebase and output basic findings
@@ -51,38 +51,38 @@ A CLI tool that can analyze Rust projects and detect/report cyclic dependencies 
 ### Sprint 2 Tasks
 
 #### AST Integration (Days 1-4)
-- [ ] **2.1.1** Integrate tree-sitter for AST parsing
-- [ ] **2.1.2** Add support for Python and JavaScript/TypeScript parsers
-- [ ] **2.1.3** Refactor dependency extraction to use AST instead of regex
-- [ ] **2.1.4** Implement basic AST caching for performance
+- [x] **2.1.1** Integrate tree-sitter for AST parsing
+- [x] **2.1.2** Add support for Python and JavaScript/TypeScript parsers
+- [x] **2.1.3** Refactor dependency extraction to use AST instead of regex
+- [x] **2.1.4** Implement basic AST caching for performance
 
 #### Enhanced Analysis (Days 5-7)
-- [ ] **2.2.1** Add "God Object" detection using AST node count heuristics
-- [ ] **2.2.2** Extract code snippets for detected issues
-- [ ] **2.2.3** Implement severity scoring for issues
+- [x] **2.2.1** Add "God Object" detection using AST node count heuristics
+- [x] **2.2.2** Extract code snippets for detected issues
+- [x] **2.2.3** Implement severity scoring for issues
 
 #### AI Integration - Phase 1 (Days 8-10)
-- [ ] **2.3.1** Add basic configuration system for API keys
-- [ ] **2.3.2** Implement simple OpenAI API client
-- [ ] **2.3.3** Generate AI explanations for detected issues
-- [ ] **2.3.4** Create basic prompt templates for issue description
+- [x] **2.3.1** Add basic configuration system for API keys
+- [x] **2.3.2** Implement simple OpenAI API client
+- [x] **2.3.3** Generate AI explanations for detected issues
+- [x] **2.3.4** Create basic prompt templates for issue description
 
 #### Enhanced Reporting (Days 11-14)
-- [ ] **2.4.1** Upgrade to structured JSON output option
-- [ ] **2.4.2** Add markdown report generation
-- [ ] **2.4.3** Include AI-generated explanations in reports
-- [ ] **2.4.4** Add summary statistics (total issues, severity breakdown)
+- [x] **2.4.1** Upgrade to structured JSON output option
+- [x] **2.4.2** Add markdown report generation
+- [x] **2.4.3** Include AI-generated explanations in reports
+- [x] **2.4.4** Add summary statistics (total issues, severity breakdown)
 
 ### Sprint 2 Deliverable
 A multi-language analyzer with AST-based detection and AI-powered explanations.
 
 ### Sprint 2 Definition of Done
-- [ ] Supports Rust, Python, and JavaScript analysis
-- [ ] Uses AST parsing for accurate analysis
-- [ ] Detects cyclic dependencies and god objects
-- [ ] Generates AI explanations for issues (when API key provided)
-- [ ] Outputs both JSON and Markdown formats
-- [ ] Handles missing API keys gracefully
+- [x] Supports Rust, Python, and JavaScript analysis
+- [x] Uses AST parsing for accurate analysis
+- [x] Detects cyclic dependencies and god objects
+- [x] Generates AI explanations for issues (when API key provided)
+- [x] Outputs both JSON and Markdown formats
+- [x] Handles missing API keys gracefully
 
 ---
 

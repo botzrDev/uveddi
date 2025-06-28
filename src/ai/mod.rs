@@ -4,6 +4,8 @@ pub mod engine;
 pub mod ollama_provider;
 pub mod ollama_provider_impl;
 pub mod anthropic_provider;
+pub mod anthropic_provider_impl;
 pub mod gemini_provider;
+pub mod gemini_provider_impl;
 
 pub use self::engine::{AiAnalysisEngine, AiError};

@@ -148,9 +148,9 @@ impl GodObjectDetector {
         };
 
         let mut cursor = QueryCursor::new();
-        let function_query_obj = Query::new(parsed_file.tree.language(), function_query)
+        let function_query_obj = Query::new(parsed_file.tree.as_ref().expect("AST tree missing").language(), function_query)
             .map_err(|e| AnalysisError::Generic(e.to_string()))?;
-        let field_query_obj = Query::new(parsed_file.tree.language(), field_query)
+        let field_query_obj = Query::new(parsed_file.tree.as_ref().expect("AST tree missing").language(), field_query)
             .map_err(|e| AnalysisError::Generic(e.to_string()))?;
         let method_count = cursor
             .matches(&function_query_obj, body_node, parsed_file.source.as_bytes())
@@ -207,12 +207,12 @@ impl AnalysisDetector for GodObjectDetector {
             SourceLanguage::JavaScript => (JAVASCRIPT_CLASS_QUERY, "JavaScript"),
         };
 
-        let query = Query::new(parsed_file.tree.language(), query_str)
+        let query = Query::new(parsed_file.tree.as_ref().expect("AST tree missing").language(), query_str)
             .map_err(|e| AnalysisError::Generic(e.to_string()))?;
         let mut cursor = QueryCursor::new();
         let matches = cursor.matches(
             &query,
-            parsed_file.tree.root_node(),
+            parsed_file.tree.as_ref().expect("AST tree missing").root_node(),
             parsed_file.source.as_bytes(),
         );
 
@@ -225,11 +225,11 @@ impl AnalysisDetector for GodObjectDetector {
 
         // Special handling for Rust `impl` blocks
         if parsed_file.language == SourceLanguage::Rust {
-            let impl_query = Query::new(parsed_file.tree.language(), RUST_IMPL_QUERY)
+            let impl_query = Query::new(parsed_file.tree.as_ref().expect("AST tree missing").language(), RUST_IMPL_QUERY)
                 .map_err(|e| AnalysisError::Generic(e.to_string()))?;
             let impl_matches = cursor.matches(
                 &impl_query,
-                parsed_file.tree.root_node(),
+                parsed_file.tree.as_ref().expect("AST tree missing").root_node(),
                 parsed_file.source.as_bytes(),
             );
             for mat in impl_matches {
@@ -240,5 +240,9 @@ impl AnalysisDetector for GodObjectDetector {
         }
 
         Ok(issues)
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
     }
 }

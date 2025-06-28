@@ -1,6 +1,8 @@
 use crate::ast::tree_sitter::AstParser;
 use crate::analysis::{AnalysisDetector, AnalysisError};
 use crate::analysis::anti_patterns::god_object_detector::GodObjectDetector;
+use crate::analysis::anti_patterns::unstable_interface_detector::UnstableInterfaceDetector;
+use crate::analysis::anti_patterns::modularity_violation_detector::ModularityViolationDetector;
 use crate::analysis::cycle_detector::CycleDetector;
 use crate::analysis::dependency_extractor::{Dependency, DependencyExtractor};
 use crate::analysis::dependency_graph::DependencyGraph;
@@ -23,6 +25,8 @@ impl AnalysisEngine {
             dependency_extractor: DependencyExtractor::new()?,
             detectors: vec![
                 Box::new(GodObjectDetector::new(15, 20)),
+                Box::new(UnstableInterfaceDetector::new()),
+                Box::new(ModularityViolationDetector::new()),
             ],
             cycle_detector: CycleDetector::new(),
             files_analyzed: 0,
@@ -45,6 +49,18 @@ impl AnalysisEngine {
 
         for cycle in cycle_results.cycles {
             file_issues.push(ArchitecturalIssue::from_cycle(cycle, &dependency_graph));
+        }
+
+        // Run graph-based anti-pattern detectors
+        for detector in &self.detectors {
+            if let Some(ui) = detector.as_any().downcast_ref::<UnstableInterfaceDetector>() {
+                let issues = ui.detect_in_graph(&dependency_graph, 0); // analysis_run_id to be set
+                file_issues.extend(issues);
+            }
+            if let Some(mv) = detector.as_any().downcast_ref::<ModularityViolationDetector>() {
+                let issues = mv.detect_in_graph(&dependency_graph, 0); // analysis_run_id to be set
+                file_issues.extend(issues);
+            }
         }
 
         Ok(file_issues)
