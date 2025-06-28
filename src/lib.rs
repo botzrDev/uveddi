@@ -9,3 +9,5 @@ pub mod analysis {
 pub mod report {
     pub mod text_reporter;
 }
+pub mod models;
+pub mod database;

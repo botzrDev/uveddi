@@ -1,7 +1,5 @@
-use crate::database::{
-    ArchitecturalIssue, CodeSnippet, DatabaseError, DatabaseManager, FromRow,
-    system_time_to_unix_timestamp,
-};
+use crate::models::{ArchitecturalIssue, CodeSnippet, FromRow, system_time_to_unix_timestamp};
+use crate::database::{DatabaseError, DatabaseManager};
 use rusqlite::params;
 use std::time::SystemTime;
 

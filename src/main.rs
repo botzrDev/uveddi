@@ -1,9 +1,8 @@
 use clap::{Parser, Subcommand};
 use log::info;
 
-mod database;
+use codeatlas::database::DatabaseManager;
 
-use database::DatabaseManager;
 
 /// CodeAtlas - A tool for code analysis and exploration
 ///
