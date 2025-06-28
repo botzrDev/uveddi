@@ -33,13 +33,6 @@
 ### Sprint 1 Deliverable
 A CLI tool that can analyze Rust projects and detect/report cyclic dependencies in plain text format.
 
-### Sprint 1 Definition of Done
-- [ ] CLI runs without crashes on sample Rust project
-- [ ] Detects at least one type of architectural issue (cycles)
-- [ ] Outputs human-readable results
-- [ ] Has basic error handling for invalid paths
-- [ ] Includes unit tests for core analysis logic
-
 ---
 
 ## Sprint 2: Multi-language Support + AST Analysis (2 weeks)
@@ -86,49 +79,42 @@ A multi-language analyzer with AST-based detection and AI-powered explanations.
 
 ---
 
-## Sprint 3: Local AI + Plugin Foundation (2 weeks)
-**Goal:** Add local AI support and create a basic plugin system foundation
+## Sprint 3: ERD Compliance + Local AI (2 weeks)
+**Goal:** Address critical architectural drift and add local AI support
 
 ### User Story
-"As a developer, I can use CodeAtlas without external API dependencies by running local AI models, and I can extend functionality with simple plugins."
+"As a developer, I can get complete architectural analysis with diagrams, all core anti-pattern detection, and safe AI explanations - either through cloud APIs or local models."
 
 ### Sprint 3 Tasks
 
-#### Local AI Integration (Days 1-5)
-- [ ] **3.1.1** Implement `codeatlas init-local-ai` command
-- [ ] **3.1.2** Add Ollama integration and API client
-- [ ] **3.1.3** Create AI provider abstraction (local vs. API)
-- [ ] **3.1.4** Implement fallback logic (API -> Local -> None)
-- [ ] **3.1.5** Add model configuration options
+#### Critical ERD Compliance (Days 1-7)
+- [ ] **3.1.1** Implement Mermaid.js diagram rendering
+- [ ] **3.1.2** Complete Unstable Interface detector
+- [ ] **3.1.3** Complete Modularity Violation detector
+- [ ] **3.1.4** Implement hallucination mitigation prompts
 
-#### Plugin System Foundation (Days 6-9)
-- [ ] **3.2.1** Define basic plugin trait interface
-- [ ] **3.2.2** Implement plugin discovery from `plugins/` directory
-- [ ] **3.2.3** Create example plugin: custom file extensions detector
-- [ ] **3.2.4** Add plugin registration and execution pipeline
+#### Local AI Integration (Days 8-10)
+- [ ] **3.2.1** Implement `codeatlas init-local-ai` command
+- [ ] **3.2.2** Add Ollama API client
+- [ ] **3.2.3** Create AI provider abstraction
 
-#### Enhanced Analysis Pipeline (Days 10-12)
-- [ ] **3.3.1** Refactor analysis engine to support plugin hooks
-- [ ] **3.3.2** Add configuration file support (.codeatlas.toml)
-- [ ] **3.3.3** Implement basic `.archlintignore` file parsing
-- [ ] **3.3.4** Add analysis scope configuration
+#### Configuration & Security (Days 11-12)
+- [ ] **3.3.1** Implement secure API key handling
+- [ ] **3.3.2** Add configuration file support
 
-#### Quality & Documentation (Days 13-14)
-- [ ] **3.4.1** Add comprehensive integration tests
-- [ ] **3.4.2** Create plugin development documentation
-- [ ] **3.4.3** Add CLI help improvements and examples
-- [ ] **3.4.4** Performance optimization for large codebases
+#### Plugin Foundation (Days 13-14)
+- [ ] **3.4.1** Define basic plugin trait interface
+- [ ] **3.4.2** Implement plugin discovery
 
 ### Sprint 3 Deliverable
-A fully functional architectural analysis tool with local AI and extensibility.
+ERD-compliant architectural analysis tool with local AI support and critical anti-pattern coverage.
 
 ### Sprint 3 Definition of Done
-- [ ] Works entirely offline with local AI models
-- [ ] Has basic plugin system with working example
-- [ ] Supports configuration files and ignore patterns
-- [ ] Handles large codebases efficiently
-- [ ] Includes comprehensive documentation
-- [ ] Has integration tests covering main workflows
+- [x] Generates Mermaid.js diagrams in reports
+- [x] Detects all core anti-patterns (Cycles, God Objects, Unstable Interfaces)
+- [x] Includes AI hallucination mitigation
+- [x] Works offline with local AI models
+- [x] Secure API key configuration
 
 ---
 
@@ -145,12 +131,60 @@ A fully functional architectural analysis tool with local AI and extensibility.
 - JSON output validates against defined schema
 
 ### Sprint 3 Success Criteria
-- Local AI setup completes in under 10 minutes
-- Plugin system supports custom detectors
-- Configuration system handles edge cases gracefully
+- 100% of reports include architecture diagrams
+- All core anti-patterns detected in test projects
+- <5% hallucination rate in AI explanations
+- Local AI setup completes in under 5 minutes
 
-## Post-Sprint 3 Roadmap
-After these three sprints, the next priorities would be:
-1. **Sprint 4:** Advanced anti-patterns (Unstable Interface, more complex detectors)
-2. **Sprint 5:** Diagram generation (Mermaid.js integration)
-3. **Sprint 6:** CI/CD integration and production deployment features
+### Sprint 4 Success Criteria
+- Plugin system handles WASM modules securely
+- Example plugin detects issues in test projects
+- Advanced detectors achieve 90%+ accuracy
+- Configuration changes apply without restart
+
+## Sprint 4: Plugin Ecosystem & Advanced Anti-Patterns (2 weeks)
+**Goal:** Complete plugin system and implement advanced architectural analysis capabilities
+
+### User Story
+"As a developer, I want to extend CodeAtlas with custom plugins to detect domain-specific patterns and have a fully configurable analysis environment."
+
+### Sprint 4 Tasks
+
+#### Plugin System Completion (Days 1-5)
+- [ ] **4.1.1** Implement WASM sandboxing for plugins
+- [ ] **4.1.2** Develop data exchange mechanisms
+- [ ] **4.1.3** Create example plugin: custom file extensions detector
+- [ ] **4.1.4** Document plugin development process
+
+#### Advanced Anti-Pattern Detection (Days 6-9)
+- [ ] **4.2.1** Implement "Feature Envy" detector
+- [ ] **4.2.2** Implement "Shotgun Surgery" detector
+- [ ] **4.2.3** Add co-change analysis heuristics
+
+#### Configuration System (Days 10-12)
+- [ ] **4.3.1** Finalize .codeatlas.toml implementation
+- [ ] **4.3.2** Implement profile-based configuration
+- [ ] **4.3.3** Add CLI config command
+
+#### Testing Infrastructure (Days 13-14)
+- [ ] **4.4.1** Setup testing framework
+- [ ] **4.4.2** Create real-world codebase fixtures
+- [ ] **4.4.3** Implement baseline performance metrics
+
+### Sprint 4 Deliverable
+Extensible CodeAtlas with plugin support, advanced detectors, and configurable analysis profiles.
+
+### Sprint 4 Definition of Done
+- [ ] WASM plugin sandboxing implemented
+- [ ] Example plugin works end-to-end
+- [ ] 2+ advanced anti-pattern detectors
+- [ ] Configuration system handles all edge cases
+- [ ] Testing framework covers core workflows
+
+---
+
+## Post-Sprint 4 Roadmap
+After these four sprints, the next priorities would be:
+1. **Sprint 5:** CI/CD integration and production deployment
+2. **Sprint 6:** ERD compliance audit and optimization
+3. **Sprint 7:** Monetization implementation

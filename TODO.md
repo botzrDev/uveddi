@@ -59,9 +59,11 @@ This document outlines the major tasks and milestones for the development of Cod
 - [x] Implement algorithms for initial anti-pattern detection based on ASTs and dependency graphs:
     - [x] Cyclic Dependency (via graph cycle detection).
     - [x] The Blob/God Object (via AST node count heuristics).
-    - [x] Unstable Interface (via dependency graph fan-in and change frequency heuristics).
-    - [x] Modularity Violation (via simple community detection).
+    - [ ] Unstable Interface (via dependency graph fan-in and change frequency heuristics).
+    - [ ] Modularity Violation (via simple community detection).
     - [x] Contextual Code Snippet Extraction for detected issues.
+- [ ] Implement Unstable Interface detector
+- [ ] Implement Modularity Violation detector
 
 ### 2.5 Error Handling & Recovery
 - [x] Implement graceful handling of malformed source files
@@ -106,9 +108,10 @@ This document outlines the major tasks and milestones for the development of Cod
 - [ ] Include detailed issue entries: name, file path, line numbers, severity, AI-generated title/description, code snippets, refactoring suggestions.
 
 ### 4.2 Diagram Integration
-- [ ] Implement logic for AI to generate valid Mermaid.js syntax for diagrams (e.g., cyclic dependencies, class relationships).
-- [ ] Embed Mermaid.js syntax directly into the Markdown report.
-- [ ] Validate AI-generated Mermaid.js diagrams for accuracy and fidelity.
+- [ ] Implement Mermaid.js diagram rendering for detected issues
+- [ ] Integrate AI-generated Mermaid.js syntax for diagrams
+- [ ] Embed diagrams into the Markdown report
+- [ ] Validate diagram accuracy and fidelity
 
 ## Phase 5: Extensibility & Plugin System
 
@@ -191,6 +194,13 @@ This document outlines the major tasks and milestones for the development of Cod
 - [ ] Develop license key management for paid features
 
 ## Phase 9: Production & Maintenance
+
+## Phase 10: Technical Debt Tracking
+
+### 10.1 ERD Compliance
+- [ ] Create ERD compliance dashboard
+- [ ] Implement weekly architecture alignment checks
+- [ ] Prioritize critical drift resolution
 
 ### 9.1 Monitoring & Analytics
 - [ ] Implement basic telemetry (opt-in) for usage and performance metrics.
