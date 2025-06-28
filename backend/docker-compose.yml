@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: codeatlas
+      POSTGRES_PASSWORD: codeatlas
+      POSTGRES_DB: codeatlas
+    ports:
+      - "5433:5432"  # Changed from 5432:5432 to avoid port conflict
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U codeatlas"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - DB_POSTGRES_HOST=postgres
+      - DB_POSTGRES_PORT=5432  # Inside the Docker network, still use 5432
+      - DB_POSTGRES_USER=codeatlas
+      - DB_POSTGRES_PASSWORD=codeatlas
+      - DB_POSTGRES_DB=codeatlas
+      - DB_ENVIRONMENT=development
+      - APP_HOST=0.0.0.0
+      - APP_PORT=8000
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    command: >
+      bash -c "
+        alembic upgrade head &&
+        uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+      "
+
+volumes:
+  postgres_data:

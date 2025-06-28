@@ -28,10 +28,14 @@ CodeAtlas acts as your **AI Architect**, providing essential architectural intel
     * **Microservice-Specific:** Insufficient Access Control, Hardcoded Endpoints, Shared Database.
 * **Hybrid AI Analysis:** Seamlessly switches between local (Ollama-powered, private) and API-based (GPT-4, Claude 3, Gemini for enhanced accuracy) AI models.
 * **Abstract Syntax Tree (AST) Powered:** Utilizes deep structural analysis via AST parsing (leveraging Tree-sitter) for accurate anti-pattern identification.
-* **Comprehensive Markdown Reports:** Generates human-readable reports with clear explanations, relevant code snippets, AI-generated refactoring suggestions, severity indicators, and integrated diagrams.
-* **CI/CD Ready:** Designed for headless execution and provides meaningful exit codes, making it perfect for integration into your Continuous Integration/Continuous Deployment pipelines.
-* **Extensible Plugin System:** A robust plugin system allows the community to contribute custom scanners for new architectural patterns, languages, or specific frameworks.
-* **Targeted Analysis:** Analyze specific directories or modules for faster, more focused scans.
+* **Dual Database Architecture:**
+    * **Local SQLite Database:** Store analysis results locally in the Rust CLI.
+    * **Cloud PostgreSQL Database:** Sync analysis data to a centralized backend for team collaboration and CI/CD integration.
+
+## 📚 Documentation
+
+* [DATABASE_GUIDE.md](./DATABASE_GUIDE.md) - Comprehensive guide for database setup, migrations, and deployment
+* [backend/README.md](./backend/README.md) - FastAPI backend documentation
 
 ## 🚀 Getting Started (For Developers & Contributors)
 
@@ -72,3 +76,23 @@ To run an analysis on your current directory (example placeholder):
 
 ```bash
 ./target/release/codeatlas analyze . --output-file architectural_report.md
+```
+
+### Backend Setup (Optional)
+
+For team collaboration and CI/CD integration, set up the backend:
+
+```bash
+cd backend
+
+# Option 1: Using Docker Compose (recommended)
+./docker-compose.sh up
+
+# Option 2: Manual setup
+cp .env.example .env
+# Edit .env with your database credentials
+make setup migrate
+make run
+```
+
+See [DATABASE_GUIDE.md](./DATABASE_GUIDE.md) for detailed instructions.
