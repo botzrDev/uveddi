@@ -118,6 +118,16 @@ impl GodObjectDetector {
         }
     }
 
+    fn score_severity(&self, method_count: usize, field_count: usize) -> String {
+        let total = method_count + field_count;
+        match total {
+            n if n >= self.method_threshold + self.field_threshold + 10 => "Critical".to_string(),
+            n if n >= self.method_threshold + self.field_threshold => "High".to_string(),
+            n if n >= self.method_threshold => "Medium".to_string(),
+            _ => "Low".to_string(),
+        }
+    }
+
     fn analyze_node(
         &self,
         node: tree_sitter::Node,
@@ -149,7 +159,9 @@ impl GodObjectDetector {
             .matches(&field_query_obj, body_node, parsed_file.source.as_bytes())
             .count();
 
-        if method_count > self.method_threshold || field_count > self.field_threshold {
+        let severity = self.score_severity(method_count, field_count);
+
+        if severity != "Low" {
             issues.push(ArchitecturalIssue {
                 issue_id: None,
                 analysis_run_id: 0, // Will be set by the engine
@@ -157,7 +169,7 @@ impl GodObjectDetector {
                 file_path: parsed_file.path.to_str().unwrap_or("").to_string(),
                 start_line: Some((name_node.start_position().row + 1) as i32),
                 end_line: Some((name_node.end_position().row + 1) as i32),
-                severity: "High".to_string(),
+                severity,
                 description: format!(
                     "God Object detected: '{}' has {} methods and {} fields. (Thresholds: methods={}, fields={})",
                     name, method_count, field_count, self.method_threshold, self.field_threshold

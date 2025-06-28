@@ -31,7 +31,7 @@ pub struct ArchitecturalIssue {
 }
 
 impl ArchitecturalIssue {
-    pub fn from_cycle(cycle: Cycle, _graph: &DependencyGraph) -> Self {
+    pub fn from_cycle(cycle: Cycle, graph: &DependencyGraph) -> Self {
         let severity_str = match cycle.severity {
             CycleSeverity::Low => "low".to_string(),
             CycleSeverity::Medium => "medium".to_string(),
@@ -48,6 +48,14 @@ impl ArchitecturalIssue {
         // and set start/end lines to None as it's a project-wide issue.
         let file_path = cycle.file_paths.first().map_or("unknown".to_string(), |p| p.display().to_string());
 
+        // Attempt to extract a code snippet from the first file (if available)
+        let code_snippet = cycle.file_paths.first().and_then(|path| {
+            std::fs::read_to_string(path).ok().map(|content| {
+                let lines: Vec<&str> = content.lines().take(10).collect();
+                lines.join("\n")
+            })
+        });
+
         ArchitecturalIssue {
             issue_id: None,
             analysis_run_id: 0, // This will be set when saving to DB
@@ -57,7 +65,7 @@ impl ArchitecturalIssue {
             end_line: None,
             severity: severity_str,
             description,
-            code_snippet: None,
+            code_snippet,
             ai_explanation: None,
         }
     }

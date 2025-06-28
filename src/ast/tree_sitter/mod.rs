@@ -1,14 +1,20 @@
 use tree_sitter::{Parser, Tree};
 use std::path::Path;
+use std::collections::HashMap;
+use std::sync::Mutex;
 
 pub mod queries;
 
 
-/// Multi-language AST parser following ERD specifications
+/// Multi-language AST parser for Rust, Python, and JavaScript/TypeScript using tree-sitter.
+/// - Caches ASTs in-memory for performance.
+/// - To add new languages, implement dynamic grammar loading (see TODO).
+/// - Used for all dependency extraction and anti-pattern detection in Sprint 2.
 pub struct AstParser {
     rust_parser: Parser,
     python_parser: Parser,
     javascript_parser: Parser,
+    cache: Mutex<HashMap<String, ParsedFile>>, // AST cache by file path
 }
 
 impl AstParser {
@@ -27,11 +33,18 @@ impl AstParser {
             rust_parser,
             python_parser,
             javascript_parser,
+            cache: Mutex::new(HashMap::new()),
         })
     }
 
-    /// Parse file and extract dependencies (ER-F-003)
+    /// Parse file and extract dependencies (ER-F-003), with AST caching.
+    /// Returns a parsed AST for the file, using cache if available.
+    /// Errors if the file cannot be parsed or language is unsupported.
     pub fn parse_file(&mut self, file_path: &Path) -> Result<ParsedFile, AstError> {
+        let path_str = file_path.to_string_lossy().to_string();
+        if let Some(cached) = self.cache.lock().unwrap().get(&path_str) {
+            return Ok(cached.clone());
+        }
         let source = std::fs::read_to_string(file_path)?;
         let language = self.detect_language(file_path)?;
         
@@ -44,14 +57,18 @@ impl AstParser {
         let tree = parser.parse(&source, None)
             .ok_or(AstError::ParseFailed)?;
             
-        Ok(ParsedFile {
+        let parsed = ParsedFile {
             path: file_path.to_path_buf(),
             language,
             tree,
             source,
-        })
+        };
+        self.cache.lock().unwrap().insert(path_str, parsed.clone());
+        Ok(parsed)
     }
 
+    /// Detect source language from file extension.
+    /// Returns SourceLanguage or an error if unsupported.
     fn detect_language(&self, file_path: &Path) -> Result<SourceLanguage, AstError> {
         let extension = file_path.extension()
             .and_then(|s| s.to_str())
@@ -66,7 +83,7 @@ impl AstParser {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ParsedFile {
     pub path: std::path::PathBuf,
     pub language: SourceLanguage,
@@ -92,3 +109,10 @@ pub enum AstError {
     #[error("Unsupported language: {0}")]
     UnsupportedLanguage(String),
 }
+
+/// Documentation:
+/// - This parser supports Rust, Python, and JavaScript/TypeScript using tree-sitter.
+/// - ASTs are cached in-memory for performance. Future: add disk cache if needed.
+/// - To add new languages, implement dynamic grammar loading (see TODO below).
+///
+/// TODO: Implement dynamic grammar loading for extensibility in future sprints.

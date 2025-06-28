@@ -42,6 +42,9 @@ This document outlines the major tasks and milestones for the development of Cod
     - [ ] Rust
     - [ ] Python
     - [ ] JavaScript/TypeScript
+- [ ] Refactor dependency extraction to use AST instead of regex.
+- [ ] Extract code snippets for detected issues.
+- [ ] Implement severity scoring for issues.
 - [ ] Develop a mechanism to load language grammars dynamically.
 - [ ] Implement caching of parsed ASTs for performance optimization.
 
