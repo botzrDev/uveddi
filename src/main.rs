@@ -1,8 +1,7 @@
 use clap::{Parser, Subcommand};
 use log::info;
 
-use codeatlas::database::DatabaseManager;
-
+use codeatlas::cli::analyze_command::AnalyzeCommand;
 
 /// CodeAtlas - A tool for code analysis and exploration
 ///
@@ -19,33 +18,20 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     /// Analyze a codebase at the given path
-    Analyze {
-        /// Path to the directory to analyze
-        path: String,
-    },
+    Analyze(AnalyzeCommand),
 }
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::init();
     let cli = Cli::parse();
-    match &cli.command {
-        Commands::Analyze { path } => {
-            info!("Analyzing directory: {}", path);
-            // TODO: Implement analysis logic here
-            println!("Analyzing directory: {}", path);
+
+    match cli.command {
+        Commands::Analyze(command) => {
+            info!("Executing analyze command...");
+            command.execute().await?;
         }
     }
-
-    // Initialize database
-    let _db = DatabaseManager::new(None).await?;
-    println!("Database initialized successfully!");
-
-    // TODO: Implement core functionality
-    // - Code parsing and analysis
-    // - Project structure visualization
-    // - Dependency mapping
-    // - Code metrics calculation
 
     Ok(())
 }
