@@ -7,9 +7,7 @@ use crate::database::crud::Database;
 use crate::analysis::analysis_engine::AnalysisEngine;
 use crate::ai::engine::AiAnalysisEngine;
 use crate::analysis::AnalysisError;
-use crate::ai::engine::AiError;
 use crate::report::ReportGenerator;
-use crate::ast::tree_sitter::AstParser;
 
 #[derive(Args)]
 pub struct AnalyzeCommand {
@@ -60,7 +58,7 @@ impl AnalyzeCommand {
         let mut analysis_run = database.create_analysis_run(&self.path)?;
         
         // Run analysis
-        let mut issues = analysis_engine.analyze_directory(&self.path).await?;
+        let mut issues = analysis_engine.analyze(&self.path).await?;
         
         // Enhance with AI analysis
         if self.enable_ai {

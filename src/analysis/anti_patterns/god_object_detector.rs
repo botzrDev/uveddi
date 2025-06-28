@@ -43,6 +43,68 @@ const FIELD_COUNT_QUERY: &str = r#"
 (public_field_definition)
 "#;
 
+const PYTHON_METHOD_QUERY: &str = r#"
+(function_definition)
+// Static and class methods (decorators)
+(decorated_definition
+  decorator: (decorator) @decorator
+  definition: (function_definition) @method
+)
+"#;
+
+const PYTHON_FIELD_QUERY: &str = r#"
+// Class-level assignments
+(expression_statement
+  (assignment
+    left: (attribute) @field
+    right: (_)
+  )
+)
+// Instance fields in __init__
+(function_definition
+  name: (identifier) @init_name
+  body: (block
+    (expression_statement
+      (assignment
+        left: (attribute) @field
+        right: (_)
+      )
+    )
+  )
+  (#eq? @init_name "__init__")
+)
+"#;
+
+const JAVASCRIPT_METHOD_QUERY: &str = r#"
+(method_definition)
+// Static methods
+(method_definition
+  static: true
+)
+"#;
+
+const JAVASCRIPT_FIELD_QUERY: &str = r#"
+// Class fields
+(public_field_definition)
+(field_definition)
+// Fields set in constructor
+(method_definition
+  name: (property_identifier) @ctor_name
+  body: (statement_block
+    (expression_statement
+      (assignment_expression
+        left: (member_expression
+          object: (this)
+          property: (property_identifier) @field
+        )
+        right: (_)
+      )
+    )
+  )
+  (#eq? @ctor_name "constructor")
+)
+"#;
+
 pub struct GodObjectDetector {
     method_threshold: usize,
     field_threshold: usize,
@@ -69,17 +131,22 @@ impl GodObjectDetector {
             .utf8_text(parsed_file.source.as_bytes())
             .unwrap_or("Unnamed");
 
-        let function_query = Query::new(parsed_file.tree.language(), FUNCTION_COUNT_QUERY)
-            .map_err(|e| AnalysisError::Generic(e.to_string()))?;
-        let field_query = Query::new(parsed_file.tree.language(), FIELD_COUNT_QUERY)
-            .map_err(|e| AnalysisError::Generic(e.to_string()))?;
+        let (function_query, field_query) = match parsed_file.language {
+            SourceLanguage::Rust => (FUNCTION_COUNT_QUERY, FIELD_COUNT_QUERY),
+            SourceLanguage::Python => (PYTHON_METHOD_QUERY, PYTHON_FIELD_QUERY),
+            SourceLanguage::JavaScript => (JAVASCRIPT_METHOD_QUERY, JAVASCRIPT_FIELD_QUERY),
+        };
 
         let mut cursor = QueryCursor::new();
+        let function_query_obj = Query::new(parsed_file.tree.language(), function_query)
+            .map_err(|e| AnalysisError::Generic(e.to_string()))?;
+        let field_query_obj = Query::new(parsed_file.tree.language(), field_query)
+            .map_err(|e| AnalysisError::Generic(e.to_string()))?;
         let method_count = cursor
-            .matches(&function_query, body_node, parsed_file.source.as_bytes())
+            .matches(&function_query_obj, body_node, parsed_file.source.as_bytes())
             .count();
         let field_count = cursor
-            .matches(&field_query, body_node, parsed_file.source.as_bytes())
+            .matches(&field_query_obj, body_node, parsed_file.source.as_bytes())
             .count();
 
         if method_count > self.method_threshold || field_count > self.field_threshold {

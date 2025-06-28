@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use crate::analysis::dependency_graph::{Cycle, DependencyGraph, CycleSeverity};
 
 /// Core analysis run tracking - aligns with ERD AnalysisRun entity
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -27,6 +28,39 @@ pub struct ArchitecturalIssue {
     pub description: String,
     pub code_snippet: Option<String>,
     pub ai_explanation: Option<String>,
+}
+
+impl ArchitecturalIssue {
+    pub fn from_cycle(cycle: Cycle, _graph: &DependencyGraph) -> Self {
+        let severity_str = match cycle.severity {
+            CycleSeverity::Low => "low".to_string(),
+            CycleSeverity::Medium => "medium".to_string(),
+            CycleSeverity::High => "high".to_string(),
+        };
+
+        let description = format!(
+            "Cyclic dependency detected involving modules: {}. Files: {}.",
+            cycle.modules.join(", "),
+            cycle.file_paths.iter().map(|p| p.display().to_string()).collect::<Vec<String>>().join(", ")
+        );
+
+        // For simplicity, we'll use the first file in the cycle as the primary file_path
+        // and set start/end lines to None as it's a project-wide issue.
+        let file_path = cycle.file_paths.first().map_or("unknown".to_string(), |p| p.display().to_string());
+
+        ArchitecturalIssue {
+            issue_id: None,
+            analysis_run_id: 0, // This will be set when saving to DB
+            anti_pattern_type_id: 0, // This will be set when saving to DB
+            file_path,
+            start_line: None,
+            end_line: None,
+            severity: severity_str,
+            description,
+            code_snippet: None,
+            ai_explanation: None,
+        }
+    }
 }
 
 /// Anti-pattern type definitions

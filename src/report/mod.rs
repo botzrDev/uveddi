@@ -131,6 +131,19 @@ impl ReportGenerator {
         content
     }
 
+    /// Generate a Mermaid.js diagram for an architectural issue using the SAM and LLM
+    /// This is a stub; actual LLM integration will be added in the next step
+    fn generate_mermaid_diagram_for_issue(&self, issue: &ArchitecturalIssue) -> Option<String> {
+        // TODO: Extract relevant SAM subgraph for the issue
+        // TODO: Serialize to JSON and prepare LLM prompt (see Ai_Diagrams.md)
+        // TODO: Call AI engine to get Mermaid.js code
+        // For now, return a placeholder diagram
+        Some(format!(
+            "```mermaid\ngraph TD\n    A[{}] --> B[Related Component]\n```\n",
+            issue.description.replace('"', "'"),
+        ))
+    }
+
     fn generate_detailed_issues(&self, issues: &[ArchitecturalIssue]) -> String {
         let mut content = String::from("## Detailed Issue Analysis\n\n");
 
@@ -179,6 +192,19 @@ impl ReportGenerator {
 
 ",
                         explanation
+                    ));
+                }
+            }
+
+            // Add Mermaid.js diagram if enabled
+            if self.include_diagrams {
+                if let Some(diagram) = self.generate_mermaid_diagram_for_issue(issue) {
+                    content.push_str(&format!(
+                        r"**Architecture Diagram:**
+{}
+
+",
+                        diagram
                     ));
                 }
             }
