@@ -1,0 +1,237 @@
+use crate::database::models::{AnalysisRun, ArchitecturalIssue};
+use serde_json::Value;
+use std::collections::HashMap;
+
+/// Report generator following ERD specifications (ER-F-011 to ER-F-014)
+pub struct ReportGenerator {
+    include_ai_explanations: bool,
+    include_code_snippets: bool,
+    include_diagrams: bool,
+}
+
+impl ReportGenerator {
+    pub fn new() -> Self {
+        Self {
+            include_ai_explanations: true,
+            include_code_snippets: true,
+            include_diagrams: false, // Future sprint feature
+        }
+    }
+
+    /// Generate comprehensive markdown report (ER-F-014)
+    pub fn generate_markdown_report(
+        &self,
+        analysis_run: &AnalysisRun,
+        issues: &[ArchitecturalIssue],
+    ) -> Result<String, ReportError> {
+        let mut report = String::new();
+
+        // Report header with analysis summary
+        report.push_str(&self.generate_header(analysis_run, issues));
+
+        // Executive summary
+        report.push_str(&self.generate_summary(issues));
+
+        // Issues by severity
+        report.push_str(&self.generate_issues_by_severity(issues));
+
+        // Detailed issue analysis
+        report.push_str(&self.generate_detailed_issues(issues));
+
+        Ok(report)
+    }
+
+    /// Generate structured JSON output
+    pub fn generate_json_report(
+        &self,
+        analysis_run: &AnalysisRun,
+        issues: &[ArchitecturalIssue],
+    ) -> Result<Value, ReportError> {
+        let report = serde_json::json!({
+            "analysis_run": {
+                "run_id": analysis_run.run_id,
+                "start_time": analysis_run.start_time,
+                "end_time": analysis_run.end_time,
+                "status": analysis_run.status,
+                "total_files_analyzed": analysis_run.total_files_analyzed,
+                "total_issues_found": analysis_run.total_issues_found
+            },
+            "summary": {
+                "total_issues": issues.len(),
+                "by_severity": self.calculate_severity_breakdown(issues),
+                "by_category": self.calculate_category_breakdown(issues)
+            },
+            "issues": issues
+        });
+
+        Ok(report)
+    }
+
+    fn generate_header(&self, analysis_run: &AnalysisRun, issues: &[ArchitecturalIssue]) -> String {
+        format!(
+            r"# CodeAtlas Analysis Report
+
+**Analysis ID:** {}
+**Start Time:** {}
+**Duration:** {}
+**Files Analyzed:** {}
+**Issues Found:** {}
+
+---
+
+",
+            analysis_run.run_id.unwrap_or(0),
+            analysis_run.start_time.format("%Y-%m-%d %H:%M:%S UTC"),
+            self.calculate_duration(analysis_run),
+            analysis_run.total_files_analyzed.unwrap_or(0),
+            issues.len()
+        )
+    }
+
+    fn generate_summary(&self, issues: &[ArchitecturalIssue]) -> String {
+        let mut summary = String::from("## Executive Summary\n\n");
+        let severity_breakdown = self.calculate_severity_breakdown(issues);
+        let total_issues = issues.len();
+
+        summary.push_str(&format!("Total Architectural Issues Found: {}\n\n", total_issues));
+        summary.push_str("### Issues by Severity:\n");
+        for (severity, count) in &severity_breakdown {
+            summary.push_str(&format!("- {}: {}\n", severity, count));
+        }
+        summary.push_str("\n");
+        summary
+    }
+
+    fn generate_issues_by_severity(&self, issues: &[ArchitecturalIssue]) -> String {
+        let mut content = String::from("## Issues by Severity\n\n");
+        let mut issues_by_severity: HashMap<String, Vec<&ArchitecturalIssue>> = HashMap::new();
+
+        for issue in issues {
+            issues_by_severity.entry(issue.severity.clone()).or_insert_with(Vec::new).push(issue);
+        }
+
+        let severities = ["critical", "high", "medium", "low"];
+
+        for severity in &severities {
+            if let Some(issues_list) = issues_by_severity.get(*severity) {
+                content.push_str(&format!("### {}\n\n", severity.to_uppercase()));
+                for issue in issues_list {
+                    content.push_str(&format!(
+                        "- **{}**: `{}` (Lines {}-{})
+",
+                        issue.description,
+                        issue.file_path,
+                        issue.start_line.unwrap_or(0),
+                        issue.end_line.unwrap_or(0)
+                    ));
+                }
+                content.push_str("\n");
+            }
+        }
+        content
+    }
+
+    fn generate_detailed_issues(&self, issues: &[ArchitecturalIssue]) -> String {
+        let mut content = String::from("## Detailed Issue Analysis\n\n");
+
+        for (index, issue) in issues.iter().enumerate() {
+            content.push_str(&format!(
+                r"### Issue #{}: {}
+
+**File:** `{}`
+**Lines:** {}-{}
+**Severity:** {}
+
+**Description:**
+{}
+
+",
+                index + 1,
+                issue.description, // Placeholder for anti-pattern name
+                issue.file_path,
+                issue.start_line.unwrap_or(0),
+                issue.end_line.unwrap_or(0),
+                issue.severity.to_uppercase(),
+                issue.description
+            ));
+
+            // Add code snippet if available
+            if self.include_code_snippets {
+                if let Some(snippet) = &issue.code_snippet {
+                    content.push_str(&format!(
+                        r"**Code Context:**
+```rust
+{}
+```
+
+",
+                        snippet
+                    ));
+                }
+            }
+
+            // Add AI explanation if available
+            if self.include_ai_explanations {
+                if let Some(explanation) = &issue.ai_explanation {
+                    content.push_str(&format!(
+                        r"**AI Analysis:**
+{}
+
+",
+                        explanation
+                    ));
+                }
+            }
+
+            content.push_str("---\n\n");
+        }
+
+        content
+    }
+
+    fn calculate_duration(&self, analysis_run: &AnalysisRun) -> String {
+        if let Some(end_time) = analysis_run.end_time {
+            let duration = end_time.signed_duration_since(analysis_run.start_time);
+            format!("{} seconds", duration.num_seconds())
+        } else {
+            "N/A".to_string()
+        }
+    }
+
+    fn calculate_severity_breakdown(&self, issues: &[ArchitecturalIssue]) -> HashMap<String, usize> {
+        let mut breakdown = HashMap::new();
+        for issue in issues {
+            *breakdown.entry(issue.severity.clone()).or_insert(0) += 1;
+        }
+        breakdown
+    }
+
+    fn calculate_category_breakdown(&self, issues: &[ArchitecturalIssue]) -> HashMap<String, usize> {
+        let mut breakdown = HashMap::new();
+        // This would require joining with AntiPatternType to get category
+        // For now, just a placeholder
+        for issue in issues {
+            *breakdown.entry("unknown".to_string()).or_insert(0) += 1;
+        }
+        breakdown
+    }
+
+    // This function would ideally fetch the anti-pattern name from the database
+    // based on anti_pattern_type_id. For now, it's a placeholder.
+    fn get_anti_pattern_name(&self, type_id: i64) -> String {
+        match type_id {
+            1 => "God Object".to_string(),
+            _ => format!("Unknown Anti-pattern (ID: {})", type_id),
+        }
+    }
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum ReportError {
+    #[error("IO error: {0}")]
+    Io(#[from] std::io::Error),
+    #[error("JSON serialization error: {0}")]
+    Json(#[from] serde_json::Error),
+    #[error("Report generation error: {0}")]
+    Generic(String),
+}
