@@ -63,6 +63,9 @@ This document outlines the major tasks and milestones for the development of Cod
 - [ ] Implement timeout handling for large files/projects
 - [ ] Add detailed error reporting with actionable messages
 
+### 2.6 Software Architecture Model (SAM)
+- [ ] Build and serialize canonical Software Architecture Model (SAM) graph capturing all nodes (components, classes, functions) and edges (calls, dependencies) with required metadata.
+
 ## Phase 3: AI Model Integration
 
 ### 3.1 Local LLM Integration (Ollama)
@@ -75,6 +78,7 @@ This document outlines the major tasks and milestones for the development of Cod
 - [ ] Implement clients for OpenAI (GPT-4), Anthropic (Claude 3), and Google (Gemini) LLM APIs.
 - [ ] Implement secure handling of API keys (environment variables/secure config).
 - [ ] Integrate API-based LLMs into the AI Reasoning Engine.
+- [ ] Implement robust error handling and user feedback for missing API keys or LLM failures.
 
 ### [CDAT-7] 3.3 AI Reasoning Engine & Prompt Engineering
 - [ ] Implement smart prompting/RAG strategy:
@@ -98,6 +102,7 @@ This document outlines the major tasks and milestones for the development of Cod
 ### 4.2 Diagram Integration
 - [ ] Implement logic for AI to generate valid Mermaid.js syntax for diagrams (e.g., cyclic dependencies, class relationships).
 - [ ] Embed Mermaid.js syntax directly into the Markdown report.
+- [ ] Validate AI-generated Mermaid.js diagrams for accuracy and fidelity.
 
 ## Phase 5: Extensibility & Plugin System
 
@@ -115,6 +120,7 @@ This document outlines the major tasks and milestones for the development of Cod
 
 ### 6.1 Unit Testing
 - [ ] Write comprehensive unit tests for all modules (CLI, file ingestion, AST parsing, graph builder, anti-pattern detection, AI integration, reporting).
+- [ ] Add real-world multi-language codebase fixtures for testing.
 
 ### 6.2 Integration Testing
 - [ ] Develop integration tests for the full analysis pipeline.
@@ -146,6 +152,7 @@ This document outlines the major tasks and milestones for the development of Cod
 - [ ] Document codebase structure and design decisions.
 - [ ] Provide guidelines for contributing to the core project.
 - [ ] Create comprehensive plugin development documentation.
+- [ ] Document SAM structure and diagram generation workflow.
 
 ### 7.3 Community Engagement
 - [ ] Set up communication channels (Discord/Slack, GitHub Discussions).

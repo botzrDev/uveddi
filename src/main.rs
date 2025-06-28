@@ -2,6 +2,7 @@ use clap::{Parser, Subcommand};
 use log::info;
 
 use codeatlas::cli::analyze_command::AnalyzeCommand;
+use codeatlas::cli::init_local_ai_command::InitLocalAiCommand;
 
 /// CodeAtlas - A tool for code analysis and exploration
 ///
@@ -19,6 +20,8 @@ struct Cli {
 enum Commands {
     /// Analyze a codebase at the given path
     Analyze(AnalyzeCommand),
+    /// Initialize and set up local AI (Ollama)
+    InitLocalAi(InitLocalAiCommand),
 }
 
 #[tokio::main]
@@ -29,6 +32,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     match cli.command {
         Commands::Analyze(command) => {
             info!("Executing analyze command...");
+            command.execute().await?;
+        }
+        Commands::InitLocalAi(command) => {
+            info!("Executing init-local-ai command...");
             command.execute().await?;
         }
     }

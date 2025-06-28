@@ -1,6 +1,9 @@
 use crate::database::models::ArchitecturalIssue;
 use crate::ai::api::llm_provider::LlmProvider;
 use crate::ai::api::openai_provider::OpenAiProvider;
+use crate::ai::anthropic_provider::AnthropicProvider;
+use crate::ai::gemini_provider::GeminiProvider;
+use crate::ai::ollama_provider::OllamaProvider;
 use crate::ai::prompts::prompt_templates;
 use anyhow::Result;
 
@@ -8,6 +11,8 @@ use anyhow::Result;
 pub struct AiAnalysisEngine {
     api_provider: Option<Box<dyn LlmProvider>>,
     local_provider: Option<Box<dyn LlmProvider>>,
+    anthropic_provider: Option<Box<dyn LlmProvider>>,
+    gemini_provider: Option<Box<dyn LlmProvider>>,
 }
 
 impl AiAnalysisEngine {
@@ -15,6 +20,8 @@ impl AiAnalysisEngine {
         Self {
             api_provider: None,
             local_provider: None,
+            anthropic_provider: None,
+            gemini_provider: None,
         }
     }
 
@@ -24,9 +31,21 @@ impl AiAnalysisEngine {
         self
     }
 
-    /// Configure local LLM provider (e.g., Ollama)
-    pub fn with_local_provider(mut self, provider: Box<dyn LlmProvider>) -> Self {
-        self.local_provider = Some(provider);
+    /// Configure local LLM provider (Ollama)
+    pub fn with_ollama(mut self, model: &str) -> Self {
+        self.local_provider = Some(Box::new(OllamaProvider::new(model)));
+        self
+    }
+
+    /// Configure Anthropic provider
+    pub fn with_anthropic(mut self, api_key: String) -> Self {
+        self.anthropic_provider = Some(Box::new(AnthropicProvider::new(&api_key)));
+        self
+    }
+
+    /// Configure Gemini provider
+    pub fn with_gemini(mut self, api_key: String) -> Self {
+        self.gemini_provider = Some(Box::new(GeminiProvider::new(&api_key)));
         self
     }
 
@@ -35,23 +54,37 @@ impl AiAnalysisEngine {
         &self,
         issue: &mut ArchitecturalIssue,
     ) -> Result<(), AiError> {
+        // TODO: Implement prompt engineering and hallucination mitigation here
+        // - Use structured prompt templates
+        // - Add uncertainty handling instructions
+        // - Add self-critique/verification step
         let prompt = prompt_templates::for_issue(issue);
 
-        // Try API provider first, then local, then skip
+        // Try providers in order: OpenAI, Anthropic, Gemini, Ollama
         if let Some(provider) = &self.api_provider {
             if let Ok(explanation) = provider.generate_explanation(&prompt).await {
                 issue.ai_explanation = Some(explanation);
                 return Ok(());
             }
         }
-
+        if let Some(provider) = &self.anthropic_provider {
+            if let Ok(explanation) = provider.generate_explanation(&prompt).await {
+                issue.ai_explanation = Some(explanation);
+                return Ok(());
+            }
+        }
+        if let Some(provider) = &self.gemini_provider {
+            if let Ok(explanation) = provider.generate_explanation(&prompt).await {
+                issue.ai_explanation = Some(explanation);
+                return Ok(());
+            }
+        }
         if let Some(provider) = &self.local_provider {
             if let Ok(explanation) = provider.generate_explanation(&prompt).await {
                 issue.ai_explanation = Some(explanation);
                 return Ok(());
             }
         }
-
         // Continue without AI explanation
         log::warn!("No AI provider available for issue analysis");
         Ok(())
