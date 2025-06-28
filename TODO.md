@@ -10,7 +10,7 @@ This document outlines the major tasks and milestones for the development of Cod
 - [X] Update `.gitignore` to reflect new directories and build artifacts.
 - [X] Initialize Rust project (`Cargo.toml`, `Cargo.lock`).
 
-### 1.2 Core CLI Framework
+### [CDAT-4]1.2 Core CLI Framework
 - [ ] Implement basic CLI command parsing using `clap` crate.
     - [ ] `codeatlas analyze <path>` command.
     - [ ] `codeatlas init-local-ai` command.
@@ -18,12 +18,12 @@ This document outlines the major tasks and milestones for the development of Cod
 - [ ] Implement basic logging and error handling.
 - [ ] Set up project for cross-platform compilation and distribution.
 
-### 1.3 Configuration Management
+### [CDAT-5]1.3 Configuration Management
 - [ ] Implement configuration loading (e.g., `.archlintignore`, API keys, analysis scopes).
     - [ ] Support environment variables for sensitive data (API keys).
     - [ ] Implement secure configuration file handling.
 
-### 1.4 Data Model Implementation
+### [CDAT-6]1.4 Data Model Implementation
 - [ ] Implement core data structures representing the Entity-Relationship model
 - [ ] Define structures for User, Organization, Project, AnalysisRun, etc.
 - [ ] Implement serialization/deserialization for these models
@@ -76,7 +76,7 @@ This document outlines the major tasks and milestones for the development of Cod
 - [ ] Implement secure handling of API keys (environment variables/secure config).
 - [ ] Integrate API-based LLMs into the AI Reasoning Engine.
 
-### 3.3 AI Reasoning Engine & Prompt Engineering
+### [CDAT-7] 3.3 AI Reasoning Engine & Prompt Engineering
 - [ ] Implement smart prompting/RAG strategy:
     - [ ] Construct prompts embedding contextual code snippets and structural information from AST analysis.
     - [ ] Implement hallucination mitigation techniques (structured prompting, uncertainty handling).
