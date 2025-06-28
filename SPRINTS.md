@@ -16,19 +16,19 @@ This document outlines the first three sprints for CodeAtlas development, focusi
 - [x] **1.1.3** Add basic error handling and logging with `env_logger`
 
 #### File Processing Pipeline (Days 3-4)
-- [ ] **1.2.1** Implement recursive file scanning for a single language (Rust)
-- [ ] **1.2.2** Create basic file filtering (ignore common non-source files)
-- [ ] **1.2.3** Implement simple dependency extraction from Rust `use` statements
+- [x] **1.2.1** Implement recursive file scanning for a single language (Rust)
+- [x] **1.2.2** Create basic file filtering (ignore common non-source files)
+- [x] **1.2.3** Implement simple dependency extraction from Rust `use` statements
 
 #### Simple Analysis Engine (Days 5-7)
-- [ ] **1.3.1** Build in-memory dependency graph from extracted imports
-- [ ] **1.3.2** Implement basic cycle detection algorithm
-- [ ] **1.3.3** Create simple data structures for analysis results
+- [x] **1.3.1** Build in-memory dependency graph from extracted imports
+- [x] **1.3.2** Implement basic cycle detection algorithm
+- [x] **1.3.3** Create simple data structures for analysis results
 
 #### Basic Reporting (Days 8-10)
-- [ ] **1.4.1** Generate plain text output showing found cyclic dependencies
-- [ ] **1.4.2** Include file paths and line numbers in output
-- [ ] **1.4.3** Add basic CLI help and usage information
+- [x] **1.4.1** Generate plain text output showing found cyclic dependencies
+- [x] **1.4.2** Include file paths and line numbers in output
+- [x] **1.4.3** Add basic CLI help and usage information
 
 ### Sprint 1 Deliverable
 A CLI tool that can analyze Rust projects and detect/report cyclic dependencies in plain text format.

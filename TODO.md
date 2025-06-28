@@ -32,9 +32,9 @@ This document outlines the major tasks and milestones for the development of Cod
 ## Phase 2: Codebase Analysis Engine
 
 ### 2.1 File Ingestion Module
-- [ ] Implement recursive file scanning of specified directories.
-- [ ] Implement `.archlintignore` parsing and file filtering logic.
-- [ ] Handle various file types and encodings.
+- [x] Implement recursive file scanning of specified directories.
+- [x] Implement basic file filtering logic (ignore common non-source files).
+- [x] Implement simple dependency extraction from Rust `use` statements.
 
 ### 2.2 AST Parsing Module (Tree-sitter Integration)
 - [ ] Integrate `tree-sitter` for AST generation.
