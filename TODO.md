@@ -11,11 +11,11 @@ This document outlines the major tasks and milestones for the development of Cod
 - [X] Initialize Rust project (`Cargo.toml`, `Cargo.lock`).
 
 ### [CDAT-4]1.2 Core CLI Framework
-- [ ] Implement basic CLI command parsing using `clap` crate.
-    - [ ] `codeatlas analyze <path>` command.
+- [x] Implement basic CLI command parsing using `clap` crate.
+    - [x] `codeatlas analyze <path>` command.
     - [ ] `codeatlas init-local-ai` command.
     - [ ] `codeatlas config` command.
-- [ ] Implement basic logging and error handling.
+- [x] Implement basic logging and error handling.
 - [ ] Set up project for cross-platform compilation and distribution.
 
 ### [CDAT-5]1.3 Configuration Management

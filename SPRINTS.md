@@ -11,9 +11,9 @@ This document outlines the first three sprints for CodeAtlas development, focusi
 ### Sprint 1 Tasks
 
 #### Core Infrastructure (Days 1-2)
-- [ ] **1.1.1** Set up basic Rust project structure with `clap` for CLI parsing
-- [ ] **1.1.2** Implement basic `codeatlas analyze <path>` command that accepts a directory
-- [ ] **1.1.3** Add basic error handling and logging with `env_logger`
+- [x] **1.1.1** Set up basic Rust project structure with `clap` for CLI parsing
+- [x] **1.1.2** Implement basic `codeatlas analyze <path>` command that accepts a directory
+- [x] **1.1.3** Add basic error handling and logging with `env_logger`
 
 #### File Processing Pipeline (Days 3-4)
 - [ ] **1.2.1** Implement recursive file scanning for a single language (Rust)
