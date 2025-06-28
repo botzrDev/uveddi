@@ -239,6 +239,7 @@ dependencies = [
  "env_logger",
  "log",
  "refinery",
+ "regex",
  "rusqlite",
  "serde",
  "serde_json",

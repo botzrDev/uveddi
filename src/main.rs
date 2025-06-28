@@ -53,11 +53,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
-    #[test]
-    fn test_main_runs() {
-        // Test that main function can be called without panicking
-        main();
-    }
+    // Integration and CLI tests should be in the `tests/` directory for clarity and maintainability.
+    // Remove this test to avoid running the CLI main in a test context.
 }

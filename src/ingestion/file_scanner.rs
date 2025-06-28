@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 use std::fs;
-use log::{debug, warn};
+use log::debug;
 
 /// File scanner for recursive directory traversal
 pub struct FileScanner {

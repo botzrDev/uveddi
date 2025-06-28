@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 use std::fs;
 use regex::Regex;
-use log::{debug, warn};
+use log::debug;
 
 /// Represents a dependency relationship between modules
 #[derive(Debug, Clone, PartialEq)]
@@ -23,7 +23,6 @@ pub enum DependencyType {
 pub struct DependencyExtractor {
     use_regex: Regex,
     mod_regex: Regex,
-    external_regex: Regex,
 }
 
 impl DependencyExtractor {
@@ -33,8 +32,6 @@ impl DependencyExtractor {
             use_regex: Regex::new(r"^\s*use\s+(?:crate::)?([a-zA-Z_][a-zA-Z0-9_]*(?:::[a-zA-Z_][a-zA-Z0-9_]*)*)")?,
             // Matches: mod module_name;
             mod_regex: Regex::new(r"^\s*mod\s+([a-zA-Z_][a-zA-Z0-9_]*)")?,
-            // Matches: use external_crate::something;
-            external_regex: Regex::new(r"^\s*use\s+([a-zA-Z_][a-zA-Z0-9_]*)::")?,
         })
     }
 
