@@ -5,10 +5,10 @@ This document outlines the major tasks and milestones for the development of Cod
 ## Phase 1: Foundational Setup & Core CLI (Rust)
 
 ### 1.1 Directory Structure Analysis & Setup
-- [ ] Review existing `src/` and `docs/` structure.
-- [ ] Define and create new top-level directories (e.g., `config/`, `tests/`, `plugins/`).
-- [ ] Update `.gitignore` to reflect new directories and build artifacts.
-- [ ] Initialize Rust project (`Cargo.toml`, `Cargo.lock`).
+- [x] Review existing `src/` and `docs/` structure.
+- [x] Define and create new top-level directories (e.g., `config/`, `tests/`, `plugins/`).
+- [X] Update `.gitignore` to reflect new directories and build artifacts.
+- [X] Initialize Rust project (`Cargo.toml`, `Cargo.lock`).
 
 ### 1.2 Core CLI Framework
 - [ ] Implement basic CLI command parsing using `clap` crate.
