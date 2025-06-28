@@ -38,3 +38,6 @@ Cargo.lock
 
 # Ignore docs build artifacts (if any)
 /docs/book/
+
+# Ignore local SQLite database and related files
+.codeatlas/
