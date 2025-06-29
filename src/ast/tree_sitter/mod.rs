@@ -208,6 +208,76 @@ pub enum CustomAst {
     // Extend as needed for more node types
 }
 
+impl CustomAst {
+    /// Returns a summary string of the AST structure (node types, relationships).
+    pub fn summary(&self) -> String {
+        match self {
+            CustomAst::File { items } => {
+                let mut summary = String::from("File containing:");
+                for item in items {
+                    summary.push_str(&format!("\n- {}", item.node_type()));
+                }
+                summary
+            }
+            CustomAst::Struct { name, methods } => {
+                format!("Struct: {} ({} methods)", name, methods.len())
+            }
+            CustomAst::Function { name, params } => {
+                format!("Function: {} ({} params)", name, params.len())
+            }
+            CustomAst::Variable { name } => {
+                format!("Variable: {}", name)
+            }
+        }
+    }
+
+    /// Returns a string representing the node type for summary purposes.
+    fn node_type(&self) -> &'static str {
+        match self {
+            CustomAst::File { .. } => "File",
+            CustomAst::Struct { .. } => "Struct",
+            CustomAst::Function { .. } => "Function",
+            CustomAst::Variable { .. } => "Variable",
+        }
+    }
+
+    /// Extracts a relevant code snippet for the given issue context, if possible.
+    pub fn extract_relevant_code(&self, issue_context: &str) -> Option<String> {
+        // For demonstration, just return the name of the first struct/function/variable matching the context
+        match self {
+            CustomAst::File { items } => {
+                for item in items {
+                    if let Some(snippet) = item.extract_relevant_code(issue_context) {
+                        return Some(snippet);
+                    }
+                }
+                None
+            }
+            CustomAst::Struct { name, methods } => {
+                if issue_context.contains(name) {
+                    Some(format!("struct {} {{ ... }}\nmethods: {:?}", name, methods))
+                } else {
+                    None
+                }
+            }
+            CustomAst::Function { name, params } => {
+                if issue_context.contains(name) {
+                    Some(format!("fn {}({}) {{ ... }}", name, params.join(", ")))
+                } else {
+                    None
+                }
+            }
+            CustomAst::Variable { name } => {
+                if issue_context.contains(name) {
+                    Some(format!("let {} = ...;", name))
+                } else {
+                    None
+                }
+            }
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum SourceLanguage {
     Rust,

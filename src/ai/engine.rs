@@ -6,6 +6,7 @@ use crate::ai::gemini_provider::GeminiProvider;
 use crate::ai::ollama_provider::OllamaProvider;
 use crate::ai::prompts::prompt_templates;
 use anyhow::Result;
+use crate::ai::types::AiSuggestion;
 
 /// AI analysis engine with provider abstraction
 pub struct AiAnalysisEngine {
@@ -53,40 +54,55 @@ impl AiAnalysisEngine {
     pub async fn analyze_issue(
         &self,
         issue: &mut ArchitecturalIssue,
+        ast: &crate::ast::CustomAst,
     ) -> Result<(), AiError> {
-        // TODO: Implement prompt engineering and hallucination mitigation here
-        // - Use structured prompt templates
-        // - Add uncertainty handling instructions
-        // - Add self-critique/verification step
-        let prompt = prompt_templates::for_issue(issue);
-
+        use crate::ai::prompts::smart_prompting::{build_prompt_from_ast, add_hallucination_mitigation};
+        // Build a smart prompt with AST/code context
+        let base_prompt = build_prompt_from_ast(ast, &issue.description);
+        let prompt = add_hallucination_mitigation(&base_prompt);
         // Try providers in order: OpenAI, Anthropic, Gemini, Ollama
+        let mut ai_suggestion: Option<AiSuggestion> = None;
         if let Some(provider) = &self.api_provider {
-            if let Ok(explanation) = provider.generate_explanation(&prompt).await {
-                issue.ai_explanation = Some(explanation);
-                return Ok(());
+            if let Ok(response) = provider.generate_explanation(&prompt).await {
+                if let Ok(suggestion) = crate::ai::engine::parse_ai_suggestion(&response) {
+                    ai_suggestion = Some(suggestion);
+                }
             }
         }
-        if let Some(provider) = &self.anthropic_provider {
-            if let Ok(explanation) = provider.generate_explanation(&prompt).await {
-                issue.ai_explanation = Some(explanation);
-                return Ok(());
+        if ai_suggestion.is_none() {
+            if let Some(provider) = &self.anthropic_provider {
+                if let Ok(response) = provider.generate_explanation(&prompt).await {
+                    if let Ok(suggestion) = crate::ai::engine::parse_ai_suggestion(&response) {
+                        ai_suggestion = Some(suggestion);
+                    }
+                }
             }
         }
-        if let Some(provider) = &self.gemini_provider {
-            if let Ok(explanation) = provider.generate_explanation(&prompt).await {
-                issue.ai_explanation = Some(explanation);
-                return Ok(());
+        if ai_suggestion.is_none() {
+            if let Some(provider) = &self.gemini_provider {
+                if let Ok(response) = provider.generate_explanation(&prompt).await {
+                    if let Ok(suggestion) = crate::ai::engine::parse_ai_suggestion(&response) {
+                        ai_suggestion = Some(suggestion);
+                    }
+                }
             }
         }
-        if let Some(provider) = &self.local_provider {
-            if let Ok(explanation) = provider.generate_explanation(&prompt).await {
-                issue.ai_explanation = Some(explanation);
-                return Ok(());
+        if ai_suggestion.is_none() {
+            if let Some(provider) = &self.local_provider {
+                if let Ok(response) = provider.generate_explanation(&prompt).await {
+                    if let Ok(suggestion) = crate::ai::engine::parse_ai_suggestion(&response) {
+                        ai_suggestion = Some(suggestion);
+                    }
+                }
             }
         }
-        // Continue without AI explanation
-        log::warn!("No AI provider available for issue analysis");
+        if let Some(suggestion) = ai_suggestion {
+            // Integrate into main pipeline: update issue fields
+            issue.ai_explanation = Some(suggestion.explanation.clone());
+            // Optionally: store title, description, refactoring, confidence in new fields
+        } else {
+            log::warn!("No valid AI suggestion for issue analysis");
+        }
         Ok(())
     }
 }
@@ -99,4 +115,9 @@ pub enum AiError {
     Context(String),
     #[error("Other AI error: {0}")]
     Other(String),
+}
+
+pub fn parse_ai_suggestion(response: &str) -> Result<AiSuggestion, String> {
+    serde_json::from_str::<AiSuggestion>(response)
+        .map_err(|e| format!("Failed to parse AI response: {}\nRaw: {}", e, response))
 }
