@@ -1,32 +1,70 @@
 //! OllamaProvider: Local LLM integration for CodeAtlas
-//
-// This is a stub for the Ollama provider. Actual implementation should handle
-// HTTP requests to the Ollama server, model management, and error handling.
 
-use std::collections::HashMap;
+use serde::{Deserialize, Serialize};
+use reqwest::Client;
+
+#[derive(Serialize)]
+struct OllamaRequest<'a> {
+    model: &'a str,
+    prompt: &'a str,
+    stream: bool,
+}
+
+#[derive(Deserialize)]
+struct OllamaResponse {
+    response: String,
+}
 
 pub struct OllamaProvider {
     pub model: String,
-    // Add more configuration fields as needed
+    pub client: Client,
+    pub api_url: String,
 }
 
 impl OllamaProvider {
-    pub fn new(model: &str) -> Self {
+    pub fn new(model: &str, api_url: &str) -> Self {
         Self {
             model: model.to_string(),
+            client: Client::new(),
+            api_url: api_url.to_string(),
         }
     }
 
     /// Run inference using the local Ollama model
     pub async fn infer(&self, prompt: &str) -> Result<String, String> {
-        // TODO: Implement HTTP call to Ollama server
-        // For now, return a stubbed response
-        Ok(format!("[Ollama stub] Model: {}, Prompt: {}", self.model, prompt))
+        let request_body = OllamaRequest {
+            model: &self.model,
+            prompt,
+            stream: false,
+        };
+
+        let response = self.client
+            .post(format!("{}/api/generate", self.api_url))
+            .json(&request_body)
+            .send()
+            .await
+            .map_err(|e| e.to_string())?;
+
+        if response.status().is_success() {
+            let ollama_response = response.json::<OllamaResponse>().await.map_err(|e| e.to_string())?;
+            Ok(ollama_response.response)
+        } else {
+            Err(format!("Ollama API request failed with status: {}", response.status()))
+        }
     }
 
     /// Check if Ollama is running and the model is available
     pub async fn check_status(&self) -> Result<(), String> {
-        // TODO: Implement health check logic
-        Ok(())
+        let response = self.client
+            .get(format!("{}/api/tags", self.api_url))
+            .send()
+            .await
+            .map_err(|e| e.to_string())?;
+
+        if response.status().is_success() {
+            Ok(())
+        } else {
+            Err(format!("Ollama API health check failed with status: {}", response.status()))
+        }
     }
 }
