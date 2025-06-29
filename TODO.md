@@ -59,11 +59,11 @@ This document outlines the major tasks and milestones for the development of Cod
 - [x] Implement algorithms for initial anti-pattern detection based on ASTs and dependency graphs:
     - [x] Cyclic Dependency (via graph cycle detection).
     - [x] The Blob/God Object (via AST node count heuristics).
-    - [ ] Unstable Interface (via dependency graph fan-in and change frequency heuristics).
-    - [ ] Modularity Violation (via simple community detection).
+    - [x] Unstable Interface (via dependency graph fan-in and change frequency heuristics).
+    - [x] Modularity Violation (via simple community detection).
     - [x] Contextual Code Snippet Extraction for detected issues.
-- [ ] Implement Unstable Interface detector
-- [ ] Implement Modularity Violation detector
+- [x] Implement Unstable Interface detector
+- [x] Implement Modularity Violation detector
 
 ### 2.5 Error Handling & Recovery
 - [x] Implement graceful handling of malformed source files
@@ -77,7 +77,7 @@ This document outlines the major tasks and milestones for the development of Cod
 ## Phase 3: AI Model Integration
 
 ### 3.1 Local LLM Integration (Ollama)
-- [ ] Implement `codeatlas init-local-ai` command to facilitate Ollama setup and model download.
+- [x] Implement `codeatlas init-local-ai` command to facilitate Ollama setup and model download.
 - [ ] Develop Rust bindings/integration for Ollama API.
 - [ ] Implement logic to utilize a specified local model (e.g., `mistral:7b-instruct-v0.2-q4_K_M`).
 - [ ] Integrate local LLM into the AI Reasoning Engine.
@@ -108,7 +108,7 @@ This document outlines the major tasks and milestones for the development of Cod
 - [ ] Include detailed issue entries: name, file path, line numbers, severity, AI-generated title/description, code snippets, refactoring suggestions.
 
 ### 4.2 Diagram Integration
-- [ ] Implement Mermaid.js diagram rendering for detected issues
+- [x] Implement Mermaid.js diagram rendering for detected issues
 - [ ] Integrate AI-generated Mermaid.js syntax for diagrams
 - [ ] Embed diagrams into the Markdown report
 - [ ] Validate diagram accuracy and fidelity
@@ -116,8 +116,8 @@ This document outlines the major tasks and milestones for the development of Cod
 ## Phase 5: Extensibility & Plugin System
 
 ### 5.1 Plugin System Core
-- [ ] Define a stable plugin interface (Rust traits).
-- [ ] Implement plugin discovery and loading mechanism (e.g., from a `plugins/` directory).
+- [x] Define a stable plugin interface (Rust traits).
+- [x] Implement plugin discovery and loading mechanism (e.g., from a `plugins/` directory).
 - [ ] Implement sandboxing for security using WebAssembly (WASM) runtime.
 - [ ] Develop data exchange mechanisms between core and plugins.
 
