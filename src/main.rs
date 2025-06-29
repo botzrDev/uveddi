@@ -36,7 +36,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         Commands::InitLocalAi(command) => {
             info!("Executing init-local-ai command...");
-            command.execute().await?;
+            let setup = codeatlas::cli::init_local_ai_command::OllamaSetup;
+            command.execute(&setup).await?;
         }
     }
 

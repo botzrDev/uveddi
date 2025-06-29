@@ -32,8 +32,8 @@ impl AiAnalysisEngine {
     }
 
     /// Configure local LLM provider (Ollama)
-    pub fn with_ollama(mut self, model: &str) -> Self {
-        self.local_provider = Some(Box::new(OllamaProvider::new(model)));
+    pub fn with_ollama(mut self, model: &str, api_url: &str) -> Self {
+        self.local_provider = Some(Box::new(OllamaProvider::new(model, api_url)));
         self
     }
 

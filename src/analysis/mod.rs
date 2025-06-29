@@ -32,4 +32,6 @@ pub enum AnalysisError {
     Report(#[from] crate::report::ReportError),
     #[error("Unsupported output format: {0}")]
     UnsupportedOutputFormat(String),
+    #[error("Invalid input path: {0}")]
+    InvalidInputPath(std::path::PathBuf),
 }

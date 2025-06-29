@@ -2,24 +2,54 @@
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    // TODO: Import CLI modules and fixtures
+    use assert_cmd::prelude::*;
+    use predicates::prelude::*;
+    use std::process::Command;
+    use tempfile::tempdir;
+    use std::fs::File;
+    use std::io::Write;
 
     #[test]
     fn cli_runs_analysis_and_outputs_markdown() {
-        // TODO: Test CLI end-to-end with Markdown output
-        unimplemented!();
+        let dir = tempdir().unwrap();
+        let file_path = dir.path().join("main.rs");
+        let mut file = File::create(&file_path).unwrap();
+        writeln!(file, "fn main() {{}}").unwrap();
+
+        let mut cmd = Command::cargo_bin("codeatlas").unwrap();
+        cmd.arg("analyze")
+            .arg(dir.path())
+            .arg("--output-format=markdown");
+
+        cmd.assert()
+            .success()
+            .stdout(predicate::str::contains("# CodeAtlas Analysis Report"));
     }
 
     #[test]
     fn cli_runs_analysis_and_outputs_json() {
-        // TODO: Test CLI end-to-end with JSON output
-        unimplemented!();
+        let dir = tempdir().unwrap();
+        let file_path = dir.path().join("main.rs");
+        let mut file = File::create(&file_path).unwrap();
+        writeln!(file, "fn main() {{}}").unwrap();
+
+        let mut cmd = Command::cargo_bin("codeatlas").unwrap();
+        cmd.arg("analyze")
+            .arg(dir.path())
+            .arg("--output-format=json");
+
+        cmd.assert()
+            .success()
+            .stdout(predicate::str::is_match(r#""run_id":"#).unwrap());
     }
 
     #[test]
     fn cli_handles_errors_gracefully() {
-        // TODO: Test CLI error handling (malformed files, missing config, etc.)
-        unimplemented!();
+        let mut cmd = Command::cargo_bin("codeatlas").unwrap();
+        cmd.arg("analyze").arg("/path/to/nonexistent/dir");
+
+        cmd.assert()
+            .failure()
+            .stderr(predicate::str::contains("Error"));
     }
 }

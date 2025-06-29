@@ -33,6 +33,9 @@ pub struct AnalyzeCommand {
 
 impl AnalyzeCommand {
     pub async fn execute(&self) -> Result<(), AnalysisError> {
+        if !self.path.exists() {
+            return Err(AnalysisError::InvalidInputPath(self.path.clone()));
+        }
         info!("Starting analysis of: {}", self.path.display());
         
         // Initialize components
