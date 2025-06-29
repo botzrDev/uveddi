@@ -10,10 +10,11 @@ const RUST_STRUCT_QUERY: &str = r#"
 )
 "#;
 
+// Fix RUST_IMPL_QUERY to use correct node types for Rust impl blocks
 const RUST_IMPL_QUERY: &str = r#"
 (impl_item
-  (type_identifier) @name
-  body: (associated_type) @body
+  type: (type_identifier) @name
+  body: (declaration_list) @body
 )
 "#;
 
@@ -31,36 +32,36 @@ const JAVASCRIPT_CLASS_QUERY: &str = r#"
 )
 "#;
 
-const FUNCTION_COUNT_QUERY: &str = r#"
+const RUST_FUNCTION_COUNT_QUERY: &str = r#"
 (function_item)
+"#;
+const PYTHON_FUNCTION_COUNT_QUERY: &str = r#"
 (function_definition)
+"#;
+const JAVASCRIPT_FUNCTION_COUNT_QUERY: &str = r#"
 (method_definition)
 "#;
+
+const RUST_FIELD_COUNT_QUERY: &str = r#"
+(field_declaration)
+"#;
+const PYTHON_FIELD_COUNT_QUERY: &str = r#"
+(attribute)
+"#;
+const JAVASCRIPT_FIELD_COUNT_QUERY: &str = r#""#;
 
 const FIELD_COUNT_QUERY: &str = r#"
 (field_declaration)
 (attribute)
-(public_field_definition)
-"#;
-
-const PYTHON_METHOD_QUERY: &str = r#"
-(function_definition)
-// Static and class methods (decorators)
-(decorated_definition
-  decorator: (decorator) @decorator
-  definition: (function_definition) @method
-)
 "#;
 
 const PYTHON_FIELD_QUERY: &str = r#"
-// Class-level assignments
 (expression_statement
   (assignment
     left: (attribute) @field
     right: (_)
   )
 )
-// Instance fields in __init__
 (function_definition
   name: (identifier) @init_name
   body: (block
@@ -75,19 +76,7 @@ const PYTHON_FIELD_QUERY: &str = r#"
 )
 "#;
 
-const JAVASCRIPT_METHOD_QUERY: &str = r#"
-(method_definition)
-// Static methods
-(method_definition
-  static: true
-)
-"#;
-
 const JAVASCRIPT_FIELD_QUERY: &str = r#"
-// Class fields
-(public_field_definition)
-(field_definition)
-// Fields set in constructor
 (method_definition
   name: (property_identifier) @ctor_name
   body: (statement_block
@@ -142,9 +131,9 @@ impl GodObjectDetector {
             .unwrap_or("Unnamed");
 
         let (function_query, field_query) = match parsed_file.language {
-            SourceLanguage::Rust => (FUNCTION_COUNT_QUERY, FIELD_COUNT_QUERY),
-            SourceLanguage::Python => (PYTHON_METHOD_QUERY, PYTHON_FIELD_QUERY),
-            SourceLanguage::JavaScript => (JAVASCRIPT_METHOD_QUERY, JAVASCRIPT_FIELD_QUERY),
+            SourceLanguage::Rust => (RUST_FUNCTION_COUNT_QUERY, RUST_FIELD_COUNT_QUERY),
+            SourceLanguage::Python => (PYTHON_FUNCTION_COUNT_QUERY, PYTHON_FIELD_COUNT_QUERY),
+            SourceLanguage::JavaScript => (JAVASCRIPT_FUNCTION_COUNT_QUERY, JAVASCRIPT_FIELD_COUNT_QUERY),
         };
 
         let mut cursor = QueryCursor::new();
@@ -219,26 +208,10 @@ impl AnalysisDetector for GodObjectDetector {
         let mut issues = Vec::new();
         for mat in matches {
             for capture in mat.captures {
-                self.analyze_node(capture.node, parsed_file, &mut issues)?;
+                let node = capture.node;
+                self.analyze_node(node, parsed_file, &mut issues)?;
             }
         }
-
-        // Special handling for Rust `impl` blocks
-        if parsed_file.language == SourceLanguage::Rust {
-            let impl_query = Query::new(parsed_file.tree.as_ref().expect("AST tree missing").language(), RUST_IMPL_QUERY)
-                .map_err(|e| AnalysisError::Generic(e.to_string()))?;
-            let impl_matches = cursor.matches(
-                &impl_query,
-                parsed_file.tree.as_ref().expect("AST tree missing").root_node(),
-                parsed_file.source.as_bytes(),
-            );
-            for mat in impl_matches {
-                for capture in mat.captures {
-                    self.analyze_node(capture.node, parsed_file, &mut issues)?;
-                }
-            }
-        }
-
         Ok(issues)
     }
 

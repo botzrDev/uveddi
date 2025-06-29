@@ -18,6 +18,9 @@ pub const RUST_IMPORTS_QUERY: &str = r#"
 (extern_crate_declaration
   name: (identifier) @path
 )
+(mod_item
+  name: (identifier) @path
+)
 "#;
 
 pub const PYTHON_IMPORTS_QUERY: &str = r#"

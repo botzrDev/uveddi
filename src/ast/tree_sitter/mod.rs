@@ -79,6 +79,10 @@ impl AstParser {
             .ok_or_else(|| AstError::UnsupportedLanguage(format!("{:?}", language)))?;
         let tree = parser.parse(&source, None)
             .ok_or(AstError::ParseFailed)?;
+        // Check for parse errors in the tree
+        if tree.root_node().has_error() {
+            return Err(AstError::ParseFailed);
+        }
         let parsed = ParsedFile {
             path: file_path.to_path_buf(),
             language,

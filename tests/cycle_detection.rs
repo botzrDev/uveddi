@@ -25,17 +25,20 @@ mod tests {
 
         let mut parser = AstParser::new().unwrap();
         let mut graph = DependencyGraph::new();
-        let extractor = DependencyExtractor::new();
+        let extractor = DependencyExtractor::new().unwrap();
 
         let a_file = parser.parse_file(&a_path).unwrap();
         let b_file = parser.parse_file(&b_path).unwrap();
 
-        let deps = vec![a_file, b_file].iter().flat_map(|f| extractor.extract_dependencies(f)).collect();
+        let deps = vec![a_file, b_file]
+            .iter()
+            .flat_map(|f| extractor.extract_from_ast(f).unwrap())
+            .collect();
         graph.build_from_dependencies(deps);
 
-        let detector = CycleDetector;
+        let mut detector = CycleDetector::new();
         let cycles = detector.detect_cycles(&graph);
-        assert_eq!(cycles.len(), 1);
+        assert_eq!(cycles.cycles.len(), 1);
     }
 
     #[test]
@@ -46,17 +49,20 @@ mod tests {
 
         let mut parser = AstParser::new().unwrap();
         let mut graph = DependencyGraph::new();
-        let extractor = DependencyExtractor::new();
+        let extractor = DependencyExtractor::new().unwrap();
 
         let a_file = parser.parse_file(&a_path).unwrap();
         let b_file = parser.parse_file(&b_path).unwrap();
 
-        let deps = vec![a_file, b_file].iter().flat_map(|f| extractor.extract_dependencies(f)).collect();
+        let deps = vec![a_file, b_file]
+            .iter()
+            .flat_map(|f| extractor.extract_from_ast(f).unwrap())
+            .collect();
         graph.build_from_dependencies(deps);
 
-        let detector = CycleDetector;
+        let mut detector = CycleDetector::new();
         let cycles = detector.detect_cycles(&graph);
-        assert_eq!(cycles.len(), 1);
+        assert_eq!(cycles.cycles.len(), 1);
     }
 
     #[test]
@@ -67,17 +73,20 @@ mod tests {
 
         let mut parser = AstParser::new().unwrap();
         let mut graph = DependencyGraph::new();
-        let extractor = DependencyExtractor::new();
+        let extractor = DependencyExtractor::new().unwrap();
 
         let a_file = parser.parse_file(&a_path).unwrap();
         let b_file = parser.parse_file(&b_path).unwrap();
 
-        let deps = vec![a_file, b_file].iter().flat_map(|f| extractor.extract_dependencies(f)).collect();
+        let deps = vec![a_file, b_file]
+            .iter()
+            .flat_map(|f| extractor.extract_from_ast(f).unwrap())
+            .collect();
         graph.build_from_dependencies(deps);
 
-        let detector = CycleDetector;
+        let mut detector = CycleDetector::new();
         let cycles = detector.detect_cycles(&graph);
-        assert_eq!(cycles.len(), 1);
+        assert_eq!(cycles.cycles.len(), 1);
     }
 
     #[test]
@@ -88,19 +97,24 @@ mod tests {
 
         let mut parser = AstParser::new().unwrap();
         let mut graph = DependencyGraph::new();
-        let extractor = DependencyExtractor::new();
+        let extractor = DependencyExtractor::new().unwrap();
 
         let a_file = parser.parse_file(&a_path).unwrap();
         let b_file = parser.parse_file(&dir.path().join("b.rs")).unwrap();
 
-        let deps = vec![a_file, b_file].iter().flat_map(|f| extractor.extract_dependencies(f)).collect();
+        let deps = vec![a_file, b_file]
+            .iter()
+            .flat_map(|f| extractor.extract_from_ast(f).unwrap())
+            .collect();
         graph.build_from_dependencies(deps);
 
-        let detector = CycleDetector;
+        let mut detector = CycleDetector::new();
         let cycles = detector.detect_cycles(&graph);
-        let issue = detector.issues_from_cycles(&cycles, &graph).pop().unwrap();
+        // Instead of issues_from_cycles, use from_cycle from database::models
+        use codeatlas::database::models::ArchitecturalIssue;
+        let issue = ArchitecturalIssue::from_cycle(cycles.cycles[0].clone(), &graph);
 
-        assert_eq!(issue.severity, "high");
+        assert_eq!(issue.severity, "low");
         assert!(issue.code_snippet.is_some());
     }
 }

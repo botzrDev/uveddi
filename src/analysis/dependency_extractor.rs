@@ -75,6 +75,20 @@ impl DependencyExtractor {
                     module_name = module_name[1..module_name.len() - 1].to_string();
                 }
 
+                // Normalize JS/TS import paths to match file stem (e.g., './b.js' -> 'b')
+                if let SourceLanguage::JavaScript = parsed_file.language {
+                    if module_name.starts_with("./") {
+                        let name = module_name.trim_start_matches("./");
+                        if let Some(stripped) = name.strip_suffix(".js") {
+                            module_name = stripped.to_string();
+                        } else if let Some(stripped) = name.strip_suffix(".ts") {
+                            module_name = stripped.to_string();
+                        } else {
+                            module_name = name.to_string();
+                        }
+                    }
+                }
+
                 dependencies.push(Dependency {
                     from_file: parsed_file.path.clone(),
                     to_module: module_name,
