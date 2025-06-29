@@ -14,7 +14,7 @@ impl ReportGenerator {
         Self {
             include_ai_explanations: true,
             include_code_snippets: true,
-            include_diagrams: false, // Future sprint feature
+            include_diagrams: true, // Enabled by default
         }
     }
 
@@ -247,6 +247,9 @@ impl ReportGenerator {
     fn get_anti_pattern_name(&self, type_id: i64) -> String {
         match type_id {
             1 => "God Object".to_string(),
+            // Sprint 3: Add Unstable Interface and Modularity Violation
+            2 => "Unstable Interface".to_string(),
+            3 => "Modularity Violation".to_string(),
             _ => format!("Unknown Anti-pattern (ID: {})", type_id),
         }
     }

@@ -4,6 +4,8 @@ pub fn for_issue(issue: &ArchitecturalIssue) -> String {
     let anti_pattern_name = match issue.anti_pattern_type_id {
         1 => "God Object",
         2 => "Cyclic Dependency",
+        3 => "Unstable Interface",
+        4 => "Modularity Violation",
         _ => "Unknown Anti-Pattern",
     };
 
@@ -29,6 +31,8 @@ pub fn for_issue(issue: &ArchitecturalIssue) -> String {
         1. Briefly explain what a "{}" anti-pattern is in software architecture.
         2. Explain why the provided code is an example of this anti-pattern.
         3. Provide a concise, actionable suggestion for how to refactor this code to resolve the issue.
+        4. If you are unsure or lack enough context, say "Not enough information to provide a reliable explanation." Do not make up details or speculate.
+        5. Only use information present in the description and code snippet above.
         "#,
         anti_pattern_name,
         issue.file_path,
