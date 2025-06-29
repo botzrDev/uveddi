@@ -47,6 +47,67 @@ impl AstParser {
         self.parsers.insert(lang, parser);
     }
 
+    /// Transform tree-sitter CST to custom AST (basic implementation for demonstration)
+    fn tree_to_custom_ast(tree: &Tree, source: &str, language: &SourceLanguage) -> Option<CustomAst> {
+        let root = tree.root_node();
+        let mut items = Vec::new();
+        match language {
+            SourceLanguage::Rust => {
+                // Collect structs and their methods
+                let mut structs: HashMap<String, Vec<String>> = HashMap::new();
+                let mut struct_names = Vec::new();
+                for child in root.children(&mut root.walk()) {
+                    match child.kind() {
+                        "struct_item" => {
+                            if let Some(name_node) = child.child_by_field_name("name") {
+                                let name = name_node.utf8_text(source.as_bytes()).unwrap_or("").to_string();
+                                struct_names.push(name.clone());
+                                structs.insert(name, Vec::new());
+                            }
+                        },
+                        "impl_item" => {
+                            if let Some(type_node) = child.child_by_field_name("type") {
+                                let type_name = type_node.utf8_text(source.as_bytes()).unwrap_or("").to_string();
+                                let mut methods = Vec::new();
+                                if let Some(body_node) = child.child_by_field_name("body") {
+                                    for decl in body_node.children(&mut body_node.walk()) {
+                                        if decl.kind() == "function_item" {
+                                            if let Some(name_node) = decl.child_by_field_name("name") {
+                                                let method_name = name_node.utf8_text(source.as_bytes()).unwrap_or("").to_string();
+                                                methods.push(method_name);
+                                            }
+                                        }
+                                    }
+                                }
+                                structs.entry(type_name).or_default().extend(methods);
+                            }
+                        },
+                        _ => {}
+                    }
+                }
+                // Build CustomAst::Struct for each struct
+                for (name, methods) in structs {
+                    items.push(CustomAst::Struct { name, methods });
+                }
+            },
+            SourceLanguage::Python | SourceLanguage::JavaScript => {
+                // Fallback: keep previous logic for now
+                for child in root.children(&mut root.walk()) {
+                    match (language, child.kind()) {
+                        (SourceLanguage::Python, "class_definition") | (SourceLanguage::JavaScript, "class_declaration") => {
+                            if let Some(name_node) = child.child_by_field_name("name") {
+                                let name = name_node.utf8_text(source.as_bytes()).unwrap_or("").to_string();
+                                items.push(CustomAst::Variable { name });
+                            }
+                        },
+                        _ => {}
+                    }
+                }
+            }
+        }
+        Some(CustomAst::File { items })
+    }
+
     /// Parse file and extract dependencies (ER-F-003), with AST caching.
     /// Returns a parsed AST for the file, using cache if available.
     /// Errors if the file cannot be parsed or language is unsupported.
@@ -60,16 +121,9 @@ impl AstParser {
         if let Ok(mut f) = fs::File::open(&cache_path) {
             let mut buf = Vec::new();
             f.read_to_end(&mut buf).ok();
-            if let Ok(mut parsed) = bincode::deserialize::<ParsedFile>(&buf) {
-                // Re-parse tree from source
-                let language = self.detect_language(file_path)?;
-                let parser = self.parsers.get_mut(&language)
-                    .ok_or_else(|| AstError::UnsupportedLanguage(format!("{:?}", language)))?;
-                if let Some(tree) = parser.parse(&parsed.source, None) {
-                    parsed.tree = Some(tree);
-                    self.cache.lock().unwrap().insert(path_str.clone(), parsed.clone());
-                    return Ok(parsed);
-                }
+            if let Ok(parsed) = bincode::deserialize::<ParsedFile>(&buf) {
+                self.cache.lock().unwrap().insert(path_str.clone(), parsed.clone());
+                return Ok(parsed);
             }
         }
         // Parse and cache
@@ -79,19 +133,19 @@ impl AstParser {
             .ok_or_else(|| AstError::UnsupportedLanguage(format!("{:?}", language)))?;
         let tree = parser.parse(&source, None)
             .ok_or(AstError::ParseFailed)?;
-        // Check for parse errors in the tree
         if tree.root_node().has_error() {
             return Err(AstError::ParseFailed);
         }
+        let custom_ast = Self::tree_to_custom_ast(&tree, &source, &language);
         let parsed = ParsedFile {
             path: file_path.to_path_buf(),
             language,
             tree: Some(tree),
             source: source.clone(),
+            custom_ast: custom_ast.clone(),
         };
-        // Save to disk
         let mut disk_parsed = parsed.clone();
-        disk_parsed.tree = None; // Tree can't be serialized, skip
+        disk_parsed.tree = None;
         let encoded = bincode::serialize(&disk_parsed).unwrap();
         if let Ok(mut f) = fs::File::create(&cache_path) {
             f.write_all(&encoded).ok();
@@ -128,6 +182,8 @@ pub struct ParsedFile {
     pub tree: Option<Tree>,
     /// The full source code as a string.
     pub source: String,
+    /// The custom, serializable AST for this file.
+    pub custom_ast: Option<CustomAst>,
 }
 
 impl ParsedFile {
@@ -140,6 +196,16 @@ impl ParsedFile {
         cache_dir.set_extension("bin");
         cache_dir
     }
+}
+
+/// A simplified, serializable Rust-native AST node for demonstration.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum CustomAst {
+    File { items: Vec<CustomAst> },
+    Struct { name: String, methods: Vec<String> },
+    Function { name: String, params: Vec<String> },
+    Variable { name: String },
+    // Extend as needed for more node types
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]

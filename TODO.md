@@ -49,6 +49,10 @@ This document outlines the major tasks and milestones for the development of Cod
 - [x] Implement severity scoring for issues.
 - [x] Develop a mechanism to load language grammars dynamically.
 - [x] Implement caching of parsed ASTs for performance optimization.
+    - [x] Replace re-parsing with a Rust-native, serializable `CustomAst` structure for disk cache.
+    - [x] Update all analysis logic (including God Object detection) to use the cache-backed `CustomAst`.
+    - [x] Update and validate all relevant tests to ensure cache correctness.
+    - [x] Update documentation (SPRINTS.md, TODO.md) to reflect new caching strategy.
 
 ### 2.3 Dependency Graph Builder
 - [x] Implement logic to traverse ASTs and identify import/dependency statements.

@@ -2,6 +2,7 @@ use crate::analysis::{AnalysisDetector, AnalysisError};
 use crate::ast::tree_sitter::{ParsedFile, SourceLanguage};
 use crate::database::models::{ArchitecturalIssue, AntiPatternType};
 use tree_sitter::{Query, QueryCursor};
+use crate::ast::tree_sitter::CustomAst;
 
 const RUST_STRUCT_QUERY: &str = r#"
 (struct_item
@@ -170,6 +171,37 @@ impl GodObjectDetector {
 
         Ok(())
     }
+
+    fn detect_issues_custom_ast(&self, parsed_file: &ParsedFile) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
+        let mut issues = Vec::new();
+        if let Some(CustomAst::File { items }) = &parsed_file.custom_ast {
+            for item in items {
+                if let CustomAst::Struct { name, methods } = item {
+                    let method_count = methods.len();
+                    let field_count = 0; // For demo, not extracting fields yet
+                    let severity = self.score_severity(method_count, field_count);
+                    if severity != "Low" {
+                        issues.push(ArchitecturalIssue {
+                            issue_id: None,
+                            analysis_run_id: 0,
+                            anti_pattern_type_id: 1,
+                            file_path: parsed_file.path.to_str().unwrap_or("").to_string(),
+                            start_line: None,
+                            end_line: None,
+                            severity,
+                            description: format!(
+                                "God Object detected: '{}' has {} methods. (Threshold: methods={})",
+                                name, method_count, self.method_threshold
+                            ),
+                            code_snippet: None,
+                            ai_explanation: None,
+                        });
+                    }
+                }
+            }
+        }
+        Ok(issues)
+    }
 }
 
 impl AnalysisDetector for GodObjectDetector {
@@ -190,6 +222,10 @@ impl AnalysisDetector for GodObjectDetector {
         &self,
         parsed_file: &ParsedFile,
     ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
+        if let SourceLanguage::Rust = parsed_file.language {
+            // Use custom AST for Rust
+            return self.detect_issues_custom_ast(parsed_file);
+        }
         let (query_str, _lang) = match parsed_file.language {
             SourceLanguage::Rust => (RUST_STRUCT_QUERY, "Rust"),
             SourceLanguage::Python => (PYTHON_CLASS_QUERY, "Python"),

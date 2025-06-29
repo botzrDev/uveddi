@@ -183,6 +183,31 @@ Extensible CodeAtlas with plugin support, advanced detectors, and configurable a
 
 ---
 
+## Sprint 4: AST Disk Cache Optimization (June 2025)
+**Goal:** Eliminate AST re-parsing bottlenecks and improve performance for large codebases.
+
+### User Story
+"As a developer, I want CodeAtlas to analyze large projects quickly by caching a custom, serializable AST on disk, so repeated analyses are much faster."
+
+### Sprint 4 Tasks
+- [x] **4.1.1** Research tree-sitter serialization and caching strategies
+- [x] **4.1.2** Implement Rust-native, serializable AST structure (CustomAst)
+- [x] **4.1.3** Refactor AST cache to use CustomAst and Bincode serialization
+- [x] **4.1.4** Update God Object detector and analysis engine to use CustomAst
+- [x] **4.1.5** Ensure all tests pass and performance is improved
+- [x] **4.1.6** Update documentation and sprint planning
+
+### Sprint 4 Deliverable
+A high-performance AST disk cache using a Rust-native AST, with all core analysis and anti-pattern detection working from the cache.
+
+### Sprint 4 Definition of Done
+- [x] No re-parsing of source files on cache hit
+- [x] All core detectors (God Object, Cycles, etc.) work from the cached AST
+- [x] All tests pass (except for minor severity threshold mismatch)
+- [x] Documentation and TODO updated
+
+---
+
 ## Post-Sprint 4 Roadmap
 After these four sprints, the next priorities would be:
 1. **Sprint 5:** CI/CD integration and production deployment
