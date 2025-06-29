@@ -208,8 +208,52 @@ A high-performance AST disk cache using a Rust-native AST, with all core analysi
 
 ---
 
-## Post-Sprint 4 Roadmap
-After these four sprints, the next priorities would be:
-1. **Sprint 5:** CI/CD integration and production deployment
-2. **Sprint 6:** ERD compliance audit and optimization
-3. **Sprint 7:** Monetization implementation
+## Sprint 5: Research Implementation & Advanced Analysis (July 2025)
+**Goal:** Implement research recommendations for DSL-based analysis, confidence scoring, and hybrid AI verification.
+
+### User Story
+"As a developer, I want CodeAtlas to use DSL-based anti-pattern rules, confidence scoring, and verified hybrid analysis for more accurate results."
+
+### Sprint 5 Tasks
+
+#### DSL Implementation (Days 1-4)
+- [ ] **5.1.1** Design DSL syntax for anti-pattern specification
+- [ ] **5.1.2** Implement DSL parser and compiler
+- [ ] **5.1.3** Convert existing detectors to use DSL rules
+- [ ] **5.1.4** Document DSL usage and examples
+
+#### Confidence Scoring (Days 5-7)
+- [ ] **5.2.1** Implement confidence scoring system
+- [ ] **5.2.2** Add confidence metrics to all detectors
+- [ ] **5.2.3** Include confidence scores in reports
+- [ ] **5.2.4** Implement threshold-based filtering
+
+#### Hybrid AI Verification (Days 8-10)
+- [ ] **5.3.1** Design verification pipeline
+- [ ] **5.3.2** Implement cross-validation between static analysis and AI
+- [ ] **5.3.3** Add verification results to reports
+- [ ] **5.3.4** Update prompt templates with verification steps
+
+#### Comprehensive AST (Days 11-14)
+- [ ] **5.4.1** Expand CustomAst to match research specifications
+- [ ] **5.4.2** Update all analysis to use expanded AST
+- [ ] **5.4.3** Ensure cache compatibility
+- [ ] **5.4.4** Update documentation
+
+### Sprint 5 Deliverable
+A DSL-configurable analysis engine with confidence scoring and hybrid AI verification.
+
+### Sprint 5 Definition of Done
+- [ ] All anti-pattern detectors use DSL rules
+- [ ] All issues include confidence scores
+- [ ] AI explanations are cross-validated with static analysis
+- [ ] CustomAst captures full semantic information
+- [ ] Documentation updated with new features
+
+---
+
+## Post-Sprint 5 Roadmap
+After these five sprints, the next priorities would be:
+1. **Sprint 6:** CI/CD integration and production deployment
+2. **Sprint 7:** ERD compliance audit and optimization
+3. **Sprint 8:** Monetization implementation

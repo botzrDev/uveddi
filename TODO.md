@@ -68,6 +68,11 @@ This document outlines the major tasks and milestones for the development of Cod
     - [x] Contextual Code Snippet Extraction for detected issues.
 - [x] Implement Unstable Interface detector
 - [x] Implement Modularity Violation detector
+- [ ] Design DSL syntax for anti-pattern specification
+- [ ] Implement DSL parser and compiler
+- [ ] Convert existing detectors to use DSL rules
+- [ ] Implement confidence scoring system
+- [ ] Expand CustomAst to match research specifications
 
 ### 2.5 Error Handling & Recovery
 - [x] Implement graceful handling of malformed source files
@@ -102,6 +107,9 @@ This document outlines the major tasks and milestones for the development of Cod
     - [ ] Design structured prompts with explicit format constraints
     - [ ] Implement self-correction loops (critic LLM reviews primary LLM output)
     - [ ] Build clear human-in-the-loop verification workflows
+- [ ] Implement hybrid verification pipeline (cross-validate static analysis with AI)
+- [ ] Add confidence scoring to AI explanations
+- [ ] Update prompt templates with verification steps
 
 ## Phase 4: Reporting & Output
 
