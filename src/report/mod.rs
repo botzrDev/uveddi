@@ -1,4 +1,5 @@
 use crate::database::models::{AnalysisRun, ArchitecturalIssue};
+use crate::models::antipattern_type::AntiPatternType;
 use serde_json::Value;
 use std::collections::HashMap;
 
@@ -108,6 +109,17 @@ impl ReportGenerator {
         summary
     }
 
+    /// Helper: Lookup anti-pattern type by id
+    fn lookup_antipattern_type(&self, type_id: i64) -> AntiPatternType {
+        // In a real system, this would query a DB or config. Here, hardcode a few for demo.
+        match type_id {
+            1 => AntiPatternType::new(1, "God Object", "A class that does too much", Some("size > 1000"), Some("OO")),
+            2 => AntiPatternType::new(2, "Unstable Interface", "Interface changes too often", Some("fan_in > 5"), Some("OO")),
+            3 => AntiPatternType::new(3, "Modularity Violation", "Module breaks encapsulation", Some("cross_module_access"), Some("Modularity")),
+            _ => AntiPatternType::new(type_id, "Unknown", "Unknown anti-pattern", None, None),
+        }
+    }
+
     fn generate_issues_by_severity(&self, issues: &[ArchitecturalIssue]) -> String {
         let mut content = String::from("## Issues by Severity\n\n");
         let mut issues_by_severity: HashMap<String, Vec<&ArchitecturalIssue>> = HashMap::new();
@@ -117,18 +129,18 @@ impl ReportGenerator {
         }
 
         let severities = ["critical", "high", "medium", "low"];
-
         for &severity in &severities {
             if let Some(issues_list) = issues_by_severity.get(severity) {
                 content.push_str(&format!("### {}\n\n", severity.to_uppercase()));
                 for issue in issues_list {
+                    let ap_type = self.lookup_antipattern_type(issue.anti_pattern_type_id);
                     content.push_str(&format!(
-                        "- **{}**: `{}` (Lines {}-{})
-",
-                        issue.description,
+                        "- **{}**: `{}` (Lines {}-{}) [{}]\n",
+                        ap_type.name,
                         issue.file_path,
-                        issue.start_line.unwrap_or(0),
-                        issue.end_line.unwrap_or(0)
+                        issue.line_start.unwrap_or(0),
+                        issue.line_end.unwrap_or(0),
+                        ap_type.category.clone().unwrap_or_else(|| "Uncategorized".to_string())
                     ));
                 }
                 content.push('\n');
@@ -137,53 +149,33 @@ impl ReportGenerator {
         content
     }
 
-    /// Generate a Mermaid.js diagram for an architectural issue using the SAM and LLM
-    /// This is a stub; actual LLM integration will be added in the next step
-    fn generate_mermaid_diagram_for_issue(&self, issue: &ArchitecturalIssue) -> Option<String> {
-        // TODO: Extract relevant SAM subgraph for the issue
-        // TODO: Serialize to JSON and prepare LLM prompt (see Ai_Diagrams.md)
-        // TODO: Call AI engine to get Mermaid.js code
-        // For now, return a placeholder diagram
-        Some(format!(
-            "```mermaid\ngraph TD\n    A[{}] --> B[Related Component]\n```\n",
-            issue.description.replace('"', "'"),
-        ))
-    }
-
-    /// Generate a Mermaid.js diagram for the full dependency graph
-    pub fn generate_mermaid_diagram_for_graph(&self, graph: &crate::analysis::dependency_graph::DependencyGraph) -> String {
-        let mut diagram = String::from("```mermaid\ngraph TD\n");
-        for dep in &graph.dependencies {
-            let from = dep.from_file.file_name().and_then(|n| n.to_str()).unwrap_or("");
-            let to = &dep.to_module;
-            diagram.push_str(&format!("    {} --> {}\n", from, to));
-        }
-        diagram.push_str("```");
-        diagram
-    }
-
     fn generate_detailed_issues(&self, issues: &[ArchitecturalIssue]) -> String {
         let mut content = String::from("## Detailed Issue Analysis\n\n");
 
         for (index, issue) in issues.iter().enumerate() {
+            let ap_type = self.lookup_antipattern_type(issue.anti_pattern_type_id);
             content.push_str(&format!(
                 r"### Issue #{}: {}
 
 **File:** `{}`
 **Lines:** {}-{}
 **Severity:** {}
+**Anti-pattern:** {}
+**Category:** {}
 
 **Description:**
 {}
 
 ",
                 index + 1,
-                issue.description, // Placeholder for anti-pattern name
+                ap_type.name,
                 issue.file_path,
-                issue.start_line.unwrap_or(0),
-                issue.end_line.unwrap_or(0),
+                issue.line_start.unwrap_or(0),
+                issue.line_end.unwrap_or(0),
                 issue.severity.to_uppercase(),
-                issue.description
+                ap_type.name,
+                ap_type.category.clone().unwrap_or_else(|| "Uncategorized".to_string()),
+                ap_type.description
             ));
 
             // Add code snippet if available
@@ -233,6 +225,31 @@ impl ReportGenerator {
         content
     }
 
+    /// Generate a Mermaid.js diagram for an architectural issue using the SAM and LLM
+    /// This is a stub; actual LLM integration will be added in the next step
+    fn generate_mermaid_diagram_for_issue(&self, issue: &ArchitecturalIssue) -> Option<String> {
+        // TODO: Extract relevant SAM subgraph for the issue
+        // TODO: Serialize to JSON and prepare LLM prompt (see Ai_Diagrams.md)
+        // TODO: Call AI engine to get Mermaid.js code
+        // For now, return a placeholder diagram
+        Some(format!(
+            "```mermaid\ngraph TD\n    A[{}] --> B[Related Component]\n```\n",
+            issue.description.replace('"', "'"),
+        ))
+    }
+
+    /// Generate a Mermaid.js diagram for the full dependency graph
+    pub fn generate_mermaid_diagram_for_graph(&self, graph: &crate::analysis::dependency_graph::DependencyGraph) -> String {
+        let mut diagram = String::from("```mermaid\ngraph TD\n");
+        for dep in &graph.dependencies {
+            let from = dep.from_file.file_name().and_then(|n| n.to_str()).unwrap_or("");
+            let to = &dep.to_module;
+            diagram.push_str(&format!("    {} --> {}\n", from, to));
+        }
+        diagram.push_str("```");
+        diagram
+    }
+
     fn calculate_duration(&self, analysis_run: &AnalysisRun) -> String {
         if let Some(end_time) = analysis_run.end_time {
             let duration = end_time.signed_duration_since(analysis_run.start_time);
@@ -258,19 +275,6 @@ impl ReportGenerator {
             *breakdown.entry("unknown".to_string()).or_insert(0) += 1;
         }
         breakdown
-    }
-
-    // This function would ideally fetch the anti-pattern name from the database
-    // based on anti_pattern_type_id. For now, it's a placeholder.
-    #[allow(dead_code)]
-    fn get_anti_pattern_name(&self, type_id: i64) -> String {
-        match type_id {
-            1 => "God Object".to_string(),
-            // Sprint 3: Add Unstable Interface and Modularity Violation
-            2 => "Unstable Interface".to_string(),
-            3 => "Modularity Violation".to_string(),
-            _ => format!("Unknown Anti-pattern (ID: {})", type_id),
-        }
     }
 }
 
