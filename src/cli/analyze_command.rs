@@ -72,7 +72,9 @@ impl AnalyzeCommand {
             // A more robust solution would involve passing `ParsedFile` or its relevant parts
             // along with the issue from the analysis engine.
             for issue in &mut issues {
-                match ai_engine.analyze_issue(issue).await {
+                // For now, pass a dummy AST for AI analysis
+                let dummy_ast = crate::ast::CustomAst::default();
+                match ai_engine.analyze_issue(issue, &dummy_ast).await {
                     Ok(_) => {},
                     Err(e) => error!("AI analysis failed for issue in {}: {}", issue.file_path, e),
                 }

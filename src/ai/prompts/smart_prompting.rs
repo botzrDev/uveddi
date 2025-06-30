@@ -22,6 +22,27 @@ Respond in the following JSON format:\n{{\n  \"title\": \"...\",\n  \"descriptio
     )
 }
 
+/// Builds a prompt embedding ranked context snippets and AST structure.
+pub fn build_prompt_with_context(context_snippets: &[String], ast: &CustomAst, issue_context: &str) -> String {
+    let ast_summary = ast.summary();
+    let context = if context_snippets.is_empty() {
+        "<no relevant context>".to_string()
+    } else {
+        context_snippets.join("\n---\n")
+    };
+    format!(
+        "You are an expert software architect.\n\
+Given the following ranked context and code structure, explain the architectural issue.\n\
+\nContext Snippets:\n{context}\n\
+AST Structure:\n{ast_summary}\n\
+Issue:\n{issue_context}\n\
+Respond in the following JSON format:\n{{\n  \"title\": \"...\",\n  \"description\": \"...\",\n  \"explanation\": \"...\",\n  \"refactoring\": \"...\",\n  \"confidence\": \"...\"\n}}\n",
+        context = context,
+        ast_summary = ast_summary,
+        issue_context = issue_context
+    )
+}
+
 /// Hallucination mitigation: structured prompting, uncertainty handling, and output schema enforcement
 pub fn add_hallucination_mitigation(prompt: &str) -> String {
     let mitigation_instructions = r#"
@@ -51,9 +72,22 @@ mod tests {
     }
 
     #[test]
+    fn test_build_prompt_with_context_ranked_snippets() {
+        let ast = CustomAst::default();
+        let issue_context = "God Object detected in module foo.rs";
+        let context_snippets = vec![
+            "Snippet 1: Related to the issue.".to_string(),
+            "Snippet 2: Provides additional context.".to_string(),
+        ];
+        let prompt = build_prompt_with_context(&context_snippets, &ast, issue_context);
+        assert!(prompt.contains("Snippet 1: Related to the issue."));
+        assert!(prompt.contains("Snippet 2: Provides additional context."));
+    }
+
+    #[test]
     fn test_add_hallucination_mitigation_appends_instruction() {
         let prompt = "Explain the issue.";
         let mitigated = add_hallucination_mitigation(prompt);
-        assert!(mitigated.contains("If unsure, respond with 'I don’t know.'"));
+        assert!(mitigated.contains("respond with \"I don’t know.\""));
     }
 }

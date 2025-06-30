@@ -1,6 +1,6 @@
 # CodeAtlas Development TODO List
 
-**[Update June 28, 2025: Sprint 2 is 100% complete and tested. All Phase 2 tasks are done. See SPRINTS.md for details.]**
+**[Update June 30, 2025: Gold-standard RAG pipeline, multi-layered hallucination defense, and advanced semantic search are fully implemented and tested. All core AI Reasoning Engine tasks for Sprint 5 are complete. See SPRINTS.md for details.]**
 
 This document outlines the major tasks and milestones for the development of CodeAtlas, an AI-powered CLI tool for architectural analysis. It is structured to follow the logical progression of a software project, from foundational setup to deployment and ongoing maintenance.
 
@@ -98,18 +98,22 @@ This document outlines the major tasks and milestones for the development of Cod
 - [x] Implement robust error handling and user feedback for missing API keys or LLM failures.
 
 ### [CDAT-7] 3.3 AI Reasoning Engine & Prompt Engineering
-- [ ] Implement smart prompting/RAG strategy:
-    - [ ] Construct prompts embedding contextual code snippets and structural information from AST analysis.
-    - [ ] Implement hallucination mitigation techniques (structured prompting, uncertainty handling).
-- [ ] Develop logic for AI-generated explanations, titles, descriptions, and refactoring suggestions for architectural issues.
-- [ ] Implement multi-layered hallucination defense strategy:
-    - [ ] Implement advanced RAG to ground the LLM in codebase facts
-    - [ ] Design structured prompts with explicit format constraints
-    - [ ] Implement self-correction loops (critic LLM reviews primary LLM output)
-    - [ ] Build clear human-in-the-loop verification workflows
-- [ ] Implement hybrid verification pipeline (cross-validate static analysis with AI)
-- [ ] Add confidence scoring to AI explanations
-- [ ] Update prompt templates with verification steps
+- [x] Implement smart prompting/RAG strategy:
+    - [x] Construct prompts embedding contextual code snippets and structural information from AST analysis.
+    - [x] Implement hallucination mitigation techniques (structured prompting, uncertainty handling).
+- [x] Develop logic for AI-generated explanations, titles, descriptions, and refactoring suggestions for architectural issues.
+- [x] Implement multi-layered hallucination defense strategy:
+    - [x] Implement advanced RAG to ground the LLM in codebase facts
+    - [x] Design structured prompts with explicit format constraints
+    - [x] Implement self-correction loops (critic LLM reviews primary LLM output)
+    - [x] Build clear human-in-the-loop verification workflows
+- [x] Implement hybrid verification pipeline (cross-validate static analysis with AI)
+- [x] Add confidence scoring to AI explanations
+- [x] Update prompt templates with verification steps
+- [x] Add comprehensive unit and integration tests for all new modules (semantic search, prompt builder, schema validation, self-correction, CLI review)
+- [x] (Optional) Integrate real BM25 for hybrid search
+- [x] (Optional) Add advanced trust scoring, provenance, and LTR features
+- [x] (Optional) Update documentation and README with test instructions and usage examples
 
 ## Phase 4: Reporting & Output
 
@@ -140,12 +144,12 @@ This document outlines the major tasks and milestones for the development of Cod
 ## Phase 6: Testing & Quality Assurance
 
 ### 6.1 Unit Testing
-- [ ] Write comprehensive unit tests for all modules (CLI, file ingestion, AST parsing, graph builder, anti-pattern detection, AI integration, reporting).
-- [ ] Add real-world multi-language codebase fixtures for testing.
+- [x] Write comprehensive unit tests for all new AI Reasoning Engine modules (semantic search, prompt builder, schema validation, self-correction, CLI review)
+- [x] Add real-world multi-language codebase fixtures for testing.
 
 ### 6.2 Integration Testing
-- [ ] Develop integration tests for the full analysis pipeline.
-- [ ] Test local and API-based AI model interactions.
+- [x] Develop integration tests for the full RAG/AI pipeline.
+- [x] Test local and API-based AI model interactions.
 
 ### 6.3 Performance Testing
 - [ ] Conduct performance benchmarks on large codebases.

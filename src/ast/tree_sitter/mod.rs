@@ -278,6 +278,12 @@ impl CustomAst {
     }
 }
 
+impl Default for CustomAst {
+    fn default() -> Self {
+        CustomAst::File { items: vec![] }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum SourceLanguage {
     Rust,
