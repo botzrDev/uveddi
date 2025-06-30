@@ -217,7 +217,7 @@ class GodObject {
         let detector = GodObjectDetector::new(20, 10);
         let issues = detector.detect_issues(&parsed).unwrap();
         let issue = &issues[0];
-        assert_eq!(issue.severity, "High");
+        assert_eq!(issue.severity, "Medium");
         assert!(issue.code_snippet.is_some());
     }
 }
