@@ -91,7 +91,7 @@ class Organization(Base):
     
     # Relationships
     users = relationship("User", back_populates="organization")
-    projects = relationship("Organization", back_populates="organization")
+    projects = relationship("Project", back_populates="organization")
     
     # Constraints
     __table_args__ = (
