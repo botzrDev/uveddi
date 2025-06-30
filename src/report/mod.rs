@@ -138,8 +138,8 @@ impl ReportGenerator {
                         "- **{}**: `{}` (Lines {}-{}) [{}]\n",
                         ap_type.name,
                         issue.file_path,
-                        issue.line_start.unwrap_or(0),
-                        issue.line_end.unwrap_or(0),
+                        issue.start_line.unwrap_or(0),
+                        issue.end_line.unwrap_or(0),
                         ap_type.category.clone().unwrap_or_else(|| "Uncategorized".to_string())
                     ));
                 }
@@ -170,8 +170,8 @@ impl ReportGenerator {
                 index + 1,
                 ap_type.name,
                 issue.file_path,
-                issue.line_start.unwrap_or(0),
-                issue.line_end.unwrap_or(0),
+                issue.start_line.unwrap_or(0),
+                issue.end_line.unwrap_or(0),
                 issue.severity.to_uppercase(),
                 ap_type.name,
                 ap_type.category.clone().unwrap_or_else(|| "Uncategorized".to_string()),

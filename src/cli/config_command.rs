@@ -2,7 +2,7 @@ use clap::{Args, Subcommand};
 use std::path::PathBuf;
 use crate::config::Config;
 use std::fs;
-use std::io::{self, Write};
+use std::io::{Write};
 
 #[derive(Subcommand)]
 pub enum ConfigSubcommand {
