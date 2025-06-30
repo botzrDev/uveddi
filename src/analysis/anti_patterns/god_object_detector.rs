@@ -12,12 +12,12 @@ const RUST_STRUCT_QUERY: &str = r#"
 "#;
 
 // Fix RUST_IMPL_QUERY to use correct node types for Rust impl blocks
-const RUST_IMPL_QUERY: &str = r#"
-(impl_item
-  type: (type_identifier) @name
-  body: (declaration_list) @body
-)
-"#;
+// const RUST_IMPL_QUERY: &str = r#"
+// (impl_item
+//   type: (type_identifier) @name
+//   body: (declaration_list) @body
+// )
+// "#;
 
 const PYTHON_CLASS_QUERY: &str = r#"
 (class_definition
@@ -43,57 +43,21 @@ const JAVASCRIPT_FUNCTION_COUNT_QUERY: &str = r#"
 (method_definition)
 "#;
 
+#[allow(dead_code)]
 const RUST_FIELD_COUNT_QUERY: &str = r#"
 (field_declaration)
 "#;
+#[allow(dead_code)]
 const PYTHON_FIELD_COUNT_QUERY: &str = r#"
 (attribute)
 "#;
+#[allow(dead_code)]
 const JAVASCRIPT_FIELD_COUNT_QUERY: &str = r#""#;
 
-const FIELD_COUNT_QUERY: &str = r#"
-(field_declaration)
-(attribute)
-"#;
-
-const PYTHON_FIELD_QUERY: &str = r#"
-(expression_statement
-  (assignment
-    left: (attribute) @field
-    right: (_)
-  )
-)
-(function_definition
-  name: (identifier) @init_name
-  body: (block
-    (expression_statement
-      (assignment
-        left: (attribute) @field
-        right: (_)
-      )
-    )
-  )
-  (#eq? @init_name "__init__")
-)
-"#;
-
-const JAVASCRIPT_FIELD_QUERY: &str = r#"
-(method_definition
-  name: (property_identifier) @ctor_name
-  body: (statement_block
-    (expression_statement
-      (assignment_expression
-        left: (member_expression
-          object: (this)
-          property: (property_identifier) @field
-        )
-        right: (_)
-      )
-    )
-  )
-  (#eq? @ctor_name "constructor")
-)
-"#;
+// const FIELD_COUNT_QUERY: &str = r#"
+// (field_declaration)
+// (attribute)
+// "#;
 
 pub struct GodObjectDetector {
     method_threshold: usize,

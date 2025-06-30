@@ -244,6 +244,7 @@ impl ReportGenerator {
 
     // This function would ideally fetch the anti-pattern name from the database
     // based on anti_pattern_type_id. For now, it's a placeholder.
+    #[allow(dead_code)]
     fn get_anti_pattern_name(&self, type_id: i64) -> String {
         match type_id {
             1 => "God Object".to_string(),

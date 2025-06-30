@@ -2,7 +2,6 @@
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use codeatlas::report::ReportGenerator;
     use codeatlas::database::models::{AnalysisRun, ArchitecturalIssue};
     use chrono::Utc;

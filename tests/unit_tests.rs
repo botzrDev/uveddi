@@ -1,4 +1,3 @@
-use std::path::Path;
 use tempfile::tempdir;
 use std::fs;
 use codeatlas::analysis::dependency_extractor::{DependencyExtractor, Dependency, DependencyType};

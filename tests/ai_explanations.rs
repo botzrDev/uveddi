@@ -2,7 +2,6 @@
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use codeatlas::ai::prompts::prompt_templates;
     use codeatlas::database::models::ArchitecturalIssue;
 

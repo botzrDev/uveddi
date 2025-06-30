@@ -13,7 +13,7 @@ impl GeminiProvider {
         }
     }
 
-    pub async fn infer(&self, prompt: &str) -> Result<String, String> {
+    pub async fn infer(&self, _prompt: &str) -> Result<String, String> {
         // TODO: Implement HTTP call to Google Gemini API
         Ok("[Gemini stub]".to_string())
     }

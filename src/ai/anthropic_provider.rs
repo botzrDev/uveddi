@@ -13,7 +13,7 @@ impl AnthropicProvider {
         }
     }
 
-    pub async fn infer(&self, prompt: &str) -> Result<String, String> {
+    pub async fn infer(&self, _prompt: &str) -> Result<String, String> {
         // TODO: Implement HTTP call to Anthropic Claude 3 API
         Ok("[Anthropic stub]".to_string())
     }

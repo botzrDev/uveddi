@@ -4,7 +4,6 @@ use crate::ai::api::openai_provider::OpenAiProvider;
 use crate::ai::anthropic_provider::AnthropicProvider;
 use crate::ai::gemini_provider::GeminiProvider;
 use crate::ai::ollama_provider::OllamaProvider;
-use crate::ai::prompts::prompt_templates;
 use anyhow::Result;
 use crate::ai::types::AiSuggestion;
 

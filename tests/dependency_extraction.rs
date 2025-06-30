@@ -2,7 +2,6 @@
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use codeatlas::analysis::dependency_extractor::DependencyExtractor;
     use codeatlas::ast::tree_sitter::AstParser;
     use tempfile::tempdir;
