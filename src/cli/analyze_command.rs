@@ -29,6 +29,14 @@ pub struct AnalyzeCommand {
     /// OpenAI API key
     #[arg(long, env = "OPENAI_API_KEY")]
     pub openai_api_key: Option<String>,
+
+    /// Ollama API URL (for local AI)
+    #[arg(long, env = "OLLAMA_API_URL")]
+    pub ollama_api_url: Option<String>,
+
+    /// Ollama model name (for local AI)
+    #[arg(long, env = "OLLAMA_MODEL")]
+    pub ollama_model: Option<String>,
 }
 
 impl AnalyzeCommand {
@@ -48,7 +56,15 @@ impl AnalyzeCommand {
             if let Some(api_key) = &self.openai_api_key {
                 ai_engine = ai_engine.with_openai_api(api_key.clone());
             } else {
-                warn!("AI analysis enabled but no OpenAI API key provided. Skipping API-based AI.");
+                // Try to configure Ollama if no OpenAI key is provided
+                let ollama_api_url = self.ollama_api_url.clone()
+                    .or_else(|| std::env::var("OLLAMA_API_URL").ok())
+                    .unwrap_or_else(|| "http://localhost:11434".to_string());
+                let ollama_model = self.ollama_model.clone()
+                    .or_else(|| std::env::var("OLLAMA_MODEL").ok())
+                    .unwrap_or_else(|| "deepseek-coder:6.7b-instruct-q4_0".to_string());
+                ai_engine = ai_engine.with_ollama(&ollama_model, &ollama_api_url);
+                warn!("AI analysis enabled with local Ollama model: {} at {}", ollama_model, ollama_api_url);
             }
         }
         

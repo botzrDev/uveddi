@@ -96,3 +96,48 @@ make run
 ```
 
 See [DATABASE_GUIDE.md](./DATABASE_GUIDE.md) for detailed instructions.
+
+## 🐳 Running CodeAtlas with Local AI in Docker
+
+You can run CodeAtlas in a fully containerized environment with Ollama and DeepSeek-Coder for local AI analysis. No host setup required!
+
+### Build the Docker image:
+
+```bash
+docker build -t codeatlas-local-ai .
+```
+
+### Run the container (interactive shell):
+
+```bash
+docker run -it --rm codeatlas-local-ai
+```
+
+This will:
+- Start the Ollama server
+- Pull the DeepSeek-Coder model
+- Run all CodeAtlas tests (including AI integration)
+- Drop you into a shell with the environment ready
+
+### Run an analysis with local AI:
+
+```bash
+# From inside the container shell:
+cargo run --release -- analyze . --enable-ai
+```
+
+You can also specify a different model or API URL:
+
+```bash
+cargo run --release -- analyze . --enable-ai --ollama-model deepseek-coder:6.7b-instruct-q4_0 --ollama-api-url http://localhost:11434
+```
+
+Or set environment variables:
+
+```bash
+export OLLAMA_MODEL=deepseek-coder:6.7b-instruct-q4_0
+export OLLAMA_API_URL=http://localhost:11434
+cargo run --release -- analyze . --enable-ai
+```
+
+All AI explanations in reports will be generated using the local DeepSeek model via Ollama.
