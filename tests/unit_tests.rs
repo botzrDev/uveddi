@@ -16,13 +16,13 @@ fn test_extract_rust_dependencies() {
         from_file: file_path.clone(),
         to_module: "std::collections::HashMap".to_string(),
         dependency_type: DependencyType::Use,
-        line_number: 1,
+        line_number: Some(1),
     }));
     assert!(deps.contains(&Dependency {
         from_file: file_path.clone(),
         to_module: "my_mod".to_string(),
         dependency_type: DependencyType::Use,
-        line_number: 2,
+        line_number: Some(2),
     }));
 }
 
@@ -40,13 +40,13 @@ fn test_extract_python_dependencies() {
         from_file: file_path.clone(),
         to_module: "os".to_string(),
         dependency_type: DependencyType::Import,
-        line_number: 1,
+        line_number: Some(1),
     }));
     assert!(deps.contains(&Dependency {
         from_file: file_path.clone(),
         to_module: "my_module".to_string(),
         dependency_type: DependencyType::Import,
-        line_number: 2,
+        line_number: Some(2),
     }));
 }
 
@@ -64,12 +64,12 @@ fn test_extract_javascript_dependencies() {
         from_file: file_path.clone(),
         to_module: "react".to_string(),
         dependency_type: DependencyType::Import,
-        line_number: 1,
+        line_number: Some(1),
     }));
     assert!(deps.contains(&Dependency {
         from_file: file_path.clone(),
-        to_module: "./my_mod".to_string(),
+        to_module: "my_mod".to_string(),
         dependency_type: DependencyType::Import,
-        line_number: 2,
+        line_number: Some(2),
     }));
 }

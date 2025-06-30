@@ -1,4 +1,3 @@
-use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
@@ -70,7 +69,7 @@ impl DependencyGraph {
 }
 
 /// Represents a dependency between two modules
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Dependency {
     pub from_file: PathBuf,
     pub to_module: String,
@@ -78,7 +77,7 @@ pub struct Dependency {
     pub line_number: Option<u32>,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Eq)]
 pub enum DependencyType {
     Use,
     Mod,
@@ -102,7 +101,7 @@ pub struct ArchitecturalIssue {
 }
 
 impl ArchitecturalIssue {
-    pub fn from_cycle(cycle: Cycle, graph: &DependencyGraph) -> Self {
+    pub fn from_cycle(cycle: Cycle, _graph: &DependencyGraph) -> Self {
         let severity_str = match cycle.severity {
             CycleSeverity::Low => "low".to_string(),
             CycleSeverity::Medium => "medium".to_string(),
