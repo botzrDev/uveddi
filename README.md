@@ -16,7 +16,7 @@ CodeAtlas fills this critical gap by providing:
 * **Dual AI Model for Ultimate Flexibility & Privacy:**
     * **Local Model (Free Tier):** Analyze proprietary code privately and offline using high-performance, open-source LLMs directly on your machine.
     * **API-based Model (Paid Tier):** Leverage state-of-the-art commercial LLMs for the most complex, nuanced analysis and seamless CI/CD integration.
-* **High-Quality, Actionable Reporting:** Get well-formatted markdown reports with embedded diagrams (Mermaid.js/PlantUML) that make complex architectural issues and refactoring suggestions immediately understandable and shareable.
+* **High-Quality, Actionable Reporting:** Get well-formatted markdown reports with embedded diagrams (Mermaid.js/PlantUML) that make complex architectural issues and refactoring suggestions immediately understandable and
 
 CodeAtlas acts as your **AI Architect**, providing essential architectural intelligence and guardrails for code increasingly written by both humans and AI.
 

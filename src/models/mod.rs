@@ -216,7 +216,7 @@ pub mod antipattern_type;
 mod tests {
     use super::*;
     use serde_json;
-    use std::time::{SystemTime, UNIX_EPOCH};
+    use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_organization_serialization() {
