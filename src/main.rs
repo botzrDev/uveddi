@@ -3,6 +3,7 @@ use log::info;
 
 use codeatlas::cli::analyze_command::AnalyzeCommand;
 use codeatlas::cli::init_local_ai_command::InitLocalAiCommand;
+use codeatlas::cli::plugin_command::PluginCommand;
 use codeatlas::error::CodeAtlasError;
 
 /// CodeAtlas - A tool for code analysis and exploration
@@ -23,6 +24,8 @@ enum Commands {
     Analyze(AnalyzeCommand),
     /// Initialize and set up local AI (Ollama)
     InitLocalAi(InitLocalAiCommand),
+    /// Plugin management commands
+    Plugin(PluginCommand),
 }
 
 #[tokio::main]
@@ -39,6 +42,10 @@ async fn main() -> Result<(), CodeAtlasError> {
             info!("Executing init-local-ai command...");
             let setup = codeatlas::cli::init_local_ai_command::OllamaSetup;
             command.execute(&setup).await?;
+        }
+        Commands::Plugin(command) => {
+            info!("Executing plugin command...");
+            command.execute().await;
         }
     }
 

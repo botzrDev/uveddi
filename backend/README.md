@@ -4,14 +4,12 @@ This directory contains the optional FastAPI backend for CodeAtlas.
 
 ## Purpose of the Backend
 
-The CodeAtlas CLI is a standalone tool that works entirely locally. However, this backend provides optional cloud-based features for teams and users who want to share and synchronize their analysis results.
+The CodeAtlas backend is a Python FastAPI service that provides optional cloud-based features for the CodeAtlas Rust CLI tool. While the Rust CLI performs all core code analysis and reporting locally, the backend enables team collaboration, centralized storage, and future web dashboards.
 
-The backend provides:
-- A centralized PostgreSQL database for storing analysis reports.
-- A REST API for the CodeAtlas CLI to upload analysis results to and download them from.
-- A foundation for future web-based dashboards and collaborative features.
-
-In short, the backend is not required for CodeAtlas to function, but it enables powerful team-based workflows.
+### Interaction with the Rust Application
+- The Rust CLI analyzes codebases and can upload analysis results to the backend via REST API endpoints.
+- The backend stores results in a PostgreSQL database and exposes endpoints for retrieving, sharing, and managing analysis data.
+- This separation allows users to run CodeAtlas fully offline or opt-in to cloud features for team workflows.
 
 ## API
 

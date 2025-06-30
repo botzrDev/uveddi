@@ -144,6 +144,18 @@ impl ReportGenerator {
         ))
     }
 
+    /// Generate a Mermaid.js diagram for the full dependency graph
+    pub fn generate_mermaid_diagram_for_graph(&self, graph: &crate::analysis::dependency_graph::DependencyGraph) -> String {
+        let mut diagram = String::from("```mermaid\ngraph TD\n");
+        for dep in &graph.dependencies {
+            let from = dep.from_file.file_name().and_then(|n| n.to_str()).unwrap_or("");
+            let to = &dep.to_module;
+            diagram.push_str(&format!("    {} --> {}\n", from, to));
+        }
+        diagram.push_str("```");
+        diagram
+    }
+
     fn generate_detailed_issues(&self, issues: &[ArchitecturalIssue]) -> String {
         let mut content = String::from("## Detailed Issue Analysis\n\n");
 

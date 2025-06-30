@@ -53,7 +53,7 @@ impl AnalysisEngine {
 
         // Run graph-based anti-pattern detectors
         for detector in &self.detectors {
-            let issues = detector.detect_graph_issues(&dependency_graph, 0); // analysis_run_id to be set
+            let issues = detector.detect(&dependency_graph);
             file_issues.extend(issues);
         }
 

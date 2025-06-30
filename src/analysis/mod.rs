@@ -15,6 +15,10 @@ pub trait AnalysisDetector {
         // Default implementation for detectors that don't analyze the graph
         vec![]
     }
+    fn detect(&self, graph: &DependencyGraph) -> Vec<ArchitecturalIssue> {
+        // Unified detection method for pluggable system
+        self.detect_graph_issues(graph, 0)
+    }
     fn get_anti_pattern_types(&self) -> Vec<AntiPatternType>;
     fn get_detector_name(&self) -> &'static str;
 }
