@@ -13,15 +13,17 @@ ENV PATH="/root/.cargo/bin:${PATH}"
 # Install Ollama
 RUN curl -fsSL https://ollama.com/install.sh | sh
 
-# Pull DeepSeek-Coder model (change version if needed)
-# RUN ollama pull deepseek-coder:6.7b-instruct-q4_0
-
-# Copy CodeAtlas source code into the container
+# Pre-fetch all dependencies (including dev-dependencies)
 WORKDIR /app
+COPY Cargo.toml Cargo.lock ./
+RUN cargo fetch
+
+# Copy the rest of the source
 COPY . .
 
-# Build CodeAtlas
+# Build and test to cache all dependencies and dev-dependencies
 RUN cargo build --release
+RUN cargo test --release --no-run
 
 # Expose Ollama API port
 EXPOSE 11434
