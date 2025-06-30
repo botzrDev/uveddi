@@ -209,3 +209,40 @@ impl FromRow for User {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    #[test]
+    fn test_organization_serialization() {
+        let org = Organization {
+            organization_id: Some(1),
+            name: "TestOrg".to_string(),
+            created_at: UNIX_EPOCH,
+        };
+        let json = serde_json::to_string(&org).unwrap();
+        let deserialized: Organization = serde_json::from_str(&json).unwrap();
+        assert_eq!(org.organization_id, deserialized.organization_id);
+        assert_eq!(org.name, deserialized.name);
+    }
+
+    #[test]
+    fn test_user_serialization() {
+        let user = User {
+            user_id: Some(1),
+            organization_id: Some(2),
+            username: "testuser".to_string(),
+            email: Some("test@example.com".to_string()),
+            created_at: UNIX_EPOCH,
+        };
+        let json = serde_json::to_string(&user).unwrap();
+        let deserialized: User = serde_json::from_str(&json).unwrap();
+        assert_eq!(user.user_id, deserialized.user_id);
+        assert_eq!(user.organization_id, deserialized.organization_id);
+        assert_eq!(user.username, deserialized.username);
+        assert_eq!(user.email, deserialized.email);
+    }
+}
