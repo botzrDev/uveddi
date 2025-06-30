@@ -2,6 +2,7 @@ use clap::{Parser, Subcommand};
 use log::info;
 
 use codeatlas::cli::analyze_command::AnalyzeCommand;
+use codeatlas::cli::config_command::ConfigCommand;
 use codeatlas::cli::init_local_ai_command::InitLocalAiCommand;
 use codeatlas::cli::plugin_command::PluginCommand;
 use codeatlas::error::CodeAtlasError;
@@ -26,6 +27,8 @@ enum Commands {
     InitLocalAi(InitLocalAiCommand),
     /// Plugin management commands
     Plugin(PluginCommand),
+    /// Configuration management commands
+    Config(ConfigCommand),
 }
 
 #[tokio::main]
@@ -46,6 +49,11 @@ async fn main() -> Result<(), CodeAtlasError> {
         Commands::Plugin(command) => {
             info!("Executing plugin command...");
             command.execute().await;
+        }
+        Commands::Config(command) => {
+            info!("Executing config command...");
+            // ConfigCommand is sync, so run in blocking
+            command.execute().map_err(|e| CodeAtlasError::Other(e))?;
         }
     }
 
