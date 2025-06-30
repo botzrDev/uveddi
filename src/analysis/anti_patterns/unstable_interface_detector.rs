@@ -13,9 +13,15 @@ impl UnstableInterfaceDetector {
     pub fn new() -> Self {
         Self { fan_in_threshold: 5 } // Default threshold, can be made configurable
     }
+}
 
-    /// Detects modules/interfaces with high fan-in using the dependency graph
-    pub fn detect_in_graph(&self, graph: &DependencyGraph, analysis_run_id: i64) -> Vec<ArchitecturalIssue> {
+impl AnalysisDetector for UnstableInterfaceDetector {
+    fn detect_issues(&self, _file: &ParsedFile) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
+        // File-level detection is not used; detection is graph-based
+        Ok(vec![])
+    }
+
+    fn detect_graph_issues(&self, graph: &DependencyGraph, analysis_run_id: i32) -> Vec<ArchitecturalIssue> {
         // Count fan-in for each module
         let mut fan_in_count: HashMap<&String, usize> = HashMap::new();
         for module in graph.get_modules() {
@@ -35,7 +41,7 @@ impl UnstableInterfaceDetector {
                 let file_path = graph.get_file_path(module).map(|p| p.display().to_string()).unwrap_or_else(|| module.clone());
                 issues.push(ArchitecturalIssue {
                     issue_id: None,
-                    analysis_run_id,
+                    analysis_run_id: analysis_run_id as i64,
                     anti_pattern_type_id: 0, // To be set by DB
                     file_path,
                     start_line: None,
@@ -49,13 +55,6 @@ impl UnstableInterfaceDetector {
         }
         issues
     }
-}
-
-impl AnalysisDetector for UnstableInterfaceDetector {
-    fn detect_issues(&self, _file: &ParsedFile) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
-        // File-level detection is not used; detection is graph-based
-        Ok(vec![])
-    }
 
     fn get_anti_pattern_types(&self) -> Vec<AntiPatternType> {
         vec![AntiPatternType {
@@ -68,9 +67,5 @@ impl AnalysisDetector for UnstableInterfaceDetector {
 
     fn get_detector_name(&self) -> &'static str {
         "unstable_interface"
-    }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
     }
 }

@@ -9,43 +9,37 @@ use crate::ai::types::AiSuggestion;
 
 /// AI analysis engine with provider abstraction
 pub struct AiAnalysisEngine {
-    api_provider: Option<Box<dyn LlmProvider>>,
-    local_provider: Option<Box<dyn LlmProvider>>,
-    anthropic_provider: Option<Box<dyn LlmProvider>>,
-    gemini_provider: Option<Box<dyn LlmProvider>>,
+    providers: Vec<Box<dyn LlmProvider>>,
 }
 
 impl AiAnalysisEngine {
     pub fn new() -> Self {
         Self {
-            api_provider: None,
-            local_provider: None,
-            anthropic_provider: None,
-            gemini_provider: None,
+            providers: Vec::new(),
         }
     }
 
     /// Configure OpenAI API provider
     pub fn with_openai_api(mut self, api_key: String) -> Self {
-        self.api_provider = Some(Box::new(OpenAiProvider::new(api_key)));
+        self.providers.push(Box::new(OpenAiProvider::new(api_key)));
         self
     }
 
     /// Configure local LLM provider (Ollama)
     pub fn with_ollama(mut self, model: &str, api_url: &str) -> Self {
-        self.local_provider = Some(Box::new(OllamaProvider::new(model, api_url)));
+        self.providers.push(Box::new(OllamaProvider::new(model, api_url)));
         self
     }
 
     /// Configure Anthropic provider
     pub fn with_anthropic(mut self, api_key: String) -> Self {
-        self.anthropic_provider = Some(Box::new(AnthropicProvider::new(&api_key)));
+        self.providers.push(Box::new(AnthropicProvider::new(&api_key)));
         self
     }
 
     /// Configure Gemini provider
     pub fn with_gemini(mut self, api_key: String) -> Self {
-        self.gemini_provider = Some(Box::new(GeminiProvider::new(&api_key)));
+        self.providers.push(Box::new(GeminiProvider::new(&api_key)));
         self
     }
 
@@ -59,49 +53,17 @@ impl AiAnalysisEngine {
         // Build a smart prompt with AST/code context
         let base_prompt = build_prompt_from_ast(ast, &issue.description);
         let prompt = add_hallucination_mitigation(&base_prompt);
-        // Try providers in order: OpenAI, Anthropic, Gemini, Ollama
-        let mut ai_suggestion: Option<AiSuggestion> = None;
-        if let Some(provider) = &self.api_provider {
+
+        for provider in &self.providers {
             if let Ok(response) = provider.generate_explanation(&prompt).await {
                 if let Ok(suggestion) = crate::ai::engine::parse_ai_suggestion(&response) {
-                    ai_suggestion = Some(suggestion);
+                    issue.ai_explanation = Some(suggestion.explanation.clone());
+                    return Ok(());
                 }
             }
         }
-        if ai_suggestion.is_none() {
-            if let Some(provider) = &self.anthropic_provider {
-                if let Ok(response) = provider.generate_explanation(&prompt).await {
-                    if let Ok(suggestion) = crate::ai::engine::parse_ai_suggestion(&response) {
-                        ai_suggestion = Some(suggestion);
-                    }
-                }
-            }
-        }
-        if ai_suggestion.is_none() {
-            if let Some(provider) = &self.gemini_provider {
-                if let Ok(response) = provider.generate_explanation(&prompt).await {
-                    if let Ok(suggestion) = crate::ai::engine::parse_ai_suggestion(&response) {
-                        ai_suggestion = Some(suggestion);
-                    }
-                }
-            }
-        }
-        if ai_suggestion.is_none() {
-            if let Some(provider) = &self.local_provider {
-                if let Ok(response) = provider.generate_explanation(&prompt).await {
-                    if let Ok(suggestion) = crate::ai::engine::parse_ai_suggestion(&response) {
-                        ai_suggestion = Some(suggestion);
-                    }
-                }
-            }
-        }
-        if let Some(suggestion) = ai_suggestion {
-            // Integrate into main pipeline: update issue fields
-            issue.ai_explanation = Some(suggestion.explanation.clone());
-            // Optionally: store title, description, refactoring, confidence in new fields
-        } else {
-            log::warn!("No valid AI suggestion for issue analysis");
-        }
+
+        log::warn!("No valid AI suggestion for issue analysis");
         Ok(())
     }
 }

@@ -53,14 +53,8 @@ impl AnalysisEngine {
 
         // Run graph-based anti-pattern detectors
         for detector in &self.detectors {
-            if let Some(ui) = detector.as_any().downcast_ref::<UnstableInterfaceDetector>() {
-                let issues = ui.detect_in_graph(&dependency_graph, 0); // analysis_run_id to be set
-                file_issues.extend(issues);
-            }
-            if let Some(mv) = detector.as_any().downcast_ref::<ModularityViolationDetector>() {
-                let issues = mv.detect_in_graph(&dependency_graph, 0); // analysis_run_id to be set
-                file_issues.extend(issues);
-            }
+            let issues = detector.detect_graph_issues(&dependency_graph, 0); // analysis_run_id to be set
+            file_issues.extend(issues);
         }
 
         Ok(file_issues)

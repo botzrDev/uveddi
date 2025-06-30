@@ -112,8 +112,8 @@ impl ReportGenerator {
 
         let severities = ["critical", "high", "medium", "low"];
 
-        for severity in &severities {
-            if let Some(issues_list) = issues_by_severity.get(*severity) {
+        for &severity in &severities {
+            if let Some(issues_list) = issues_by_severity.get(severity) {
                 content.push_str(&format!("### {}\n\n", severity.to_uppercase()));
                 for issue in issues_list {
                     content.push_str(&format!(
@@ -236,7 +236,7 @@ impl ReportGenerator {
         let mut breakdown = HashMap::new();
         // This would require joining with AntiPatternType to get category
         // For now, just a placeholder
-        for issue in issues {
+        for _issue in issues {
             *breakdown.entry("unknown".to_string()).or_insert(0) += 1;
         }
         breakdown

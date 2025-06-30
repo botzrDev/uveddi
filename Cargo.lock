@@ -322,6 +322,7 @@ dependencies = [
  "bincode",
  "chrono",
  "clap",
+ "codeatlas-plugin-api",
  "env_logger",
  "log",
  "md5",
@@ -345,6 +346,15 @@ dependencies = [
  "tree-sitter-rust",
  "uuid",
  "walkdir",
+]
+
+[[package]]
+name = "codeatlas-plugin-api"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "serde",
+ "thiserror",
 ]
 
 [[package]]

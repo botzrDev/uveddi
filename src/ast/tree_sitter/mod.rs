@@ -113,19 +113,27 @@ impl AstParser {
     /// Errors if the file cannot be parsed or language is unsupported.
     pub fn parse_file(&mut self, file_path: &Path) -> Result<ParsedFile, AstError> {
         let path_str = file_path.to_string_lossy().to_string();
+        let modified_time = fs::metadata(file_path)?.modified()?;
+
         if let Some(cached) = self.cache.lock().unwrap().get(&path_str) {
-            return Ok(cached.clone());
+            if cached.modified_at == modified_time {
+                return Ok(cached.clone());
+            }
         }
+
         // Try disk cache
         let cache_path = ParsedFile::cache_path(file_path);
         if let Ok(mut f) = fs::File::open(&cache_path) {
             let mut buf = Vec::new();
             f.read_to_end(&mut buf).ok();
             if let Ok(parsed) = bincode::deserialize::<ParsedFile>(&buf) {
-                self.cache.lock().unwrap().insert(path_str.clone(), parsed.clone());
-                return Ok(parsed);
+                if parsed.modified_at == modified_time {
+                    self.cache.lock().unwrap().insert(path_str.clone(), parsed.clone());
+                    return Ok(parsed);
+                }
             }
         }
+
         // Parse and cache
         let source = fs::read_to_string(file_path)?;
         let language = self.detect_language(file_path)?;
@@ -143,6 +151,7 @@ impl AstParser {
             tree: Some(tree),
             source: source.clone(),
             custom_ast: custom_ast.clone(),
+            modified_at: modified_time,
         };
         let mut disk_parsed = parsed.clone();
         disk_parsed.tree = None;
@@ -184,6 +193,8 @@ pub struct ParsedFile {
     pub source: String,
     /// The custom, serializable AST for this file.
     pub custom_ast: Option<CustomAst>,
+    /// The last modification time of the file.
+    pub modified_at: std::time::SystemTime,
 }
 
 impl ParsedFile {

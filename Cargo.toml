@@ -34,6 +34,7 @@ walkdir = "2.3"
 async-trait = "0.1"
 md5 = "0.7"
 toml = "0.8"
+codeatlas-plugin-api = { path = "plugins/codeatlas-plugin-api" }
 
 [dev-dependencies]
 tempfile = "3.0"

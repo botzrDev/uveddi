@@ -6,23 +6,7 @@ use crate::ast::tree_sitter::{
     queries::{JAVASCRIPT_IMPORTS_QUERY, PYTHON_IMPORTS_QUERY, RUST_IMPORTS_QUERY},
     AstParser, ParsedFile, SourceLanguage,
 };
-
-/// Represents a dependency relationship between modules
-#[derive(Debug, Clone, PartialEq)]
-pub struct Dependency {
-    pub from_file: PathBuf,
-    pub to_module: String,
-    pub dependency_type: DependencyType,
-    pub line_number: usize,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum DependencyType {
-    Use,
-    Mod,
-    External,
-    Import, // Generic for Python/JS
-}
+pub use codeatlas_plugin_api::models::{Dependency, DependencyType};
 
 /// AST-based dependency extractor
 pub struct DependencyExtractor {
@@ -93,7 +77,7 @@ impl DependencyExtractor {
                     from_file: parsed_file.path.clone(),
                     to_module: module_name,
                     dependency_type: dependency_type.clone(),
-                    line_number,
+                    line_number: Some(line_number as u32),
                 });
             }
         }

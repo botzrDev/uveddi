@@ -3,6 +3,7 @@ use log::info;
 
 use codeatlas::cli::analyze_command::AnalyzeCommand;
 use codeatlas::cli::init_local_ai_command::InitLocalAiCommand;
+use codeatlas::error::CodeAtlasError;
 
 /// CodeAtlas - A tool for code analysis and exploration
 ///
@@ -25,7 +26,7 @@ enum Commands {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> Result<(), CodeAtlasError> {
     env_logger::init();
     let cli = Cli::parse();
 
@@ -44,8 +45,4 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-#[cfg(test)]
-mod tests {
-    // Integration and CLI tests should be in the `tests/` directory for clarity and maintainability.
-    // Remove this test to avoid running the CLI main in a test context.
-}
+

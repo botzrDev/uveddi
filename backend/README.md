@@ -1,12 +1,27 @@
-# CodeAtlas Backend Database Setup
+# CodeAtlas Backend
 
-This directory contains the FastAPI backend for CodeAtlas with PostgreSQL database support.
+This directory contains the optional FastAPI backend for CodeAtlas.
+
+## Purpose of the Backend
+
+The CodeAtlas CLI is a standalone tool that works entirely locally. However, this backend provides optional cloud-based features for teams and users who want to share and synchronize their analysis results.
+
+The backend provides:
+- A centralized PostgreSQL database for storing analysis reports.
+- A REST API for the CodeAtlas CLI to upload analysis results to and download them from.
+- A foundation for future web-based dashboards and collaborative features.
+
+In short, the backend is not required for CodeAtlas to function, but it enables powerful team-based workflows.
+
+## API
+
+The API is documented using the OpenAPI standard. When the backend is running, you can find the interactive API documentation at `http://localhost:8000/docs`.
 
 ## Database Architecture
 
 The CodeAtlas system uses a two-database architecture:
-1. **Local SQLite database** in the Rust CLI for storing local analysis data
-2. **Centralized PostgreSQL database** in this FastAPI backend for cloud synchronization
+1. **Local SQLite database** in the Rust CLI for storing local analysis data.
+2. **Centralized PostgreSQL database** in this FastAPI backend for cloud synchronization.
 
 ## Setup Options
 

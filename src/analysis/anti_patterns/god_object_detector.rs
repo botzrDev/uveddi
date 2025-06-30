@@ -214,8 +214,4 @@ impl AnalysisDetector for GodObjectDetector {
         }
         Ok(issues)
     }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
-    }
 }

@@ -13,9 +13,15 @@ impl ModularityViolationDetector {
     pub fn new() -> Self {
         Self { cross_module_threshold: 3 } // Default threshold, can be made configurable
     }
+}
 
-    /// Detects strong dependencies between modules in different communities
-    pub fn detect_in_graph(&self, graph: &DependencyGraph, analysis_run_id: i64) -> Vec<ArchitecturalIssue> {
+impl AnalysisDetector for ModularityViolationDetector {
+    fn detect_issues(&self, _file: &ParsedFile) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
+        // File-level detection is not used; detection is graph-based
+        Ok(vec![])
+    }
+
+    fn detect_graph_issues(&self, graph: &DependencyGraph, analysis_run_id: i32) -> Vec<ArchitecturalIssue> {
         // Simple community detection: group modules by top-level directory
         let mut communities: HashMap<String, HashSet<String>> = HashMap::new();
         for module in graph.get_modules() {
@@ -41,7 +47,7 @@ impl ModularityViolationDetector {
             if count >= self.cross_module_threshold {
                 issues.push(ArchitecturalIssue {
                     issue_id: None,
-                    analysis_run_id,
+                    analysis_run_id: analysis_run_id as i64,
                     anti_pattern_type_id: 0, // To be set by DB
                     file_path: format!("{} -> {}", from_group, to_group),
                     start_line: None,
@@ -55,13 +61,6 @@ impl ModularityViolationDetector {
         }
         issues
     }
-}
-
-impl AnalysisDetector for ModularityViolationDetector {
-    fn detect_issues(&self, _file: &ParsedFile) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
-        // File-level detection is not used; detection is graph-based
-        Ok(vec![])
-    }
 
     fn get_anti_pattern_types(&self) -> Vec<AntiPatternType> {
         vec![AntiPatternType {
@@ -74,9 +73,5 @@ impl AnalysisDetector for ModularityViolationDetector {
 
     fn get_detector_name(&self) -> &'static str {
         "modularity_violation"
-    }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
     }
 }
