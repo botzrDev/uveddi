@@ -9,6 +9,12 @@ pub struct ReportGenerator {
     include_diagrams: bool,
 }
 
+impl Default for ReportGenerator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ReportGenerator {
     pub fn new() -> Self {
         Self {
@@ -98,7 +104,7 @@ impl ReportGenerator {
         for (severity, count) in &severity_breakdown {
             summary.push_str(&format!("- {}: {}\n", severity, count));
         }
-        summary.push_str("\n");
+        summary.push('\n');
         summary
     }
 
@@ -107,7 +113,7 @@ impl ReportGenerator {
         let mut issues_by_severity: HashMap<String, Vec<&ArchitecturalIssue>> = HashMap::new();
 
         for issue in issues {
-            issues_by_severity.entry(issue.severity.clone()).or_insert_with(Vec::new).push(issue);
+            issues_by_severity.entry(issue.severity.clone()).or_default().push(issue);
         }
 
         let severities = ["critical", "high", "medium", "low"];
@@ -125,7 +131,7 @@ impl ReportGenerator {
                         issue.end_line.unwrap_or(0)
                     ));
                 }
-                content.push_str("\n");
+                content.push('\n');
             }
         }
         content

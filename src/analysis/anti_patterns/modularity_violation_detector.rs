@@ -9,6 +9,12 @@ pub struct ModularityViolationDetector {
     pub cross_module_threshold: usize,
 }
 
+impl Default for ModularityViolationDetector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ModularityViolationDetector {
     pub fn new() -> Self {
         Self { cross_module_threshold: 3 } // Default threshold, can be made configurable

@@ -12,6 +12,12 @@ pub struct AiAnalysisEngine {
     providers: Vec<Box<dyn LlmProvider>>,
 }
 
+impl Default for AiAnalysisEngine {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl AiAnalysisEngine {
     pub fn new() -> Self {
         Self {

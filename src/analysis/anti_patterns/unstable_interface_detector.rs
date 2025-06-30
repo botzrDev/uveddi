@@ -9,6 +9,12 @@ pub struct UnstableInterfaceDetector {
     pub fan_in_threshold: usize,
 }
 
+impl Default for UnstableInterfaceDetector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl UnstableInterfaceDetector {
     pub fn new() -> Self {
         Self { fan_in_threshold: 5 } // Default threshold, can be made configurable

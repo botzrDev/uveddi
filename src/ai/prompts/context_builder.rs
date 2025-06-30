@@ -15,6 +15,12 @@ pub struct ContextBuilder {
     context: IssueContext,
 }
 
+impl Default for ContextBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ContextBuilder {
     pub fn new() -> Self {
         Self {

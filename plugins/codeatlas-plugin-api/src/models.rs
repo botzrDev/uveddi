@@ -27,7 +27,7 @@ impl DependencyGraph {
     pub fn build_from_dependencies(&mut self, dependencies: Vec<Dependency>) {
         self.dependencies = dependencies.clone();
         for dep in dependencies {
-            let from_module = self.extract_module_name(&dep.from_file);
+            let from_module = self.extract_module_name(dep.from_file.as_path());
             self.adjacency_list
                 .entry(from_module.clone())
                 .or_insert_with(HashSet::new)
@@ -37,7 +37,7 @@ impl DependencyGraph {
     }
 
     /// Extract module name from file path
-    fn extract_module_name(&self, file_path: &PathBuf) -> String {
+    fn extract_module_name(&self, file_path: &std::path::Path) -> String {
         if let Some(file_stem) = file_path.file_stem().and_then(|s| s.to_str()) {
             if file_stem == "mod" {
                 if let Some(parent) = file_path.parent() {

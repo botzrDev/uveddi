@@ -16,6 +16,12 @@ enum VisitState {
     Visited,    // Black - completely processed
 }
 
+impl Default for CycleDetector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CycleDetector {
     pub fn new() -> Self {
         Self {
