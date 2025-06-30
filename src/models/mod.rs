@@ -210,6 +210,8 @@ impl FromRow for User {
     }
 }
 
+pub mod antipattern_type;
+
 #[cfg(test)]
 mod tests {
     use super::*;
