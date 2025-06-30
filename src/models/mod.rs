@@ -169,3 +169,43 @@ impl FromRow for CodeSnippet {
         })
     }
 }
+
+/// Organization model
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Organization {
+    pub organization_id: Option<i64>,
+    pub name: String,
+    pub created_at: SystemTime,
+}
+
+impl FromRow for Organization {
+    fn from_row(row: &Row) -> rusqlite::Result<Self> {
+        Ok(Organization {
+            organization_id: Some(row.get("organization_id")?),
+            name: row.get("name")?,
+            created_at: unix_timestamp_to_system_time(row.get("created_at")?),
+        })
+    }
+}
+
+/// User model
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct User {
+    pub user_id: Option<i64>,
+    pub organization_id: Option<i64>,
+    pub username: String,
+    pub email: Option<String>,
+    pub created_at: SystemTime,
+}
+
+impl FromRow for User {
+    fn from_row(row: &Row) -> rusqlite::Result<Self> {
+        Ok(User {
+            user_id: Some(row.get("user_id")?),
+            organization_id: row.get("organization_id")?,
+            username: row.get("username")?,
+            email: row.get("email")?,
+            created_at: unix_timestamp_to_system_time(row.get("created_at")?),
+        })
+    }
+}
