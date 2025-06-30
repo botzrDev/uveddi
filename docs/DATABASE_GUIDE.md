@@ -4,19 +4,38 @@ This document provides a comprehensive guide for setting up, migrating, and depl
 
 ## Database Architecture Overview
 
-CodeAtlas uses a dual-database architecture:
+CodeAtlas uses a dual-database architecture for robust, scalable, and developer-friendly operation:
 
 1. **Local SQLite Database** (Rust CLI)
    - Embedded in the CLI tool
-   - Stores local analysis data
-   - Uses Refinery for migrations
+   - Stores local analysis data, configuration, plugin metadata, and history
+   - Uses [Refinery](https://github.com/rust-db/refinery) for migrations
    - Local-only, not synchronized by default
+   - Schema is defined in `migrations/V1__initial_schema_sqlite.sql`
+   - Foreign key constraints are enforced (enabled via `PRAGMA foreign_keys = ON`)
+   - Comprehensive integration tests are provided in `tests/sqlite_db.rs` and must pass in CI
 
 2. **Centralized PostgreSQL Database** (Python/FastAPI Backend)
-   - Stores organization and user data
-   - Aggregates analysis data from multiple clients
+   - Stores organization and user data, projects, analysis history, anti-pattern catalog, plugin registry, and more
+   - Aggregates analysis data from multiple clients and supports team/enterprise features
    - Uses SQLAlchemy ORM and Alembic for migrations
-   - Deployable to Google Cloud SQL
+   - Deployable to Google Cloud SQL or any managed PostgreSQL service
+   - Schema is defined in `migrations/V1__initial_schema_postgres.sql`
+   - Default anti-pattern types are inserted by migration or test setup
+   - Comprehensive integration tests are provided in `tests/postgres_db.py` and must pass in CI
+   - Enforces check constraints (e.g., valid `subscription_tier` values)
+
+### Key Practices
+- **Migrations:**
+  - SQLite: CLI runs migrations automatically on startup using Refinery.
+  - PostgreSQL: Backend uses Alembic migrations, applied via scripts or Docker Compose.
+- **Testing:**
+  - Both databases have comprehensive integration tests for CRUD, relationships, constraints, and default data.
+  - SQLite tests use in-memory databases with foreign key enforcement for isolation and speed.
+  - PostgreSQL tests use a dedicated test database, truncate all tables before each test, and ensure constraints and default data.
+- **Production Readiness:**
+  - Both schemas are normalized, indexed, and enforce referential integrity.
+  - All tests must pass before deployment or release.
 
 ## Quick Start with Docker Compose
 
