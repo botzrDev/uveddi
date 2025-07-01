@@ -8,9 +8,16 @@ use crate::analysis::dependency_extractor::{Dependency, DependencyExtractor};
 use crate::analysis::dependency_graph::DependencyGraph;
 use crate::database::models::{ArchitecturalIssue, AntiPatternType};
 use crate::ingestion::AsyncWalker;
-use std::path::Path;
+use crate::cache::result_cache::ResultCache;
+use std::path::{Path, PathBuf};
 use log::{info, warn};
 use tokio_stream::StreamExt;
+
+#[derive(serde::Serialize, serde::Deserialize, Debug)]
+struct CachedAnalysisResult {
+    issues: Vec<ArchitecturalIssue>,
+    dependencies: Vec<Dependency>,
+}
 
 pub struct AnalysisEngine {
     ast_parser: AstParser,
@@ -18,10 +25,12 @@ pub struct AnalysisEngine {
     detectors: Vec<Box<dyn AnalysisDetector>>,
     cycle_detector: CycleDetector,
     files_analyzed: i32,
+    cache: ResultCache,
 }
 
 impl AnalysisEngine {
     pub fn new() -> Result<Self, crate::error::UveddiError> {
+        let cache_path = PathBuf::from("uveddi_cache.db");
         Ok(Self {
             ast_parser: AstParser::new()?,
             dependency_extractor: DependencyExtractor::new()?,
@@ -32,6 +41,7 @@ impl AnalysisEngine {
             ],
             cycle_detector: CycleDetector::new(),
             files_analyzed: 0,
+            cache: ResultCache::new(&cache_path)?,
         })
     }
 
@@ -67,32 +77,54 @@ impl AnalysisEngine {
         let mut all_dependencies = Vec::new();
         self.files_analyzed = 0;
 
-        // Use async file walker instead of synchronous walkdir
         let walker = AsyncWalker::for_source_code();
         let mut file_stream = walker.walk(path);
 
         while let Some(file_result) = file_stream.next().await {
             match file_result {
                 Ok(file_path) => {
-                    info!("Analyzing file: {}", file_path.display());
+                    if let Some(cached_result) = self.cache.get::<_, CachedAnalysisResult>(&file_path)? {
+                        info!("CACHE HIT: Using cached analysis for {}", file_path.display());
+                        all_issues.extend(cached_result.issues);
+                        all_dependencies.extend(cached_result.dependencies);
+                        self.files_analyzed += 1;
+                        continue;
+                    }
+
+                    info!("CACHE MISS: Analyzing file: {}", file_path.display());
 
                     match self.ast_parser.parse_file(&file_path) {
                         Ok(parsed_file) => {
                             self.files_analyzed += 1;
                             
+                            let mut file_issues = Vec::new();
+                            let mut file_dependencies = Vec::new();
+
                             // Run file-level detectors
                             for detector in &self.detectors {
                                 match detector.detect_issues(&parsed_file) {
-                                    Ok(mut issues) => all_issues.append(&mut issues),
+                                    Ok(mut issues) => file_issues.append(&mut issues),
                                     Err(e) => warn!("Error running detector {} on {}: {}", detector.get_detector_name(), file_path.display(), e),
                                 }
                             }
 
                             // Extract dependencies
                             match self.dependency_extractor.extract_from_ast(&parsed_file) {
-                                Ok(mut dependencies) => all_dependencies.append(&mut dependencies),
+                                Ok(mut dependencies) => file_dependencies.append(&mut dependencies),
                                 Err(e) => warn!("Error extracting dependencies from {}: {}", file_path.display(), e),
                             }
+
+                            let result_to_cache = CachedAnalysisResult {
+                                issues: file_issues.clone(),
+                                dependencies: file_dependencies.clone(),
+                            };
+
+                            if let Err(e) = self.cache.set(&file_path, &result_to_cache) {
+                                warn!("Failed to cache analysis for {}: {}", file_path.display(), e);
+                            }
+
+                            all_issues.extend(file_issues);
+                            all_dependencies.extend(file_dependencies);
                         },
                         Err(e) => warn!("Failed to parse file {}: {}", file_path.display(), e),
                     }

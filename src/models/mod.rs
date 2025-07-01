@@ -211,6 +211,7 @@ impl FromRow for User {
 }
 
 pub mod antipattern_type;
+pub mod dependency_graph;
 
 #[cfg(test)]
 mod tests {

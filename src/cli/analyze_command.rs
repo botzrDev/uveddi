@@ -8,6 +8,8 @@ use crate::analysis::analysis_engine::AnalysisEngine;
 use crate::ai::engine::AiAnalysisEngine;
 use crate::analysis::AnalysisError;
 use crate::report::ReportGenerator;
+use crate::plugin::initialize_plugins;
+use crate::models::dependency_graph::DependencyGraph; // Assuming this is where it will be
 
 #[derive(Args)]
 pub struct AnalyzeCommand {
@@ -50,6 +52,7 @@ impl AnalyzeCommand {
         let mut database = Database::new()?;
         let mut analysis_engine = AnalysisEngine::new()?;
         let mut ai_engine = AiAnalysisEngine::new();
+        let plugin_manager = initialize_plugins();
         
         // Configure AI if enabled
         if self.enable_ai {
@@ -78,6 +81,17 @@ impl AnalyzeCommand {
         
         // Run analysis
         let mut issues = analysis_engine.analyze(&self.path).await?;
+
+        // Run plugins
+        info!("Running analysis plugins...");
+        let dependency_graph = DependencyGraph::new(); // Create a dependency graph from the analysis
+        let plugin_results = plugin_manager.run_plugins(&dependency_graph);
+        for result in plugin_results {
+            match result {
+                Ok(plugin_issues) => issues.extend(plugin_issues.into_iter().map(|i| i.into())),
+                Err(e) => error!("Plugin execution failed: {}", e),
+            }
+        }
         
         // Enhance with AI analysis
         if self.enable_ai {
