@@ -49,8 +49,8 @@ Uveddi acts as your **AI Architect**, providing essential architectural intellig
 
 1.  **Clone the Repository:**
     ```bash
-    git clone [https://github.com/your-org/uveddi-cli.git](https://github.com/your-org/uveddi-cli.git)
-    cd uveddi-cli
+    git clone https://github.com/botzrDev/uveddi.git
+    cd uveddi
     ```
 2.  **Build the Project:**
     ```bash
