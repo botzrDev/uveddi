@@ -1,5 +1,4 @@
 use std::path::{Path, PathBuf};
-use std::fs;
 use log::debug;
 
 /// File scanner for recursive directory traversal

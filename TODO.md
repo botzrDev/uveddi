@@ -1,5 +1,7 @@
 # Uveddi Development TODO List
 
+**[Update July 1, 2025: Sprint 6 (Medium-Priority Operational Excellence) and Sprint 7 (Low-Priority Enhancements) planned. Focus on benchmark tests, health checks, graceful AI fallback, dependency optimization, result caching analytics, and plugin documentation. All high-priority items from architecture analysis have been completed.]**
+
 **[Update June 30, 2025: Gold-standard RAG pipeline, multi-layered hallucination defense, and advanced semantic search are fully implemented and tested. All core AI Reasoning Engine tasks for Sprint 5 are complete. See SPRINTS.md for details.]**
 
 **[Update June 30, 2025, PM]: Core CLI config command, ER data model (User, Organization, Project, AnalysisRun), serialization, and anti-pattern type integration are now implemented and tested. Reporting system now categorizes issues by anti-pattern type.**]
@@ -129,6 +131,13 @@ This document outlines the major tasks and milestones for the development of Uve
 - [ ] Embed diagrams into the Markdown report
 - [ ] Validate diagram accuracy and fidelity
 
+### 4.3 Result Caching & Analytics
+- [ ] **[SPRINT 7]** Implement cache analytics with static metrics (CACHE_HITS, CACHE_MISSES, CACHE_SIZE_BYTES, CACHE_ENTRY_COUNT)
+- [ ] **[SPRINT 7]** Add structured logging for cache analytics with target: "cache"
+- [ ] **[SPRINT 7]** Implement intelligent prefetching based on top 20% most analyzed files (last 30 days)
+- [ ] **[SPRINT 7]** Add configurable disk usage threshold (cache_max_disk_usage_percent) with per-project 1GB limits
+- [ ] **[SPRINT 7]** Enable lz4_flex compression by default for AST cache
+
 ## Phase 5: Extensibility & Plugin System
 
 ### 5.1 Plugin System Core
@@ -137,7 +146,11 @@ This document outlines the major tasks and milestones for the development of Uve
 - [ ] Implement sandboxing for security using WebAssembly (WASM) runtime.
 - [ ] Develop data exchange mechanisms between core and plugins.
 
-### 5.2 Example Plugin Development
+### 5.2 Example Plugin Development & Documentation
+- [ ] **[SPRINT 7]** Create comprehensive example plugin in plugins/examples/ (TODO comment detector)
+- [ ] **[SPRINT 7]** Write plugins/examples/README.md with integration walkthrough, API usage, build instructions, and lifecycle explanation
+- [ ] **[SPRINT 7]** Add module-level experimental documentation with clear warnings
+- [ ] **[SPRINT 7]** Implement #[cfg(feature = "plugins")] guards for experimental status
 - [ ] Create a simple example plugin to validate the system.
 - [ ] Document the plugin development process.
 
@@ -151,15 +164,49 @@ This document outlines the major tasks and milestones for the development of Uve
 - [x] Develop integration tests for the full RAG/AI pipeline.
 - [x] Test local and API-based AI model interactions.
 
-### 6.3 Performance Testing
+## Phase 6: Testing & Quality Assurance
+
+### 6.1 Unit Testing
+- [x] Write comprehensive unit tests for all new AI Reasoning Engine modules (semantic search, prompt builder, schema validation, self-correction, CLI review)
+- [x] Add real-world multi-language codebase fixtures for testing.
+
+### 6.2 Integration Testing
+- [x] Develop integration tests for the full RAG/AI pipeline.
+- [x] Test local and API-based AI model interactions.
+
+### 6.3 Performance Testing & Benchmarks
+- [ ] **[SPRINT 6]** Create synthetic benchmark datasets (small: 100 files/10MB, medium: 1K files/100MB, large: 10K files/1GB)
+- [ ] **[SPRINT 6]** Implement file scanning benchmarks comparing async walker vs walkdir baseline
+- [ ] **[SPRINT 6]** Add AI provider response time benchmarks (OpenAI, Ollama) with rate limiting
+- [ ] **[SPRINT 6]** Create database performance benchmarks with concurrent operations
+- [ ] **[SPRINT 6]** Integrate continuous memory monitoring with sysinfo crate
 - [ ] Conduct performance benchmarks on large codebases.
 - [ ] Identify and address performance bottlenecks (e.g., parsing, AI inference).
 
-### 6.4 User Acceptance Testing (UAT) / Beta Program
+### 6.4 Health Monitoring & Operational Excellence
+- [ ] **[SPRINT 6]** Implement CLI health checks (`uveddi health`) with text/JSON output formats
+- [ ] **[SPRINT 6]** Add verbose mode with detailed metrics (connection durations, response times, error details)
+- [ ] **[SPRINT 6]** Create FastAPI health endpoints (/health basic, /health/detailed comprehensive)
+- [ ] **[SPRINT 6]** Implement configurable timeouts via environment variables
+- [ ] **[SPRINT 6]** Monitor database connectivity, AI provider availability, cache analytics, disk usage
+
+### 6.5 AI Reliability & Fallback Systems
+- [ ] **[SPRINT 6]** Implement per-provider circuit breaker with rolling window (last 10 attempts)
+- [ ] **[SPRINT 6]** Add graceful fallback returning ArchitecturalIssue with ai_explanation: None
+- [ ] **[SPRINT 6]** Configure circuit breaker thresholds (5 failures, 30-second cooldown, exponential backoff)
+- [ ] **[SPRINT 6]** Add structured logging for fallback events and provider recovery
+
+### 6.6 Dependency Management & Build Optimization
+- [ ] **[SPRINT 6]** Implement Cargo feature flags (default, ai, local-ai, cloud-ai, backend, wasm-plugins, minimal)
+- [ ] **[SPRINT 6]** Handle cross-feature dependencies (backend requires cloud-ai, minimal requires database-core)
+- [ ] **[SPRINT 6]** Unify dependency versions (reqwest, serde, tokio ecosystem) to latest compatible
+- [ ] **[SPRINT 6]** Add CI compilation tests for different feature combinations
+
+### 6.7 User Acceptance Testing (UAT) / Beta Program
 - [ ] Recruit beta testers (Senior Devs, Tech Leads, Architects).
 - [ ] Gather feedback and iterate on features and UX.
 
-### 6.5 Real-World Project Benchmarking
+### 6.8 Real-World Project Benchmarking
 - [ ] Select 3-5 popular open-source projects for benchmark analysis
 - [ ] Document architectural issues discovered in these projects
 - [ ] Create case studies showcasing Uveddi' effectiveness

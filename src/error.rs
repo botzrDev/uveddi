@@ -93,7 +93,7 @@ impl From<crate::analysis::dependency_extractor::ExtractionError> for UveddiErro
     fn from(err: crate::analysis::dependency_extractor::ExtractionError) -> Self {
         match err {
             crate::analysis::dependency_extractor::ExtractionError::AstError(ast_err) => ast_err.into(),
-            crate::analysis::dependency_extractor::ExtractionError::IoError(path, io_err) => {
+            crate::analysis::dependency_extractor::ExtractionError::IoError(_path, io_err) => {
                 UveddiError::Io(io_err)
             },
             _ => UveddiError::DependencyExtraction(err.to_string()),

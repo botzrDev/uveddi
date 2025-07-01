@@ -53,7 +53,7 @@ async fn main() -> Result<(), UveddiError> {
         Commands::Config(command) => {
             info!("Executing config command...");
             // ConfigCommand is sync, so run in blocking
-            command.execute().map_err(|e| UveddiError::Generic(e.to_string()))?;
+            command.execute().map_err(UveddiError::Configuration)?;
         }
     }
 

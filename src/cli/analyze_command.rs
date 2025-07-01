@@ -42,7 +42,7 @@ pub struct AnalyzeCommand {
 impl AnalyzeCommand {
     pub async fn execute(&self) -> Result<(), AnalysisError> {
         if !self.path.exists() {
-            return Err(AnalysisError::InvalidInputPath(self.path.clone()));
+            return Err(AnalysisError::InvalidInputPath { path: self.path.clone() });
         }
         info!("Starting analysis of: {}", self.path.display());
         

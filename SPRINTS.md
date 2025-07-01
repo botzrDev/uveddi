@@ -1,5 +1,7 @@
 # Uveddi Sprint Planning - Vertical Slices
 
+**[Update July 1, 2025: Sprint 6 (Medium-Priority Operational Excellence) and Sprint 7 (Low-Priority Enhancements) planned. Focus on benchmark tests, health checks, graceful AI fallback, dependency optimization, result caching analytics, and plugin documentation.]**
+
 **[Update June 30, 2025: Sprint 5 milestone achieved—Gold-standard RAG pipeline, multi-layered hallucination defense, advanced semantic search, and robust testing are complete. All core AI Reasoning Engine tasks for Sprint 5 are done. See TODO.md for next steps.]**
 
 ## Sprint 1: Basic CLI with Simple Analysis (2 weeks)
@@ -250,6 +252,86 @@ A DSL-configurable analysis engine with confidence scoring and hybrid AI verific
 
 ---
 
+---
+
+## Sprint 6: Medium-Priority Operational Excellence (2 weeks)
+**Goal:** Implement benchmark tests, health checks, graceful AI fallback, and dependency optimization
+
+### User Story
+"As a developer and operations team, I want comprehensive performance monitoring, health checks, and robust AI fallback mechanisms to ensure Uveddi is production-ready and operationally excellent."
+
+### Sprint 6 Tasks
+
+#### Benchmark Tests Implementation (Days 1-4)
+- [ ] **6.1.1** Create synthetic dataset generation in `target/benchmark-data/` (small: 100 files/10MB, medium: 1K files/100MB, large: 10K files/1GB)
+- [ ] **6.1.2** Implement file scanning benchmarks comparing async walker vs `walkdir::WalkDir` baseline
+- [ ] **6.1.3** Add AI provider benchmarks (OpenAI, Ollama) with automatic rate limiting (1-second intervals)
+- [ ] **6.1.4** Create database benchmark suite with concurrent operations (3-5 concurrent tokio::spawn operations)
+- [ ] **6.1.5** Integrate continuous memory monitoring using `sysinfo` crate
+
+#### Health Check Endpoints (Days 5-8)
+- [ ] **6.2.1** Implement CLI health checks with `uveddi health` command
+- [ ] **6.2.2** Add text output (default) and `--format json` flag for machine-readable output
+- [ ] **6.2.3** Create `--verbose` flag with detailed metrics (connection durations, response times, error details)
+- [ ] **6.2.4** Add FastAPI endpoints: `/health` (basic) and `/health/detailed` (comprehensive metrics)
+- [ ] **6.2.5** Implement configurable timeouts via environment variables (UVEDDI_HEALTH_DB_TIMEOUT, UVEDDI_HEALTH_AI_TIMEOUT)
+
+#### Graceful AI Fallback Enhancement (Days 9-11)
+- [ ] **6.3.1** Implement per-provider circuit breaker with rolling window (last 10 attempts)
+- [ ] **6.3.2** Add circuit breaker configuration to Config struct with HashMap<String, CircuitBreakerConfig>
+- [ ] **6.3.3** Update fallback logic to return ArchitecturalIssue with ai_explanation: None when all providers fail
+- [ ] **6.3.4** Add structured logging for fallback events and provider recovery
+
+#### Dependency Tree Simplification (Days 12-14)
+- [ ] **6.4.1** Implement Cargo feature flags: default, ai, local-ai, cloud-ai, backend, wasm-plugins, minimal
+- [ ] **6.4.2** Add cross-feature dependency handling (backend requires cloud-ai, minimal requires database-core)
+- [ ] **6.4.3** Unify dependency versions (reqwest, serde, tokio ecosystem) to latest compatible versions
+- [ ] **6.4.4** Add CI compilation tests for different feature combinations
+
+### Sprint 6 Deliverable
+Production-ready Uveddi with comprehensive monitoring, robust AI fallback, and optimized dependencies.
+
+### Sprint 6 Definition of Done
+- [ ] Benchmark suite validates AST caching performance gains
+- [ ] Health checks provide operational visibility for all critical components
+- [ ] AI provider failures gracefully fallback without system crashes
+- [ ] Feature flags enable minimal builds and optional AI providers
+- [ ] All dependency version conflicts resolved
+
+---
+
+## Sprint 7: Low-Priority Enhancements & Polish (1 week)
+**Goal:** Complete result caching optimization and finalize plugin system documentation
+
+### User Story
+"As a developer, I want intelligent caching with analytics and clear plugin system documentation for future extensibility."
+
+### Sprint 7 Tasks
+
+#### Result Caching Optimization (Days 1-4)
+- [ ] **7.1.1** Implement cache analytics with static metrics (CACHE_HITS, CACHE_MISSES, CACHE_SIZE_BYTES, CACHE_ENTRY_COUNT)
+- [ ] **7.1.2** Add structured logging for cache analytics: `log::info!(target: "cache", "cache_hit_ratio={}, size_mb={}", ratio, size)`
+- [ ] **7.1.3** Implement intelligent prefetching based on top 20% most analyzed files (last 30 days from analysis_runs table)
+- [ ] **7.1.4** Add configurable disk usage threshold (cache_max_disk_usage_percent) with per-project 1GB prefetch limits
+- [ ] **7.1.5** Enable lz4_flex compression by default for AST cache
+
+#### Plugin System Documentation & Examples (Days 5-7)
+- [ ] **7.2.1** Create comprehensive example plugin in `plugins/examples/` (TODO comment detector)
+- [ ] **7.2.2** Write `plugins/examples/README.md` with integration walkthrough, API usage, build instructions, and lifecycle explanation
+- [ ] **7.2.3** Add module-level experimental documentation with clear warnings
+- [ ] **7.2.4** Implement `#[cfg(feature = "plugins")]` guards for experimental status
+
+### Sprint 7 Deliverable
+Optimized caching system with analytics and comprehensive plugin documentation.
+
+### Sprint 7 Definition of Done
+- [ ] Cache hit/miss analytics available via health endpoints
+- [ ] Intelligent prefetching reduces analysis times on frequently accessed files
+- [ ] Plugin system documented with working examples
+- [ ] All experimental features clearly marked and guarded
+
+---
+
 ## Next Sprint: CI/CD Integration & Production Deployment
-- [ ] Begin Sprint 6: CI/CD integration and production deployment
+- [ ] Begin Sprint 8: CI/CD integration and production deployment
 - [ ] Address any remaining non-RAG/AI test failures (e.g., god object severity threshold)

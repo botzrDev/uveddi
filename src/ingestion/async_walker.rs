@@ -6,7 +6,7 @@
 use std::path::{Path, PathBuf};
 use tokio::fs;
 use tokio_stream::{StreamExt, wrappers::ReadDirStream};
-use futures::stream::{self, Stream};
+use futures::stream::Stream;
 use std::pin::Pin;
 
 /// Async file walker that yields file paths

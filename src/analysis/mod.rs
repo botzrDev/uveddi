@@ -8,9 +8,11 @@ use crate::database::models::{ArchitecturalIssue, AntiPatternType};
 use crate::ast::tree_sitter::ParsedFile;
 use crate::analysis::dependency_graph::DependencyGraph;
 
+pub type AnalysisError = crate::error::UveddiError;
+
 /// Core analysis trait for all detectors
 pub trait AnalysisDetector {
-    fn detect_issues(&self, file: &ParsedFile) -> Result<Vec<ArchitecturalIssue>, crate::error::UveddiError>;
+    fn detect_issues(&self, file: &ParsedFile) -> Result<Vec<ArchitecturalIssue>, AnalysisError>;
     fn detect_graph_issues(&self, _graph: &DependencyGraph, _analysis_run_id: i32) -> Vec<ArchitecturalIssue> {
         // Default implementation for detectors that don't analyze the graph
         vec![]

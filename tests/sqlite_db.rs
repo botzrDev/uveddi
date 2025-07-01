@@ -3,7 +3,6 @@
 // Uses rusqlite for direct DB access
 
 use rusqlite::{params, Connection, Result};
-use std::fs;
 
 fn setup_db() -> Result<Connection> {
     // Use an in-memory SQLite database for isolation and speed
