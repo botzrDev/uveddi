@@ -1,9 +1,10 @@
+use anyhow::Context;
 use clap::{Parser, Subcommand};
 use log::{info, error};
 use color_eyre::eyre::Result;
 use color_eyre::Section;
 use color_eyre::eyre::eyre;
-use crate::error::{UveddiError, ErrContext};
+use crate::error::UveddiError;
 
 use crate::cli::analyze_command::AnalyzeCommand;
 use crate::cli::config_command::ConfigCommand;
@@ -46,27 +47,27 @@ fn main() -> Result<()> {
             info!("Executing analyze command...");
             tokio::runtime::Runtime::new()?
                 .block_on(command.execute())
-                .err_context("Analyze command failed")
+                .context("Analyze command failed")
         }
         Commands::InitLocalAi(command) => {
             info!("Executing init-local-ai command...");
             let setup = crate::cli::init_local_ai_command::OllamaSetup;
             tokio::runtime::Runtime::new()?
                 .block_on(command.execute(&setup))
-                .err_context("Init-local-ai command failed")
+                .context("Init-local-ai command failed")
         }
         Commands::Plugin(command) => {
             info!("Executing plugin command...");
             tokio::runtime::Runtime::new()?
                 .block_on(command.execute())
                 .map_err(|e| UveddiError::Plugin(e.to_string()))
-                .err_context("Plugin command failed")
+                .context("Plugin command failed")
         }
         Commands::Config(command) => {
             info!("Executing config command...");
             command.execute()
                 .map_err(|e| UveddiError::Configuration(e))
-                .err_context("Config command failed")
+                .context("Config command failed")
         }
     };
 

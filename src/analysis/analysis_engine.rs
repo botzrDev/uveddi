@@ -5,7 +5,7 @@ use crate::analysis::anti_patterns::unstable_interface_detector::UnstableInterfa
 use crate::analysis::anti_patterns::modularity_violation_detector::ModularityViolationDetector;
 use crate::analysis::cycle_detector::CycleDetector;
 use crate::analysis::dependency_extractor::{Dependency, DependencyExtractor};
-use crate::analysis::dependency_graph::DependencyGraph;
+use crate::analysis::dependency_graph::{ComponentNode, DependencyGraph};
 use crate::database::models::{ArchitecturalIssue, AntiPatternType};
 use crate::ingestion::AsyncWalker;
 use crate::cache::result_cache::ResultCache;
@@ -50,18 +50,18 @@ impl AnalysisEngine {
 
         info!("Building dependency graph...");
         let mut dependency_graph = DependencyGraph::new();
-        dependency_graph.build_from_dependencies(all_dependencies);
-        info!("Dependency graph built with {} modules and {} dependencies.", 
-              dependency_graph.get_modules().len(), 
-              dependency_graph.get_all_dependencies().len());
+        for dep in all_dependencies {
+            let from_node = ComponentNode::Module { path: dep.source_path };
+            let to_node = ComponentNode::Module { path: dep.target_path };
+            dependency_graph.add_dependency(&from_node, &to_node, dep.dep_type);
+        }
+        info!("Dependency graph built.");
 
         info!("Detecting cycles...");
-        let cycle_results = self.cycle_detector.detect_cycles(&dependency_graph);
-        info!("Found {} cycles.", cycle_results.cycles.len());
-
-        for cycle in cycle_results.cycles {
-            file_issues.push(ArchitecturalIssue::from_cycle(cycle, &dependency_graph));
-        }
+        // Assuming analysis_run_id is 0 for now. This will be managed by a higher-level process.
+        let cycle_issues = self.cycle_detector.detect_cycles(&dependency_graph, 0);
+        info!("Found {} cycles.", cycle_issues.len());
+        file_issues.extend(cycle_issues);
 
         // Run graph-based anti-pattern detectors
         for detector in &self.detectors {

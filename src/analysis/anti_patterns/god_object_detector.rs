@@ -106,9 +106,9 @@ impl GodObjectDetector {
         };
 
         let mut cursor = QueryCursor::new();
-        let function_query_obj = Query::new(parsed_file.tree.as_ref().expect("AST tree missing").language(), function_query)
+        let function_query_obj = Query::new(&parsed_file.tree.as_ref().expect("AST tree missing").language(), function_query)
             .map_err(|e| AnalysisError::AntiPatternDetection(e.to_string()))?;
-        let field_query_obj = Query::new(parsed_file.tree.as_ref().expect("AST tree missing").language(), field_query)
+        let field_query_obj = Query::new(&parsed_file.tree.as_ref().expect("AST tree missing").language(), field_query)
             .map_err(|e| AnalysisError::AntiPatternDetection(e.to_string()))?;
         let method_count = cursor
             .matches(&function_query_obj, body_node, parsed_file.source.as_bytes())
@@ -200,7 +200,7 @@ impl AnalysisDetector for GodObjectDetector {
             SourceLanguage::JavaScript => (JAVASCRIPT_CLASS_QUERY, "JavaScript"),
         };
 
-        let query = Query::new(parsed_file.tree.as_ref().expect("AST tree missing").language(), query_str)
+        let query = Query::new(&parsed_file.tree.as_ref().expect("AST tree missing").language(), query_str)
             .map_err(|e| AnalysisError::AntiPatternDetection(e.to_string()))?;
         let mut cursor = QueryCursor::new();
         let matches = cursor.matches(

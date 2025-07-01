@@ -1,9 +1,10 @@
 use std::path::PathBuf;
 use clap::Args;
 use log::info;
+use anyhow::Context;
 
 use crate::application::{AnalysisOrchestrator, AnalysisConfig};
-use crate::error::{UveddiError, ErrContext};
+use crate::error::UveddiError;
 
 #[derive(Args)]
 pub struct AnalyzeCommand {
@@ -41,7 +42,7 @@ impl AnalyzeCommand {
         
         // Create application layer orchestrator
         let mut orchestrator = AnalysisOrchestrator::new()
-            .err_context("Failed to initialize analysis orchestrator")?;
+            .context("Failed to initialize analysis orchestrator")?;
         
         // Configure analysis parameters
         let config = AnalysisConfig {
@@ -56,7 +57,7 @@ impl AnalyzeCommand {
         
         // Execute analysis through application layer
         let report = orchestrator.execute_analysis(config).await
-            .err_context("Analysis execution failed")?;
+            .context("Analysis execution failed")?;
         
         // Output results
         if self.output.is_none() {

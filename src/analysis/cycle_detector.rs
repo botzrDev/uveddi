@@ -1,96 +1,89 @@
-use std::collections::HashMap;
-use crate::analysis::dependency_graph::{DependencyGraph, Cycle, AnalysisResults};
-use log::{debug, info};
+//! Detects cyclic dependencies in the `DependencyGraph`.
 
-/// Cycle detection using Depth-First Search with color coding
-pub struct CycleDetector {
-    visited: HashMap<String, VisitState>,
-    current_path: Vec<String>,
-    cycles: Vec<Cycle>,
-}
+use crate::analysis::dependency_graph::{ComponentNode, DependencyGraph};
+use crate::database::models::{ArchitecturalIssue, AntiPatternType};
+use petgraph::algo::tarjan_scc;
+use log::info;
 
-#[derive(Debug, Clone, PartialEq)]
-enum VisitState {
-    Unvisited,
-    Visiting,   // Gray - currently in DFS path
-    Visited,    // Black - completely processed
+/// A detector for identifying cyclic dependencies between components.
+pub struct CycleDetector;
+
+impl CycleDetector {
+    pub fn new() -> Self {
+        Self
+    }
+
+    /// Detects all cycles in the given `DependencyGraph`.
+    ///
+    /// This method uses Tarjan's algorithm for finding strongly connected components (SCCs)
+    /// to efficiently identify all cycles. Any SCC with more than one node represents
+    /// a cycle.
+    ///
+    /// # Arguments
+    ///
+    /// * `graph` - A reference to the `DependencyGraph` to be analyzed.
+    /// * `analysis_run_id` - The ID of the current analysis run for associating the issues.
+    ///
+    /// # Returns
+    ///
+    /// A `Vec<ArchitecturalIssue>` containing all the cyclic dependency issues found.
+    pub fn detect_cycles(&self, graph: &DependencyGraph, analysis_run_id: i32) -> Vec<ArchitecturalIssue> {
+        let start_time = std::time::Instant::now();
+        
+        // `tarjan_scc` returns a list of strongly connected components.
+        // Each component is a Vec of NodeIndices.
+        let sccs = tarjan_scc(&graph.graph);
+
+        let mut issues = Vec::new();
+
+        for scc in sccs {
+            // A strongly connected component with more than one node is a cycle.
+            if scc.len() > 1 {
+                let cycle_nodes: Vec<String> = scc.iter()
+                    .map(|&node_index| {
+                        // Safely access the node data from the graph.
+                        let component = &graph.graph[node_index];
+                        match component {
+                            ComponentNode::Module { path } => path.clone(),
+                            ComponentNode::Class { name, file_path } => format!("Class({}@{})", name, file_path),
+                            ComponentNode::Function { name, file_path } => format!("Function({}@{})", name, file_path),
+                        }
+                    })
+                    .collect();
+
+                let description = format!("A cyclic dependency was detected involving the following components: {}. This creates tight coupling and hinders maintainability.", cycle_nodes.join(", "));
+                
+                // For simplicity, we'll associate the issue with the first component in the cycle.
+                let representative_node = &graph.graph[scc[0]];
+                let (file_path, start_line) = match representative_node {
+                     ComponentNode::Module { path } => (path.clone(), 0),
+                     ComponentNode::Class { file_path, .. } => (file_path.clone(), 0), // Line number could be improved
+                     ComponentNode::Function { file_path, .. } => (file_path.clone(), 0), // Line number could be improved
+                };
+
+                issues.push(ArchitecturalIssue {
+                    id: 0, // Will be set by the database
+                    analysis_run_id,
+                    detector_name: "CycleDetector".to_string(),
+                    issue_type: AntiPatternType::CyclicDependency,
+                    file_path,
+                    line_number: Some(start_line as i32),
+                    description,
+                    suggestion: Some("Break the cycle by inverting dependencies, using interfaces, or extracting a new component.".to_string()),
+                    severity: "High".to_string(),
+                    remediation_cost: 5, // Example cost
+                    created_at: chrono::Utc::now().naive_utc(),
+                });
+            }
+        }
+
+        info!("Cycle detection completed in {:?}, found {} cycles.", start_time.elapsed(), issues.len());
+        issues
+    }
 }
 
 impl Default for CycleDetector {
     fn default() -> Self {
         Self::new()
-    }
-}
-
-impl CycleDetector {
-    pub fn new() -> Self {
-        Self {
-            visited: HashMap::new(),
-            current_path: Vec::new(),
-            cycles: Vec::new(),
-        }
-    }
-
-    /// Detect all cycles in the dependency graph
-    pub fn detect_cycles(&mut self, graph: &DependencyGraph) -> AnalysisResults {
-        let start_time = std::time::Instant::now();
-        for module in graph.get_modules() {
-            self.visited.insert(module.clone(), VisitState::Unvisited);
-        }
-        for module in graph.get_modules() {
-            if self.visited.get(module) == Some(&VisitState::Unvisited) {
-                self.dfs_visit(module, graph);
-            }
-        }
-        let analysis_duration = start_time.elapsed();
-        info!("Cycle detection completed: found {} cycles in {:?}", 
-              self.cycles.len(), analysis_duration);
-        AnalysisResults {
-            cycles: self.cycles.clone(),
-            total_modules: graph.get_modules().len(),
-            total_dependencies: graph.get_all_dependencies().len(),
-            analysis_duration,
-        }
-    }
-
-    fn dfs_visit(&mut self, module: &str, graph: &DependencyGraph) {
-        self.visited.insert(module.to_string(), VisitState::Visiting);
-        self.current_path.push(module.to_string());
-        if let Some(dependencies) = graph.get_dependencies(module) {
-            for dep in dependencies {
-                match self.visited.get(dep) {
-                    Some(VisitState::Visiting) => {
-                        self.extract_cycle(dep, graph);
-                    }
-                    Some(VisitState::Unvisited) | None => {
-                        self.dfs_visit(dep, graph);
-                    }
-                    Some(VisitState::Visited) => {}
-                }
-            }
-        }
-        self.visited.insert(module.to_string(), VisitState::Visited);
-        self.current_path.pop();
-    }
-
-    fn extract_cycle(&mut self, back_edge_target: &str, graph: &DependencyGraph) {
-        if let Some(cycle_start) = self.current_path.iter().position(|m| m == back_edge_target) {
-            let cycle_modules: Vec<String> = self.current_path[cycle_start..].to_vec();
-            if !self.is_duplicate_cycle(&cycle_modules) {
-                let cycle = Cycle::new(cycle_modules, graph);
-                debug!("Found cycle: {:?}", cycle.modules);
-                self.cycles.push(cycle);
-            }
-        }
-    }
-
-    fn is_duplicate_cycle(&self, new_cycle: &[String]) -> bool {
-        self.cycles.iter().any(|existing| {
-            let mut existing_sorted = existing.modules.clone();
-            existing_sorted.sort();
-            let mut new_sorted = new_cycle.to_vec();
-            new_sorted.sort();
-            existing_sorted == new_sorted
-        })
     }
 }

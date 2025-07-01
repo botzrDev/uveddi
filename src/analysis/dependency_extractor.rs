@@ -36,7 +36,7 @@ impl DependencyExtractor {
             SourceLanguage::JavaScript => (JAVASCRIPT_IMPORTS_QUERY, DependencyType::Import),
         };
 
-        let query = Query::new(parsed_file.tree.as_ref().expect("AST tree missing").language(), query_str)
+        let query = Query::new(&parsed_file.tree.as_ref().expect("AST tree missing").language(), query_str)
             .map_err(|e| ExtractionError::QueryError(e.to_string()))?;
 
         let mut cursor = QueryCursor::new();

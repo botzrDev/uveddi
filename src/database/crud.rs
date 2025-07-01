@@ -46,7 +46,7 @@ impl Database {
                 path TEXT NOT NULL UNIQUE
             );
         ")?;
-        Ok(Database { conn })
+       
     }
 
     pub fn get_or_create_project_id(&self, project_path: &Path) -> Result<i64> {
@@ -141,7 +141,7 @@ impl Database {
     }
 
     /// Stores multiple anti-pattern types in a batch operation
-    pub fn store_anti_pattern_types_batch(&self, anti_pattern_types: &mut [AntiPatternType]) -> Result<()> {
+    pub fn store_anti_pattern_types_batch(&mut self, anti_pattern_types: &mut [AntiPatternType]) -> Result<()> {
         let tx = self.conn.transaction()?;
         {
             let mut stmt = tx.prepare(

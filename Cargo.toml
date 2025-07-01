@@ -1,7 +1,7 @@
 [package]
 name = "uveddi"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
 description = "A Rust-based code analysis and exploration tool"
 authors = ["Phillip Austin Green <your.email@example.com>"]
 license = "MIT"
@@ -45,6 +45,8 @@ toml = "0.8.0"
 sha2 = "0.10.0"
 uveddi-plugin-api = { path = "plugins/uveddi-plugin-api" }
 async-trait = "0.1.88"
+md5 = "0.8.0"
+petgraph = "0.8.2"
 
 
 [dev-dependencies]

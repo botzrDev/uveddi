@@ -6,6 +6,7 @@ use serde::{Serialize, Deserialize};
 use bincode;
 use std::fs;
 use std::io::{Read, Write};
+use md5;
 
 pub mod queries;
 
@@ -25,15 +26,15 @@ impl AstParser {
     pub fn new() -> Result<Self, AstError> {
         let mut parsers = HashMap::new();
         let mut rust_parser = Parser::new();
-        rust_parser.set_language(tree_sitter_rust::language())?;
+        rust_parser.set_language(&tree_sitter_rust::language())?;
         parsers.insert(SourceLanguage::Rust, rust_parser);
 
         let mut python_parser = Parser::new();
-        python_parser.set_language(tree_sitter_python::language())?;
+        python_parser.set_language(&tree_sitter_python::language())?;
         parsers.insert(SourceLanguage::Python, python_parser);
 
         let mut javascript_parser = Parser::new();
-        javascript_parser.set_language(tree_sitter_javascript::language())?;
+        javascript_parser.set_language(&tree_sitter_javascript::language())?;
         parsers.insert(SourceLanguage::JavaScript, javascript_parser);
 
         Ok(AstParser {
@@ -252,7 +253,7 @@ impl CustomAst {
         }
     }
 
-    /// Extracts a relevant code snippet for the given issue context, if possible.
+    /// Extracts a relevant code snippet for the given issue context, if present.
     pub fn extract_relevant_code(&self, issue_context: &str) -> Option<String> {
         // For demonstration, just return the name of the first struct/function/variable matching the context
         match self {

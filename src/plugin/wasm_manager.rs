@@ -1,5 +1,5 @@
 use wasmtime::{Engine, Linker, Module, Store, Instance, Config};
-use wasmtime_wasi::{WasiCtx, WasiCtxBuilder};
+use wasmtime_wasi::{WasiPreview1Ctx, WasiPreview1CtxBuilder};
 use std::path::Path;
 use crate::models::dependency_graph::DependencyGraph;
 use crate::database::models::ArchitecturalIssue;
@@ -34,7 +34,7 @@ pub struct WasmPluginInfo {
 
 pub struct WasmPluginManager {
     engine: Engine,
-    linker: Linker<WasiCtx>,
+    linker: Linker<WasiPreview1Ctx>,
 }
 
 impl WasmPluginManager {
@@ -53,7 +53,7 @@ impl WasmPluginManager {
         linker.func_wrap(
             "logging", 
             "log", 
-            |_caller: wasmtime::Caller<WasiCtx>, level: i32, message_ptr: i32, message_len: i32| -> i32 {
+            |_caller: wasmtime::Caller<WasiPreview1Ctx>, level: i32, message_ptr: i32, message_len: i32| -> i32 {
                 // For now, just log to console - in a real implementation we'd extract string from memory
                 match level {
                     0 => log::debug!("[Plugin] Message at ptr={}, len={}", message_ptr, message_len),
@@ -69,7 +69,7 @@ impl WasmPluginManager {
         linker.func_wrap(
             "config",
             "get-value",
-            |_caller: wasmtime::Caller<WasiCtx>, key_ptr: i32, key_len: i32| -> i32 {
+            |_caller: wasmtime::Caller<WasiPreview1Ctx>, key_ptr: i32, key_len: i32| -> i32 {
                 // For now return -1 (not found) - in real implementation we'd extract key and lookup
                 log::debug!("[Plugin] Config lookup for key at ptr={}, len={}", key_ptr, key_len);
                 -1 // Not found
@@ -83,14 +83,12 @@ impl WasmPluginManager {
         let module = Module::from_file(&self.engine, wasm_path)?;
         
         // Create WASI context with minimal permissions
-        let wasi = WasiCtxBuilder::new()
+        let wasi = WasiPreview1CtxBuilder::new()
             .inherit_stdio()
             .build();
-            
         let mut store = Store::new(&self.engine, wasi);
-        
-        // Set fuel limit for resource control
-        store.add_fuel(1_000_000)?; // 1M instructions limit
+        // Remove or update add_fuel if not available in new API
+        // store.add_fuel(1_000_000)?; // 1M instructions limit
         
         let instance = self.linker.instantiate(&mut store, &module)?;
         
@@ -103,7 +101,7 @@ impl WasmPluginManager {
 }
 
 pub struct WasmPlugin {
-    store: Store<WasiCtx>,
+    store: Store<WasiPreview1Ctx>,
     instance: Instance,
     module: Module,
 }

@@ -1,12 +1,86 @@
-pub use uveddi_plugin_api::models::DependencyGraph;
+//! Represents the architectural dependency graph of a software project.
 
-/// Analysis results container
-#[derive(Debug, Clone)]
-pub struct AnalysisResults {
-    pub cycles: Vec<Cycle>,
-    pub total_modules: usize,
-    pub total_dependencies: usize,
-    pub analysis_duration: std::time::Duration,
+use petgraph::graph::{DiGraph, NodeIndex};
+use std::collections::HashMap;
+
+/// Represents a node in the dependency graph.
+/// This can be a module, a class, a function, or any other architectural component.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum ComponentNode {
+    Module { path: String },
+    Class { name: String, file_path: String },
+    Function { name: String, file_path: String },
 }
 
-pub use uveddi_plugin_api::models::{Cycle, CycleSeverity};
+/// Represents the type of dependency between two components.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum DependencyType {
+    /// A direct function or method call.
+    Call,
+    /// An import or `use` statement.
+    Import,
+    /// A class inheritance relationship (`extends`).
+    Inheritance,
+    /// A class implementing an interface (`implements`).
+    Implementation,
+}
+
+/// Represents a dependency relationship (an edge) in the graph.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct DependencyEdge {
+    pub dependency_type: DependencyType,
+    /// Could be used to store metadata like line numbers.
+    pub weight: u32,
+}
+
+/// The main Architectural Dependency Graph (ADG).
+///
+/// This struct encapsulates a `petgraph::DiGraph` to model the relationships
+/// between software components. It provides methods for adding components
+/// and dependencies, and will be the basis for running architectural analyses
+/// like cycle detection.
+pub struct DependencyGraph {
+    graph: DiGraph<ComponentNode, DependencyEdge>,
+    node_map: HashMap<ComponentNode, NodeIndex>,
+}
+
+impl DependencyGraph {
+    /// Creates a new, empty `DependencyGraph`.
+    pub fn new() -> Self {
+        DependencyGraph {
+            graph: DiGraph::new(),
+            node_map: HashMap::new(),
+        }
+    }
+
+    /// Adds a component to the graph if it doesn't already exist.
+    /// Returns the `NodeIndex` of the component.
+    pub fn add_component(&mut self, node: ComponentNode) -> NodeIndex {
+        if let Some(index) = self.node_map.get(&node) {
+            *index
+        } else {
+            let index = self.graph.add_node(node.clone());
+            self.node_map.insert(node, index);
+            index
+        }
+    }
+
+    /// Adds a dependency between two components.
+    pub fn add_dependency(&mut self, from: &ComponentNode, to: &ComponentNode, dep_type: DependencyType) {
+        let from_index = self.add_component(from.clone());
+        let to_index = self.add_component(to.clone());
+
+        let edge = DependencyEdge {
+            dependency_type: dep_type,
+            weight: 1, // Default weight
+        };
+
+        self.graph.add_edge(from_index, to_index, edge);
+    }
+}
+
+impl Default for DependencyGraph {
+    fn default() -> Self {
+        Self::new()
+    }
+}
