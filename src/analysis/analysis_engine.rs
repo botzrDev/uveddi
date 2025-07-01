@@ -105,7 +105,7 @@ impl AnalysisEngine {
         }
         // Add cycle dependency type
         types.push(AntiPatternType {
-            type_id: None, // Will be assigned by DB
+            anti_pattern_type_id: None, // Will be assigned by DB
             name: "Cyclic Dependency".to_string(),
             description: "A direct or indirect dependency cycle between modules or components.".to_string(),
             category: "Structural".to_string(),

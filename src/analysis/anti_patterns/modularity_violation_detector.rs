@@ -70,7 +70,7 @@ impl AnalysisDetector for ModularityViolationDetector {
 
     fn get_anti_pattern_types(&self) -> Vec<AntiPatternType> {
         vec![AntiPatternType {
-            type_id: None,
+            anti_pattern_type_id: None,
             name: "Modularity Violation".to_string(),
             description: "Strong dependencies between modules that should be independent, violating modular boundaries.".to_string(),
             category: "structural".to_string(),

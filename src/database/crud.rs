@@ -22,7 +22,7 @@ impl Database {
                 analysis_config TEXT NOT NULL
             );
             CREATE TABLE IF NOT EXISTS anti_pattern_types (
-                type_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                anti_pattern_type_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL UNIQUE,
                 description TEXT NOT NULL,
                 category TEXT NOT NULL
@@ -39,7 +39,7 @@ impl Database {
                 code_snippet TEXT,
                 ai_explanation TEXT,
                 FOREIGN KEY (analysis_run_id) REFERENCES analysis_runs(run_id),
-                FOREIGN KEY (anti_pattern_type_id) REFERENCES anti_pattern_types(type_id)
+                FOREIGN KEY (anti_pattern_type_id) REFERENCES anti_pattern_types(anti_pattern_type_id)
             );
             CREATE TABLE IF NOT EXISTS projects (
                 project_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -112,9 +112,9 @@ impl Database {
                 anti_pattern_type.category,
             ],
         )?;
-        if anti_pattern_type.type_id.is_none() {
-            let mut stmt = self.conn.prepare("SELECT type_id FROM anti_pattern_types WHERE name = ?")?;
-            anti_pattern_type.type_id = Some(stmt.query_row([&anti_pattern_type.name], |row| row.get(0))?);
+        if anti_pattern_type.anti_pattern_type_id.is_none() {
+            let mut stmt = self.conn.prepare("SELECT anti_pattern_type_id FROM anti_pattern_types WHERE name = ?")?;
+            anti_pattern_type.anti_pattern_type_id = Some(stmt.query_row([&anti_pattern_type.name], |row| row.get(0))?);
         }
         Ok(())
     }

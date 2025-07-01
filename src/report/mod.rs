@@ -1,5 +1,4 @@
-use crate::database::models::{AnalysisRun, ArchitecturalIssue};
-use crate::models::antipattern_type::AntiPatternType;
+use crate::database::models::{AnalysisRun, ArchitecturalIssue, AntiPatternType};
 use serde_json::Value;
 use std::collections::HashMap;
 
@@ -113,10 +112,30 @@ impl ReportGenerator {
     fn lookup_antipattern_type(&self, type_id: i64) -> AntiPatternType {
         // In a real system, this would query a DB or config. Here, hardcode a few for demo.
         match type_id {
-            1 => AntiPatternType::new(1, "God Object", "A class that does too much", Some("size > 1000"), Some("OO")),
-            2 => AntiPatternType::new(2, "Unstable Interface", "Interface changes too often", Some("fan_in > 5"), Some("OO")),
-            3 => AntiPatternType::new(3, "Modularity Violation", "Module breaks encapsulation", Some("cross_module_access"), Some("Modularity")),
-            _ => AntiPatternType::new(type_id, "Unknown", "Unknown anti-pattern", None, None),
+            1 => AntiPatternType {
+                anti_pattern_type_id: Some(1),
+                name: "God Object".to_string(),
+                description: "A class that does too much".to_string(),
+                category: "OO".to_string(),
+            },
+            2 => AntiPatternType {
+                anti_pattern_type_id: Some(2),
+                name: "Unstable Interface".to_string(),
+                description: "Interface changes too often".to_string(),
+                category: "OO".to_string(),
+            },
+            3 => AntiPatternType {
+                anti_pattern_type_id: Some(3),
+                name: "Modularity Violation".to_string(),
+                description: "Module breaks encapsulation".to_string(),
+                category: "Modularity".to_string(),
+            },
+            _ => AntiPatternType {
+                anti_pattern_type_id: Some(type_id),
+                name: "Unknown".to_string(),
+                description: "Unknown anti-pattern".to_string(),
+                category: "Unknown".to_string(),
+            },
         }
     }
 
@@ -140,7 +159,7 @@ impl ReportGenerator {
                         issue.file_path,
                         issue.start_line.unwrap_or(0),
                         issue.end_line.unwrap_or(0),
-                        ap_type.category.clone().unwrap_or_else(|| "Uncategorized".to_string())
+                        ap_type.category.clone()
                     ));
                 }
                 content.push('\n');
@@ -174,7 +193,7 @@ impl ReportGenerator {
                 issue.end_line.unwrap_or(0),
                 issue.severity.to_uppercase(),
                 ap_type.name,
-                ap_type.category.clone().unwrap_or_else(|| "Uncategorized".to_string()),
+                ap_type.category.clone(),
                 ap_type.description
             ));
 

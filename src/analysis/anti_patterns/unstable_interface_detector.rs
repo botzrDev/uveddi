@@ -64,7 +64,7 @@ impl AnalysisDetector for UnstableInterfaceDetector {
 
     fn get_anti_pattern_types(&self) -> Vec<AntiPatternType> {
         vec![AntiPatternType {
-            type_id: None,
+            anti_pattern_type_id: None,
             name: "Unstable Interface".to_string(),
             description: "A module or interface with high fan-in that changes frequently, causing ripple effects.".to_string(),
             category: "structural".to_string(),

@@ -175,7 +175,7 @@ impl AnalysisDetector for GodObjectDetector {
 
     fn get_anti_pattern_types(&self) -> Vec<AntiPatternType> {
         vec![AntiPatternType {
-            type_id: Some(1),
+            anti_pattern_type_id: Some(1),
             name: "God Object".to_string(),
             description: "A class that does too much.".to_string(),
             category: "structural".to_string(),
