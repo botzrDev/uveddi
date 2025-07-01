@@ -37,6 +37,9 @@ Cargo.lock
 .uveddi_cache/
 *.db
 
+# Ignore PID files from scripts
+/scripts/*.pid
+
 # Python
 backend/venv/
 backend/__pycache__/
