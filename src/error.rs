@@ -22,9 +22,11 @@ pub enum UveddiError {
     #[error("Language not supported: {0}")]
     UnsupportedLanguage(String),
     
-    // === Analysis Errors ===
-    #[error("Analysis error: {0}")]
-    Analysis(String),
+#[error("Analysis error: {0}")]
+Analysis(String),
+
+#[error("Anti-pattern detection error: {0}")]
+AntiPatternDetection(String),
     
     // === AI Provider Errors ===
     #[error("AI API error: {provider}: {message}")]
@@ -54,9 +56,11 @@ pub enum UveddiError {
     #[error("TOML parsing error: {0}")]
     Toml(#[from] toml::de::Error),
     
-    // === Plugin Errors ===
-    #[error("Plugin error: {0}")]
-    Plugin(String),
+#[error("Plugin error: {0}")]
+Plugin(String),
+
+#[error("Plugin error: {0}")]
+PluginError(String),
     #[error("WASM runtime error: {0}")]
     WasmRuntimeError(#[from] wasmtime::Error),
     
@@ -96,7 +100,7 @@ impl From<crate::analysis::dependency_extractor::ExtractionError> for UveddiErro
     }
 }
 
-// Context support for adding contextual information to errors
+l // Context support for adding contextual information to errors
 pub trait ErrContext<T> {
     fn err_context(self, context: &str) -> Result<T, UveddiError>;
     fn err_context_with(self, context: impl FnOnce() -> String) -> Result<T, UveddiError>;
