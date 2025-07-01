@@ -11,34 +11,32 @@ categories = ["development-tools"]
 readme = "README.md"
 
 [dependencies]
-rusqlite = { version = "0.29", features = ["chrono"] }
+rusqlite = { version = "0.31.0", features = ["bundled"] }
 refinery = { version = "0.8", features = ["rusqlite"] }
-tokio = { version = "1.0", features = ["full"] }
-tokio-stream = { version = "0.1", features = ["fs"] }
+tokio = { version = "1.37.0", features = ["full"] }
+tokio-stream = { version = "0.1.15", features = ["fs"] }
 futures = "0.3"
 async-stream = "0.3"
-chrono = { version = "0.4", features = ["serde"] }
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
+chrono = { version = "0.4.38", features = ["serde"] }
+serde = { version = "1.0.203", features = ["derive"] }
+serde_json = "1.0.117"
 bincode = "1.3.3"
 uuid = { version = "1.0", features = ["v4"] }
-thiserror = "1.0"
-anyhow = "1.0"
-clap = { version = "4.0", features = ["derive", "env"] }
-log = "0.4"
-env_logger = "0.10"
+thiserror = "1.0.61"
+anyhow = "1.0.86"
+clap = { version = "4.5.4", features = ["derive", "env"] }
+log = "0.4.21"
+env_logger = "0.11.3"
 regex = "1.10"
-tree-sitter = "0.20"
-tree-sitter-rust = "0.20"
-tree-sitter-python = "0.20"
-tree-sitter-javascript = "0.20"
-reqwest = { version = "0.11", features = ["json"] }
-walkdir = "2.3"
-async-trait = "0.1"
-md5 = "0.7"
-toml = "0.8"
-uveddi-plugin-api = { path = "plugins/uveddi-plugin-api" }
-rand = "0.8"
+tree-sitter = "0.22.6"
+tree-sitter-rust = "0.21.0"
+tree-sitter-python = "0.21.0"
+tree-sitter-javascript = "0.21.0"
+tree-sitter-typescript = "0.21.0"
+reqwest = { version = "0.12.4", features = ["json"] }
+walkdir = "2.5.0"
+ignore = "0.4.22"
+wasmtime = "21.0.1"
 
 [dev-dependencies]
 tempfile = "3.0"

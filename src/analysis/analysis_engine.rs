@@ -45,7 +45,7 @@ impl AnalysisEngine {
         })
     }
 
-    pub async fn analyze(&mut self, path: &Path) -> Result<Vec<ArchitecturalIssue>, crate::error::UveddiError> {
+    pub async fn analyze(&mut self, path: &Path) -> Result<(Vec<ArchitecturalIssue>, DependencyGraph), crate::error::UveddiError> {
         let (mut file_issues, all_dependencies) = self.analyze_files_and_collect_dependencies(path).await?;
 
         info!("Building dependency graph...");
@@ -69,7 +69,7 @@ impl AnalysisEngine {
             file_issues.extend(issues);
         }
 
-        Ok(file_issues)
+        Ok((file_issues, dependency_graph))
     }
 
     async fn analyze_files_and_collect_dependencies(&mut self, path: &Path) -> Result<(Vec<ArchitecturalIssue>, Vec<Dependency>), crate::error::UveddiError> {

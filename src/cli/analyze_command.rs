@@ -9,7 +9,6 @@ use crate::ai::engine::AiAnalysisEngine;
 use crate::analysis::AnalysisError;
 use crate::report::ReportGenerator;
 use crate::plugin::initialize_plugins;
-use crate::models::dependency_graph::DependencyGraph; // Assuming this is where it will be
 
 #[derive(Args)]
 pub struct AnalyzeCommand {
@@ -80,11 +79,10 @@ impl AnalyzeCommand {
         let mut analysis_run = database.create_analysis_run(&self.path)?;
         
         // Run analysis
-        let mut issues = analysis_engine.analyze(&self.path).await?;
+        let (mut issues, dependency_graph) = analysis_engine.analyze(&self.path).await?;
 
         // Run plugins
         info!("Running analysis plugins...");
-        let dependency_graph = DependencyGraph::new(); // Create a dependency graph from the analysis
         let plugin_results = plugin_manager.run_plugins(&dependency_graph);
         for result in plugin_results {
             match result {
