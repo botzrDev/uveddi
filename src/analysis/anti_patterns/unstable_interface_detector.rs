@@ -1,7 +1,7 @@
 use crate::analysis::{AnalysisDetector, AnalysisError};
 use crate::ast::tree_sitter::ParsedFile;
 use crate::database::models::{ArchitecturalIssue, AntiPatternType};
-use crate::analysis::dependency_graph::DependencyGraph;
+use crate::analysis::dependency_graph::{ComponentNode, DependencyGraph};
 use std::collections::HashMap;
 
 /// Detector for the Unstable Interface anti-pattern
@@ -27,33 +27,40 @@ impl AnalysisDetector for UnstableInterfaceDetector {
         Ok(vec![])
     }
 
-    fn detect_graph_issues(&self, graph: &DependencyGraph, analysis_run_id: i32) -> Vec<ArchitecturalIssue> {
-        // Count fan-in for each module
-        let mut fan_in_count: HashMap<&String, usize> = HashMap::new();
-        for module in graph.get_modules() {
-            fan_in_count.insert(module, 0);
-        }
-        for module in graph.get_modules() {
-            if let Some(deps) = graph.get_dependencies(module) {
-                for dep in deps {
-                    *fan_in_count.entry(dep).or_insert(0) += 1;
+    fn detect_graph_issues(&self, graph: &DependencyGraph, analysis_run_id: i64) -> Vec<ArchitecturalIssue> {
+        let petgraph = graph.get_petgraph();
+        let mut fan_in_count: HashMap<String, usize> = HashMap::new();
+
+        for node_index in petgraph.node_indices() {
+            if let Some(component) = graph.get_node_from_index(node_index) {
+                if let ComponentNode::Module { path } = component {
+                    fan_in_count.entry(path.clone()).or_insert(0);
                 }
             }
         }
-        // Flag modules with high fan-in
+
+        for edge_index in petgraph.edge_indices() {
+            if let Some(edge) = petgraph.edge_endpoints(edge_index) {
+                if let Some(target_component) = graph.get_node_from_index(edge.1) {
+                     if let ComponentNode::Module { path } = target_component {
+                        *fan_in_count.entry(path.clone()).or_default() += 1;
+                    }
+                }
+            }
+        }
+
         let mut issues = Vec::new();
-        for (&module, &count) in &fan_in_count {
+        for (module, &count) in &fan_in_count {
             if count >= self.fan_in_threshold {
-                let file_path = graph.get_file_path(module).map(|p| p.display().to_string()).unwrap_or_else(|| module.clone());
                 issues.push(ArchitecturalIssue {
                     issue_id: None,
-                    analysis_run_id: analysis_run_id as i64,
-                    anti_pattern_type_id: 0, // To be set by DB
-                    file_path,
-                    start_line: None,
-                    end_line: None,
-                    severity: if count > self.fan_in_threshold * 2 { "high".to_string() } else { "medium".to_string() },
-                    description: format!("Module/interface '{}' has high fan-in ({} dependents). This can cause ripple effects if the interface changes.", module, count),
+                    analysis_run_id,
+                    anti_pattern_type_id: 3, // Standard ID for Unstable Interface
+                    file_path: module.clone(),
+                    start_line: Some(1),
+                    end_line: Some(1),
+                    severity: if count > self.fan_in_threshold * 2 { "High".to_string() } else { "Medium".to_string() },
+                    description: format!("Unstable Interface: Module '{}' has a high fan-in of {}. Changes to this module could have a widespread impact.", module, count),
                     code_snippet: None,
                     ai_explanation: None,
                 });

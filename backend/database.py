@@ -18,6 +18,12 @@ from pydantic_settings import BaseSettings
 class DatabaseSettings(BaseSettings):
     """Database configuration settings."""
     
+    # Database type (sqlite for development, postgresql for production)
+    db_type: str = "sqlite"
+    
+    # SQLite settings
+    sqlite_file: str = "uveddi_backend.db"
+    
     # PostgreSQL connection parameters
     postgres_host: str = "localhost"
     postgres_port: int = 5432
@@ -35,19 +41,25 @@ class DatabaseSettings(BaseSettings):
     
     @property
     def database_url(self) -> str:
-        """Construct the PostgreSQL database URL."""
-        return (
-            f"postgresql://{self.postgres_user}:{self.postgres_password}"
-            f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
-        )
+        """Construct the database URL based on db_type."""
+        if self.db_type == "sqlite":
+            return f"sqlite:///{self.sqlite_file}"
+        else:
+            return (
+                f"postgresql://{self.postgres_user}:{self.postgres_password}"
+                f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
+            )
     
     @property
     def async_database_url(self) -> str:
-        """Construct the async PostgreSQL database URL."""
-        return (
-            f"postgresql+asyncpg://{self.postgres_user}:{self.postgres_password}"
-            f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
-        )
+        """Construct the async database URL based on db_type."""
+        if self.db_type == "sqlite":
+            return f"sqlite+aiosqlite:///{self.sqlite_file}"
+        else:
+            return (
+                f"postgresql+asyncpg://{self.postgres_user}:{self.postgres_password}"
+                f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
+            )
     
     class Config:
         env_file = ".env"

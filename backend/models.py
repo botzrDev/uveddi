@@ -13,7 +13,7 @@ from sqlalchemy import (
     Boolean, Column, DateTime, ForeignKey, Integer, String, Text, 
     UniqueConstraint, Index, CheckConstraint
 )
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy import JSON
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import uuid
@@ -34,8 +34,8 @@ class User(Base):
     email = Column(String(255), unique=True, nullable=False, index=True)
     username = Column(String(100), unique=True, nullable=False, index=True)
     password_hash = Column(String(255), nullable=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    last_login = Column(DateTime(timezone=True))
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    last_login = Column(DateTime)
     role = Column(
         String(50), 
         nullable=False, 
@@ -86,7 +86,7 @@ class Organization(Base):
         default="free",
         server_default="free"
     )
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
     api_key_usage_limit = Column(Integer, default=1000)  # For paid tiers
     
     # Relationships
@@ -121,8 +121,8 @@ class Project(Base):
     name = Column(String(255), nullable=False)
     repository_url = Column(String(500), nullable=False)
     last_analyzed_commit = Column(String(255))
-    config_data = Column(JSONB)  # .archlintignore rules, analysis scopes, etc.
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    config_data = Column(JSON)  # .archlintignore rules, analysis scopes, etc.
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
     
     # Relationships
     organization = relationship("Organization", back_populates="projects")
@@ -181,13 +181,13 @@ class AnalysisRun(Base):
         index=True
     )
     start_time = Column(DateTime(timezone=True), nullable=False, index=True)
-    end_time = Column(DateTime(timezone=True))
+    end_time = Column(DateTime)
     status = Column(String(50), nullable=False, default="running", index=True)
     ai_model_used = Column(String(100))
     total_files_scanned = Column(Integer)
     total_issues_found = Column(Integer)
     exit_code = Column(Integer)
-    raw_analysis_output = Column(JSONB)  # For debugging/advanced usage
+    raw_analysis_output = Column(JSON)  # For debugging/advanced usage
     
     # Relationships
     project = relationship("Project", back_populates="analysis_runs")
@@ -240,7 +240,7 @@ class ArchitecturalIssue(Base):
         ForeignKey("users.user_id", ondelete="SET NULL"),
         nullable=True
     )
-    ignored_at = Column(DateTime(timezone=True))
+    ignored_at = Column(DateTime)
     
     # Relationships
     analysis_run = relationship("AnalysisRun", back_populates="architectural_issues")
@@ -314,7 +314,7 @@ class Plugin(Base):
     github_repo_url = Column(String(500))
     is_official = Column(Boolean, nullable=False, default=False, index=True)
     is_approved = Column(Boolean, nullable=False, default=False, index=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
     last_updated = Column(
         DateTime(timezone=True), 
         server_default=func.now(), 

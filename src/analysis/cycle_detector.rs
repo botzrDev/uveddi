@@ -27,52 +27,46 @@ impl CycleDetector {
     /// # Returns
     ///
     /// A `Vec<ArchitecturalIssue>` containing all the cyclic dependency issues found.
-    pub fn detect_cycles(&self, graph: &DependencyGraph, analysis_run_id: i32) -> Vec<ArchitecturalIssue> {
+    pub fn detect_cycles(&self, graph: &DependencyGraph, analysis_run_id: i64) -> Vec<ArchitecturalIssue> {
         let start_time = std::time::Instant::now();
         
-        // `tarjan_scc` returns a list of strongly connected components.
-        // Each component is a Vec of NodeIndices.
-        let sccs = tarjan_scc(&graph.graph);
+        let petgraph = graph.get_petgraph();
+        let sccs = tarjan_scc(petgraph);
 
         let mut issues = Vec::new();
 
         for scc in sccs {
-            // A strongly connected component with more than one node is a cycle.
             if scc.len() > 1 {
                 let cycle_nodes: Vec<String> = scc.iter()
-                    .map(|&node_index| {
-                        // Safely access the node data from the graph.
-                        let component = &graph.graph[node_index];
-                        match component {
+                    .filter_map(|&node_index| {
+                        graph.get_node_from_index(node_index).map(|component| match component {
                             ComponentNode::Module { path } => path.clone(),
                             ComponentNode::Class { name, file_path } => format!("Class({}@{})", name, file_path),
                             ComponentNode::Function { name, file_path } => format!("Function({}@{})", name, file_path),
-                        }
+                        })
                     })
                     .collect();
 
-                let description = format!("A cyclic dependency was detected involving the following components: {}. This creates tight coupling and hinders maintainability.", cycle_nodes.join(", "));
+                let description = format!("Cyclic dependency detected involving: {}. This creates tight coupling and hinders maintainability.", cycle_nodes.join(", "));
                 
-                // For simplicity, we'll associate the issue with the first component in the cycle.
-                let representative_node = &graph.graph[scc[0]];
+                let representative_node = graph.get_node_from_index(scc[0]).unwrap(); // Safe due to scc.len() > 1
                 let (file_path, start_line) = match representative_node {
-                     ComponentNode::Module { path } => (path.clone(), 0),
-                     ComponentNode::Class { file_path, .. } => (file_path.clone(), 0), // Line number could be improved
-                     ComponentNode::Function { file_path, .. } => (file_path.clone(), 0), // Line number could be improved
+                     ComponentNode::Module { path } => (path.clone(), 1),
+                     ComponentNode::Class { file_path, .. } => (file_path.clone(), 1),
+                     ComponentNode::Function { file_path, .. } => (file_path.clone(), 1),
                 };
 
                 issues.push(ArchitecturalIssue {
-                    id: 0, // Will be set by the database
+                    issue_id: None,
                     analysis_run_id,
-                    detector_name: "CycleDetector".to_string(),
-                    issue_type: AntiPatternType::CyclicDependency,
+                    anti_pattern_type_id: 2, // Standard ID for Cyclic Dependency
                     file_path,
-                    line_number: Some(start_line as i32),
-                    description,
-                    suggestion: Some("Break the cycle by inverting dependencies, using interfaces, or extracting a new component.".to_string()),
+                    start_line: Some(start_line),
+                    end_line: Some(start_line),
                     severity: "High".to_string(),
-                    remediation_cost: 5, // Example cost
-                    created_at: chrono::Utc::now().naive_utc(),
+                    description,
+                    code_snippet: None, // Snippet is less relevant for multi-file cycles
+                    ai_explanation: None,
                 });
             }
         }

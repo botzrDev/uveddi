@@ -46,7 +46,7 @@ impl Database {
                 path TEXT NOT NULL UNIQUE
             );
         ")?;
-       
+        Ok(Self { conn })
     }
 
     pub fn get_or_create_project_id(&self, project_path: &Path) -> Result<i64> {

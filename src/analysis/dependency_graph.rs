@@ -77,6 +77,16 @@ impl DependencyGraph {
 
         self.graph.add_edge(from_index, to_index, edge);
     }
+
+    /// Provides read-only access to the underlying petgraph DiGraph.
+    pub fn get_petgraph(&self) -> &DiGraph<ComponentNode, DependencyEdge> {
+        &self.graph
+    }
+
+    /// Retrieves a component node by its index.
+    pub fn get_node_from_index(&self, index: NodeIndex) -> Option<&ComponentNode> {
+        self.graph.node_weight(index)
+    }
 }
 
 impl Default for DependencyGraph {

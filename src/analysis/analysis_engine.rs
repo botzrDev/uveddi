@@ -51,9 +51,9 @@ impl AnalysisEngine {
         info!("Building dependency graph...");
         let mut dependency_graph = DependencyGraph::new();
         for dep in all_dependencies {
-            let from_node = ComponentNode::Module { path: dep.source_path };
-            let to_node = ComponentNode::Module { path: dep.target_path };
-            dependency_graph.add_dependency(&from_node, &to_node, dep.dep_type);
+            let from_node = ComponentNode::Module { path: dep.from_file.to_string_lossy().into_owned() };
+            let to_node = ComponentNode::Module { path: dep.to_module };
+            dependency_graph.add_dependency(&from_node, &to_node, dep.dependency_type);
         }
         info!("Dependency graph built.");
 

@@ -6,7 +6,7 @@ authentication, and CRUD endpoints for organizations and projects.
 """
 
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,8 +14,12 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, EmailStr
 import logging
+import hashlib
+import secrets
+import jwt
+from passlib.context import CryptContext
 
 from database import get_async_session, init_database, close_database
 from models import User, Organization, Project
@@ -38,17 +42,27 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",  # React dev server (Create React App)
-        "http://localhost:5173",  # Vite dev server
+        "http://localhost:5173",  # Vite dev server default
         "http://localhost:7777",  # Our custom frontend server
+        "http://localhost:9999",  # New frontend port
         "http://127.0.0.1:3000",
         "http://127.0.0.1:5173",
         "http://127.0.0.1:7777",
+        "http://127.0.0.1:9999",
         # Add production domains here when deploying
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
+
+# Security configuration
+SECRET_KEY = "your-secret-key-change-in-production"  # Change this in production!
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+# Password hashing
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # Security
 security = HTTPBearer()
@@ -111,6 +125,66 @@ class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+# Authentication models
+class UserCreate(BaseModel):
+    """Schema for user registration."""
+    email: EmailStr
+    username: str
+    password: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UserLogin(BaseModel):
+    """Schema for user login."""
+    email: EmailStr
+    password: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class Token(BaseModel):
+    """Schema for JWT token response."""
+    access_token: str
+    token_type: str
+    user: UserResponse
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# Authentication helper functions
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verify a password against its hash."""
+    return pwd_context.verify(plain_password, hashed_password)
+
+
+def get_password_hash(password: str) -> str:
+    """Hash a password."""
+    return pwd_context.hash(password)
+
+
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+    """Create a JWT access token."""
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=15)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+
+async def authenticate_user(db: AsyncSession, email: str, password: str) -> Optional[User]:
+    """Authenticate a user by email and password."""
+    result = await db.execute(select(User).where(User.email == email))
+    user = result.scalar_one_or_none()
+    
+    if not user or not verify_password(password, user.password_hash):
+        return None
+    return user
+
+
 # Dependency injection for database sessions
 async def get_db() -> AsyncSession:
     """
@@ -126,16 +200,13 @@ async def get_db() -> AsyncSession:
         yield session
 
 
-# Mock authentication dependency (replace with real authentication)
+# JWT token authentication dependency
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
     db: AsyncSession = Depends(get_db)
 ) -> User:
     """
-    Dependency to get the current authenticated user.
-    
-    In a real implementation, this would validate the JWT token
-    and return the corresponding user from the database.
+    Dependency to get the current authenticated user from JWT token.
     
     Args:
         credentials: HTTP Authorization header with Bearer token
@@ -147,29 +218,28 @@ async def get_current_user(
     Raises:
         HTTPException: If authentication fails
     """
-    # Mock implementation - replace with real JWT validation
-    token = credentials.credentials
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
     
-    # For demo purposes, assume token is a user_id
     try:
-        user_id = int(token)
-        result = await db.execute(
-            select(User).where(User.user_id == user_id)
-        )
-        user = result.scalar_one_or_none()
-        
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid authentication credentials"
-            )
-        
-        return user
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token format"
-        )
+        token = credentials.credentials
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            raise credentials_exception
+    except jwt.PyJWTError:
+        raise credentials_exception
+    
+    result = await db.execute(select(User).where(User.email == email))
+    user = result.scalar_one_or_none()
+    
+    if user is None:
+        raise credentials_exception
+    
+    return user
 
 
 # Dependency to extract organization_id from current user
@@ -219,6 +289,119 @@ async def shutdown_event():
 async def health_check():
     """Health check endpoint for load balancers and monitoring."""
     return {"status": "healthy", "timestamp": datetime.utcnow()}
+
+
+# Authentication endpoints
+@app.post("/auth/register", response_model=Token)
+async def register_user(
+    user_data: UserCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Register a new user account.
+    
+    Creates a new user with hashed password and returns a JWT token.
+    """
+    # Check if user already exists
+    result = await db.execute(
+        select(User).where(User.email == user_data.email)
+    )
+    existing_user = result.scalar_one_or_none()
+    
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered"
+        )
+    
+    # Check if username already exists
+    result = await db.execute(
+        select(User).where(User.username == user_data.username)
+    )
+    existing_username = result.scalar_one_or_none()
+    
+    if existing_username:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Username already taken"
+        )
+    
+    # Create new user
+    hashed_password = get_password_hash(user_data.password)
+    new_user = User(
+        email=user_data.email,
+        username=user_data.username,
+        password_hash=hashed_password,
+        role="individual"
+    )
+    
+    db.add(new_user)
+    await db.flush()
+    await db.refresh(new_user)
+    
+    # Create access token
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": new_user.email}, expires_delta=access_token_expires
+    )
+    
+    logger.info(f"New user registered: {new_user.email} (ID: {new_user.user_id})")
+    
+    return Token(
+        access_token=access_token,
+        token_type="bearer",
+        user=UserResponse.model_validate(new_user)
+    )
+
+
+@app.post("/auth/login", response_model=Token)
+async def login_user(
+    user_credentials: UserLogin,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Authenticate user and return JWT token.
+    
+    Validates email/password and returns access token on success.
+    """
+    user = await authenticate_user(db, user_credentials.email, user_credentials.password)
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Update last login time
+    user.last_login = datetime.utcnow()
+    await db.flush()
+    
+    # Create access token
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user.email}, expires_delta=access_token_expires
+    )
+    
+    logger.info(f"User logged in: {user.email}")
+    
+    return Token(
+        access_token=access_token,
+        token_type="bearer",
+        user=UserResponse.model_validate(user)
+    )
+
+
+@app.post("/auth/logout")
+async def logout_user():
+    """
+    Logout endpoint.
+    
+    In a stateless JWT implementation, logout is handled client-side
+    by simply discarding the token. This endpoint is provided for
+    compatibility and potential future token blacklisting.
+    """
+    return {"message": "Successfully logged out"}
 
 
 # Organization endpoints

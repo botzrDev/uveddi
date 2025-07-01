@@ -123,20 +123,18 @@ impl PluginManager {
         // Convert WASM issues back to our internal format
         let mut issues = Vec::new();
         for wasm_issue in wasm_issues {
-            // Create a new ArchitecturalIssue using the plugin API format
-            let issue = ArchitecturalIssue {
+            issues.push(ArchitecturalIssue {
                 issue_id: None,
-                analysis_run_id: 0,
-                anti_pattern_type_id: 0,
+                analysis_run_id: 0, // Will be set by the engine
+                anti_pattern_type_id: wasm_issue.anti_pattern_type_id,
                 file_path: wasm_issue.file_path,
-                start_line: Some(wasm_issue.start_line as i32),
-                end_line: Some(wasm_issue.end_line as i32),
+                start_line: wasm_issue.start_line,
+                end_line: wasm_issue.end_line,
                 severity: wasm_issue.severity,
-                description: wasm_issue.message,
+                description: wasm_issue.description,
                 code_snippet: wasm_issue.code_snippet,
-                ai_explanation: None,
-            };
-            issues.push(issue);
+                ai_explanation: wasm_issue.ai_explanation,
+            });
         }
         
         Ok(issues)
