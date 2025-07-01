@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PORT=7777
+PORT=5173
 # Get the directory where the script is located
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 # Assume the frontend directory is one level up from the scripts dir
@@ -29,9 +29,9 @@ if lsof -i :$PORT > /dev/null; then
   exit 1
 fi
 
-echo "Starting server on http://localhost:$PORT"
-# Navigate to the frontend directory, start the server in the background, and store its PID
-(cd "$FRONTEND_DIR" && python3 -m http.server $PORT & echo $! > "$PID_FILE")
+echo "Starting Vite dev server on http://localhost:$PORT"
+# Navigate to the frontend directory, start the Vite server in the background, and store its PID
+(cd "$FRONTEND_DIR" && npm run dev -- --host 0.0.0.0 --port $PORT & echo $! > "$PID_FILE")
 
 echo "Server started. PID stored in $PID_FILE"
 echo "You can stop it later by running 'kill \$(cat $PID_FILE)'"

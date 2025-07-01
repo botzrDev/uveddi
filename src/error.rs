@@ -19,6 +19,8 @@ pub enum UveddiError {
     // === AST Parsing Errors ===
     #[error("AST parsing error: {0}")]
     AstParsing(String),
+    #[error("Tree-sitter query error: {0}")]
+    QueryError(String),
     #[error("Language not supported: {0}")]
     UnsupportedLanguage(String),
     
