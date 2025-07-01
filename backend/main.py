@@ -18,7 +18,7 @@ from pydantic import BaseModel, ConfigDict, EmailStr
 import logging
 import hashlib
 import secrets
-import jwt
+from jose import jwt, JWTError
 from passlib.context import CryptContext
 
 from database import get_async_session, init_database, close_database
@@ -230,7 +230,7 @@ async def get_current_user(
         email: str = payload.get("sub")
         if email is None:
             raise credentials_exception
-    except jwt.PyJWTError:
+    except JWTError:
         raise credentials_exception
     
     result = await db.execute(select(User).where(User.email == email))
