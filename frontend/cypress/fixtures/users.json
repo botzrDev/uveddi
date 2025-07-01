@@ -1,0 +1,16 @@
+{
+  "testUser": {
+    "name": "Test User",
+    "email": "test@uveddi.com",
+    "password": "testpassword123"
+  },
+  "adminUser": {
+    "name": "Admin User", 
+    "email": "admin@uveddi.com",
+    "password": "adminpassword123"
+  },
+  "invalidUser": {
+    "email": "invalid@example.com",
+    "password": "wrongpassword"
+  }
+}
