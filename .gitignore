@@ -1,5 +1,5 @@
 # Rust build artifacts
-/target
+/target/
 **/*.rs.bk
 
 # IDE/editor settings
@@ -34,8 +34,33 @@ Cargo.lock
 
 # Ignore local SQLite database and related files
 .uveddi/
+.uveddi_cache/
+*.db
 
-# If config/ or plugins/ contain only generated or environment-specific files, uncomment below lines.
+# Python
+backend/venv/
+backend/__pycache__/
+backend/*.pyc
+backend/*.pyo
+backend/*.pyd
+backend/.pytest_cache/
+
+# Node.js/Frontend
+node_modules/
+dist/
+dist-ssr/
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+
+# Misc
+*.bin
+*.exe
+*.out
+*.so
+*.dll
+*.dylib
+
+# Uncomment if config/ or plugins/ contain only generated or environment-specific files.
 # /config/
 # /plugins/
-.uveddi_cache/
