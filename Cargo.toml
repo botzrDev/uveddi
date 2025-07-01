@@ -44,6 +44,7 @@ wasi-common = "21.0.1"
 toml = "0.8.0"
 sha2 = "0.10.0"
 uveddi-plugin-api = { path = "plugins/uveddi-plugin-api" }
+async-trait = "0.1.88"
 
 
 [dev-dependencies]

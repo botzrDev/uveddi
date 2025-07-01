@@ -6,9 +6,9 @@ use chrono::Utc;
 use crate::database::crud::Database;
 use crate::analysis::analysis_engine::AnalysisEngine;
 use crate::ai::engine::AiAnalysisEngine;
-use crate::analysis::AnalysisError;
 use crate::report::ReportGenerator;
 use crate::plugin::initialize_plugins;
+use crate::error::{UveddiError, ErrContext};
 
 #[derive(Args)]
 pub struct AnalyzeCommand {
@@ -41,24 +41,26 @@ pub struct AnalyzeCommand {
 }
 
 impl AnalyzeCommand {
-    pub async fn execute(&self) -> Result<(), AnalysisError> {
+    pub async fn execute(&self) -> Result<(), UveddiError> {
         if !self.path.exists() {
-            return Err(AnalysisError::InvalidInputPath { path: self.path.clone() });
+            return Err(UveddiError::PathNotFound(self.path.display().to_string()))
+                .err_context("Input path validation failed");
         }
         info!("Starting analysis of: {}", self.path.display());
         
-        // Initialize components
-        let mut database = Database::new()?;
-        let mut analysis_engine = AnalysisEngine::new()?;
+        // Initialize components with context
+        let mut database = Database::new()
+            .err_context("Failed to initialize database")?;
+        let mut analysis_engine = AnalysisEngine::new()
+            .err_context("Failed to initialize analysis engine")?;
         let mut ai_engine = AiAnalysisEngine::new();
         let plugin_manager = initialize_plugins();
         
-        // Configure AI if enabled
+        // Configure AI if enabled with context
         if self.enable_ai {
             if let Some(api_key) = &self.openai_api_key {
                 ai_engine = ai_engine.with_openai_api(api_key.clone());
             } else {
-                // Try to configure Ollama if no OpenAI key is provided
                 let ollama_api_url = self.ollama_api_url.clone()
                     .or_else(|| std::env::var("OLLAMA_API_URL").ok())
                     .unwrap_or_else(|| "http://localhost:11434".to_string());
@@ -70,18 +72,21 @@ impl AnalyzeCommand {
             }
         }
         
-        // Store anti-pattern types in DB
+        // Store anti-pattern types with context
         for mut anti_pattern_type in analysis_engine.get_anti_pattern_types() {
-            database.store_anti_pattern_type(&mut anti_pattern_type)?;
+            database.store_anti_pattern_type(&mut anti_pattern_type)
+                .err_context("Failed to store anti-pattern type")?;
         }
 
-        // Create analysis run
-        let mut analysis_run = database.create_analysis_run(&self.path)?;
+        // Create analysis run with context
+        let mut analysis_run = database.create_analysis_run(&self.path)
+            .err_context("Failed to create analysis run")?;
         
-        // Run analysis
-        let (mut issues, dependency_graph) = analysis_engine.analyze(&self.path).await?;
+        // Run analysis with context
+        let (mut issues, dependency_graph) = analysis_engine.analyze(&self.path).await
+            .err_context("Analysis failed")?;
 
-        // Run plugins
+        // Run plugins with error logging
         info!("Running analysis plugins...");
         let plugin_results = plugin_manager.run_plugins(&dependency_graph);
         for result in plugin_results {
@@ -91,45 +96,45 @@ impl AnalyzeCommand {
             }
         }
         
-        // Enhance with AI analysis
+        // Enhance with AI analysis with error logging
         if self.enable_ai {
             info!("Enhancing issues with AI analysis...");
-            // This loop needs to be careful about borrowing `issues` and `parsed_file`
-            // For now, we'll assume `analyze_issue` can work without re-parsing the file
-            // or that `ParsedFile` can be retrieved/cloned if needed.
-            // A more robust solution would involve passing `ParsedFile` or its relevant parts
-            // along with the issue from the analysis engine.
             for issue in &mut issues {
-                // For now, pass a dummy AST for AI analysis
                 let dummy_ast = crate::ast::CustomAst::default();
-                match ai_engine.analyze_issue(issue, &dummy_ast).await {
-                    Ok(_) => {},
-                    Err(e) => error!("AI analysis failed for issue in {}: {}", issue.file_path, e),
+                if let Err(e) = ai_engine.analyze_issue(issue, &dummy_ast).await {
+                    error!("AI analysis failed for issue in {}: {}", issue.file_path, e);
                 }
             }
         }
         
-        // Update analysis run with results
+        // Update analysis run with context
         analysis_run.total_files_analyzed = Some(analysis_engine.get_files_analyzed());
         analysis_run.total_issues_found = Some(issues.len() as i32);
         analysis_run.end_time = Some(Utc::now());
         analysis_run.status = "completed".to_string();
-        database.update_analysis_run(&analysis_run)?;
+        database.update_analysis_run(&analysis_run)
+            .err_context("Failed to update analysis run")?;
 
-        // Store results
-        database.store_issues(&issues)?;
+        // Store results with context
+        database.store_issues(&issues)
+            .err_context("Failed to store analysis issues")?;
         
-        // Generate report
+        // Generate report with context
         let report_generator = ReportGenerator::new();
         let report = match self.output_format.as_str() {
-            "json" => report_generator.generate_json_report(&analysis_run, &issues)?.to_string(),
-            "markdown" => report_generator.generate_markdown_report(&analysis_run, &issues)?,
-            _ => return Err(AnalysisError::UnsupportedOutputFormat(self.output_format.clone())),
+            "json" => report_generator.generate_json_report(&analysis_run, &issues)?
+                .err_context("JSON report generation failed")?
+                .to_string(),
+            "markdown" => report_generator.generate_markdown_report(&analysis_run, &issues)?
+                .err_context("Markdown report generation failed")?,
+            _ => return Err(UveddiError::UnsupportedOutputFormat(self.output_format.clone()))
+                .err_context("Unsupported output format specified"),
         };
         
-        // Output report
+        // Output report with context
         if let Some(output_path) = &self.output {
-            std::fs::write(output_path, report)?;
+            std::fs::write(output_path, report)
+                .err_context(format!("Failed to write report to {}", output_path.display()))?;
             println!("Report written to: {}", output_path.display());
         } else {
             println!("{}", report);
@@ -138,6 +143,3 @@ impl AnalyzeCommand {
         Ok(())
     }
 }
-
-
-
