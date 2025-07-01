@@ -1,147 +1,588 @@
+import {
+  AlertTriangle,
+  ArrowRight,
+  CheckCircle,
+  Code2,
+  Download,
+  ExternalLink,
+  GitBranch,
+  Github,
+  GitlabIcon as Gitlab,
+  MonitorSpeaker,
+  Play,
+  Search,
+  Settings,
+  Shield,
+  Star,
+  TrendingUp,
+  Zap
+} from 'lucide-react';
 import React from 'react';
 import { Link } from 'react-router-dom';
+import AnimatedTerminal from '../components/ui/AnimatedTerminal';
+import FeatureCard from '../components/ui/FeatureCard';
+import GradientButton from '../components/ui/GradientButton';
+import StatsCard from '../components/ui/StatsCard';
 
 const LandingPage: React.FC = () => {
+  const terminalCommands = [
+    {
+      command: 'uveddi analyze ./your-repo --level=high',
+      output: [
+        '> Analyzing codebase architecture...',
+        '> Found 3 critical architectural issues',
+        '> Detected 15 potential security vulnerabilities',
+        '> Generated analysis report: ./reports/architectural_analysis.md',
+        '',
+        '✅ Analysis complete in 2.3s'
+      ],
+      delay: 2000,
+    },
+    {
+      command: 'uveddi explain --issue="cyclic-dependency" --ai',
+      output: [
+        '> Using AI to explain architectural issue...',
+        '',
+        '🔍 Cyclic Dependency Analysis:',
+        '   Your modules A ↔ B create a circular dependency.',
+        '   This increases coupling and makes testing difficult.',
+        '',
+        '💡 Suggested fix: Use dependency inversion pattern',
+        '   Create an interface to break the cycle.',
+      ],
+      delay: 3000,
+    }
+  ];
+
   return (
-    <div className="bg-gray-900 text-white">
-      <header className="sticky top-0 bg-gray-900 bg-opacity-90 backdrop-blur-md z-50">
-        <nav className="container mx-auto px-6 py-4 flex justify-between items-center">
-          <div className="text-2xl font-bold">uveddi</div>
-          <div className="hidden md:flex items-center space-x-8">
-            <a href="#features" className="hover:text-green-400">Features</a>
-            <a href="#use-cases" className="hover:text-green-400">Use Cases</a>
-            <a href="#pricing" className="hover:text-green-400">Pricing</a>
-            <a href="#docs" className="hover:text-green-400">Docs</a>
-          </div>
-          <div className="flex items-center space-x-4">
-            <Link to="/register" className="text-sm hover:text-green-400">Sign Up</Link>
-            <Link to="/login" className="text-sm hover:text-green-400">Sign In</Link>
-            <Link to="/register" className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">
-              Get Started Free
-            </Link>
+    <div className="bg-secondary-900 text-white min-h-screen">
+      {/* Header */}
+      <header className="sticky top-0 bg-secondary-900/80 backdrop-blur-md z-50 border-b border-secondary-800">
+        <nav className="container mx-auto px-6 py-4">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-gradient-to-r from-primary-500 to-primary-600 rounded-lg flex items-center justify-center">
+                <Code2 className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-primary-500 bg-clip-text text-transparent">
+                uveddi
+              </span>
+            </div>
+            <div className="hidden md:flex items-center space-x-8">
+              <a href="#features" className="text-secondary-300 hover:text-primary-400 transition-colors">Features</a>
+              <a href="#use-cases" className="text-secondary-300 hover:text-primary-400 transition-colors">Use Cases</a>
+              <a href="#integrations" className="text-secondary-300 hover:text-primary-400 transition-colors">Integrations</a>
+              <a href="#pricing" className="text-secondary-300 hover:text-primary-400 transition-colors">Pricing</a>
+              <a href="#docs" className="text-secondary-300 hover:text-primary-400 transition-colors">Docs</a>
+            </div>
+            <div className="flex items-center space-x-4">
+              <Link to="/login" className="text-secondary-300 hover:text-primary-400 transition-colors">
+                Sign In
+              </Link>
+              <GradientButton href="/register">
+                Get Started Free
+              </GradientButton>
+            </div>
           </div>
         </nav>
       </header>
 
       <main>
-        <section className="hero text-center py-20 px-6">
-          <h1 className="text-5xl font-bold mb-4">uveddi: High-Level Code Analysis, Instantly.</h1>
-          <p className="text-xl text-gray-400 mb-8">Transform complex codebases into actionable intelligence, securing and optimizing your projects from the command line.</p>
-          <div className="flex justify-center space-x-4">
-            <a href="#" className="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded">Download uveddi CLI</a>
-            <a href="#" className="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded">Request a Demo</a>
-          </div>
-          <div className="mt-12">
-            <div className="bg-gray-800 border border-gray-700 rounded-lg p-4 max-w-4xl mx-auto text-left font-mono text-sm">
-              <div className="flex items-center mb-2">
-                <span className="text-green-400 mr-2">$</span>
-                <span className="text-gray-300">uveddi analyze ./your-repo --level=high</span>
+        {/* Hero Section */}
+        <section className="relative py-20 px-6 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-secondary-900 via-secondary-800 to-secondary-900" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary-900/20 via-transparent to-transparent" />
+          
+          <div className="container mx-auto relative z-10">
+            <div className="text-center max-w-4xl mx-auto mb-12">
+              <div className="inline-flex items-center bg-secondary-800 border border-secondary-700 rounded-full px-4 py-2 mb-6">
+                <Star className="w-4 h-4 text-accent-400 mr-2" />
+                <span className="text-sm text-secondary-300">Trusted by developers for high-level code analysis</span>
               </div>
-              <div className="text-gray-400">
-                <p>&gt; Analyzing codebase...</p>
-                <p>&gt; Found <span className="text-yellow-400">3 critical</span> architectural issues.</p>
-                <p className="text-green-400">&gt; Report generated at: reports/architectural_analysis.md</p>
+              
+              <h1 className="text-5xl md:text-7xl font-bold mb-6 animate-slide-up">
+                <span className="bg-gradient-to-r from-white to-secondary-300 bg-clip-text text-transparent">
+                  Code Analysis
+                </span>
+                <br />
+                <span className="bg-gradient-to-r from-primary-400 to-primary-500 bg-clip-text text-transparent">
+                  Instantly Intelligent
+                </span>
+              </h1>
+              
+              <p className="text-xl text-secondary-300 mb-8 leading-relaxed max-w-3xl mx-auto">
+                Transform complex codebases into actionable intelligence. Detect architectural anti-patterns, 
+                security vulnerabilities, and technical debt before they compromise your projects.
+                <span className="text-primary-400 font-semibold"> AI-powered insights for human-written and AI-generated code.</span>
+              </p>
+              
+              <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4 mb-12">
+                <GradientButton size="lg" className="group">
+                  <Download className="w-5 h-5 mr-2 group-hover:animate-bounce-gentle" />
+                  Download CLI
+                </GradientButton>
+                <GradientButton variant="secondary" size="lg" className="group">
+                  <Play className="w-5 h-5 mr-2" />
+                  Watch Demo
+                </GradientButton>
               </div>
+            </div>
+
+            {/* Terminal Demo */}
+            <div className="max-w-4xl mx-auto">
+              <AnimatedTerminal 
+                commands={terminalCommands}
+                className="shadow-2xl shadow-primary-500/20"
+                loop={true}
+              />
             </div>
           </div>
         </section>
 
-        <section id="features" className="py-20 px-6">
+        {/* Trust Signals */}
+        <section className="py-16 px-6 bg-secondary-800/50">
           <div className="container mx-auto">
-            <h2 className="text-4xl font-bold text-center mb-12">Actionable Intelligence, Not Just Data</h2>
-            <div className="grid md:grid-cols-3 gap-8">
-              <div className="bg-gray-800 p-6 rounded-lg">
-                <h3 className="text-2xl font-bold mb-2">Architectural Anti-Patterns</h3>
-                <p className="text-gray-400">Detect complex issues like Cyclic Dependencies, God Objects, and Leaky Abstractions before they compromise your codebase.</p>
-              </div>
-              <div className="bg-gray-800 p-6 rounded-lg">
-                <h3 className="text-2xl font-bold mb-2">AI-Powered Insights</h3>
-                <p className="text-gray-400">Leverage local or cloud-based AI to get human-readable explanations and actionable refactoring suggestions.</p>
-              </div>
-              <div className="bg-gray-800 p-6 rounded-lg">
-                <h3 className="text-2xl font-bold mb-2">Visualize Your Architecture</h3>
-                <p className="text-gray-400">Generate Mermaid.js diagrams directly in your reports to visualize dependencies and understand complex relationships.</p>
-              </div>
+            <div className="text-center mb-8">
+              <p className="text-secondary-400 text-sm font-medium">Trusted by developers at</p>
+            </div>
+            <div className="flex justify-center items-center space-x-12 opacity-60">
+              <Github className="w-8 h-8" />
+              <Gitlab className="w-8 h-8" />
+              <span className="text-xl font-bold">VS Code</span>
+              <span className="text-xl font-bold">Jenkins</span>
+              <span className="text-xl font-bold">CircleCI</span>
             </div>
           </div>
         </section>
 
-        <section id="use-cases" className="py-20 px-6 bg-gray-800">
+        {/* Problem/Solution Section */}
+        <section className="py-20 px-6">
           <div className="container mx-auto">
-            <h2 className="text-4xl font-bold text-center mb-12">Shift-Left Your Architectural Review</h2>
-            <div className="grid md:grid-cols-2 gap-8 items-center">
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
               <div>
-                <h3 className="text-3xl font-bold mb-4">For the Modern Developer</h3>
-                <p className="text-gray-400 mb-4">Integrate high-level analysis directly into your workflow. Catch architectural drift early, improve code quality, and spend less time on manual reviews. Uveddi empowers you to build better software, faster.</p>
-                <ul className="space-y-2 text-gray-300">
-                  <li>✓ Proactive Technical Debt Management</li>
-                  <li>✓ Automated Code Reviews</li>
-                  <li>✓ Real-time Tech Debt Prevention</li>
-                </ul>
-              </div>
-              <div className="bg-gray-900 border border-gray-700 rounded-lg p-4 font-mono text-sm">
-                <h4 className="text-lg font-bold mb-4 text-white">AI-Generated Report Snippet</h4>
-                <p><span className="font-bold text-red-400">[Critical]</span> Cyclic Dependency Detected</p>
-                <p className="text-gray-400">Module `A` has a circular dependency with Module `B`.</p>
-                <div className="my-4 p-2 bg-gray-800 rounded">
-                  <pre><code>graph TD\n    A --&gt; B\n    B --&gt; A</code></pre>
+                <h2 className="text-4xl font-bold mb-6">
+                  <span className="text-red-400">The Problem:</span> Code Quality Chaos
+                </h2>
+                <div className="space-y-4 text-secondary-300">
+                  <div className="flex items-start space-x-3">
+                    <AlertTriangle className="w-6 h-6 text-red-400 mt-1 flex-shrink-0" />
+                    <p>Manual code reviews take hours and miss critical architectural issues</p>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <AlertTriangle className="w-6 h-6 text-red-400 mt-1 flex-shrink-0" />
+                    <p>AI-generated code lacks quality validation and security oversight</p>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <AlertTriangle className="w-6 h-6 text-red-400 mt-1 flex-shrink-0" />
+                    <p>Technical debt accumulates silently until it becomes expensive to fix</p>
+                  </div>
                 </div>
-                <p className="text-gray-300">Suggestion: Refactor to use dependency inversion...</p>
+              </div>
+              
+              <div>
+                <h2 className="text-4xl font-bold mb-6">
+                  <span className="text-primary-400">The Solution:</span> Shift-Left Intelligence
+                </h2>
+                <div className="space-y-4 text-secondary-300">
+                  <div className="flex items-start space-x-3">
+                    <CheckCircle className="w-6 h-6 text-primary-400 mt-1 flex-shrink-0" />
+                    <p>Instant architectural analysis directly in your terminal</p>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <CheckCircle className="w-6 h-6 text-primary-400 mt-1 flex-shrink-0" />
+                    <p>AI-powered explanations make complex issues understandable</p>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <CheckCircle className="w-6 h-6 text-primary-400 mt-1 flex-shrink-0" />
+                    <p>Catch problems early, before they reach production</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </section>
 
-        <section id="integrations" className="py-20 px-6">
-          <div className="container mx-auto text-center">
-            <h2 className="text-4xl font-bold mb-4">Integrates With Your Workflow</h2>
-            <p className="text-gray-400 mb-8">Uveddi works with your existing tools and platforms.</p>
-            <div className="flex justify-center space-x-8">
-              <span className="text-2xl font-bold text-gray-500">GitHub</span>
-              <span className="text-2xl font-bold text-gray-500">GitLab</span>
-              <span className="text-2xl font-bold text-gray-500">Jenkins</span>
-              <span className="text-2xl font-bold text-gray-500">VS Code</span>
-            </div>
-          </div>
-        </section>
-
-        <section id="pricing" className="py-20 px-6 bg-gray-800">
+        {/* Features Section */}
+        <section id="features" className="py-20 px-6 bg-secondary-800/30">
           <div className="container mx-auto">
-            <h2 className="text-4xl font-bold text-center mb-12">Flexible Pricing for Every Team</h2>
-            <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-              <div className="bg-gray-900 p-8 rounded-lg border border-gray-700">
-                <h3 className="text-2xl font-bold mb-4">Community</h3>
-                <p className="text-5xl font-bold mb-4">$0</p>
-                <p className="text-gray-400 mb-6">For individuals and small teams getting started with architectural analysis.</p>
-                <ul className="space-y-2 text-gray-300 mb-6">
-                  <li>✓ Local LLM Analysis</li>
-                  <li>✓ Core Anti-Pattern Detection</li>
-                  <li>✓ Markdown Reports</li>
-                </ul>
-                <Link to="/register" className="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded w-full block text-center">Get Started</Link>
+            <div className="text-center mb-16">
+              <h2 className="text-4xl font-bold mb-4">
+                Actionable Intelligence, Not Just Data
+              </h2>
+              <p className="text-xl text-secondary-300 max-w-3xl mx-auto">
+                Advanced static analysis meets AI-powered insights to give you the complete picture of your codebase health.
+              </p>
+            </div>
+            
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <FeatureCard
+                icon={Search}
+                title="Architectural Anti-Patterns"
+                description="Detect complex issues like Cyclic Dependencies, God Objects, and Leaky Abstractions before they compromise your codebase."
+                gradient="from-red-500 to-red-600"
+              />
+              <FeatureCard
+                icon={Shield}
+                title="AI-Powered Security"
+                description="Leverage local or cloud-based AI to get human-readable security explanations and actionable refactoring suggestions."
+                gradient="from-blue-500 to-blue-600"
+              />
+              <FeatureCard
+                icon={GitBranch}
+                title="Dependency Visualization"
+                description="Generate Mermaid.js diagrams directly in your reports to visualize dependencies and understand complex relationships."
+                gradient="from-purple-500 to-purple-600"
+              />
+              <FeatureCard
+                icon={Zap}
+                title="Lightning Fast"
+                description="Built with Rust for maximum performance. Analyze entire codebases in seconds, not minutes."
+                gradient="from-accent-500 to-accent-600"
+              />
+              <FeatureCard
+                icon={Code2}
+                title="Multi-Language Support"
+                description="Comprehensive analysis for JavaScript, TypeScript, Python, Rust, Java, and more languages coming soon."
+                gradient="from-primary-500 to-primary-600"
+              />
+              <FeatureCard
+                icon={Settings}
+                title="CI/CD Integration"
+                description="Seamlessly integrate with GitHub Actions, GitLab CI, Jenkins, and other popular CI/CD platforms."
+                gradient="from-indigo-500 to-indigo-600"
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* Use Cases Section */}
+        <section id="use-cases" className="py-20 px-6">
+          <div className="container mx-auto">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl font-bold mb-4">
+                Shift-Left Your Architectural Review
+              </h2>
+              <p className="text-xl text-secondary-300">
+                Empower developers to catch and fix issues early in the development cycle
+              </p>
+            </div>
+            
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+              <div>
+                <h3 className="text-3xl font-bold mb-6">For the Modern Developer</h3>
+                <p className="text-secondary-300 mb-6 text-lg leading-relaxed">
+                  Integrate high-level analysis directly into your workflow. Catch architectural drift early, 
+                  improve code quality, and spend less time on manual reviews. 
+                  <span className="text-primary-400 font-semibold">
+                    Uveddi empowers you to build better software, faster.
+                  </span>
+                </p>
+                
+                <div className="grid sm:grid-cols-2 gap-4 mb-8">
+                  <StatsCard
+                    title="Faster Reviews"
+                    value="15x"
+                    description="Reduce manual review time"
+                    icon={<TrendingUp className="w-6 h-6" />}
+                  />
+                  <StatsCard
+                    title="Early Detection"
+                    value="80%"
+                    description="Issues caught pre-deployment"
+                    icon={<Shield className="w-6 h-6" />}
+                  />
+                </div>
+                
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-3">
+                    <CheckCircle className="w-5 h-5 text-primary-400" />
+                    <span className="text-secondary-300">Proactive Technical Debt Management</span>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <CheckCircle className="w-5 h-5 text-primary-400" />
+                    <span className="text-secondary-300">Automated Code Reviews</span>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <CheckCircle className="w-5 h-5 text-primary-400" />
+                    <span className="text-secondary-300">Real-time Tech Debt Prevention</span>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <CheckCircle className="w-5 h-5 text-primary-400" />
+                    <span className="text-secondary-300">AI-Generated Code Safeguards</span>
+                  </div>
+                </div>
               </div>
-              <div className="bg-gray-900 p-8 rounded-lg border border-green-500">
-                <h3 className="text-2xl font-bold mb-4">Enterprise</h3>
-                <p className="text-5xl font-bold mb-4">Custom</p>
-                <p className="text-gray-400 mb-6">For organizations requiring advanced features, security, and support.</p>
-                <ul className="space-y-2 text-gray-300 mb-6">
-                  <li>✓ Cloud-Based LLM Analysis (OpenAI, Anthropic)</li>
-                  <li>✓ CI/CD Integration</li>
-                  <li>✓ Priority Support & SLA</li>
-                </ul>
-                <a href="#" className="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded w-full block text-center">Contact Sales</a>
+              
+              <div className="bg-secondary-800 border border-secondary-700 rounded-xl p-6">
+                <h4 className="text-lg font-semibold mb-4 text-primary-400">AI-Generated Report Snippet</h4>
+                <div className="space-y-3 font-mono text-sm">
+                  <div className="flex items-start space-x-2">
+                    <span className="text-red-400 font-bold">[CRITICAL]</span>
+                    <span className="text-white">Cyclic Dependency Detected</span>
+                  </div>
+                  <p className="text-secondary-300 ml-8">
+                    Module `UserService` has a circular dependency with `AuthService`.
+                  </p>
+                  
+                  <div className="bg-secondary-900 border border-secondary-600 rounded p-3 my-4">
+                    <pre className="text-primary-400 text-xs">
+{`graph TD
+    UserService --> AuthService
+    AuthService --> UserService
+    style UserService fill:#ef4444
+    style AuthService fill:#ef4444`}
+                    </pre>
+                  </div>
+                  
+                  <div className="text-secondary-300">
+                    <p className="mb-2"><span className="text-primary-400">💡 AI Suggestion:</span></p>
+                    <p className="ml-4">Refactor to use dependency inversion pattern. Create an `IAuthProvider` interface to break the cycle and improve testability.</p>
+                  </div>
+                </div>
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Integrations Section */}
+        <section id="integrations" className="py-20 px-6 bg-secondary-800/30">
+          <div className="container mx-auto text-center">
+            <h2 className="text-4xl font-bold mb-4">
+              Integrates With Your Workflow
+            </h2>
+            <p className="text-xl text-secondary-300 mb-12">
+              Uveddi works seamlessly with your existing tools and platforms
+            </p>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 items-center">
+              <div className="flex flex-col items-center space-y-2 hover:scale-110 transition-transform">
+                <Github className="w-12 h-12 text-secondary-400 hover:text-primary-400 transition-colors" />
+                <span className="text-sm text-secondary-400">GitHub</span>
+              </div>
+              <div className="flex flex-col items-center space-y-2 hover:scale-110 transition-transform">
+                <Gitlab className="w-12 h-12 text-secondary-400 hover:text-primary-400 transition-colors" />
+                <span className="text-sm text-secondary-400">GitLab</span>
+              </div>
+              <div className="flex flex-col items-center space-y-2 hover:scale-110 transition-transform">
+                <Settings className="w-12 h-12 text-secondary-400 hover:text-primary-400 transition-colors" />
+                <span className="text-sm text-secondary-400">Jenkins</span>
+              </div>
+              <div className="flex flex-col items-center space-y-2 hover:scale-110 transition-transform">
+                <Code2 className="w-12 h-12 text-secondary-400 hover:text-primary-400 transition-colors" />
+                <span className="text-sm text-secondary-400">VS Code</span>
+              </div>
+              <div className="flex flex-col items-center space-y-2 hover:scale-110 transition-transform">
+                <MonitorSpeaker className="w-12 h-12 text-secondary-400 hover:text-primary-400 transition-colors" />
+                <span className="text-sm text-secondary-400">CircleCI</span>
+              </div>
+              <div className="flex flex-col items-center space-y-2 hover:scale-110 transition-transform">
+                <GitBranch className="w-12 h-12 text-secondary-400 hover:text-primary-400 transition-colors" />
+                <span className="text-sm text-secondary-400">Bitbucket</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Pricing Section */}
+        <section id="pricing" className="py-20 px-6">
+          <div className="container mx-auto">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl font-bold mb-4">
+                Flexible Pricing for Every Team
+              </h2>
+              <p className="text-xl text-secondary-300">
+                Start free, scale as you grow
+              </p>
+            </div>
+            
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+              {/* Community */}
+              <div className="bg-secondary-800 border border-secondary-700 rounded-xl p-8 hover:border-secondary-600 transition-colors">
+                <h3 className="text-2xl font-bold mb-2">Community</h3>
+                <div className="flex items-baseline mb-4">
+                  <span className="text-5xl font-bold">$0</span>
+                  <span className="text-secondary-400 ml-2">/forever</span>
+                </div>
+                <p className="text-secondary-300 mb-6">
+                  Perfect for individuals and small teams getting started with architectural analysis.
+                </p>
+                <ul className="space-y-3 text-secondary-300 mb-8">
+                  <li className="flex items-center space-x-3">
+                    <CheckCircle className="w-5 h-5 text-primary-400" />
+                    <span>Local LLM Analysis</span>
+                  </li>
+                  <li className="flex items-center space-x-3">
+                    <CheckCircle className="w-5 h-5 text-primary-400" />
+                    <span>Core Anti-Pattern Detection</span>
+                  </li>
+                  <li className="flex items-center space-x-3">
+                    <CheckCircle className="w-5 h-5 text-primary-400" />
+                    <span>Markdown Reports</span>
+                  </li>
+                  <li className="flex items-center space-x-3">
+                    <CheckCircle className="w-5 h-5 text-primary-400" />
+                    <span>Community Support</span>
+                  </li>
+                </ul>
+                <GradientButton className="w-full">
+                  Get Started Free
+                </GradientButton>
+              </div>
+
+              {/* Pro */}
+              <div className="bg-secondary-800 border-2 border-primary-500 rounded-xl p-8 relative overflow-hidden">
+                <div className="absolute top-0 right-0 bg-primary-500 text-white px-3 py-1 text-sm font-semibold">
+                  POPULAR
+                </div>
+                <h3 className="text-2xl font-bold mb-2">Pro</h3>
+                <div className="flex items-baseline mb-4">
+                  <span className="text-5xl font-bold">$29</span>
+                  <span className="text-secondary-400 ml-2">/month</span>
+                </div>
+                <p className="text-secondary-300 mb-6">
+                  Enhanced features for professional developers and growing teams.
+                </p>
+                <ul className="space-y-3 text-secondary-300 mb-8">
+                  <li className="flex items-center space-x-3">
+                    <CheckCircle className="w-5 h-5 text-primary-400" />
+                    <span>Everything in Community</span>
+                  </li>
+                  <li className="flex items-center space-x-3">
+                    <CheckCircle className="w-5 h-5 text-primary-400" />
+                    <span>Cloud-Based AI Analysis</span>
+                  </li>
+                  <li className="flex items-center space-x-3">
+                    <CheckCircle className="w-5 h-5 text-primary-400" />
+                    <span>Advanced Security Scanning</span>
+                  </li>
+                  <li className="flex items-center space-x-3">
+                    <CheckCircle className="w-5 h-5 text-primary-400" />
+                    <span>CI/CD Integration</span>
+                  </li>
+                  <li className="flex items-center space-x-3">
+                    <CheckCircle className="w-5 h-5 text-primary-400" />
+                    <span>Priority Support</span>
+                  </li>
+                </ul>
+                <GradientButton className="w-full">
+                  Start Pro Trial
+                </GradientButton>
+              </div>
+
+              {/* Enterprise */}
+              <div className="bg-secondary-800 border border-secondary-700 rounded-xl p-8 hover:border-secondary-600 transition-colors">
+                <h3 className="text-2xl font-bold mb-2">Enterprise</h3>
+                <div className="flex items-baseline mb-4">
+                  <span className="text-5xl font-bold">Custom</span>
+                </div>
+                <p className="text-secondary-300 mb-6">
+                  Advanced features, security, and support for large organizations.
+                </p>
+                <ul className="space-y-3 text-secondary-300 mb-8">
+                  <li className="flex items-center space-x-3">
+                    <CheckCircle className="w-5 h-5 text-primary-400" />
+                    <span>Everything in Pro</span>
+                  </li>
+                  <li className="flex items-center space-x-3">
+                    <CheckCircle className="w-5 h-5 text-primary-400" />
+                    <span>On-Premise Deployment</span>
+                  </li>
+                  <li className="flex items-center space-x-3">
+                    <CheckCircle className="w-5 h-5 text-primary-400" />
+                    <span>SSO & Advanced Security</span>
+                  </li>
+                  <li className="flex items-center space-x-3">
+                    <CheckCircle className="w-5 h-5 text-primary-400" />
+                    <span>Custom Integrations</span>
+                  </li>
+                  <li className="flex items-center space-x-3">
+                    <CheckCircle className="w-5 h-5 text-primary-400" />
+                    <span>24/7 Support & SLA</span>
+                  </li>
+                </ul>
+                <GradientButton variant="secondary" className="w-full">
+                  Contact Sales
+                </GradientButton>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Final CTA Section */}
+        <section className="py-20 px-6 bg-gradient-to-r from-primary-900/20 to-secondary-900">
+          <div className="container mx-auto text-center">
+            <h2 className="text-4xl font-bold mb-4">
+              Ready to Transform Your Code Analysis?
+            </h2>
+            <p className="text-xl text-secondary-300 mb-8 max-w-2xl mx-auto">
+              Join thousands of developers who trust uveddi to keep their codebases healthy, 
+              secure, and maintainable.
+            </p>
+            <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+              <GradientButton size="lg" className="group">
+                Download CLI
+                <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+              </GradientButton>
+              <GradientButton variant="outline" size="lg">
+                <ExternalLink className="w-5 h-5 mr-2" />
+                View Documentation
+              </GradientButton>
             </div>
           </div>
         </section>
       </main>
 
-      <footer className="bg-gray-900 text-center py-8">
-        <div className="container mx-auto text-gray-500">
-          <p>&copy; 2025 uveddi. All rights reserved.</p>
-          <div className="flex justify-center space-x-4 mt-4">
-            <a href="#" className="hover:text-white">Privacy Policy</a>
-            <a href="#" className="hover:text-white">Terms of Service</a>
+      {/* Footer */}
+      <footer className="bg-secondary-900 border-t border-secondary-800 py-12">
+        <div className="container mx-auto px-6">
+          <div className="grid md:grid-cols-4 gap-8">
+            <div>
+              <div className="flex items-center space-x-2 mb-4">
+                <div className="w-8 h-8 bg-gradient-to-r from-primary-500 to-primary-600 rounded-lg flex items-center justify-center">
+                  <Code2 className="w-5 h-5 text-white" />
+                </div>
+                <span className="text-xl font-bold bg-gradient-to-r from-primary-400 to-primary-500 bg-clip-text text-transparent">
+                  uveddi
+                </span>
+              </div>
+              <p className="text-secondary-400 text-sm">
+                High-level code analysis for the modern developer.
+              </p>
+            </div>
+            
+            <div>
+              <h4 className="font-semibold text-white mb-4">Product</h4>
+              <ul className="space-y-2 text-secondary-400 text-sm">
+                <li><a href="#" className="hover:text-primary-400 transition-colors">Features</a></li>
+                <li><a href="#" className="hover:text-primary-400 transition-colors">Pricing</a></li>
+                <li><a href="#" className="hover:text-primary-400 transition-colors">Integrations</a></li>
+                <li><a href="#" className="hover:text-primary-400 transition-colors">API</a></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 className="font-semibold text-white mb-4">Resources</h4>
+              <ul className="space-y-2 text-secondary-400 text-sm">
+                <li><a href="#" className="hover:text-primary-400 transition-colors">Documentation</a></li>
+                <li><a href="#" className="hover:text-primary-400 transition-colors">Blog</a></li>
+                <li><a href="#" className="hover:text-primary-400 transition-colors">Community</a></li>
+                <li><a href="#" className="hover:text-primary-400 transition-colors">Support</a></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 className="font-semibold text-white mb-4">Company</h4>
+              <ul className="space-y-2 text-secondary-400 text-sm">
+                <li><a href="#" className="hover:text-primary-400 transition-colors">About</a></li>
+                <li><a href="#" className="hover:text-primary-400 transition-colors">Privacy Policy</a></li>
+                <li><a href="#" className="hover:text-primary-400 transition-colors">Terms of Service</a></li>
+                <li><a href="#" className="hover:text-primary-400 transition-colors">Contact</a></li>
+              </ul>
+            </div>
+          </div>
+          
+          <div className="border-t border-secondary-800 mt-8 pt-8 text-center text-secondary-400 text-sm">
+            <p>&copy; 2025 uveddi. All rights reserved.</p>
           </div>
         </div>
       </footer>
