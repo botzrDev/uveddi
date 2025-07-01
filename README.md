@@ -34,8 +34,21 @@ Uveddi acts as your **AI Architect**, providing essential architectural intellig
 
 ## 📚 Documentation
 
-* [DATABASE_GUIDE.md](./DATABASE_GUIDE.md) - Comprehensive guide for database setup, migrations, and deployment
-* [backend/README.md](./backend/README.md) - FastAPI backend documentation
+### Architecture & Design
+* [📋 ARCHITECTURE.md](./docs/ARCHITECTURE.md) - Complete architectural documentation with layer definitions and boundaries
+* [🏗️ C4_ARCHITECTURE.md](./docs/C4_ARCHITECTURE.md) - C4 model diagrams (Context, Container, Component, Code)
+* [🔧 SAM.md](./docs/SAM.md) - Software Architecture Model (canonical source of truth)
+* [📊 Architecture_Analysis_Report_2025-07-01.md](./docs/Architecture_Analysis_Report_2025-07-01.md) - Current architectural health assessment
+
+### Development & Operations
+* [🗄️ DATABASE_GUIDE.md](./docs/DATABASE_GUIDE.md) - Comprehensive guide for database setup, migrations, and deployment
+* [⚙️ backend/README.md](./backend/README.md) - FastAPI backend documentation
+* [🔌 plugins/DEVELOPER_GUIDE.md](./plugins/DEVELOPER_GUIDE.md) - Plugin development guide
+* [🧪 tests/README.md](./tests/README.md) - Testing strategy and guidelines
+
+### Project Management
+* [📈 PRD.md](./docs/PRD.md) - Product Requirements Document
+* [🎯 SPRINTS.md](./SPRINTS.md) - Sprint planning and progress tracking
 
 ## 🚀 Getting Started (For Developers & Contributors)
 

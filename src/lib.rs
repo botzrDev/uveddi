@@ -10,3 +10,4 @@ pub mod error;
 pub mod ingestion;
 pub mod plugin;
 pub mod cache;
+pub mod application;
