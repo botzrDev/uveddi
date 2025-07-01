@@ -37,6 +37,14 @@ reqwest = { version = "0.12.4", features = ["json"] }
 walkdir = "2.5.0"
 ignore = "0.4.22"
 wasmtime = "21.0.1"
+wasmtime-wasi = "21.0.1"
+wit-bindgen = "0.25.0"
+cap-std = "3.0.0"
+wasi-common = "21.0.1"
+toml = "0.8.0"
+sha2 = "0.10.0"
+uveddi-plugin-api = { path = "plugins/uveddi-plugin-api" }
+
 
 [dev-dependencies]
 tempfile = "3.0"

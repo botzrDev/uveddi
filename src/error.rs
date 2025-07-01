@@ -58,6 +58,14 @@ pub enum UveddiError {
     Plugin(String),
     #[error("Plugin discovery error: {0}")]
     PluginDiscovery(String),
+    #[error("Plugin error: {0}")]
+    PluginError(String),
+    #[error("WASM runtime error: {0}")]
+    WasmRuntimeError(#[from] wasmtime::Error),
+    #[error("Plugin verification failed: {0}")]
+    PluginVerificationError(String),
+    #[error("Resource limit exceeded: {0}")]
+    ResourceLimitError(String),
 
     // Cache errors
     #[error("Cache error: {0}")]

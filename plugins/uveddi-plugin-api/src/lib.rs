@@ -23,3 +23,9 @@ pub enum PluginError {
     #[error("Plugin execution failed: {0}")]
     Execution(String),
 }
+
+impl PluginError {
+    pub fn new(message: String) -> Self {
+        PluginError::Execution(message)
+    }
+}
