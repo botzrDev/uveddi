@@ -29,7 +29,7 @@ impl ReportGenerator {
         &self,
         analysis_run: &AnalysisRun,
         issues: &[ArchitecturalIssue],
-    ) -> Result<String, ReportError> {
+    ) -> Result<String, crate::error::UveddiError> {
         let mut report = String::new();
 
         // Report header with analysis summary
@@ -52,7 +52,7 @@ impl ReportGenerator {
         &self,
         analysis_run: &AnalysisRun,
         issues: &[ArchitecturalIssue],
-    ) -> Result<Value, ReportError> {
+    ) -> Result<Value, crate::error::UveddiError> {
         let report = serde_json::json!({
             "analysis_run": {
                 "run_id": analysis_run.run_id,
@@ -297,12 +297,4 @@ impl ReportGenerator {
     }
 }
 
-#[derive(Debug, thiserror::Error)]
-pub enum ReportError {
-    #[error("IO error: {0}")]
-    Io(#[from] std::io::Error),
-    #[error("JSON serialization error: {0}")]
-    Json(#[from] serde_json::Error),
-    #[error("Report generation error: {0}")]
-    Generic(String),
-}
+

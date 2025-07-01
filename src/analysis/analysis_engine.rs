@@ -1,5 +1,5 @@
 use crate::ast::tree_sitter::AstParser;
-use crate::analysis::{AnalysisDetector, AnalysisError};
+use crate::analysis::AnalysisDetector;
 use crate::analysis::anti_patterns::god_object_detector::GodObjectDetector;
 use crate::analysis::anti_patterns::unstable_interface_detector::UnstableInterfaceDetector;
 use crate::analysis::anti_patterns::modularity_violation_detector::ModularityViolationDetector;
@@ -19,7 +19,7 @@ pub struct AnalysisEngine {
 }
 
 impl AnalysisEngine {
-    pub fn new() -> Result<Self, AnalysisError> {
+    pub fn new() -> Result<Self, crate::error::UveddiError> {
         Ok(Self {
             ast_parser: AstParser::new()?,
             dependency_extractor: DependencyExtractor::new()?,
@@ -33,7 +33,7 @@ impl AnalysisEngine {
         })
     }
 
-    pub async fn analyze(&mut self, path: &Path) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
+    pub async fn analyze(&mut self, path: &Path) -> Result<Vec<ArchitecturalIssue>, crate::error::UveddiError> {
         let (mut file_issues, all_dependencies) = self.analyze_files_and_collect_dependencies(path).await?;
 
         info!("Building dependency graph...");
@@ -60,7 +60,7 @@ impl AnalysisEngine {
         Ok(file_issues)
     }
 
-    async fn analyze_files_and_collect_dependencies(&mut self, path: &Path) -> Result<(Vec<ArchitecturalIssue>, Vec<Dependency>), AnalysisError> {
+    async fn analyze_files_and_collect_dependencies(&mut self, path: &Path) -> Result<(Vec<ArchitecturalIssue>, Vec<Dependency>), crate::error::UveddiError> {
         let mut all_issues = Vec::new();
         let mut all_dependencies = Vec::new();
         self.files_analyzed = 0;

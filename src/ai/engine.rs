@@ -54,7 +54,7 @@ impl AiAnalysisEngine {
         &self,
         issue: &mut ArchitecturalIssue,
         ast: &crate::ast::CustomAst,
-    ) -> Result<(), AiError> {
+    ) -> Result<(), crate::error::UveddiError> {
         use crate::ai::prompts::smart_prompting::{build_prompt_from_ast, add_hallucination_mitigation};
         // Build a smart prompt with AST/code context
         let base_prompt = build_prompt_from_ast(ast, &issue.description);
@@ -70,21 +70,13 @@ impl AiAnalysisEngine {
         }
 
         log::warn!("No valid AI suggestion for issue analysis");
-        Ok(())
+        Err(crate::error::UveddiError::NoAiProviders)
     }
 }
 
-#[derive(Debug, thiserror::Error)]
-pub enum AiError {
-    #[error("AI API error: {0}")]
-    Api(String),
-    #[error("Context building error: {0}")]
-    Context(String),
-    #[error("Other AI error: {0}")]
-    Other(String),
-}
-
-pub fn parse_ai_suggestion(response: &str) -> Result<AiSuggestion, String> {
+pub fn parse_ai_suggestion(response: &str) -> Result<AiSuggestion, crate::error::UveddiError> {
     serde_json::from_str::<AiSuggestion>(response)
-        .map_err(|e| format!("Failed to parse AI response: {}\nRaw: {}", e, response))
+        .map_err(|e| crate::error::UveddiError::AiResponseParsing(
+            format!("Failed to parse AI response: {}\nRaw: {}", e, response)
+        ))
 }
