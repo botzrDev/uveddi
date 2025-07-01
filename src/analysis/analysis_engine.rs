@@ -7,8 +7,10 @@ use crate::analysis::cycle_detector::CycleDetector;
 use crate::analysis::dependency_extractor::{Dependency, DependencyExtractor};
 use crate::analysis::dependency_graph::DependencyGraph;
 use crate::database::models::{ArchitecturalIssue, AntiPatternType};
+use crate::ingestion::AsyncWalker;
 use std::path::Path;
 use log::{info, warn};
+use tokio_stream::StreamExt;
 
 pub struct AnalysisEngine {
     ast_parser: AstParser,
@@ -65,35 +67,40 @@ impl AnalysisEngine {
         let mut all_dependencies = Vec::new();
         self.files_analyzed = 0;
 
-        for entry in walkdir::WalkDir::new(path)
-            .into_iter()
-            .filter_map(|e| e.ok())
-            .filter(|e| e.file_type().is_file()) {
-            
-            let file_path = entry.path();
-            info!("Analyzing file: {}", file_path.display());
+        // Use async file walker instead of synchronous walkdir
+        let walker = AsyncWalker::for_source_code();
+        let mut file_stream = walker.walk(path);
 
-            match self.ast_parser.parse_file(file_path) {
-                Ok(parsed_file) => {
-                    self.files_analyzed += 1;
-                    
-                    // Run file-level detectors
-                    for detector in &self.detectors {
-                        match detector.detect_issues(&parsed_file) {
-                            Ok(mut issues) => all_issues.append(&mut issues),
-                            Err(e) => warn!("Error running detector {} on {}: {}", detector.get_detector_name(), file_path.display(), e),
-                        }
-                    }
+        while let Some(file_result) = file_stream.next().await {
+            match file_result {
+                Ok(file_path) => {
+                    info!("Analyzing file: {}", file_path.display());
 
-                    // Extract dependencies
-                    match self.dependency_extractor.extract_from_ast(&parsed_file) {
-                        Ok(mut dependencies) => all_dependencies.append(&mut dependencies),
-                        Err(e) => warn!("Error extracting dependencies from {}: {}", file_path.display(), e),
+                    match self.ast_parser.parse_file(&file_path) {
+                        Ok(parsed_file) => {
+                            self.files_analyzed += 1;
+                            
+                            // Run file-level detectors
+                            for detector in &self.detectors {
+                                match detector.detect_issues(&parsed_file) {
+                                    Ok(mut issues) => all_issues.append(&mut issues),
+                                    Err(e) => warn!("Error running detector {} on {}: {}", detector.get_detector_name(), file_path.display(), e),
+                                }
+                            }
+
+                            // Extract dependencies
+                            match self.dependency_extractor.extract_from_ast(&parsed_file) {
+                                Ok(mut dependencies) => all_dependencies.append(&mut dependencies),
+                                Err(e) => warn!("Error extracting dependencies from {}: {}", file_path.display(), e),
+                            }
+                        },
+                        Err(e) => warn!("Failed to parse file {}: {}", file_path.display(), e),
                     }
                 },
-                Err(e) => warn!("Failed to parse file {}: {}", file_path.display(), e),
+                Err(e) => warn!("Error walking directory: {}", e),
             }
         }
+        
         info!("Analyzed {} files and extracted dependencies.", self.files_analyzed);
         Ok((all_issues, all_dependencies))
     }
