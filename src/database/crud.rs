@@ -139,4 +139,27 @@ impl Database {
         }
         tx.commit()
     }
+
+    /// Stores multiple anti-pattern types in a batch operation
+    pub fn store_anti_pattern_types_batch(&self, anti_pattern_types: &mut [AntiPatternType]) -> Result<()> {
+        let tx = self.conn.transaction()?;
+        {
+            let mut stmt = tx.prepare(
+                "INSERT OR IGNORE INTO anti_pattern_types (name, description, category) VALUES (?, ?, ?)"
+            )?;
+            for anti_pattern_type in anti_pattern_types.iter_mut() {
+                stmt.execute(rusqlite::params![
+                    anti_pattern_type.name,
+                    anti_pattern_type.description,
+                    anti_pattern_type.category,
+                ])?;
+                if anti_pattern_type.anti_pattern_type_id.is_none() {
+                    let mut id_stmt = tx.prepare("SELECT anti_pattern_type_id FROM anti_pattern_types WHERE name = ?")?;
+                    anti_pattern_type.anti_pattern_type_id = Some(id_stmt.query_row([&anti_pattern_type.name], |row| row.get(0))?);
+                }
+            }
+        }
+        tx.commit()?;
+        Ok(())
+    }
 }

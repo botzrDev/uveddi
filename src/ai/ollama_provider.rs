@@ -67,6 +67,23 @@ impl OllamaProvider {
             Err(format!("Ollama API health check failed with status: {}", response.status()))
         }
     }
+
+    /// Download a model from Ollama's model registry
+    pub async fn download_model(&self, model_name: &str) -> Result<(), String> {
+        let url = format!("{}/api/pull", self.api_url);
+        let response = self.client
+            .post(&url)
+            .json(&serde_json::json!({ "name": model_name }))
+            .send()
+            .await
+            .map_err(|e| e.to_string())?;
+
+        if response.status().is_success() {
+            Ok(())
+        } else {
+            Err(format!("Failed to download model: {}", response.status()))
+        }
+    }
 }
 
 use async_trait::async_trait;

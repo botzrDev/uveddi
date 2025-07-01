@@ -52,7 +52,11 @@ const PYTHON_FIELD_COUNT_QUERY: &str = r#"
 (attribute)
 "#;
 #[allow(dead_code)]
-const JAVASCRIPT_FIELD_COUNT_QUERY: &str = r#""#;
+const JAVASCRIPT_FIELD_COUNT_QUERY: &str = r#"
+(class_declaration
+  body: (class_body
+    (field_definition) @field))
+"#;
 
 // const FIELD_COUNT_QUERY: &str = r#"
 // (field_declaration)
