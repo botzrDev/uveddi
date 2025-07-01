@@ -1,7 +1,7 @@
 //! Detects cyclic dependencies in the `DependencyGraph`.
 
 use crate::analysis::dependency_graph::{ComponentNode, DependencyGraph};
-use crate::database::models::{ArchitecturalIssue, AntiPatternType};
+use crate::models::ArchitecturalIssue;
 use petgraph::algo::tarjan_scc;
 use log::info;
 
@@ -58,15 +58,18 @@ impl CycleDetector {
 
                 issues.push(ArchitecturalIssue {
                     issue_id: None,
-                    analysis_run_id,
+                    run_id: analysis_run_id,
                     anti_pattern_type_id: 2, // Standard ID for Cyclic Dependency
                     file_path,
-                    start_line: Some(start_line),
-                    end_line: Some(start_line),
+                    line_start: Some(start_line),
+                    line_end: Some(start_line),
                     severity: "High".to_string(),
+                    title: "Cyclic Dependency Detected".to_string(),
                     description,
-                    code_snippet: None, // Snippet is less relevant for multi-file cycles
-                    ai_explanation: None,
+                    ai_refactoring_suggestion: None,
+                    is_ignored: false,
+                    ignored_by_user_id: None,
+                    ignored_at: None,
                 });
             }
         }

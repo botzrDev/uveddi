@@ -1,5 +1,4 @@
 use thiserror::Error;
-use anyhow::Context;
 
 /// Unified error type for all Uveddi operations with comprehensive documentation
 #[derive(Debug, Error)]
