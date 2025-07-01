@@ -57,26 +57,26 @@ const LandingPage: React.FC = () => {
   return (
     <div className="bg-secondary-900 bg-gray-900 text-white min-h-screen">
       {/* Header */}
-      <header className="sticky top-0 bg-secondary-900/80 bg-gray-900/80 backdrop-blur-md z-50 border-b border-secondary-800 border-gray-700">
+      <header className="sticky top-0 bg-secondary-900/80 backdrop-blur-md z-50 border-b border-secondary-800">
         <nav className="container mx-auto px-6 py-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-primary-500 from-green-500 to-primary-600 to-green-600 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-gradient-to-r from-primary-500 to-primary-600 rounded-lg flex items-center justify-center">
                 <Code2 className="w-5 h-5 text-white" />
               </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-primary-400 from-green-400 to-primary-500 to-green-500 bg-clip-text text-transparent">
+              <span className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-primary-500 bg-clip-text text-transparent">
                 uveddi
               </span>
             </div>
             <div className="hidden md:flex items-center space-x-8">
-              <a href="#features" className="text-secondary-300 text-gray-300 hover:text-primary-400 hover:text-green-400 transition-colors">Features</a>
-              <a href="#use-cases" className="text-secondary-300 text-gray-300 hover:text-primary-400 hover:text-green-400 transition-colors">Use Cases</a>
-              <a href="#integrations" className="text-secondary-300 text-gray-300 hover:text-primary-400 hover:text-green-400 transition-colors">Integrations</a>
-              <a href="#pricing" className="text-secondary-300 text-gray-300 hover:text-primary-400 hover:text-green-400 transition-colors">Pricing</a>
-              <a href="#docs" className="text-secondary-300 text-gray-300 hover:text-primary-400 hover:text-green-400 transition-colors">Docs</a>
+              <a href="#features" className="text-secondary-300 hover:text-primary-400 transition-colors">Features</a>
+              <a href="#use-cases" className="text-secondary-300 hover:text-primary-400 transition-colors">Use Cases</a>
+              <a href="#integrations" className="text-secondary-300 hover:text-primary-400 transition-colors">Integrations</a>
+              <a href="#pricing" className="text-secondary-300 hover:text-primary-400 transition-colors">Pricing</a>
+              <a href="#docs" className="text-secondary-300 hover:text-primary-400 transition-colors">Docs</a>
             </div>
             <div className="flex items-center space-x-4">
-              <Link to="/login" className="text-secondary-300 text-gray-300 hover:text-primary-400 hover:text-green-400 transition-colors">
+              <Link to="/login" className="text-secondary-300 hover:text-primary-400 transition-colors">
                 Sign In
               </Link>
               <GradientButton href="/register">
