@@ -1,8 +1,8 @@
-# CodeAtlas System Architectural Review - Sprint 3
+# Uveddi System Architectural Review - Sprint 3
 
 ## Overview
 
-This report summarizes the architectural review of the CodeAtlas project following Sprint 3. The review focused on the core Rust modules responsible for AST parsing, analysis (anti-pattern detection, dependency extraction, cycle detection), AI integration, and database interactions. The overall structure demonstrates good modularity and adherence to the Rust ecosystem's best practices for CLI applications.
+This report summarizes the architectural review of the Uveddi project following Sprint 3. The review focused on the core Rust modules responsible for AST parsing, analysis (anti-pattern detection, dependency extraction, cycle detection), AI integration, and database interactions. The overall structure demonstrates good modularity and adherence to the Rust ecosystem's best practices for CLI applications.
 
 ## Identified Potential Issues and Recommendations
 
@@ -79,4 +79,4 @@ Prioritize the full implementation of `OllamaSetup::download_model`. This should
 
 ## Overall Assessment
 
-The CodeAtlas project demonstrates a well-thought-out architecture with clear separation of concerns (AST parsing, analysis, AI, database, CLI). The use of traits like `LlmProvider` and `AnalysisDetector` promotes extensibility. The identified issues are primarily areas for refinement, performance optimization, and completion of stubbed functionality, rather than fundamental architectural flaws. Addressing these points will enhance the robustness, usability, and completeness of the CodeAtlas CLI tool.
+The Uveddi project demonstrates a well-thought-out architecture with clear separation of concerns (AST parsing, analysis, AI, database, CLI). The use of traits like `LlmProvider` and `AnalysisDetector` promotes extensibility. The identified issues are primarily areas for refinement, performance optimization, and completion of stubbed functionality, rather than fundamental architectural flaws. Addressing these points will enhance the robustness, usability, and completeness of the Uveddi CLI tool.

@@ -1,15 +1,15 @@
-# CodeAtlas Backend
+# Uveddi Backend
 
-This directory contains the optional FastAPI backend for CodeAtlas.
+This directory contains the optional FastAPI backend for Uveddi.
 
 ## Purpose of the Backend
 
-The CodeAtlas backend is a Python FastAPI service that provides optional cloud-based features for the CodeAtlas Rust CLI tool. While the Rust CLI performs all core code analysis and reporting locally, the backend enables team collaboration, centralized storage, and future web dashboards.
+The Uveddi backend is a Python FastAPI service that provides optional cloud-based features for the Uveddi Rust CLI tool. While the Rust CLI performs all core code analysis and reporting locally, the backend enables team collaboration, centralized storage, and future web dashboards.
 
 ### Interaction with the Rust Application
 - The Rust CLI analyzes codebases and can upload analysis results to the backend via REST API endpoints.
 - The backend stores results in a PostgreSQL database and exposes endpoints for retrieving, sharing, and managing analysis data.
-- This separation allows users to run CodeAtlas fully offline or opt-in to cloud features for team workflows.
+- This separation allows users to run Uveddi fully offline or opt-in to cloud features for team workflows.
 
 ## API
 
@@ -17,7 +17,7 @@ The API is documented using the OpenAPI standard. When the backend is running, y
 
 ## Database Architecture
 
-The CodeAtlas system uses a two-database architecture:
+The Uveddi system uses a two-database architecture:
 1. **Local SQLite database** in the Rust CLI for storing local analysis data.
 2. **Centralized PostgreSQL database** in this FastAPI backend for cloud synchronization.
 
@@ -154,27 +154,27 @@ The included Dockerfile is configured for Google Cloud Run with Cloud SQL Proxy 
 
 ```bash
 # Build the Docker image
-docker build -t codeatlas-backend .
+docker build -t uveddi-backend .
 
 # Run the container locally (for testing)
 docker run -p 8000:8080 \
   --env-file .env \
   --mount type=bind,source=/path/to/service-account.json,target=/secrets/cloudsql/credentials.json,readonly \
-  codeatlas-backend
+  uveddi-backend
 ```
 
 ### Deploying to Cloud Run
 
 ```bash
 # Build and push the image to Google Container Registry
-gcloud builds submit --tag gcr.io/PROJECT_ID/codeatlas-backend
+gcloud builds submit --tag gcr.io/PROJECT_ID/uveddi-backend
 
 # Deploy to Cloud Run with Cloud SQL connection
-gcloud run deploy codeatlas-backend \
-  --image gcr.io/PROJECT_ID/codeatlas-backend \
+gcloud run deploy uveddi-backend \
+  --image gcr.io/PROJECT_ID/uveddi-backend \
   --platform managed \
   --add-cloudsql-instances PROJECT_ID:REGION:INSTANCE_NAME \
-  --set-env-vars "DB_POSTGRES_HOST=127.0.0.1,DB_POSTGRES_DB=codeatlas,DB_POSTGRES_USER=codeatlas,DB_ENVIRONMENT=production" \
+  --set-env-vars "DB_POSTGRES_HOST=127.0.0.1,DB_POSTGRES_DB=uveddi,DB_POSTGRES_USER=uveddi,DB_ENVIRONMENT=production" \
   --set-secrets="DB_POSTGRES_PASSWORD=db-password:latest" \
   --allow-unauthenticated
 ```
@@ -184,7 +184,7 @@ gcloud run deploy codeatlas-backend \
 If you encounter issues with database connectivity:
 
 1. Ensure PostgreSQL is running: `sudo service postgresql status`
-2. Check database exists: `psql -U postgres -c '\l' | grep codeatlas`
+2. Check database exists: `psql -U postgres -c '\l' | grep uveddi`
 3. Verify credentials in `.env` file
 4. Check migration status: `alembic current`
 5. For Cloud SQL issues, verify IAM permissions and network connectivity

@@ -1,12 +1,12 @@
 [package]
-name = "codeatlas"
+name = "uveddi"
 version = "0.1.0"
 edition = "2024"
 description = "A Rust-based code analysis and exploration tool"
 authors = ["Phillip Austin Green <your.email@example.com>"]
 license = "MIT"
-repository = "https://github.com/yourusername/codeatlas"
-keywords = ["code", "analysis", "tools", "visualization"]
+repository = "https://github.com/yourusername/uveddi"
+keywords = ["code", "analysis", "tools", "visualization", "uveddi"]
 categories = ["development-tools"]
 readme = "README.md"
 
@@ -34,7 +34,7 @@ walkdir = "2.3"
 async-trait = "0.1"
 md5 = "0.7"
 toml = "0.8"
-codeatlas-plugin-api = { path = "plugins/codeatlas-plugin-api" }
+uveddi-plugin-api = { path = "plugins/uveddi-plugin-api" }
 
 [dev-dependencies]
 tempfile = "3.0"

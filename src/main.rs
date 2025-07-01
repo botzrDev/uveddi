@@ -1,18 +1,18 @@
 use clap::{Parser, Subcommand};
 use log::info;
 
-use codeatlas::cli::analyze_command::AnalyzeCommand;
-use codeatlas::cli::config_command::ConfigCommand;
-use codeatlas::cli::init_local_ai_command::InitLocalAiCommand;
-use codeatlas::cli::plugin_command::PluginCommand;
-use codeatlas::error::CodeAtlasError;
+use uveddi::cli::analyze_command::AnalyzeCommand;
+use uveddi::cli::config_command::ConfigCommand;
+use uveddi::cli::init_local_ai_command::InitLocalAiCommand;
+use uveddi::cli::plugin_command::PluginCommand;
+use uveddi::error::UveddiError;
 
-/// CodeAtlas - A tool for code analysis and exploration
+/// Uveddi - A tool for code analysis and exploration
 ///
-/// This is the main entry point for the CodeAtlas application.
+/// This is the main entry point for the Uveddi application.
 
 #[derive(Parser)]
-#[command(name = "codeatlas")]
+#[command(name = "uveddi")]
 #[command(about = "A Rust-based code analysis and exploration tool", long_about = None)]
 struct Cli {
     #[command(subcommand)]
@@ -32,7 +32,7 @@ enum Commands {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), CodeAtlasError> {
+async fn main() -> Result<(), UveddiError> {
     env_logger::init();
     let cli = Cli::parse();
 
@@ -43,7 +43,7 @@ async fn main() -> Result<(), CodeAtlasError> {
         }
         Commands::InitLocalAi(command) => {
             info!("Executing init-local-ai command...");
-            let setup = codeatlas::cli::init_local_ai_command::OllamaSetup;
+            let setup = uveddi::cli::init_local_ai_command::OllamaSetup;
             command.execute(&setup).await?;
         }
         Commands::Plugin(command) => {
@@ -53,7 +53,7 @@ async fn main() -> Result<(), CodeAtlasError> {
         Commands::Config(command) => {
             info!("Executing config command...");
             // ConfigCommand is sync, so run in blocking
-            command.execute().map_err(|e| CodeAtlasError::Custom(e.to_string()))?;
+            command.execute().map_err(|e| UveddiError::Generic(e.to_string()))?;
         }
     }
 

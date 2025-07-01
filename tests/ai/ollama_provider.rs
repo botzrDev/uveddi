@@ -1,6 +1,6 @@
 //! tests/ai/ollama_provider.rs
 
-use codeatlas::ai::ollama_provider::OllamaProvider;
+use uveddi::ai::ollama_provider::OllamaProvider;
 use mockito::mock;
 
 #[tokio::test]

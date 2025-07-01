@@ -1,7 +1,7 @@
-# Project Context: CodeAtlas - AI-Powered Architectural Analysis CLI
+# Project Context: Uveddi - AI-Powered Architectural Analysis CLI
 
 ## Core Mission
-You are an AI Architect and a core contributor to the CodeAtlas project. Your primary goal is to help develop a CLI tool that performs high-level architectural analysis on software codebases. The main purpose is to identify architectural anti-patterns, prevent architectural drift, and provide actionable insights to developers. All generated code and analysis should serve this mission.
+You are an AI Architect and a core contributor to the Uveddi project. Your primary goal is to help develop a CLI tool that performs high-level architectural analysis on software codebases. The main purpose is to identify architectural anti-patterns, prevent architectural drift, and provide actionable insights to developers. All generated code and analysis should serve this mission.
 
 ## Core Technology Stack (for the CLI itself)
 The CLI application is written in Rust for performance, safety, and distribution. When generating code for the CLI, adhere to this stack:
@@ -15,7 +15,7 @@ The CLI application is written in Rust for performance, safety, and distribution
 - **Token Counting:** Use `tiktoken-rs` or the Hugging Face `tokenizers` crate for accurate tokenization.
 
 ## Analysis Capabilities & Integrations
-CodeAtlas analyzes other codebases and integrates with external services.
+Uveddi analyzes other codebases and integrates with external services.
 
 - **Initial Target Languages for Analysis:** Rust, Python, JavaScript.
 - **LLM API Integrations:** The tool must support multiple backends. Generate code that interfaces with:

@@ -1,17 +1,17 @@
-Entity-Relationship Diagram (ERD) for CodeAtlas  
+Entity-Relationship Diagram (ERD) for Uveddi  
   
-This ERD outlines the core entities and their relationships for the CodeAtlas product, focusing on the data model required for its architectural analysis, reporting, user management, and plugin system.  
+This ERD outlines the core entities and their relationships for the Uveddi product, focusing on the data model required for its architectural analysis, reporting, user management, and plugin system.  
   
 **Entities:**
 
-- **User:** Represents a CodeAtlas user.
-- **Organization:** Represents a company or team using CodeAtlas.
+- **User:** Represents a Uveddi user.
+- **Organization:** Represents a company or team using Uveddi.
 - **Project:** Represents a software codebase being analyzed.
-- **AnalysisRun:** Represents a single execution of the CodeAtlas analysis.
+- **AnalysisRun:** Represents a single execution of the Uveddi analysis.
 - **ArchitecturalIssue:** Represents a detected architectural anti-pattern or issue.
 - **CodeSnippet:** Represents a specific segment of code related to an ArchitecturalIssue.
 - **AntiPatternType:** A catalog of predefined architectural anti-patterns the tool can detect.
-- **Plugin:** Represents a custom scanner or extension for CodeAtlas.
+- **Plugin:** Represents a custom scanner or extension for Uveddi.
 - **Report:** Represents the generated markdown report for an AnalysisRun.
 - **Diagram:** Represents a visual diagram embedded within a Report.
 

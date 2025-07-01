@@ -1,8 +1,8 @@
 """
-Database configuration and connection management for CodeAtlas backend.
+Database configuration and connection management for Uveddi backend.
 
 This module handles the PostgreSQL database connection using SQLAlchemy ORM
-for the centralized CodeAtlas subscriber database.
+for the centralized Uveddi subscriber database.
 """
 
 import os
@@ -21,9 +21,9 @@ class DatabaseSettings(BaseSettings):
     # PostgreSQL connection parameters
     postgres_host: str = "localhost"
     postgres_port: int = 5432
-    postgres_user: str = "codeatlas"
-    postgres_password: str = "codeatlas"
-    postgres_db: str = "codeatlas"
+    postgres_user: str = "uveddi"
+    postgres_password: str = "uveddi"
+    postgres_db: str = "uveddi"
     
     # Connection pool settings
     pool_size: int = 10
@@ -181,9 +181,9 @@ def get_database_url_from_env() -> str:
     # Option 2: Individual components
     host = os.getenv("DB_POSTGRES_HOST", "localhost")
     port = os.getenv("DB_POSTGRES_PORT", "5432")
-    user = os.getenv("DB_POSTGRES_USER", "codeatlas")
+    user = os.getenv("DB_POSTGRES_USER", "uveddi")
     password = os.getenv("DB_POSTGRES_PASSWORD", "")
-    database = os.getenv("DB_POSTGRES_DB", "codeatlas")
+    database = os.getenv("DB_POSTGRES_DB", "uveddi")
     
     if not password:
         raise ValueError("Database password must be provided via environment variables")
@@ -198,9 +198,9 @@ Example .env file for production:
 # Database Configuration
 DB_POSTGRES_HOST=your-rds-endpoint.amazonaws.com
 DB_POSTGRES_PORT=5432
-DB_POSTGRES_USER=codeatlas_user
+DB_POSTGRES_USER=uveddi_user
 DB_POSTGRES_PASSWORD=your-secure-password
-DB_POSTGRES_DB=codeatlas_prod
+DB_POSTGRES_DB=uveddi_prod
 DB_POOL_SIZE=20
 DB_MAX_OVERFLOW=40
 DB_ENVIRONMENT=production

@@ -31,8 +31,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Create a non-root user for running the application
-RUN useradd -m codeatlas && chown -R codeatlas:codeatlas /app
-USER codeatlas
+RUN useradd -m uveddi && chown -R uveddi:uveddi /app
+USER uveddi
 
 # Command to run the application with Gunicorn for production
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "${PORT:-8080}"]

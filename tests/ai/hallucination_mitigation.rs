@@ -1,7 +1,7 @@
 //! tests/ai/hallucination_mitigation.rs
 
-use codeatlas::ai::prompts::prompt_templates;
-use codeatlas::database::models::ArchitecturalIssue;
+use uveddi::ai::prompts::prompt_templates;
+use uveddi::database::models::ArchitecturalIssue;
 
 #[test]
 fn test_hallucination_mitigation_in_prompt() {

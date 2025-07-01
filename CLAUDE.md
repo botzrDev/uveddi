@@ -16,10 +16,10 @@ cargo test
 cargo test test_name
 
 # Run the CLI tool
-./target/release/codeatlas analyze . --output-file report.md
+./target/release/uveddi analyze . --output-file report.md
 
 # Run with AI enhancement
-./target/release/codeatlas analyze . --enable-ai --output-file report.md
+./target/release/uveddi analyze . --enable-ai --output-file report.md
 
 # Check formatting and linting
 cargo fmt --check
@@ -46,7 +46,7 @@ make new-migration
 
 ## Architecture Overview
 
-CodeAtlas is a dual-architecture system with a Rust CLI and Python FastAPI backend for AI-powered code analysis.
+Uveddi is a dual-architecture system with a Rust CLI and Python FastAPI backend for AI-powered code analysis.
 
 ### Core Components
 
@@ -101,7 +101,7 @@ The system uses a pluggable AI provider pattern:
 - `OLLAMA_API_URL` - Ollama server URL (default: http://localhost:11434)
 
 **Config Files:**
-- `codeatlas.toml` - Main configuration file
+- `uveddi.toml` - Main configuration file
 - Command-line args override config file values
 
 ## Docker Integration
@@ -109,8 +109,8 @@ The system uses a pluggable AI provider pattern:
 **Local AI Development:**
 ```bash
 # Build container with Ollama and DeepSeek-Coder
-docker build -t codeatlas-local-ai .
-docker run -it --rm codeatlas-local-ai
+docker build -t uveddi-local-ai .
+docker run -it --rm uveddi-local-ai
 
 # Run analysis with local AI
 cargo run --release -- analyze . --enable-ai
@@ -128,7 +128,7 @@ cargo run --release -- analyze . --enable-ai
 
 Framework exists for extending analysis capabilities:
 - `AnalysisDetector` trait for custom anti-pattern detectors
-- Plugin API crate at `plugins/codeatlas-plugin-api/`
+- Plugin API crate at `plugins/uveddi-plugin-api/`
 - Discovery and lifecycle management (stub implementation)
 
 ## Important Implementation Notes

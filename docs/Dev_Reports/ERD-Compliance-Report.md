@@ -1,4 +1,4 @@
-# CodeAtlas ERD Compliance Report
+# Uveddi ERD Compliance Report
 
 ## Component Implementation Status
 

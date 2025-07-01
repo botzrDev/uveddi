@@ -1,8 +1,8 @@
 """
-SQLAlchemy ORM models for the CodeAtlas centralized database.
+SQLAlchemy ORM models for the Uveddi centralized database.
 
 This module defines the database schema for the PostgreSQL backend
-that serves the CodeAtlas subscriber system, CI/CD integrations,
+that serves the Uveddi subscriber system, CI/CD integrations,
 and centralized analysis data.
 """
 
@@ -23,7 +23,7 @@ from database import Base
 
 class User(Base):
     """
-    User entity for CodeAtlas subscribers.
+    User entity for Uveddi subscribers.
     
     Represents individual users who can belong to organizations
     and initiate analysis runs.
@@ -140,7 +140,7 @@ class AntiPatternType(Base):
     """
     Catalog of predefined architectural anti-patterns.
     
-    This table stores the types of issues that CodeAtlas can detect.
+    This table stores the types of issues that Uveddi can detect.
     """
     __tablename__ = "anti_pattern_types"
     
@@ -163,7 +163,7 @@ class AnalysisRun(Base):
     """
     Analysis run execution records.
     
-    Represents a single execution of CodeAtlas analysis on a project.
+    Represents a single execution of Uveddi analysis on a project.
     """
     __tablename__ = "analysis_runs"
     
@@ -296,9 +296,9 @@ class CodeSnippet(Base):
 
 class Plugin(Base):
     """
-    Custom scanners and extensions for CodeAtlas.
+    Custom scanners and extensions for Uveddi.
     
-    Represents plugins that extend CodeAtlas functionality.
+    Represents plugins that extend Uveddi functionality.
     """
     __tablename__ = "plugins"
     

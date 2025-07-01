@@ -1,4 +1,4 @@
-"""Add remaining tables for CodeAtlas core functionality
+"""Add remaining tables for Uveddi core functionality
 
 Revision ID: 002_remaining_tables
 Revises: 001_initial_tables
@@ -20,7 +20,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """
-    Create remaining tables for the CodeAtlas database.
+    Create remaining tables for the Uveddi database.
     """
     # Create projects table
     op.create_table(

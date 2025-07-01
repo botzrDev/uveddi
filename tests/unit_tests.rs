@@ -1,6 +1,6 @@
 use tempfile::tempdir;
 use std::fs;
-use codeatlas::analysis::dependency_extractor::{DependencyExtractor, Dependency, DependencyType};
+use uveddi::analysis::dependency_extractor::{DependencyExtractor, Dependency, DependencyType};
 
 #[test]
 fn test_extract_rust_dependencies() {

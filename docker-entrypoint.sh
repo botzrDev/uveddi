@@ -11,7 +11,7 @@ done
 echo "Ollama server is up. Pulling DeepSeek model..."
 ollama pull deepseek-coder:6.7b-instruct-q4_0
 
-echo "Running CodeAtlas tests (pre-built, should be fast)..."
+echo "Running Uveddi tests (pre-built, should be fast)..."
 cargo test --release --no-run && cargo test --release
 
 echo "All done. Dropping to shell."

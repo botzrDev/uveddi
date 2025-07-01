@@ -1,10 +1,10 @@
-# CodeAtlas Database Architecture Guide
+# Uveddi Database Architecture Guide
 
-This document provides a comprehensive guide for setting up, migrating, and deploying the CodeAtlas database architecture.
+This document provides a comprehensive guide for setting up, migrating, and deploying the Uveddi database architecture.
 
 ## Database Architecture Overview
 
-CodeAtlas uses a dual-database architecture for robust, scalable, and developer-friendly operation:
+Uveddi uses a dual-database architecture for robust, scalable, and developer-friendly operation:
 
 1. **Local SQLite Database** (Rust CLI)
    - Embedded in the CLI tool
@@ -149,20 +149,20 @@ alembic upgrade head --sql > migration.sql
    - Configure machine type and storage
    - Enable private IP or public IP with authorized networks
 
-2. **Create a database user** for CodeAtlas
+2. **Create a database user** for Uveddi
    ```sql
-   CREATE USER codeatlas WITH PASSWORD 'secure-password';
-   CREATE DATABASE codeatlas;
-   GRANT ALL PRIVILEGES ON DATABASE codeatlas TO codeatlas;
+   CREATE USER uveddi WITH PASSWORD 'secure-password';
+   CREATE DATABASE uveddi;
+   GRANT ALL PRIVILEGES ON DATABASE uveddi TO uveddi;
    ```
 
 3. **Configure environment variables**
    Update your `.env` file with Cloud SQL settings:
    ```
    DB_POSTGRES_HOST=127.0.0.1  # When using Cloud SQL Proxy
-   DB_POSTGRES_USER=codeatlas
+   DB_POSTGRES_USER=uveddi
    DB_POSTGRES_PASSWORD=secure-password
-   DB_POSTGRES_DB=codeatlas
+   DB_POSTGRES_DB=uveddi
    DB_ENVIRONMENT=production
    GOOGLE_CLOUD_PROJECT=your-project-id
    CLOUD_SQL_CONNECTION_NAME=your-project:region:instance

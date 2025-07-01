@@ -1,6 +1,6 @@
-# CodeAtlas Test Suite Implementation Guide
+# Uveddi Test Suite Implementation Guide
 
-This document provides guidance for the next developer on how to implement comprehensive tests for all Sprint 2 features in the CodeAtlas project. The test files are scaffolded and ready for detailed test logic and fixture expansion.
+This document provides guidance for the next developer on how to implement comprehensive tests for all Sprint 2 features in the Uveddi project. The test files are scaffolded and ready for detailed test logic and fixture expansion.
 
 ## General Guidelines
 - Follow Rust best practices and idioms for all tests.

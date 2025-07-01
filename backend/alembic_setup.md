@@ -1,4 +1,4 @@
-# Alembic initialization and migration setup for CodeAtlas backend
+# Alembic initialization and migration setup for Uveddi backend
 
 ## 1. Initialize Alembic
 
@@ -19,7 +19,7 @@ Update the `alembic.ini` file to use your database URL:
 script_location = alembic
 prepend_sys_path = .
 version_path_separator = os
-sqlalchemy.url = postgresql://codeatlas:codeatlas@localhost:5432/codeatlas
+sqlalchemy.url = postgresql://uveddi:uveddi@localhost:5432/uveddi
 
 # For environment variable configuration:
 # sqlalchemy.url = 

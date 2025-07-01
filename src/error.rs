@@ -1,7 +1,7 @@
 use thiserror::Error;
 
 #[derive(Debug, Error)]
-pub enum CodeAtlasError {
+pub enum UveddiError {
     #[error("Path not found: {0}")]
     PathNotFound(String),
     #[error("Database error: {0}")]

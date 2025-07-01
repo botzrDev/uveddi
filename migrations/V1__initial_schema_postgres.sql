@@ -1,5 +1,5 @@
 -- V1__initial_schema_postgres.sql
--- Initial PostgreSQL schema for CodeAtlas backend
+-- Initial PostgreSQL schema for Uveddi backend
 -- Generated on 2025-06-30
 
 -- Organization table

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Script to run the FastAPI backend for CodeAtlas
+# Script to run the FastAPI backend for Uveddi
 
 # Change to the backend directory
 cd "$(dirname "$0")"
@@ -9,7 +9,7 @@ set -a
 source .env
 set +a
 
-echo "Starting CodeAtlas FastAPI backend..."
+echo "Starting Uveddi FastAPI backend..."
 
 # Check if uvicorn is installed
 if ! command -v uvicorn &> /dev/null; then

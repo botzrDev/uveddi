@@ -2,8 +2,8 @@
 
 #[cfg(test)]
 mod tests {
-    use codeatlas::ai::prompts::prompt_templates;
-    use codeatlas::database::models::ArchitecturalIssue;
+    use uveddi::ai::prompts::prompt_templates;
+    use uveddi::database::models::ArchitecturalIssue;
 
     #[test]
     fn prompt_template_renders_correctly() {
@@ -27,8 +27,8 @@ mod tests {
 
     #[tokio::test]
     async fn ai_explanation_integration() {
-        use codeatlas::ai::engine::AiAnalysisEngine;
-        use codeatlas::ast::CustomAst;
+        use uveddi::ai::engine::AiAnalysisEngine;
+        use uveddi::ast::CustomAst;
         let mut issue = ArchitecturalIssue {
             issue_id: None,
             analysis_run_id: 1,
@@ -52,8 +52,8 @@ mod tests {
 
     #[tokio::test]
     async fn ai_fallback_on_missing_key() {
-        use codeatlas::ai::engine::AiAnalysisEngine;
-        use codeatlas::ast::CustomAst;
+        use uveddi::ai::engine::AiAnalysisEngine;
+        use uveddi::ast::CustomAst;
         let mut issue = ArchitecturalIssue {
             issue_id: None,
             analysis_run_id: 1,

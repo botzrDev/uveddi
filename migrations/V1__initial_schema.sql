@@ -1,5 +1,5 @@
 -- V1__initial_schema.sql
--- Initial SQLite schema for CodeAtlas local database
+-- Initial SQLite schema for Uveddi local database
 
 -- AntiPatternType table (catalog of predefined patterns)
 CREATE TABLE anti_pattern_types (

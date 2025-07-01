@@ -1,7 +1,7 @@
-# CodeAtlas Dockerized Local AI Integration: Engineering Log
+# Uveddi Dockerized Local AI Integration: Engineering Log
 
 ## Overview
-This document outlines the steps taken to enable fully automated, reproducible testing and usage of CodeAtlas with local AI (Ollama + DeepSeek-Coder) in a Docker environment. The goal is to allow robust local and CI testing of CodeAtlas's AI Reasoning Engine without requiring any host-side AI setup.
+This document outlines the steps taken to enable fully automated, reproducible testing and usage of Uveddi with local AI (Ollama + DeepSeek-Coder) in a Docker environment. The goal is to allow robust local and CI testing of Uveddi's AI Reasoning Engine without requiring any host-side AI setup.
 
 ---
 
@@ -14,12 +14,12 @@ This document outlines the steps taken to enable fully automated, reproducible t
   - Starts Ollama server
   - Waits for readiness
   - Pulls DeepSeek-Coder model
-  - Runs all CodeAtlas tests
+  - Runs all Uveddi tests
   - Drops to a shell for interactive use
 
 ---
 
-## 2. Rust CLI (CodeAtlas) AI Provider Logic
+## 2. Rust CLI (Uveddi) AI Provider Logic
 - **AI Reasoning Engine:**
   - Supports multiple providers: OpenAI, Ollama, Anthropic, Gemini.
   - CLI (`AnalyzeCommand`) now auto-configures Ollama as the AI provider if `--enable-ai` is set and no OpenAI key is provided.
@@ -39,11 +39,11 @@ This document outlines the steps taken to enable fully automated, reproducible t
 ## 4. Usage Instructions (as documented in README)
 - **Build Docker Image:**
   ```bash
-  docker build -t codeatlas-local-ai .
+  docker build -t uveddi-local-ai .
   ```
 - **Run Container:**
   ```bash
-  docker run -it --rm codeatlas-local-ai
+  docker run -it --rm uveddi-local-ai
   ```
 - **Run Analysis with Local AI:**
   ```bash
@@ -71,4 +71,4 @@ This document outlines the steps taken to enable fully automated, reproducible t
 
 ---
 
-*This document is auto-generated as part of the CodeAtlas engineering workflow.*
+*This document is auto-generated as part of the Uveddi engineering workflow.*

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Based on the project documentation and ERD analysis, Sprint 2 represents a critical architectural expansion phase. This sprint transforms CodeAtlas from a simple cyclic dependency detector into a multi-language AST-powered analysis engine with AI integration.
+Based on the project documentation and ERD analysis, Sprint 2 represents a critical architectural expansion phase. This sprint transforms Uveddi from a simple cyclic dependency detector into a multi-language AST-powered analysis engine with AI integration.
 
 ## Key Observations
 
@@ -437,7 +437,7 @@ impl ReportGenerator {
 
     fn generate_header(&self, analysis_run: &AnalysisRun, issues: &[ArchitecturalIssue]) -> String {
         format!(
-            r#"# CodeAtlas Analysis Report
+            r#"# Uveddi Analysis Report
 
 **Analysis ID:** {}
 **Start Time:** {}

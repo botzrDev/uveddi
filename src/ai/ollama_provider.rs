@@ -1,4 +1,4 @@
-//! OllamaProvider: Local LLM integration for CodeAtlas
+//! OllamaProvider: Local LLM integration for Uveddi
 
 use serde::{Deserialize, Serialize};
 use reqwest::Client;

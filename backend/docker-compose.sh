@@ -1,10 +1,10 @@
 #!/bin/bash
-# Script to run the CodeAtlas backend with Docker Compose
+# Script to run the Uveddi backend with Docker Compose
 
 # Change to the backend directory
 cd "$(dirname "$0")"
 
-echo "Starting CodeAtlas backend with Docker Compose..."
+echo "Starting Uveddi backend with Docker Compose..."
 
 # Check if Docker Compose is installed
 if ! command -v docker-compose &> /dev/null; then
@@ -18,9 +18,9 @@ if [ "$1" == "db-only" ]; then
     echo "Starting PostgreSQL container only..."
     docker-compose up -d postgres
     echo "PostgreSQL is running at localhost:5433 (mapped from container port 5432)"
-    echo "User: codeatlas"
-    echo "Password: codeatlas"
-    echo "Database: codeatlas"
+    echo "User: uveddi"
+    echo "Password: uveddi"
+    echo "Database: uveddi"
     exit 0
 fi
 

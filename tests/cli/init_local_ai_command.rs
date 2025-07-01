@@ -1,6 +1,6 @@
 //! tests/cli/init_local_ai_command.rs
 
-use codeatlas::cli::init_local_ai_command::{InitLocalAiCommand, LocalAiSetup};
+use uveddi::cli::init_local_ai_command::{InitLocalAiCommand, LocalAiSetup};
 use async_trait::async_trait;
 use mockall::mock;
 

@@ -33,9 +33,9 @@ Cargo.lock
 /docs/book/
 
 # Ignore local SQLite database and related files
-.codeatlas/
+.uveddi/
 
 # If config/ or plugins/ contain only generated or environment-specific files, uncomment below lines.
 # /config/
 # /plugins/
-.codeatlas_cache/
+.uveddi_cache/

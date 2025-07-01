@@ -1,5 +1,5 @@
 #!/bin/bash
-# Script to run Alembic migrations for CodeAtlas backend
+# Script to run Alembic migrations for Uveddi backend
 
 # Change to the backend directory
 cd "$(dirname "$0")"
@@ -9,7 +9,7 @@ set -a
 source .env
 set +a
 
-echo "Running Alembic migrations for CodeAtlas backend..."
+echo "Running Alembic migrations for Uveddi backend..."
 
 # Check if alembic is installed
 if ! command -v alembic &> /dev/null; then

@@ -1,5 +1,5 @@
 
-Optimizing AST Disk Cache Performance in CodeAtlas: A Comparative Analysis and Recommendation
+Optimizing AST Disk Cache Performance in Uveddi: A Comparative Analysis and Recommendation
 
 
 1.0 Executive Summary
@@ -7,7 +7,7 @@ Optimizing AST Disk Cache Performance in CodeAtlas: A Comparative Analysis and R
 
 Problem Statement
 
-The CodeAtlas platform, a sophisticated tool for large-scale source code analysis, currently experiences significant performance bottlenecks related to its Abstract Syntax Tree (AST) disk cache. When a file's AST is not present in the cache, the system must re-parse the source file from disk. This re-parsing latency, especially for large or syntactically complex codebases, degrades the user experience by increasing analysis startup times and reducing overall system responsiveness. The current caching strategy is insufficient to meet the performance demands of modern, large-scale software development environments.
+The Uveddi platform, a sophisticated tool for large-scale source code analysis, currently experiences significant performance bottlenecks related to its Abstract Syntax Tree (AST) disk cache. When a file's AST is not present in the cache, the system must re-parse the source file from disk. This re-parsing latency, especially for large or syntactically complex codebases, degrades the user experience by increasing analysis startup times and reducing overall system responsiveness. The current caching strategy is insufficient to meet the performance demands of modern, large-scale software development environments.
 
 Investigative Scope
 
@@ -21,13 +21,13 @@ Key Findings
 The investigation yielded several critical findings that inform the final recommendation:
 Direct serialization of tree-sitter::Tree objects is fundamentally infeasible. These objects are not self-contained Rust data structures but are opaque wrappers around C pointers (Foreign Function Interface, or FFI, handles). They are inextricably linked to the lifetime and memory layout of the original source text and the C library's internal state, making them non-portable and unserializable.
 Caching a custom, Rust-native AST provides a robust and high-performance solution. By transforming the tree-sitter CST into an idiomatic Rust data structure, we gain the ability to use highly efficient binary serialization formats. This approach offers a powerful balance of performance, architectural flexibility, and manageable implementation complexity.
-Caching pre-computed analysis results, while offering the fastest cache-hit performance for known queries, introduces severe architectural rigidity. This strategy tightly couples the cache's structure to the application's current feature set, making it prohibitively expensive to introduce new, ad-hoc analyses in the future. It is therefore unsuitable as a general-purpose caching strategy for a dynamic platform like CodeAtlas.
+Caching pre-computed analysis results, while offering the fastest cache-hit performance for known queries, introduces severe architectural rigidity. This strategy tightly couples the cache's structure to the application's current feature set, making it prohibitively expensive to introduce new, ad-hoc analyses in the future. It is therefore unsuitable as a general-purpose caching strategy for a dynamic platform like Uveddi.
 
 Core Recommendation
 
 Based on a thorough analysis of performance trade-offs, architectural implications, and implementation feasibility, this report makes a clear and unequivocal recommendation:
-CodeAtlas should implement an AST caching strategy based on transforming tree-sitter Concrete Syntax Trees into a custom, semantically-focused, Rust-native Abstract Syntax Tree. This custom AST should then be serialized to the disk cache using a high-performance binary format, with Bincode being the preferred choice.
-This strategy effectively eliminates the re-parsing bottleneck, providing near-instantaneous cache-hit load times. Crucially, it preserves the architectural flexibility required for CodeAtlas to evolve, allowing for the future development of new and varied code analyses without requiring costly, full-project re-processing.
+Uveddi should implement an AST caching strategy based on transforming tree-sitter Concrete Syntax Trees into a custom, semantically-focused, Rust-native Abstract Syntax Tree. This custom AST should then be serialized to the disk cache using a high-performance binary format, with Bincode being the preferred choice.
+This strategy effectively eliminates the re-parsing bottleneck, providing near-instantaneous cache-hit load times. Crucially, it preserves the architectural flexibility required for Uveddi to evolve, allowing for the future development of new and varied code analyses without requiring costly, full-project re-processing.
 
 2.0 Foundational Analysis: The Challenge of tree-sitter Tree Serialization
 
@@ -66,7 +66,7 @@ Given the infeasibility of directly serializing tree-sitter's internal data stru
 
 The proposed strategy decouples the parsing and caching stages into two distinct phases:
 Phase 1: Parsing (CST Generation): Utilize tree-sitter for its primary strength: rapidly and robustly parsing raw source text into a Concrete Syntax Tree (CST). The CST is a high-fidelity representation of the source, including all tokens, whitespace, and comments, and is remarkably resilient to syntax errors.2
-Phase 2: Transformation (AST Generation): After parsing, traverse the tree-sitter CST to build a separate, Rust-native Abstract Syntax Tree (AST). This custom AST is designed specifically for the analytical needs of CodeAtlas, containing only semantically relevant information and structured as an idiomatic Rust enum or set of structs.
+Phase 2: Transformation (AST Generation): After parsing, traverse the tree-sitter CST to build a separate, Rust-native Abstract Syntax Tree (AST). This custom AST is designed specifically for the analytical needs of Uveddi, containing only semantically relevant information and structured as an idiomatic Rust enum or set of structs.
 This two-phase pattern is a well-established practice in the high-performance tooling space. Projects like luau-ast-rs explicitly describe using tree-sitter as a "lexer" or first-pass parser to feed their own custom AST construction logic.13 Similarly, the
 oxc toolchain for JavaScript 14 and the structural search tool
 ast-grep 15 build their own tree representations on top of
@@ -75,7 +75,7 @@ Adopting this approach of decoupling the cached artifact from tree-sitter's C li
 Trivial Serialization: The Rust-native AST can easily derive serde::{Serialize, Deserialize}, making it compatible with a wide range of serialization formats.
 Memory Safety: All interactions with the cached data occur within the safety guarantees of the Rust compiler, completely eliminating FFI-related risks like dangling pointers or memory corruption.
 Performance Optimization: The custom AST can be designed for optimal memory layout and traversal speed. It can omit details from the CST (like whitespace or punctuation nodes) that are irrelevant for semantic analysis, resulting in a more compact and efficient in-memory representation.
-Architectural Maintainability: The AST definition is owned and controlled by the CodeAtlas team. It can evolve to meet new requirements without being constrained by changes to tree-sitter's internal C implementation, ensuring long-term stability and adaptability.
+Architectural Maintainability: The AST definition is owned and controlled by the Uveddi team. It can evolve to meet new requirements without being constrained by changes to tree-sitter's internal C implementation, ensuring long-term stability and adaptability.
 
 3.2 Implementation Model: Building the Custom AST
 
@@ -204,7 +204,7 @@ Cons: JSON is notoriously verbose. Serializing a complex AST will result in larg
 Bincode
 Pros: Bincode is designed for maximum performance. It produces an extremely compact binary representation of Rust data structures. The serialization and deserialization processes are exceptionally fast, often approaching the speed of a raw memory copy (memcpy). For performance-critical applications, binary formats are the clear choice.20
 Cons: The primary drawback is that the output is not human-readable, which can make debugging cache files challenging. It is also sensitive to changes in the data structure definitions between application versions, necessitating a robust cache versioning and invalidation strategy.
-Recommendation for CodeAtlas:
+Recommendation for Uveddi:
 Given that the central objective is to maximize performance and minimize latency, Bincode is the strongly recommended serialization format. The disadvantage of its unreadability can be effectively mitigated by developing a small, internal command-line utility. This tool would be capable of reading a Bincode-encoded cache file and pretty-printing its contents as JSON on demand, providing the best of both worlds: maximum performance in production and debuggability when required.
 
 4.0 Strategy B: Caching Pre-Computed Analysis Results
@@ -229,9 +229,9 @@ High Initial Processing Cost: This strategy does not reduce the cost of the init
 
 4.3 Architectural Implications and Trade-offs
 
-While offering potential performance benefits for cache hits, this strategy introduces significant architectural drawbacks that make it ill-suited for a platform like CodeAtlas.
+While offering potential performance benefits for cache hits, this strategy introduces significant architectural drawbacks that make it ill-suited for a platform like Uveddi.
 The most severe issue is the architectural rigidity trap. This strategy creates a tight, brittle coupling between the structure of the cached data and the application's current set of analytical features. Consider the following scenario:
-Initially, CodeAtlas is designed to analyze two things: a list of dependencies and a set of security vulnerabilities. The cache is designed to store structs representing these two result types.
+Initially, Uveddi is designed to analyze two things: a list of dependencies and a set of security vulnerabilities. The cache is designed to store structs representing these two result types.
 A new feature request arrives: "Find all // TODO: comments in the codebase."
 This new feature cannot leverage the existing cache. The cache contains dependency lists and vulnerability reports, not information about comments. To implement this feature, the system would have to discard the cache for every file, trigger a full re-parse across the entire project, and run a new tree-sitter query to find the comments.
 In contrast, with Strategy A (caching the custom AST), this new feature would be trivial to implement. It would simply load the pre-existing, full-fidelity AST from the cache for each file and run a new, lightweight query against the in-memory tree—a dramatically faster and more efficient operation.
@@ -264,7 +264,7 @@ Memory: Peak resident set size (RSS) during the operation, measured in megabytes
 
 5.2 Baseline Performance (Current Approach: Re-parsing)
 
-This benchmark quantifies the performance of CodeAtlas's current approach, which involves reading the file from disk and parsing it from scratch on every analysis request. The results clearly establish the performance bottleneck that needs to be addressed.
+This benchmark quantifies the performance of Uveddi's current approach, which involves reading the file from disk and parsing it from scratch on every analysis request. The results clearly establish the performance bottleneck that needs to be addressed.
 
 File Descriptor
 File Size (KB)
@@ -369,15 +369,15 @@ Cache Hit Performance: Both caching strategies offer a dramatic improvement over
 Bincode vs. JSON: Bincode consistently outperforms JSON in every metric. It is significantly faster for both serialization (reflected in the lower miss time) and deserialization (hit time). Most importantly, the resulting cache size is 4-5x smaller than JSON, which reduces disk I/O and storage costs.
 Cache Miss Overhead: As expected, creating the cache entry is more expensive than simply parsing. The parse -> transform -> serialize pipeline for the Custom AST strategy adds a noticeable overhead (~25-35%) on the first run. However, this is a one-time cost per file version, which is an acceptable trade-off for the massive gains on subsequent hits.
 Strategy A vs. Strategy B: While Strategy B (Analysis Results) has the fastest hit times and smallest cache size, its miss time is only marginally better than the baseline. This is because it still requires a full parse and query execution. Given its severe architectural limitations, the slight performance edge on cache hits does not justify sacrificing the flexibility that Strategy A provides.
-The empirical data overwhelmingly supports the conclusion that caching a custom AST serialized with Bincode offers the best combination of performance, efficiency, and architectural soundness for CodeAtlas.
+The empirical data overwhelmingly supports the conclusion that caching a custom AST serialized with Bincode offers the best combination of performance, efficiency, and architectural soundness for Uveddi.
 
-6.0 Final Recommendation for CodeAtlas
+6.0 Final Recommendation for Uveddi
 
 
 6.1 Recommended Strategy: Custom Serializable AST with Bincode
 
-Based on the foundational analysis of tree-sitter's architecture and the conclusive results of the performance benchmarks, the unequivocal recommendation for CodeAtlas is to implement a disk caching strategy centered on a custom, serializable, Rust-native Abstract Syntax Tree, using Bincode as the serialization format.
-This strategy directly addresses the core problem of re-parsing latency while providing a robust and future-proof architecture. It avoids the technical impossibilities of direct tree-sitter::Tree serialization detailed in Section 2.0. The benchmark data in Section 5.0 demonstrates that this approach yields a performance improvement of over an order of magnitude on cache hits compared to the current baseline. Most critically, it retains full architectural flexibility, a weakness that makes the alternative of caching pre-computed analysis results (Section 4.0) unsuitable for a dynamic, evolving platform like CodeAtlas. The choice of Bincode over text-based formats like JSON is justified by its superior performance and dramatically smaller storage footprint, as shown in the comparative benchmarks.
+Based on the foundational analysis of tree-sitter's architecture and the conclusive results of the performance benchmarks, the unequivocal recommendation for Uveddi is to implement a disk caching strategy centered on a custom, serializable, Rust-native Abstract Syntax Tree, using Bincode as the serialization format.
+This strategy directly addresses the core problem of re-parsing latency while providing a robust and future-proof architecture. It avoids the technical impossibilities of direct tree-sitter::Tree serialization detailed in Section 2.0. The benchmark data in Section 5.0 demonstrates that this approach yields a performance improvement of over an order of magnitude on cache hits compared to the current baseline. Most critically, it retains full architectural flexibility, a weakness that makes the alternative of caching pre-computed analysis results (Section 4.0) unsuitable for a dynamic, evolving platform like Uveddi. The choice of Bincode over text-based formats like JSON is justified by its superior performance and dramatically smaller storage footprint, as shown in the comparative benchmarks.
 
 6.2 Summary of Pros and Cons
 
@@ -387,7 +387,7 @@ Pros:
 Blazing Fast Cache Hits: Loading and deserializing a Bincode-encoded AST is orders of magnitude faster than re-parsing a source file from text, effectively eliminating the primary performance bottleneck.
 Architectural Flexibility: The cache stores a full, semantic representation of the source file. This allows new, unforeseen analyses to be developed and run on cached ASTs without forcing a costly, full-project re-scan. This makes the system extensible and future-proof.
 Type Safety and Ergonomics: Downstream analysis modules interact with a strongly-typed, idiomatic Rust enum, enabling compiler-checked correctness and improving developer ergonomics compared to working with tree-sitter's string-based kind() API.
-Decoupling from FFI: The cache format is entirely independent of tree-sitter's internal C implementation. This insulates CodeAtlas from potential breaking changes in the underlying library and removes all FFI-related safety concerns from the cache-handling code.
+Decoupling from FFI: The cache format is entirely independent of tree-sitter's internal C implementation. This insulates Uveddi from potential breaking changes in the underlying library and removes all FFI-related safety concerns from the cache-handling code.
 
 Cons:
 
@@ -401,7 +401,7 @@ To translate this recommendation into an actionable plan, the following phased i
 
 Phase 1: AST and Transformer Definition (Sprints 1-2)
 
-Task 1.1: Collaboratively design and define the initial version of the Rust-native AstNode enum and its constituent structs. The initial scope should cover all syntactic constructs required by CodeAtlas's current analysis features.
+Task 1.1: Collaboratively design and define the initial version of the Rust-native AstNode enum and its constituent structs. The initial scope should cover all syntactic constructs required by Uveddi's current analysis features.
 Task 1.2: Implement the CST-to-AST transformer module. This will contain the core recursive logic for walking the tree-sitter tree and building our custom AST.
 Task 1.3: Integrate an arena allocator (e.g., bumpalo) into the transformation process to optimize performance and memory usage during AST construction.
 Task 1.4: Develop a comprehensive suite of unit tests for the transformer, ensuring that various source code snippets are correctly transformed into the expected AST structures.
@@ -413,7 +413,7 @@ Task 2.2: Design and implement a robust cache keying and invalidation strategy. 
 
 Phase 3: Refactor Downstream Consumers (Sprint 4+)
 
-Task 3.1: Identify all modules within CodeAtlas that currently invoke the tree-sitter parser directly.
+Task 3.1: Identify all modules within Uveddi that currently invoke the tree-sitter parser directly.
 Task 3.2: Incrementally refactor these modules to instead request an AST from the new cache manager. Their analysis logic will be updated to operate on the deserialized AstNode enum instead of the tree_sitter::Node object.
 
 Phase 4: Tooling and Monitoring (Ongoing)

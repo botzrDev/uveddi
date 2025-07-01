@@ -9,7 +9,7 @@ use std::io::{Read, Write};
 
 pub mod queries;
 
-const CACHE_DIR: &str = ".codeatlas_cache";
+const CACHE_DIR: &str = ".uveddi_cache";
 
 /// Multi-language AST parser for Rust, Python, and JavaScript/TypeScript using tree-sitter.
 /// - Caches ASTs in-memory for performance.

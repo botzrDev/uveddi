@@ -2,10 +2,10 @@
 
 #[cfg(test)]
 mod tests {
-    use codeatlas::analysis::cycle_detector::CycleDetector;
-    use codeatlas::analysis::dependency_graph::DependencyGraph;
-    use codeatlas::analysis::dependency_extractor::DependencyExtractor;
-    use codeatlas::ast::tree_sitter::AstParser;
+    use uveddi::analysis::cycle_detector::CycleDetector;
+    use uveddi::analysis::dependency_graph::DependencyGraph;
+    use uveddi::analysis::dependency_extractor::DependencyExtractor;
+    use uveddi::ast::tree_sitter::AstParser;
     use tempfile::tempdir;
     use std::fs::File;
     use std::io::Write;
@@ -111,7 +111,7 @@ mod tests {
         let mut detector = CycleDetector::new();
         let cycles = detector.detect_cycles(&graph);
         // Instead of issues_from_cycles, use from_cycle from database::models
-        use codeatlas::database::models::ArchitecturalIssue;
+        use uveddi::database::models::ArchitecturalIssue;
         let issue = ArchitecturalIssue::from_cycle(cycles.cycles[0].clone(), &graph);
 
         assert_eq!(issue.severity, "low");

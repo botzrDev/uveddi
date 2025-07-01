@@ -1,20 +1,20 @@
 
-Architecting a Secure and Performant Plugin System for CodeAtlas with WebAssembly
+Architecting a Secure and Performant Plugin System for Uveddi with WebAssembly
 
 Executive Summary
-CodeAtlas requires a plugin architecture that enables safe, third-party extensibility without compromising the core application's security or performance. This report provides a comprehensive architectural blueprint for achieving this using WebAssembly (WASM). The analysis concludes with a set of strategic recommendations designed to provide CodeAtlas with a robust, scalable, and future-proof plugin ecosystem.
+Uveddi requires a plugin architecture that enables safe, third-party extensibility without compromising the core application's security or performance. This report provides a comprehensive architectural blueprint for achieving this using WebAssembly (WASM). The analysis concludes with a set of strategic recommendations designed to provide Uveddi with a robust, scalable, and future-proof plugin ecosystem.
 The primary recommendation is the adoption of the Wasmtime runtime. This choice is predicated on its security-first design philosophy, transparent development practices, leadership in emerging WASM standards, and the stable backing of the Bytecode Alliance. While other runtimes may offer higher peak performance in specific benchmarks, Wasmtime provides the optimal balance of security, performance, and long-term strategic alignment for an enterprise-grade system.
 For inter-module communication, this report recommends architecting around the WebAssembly Component Model. This emerging standard automates the complex and error-prone task of data exchange across the host-guest boundary, offering both high performance and superior developer experience. For the specialized task of handling large, complex data structures like Abstract Syntax Trees (ASTs), a hybrid approach is advised: using the Component Model for API control flow and the Apache Arrow IPC format for structuring bulk data within shared memory buffers.
 The security of the plugin system will be ensured through a multi-layered, defense-in-depth framework. This framework begins with a capability-based security model founded on the "deny-by-default" principle, implemented via the WebAssembly System Interface (WASI). This is reinforced by a rigorous plugin verification pipeline that includes static analysis of WASM bytecode, digital signature verification for authenticity and integrity, and strict manifest validation. At runtime, plugins will be further constrained by deterministic resource limits, including instruction-counting ("fuel") to prevent denial-of-service attacks and strict memory caps.
-Finally, to meet the stringent performance requirement of operating within 30% of native code overhead, a holistic optimization strategy is essential. This strategy includes designing "chunky" APIs to minimize boundary-crossing costs, implementing a persistent Ahead-of-Time (AOT) compilation cache to ensure near-instantaneous plugin startup, and leveraging Rust's memory efficiency for plugin development. By following these integrated recommendations, CodeAtlas can build a powerful extensibility platform that fosters community contribution while rigorously upholding the integrity and performance of its core application.
+Finally, to meet the stringent performance requirement of operating within 30% of native code overhead, a holistic optimization strategy is essential. This strategy includes designing "chunky" APIs to minimize boundary-crossing costs, implementing a persistent Ahead-of-Time (AOT) compilation cache to ensure near-instantaneous plugin startup, and leveraging Rust's memory efficiency for plugin development. By following these integrated recommendations, Uveddi can build a powerful extensibility platform that fosters community contribution while rigorously upholding the integrity and performance of its core application.
 
 Section 1: Foundational Runtime Analysis: A Comparative Study of Rust-Compatible WASM Runtimes
 
-The selection of a WebAssembly runtime is the most critical architectural decision for the CodeAtlas plugin system. It dictates the foundation upon which all security, performance, and interoperability features will be built. This section provides a multi-faceted comparative analysis of the three leading Rust-compatible runtimes: Wasmtime, Wasmer, and WasmEdge. The evaluation focuses on performance characteristics, security posture, and the broader ecosystem to provide a definitive, data-driven recommendation for CodeAtlas.
+The selection of a WebAssembly runtime is the most critical architectural decision for the Uveddi plugin system. It dictates the foundation upon which all security, performance, and interoperability features will be built. This section provides a multi-faceted comparative analysis of the three leading Rust-compatible runtimes: Wasmtime, Wasmer, and WasmEdge. The evaluation focuses on performance characteristics, security posture, and the broader ecosystem to provide a definitive, data-driven recommendation for Uveddi.
 
 1.1. Performance Benchmarking: Execution Speed, Compilation, and Memory
 
-The performance of a WASM runtime is not a single metric but a complex interplay of execution speed, compilation strategy, and memory consumption. Achieving the CodeAtlas success criterion of plugin execution within 30% overhead of native Rust code requires a nuanced understanding of these factors.
+The performance of a WASM runtime is not a single metric but a complex interplay of execution speed, compilation strategy, and memory consumption. Achieving the Uveddi success criterion of plugin execution within 30% overhead of native Rust code requires a nuanced understanding of these factors.
 
 1.1.1. Analysis of Execution Speed
 
@@ -28,19 +28,19 @@ Achieving the Target: The goal of staying within a 30% performance overhead (equ
 1.1.2. Analysis of Compilation Strategies (AOT vs. JIT)
 
 The method and timing of compilation are critical for a plugin system, directly influencing startup latency and predictability.
-Ahead-of-Time (AOT) vs. Just-in-Time (JIT): AOT compilation involves translating the entire WASM module to native machine code before it is executed for the first time. This approach, favored by server-side runtimes like Wasmtime and Wasmer, results in predictable and stable performance from the outset, as the expensive compilation step is done upfront.9 In contrast, JIT compilation occurs during program execution. While this allows for dynamic optimizations based on runtime behavior, it introduces a "warm-up" period where initial execution is slower, and it consumes more memory to store intermediate representations and profiling data.8 For the CodeAtlas plugin system, where predictable startup is crucial, AOT is the superior strategy.
+Ahead-of-Time (AOT) vs. Just-in-Time (JIT): AOT compilation involves translating the entire WASM module to native machine code before it is executed for the first time. This approach, favored by server-side runtimes like Wasmtime and Wasmer, results in predictable and stable performance from the outset, as the expensive compilation step is done upfront.9 In contrast, JIT compilation occurs during program execution. While this allows for dynamic optimizations based on runtime behavior, it introduces a "warm-up" period where initial execution is slower, and it consumes more memory to store intermediate representations and profiling data.8 For the Uveddi plugin system, where predictable startup is crucial, AOT is the superior strategy.
 Compilation Speed: There is a significant performance differential between compiler backends. Cranelift is designed for speed, enabling very fast module compilation. LLVM, while producing more optimized code, is orders of magnitude slower to compile.1 This makes Cranelift particularly well-suited for environments where plugins are loaded dynamically and startup time is a critical user-facing metric.
 AOT Caching: A critical optimization for any AOT-based plugin system is the caching of compiled artifacts. Both Wasmtime and Wasmer support serializing a compiled module to a file. On the first load of a plugin, the system performs the AOT compilation and saves the result. On all subsequent loads of that same plugin, the system can bypass the compilation step entirely by deserializing the cached native code, drastically reducing startup time.1 This pattern is essential for mitigating the "cold start" penalty of AOT compilation, especially if using a slower backend like LLVM.
 
 1.1.3. Analysis of Memory Overhead
 
 WASM execution inherently introduces memory overhead compared to a native process, a factor that must be managed in a multi-plugin environment.
-Runtime Memory Footprint: A simple native Rust program might consume under 2 MB of memory, whereas its WASM counterpart running in Wasmtime could require 12 MB, and in Wasmer, 24 MB.8 This overhead stems from the runtime's need to manage the sandbox, linear memory, and other associated data structures. CodeAtlas must account for this per-plugin overhead in its capacity planning and resource limiting.
+Runtime Memory Footprint: A simple native Rust program might consume under 2 MB of memory, whereas its WASM counterpart running in Wasmtime could require 12 MB, and in Wasmer, 24 MB.8 This overhead stems from the runtime's need to manage the sandbox, linear memory, and other associated data structures. Uveddi must account for this per-plugin overhead in its capacity planning and resource limiting.
 Binary Size: The choice of source language for plugins also affects their footprint. Rust is an excellent choice as it produces highly optimized, small WASM binaries with minimal runtime dependencies. In contrast, languages like Swift can produce binaries that are over four times larger for the same simple program, due to the need to bundle a more substantial language runtime.12
 
 1.2. Security Model and Posture: Sandboxing, Vulnerability Management, and WASI
 
-For CodeAtlas, the security guarantees of the runtime are paramount. The analysis reveals significant differences in the security philosophy and practices of the leading runtimes.
+For Uveddi, the security guarantees of the runtime are paramount. The analysis reveals significant differences in the security philosophy and practices of the leading runtimes.
 Wasmtime's Security-First Approach: Wasmtime, developed under the governance of the Bytecode Alliance, has an explicit and demonstrable focus on security and correctness.13
 Defense-in-Depth: Beyond the standard WASM sandbox, Wasmtime implements multiple additional layers of protection. These include placing a 2 GB guard region before a module's linear memory to protect against potential compiler bugs that could lead to out-of-bounds access, using guard pages on native thread stacks to detect overflows, and systematically zeroing memory after an instance is dropped to prevent data leakage between plugins.16
 Supply Chain Security: Wasmtime is a notable adopter of cargo vet, a tool for methodically auditing every third-party dependency. This practice provides strong protection against supply chain attacks, a critical concern for any enterprise system.13
@@ -51,7 +51,7 @@ WasmEdge's Security Model: As a Cloud Native Computing Foundation (CNCF) project
 
 1.3. Ecosystem, API, and Strategic Alignment
 
-The long-term viability of the CodeAtlas plugin system depends on the health of the chosen runtime's ecosystem and its alignment with future standards.
+The long-term viability of the Uveddi plugin system depends on the health of the chosen runtime's ecosystem and its alignment with future standards.
 Community and Corporate Backing: The organizational structure behind a runtime is a strong indicator of its long-term trajectory.
 Wasmtime is backed by the Bytecode Alliance, a non-profit foundation with members including Mozilla, Fastly, Intel, and Red Hat.3 This diverse, collaborative backing suggests a focus on creating a stable, open standard rather than a specific commercial product, reducing the risk of vendor lock-in or sudden strategic pivots.
 Wasmer is a commercial entity. While this drives innovation in features and broad language support, it also ties the future of the runtime to the success and strategic direction of a single company.8
@@ -61,13 +61,13 @@ Wasmtime's Rust API is specifically designed to be ergonomic and safe, guarantee
 Wasmer also provides extensive language bindings and is designed to be embeddable.2 However, its history suggests a greater propensity for API changes as the product evolves.32
 WasmEdge's C++ core means that its Rust SDK is a wrapper around a C FFI boundary.25 This introduces an additional layer of complexity and potential for impedance mismatch compared to the pure-Rust runtimes.
 Alignment with Emerging Standards: The WebAssembly ecosystem is rapidly evolving. Aligning with emerging standards like the WebAssembly Component Model is crucial for future-proofing the architecture.
-Wasmtime and the Bytecode Alliance are the primary drivers of the Component Model and the WASI Preview 2 specification.34 Choosing Wasmtime inherently aligns CodeAtlas with the core group defining the future of interoperable WASM.
+Wasmtime and the Bytecode Alliance are the primary drivers of the Component Model and the WASI Preview 2 specification.34 Choosing Wasmtime inherently aligns Uveddi with the core group defining the future of interoperable WASM.
 Wasmer has historically taken a more pragmatic approach, sometimes creating its own non-standard extensions, such as WASIX, to meet immediate user needs that the standards process has not yet addressed (e.g., adding a fork() syscall).35 While this provides more features today, it creates a risk of fragmentation and divergence from the main standards track.
 
 1.4. Runtime Comparison Summary
 
 The choice of runtime is not merely a technical selection but a strategic commitment to a particular development philosophy and ecosystem. A purely performance-based comparison is misleading. For instance, claims of superior speed often hinge on using an LLVM backend, which comes with a severe compile-time penalty—a critical factor for a dynamic plugin system.1 When comparing like-for-like compiler backends (Cranelift), Wasmtime and Wasmer show very similar performance profiles.7
-Therefore, the decision must be based on a more holistic view that prioritizes the non-functional requirements essential for an enterprise system like CodeAtlas. The stark contrast in security posture becomes a deciding factor. Wasmtime's commitment to a security-first development process—evidenced by its defense-in-depth mechanisms, supply chain auditing, formal verification efforts, and, most importantly, transparent vulnerability disclosure—provides a level of assurance that is critical for a platform that will run untrusted third-party code. This stands in contrast to the more opaque security processes of other runtimes. Aligning with Wasmtime also means aligning with the community-driven, standards-first approach of the Bytecode Alliance, which minimizes long-term architectural risk and ensures compatibility with the future of WebAssembly.
+Therefore, the decision must be based on a more holistic view that prioritizes the non-functional requirements essential for an enterprise system like Uveddi. The stark contrast in security posture becomes a deciding factor. Wasmtime's commitment to a security-first development process—evidenced by its defense-in-depth mechanisms, supply chain auditing, formal verification efforts, and, most importantly, transparent vulnerability disclosure—provides a level of assurance that is critical for a platform that will run untrusted third-party code. This stands in contrast to the more opaque security processes of other runtimes. Aligning with Wasmtime also means aligning with the community-driven, standards-first approach of the Bytecode Alliance, which minimizes long-term architectural risk and ensures compatibility with the future of WebAssembly.
 Criterion
 Wasmtime
 Wasmer
@@ -106,10 +106,10 @@ Medium: Dependent on the roadmap and success of a single commercial vendor.
 Medium: Risk of divergence from core WASM standards due to focus on cloud-native extensions.
 
 
-1.5. Recommendation for CodeAtlas
+1.5. Recommendation for Uveddi
 
-Based on this comprehensive analysis, Wasmtime is the unequivocally recommended runtime for the CodeAtlas plugin system.
-This recommendation is justified by Wasmtime's superior and transparent security posture, which is a non-negotiable requirement for a system that executes third-party code. Its leadership in developing and adopting the WebAssembly Component Model ensures that CodeAtlas will be building on a future-proof foundation. The backing of the Bytecode Alliance provides stability and mitigates the risks associated with dependency on a single vendor. While Wasmtime forgoes the absolute peak performance offered by an LLVM backend, its Cranelift compiler provides an excellent balance of fast plugin load times and high-quality runtime performance that is well-suited to the dynamic nature of a plugin architecture. This combination of security, standards alignment, and balanced performance makes Wasmtime the most prudent and powerful choice for CodeAtlas.
+Based on this comprehensive analysis, Wasmtime is the unequivocally recommended runtime for the Uveddi plugin system.
+This recommendation is justified by Wasmtime's superior and transparent security posture, which is a non-negotiable requirement for a system that executes third-party code. Its leadership in developing and adopting the WebAssembly Component Model ensures that Uveddi will be building on a future-proof foundation. The backing of the Bytecode Alliance provides stability and mitigates the risks associated with dependency on a single vendor. While Wasmtime forgoes the absolute peak performance offered by an LLVM backend, its Cranelift compiler provides an excellent balance of fast plugin load times and high-quality runtime performance that is well-suited to the dynamic nature of a plugin architecture. This combination of security, standards alignment, and balanced performance makes Wasmtime the most prudent and powerful choice for Uveddi.
 
 Section 2: Inter-Module Communication: Protocols and Patterns for Efficient Data Exchange
 
@@ -124,13 +124,13 @@ The Performance Bottleneck: This boundary-crossing, with its associated serializ
 
 2.2. Serialization Format Analysis for Code Analysis Data
 
-The choice of serialization format directly impacts the performance of the data exchange. For CodeAtlas, which deals with potentially large and complex ASTs, this choice is critical.
+The choice of serialization format directly impacts the performance of the data exchange. For Uveddi, which deals with potentially large and complex ASTs, this choice is critical.
 Traditional Formats (JSON, Protobuf):
 JSON: While human-readable and easy to debug, JSON is a text-based format that suffers from significant parsing overhead and a verbose, large memory footprint. It is unsuitable for performance-critical data exchange.43
 Protocol Buffers (Protobuf): As a binary, schema-driven format, Protobuf offers a substantial improvement over JSON. It produces much smaller payloads and is significantly faster to serialize and deserialize. It is a battle-tested and robust choice for many RPC systems.43 However, it still fundamentally relies on a serialize-copy-deserialize workflow, which involves CPU-intensive steps and memory allocation that can be a bottleneck for very large datasets.44
 Zero-Copy Deserialization Formats: This class of formats is designed to eliminate the costly deserialization step. Data is serialized into a specific binary layout that allows the reader to access fields directly from the byte buffer without parsing the entire structure into new memory allocations. This is ideal for read-heavy workloads, which is common in analysis plugins.
 Flatbuffers and rkyv: These are prominent examples of zero-copy formats. They enable extremely fast read access, as they essentially provide a pointer to the data in place.43 The trade-off is often a more complex and less intuitive API for writing or building the data structures, as they are optimized for read speed, not write simplicity.43
-Apache Arrow: Arrow is a specification for a language-agnostic, columnar in-memory data format. It is specifically designed for high-performance, large-scale data processing and analytics.46 Its key advantage for CodeAtlas is its columnar layout, which is highly efficient for querying and accessing subsets of large, structured data like an AST. For example, a plugin could efficiently iterate over all "function declaration" nodes without needing to traverse or deserialize the entire tree. Using Arrow's Inter-Process Communication (IPC) format provides a standardized, zero-copy-capable way to share this complex data between the Rust host and a WASM plugin.46
+Apache Arrow: Arrow is a specification for a language-agnostic, columnar in-memory data format. It is specifically designed for high-performance, large-scale data processing and analytics.46 Its key advantage for Uveddi is its columnar layout, which is highly efficient for querying and accessing subsets of large, structured data like an AST. For example, a plugin could efficiently iterate over all "function declaration" nodes without needing to traverse or deserialize the entire tree. Using Arrow's Inter-Process Communication (IPC) format provides a standardized, zero-copy-capable way to share this complex data between the Rust host and a WASM plugin.46
 
 2.3. The Strategic Solution: The WebAssembly Component Model
 
@@ -143,12 +143,12 @@ The Component Model represents a paradigm shift. Instead of manually optimizing 
 
 2.4. Protocol Comparison and Hybrid Strategy
 
-The choice of a communication protocol is not merely about picking the fastest format; it is a foundational architectural decision that defines the performance ceiling, developer experience, and long-term maintainability of the entire plugin system. A naive approach using traditional serialization like JSON would impose a severe performance penalty due to parsing and copying, making it difficult to meet CodeAtlas's performance goals.43 A zero-copy format like Apache Arrow offers a direct performance optimization, but requires manual integration and management.46
+The choice of a communication protocol is not merely about picking the fastest format; it is a foundational architectural decision that defines the performance ceiling, developer experience, and long-term maintainability of the entire plugin system. A naive approach using traditional serialization like JSON would impose a severe performance penalty due to parsing and copying, making it difficult to meet Uveddi's performance goals.43 A zero-copy format like Apache Arrow offers a direct performance optimization, but requires manual integration and management.46
 The WebAssembly Component Model provides the most robust and future-proof solution. By operating at a higher level of abstraction, it solves the data transfer problem systemically, providing both performance and excellent developer ergonomics.34 It is the clear direction in which the entire WebAssembly ecosystem is moving.
-However, given that the Component Model is still an emerging standard, and that Apache Arrow offers unparalleled efficiency for the specific domain of large-scale data analysis, a hybrid strategy is recommended for CodeAtlas during the transition period. This strategy leverages the strengths of both approaches:
+However, given that the Component Model is still an emerging standard, and that Apache Arrow offers unparalleled efficiency for the specific domain of large-scale data analysis, a hybrid strategy is recommended for Uveddi during the transition period. This strategy leverages the strengths of both approaches:
 Control Plane: Use the Component Model and WIT to define the primary plugin API. This includes functions for registration, configuration, and invoking analysis tasks. This provides a clean, type-safe, and ergonomic interface for all standard interactions.
 Data Plane: For the transfer of very large, performance-critical data payloads like full ASTs, the WIT interface should be designed to pass handles (e.g., simple integer IDs or pointers) that refer to large data blocks residing in the plugin's linear memory. These data blocks should be structured using the highly efficient Apache Arrow IPC format.
-This two-tiered protocol gives CodeAtlas the best of both worlds: the developer-friendly, standardized, and automated glue code of the Component Model for the majority of API interactions, combined with the raw, specialized performance of Apache Arrow for its most demanding data analysis tasks.
+This two-tiered protocol gives Uveddi the best of both worlds: the developer-friendly, standardized, and automated glue code of the Component Model for the majority of API interactions, combined with the raw, specialized performance of Apache Arrow for its most demanding data analysis tasks.
 
 Approach
 Performance (Overhead)
@@ -187,16 +187,16 @@ Excellent (High-level, type-safe)
 Excellent (The future standard)
 
 
-2.5. Protocol Specification for CodeAtlas
+2.5. Protocol Specification for Uveddi
 
-It is recommended that CodeAtlas adopt the WebAssembly Component Model as the primary framework for all plugin interface definitions. For handling large code analysis data, this should be supplemented by using the Apache Arrow IPC format for the data plane.
+It is recommended that Uveddi adopt the WebAssembly Component Model as the primary framework for all plugin interface definitions. For handling large code analysis data, this should be supplemented by using the Apache Arrow IPC format for the data plane.
 A sample WIT file (plugin.wit) demonstrating this hybrid approach could look as follows:
 
 Code snippet
 
 
 // file: plugin.wit
-package codeatlas:plugins
+package uveddi:plugins
 
 // Define the world that our plugins will implement.
 // This world imports host functionality and exports plugin functionality.
@@ -242,7 +242,7 @@ This design is both performant and clean, providing a clear and robust contract 
 
 Section 3: A Multi-Layered Security Architecture for the Plugin Ecosystem
 
-A secure plugin system is non-negotiable. It requires a defense-in-depth strategy that protects the CodeAtlas application and its users at every stage of the plugin lifecycle, from submission and verification to execution and resource management. This section details a multi-layered security architecture founded on the principle of least authority.
+A secure plugin system is non-negotiable. It requires a defense-in-depth strategy that protects the Uveddi application and its users at every stage of the plugin lifecycle, from submission and verification to execution and resource management. This section details a multi-layered security architecture founded on the principle of least authority.
 
 3.1. The Principle of Least Authority: A Capability-Based Security Model
 
@@ -253,7 +253,7 @@ Filesystem Access: Granting read-only or read-write access to specific host dire
 Environment Variables: Passing a curated list of environment variables, preventing leakage of sensitive host information.29
 Networking: Providing pre-opened socket handles for specific, allowed network endpoints.54
 The Role of the Component Model: The Component Model naturally extends this paradigm. The interfaces defined in a WIT file act as a set of capabilities. A plugin component can only interact with the host through the functions it explicitly imports in its world definition.48 The runtime enforces this contract, ensuring that a plugin cannot call an undeclared host function. This provides a high-level, language-agnostic mechanism for enforcing the principle of least authority at the API level.37
-The logic within the CodeAtlas host that configures the WasiCtxBuilder for each plugin is therefore the most security-critical component of the entire architecture. It is the gatekeeper that mints and bestows all authority. This code must be subject to the highest level of scrutiny and testing to ensure it correctly and minimally grants capabilities based on a verified plugin manifest.
+The logic within the Uveddi host that configures the WasiCtxBuilder for each plugin is therefore the most security-critical component of the entire architecture. It is the gatekeeper that mints and bestows all authority. This code must be subject to the highest level of scrutiny and testing to ensure it correctly and minimally grants capabilities based on a verified plugin manifest.
 
 3.1.1. Implementation Guidelines for Capability Scoping
 
@@ -310,9 +310,9 @@ let instance = linker.instantiate(&mut store, &module)?;
 
 Before a plugin is ever executed, it must pass through a rigorous verification pipeline to proactively identify and block threats. This pipeline should be an automated part of the plugin submission and publication process.
 Static Analysis of WASM Bytecode: Many vulnerabilities, especially those inherited from unsafe source languages like C or C++, can be detected by statically analyzing the WASM bytecode itself.58 Tools like
-Wasmati construct a Code Property Graph (CPG) from the binary and use it to query for vulnerability patterns such as integer overflows, buffer overflows, or dangerous uses of imported functions.58 The CodeAtlas plugin ingestion pipeline must integrate such a scanner and automatically reject any plugin that contains high-severity vulnerabilities.
+Wasmati construct a Code Property Graph (CPG) from the binary and use it to query for vulnerability patterns such as integer overflows, buffer overflows, or dangerous uses of imported functions.58 The Uveddi plugin ingestion pipeline must integrate such a scanner and automatically reject any plugin that contains high-severity vulnerabilities.
 Code Signing and Integrity Verification: To guarantee the authenticity (who created it) and integrity (it hasn't been tampered with) of a plugin, a digital signature scheme is essential.61
-Embedded Signature Approach: A practical and self-contained method is to embed an ECDSA signature within a custom section of the .wasm file.62 When a plugin is published, the author signs the hash of the binary with their private key. The CodeAtlas host, upon loading the plugin, can then verify this signature against the author's public key, which could be fetched from a trusted registry. This ensures the plugin is from a known source and has not been modified.61
+Embedded Signature Approach: A practical and self-contained method is to embed an ECDSA signature within a custom section of the .wasm file.62 When a plugin is published, the author signs the hash of the binary with their private key. The Uveddi host, upon loading the plugin, can then verify this signature against the author's public key, which could be fetched from a trusted registry. This ensures the plugin is from a known source and has not been modified.61
 Registry-Based (TUF) Approach: For a more mature ecosystem, a framework like The Update Framework (TUF) offers stronger protection against supply chain attacks, such as a compromised plugin registry. In this model, the plugin binary is stored in an OCI-compliant registry, while its cryptographic digest and signature are stored on a separate, highly secured trust server (e.g., Notary).64 The client verifies the integrity by cross-referencing both sources. For initial implementation, the embedded signature is sufficient, but the architecture should be planned with a potential migration to TUF in mind.
 Manifest Validation: Every plugin must be accompanied by a machine-readable manifest file (e.g., plugin.toml) that serves as a declaration of intent.
 This manifest must explicitly enumerate all permissions the plugin requires, such as filesystem paths, network hosts, or environment variables. Example: permissions = ["fs:read:/src", "net:connect:api.github.com"].
@@ -325,10 +325,10 @@ CPU and Execution Time Limiting: A primary threat is a plugin entering an infini
 Instruction Counting ("Fuel"): The most robust and deterministic method for preventing this is instruction counting, often called "gas" or "fuel" metering. Before execution, the host allocates a certain amount of "fuel" to the plugin instance. The runtime is instrumented to decrement this fuel counter as it executes WASM instructions. If the fuel runs out, the execution is deterministically trapped.68 Wasmtime provides this mechanism via
 Config::consume_fuel(true) and Store::set_fuel().70 While it introduces a moderate performance overhead, its determinism is invaluable for security.
 Epoch-Based Timeouts: A lower-overhead alternative is epoch-based interruption. The host maintains an "epoch" counter that is periodically incremented by a timer in a separate thread. The WASM code is instrumented with checks against this epoch counter. If the deadline is passed, execution traps.70 This method is effective at stopping long-running computations but is non-deterministic and may not catch very tight, fast infinite loops.
-Recommendation: For its predictability and stronger guarantee against DoS, the fuel-based mechanism is recommended. The amount of fuel allocated per invocation should be a configurable policy within CodeAtlas.
+Recommendation: For its predictability and stronger guarantee against DoS, the fuel-based mechanism is recommended. The amount of fuel allocated per invocation should be a configurable policy within Uveddi.
 Memory Capping: A plugin must be prevented from consuming unbounded amounts of memory.67
 The WebAssembly standard allows a module's linear memory to be defined with an initial and a maximum size, measured in 64KiB pages.72
-The CodeAtlas host must enforce a sensible maximum limit during plugin instantiation. For example, MemoryType::new(1, Some(4096)) would give the plugin an initial 64KiB but cap its growth at 256MB (4096 pages). This prevents a single plugin from exhausting host memory.
+The Uveddi host must enforce a sensible maximum limit during plugin instantiation. For example, MemoryType::new(1, Some(4096)) would give the plugin an initial 64KiB but cap its growth at 256MB (4096 pages). This prevents a single plugin from exhausting host memory.
 Logging and Output Limiting: To prevent a plugin from flooding log files or standard output (a "log bomb" DoS), the host must intercept and rate-limit the data written to these streams. A per-invocation cap, such as the 16 KiB limit used by Google Cloud's Wasm service, is a reasonable practice.71
 This defense-in-depth approach, combining proactive verification with robust runtime containment, creates a security posture where a failure in one layer is likely to be caught by another. This layered model is essential for building the trust required to foster a vibrant and safe third-party plugin ecosystem.
 
@@ -360,15 +360,15 @@ Standardized Allocation via the Component Model: As discussed in Section 2, the 
 Acknowledge Grow-Only Memory: A crucial characteristic of the current WebAssembly memory model is that linear memory can grow but can never shrink.76 A plugin that has a transient high-water mark for memory usage will retain that large memory allocation for its entire lifetime. This can lead to a bloated memory footprint for the host application. Plugin developers should be educated on this limitation and encouraged to design their plugins to be memory-frugal.
 Future-Proofing for memory.discard: The memory.discard proposal is designed to address the grow-only limitation. It will introduce an instruction that allows a module to inform the host that a range of memory pages is no longer in use. The host can then release the underlying physical memory back to the operating system, reducing the application's true memory footprint.76 While this feature is not yet finalized, designing plugins with memory locality in mind (i.e., allocating transient data contiguously) can help prepare the ecosystem to take advantage of it when it becomes available.
 The Rust Advantage: Encouraging or requiring plugins to be written in Rust provides significant performance benefits. Rust's compile-time memory safety guarantees and lack of a heavy, garbage-collected runtime result in WASM modules that are smaller, faster, and have more predictable memory usage patterns than modules compiled from languages like Go, Swift, or anything requiring a large runtime.12
-There is an inherent and unavoidable tension between achieving maximum performance and ensuring robust security and determinism. The fastest possible execution would involve no sandboxing, no bounds checks, and no resource metering. However, for the CodeAtlas plugin system, security is paramount. Therefore, certain performance trade-offs are necessary costs of enabling a safe, extensible ecosystem. For example, the deterministic fuel-based timeout mechanism is computationally more expensive than the non-deterministic epoch-based one, but it provides a stronger guarantee against DoS attacks.70 The architecture must allow for these trade-offs to be made consciously and, where appropriate, configurably. For highly trusted, internally developed plugins, it might be acceptable to increase fuel limits to maximize performance. For untrusted community plugins, a stricter, more conservative limit is required. The key is to build a system that can support this policy-driven configuration.
+There is an inherent and unavoidable tension between achieving maximum performance and ensuring robust security and determinism. The fastest possible execution would involve no sandboxing, no bounds checks, and no resource metering. However, for the Uveddi plugin system, security is paramount. Therefore, certain performance trade-offs are necessary costs of enabling a safe, extensible ecosystem. For example, the deterministic fuel-based timeout mechanism is computationally more expensive than the non-deterministic epoch-based one, but it provides a stronger guarantee against DoS attacks.70 The architecture must allow for these trade-offs to be made consciously and, where appropriate, configurably. For highly trusted, internally developed plugins, it might be acceptable to increase fuel limits to maximize performance. For untrusted community plugins, a stricter, more conservative limit is required. The key is to build a system that can support this policy-driven configuration.
 
 Section 5: Conclusion and Implementation Roadmap
 
-This report has provided a comprehensive architectural analysis for building a secure, performant, and scalable plugin system for CodeAtlas using WebAssembly. The findings indicate that with a carefully considered architecture, it is possible to achieve the goals of safe third-party extensibility while maintaining system integrity and meeting stringent performance targets.
+This report has provided a comprehensive architectural analysis for building a secure, performant, and scalable plugin system for Uveddi using WebAssembly. The findings indicate that with a carefully considered architecture, it is possible to achieve the goals of safe third-party extensibility while maintaining system integrity and meeting stringent performance targets.
 
 5.1. Summary of Architectural Recommendations
 
-The following core recommendations form the blueprint for the CodeAtlas plugin architecture:
+The following core recommendations form the blueprint for the Uveddi plugin architecture:
 Runtime: Adopt Wasmtime as the core WASM runtime. Its security-first design, transparent development process, leadership in emerging standards (Component Model), and the stable backing of the Bytecode Alliance make it the most robust and strategically sound choice for an enterprise system.
 Communication Protocol: Standardize all plugin interfaces using the WebAssembly Component Model and its Interface Definition Language (WIT). This provides a high-level, type-safe, and future-proof foundation for host-guest communication. For the specialized transfer of large data payloads like ASTs, supplement this by passing handles to memory buffers formatted with the Apache Arrow IPC specification to achieve maximum data plane performance.
 Security Framework: Implement a multi-stage, defense-in-depth security pipeline that operates throughout the plugin lifecycle. This pipeline must include:
@@ -382,11 +382,11 @@ Language Choice: Promoting Rust as the primary language for plugin development t
 
 5.2. Phased Implementation Plan
 
-To translate these architectural recommendations into a functional system, the following phased implementation plan is proposed for the CodeAtlas engineering team.
+To translate these architectural recommendations into a functional system, the following phased implementation plan is proposed for the Uveddi engineering team.
 Phase 1: Core Runtime & Communication Proof of Concept (PoC)
 Objective: Validate the core technical choices and establish a baseline for performance.
 Key Tasks:
-Integrate the wasmtime and wasmtime-wasi crates into a branch of the CodeAtlas application.
+Integrate the wasmtime and wasmtime-wasi crates into a branch of the Uveddi application.
 Define a simple plugin interface using WIT (e.g., a basic linter).
 Develop a prototype Rust plugin that implements this WIT interface, compiling it to a WASM component.
 Implement the host-side logic to load, instantiate, and call the component using wit-bindgen-generated bindings.
@@ -411,7 +411,7 @@ Key Tasks:
 Implement the persistent AOT cache to drastically reduce plugin load times.
 Refine the performance benchmark suite to cover a wider range of realistic use cases.
 Author and publish comprehensive documentation and best-practice guides for third-party plugin developers.
-Launch a beta program for the CodeAtlas plugin ecosystem, inviting initial community contributions.
+Launch a beta program for the Uveddi plugin ecosystem, inviting initial community contributions.
 Works cited
 Benchmarking WebAssembly Runtimes | by Brandon Fish | Wasmer, accessed June 28, 2025, https://blog.wasmer.io/benchmarking-webassembly-runtimes-18497ce0d76e
 Wasmer vs Wasmtime, accessed June 28, 2025, https://wasmer.io/wasmer-vs-wasmtime

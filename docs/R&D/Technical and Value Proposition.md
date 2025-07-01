@@ -1,28 +1,28 @@
-CodeAtlas offers a distinct value proposition that clearly differentiates it from GitHub Copilot, focusing on different stages and aspects of the software development lifecycle.
+Uveddi offers a distinct value proposition that clearly differentiates it from GitHub Copilot, focusing on different stages and aspects of the software development lifecycle.
 
-Here's how CodeAtlas stands apart:
+Here's how Uveddi stands apart:
 
 - **Singular Focus on Architecture vs. Code Generation:**
     
-    - **CodeAtlas:** Our primary differentiator is a singular focus on **high-level architectural analysis**. We evaluate the foundational blueprint of the software, addressing strategic questions like "Is this system structurally sound?" or "Are we introducing dangerous coupling?". This elevates CodeAtlas from a simple linter to a strategic partner in managing technical debt and ensuring long-term maintainability.
+    - **Uveddi:** Our primary differentiator is a singular focus on **high-level architectural analysis**. We evaluate the foundational blueprint of the software, addressing strategic questions like "Is this system structurally sound?" or "Are we introducing dangerous coupling?". This elevates Uveddi from a simple linter to a strategic partner in managing technical debt and ensuring long-term maintainability.
         
     - **GitHub Copilot:** Its fundamental purpose is **code generation**. It excels at suggesting and completing code in real-time within the IDE. While it accelerates code writing, Copilot has a limited understanding of the overall project architecture and can even produce code that is locally correct but architecturally unsound, potentially accelerating the introduction of architectural debt.
         
 - **Deep Architectural Intelligence On-Demand:**
     
-    - **CodeAtlas:** We provide deep architectural intelligence on-demand, helping technical leaders proactively manage technical debt, ensure long-term maintainability, and gain objective, data-driven insights into code structure. It goes beyond line-level issues to detect complex architectural anti-patterns like Cyclic Dependency, The Blob/God Object, and Leaky Abstraction.
+    - **Uveddi:** We provide deep architectural intelligence on-demand, helping technical leaders proactively manage technical debt, ensure long-term maintainability, and gain objective, data-driven insights into code structure. It goes beyond line-level issues to detect complex architectural anti-patterns like Cyclic Dependency, The Blob/God Object, and Leaky Abstraction.
         
     - **GitHub Copilot:** Its scope is typically line or function-level code, not a proactive, system-wide architectural audit.
         
 - **Actionable, Persistent Reporting vs. In-line Suggestions:**
     
-    - **CodeAtlas:** Our output is a **high-quality, actionable markdown report** with integrated diagrams (Mermaid.js or PlantUML syntax) that visually explain complex issues. This report serves as a durable artifact for communication, version control, and formal architectural review meetings. It includes detailed problem descriptions, relevant code snippets, AI-generated refactoring suggestions, and severity indicators.
+    - **Uveddi:** Our output is a **high-quality, actionable markdown report** with integrated diagrams (Mermaid.js or PlantUML syntax) that visually explain complex issues. This report serves as a durable artifact for communication, version control, and formal architectural review meetings. It includes detailed problem descriptions, relevant code snippets, AI-generated refactoring suggestions, and severity indicators.
         
     - **GitHub Copilot:** Provides in-line code suggestions directly in the IDE. While useful for immediate coding tasks, its output is transient and not designed for comprehensive architectural documentation or team-wide review.
         
 - **Hybrid AI Model for Flexibility and Privacy:**
     
-    - **CodeAtlas:** We offer a unique **dual AI model**:
+    - **Uveddi:** We offer a unique **dual AI model**:
         
         - **Local Model (Free Tier):** Utilizes high-performance, open-source LLMs for **privacy-focused, offline analysis**, ensuring proprietary code never leaves the user's machine.
             
@@ -31,7 +31,7 @@ Here's how CodeAtlas stands apart:
     - **GitHub Copilot:** Primarily relies on cloud-based generative AI, which may not address privacy concerns for proprietary code and does not offer a local, offline mode.
         
 
-In summary, while GitHub Copilot acts as an AI pair programmer accelerating code generation, CodeAtlas functions as an **AI Architect**, providing essential architectural intelligence and guardrails to ensure the long-term health and structural integrity of a codebase, especially crucial as code is increasingly written by both humans and AI.
+In summary, while GitHub Copilot acts as an AI pair programmer accelerating code generation, Uveddi functions as an **AI Architect**, providing essential architectural intelligence and guardrails to ensure the long-term health and structural integrity of a codebase, especially crucial as code is increasingly written by both humans and AI.
 
 Here's a breakdown of how we plan to technically achieve our proposition, directly addressing the core differentiators:
 

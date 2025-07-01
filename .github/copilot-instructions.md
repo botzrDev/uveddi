@@ -1,8 +1,8 @@
-# Copilot Instructions for CodeAtlas
+# Copilot Instructions for Uveddi
 
 <!-- Use this file to provide workspace-specific custom instructions to Copilot. For more details, visit https://code.visualstudio.com/docs/copilot/copilot-customization#_use-a-githubcopilotinstructionsmd-file -->
 
-This is a Rust project called CodeAtlas. When generating code:
+This is a Rust project called Uveddi. When generating code:
 
 ## General Guidelines
 - Follow Rust best practices and idioms

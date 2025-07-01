@@ -1,5 +1,5 @@
 -- V1__initial_schema_sqlite.sql
--- Initial SQLite schema for CodeAtlas CLI (Rust)
+-- Initial SQLite schema for Uveddi CLI (Rust)
 -- Generated on 2025-06-30
 
 -- Organization table

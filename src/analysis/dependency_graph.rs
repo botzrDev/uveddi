@@ -1,4 +1,4 @@
-pub use codeatlas_plugin_api::models::DependencyGraph;
+pub use uveddi_plugin_api::models::DependencyGraph;
 
 /// Analysis results container
 #[derive(Debug, Clone)]
@@ -9,4 +9,4 @@ pub struct AnalysisResults {
     pub analysis_duration: std::time::Duration,
 }
 
-pub use codeatlas_plugin_api::models::{Cycle, CycleSeverity};
+pub use uveddi_plugin_api::models::{Cycle, CycleSeverity};

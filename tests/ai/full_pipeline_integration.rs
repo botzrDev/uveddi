@@ -16,7 +16,7 @@ mod tests {
         let mut file = File::create(&file_path).unwrap();
         writeln!(file, "struct GodObject {{ fn a(&self) {{}} fn b(&self) {{}} }}").unwrap();
 
-        let mut cmd = Command::cargo_bin("codeatlas").unwrap();
+        let mut cmd = Command::cargo_bin("uveddi").unwrap();
         cmd.arg("analyze")
             .arg(dir.path())
             .arg("--output-format=markdown")
@@ -36,7 +36,7 @@ mod tests {
         let mut file = File::create(&file_path).unwrap();
         writeln!(file, "fn main() {{}}").unwrap();
 
-        let mut cmd = Command::cargo_bin("codeatlas").unwrap();
+        let mut cmd = Command::cargo_bin("uveddi").unwrap();
         cmd.arg("analyze")
             .arg(dir.path())
             .arg("--output-format=json")

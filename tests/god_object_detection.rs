@@ -2,9 +2,9 @@
 
 #[cfg(test)]
 mod tests {
-    use codeatlas::analysis::anti_patterns::god_object_detector::GodObjectDetector;
-    use codeatlas::analysis::AnalysisDetector;
-    use codeatlas::ast::tree_sitter::{AstParser};
+    use uveddi::analysis::anti_patterns::god_object_detector::GodObjectDetector;
+    use uveddi::analysis::AnalysisDetector;
+    use uveddi::ast::tree_sitter::{AstParser};
     use std::fs::File;
     use std::io::Write;
     use tempfile::tempdir;

@@ -1,8 +1,8 @@
 use tempfile::tempdir;
 use std::fs;
-use codeatlas::analysis::dependency_extractor::DependencyExtractor;
-use codeatlas::analysis::dependency_graph::DependencyGraph;
-use codeatlas::analysis::cycle_detector::CycleDetector;
+use uveddi::analysis::dependency_extractor::DependencyExtractor;
+use uveddi::analysis::dependency_graph::DependencyGraph;
+use uveddi::analysis::cycle_detector::CycleDetector;
 
 #[test]
 fn test_sprint1_cycle_detection() {

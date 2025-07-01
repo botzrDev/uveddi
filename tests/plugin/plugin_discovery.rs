@@ -1,6 +1,6 @@
 //! tests/plugin/plugin_discovery.rs
 
-use codeatlas::plugin::discover_plugins;
+use uveddi::plugin::discover_plugins;
 
 #[test]
 fn test_plugin_discovery() {

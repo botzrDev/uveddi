@@ -1,10 +1,10 @@
-# CodeAtlas Development TODO List
+# Uveddi Development TODO List
 
 **[Update June 30, 2025: Gold-standard RAG pipeline, multi-layered hallucination defense, and advanced semantic search are fully implemented and tested. All core AI Reasoning Engine tasks for Sprint 5 are complete. See SPRINTS.md for details.]**
 
 **[Update June 30, 2025, PM]: Core CLI config command, ER data model (User, Organization, Project, AnalysisRun), serialization, and anti-pattern type integration are now implemented and tested. Reporting system now categorizes issues by anti-pattern type.**]
 
-This document outlines the major tasks and milestones for the development of CodeAtlas, an AI-powered CLI tool for architectural analysis. It is structured to follow the logical progression of a software project, from foundational setup to deployment and ongoing maintenance.
+This document outlines the major tasks and milestones for the development of Uveddi, an AI-powered CLI tool for architectural analysis. It is structured to follow the logical progression of a software project, from foundational setup to deployment and ongoing maintenance.
 
 ## Phase 1: Foundational Setup & Core CLI (Rust)
 
@@ -16,9 +16,9 @@ This document outlines the major tasks and milestones for the development of Cod
 
 ### [CDAT-4]1.2 Core CLI Framework
 - [x] Implement basic CLI command parsing using `clap` crate.
-    - [x] `codeatlas analyze <path>` command.
-    - [x] `codeatlas init-local-ai` command.
-    - [x] `codeatlas config` command.
+    - [x] `uveddi analyze <path>` command.
+    - [x] `uveddi init-local-ai` command.
+    - [x] `uveddi config` command.
 - [x] Implement basic logging and error handling.
 - [ ] Set up project for cross-platform compilation and distribution.
 
@@ -88,7 +88,7 @@ This document outlines the major tasks and milestones for the development of Cod
 ## Phase 3: AI Model Integration
 
 ### 3.1 Local LLM Integration (Ollama)
-- [x] Implement `codeatlas init-local-ai` command to facilitate Ollama setup and model download.
+- [x] Implement `uveddi init-local-ai` command to facilitate Ollama setup and model download.
 - [x
 
 ### 3.2 External LLM API Integration
@@ -162,7 +162,7 @@ This document outlines the major tasks and milestones for the development of Cod
 ### 6.5 Real-World Project Benchmarking
 - [ ] Select 3-5 popular open-source projects for benchmark analysis
 - [ ] Document architectural issues discovered in these projects
-- [ ] Create case studies showcasing CodeAtlas' effectiveness
+- [ ] Create case studies showcasing Uveddi' effectiveness
 - [ ] Use findings for marketing materials and demos
 
 ## Phase 7: Documentation & Community Building

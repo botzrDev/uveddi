@@ -1,6 +1,6 @@
-# CodeAtlas Improvement and Action Plan (2025-06-30)
+# Uveddi Improvement and Action Plan (2025-06-30)
 
-This report synthesizes the analysis from the `Dev_Review06302025` document and provides a structured plan for enhancing the CodeAtlas project.
+This report synthesizes the analysis from the `Dev_Review06302025` document and provides a structured plan for enhancing the Uveddi project.
 
 ## 1. Architectural and Code Refinements
 
@@ -22,7 +22,7 @@ The initial code review highlights a strong foundation but points to several are
 
 *   **D. Implement AST Caching:**
     *   **Issue:** Files are parsed on every run, which is inefficient. This is noted as a high-priority item.
-    *   **Resolution:** Implement a caching mechanism. When a file is scanned, store its AST (or a serialized version) in a cache (like `.codeatlas_cache/`). On subsequent runs, check if the file's modification time has changed. If not, load the AST from the cache instead of re-parsing.
+    *   **Resolution:** Implement a caching mechanism. When a file is scanned, store its AST (or a serialized version) in a cache (like `.uveddi_cache/`). On subsequent runs, check if the file's modification time has changed. If not, load the AST from the cache instead of re-parsing.
 
 *   **E. Improve Project Organization:**
     *   **Issue:** The project root and `src/` directory have some organizational clutter.
@@ -62,7 +62,7 @@ The `cargo clippy` output provides several actionable warnings that will improve
 **Action Plan:**
 
 *   **A. Automated Fixes:**
-    *   **Resolution:** Run the command `cargo clippy --fix --lib -p codeatlas`. This will automatically fix the majority of the warnings, including:
+    *   **Resolution:** Run the command `cargo clippy --fix --lib -p uveddi`. This will automatically fix the majority of the warnings, including:
         *   Changing `or_insert_with(Vec::new)` to `or_default()`.
         *   Changing `.push_str("\n")` to `.push('\n')`.
         *   Adding `impl Default` blocks for many of the structs with `new()` functions.

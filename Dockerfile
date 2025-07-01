@@ -1,4 +1,4 @@
-# Dockerfile for CodeAtlas + Ollama + DeepSeek-Coder
+# Dockerfile for Uveddi + Ollama + DeepSeek-Coder
 FROM ubuntu:22.04
 
 # Install dependencies

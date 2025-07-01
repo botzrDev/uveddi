@@ -1,7 +1,7 @@
 //! tests/analysis/anti_patterns/modularity_violation_detector.rs
 
-use codeatlas::analysis::anti_patterns::modularity_violation_detector::ModularityViolationDetector;
-use codeatlas::analysis::dependency_graph::DependencyGraph;
+use uveddi::analysis::anti_patterns::modularity_violation_detector::ModularityViolationDetector;
+use uveddi::analysis::dependency_graph::DependencyGraph;
 use std::path::PathBuf;
 
 #[test]

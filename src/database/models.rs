@@ -15,7 +15,7 @@ pub struct AnalysisRun {
     pub analysis_config: String, // JSON serialized config
 }
 
-pub use codeatlas_plugin_api::models::ArchitecturalIssue;
+pub use uveddi_plugin_api::models::ArchitecturalIssue;
 
 /// Anti-pattern type definitions
 #[derive(Debug, Clone, Serialize, Deserialize)]

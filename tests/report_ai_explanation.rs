@@ -1,7 +1,7 @@
 //! Unit tests for report generator AI explanation rendering
 
-use codeatlas::report::ReportGenerator;
-use codeatlas::database::models::{AnalysisRun, ArchitecturalIssue};
+use uveddi::report::ReportGenerator;
+use uveddi::database::models::{AnalysisRun, ArchitecturalIssue};
 use chrono::Utc;
 
 #[test]

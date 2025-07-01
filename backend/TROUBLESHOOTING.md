@@ -1,6 +1,6 @@
-# CodeAtlas Backend Troubleshooting Guide
+# Uveddi Backend Troubleshooting Guide
 
-This document contains solutions for common issues you might encounter when setting up and running the CodeAtlas backend.
+This document contains solutions for common issues you might encounter when setting up and running the Uveddi backend.
 
 ## Docker Compose Issues
 
@@ -56,7 +56,7 @@ Error response from daemon: failed to set up container networking: driver failed
    ```
 2. Make sure the database is accessible:
    ```bash
-   docker-compose exec postgres psql -U codeatlas -d codeatlas -c "\l"
+   docker-compose exec postgres psql -U uveddi -d uveddi -c "\l"
    ```
 3. Try running migrations with more verbose output:
    ```bash
@@ -74,10 +74,10 @@ Error response from daemon: failed to set up container networking: driver failed
 4. Test the connection:
    ```bash
    # Inside Docker:
-   docker-compose exec backend python -c "import psycopg2; conn = psycopg2.connect(dbname='codeatlas', user='codeatlas', password='codeatlas', host='postgres', port=5432); print('Connection successful!')"
+   docker-compose exec backend python -c "import psycopg2; conn = psycopg2.connect(dbname='uveddi', user='uveddi', password='uveddi', host='postgres', port=5432); print('Connection successful!')"
    
    # From host machine:
-   python -c "import psycopg2; conn = psycopg2.connect(dbname='codeatlas', user='codeatlas', password='codeatlas', host='localhost', port=5433); print('Connection successful!')"
+   python -c "import psycopg2; conn = psycopg2.connect(dbname='uveddi', user='uveddi', password='uveddi', host='localhost', port=5433); print('Connection successful!')"
    ```
 
 ## FastAPI Backend Issues

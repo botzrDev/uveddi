@@ -8,7 +8,7 @@ Sprint 1 focuses on establishing the foundational CLI infrastructure and impleme
 
 ### ✅ **Completed (Days 1-2)**
 - [x] **1.1.1** Basic Rust project structure with `clap` for CLI parsing
-- [x] **1.1.2** Basic `codeatlas analyze <path>` command structure
+- [x] **1.1.2** Basic `uveddi analyze <path>` command structure
 - [x] **1.1.3** Basic error handling and logging with `env_logger`
 
 ### 🔄 **In Progress/Needs Completion**
@@ -524,7 +524,7 @@ impl TextReporter {
     /// Write report to any writer
     pub fn write_report<W: Write>(&self, writer: &mut W, results: &AnalysisResults) -> io::Result<()> {
         // Header
-        writeln!(writer, "CodeAtlas Analysis Report")?;
+        writeln!(writer, "Uveddi Analysis Report")?;
         writeln!(writer, "=========================")?;
         writeln!(writer)?;
 
@@ -742,11 +742,11 @@ mod cli;
 
 use cli::analyze_command::AnalyzeCommand;
 
-/// CodeAtlas - A tool for code analysis and exploration
+/// Uveddi - A tool for code analysis and exploration
 #[derive(Parser)]
-#[command(name = "codeatlas")]
+#[command(name = "uveddi")]
 #[command(about = "A Rust-based code analysis and exploration tool")]
-#[command(long_about = "CodeAtlas analyzes your codebase to detect architectural issues, \
+#[command(long_about = "Uveddi analyzes your codebase to detect architectural issues, \
                         cyclic dependencies, and provides insights into code structure.")]
 struct Cli {
     #[command(subcommand)]
@@ -798,7 +798,7 @@ tempfile = "3.8"
 // tests/integration_test.rs
 use std::fs;
 use tempfile::TempDir;
-use codeatlas::cli::analyze_command::AnalyzeCommand;
+use uveddi::cli::analyze_command::AnalyzeCommand;
 
 #[test]
 fn test_cyclic_dependency_detection() {

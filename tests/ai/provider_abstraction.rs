@@ -1,8 +1,8 @@
 //! tests/ai/provider_abstraction.rs
 
-use codeatlas::ai::engine::{AiAnalysisEngine, AiError};
-use codeatlas::ai::api::llm_provider::LlmProvider;
-use codeatlas::database::models::ArchitecturalIssue;
+use uveddi::ai::engine::{AiAnalysisEngine, AiError};
+use uveddi::ai::api::llm_provider::LlmProvider;
+use uveddi::database::models::ArchitecturalIssue;
 use async_trait::async_trait;
 use mockall::mock;
 use anyhow::Result;

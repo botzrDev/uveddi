@@ -2,8 +2,8 @@
 
 #[cfg(test)]
 mod tests {
-    use codeatlas::analysis::dependency_extractor::DependencyExtractor;
-    use codeatlas::ast::tree_sitter::AstParser;
+    use uveddi::analysis::dependency_extractor::DependencyExtractor;
+    use uveddi::ast::tree_sitter::AstParser;
     use tempfile::tempdir;
     use std::fs::File;
     use std::io::Write;

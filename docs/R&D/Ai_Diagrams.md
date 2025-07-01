@@ -56,7 +56,7 @@ source_node: The ID of the originating node.
 target_node: The ID of the destination node.
 type: The classification of the relationship (e.g., CALLS, INHERITS_FROM, READS_DATA_FROM, PUBLISHES_TO_TOPIC).
 properties: A key-value map for additional metadata, such as the frequency of a call if dynamic data is available.
-This structured SAM becomes the central artifact of the CodeAtlas system.
+This structured SAM becomes the central artifact of the Uveddi system.
 
 1.4 Phase 3: Augmenting with Dynamic and Behavioral Analysis
 
@@ -145,7 +145,7 @@ You are an expert architect. Convert the provided JSON model, which represents a
 
 Section 3: A Quantitative Framework for Diagram-Code Validation
 
-To ensure that AI-generated diagrams are not merely plausible but verifiably accurate, a rigorous, quantitative validation framework is essential. Subjective evaluation is insufficient; the CodeAtlas system requires objective, computable metrics that can drive an automated feedback loop. This section defines a multi-faceted suite of metrics to measure the fidelity of a generated diagram against the ground-truth Software Architecture Model (SAM). The framework assesses accuracy along two primary axes: Structural Fidelity (are the boxes and lines correct?) and Semantic Coherence (do the labels and names mean the right thing?).
+To ensure that AI-generated diagrams are not merely plausible but verifiably accurate, a rigorous, quantitative validation framework is essential. Subjective evaluation is insufficient; the Uveddi system requires objective, computable metrics that can drive an automated feedback loop. This section defines a multi-faceted suite of metrics to measure the fidelity of a generated diagram against the ground-truth Software Architecture Model (SAM). The framework assesses accuracy along two primary axes: Structural Fidelity (are the boxes and lines correct?) and Semantic Coherence (do the labels and names mean the right thing?).
 The core of the evaluation process is a comparison between two graph representations:
 Gsam​: The ground-truth graph derived from the SAM, as constructed in Section 1.
 Ggenerated​: The graph extracted by deterministically parsing the AI-generated Mermaid.js or PlantUML code.32
@@ -200,7 +200,7 @@ For example, if the SAM has a node UserAuthenticationService and the LLM labels 
 The overall SCS for the diagram is the average cosine similarity score calculated across all matched nodes.
 $$ \text{SCS} = \frac{1}{|\text{Matched Nodes}|} \sum_{i \in \text{Matched Nodes}} \text{cosine_similarity}(\text{vector}(label_{i, sam}), \text{vector}(label_{i, gen})) $$
 An SCS score close to 1.0 indicates that the diagram is not only structurally correct but also semantically aligned with the source code, making it highly comprehensible and trustworthy.
-The introduction of this comprehensive, multi-faceted suite of metrics is a direct consequence of understanding that "accuracy" is not a monolithic concept.42 A validation framework that relies on a single number would be brittle. By combining structural metrics (Precision/Recall, GED), architectural characteristic metrics (Drift), and semantic metrics (SCS), the CodeAtlas system can generate a rich, detailed report on diagram quality. This entire framework is predicated on the existence of the SAM as the ground truth; without it, none of these quantitative, automated comparisons would be possible, reinforcing the criticality of the model-first approach outlined in Section 1.
+The introduction of this comprehensive, multi-faceted suite of metrics is a direct consequence of understanding that "accuracy" is not a monolithic concept.42 A validation framework that relies on a single number would be brittle. By combining structural metrics (Precision/Recall, GED), architectural characteristic metrics (Drift), and semantic metrics (SCS), the Uveddi system can generate a rich, detailed report on diagram quality. This entire framework is predicated on the existence of the SAM as the ground truth; without it, none of these quantitative, automated comparisons would be possible, reinforcing the criticality of the model-first approach outlined in Section 1.
 The following table provides a consolidated reference for the proposed quantitative metrics.
 
 Metric Name
@@ -268,7 +268,7 @@ Convergence Check: The loop repeats, with Diagram v2 being validated. The proces
 
 The ultimate goal is to eliminate architectural drift, where the implementation evolves but the documentation does not.45 This is achieved by embedding the validation engine into the development workflow through CI/CD integration. This practice transforms the architecture diagram from a static, point-in-time artifact into a living, continuously verified document.46
 The integration works as follows:
-On every pull request or merge to the main branch, the CI pipeline triggers the CodeAtlas engine.
+On every pull request or merge to the main branch, the CI pipeline triggers the Uveddi engine.
 The engine checks out the proposed code changes and regenerates the SAM.
 It then regenerates the corresponding architecture diagram(s).
 The Validation Engine performs a conformance check, comparing the newly generated diagram against the new SAM.
@@ -308,13 +308,13 @@ Sequence View: For a specific user story or API endpoint, this view generates a 
 
 5.4 Interactive Exploration
 
-Static diagrams, even with multiple views, have limited utility. To truly manage complexity, the user must be able to interact with the visualization dynamically. The front-end of the CodeAtlas tool should be an interactive canvas, not just an image viewer.
+Static diagrams, even with multiple views, have limited utility. To truly manage complexity, the user must be able to interact with the visualization dynamically. The front-end of the Uveddi tool should be an interactive canvas, not just an image viewer.
 Key interactive features must include:
 Zoom and Pan: Standard navigational controls for large diagrams.
 Click-to-Drill-Down: This is the primary mechanism for navigating the C4 hierarchy. Clicking on a container in a Level 2 diagram should seamlessly transition the user to the corresponding Level 3 component diagram for that container.56
 Hover-for-Details: Mousing over any node or edge should pop up a tooltip displaying its detailed attributes from the SAM (e.g., its full name, description, source code location, list of cross-cutting concerns).14
 Dynamic Filtering and Highlighting: A search bar should allow users to type a query (e.g., a component name, a concern like "caching"). The system should then highlight all matching elements and their direct relationships in real-time, dimming the rest of the diagram. This allows users to instantly focus on relevant sub-systems.57
-The realization that the SAM is a multi-view model, not a single diagram, is fundamental. It shifts the product vision for CodeAtlas from a simple "diagram generator" to a powerful "interactive architecture exploration platform." Different stakeholders have vastly different needs 47, and attempting to serve them all with a single, static image is a recipe for failure. By providing on-demand generation of specific, user-defined views from a single, consistent model, the system becomes exponentially more valuable. Interactivity is the ultimate tool for complexity management. A static diagram has a fixed cognitive load, whereas an interactive canvas empowers the user to dynamically control the amount of information they see at any moment, enabling progressive disclosure of detail as their investigation deepens.
+The realization that the SAM is a multi-view model, not a single diagram, is fundamental. It shifts the product vision for Uveddi from a simple "diagram generator" to a powerful "interactive architecture exploration platform." Different stakeholders have vastly different needs 47, and attempting to serve them all with a single, static image is a recipe for failure. By providing on-demand generation of specific, user-defined views from a single, consistent model, the system becomes exponentially more valuable. Interactivity is the ultimate tool for complexity management. A static diagram has a fixed cognitive load, whereas an interactive canvas empowers the user to dynamically control the amount of information they see at any moment, enabling progressive disclosure of detail as their investigation deepens.
 
 Section 6: Comparative Analysis: AI-Generated vs. Manually-Crafted Architectural Diagrams
 
@@ -329,7 +329,7 @@ Project B (Microservices): A distributed system composed of multiple, independen
 Project C (Event-Driven): A system architected around asynchronous event processing.
 Process for Each Project:
 Manual Baseline Creation: An expert software architect, external to the project, will be tasked with manually analyzing the source code and creating a set of "gold standard" architectural diagrams. This set will include a C4 Level 2 (Container) diagram, a C4 Level 3 (Component) diagram for a key service, and a sequence diagram for a critical user workflow. The time taken for this manual process will be recorded.
-AI-Powered Generation: The CodeAtlas framework, as specified in this report, will be executed on the same codebase to automatically generate the equivalent set of diagrams. The total computation time, including any automated refinement loops, will be recorded.
+AI-Powered Generation: The Uveddi framework, as specified in this report, will be executed on the same codebase to automatically generate the equivalent set of diagrams. The total computation time, including any automated refinement loops, will be recorded.
 
 6.2 Benchmarking Axes and Results
 
@@ -342,7 +342,7 @@ Maintenance Effort: This is the most critical axis of comparison. A significant 
 6.3 Analysis of Strengths and Weaknesses
 
 The case studies are expected to highlight the distinct advantages and disadvantages of each approach.
-AI-Generated Diagrams (CodeAtlas Framework):
+AI-Generated Diagrams (Uveddi Framework):
 Strengths: Unparalleled speed in generation and updates; guaranteed consistency with the current state of the code; objective and repeatable quality measurement via metrics; the ability to generate numerous, consistent views on demand.46
 Weaknesses: The quality of the output is fundamentally dependent on the quality of the input code and its comments. The system may struggle to infer high-level architectural intent or business context that is not explicitly reflected in the code. There is also an initial investment cost in setting up the analysis pipeline.
 Manually-Crafted Diagrams:
@@ -386,25 +386,25 @@ Qualitative Improvement
 
 6.4 Conclusions from the Analysis
 
-The primary value of an AI-powered framework like CodeAtlas is not merely in the initial generation of a diagram but in its continuous maintenance and guaranteed consistency. The case study's maintenance-effort benchmark is designed to unequivocally demonstrate this point. The recurring, debilitating cost in software engineering is not the one-time creation of a document, but the perpetual, manual effort required to keep it synchronized with a constantly evolving codebase—a task at which manual processes almost universally fail. The automated conformance checking loop specified in Section 4 directly and permanently solves this core problem.
+The primary value of an AI-powered framework like Uveddi is not merely in the initial generation of a diagram but in its continuous maintenance and guaranteed consistency. The case study's maintenance-effort benchmark is designed to unequivocally demonstrate this point. The recurring, debilitating cost in software engineering is not the one-time creation of a document, but the perpetual, manual effort required to keep it synchronized with a constantly evolving codebase—a task at which manual processes almost universally fail. The automated conformance checking loop specified in Section 4 directly and permanently solves this core problem.
 This leads to a final, crucial conclusion: the AI framework and the human architect are complementary, not competitive. The system automates the laborious, error-prone, and historically intractable task of producing an accurate, objective, and always-current representation of the system's as-is architecture. This frees the human architect from the role of a mere drafter and empowers them to perform their true, high-value function: strategic analysis. With a perfect, real-time map of the existing territory provided by the tool, the architect can focus their expertise on analyzing the to-be architecture, identifying and prioritizing technical debt, planning complex refactoring initiatives, and making data-driven strategic decisions that align the system's evolution with business goals. The AI handles the "what is," so the human can master the "why" and "what's next."
 
 Conclusion and Recommendations
 
-This report has detailed a comprehensive framework for the development of CodeAtlas, an AI-powered system for generating high-fidelity software architecture diagrams. The proposed methodology represents a significant advancement over existing tools by moving beyond simple dependency mapping to a holistic system of architectural modeling, generation, and automated validation.
+This report has detailed a comprehensive framework for the development of Uveddi, an AI-powered system for generating high-fidelity software architecture diagrams. The proposed methodology represents a significant advancement over existing tools by moving beyond simple dependency mapping to a holistic system of architectural modeling, generation, and automated validation.
 The core of the framework rests on several foundational principles derived from an exhaustive analysis of the field:
 The Model-First Imperative: The system's central function must be the creation of a structured, queryable Software Architecture Model (SAM) through a combination of static, dynamic, and behavioral code analysis. This model serves as the single source of truth, enabling both accurate diagram generation and quantitative validation. This elevates the tool from a simple diagrammer to a true architectural modeling platform.
 Constrained, Model-to-Text LLM Tasking: The role of the Large Language Model should be strictly confined to translating the pre-validated SAM into Mermaid.js or PlantUML syntax. This leverages the LLM's strengths in language generation while mitigating its weaknesses in deep architectural reasoning, ensuring high predictability and fidelity.
 Quantitative, Multi-Faceted Validation: Diagram accuracy must be measured objectively using a suite of metrics that assess structural fidelity (Node/Edge Precision & Recall, Graph Edit Distance), architectural integrity (Metric Drift), and semantic coherence (Semantic Coherence Score). These metrics are the engine of automated quality control.
 Closed-Loop Refinement and Conformance Checking: The system must implement a "self-healing" feedback loop where validation results are used to automatically generate refinement prompts, progressively improving diagram accuracy. Integrating this loop into the CI/CD pipeline solves the critical problem of architectural drift, ensuring diagrams remain perpetually synchronized with the source code.
 Viewpoint-Based Complexity Management: Visual clarity for complex systems is achieved not by simplifying the model, but by generating multiple, focused views (e.g., C4 levels, data flow, security) from the central SAM and enabling rich, interactive exploration by the user.
-Actionable Recommendations for the CodeAtlas Team:
+Actionable Recommendations for the Uveddi Team:
 Prioritize the SAM: The initial development effort should focus on building the robust SAM generation pipeline (Section 1). This is the bedrock of the entire system.
-Adopt a View-Based Product Strategy: Market and design CodeAtlas not as a tool that generates "a diagram," but as an interactive platform for exploring multiple, consistent architectural views derived from a living model of the codebase.
+Adopt a View-Based Product Strategy: Market and design Uveddi not as a tool that generates "a diagram," but as an interactive platform for exploring multiple, consistent architectural views derived from a living model of the codebase.
 Implement the Full Metric Suite: Resist the temptation to use simpler validation checks. The multi-faceted metric framework (Section 3) is essential for capturing the nuances of diagram quality and for powering an effective refinement loop.
 Build for CI/CD Integration from Day One: The automated conformance checking capability (Section 4) is the single most compelling feature for enterprise customers, as it solves a major, costly pain point. This should be a core, not an add-on, feature.
 Focus the User Experience on Interaction: The front-end should be designed as an interactive canvas (Section 5) that empowers users to manage complexity through drill-downs, filtering, and dynamic exploration, rather than as a static image viewer.
-By implementing this framework, CodeAtlas can position itself as a next-generation software architecture tool that provides not just pictures, but trustworthy, interactive, and perpetually current insights into the structure and behavior of complex software systems. This approach automates the tedious and error-prone work of documentation, freeing architects and developers to focus on the strategic challenges of building better software.
+By implementing this framework, Uveddi can position itself as a next-generation software architecture tool that provides not just pictures, but trustworthy, interactive, and perpetually current insights into the structure and behavior of complex software systems. This approach automates the tedious and error-prone work of documentation, freeing architects and developers to focus on the strategic challenges of building better software.
 Works cited
 Introducing Swark: Automatic Architecture Diagrams from Code | by Oz Anani | Medium, accessed June 28, 2025, https://medium.com/@ozanani/introducing-swark-automatic-architecture-diagrams-from-code-cb5c8af7a7a5
 Harnessing generative AI to create and understand architecture ..., accessed June 28, 2025, https://ijsra.net/sites/default/files/IJSRA-2024-2601.pdf

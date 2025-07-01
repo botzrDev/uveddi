@@ -1,16 +1,16 @@
-# CodeAtlas: AI-Powered Architectural Analysis CLI
+# Uveddi: AI-Powered Architectural Analysis CLI
 
-![CodeAtlas Logo/Banner (Placeholder - will add actual visual later)](./docs/img/codeatlas-banner.png)
+![Uveddi Logo/Banner (Placeholder - will add actual visual later)](./docs/img/uveddi-banner.png)
 
 "Stop Just Linting Your Code. Start Analyzing Your Architecture."
 
-CodeAtlas is a powerful Command-Line Interface (CLI) tool designed to help Senior Developers, Tech Leads, and Software Architects maintain the health and integrity of their software codebases by performing high-level architectural analysis using a hybrid of local and API-based Artificial Intelligence models. It goes beyond traditional static analysis to identify subtle but critical architectural anti-patterns that lead to technical debt and system complexity.
+Uveddi is a powerful Command-Line Interface (CLI) tool designed to help Senior Developers, Tech Leads, and Software Architects maintain the health and integrity of their software codebases by performing high-level architectural analysis using a hybrid of local and API-based Artificial Intelligence models. It goes beyond traditional static analysis to identify subtle but critical architectural anti-patterns that lead to technical debt and system complexity.
 
-## 💡 Why CodeAtlas?
+## 💡 Why Uveddi?
 
 In today's fast-paced, AI-augmented software development landscape, architectural drift—the slow erosion of a system's design integrity—is a pervasive and costly problem. Manual architectural reviews are time-consuming, subjective, and don't scale. Existing static analysis tools are often too noisy and focus on line-level issues, while AI code generators like GitHub Copilot, while excellent for generation, lack a holistic understanding of project architecture and can even accelerate the introduction of architectural debt.
 
-CodeAtlas fills this critical gap by providing:
+Uveddi fills this critical gap by providing:
 
 * **A Singular Focus on Architecture:** We evaluate the foundational blueprint of your software, answering strategic questions like "Is this system structurally sound?" or "Are we introducing dangerous coupling?"
 * **Dual AI Model for Ultimate Flexibility & Privacy:**
@@ -18,7 +18,7 @@ CodeAtlas fills this critical gap by providing:
     * **API-based Model (Paid Tier):** Leverage state-of-the-art commercial LLMs for the most complex, nuanced analysis and seamless CI/CD integration.
 * **High-Quality, Actionable Reporting:** Get well-formatted markdown reports with embedded diagrams (Mermaid.js/PlantUML) that make complex architectural issues and refactoring suggestions immediately understandable and
 
-CodeAtlas acts as your **AI Architect**, providing essential architectural intelligence and guardrails for code increasingly written by both humans and AI.
+Uveddi acts as your **AI Architect**, providing essential architectural intelligence and guardrails for code increasingly written by both humans and AI.
 
 ## ✨ Key Features
 
@@ -41,7 +41,7 @@ CodeAtlas acts as your **AI Architect**, providing essential architectural intel
 
 ### Prerequisites
 
-* **Rust Toolchain:** CodeAtlas is built with Rust for performance and safety.
+* **Rust Toolchain:** Uveddi is built with Rust for performance and safety.
     * Install `rustup` by following the instructions on [rustup.rs](https://rustup.rs/).
 * **Git:** Required for cloning the repository.
 
@@ -49,14 +49,14 @@ CodeAtlas acts as your **AI Architect**, providing essential architectural intel
 
 1.  **Clone the Repository:**
     ```bash
-    git clone [https://github.com/your-org/codeatlas-cli.git](https://github.com/your-org/codeatlas-cli.git)
-    cd codeatlas-cli
+    git clone [https://github.com/your-org/uveddi-cli.git](https://github.com/your-org/uveddi-cli.git)
+    cd uveddi-cli
     ```
 2.  **Build the Project:**
     ```bash
     cargo build --release
     ```
-    This will compile the CodeAtlas CLI binary and place it in `target/release/codeatlas`.
+    This will compile the Uveddi CLI binary and place it in `target/release/uveddi`.
 3.  **Run Tests:**
     ```bash
     cargo test
@@ -64,8 +64,8 @@ CodeAtlas acts as your **AI Architect**, providing essential architectural intel
 4.  **Install Local AI Models (Optional, for Free Tier development):**
     For developing with local AI models, you'll need `Ollama`.
     ```bash
-    # Run the CodeAtlas init command (once implemented)
-    ./target/release/codeatlas init-local-ai
+    # Run the Uveddi init command (once implemented)
+    ./target/release/uveddi init-local-ai
     # This command will guide you through installing Ollama and downloading a default model (e.g., mistral:7b-instruct-v0.2-q4_K_M)
     ```
     **Hardware Recommendation for Local Models:** A minimum of 16GB RAM is required. For optimal performance, a GPU with at least 8-12GB VRAM (e.g., NVIDIA RTX 3060 or better) is highly recommended.
@@ -75,7 +75,7 @@ CodeAtlas acts as your **AI Architect**, providing essential architectural intel
 To run an analysis on your current directory (example placeholder):
 
 ```bash
-./target/release/codeatlas analyze . --output-file architectural_report.md
+./target/release/uveddi analyze . --output-file architectural_report.md
 ```
 
 ### Backend Setup (Optional)
@@ -97,26 +97,26 @@ make run
 
 See [DATABASE_GUIDE.md](./DATABASE_GUIDE.md) for detailed instructions.
 
-## 🐳 Running CodeAtlas with Local AI in Docker
+## 🐳 Running Uveddi with Local AI in Docker
 
-You can run CodeAtlas in a fully containerized environment with Ollama and DeepSeek-Coder for local AI analysis. No host setup required!
+You can run Uveddi in a fully containerized environment with Ollama and DeepSeek-Coder for local AI analysis. No host setup required!
 
 ### Build the Docker image:
 
 ```bash
-docker build -t codeatlas-local-ai .
+docker build -t uveddi-local-ai .
 ```
 
 ### Run the container (interactive shell):
 
 ```bash
-docker run -it --rm codeatlas-local-ai
+docker run -it --rm uveddi-local-ai
 ```
 
 This will:
 - Start the Ollama server
 - Pull the DeepSeek-Coder model
-- Run all CodeAtlas tests (including AI integration)
+- Run all Uveddi tests (including AI integration)
 - Drop you into a shell with the environment ready
 
 ### Run an analysis with local AI:

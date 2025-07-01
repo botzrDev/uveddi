@@ -1,8 +1,8 @@
 //! Unit test for AiAnalysisEngine when no provider is configured
 
-use codeatlas::ai::engine::AiAnalysisEngine;
-use codeatlas::database::models::ArchitecturalIssue;
-use codeatlas::ast::CustomAst;
+use uveddi::ai::engine::AiAnalysisEngine;
+use uveddi::database::models::ArchitecturalIssue;
+use uveddi::ast::CustomAst;
 
 #[tokio::test]
 async fn analyze_issue_no_provider_does_not_set_explanation() {

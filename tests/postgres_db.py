@@ -1,6 +1,6 @@
 # tests/postgres_db.py
 """
-Comprehensive integration tests for PostgreSQL database operations in CodeAtlas backend.
+Comprehensive integration tests for PostgreSQL database operations in Uveddi backend.
 Uses psycopg2 for direct DB access.
 """
 import os
@@ -10,9 +10,9 @@ import pytest
 DB_CONFIG = {
     'host': os.getenv('DB_POSTGRES_HOST', 'localhost'),
     'port': int(os.getenv('DB_POSTGRES_PORT', 5433)),
-    'user': os.getenv('DB_POSTGRES_USER', 'codeatlas'),
-    'password': os.getenv('DB_POSTGRES_PASSWORD', 'codeatlas'),
-    'dbname': os.getenv('DB_POSTGRES_DB', 'codeatlas'),
+    'user': os.getenv('DB_POSTGRES_USER', 'uveddi'),
+    'password': os.getenv('DB_POSTGRES_PASSWORD', 'uveddi'),
+    'dbname': os.getenv('DB_POSTGRES_DB', 'uveddi'),
 }
 
 @pytest.fixture(scope="function")

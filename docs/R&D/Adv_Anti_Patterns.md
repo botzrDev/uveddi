@@ -292,13 +292,13 @@ Report Cycles: For each SCC with a size greater than one, flag a CyclicDependenc
 This algorithm can be applied at different levels of granularity by changing the node type in the ADG. Running it on a graph of packages will detect package-level cycles, which are often considered severe architectural flaws.11 Running it on a graph of classes or files will detect finer-grained cycles within a module.
 The modularity violation detector can be further refined by exposing the "resolution" parameter often found in community detection algorithms. A low resolution setting will tend to find large, coarse-grained communities, corresponding to major architectural layers or subsystems. Violations detected at this level represent significant architectural breakdowns. Conversely, a high resolution setting will produce smaller, more numerous communities. Violations at this level might correspond to finer-grained design smells like Feature Envy or misplaced class responsibilities. By allowing users to select a sensitivity level (e.g., "Architectural" vs. "Fine-Grained"), the tool can be adapted to the needs of different roles, from architects examining the system's macro-structure to developers focusing on local code health.
 
-Section 6: Implementation Guidelines for the CodeAtlas Rust Architecture
+Section 6: Implementation Guidelines for the Uveddi Rust Architecture
 
 This section provides concrete recommendations and examples for implementing the proposed detection framework within a Rust-based environment, addressing specific questions from the research prompt.
 
 6.1 Recommended Rust Libraries for Parsing and AST Generation
 
-The choice of a parsing library is foundational to the entire analysis pipeline. The library must be performant, robust, and capable of handling the complexities of multiple programming languages. For a tool like CodeAtlas, which must analyze code that may be incomplete or contain syntax errors during development, error recovery is a paramount concern.
+The choice of a parsing library is foundational to the entire analysis pipeline. The library must be performant, robust, and capable of handling the complexities of multiple programming languages. For a tool like Uveddi, which must analyze code that may be incomplete or contain syntax errors during development, error recovery is a paramount concern.
 Library
 Paradigm
 Key Features
@@ -570,7 +570,7 @@ The key deliverables and strategies outlined in this document include:
 5.  **Actionable Confidence Scoring:** The multi-factor probabilistic confidence model moves beyond binary alerts, enabling intelligent prioritization and context-aware workflows that reduce alert fatigue and focus developer attention where it is most needed.
 6.  **Calibrated Hybrid Integration:** The proposed Confidence-Driven LLM Triage model provides a pragmatic and powerful strategy for integrating deterministic analysis with LLM-based verification, leveraging the strengths of both paradigms while creating a feedback loop for continuous improvement.
 
-By implementing the recommendations within this report, the CodeAtlas team can develop a next-generation analysis engine capable of identifying nuanced architectural flaws with high precision across a variety of languages and architectural styles. This framework not only provides a solution to the immediate technical challenges but also establishes a strategic foundation for future innovation in the field of automated software quality and architecture assurance.
+By implementing the recommendations within this report, the Uveddi team can develop a next-generation analysis engine capable of identifying nuanced architectural flaws with high precision across a variety of languages and architectural styles. This framework not only provides a solution to the immediate technical challenges but also establishes a strategic foundation for future innovation in the field of automated software quality and architecture assurance.
 
 
 Works cited

@@ -1,6 +1,6 @@
 //! tests/config/secure_api_keys.rs
 
-use codeatlas::config::Config;
+use uveddi::config::Config;
 use std::env;
 
 #[test]

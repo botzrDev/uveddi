@@ -45,14 +45,14 @@ mod tests {
         "#;
         File::create(&file_path).unwrap().write_all(code.as_bytes()).unwrap();
 
-        let mut cmd = Command::cargo_bin("codeatlas").unwrap();
+        let mut cmd = Command::cargo_bin("uveddi").unwrap();
         cmd.arg("analyze")
             .arg(dir.path())
             .arg("--output-format=markdown")
             .arg("--enable-ai");
 
         // Print output for debugging
-        let output = cmd.output().expect("Failed to run codeatlas");
+        let output = cmd.output().expect("Failed to run uveddi");
         let stdout = String::from_utf8_lossy(&output.stdout);
         println!("CLI OUTPUT:\n{}", stdout);
         assert!(stdout.contains("AI Explanation") || stdout.contains("ai_explanation"), "Expected AI explanation in output, got: {}", stdout);
@@ -66,7 +66,7 @@ mod tests {
         let mut file = File::create(&file_path).unwrap();
         writeln!(file, "fn main() {{}}").unwrap();
 
-        let mut cmd = Command::cargo_bin("codeatlas").unwrap();
+        let mut cmd = Command::cargo_bin("uveddi").unwrap();
         cmd.arg("analyze")
             .arg(dir.path())
             .arg("--output-format=json")

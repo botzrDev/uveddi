@@ -1,4 +1,4 @@
-# CodeAtlas Sprint Planning - Vertical Slices
+# Uveddi Sprint Planning - Vertical Slices
 
 **[Update June 30, 2025: Sprint 5 milestone achieved—Gold-standard RAG pipeline, multi-layered hallucination defense, advanced semantic search, and robust testing are complete. All core AI Reasoning Engine tasks for Sprint 5 are done. See TODO.md for next steps.]**
 
@@ -6,13 +6,13 @@
 **Goal:** Deliver a working CLI that can analyze a simple codebase and output basic findings
 
 ### User Story
-"As a developer, I can run `codeatlas analyze ./my-project` and get a basic text report showing cyclic dependencies in my codebase."
+"As a developer, I can run `uveddi analyze ./my-project` and get a basic text report showing cyclic dependencies in my codebase."
 
 ### Sprint 1 Tasks
 
 #### Core Infrastructure (Days 1-2)
 - [x] **1.1.1** Set up basic Rust project structure with `clap` for CLI parsing
-- [x] **1.1.2** Implement basic `codeatlas analyze <path>` command that accepts a directory
+- [x] **1.1.2** Implement basic `uveddi analyze <path>` command that accepts a directory
 - [x] **1.1.3** Add basic error handling and logging with `env_logger`
 
 #### File Processing Pipeline (Days 3-4)
@@ -94,7 +94,7 @@ A multi-language analyzer with AST-based detection and AI-powered explanations.
 - [x] **3.1.4** Implement hallucination mitigation prompts
 
 #### Local AI Integration (Days 8-10)
-- [x] **3.2.1** Implement `codeatlas init-local-ai` command
+- [x] **3.2.1** Implement `uveddi init-local-ai` command
 - [x] **3.2.2** Add Ollama API client
 - [x] **3.2.3** Create AI provider abstraction
 
@@ -146,7 +146,7 @@ ERD-compliant architectural analysis tool with local AI support and critical ant
 **Goal:** Complete plugin system and implement advanced architectural analysis capabilities
 
 ### User Story
-"As a developer, I want to extend CodeAtlas with custom plugins to detect domain-specific patterns and have a fully configurable analysis environment."
+"As a developer, I want to extend Uveddi with custom plugins to detect domain-specific patterns and have a fully configurable analysis environment."
 
 ### Sprint 4 Tasks
 
@@ -162,7 +162,7 @@ ERD-compliant architectural analysis tool with local AI support and critical ant
 - [ ] **4.2.3** Add co-change analysis heuristics
 
 #### Configuration System (Days 10-12)
-- [ ] **4.3.1** Finalize .codeatlas.toml implementation
+- [ ] **4.3.1** Finalize .uveddi.toml implementation
 - [ ] **4.3.2** Implement profile-based configuration
 - [ ] **4.3.3** Add CLI config command
 
@@ -172,7 +172,7 @@ ERD-compliant architectural analysis tool with local AI support and critical ant
 - [ ] **4.4.3** Implement baseline performance metrics
 
 ### Sprint 4 Deliverable
-Extensible CodeAtlas with plugin support, advanced detectors, and configurable analysis profiles.
+Extensible Uveddi with plugin support, advanced detectors, and configurable analysis profiles.
 
 ### Sprint 4 Definition of Done
 - [ ] WASM plugin sandboxing implemented
@@ -187,7 +187,7 @@ Extensible CodeAtlas with plugin support, advanced detectors, and configurable a
 **Goal:** Eliminate AST re-parsing bottlenecks and improve performance for large codebases.
 
 ### User Story
-"As a developer, I want CodeAtlas to analyze large projects quickly by caching a custom, serializable AST on disk, so repeated analyses are much faster."
+"As a developer, I want Uveddi to analyze large projects quickly by caching a custom, serializable AST on disk, so repeated analyses are much faster."
 
 ### Sprint 4 Tasks
 - [x] **4.1.1** Research tree-sitter serialization and caching strategies

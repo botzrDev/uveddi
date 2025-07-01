@@ -39,7 +39,7 @@ pub struct InitLocalAiCommand {
 }
 
 impl InitLocalAiCommand {
-    pub async fn execute<T: LocalAiSetup>(&self, setup: &T) -> Result<(), crate::error::CodeAtlasError> {
+    pub async fn execute<T: LocalAiSetup>(&self, setup: &T) -> Result<(), crate::error::UveddiError> {
         info!("Initializing local AI (Ollama) with model: {}", self.model);
 
         if !setup.is_ollama_installed().await {

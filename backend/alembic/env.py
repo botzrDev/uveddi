@@ -1,5 +1,5 @@
 """
-Alembic environment configuration for CodeAtlas backend.
+Alembic environment configuration for Uveddi backend.
 
 This module configures Alembic to work with our SQLAlchemy models
 and PostgreSQL database.

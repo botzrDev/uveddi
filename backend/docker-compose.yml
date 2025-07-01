@@ -5,15 +5,15 @@ services:
     image: postgres:15
     restart: always
     environment:
-      POSTGRES_USER: codeatlas
-      POSTGRES_PASSWORD: codeatlas
-      POSTGRES_DB: codeatlas
+      POSTGRES_USER: uveddi
+      POSTGRES_PASSWORD: uveddi
+      POSTGRES_DB: uveddi
     ports:
       - "5433:5432"  # Changed from 5432:5432 to avoid port conflict
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U codeatlas"]
+      test: ["CMD-SHELL", "pg_isready -U uveddi"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -29,9 +29,9 @@ services:
     environment:
       - DB_POSTGRES_HOST=postgres
       - DB_POSTGRES_PORT=5432  # Inside the Docker network, still use 5432
-      - DB_POSTGRES_USER=codeatlas
-      - DB_POSTGRES_PASSWORD=codeatlas
-      - DB_POSTGRES_DB=codeatlas
+      - DB_POSTGRES_USER=uveddi
+      - DB_POSTGRES_PASSWORD=uveddi
+      - DB_POSTGRES_DB=uveddi
       - DB_ENVIRONMENT=development
       - APP_HOST=0.0.0.0
       - APP_PORT=8000

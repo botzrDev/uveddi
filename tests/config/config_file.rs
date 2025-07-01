@@ -1,6 +1,6 @@
 //! tests/config/config_file.rs
 
-use codeatlas::config::Config;
+use uveddi::config::Config;
 use std::fs::File;
 use std::io::Write;
 use tempfile::tempdir;
@@ -8,7 +8,7 @@ use tempfile::tempdir;
 #[test]
 fn test_load_config_from_file() {
     let dir = tempdir().unwrap();
-    let file_path = dir.path().join("codeatlas.toml");
+    let file_path = dir.path().join("uveddi.toml");
 
     let mut file = File::create(&file_path).unwrap();
     writeln!(file, "openai_api_key = 'test_key'").unwrap();

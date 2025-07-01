@@ -1,5 +1,5 @@
 // tests/sqlite_db.rs
-// Comprehensive integration tests for SQLite database operations in CodeAtlas
+// Comprehensive integration tests for SQLite database operations in Uveddi
 // Uses rusqlite for direct DB access
 
 use rusqlite::{params, Connection, Result};

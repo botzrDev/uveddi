@@ -1,4 +1,4 @@
-# Makefile for CodeAtlas backend
+# Makefile for Uveddi backend
 
 .PHONY: setup migrate run test clean docker-build docker-run
 
@@ -39,21 +39,21 @@ clean:
 # Docker commands
 docker-build:
 	@echo "Building Docker image..."
-	docker build -t codeatlas-backend .
+	docker build -t uveddi-backend .
 
 docker-run:
 	@echo "Running Docker container..."
-	docker run -p 8000:8080 --env-file .env codeatlas-backend
+	docker run -p 8000:8080 --env-file .env uveddi-backend
 
 # Google Cloud deployment
 gcloud-build:
 	@echo "Building for Google Cloud..."
-	gcloud builds submit --tag gcr.io/$(GOOGLE_CLOUD_PROJECT)/codeatlas-backend
+	gcloud builds submit --tag gcr.io/$(GOOGLE_CLOUD_PROJECT)/uveddi-backend
 
 gcloud-deploy:
 	@echo "Deploying to Google Cloud Run..."
-	gcloud run deploy codeatlas-backend \
-		--image gcr.io/$(GOOGLE_CLOUD_PROJECT)/codeatlas-backend \
+	gcloud run deploy uveddi-backend \
+		--image gcr.io/$(GOOGLE_CLOUD_PROJECT)/uveddi-backend \
 		--platform managed \
 		--region us-central1 \
 		--add-cloudsql-instances $(CLOUD_SQL_CONNECTION_NAME) \
@@ -69,7 +69,7 @@ new-migration:
 
 # Help target
 help:
-	@echo "CodeAtlas Backend Makefile"
+	@echo "Uveddi Backend Makefile"
 	@echo ""
 	@echo "Usage:"
 	@echo "  make setup         - Set up the database"

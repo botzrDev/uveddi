@@ -16,14 +16,14 @@ mod tests {
         let mut file = File::create(&file_path).unwrap();
         writeln!(file, "fn main() {{}}").unwrap();
 
-        let mut cmd = Command::cargo_bin("codeatlas").unwrap();
+        let mut cmd = Command::cargo_bin("uveddi").unwrap();
         cmd.arg("analyze")
             .arg(dir.path())
             .arg("--output-format=markdown");
 
         cmd.assert()
             .success()
-            .stdout(predicate::str::contains("# CodeAtlas Analysis Report"));
+            .stdout(predicate::str::contains("# Uveddi Analysis Report"));
     }
 
     #[test]
@@ -33,7 +33,7 @@ mod tests {
         let mut file = File::create(&file_path).unwrap();
         writeln!(file, "fn main() {{}}").unwrap();
 
-        let mut cmd = Command::cargo_bin("codeatlas").unwrap();
+        let mut cmd = Command::cargo_bin("uveddi").unwrap();
         cmd.arg("analyze")
             .arg(dir.path())
             .arg("--output-format=json");
@@ -45,7 +45,7 @@ mod tests {
 
     #[test]
     fn cli_handles_errors_gracefully() {
-        let mut cmd = Command::cargo_bin("codeatlas").unwrap();
+        let mut cmd = Command::cargo_bin("uveddi").unwrap();
         cmd.arg("analyze").arg("/path/to/nonexistent/dir");
 
         cmd.assert()

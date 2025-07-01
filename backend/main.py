@@ -1,5 +1,5 @@
 """
-FastAPI application for CodeAtlas backend service.
+FastAPI application for Uveddi backend service.
 
 This module sets up the FastAPI application with database dependency injection,
 authentication, and CRUD endpoints for organizations and projects.
@@ -25,8 +25,8 @@ logger = logging.getLogger(__name__)
 
 # FastAPI app instance
 app = FastAPI(
-    title="CodeAtlas Backend API",
-    description="Centralized backend service for CodeAtlas code analysis platform",
+    title="Uveddi Backend API",
+    description="Centralized backend service for Uveddi code analysis platform",
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc"

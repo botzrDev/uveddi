@@ -1,7 +1,7 @@
 //! tests/analysis/anti_patterns/unstable_interface_detector.rs
 
-use codeatlas::analysis::anti_patterns::unstable_interface_detector::UnstableInterfaceDetector;
-use codeatlas::analysis::dependency_graph::DependencyGraph;
+use uveddi::analysis::anti_patterns::unstable_interface_detector::UnstableInterfaceDetector;
+use uveddi::analysis::dependency_graph::DependencyGraph;
 use std::path::PathBuf;
 
 #[test]

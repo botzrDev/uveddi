@@ -76,7 +76,7 @@ impl ReportGenerator {
 
     fn generate_header(&self, analysis_run: &AnalysisRun, issues: &[ArchitecturalIssue]) -> String {
         format!(
-            r"# CodeAtlas Analysis Report
+            r"# Uveddi Analysis Report
 
 **Analysis ID:** {}
 **Start Time:** {}

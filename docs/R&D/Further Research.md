@@ -13,7 +13,7 @@ While the plan is clear and robust, there are always areas that require continuo
 
 
 
-# Areas Needing Additional Research in CodeAtlas
+# Areas Needing Additional Research in Uveddi
 
 After reviewing your TODO list again, I've identified several other components that would benefit from extensive research beyond the AI Reasoning Engine:
 
@@ -23,7 +23,7 @@ This is a technically complex area requiring significant research:
 - **Plugin Interface Design**: Principles for creating stable APIs that won't break with updates
 - **Sandboxing Security**: Research on secure isolation patterns and potential vulnerabilities
 - **Data Exchange Protocols**: Efficient serialization/deserialization between host and plugins
-- **Version Compatibility**: How to handle plugin versioning across CodeAtlas releases
+- **Version Compatibility**: How to handle plugin versioning across Uveddi releases
 
 ## 2. AST Parsing Module (Phase 2.2)
 The language support infrastructure needs careful research:
@@ -44,19 +44,19 @@ This requires both technical and domain-specific research:
 This validation phase needs careful planning:
 - **Benchmark Selection Criteria**: Research on representative open-source projects
 - **Evaluation Methodology**: Developing objective measures of analysis accuracy
-- **Comparative Analysis**: How CodeAtlas performs versus human code reviewers
+- **Comparative Analysis**: How Uveddi performs versus human code reviewers
 - **Performance Metrics**: Standard benchmarks for processing time and resource usage
 
 The Plugin System stands out as particularly research-intensive due to its security implications and the need to design a stable, future-proof API. The Anti-pattern Detector also requires significant research to ensure reliable detection algorithms that minimize false positives while catching genuine architectural issues.
 
 ### Research Prompts:
 
-# Research Prompts for Critical CodeAtlas Components
+# Research Prompts for Critical Uveddi Components
 
 ## 1. Plugin System Core Research Prompt
 
 ### Context & Purpose
-We're implementing a plugin system for CodeAtlas that uses WebAssembly for sandboxing. This research will inform the design of a secure, performant, and future-proof plugin architecture that allows third-party developers to extend our code analysis capabilities.
+We're implementing a plugin system for Uveddi that uses WebAssembly for sandboxing. This research will inform the design of a secure, performant, and future-proof plugin architecture that allows third-party developers to extend our code analysis capabilities.
 
 ### Key Research Areas
 - **WASM Runtime Evaluation**: Compare `wasmer`, `wasmtime`, and other Rust-compatible WASM runtimes
@@ -70,7 +70,7 @@ We're implementing a plugin system for CodeAtlas that uses WebAssembly for sandb
 2. What are the best practices for designing stable plugin interfaces that won't break with updates?
 3. How should we handle capability-based security to limit plugin access to system resources?
 4. What serialization approach minimizes overhead between host and WASM modules?
-5. How should we handle plugin versioning and compatibility across CodeAtlas releases?
+5. How should we handle plugin versioning and compatibility across Uveddi releases?
 
 ### Deliverables
 1. Comparative analysis of WASM runtime options with security-performance metrics
@@ -134,21 +134,21 @@ We're implementing algorithms to detect architectural anti-patterns in code with
 ## 4. Real-World Project Benchmarking Research Prompt
 
 ### Context & Purpose
-We need to validate CodeAtlas against real-world codebases to ensure its effectiveness and performance. This research will inform our benchmarking methodology and selection of representative projects for validation.
+We need to validate Uveddi against real-world codebases to ensure its effectiveness and performance. This research will inform our benchmarking methodology and selection of representative projects for validation.
 
 ### Key Research Areas
 - **Benchmark Selection Criteria**: Research criteria for selecting representative open-source projects
 - **Evaluation Methodology**: Explore objective measures for analysis accuracy
-- **Comparative Analysis Framework**: Research methods for comparing CodeAtlas to human reviewers
+- **Comparative Analysis Framework**: Research methods for comparing Uveddi to human reviewers
 - **Performance Metrics**: Investigate standardized benchmarks for processing time and resource usage
 - **Case Study Development**: Explore approaches for developing compelling case studies
 
 ### Specific Implementation Questions
 1. What criteria should guide our selection of benchmark projects?
 2. How can we objectively measure analysis accuracy without ground truth?
-3. What methodology should we use to compare CodeAtlas findings with expert reviews?
+3. What methodology should we use to compare Uveddi findings with expert reviews?
 4. What performance metrics are most relevant for code analysis tools?
-5. How should we structure case studies to demonstrate CodeAtlas's value?
+5. How should we structure case studies to demonstrate Uveddi's value?
 
 ### Deliverables
 1. Benchmark project selection criteria with candidate list

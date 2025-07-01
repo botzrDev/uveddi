@@ -9,7 +9,7 @@ pub struct Database {
 
 impl Database {
     pub fn new() -> Result<Self> {
-        let conn = Connection::open("codeatlas.db")?;
+        let conn = Connection::open("uveddi.db")?;
         conn.execute_batch("
             CREATE TABLE IF NOT EXISTS analysis_runs (
                 run_id INTEGER PRIMARY KEY AUTOINCREMENT,

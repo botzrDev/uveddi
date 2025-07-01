@@ -19,7 +19,7 @@ pub enum ConfigSubcommand {
         /// Config value
         value: String,
         /// Path to config file
-        #[arg(long, default_value = "codeatlas.toml")]
+        #[arg(long, default_value = "uveddi.toml")]
         file: PathBuf,
     },
     /// Validate the configuration file
@@ -75,7 +75,7 @@ impl ConfigCommand {
                 println!("Config updated in {}", file.display());
             }
             ConfigSubcommand::Validate { file } => {
-                let path = file.as_ref().map(|p| p.to_str().unwrap()).unwrap_or("codeatlas.toml");
+                let path = file.as_ref().map(|p| p.to_str().unwrap()).unwrap_or("uveddi.toml");
                 match Config::from_file(path) {
                     Ok(_) => println!("Config is valid."),
                     Err(e) => return Err(format!("Config validation failed: {}", e)),

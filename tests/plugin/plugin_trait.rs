@@ -1,10 +1,10 @@
 //! tests/plugin/plugin_trait.rs
 
-use codeatlas::plugin::CodeAtlasPlugin;
+use uveddi::plugin::UveddiPlugin;
 
 struct TestPlugin;
 
-impl CodeAtlasPlugin for TestPlugin {
+impl UveddiPlugin for TestPlugin {
     fn name(&self) -> &'static str {
         "Test Plugin"
     }

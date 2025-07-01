@@ -1,14 +1,14 @@
-Engineering Requirements Document (ERD) for CodeAtlas  
+Engineering Requirements Document (ERD) for Uveddi  
   
 **1. Introduction**  
   
-This Engineering Requirements Document (ERD) details the technical specifications and engineering considerations for the development of CodeAtlas, an AI-powered Command-Line Interface (CLI) tool for high-level architectural analysis of software codebases. It translates the product requirements outlined in the PRD into actionable engineering tasks and technical design decisions.  
+This Engineering Requirements Document (ERD) details the technical specifications and engineering considerations for the development of Uveddi, an AI-powered Command-Line Interface (CLI) tool for high-level architectural analysis of software codebases. It translates the product requirements outlined in the PRD into actionable engineering tasks and technical design decisions.  
   
 **1.1. Purpose**  
-The purpose of this document is to guide the engineering team in the design, development, and testing of CodeAtlas, ensuring that the implemented solution meets the defined functional, non-functional, and performance requirements.  
+The purpose of this document is to guide the engineering team in the design, development, and testing of Uveddi, ensuring that the implemented solution meets the defined functional, non-functional, and performance requirements.  
   
 **1.2. Scope**  
-This ERD covers the technical architecture, component design, data models, integration points, and performance targets for the initial release of CodeAtlas. It focuses on the core analysis engine, AI model integration, reporting mechanisms, and the plugin system.  
+This ERD covers the technical architecture, component design, data models, integration points, and performance targets for the initial release of Uveddi. It focuses on the core analysis engine, AI model integration, reporting mechanisms, and the plugin system.  
   
 **1.3. Definitions, Acronyms, and Abbreviations**
 
@@ -30,13 +30,13 @@ This ERD covers the technical architecture, component design, data models, integ
 
 **2. System Architecture**  
   
-CodeAtlas will implement a hybrid architecture to balance performance, privacy, and the power of advanced AI models.  
+Uveddi will implement a hybrid architecture to balance performance, privacy, and the power of advanced AI models.  
   
 **2.1. High-Level System Diagram**
 
 ```
 graph TD
-    A[User/CI/CD] --> B{CodeAtlas CLI}
+    A[User/CI/CD] --> B{Uveddi CLI}
     B --> C[Codebase Files]
     C -- .archlintignore --> D[File Ingestion Module]
     D --> E[AST Parsing Module (Tree-sitter)]
@@ -104,7 +104,7 @@ graph TD
 **3.2. AI Model Integration**
 
 - **ER-F-006: Local LLM Integration:** The tool SHALL integrate with Ollama to utilize locally hosted LLMs for analysis.
-    - **ER-F-006.1:** The CLI SHALL provide a command to facilitate Ollama setup and model download (e.g., `codeatlas init-local-ai`).
+    - **ER-F-006.1:** The CLI SHALL provide a command to facilitate Ollama setup and model download (e.g., `uveddi init-local-ai`).
     - **ER-F-006.2:** The tool SHALL default to a specified local model (e.g., `mistral:7b-instruct-v0.2-q4_K_M`) if available and configured.
 - **ER-F-007: API-based LLM Integration:** The tool SHALL support integration with OpenAI (GPT-4), Anthropic (Claude 3), and Google (Gemini) LLM APIs.
     - **ER-F-007.1:** API keys and model preferences SHALL be configurable via environment variables or a secure configuration file.

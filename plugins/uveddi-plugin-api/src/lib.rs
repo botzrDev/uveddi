@@ -3,7 +3,7 @@ pub mod models;
 use models::{ArchitecturalIssue, DependencyGraph};
 use thiserror::Error;
 
-/// The main trait that all CodeAtlas plugins must implement.
+/// The main trait that all Uveddi plugins must implement.
 pub trait Plugin {
     /// A unique name for the plugin.
     fn name(&self) -> &'static str;

@@ -1,4 +1,4 @@
-use codeatlas::ast::tree_sitter::{AstParser, SourceLanguage};
+use uveddi::ast::tree_sitter::{AstParser, SourceLanguage};
 use std::fs::File;
 use std::io::Write;
 use tempfile::tempdir;
