@@ -79,6 +79,7 @@ impl WasmPluginManager {
     }
 }
 
+#[allow(dead_code)]
 pub struct WasmPlugin {
     store: Store<PluginState>,
     instance: Instance,

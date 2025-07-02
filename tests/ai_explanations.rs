@@ -28,7 +28,6 @@ mod tests {
     #[tokio::test]
     async fn ai_explanation_integration() {
         use uveddi::ai::engine::AiAnalysisEngine;
-        use uveddi::ast::CustomAst;
         let mut issue = ArchitecturalIssue {
             issue_id: None,
             analysis_run_id: 1,
@@ -43,8 +42,7 @@ mod tests {
         };
         // No API key, should fallback gracefully
         let ai_engine = AiAnalysisEngine::new();
-        let dummy_ast = CustomAst::default();
-        let result = ai_engine.analyze_issue(&mut issue, &dummy_ast).await;
+        let result = ai_engine.analyze_issue(&mut issue).await;
         assert!(result.is_ok());
         // Should not panic or set explanation
         assert!(issue.ai_explanation.is_none());
@@ -53,7 +51,6 @@ mod tests {
     #[tokio::test]
     async fn ai_fallback_on_missing_key() {
         use uveddi::ai::engine::AiAnalysisEngine;
-        use uveddi::ast::CustomAst;
         let mut issue = ArchitecturalIssue {
             issue_id: None,
             analysis_run_id: 1,
@@ -68,8 +65,7 @@ mod tests {
         };
         // No API key, should fallback gracefully
         let ai_engine = AiAnalysisEngine::new();
-        let dummy_ast = CustomAst::default();
-        let result = ai_engine.analyze_issue(&mut issue, &dummy_ast).await;
+        let result = ai_engine.analyze_issue(&mut issue).await;
         assert!(result.is_ok());
         assert!(issue.ai_explanation.is_none());
     }

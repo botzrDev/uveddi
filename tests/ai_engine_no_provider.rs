@@ -2,7 +2,6 @@
 
 use uveddi::ai::engine::AiAnalysisEngine;
 use uveddi::database::models::ArchitecturalIssue;
-use uveddi::ast::CustomAst;
 
 #[tokio::test]
 async fn analyze_issue_no_provider_does_not_set_explanation() {
@@ -19,8 +18,7 @@ async fn analyze_issue_no_provider_does_not_set_explanation() {
         ai_explanation: None,
     };
     let ai_engine = AiAnalysisEngine::new();
-    let dummy_ast = CustomAst::default();
-    let result = ai_engine.analyze_issue(&mut issue, &dummy_ast).await;
+    let result = ai_engine.analyze_issue(&mut issue).await;
     assert!(result.is_ok());
     assert!(issue.ai_explanation.is_none(), "AI explanation should not be set if no provider is configured");
 }

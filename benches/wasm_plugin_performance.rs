@@ -3,7 +3,6 @@ use uveddi::plugin::{PluginManager, WasmPluginManager};
 use uveddi::analysis::dependency_graph::LocalDependencyGraph;
 use uveddi_plugin_api::models::{DependencyGraph, Dependency, DependencyType};
 use std::path::PathBuf;
-use std::sync::Arc;
 
 fn create_test_dependency_graph(size: usize) -> DependencyGraph {
     let mut graph = DependencyGraph::new();

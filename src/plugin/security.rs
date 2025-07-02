@@ -38,6 +38,7 @@ impl Default for ResourceLimits {
     }
 }
 
+#[allow(dead_code)]
 pub fn create_secure_wasi_context(manifest: &PluginManifest) -> Result<wasmtime_wasi::WasiCtx, UveddiError> {
     let mut builder = WasiCtxBuilder::new();
     
@@ -88,6 +89,7 @@ pub fn create_secure_wasi_context(manifest: &PluginManifest) -> Result<wasmtime_
 }
 
 /// Check if a file path is safe for plugin access
+#[allow(dead_code)]
 fn is_safe_path(path: &str) -> bool {
     let safe_paths = [
         "/tmp/",
@@ -106,6 +108,7 @@ fn is_safe_path(path: &str) -> bool {
 }
 
 /// Check if an environment variable is safe to expose to plugins
+#[allow(dead_code)]
 fn is_safe_env_var(var: &str) -> bool {
     let safe_vars = [
         "UVEDDI_PLUGIN_CONFIG",

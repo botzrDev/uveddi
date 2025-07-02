@@ -1,4 +1,3 @@
-use crate::ast::CustomAst;
 use crate::database::models::ArchitecturalIssue;
 use crate::error::UveddiError;
 use log::info;
