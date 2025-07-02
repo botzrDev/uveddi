@@ -2,7 +2,7 @@ use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use uveddi::plugin::{PluginManager, WasmPluginManager};
 // use the correct path to LocalDependencyGraph
 use std::path::PathBuf;
-use uveddi::analysis::dependency_graph::LocalDependencyGraph;
+use uveddi::analysis::graph::dependency::LocalDependencyGraph;
 use uveddi_plugin_api::models::{Dependency, DependencyGraph, DependencyType};
 
 fn create_test_dependency_graph(size: usize) -> DependencyGraph {
@@ -36,7 +36,7 @@ fn create_test_dependency_graph(size: usize) -> DependencyGraph {
 }
 
 fn create_internal_dependency_graph(size: usize) -> LocalDependencyGraph {
-    use uveddi::analysis::dependency_graph::{ComponentNode, LocalDependencyType};
+    use uveddi::analysis::graph::dependency::{ComponentNode, LocalDependencyType};
     let mut graph = LocalDependencyGraph::new();
 
     // Create similar structure for internal graph

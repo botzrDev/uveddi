@@ -16,6 +16,7 @@ pub struct CacheableAst {
 
 pub struct AstCache {
     memory_cache: HashMap<PathBuf, (Tree, SystemTime)>,
+    #[allow(dead_code)]
     disk_cache_path: PathBuf,
     max_memory_entries: usize,
 }
