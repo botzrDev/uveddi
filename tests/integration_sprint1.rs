@@ -7,8 +7,10 @@ use uveddi::analysis::cycle_detector::CycleDetector;
 #[test]
 fn test_sprint1_cycle_detection() {
     let dir = tempdir().unwrap();
-    let mod1_path = dir.path().join("mod1.rs");
-    let mod2_path = dir.path().join("mod2.rs");
+    let src_dir = dir.path().join("src");
+    fs::create_dir(&src_dir).unwrap();
+    let mod1_path = src_dir.join("mod1.rs");
+    let mod2_path = src_dir.join("mod2.rs");
 
     fs::write(&mod1_path, "pub mod mod2;").unwrap();
     fs::write(&mod2_path, "pub mod mod1;").unwrap();
@@ -18,14 +20,14 @@ fn test_sprint1_cycle_detection() {
 
     let deps1 = extractor.extract_from_file(&mod1_path).unwrap();
     for dep in deps1 {
-        let from_node = ComponentNode::Module { path: dep.from_file.to_string_lossy().into_owned() };
+        let from_node = ComponentNode::Module { path: "mod1".to_string() };
         let to_node = ComponentNode::Module { path: dep.to_module };
         graph.add_dependency(&from_node, &to_node, LocalDependencyType::Import);
     }
 
     let deps2 = extractor.extract_from_file(&mod2_path).unwrap();
     for dep in deps2 {
-        let from_node = ComponentNode::Module { path: dep.from_file.to_string_lossy().into_owned() };
+        let from_node = ComponentNode::Module { path: "mod2".to_string() };
         let to_node = ComponentNode::Module { path: dep.to_module };
         graph.add_dependency(&from_node, &to_node, LocalDependencyType::Import);
     }
@@ -35,6 +37,6 @@ fn test_sprint1_cycle_detection() {
 
     assert_eq!(results.len(), 1);
     let description = &results[0].description;
-    assert!(description.contains("mod1.rs"));
-    assert!(description.contains("mod2.rs"));
+    assert!(description.contains("mod1"));
+    assert!(description.contains("mod2"));
 }

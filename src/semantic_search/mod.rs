@@ -52,3 +52,6 @@ pub fn cosine_similarity(a: &Array1<f32>, b: &Array1<f32>) -> f32 {
 pub mod embedding;
 pub mod hybrid;
 pub mod mmr;
+
+#[cfg(test)]
+mod embedding_tests;

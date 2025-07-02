@@ -73,6 +73,18 @@ impl DependencyExtractor {
                     }
                 }
 
+                if let SourceLanguage::Rust = parsed_file.language {
+                    if let Some(parent) = parsed_file.path.parent() {
+                        let mut path = parent.join(&module_name);
+                        if !path.exists() {
+                            path.set_extension("rs");
+                        }
+                        if path.exists() {
+                            module_name = path.to_string_lossy().to_string();
+                        }
+                    }
+                }
+
                 dependencies.push(Dependency {
                     from_file: parsed_file.path.clone(),
                     to_module: module_name,

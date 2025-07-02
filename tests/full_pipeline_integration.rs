@@ -55,8 +55,8 @@ mod tests {
         let output = cmd.output().expect("Failed to run uveddi");
         let stdout = String::from_utf8_lossy(&output.stdout);
         println!("CLI OUTPUT:\n{}", stdout);
-        assert!(stdout.contains("AI Explanation") || stdout.contains("ai_explanation"), "Expected AI explanation in output, got: {}", stdout);
-        assert!(stdout.contains("confidence") || stdout.contains("Confidence"), "Expected confidence in output, got: {}", stdout);
+        assert!(!stdout.contains("AI Explanation") && !stdout.contains("ai_explanation"), "Expected no AI explanation in output, got: {}", stdout);
+        assert!(!stdout.contains("confidence") && !stdout.contains("Confidence"), "Expected no confidence in output, got: {}", stdout);
     }
 
     #[test]
@@ -72,9 +72,9 @@ mod tests {
             .arg("--output-format=json")
             .arg("--enable-ai");
 
-        // Should not fail, but may warn about missing API key
+        // Should not fail, and should not contain an explanation
         cmd.assert()
             .success()
-            .stdout(predicate::str::is_match(r#"ai_explanation":|AI Explanation"#).unwrap());
+            .stdout(predicate::str::is_match(r#"ai_explanation"#).unwrap().not());
     }
 }

@@ -37,8 +37,7 @@ impl AiAnalysisEngine {
         info!("AI Engine analyzing issue: {}", issue.description);
         // In a real implementation, this would involve calls to an LLM
         // and would be significantly more complex.
-        // For now, we'll just add some placeholder data.
-        issue.ai_explanation = Some("This is a placeholder AI explanation.".to_string());
+        // For now, we do nothing if no provider is configured.
         Ok(())
     }
 

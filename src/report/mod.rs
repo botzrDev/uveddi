@@ -55,8 +55,8 @@ impl ReportGenerator {
         issues: &[ArchitecturalIssue],
     ) -> Result<Value, crate::error::UveddiError> {
         let report = serde_json::json!({
+            "run_id": analysis_run.run_id,
             "analysis_run": {
-                "run_id": analysis_run.run_id,
                 "start_time": analysis_run.start_time,
                 "end_time": analysis_run.end_time,
                 "status": analysis_run.status,
@@ -91,7 +91,7 @@ impl ReportGenerator {
             analysis_run.start_time.format("%Y-%m-%d %H:%M:%S UTC"),
             self.calculate_duration(analysis_run),
             analysis_run.total_files_analyzed.unwrap_or(0),
-            issues.len()
+            analysis_run.total_issues_found.unwrap_or(0)
         )
     }
 

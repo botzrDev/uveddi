@@ -1,19 +1,21 @@
-//! Unit tests for DummyEmbeddingModel
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::tempdir;
+    use std::fs::File;
+    use std::io::Write;
 
-use super::embedding::{EmbeddingModel, DummyEmbeddingModel};
+    #[tokio::test]
+    async fn test_embedding_creation() {
+        let dir = tempdir().unwrap();
+        let file_path = dir.path().join("test.rs");
+        let mut file = File::create(&file_path).unwrap();
+        writeln!(file, "fn main() {{}}").unwrap();
 
-#[test]
-fn test_dummy_embedding_model_returns_fixed_length() {
-    let model = DummyEmbeddingModel;
-    let emb = model.embed("hello world");
-    assert_eq!(emb.len(), 768);
-}
-
-#[test]
-fn test_dummy_embedding_model_different_texts() {
-    let model = DummyEmbeddingModel;
-    let emb1 = model.embed("foo");
-    let emb2 = model.embed("bar");
-    assert_eq!(emb1.len(), emb2.len());
-    assert_ne!(emb1, emb2);
+        let embedding_result = create_embedding("fn main() {{}}", &file_path.to_string_lossy()).await;
+        assert!(embedding_result.is_ok());
+        let embedding = embedding_result.unwrap();
+        assert_eq!(embedding.source, file_path.to_string_lossy());
+        assert!(!embedding.vector.is_empty());
+    }
 }
