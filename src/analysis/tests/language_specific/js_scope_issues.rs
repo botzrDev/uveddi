@@ -83,4 +83,36 @@ mod tests {
         // Example: IIFE patterns, module scope, arrow function scope
         todo!("Implement scope edge cases test");
     }
+
+    #[test]
+    #[ignore]
+    fn test_this_context_loss() {
+        // TODO: Implement test for arrow function vs regular function context binding issues
+        // Example: setTimeout(function() { ... }, 1000) vs setTimeout(() => { ... }, 1000)
+        todo!("Implement this context loss detection test");
+    }
+
+    #[test]
+    #[ignore]
+    fn test_global_namespace_pollution_negative() {
+        // TODO: Implement negative test for global namespace pollution
+        // Example: All variables properly encapsulated in modules/functions
+        todo!("Implement negative test for global namespace pollution");
+    }
+
+    #[test]
+    #[ignore]
+    fn test_var_let_const_edge_cases() {
+        // TODO: Implement edge case test for var/let/const usage
+        // Example: Shadowing, redeclaration, block scoping
+        todo!("Implement var/let/const edge case test");
+    }
+
+    #[test]
+    #[ignore]
+    fn test_scope_performance() {
+        // TODO: Implement performance/scalability test for scope analysis
+        // Example: Large files with many nested scopes
+        todo!("Implement scope performance test");
+    }
 }
