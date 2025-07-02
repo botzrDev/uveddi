@@ -4,13 +4,14 @@ use std::sync::Arc;
 use uveddi_plugin_api::models::{ArchitecturalIssue, DependencyGraph};
 use uveddi_plugin_api::{Plugin, PluginError};
 
-mod security;
+// Use stub implementations instead of real WASM modules
+mod security_stub;
 mod verification;
-mod wasm_manager;
+mod wasm_manager_stub;
 
-pub use security::{Permission, PluginManifest, ResourceLimits};
+pub use security_stub::{Permission, PluginManifest, ResourceLimits};
 pub use verification::PluginVerifier;
-pub use wasm_manager::{WasmPlugin, WasmPluginManager};
+pub use wasm_manager_stub::{WasmPlugin, WasmPluginManager};
 
 /// Manages the discovery and execution of plugins.
 pub struct PluginManager {

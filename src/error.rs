@@ -63,8 +63,9 @@ pub enum UveddiError {
 
     #[error("Plugin error: {0}")]
     PluginError(String),
-    #[error("WASM runtime error: {0}")]
-    WasmRuntimeError(#[from] wasmtime::Error),
+    // WASM error conversion temporarily disabled for debugging
+    // #[error("WASM runtime error: {0}")]
+    // WasmRuntimeError(#[from] wasmtime::Error),
 
     // === Cache Errors ===
     #[error("Cache error: {0}")]
@@ -77,6 +78,9 @@ pub enum UveddiError {
     // === Validation Errors ===
     #[error("Validation error: {0}")]
     Validation(String),
+
+    #[error("Other error: {0}")]
+    Other(String),
 }
 
 // Comprehensive From implementations for common error types
@@ -99,5 +103,11 @@ impl From<ExtractionError> for UveddiError {
             ExtractionError::IoError(_path, io_err) => UveddiError::Io(io_err),
             _ => UveddiError::Analysis(err.to_string()),
         }
+    }
+}
+
+impl From<anyhow::Error> for UveddiError {
+    fn from(err: anyhow::Error) -> Self {
+        UveddiError::Other(err.to_string())
     }
 }

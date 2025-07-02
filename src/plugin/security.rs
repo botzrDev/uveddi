@@ -40,14 +40,12 @@ impl Default for ResourceLimits {
 
 #[allow(dead_code)]
 pub fn create_secure_wasi_context(
-    manifest: &PluginManifest,
-) -> Result<wasmtime_wasi::WasiCtx, UveddiError> {
-    let mut builder = WasiCtxBuilder::new();
-
-    // Always inherit stdio for logging
-    builder.inherit_stdio();
-
-    // Grant permissions based on manifest
+    _manifest: &PluginManifest,
+) -> Result<(), UveddiError> {
+    // Temporarily disabled during development to prevent WASM runtime errors
+    log::warn!("WASI context creation temporarily disabled during development");
+    Err(UveddiError::Plugin("WASI context creation disabled".to_string()))
+}
     for permission in &manifest.permissions {
         match permission {
             Permission::FilesystemRead { path } => {

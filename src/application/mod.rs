@@ -9,9 +9,7 @@ use crate::analysis::LocalDependencyGraph;
 use crate::database::crud::Database;
 use crate::database::models::{AnalysisRun, ArchitecturalIssue};
 use crate::error::UveddiError;
-use crate::plugin::initialize_plugins;
 use crate::report::ReportGenerator;
-use uveddi_plugin_api::models::DependencyGraph as PluginDependencyGraph;
 
 /// Application layer orchestrator for analysis workflows
 ///
@@ -106,24 +104,40 @@ impl AnalysisOrchestrator {
         // Run plugin analysis
         let plugin_issues = self.run_plugin_analysis(&dependency_graph).await?;
         issues.extend(plugin_issues.into_iter());
+        info!("Plugin analysis completed successfully");
 
         // Enhance with AI analysis if enabled
         let ai_enhanced = if config.enable_ai {
+            info!("Starting AI analysis enhancement");
             self.enhance_with_ai_analysis(&mut issues).await?;
+            info!("AI analysis enhancement completed");
             true
         } else {
+            info!("AI analysis disabled, skipping enhancement");
             false
         };
+        info!("AI analysis phase completed");
 
         // Update analysis run record
+        info!("Starting analysis run finalization");
         let analysis_duration = start_time.elapsed();
         self.finalize_analysis_run(&mut analysis_run, &issues, analysis_duration)
             .await?;
+        info!("Analysis run finalization completed");
 
         // Store results
+        info!("Starting to store {} issues to database", issues.len());
+        
+        // Set the correct analysis_run_id for all issues
+        let analysis_run_id = analysis_run.run_id.expect("Analysis run should have an ID");
+        for issue in &mut issues {
+            issue.analysis_run_id = analysis_run_id;
+        }
+        
         self.database
             .store_issues(&issues)
             .context("Failed to store analysis issues")?;
+        info!("Issues stored to database successfully");
 
         // Generate report
         let report_content = self.generate_report(&config, &analysis_run, &issues)?;
@@ -194,26 +208,10 @@ impl AnalysisOrchestrator {
     ) -> Result<Vec<ArchitecturalIssue>, UveddiError> {
         info!("Running analysis plugins...");
 
-        // Temporarily disable plugin system during development
-        info!("Plugin system temporarily disabled - returning empty results");
+        // Plugin system is temporarily disabled to prevent WASM runtime errors
+        // TODO: Re-enable once WASM plugin integration is stabilized
+        info!("Plugin system disabled - native analysis only");
         Ok(Vec::new())
-        
-        /*
-        // Convert LocalDependencyGraph to plugin API format without cloning
-        let plugin_graph = PluginDependencyGraph::from(local_graph);
-
-        let plugin_manager = initialize_plugins();
-        let plugin_results = plugin_manager.run_plugins(&plugin_graph);
-
-        let mut all_plugin_issues = Vec::new();
-        for result in plugin_results {
-            match result {
-                Ok(plugin_issues) => all_plugin_issues.extend(plugin_issues),
-                Err(e) => error!("Plugin execution failed: {}", e),
-            }
-        }
-        Ok(all_plugin_issues)
-        */
     }
 
     /// Enhance analysis results with AI insights
