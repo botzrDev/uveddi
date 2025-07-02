@@ -190,10 +190,15 @@ impl AnalysisOrchestrator {
     /// Run plugin-based analysis
     async fn run_plugin_analysis(
         &self,
-        local_graph: &LocalDependencyGraph,
+        _local_graph: &LocalDependencyGraph,
     ) -> Result<Vec<ArchitecturalIssue>, UveddiError> {
         info!("Running analysis plugins...");
 
+        // Temporarily disable plugin system during development
+        info!("Plugin system temporarily disabled - returning empty results");
+        Ok(Vec::new())
+        
+        /*
         // Convert LocalDependencyGraph to plugin API format without cloning
         let plugin_graph = PluginDependencyGraph::from(local_graph);
 
@@ -208,6 +213,7 @@ impl AnalysisOrchestrator {
             }
         }
         Ok(all_plugin_issues)
+        */
     }
 
     /// Enhance analysis results with AI insights

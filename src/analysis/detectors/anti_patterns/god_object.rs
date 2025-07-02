@@ -1,6 +1,7 @@
 use crate::analysis::{AnalysisDetector, AnalysisError};
 use crate::ast::tree_sitter::{ParsedFile, SourceLanguage};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
+use log::{debug, info};
 use std::collections::HashMap;
 use tree_sitter::{Query, QueryCursor};
 
@@ -151,6 +152,9 @@ impl GodObjectDetector {
                 .matches(&field_query, body_node, source)
                 .count();
 
+            debug!("Analyzing {}: {} methods, {} fields (thresholds: >{}, >{})", 
+                   name, method_count, field_count, self.method_threshold, self.field_threshold);
+
             if let Some(issue) = self.create_issue(
                 parsed_file,
                 name,
@@ -159,6 +163,7 @@ impl GodObjectDetector {
                 method_count,
                 field_count,
             ) {
+                info!("Found God Object: {}", name);
                 issues.push(issue);
             }
         }
@@ -262,7 +267,8 @@ impl AnalysisDetector for GodObjectDetector {
         &self,
         parsed_file: &ParsedFile,
     ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
-        match parsed_file.language {
+        debug!("Running God Object detection on: {}", parsed_file.path.display());
+        let result = match parsed_file.language {
             SourceLanguage::Rust => self.analyze_rust(parsed_file),
             SourceLanguage::Python => self.analyze_standard(
                 parsed_file,
@@ -276,6 +282,21 @@ impl AnalysisDetector for GodObjectDetector {
                 JAVASCRIPT_FUNCTION_COUNT_QUERY,
                 JAVASCRIPT_FIELD_COUNT_QUERY,
             ),
+        };
+        
+        match &result {
+            Ok(issues) => {
+                if issues.is_empty() {
+                    debug!("No God Object issues found in {}", parsed_file.path.display());
+                } else {
+                    info!("Found {} God Object issues in {}", issues.len(), parsed_file.path.display());
+                }
+            },
+            Err(e) => {
+                debug!("Error analyzing {} for God Objects: {}", parsed_file.path.display(), e);
+            }
         }
+        
+        result
     }
 }

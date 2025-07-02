@@ -82,7 +82,7 @@ impl AnalysisEngine {
         Ok(Self {
             ast_parser: AstParser::new()?,
             dependency_extractor: DependencyExtractor::new()?,
-            detectors: vec![Box::new(GodObjectDetector::new(15, 20))],
+            detectors: vec![Box::new(GodObjectDetector::new(5, 8))], // More sensitive thresholds
             cycle_detector: CycleDetector::new(),
             files_analyzed: 0,
             cache: ResultCache::new(&cache_path)?,

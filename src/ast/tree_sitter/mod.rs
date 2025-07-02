@@ -146,8 +146,16 @@ impl AstParser {
         if let Ok(mut f) = fs::File::open(&cache_path) {
             let mut buf = Vec::new();
             f.read_to_end(&mut buf).ok();
-            if let Ok(parsed) = bincode::deserialize::<ParsedFile>(&buf) {
+            if let Ok(mut parsed) = bincode::deserialize::<ParsedFile>(&buf) {
                 if parsed.modified_at == modified_time {
+                    // Re-parse the AST since Tree is not serializable
+                    let parser = self
+                        .parsers
+                        .get_mut(&parsed.language)
+                        .ok_or_else(|| AstError::UnsupportedLanguage(format!("{:?}", parsed.language)))?;
+                    let tree = parser.parse(&parsed.source, None).ok_or(AstError::ParseFailed)?;
+                    parsed.tree = Some(tree);
+                    
                     self.cache
                         .lock()
                         .unwrap()

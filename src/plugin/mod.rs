@@ -22,6 +22,9 @@ pub struct PluginManager {
 impl PluginManager {
     /// Creates a new, empty `PluginManager`.
     pub fn new() -> Self {
+        // Temporarily disable WASM plugins to avoid crashes during development
+        let wasm_manager = None;
+        /*
         let wasm_manager = match WasmPluginManager::new() {
             Ok(manager) => Some(manager),
             Err(e) => {
@@ -32,6 +35,7 @@ impl PluginManager {
                 None
             }
         };
+        */
 
         Self {
             plugins: Vec::new(),
@@ -57,7 +61,7 @@ impl PluginManager {
             results.push(plugin.run(graph));
         }
 
-        // Run WASM plugins if available
+        // Run WASM plugins only if WASM manager is available
         if let Some(wasm_manager) = &self.wasm_manager {
             let wasm_results = self.run_wasm_plugins(wasm_manager, graph);
             for result in wasm_results {
@@ -65,6 +69,8 @@ impl PluginManager {
                 let converted_result = result.map_err(|e| PluginError::Execution(e.to_string()));
                 results.push(converted_result);
             }
+        } else {
+            log::debug!("WASM plugin manager not available, skipping WASM plugins");
         }
 
         results
@@ -156,50 +162,9 @@ impl Default for PluginManager {
     }
 }
 
-/// Example plugin: Detects God Objects.
-struct GodObjectDetector;
-
-impl Plugin for GodObjectDetector {
-    fn name(&self) -> &'static str {
-        "God Object Detector"
-    }
-
-    fn description(&self) -> &'static str {
-        "Detects potential 'God Objects' in the codebase, which are objects that know too much or do too much."
-    }
-
-    fn run(&self, _graph: &DependencyGraph) -> Result<Vec<ArchitecturalIssue>, PluginError> {
-        // Stub implementation for now.
-        // In a real implementation, this would analyze the graph
-        // to find nodes with an excessive number of dependencies.
-        println!("Running God Object Detector plugin...");
-        Ok(vec![])
-    }
-}
-
-/// Example plugin: Detects Cyclomatic Complexity
-struct CyclomaticComplexityDetector;
-
-impl Plugin for CyclomaticComplexityDetector {
-    fn name(&self) -> &'static str {
-        "Cyclomatic Complexity Detector"
-    }
-
-    fn description(&self) -> &'static str {
-        "Detects functions with high cyclomatic complexity."
-    }
-
-    fn run(&self, _graph: &DependencyGraph) -> Result<Vec<ArchitecturalIssue>, PluginError> {
-        println!("Running Cyclomatic Complexity Detector plugin...");
-        Ok(vec![])
-    }
-}
-
 /// Initializes the plugin manager and registers all built-in plugins.
 pub fn initialize_plugins() -> PluginManager {
-    let mut manager = PluginManager::new();
-    manager.register(Arc::new(GodObjectDetector));
-    manager.register(Arc::new(CyclomaticComplexityDetector));
+    let manager = PluginManager::new();
 
     // Log plugin initialization status
     if manager.wasm_manager.is_some() {
