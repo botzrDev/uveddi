@@ -40,12 +40,18 @@ struct CachedAnalysisResult {
 /// 4. **Graph Analysis**: Builds dependency graph and runs graph-based detectors
 /// 5. **Result Aggregation**: Combines all detected issues into final report
 ///
-/// ## Usage:
+/// ## Usage
 ///
-/// ```rust
-/// let mut engine = AnalysisEngine::new()?;
-/// let (issues, graph) = engine.analyze(Path::new("src/")).await?;
-/// println!("Found {} issues", issues.len());
+/// ```no_run
+/// use uveddi::analysis::AnalysisEngine;
+/// use std::path::Path;
+/// #[tokio::main]
+/// async fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     let mut engine = AnalysisEngine::new()?;
+///     let (issues, graph) = engine.analyze(Path::new("src/")).await?;
+///     println!("Found {} issues", issues.len());
+///     Ok(())
+/// }
 /// ```
 pub struct AnalysisEngine {
     ast_parser: AstParser,

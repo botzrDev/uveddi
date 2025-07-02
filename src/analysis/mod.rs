@@ -39,17 +39,15 @@
 //! ## Usage Example
 //!
 //! ```rust
-//! use crate::analysis::{AnalysisEngine, AnalysisDetector};
-//! use crate::analysis::detectors::anti_patterns::GodObjectDetector;
+//! use uveddi::analysis::{AnalysisEngine, AnalysisDetector};
+//! use uveddi::analysis::detectors::anti_patterns::GodObjectDetector;
+//! use std::path::Path;
 //!
-//! let engine = AnalysisEngine::new();
-//! let detector = GodObjectDetector::new();
-//!
-//! // Register detector with engine
+//! let mut engine = AnalysisEngine::new().unwrap();
+//! let detector = GodObjectDetector::new(15, 20);
 //! engine.add_detector(Box::new(detector));
-//!
-//! // Run analysis on a project
-//! let results = engine.analyze_project("path/to/project")?;
+//! // let (issues, graph) = engine.analyze(Path::new("src/")).await.unwrap();
+//! // println!("Found {} issues", issues.len());
 //! ```
 
 pub mod cache;
@@ -98,29 +96,18 @@ pub type AnalysisError = crate::error::UveddiError;
 /// 3. **Error Handling**: Return `AnalysisError` for serious issues, empty Vec for no findings
 /// 4. **Caching**: Leverage the AST cache for expensive parsing operations
 ///
-/// ## Example Implementation
-///
+/// # Example
 /// ```rust
-/// use crate::analysis::{AnalysisDetector, AnalysisError};
-/// use crate::ast::tree_sitter::ParsedFile;
-/// use crate::database::models::{ArchitecturalIssue, AntiPatternType};
+/// use uveddi::analysis::{AnalysisEngine, AnalysisDetector};
+/// use uveddi::analysis::detectors::anti_patterns::GodObjectDetector;
+/// use std::path::Path;
 ///
-/// pub struct MyDetector;
-///
-/// impl AnalysisDetector for MyDetector {
-///     fn get_detector_name(&self) -> &'static str {
-///         "MyDetector"
-///     }
-///
-///     fn get_anti_pattern_types(&self) -> Vec<AntiPatternType> {
-///         vec![AntiPatternType::MyAntiPattern]
-///     }
-///
-///     fn detect_issues(&self, parsed_file: &ParsedFile) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
-///         // Implementation here
-///         Ok(vec![])
-///     }
-/// }
+/// let mut engine = AnalysisEngine::new().unwrap();
+/// let detector = GodObjectDetector::new(15, 20);
+/// engine.add_detector(Box::new(detector));
+/// // let (issues, graph) = engine.analyze(Path::new("src/")).await.unwrap();
+/// // println!("Found {} issues", issues.len());
+/// # fn main() {}
 /// ```
 pub trait AnalysisDetector {
     fn detect_issues(&self, file: &ParsedFile) -> Result<Vec<ArchitecturalIssue>, AnalysisError>;

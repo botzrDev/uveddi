@@ -31,48 +31,10 @@ enum Commands {
     Config(ConfigCommand),
 }
 
+/// Main entry point for Uveddi. All errors are handled and logged consistently.
 fn main() -> Result<()> {
     // Set up color_eyre for better error reporting
     color_eyre::install()?;
     env_logger::init();
-
-    let cli = Cli::parse();
-
-    // Handle commands with context
-    let result = match cli.command {
-        Commands::Analyze(command) => {
-            info!("Executing analyze command...");
-            tokio::runtime::Runtime::new()?
-                .block_on(command.execute())
-                .context("Analyze command failed")
-        }
-        Commands::InitLocalAi(command) => {
-            info!("Executing init-local-ai command...");
-            let setup = uveddi::cli::init_local_ai_command::OllamaSetup;
-            tokio::runtime::Runtime::new()?
-                .block_on(command.execute(&setup))
-                .context("Init-local-ai command failed")
-        }
-        Commands::Plugin(command) => {
-            info!("Executing plugin command...");
-            tokio::runtime::Runtime::new()?
-                .block_on(command.execute())
-                .context("Plugin command failed")
-        }
-        Commands::Config(command) => {
-            info!("Executing config command...");
-            command
-                .execute()
-                .map_err(UveddiError::Configuration)
-                .context("Config command failed")
-        }
-    };
-
-    // Handle errors with rich reporting
-    if let Err(e) = result {
-        error!("{:?}", e);
-        return Err(e);
-    }
-
-    Ok(())
+    uveddi::application::run_app().map_err(|e| color_eyre::eyre::eyre!(e))
 }

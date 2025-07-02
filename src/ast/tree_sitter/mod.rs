@@ -349,3 +349,23 @@ pub enum AstError {
 // - To add new languages, implement dynamic grammar loading (see TODO below).
 //
 // TODO: Implement dynamic grammar loading for extensibility in future sprints.
+
+impl Clone for AstParser {
+    fn clone(&self) -> Self {
+        // Re-initialize parsers for each clone
+        let mut parsers = std::collections::HashMap::new();
+        let mut rust_parser = tree_sitter::Parser::new();
+        rust_parser.set_language(&tree_sitter_rust::language()).unwrap();
+        parsers.insert(SourceLanguage::Rust, rust_parser);
+        let mut python_parser = tree_sitter::Parser::new();
+        python_parser.set_language(&tree_sitter_python::language()).unwrap();
+        parsers.insert(SourceLanguage::Python, python_parser);
+        let mut javascript_parser = tree_sitter::Parser::new();
+        javascript_parser.set_language(&tree_sitter_javascript::language()).unwrap();
+        parsers.insert(SourceLanguage::JavaScript, javascript_parser);
+        AstParser {
+            parsers,
+            cache: std::sync::Mutex::new(std::collections::HashMap::new()),
+        }
+    }
+}

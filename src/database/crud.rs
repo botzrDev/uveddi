@@ -128,6 +128,7 @@ impl Database {
         Ok(())
     }
 
+    /// Stores architectural issues in a transaction to ensure data consistency
     pub fn store_issues(&mut self, issues: &[ArchitecturalIssue]) -> Result<()> {
         let tx = self.conn.transaction()?;
         for issue in issues {

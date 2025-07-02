@@ -3371,6 +3371,7 @@ dependencies = [
  "mockito",
  "petgraph",
  "predicates 2.1.5",
+ "rayon",
  "refinery",
  "regex",
  "reqwest",

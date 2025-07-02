@@ -1,4 +1,5 @@
 use log::debug;
+use rayon::prelude::*;
 use std::path::{Path, PathBuf};
 use tree_sitter::{Query, QueryCursor};
 
@@ -21,11 +22,12 @@ impl DependencyExtractor {
 
     /// Extract dependencies from a single file using AST parsing
     pub fn extract_from_file(
-        &mut self,
+        &self,
         file_path: &Path,
     ) -> Result<Vec<Dependency>, ExtractionError> {
         let parsed_file = self
             .parser
+            .clone()
             .parse_file(file_path)
             .map_err(ExtractionError::AstError)?;
         self.extract_from_ast(&parsed_file)
@@ -152,6 +154,17 @@ impl DependencyExtractor {
             parsed_file.path.display()
         );
         Ok(dependencies)
+    }
+
+    /// Extract dependencies from multiple files in parallel using rayon for performance
+    pub fn extract_from_files_parallel(
+        &mut self,
+        file_paths: &[&std::path::Path],
+    ) -> Vec<Result<Vec<Dependency>, ExtractionError>> {
+        file_paths
+            .par_iter()
+            .map(|path| self.extract_from_file(path))
+            .collect()
     }
 }
 

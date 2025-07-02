@@ -274,3 +274,61 @@ impl Default for AnalysisOrchestrator {
         Self::new().expect("Failed to create default AnalysisOrchestrator")
     }
 }
+
+/// Runs the main application orchestration logic, handling CLI commands and error context.
+pub fn run_app() -> Result<(), UveddiError> {
+    use crate::cli::{
+        analyze_command::AnalyzeCommand, config_command::ConfigCommand,
+        init_local_ai_command::InitLocalAiCommand, plugin_command::PluginCommand,
+    };
+    use clap::Parser;
+    use log::{error, info};
+
+    #[derive(Parser)]
+    #[command(name = "uveddi")]
+    #[command(about = "A Rust-based code analysis and exploration tool", long_about = None)]
+    struct Cli {
+        #[command(subcommand)]
+        command: Commands,
+    }
+
+    #[derive(clap::Subcommand)]
+    enum Commands {
+        Analyze(AnalyzeCommand),
+        InitLocalAi(InitLocalAiCommand),
+        Plugin(PluginCommand),
+        Config(ConfigCommand),
+    }
+
+    let cli = Cli::parse();
+    let result = match cli.command {
+        Commands::Analyze(command) => {
+            info!("Executing analyze command...");
+            tokio::runtime::Runtime::new()?
+                .block_on(command.execute())
+                .map_err(|e| UveddiError::Analysis(e.to_string()))
+        }
+        Commands::InitLocalAi(command) => {
+            info!("Executing init-local-ai command...");
+            let setup = crate::cli::init_local_ai_command::OllamaSetup;
+            tokio::runtime::Runtime::new()?
+                .block_on(command.execute(&setup))
+                .map_err(|e| UveddiError::Analysis(e.to_string()))
+        }
+        Commands::Plugin(command) => {
+            info!("Executing plugin command...");
+            tokio::runtime::Runtime::new()?
+                .block_on(command.execute())
+                .map_err(|e| UveddiError::Analysis(e.to_string()))
+        }
+        Commands::Config(command) => {
+            info!("Executing config command...");
+            command.execute().map_err(|e| UveddiError::Configuration(e.to_string()))
+        }
+    };
+    if let Err(e) = result {
+        error!("Error: {e:?}");
+        return Err(e);
+    }
+    Ok(())
+}

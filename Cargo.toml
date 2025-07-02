@@ -1,3 +1,5 @@
+# All dependencies are now pinned to specific versions for reproducible builds.
+
 [package]
 name = "uveddi"
 version = "0.1.0"
@@ -48,6 +50,7 @@ async-trait = "0.1.88"
 md5 = "0.8.0"
 petgraph = "0.8.2"
 color-eyre = "0.6"
+rayon = "1.10"
 
 
 [dev-dependencies]
