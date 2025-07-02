@@ -74,7 +74,7 @@ impl ReportGenerator {
         Ok(report)
     }
 
-    fn generate_header(&self, analysis_run: &AnalysisRun, issues: &[ArchitecturalIssue]) -> String {
+    fn generate_header(&self, analysis_run: &AnalysisRun, _issues: &[ArchitecturalIssue]) -> String {
         format!(
             r"# Uveddi Analysis Report
 

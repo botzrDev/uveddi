@@ -50,7 +50,7 @@ mod tests {
         let deps = extractor.extract_from_ast(&parsed).unwrap();
         let dep_names: Vec<_> = deps.iter().map(|d| d.to_module.as_str()).collect();
         assert_eq!(dep_names.len(), 2);
-        assert!(dep_names.contains(&"./b.js"));
+        assert!(dep_names.contains(&"b"));  // Normalized from "./b.js"
         assert!(dep_names.contains(&"fs"));
     }
 

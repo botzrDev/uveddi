@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from pydantic_settings import BaseSettings
+from pydantic import ConfigDict
 
 
 class DatabaseSettings(BaseSettings):
@@ -61,9 +62,11 @@ class DatabaseSettings(BaseSettings):
                 f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
             )
     
-    class Config:
-        env_file = ".env"
-        env_prefix = "DB_"
+    model_config = ConfigDict(
+        env_file=".env",
+        env_prefix="DB_",
+        extra="ignore"  # Ignore extra fields instead of forbidding them
+    )
 
 
 # Global database settings

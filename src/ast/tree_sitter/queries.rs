@@ -3,17 +3,17 @@
 pub const RUST_IMPORTS_QUERY: &str = r#"
 (use_declaration
   (use_wildcard
-    (scoped_identifier
-      path: (_) @path))
+    (scoped_identifier) @path)
 )
 (use_declaration
   (use_list
-    (scoped_identifier
-      path: (_) @path))
+    (scoped_identifier) @path)
 )
 (use_declaration
-  (scoped_identifier
-    path: (_) @path)
+  (scoped_identifier) @path
+)
+(use_declaration
+  (identifier) @path
 )
 (extern_crate_declaration
   name: (identifier) @path

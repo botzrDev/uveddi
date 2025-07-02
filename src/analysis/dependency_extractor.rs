@@ -45,6 +45,12 @@ impl DependencyExtractor {
         let mut dependencies = Vec::new();
         for mat in matches {
             for capture in mat.captures {
+                // Only process captures named "path"
+                let capture_name = query.capture_names()[capture.index as usize];
+                if capture_name != "path" {
+                    continue;
+                }
+                
                 let node = capture.node;
                 let line_number = node.start_position().row + 1;
                 let mut module_name = node
