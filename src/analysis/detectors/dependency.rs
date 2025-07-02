@@ -1,5 +1,5 @@
-use std::path::{Path, PathBuf};
 use log::debug;
+use std::path::{Path, PathBuf};
 use tree_sitter::{Query, QueryCursor};
 
 use crate::ast::tree_sitter::{
@@ -20,7 +20,10 @@ impl DependencyExtractor {
     }
 
     /// Extract dependencies from a single file using AST parsing
-    pub fn extract_from_file(&mut self, file_path: &Path) -> Result<Vec<Dependency>, ExtractionError> {
+    pub fn extract_from_file(
+        &mut self,
+        file_path: &Path,
+    ) -> Result<Vec<Dependency>, ExtractionError> {
         let parsed_file = self
             .parser
             .parse_file(file_path)
@@ -29,18 +32,36 @@ impl DependencyExtractor {
     }
 
     /// Extracts dependencies from a previously parsed file
-    pub fn extract_from_ast(&self, parsed_file: &ParsedFile) -> Result<Vec<Dependency>, ExtractionError> {
+    pub fn extract_from_ast(
+        &self,
+        parsed_file: &ParsedFile,
+    ) -> Result<Vec<Dependency>, ExtractionError> {
         let (query_str, dependency_type) = match parsed_file.language {
             SourceLanguage::Rust => (RUST_IMPORTS_QUERY, DependencyType::Use),
             SourceLanguage::Python => (PYTHON_IMPORTS_QUERY, DependencyType::Import),
             SourceLanguage::JavaScript => (JAVASCRIPT_IMPORTS_QUERY, DependencyType::Import),
         };
 
-        let query = Query::new(&parsed_file.tree.as_ref().expect("AST tree missing").language(), query_str)
-            .map_err(|e| ExtractionError::QueryError(e.to_string()))?;
+        let query = Query::new(
+            &parsed_file
+                .tree
+                .as_ref()
+                .expect("AST tree missing")
+                .language(),
+            query_str,
+        )
+        .map_err(|e| ExtractionError::QueryError(e.to_string()))?;
 
         let mut cursor = QueryCursor::new();
-        let matches = cursor.matches(&query, parsed_file.tree.as_ref().expect("AST tree missing").root_node(), parsed_file.source.as_bytes());
+        let matches = cursor.matches(
+            &query,
+            parsed_file
+                .tree
+                .as_ref()
+                .expect("AST tree missing")
+                .root_node(),
+            parsed_file.source.as_bytes(),
+        );
 
         let mut dependencies = Vec::new();
         for mat in matches {
@@ -50,7 +71,7 @@ impl DependencyExtractor {
                 if capture_name != "path" {
                     continue;
                 }
-                
+
                 let node = capture.node;
                 let line_number = node.start_position().row + 1;
                 let mut module_name = node
@@ -59,13 +80,20 @@ impl DependencyExtractor {
                     .to_string();
 
                 // For Rust, resolve `mod` statements to file paths
-                if parsed_file.language == SourceLanguage::Rust && dependency_type == DependencyType::Use {
+                if parsed_file.language == SourceLanguage::Rust
+                    && dependency_type == DependencyType::Use
+                {
                     let mut potential_path = parsed_file.path.parent().unwrap().join(&module_name);
                     if !potential_path.exists() {
                         potential_path.set_extension("rs");
                         if !potential_path.exists() {
-                             // Check for module/mod.rs
-                            let mod_path = parsed_file.path.parent().unwrap().join(&module_name).join("mod.rs");
+                            // Check for module/mod.rs
+                            let mod_path = parsed_file
+                                .path
+                                .parent()
+                                .unwrap()
+                                .join(&module_name)
+                                .join("mod.rs");
                             if mod_path.exists() {
                                 potential_path = mod_path;
                             }

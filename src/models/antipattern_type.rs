@@ -1,6 +1,6 @@
 /// AntiPatternType represents a type of architectural anti-pattern.
 /// This will be used for DSL-based anti-pattern specification and reporting.
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AntiPatternType {
@@ -12,7 +12,13 @@ pub struct AntiPatternType {
 }
 
 impl AntiPatternType {
-    pub fn new(id: i64, name: &str, description: &str, dsl_rule: Option<&str>, category: Option<&str>) -> Self {
+    pub fn new(
+        id: i64,
+        name: &str,
+        description: &str,
+        dsl_rule: Option<&str>,
+        category: Option<&str>,
+    ) -> Self {
         Self {
             id,
             name: name.to_string(),
@@ -28,7 +34,13 @@ mod tests {
     use super::*;
     #[test]
     fn test_antipatterntype_serialization() {
-        let ap = AntiPatternType::new(1, "God Object", "A class that does too much", Some("size > 1000"), Some("OO"));
+        let ap = AntiPatternType::new(
+            1,
+            "God Object",
+            "A class that does too much",
+            Some("size > 1000"),
+            Some("OO"),
+        );
         let json = serde_json::to_string(&ap).unwrap();
         let de: AntiPatternType = serde_json::from_str(&json).unwrap();
         assert_eq!(ap, de);

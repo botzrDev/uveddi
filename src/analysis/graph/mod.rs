@@ -5,4 +5,4 @@
 
 pub mod dependency;
 
-pub use dependency::{LocalDependencyGraph, ComponentNode, LocalDependencyType};
+pub use dependency::{ComponentNode, LocalDependencyGraph, LocalDependencyType};

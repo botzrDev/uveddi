@@ -1,7 +1,7 @@
 //! OllamaProvider: Local LLM integration for Uveddi
 
-use serde::{Deserialize, Serialize};
 use reqwest::Client;
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize)]
 struct OllamaRequest<'a> {
@@ -38,7 +38,8 @@ impl OllamaProvider {
             stream: false,
         };
 
-        let response = self.client
+        let response = self
+            .client
             .post(format!("{}/api/generate", self.api_url))
             .json(&request_body)
             .send()
@@ -46,16 +47,23 @@ impl OllamaProvider {
             .map_err(|e| e.to_string())?;
 
         if response.status().is_success() {
-            let ollama_response = response.json::<OllamaResponse>().await.map_err(|e| e.to_string())?;
+            let ollama_response = response
+                .json::<OllamaResponse>()
+                .await
+                .map_err(|e| e.to_string())?;
             Ok(ollama_response.response)
         } else {
-            Err(format!("Ollama API request failed with status: {}", response.status()))
+            Err(format!(
+                "Ollama API request failed with status: {}",
+                response.status()
+            ))
         }
     }
 
     /// Check if Ollama is running and the model is available
     pub async fn check_status(&self) -> Result<(), String> {
-        let response = self.client
+        let response = self
+            .client
             .get(format!("{}/api/tags", self.api_url))
             .send()
             .await
@@ -64,14 +72,18 @@ impl OllamaProvider {
         if response.status().is_success() {
             Ok(())
         } else {
-            Err(format!("Ollama API health check failed with status: {}", response.status()))
+            Err(format!(
+                "Ollama API health check failed with status: {}",
+                response.status()
+            ))
         }
     }
 
     /// Download a model from Ollama's model registry
     pub async fn download_model(&self, model_name: &str) -> Result<(), String> {
         let url = format!("{}/api/pull", self.api_url);
-        let response = self.client
+        let response = self
+            .client
             .post(&url)
             .json(&serde_json::json!({ "name": model_name }))
             .send()
@@ -86,9 +98,9 @@ impl OllamaProvider {
     }
 }
 
-use async_trait::async_trait;
-use anyhow::{Result, anyhow};
 use crate::ai::api::llm_provider::LlmProvider;
+use anyhow::{anyhow, Result};
+use async_trait::async_trait;
 
 #[async_trait]
 impl LlmProvider for OllamaProvider {

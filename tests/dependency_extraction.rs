@@ -2,11 +2,11 @@
 
 #[cfg(test)]
 mod tests {
-    use uveddi::analysis::DependencyExtractor;
-    use uveddi::ast::tree_sitter::AstParser;
-    use tempfile::tempdir;
     use std::fs::File;
     use std::io::Write;
+    use tempfile::tempdir;
+    use uveddi::analysis::DependencyExtractor;
+    use uveddi::ast::tree_sitter::AstParser;
 
     fn create_temp_file(dir: &tempfile::TempDir, name: &str, content: &str) -> std::path::PathBuf {
         let file_path = dir.path().join(name);
@@ -43,14 +43,18 @@ mod tests {
     #[test]
     fn js_dependency_extraction_basic() {
         let dir = tempdir().unwrap();
-        let file_path = create_temp_file(&dir, "a.js", "import b from './b.js';\nimport fs from 'fs';\n");
+        let file_path = create_temp_file(
+            &dir,
+            "a.js",
+            "import b from './b.js';\nimport fs from 'fs';\n",
+        );
         let mut parser = AstParser::new().unwrap();
         let parsed = parser.parse_file(&file_path).unwrap();
         let extractor = DependencyExtractor::new().unwrap();
         let deps = extractor.extract_from_ast(&parsed).unwrap();
         let dep_names: Vec<_> = deps.iter().map(|d| d.to_module.as_str()).collect();
         assert_eq!(dep_names.len(), 2);
-        assert!(dep_names.contains(&"b"));  // Normalized from "./b.js"
+        assert!(dep_names.contains(&"b")); // Normalized from "./b.js"
         assert!(dep_names.contains(&"fs"));
     }
 

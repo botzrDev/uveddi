@@ -1,5 +1,5 @@
-use async_trait::async_trait;
 use anyhow::Result;
+use async_trait::async_trait;
 
 /// We need to add the `async_trait` macro to make this dyn-compatible
 #[async_trait]

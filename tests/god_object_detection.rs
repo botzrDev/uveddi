@@ -2,12 +2,12 @@
 
 #[cfg(test)]
 mod tests {
-    use uveddi::analysis::GodObjectDetector;
-    use uveddi::analysis::AnalysisDetector;
-    use uveddi::ast::tree_sitter::{AstParser};
     use std::fs::File;
     use std::io::Write;
     use tempfile::tempdir;
+    use uveddi::analysis::AnalysisDetector;
+    use uveddi::analysis::GodObjectDetector;
+    use uveddi::ast::tree_sitter::AstParser;
 
     #[test]
     fn detects_god_object_rust() {
@@ -43,7 +43,10 @@ mod tests {
             fn m21(&self) {}
         }
         "#;
-        File::create(&file_path).unwrap().write_all(code.as_bytes()).unwrap();
+        File::create(&file_path)
+            .unwrap()
+            .write_all(code.as_bytes())
+            .unwrap();
         let mut parser = AstParser::new().unwrap();
         let parsed = parser.parse_file(&file_path).unwrap();
         let detector = GodObjectDetector::new(20, 10); // Example thresholds
@@ -103,7 +106,10 @@ class GodObject:
     def m20(self): pass
     def m21(self): pass
 "#;
-        File::create(&file_path).unwrap().write_all(code.as_bytes()).unwrap();
+        File::create(&file_path)
+            .unwrap()
+            .write_all(code.as_bytes())
+            .unwrap();
         let mut parser = AstParser::new().unwrap();
         let parsed = parser.parse_file(&file_path).unwrap();
         let detector = GodObjectDetector::new(20, 10);
@@ -165,7 +171,10 @@ class GodObject {
     m21() {}
 }
 "#;
-        File::create(&file_path).unwrap().write_all(code.as_bytes()).unwrap();
+        File::create(&file_path)
+            .unwrap()
+            .write_all(code.as_bytes())
+            .unwrap();
         let mut parser = AstParser::new().unwrap();
         let parsed = parser.parse_file(&file_path).unwrap();
         let detector = GodObjectDetector::new(20, 10);
@@ -210,7 +219,10 @@ class GodObject {
             fn m21(&self) {}
         }
         "#;
-        File::create(&file_path).unwrap().write_all(code.as_bytes()).unwrap();
+        File::create(&file_path)
+            .unwrap()
+            .write_all(code.as_bytes())
+            .unwrap();
         let mut parser = AstParser::new().unwrap();
         let parsed = parser.parse_file(&file_path).unwrap();
         let detector = GodObjectDetector::new(20, 10);

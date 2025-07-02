@@ -1,7 +1,7 @@
-use tempfile::tempdir;
 use std::fs;
+use tempfile::tempdir;
 use uveddi::analysis::detectors::dependency::DependencyType;
-use uveddi::analysis::{DependencyExtractor, Dependency};
+use uveddi::analysis::{Dependency, DependencyExtractor};
 
 #[test]
 fn test_extract_rust_dependencies() {
@@ -55,7 +55,11 @@ fn test_extract_python_dependencies() {
 fn test_extract_javascript_dependencies() {
     let dir = tempdir().unwrap();
     let file_path = dir.path().join("main.js");
-    fs::write(&file_path, "import React from 'react';\nconst my_mod = require('./my_mod');").unwrap();
+    fs::write(
+        &file_path,
+        "import React from 'react';\nconst my_mod = require('./my_mod');",
+    )
+    .unwrap();
 
     let mut extractor = DependencyExtractor::new().unwrap();
     let deps = extractor.extract_from_file(&file_path).unwrap();

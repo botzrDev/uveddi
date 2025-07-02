@@ -1,5 +1,5 @@
-use crate::database::models::{AnalysisRun, ArchitecturalIssue, AntiPatternType};
 use crate::analysis::graph::ComponentNode;
+use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
 use serde_json::Value;
 use std::collections::HashMap;
 
@@ -74,7 +74,11 @@ impl ReportGenerator {
         Ok(report)
     }
 
-    fn generate_header(&self, analysis_run: &AnalysisRun, _issues: &[ArchitecturalIssue]) -> String {
+    fn generate_header(
+        &self,
+        analysis_run: &AnalysisRun,
+        _issues: &[ArchitecturalIssue],
+    ) -> String {
         format!(
             r"# Uveddi Analysis Report
 
@@ -100,7 +104,10 @@ impl ReportGenerator {
         let severity_breakdown = self.calculate_severity_breakdown(issues);
         let total_issues = issues.len();
 
-        summary.push_str(&format!("Total Architectural Issues Found: {}\n\n", total_issues));
+        summary.push_str(&format!(
+            "Total Architectural Issues Found: {}\n\n",
+            total_issues
+        ));
         summary.push_str("### Issues by Severity:\n");
         for (severity, count) in &severity_breakdown {
             summary.push_str(&format!("- {}: {}\n", severity, count));
@@ -145,7 +152,10 @@ impl ReportGenerator {
         let mut issues_by_severity: HashMap<String, Vec<&ArchitecturalIssue>> = HashMap::new();
 
         for issue in issues {
-            issues_by_severity.entry(issue.severity.clone()).or_default().push(issue);
+            issues_by_severity
+                .entry(issue.severity.clone())
+                .or_default()
+                .push(issue);
         }
 
         let severities = ["critical", "high", "medium", "low"];
@@ -259,13 +269,19 @@ impl ReportGenerator {
     }
 
     /// Generate a Mermaid.js diagram for the full dependency graph
-    pub fn generate_mermaid_diagram_for_graph(&self, graph: &crate::analysis::LocalDependencyGraph) -> String {
+    pub fn generate_mermaid_diagram_for_graph(
+        &self,
+        graph: &crate::analysis::LocalDependencyGraph,
+    ) -> String {
         let mut diagram = String::from("```mermaid\ngraph TD\n");
         let petgraph = graph.get_petgraph();
-        
+
         for edge in petgraph.edge_indices() {
             if let Some((from_idx, to_idx)) = petgraph.edge_endpoints(edge) {
-                if let (Some(from_node), Some(to_node)) = (graph.get_node_from_index(from_idx), graph.get_node_from_index(to_idx)) {
+                if let (Some(from_node), Some(to_node)) = (
+                    graph.get_node_from_index(from_idx),
+                    graph.get_node_from_index(to_idx),
+                ) {
                     let from_name = match from_node {
                         ComponentNode::Module { path } => path.split('/').last().unwrap_or(&path),
                         ComponentNode::Class { name, .. } => &name,
@@ -293,7 +309,10 @@ impl ReportGenerator {
         }
     }
 
-    fn calculate_severity_breakdown(&self, issues: &[ArchitecturalIssue]) -> HashMap<String, usize> {
+    fn calculate_severity_breakdown(
+        &self,
+        issues: &[ArchitecturalIssue],
+    ) -> HashMap<String, usize> {
         let mut breakdown = HashMap::new();
         for issue in issues {
             *breakdown.entry(issue.severity.clone()).or_insert(0) += 1;
@@ -301,7 +320,10 @@ impl ReportGenerator {
         breakdown
     }
 
-    fn calculate_category_breakdown(&self, issues: &[ArchitecturalIssue]) -> HashMap<String, usize> {
+    fn calculate_category_breakdown(
+        &self,
+        issues: &[ArchitecturalIssue],
+    ) -> HashMap<String, usize> {
         let mut breakdown = HashMap::new();
         // This would require joining with AntiPatternType to get category
         // For now, just a placeholder

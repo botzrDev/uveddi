@@ -1,8 +1,8 @@
+use crate::analysis::graph::dependency::ComponentNode;
 use crate::analysis::graph::dependency::LocalDependencyGraph;
 use crate::database::models::ArchitecturalIssue;
-use crate::analysis::graph::dependency::ComponentNode;
-use petgraph::algo::tarjan_scc;
 use log::info;
+use petgraph::algo::tarjan_scc;
 
 /// A detector for identifying cyclic dependencies between components.
 pub struct CycleDetector;
@@ -26,7 +26,11 @@ impl CycleDetector {
     /// # Returns
     ///
     /// A `Vec<ArchitecturalIssue>` containing all the cyclic dependency issues found.
-    pub fn detect_cycles(&self, graph: &LocalDependencyGraph, analysis_run_id: i64) -> Vec<ArchitecturalIssue> {
+    pub fn detect_cycles(
+        &self,
+        graph: &LocalDependencyGraph,
+        analysis_run_id: i64,
+    ) -> Vec<ArchitecturalIssue> {
         let start_time = std::time::Instant::now();
 
         let petgraph = graph.get_petgraph();
@@ -36,13 +40,19 @@ impl CycleDetector {
 
         for scc in sccs {
             if scc.len() > 1 {
-                let cycle_nodes: Vec<String> = scc.iter()
+                let cycle_nodes: Vec<String> = scc
+                    .iter()
                     .filter_map(|&node_index| {
-                        graph.get_node_from_index(node_index)
+                        graph
+                            .get_node_from_index(node_index)
                             .and_then(|node| match node {
                                 ComponentNode::Module { path } => Some(path.clone()),
-                                ComponentNode::Class { name: _, file_path } => Some(file_path.clone()),
-                                ComponentNode::Function { name: _, file_path } => Some(file_path.clone()),
+                                ComponentNode::Class { name: _, file_path } => {
+                                    Some(file_path.clone())
+                                }
+                                ComponentNode::Function { name: _, file_path } => {
+                                    Some(file_path.clone())
+                                }
                             })
                     })
                     .collect();
@@ -72,7 +82,11 @@ impl CycleDetector {
             }
         }
 
-        info!("Cycle detection completed in {:?}, found {} cycles.", start_time.elapsed(), issues.len());
+        info!(
+            "Cycle detection completed in {:?}, found {} cycles.",
+            start_time.elapsed(),
+            issues.len()
+        );
         issues
     }
 }

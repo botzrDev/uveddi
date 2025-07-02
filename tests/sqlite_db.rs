@@ -28,12 +28,26 @@ fn test_organization_crud() -> Result<()> {
     })?;
     assert_eq!(org.1, "TestOrg");
     // Update
-    conn.execute("UPDATE organizations SET subscription_tier = ?1 WHERE name = ?2", params!["paid", "TestOrg"])?;
-    let tier: String = conn.query_row("SELECT subscription_tier FROM organizations WHERE name = ?1", params!["TestOrg"], |row| row.get(0))?;
+    conn.execute(
+        "UPDATE organizations SET subscription_tier = ?1 WHERE name = ?2",
+        params!["paid", "TestOrg"],
+    )?;
+    let tier: String = conn.query_row(
+        "SELECT subscription_tier FROM organizations WHERE name = ?1",
+        params!["TestOrg"],
+        |row| row.get(0),
+    )?;
     assert_eq!(tier, "paid");
     // Delete
-    conn.execute("DELETE FROM organizations WHERE name = ?1", params!["TestOrg"])?;
-    let count: i64 = conn.query_row("SELECT COUNT(*) FROM organizations WHERE name = ?1", params!["TestOrg"], |row| row.get(0))?;
+    conn.execute(
+        "DELETE FROM organizations WHERE name = ?1",
+        params!["TestOrg"],
+    )?;
+    let count: i64 = conn.query_row(
+        "SELECT COUNT(*) FROM organizations WHERE name = ?1",
+        params!["TestOrg"],
+        |row| row.get(0),
+    )?;
     assert_eq!(count, 0);
     Ok(())
 }
@@ -42,14 +56,25 @@ fn test_organization_crud() -> Result<()> {
 fn test_user_and_project_relationship() -> Result<()> {
     let conn = setup_db()?;
     // Insert org
-    conn.execute("INSERT INTO organizations (name, subscription_tier, created_at) VALUES (?1, ?2, ?3)", params!["OrgA", "free", "2025-06-30T00:00:00Z"])?;
-    let org_id: i64 = conn.query_row("SELECT organization_id FROM organizations WHERE name = ?1", params!["OrgA"], |row| row.get(0))?;
+    conn.execute(
+        "INSERT INTO organizations (name, subscription_tier, created_at) VALUES (?1, ?2, ?3)",
+        params!["OrgA", "free", "2025-06-30T00:00:00Z"],
+    )?;
+    let org_id: i64 = conn.query_row(
+        "SELECT organization_id FROM organizations WHERE name = ?1",
+        params!["OrgA"],
+        |row| row.get(0),
+    )?;
     // Insert user
     conn.execute("INSERT INTO users (email, username, password_hash, created_at, role, organization_id) VALUES (?1, ?2, ?3, ?4, ?5, ?6)", params!["user@a.com", "usera", "hash", "2025-06-30T00:00:00Z", "org_admin", org_id])?;
     // Insert project
     conn.execute("INSERT INTO projects (organization_id, name, repository_url, created_at) VALUES (?1, ?2, ?3, ?4)", params![org_id, "ProjA", "https://repo", "2025-06-30T00:00:00Z"])?;
     // Check project belongs to org
-    let count: i64 = conn.query_row("SELECT COUNT(*) FROM projects WHERE organization_id = ?1", params![org_id], |row| row.get(0))?;
+    let count: i64 = conn.query_row(
+        "SELECT COUNT(*) FROM projects WHERE organization_id = ?1",
+        params![org_id],
+        |row| row.get(0),
+    )?;
     assert_eq!(count, 1);
     Ok(())
 }
@@ -58,8 +83,15 @@ fn test_user_and_project_relationship() -> Result<()> {
 fn test_foreign_key_constraints() -> Result<()> {
     let conn = setup_db()?;
     // Insert org
-    conn.execute("INSERT INTO organizations (name, subscription_tier, created_at) VALUES (?1, ?2, ?3)", params!["OrgB", "free", "2025-06-30T00:00:00Z"])?;
-    let org_id: i64 = conn.query_row("SELECT organization_id FROM organizations WHERE name = ?1", params!["OrgB"], |row| row.get(0))?;
+    conn.execute(
+        "INSERT INTO organizations (name, subscription_tier, created_at) VALUES (?1, ?2, ?3)",
+        params!["OrgB", "free", "2025-06-30T00:00:00Z"],
+    )?;
+    let org_id: i64 = conn.query_row(
+        "SELECT organization_id FROM organizations WHERE name = ?1",
+        params!["OrgB"],
+        |row| row.get(0),
+    )?;
     // Try to insert project with invalid org_id
     let res = conn.execute("INSERT INTO projects (organization_id, name, repository_url, created_at) VALUES (?1, ?2, ?3, ?4)", params![9999, "ProjB", "https://repo", "2025-06-30T00:00:00Z"]);
     assert!(res.is_err());

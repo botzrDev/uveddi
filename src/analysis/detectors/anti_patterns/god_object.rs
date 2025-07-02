@@ -1,6 +1,6 @@
 use crate::analysis::{AnalysisDetector, AnalysisError};
 use crate::ast::tree_sitter::{ParsedFile, SourceLanguage};
-use crate::database::models::{ArchitecturalIssue, AntiPatternType};
+use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use std::collections::HashMap;
 use tree_sitter::{Query, QueryCursor};
 
@@ -120,9 +120,10 @@ impl GodObjectDetector {
     ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         let mut issues = Vec::new();
         let source = parsed_file.source.as_bytes();
-        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-            AnalysisError::AntiPatternDetection("AST tree missing".to_string())
-        })?;
+        let tree = parsed_file
+            .tree
+            .as_ref()
+            .ok_or_else(|| AnalysisError::AntiPatternDetection("AST tree missing".to_string()))?;
         let language = tree.language();
 
         let container_query = Query::new(&language, container_query_str)
@@ -171,9 +172,10 @@ impl GodObjectDetector {
     ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         let mut issues = Vec::new();
         let source = parsed_file.source.as_bytes();
-        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-            AnalysisError::AntiPatternDetection("AST tree missing".to_string())
-        })?;
+        let tree = parsed_file
+            .tree
+            .as_ref()
+            .ok_or_else(|| AnalysisError::AntiPatternDetection("AST tree missing".to_string()))?;
         let language = tree.language();
         let root_node = tree.root_node();
 
@@ -186,7 +188,9 @@ impl GodObjectDetector {
 
         let mut cursor = QueryCursor::new();
         for mat in cursor.matches(&impl_query, root_node, source) {
-            if let (Some(name_capture), Some(body_capture)) = (mat.captures.get(0), mat.captures.get(1)) {
+            if let (Some(name_capture), Some(body_capture)) =
+                (mat.captures.get(0), mat.captures.get(1))
+            {
                 let name_node = name_capture.node;
                 let body_node = body_capture.node;
                 if let Ok(name) = name_node.utf8_text(source) {
@@ -207,7 +211,9 @@ impl GodObjectDetector {
 
         let mut struct_cursor = QueryCursor::new();
         for mat in struct_cursor.matches(&struct_query, root_node, source) {
-             if let (Some(name_capture), Some(body_capture)) = (mat.captures.get(0), mat.captures.get(1)) {
+            if let (Some(name_capture), Some(body_capture)) =
+                (mat.captures.get(0), mat.captures.get(1))
+            {
                 let name_node = name_capture.node;
                 let body_node = body_capture.node;
                 let container_node = name_node.parent().unwrap_or(name_node);

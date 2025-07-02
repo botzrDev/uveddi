@@ -1,6 +1,6 @@
-use serde::{Deserialize, Serialize};
-use petgraph::Graph;
 use petgraph::Directed;
+use petgraph::Graph;
+use serde::{Deserialize, Serialize};
 
 /// Represents a dependency graph with nodes and edges.
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -32,7 +32,11 @@ impl DependencyGraph {
     /// Converts the `DependencyGraph` into a `petgraph::Graph` for cycle detection.
     pub fn get_petgraph(&self) -> Graph<&str, (), Directed> {
         let mut graph = Graph::<&str, (), Directed>::new();
-        let node_indices: Vec<_> = self.nodes.iter().map(|node| graph.add_node(node.as_str())).collect();
+        let node_indices: Vec<_> = self
+            .nodes
+            .iter()
+            .map(|node| graph.add_node(node.as_str()))
+            .collect();
         for (from, to) in &self.edges {
             if let (Some(from_idx), Some(to_idx)) = (
                 self.nodes.iter().position(|n| n == from),

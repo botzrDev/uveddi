@@ -19,7 +19,7 @@ impl AiAnalysisEngine {
     }
 
     /// Performs architectural analysis on the provided codebase.
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `codebase_path` - The path to the codebase to analyze.

@@ -4,10 +4,10 @@
 mod tests {
     use assert_cmd::prelude::*;
     use predicates::prelude::*;
-    use std::process::Command;
-    use tempfile::tempdir;
     use std::fs::File;
     use std::io::Write;
+    use std::process::Command;
+    use tempfile::tempdir;
 
     #[test]
     fn cli_ai_pipeline_outputs_explanations_and_confidence() {
@@ -43,7 +43,10 @@ mod tests {
             fn m21(&self) {}
         }
         "#;
-        File::create(&file_path).unwrap().write_all(code.as_bytes()).unwrap();
+        File::create(&file_path)
+            .unwrap()
+            .write_all(code.as_bytes())
+            .unwrap();
 
         let mut cmd = Command::cargo_bin("uveddi").unwrap();
         cmd.arg("analyze")
@@ -55,8 +58,16 @@ mod tests {
         let output = cmd.output().expect("Failed to run uveddi");
         let stdout = String::from_utf8_lossy(&output.stdout);
         println!("CLI OUTPUT:\n{}", stdout);
-        assert!(!stdout.contains("AI Explanation") && !stdout.contains("ai_explanation"), "Expected no AI explanation in output, got: {}", stdout);
-        assert!(!stdout.contains("confidence") && !stdout.contains("Confidence"), "Expected no confidence in output, got: {}", stdout);
+        assert!(
+            !stdout.contains("AI Explanation") && !stdout.contains("ai_explanation"),
+            "Expected no AI explanation in output, got: {}",
+            stdout
+        );
+        assert!(
+            !stdout.contains("confidence") && !stdout.contains("Confidence"),
+            "Expected no confidence in output, got: {}",
+            stdout
+        );
     }
 
     #[test]

@@ -4,10 +4,10 @@
 mod tests {
     use assert_cmd::prelude::*;
     use predicates::prelude::*;
-    use std::process::Command;
-    use tempfile::tempdir;
     use std::fs::File;
     use std::io::Write;
+    use std::process::Command;
+    use tempfile::tempdir;
 
     #[test]
     fn cli_runs_analysis_and_outputs_markdown() {

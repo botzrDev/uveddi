@@ -37,11 +37,13 @@ impl FromRow for Project {
         let config_data = config_data
             .map(|s| serde_json::from_str(&s))
             .transpose()
-            .map_err(|e| rusqlite::Error::FromSqlConversionFailure(
-                0,
-                rusqlite::types::Type::Text,
-                Box::new(e),
-            ))?;
+            .map_err(|e| {
+                rusqlite::Error::FromSqlConversionFailure(
+                    0,
+                    rusqlite::types::Type::Text,
+                    Box::new(e),
+                )
+            })?;
 
         Ok(Project {
             project_id: Some(row.get("project_id")?),
@@ -77,11 +79,13 @@ impl FromRow for AnalysisRun {
         let raw_analysis_output = raw_analysis_output
             .map(|s| serde_json::from_str(&s))
             .transpose()
-            .map_err(|e| rusqlite::Error::FromSqlConversionFailure(
-                0,
-                rusqlite::types::Type::Text,
-                Box::new(e),
-            ))?;
+            .map_err(|e| {
+                rusqlite::Error::FromSqlConversionFailure(
+                    0,
+                    rusqlite::types::Type::Text,
+                    Box::new(e),
+                )
+            })?;
 
         let end_time: Option<i64> = row.get("end_time")?;
         let end_time = end_time.map(unix_timestamp_to_system_time);
@@ -124,7 +128,7 @@ impl FromRow for ArchitecturalIssue {
     fn from_row(row: &Row) -> rusqlite::Result<Self> {
         let ignored_at: Option<i64> = row.get("ignored_at")?;
         let ignored_at = ignored_at.map(unix_timestamp_to_system_time);
-        
+
         // SQLite stores booleans as integers
         let is_ignored: i64 = row.get("is_ignored")?;
 
@@ -214,9 +218,8 @@ pub mod antipattern_type;
 pub mod dependency_graph;
 
 pub use uveddi_plugin_api::models::{
-    DependencyGraph as ApiDependencyGraph,
+    ArchitecturalIssue as ApiArchitecturalIssue, DependencyGraph as ApiDependencyGraph,
     DependencyType as ApiDependencyType,
-    ArchitecturalIssue as ApiArchitecturalIssue,
 };
 #[cfg(test)]
 mod tests {

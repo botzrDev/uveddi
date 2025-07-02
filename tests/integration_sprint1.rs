@@ -1,6 +1,8 @@
-use tempfile::tempdir;
 use std::fs;
-use uveddi::analysis::{DependencyExtractor, LocalDependencyGraph, ComponentNode, LocalDependencyType, CycleDetector};
+use tempfile::tempdir;
+use uveddi::analysis::{
+    ComponentNode, CycleDetector, DependencyExtractor, LocalDependencyGraph, LocalDependencyType,
+};
 
 #[test]
 fn test_sprint1_cycle_detection() {
@@ -18,7 +20,9 @@ fn test_sprint1_cycle_detection() {
 
     let deps1 = extractor.extract_from_file(&mod1_path).unwrap();
     for dep in deps1 {
-        let from_node = ComponentNode::Module { path: "mod1".to_string() };
+        let from_node = ComponentNode::Module {
+            path: "mod1".to_string(),
+        };
         // Extract just the module name from the path
         let module_name = std::path::Path::new(&dep.to_module)
             .file_stem()
@@ -31,7 +35,9 @@ fn test_sprint1_cycle_detection() {
 
     let deps2 = extractor.extract_from_file(&mod2_path).unwrap();
     for dep in deps2 {
-        let from_node = ComponentNode::Module { path: "mod2".to_string() };
+        let from_node = ComponentNode::Module {
+            path: "mod2".to_string(),
+        };
         // Extract just the module name from the path
         let module_name = std::path::Path::new(&dep.to_module)
             .file_stem()

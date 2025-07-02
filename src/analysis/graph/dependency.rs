@@ -4,7 +4,7 @@ use petgraph::graph::{DiGraph, NodeIndex};
 use petgraph::visit::EdgeRef;
 use std::collections::HashMap;
 use std::path::PathBuf;
-use uveddi_plugin_api::models::{DependencyGraph, Dependency, DependencyType};
+use uveddi_plugin_api::models::{Dependency, DependencyGraph, DependencyType};
 
 /// Represents a node in the dependency graph.
 /// This can be a module, a class, a function, or any other architectural component.
@@ -69,7 +69,12 @@ impl LocalDependencyGraph {
     }
 
     /// Adds a dependency between two components.
-    pub fn add_dependency(&mut self, from: &ComponentNode, to: &ComponentNode, dep_type: LocalDependencyType) {
+    pub fn add_dependency(
+        &mut self,
+        from: &ComponentNode,
+        to: &ComponentNode,
+        dep_type: LocalDependencyType,
+    ) {
         let from_index = self.add_component(from.clone());
         let to_index = self.add_component(to.clone());
 
@@ -103,31 +108,31 @@ impl From<&LocalDependencyGraph> for DependencyGraph {
     fn from(local_graph: &LocalDependencyGraph) -> Self {
         let mut plugin_graph = DependencyGraph::new();
         let mut dependencies = Vec::new();
-        
+
         // Convert edges to dependencies
         for edge_ref in local_graph.graph.edge_references() {
             let from_node = local_graph.graph.node_weight(edge_ref.source()).unwrap();
             let to_node = local_graph.graph.node_weight(edge_ref.target()).unwrap();
-            
+
             let from_file = match from_node {
                 ComponentNode::Module { path } => PathBuf::from(path),
                 ComponentNode::Class { file_path, .. } => PathBuf::from(file_path),
                 ComponentNode::Function { file_path, .. } => PathBuf::from(file_path),
             };
-            
+
             let to_module = match to_node {
                 ComponentNode::Module { path } => path.clone(),
                 ComponentNode::Class { name, .. } => name.clone(),
                 ComponentNode::Function { name, .. } => name.clone(),
             };
-            
+
             let dependency_type = match edge_ref.weight().dependency_type {
                 LocalDependencyType::Call => DependencyType::Use,
                 LocalDependencyType::Import => DependencyType::Import,
                 LocalDependencyType::Inheritance => DependencyType::Use,
                 LocalDependencyType::Implementation => DependencyType::Use,
             };
-            
+
             dependencies.push(Dependency {
                 from_file,
                 to_module,
@@ -135,7 +140,7 @@ impl From<&LocalDependencyGraph> for DependencyGraph {
                 line_number: None,
             });
         }
-        
+
         plugin_graph.build_from_dependencies(dependencies);
         plugin_graph
     }

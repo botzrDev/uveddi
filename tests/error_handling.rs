@@ -2,11 +2,11 @@
 
 #[cfg(test)]
 mod tests {
-    use uveddi::analysis::DependencyExtractor;
-    use uveddi::ast::tree_sitter::{AstParser, AstError};
-    use tempfile::tempdir;
     use std::fs::File;
     use std::io::Write;
+    use tempfile::tempdir;
+    use uveddi::analysis::DependencyExtractor;
+    use uveddi::ast::tree_sitter::{AstError, AstParser};
 
     fn create_temp_file(dir: &tempfile::TempDir, name: &str, content: &str) -> std::path::PathBuf {
         let file_path = dir.path().join(name);

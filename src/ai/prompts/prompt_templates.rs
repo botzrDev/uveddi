@@ -9,7 +9,10 @@ pub fn for_issue(issue: &ArchitecturalIssue) -> String {
         _ => "Unknown Anti-Pattern",
     };
 
-    let code_context = issue.code_snippet.as_deref().unwrap_or("No code snippet available.");
+    let code_context = issue
+        .code_snippet
+        .as_deref()
+        .unwrap_or("No code snippet available.");
 
     format!(
         r#"

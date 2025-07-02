@@ -1,8 +1,8 @@
+use super::llm_provider::LlmProvider;
+use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use reqwest::Client;
 use serde_json::json;
-use super::llm_provider::LlmProvider;
-use anyhow::{Result, anyhow};
 
 pub struct OpenAiProvider {
     api_key: String,
@@ -38,7 +38,10 @@ impl LlmProvider for OpenAiProvider {
         let json_response: serde_json::Value = response.json().await?;
 
         if let Some(error) = json_response["error"].as_object() {
-            return Err(anyhow!("OpenAI API error: {}", error["message"].as_str().unwrap_or("unknown error")));
+            return Err(anyhow!(
+                "OpenAI API error: {}",
+                error["message"].as_str().unwrap_or("unknown error")
+            ));
         }
 
         let explanation = json_response["choices"][0]["message"]["content"]

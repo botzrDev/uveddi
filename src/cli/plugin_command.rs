@@ -8,13 +8,9 @@ pub enum PluginCommands {
     /// List installed plugins
     List,
     /// Install a plugin by name
-    Install {
-        name: String,
-    },
+    Install { name: String },
     /// Remove an installed plugin by name
-    Remove {
-        name: String,
-    },
+    Remove { name: String },
 }
 
 #[derive(Args)]

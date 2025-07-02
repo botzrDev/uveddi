@@ -1,8 +1,8 @@
 //! Unit tests for report generator AI explanation rendering
 
-use uveddi::report::ReportGenerator;
-use uveddi::database::models::{AnalysisRun, ArchitecturalIssue};
 use chrono::Utc;
+use uveddi::database::models::{AnalysisRun, ArchitecturalIssue};
+use uveddi::report::ReportGenerator;
 
 #[test]
 fn report_includes_ai_explanation_when_present() {
@@ -28,7 +28,9 @@ fn report_includes_ai_explanation_when_present() {
         code_snippet: Some("struct GodObject { ... }".to_string()),
         ai_explanation: Some("This is an AI explanation.".to_string()),
     }];
-    let report = ReportGenerator::new().generate_markdown_report(&run, &issues).unwrap();
+    let report = ReportGenerator::new()
+        .generate_markdown_report(&run, &issues)
+        .unwrap();
     assert!(report.contains("AI Analysis"));
     assert!(report.contains("This is an AI explanation."));
 }
@@ -57,6 +59,8 @@ fn report_excludes_ai_explanation_when_absent() {
         code_snippet: Some("struct GodObject { ... }".to_string()),
         ai_explanation: None,
     }];
-    let report = ReportGenerator::new().generate_markdown_report(&run, &issues).unwrap();
+    let report = ReportGenerator::new()
+        .generate_markdown_report(&run, &issues)
+        .unwrap();
     assert!(!report.contains("AI Analysis"));
 }

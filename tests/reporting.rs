@@ -2,9 +2,9 @@
 
 #[cfg(test)]
 mod tests {
-    use uveddi::report::ReportGenerator;
-    use uveddi::database::models::{AnalysisRun, ArchitecturalIssue};
     use chrono::Utc;
+    use uveddi::database::models::{AnalysisRun, ArchitecturalIssue};
+    use uveddi::report::ReportGenerator;
 
     #[test]
     fn markdown_report_output() {
@@ -31,7 +31,9 @@ mod tests {
             ai_explanation: Some("This is a God Object because...".to_string()),
         }];
         let generator = ReportGenerator::new();
-        let report = generator.generate_markdown_report(&analysis_run, &issues).unwrap();
+        let report = generator
+            .generate_markdown_report(&analysis_run, &issues)
+            .unwrap();
         assert!(report.contains("God Object"));
         assert!(report.contains("AI Analysis"));
         assert!(report.contains("src/main.rs"));
@@ -63,11 +65,16 @@ mod tests {
             ai_explanation: Some("This is a God Object because...".to_string()),
         }];
         let generator = ReportGenerator::new();
-        let report = generator.generate_json_report(&analysis_run, &issues).unwrap();
+        let report = generator
+            .generate_json_report(&analysis_run, &issues)
+            .unwrap();
         let report_str = serde_json::to_string(&report).unwrap();
         let json: serde_json::Value = serde_json::from_str(&report_str).unwrap();
         assert_eq!(json["run_id"], 1);
-        assert_eq!(json["issues"][0]["description"], "God Object with too many methods");
+        assert_eq!(
+            json["issues"][0]["description"],
+            "God Object with too many methods"
+        );
     }
 
     #[test]
@@ -84,7 +91,9 @@ mod tests {
         };
         let issues = vec![];
         let generator = ReportGenerator::new();
-        let report = generator.generate_markdown_report(&analysis_run, &issues).unwrap();
+        let report = generator
+            .generate_markdown_report(&analysis_run, &issues)
+            .unwrap();
         assert!(report.contains("**Files Analyzed:** 10"));
         assert!(report.contains("**Issues Found:** 5"));
     }
@@ -114,7 +123,9 @@ mod tests {
             ai_explanation: Some("This is a God Object because...".to_string()),
         }];
         let generator = ReportGenerator::new();
-        let report = generator.generate_markdown_report(&analysis_run, &issues).unwrap();
+        let report = generator
+            .generate_markdown_report(&analysis_run, &issues)
+            .unwrap();
         assert!(report.contains("struct GodObject { ... }"));
         assert!(report.contains("This is a God Object because..."));
     }

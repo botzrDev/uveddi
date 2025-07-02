@@ -20,5 +20,8 @@ async fn analyze_issue_no_provider_does_not_set_explanation() {
     let ai_engine = AiAnalysisEngine::new();
     let result = ai_engine.analyze_issue(&mut issue).await;
     assert!(result.is_ok());
-    assert!(issue.ai_explanation.is_none(), "AI explanation should not be set if no provider is configured");
+    assert!(
+        issue.ai_explanation.is_none(),
+        "AI explanation should not be set if no provider is configured"
+    );
 }

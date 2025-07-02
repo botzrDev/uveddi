@@ -2,9 +2,9 @@
 //
 // Anthropic Claude 3 API integration with LlmProvider trait implementation
 
-use async_trait::async_trait;
-use anyhow::{Result, anyhow};
 use crate::ai::api::llm_provider::LlmProvider;
+use anyhow::{anyhow, Result};
+use async_trait::async_trait;
 
 pub struct AnthropicProvider {
     pub api_key: String,

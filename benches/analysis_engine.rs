@@ -1,9 +1,9 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 // Update the path below to the correct location of AnalysisEngine in your uveddi crate.
 // For example, if AnalysisEngine is defined in uveddi::analysis::engine:
-use uveddi::analysis::engine::AnalysisEngine;
 use std::path::Path;
 use tokio::runtime::Runtime;
+use uveddi::analysis::engine::AnalysisEngine;
 
 fn bench_analysis_engine(c: &mut Criterion) {
     let rt = Runtime::new().unwrap();

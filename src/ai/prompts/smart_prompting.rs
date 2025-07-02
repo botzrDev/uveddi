@@ -6,8 +6,10 @@ use crate::ast::CustomAst;
 pub fn build_prompt_from_ast(ast: &CustomAst, issue_context: &str) -> String {
     // Extract a summary of the AST structure (e.g., node types, relationships)
     let ast_summary = ast.summary(); // Assumes a summary() method exists or is implemented
-    // Extract relevant code snippets (e.g., lines around the detected issue)
-    let code_snippet = ast.extract_relevant_code(issue_context).unwrap_or_else(|| "<code unavailable>".to_string());
+                                     // Extract relevant code snippets (e.g., lines around the detected issue)
+    let code_snippet = ast
+        .extract_relevant_code(issue_context)
+        .unwrap_or_else(|| "<code unavailable>".to_string());
     // Format the prompt using a template
     format!(
         "You are an expert software architect.\n\
@@ -23,7 +25,11 @@ Respond in the following JSON format:\n{{\n  \"title\": \"...\",\n  \"descriptio
 }
 
 /// Builds a prompt embedding ranked context snippets and AST structure.
-pub fn build_prompt_with_context(context_snippets: &[String], ast: &CustomAst, issue_context: &str) -> String {
+pub fn build_prompt_with_context(
+    context_snippets: &[String],
+    ast: &CustomAst,
+    issue_context: &str,
+) -> String {
     let ast_summary = ast.summary();
     let context = if context_snippets.is_empty() {
         "<no relevant context>".to_string()

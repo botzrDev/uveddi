@@ -1,5 +1,5 @@
-use std::path::{Path, PathBuf};
 use log::debug;
+use std::path::{Path, PathBuf};
 
 /// File scanner for recursive directory traversal
 pub struct FileScanner {
@@ -43,7 +43,11 @@ impl FileScanner {
     pub fn scan_directory(&self, root_path: &Path) -> Result<Vec<PathBuf>, ScanError> {
         let mut files = Vec::new();
         self.scan_recursive(root_path, &mut files)?;
-        debug!("Found {} Rust files in {}", files.len(), root_path.display());
+        debug!(
+            "Found {} Rust files in {}",
+            files.len(),
+            root_path.display()
+        );
         Ok(files)
     }
 
@@ -55,8 +59,8 @@ impl FileScanner {
             debug!("Ignoring directory: {}", dir.display());
             return Ok(());
         }
-        let entries = std::fs::read_dir(dir)
-            .map_err(|e| ScanError::IoError(dir.to_path_buf(), e))?;
+        let entries =
+            std::fs::read_dir(dir).map_err(|e| ScanError::IoError(dir.to_path_buf(), e))?;
         for entry in entries {
             let entry = entry.map_err(|e| ScanError::IoError(dir.to_path_buf(), e))?;
             let path = entry.path();
@@ -75,7 +79,9 @@ impl FileScanner {
 
     fn should_ignore_directory(&self, dir: &Path) -> bool {
         if let Some(dir_name) = dir.file_name().and_then(|n| n.to_str()) {
-            self.ignore_patterns.iter().any(|pattern| dir_name == pattern)
+            self.ignore_patterns
+                .iter()
+                .any(|pattern| dir_name == pattern)
         } else {
             false
         }

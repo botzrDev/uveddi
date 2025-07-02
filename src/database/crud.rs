@@ -1,7 +1,7 @@
-use rusqlite::{Connection, Result};
-use crate::database::models::{AnalysisRun, ArchitecturalIssue, AntiPatternType};
-use std::path::Path;
+use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
 use chrono::Utc;
+use rusqlite::{Connection, Result};
+use std::path::Path;
 
 pub struct Database {
     conn: Connection,
@@ -51,13 +51,16 @@ impl Database {
 
     pub fn get_or_create_project_id(&self, project_path: &Path) -> Result<i64> {
         let path_str = project_path.to_string_lossy().to_string();
-        let mut stmt = self.conn.prepare("SELECT project_id FROM projects WHERE path = ?")?;
+        let mut stmt = self
+            .conn
+            .prepare("SELECT project_id FROM projects WHERE path = ?")?;
         let mut rows = stmt.query([&path_str])?;
 
         if let Some(row) = rows.next()? {
             Ok(row.get(0)?)
         } else {
-            self.conn.execute("INSERT INTO projects (path) VALUES (?)", [&path_str])?;
+            self.conn
+                .execute("INSERT INTO projects (path) VALUES (?)", [&path_str])?;
             Ok(self.conn.last_insert_rowid())
         }
     }
@@ -86,7 +89,10 @@ impl Database {
         )?;
 
         let last_id = self.conn.last_insert_rowid();
-        Ok(AnalysisRun { run_id: Some(last_id), ..analysis_run })
+        Ok(AnalysisRun {
+            run_id: Some(last_id),
+            ..analysis_run
+        })
     }
 
     pub fn update_analysis_run(&self, run: &AnalysisRun) -> Result<()> {
@@ -113,8 +119,11 @@ impl Database {
             ],
         )?;
         if anti_pattern_type.anti_pattern_type_id.is_none() {
-            let mut stmt = self.conn.prepare("SELECT anti_pattern_type_id FROM anti_pattern_types WHERE name = ?")?;
-            anti_pattern_type.anti_pattern_type_id = Some(stmt.query_row([&anti_pattern_type.name], |row| row.get(0))?);
+            let mut stmt = self
+                .conn
+                .prepare("SELECT anti_pattern_type_id FROM anti_pattern_types WHERE name = ?")?;
+            anti_pattern_type.anti_pattern_type_id =
+                Some(stmt.query_row([&anti_pattern_type.name], |row| row.get(0))?);
         }
         Ok(())
     }
@@ -141,7 +150,10 @@ impl Database {
     }
 
     /// Stores multiple anti-pattern types in a batch operation
-    pub fn store_anti_pattern_types_batch(&mut self, anti_pattern_types: &mut [AntiPatternType]) -> Result<()> {
+    pub fn store_anti_pattern_types_batch(
+        &mut self,
+        anti_pattern_types: &mut [AntiPatternType],
+    ) -> Result<()> {
         let tx = self.conn.transaction()?;
         {
             let mut stmt = tx.prepare(
@@ -154,8 +166,11 @@ impl Database {
                     anti_pattern_type.category,
                 ])?;
                 if anti_pattern_type.anti_pattern_type_id.is_none() {
-                    let mut id_stmt = tx.prepare("SELECT anti_pattern_type_id FROM anti_pattern_types WHERE name = ?")?;
-                    anti_pattern_type.anti_pattern_type_id = Some(id_stmt.query_row([&anti_pattern_type.name], |row| row.get(0))?);
+                    let mut id_stmt = tx.prepare(
+                        "SELECT anti_pattern_type_id FROM anti_pattern_types WHERE name = ?",
+                    )?;
+                    anti_pattern_type.anti_pattern_type_id =
+                        Some(id_stmt.query_row([&anti_pattern_type.name], |row| row.get(0))?);
                 }
             }
         }

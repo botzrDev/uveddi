@@ -1,11 +1,11 @@
-use wasmtime::{Engine, Config, Store};
-use wasmtime::component::{Component, Linker, Instance, ResourceTable};
-use wasmtime_wasi::{WasiCtx, WasiCtxBuilder, WasiView, add_to_linker_sync};
-use std::path::Path;
-use crate::models::dependency_graph::DependencyGraph;
 use crate::database::models::ArchitecturalIssue;
 use crate::error::UveddiError;
-use serde::{Serialize, Deserialize};
+use crate::models::dependency_graph::DependencyGraph;
+use serde::{Deserialize, Serialize};
+use std::path::Path;
+use wasmtime::component::{Component, Instance, Linker, ResourceTable};
+use wasmtime::{Config, Engine, Store};
+use wasmtime_wasi::{add_to_linker_sync, WasiCtx, WasiCtxBuilder, WasiView};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct WasmDependency {
@@ -28,7 +28,7 @@ pub struct WasmArchitecturalIssue {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct WasmPluginInfo {
     pub name: String,
-   
+
     pub description: String,
     pub author: String,
 }
@@ -68,7 +68,10 @@ impl WasmPluginManager {
         let component = Component::from_file(&self.engine, wasm_path)?;
         let wasi_ctx = WasiCtxBuilder::new().inherit_stdio().build();
         let resource_table = ResourceTable::new();
-        let state = PluginState { wasi_ctx, resource_table };
+        let state = PluginState {
+            wasi_ctx,
+            resource_table,
+        };
         let mut store = Store::new(&self.engine, state);
         let instance = self.linker.instantiate(&mut store, &component)?;
         Ok(WasmPlugin {
@@ -94,15 +97,23 @@ impl WasmPlugin {
             author: "Unknown".to_string(),
         })
     }
-    pub fn analyze(&mut self, dependencies: &DependencyGraph) -> Result<Vec<ArchitecturalIssue>, UveddiError> {
-        let wasm_deps: Vec<WasmDependency> = dependencies.edges.iter().map(|(from, to)| {
-            WasmDependency {
+    pub fn analyze(
+        &mut self,
+        dependencies: &DependencyGraph,
+    ) -> Result<Vec<ArchitecturalIssue>, UveddiError> {
+        let wasm_deps: Vec<WasmDependency> = dependencies
+            .edges
+            .iter()
+            .map(|(from, to)| WasmDependency {
                 from_module: from.clone(),
                 to_module: to.clone(),
                 dependency_type: "import".to_string(),
-            }
-        }).collect();
-        log::info!("WASM plugin analyze called with {} dependencies", wasm_deps.len());
+            })
+            .collect();
+        log::info!(
+            "WASM plugin analyze called with {} dependencies",
+            wasm_deps.len()
+        );
         Ok(vec![])
     }
 }
@@ -119,13 +130,15 @@ mod tests {
     fn test_dependency_conversion() {
         let mut graph = DependencyGraph::new();
         graph.add_edge("module_a".to_string(), "module_b".to_string());
-        let deps: Vec<WasmDependency> = graph.edges.iter().map(|(from, to)| {
-            WasmDependency {
+        let deps: Vec<WasmDependency> = graph
+            .edges
+            .iter()
+            .map(|(from, to)| WasmDependency {
                 from_module: from.clone(),
                 to_module: to.clone(),
                 dependency_type: "import".to_string(),
-            }
-        }).collect();
+            })
+            .collect();
         assert_eq!(deps.len(), 1);
         assert_eq!(deps[0].from_module, "module_a");
         assert_eq!(deps[0].to_module, "module_b");

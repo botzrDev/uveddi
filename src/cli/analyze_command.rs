@@ -1,28 +1,28 @@
-use std::path::PathBuf;
+use anyhow::Context;
 use clap::Args;
 use log::info;
-use anyhow::Context;
+use std::path::PathBuf;
 
-use crate::application::{AnalysisOrchestrator, AnalysisConfig};
+use crate::application::{AnalysisConfig, AnalysisOrchestrator};
 use crate::error::UveddiError;
 
 #[derive(Args)]
 pub struct AnalyzeCommand {
     /// Path to analyze
     pub path: PathBuf,
-    
+
     /// Output format (text, json, markdown)
     #[arg(long, default_value = "markdown")]
     pub output_format: String,
-    
+
     /// Output file path
     #[arg(long)]
     pub output: Option<PathBuf>,
-    
+
     /// Enable AI analysis (requires API key or local model)
     #[arg(long)]
     pub enable_ai: bool,
-    
+
     /// OpenAI API key
     #[arg(long, env = "OPENAI_API_KEY")]
     pub openai_api_key: Option<String>,
@@ -39,11 +39,11 @@ pub struct AnalyzeCommand {
 impl AnalyzeCommand {
     pub async fn execute(&self) -> Result<(), UveddiError> {
         info!("Starting analysis of: {}", self.path.display());
-        
+
         // Create application layer orchestrator
-        let mut orchestrator = AnalysisOrchestrator::new()
-            .context("Failed to initialize analysis orchestrator")?;
-        
+        let mut orchestrator =
+            AnalysisOrchestrator::new().context("Failed to initialize analysis orchestrator")?;
+
         // Configure analysis parameters
         let config = AnalysisConfig {
             target_path: self.path.clone(),
@@ -54,24 +54,26 @@ impl AnalyzeCommand {
             ollama_api_url: self.ollama_api_url.clone(),
             ollama_model: self.ollama_model.clone(),
         };
-        
+
         // Execute analysis through application layer
-        let report = orchestrator.execute_analysis(config).await
+        let report = orchestrator
+            .execute_analysis(config)
+            .await
             .context("Analysis execution failed")?;
-        
+
         // Output results
         if self.output.is_none() {
             println!("{}", report.content);
         }
-        
+
         // Log summary
         info!(
-            "Analysis completed: {} files analyzed, {} issues found, AI enhanced: {}", 
+            "Analysis completed: {} files analyzed, {} issues found, AI enhanced: {}",
             report.metadata.files_analyzed,
             report.metadata.issues_found,
             report.metadata.ai_enhanced
         );
-        
+
         Ok(())
     }
 }

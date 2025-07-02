@@ -1,10 +1,10 @@
 //! AST disk and memory cache for Uveddi
 
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
-use serde::{Serialize, Deserialize};
 use tree_sitter::Tree;
 
 #[derive(Serialize, Deserialize)]
@@ -53,7 +53,9 @@ impl AstCache {
     }
 
     pub fn store(&mut self, path: &Path, tree: Tree) {
-        let modified = fs::metadata(path).and_then(|m| m.modified()).unwrap_or(SystemTime::now());
+        let modified = fs::metadata(path)
+            .and_then(|m| m.modified())
+            .unwrap_or(SystemTime::now());
         // let bytes = serialize(&tree).unwrap();
         // let cache_path = self.disk_cache_path.join(format!("{:x}.ast", md5::compute(path.to_string_lossy().as_bytes())));
         // fs::write(&cache_path, bytes).ok();

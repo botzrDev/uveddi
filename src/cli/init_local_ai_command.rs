@@ -1,6 +1,6 @@
+use async_trait::async_trait;
 use clap::Args;
 use log::info;
-use async_trait::async_trait;
 
 #[async_trait]
 pub trait LocalAiSetup {
@@ -22,11 +22,16 @@ impl LocalAiSetup for OllamaSetup {
     }
 
     async fn is_ollama_running(&self) -> bool {
-        reqwest::get("http://localhost:11434/api/tags").await.is_ok()
+        reqwest::get("http://localhost:11434/api/tags")
+            .await
+            .is_ok()
     }
 
     async fn download_model(&self, model: &str) {
-        println!("Ollama is installed and running. [stub] Would download model: {}", model);
+        println!(
+            "Ollama is installed and running. [stub] Would download model: {}",
+            model
+        );
     }
 }
 
@@ -39,7 +44,10 @@ pub struct InitLocalAiCommand {
 }
 
 impl InitLocalAiCommand {
-    pub async fn execute<T: LocalAiSetup>(&self, setup: &T) -> Result<(), crate::error::UveddiError> {
+    pub async fn execute<T: LocalAiSetup>(
+        &self,
+        setup: &T,
+    ) -> Result<(), crate::error::UveddiError> {
         info!("Initializing local AI (Ollama) with model: {}", self.model);
 
         if !setup.is_ollama_installed().await {

@@ -40,7 +40,10 @@ fn generate_complex_rust_code(file_index: usize, complexity: usize, total_files:
     // Add some imports to other generated modules
     for j in 1..=3 {
         let import_index = (file_index + j) % total_files;
-        code.push_str(&format!("use crate::module_{}::Struct{};\n", import_index, import_index));
+        code.push_str(&format!(
+            "use crate::module_{}::Struct{};\n",
+            import_index, import_index
+        ));
     }
     code.push_str("\n");
 
@@ -54,7 +57,10 @@ fn generate_complex_rust_code(file_index: usize, complexity: usize, total_files:
     // Add an implementation block with some functions
     code.push_str(&format!("impl Struct{} {{\n", file_index));
     for i in 0..complexity {
-        code.push_str(&format!("    pub fn func_{}(&self, arg: u32) -> u32 {{\n", i));
+        code.push_str(&format!(
+            "    pub fn func_{}(&self, arg: u32) -> u32 {{\n",
+            i
+        ));
         code.push_str(&format!("        self.field_{} + arg\n", i));
         code.push_str("    }\n");
     }

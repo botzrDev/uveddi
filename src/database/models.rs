@@ -1,7 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-
 /// Core analysis run tracking - aligns with ERD AnalysisRun entity
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AnalysisRun {

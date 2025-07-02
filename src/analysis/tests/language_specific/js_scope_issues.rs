@@ -1,5 +1,5 @@
 //! JavaScript scope issues detection tests
-//! 
+//!
 //! This module tests the detection of JavaScript scope issues including:
 //! - var vs let/const analysis
 //! - Hoisting problems
@@ -9,9 +9,9 @@
 mod tests {
     use crate::analysis::AnalysisDetector;
     use crate::ast::tree_sitter::AstParser;
-    use tempfile::tempdir;
     use std::fs::File;
     use std::io::Write;
+    use tempfile::tempdir;
 
     fn create_temp_file(dir: &tempfile::TempDir, name: &str, content: &str) -> std::path::PathBuf {
         let file_path = dir.path().join(name);

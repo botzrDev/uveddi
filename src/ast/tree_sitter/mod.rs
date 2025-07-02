@@ -1,12 +1,12 @@
-use tree_sitter::{Parser, Tree};
-use std::path::Path;
-use std::collections::HashMap;
-use std::sync::Mutex;
-use serde::{Serialize, Deserialize};
 use bincode;
+use md5;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::fs;
 use std::io::{Read, Write};
-use md5;
+use std::path::Path;
+use std::sync::Mutex;
+use tree_sitter::{Parser, Tree};
 
 pub mod queries;
 
@@ -49,7 +49,11 @@ impl AstParser {
     }
 
     /// Transform tree-sitter CST to custom AST (basic implementation for demonstration)
-    fn tree_to_custom_ast(tree: &Tree, source: &str, language: &SourceLanguage) -> Option<CustomAst> {
+    fn tree_to_custom_ast(
+        tree: &Tree,
+        source: &str,
+        language: &SourceLanguage,
+    ) -> Option<CustomAst> {
         let root = tree.root_node();
         let mut items = Vec::new();
         match language {
@@ -61,20 +65,31 @@ impl AstParser {
                     match child.kind() {
                         "struct_item" => {
                             if let Some(name_node) = child.child_by_field_name("name") {
-                                let name = name_node.utf8_text(source.as_bytes()).unwrap_or("").to_string();
+                                let name = name_node
+                                    .utf8_text(source.as_bytes())
+                                    .unwrap_or("")
+                                    .to_string();
                                 struct_names.push(name.clone());
                                 structs.insert(name, Vec::new());
                             }
-                        },
+                        }
                         "impl_item" => {
                             if let Some(type_node) = child.child_by_field_name("type") {
-                                let type_name = type_node.utf8_text(source.as_bytes()).unwrap_or("").to_string();
+                                let type_name = type_node
+                                    .utf8_text(source.as_bytes())
+                                    .unwrap_or("")
+                                    .to_string();
                                 let mut methods = Vec::new();
                                 if let Some(body_node) = child.child_by_field_name("body") {
                                     for decl in body_node.children(&mut body_node.walk()) {
                                         if decl.kind() == "function_item" {
-                                            if let Some(name_node) = decl.child_by_field_name("name") {
-                                                let method_name = name_node.utf8_text(source.as_bytes()).unwrap_or("").to_string();
+                                            if let Some(name_node) =
+                                                decl.child_by_field_name("name")
+                                            {
+                                                let method_name = name_node
+                                                    .utf8_text(source.as_bytes())
+                                                    .unwrap_or("")
+                                                    .to_string();
                                                 methods.push(method_name);
                                             }
                                         }
@@ -82,7 +97,7 @@ impl AstParser {
                                 }
                                 structs.entry(type_name).or_default().extend(methods);
                             }
-                        },
+                        }
                         _ => {}
                     }
                 }
@@ -90,17 +105,21 @@ impl AstParser {
                 for (name, methods) in structs {
                     items.push(CustomAst::Struct { name, methods });
                 }
-            },
+            }
             SourceLanguage::Python | SourceLanguage::JavaScript => {
                 // Fallback: keep previous logic for now
                 for child in root.children(&mut root.walk()) {
                     match (language, child.kind()) {
-                        (SourceLanguage::Python, "class_definition") | (SourceLanguage::JavaScript, "class_declaration") => {
+                        (SourceLanguage::Python, "class_definition")
+                        | (SourceLanguage::JavaScript, "class_declaration") => {
                             if let Some(name_node) = child.child_by_field_name("name") {
-                                let name = name_node.utf8_text(source.as_bytes()).unwrap_or("").to_string();
+                                let name = name_node
+                                    .utf8_text(source.as_bytes())
+                                    .unwrap_or("")
+                                    .to_string();
                                 items.push(CustomAst::Variable { name });
                             }
-                        },
+                        }
                         _ => {}
                     }
                 }
@@ -129,7 +148,10 @@ impl AstParser {
             f.read_to_end(&mut buf).ok();
             if let Ok(parsed) = bincode::deserialize::<ParsedFile>(&buf) {
                 if parsed.modified_at == modified_time {
-                    self.cache.lock().unwrap().insert(path_str.clone(), parsed.clone());
+                    self.cache
+                        .lock()
+                        .unwrap()
+                        .insert(path_str.clone(), parsed.clone());
                     return Ok(parsed);
                 }
             }
@@ -138,10 +160,11 @@ impl AstParser {
         // Parse and cache
         let source = fs::read_to_string(file_path)?;
         let language = self.detect_language(file_path)?;
-        let parser = self.parsers.get_mut(&language)
+        let parser = self
+            .parsers
+            .get_mut(&language)
             .ok_or_else(|| AstError::UnsupportedLanguage(format!("{:?}", language)))?;
-        let tree = parser.parse(&source, None)
-            .ok_or(AstError::ParseFailed)?;
+        let tree = parser.parse(&source, None).ok_or(AstError::ParseFailed)?;
         if tree.root_node().has_error() {
             return Err(AstError::ParseFailed);
         }
@@ -167,9 +190,14 @@ impl AstParser {
     /// Detect source language from file extension.
     /// Returns SourceLanguage or an error if unsupported.
     fn detect_language(&self, file_path: &Path) -> Result<SourceLanguage, AstError> {
-        let extension = file_path.extension()
-            .and_then(|s| s.to_str())
-            .ok_or(AstError::UnsupportedLanguage(format!("No file extension for {:?}", file_path)))?;
+        let extension =
+            file_path
+                .extension()
+                .and_then(|s| s.to_str())
+                .ok_or(AstError::UnsupportedLanguage(format!(
+                    "No file extension for {:?}",
+                    file_path
+                )))?;
 
         match extension {
             "rs" => Ok(SourceLanguage::Rust),

@@ -4,9 +4,9 @@
 //! and other code quality problems. It includes both pattern-specific detectors and
 //! infrastructure for dependency analysis.
 
+pub mod anti_patterns;
 pub mod cycle;
 pub mod dependency;
-pub mod anti_patterns;
 
 pub use cycle::CycleDetector;
-pub use dependency::{DependencyExtractor, Dependency};
+pub use dependency::{Dependency, DependencyExtractor};

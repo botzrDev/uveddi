@@ -1,8 +1,8 @@
-use clap::{Args, Subcommand};
-use std::path::PathBuf;
 use crate::config::Config;
+use clap::{Args, Subcommand};
 use std::fs;
-use std::io::{Write};
+use std::io::Write;
+use std::path::PathBuf;
 
 #[derive(Subcommand)]
 pub enum ConfigSubcommand {
@@ -71,11 +71,16 @@ impl ConfigCommand {
                 }
                 let toml = toml::to_string_pretty(&config).map_err(|e| e.to_string())?;
                 let mut file_handle = fs::File::create(file).map_err(|e| e.to_string())?;
-                file_handle.write_all(toml.as_bytes()).map_err(|e| e.to_string())?;
+                file_handle
+                    .write_all(toml.as_bytes())
+                    .map_err(|e| e.to_string())?;
                 println!("Config updated in {}", file.display());
             }
             ConfigSubcommand::Validate { file } => {
-                let path = file.as_ref().map(|p| p.to_str().unwrap()).unwrap_or("uveddi.toml");
+                let path = file
+                    .as_ref()
+                    .map(|p| p.to_str().unwrap())
+                    .unwrap_or("uveddi.toml");
                 match Config::from_file(path) {
                     Ok(_) => println!("Config is valid."),
                     Err(e) => return Err(format!("Config validation failed: {}", e)),

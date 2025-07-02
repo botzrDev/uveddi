@@ -3,11 +3,11 @@
 //! This module provides async file walking functionality to replace the
 //! synchronous walkdir usage for better performance on large codebases.
 
-use std::path::{Path, PathBuf};
-use tokio::fs;
-use tokio_stream::{StreamExt, wrappers::ReadDirStream};
 use futures::stream::Stream;
+use std::path::{Path, PathBuf};
 use std::pin::Pin;
+use tokio::fs;
+use tokio_stream::{wrappers::ReadDirStream, StreamExt};
 
 /// Async file walker that yields file paths
 pub struct AsyncWalker {
@@ -37,7 +37,10 @@ impl AsyncWalker {
         self.walk_recursive(root.to_path_buf())
     }
 
-    fn walk_recursive(&self, path: PathBuf) -> Pin<Box<dyn Stream<Item = Result<PathBuf, std::io::Error>> + Send + '_>> {
+    fn walk_recursive(
+        &self,
+        path: PathBuf,
+    ) -> Pin<Box<dyn Stream<Item = Result<PathBuf, std::io::Error>> + Send + '_>> {
         Box::pin(async_stream::stream! {
             let mut stack = vec![path];
 

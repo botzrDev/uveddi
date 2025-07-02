@@ -1,5 +1,5 @@
-use crate::database::models::ArchitecturalIssue;
 use crate::ast::tree_sitter::ParsedFile;
+use crate::database::models::ArchitecturalIssue;
 
 /// Contextual information for AI analysis
 #[derive(Debug)]
@@ -29,7 +29,7 @@ impl ContextBuilder {
                 code_snippet: String::new(),
                 surrounding_context: String::new(),
                 project_patterns: Vec::new(),
-            }
+            },
         }
     }
 

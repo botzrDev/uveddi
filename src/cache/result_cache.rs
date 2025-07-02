@@ -1,8 +1,8 @@
-use std::path::Path;
 use rusqlite::{Connection, Result};
 use serde::{de::DeserializeOwned, Serialize};
-use std::hash::{Hash, Hasher};
 use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
+use std::path::Path;
 
 pub struct ResultCache {
     conn: Connection,
@@ -30,7 +30,9 @@ impl ResultCache {
 
     pub fn get<K: Hash, V: DeserializeOwned>(&self, key_data: &K) -> Result<Option<V>> {
         let key = Self::hash_key(key_data);
-        let mut stmt = self.conn.prepare("SELECT value FROM cache WHERE key = ?1")?;
+        let mut stmt = self
+            .conn
+            .prepare("SELECT value FROM cache WHERE key = ?1")?;
         let mut rows = stmt.query_map([&key], |row| {
             let value: Vec<u8> = row.get(0)?;
             Ok(value)

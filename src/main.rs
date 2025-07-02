@@ -1,6 +1,6 @@
 use clap::{Parser, Subcommand};
-use log::{error, info};
 use color_eyre::eyre::{Result, WrapErr};
+use log::{error, info};
 
 use uveddi::cli::{
     analyze_command::AnalyzeCommand, config_command::ConfigCommand,
@@ -35,7 +35,7 @@ fn main() -> Result<()> {
     // Set up color_eyre for better error reporting
     color_eyre::install()?;
     env_logger::init();
-    
+
     let cli = Cli::parse();
 
     // Handle commands with context
@@ -61,7 +61,8 @@ fn main() -> Result<()> {
         }
         Commands::Config(command) => {
             info!("Executing config command...");
-            command.execute()
+            command
+                .execute()
                 .map_err(UveddiError::Configuration)
                 .context("Config command failed")
         }
