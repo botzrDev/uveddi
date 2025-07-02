@@ -55,9 +55,9 @@ const LandingPage: React.FC = () => {
   ];
 
   return (
-    <div className="bg-secondary-900 bg-gray-900 text-white min-h-screen">
+    <div className="bg-secondary-950 text-white min-h-screen">
       {/* Header */}
-      <header className="sticky top-0 bg-secondary-900/80 backdrop-blur-md z-50 border-b border-secondary-800">
+      <header className="sticky top-0 bg-secondary-950/90 backdrop-blur-md z-50 border-b border-secondary-800">
         <nav className="container mx-auto px-6 py-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-2">
@@ -76,12 +76,12 @@ const LandingPage: React.FC = () => {
               <a href="#docs" className="text-secondary-300 hover:text-primary-400 transition-colors">Docs</a>
             </div>
             <div className="flex items-center space-x-4">
-              <Link to="/login" className="text-secondary-300 hover:text-primary-400 transition-colors">
+              <Link to="/login" className="text-secondary-300 hover:text-primary-400 transition-colors font-medium">
                 Sign In
               </Link>
-              <GradientButton href="/register">
+              <button className="px-4 py-2 bg-success-500 hover:bg-success-600 text-white rounded-lg font-medium transition-all duration-300 hover:shadow-glow-success">
                 Get Started Free
-              </GradientButton>
+              </button>
             </div>
           </div>
         </nav>
@@ -89,42 +89,41 @@ const LandingPage: React.FC = () => {
 
       <main>
         {/* Hero Section */}
-        <section className="relative py-20 px-6 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-secondary-900 from-gray-900 via-secondary-800 via-gray-800 to-secondary-900 to-gray-900" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary-900/20 from-green-900/20 via-transparent to-transparent" />
+        <section className="relative py-24 px-6 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-secondary-950 via-secondary-900 to-primary-950/20" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary-900/20 via-transparent to-transparent" />
           
           <div className="container mx-auto relative z-10">
-            <div className="text-center max-w-4xl mx-auto mb-12">
-              <div className="inline-flex items-center bg-secondary-800 bg-gray-800 border border-secondary-700 border-gray-700 rounded-full px-4 py-2 mb-6">
-                <Star className="w-4 h-4 text-accent-400 text-yellow-400 mr-2" />
-                <span className="text-sm text-secondary-300 text-gray-300">Trusted by developers for high-level code analysis</span>
+            <div className="text-center max-w-4xl mx-auto mb-16">
+              <div className="inline-flex items-center bg-secondary-800/50 border border-secondary-700 rounded-full px-4 py-2 mb-8">
+                <Star className="w-4 h-4 text-accent-400 mr-2" />
+                <span className="text-sm text-secondary-300">Trusted by developers for high-level code analysis</span>
               </div>
               
-              <h1 className="text-5xl md:text-7xl font-bold mb-6 animate-slide-up">
-                <span className="bg-gradient-to-r from-white to-secondary-300 to-gray-300 bg-clip-text text-transparent">
+              <h1 className="text-6xl md:text-8xl font-bold mb-8 animate-slide-up leading-tight">
+                <span className="bg-gradient-to-r from-white to-secondary-200 bg-clip-text text-transparent">
                   Code Analysis
                 </span>
                 <br />
-                <span className="bg-gradient-to-r from-primary-400 from-green-400 to-primary-500 to-green-500 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-primary-400 to-primary-500 bg-clip-text text-transparent">
                   Instantly Intelligent
                 </span>
               </h1>
               
-              <p className="text-xl text-secondary-300 text-gray-300 mb-8 leading-relaxed max-w-3xl mx-auto">
+              <p className="text-xl text-secondary-200 mb-12 leading-relaxed max-w-3xl mx-auto">
                 Transform complex codebases into actionable intelligence. Detect architectural anti-patterns, 
                 security vulnerabilities, and technical debt before they compromise your projects.
-                <span className="text-primary-400 text-green-400 font-semibold"> AI-powered insights for human-written and AI-generated code.</span>
+                <span className="text-primary-400 font-semibold block mt-2">AI-powered insights for human-written and AI-generated code.</span>
               </p>
               
-              <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4 mb-12">
-                <GradientButton size="lg" className="group">
-                  <Download className="w-5 h-5 mr-2 group-hover:animate-bounce-gentle" />
-                  Download CLI
-                </GradientButton>
-                <GradientButton variant="secondary" size="lg" className="group">
-                  <Play className="w-5 h-5 mr-2" />
-                  Watch Demo
-                </GradientButton>
+              {/* Single focused CTA */}
+              <div className="mb-16">
+                <button className="group px-8 py-4 bg-success-500 hover:bg-success-600 text-white text-lg font-semibold rounded-xl transition-all duration-300 hover:shadow-glow-success hover:scale-105 flex items-center mx-auto">
+                  <Download className="w-6 h-6 mr-3 group-hover:animate-bounce-gentle" />
+                  Get Started Free - Download CLI
+                  <ArrowRight className="w-5 h-5 ml-3 group-hover:translate-x-1 transition-transform" />
+                </button>
+                <p className="text-sm text-secondary-400 mt-3">No signup required • Works with any codebase • Instant results</p>
               </div>
             </div>
 
@@ -132,7 +131,7 @@ const LandingPage: React.FC = () => {
             <div className="max-w-4xl mx-auto">
               <AnimatedTerminal 
                 commands={terminalCommands}
-                className="shadow-2xl shadow-primary-500/20"
+                className="shadow-2xl shadow-primary-500/20 border border-secondary-700/50"
                 loop={true}
               />
             </div>
@@ -140,17 +139,35 @@ const LandingPage: React.FC = () => {
         </section>
 
         {/* Trust Signals */}
-        <section className="py-16 px-6 bg-secondary-800/50">
+        <section className="py-20 px-6 bg-secondary-900/30 border-y border-secondary-800/50">
           <div className="container mx-auto">
-            <div className="text-center mb-8">
-              <p className="text-secondary-400 text-sm font-medium">Trusted by developers at</p>
+            <div className="text-center mb-12">
+              <p className="text-secondary-300 text-sm font-medium uppercase tracking-wider">Integrates with your existing workflow</p>
             </div>
-            <div className="flex justify-center items-center space-x-12 opacity-60">
-              <Github className="w-8 h-8" />
-              <Gitlab className="w-8 h-8" />
-              <span className="text-xl font-bold">VS Code</span>
-              <span className="text-xl font-bold">Jenkins</span>
-              <span className="text-xl font-bold">CircleCI</span>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-8 items-center justify-items-center max-w-4xl mx-auto">
+              <div className="flex flex-col items-center space-y-2 group">
+                <Github className="w-10 h-10 text-secondary-400 group-hover:text-white transition-colors" />
+                <span className="text-sm text-secondary-400 group-hover:text-secondary-300 transition-colors">GitHub</span>
+              </div>
+              <div className="flex flex-col items-center space-y-2 group">
+                <Gitlab className="w-10 h-10 text-secondary-400 group-hover:text-white transition-colors" />
+                <span className="text-sm text-secondary-400 group-hover:text-secondary-300 transition-colors">GitLab</span>
+              </div>
+              <div className="flex flex-col items-center space-y-2 group">
+                <Settings className="w-10 h-10 text-secondary-400 group-hover:text-white transition-colors" />
+                <span className="text-sm text-secondary-400 group-hover:text-secondary-300 transition-colors">VS Code</span>
+              </div>
+              <div className="flex flex-col items-center space-y-2 group">
+                <GitBranch className="w-10 h-10 text-secondary-400 group-hover:text-white transition-colors" />
+                <span className="text-sm text-secondary-400 group-hover:text-secondary-300 transition-colors">Jenkins</span>
+              </div>
+              <div className="flex flex-col items-center space-y-2 group">
+                <MonitorSpeaker className="w-10 h-10 text-secondary-400 group-hover:text-white transition-colors" />
+                <span className="text-sm text-secondary-400 group-hover:text-secondary-300 transition-colors">CircleCI</span>
+              </div>
+            </div>
+            <div className="text-center mt-12">
+              <p className="text-secondary-400 text-sm">Works with any Git repository • CLI-first approach • CI/CD ready</p>
             </div>
           </div>
         </section>
@@ -163,7 +180,7 @@ const LandingPage: React.FC = () => {
                 <h2 className="text-4xl font-bold mb-6">
                   <span className="text-red-400">The Problem:</span> Code Quality Chaos
                 </h2>
-                <div className="space-y-4 text-secondary-300">
+                <div className="space-y-4 text-secondary-200">
                   <div className="flex items-start space-x-3">
                     <AlertTriangle className="w-6 h-6 text-red-400 mt-1 flex-shrink-0" />
                     <p>Manual code reviews take hours and miss critical architectural issues</p>
@@ -181,19 +198,19 @@ const LandingPage: React.FC = () => {
               
               <div>
                 <h2 className="text-4xl font-bold mb-6">
-                  <span className="text-primary-400">The Solution:</span> Shift-Left Intelligence
+                  <span className="text-success-400">The Solution:</span> Shift-Left Intelligence
                 </h2>
-                <div className="space-y-4 text-secondary-300">
+                <div className="space-y-4 text-secondary-200">
                   <div className="flex items-start space-x-3">
-                    <CheckCircle className="w-6 h-6 text-primary-400 mt-1 flex-shrink-0" />
+                    <CheckCircle className="w-6 h-6 text-success-400 mt-1 flex-shrink-0" />
                     <p>Instant architectural analysis directly in your terminal</p>
                   </div>
                   <div className="flex items-start space-x-3">
-                    <CheckCircle className="w-6 h-6 text-primary-400 mt-1 flex-shrink-0" />
+                    <CheckCircle className="w-6 h-6 text-success-400 mt-1 flex-shrink-0" />
                     <p>AI-powered explanations make complex issues understandable</p>
                   </div>
                   <div className="flex items-start space-x-3">
-                    <CheckCircle className="w-6 h-6 text-primary-400 mt-1 flex-shrink-0" />
+                    <CheckCircle className="w-6 h-6 text-success-400 mt-1 flex-shrink-0" />
                     <p>Catch problems early, before they reach production</p>
                   </div>
                 </div>
@@ -383,66 +400,201 @@ const LandingPage: React.FC = () => {
           </div>
         </section>
 
+        {/* Testimonials Section */}
+        <section className="py-20 px-6">
+          <div className="container mx-auto">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl font-bold mb-4">
+                Trusted by Developers Worldwide
+              </h2>
+              <p className="text-xl text-secondary-200">
+                See how uveddi is transforming code quality for teams everywhere
+              </p>
+            </div>
+            
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+              {/* Testimonial 1 */}
+              <div className="bg-secondary-800/50 border border-secondary-700 rounded-xl p-8 hover:border-secondary-600 transition-all duration-300">
+                <div className="flex items-start space-x-4 mb-6">
+                  <div className="w-12 h-12 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                    SM
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-white">Sarah Martinez</h4>
+                    <p className="text-secondary-300 text-sm">Senior Engineer</p>
+                    <div className="flex items-center space-x-2 mt-1">
+                      <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center">
+                        <span className="text-white text-xs font-bold">T</span>
+                      </div>
+                      <span className="text-secondary-400 text-sm">TechCorp</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="mb-4">
+                  <div className="flex text-accent-400 mb-2">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="w-4 h-4 fill-current" />
+                    ))}
+                  </div>
+                  <blockquote className="text-secondary-200 italic">
+                    "Uveddi caught <span className="text-success-400 font-semibold">23 architectural issues</span> in our legacy codebase that manual reviews missed. 
+                    It's like having a senior architect review every commit."
+                  </blockquote>
+                </div>
+                <div className="text-sm text-secondary-400">
+                  Reduced technical debt by 40% in 6 months
+                </div>
+              </div>
+
+              {/* Testimonial 2 */}
+              <div className="bg-secondary-800/50 border border-secondary-700 rounded-xl p-8 hover:border-secondary-600 transition-all duration-300">
+                <div className="flex items-start space-x-4 mb-6">
+                  <div className="w-12 h-12 bg-gradient-to-r from-success-500 to-success-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                    MJ
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-white">Michael Johnson</h4>
+                    <p className="text-secondary-300 text-sm">Lead Developer</p>
+                    <div className="flex items-center space-x-2 mt-1">
+                      <div className="w-6 h-6 bg-green-600 rounded flex items-center justify-center">
+                        <span className="text-white text-xs font-bold">S</span>
+                      </div>
+                      <span className="text-secondary-400 text-sm">StartupXYZ</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="mb-4">
+                  <div className="flex text-accent-400 mb-2">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="w-4 h-4 fill-current" />
+                    ))}
+                  </div>
+                  <blockquote className="text-secondary-200 italic">
+                    "AI-generated code analysis saved us <span className="text-success-400 font-semibold">15 hours per week</span> on code reviews. 
+                    The explanations help junior devs understand complex patterns instantly."
+                  </blockquote>
+                </div>
+                <div className="text-sm text-secondary-400">
+                  Improved code review efficiency by 75%
+                </div>
+              </div>
+
+              {/* Testimonial 3 */}
+              <div className="bg-secondary-800/50 border border-secondary-700 rounded-xl p-8 hover:border-secondary-600 transition-all duration-300">
+                <div className="flex items-start space-x-4 mb-6">
+                  <div className="w-12 h-12 bg-gradient-to-r from-action-500 to-action-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                    AC
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-white">Amy Chen</h4>
+                    <p className="text-secondary-300 text-sm">DevOps Manager</p>
+                    <div className="flex items-center space-x-2 mt-1">
+                      <div className="w-6 h-6 bg-purple-600 rounded flex items-center justify-center">
+                        <span className="text-white text-xs font-bold">E</span>
+                      </div>
+                      <span className="text-secondary-400 text-sm">Enterprise Inc</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="mb-4">
+                  <div className="flex text-accent-400 mb-2">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="w-4 h-4 fill-current" />
+                    ))}
+                  </div>
+                  <blockquote className="text-secondary-200 italic">
+                    "Prevented <span className="text-success-400 font-semibold">3 critical security vulnerabilities</span> from reaching production. 
+                    The CI/CD integration caught issues that would have cost us $500K+ to fix."
+                  </blockquote>
+                </div>
+                <div className="text-sm text-secondary-400">
+                  Zero security incidents in 18 months
+                </div>
+              </div>
+            </div>
+
+            <div className="text-center mt-12">
+              <div className="flex flex-col md:flex-row justify-center items-center space-y-4 md:space-y-0 md:space-x-8 text-secondary-300">
+                <div className="flex items-center space-x-2">
+                  <TrendingUp className="w-5 h-5 text-success-400" />
+                  <span>10,000+ repositories analyzed</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Shield className="w-5 h-5 text-success-400" />
+                  <span>500+ vulnerabilities caught early</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Zap className="w-5 h-5 text-success-400" />
+                  <span>Average 60% faster code reviews</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Pricing Section */}
-        <section id="pricing" className="py-20 px-6">
+        <section id="pricing" className="py-20 px-6 bg-secondary-900/20">
           <div className="container mx-auto">
             <div className="text-center mb-16">
               <h2 className="text-4xl font-bold mb-4">
                 Flexible Pricing for Every Team
               </h2>
-              <p className="text-xl text-secondary-300">
+              <p className="text-xl text-secondary-200">
                 Start free, scale as you grow
               </p>
             </div>
             
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-              {/* Community */}
-              <div className="bg-secondary-800 border border-secondary-700 rounded-xl p-8 hover:border-secondary-600 transition-colors">
-                <h3 className="text-2xl font-bold mb-2">Community</h3>
-                <div className="flex items-baseline mb-4">
-                  <span className="text-5xl font-bold">$0</span>
-                  <span className="text-secondary-400 ml-2">/forever</span>
+              {/* Community - FREE TIER HIGHLIGHTED */}
+              <div className="bg-secondary-800 border-2 border-success-500 rounded-xl p-8 relative overflow-hidden shadow-lg shadow-success-500/20 transform hover:scale-105 transition-all duration-300">
+                <div className="absolute top-0 right-0 bg-success-500 text-white px-4 py-2 text-sm font-bold">
+                  FREE FOREVER
                 </div>
-                <p className="text-secondary-300 mb-6">
+                <h3 className="text-2xl font-bold mb-2 text-success-400">Community</h3>
+                <div className="flex items-baseline mb-4">
+                  <span className="text-5xl font-bold text-success-400">$0</span>
+                  <span className="text-secondary-300 ml-2">/forever</span>
+                </div>
+                <p className="text-secondary-200 mb-6">
                   Perfect for individuals and small teams getting started with architectural analysis.
                 </p>
-                <ul className="space-y-3 text-secondary-300 mb-8">
+                <ul className="space-y-3 text-secondary-200 mb-8">
                   <li className="flex items-center space-x-3">
-                    <CheckCircle className="w-5 h-5 text-primary-400" />
+                    <CheckCircle className="w-5 h-5 text-success-400" />
                     <span>Local LLM Analysis</span>
                   </li>
                   <li className="flex items-center space-x-3">
-                    <CheckCircle className="w-5 h-5 text-primary-400" />
+                    <CheckCircle className="w-5 h-5 text-success-400" />
                     <span>Core Anti-Pattern Detection</span>
                   </li>
                   <li className="flex items-center space-x-3">
-                    <CheckCircle className="w-5 h-5 text-primary-400" />
+                    <CheckCircle className="w-5 h-5 text-success-400" />
                     <span>Markdown Reports</span>
                   </li>
                   <li className="flex items-center space-x-3">
-                    <CheckCircle className="w-5 h-5 text-primary-400" />
+                    <CheckCircle className="w-5 h-5 text-success-400" />
                     <span>Community Support</span>
                   </li>
                 </ul>
-                <GradientButton className="w-full">
+                <button className="w-full px-6 py-3 bg-success-500 hover:bg-success-600 text-white font-semibold rounded-lg transition-all duration-300 hover:shadow-glow-success">
                   Get Started Free
-                </GradientButton>
+                </button>
               </div>
 
               {/* Pro */}
-              <div className="bg-secondary-800 border-2 border-primary-500 rounded-xl p-8 relative overflow-hidden">
+              <div className="bg-secondary-800 border border-primary-500/50 rounded-xl p-8 relative overflow-hidden hover:border-primary-500 transition-all duration-300">
                 <div className="absolute top-0 right-0 bg-primary-500 text-white px-3 py-1 text-sm font-semibold">
                   POPULAR
                 </div>
                 <h3 className="text-2xl font-bold mb-2">Pro</h3>
                 <div className="flex items-baseline mb-4">
                   <span className="text-5xl font-bold">$29</span>
-                  <span className="text-secondary-400 ml-2">/month</span>
+                  <span className="text-secondary-300 ml-2">/month</span>
                 </div>
-                <p className="text-secondary-300 mb-6">
+                <p className="text-secondary-200 mb-6">
                   Enhanced features for professional developers and growing teams.
                 </p>
-                <ul className="space-y-3 text-secondary-300 mb-8">
+                <ul className="space-y-3 text-secondary-200 mb-8">
                   <li className="flex items-center space-x-3">
                     <CheckCircle className="w-5 h-5 text-primary-400" />
                     <span>Everything in Community</span>
@@ -464,9 +616,9 @@ const LandingPage: React.FC = () => {
                     <span>Priority Support</span>
                   </li>
                 </ul>
-                <GradientButton className="w-full">
+                <button className="w-full px-6 py-3 bg-primary-500 hover:bg-primary-600 text-white font-semibold rounded-lg transition-all duration-300 hover:shadow-glow">
                   Start Pro Trial
-                </GradientButton>
+                </button>
               </div>
 
               {/* Enterprise */}
@@ -475,10 +627,10 @@ const LandingPage: React.FC = () => {
                 <div className="flex items-baseline mb-4">
                   <span className="text-5xl font-bold">Custom</span>
                 </div>
-                <p className="text-secondary-300 mb-6">
+                <p className="text-secondary-200 mb-6">
                   Advanced features, security, and support for large organizations.
                 </p>
-                <ul className="space-y-3 text-secondary-300 mb-8">
+                <ul className="space-y-3 text-secondary-200 mb-8">
                   <li className="flex items-center space-x-3">
                     <CheckCircle className="w-5 h-5 text-primary-400" />
                     <span>Everything in Pro</span>
@@ -500,9 +652,9 @@ const LandingPage: React.FC = () => {
                     <span>24/7 Support & SLA</span>
                   </li>
                 </ul>
-                <GradientButton variant="secondary" className="w-full">
+                <button className="w-full px-6 py-3 bg-action-500 hover:bg-action-600 text-white font-semibold rounded-lg transition-all duration-300 hover:shadow-glow-action">
                   Contact Sales
-                </GradientButton>
+                </button>
               </div>
             </div>
           </div>

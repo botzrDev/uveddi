@@ -11,18 +11,21 @@ export default {
         mono: ['SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'source-code-pro', 'Menlo', 'Consolas', 'monospace'],
       },
       colors: {
+        // Professional navy blue primary palette for trust and stability
         primary: {
-          50: '#f0fdf4',
-          100: '#dcfce7',
-          200: '#bbf7d0',
-          300: '#86efac',
-          400: '#4ade80',
-          500: '#22c55e',
-          600: '#16a34a',
-          700: '#15803d',
-          800: '#166534',
-          900: '#14532d',
+          50: '#f0f4ff',
+          100: '#e0e7ff',
+          200: '#c7d2fe',
+          300: '#a5b4fc',
+          400: '#818cf8',
+          500: '#6366f1',
+          600: '#4f46e5',
+          700: '#4338ca',
+          800: '#3730a3',
+          900: '#312e81',
+          950: '#1e1b4b',
         },
+        // Charcoal gray for backgrounds and text
         secondary: {
           50: '#f8fafc',
           100: '#f1f5f9',
@@ -34,7 +37,35 @@ export default {
           700: '#334155',
           800: '#1e293b',
           900: '#0f172a',
+          950: '#020617',
         },
+        // Vibrant green for low-friction CTAs (Get Started, Download)
+        success: {
+          50: '#f0fdf4',
+          100: '#dcfce7',
+          200: '#bbf7d0',
+          300: '#86efac',
+          400: '#4ade80',
+          500: '#22c55e',
+          600: '#16a34a',
+          700: '#15803d',
+          800: '#166534',
+          900: '#14532d',
+        },
+        // Bright orange for high-commitment CTAs (Request Demo, Contact Sales)
+        action: {
+          50: '#fff7ed',
+          100: '#ffedd5',
+          200: '#fed7aa',
+          300: '#fdba74',
+          400: '#fb923c',
+          500: '#f97316',
+          600: '#ea580c',
+          700: '#c2410c',
+          800: '#9a3412',
+          900: '#7c2d12',
+        },
+        // Keep amber/yellow for accent highlights
         accent: {
           50: '#fef3c7',
           100: '#fde68a',
@@ -74,8 +105,10 @@ export default {
         },
       },
       boxShadow: {
-        'glow': '0 0 20px rgba(34, 197, 94, 0.3)',
-        'glow-lg': '0 0 40px rgba(34, 197, 94, 0.4)',
+        'glow': '0 0 20px rgba(99, 102, 241, 0.3)',
+        'glow-lg': '0 0 40px rgba(99, 102, 241, 0.4)',
+        'glow-success': '0 0 20px rgba(34, 197, 94, 0.3)',
+        'glow-action': '0 0 20px rgba(249, 115, 22, 0.3)',
         'inner-lg': 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)',
       },
       backdropBlur: {
