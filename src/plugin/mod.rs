@@ -161,7 +161,7 @@ impl Plugin for GodObjectDetector {
 
     fn run(
         &self,
-        graph: &DependencyGraph,
+        _graph: &DependencyGraph,
     ) -> Result<Vec<ArchitecturalIssue>, PluginError> {
         // Stub implementation for now.
         // In a real implementation, this would analyze the graph

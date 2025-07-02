@@ -41,8 +41,8 @@ impl CycleDetector {
                         graph.get_node_from_index(node_index)
                             .and_then(|node| match node {
                                 ComponentNode::Module { path } => Some(path.clone()),
-                                ComponentNode::Class { name, file_path } => Some(file_path.clone()),
-                                ComponentNode::Function { name, file_path } => Some(file_path.clone()),
+                                ComponentNode::Class { name: _, file_path } => Some(file_path.clone()),
+                                ComponentNode::Function { name: _, file_path } => Some(file_path.clone()),
                             })
                     })
                     .collect();

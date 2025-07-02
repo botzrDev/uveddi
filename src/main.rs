@@ -1,15 +1,12 @@
-use anyhow::Context;
 use clap::{Parser, Subcommand};
-use log::{info, error};
-use color_eyre::eyre::Result;
-use color_eyre::Section;
-use color_eyre::eyre::eyre;
-use crate::error::UveddiError;
+use log::{error, info};
+use color_eyre::eyre::{Result, WrapErr};
 
-use crate::cli::analyze_command::AnalyzeCommand;
-use crate::cli::config_command::ConfigCommand;
-use crate::cli::init_local_ai_command::InitLocalAiCommand;
-use crate::cli::plugin_command::PluginCommand;
+use uveddi::cli::{
+    analyze_command::AnalyzeCommand, config_command::ConfigCommand,
+    init_local_ai_command::InitLocalAiCommand, plugin_command::PluginCommand,
+};
+use uveddi::error::UveddiError;
 
 /// Uveddi - A tool for code analysis and exploration
 ///
@@ -51,7 +48,7 @@ fn main() -> Result<()> {
         }
         Commands::InitLocalAi(command) => {
             info!("Executing init-local-ai command...");
-            let setup = crate::cli::init_local_ai_command::OllamaSetup;
+            let setup = uveddi::cli::init_local_ai_command::OllamaSetup;
             tokio::runtime::Runtime::new()?
                 .block_on(command.execute(&setup))
                 .context("Init-local-ai command failed")
@@ -60,21 +57,20 @@ fn main() -> Result<()> {
             info!("Executing plugin command...");
             tokio::runtime::Runtime::new()?
                 .block_on(command.execute())
-                .map_err(|e| UveddiError::Plugin(e.to_string()))
                 .context("Plugin command failed")
         }
         Commands::Config(command) => {
             info!("Executing config command...");
             command.execute()
-                .map_err(|e| UveddiError::Configuration(e))
+                .map_err(UveddiError::Configuration)
                 .context("Config command failed")
         }
     };
 
     // Handle errors with rich reporting
     if let Err(e) = result {
-        error!("{}", e);
-        return Err(eyre!(e).suggestion("Check logs for more details"));
+        error!("{:?}", e);
+        return Err(e);
     }
 
     Ok(())

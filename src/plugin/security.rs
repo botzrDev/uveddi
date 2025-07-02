@@ -72,7 +72,7 @@ pub fn create_secure_wasi_context(manifest: &PluginManifest) -> Result<wasmtime_
                 if is_safe_env_var(var) {
                     if let Ok(value) = std::env::var(var) {
                         log::info!("Granting environment variable access: {}", var);
-                        builder = builder.env(var, &value)?;
+                        builder.env(var, &value);
                     }
                 } else {
                     log::warn!("Denying access to sensitive environment variable: {}", var);

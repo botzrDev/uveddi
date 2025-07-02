@@ -1,4 +1,5 @@
 use clap::{Args, Subcommand};
+use color_eyre::eyre::Result;
 
 #[derive(Subcommand)]
 pub enum PluginCommands {
@@ -23,7 +24,7 @@ pub struct PluginCommand {
 }
 
 impl PluginCommand {
-    pub async fn execute(&self) {
+    pub async fn execute(&self) -> Result<()> {
         match &self.command {
             PluginCommands::Discover => {
                 println!("Discovering available plugins...");
@@ -42,5 +43,6 @@ impl PluginCommand {
                 // TODO: Implement plugin removal logic
             }
         }
+        Ok(())
     }
 }

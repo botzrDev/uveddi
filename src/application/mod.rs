@@ -138,7 +138,7 @@ impl AnalysisOrchestrator {
     /// Configure AI providers based on the provided configuration
     fn configure_ai(&mut self, config: &AnalysisConfig) -> Result<(), UveddiError> {
         if config.enable_ai {
-            if let Some(api_key) = &config.openai_api_key {
+            if let Some(_api_key) = &config.openai_api_key {
                 // self.ai_engine = self.ai_engine.clone().with_openai_api(api_key.clone());
                 // Placeholder: set OpenAI API key if needed
                 info!("AI analysis enabled with OpenAI");
@@ -170,7 +170,7 @@ impl AnalysisOrchestrator {
     async fn run_plugin_analysis(&self, local_graph: &LocalDependencyGraph) -> Result<Vec<ArchitecturalIssue>, UveddiError> {
         info!("Running analysis plugins...");
         
-        // Convert LocalDependencyGraph to plugin API format
+        // Convert LocalDependencyGraph to plugin API format without cloning
         let plugin_graph = PluginDependencyGraph::from(local_graph);
         
         let plugin_manager = initialize_plugins();
@@ -189,10 +189,9 @@ impl AnalysisOrchestrator {
     /// Enhance analysis results with AI insights
     async fn enhance_with_ai_analysis(&mut self, issues: &mut Vec<ArchitecturalIssue>) -> Result<(), UveddiError> {
         info!("Enhancing issues with AI analysis...");
-        for issue in issues {
-            // Placeholder: AI enhancement logic would go here
-            // e.g., self.ai_engine.analyze(issue, &dummy_ast).await?;
-            // For now, just log and continue
+        for issue in issues.iter_mut() {
+            self.ai_engine.analyze_issue(issue).await
+                .context("Failed to enhance issue with AI analysis")?;
             info!("AI analysis placeholder for issue in {}", issue.file_path);
         }
         Ok(())

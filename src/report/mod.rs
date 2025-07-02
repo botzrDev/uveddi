@@ -1,5 +1,5 @@
 use crate::database::models::{AnalysisRun, ArchitecturalIssue, AntiPatternType};
-use crate::analysis::dependency_graph::{LocalDependencyGraph, ComponentNode};
+use crate::analysis::dependency_graph::ComponentNode;
 use serde_json::Value;
 use std::collections::HashMap;
 
