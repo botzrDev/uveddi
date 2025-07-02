@@ -15,7 +15,7 @@ fn test_sprint1_cycle_detection() {
     fs::write(&mod1_path, "pub mod mod2;").unwrap();
     fs::write(&mod2_path, "pub mod mod1;").unwrap();
 
-    let mut extractor = DependencyExtractor::new().unwrap();
+    let extractor = DependencyExtractor::new().unwrap();
     let mut graph = LocalDependencyGraph::new();
 
     let deps1 = extractor.extract_from_file(&mod1_path).unwrap();

@@ -1,12 +1,10 @@
 use clap::{Parser, Subcommand};
-use color_eyre::eyre::{Result, WrapErr};
-use log::{error, info};
+use color_eyre::eyre::Result;
 
 use uveddi::cli::{
     analyze_command::AnalyzeCommand, config_command::ConfigCommand,
     init_local_ai_command::InitLocalAiCommand, plugin_command::PluginCommand,
 };
-use uveddi::error::UveddiError;
 
 /// Uveddi - A tool for code analysis and exploration
 ///
