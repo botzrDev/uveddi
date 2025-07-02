@@ -1,5 +1,7 @@
 use criterion::{criterion_group, criterion_main, Criterion};
-use uveddi::analysis::analysis_engine::AnalysisEngine;
+// Update the path below to the correct location of AnalysisEngine in your uveddi crate.
+// For example, if AnalysisEngine is defined in uveddi::analysis::engine:
+use uveddi::analysis::engine::AnalysisEngine;
 use std::path::Path;
 use tokio::runtime::Runtime;
 

@@ -1,5 +1,6 @@
 use criterion::{criterion_group, criterion_main, Criterion, BenchmarkId};
 use uveddi::plugin::{PluginManager, WasmPluginManager};
+// use the correct path to LocalDependencyGraph
 use uveddi::analysis::dependency_graph::LocalDependencyGraph;
 use uveddi_plugin_api::models::{DependencyGraph, Dependency, DependencyType};
 use std::path::PathBuf;
