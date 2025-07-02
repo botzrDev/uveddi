@@ -14,7 +14,7 @@ pub enum ComponentNode {
 
 /// Represents the type of dependency between two components.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum DependencyType {
+pub enum LocalDependencyType {
     /// A direct function or method call.
     Call,
     /// An import or `use` statement.
@@ -28,7 +28,7 @@ pub enum DependencyType {
 /// Represents a dependency relationship (an edge) in the graph.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct DependencyEdge {
-    pub dependency_type: DependencyType,
+    pub dependency_type: LocalDependencyType,
     /// Could be used to store metadata like line numbers.
     pub weight: u32,
 }
@@ -39,15 +39,15 @@ pub struct DependencyEdge {
 /// between software components. It provides methods for adding components
 /// and dependencies, and will be the basis for running architectural analyses
 /// like cycle detection.
-pub struct DependencyGraph {
+pub struct LocalDependencyGraph {
     graph: DiGraph<ComponentNode, DependencyEdge>,
     node_map: HashMap<ComponentNode, NodeIndex>,
 }
 
-impl DependencyGraph {
-    /// Creates a new, empty `DependencyGraph`.
+impl LocalDependencyGraph {
+    /// Creates a new, empty `LocalDependencyGraph`.
     pub fn new() -> Self {
-        DependencyGraph {
+        LocalDependencyGraph {
             graph: DiGraph::new(),
             node_map: HashMap::new(),
         }
@@ -66,7 +66,7 @@ impl DependencyGraph {
     }
 
     /// Adds a dependency between two components.
-    pub fn add_dependency(&mut self, from: &ComponentNode, to: &ComponentNode, dep_type: DependencyType) {
+    pub fn add_dependency(&mut self, from: &ComponentNode, to: &ComponentNode, dep_type: LocalDependencyType) {
         let from_index = self.add_component(from.clone());
         let to_index = self.add_component(to.clone());
 
@@ -89,7 +89,7 @@ impl DependencyGraph {
     }
 }
 
-impl Default for DependencyGraph {
+impl Default for LocalDependencyGraph {
     fn default() -> Self {
         Self::new()
     }

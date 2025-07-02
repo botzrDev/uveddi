@@ -1,7 +1,8 @@
 use crate::analysis::{AnalysisDetector, AnalysisError};
 use crate::ast::tree_sitter::ParsedFile;
 use crate::database::models::{ArchitecturalIssue, AntiPatternType};
-use crate::analysis::dependency_graph::{ComponentNode, DependencyGraph};
+use crate::analysis::dependency_graph::LocalDependencyGraph;
+use crate::analysis::dependency_graph::ComponentNode;
 use std::collections::{HashMap, HashSet};
 
 /// Detector for the Modularity Violation anti-pattern
@@ -27,14 +28,14 @@ impl AnalysisDetector for ModularityViolationDetector {
         Ok(vec![])
     }
 
-    fn detect_graph_issues(&self, graph: &DependencyGraph, analysis_run_id: i64) -> Vec<ArchitecturalIssue> {
+    fn detect_graph_issues(&self, graph: &LocalDependencyGraph, analysis_run_id: i64) -> Vec<ArchitecturalIssue> {
         let petgraph = graph.get_petgraph();
         let mut communities: HashMap<String, HashSet<String>> = HashMap::new();
 
         // Simple community detection: group modules by top-level directory
         for node_index in petgraph.node_indices() {
             if let Some(ComponentNode::Module { path }) = graph.get_node_from_index(node_index) {
-                let community_name = path.split('/').next().unwrap_or(path).to_string();
+                let community_name = path.split('/').next().unwrap_or(&path).to_string();
                 communities.entry(community_name).or_default().insert(path.clone());
             }
         }
@@ -45,8 +46,8 @@ impl AnalysisDetector for ModularityViolationDetector {
                 if let (Some(ComponentNode::Module { path: from_path }), Some(ComponentNode::Module { path: to_path })) = 
                     (graph.get_node_from_index(edge.0), graph.get_node_from_index(edge.1)) {
                     
-                    let from_community = from_path.split('/').next().unwrap_or(from_path).to_string();
-                    let to_community = to_path.split('/').next().unwrap_or(to_path).to_string();
+                    let from_community = from_path.split('/').next().unwrap_or(&from_path).to_string();
+                    let to_community = to_path.split('/').next().unwrap_or(&to_path).to_string();
 
                     if from_community != to_community {
                         let key = (from_community, to_community);

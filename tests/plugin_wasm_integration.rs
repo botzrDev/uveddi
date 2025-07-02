@@ -3,6 +3,7 @@ use uveddi::models::dependency_graph::DependencyGraph;
 use std::path::PathBuf;
 use tempfile::TempDir;
 use std::fs;
+use uveddi::analysis::api_types::ApiDependencyGraph;
 
 #[tokio::test]
 async fn test_wasm_plugin_manager_creation() {

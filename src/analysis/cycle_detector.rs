@@ -1,7 +1,6 @@
-//! Detects cyclic dependencies in the `DependencyGraph`.
-
-use crate::analysis::dependency_graph::{ComponentNode, DependencyGraph};
-use crate::models::ArchitecturalIssue;
+use crate::analysis::dependency_graph::LocalDependencyGraph;
+use crate::database::models::ArchitecturalIssue;
+use crate::analysis::dependency_graph::ComponentNode;
 use petgraph::algo::tarjan_scc;
 use log::info;
 
@@ -27,11 +26,11 @@ impl CycleDetector {
     /// # Returns
     ///
     /// A `Vec<ArchitecturalIssue>` containing all the cyclic dependency issues found.
-    pub fn detect_cycles(&self, graph: &DependencyGraph, analysis_run_id: i64) -> Vec<ArchitecturalIssue> {
+    pub fn detect_cycles(&self, graph: &LocalDependencyGraph, analysis_run_id: i64) -> Vec<ArchitecturalIssue> {
         let start_time = std::time::Instant::now();
-        
+
         let petgraph = graph.get_petgraph();
-        let sccs = tarjan_scc(petgraph);
+        let sccs = tarjan_scc(&petgraph);
 
         let mut issues = Vec::new();
 
@@ -39,37 +38,36 @@ impl CycleDetector {
             if scc.len() > 1 {
                 let cycle_nodes: Vec<String> = scc.iter()
                     .filter_map(|&node_index| {
-                        graph.get_node_from_index(node_index).map(|component| match component {
-                            ComponentNode::Module { path } => path.clone(),
-                            ComponentNode::Class { name, file_path } => format!("Class({}@{})", name, file_path),
-                            ComponentNode::Function { name, file_path } => format!("Function({}@{})", name, file_path),
-                        })
+                        graph.get_node_from_index(node_index)
+                            .and_then(|node| match node {
+                                ComponentNode::Module { path } => Some(path.clone()),
+                                ComponentNode::Class { name, file_path } => Some(file_path.clone()),
+                                ComponentNode::Function { name, file_path } => Some(file_path.clone()),
+                            })
                     })
                     .collect();
 
                 let description = format!("Cyclic dependency detected involving: {}. This creates tight coupling and hinders maintainability.", cycle_nodes.join(", "));
-                
+
                 let representative_node = graph.get_node_from_index(scc[0]).unwrap(); // Safe due to scc.len() > 1
-                let (file_path, start_line) = match representative_node {
-                     ComponentNode::Module { path } => (path.clone(), 1),
-                     ComponentNode::Class { file_path, .. } => (file_path.clone(), 1),
-                     ComponentNode::Function { file_path, .. } => (file_path.clone(), 1),
+                let file_path = match representative_node {
+                    ComponentNode::Module { path } => path.clone(),
+                    ComponentNode::Class { file_path, .. } => file_path.clone(),
+                    ComponentNode::Function { file_path, .. } => file_path.clone(),
                 };
+                let start_line = 1;
 
                 issues.push(ArchitecturalIssue {
                     issue_id: None,
-                    run_id: analysis_run_id,
+                    analysis_run_id,
                     anti_pattern_type_id: 2, // Standard ID for Cyclic Dependency
                     file_path,
-                    line_start: Some(start_line),
-                    line_end: Some(start_line),
+                    start_line: Some(start_line),
+                    end_line: Some(start_line),
                     severity: "High".to_string(),
-                    title: "Cyclic Dependency Detected".to_string(),
                     description,
-                    ai_refactoring_suggestion: None,
-                    is_ignored: false,
-                    ignored_by_user_id: None,
-                    ignored_at: None,
+                    code_snippet: None,
+                    ai_explanation: None,
                 });
             }
         }

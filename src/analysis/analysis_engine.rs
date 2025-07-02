@@ -1,11 +1,12 @@
 use crate::ast::tree_sitter::AstParser;
+use crate::analysis::dependency_graph::{ComponentNode, LocalDependencyType};
 use crate::analysis::AnalysisDetector;
 use crate::analysis::anti_patterns::god_object_detector::GodObjectDetector;
 use crate::analysis::anti_patterns::unstable_interface_detector::UnstableInterfaceDetector;
 use crate::analysis::anti_patterns::modularity_violation_detector::ModularityViolationDetector;
 use crate::analysis::cycle_detector::CycleDetector;
 use crate::analysis::dependency_extractor::{Dependency, DependencyExtractor};
-use crate::analysis::dependency_graph::{ComponentNode, DependencyGraph};
+use crate::analysis::dependency_graph::LocalDependencyGraph;
 use crate::database::models::{ArchitecturalIssue, AntiPatternType};
 use crate::ingestion::AsyncWalker;
 use crate::cache::result_cache::ResultCache;
@@ -45,15 +46,15 @@ impl AnalysisEngine {
         })
     }
 
-    pub async fn analyze(&mut self, path: &Path) -> Result<(Vec<ArchitecturalIssue>, DependencyGraph), crate::error::UveddiError> {
+    pub async fn analyze(&mut self, path: &Path) -> Result<(Vec<ArchitecturalIssue>, LocalDependencyGraph), crate::error::UveddiError> {
         let (mut file_issues, all_dependencies) = self.analyze_files_and_collect_dependencies(path).await?;
 
         info!("Building dependency graph...");
-        let mut dependency_graph = DependencyGraph::new();
+        let mut dependency_graph = LocalDependencyGraph::new();
         for dep in all_dependencies {
             let from_node = ComponentNode::Module { path: dep.from_file.to_string_lossy().into_owned() };
-            let to_node = ComponentNode::Module { path: dep.to_module };
-            dependency_graph.add_dependency(&from_node, &to_node, dep.dependency_type);
+            let to_node = ComponentNode::Module { path: dep.to_module.clone() };
+            dependency_graph.add_dependency(&from_node, &to_node, LocalDependencyType::Import);
         }
         info!("Dependency graph built.");
 

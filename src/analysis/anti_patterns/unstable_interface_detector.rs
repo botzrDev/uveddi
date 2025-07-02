@@ -1,7 +1,8 @@
 use crate::analysis::{AnalysisDetector, AnalysisError};
 use crate::ast::tree_sitter::ParsedFile;
 use crate::database::models::{ArchitecturalIssue, AntiPatternType};
-use crate::analysis::dependency_graph::{ComponentNode, DependencyGraph};
+use crate::analysis::dependency_graph::LocalDependencyGraph;
+use crate::analysis::dependency_graph::ComponentNode;
 use std::collections::HashMap;
 
 /// Detector for the Unstable Interface anti-pattern
@@ -27,40 +28,36 @@ impl AnalysisDetector for UnstableInterfaceDetector {
         Ok(vec![])
     }
 
-    fn detect_graph_issues(&self, graph: &DependencyGraph, analysis_run_id: i64) -> Vec<ArchitecturalIssue> {
+    fn detect_graph_issues(&self, graph: &LocalDependencyGraph, analysis_run_id: i64) -> Vec<ArchitecturalIssue> {
         let petgraph = graph.get_petgraph();
         let mut fan_in_count: HashMap<String, usize> = HashMap::new();
 
         for node_index in petgraph.node_indices() {
-            if let Some(component) = graph.get_node_from_index(node_index) {
-                if let ComponentNode::Module { path } = component {
-                    fan_in_count.entry(path.clone()).or_insert(0);
-                }
+            if let Some(ComponentNode::Module { path }) = graph.get_node_from_index(node_index) {
+                fan_in_count.entry(path.clone()).or_insert(0);
             }
         }
 
         for edge_index in petgraph.edge_indices() {
             if let Some(edge) = petgraph.edge_endpoints(edge_index) {
-                if let Some(target_component) = graph.get_node_from_index(edge.1) {
-                     if let ComponentNode::Module { path } = target_component {
-                        *fan_in_count.entry(path.clone()).or_default() += 1;
-                    }
+                if let Some(ComponentNode::Module { path }) = graph.get_node_from_index(edge.1) {
+                    *fan_in_count.entry(path.clone()).or_default() += 1;
                 }
             }
         }
 
         let mut issues = Vec::new();
-        for (module, &count) in &fan_in_count {
+        for (module_path, &count) in &fan_in_count {
             if count >= self.fan_in_threshold {
                 issues.push(ArchitecturalIssue {
                     issue_id: None,
                     analysis_run_id,
                     anti_pattern_type_id: 3, // Standard ID for Unstable Interface
-                    file_path: module.clone(),
+                    file_path: module_path.clone(),
                     start_line: Some(1),
                     end_line: Some(1),
                     severity: if count > self.fan_in_threshold * 2 { "High".to_string() } else { "Medium".to_string() },
-                    description: format!("Unstable Interface: Module '{}' has a high fan-in of {}. Changes to this module could have a widespread impact.", module, count),
+                    description: format!("Unstable Interface: Module '{}' has a high fan-in of {}. Changes to this module could have a widespread impact.", module_path, count),
                     code_snippet: None,
                     ai_explanation: None,
                 });

@@ -213,6 +213,11 @@ impl FromRow for User {
 pub mod antipattern_type;
 pub mod dependency_graph;
 
+pub use uveddi_plugin_api::models::{
+    DependencyGraph as ApiDependencyGraph,
+    DependencyType as ApiDependencyType,
+    ArchitecturalIssue as ApiArchitecturalIssue,
+};
 #[cfg(test)]
 mod tests {
     use super::*;

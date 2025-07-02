@@ -1,7 +1,7 @@
 use criterion::{criterion_group, criterion_main, Criterion, BenchmarkId};
 use uveddi::plugin::{PluginManager, WasmPluginManager};
-use uveddi::models::dependency_graph::DependencyGraph;
-use uveddi_plugin_api::models::{DependencyGraph as ApiDependencyGraph, Dependency, DependencyType};
+use uveddi::analysis::dependency_graph::LocalDependencyGraph;
+use uveddi::analysis::api_types::{ApiDependencyGraph, ApiDependencyType};
 use std::path::PathBuf;
 
 fn create_test_dependency_graph(size: usize) -> ApiDependencyGraph {
@@ -34,8 +34,8 @@ fn create_test_dependency_graph(size: usize) -> ApiDependencyGraph {
     graph
 }
 
-fn create_internal_dependency_graph(size: usize) -> DependencyGraph {
-    let mut graph = DependencyGraph::new();
+fn create_internal_dependency_graph(size: usize) -> LocalDependencyGraph {
+    let mut graph = LocalDependencyGraph::new();
     
     // Create similar structure for internal graph
     for i in 0..size {

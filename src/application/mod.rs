@@ -10,7 +10,8 @@ use crate::ai::AiAnalysisEngine;
 use crate::report::ReportGenerator;
 use crate::plugin::initialize_plugins;
 use crate::error::UveddiError;
-use uveddi_plugin_api::models::DependencyGraph;
+use crate::analysis::dependency_graph::LocalDependencyGraph;
+use uveddi_plugin_api::models::DependencyGraph as PluginDependencyGraph;
 
 /// Application layer orchestrator for analysis workflows
 /// 
@@ -166,10 +167,14 @@ impl AnalysisOrchestrator {
     }
     
     /// Run plugin-based analysis
-    async fn run_plugin_analysis(&self, dependency_graph: &DependencyGraph) -> Result<Vec<ArchitecturalIssue>, UveddiError> {
+    async fn run_plugin_analysis(&self, local_graph: &LocalDependencyGraph) -> Result<Vec<ArchitecturalIssue>, UveddiError> {
         info!("Running analysis plugins...");
+        
+        // Convert LocalDependencyGraph to plugin API format
+        let plugin_graph = PluginDependencyGraph::from(local_graph);
+        
         let plugin_manager = initialize_plugins();
-        let plugin_results = plugin_manager.run_plugins(dependency_graph);
+        let plugin_results = plugin_manager.run_plugins(&plugin_graph);
         
         let mut all_plugin_issues = Vec::new();
         for result in plugin_results {

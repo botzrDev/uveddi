@@ -2,8 +2,8 @@
 
 #[cfg(test)]
 mod tests {
+    use uveddi::analysis::api_types::ApiDependencyGraph;
     use uveddi::analysis::cycle_detector::CycleDetector;
-    use uveddi::analysis::dependency_graph::DependencyGraph;
     use uveddi::analysis::dependency_extractor::DependencyExtractor;
     use uveddi::ast::tree_sitter::AstParser;
     use tempfile::tempdir;
@@ -24,7 +24,7 @@ mod tests {
         let b_path = create_temp_file(&dir, "b.rs", "mod a;");
 
         let mut parser = AstParser::new().unwrap();
-        let mut graph = DependencyGraph::new();
+        let mut graph = ApiDependencyGraph::new();
         let extractor = DependencyExtractor::new().unwrap();
 
         let a_file = parser.parse_file(&a_path).unwrap();
@@ -37,7 +37,7 @@ mod tests {
         graph.build_from_dependencies(deps);
 
         let mut detector = CycleDetector::new();
-        let cycles = detector.detect_cycles(&graph);
+        let cycles = detector.detect_cycles(&graph, 0);
         assert_eq!(cycles.cycles.len(), 1);
     }
 
@@ -48,7 +48,7 @@ mod tests {
         let b_path = create_temp_file(&dir, "b.py", "import a");
 
         let mut parser = AstParser::new().unwrap();
-        let mut graph = DependencyGraph::new();
+        let mut graph = ApiDependencyGraph::new();
         let extractor = DependencyExtractor::new().unwrap();
 
         let a_file = parser.parse_file(&a_path).unwrap();
@@ -61,7 +61,7 @@ mod tests {
         graph.build_from_dependencies(deps);
 
         let mut detector = CycleDetector::new();
-        let cycles = detector.detect_cycles(&graph);
+        let cycles = detector.detect_cycles(&graph, 0);
         assert_eq!(cycles.cycles.len(), 1);
     }
 
@@ -72,7 +72,7 @@ mod tests {
         let b_path = create_temp_file(&dir, "b.js", "import a from './a.js';");
 
         let mut parser = AstParser::new().unwrap();
-        let mut graph = DependencyGraph::new();
+        let mut graph = ApiDependencyGraph::new();
         let extractor = DependencyExtractor::new().unwrap();
 
         let a_file = parser.parse_file(&a_path).unwrap();
@@ -85,7 +85,7 @@ mod tests {
         graph.build_from_dependencies(deps);
 
         let mut detector = CycleDetector::new();
-        let cycles = detector.detect_cycles(&graph);
+        let cycles = detector.detect_cycles(&graph, 0);
         assert_eq!(cycles.cycles.len(), 1);
     }
 
@@ -96,7 +96,7 @@ mod tests {
         create_temp_file(&dir, "b.rs", "mod a;");
 
         let mut parser = AstParser::new().unwrap();
-        let mut graph = DependencyGraph::new();
+        let mut graph = ApiDependencyGraph::new();
         let extractor = DependencyExtractor::new().unwrap();
 
         let a_file = parser.parse_file(&a_path).unwrap();
@@ -109,7 +109,7 @@ mod tests {
         graph.build_from_dependencies(deps);
 
         let mut detector = CycleDetector::new();
-        let cycles = detector.detect_cycles(&graph);
+        let cycles = detector.detect_cycles(&graph, 0);
         // Instead of issues_from_cycles, use from_cycle from database::models
         use uveddi::database::models::ArchitecturalIssue;
         let issue = ArchitecturalIssue::from_cycle(cycles.cycles[0].clone(), &graph);
