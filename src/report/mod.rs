@@ -1,5 +1,5 @@
 use crate::database::models::{AnalysisRun, ArchitecturalIssue, AntiPatternType};
-use crate::analysis::dependency_graph::ComponentNode;
+use crate::analysis::graph::ComponentNode;
 use serde_json::Value;
 use std::collections::HashMap;
 
@@ -259,7 +259,7 @@ impl ReportGenerator {
     }
 
     /// Generate a Mermaid.js diagram for the full dependency graph
-    pub fn generate_mermaid_diagram_for_graph(&self, graph: &crate::analysis::dependency_graph::LocalDependencyGraph) -> String {
+    pub fn generate_mermaid_diagram_for_graph(&self, graph: &crate::analysis::LocalDependencyGraph) -> String {
         let mut diagram = String::from("```mermaid\ngraph TD\n");
         let petgraph = graph.get_petgraph();
         
@@ -267,14 +267,14 @@ impl ReportGenerator {
             if let Some((from_idx, to_idx)) = petgraph.edge_endpoints(edge) {
                 if let (Some(from_node), Some(to_node)) = (graph.get_node_from_index(from_idx), graph.get_node_from_index(to_idx)) {
                     let from_name = match from_node {
-                        ComponentNode::Module { path } => path.split('/').last().unwrap_or(path),
-                        ComponentNode::Class { name, .. } => name,
-                        ComponentNode::Function { name, .. } => name,
+                        ComponentNode::Module { path } => path.split('/').last().unwrap_or(&path),
+                        ComponentNode::Class { name, .. } => &name,
+                        ComponentNode::Function { name, .. } => &name,
                     };
                     let to_name = match to_node {
-                        ComponentNode::Module { path } => path.split('/').last().unwrap_or(path),
-                        ComponentNode::Class { name, .. } => name,
-                        ComponentNode::Function { name, .. } => name,
+                        ComponentNode::Module { path } => path.split('/').last().unwrap_or(&path),
+                        ComponentNode::Class { name, .. } => &name,
+                        ComponentNode::Function { name, .. } => &name,
                     };
                     diagram.push_str(&format!("    {} --> {}\n", from_name, to_name));
                 }

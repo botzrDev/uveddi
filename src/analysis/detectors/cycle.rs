@@ -1,6 +1,6 @@
-use crate::analysis::dependency_graph::LocalDependencyGraph;
+use crate::analysis::graph::dependency::LocalDependencyGraph;
 use crate::database::models::ArchitecturalIssue;
-use crate::analysis::dependency_graph::ComponentNode;
+use crate::analysis::graph::dependency::ComponentNode;
 use petgraph::algo::tarjan_scc;
 use log::info;
 

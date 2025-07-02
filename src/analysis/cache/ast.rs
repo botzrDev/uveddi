@@ -5,7 +5,6 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 use serde::{Serialize, Deserialize};
-use bincode::{serialize, deserialize};
 use tree_sitter::Tree;
 
 #[derive(Serialize, Deserialize)]
@@ -38,25 +37,26 @@ impl AstCache {
                 return Some(tree.clone());
             }
         }
-        let cache_path = self.disk_cache_path.join(format!("{:x}.ast", md5::compute(path.to_string_lossy().as_bytes())));
-        let cache_meta = fs::metadata(&cache_path).ok()?;
-        let file_meta = fs::metadata(path).ok()?;
-        let cache_time = cache_meta.modified().ok()?;
-        let file_time = file_meta.modified().ok()?;
-        if file_time <= cache_time {
-            let bytes = fs::read(&cache_path).ok()?;
-            let tree = deserialize(&bytes).ok()?;
-            self.add_to_memory_cache(path.to_path_buf(), tree.clone(), file_time);
-            return Some(tree);
-        }
+        // TODO: Implement disk cache for ASTs using a serializable representation
+        // let cache_path = self.disk_cache_path.join(format!("{:x}.ast", md5::compute(path.to_string_lossy().as_bytes())));
+        // let cache_meta = fs::metadata(&cache_path).ok()?;
+        // let file_meta = fs::metadata(path).ok()?;
+        // let cache_time = cache_meta.modified().ok()?;
+        // let file_time = file_meta.modified().ok()?;
+        // if file_time <= cache_time {
+        //     let bytes = fs::read(&cache_path).ok()?;
+        //     let tree = deserialize(&bytes).ok()?;
+        //     self.add_to_memory_cache(path.to_path_buf(), tree.clone(), file_time);
+        //     return Some(tree);
+        // }
         None
     }
 
     pub fn store(&mut self, path: &Path, tree: Tree) {
         let modified = fs::metadata(path).and_then(|m| m.modified()).unwrap_or(SystemTime::now());
-        let bytes = serialize(&tree).unwrap();
-        let cache_path = self.disk_cache_path.join(format!("{:x}.ast", md5::compute(path.to_string_lossy().as_bytes())));
-        fs::write(&cache_path, bytes).ok();
+        // let bytes = serialize(&tree).unwrap();
+        // let cache_path = self.disk_cache_path.join(format!("{:x}.ast", md5::compute(path.to_string_lossy().as_bytes())));
+        // fs::write(&cache_path, bytes).ok();
         self.add_to_memory_cache(path.to_path_buf(), tree, modified);
     }
 

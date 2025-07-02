@@ -5,12 +5,12 @@ use anyhow::Context;
 
 use crate::database::crud::Database;
 use crate::database::models::{AnalysisRun, ArchitecturalIssue};
-use crate::analysis::analysis_engine::AnalysisEngine;
+use crate::analysis::AnalysisEngine;
 use crate::ai::AiAnalysisEngine;
 use crate::report::ReportGenerator;
 use crate::plugin::initialize_plugins;
 use crate::error::UveddiError;
-use crate::analysis::dependency_graph::LocalDependencyGraph;
+use crate::analysis::LocalDependencyGraph;
 use uveddi_plugin_api::models::DependencyGraph as PluginDependencyGraph;
 
 /// Application layer orchestrator for analysis workflows

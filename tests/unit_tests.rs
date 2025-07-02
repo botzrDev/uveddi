@@ -1,6 +1,7 @@
 use tempfile::tempdir;
 use std::fs;
-use uveddi::analysis::dependency_extractor::{DependencyExtractor, Dependency, DependencyType};
+use uveddi::analysis::detectors::dependency::DependencyType;
+use uveddi::analysis::{DependencyExtractor, Dependency};
 
 #[test]
 fn test_extract_rust_dependencies() {

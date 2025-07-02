@@ -1,4 +1,5 @@
 use thiserror::Error;
+use crate::analysis::detectors::dependency::ExtractionError;
 
 /// Unified error type for all Uveddi operations with comprehensive documentation
 #[derive(Debug, Error)]
@@ -90,12 +91,11 @@ impl From<crate::ast::tree_sitter::AstError> for UveddiError {
     }
 }
 
-impl From<crate::analysis::dependency_extractor::ExtractionError> for UveddiError {
-    fn from(err: crate::analysis::dependency_extractor::ExtractionError) -> Self {
+impl From<ExtractionError> for UveddiError {
+    fn from(err: ExtractionError) -> Self {
         match err {
-            crate::analysis::dependency_extractor::ExtractionError::AstError(ast_err) => ast_err.into(),
-            crate::analysis::dependency_extractor::ExtractionError::IoError(_path, io_err) => 
-                UveddiError::Io(io_err),
+            ExtractionError::AstError(ast_err) => ast_err.into(),
+            ExtractionError::IoError(_path, io_err) => UveddiError::Io(io_err),
             _ => UveddiError::Analysis(err.to_string()),
         }
     }

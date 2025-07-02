@@ -2,7 +2,7 @@
 
 #[cfg(test)]
 mod tests {
-    use uveddi::analysis::anti_patterns::god_object_detector::GodObjectDetector;
+    use uveddi::analysis::GodObjectDetector;
     use uveddi::analysis::AnalysisDetector;
     use uveddi::ast::tree_sitter::{AstParser};
     use std::fs::File;

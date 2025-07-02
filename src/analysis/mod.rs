@@ -1,13 +1,21 @@
-pub mod analysis_engine;
-pub mod anti_patterns;
-pub mod cycle_detector;
-pub mod dependency_extractor;
-pub mod dependency_graph;
-pub mod api_types;
+pub mod engine;
+pub mod types;
+pub mod cache;
+pub mod detectors;
+pub mod graph;
+
+#[cfg(test)]
+pub mod tests;
+
+// Re-exports for convenience
+pub use engine::AnalysisEngine;
+pub use cache::AstCache;
+pub use detectors::{CycleDetector, DependencyExtractor, Dependency};
+pub use detectors::anti_patterns::GodObjectDetector;
+pub use graph::{LocalDependencyGraph, ComponentNode, LocalDependencyType};
 
 use crate::database::models::{ArchitecturalIssue, AntiPatternType};
 use crate::ast::tree_sitter::ParsedFile;
-use crate::analysis::dependency_graph::LocalDependencyGraph;
 
 pub type AnalysisError = crate::error::UveddiError;
 

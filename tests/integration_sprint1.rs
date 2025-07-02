@@ -1,8 +1,6 @@
 use tempfile::tempdir;
 use std::fs;
-use uveddi::analysis::dependency_extractor::DependencyExtractor;
-use uveddi::analysis::dependency_graph::{LocalDependencyGraph, ComponentNode, LocalDependencyType};
-use uveddi::analysis::cycle_detector::CycleDetector;
+use uveddi::analysis::{DependencyExtractor, LocalDependencyGraph, ComponentNode, LocalDependencyType, CycleDetector};
 
 #[test]
 fn test_sprint1_cycle_detection() {

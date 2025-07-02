@@ -2,8 +2,7 @@
 
 #[cfg(test)]
 mod tests {
-    use uveddi::analysis::dependency_graph::{LocalDependencyGraph, ComponentNode, LocalDependencyType};
-    use uveddi::analysis::cycle_detector::CycleDetector;
+    use uveddi::analysis::{LocalDependencyGraph, ComponentNode, LocalDependencyType, CycleDetector};
 
     #[test]
     fn test_simple_cycle_detection() {

@@ -1,12 +1,10 @@
 use crate::ast::tree_sitter::AstParser;
-use crate::analysis::dependency_graph::{ComponentNode, LocalDependencyType};
+use crate::analysis::graph::dependency::{ComponentNode, LocalDependencyType};
 use crate::analysis::AnalysisDetector;
-use crate::analysis::anti_patterns::god_object_detector::GodObjectDetector;
-use crate::analysis::anti_patterns::unstable_interface_detector::UnstableInterfaceDetector;
-use crate::analysis::anti_patterns::modularity_violation_detector::ModularityViolationDetector;
-use crate::analysis::cycle_detector::CycleDetector;
-use crate::analysis::dependency_extractor::{Dependency, DependencyExtractor};
-use crate::analysis::dependency_graph::LocalDependencyGraph;
+use crate::analysis::detectors::anti_patterns::god_object::GodObjectDetector;
+use crate::analysis::detectors::cycle::CycleDetector;
+use crate::analysis::detectors::dependency::{Dependency, DependencyExtractor};
+use crate::analysis::graph::dependency::LocalDependencyGraph;
 use crate::database::models::{ArchitecturalIssue, AntiPatternType};
 use crate::ingestion::AsyncWalker;
 use crate::cache::result_cache::ResultCache;
@@ -37,8 +35,6 @@ impl AnalysisEngine {
             dependency_extractor: DependencyExtractor::new()?,
             detectors: vec![
                 Box::new(GodObjectDetector::new(15, 20)),
-                Box::new(UnstableInterfaceDetector::new()),
-                Box::new(ModularityViolationDetector::new()),
             ],
             cycle_detector: CycleDetector::new(),
             files_analyzed: 0,
