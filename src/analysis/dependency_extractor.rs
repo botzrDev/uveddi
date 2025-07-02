@@ -52,6 +52,24 @@ impl DependencyExtractor {
                     .unwrap_or("")
                     .to_string();
 
+                // For Rust, resolve `mod` statements to file paths
+                if parsed_file.language == SourceLanguage::Rust && dependency_type == DependencyType::Use {
+                    let mut potential_path = parsed_file.path.parent().unwrap().join(&module_name);
+                    if !potential_path.exists() {
+                        potential_path.set_extension("rs");
+                        if !potential_path.exists() {
+                             // Check for module/mod.rs
+                            let mod_path = parsed_file.path.parent().unwrap().join(&module_name).join("mod.rs");
+                            if mod_path.exists() {
+                                potential_path = mod_path;
+                            }
+                        }
+                    }
+                    if potential_path.exists() {
+                        module_name = potential_path.to_string_lossy().into_owned();
+                    }
+                }
+
                 // Clean up the module name (e.g., remove quotes from strings)
                 if module_name.starts_with('"') && module_name.ends_with('"')
                     || module_name.starts_with('\'') && module_name.ends_with('\'')
