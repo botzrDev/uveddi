@@ -1,4 +1,4 @@
-// Re-export the plugin API types to ensure consistent usage
-pub use uveddi_plugin_api::models::{
+// Re-export the database models for consistent usage
+pub use crate::database::models::{
     DependencyGraph as ApiDependencyGraph, DependencyType as ApiDependencyType,
 };

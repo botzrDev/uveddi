@@ -2678,17 +2678,7 @@ dependencies = [
  "tree-sitter-rust",
  "tree-sitter-typescript",
  "uuid",
- "uveddi-plugin-api",
  "walkdir",
-]
-
-[[package]]
-name = "uveddi-plugin-api"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "serde",
- "thiserror",
 ]
 
 [[package]]

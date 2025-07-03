@@ -15,5 +15,4 @@ pub mod database;
 pub mod error;
 pub mod ingestion;
 pub mod models;
-pub mod plugin;
 pub mod report;

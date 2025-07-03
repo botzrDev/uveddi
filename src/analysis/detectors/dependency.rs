@@ -7,7 +7,7 @@ use crate::ast::tree_sitter::{
     queries::{JAVASCRIPT_IMPORTS_QUERY, PYTHON_IMPORTS_QUERY, RUST_IMPORTS_QUERY},
     AstParser, ParsedFile, SourceLanguage,
 };
-pub use uveddi_plugin_api::models::{Dependency, DependencyType};
+pub use crate::database::models::{Dependency, DependencyType};
 
 /// AST-based dependency extractor
 pub struct DependencyExtractor {

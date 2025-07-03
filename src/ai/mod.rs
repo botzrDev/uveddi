@@ -3,10 +3,8 @@
 //! This module provides AI-powered analysis capabilities, including integration with local and API-based LLMs.
 //! Submodules implement providers, prompt templates, and the main AI analysis engine.
 
-pub mod anthropic_provider;
 pub mod api;
 pub mod engine;
-pub mod gemini_provider;
 pub mod ollama_provider;
 pub mod prompts;
 pub mod types;

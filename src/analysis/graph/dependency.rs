@@ -4,7 +4,7 @@ use petgraph::graph::{DiGraph, NodeIndex};
 use petgraph::visit::EdgeRef;
 use std::collections::HashMap;
 use std::path::PathBuf;
-use uveddi_plugin_api::models::{Dependency, DependencyGraph, DependencyType};
+use crate::database::models::{Dependency, DependencyGraph, DependencyType};
 
 /// Represents a node in the dependency graph.
 /// This can be a module, a class, a function, or any other architectural component.

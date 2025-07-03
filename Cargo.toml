@@ -67,7 +67,6 @@ ignore = "0.4.22"
 # wasi-common = "21.0.1"
 toml = "0.8.0"
 sha2 = "0.10.0"
-uveddi-plugin-api = { path = "plugins/uveddi-plugin-api" }
 async-trait = "0.1.88"
 md5 = "0.8.0"
 petgraph = "0.8.2"

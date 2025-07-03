@@ -289,7 +289,6 @@ impl Default for AnalysisOrchestrator {
 pub fn run_app() -> Result<(), UveddiError> {
     use crate::cli::{
         analyze_command::AnalyzeCommand, config_command::ConfigCommand,
-        init_local_ai_command::InitLocalAiCommand, plugin_command::PluginCommand,
     };
     use clap::Parser;
     use log::{error, info};
@@ -305,8 +304,6 @@ pub fn run_app() -> Result<(), UveddiError> {
     #[derive(clap::Subcommand)]
     enum Commands {
         Analyze(AnalyzeCommand),
-        InitLocalAi(InitLocalAiCommand),
-        Plugin(PluginCommand),
         Config(ConfigCommand),
     }
 
@@ -314,19 +311,6 @@ pub fn run_app() -> Result<(), UveddiError> {
     let result = match cli.command {
         Commands::Analyze(command) => {
             info!("Executing analyze command...");
-            tokio::runtime::Runtime::new()?
-                .block_on(command.execute())
-                .map_err(|e| UveddiError::Analysis(e.to_string()))
-        }
-        Commands::InitLocalAi(command) => {
-            info!("Executing init-local-ai command...");
-            let setup = crate::cli::init_local_ai_command::OllamaSetup;
-            tokio::runtime::Runtime::new()?
-                .block_on(command.execute(&setup))
-                .map_err(|e| UveddiError::Analysis(e.to_string()))
-        }
-        Commands::Plugin(command) => {
-            info!("Executing plugin command...");
             tokio::runtime::Runtime::new()?
                 .block_on(command.execute())
                 .map_err(|e| UveddiError::Analysis(e.to_string()))

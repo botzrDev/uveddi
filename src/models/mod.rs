@@ -241,7 +241,7 @@ impl FromRow for User {
 pub mod antipattern_type;
 pub mod dependency_graph;
 
-pub use uveddi_plugin_api::models::{
+pub use crate::database::models::{
     ArchitecturalIssue as ApiArchitecturalIssue, DependencyGraph as ApiDependencyGraph,
     DependencyType as ApiDependencyType,
 };
