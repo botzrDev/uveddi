@@ -6,6 +6,14 @@
 //! Uveddi - A tool for code analysis and exploration
 //!
 //! This is the main entry point for the Uveddi application.
+
+use clap::{Parser, Subcommand};
+use color_eyre::eyre::Result;
+use uveddi::cli::analyze_command::AnalyzeCommand;
+use uveddi::cli::config_command::ConfigCommand;
+use uveddi::cli::init_local_ai_command::InitLocalAiCommand;
+use uveddi::cli::plugin_command::PluginCommand;
+
 #[derive(Parser)]
 #[command(name = "uveddi")]
 #[command(about = "A Rust-based code analysis and exploration tool", long_about = None)]
