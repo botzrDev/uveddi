@@ -117,7 +117,7 @@ export const authAPI = {
       await api.post('/auth/logout');
     } catch (error) {
       // Continue with logout even if API call fails
-      console.warn('Logout API call failed:', error);
+      // Logout API call failed, but we'll logout locally anyway
     } finally {
       tokenManager.removeToken();
     }

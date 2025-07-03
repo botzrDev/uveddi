@@ -1,16 +1,23 @@
 import { QueryClientProvider } from '@tanstack/react-query';
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { Navigate, Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 import { queryClient } from './lib/queryClient';
 import { useIsAuthenticated } from './store/auth';
+import { reportWebVitals } from './utils/performance';
 
-// Pages
-import DashboardPage from './pages/DashboardPage';
-import LandingPage from './pages/LandingPage'; // Import the new LandingPage
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import TestPage from './pages/TestPage';
-import SimpleTest from './SimpleTest';
+// Lazy load pages for better performance
+const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const LandingPage = lazy(() => import('./pages/LandingPage'));
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const RegisterPage = lazy(() => import('./pages/RegisterPage'));
+const TestPage = lazy(() => import('./pages/TestPage'));
+
+// Loading component
+const PageLoader: React.FC = () => (
+  <div className="min-h-screen bg-secondary-950 flex items-center justify-center">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+  </div>
+);
 
 // Protected Route component
 interface ProtectedRouteProps {
@@ -42,25 +49,83 @@ const PublicRoute: React.FC<PublicRouteProps> = ({ children }) => {
   return <>{children}</>;
 };
 
-const App: React.FC = () => {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <Router>
-        <Routes>
-          <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
-          <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
-          <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
-          <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-          
-          {/* Test routes - can be removed later */}
-          <Route path="/test" element={<TestPage />} />
-          <Route path="/simple" element={<SimpleTest />} />
+// Error Boundary Component
+class ErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean; error?: Error }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
 
-          {/* Redirect any unknown routes to the landing page */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Router>
-    </QueryClientProvider>
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('Error caught by boundary:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-secondary-950 flex items-center justify-center">
+          <div className="text-center text-white p-8">
+            <h1 className="text-2xl font-bold mb-4">Something went wrong</h1>
+            <p className="text-secondary-300 mb-4">
+              We're sorry, but something unexpected happened.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors"
+            >
+              Reload Page
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+const App: React.FC = () => {
+  // Report web vitals in production
+  React.useEffect(() => {
+    if (process.env.NODE_ENV === 'production') {
+      import('web-vitals').then(({ getCLS, getFID, getFCP, getLCP, getTTFB }) => {
+        getCLS(reportWebVitals);
+        getFID(reportWebVitals);
+        getFCP(reportWebVitals);
+        getLCP(reportWebVitals);
+        getTTFB(reportWebVitals);
+      });
+    }
+  }, []);
+
+  return (
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <Router>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
+              <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
+              <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
+              <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+              
+              {/* Test routes - can be removed later */}
+              <Route path="/test" element={<TestPage />} />
+
+              {/* Redirect any unknown routes to the landing page */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Suspense>
+        </Router>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 };
 

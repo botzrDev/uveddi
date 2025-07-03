@@ -38,13 +38,13 @@ const Header: React.FC<HeaderProps> = ({ variant = 'default', className = '' }) 
           {/* Logo */}
           {variant === 'landing' ? (
             <a href="#top" className="flex items-center">
-              <img src="/logo.png" alt="Uveddi Logo" className="w-8 h-8 rounded-lg mr-2" />
-              <h1 className="font-display text-headline-md font-headline text-white">uveddi</h1>
+              <img src="/logo.png" alt="Uveddi Logo" className="w-10 h-10 rounded-lg mr-2" />
+              <h1 className="font-mono text-2xl font-bold bg-gradient-to-r from-white to-primary-200 bg-clip-text text-transparent tracking-wider">veddi</h1>
             </a>
           ) : (
             <Link to="/" className="flex items-center">
               <img src="/logo.png" alt="Uveddi Logo" className="h-10 w-auto mr-2" />
-              <h1 className="font-display text-headline-md font-headline text-white">uveddi</h1>
+              <h1 className="font-mono text-2xl font-bold bg-gradient-to-r from-white to-primary-200 bg-clip-text text-transparent tracking-wider">veddi</h1>
             </Link>
           )}
 
