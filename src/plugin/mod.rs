@@ -1,3 +1,51 @@
+//! Plugin system integration for Uveddi
+//!
+//! This module manages plugin discovery, registration, and execution. It supports both native and WASM-based plugins,
+//! and provides sandboxing and verification utilities for safe extensibility.
+//!
+//! # Overview
+//!
+//! The plugin system in Uveddi is designed to be flexible and extensible, allowing for dynamic analysis capabilities
+//! to be added or updated without modifying the core engine. Plugins can be written in Rust (native plugins) or
+//! compiled to WebAssembly (WASM plugins), enabling a wide range of possibilities from performance-critical code
+//! to easily distributable and sandboxed modules.
+//!
+//! # Directories
+//!
+//! - **`plugins/installed`**: This is the default directory where installed plugins are expected to be found.
+//!   The directory is scanned for both native and WASM plugins during initialization.
+//! - **`plugins/available`**: This directory is used to store plugins that are available to be installed.
+//!   It acts as a repository of plugins that can be added to the system.
+//!
+//! # Plugin Lifecycle
+//!
+//! 1. **Discovery**: The plugin manager scans the `plugins/installed` directory at startup to discover
+//!    available plugins. WASM plugins are also verified for safety and compliance with the expected interface.
+//! 2. **Registration**: Discovered plugins are registered and made available for execution. Plugins can
+//!    also be manually registered at runtime.
+//! 3. **Execution**: Plugins are executed in response to analysis requests. They receive a dependency graph
+//!    and return identified architectural issues.
+//! 4. **Sandboxing**: WASM plugins are executed in a sandboxed environment to ensure they do not perform
+//!    any unsafe operations or access unauthorized resources.
+//! 5. **Verification**: Plugins are verified against their manifests to ensure they have not been tampered with
+//!    and comply with the expected security and functionality constraints.
+//!
+//! # Extensibility
+//!
+//! The plugin system is designed to be easily extensible. New plugins can be added by placing them in the
+//! `plugins/available` directory and installing them via the engine's installation commands. Developers can
+//! create custom plugins to implement specific analysis rules or integrate with other tools and services.
+//! The system also supports updating and removing plugins without requiring a restart of the engine,
+//! allowing for seamless upgrades and maintenance.
+//!
+//! # Security
+//!
+//! Security is a primary concern for the plugin system. WASM plugins are inherently more secure due to
+//! the sandboxing provided by the WASM runtime. Native plugins, however, run in the same address space
+//! as the engine and therefore require stricter verification and permission checks. The system is designed
+//! to prevent unauthorized access to system resources and to ensure that plugins do not interfere with
+//! the normal operation of the engine or other plugins.
+
 use crate::error::UveddiError;
 use std::path::PathBuf;
 use std::sync::Arc;

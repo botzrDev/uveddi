@@ -154,3 +154,17 @@ cargo run --release -- analyze . --enable-ai
 ```
 
 All AI explanations in reports will be generated using the local DeepSeek model via Ollama.
+
+## 📝 Documentation & Commenting Standards
+
+Uveddi follows strict documentation and commenting standards to ensure code quality and maintainability:
+
+- All public structs, enums, traits, and functions must have `///` doc comments, including summaries, parameter/return descriptions, and error conditions.
+- Complex logic and algorithms should be explained with high-level and inline comments.
+- Each module must start with a `//!` doc comment summarizing its purpose and main types/functions.
+- Error types and error conditions must be documented.
+- Plugin API traits and types require detailed doc comments and usage examples.
+- Test modules and functions should describe what is being tested and why.
+- See [`docs/commenting_documentation_checklist.md`](./docs/commenting_documentation_checklist.md) for the full checklist.
+
+**Contributions that improve documentation and comments are highly encouraged!**

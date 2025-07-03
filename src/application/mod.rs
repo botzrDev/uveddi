@@ -1,3 +1,9 @@
+//! Application orchestration module for Uveddi
+//!
+//! This module coordinates the high-level workflow for codebase analysis, integrating the
+//! database, analysis engine, AI engine, and report generation. It serves as the boundary
+//! between the CLI and infrastructure layers.
+
 use anyhow::Context;
 use chrono::Utc;
 use log::{error, info};

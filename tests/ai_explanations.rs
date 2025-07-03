@@ -1,4 +1,11 @@
 //! AI explanation and prompt template tests
+//!
+//! This module tests the AI explanation generation and prompt template rendering for architectural issues.
+//! It ensures that prompt templates are correctly rendered and that the AI engine integration is robust to missing API keys.
+//! It contains the following tests:
+//! - `prompt_template_renders_correctly`: Verifies that the prompt template includes relevant issue details.
+//! - `ai_explanation_integration`: Ensures the AI engine handles missing API keys gracefully and does not panic.
+//! - `ai_fallback_on_missing_key`: Tests fallback behavior when no API key is provided.
 
 #[cfg(test)]
 mod tests {
@@ -7,6 +14,8 @@ mod tests {
 
     #[test]
     fn prompt_template_renders_correctly() {
+        // Test that the prompt template includes relevant issue details
+
         let issue = ArchitecturalIssue {
             issue_id: None,
             analysis_run_id: 1,
@@ -27,6 +36,8 @@ mod tests {
 
     #[tokio::test]
     async fn ai_explanation_integration() {
+        // Test that the AI engine handles missing API keys gracefully and does not panic
+
         use uveddi::ai::engine::AiAnalysisEngine;
         let mut issue = ArchitecturalIssue {
             issue_id: None,
@@ -50,6 +61,8 @@ mod tests {
 
     #[tokio::test]
     async fn ai_fallback_on_missing_key() {
+        // Test fallback behavior when no API key is provided
+
         use uveddi::ai::engine::AiAnalysisEngine;
         let mut issue = ArchitecturalIssue {
             issue_id: None,

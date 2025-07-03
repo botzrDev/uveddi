@@ -1,3 +1,11 @@
+//! Error types and error handling for Uveddi
+//!
+//! This module defines the unified error type [`UveddiError`] used throughout the codebase.
+//! All fallible operations should return `Result<T, UveddiError>`. Error variants cover
+//! filesystem, database, AST parsing, AI provider, report generation, and configuration errors.
+//!
+//! [`UveddiError`]: enum.UveddiError.html
+
 use crate::analysis::detectors::dependency::ExtractionError;
 use thiserror::Error;
 

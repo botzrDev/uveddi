@@ -1,4 +1,9 @@
 //! Reporting output and summary tests
+//!
+//! This module tests the markdown and JSON report generation for analysis runs and architectural issues.
+//! It ensures that reports contain the expected content and are formatted correctly.
+//! Additionally, it verifies that summary statistics are accurate and that reports include
+//! both code snippets and AI-generated explanations where applicable.
 
 #[cfg(test)]
 mod tests {
@@ -8,6 +13,7 @@ mod tests {
 
     #[test]
     fn markdown_report_output() {
+        // Test that the markdown report contains key issue details and AI analysis
         let analysis_run = AnalysisRun {
             run_id: Some(1),
             project_id: 1,
@@ -42,6 +48,7 @@ mod tests {
 
     #[test]
     fn json_report_output() {
+        // Test that the JSON report contains the correct structure and issue details
         let analysis_run = AnalysisRun {
             run_id: Some(1),
             project_id: 1,
@@ -79,6 +86,7 @@ mod tests {
 
     #[test]
     fn report_summary_statistics() {
+        // Test that the report summary includes correct statistics for files analyzed and issues found
         let analysis_run = AnalysisRun {
             run_id: Some(1),
             project_id: 1,
@@ -100,6 +108,7 @@ mod tests {
 
     #[test]
     fn report_includes_code_and_ai_context() {
+        // Test that the report includes both code snippets and AI context for issues
         let analysis_run = AnalysisRun {
             run_id: Some(1),
             project_id: 1,

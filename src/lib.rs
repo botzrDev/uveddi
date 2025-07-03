@@ -1,3 +1,9 @@
+//! Uveddi main library module
+//!
+//! This crate provides the core functionality for the Uveddi architectural analysis tool.
+//! It exposes modules for AI-powered analysis, AST parsing, plugin integration, reporting,
+//! database management, and more. See each submodule for details.
+
 pub mod ai;
 pub mod analysis;
 pub mod application;

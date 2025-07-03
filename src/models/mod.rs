@@ -1,3 +1,27 @@
+//! Data models for Uveddi
+//!
+//! This module defines core data structures for projects, analysis runs, and database row conversion utilities.
+//! The main types are `Project`, `AnalysisRun`, `ArchitecturalIssue`, `CodeSnippet`, `Organization`, and `User`.
+//! Each of these types corresponds to a database table or view, and the module provides functionality to convert
+//! between database rows and Rust structs, as well as serialization and deserialization to and from JSON.
+//!
+//! The module also declares sub-modules for anti-pattern types and dependency graphs, which are used in
+//! architectural analysis, and re-exports some types for external use.
+//!
+//! # Main Types
+//!
+//! - `Project`: Represents a project with associated metadata and configuration.
+//! - `AnalysisRun`: Represents a single analysis run on a project, including statistics and results.
+//! - `ArchitecturalIssue`: Represents an architectural issue found during analysis, with details and suggestions.
+//! - `CodeSnippet`: Represents a code snippet associated with an architectural issue, providing context.
+//! - `Organization`: Represents an organization that owns projects.
+//! - `User`: Represents a user who can own projects and organizations.
+//!
+//! # Sub-modules
+//!
+//! - `antipattern_type`: Defines types and functionality related to anti-patterns detected in code.
+//! - `dependency_graph`: Defines types and functionality for representing and analyzing dependency graphs.
+
 use rusqlite::Row;
 use serde::{Deserialize, Serialize};
 use std::time::{SystemTime, UNIX_EPOCH};

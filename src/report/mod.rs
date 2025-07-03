@@ -1,3 +1,18 @@
+//! Reporting module for Uveddi
+//!
+//! This module provides report generation utilities, including markdown and JSON output for analysis results.
+//! It supports ERD-compliant reporting, AI explanations, code snippets, and diagram integration.
+//!
+//
+//! # Main Features
+//!
+//! - **Markdown Report**: Comprehensive reports in markdown format, including executive summary, issues by severity, and detailed issue analysis.
+//! - **JSON Report**: Structured JSON output for integration with other tools or for automated processing.
+//! - **AI Integration**: Optional AI-generated explanations and code snippets for deeper insights.
+//! - **Diagram Support**: Integration of architecture diagrams using Mermaid.js for visual representation of issues.
+//! - **Customizable**: Options to include/exclude AI explanations, code snippets, and diagrams in the reports.
+//! - **Performance**: Efficient processing and reporting, capable of handling large analysis results.
+
 use crate::analysis::graph::ComponentNode;
 use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
 use serde_json::Value;

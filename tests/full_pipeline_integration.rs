@@ -1,4 +1,9 @@
 //! End-to-end integration test for the full AI Reasoning Engine pipeline (RAG, hallucination defense, self-correction, hybrid verification)
+//!
+//! This test simulates a real-world scenario where a codebase with a God Object is analyzed end-to-end.
+//! It verifies that the CLI outputs explanations, confidence scores, and handles the full pipeline.
+//! Additionally, it checks the behavior when the API key is missing, ensuring graceful degradation
+//! without failing the analysis.
 
 #[cfg(test)]
 mod tests {
@@ -11,6 +16,7 @@ mod tests {
 
     #[test]
     fn cli_ai_pipeline_outputs_explanations_and_confidence() {
+        // Simulate a codebase with a God Object and run the CLI to ensure explanations and confidence are output
         let dir = tempdir().unwrap();
         let file_path = dir.path().join("god_object.rs");
         let code = r#"
@@ -72,6 +78,7 @@ mod tests {
 
     #[test]
     fn cli_ai_pipeline_handles_missing_api_key_gracefully() {
+        // Create a minimal Rust file and run the CLI to ensure it handles missing API key without failure
         let dir = tempdir().unwrap();
         let file_path = dir.path().join("main.rs");
         let mut file = File::create(&file_path).unwrap();

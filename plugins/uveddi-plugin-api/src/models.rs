@@ -1,3 +1,7 @@
+//! Data models for Uveddi plugins
+//!
+//! This module defines the types used by plugins, including dependency graphs, architectural issues, and cycles.
+
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
