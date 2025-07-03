@@ -1,6 +1,6 @@
+import { LogOut, Settings, User } from 'lucide-react';
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { LogOut, User, Settings } from 'lucide-react';
 import { useAuth } from '../../store/auth';
 import Button from '../ui/Button';
 
@@ -19,9 +19,8 @@ const Header: React.FC = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              uveddi
-            </h1>
+            <img src="/logo.png" alt="Uveddi Logo" className="h-10 w-auto mr-2" />
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">uveddi</h1>
           </Link>
 
           {/* Navigation */}

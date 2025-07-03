@@ -1,21 +1,20 @@
 import {
-  AlertTriangle,
-  ArrowRight,
-  CheckCircle,
-  Code2,
-  Download,
-  ExternalLink,
-  GitBranch,
-  Github,
-  GitlabIcon as Gitlab,
-  MonitorSpeaker,
-  Play,
-  Search,
-  Settings,
-  Shield,
-  Star,
-  TrendingUp,
-  Zap
+    AlertTriangle,
+    ArrowRight,
+    CheckCircle,
+    Code2,
+    Download,
+    ExternalLink,
+    GitBranch,
+    Github,
+    GitlabIcon as Gitlab,
+    MonitorSpeaker,
+    Search,
+    Settings,
+    Shield,
+    Star,
+    TrendingUp,
+    Zap
 } from 'lucide-react';
 import React from 'react';
 import { Link } from 'react-router-dom';
@@ -61,9 +60,7 @@ const LandingPage: React.FC = () => {
         <nav className="container mx-auto px-6 py-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-primary-500 to-primary-600 rounded-lg flex items-center justify-center">
-                <Code2 className="w-5 h-5 text-white" />
-              </div>
+              <img src="/logo.png" alt="Uveddi Logo" className="w-8 h-8 rounded-lg" />
               <span className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-primary-500 bg-clip-text text-transparent">
                 uveddi
               </span>

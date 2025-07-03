@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "Bash(cargo test:*)",
+      "Bash(mkdir:*)",
+      "Bash(cargo check:*)",
+      "Bash(ls:*)",
+      "Bash(mv:*)",
+      "Bash(npm create:*)",
+      "Bash(npm install)",
+      "Bash(npm install:*)",
+      "Bash(npx tailwindcss init:*)",
+      "Bash(./node_modules/.bin/tailwindcss:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(npm run dev:*)",
+      "Bash(curl:*)",
+      "Bash(pkill:*)",
+      "Bash(pip install:*)",
+      "Bash(python -m pytest test_database.py -v)",
+      "Bash(python -m pytest tests/ -v)",
+      "Bash(npx cypress run:*)",
+      "Bash(rm:*)",
+      "Bash(npm test)",
+      "Bash(RUST_BACKTRACE=1 cargo test --test unit_tests test_extract_javascript_dependencies -- --nocapture)",
+      "Bash(env)",
+      "Bash(python -m pytest backend/test_database.py -v)"
+    ],
+    "deny": []
+  }
+}
