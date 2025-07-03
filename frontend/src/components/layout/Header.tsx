@@ -37,13 +37,13 @@ const Header: React.FC<HeaderProps> = ({ variant = 'default', className = '' }) 
         <div className={itemsClasses}>
           {/* Logo */}
           {variant === 'landing' ? (
-            <a href="#top" className="flex items-center">
-              <img src="/logo.png" alt="Uveddi Logo" className="w-10 h-10 rounded-lg mr-2" />
+            <a href="#top" className="flex items-center mb-0" style={{ gap: '2px' }}>
+              <img src="/logo(dark).png" alt="Uveddi Logo" className="w-10 h-10 rounded-lg mr-0" />
               <h1 className="font-mono text-2xl font-bold bg-gradient-to-r from-white to-primary-200 bg-clip-text text-transparent tracking-wider">veddi</h1>
             </a>
           ) : (
-            <Link to="/" className="flex items-center">
-              <img src="/logo.png" alt="Uveddi Logo" className="h-10 w-auto mr-2" />
+            <Link to="/" className="flex items-center mb-0" style={{ gap: '2px' }}>
+              <img src="/logo.png" alt="Uveddi Logo" className="h-10 w-auto mr-0" />
               <h1 className="font-mono text-2xl font-bold bg-gradient-to-r from-white to-primary-200 bg-clip-text text-transparent tracking-wider">veddi</h1>
             </Link>
           )}
@@ -115,7 +115,15 @@ const Header: React.FC<HeaderProps> = ({ variant = 'default', className = '' }) 
                 <Link to="/login" className="text-secondary-300 hover:text-primary-400 transition-colors font-medium">
                   Sign In
                 </Link>
-                <button className="px-4 py-2 bg-success-500 hover:bg-success-600 text-white rounded-lg font-medium transition-all duration-300 hover:shadow-glow-success">
+                <button
+                  className="px-4 py-2 bg-gradient-to-br from-green-700 via-green-800 to-green-900 hover:from-green-800 hover:via-green-900 hover:to-black text-white rounded-lg font-medium transition-all duration-300 hover:shadow-glow-success border border-green-900/60"
+                  style={{
+                    background: 'linear-gradient(120deg, #17643b 0%, #14532d 60%, #23272f 100%)',
+                    boxShadow: '0 2px 8px 0 rgba(20,83,45,0.18), 0 1.5px 0 0 #fff3 inset',
+                    border: '1px solid #14532d',
+                    backgroundBlendMode: 'overlay, normal',
+                  }}
+                >
                   Get Started Free
                 </button>
               </>

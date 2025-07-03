@@ -10,19 +10,18 @@ import {
   MonitorSpeaker,
   Settings,
   Shield,
-  Star,
-  TrendingUp,
-  Zap
+  TrendingUp
 } from 'lucide-react';
 import React from 'react';
-import Header from '../components/layout/Header';
 import FeaturesSection from '../components/landing/FeaturesSection';
 import HeroSection from '../components/landing/HeroSection';
 import PricingSection from '../components/landing/PricingSection';
 import TestimonialsSection from '../components/landing/TestimonialsSection';
+import Footer from '../components/layout/Footer';
+import Header from '../components/layout/Header';
 import GradientButton from '../components/ui/GradientButton';
 import StatsCard from '../components/ui/StatsCard';
-import { Headline, Body, Caption } from '../components/ui/Typography';
+import { Body, Caption, Headline } from '../components/ui/Typography';
 
 const LandingPage: React.FC = () => {
   const terminalCommands = [
@@ -92,7 +91,7 @@ const LandingPage: React.FC = () => {
               </div>
             </div>
             <div className="text-center mt-12">
-              <Caption color="muted">Works with any Git repository ¥ CLI-first approach ¥ CI/CD ready</Caption>
+              <Caption color="muted">Works with any Git repository ï¿½ CLI-first approach ï¿½ CI/CD ready</Caption>
             </div>
           </div>
         </section>
@@ -288,7 +287,7 @@ const LandingPage: React.FC = () => {
               Ready to Take Control of Your Architecture?
             </Headline>
             <Body size="lg" color="tertiary" className="mb-8 max-w-2xl mx-auto">
-              Join thousands of empowered developers who trust Uveddi to keep their codebases healthy, secure, and maintainableÑso you can focus on building, not firefighting.
+              Join thousands of empowered developers who trust Uveddi to keep their codebases healthy, secure, and maintainableï¿½so you can focus on building, not firefighting.
             </Body>
             <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
               <GradientButton size="lg" className="group">
@@ -300,7 +299,7 @@ const LandingPage: React.FC = () => {
                 View Documentation
               </GradientButton>
             </div>
-            <Caption color="muted" className="mt-4">No credit card required ¥ Works with any codebase ¥ Get actionable results in minutes</Caption>
+            <Caption color="muted" className="mt-4">No credit card required ï¿½ Works with any codebase ï¿½ Get actionable results in minutes</Caption>
           </div>
         </section>
 
@@ -335,57 +334,7 @@ const LandingPage: React.FC = () => {
       </main>
 
       {/* Footer */}
-      <footer className="bg-secondary-900 border-t border-secondary-800 py-12">
-        <div className="container mx-auto px-6">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center space-x-2 mb-4">
-              <img src="/logo.png" alt="Uveddi Logo" className="w-10 h-10 rounded-lg" />
-                <span className="font-mono text-2xl font-bold bg-gradient-to-r from-white to-primary-200 bg-clip-text text-transparent tracking-wider">
-                  veddi
-                </span>
-              </div>
-              <p className="text-secondary-400 text-sm">
-                High-level code analysis for the modern developer.
-              </p>
-            </div>
-            
-            <div>
-              <h4 className="font-semibold text-white mb-4">Product</h4>
-              <ul className="space-y-2 text-secondary-400 text-sm">
-                <li><a href="#" className="hover:text-primary-400 transition-colors">Features</a></li>
-                <li><a href="#" className="hover:text-primary-400 transition-colors">Pricing</a></li>
-                <li><a href="#" className="hover:text-primary-400 transition-colors">Integrations</a></li>
-                <li><a href="#" className="hover:text-primary-400 transition-colors">API</a></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h4 className="font-semibold text-white mb-4">Resources</h4>
-              <ul className="space-y-2 text-secondary-400 text-sm">
-                <li><a href="#" className="hover:text-primary-400 transition-colors">Documentation</a></li>
-                <li><a href="#" className="hover:text-primary-400 transition-colors">Blog</a></li>
-                <li><a href="#" className="hover:text-primary-400 transition-colors">Community</a></li>
-                <li><a href="#" className="hover:text-primary-400 transition-colors">Support</a></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h4 className="font-semibold text-white mb-4">Company</h4>
-              <ul className="space-y-2 text-secondary-400 text-sm">
-                <li><a href="#" className="hover:text-primary-400 transition-colors">About</a></li>
-                <li><a href="#" className="hover:text-primary-400 transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-primary-400 transition-colors">Terms of Service</a></li>
-                <li><a href="#" className="hover:text-primary-400 transition-colors">Contact</a></li>
-              </ul>
-            </div>
-          </div>
-          
-          <div className="border-t border-secondary-800 mt-8 pt-8 text-center text-secondary-400 text-sm">
-            <p>&copy; 2025 uveddi. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };
