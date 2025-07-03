@@ -1,17 +1,18 @@
 import {
-  AlertTriangle,
-  CheckCircle,
-  Code2,
-  ExternalLink,
-  GitBranch,
-  Github,
-  GitlabIcon as Gitlab,
-  MonitorSpeaker,
-  Settings,
-  Shield,
-  TrendingUp
+    AlertTriangle,
+    CheckCircle,
+    Code2,
+    ExternalLink,
+    GitBranch,
+    Github,
+    GitlabIcon as Gitlab,
+    MonitorSpeaker,
+    Settings,
+    Shield,
+    TrendingUp
 } from 'lucide-react';
 import React from 'react';
+import { Link } from 'react-router-dom';
 import FeaturesSection from '../components/landing/FeaturesSection';
 import HeroSection from '../components/landing/HeroSection';
 import PricingSection from '../components/landing/PricingSection';
@@ -289,6 +290,11 @@ const LandingPage: React.FC = () => {
               Join thousands of empowered developers who trust Uveddi to keep their codebases healthy, secure, and maintainable�so you can focus on building, not firefighting.
             </Body>
             <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+              <Link to="/register">
+                <GradientButton variant="primary" size="lg">
+                  Get Started Free
+                </GradientButton>
+              </Link>
               <GradientButton variant="outline" size="lg">
                 <ExternalLink className="w-5 h-5 mr-2" />
                 View Documentation

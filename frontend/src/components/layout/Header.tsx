@@ -1,6 +1,6 @@
 import { LogOut, Settings, User } from 'lucide-react';
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../store/auth';
 import Button from '../ui/Button';
 
@@ -12,10 +12,35 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ variant = 'default', className = '' }) => {
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  // Check if we're on the landing page
+  const isOnLandingPage = location.pathname === '/';
+
+  // Custom navigation handler for landing page sections
+  const handleSectionNavigation = (sectionId: string) => {
+    if (isOnLandingPage) {
+      // If we're already on the landing page, just scroll to the section
+      const element = document.getElementById(sectionId);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    } else {
+      // If we're on a different page, navigate to home first, then scroll
+      navigate('/');
+      // Use setTimeout to ensure the page has loaded before scrolling
+      setTimeout(() => {
+        const element = document.getElementById(sectionId);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    }
   };
 
   // Different styles for different variants
@@ -36,22 +61,22 @@ const Header: React.FC<HeaderProps> = ({ variant = 'default', className = '' }) 
       <div className={containerClasses}>
         <div className={itemsClasses}>
           {/* Logo */}
-          {variant === 'landing' ? (
+          {variant === 'landing' && isOnLandingPage ? (
             <a href="#top" className="flex items-center mb-0" style={{ gap: '2px' }}>
               <img src="/logo(dark).png" alt="Uveddi Logo" className="w-10 h-10 rounded-lg mr-0" />
               <h1 className="font-mono text-2xl font-bold bg-gradient-to-r from-white to-primary-200 bg-clip-text text-transparent tracking-wider">veddi</h1>
             </a>
           ) : (
             <Link to="/" className="flex items-center mb-0" style={{ gap: '2px' }}>
-              <img src="/logo.png" alt="Uveddi Logo" className="h-10 w-auto mr-0" />
+              <img src={variant === 'landing' ? "/logo(dark).png" : "/logo.png"} alt="Uveddi Logo" className={variant === 'landing' ? "w-10 h-10 rounded-lg mr-0" : "h-10 w-auto mr-0"} />
               <h1 className="font-mono text-2xl font-bold bg-gradient-to-r from-white to-primary-200 bg-clip-text text-transparent tracking-wider">veddi</h1>
             </Link>
           )}
 
           {/* Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            {variant === 'landing' ? (
-              // Landing page navigation
+            {variant === 'landing' && isOnLandingPage ? (
+              // Landing page navigation - use anchor links for same-page navigation
               <>
                 <a href="#features" className="text-secondary-300 hover:text-primary-400 transition-colors">Features</a>
                 <a href="#use-cases" className="text-secondary-300 hover:text-primary-400 transition-colors">Use Cases</a>
@@ -59,6 +84,41 @@ const Header: React.FC<HeaderProps> = ({ variant = 'default', className = '' }) 
                 <a href="#pricing" className="text-secondary-300 hover:text-primary-400 transition-colors">Pricing</a>
                 <Link to="/support" className="text-secondary-300 hover:text-primary-400 transition-colors">Support</Link>
                 <a href="#faq" className="text-secondary-300 hover:text-primary-400 transition-colors">FAQ</a>
+              </>
+            ) : variant === 'landing' ? (
+              // Landing variant but not on landing page - use custom navigation
+              <>
+                <button 
+                  onClick={() => handleSectionNavigation('features')}
+                  className="text-secondary-300 hover:text-primary-400 transition-colors"
+                >
+                  Features
+                </button>
+                <button 
+                  onClick={() => handleSectionNavigation('use-cases')}
+                  className="text-secondary-300 hover:text-primary-400 transition-colors"
+                >
+                  Use Cases
+                </button>
+                <button 
+                  onClick={() => handleSectionNavigation('integrations')}
+                  className="text-secondary-300 hover:text-primary-400 transition-colors"
+                >
+                  Integrations
+                </button>
+                <button 
+                  onClick={() => handleSectionNavigation('pricing')}
+                  className="text-secondary-300 hover:text-primary-400 transition-colors"
+                >
+                  Pricing
+                </button>
+                <Link to="/support" className="text-secondary-300 hover:text-primary-400 transition-colors">Support</Link>
+                <button 
+                  onClick={() => handleSectionNavigation('faq')}
+                  className="text-secondary-300 hover:text-primary-400 transition-colors"
+                >
+                  FAQ
+                </button>
               </>
             ) : isAuthenticated ? (
               // Authenticated app navigation
@@ -114,6 +174,11 @@ const Header: React.FC<HeaderProps> = ({ variant = 'default', className = '' }) 
               <>
                 <Link to="/login" className="text-secondary-300 hover:text-primary-400 transition-colors font-medium">
                   Sign In
+                </Link>
+                <Link to="/register">
+                  <Button variant="primary" size="sm">
+                    Get Started
+                  </Button>
                 </Link>
               </>
             ) : isAuthenticated && user ? (

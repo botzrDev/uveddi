@@ -49,6 +49,11 @@ const CommunitySupportPage: React.FC = () => {
     loadQuestions();
   }, []);
 
+  // Scroll to top when component mounts (instant scroll to avoid jarring animation)
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   // Load answers when a question is selected
   useEffect(() => {
     if (selectedQuestion && !answers[selectedQuestion.id]) {
