@@ -17,7 +17,7 @@ import {
     Zap
 } from 'lucide-react';
 import React from 'react';
-import { Link } from 'react-router-dom';
+import Header from '../components/layout/Header';
 import AnimatedTerminal from '../components/ui/AnimatedTerminal';
 import FeatureCard from '../components/ui/FeatureCard';
 import GradientButton from '../components/ui/GradientButton';
@@ -55,34 +55,8 @@ const LandingPage: React.FC = () => {
 
   return (
     <div className="bg-secondary-950 text-white min-h-screen">
-      {/* Header */}
-      <header className="sticky top-0 bg-secondary-950/90 backdrop-blur-md z-50 border-b border-secondary-800">
-        <nav className="container mx-auto px-6 py-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-2">
-              <img src="/logo.png" alt="Uveddi Logo" className="w-8 h-8 rounded-lg" />
-              <span className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-primary-500 bg-clip-text text-transparent">
-                uveddi
-              </span>
-            </div>
-            <div className="hidden md:flex items-center space-x-8">
-              <a href="#features" className="text-secondary-300 hover:text-primary-400 transition-colors">Features</a>
-              <a href="#use-cases" className="text-secondary-300 hover:text-primary-400 transition-colors">Use Cases</a>
-              <a href="#integrations" className="text-secondary-300 hover:text-primary-400 transition-colors">Integrations</a>
-              <a href="#pricing" className="text-secondary-300 hover:text-primary-400 transition-colors">Pricing</a>
-              <a href="#docs" className="text-secondary-300 hover:text-primary-400 transition-colors">Docs</a>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Link to="/login" className="text-secondary-300 hover:text-primary-400 transition-colors font-medium">
-                Sign In
-              </Link>
-              <button className="px-4 py-2 bg-success-500 hover:bg-success-600 text-white rounded-lg font-medium transition-all duration-300 hover:shadow-glow-success">
-                Get Started Free
-              </button>
-            </div>
-          </div>
-        </nav>
-      </header>
+      {/* Use shared Header component */}
+      <Header variant="landing" />
 
       <main>
         {/* Hero Section */}
@@ -97,7 +71,7 @@ const LandingPage: React.FC = () => {
                 <span className="text-sm text-secondary-300">Trusted by developers for high-level code analysis</span>
               </div>
               
-              <h1 className="text-6xl md:text-8xl font-bold mb-8 animate-slide-up leading-tight">
+              <h1 className="font-display text-display-sm md:text-display-md lg:text-display-lg font-display mb-8 animate-slide-up leading-tight tracking-tight">
                 <span className="bg-gradient-to-r from-white to-secondary-200 bg-clip-text text-transparent">
                   Code Analysis
                 </span>
@@ -107,10 +81,10 @@ const LandingPage: React.FC = () => {
                 </span>
               </h1>
               
-              <p className="text-xl text-secondary-200 mb-12 leading-relaxed max-w-3xl mx-auto">
+              <p className="font-sans text-body-lg font-body text-secondary-200 mb-12 leading-relaxed max-w-3xl mx-auto">
                 Transform complex codebases into actionable intelligence. Detect architectural anti-patterns, 
                 security vulnerabilities, and technical debt before they compromise your projects.
-                <span className="text-primary-400 font-semibold block mt-2">AI-powered insights for human-written and AI-generated code.</span>
+                <span className="text-primary-400 font-emphasis block mt-2">AI-powered insights for human-written and AI-generated code.</span>
               </p>
               
               {/* Single focused CTA */}

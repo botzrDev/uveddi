@@ -8,7 +8,34 @@ export default {
     extend: {
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
-        mono: ['SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'source-code-pro', 'Menlo', 'Consolas', 'monospace'],
+        mono: ['JetBrains Mono', 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'source-code-pro', 'Menlo', 'Consolas', 'monospace'],
+        display: ['JetBrains Mono', 'Inter', 'system-ui', 'sans-serif'],
+      },
+      fontSize: {
+        // Display sizes for hero sections
+        'display-lg': ['4rem', { lineHeight: '1.1', letterSpacing: '-0.025em' }],
+        'display-md': ['3rem', { lineHeight: '1.1', letterSpacing: '-0.025em' }],
+        'display-sm': ['2.25rem', { lineHeight: '1.2', letterSpacing: '-0.025em' }],
+        
+        // Headline sizes
+        'headline-lg': ['2rem', { lineHeight: '1.2', letterSpacing: '-0.015em' }],
+        'headline-md': ['1.5rem', { lineHeight: '1.3', letterSpacing: '-0.015em' }],
+        'headline-sm': ['1.25rem', { lineHeight: '1.3', letterSpacing: '-0.015em' }],
+        
+        // Body text sizes with optimal line heights
+        'body-lg': ['1.125rem', { lineHeight: '1.6' }],
+        'body-md': ['1rem', { lineHeight: '1.5' }],
+        'body-sm': ['0.875rem', { lineHeight: '1.5' }],
+        
+        // Utility sizes
+        'caption': ['0.75rem', { lineHeight: '1.4' }],
+        'overline': ['0.75rem', { lineHeight: '1.4', letterSpacing: '0.1em', textTransform: 'uppercase' }],
+      },
+      fontWeight: {
+        'display': '700',
+        'headline': '600',
+        'body': '400',
+        'emphasis': '500',
       },
       colors: {
         // Professional navy blue primary palette for trust and stability
