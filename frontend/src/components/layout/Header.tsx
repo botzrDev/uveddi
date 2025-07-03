@@ -57,7 +57,7 @@ const Header: React.FC<HeaderProps> = ({ variant = 'default', className = '' }) 
                 <a href="#use-cases" className="text-secondary-300 hover:text-primary-400 transition-colors">Use Cases</a>
                 <a href="#integrations" className="text-secondary-300 hover:text-primary-400 transition-colors">Integrations</a>
                 <a href="#pricing" className="text-secondary-300 hover:text-primary-400 transition-colors">Pricing</a>
-                <a href="#docs" className="text-secondary-300 hover:text-primary-400 transition-colors">Docs</a>
+                <Link to="/support" className="text-secondary-300 hover:text-primary-400 transition-colors">Support</Link>
                 <a href="#faq" className="text-secondary-300 hover:text-primary-400 transition-colors">FAQ</a>
               </>
             ) : isAuthenticated ? (
@@ -98,10 +98,10 @@ const Header: React.FC<HeaderProps> = ({ variant = 'default', className = '' }) 
                   Pricing
                 </Link>
                 <Link 
-                  to="/docs" 
+                  to="/support" 
                   className="text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400"
                 >
-                  Docs
+                  Support
                 </Link>
               </>
             )}

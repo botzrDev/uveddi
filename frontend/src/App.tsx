@@ -3,7 +3,7 @@ import React, { Suspense, lazy } from 'react';
 import { Navigate, Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 import { queryClient } from './lib/queryClient';
 import { useIsAuthenticated } from './store/auth';
-import { reportWebVitals } from './utils/performance';
+// import { reportWebVitals } from './utils/performance';
 
 // Lazy load pages for better performance
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
@@ -11,6 +11,7 @@ const LandingPage = lazy(() => import('./pages/LandingPage'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const RegisterPage = lazy(() => import('./pages/RegisterPage'));
 const TestPage = lazy(() => import('./pages/TestPage'));
+const CommunitySupportPage = React.lazy(() => import('./pages/CommunitySupportPage'));
 
 // Loading component
 const PageLoader: React.FC = () => (
@@ -94,15 +95,16 @@ class ErrorBoundary extends React.Component<
 const App: React.FC = () => {
   // Report web vitals in production
   React.useEffect(() => {
-    if (process.env.NODE_ENV === 'production') {
-      import('web-vitals').then(({ getCLS, getFID, getFCP, getLCP, getTTFB }) => {
-        getCLS(reportWebVitals);
-        getFID(reportWebVitals);
-        getFCP(reportWebVitals);
-        getLCP(reportWebVitals);
-        getTTFB(reportWebVitals);
-      });
-    }
+    // TODO: Fix web vitals import when needed
+    // if (process.env.NODE_ENV === 'production') {
+    //   import('web-vitals').then((webVitals) => {
+    //     webVitals.getCLS(reportWebVitals);
+    //     webVitals.getFID(reportWebVitals);
+    //     webVitals.getFCP(reportWebVitals);
+    //     webVitals.getLCP(reportWebVitals);
+    //     webVitals.getTTFB(reportWebVitals);
+    //   });
+    // }
   }, []);
 
   return (
@@ -118,6 +120,7 @@ const App: React.FC = () => {
               
               {/* Test routes - can be removed later */}
               <Route path="/test" element={<TestPage />} />
+              <Route path="/support" element={<CommunitySupportPage />} />
 
               {/* Redirect any unknown routes to the landing page */}
               <Route path="*" element={<Navigate to="/" replace />} />

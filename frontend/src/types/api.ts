@@ -8,6 +8,7 @@ export interface User {
   organization_id?: number;
   created_at: string;
   last_login?: string;
+  is_verified: boolean; // Indicates if the user's email/account is verified
 }
 
 export interface Organization {
