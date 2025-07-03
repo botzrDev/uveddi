@@ -35,7 +35,6 @@ pub struct AnalysisConfig {
     pub output_format: String,
     pub output_file: Option<PathBuf>,
     pub enable_ai: bool,
-    pub openai_api_key: Option<String>,
     pub ollama_api_url: Option<String>,
     pub ollama_model: Option<String>,
 }
@@ -171,11 +170,7 @@ impl AnalysisOrchestrator {
     /// Configure AI providers based on the provided configuration
     fn configure_ai(&mut self, config: &AnalysisConfig) -> Result<(), UveddiError> {
         if config.enable_ai {
-            if let Some(_api_key) = &config.openai_api_key {
-                // self.ai_engine = self.ai_engine.clone().with_openai_api(api_key.clone());
-                // Placeholder: set OpenAI API key if needed
-                info!("AI analysis enabled with OpenAI");
-            } else {
+            {
                 let ollama_api_url = config
                     .ollama_api_url
                     .clone()

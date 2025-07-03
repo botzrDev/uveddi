@@ -23,9 +23,6 @@ pub struct AnalyzeCommand {
     #[arg(long)]
     pub enable_ai: bool,
 
-    /// OpenAI API key
-    #[arg(long, env = "OPENAI_API_KEY")]
-    pub openai_api_key: Option<String>,
 
     /// Ollama API URL (for local AI)
     #[arg(long, env = "OLLAMA_API_URL")]
@@ -50,7 +47,6 @@ impl AnalyzeCommand {
             output_format: self.output_format.clone(),
             output_file: self.output.clone(),
             enable_ai: self.enable_ai,
-            openai_api_key: self.openai_api_key.clone(),
             ollama_api_url: self.ollama_api_url.clone(),
             ollama_model: self.ollama_model.clone(),
         };

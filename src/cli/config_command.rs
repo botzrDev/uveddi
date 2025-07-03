@@ -56,16 +56,10 @@ impl ConfigCommand {
                 let mut config = match Config::from_file(file.to_str().unwrap()) {
                     Ok(cfg) => cfg,
                     Err(_) => Config {
-                        openai_api_key: None,
-                        anthropic_api_key: None,
-                        gemini_api_key: None,
                         ollama_model: None,
                     },
                 };
                 match key.as_str() {
-                    "openai_api_key" => config.openai_api_key = Some(value.clone()),
-                    "anthropic_api_key" => config.anthropic_api_key = Some(value.clone()),
-                    "gemini_api_key" => config.gemini_api_key = Some(value.clone()),
                     "ollama_model" => config.ollama_model = Some(value.clone()),
                     _ => return Err("Unknown config key".to_string()),
                 }
