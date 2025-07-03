@@ -4,6 +4,7 @@
 
 pub mod code_duplication_detection;
 pub mod complexity_analysis;
+pub mod debug_test;
 pub mod global_state_pollution;
 pub mod magic_values_detection;
 pub mod mutable_defaults_detection;

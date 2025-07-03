@@ -1,3 +1,4 @@
+use crate::analysis::detectors::anti_patterns::code_duplication::CodeDuplicationDetector;
 use crate::analysis::detectors::anti_patterns::god_object::GodObjectDetector;
 use crate::analysis::detectors::cycle::CycleDetector;
 use crate::analysis::detectors::dependency::{Dependency, DependencyExtractor};
@@ -82,7 +83,10 @@ impl AnalysisEngine {
         Ok(Self {
             ast_parser: AstParser::new()?,
             dependency_extractor: DependencyExtractor::new()?,
-            detectors: vec![Box::new(GodObjectDetector::new(5, 8))], // More sensitive thresholds
+            detectors: vec![
+                Box::new(GodObjectDetector::new(5, 8)), // More sensitive thresholds
+                Box::new(CodeDuplicationDetector::new()),
+            ],
             cycle_detector: CycleDetector::new(),
             files_analyzed: 0,
             cache: ResultCache::new(&cache_path)?,
