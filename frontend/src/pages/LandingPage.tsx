@@ -1,6 +1,5 @@
 import {
   AlertTriangle,
-  ArrowRight,
   CheckCircle,
   Code2,
   ExternalLink,
@@ -290,10 +289,6 @@ const LandingPage: React.FC = () => {
               Join thousands of empowered developers who trust Uveddi to keep their codebases healthy, secure, and maintainable�so you can focus on building, not firefighting.
             </Body>
             <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-              <GradientButton size="lg" className="group">
-                Download CLI & Analyze Free
-                <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-              </GradientButton>
               <GradientButton variant="outline" size="lg">
                 <ExternalLink className="w-5 h-5 mr-2" />
                 View Documentation

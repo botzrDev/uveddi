@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # --- Configuration ---
-FRONTEND_PORT=5173
+FRONTEND_PORT=9999
 BACKEND_PORT=8000
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"

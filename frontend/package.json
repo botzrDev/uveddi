@@ -14,8 +14,8 @@
     "cy:run:headed": "cypress run --headed",
     "cy:run:chrome": "cypress run --browser chrome",
     "cy:run:firefox": "cypress run --browser firefox",
-    "test:e2e": "start-server-and-test dev http://localhost:10000 cy:run",
-    "test:e2e:open": "start-server-and-test dev http://localhost:10000 cy:open"
+    "test:e2e": "start-server-and-test dev http://localhost:9999 cy:run",
+    "test:e2e:open": "start-server-and-test dev http://localhost:9999 cy:open"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.81.5",

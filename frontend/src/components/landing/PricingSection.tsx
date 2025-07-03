@@ -1,6 +1,6 @@
 import { CheckCircle } from 'lucide-react';
 import React from 'react';
-import { Headline, Body } from '../ui/Typography';
+import { Body, Headline } from '../ui/Typography';
 
 const PricingSection: React.FC = () => {
   return (
@@ -55,9 +55,20 @@ const PricingSection: React.FC = () => {
                 <span>Community Support & Contributions</span>
               </li>
             </ul>
-            <button className="w-full px-6 py-3 bg-success-500 hover:bg-success-600 text-white font-semibold rounded-lg transition-all duration-300 hover:shadow-glow-success">
-              Download & Get Started
-            </button>
+            <div className="p-4 bg-gray-900 rounded-lg border border-gray-700">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-gray-400">Install Command</span>
+                <button
+                  onClick={() => navigator.clipboard.writeText('curl -sSL https://uveddi.org/install.sh | bash')}
+                  className="text-xs text-green-400 hover:text-green-300 transition-colors"
+                >
+                  Copy
+                </button>
+              </div>
+              <code className="text-green-400 font-mono text-sm">
+                curl -sSL https://uveddi.org/install.sh | bash
+              </code>
+            </div>
           </div>
         </div>
       </div>

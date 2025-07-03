@@ -1,4 +1,4 @@
-import { ArrowRight, Download, Star } from 'lucide-react';
+import { Star } from 'lucide-react';
 import React from 'react';
 import AnimatedTerminal from '../ui/AnimatedTerminal';
 import { Body, Display } from '../ui/Typography';
@@ -13,7 +13,7 @@ interface HeroSectionProps {
 
 const HeroSection: React.FC<HeroSectionProps> = ({ terminalCommands }) => {
   const handleCopyCommand = () => {
-    navigator.clipboard.writeText('curl -sSL https://uveddi.dev/install.sh | bash');
+    navigator.clipboard.writeText('curl -sSL https://uveddi.org/install.sh | bash');
   };
 
   return (
@@ -46,7 +46,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ terminalCommands }) => {
           {/* CLI Install Command Section */}
           <div className="mb-6">
             <div className="bg-secondary-900 border border-secondary-700 rounded-lg px-6 py-4 inline-flex items-center mx-auto text-left shadow-lg">
-              <span className="font-mono text-primary-400 text-base select-all">curl -sSL https://uveddi.dev/install.sh | bash</span>
+              <span className="font-mono text-primary-400 text-base select-all">curl -sSL https://uveddi.org/install.sh | bash</span>
               <button 
                 className="ml-4 px-3 py-1 bg-primary-500 hover:bg-primary-600 text-white text-xs rounded transition-all" 
                 onClick={handleCopyCommand}
@@ -57,22 +57,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({ terminalCommands }) => {
             <p className="text-xs text-secondary-400 mt-2">Open source CLI - no account, no tracking, no limits.</p>
           </div>
 
-          {/* Single focused CTA */}
-          <div className="mb-8">
-            <button
-              className="group px-8 py-4 bg-gradient-to-br from-green-700 via-green-800 to-green-900 text-white text-lg font-semibold rounded-xl transition-all duration-300 hover:from-green-800 hover:via-green-900 hover:to-black shadow-lg hover:shadow-glow-success hover:scale-105 flex items-center mx-auto border border-green-900/60"
-              style={{
-                background: 'linear-gradient(120deg, #17643b 0%, #14532d 60%, #23272f 100%)',
-                boxShadow: '0 2px 8px 0 rgba(20,83,45,0.18), 0 1.5px 0 0 #fff3 inset',
-                border: '1px solid #14532d',
-                backgroundBlendMode: 'overlay, normal',
-              }}
-            >
-              <Download className="w-6 h-6 mr-3 group-hover:animate-bounce-gentle" />
-              Get Started - Community Edition
-              <ArrowRight className="w-5 h-5 ml-3 group-hover:translate-x-1 transition-transform" />
-            </button>
-          </div>
         </div>
 
         {/* Terminal Demo */}

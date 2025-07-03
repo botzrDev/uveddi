@@ -17,7 +17,7 @@ describe('Cypress Setup Validation', () => {
     cy.visit('/')
     
     // Test basic routing
-    cy.url().should('eq', 'http://localhost:10000/')
+    cy.url().should('eq', 'http://localhost:9999/')
     
     // Verify the app can handle route changes
     cy.window().then((win) => {
