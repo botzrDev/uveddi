@@ -12,6 +12,25 @@ keywords = ["code", "analysis", "tools", "visualization", "uveddi"]
 categories = ["development-tools"]
 readme = "README.md"
 
+# Feature flags for modular compilation
+[features]
+default = ["analysis", "local-ai"]
+# Core analysis features
+analysis = ["tree-sitter", "tree-sitter-rust", "tree-sitter-python", "tree-sitter-javascript", "tree-sitter-typescript"]
+# AI provider features
+ai = ["openai", "anthropic", "ollama"]
+openai = ["reqwest"]
+anthropic = ["reqwest"] 
+ollama = ["reqwest"]
+local-ai = ["ollama"]
+cloud-ai = ["openai", "anthropic"]
+# Backend integration
+backend = ["reqwest"]
+# Plugin system (experimental)
+plugins = []
+# Minimal build for CI/embedded use
+minimal = []
+
 [dependencies]
 rusqlite = { version = "0.31.0", features = ["bundled"] }
 refinery = { version = "0.8", features = ["rusqlite"] }
@@ -30,12 +49,14 @@ clap = { version = "4.5.4", features = ["derive", "env"] }
 log = "0.4.21"
 env_logger = "0.11.3"
 regex = "1.10"
-tree-sitter = "0.22.6"
-tree-sitter-rust = "0.21.0"
-tree-sitter-python = "0.21.0"
-tree-sitter-javascript = "0.21.0"
-tree-sitter-typescript = "0.21.0"
-reqwest = { version = "0.12.4", features = ["json"] }
+# AST parsing dependencies (optional via features)
+tree-sitter = { version = "0.22.6", optional = true }
+tree-sitter-rust = { version = "0.21.0", optional = true }
+tree-sitter-python = { version = "0.21.0", optional = true }
+tree-sitter-javascript = { version = "0.21.0", optional = true }
+tree-sitter-typescript = { version = "0.21.0", optional = true }
+# HTTP client for AI providers (optional via features)
+reqwest = { version = "0.12.4", features = ["json"], optional = true }
 walkdir = "2.5.0"
 ignore = "0.4.22"
 # WASM dependencies temporarily disabled to debug runtime error
