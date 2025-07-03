@@ -8,14 +8,14 @@ const PricingSection: React.FC = () => {
       <div className="container mx-auto">
         <div className="text-center mb-16">
           <Headline size="lg" className="mb-4">
-            Flexible Pricing for Every Team
+            Open Source. Always Free.
           </Headline>
           <Body size="lg" color="secondary">
-            Start free, scale as you grow
+            Built by the community, for the community
           </Body>
         </div>
         
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <div className="flex justify-center max-w-2xl mx-auto">
           {/* Community - FREE TIER HIGHLIGHTED */}
           <div className="bg-secondary-800 border-2 border-success-500 rounded-xl p-8 relative overflow-hidden shadow-lg shadow-success-500/20 transform hover:scale-105 transition-all duration-300">
             <div className="absolute top-0 right-0 bg-success-500 text-white px-4 py-2 text-sm font-bold">
@@ -27,16 +27,24 @@ const PricingSection: React.FC = () => {
               <span className="text-secondary-300 ml-2">/forever</span>
             </div>
             <p className="text-secondary-200 mb-6">
-              Perfect for individuals and small teams getting started with architectural analysis.
+              Everything you need for architectural analysis. No limits, no tracking, no premium features locked away.
             </p>
             <ul className="space-y-3 text-secondary-200 mb-8">
               <li className="flex items-center space-x-3">
                 <CheckCircle className="w-5 h-5 text-success-400" />
-                <span>Local LLM Analysis</span>
+                <span>Local AI Analysis (Ollama)</span>
               </li>
               <li className="flex items-center space-x-3">
                 <CheckCircle className="w-5 h-5 text-success-400" />
-                <span>Core Anti-Pattern Detection</span>
+                <span>God Object & Cycle Detection</span>
+              </li>
+              <li className="flex items-center space-x-3">
+                <CheckCircle className="w-5 h-5 text-success-400" />
+                <span>Code Duplication Analysis</span>
+              </li>
+              <li className="flex items-center space-x-3">
+                <CheckCircle className="w-5 h-5 text-success-400" />
+                <span>Rust, Python, JavaScript Support</span>
               </li>
               <li className="flex items-center space-x-3">
                 <CheckCircle className="w-5 h-5 text-success-400" />
@@ -44,87 +52,11 @@ const PricingSection: React.FC = () => {
               </li>
               <li className="flex items-center space-x-3">
                 <CheckCircle className="w-5 h-5 text-success-400" />
-                <span>Community Support</span>
+                <span>Community Support & Contributions</span>
               </li>
             </ul>
             <button className="w-full px-6 py-3 bg-success-500 hover:bg-success-600 text-white font-semibold rounded-lg transition-all duration-300 hover:shadow-glow-success">
-              Get Started Free
-            </button>
-          </div>
-
-          {/* Pro */}
-          <div className="bg-secondary-800 border border-primary-500/50 rounded-xl p-8 relative overflow-hidden hover:border-primary-500 transition-all duration-300">
-            <div className="absolute top-0 right-0 bg-primary-500 text-white px-3 py-1 text-sm font-semibold">
-              POPULAR
-            </div>
-            <h3 className="text-2xl font-bold mb-2">Pro</h3>
-            <div className="flex items-baseline mb-4">
-              <span className="text-5xl font-bold">$29</span>
-              <span className="text-secondary-300 ml-2">/month</span>
-            </div>
-            <p className="text-secondary-200 mb-6">
-              Enhanced features for professional developers and growing teams.
-            </p>
-            <ul className="space-y-3 text-secondary-200 mb-8">
-              <li className="flex items-center space-x-3">
-                <CheckCircle className="w-5 h-5 text-primary-400" />
-                <span>Everything in Community</span>
-              </li>
-              <li className="flex items-center space-x-3">
-                <CheckCircle className="w-5 h-5 text-primary-400" />
-                <span>Cloud-Based AI Analysis</span>
-              </li>
-              <li className="flex items-center space-x-3">
-                <CheckCircle className="w-5 h-5 text-primary-400" />
-                <span>Advanced Security Scanning</span>
-              </li>
-              <li className="flex items-center space-x-3">
-                <CheckCircle className="w-5 h-5 text-primary-400" />
-                <span>CI/CD Integration</span>
-              </li>
-              <li className="flex items-center space-x-3">
-                <CheckCircle className="w-5 h-5 text-primary-400" />
-                <span>Priority Support</span>
-              </li>
-            </ul>
-            <button className="w-full px-6 py-3 bg-primary-500 hover:bg-primary-600 text-white font-semibold rounded-lg transition-all duration-300 hover:shadow-glow">
-              Start Pro Trial
-            </button>
-          </div>
-
-          {/* Enterprise */}
-          <div className="bg-secondary-800 border border-secondary-700 rounded-xl p-8 hover:border-secondary-600 transition-colors">
-            <h3 className="text-2xl font-bold mb-2">Enterprise</h3>
-            <div className="flex items-baseline mb-4">
-              <span className="text-5xl font-bold">Custom</span>
-            </div>
-            <p className="text-secondary-200 mb-6">
-              Advanced features, security, and support for large organizations.
-            </p>
-            <ul className="space-y-3 text-secondary-200 mb-8">
-              <li className="flex items-center space-x-3">
-                <CheckCircle className="w-5 h-5 text-primary-400" />
-                <span>Everything in Pro</span>
-              </li>
-              <li className="flex items-center space-x-3">
-                <CheckCircle className="w-5 h-5 text-primary-400" />
-                <span>On-Premise Deployment</span>
-              </li>
-              <li className="flex items-center space-x-3">
-                <CheckCircle className="w-5 h-5 text-primary-400" />
-                <span>SSO & Advanced Security</span>
-              </li>
-              <li className="flex items-center space-x-3">
-                <CheckCircle className="w-5 h-5 text-primary-400" />
-                <span>Custom Integrations</span>
-              </li>
-              <li className="flex items-center space-x-3">
-                <CheckCircle className="w-5 h-5 text-primary-400" />
-                <span>24/7 Support & SLA</span>
-              </li>
-            </ul>
-            <button className="w-full px-6 py-3 bg-action-500 hover:bg-action-600 text-white font-semibold rounded-lg transition-all duration-300 hover:shadow-glow-action">
-              Contact Sales
+              Download & Get Started
             </button>
           </div>
         </div>

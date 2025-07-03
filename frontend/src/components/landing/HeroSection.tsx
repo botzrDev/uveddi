@@ -25,22 +25,22 @@ const HeroSection: React.FC<HeroSectionProps> = ({ terminalCommands }) => {
         <div className="text-center max-w-4xl mx-auto mb-16">
           <div className="inline-flex items-center bg-secondary-800/50 border border-secondary-700 rounded-full px-4 py-2 mb-8">
             <Star className="w-4 h-4 text-accent-400 mr-2" />
-            <span className="text-sm text-secondary-300">Trusted by developers for high-level code analysis</span>
+            <span className="text-sm text-secondary-300">Join the open source community building better software architecture</span>
           </div>
 
           <Display size="lg" className="mb-8 animate-slide-up">
             <span className="bg-gradient-to-r from-white to-secondary-200 bg-clip-text text-transparent">
-              Your AI Co-pilot Writes the Code.
+              Open Source Architectural Analysis
             </span>
             <br />
             <span className="bg-gradient-to-r from-primary-400 to-primary-500 bg-clip-text text-transparent">
-              Uveddi Ensures the Architecture is Sound.
+              Built by Developers, for Developers
             </span>
           </Display>
 
           <Body size="lg" color="secondary" className="mb-6 leading-relaxed max-w-3xl mx-auto">
-            AI generates code at lightning speed, but it can't see the bigger picture. Uveddi is the essential verification layer that analyzes your codebase's architecture, ensuring AI-generated code is maintainable, scalable, and won't create long-term technical debt.
-            <span className="text-primary-400 font-emphasis block mt-2">Accelerate onboarding by 30%. Ship features 2x faster. Cut technical debt at the root.</span>
+            Stop architectural drift before it becomes technical debt. Uveddi's community-driven CLI analyzes your codebase locally, detecting God Objects, cyclic dependencies, and other anti-patterns that slow your team down.
+            <span className="text-primary-400 font-emphasis block mt-2">100% free. 100% local. 100% open source.</span>
           </Body>
 
           {/* CLI Install Command Section */}
@@ -54,7 +54,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ terminalCommands }) => {
                 Copy
               </button>
             </div>
-            <p className="text-xs text-secondary-400 mt-2">Get started in under 2 minutes. No account or credit card required.</p>
+            <p className="text-xs text-secondary-400 mt-2">Open source CLI - no account, no tracking, no limits.</p>
           </div>
 
           {/* Single focused CTA */}
@@ -69,7 +69,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ terminalCommands }) => {
               }}
             >
               <Download className="w-6 h-6 mr-3 group-hover:animate-bounce-gentle" />
-              Download CLI & Analyze Free
+              Get Started - Community Edition
               <ArrowRight className="w-5 h-5 ml-3 group-hover:translate-x-1 transition-transform" />
             </button>
           </div>

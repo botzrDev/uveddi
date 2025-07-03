@@ -9,10 +9,10 @@ const FeaturesSection: React.FC = () => {
       <div className="container mx-auto">
         <div className="text-center mb-16">
           <Headline size="lg" className="mb-4">
-            Actionable Intelligence, Not Just Data
+            Community-Driven Architectural Analysis
           </Headline>
           <Body size="lg" color="tertiary" className="max-w-3xl mx-auto">
-            Advanced static analysis meets AI-powered insights to give you the complete picture of your codebase health.
+            Open source CLI powered by local AI analysis. No cloud dependencies, no data sharing, just pure architectural intelligence.
           </Body>
         </div>
         
@@ -25,14 +25,14 @@ const FeaturesSection: React.FC = () => {
           />
           <FeatureCard
             icon={Shield}
-            title="AI-Powered Security Insights"
-            description="Catch vulnerabilities before they become incidents. Uveddi explains risks in plain English and recommends fixes, empowering you to act with confidence."
+            title="Local AI Analysis"
+            description="Powered by Ollama and local models. Your code never leaves your machine. Get AI-powered insights with complete privacy and control."
             gradient="from-blue-500 to-blue-600"
           />
           <FeatureCard
             icon={GitBranch}
-            title="Visual Dependency Maps"
-            description="See the big picture. Instantly generate interactive diagrams to understand and untangle complex relationships. Accelerate onboarding by 30%."
+            title="Dependency Analysis"
+            description="Detect cyclic dependencies and tight coupling. Get clear markdown reports that help you understand and fix architectural issues."
             gradient="from-purple-500 to-purple-600"
           />
           <FeatureCard
@@ -43,14 +43,14 @@ const FeaturesSection: React.FC = () => {
           />
           <FeatureCard
             icon={Code2}
-            title="Multi-Language, One Tool"
-            description="Unify your analysis. Scan JavaScript, TypeScript, Python, Rust, Java, and more—no context switching, no extra setup."
+            title="Multi-Language Support"
+            description="Analyze Rust, Python, and JavaScript codebases with the same tool. More languages coming through community contributions."
             gradient="from-primary-500 to-primary-600"
           />
           <FeatureCard
             icon={Settings}
-            title="Seamless CI/CD Integration"
-            description="Automate architectural checks in every pipeline. Prevent costly issues from ever reaching production."
+            title="Simple CLI Integration"
+            description="Drop into any workflow with a single command. Perfect for local development and basic CI/CD automation."
             gradient="from-indigo-500 to-indigo-600"
           />
         </div>
