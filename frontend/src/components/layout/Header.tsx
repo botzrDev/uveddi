@@ -36,10 +36,17 @@ const Header: React.FC<HeaderProps> = ({ variant = 'default', className = '' }) 
       <div className={containerClasses}>
         <div className={itemsClasses}>
           {/* Logo */}
-          <Link to="/" className="flex items-center">
-            <img src="/logo.png" alt="Uveddi Logo" className={variant === 'landing' ? "w-8 h-8 rounded-lg mr-2" : "h-10 w-auto mr-2"} />
-            <h1 className="font-display text-headline-md font-headline text-white">uveddi</h1>
-          </Link>
+          {variant === 'landing' ? (
+            <a href="#top" className="flex items-center">
+              <img src="/logo.png" alt="Uveddi Logo" className="w-8 h-8 rounded-lg mr-2" />
+              <h1 className="font-display text-headline-md font-headline text-white">uveddi</h1>
+            </a>
+          ) : (
+            <Link to="/" className="flex items-center">
+              <img src="/logo.png" alt="Uveddi Logo" className="h-10 w-auto mr-2" />
+              <h1 className="font-display text-headline-md font-headline text-white">uveddi</h1>
+            </Link>
+          )}
 
           {/* Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
@@ -51,6 +58,7 @@ const Header: React.FC<HeaderProps> = ({ variant = 'default', className = '' }) 
                 <a href="#integrations" className="text-secondary-300 hover:text-primary-400 transition-colors">Integrations</a>
                 <a href="#pricing" className="text-secondary-300 hover:text-primary-400 transition-colors">Pricing</a>
                 <a href="#docs" className="text-secondary-300 hover:text-primary-400 transition-colors">Docs</a>
+                <a href="#faq" className="text-secondary-300 hover:text-primary-400 transition-colors">FAQ</a>
               </>
             ) : isAuthenticated ? (
               // Authenticated app navigation

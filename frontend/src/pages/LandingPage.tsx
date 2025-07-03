@@ -1,20 +1,20 @@
 import {
-    AlertTriangle,
-    ArrowRight,
-    CheckCircle,
-    Code2,
-    Download,
-    ExternalLink,
-    GitBranch,
-    Github,
-    GitlabIcon as Gitlab,
-    MonitorSpeaker,
-    Search,
-    Settings,
-    Shield,
-    Star,
-    TrendingUp,
-    Zap
+  AlertTriangle,
+  ArrowRight,
+  CheckCircle,
+  Code2,
+  Download,
+  ExternalLink,
+  GitBranch,
+  Github,
+  GitlabIcon as Gitlab,
+  MonitorSpeaker,
+  Search,
+  Settings,
+  Shield,
+  Star,
+  TrendingUp,
+  Zap
 } from 'lucide-react';
 import React from 'react';
 import Header from '../components/layout/Header';
@@ -54,7 +54,7 @@ const LandingPage: React.FC = () => {
   ];
 
   return (
-    <div className="bg-secondary-950 text-white min-h-screen">
+    <div id="top" className="bg-secondary-950 text-white min-h-screen">
       {/* Use shared Header component */}
       <Header variant="landing" />
 
@@ -70,31 +70,51 @@ const LandingPage: React.FC = () => {
                 <Star className="w-4 h-4 text-accent-400 mr-2" />
                 <span className="text-sm text-secondary-300">Trusted by developers for high-level code analysis</span>
               </div>
-              
-              <h1 className="font-display text-display-sm md:text-display-md lg:text-display-lg font-display mb-8 animate-slide-up leading-tight tracking-tight">
+              {/* === HERO HEADLINE A/B TEST === */}
+              {/* Option A: Architectural Debt Angle */}
+              {/* <h1 className="font-display text-display-sm md:text-display-md lg:text-display-lg font-display mb-8 animate-slide-up leading-tight tracking-tight">
                 <span className="bg-gradient-to-r from-white to-secondary-200 bg-clip-text text-transparent">
-                  Code Analysis
+                  Stop Fixing Symptoms.
                 </span>
                 <br />
                 <span className="bg-gradient-to-r from-primary-400 to-primary-500 bg-clip-text text-transparent">
-                  Instantly Intelligent
+                  Eradicate Architectural Debt.
+                </span>
+              </h1> */}
+              {/* Option B: AI Code Architect Angle */}
+              <h1 className="font-display text-display-sm md:text-display-md lg:text-display-lg font-display mb-8 animate-slide-up leading-tight tracking-tight">
+                <span className="bg-gradient-to-r from-white to-secondary-200 bg-clip-text text-transparent">
+                  Your AI Co-pilot Writes the Code.
+                </span>
+                <br />
+                <span className="bg-gradient-to-r from-primary-400 to-primary-500 bg-clip-text text-transparent">
+                  Uveddi Ensures the Architecture is Sound.
                 </span>
               </h1>
-              
-              <p className="font-sans text-body-lg font-body text-secondary-200 mb-12 leading-relaxed max-w-3xl mx-auto">
-                Transform complex codebases into actionable intelligence. Detect architectural anti-patterns, 
-                security vulnerabilities, and technical debt before they compromise your projects.
-                <span className="text-primary-400 font-emphasis block mt-2">AI-powered insights for human-written and AI-generated code.</span>
+              {/* === END HERO HEADLINE A/B TEST === */}
+
+              <p className="font-sans text-body-lg font-body text-secondary-200 mb-6 leading-relaxed max-w-3xl mx-auto">
+                AI generates code at lightning speed, but it can't see the bigger picture. Uveddi is the essential verification layer that analyzes your codebase's architecture, ensuring AI-generated code is maintainable, scalable, and won't create long-term technical debt.
+                <span className="text-primary-400 font-emphasis block mt-2">Accelerate onboarding by 30%. Ship features 2x faster. Cut technical debt at the root.</span>
               </p>
-              
+
+              {/* CLI Install Command Section */}
+              <div className="mb-6">
+                <div className="bg-secondary-900 border border-secondary-700 rounded-lg px-6 py-4 inline-flex items-center mx-auto text-left shadow-lg">
+                  <span className="font-mono text-primary-400 text-base select-all">curl -sSL https://uveddi.dev/install.sh | bash</span>
+                  <button className="ml-4 px-3 py-1 bg-primary-500 hover:bg-primary-600 text-white text-xs rounded transition-all" onClick={() => {navigator.clipboard.writeText('curl -sSL https://uveddi.dev/install.sh | bash')}}>Copy</button>
+                </div>
+                <p className="text-xs text-secondary-400 mt-2">Get started in under 2 minutes. No account or credit card required.</p>
+              </div>
+
               {/* Single focused CTA */}
-              <div className="mb-16">
+              <div className="mb-8">
                 <button className="group px-8 py-4 bg-success-500 hover:bg-success-600 text-white text-lg font-semibold rounded-xl transition-all duration-300 hover:shadow-glow-success hover:scale-105 flex items-center mx-auto">
                   <Download className="w-6 h-6 mr-3 group-hover:animate-bounce-gentle" />
-                  Get Started Free - Download CLI
+                  Download CLI & Analyze Free
                   <ArrowRight className="w-5 h-5 ml-3 group-hover:translate-x-1 transition-transform" />
                 </button>
-                <p className="text-sm text-secondary-400 mt-3">No signup required • Works with any codebase • Instant results</p>
+                <p className="text-sm text-secondary-400 mt-3">Works with any codebase • Instant results • CLI-first</p>
               </div>
             </div>
 
@@ -205,38 +225,38 @@ const LandingPage: React.FC = () => {
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               <FeatureCard
                 icon={Search}
-                title="Architectural Anti-Patterns"
-                description="Detect complex issues like Cyclic Dependencies, God Objects, and Leaky Abstractions before they compromise your codebase."
+                title="Architectural Bottleneck Detection"
+                description="Stop firefighting symptoms. Instantly surface the root causes—like Cyclic Dependencies and God Objects—that slow your team and block delivery."
                 gradient="from-red-500 to-red-600"
               />
               <FeatureCard
                 icon={Shield}
-                title="AI-Powered Security"
-                description="Leverage local or cloud-based AI to get human-readable security explanations and actionable refactoring suggestions."
+                title="AI-Powered Security Insights"
+                description="Catch vulnerabilities before they become incidents. Uveddi explains risks in plain English and recommends fixes, empowering you to act with confidence."
                 gradient="from-blue-500 to-blue-600"
               />
               <FeatureCard
                 icon={GitBranch}
-                title="Dependency Visualization"
-                description="Generate Mermaid.js diagrams directly in your reports to visualize dependencies and understand complex relationships."
+                title="Visual Dependency Maps"
+                description="See the big picture. Instantly generate interactive diagrams to understand and untangle complex relationships. Accelerate onboarding by 30%."
                 gradient="from-purple-500 to-purple-600"
               />
               <FeatureCard
                 icon={Zap}
-                title="Lightning Fast"
-                description="Built with Rust for maximum performance. Analyze entire codebases in seconds, not minutes."
+                title="Lightning-Fast CLI"
+                description="Analyze massive codebases in seconds, not minutes. Uveddi’s Rust-powered CLI fits seamlessly into your workflow and CI/CD."
                 gradient="from-accent-500 to-accent-600"
               />
               <FeatureCard
                 icon={Code2}
-                title="Multi-Language Support"
-                description="Comprehensive analysis for JavaScript, TypeScript, Python, Rust, Java, and more languages coming soon."
+                title="Multi-Language, One Tool"
+                description="Unify your analysis. Scan JavaScript, TypeScript, Python, Rust, Java, and more—no context switching, no extra setup."
                 gradient="from-primary-500 to-primary-600"
               />
               <FeatureCard
                 icon={Settings}
-                title="CI/CD Integration"
-                description="Seamlessly integrate with GitHub Actions, GitLab CI, Jenkins, and other popular CI/CD platforms."
+                title="Seamless CI/CD Integration"
+                description="Automate architectural checks in every pipeline. Prevent costly issues from ever reaching production."
                 gradient="from-indigo-500 to-indigo-600"
               />
             </div>
@@ -384,20 +404,20 @@ const LandingPage: React.FC = () => {
             </div>
             
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-              {/* Testimonial 1 */}
+              {/* Testimonial 1: Architect Persona */}
               <div className="bg-secondary-800/50 border border-secondary-700 rounded-xl p-8 hover:border-secondary-600 transition-all duration-300">
                 <div className="flex items-start space-x-4 mb-6">
                   <div className="w-12 h-12 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                    SM
+                    JD
                   </div>
                   <div>
-                    <h4 className="font-semibold text-white">Sarah Martinez</h4>
-                    <p className="text-secondary-300 text-sm">Senior Engineer</p>
+                    <h4 className="font-semibold text-white">Jessica Davis</h4>
+                    <p className="text-secondary-300 text-sm">Principal Architect</p>
                     <div className="flex items-center space-x-2 mt-1">
                       <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center">
-                        <span className="text-white text-xs font-bold">T</span>
+                        <span className="text-white text-xs font-bold">A</span>
                       </div>
-                      <span className="text-secondary-400 text-sm">TechCorp</span>
+                      <span className="text-secondary-400 text-sm">Acme Corp</span>
                     </div>
                   </div>
                 </div>
@@ -408,29 +428,28 @@ const LandingPage: React.FC = () => {
                     ))}
                   </div>
                   <blockquote className="text-secondary-200 italic">
-                    "Uveddi caught <span className="text-success-400 font-semibold">23 architectural issues</span> in our legacy codebase that manual reviews missed. 
-                    It's like having a senior architect review every commit."
+                    "Uveddi helped us <span className="text-success-400 font-semibold">reduce onboarding time by 40%</span> and eliminated critical architectural debt that slowed our releases."
                   </blockquote>
                 </div>
                 <div className="text-sm text-secondary-400">
-                  Reduced technical debt by 40% in 6 months
+                  2x faster feature delivery, 0 major regressions in 12 months
                 </div>
               </div>
 
-              {/* Testimonial 2 */}
+              {/* Testimonial 2: DevOps Persona */}
               <div className="bg-secondary-800/50 border border-secondary-700 rounded-xl p-8 hover:border-secondary-600 transition-all duration-300">
                 <div className="flex items-start space-x-4 mb-6">
                   <div className="w-12 h-12 bg-gradient-to-r from-success-500 to-success-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                    MJ
+                    RK
                   </div>
                   <div>
-                    <h4 className="font-semibold text-white">Michael Johnson</h4>
-                    <p className="text-secondary-300 text-sm">Lead Developer</p>
+                    <h4 className="font-semibold text-white">Rahul Kumar</h4>
+                    <p className="text-secondary-300 text-sm">DevOps Lead</p>
                     <div className="flex items-center space-x-2 mt-1">
                       <div className="w-6 h-6 bg-green-600 rounded flex items-center justify-center">
                         <span className="text-white text-xs font-bold">S</span>
                       </div>
-                      <span className="text-secondary-400 text-sm">StartupXYZ</span>
+                      <span className="text-secondary-400 text-sm">ScaleUp</span>
                     </div>
                   </div>
                 </div>
@@ -441,29 +460,28 @@ const LandingPage: React.FC = () => {
                     ))}
                   </div>
                   <blockquote className="text-secondary-200 italic">
-                    "AI-generated code analysis saved us <span className="text-success-400 font-semibold">15 hours per week</span> on code reviews. 
-                    The explanations help junior devs understand complex patterns instantly."
+                    "CI/CD integration with Uveddi <span className="text-success-400 font-semibold">prevented 5 production incidents</span> last quarter. Our team now fixes issues before they ever reach users."
                   </blockquote>
                 </div>
                 <div className="text-sm text-secondary-400">
-                  Improved code review efficiency by 75%
+                  $200K+ saved in incident response costs
                 </div>
               </div>
 
-              {/* Testimonial 3 */}
+              {/* Testimonial 3: CTO Persona */}
               <div className="bg-secondary-800/50 border border-secondary-700 rounded-xl p-8 hover:border-secondary-600 transition-all duration-300">
                 <div className="flex items-start space-x-4 mb-6">
                   <div className="w-12 h-12 bg-gradient-to-r from-action-500 to-action-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                    AC
+                    LC
                   </div>
                   <div>
-                    <h4 className="font-semibold text-white">Amy Chen</h4>
-                    <p className="text-secondary-300 text-sm">DevOps Manager</p>
+                    <h4 className="font-semibold text-white">Lina Chen</h4>
+                    <p className="text-secondary-300 text-sm">CTO</p>
                     <div className="flex items-center space-x-2 mt-1">
                       <div className="w-6 h-6 bg-purple-600 rounded flex items-center justify-center">
                         <span className="text-white text-xs font-bold">E</span>
                       </div>
-                      <span className="text-secondary-400 text-sm">Enterprise Inc</span>
+                      <span className="text-secondary-400 text-sm">EnterpriseX</span>
                     </div>
                   </div>
                 </div>
@@ -474,12 +492,11 @@ const LandingPage: React.FC = () => {
                     ))}
                   </div>
                   <blockquote className="text-secondary-200 italic">
-                    "Prevented <span className="text-success-400 font-semibold">3 critical security vulnerabilities</span> from reaching production. 
-                    The CI/CD integration caught issues that would have cost us $500K+ to fix."
+                    "With Uveddi, we <span className="text-success-400 font-semibold">cut technical debt by 60%</span> and improved team morale. The AI explanations make complex issues actionable for everyone."
                   </blockquote>
                 </div>
                 <div className="text-sm text-secondary-400">
-                  Zero security incidents in 18 months
+                  60% less tech debt, 3x faster onboarding
                 </div>
               </div>
             </div>
@@ -635,21 +652,50 @@ const LandingPage: React.FC = () => {
         <section className="py-20 px-6 bg-gradient-to-r from-primary-900/20 to-secondary-900">
           <div className="container mx-auto text-center">
             <h2 className="text-4xl font-bold mb-4">
-              Ready to Transform Your Code Analysis?
+              Ready to Take Control of Your Architecture?
             </h2>
             <p className="text-xl text-secondary-300 mb-8 max-w-2xl mx-auto">
-              Join thousands of developers who trust uveddi to keep their codebases healthy, 
-              secure, and maintainable.
+              Join thousands of empowered developers who trust Uveddi to keep their codebases healthy, secure, and maintainable—so you can focus on building, not firefighting.
             </p>
             <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
               <GradientButton size="lg" className="group">
-                Download CLI
+                Download CLI & Analyze Free
                 <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
               </GradientButton>
               <GradientButton variant="outline" size="lg">
                 <ExternalLink className="w-5 h-5 mr-2" />
                 View Documentation
               </GradientButton>
+            </div>
+            <p className="text-sm text-secondary-400 mt-4">No credit card required • Works with any codebase • Get actionable results in minutes</p>
+          </div>
+        </section>
+
+        {/* FAQ Section */}
+        <section id="faq" className="py-16 px-6 bg-secondary-950 border-t border-secondary-800">
+          <div className="container mx-auto max-w-3xl">
+            <h3 className="text-2xl font-bold mb-8 text-primary-400 text-center">Frequently Asked Questions</h3>
+            <div className="space-y-6">
+              <div>
+                <h4 className="font-semibold text-secondary-200 mb-2">Is Uveddi only for AI-generated code?</h4>
+                <p className="text-secondary-400">No. Uveddi analyzes both human-written and AI-generated code, surfacing architectural issues and technical debt in any codebase.</p>
+              </div>
+              <div>
+                <h4 className="font-semibold text-secondary-200 mb-2">Do I need to upload my code to the cloud?</h4>
+                <p className="text-secondary-400">No. Uveddi runs locally via CLI, so your code never leaves your machine unless you opt in to cloud features.</p>
+              </div>
+              <div>
+                <h4 className="font-semibold text-secondary-200 mb-2">How fast is the analysis?</h4>
+                <p className="text-secondary-400">Most codebases are analyzed in seconds, thanks to Uveddi’s Rust-powered engine.</p>
+              </div>
+              <div>
+                <h4 className="font-semibold text-secondary-200 mb-2">What languages are supported?</h4>
+                <p className="text-secondary-400">JavaScript, TypeScript, Python, Rust, Java, and more coming soon.</p>
+              </div>
+              <div>
+                <h4 className="font-semibold text-secondary-200 mb-2">Is there a free tier?</h4>
+                <p className="text-secondary-400">Yes! The Community plan is free forever and includes core analysis features.</p>
+              </div>
             </div>
           </div>
         </section>

@@ -1,69 +1,46 @@
-# React + TypeScript + Vite
+# Uveddi Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is the frontend for the Uveddi platform.
 
-Currently, two official plugins are available:
+## 🚀 Quick Start
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### 1. Install Uveddi CLI (Recommended)
 
-## Expanding the ESLint configuration
+Get started analyzing your codebase in under 2 minutes:
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```sh
+curl -sSL https://uveddi.dev/install.sh | bash
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+- No account or credit card required
+- Works on Linux, macOS, and WSL
+- See [full CLI docs](https://uveddi.dev/docs/cli)
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### 2. Run the Frontend Locally
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```sh
+npm install
+npm run dev
 ```
+
+The app will be available at [http://localhost:5173](http://localhost:5173).
+
+## 🛠️ Features
+- Architectural anti-pattern detection
+- AI-powered explanations
+- Visual dependency maps
+- Multi-language support
+- Seamless CI/CD integration
+
+## 📚 Documentation
+- [Uveddi CLI Docs](https://uveddi.dev/docs/cli)
+- [API Reference](https://uveddi.dev/docs/api)
+- [FAQ](https://uveddi.dev/docs/faq)
+
+## 🤝 Community & Support
+- [Join the Discord](https://discord.gg/uveddi)
+- [Report an Issue](https://github.com/uveddi/uveddi/issues)
+
+---
+
+© 2025 Uveddi. All rights reserved.
