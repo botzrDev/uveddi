@@ -1,16 +1,16 @@
-# Uveddi Architecture Documentation
+# Uveddi Community Release Architecture
 
 ## Overview
 
-Uveddi follows a layered, modular architecture designed for maintainability, testability, and extensibility. This document defines the architectural layers, their responsibilities, and the boundaries between them.
+Uveddi follows a simplified, layered architecture focused on local analysis and community-driven development. This document defines the architectural layers for the community release, emphasizing privacy, simplicity, and extensibility through open source contributions.
 
 ## Architectural Principles
 
-1. **Separation of Concerns**: Each module has a single, well-defined responsibility
-2. **Dependency Inversion**: Higher-level modules do not depend on lower-level modules
-3. **Interface Segregation**: Modules expose minimal, focused interfaces
-4. **Fail-Fast Design**: Errors are caught early and propagated cleanly
-5. **Plugin Extensibility**: Core functionality can be extended without modifying the main codebase
+1. **Privacy First**: All analysis happens locally - no data leaves the user's machine
+2. **Separation of Concerns**: Each module has a single, well-defined responsibility
+3. **Community Extensibility**: Core functionality can be extended through open source contributions
+4. **Simplicity**: Minimal dependencies and straightforward architecture
+5. **Local AI Integration**: Seamless integration with Ollama for private AI analysis
 
 ## Layer Architecture
 

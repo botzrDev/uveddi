@@ -4,7 +4,7 @@
 
 "Stop Just Linting Your Code. Start Analyzing Your Architecture."
 
-Uveddi is a powerful Command-Line Interface (CLI) tool designed to help Senior Developers, Tech Leads, and Software Architects maintain the health and integrity of their software codebases by performing high-level architectural analysis using a hybrid of local and API-based Artificial Intelligence models. It goes beyond traditional static analysis to identify subtle but critical architectural anti-patterns that lead to technical debt and system complexity.
+Uveddi is an open source Command-Line Interface (CLI) tool designed to help developers maintain the health and integrity of their software codebases by performing high-level architectural analysis using local AI models. It goes beyond traditional static analysis to identify subtle but critical architectural anti-patterns that lead to technical debt and system complexity.
 
 ## 💡 Why Uveddi?
 
@@ -13,24 +13,23 @@ In today's fast-paced, AI-augmented software development landscape, architectura
 Uveddi fills this critical gap by providing:
 
 * **A Singular Focus on Architecture:** We evaluate the foundational blueprint of your software, answering strategic questions like "Is this system structurally sound?" or "Are we introducing dangerous coupling?"
-* **Dual AI Model for Ultimate Flexibility & Privacy:**
-    * **Local Model (Free Tier):** Analyze proprietary code privately and offline using high-performance, open-source LLMs directly on your machine.
-    * **API-based Model (Paid Tier):** Leverage state-of-the-art commercial LLMs for the most complex, nuanced analysis and seamless CI/CD integration.
-* **High-Quality, Actionable Reporting:** Get well-formatted markdown reports with embedded diagrams (Mermaid.js/PlantUML) that make complex architectural issues and refactoring suggestions immediately understandable and
+* **Local AI Analysis with Complete Privacy:** Analyze proprietary code privately and offline using high-performance, open-source LLMs (via Ollama) directly on your machine. Your code never leaves your system.
+* **High-Quality, Actionable Reporting:** Get well-formatted markdown reports that make complex architectural issues and refactoring suggestions immediately understandable and actionable.
+* **Community-Driven Development:** Open source with community contributions driving new features, language support, and anti-pattern detectors.
 
-Uveddi acts as your **AI Architect**, providing essential architectural intelligence and guardrails for code increasingly written by both humans and AI.
+Uveddi acts as your **AI Architect**, providing essential architectural intelligence for modern development workflows.
 
 ## ✨ Key Features
 
-* **Architectural Anti-pattern Detection:** Identifies a robust taxonomy of high-level architectural smells:
-    * **Dependency-Based:** Unstable Interface, Cyclic Dependency, Modularity Violation.
-    * **Abstraction-Based:** The Blob/God Object, Leaky Abstraction, Violation of Inheritance Hierarchy.
-    * **Microservice-Specific:** Insufficient Access Control, Hardcoded Endpoints, Shared Database.
-* **Hybrid AI Analysis:** Seamlessly switches between local (Ollama-powered, private) and API-based (GPT-4, Claude 3, Gemini for enhanced accuracy) AI models.
-* **Abstract Syntax Tree (AST) Powered:** Utilizes deep structural analysis via AST parsing (leveraging Tree-sitter) for accurate anti-pattern identification.
-* **Dual Database Architecture:**
-    * **Local SQLite Database:** Store analysis results locally in the Rust CLI.
-    * **Cloud PostgreSQL Database:** Sync analysis data to a centralized backend for team collaboration and CI/CD integration.
+* **Core Anti-pattern Detection:** Identifies essential architectural issues:
+    * **God Objects:** Classes/structs with too many responsibilities
+    * **Cyclic Dependencies:** Import/dependency cycles that create tight coupling
+    * **Code Duplication:** Duplicate code blocks across your codebase
+    * **Magic Values:** Hardcoded constants without explanation
+    * **Tight Coupling:** Excessive dependencies between modules
+* **Local AI Analysis:** Powered by Ollama for private, offline analysis with no data sharing
+* **Multi-Language Support:** Currently supports Rust, Python, and JavaScript with more languages coming through community contributions
+* **Local SQLite Database:** Store analysis results locally with no cloud dependencies
 
 ## 📚 Documentation
 
@@ -50,121 +49,75 @@ Uveddi acts as your **AI Architect**, providing essential architectural intellig
 * [📈 PRD.md](./docs/PRD.md) - Product Requirements Document
 * [🎯 SPRINTS.md](./SPRINTS.md) - Sprint planning and progress tracking
 
-## 🚀 Getting Started (For Developers & Contributors)
+## 🚀 Getting Started
 
-### Prerequisites
+### Quick Install
 
-* **Rust Toolchain:** Uveddi is built with Rust for performance and safety.
-    * Install `rustup` by following the instructions on [rustup.rs](https://rustup.rs/).
-* **Git:** Required for cloning the repository.
+```bash
+curl -sSL https://uveddi.dev/install.sh | bash
+```
 
-### Local Development Setup
+### Manual Installation
 
-1.  **Clone the Repository:**
+1.  **Install Prerequisites:**
+    * **Rust Toolchain:** Install `rustup` from [rustup.rs](https://rustup.rs/)
+    * **Ollama:** Install from [ollama.ai](https://ollama.ai) for local AI analysis
+
+2.  **Clone and Build:**
     ```bash
     git clone https://github.com/botzrDev/uveddi.git
     cd uveddi
-    ```
-2.  **Build the Project:**
-    ```bash
     cargo build --release
     ```
-    This will compile the Uveddi CLI binary and place it in `target/release/uveddi`.
-3.  **Run Tests:**
+
+3.  **Set up Local AI (Optional):**
     ```bash
-    cargo test
+    # Install Ollama and pull a model
+    ollama pull deepseek-coder:6.7b-instruct
     ```
-4.  **Install Local AI Models (Optional, for Free Tier development):**
-    For developing with local AI models, you'll need `Ollama`.
-    ```bash
-    # Run the Uveddi init command (once implemented)
-    ./target/release/uveddi init-local-ai
-    # This command will guide you through installing Ollama and downloading a default model (e.g., mistral:7b-instruct-v0.2-q4_K_M)
-    ```
-    **Hardware Recommendation for Local Models:** A minimum of 16GB RAM is required. For optimal performance, a GPU with at least 8-12GB VRAM (e.g., NVIDIA RTX 3060 or better) is highly recommended.
+    **Hardware Recommendation:** 16GB+ RAM recommended. GPU with 8GB+ VRAM optional but improves performance.
 
-### Basic Usage (Once Built)
-
-To run an analysis on your current directory (example placeholder):
+### Basic Usage
 
 ```bash
-./target/release/uveddi analyze . --output-file architectural_report.md
+# Analyze current directory
+uveddi analyze .
+
+# Analyze with AI explanations (requires Ollama)
+uveddi analyze . --enable-ai
+
+# Save report to file
+uveddi analyze . --output report.md
 ```
 
-### Backend Setup (Optional)
+## 🐳 Docker Usage
 
-For team collaboration and CI/CD integration, set up the backend:
+Run Uveddi with local AI in a containerized environment:
 
 ```bash
-cd backend
+# Build the image
+docker build -t uveddi .
 
-# Option 1: Using Docker Compose (recommended)
-./docker-compose.sh up
-
-# Option 2: Manual setup
-cp .env.example .env
-# Edit .env with your database credentials
-make setup migrate
-make run
+# Run analysis on your code
+docker run -v $(pwd):/workspace uveddi analyze /workspace --enable-ai
 ```
 
-See [DATABASE_GUIDE.md](./DATABASE_GUIDE.md) for detailed instructions.
+The container includes Ollama and DeepSeek-Coder for complete local AI analysis.
 
-## 🐳 Running Uveddi with Local AI in Docker
+## 🤝 Contributing
 
-You can run Uveddi in a fully containerized environment with Ollama and DeepSeek-Coder for local AI analysis. No host setup required!
+Uveddi is community-driven! We welcome contributions:
 
-### Build the Docker image:
+- **New Anti-Pattern Detectors:** Help identify more architectural issues
+- **Language Support:** Add support for new programming languages  
+- **Documentation:** Improve guides, examples, and API docs
+- **Bug Reports:** Help us improve reliability and accuracy
 
-```bash
-docker build -t uveddi-local-ai .
-```
+See our [Contributing Guide](./CONTRIBUTING.md) for details on how to get started.
 
-### Run the container (interactive shell):
+## 📝 Documentation Standards
 
-```bash
-docker run -it --rm uveddi-local-ai
-```
-
-This will:
-- Start the Ollama server
-- Pull the DeepSeek-Coder model
-- Run all Uveddi tests (including AI integration)
-- Drop you into a shell with the environment ready
-
-### Run an analysis with local AI:
-
-```bash
-# From inside the container shell:
-cargo run --release -- analyze . --enable-ai
-```
-
-You can also specify a different model or API URL:
-
-```bash
-cargo run --release -- analyze . --enable-ai --ollama-model deepseek-coder:6.7b-instruct-q4_0 --ollama-api-url http://localhost:11434
-```
-
-Or set environment variables:
-
-```bash
-export OLLAMA_MODEL=deepseek-coder:6.7b-instruct-q4_0
-export OLLAMA_API_URL=http://localhost:11434
-cargo run --release -- analyze . --enable-ai
-```
-
-All AI explanations in reports will be generated using the local DeepSeek model via Ollama.
-
-## 📝 Documentation & Commenting Standards
-
-Uveddi follows strict documentation and commenting standards to ensure code quality and maintainability:
-
-- All public structs, enums, traits, and functions must have `///` doc comments, including summaries, parameter/return descriptions, and error conditions.
-- Complex logic and algorithms should be explained with high-level and inline comments.
-- Each module must start with a `//!` doc comment summarizing its purpose and main types/functions.
-- Error types and error conditions must be documented.
-- Plugin API traits and types require detailed doc comments and usage examples.
-- Test modules and functions should describe what is being tested and why.
-- See [`docs/commenting_documentation_checklist.md`](./docs/commenting_documentation_checklist.md) for the full checklist.
-
-**Contributions that improve documentation and comments are highly encouraged!**
+- All public APIs must have `///` doc comments
+- Complex algorithms need explanatory comments
+- Each module starts with `//!` module documentation
+- See [`docs/commenting_documentation_checklist.md`](./docs/commenting_documentation_checklist.md) for full guidelines
