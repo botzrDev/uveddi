@@ -11,8 +11,6 @@ use clap::{Parser, Subcommand};
 use color_eyre::eyre::Result;
 use uveddi::cli::analyze_command::AnalyzeCommand;
 use uveddi::cli::config_command::ConfigCommand;
-use uveddi::cli::init_local_ai_command::InitLocalAiCommand;
-use uveddi::cli::plugin_command::PluginCommand;
 
 #[derive(Parser)]
 #[command(name = "uveddi")]
@@ -26,10 +24,6 @@ struct Cli {
 enum Commands {
     /// Analyze a codebase at the given path
     Analyze(AnalyzeCommand),
-    /// Initialize and set up local AI (Ollama)
-    InitLocalAi(InitLocalAiCommand),
-    /// Plugin management commands
-    Plugin(PluginCommand),
     /// Configuration management commands
     Config(ConfigCommand),
 }
