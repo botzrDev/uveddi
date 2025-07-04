@@ -36,19 +36,19 @@
 //! - **Result Collection**: Engine aggregates results from all detectors
 //! - **Reporting**: Results are stored in the database for analysis
 //!
-//! ## Usage Example
-//!
-//! ```rust
-//! use uveddi::analysis::{AnalysisEngine, AnalysisDetector};
-//! use uveddi::analysis::detectors::anti_patterns::GodObjectDetector;
-//! use std::path::Path;
-//!
-//! let mut engine = AnalysisEngine::new().unwrap();
-//! let detector = GodObjectDetector::new(15, 20);
-//! engine.add_detector(Box::new(detector));
-//! // let (issues, graph) = engine.analyze(Path::new("src/")).await.unwrap();
-//! // println!("Found {} issues", issues.len());
-//! ```
+/// ## Usage Example
+///
+/// ```rust
+/// use uveddi::analysis::{AnalysisEngine, AnalysisDetector};
+/// use uveddi::analysis::detectors::anti_patterns::GodObjectDetector;
+/// use std::path::Path;
+///
+/// let engine = AnalysisEngine::new().unwrap();
+/// let detector = GodObjectDetector::new(15, 20);
+/// // Detectors are built into the engine
+/// // let (issues, graph) = engine.analyze(Path::new("src/")).await.unwrap();
+/// // println!("Found {} issues", issues.len());
+/// ```
 
 pub mod cache;
 pub mod detectors;
@@ -102,9 +102,9 @@ pub type AnalysisError = crate::error::UveddiError;
 /// use uveddi::analysis::detectors::anti_patterns::GodObjectDetector;
 /// use std::path::Path;
 ///
-/// let mut engine = AnalysisEngine::new().unwrap();
+/// let engine = AnalysisEngine::new().unwrap();
 /// let detector = GodObjectDetector::new(15, 20);
-/// engine.add_detector(Box::new(detector));
+/// // Detectors are built into the engine
 /// // let (issues, graph) = engine.analyze(Path::new("src/")).await.unwrap();
 /// // println!("Found {} issues", issues.len());
 /// # fn main() {}

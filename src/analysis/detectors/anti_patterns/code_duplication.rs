@@ -153,23 +153,10 @@ const PYTHON_FUNCTION_QUERY: &str = r#"
 "#;
 
 const JAVASCRIPT_FUNCTION_QUERY: &str = r#"
-[
-  (function_declaration
-    name: (identifier) @name
-    body: (statement_block) @body
-  ) @function
-  (function_expression
-    name: (identifier)? @name
-    body: (statement_block) @body
-  ) @function
-  (arrow_function
-    body: (statement_block) @body
-  ) @function
-  (method_definition
-    name: (identifier) @name
-    body: (statement_block) @body
-  ) @function
-]
+(function_declaration
+  name: (identifier) @name
+  body: (statement_block) @body
+) @function
 "#;
 
 /// Code Duplication Detector using two-stage hybrid approach

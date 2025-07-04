@@ -11,7 +11,6 @@ use std::path::PathBuf;
 
 use crate::ai::AiAnalysisEngine;
 use crate::analysis::AnalysisEngine;
-use crate::analysis::LocalDependencyGraph;
 use crate::database::crud::Database;
 use crate::database::models::{AnalysisRun, ArchitecturalIssue};
 use crate::error::UveddiError;
@@ -100,16 +99,14 @@ impl AnalysisOrchestrator {
             .context("Failed to create analysis run")?;
 
         // Execute core analysis
-        let (mut issues, dependency_graph) = self
+        let (mut issues, _dependency_graph) = self
             .analysis_engine
             .analyze(&config.target_path)
             .await
             .context("Analysis failed")?;
 
-        // Run plugin analysis
-        let plugin_issues = self.run_plugin_analysis(&dependency_graph).await?;
-        issues.extend(plugin_issues.into_iter());
-        info!("Plugin analysis completed successfully");
+        // Plugin system removed in community version
+        info!("Plugin analysis skipped (not available in community version)");
 
         // Enhance with AI analysis if enabled
         let ai_enhanced = if config.enable_ai {
@@ -202,18 +199,6 @@ impl AnalysisOrchestrator {
         Ok(())
     }
 
-    /// Run plugin-based analysis
-    async fn run_plugin_analysis(
-        &self,
-        _local_graph: &LocalDependencyGraph,
-    ) -> Result<Vec<ArchitecturalIssue>, UveddiError> {
-        info!("Running analysis plugins...");
-
-        // Plugin system is temporarily disabled to prevent WASM runtime errors
-        // TODO: Re-enable once WASM plugin integration is stabilized
-        info!("Plugin system disabled - native analysis only");
-        Ok(Vec::new())
-    }
 
     /// Enhance analysis results with AI insights
     async fn enhance_with_ai_analysis(

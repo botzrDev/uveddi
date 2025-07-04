@@ -8,7 +8,6 @@ use std::env;
 
 /// AiAnalysisEngine is responsible for performing AI-powered architectural analysis.
 /// It integrates with different AI providers to analyze codebases and detect architectural issues.
-
 pub struct AiAnalysisEngine {
     provider: Option<Box<dyn LlmProvider + Send + Sync>>,
     prompt_builder: SmartPromptBuilder,
@@ -69,7 +68,7 @@ impl AiAnalysisEngine {
                 issue.ai_explanation = Some(explanation);
             },
             Err(e) => {
-                warn!("Failed to generate AI explanation: {}", e);
+                warn!("Failed to generate AI explanation: {e}");
                 // Don't fail the entire analysis if AI fails
             }
         }
