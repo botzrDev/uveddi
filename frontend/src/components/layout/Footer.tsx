@@ -6,7 +6,7 @@ const Footer: React.FC = () => (
       <div className="grid md:grid-cols-4 gap-8">
         <div>
           <div className="flex items-center mb-4" style={{ gap: '2px' }}>
-            <img src="/logo(dark).png" alt="Uveddi Logo" className="w-10 h-10 rounded-lg" />
+            <img src="/logo(blue).png" alt="Uveddi Logo" className="w-10 h-10 rounded-lg" />
             <span className="font-mono text-2xl font-bold bg-gradient-to-r from-white to-primary-200 bg-clip-text text-transparent tracking-wider">
               veddi
             </span>

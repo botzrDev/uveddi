@@ -63,7 +63,7 @@ const Header: React.FC<HeaderProps> = ({ variant = 'default', className = '' }) 
           {/* Logo */}
           {variant === 'landing' && isOnLandingPage ? (
             <a href="#top" className="flex items-center mb-0" style={{ gap: '2px' }}>
-              <img src="/logo(dark).png" alt="Uveddi Logo" className="w-10 h-10 rounded-lg mr-0" />
+              <img src="/logo(blue).png" alt="Uveddi Logo" className="w-10 h-10 rounded-lg mr-0" />
               <h1 className="font-mono text-2xl font-bold bg-gradient-to-r from-white to-primary-200 bg-clip-text text-transparent tracking-wider">veddi</h1>
             </a>
           ) : (
