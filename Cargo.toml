@@ -63,3 +63,23 @@ mockito = "0.31"
 assert_cmd = "2.0"
 predicates = "2.1"
 serde_json = "1.0"
+
+[[test]]
+name = "analysis_engine"
+path = "tests/analysis/engine.rs"
+
+[[test]]
+name = "application"
+path = "tests/application.rs"
+
+[[test]]
+name = "config"
+path = "tests/config.rs"
+
+[[test]]
+name = "cli_analyze"
+path = "tests/cli_analyze.rs"
+
+[[test]]
+name = "database_crud"
+path = "tests/database_crud.rs"
