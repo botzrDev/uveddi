@@ -277,7 +277,7 @@ I need to implement cross-file semantic analysis for detecting leaky abstraction
 Please provide algorithms, data structures, and implementation strategies for efficient cross-file semantic analysis.
 ```
 
-### Prompt 4.2: Symbol Resolution and Scope Analysis
+<<<### Prompt 4.2: Symbol Resolution and Scope Analysis <><>
 ```
 I need to implement symbol resolution across multiple files for leaky abstraction detection. Help me understand:
 
