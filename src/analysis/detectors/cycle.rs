@@ -38,55 +38,59 @@ impl CycleDetector {
 
         let mut issues = Vec::new();
 
-        for scc in sccs {
-            if scc.len() > 1 {
-                let cycle_nodes: Vec<String> = scc
-                    .iter()
-                    .filter_map(|&node_index| {
-                        graph
-                            .get_node_from_index(node_index)
-                            .map(|node| match node {
-                                ComponentNode::Module { path } => path.clone(),
-                                ComponentNode::Class { name: _, file_path } => {
-                                    file_path.clone()
-                                }
-                                ComponentNode::Function { name: _, file_path } => {
-                                    file_path.clone()
-                                }
-                            })
-                    })
-                    .collect();
+        // Filter out SCCs with only one node (not a cycle)
+        let cycles: Vec<_> = sccs.into_iter().filter(|scc| scc.len() > 1).collect();
 
-                let description = format!("Cyclic dependency detected involving: {}. This creates tight coupling and hinders maintainability.", cycle_nodes.join(", "));
+        for (cycle_id, cycle) in cycles.iter().enumerate() {
+            // Get component names for the cycle description
+            let component_names: Vec<String> = cycle
+                .iter()
+                .map(|&node_idx| {
+                    let node_ref = &petgraph[node_idx];
+                    node_ref.name.clone()
+                })
+                .collect();
 
-                let representative_node = graph.get_node_from_index(scc[0]).unwrap(); // Safe due to scc.len() > 1
-                let file_path = match representative_node {
-                    ComponentNode::Module { path } => path.clone(),
-                    ComponentNode::Class { file_path, .. } => file_path.clone(),
-                    ComponentNode::Function { file_path, .. } => file_path.clone(),
+            // Create the cycle description
+            let description = format!(
+                "Cyclic dependency detected between components: {}",
+                component_names.join(" → ")
+            );
+
+            // Create an architectural issue for each component in the cycle
+            for &node_idx in cycle {
+                let node_ref = &petgraph[node_idx];
+
+                // Find the file path of the component
+                let file_path = if let Some(ref path) = node_ref.file_path {
+                    path.clone()
+                } else {
+                    "Unknown location".to_string()
                 };
-                let start_line = 1;
 
                 issues.push(ArchitecturalIssue {
                     issue_id: None,
                     analysis_run_id,
-                    anti_pattern_type_id: 2, // Standard ID for Cyclic Dependency
+                    anti_pattern_type_id: 1, // Assuming 1 is cyclic dependency type
                     file_path,
-                    start_line: Some(start_line),
-                    end_line: Some(start_line),
-                    severity: "High".to_string(),
-                    description,
-                    code_snippet: None,
-                    ai_explanation: None,
+                    start_line: node_ref.start_line,
+                    end_line: node_ref.end_line,
+                    severity: "high".to_string(), // Cyclic dependencies are typically high severity
+                    description: description.clone(),
+                    code_snippet: None, // Will be populated separately if needed
+                    ai_explanation: None, // Will be populated by AI engine
                 });
             }
         }
 
+        let elapsed = start_time.elapsed();
         info!(
-            "Cycle detection completed in {:?}, found {} cycles.",
-            start_time.elapsed(),
+            "Cycle detection completed in {:.2?}. Found {} cycles with {} total issues.",
+            elapsed,
+            cycles.len(),
             issues.len()
         );
+
         issues
     }
 }

@@ -2,11 +2,16 @@
 
 use crate::ast::CustomAst;
 use crate::database::models::ArchitecturalIssue;
+use crate::semantic_search::{IndexedChunk, VectorIndex};
 
 /// Smart prompt builder for generating AI prompts for architectural issues
 #[derive(Clone)]
 pub struct SmartPromptBuilder {
-    // Future: Could add configuration, templates, etc.
+    // Configuration options
+    pub use_rag: bool,
+    pub max_context_chunks: usize,
+    pub include_code_snippets: bool,
+    pub diversify_results: bool,
 }
 
 impl Default for SmartPromptBuilder {
@@ -17,7 +22,12 @@ impl Default for SmartPromptBuilder {
 
 impl SmartPromptBuilder {
     pub fn new() -> Self {
-        SmartPromptBuilder {}
+        SmartPromptBuilder {
+            use_rag: true,
+            max_context_chunks: 5,
+            include_code_snippets: true,
+            diversify_results: true,
+        }
     }
 
     /// Build a prompt specifically for analyzing an architectural issue
@@ -27,72 +37,96 @@ impl SmartPromptBuilder {
             issue.anti_pattern_type_id, issue.description, issue.file_path, issue.severity
         );
 
-        // Build basic prompt - in future this could use AST context
-        let prompt = format!(
+        // Build basic prompt with code snippet if available
+        let mut prompt = format!(
             "You are an expert software architect.\n\
 Given the following architectural issue, provide a detailed explanation and recommendation.\n\
-\n{issue_context}\n\
-\nRespond in the following JSON format:\n{{\n  \"title\": \"Brief title for the issue\",\n  \"description\": \"Detailed description of the problem\",\n  \"explanation\": \"Why this is an architectural concern\",\n  \"refactoring\": \"Recommended solution or refactoring steps\",\n  \"confidence\": \"high/medium/low confidence in this assessment\"\n}}\n"
+\n{issue_context}\n"
+        );
+
+        // Add code snippet context if available and enabled
+        if self.include_code_snippets && issue.code_snippet.is_some() {
+            prompt.push_str(&format!(
+                "\nRelevant code snippet:\n```\n{}\n```\n",
+                issue.code_snippet.as_ref().unwrap()
+            ));
+        }
+
+        // Add response format instructions
+        prompt.push_str(
+            "\nRespond in the following JSON format:\n\
+            {\n\
+              \"title\": \"Brief title for the issue\",\n\
+              \"description\": \"Detailed description of the problem\",\n\
+              \"explanation\": \"Why this is an architectural concern\",\n\
+              \"refactoring\": \"Recommended solution or refactoring steps\",\n\
+              \"confidence\": \"high/medium/low confidence in this assessment\"\n\
+            }\n"
         );
 
         add_hallucination_mitigation(&prompt)
     }
+    
+    /// Build a RAG-enhanced prompt with relevant context from codebase
+    pub fn build_rag_prompt(&self, issue: &ArchitecturalIssue, vector_index: &VectorIndex, query_embedding: &ndarray::Array1<f32>) -> String {
+        // Start with the basic prompt
+        let mut prompt = self.build_prompt_for_issue(issue);
+        
+        if !self.use_rag {
+            return prompt;
+        }
+        
+        // Get relevant context chunks from the vector index
+        let relevant_chunks = if self.diversify_results {
+            // Use maximal marginal relevance to diversify results
+            use crate::semantic_search::mmr::maximal_marginal_relevance;
+            let search_results = vector_index.search(query_embedding, self.max_context_chunks * 2);
+            // Convert search results to IndexedChunk references
+            let candidates: Vec<&IndexedChunk> = search_results.iter()
+                .map(|(_, chunk)| *chunk)
+                .collect();
+                
+            // MMR returns the selected chunks directly, not indices
+            maximal_marginal_relevance(
+                query_embedding,
+                &candidates,
+                0.5, // Lambda (diversity parameter) - balance between relevance and diversity
+                self.max_context_chunks // k - number of results to return
+            )
+        } else {
+            // Just use top-k most similar chunks
+            vector_index.search(query_embedding, self.max_context_chunks)
+                .into_iter()
+                .map(|(_, chunk)| chunk)
+                .collect::<Vec<_>>()
+        };
+        
+        // Insert the RAG context
+        if !relevant_chunks.is_empty() {
+            let context_section = format!(
+                "\n\n### RELEVANT CODEBASE CONTEXT ###\n{}",
+                relevant_chunks.iter()
+                    .map(|chunk| format!("--- {} ---\n{}\n", 
+                        chunk.metadata.get("path").unwrap_or(&"unknown".to_string()), 
+                        chunk.text))
+                    .collect::<Vec<_>>()
+                    .join("\n")
+            );
+            
+            // Insert context before the response format
+            prompt.insert_str(prompt.find("Respond in the following").unwrap(), &context_section);
+        }
+        
+        prompt
+    }
 }
 
-/// Builds a prompt embedding code snippets and AST structure.
-pub fn build_prompt_from_ast(ast: &CustomAst, issue_context: &str) -> String {
-    // Extract a summary of the AST structure (e.g., node types, relationships)
-    let ast_summary = ast.summary(); // Assumes a summary() method exists or is implemented
-                                     // Extract relevant code snippets (e.g., lines around the detected issue)
-    let code_snippet = ast
-        .extract_relevant_code(issue_context)
-        .unwrap_or_else(|| "<code unavailable>".to_string());
-    // Format the prompt using a template
+/// Add anti-hallucination guardrails to the prompt
+fn add_hallucination_mitigation(prompt: &str) -> String {
     format!(
-        "You are an expert software architect.\n\
-Given the following code and context, explain the architectural issue.\n\
-\nCode:\n{code_snippet}\n\
-Context:\n{ast_summary}\n\
-Issue:\n{issue_context}\n\
-Respond in the following JSON format:\n{{\n  \"title\": \"...\",\n  \"description\": \"...\",\n  \"explanation\": \"...\",\n  \"refactoring\": \"...\",\n  \"confidence\": \"...\"\n}}\n"
+        "{}\n\nIMPORTANT: Base your explanations only on the provided information. DO NOT invent or hallucinate details not present in the issue description or context. If you're uncertain, indicate your level of confidence clearly. Focus on architectural principles and patterns that are relevant to the described issue.",
+        prompt
     )
-}
-
-/// Builds a prompt embedding ranked context snippets and AST structure.
-pub fn build_prompt_with_context(
-    context_snippets: &[String],
-    ast: &CustomAst,
-    issue_context: &str,
-) -> String {
-    let ast_summary = ast.summary();
-    let context = if context_snippets.is_empty() {
-        "<no relevant context>".to_string()
-    } else {
-        context_snippets.join("\n---\n")
-    };
-    format!(
-        "You are an expert software architect.\n\
-Given the following ranked context and code structure, explain the architectural issue.\n\
-\nContext Snippets:\n{context}\n\
-AST Structure:\n{ast_summary}\n\
-Issue:\n{issue_context}\n\
-Respond in the following JSON format:\n{{\n  \"title\": \"...\",\n  \"description\": \"...\",\n  \"explanation\": \"...\",\n  \"refactoring\": \"...\",\n  \"confidence\": \"...\"\n}}\n"
-    )
-}
-
-/// Hallucination mitigation: structured prompting, uncertainty handling, and output schema enforcement
-pub fn add_hallucination_mitigation(prompt: &str) -> String {
-    let mitigation_instructions = r#"
----
-INSTRUCTIONS FOR AI:
-- If you are not certain, respond with "I don’t know." or indicate uncertainty.
-- Only use facts present in the provided code and context. Do not invent details.
-- Follow the required JSON output schema exactly. If you cannot answer, set fields to null or "unknown".
-- If the issue is ambiguous, explain your uncertainty in the explanation field.
-- Do not provide information not grounded in the input.
----
-"#;
-    format!("{prompt}\n{mitigation_instructions}")
 }
 
 #[cfg(test)]
@@ -125,6 +159,6 @@ mod tests {
     fn test_add_hallucination_mitigation_appends_instruction() {
         let prompt = "Explain the issue.";
         let mitigated = add_hallucination_mitigation(prompt);
-        assert!(mitigated.contains("respond with \"I don’t know.\""));
+        assert!(mitigated.contains("IMPORTANT: Base your explanations only on the provided information."));
     }
 }

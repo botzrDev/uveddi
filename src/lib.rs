@@ -16,3 +16,4 @@ pub mod error;
 pub mod ingestion;
 pub mod models;
 pub mod report;
+pub mod semantic_search;

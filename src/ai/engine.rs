@@ -1,5 +1,5 @@
 use crate::ai::api::llm_provider::LlmProvider;
-use crate::ai::ollama_provider::OllamaProvider;
+use crate::ai::ollama_provider::{OllamaProvider, OllamaConfig};
 use crate::ai::prompts::smart_prompting::SmartPromptBuilder;
 use crate::database::models::ArchitecturalIssue;
 use crate::error::UveddiError;
@@ -20,7 +20,14 @@ impl AiAnalysisEngine {
         let provider = if let Ok(api_url) = env::var("OLLAMA_API_URL") {
             let model = env::var("OLLAMA_MODEL")
                 .unwrap_or_else(|_| "deepseek-coder:6.7b-instruct-q4_0".to_string());
-            let ollama_provider = OllamaProvider::new(&model, &api_url);
+            
+            let config = OllamaConfig {
+                model,
+                api_url,
+                ..Default::default()
+            };
+            
+            let ollama_provider = OllamaProvider::new(config);
             Some(Box::new(ollama_provider) as Box<dyn LlmProvider + Send + Sync>)
         } else {
             None
