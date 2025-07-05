@@ -39,7 +39,8 @@ notice = "warn"
 # A list of advisory IDs to ignore. Note that ignored advisories will still
 # output a note when they are encountered.
 ignore = [
-    #"RUSTSEC-0000-0000",
+    "RUSTSEC-2025-0009",  # Temporary ignore - ring v0.17.9 AES panic issue
+    # TODO: Remove this ignore once dependency chain allows ring >=0.17.12
 ]
 
 # The licenses section configures how the `cargo deny check licenses` command works

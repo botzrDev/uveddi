@@ -258,8 +258,7 @@ pub mod antipattern_type;
 pub mod dependency_graph;
 
 pub use crate::database::models::{
-    ArchitecturalIssue as ApiArchitecturalIssue,
-    DependencyType as ApiDependencyType,
+    ArchitecturalIssue as ApiArchitecturalIssue, DependencyType as ApiDependencyType,
 };
 #[cfg(test)]
 mod tests {

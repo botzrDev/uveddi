@@ -31,7 +31,7 @@ pub fn maximal_marginal_relevance<'a>(
     lambda: f32,
     k: usize,
 ) -> Vec<&'a IndexedChunk> {
-    let mut selected = Vec::new();
+    let mut selected: Vec<&IndexedChunk> = Vec::new();
     let mut remaining: Vec<_> = candidates.to_vec();
     while selected.len() < k && !remaining.is_empty() {
         let mut best_score = f32::MIN;
@@ -40,7 +40,7 @@ pub fn maximal_marginal_relevance<'a>(
             let relevance = super::cosine_similarity(query_embedding, &chunk.embedding);
             let diversity = selected
                 .iter()
-                .map(|s: &IndexedChunk| super::cosine_similarity(&s.embedding, &chunk.embedding))
+                .map(|s: &&IndexedChunk| super::cosine_similarity(&s.embedding, &chunk.embedding))
                 .fold(0.0, f32::max);
             let mmr_score = lambda * relevance - (1.0 - lambda) * diversity;
             if mmr_score > best_score {

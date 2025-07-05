@@ -682,8 +682,9 @@ impl ReportGenerator {
                     analysis_run
                         .end_time
                         .and_then(|end| Some((end - analysis_run.start_time).num_seconds() as f64))
-                        .unwrap_or(0.0)
-                ).unwrap_or(serde_json::Number::from(0))
+                        .unwrap_or(0.0),
+                )
+                .unwrap_or(serde_json::Number::from(0)),
             ),
         );
         report.insert("metadata".to_string(), Value::Object(metadata));
