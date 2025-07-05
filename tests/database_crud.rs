@@ -1,6 +1,5 @@
 use uveddi::database::crud::Database;
-use uveddi::database::models::{AntiPatternType, ArchitecturalIssue};
-use chrono::Utc;
+use uveddi::database::models::AntiPatternType;
 use std::path::Path;
 use std::fs;
 

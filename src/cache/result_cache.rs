@@ -22,6 +22,21 @@ impl ResultCache {
         Ok(Self { conn })
     }
 
+    /// Creates a new ResultCache using an in-memory database
+    /// This is primarily useful for testing to avoid file system conflicts
+    pub fn new_in_memory() -> Result<Self> {
+        let conn = Connection::open_in_memory()?;
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS cache (
+                key TEXT PRIMARY KEY,
+                value BLOB NOT NULL,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+            )",
+            [],
+        )?;
+        Ok(Self { conn })
+    }
+
     fn hash_key<T: Hash>(key_data: &T) -> String {
         let mut hasher = DefaultHasher::new();
         key_data.hash(&mut hasher);

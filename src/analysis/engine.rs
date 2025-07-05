@@ -80,6 +80,24 @@ impl AnalysisEngine {
     /// - Dependency extractor setup fails
     pub fn new() -> Result<Self, crate::error::UveddiError> {
         let cache_path = PathBuf::from("uveddi_cache.db");
+        Self::with_cache_path(&cache_path)
+    }
+
+    /// Creates a new analysis engine with a custom cache database path
+    ///
+    /// This is primarily useful for testing to avoid database conflicts.
+    ///
+    /// # Arguments
+    /// 
+    /// * `cache_path` - Path to the cache database file
+    ///
+    /// # Errors
+    ///
+    /// Returns `UveddiError` if:
+    /// - Cache database cannot be created
+    /// - AST parser initialization fails
+    /// - Dependency extractor setup fails
+    pub fn with_cache_path(cache_path: &Path) -> Result<Self, crate::error::UveddiError> {
         Ok(Self {
             ast_parser: AstParser::new()?,
             dependency_extractor: DependencyExtractor::new()?,
@@ -89,7 +107,32 @@ impl AnalysisEngine {
             ],
             cycle_detector: CycleDetector::new(),
             files_analyzed: 0,
-            cache: ResultCache::new(&cache_path)?,
+            cache: ResultCache::new(cache_path)?,
+        })
+    }
+
+    /// Creates a new analysis engine with an in-memory cache database
+    ///
+    /// This is primarily useful for testing to avoid database conflicts
+    /// and ensure test isolation.
+    ///
+    /// # Errors
+    ///
+    /// Returns `UveddiError` if:
+    /// - Cache database cannot be created
+    /// - AST parser initialization fails
+    /// - Dependency extractor setup fails
+    pub fn new_with_memory_cache() -> Result<Self, crate::error::UveddiError> {
+        Ok(Self {
+            ast_parser: AstParser::new()?,
+            dependency_extractor: DependencyExtractor::new()?,
+            detectors: vec![
+                Box::new(GodObjectDetector::new(5, 8)), // More sensitive thresholds
+                Box::new(CodeDuplicationDetector::new()),
+            ],
+            cycle_detector: CycleDetector::new(),
+            files_analyzed: 0,
+            cache: ResultCache::new_in_memory()?,
         })
     }
 

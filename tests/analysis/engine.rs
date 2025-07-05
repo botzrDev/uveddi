@@ -1,26 +1,15 @@
 use uveddi::analysis::AnalysisEngine;
-use std::fs;
-use std::path::Path;
 use tempfile;
-
-fn setup() {
-    // Clean up previous test runs
-    if Path::new("uveddi_cache.db").exists() {
-        let _ = fs::remove_file("uveddi_cache.db");
-    }
-}
 
 #[test]
 fn test_new_engine_creation() {
-    setup();
-    let engine = AnalysisEngine::new();
+    let engine = AnalysisEngine::new_with_memory_cache();
     assert!(engine.is_ok());
 }
 
 #[test]
 fn test_get_anti_pattern_types() {
-    setup();
-    let engine = AnalysisEngine::new().unwrap();
+    let engine = AnalysisEngine::new_with_memory_cache().unwrap();
     let types = engine.get_anti_pattern_types();
 
     let names: Vec<_> = types.iter().map(|t| t.name.as_str()).collect();
@@ -32,15 +21,13 @@ fn test_get_anti_pattern_types() {
 
 #[test]
 fn test_get_files_analyzed_initially_zero() {
-    setup();
-    let engine = AnalysisEngine::new().unwrap();
+    let engine = AnalysisEngine::new_with_memory_cache().unwrap();
     assert_eq!(engine.get_files_analyzed(), 0);
 }
 
 #[tokio::test]
 async fn test_analyze_empty_directory() {
-    setup();
-    let mut engine = AnalysisEngine::new().unwrap();
+    let mut engine = AnalysisEngine::new_with_memory_cache().unwrap();
     
     // Create a temporary empty directory
     let temp_dir = tempfile::tempdir().unwrap();
@@ -52,8 +39,7 @@ async fn test_analyze_empty_directory() {
 
 #[tokio::test]
 async fn test_analyze_simple_rust_file() {
-    setup();
-    let mut engine = AnalysisEngine::new().unwrap();
+    let mut engine = AnalysisEngine::new_with_memory_cache().unwrap();
     
     // Create a temporary directory with a simple Rust file
     let temp_dir = tempfile::tempdir().unwrap();
@@ -80,8 +66,7 @@ fn main() {
 
 #[tokio::test]
 async fn test_analyze_god_object_detection() {
-    setup();
-    let mut engine = AnalysisEngine::new().unwrap();
+    let mut engine = AnalysisEngine::new_with_memory_cache().unwrap();
     
     // Create a temporary directory with a Rust file that should trigger god object detection
     let temp_dir = tempfile::tempdir().unwrap();
