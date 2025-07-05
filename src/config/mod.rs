@@ -1,12 +1,60 @@
-//! Centralized configuration module for Uveddi
-//! Provides Config struct and loading from env or file
-//! Extend this struct as needed for new configuration options
+//! Configuration Management for Uveddi
+//!
+//! This module provides centralized configuration management for the Uveddi application.
+//! Configuration can be loaded from environment variables, TOML files, or provided
+//! programmatically.
+//!
+//! # Configuration Sources
+//!
+//! 1. **Environment Variables**: Use `Config::from_env()` to load from env vars
+//! 2. **TOML Files**: Use `Config::from_file()` to load from a TOML configuration file
+//! 3. **Programmatic**: Create `Config` instances directly in code
+//!
+//! # Example Configuration File (config.toml)
+//!
+//! ```toml
+//! ollama_model = "deepseek-coder:6.7b-instruct-q4_0"
+//! ```
+//!
+//! # Environment Variables
+//!
+//! - `OLLAMA_MODEL`: The Ollama model to use for AI analysis
+//!
+//! # Usage
+//!
+//! ```rust,no_run
+//! use uveddi::config::Config;
+//!
+//! // Load from environment
+//! let config = Config::from_env()?;
+//!
+//! // Load from file
+//! let config = Config::from_file("config.toml")?;
+//!
+//! // Create programmatically
+//! let config = Config {
+//!     ollama_model: Some("codellama:7b-instruct".to_string()),
+//! };
+//! # Ok::<(), Box<dyn std::error::Error>>(())
+//! ```
 
 use serde::{Deserialize, Serialize};
 use std::{env, fs};
 
+/// Main configuration structure for Uveddi
+///
+/// Contains all configuration options that can be customized by users.
+/// All fields are optional to allow partial configuration and fallback
+/// to sensible defaults.
+///
+/// # Fields
+///
+/// * `ollama_model` - Optional model name for Ollama AI provider
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Config {
+    /// The Ollama model to use for AI-powered analysis
+    ///
+    /// Examples: "deepseek-coder:6.7b-instruct-q4_0", "codellama:7b-instruct"
     pub ollama_model: Option<String>,
 }
 

@@ -1,30 +1,86 @@
-//! Main entry point for the Uveddi CLI application
+//! Uveddi CLI Application Entry Point
 //!
-//! This binary parses command-line arguments, initializes logging and error reporting,
-//! and delegates to the application logic in `uveddi::application`.
-
-//! Uveddi - A tool for code analysis and exploration
+//! This is the main entry point for the Uveddi command-line interface. It handles
+//! command-line argument parsing, initializes the application environment, and
+//! delegates execution to the appropriate subcommands.
 //!
-//! This is the main entry point for the Uveddi application.
+//! # Application Overview
+//!
+//! Uveddi is a comprehensive code analysis tool that combines static analysis
+//! with AI-powered insights. It provides:
+//!
+//! - **Multi-language AST analysis**: Parse and analyze code across different languages
+//! - **Anti-pattern detection**: Identify code quality issues and architectural problems
+//! - **AI-powered explanations**: Generate intelligent explanations for detected issues
+//! - **Flexible reporting**: Output results in multiple formats (Markdown, JSON, etc.)
+//!
+//! # Available Commands
+//!
+//! ## `analyze`
+//! Performs comprehensive analysis of a codebase:
+//! ```bash
+//! uveddi analyze ./src --output-format markdown --enable-ai
+//! ```
+//!
+//! ## `config`
+//! Manages application configuration:
+//! ```bash
+//! uveddi config show
+//! uveddi config set ollama.model "deepseek-coder:6.7b"
+//! ```
+//!
+//! # Environment Variables
+//!
+//! - `OLLAMA_API_URL`: Base URL for Ollama API (default: http://localhost:11434)
+//! - `OLLAMA_MODEL`: Default model for AI analysis
+//! - `RUST_LOG`: Logging level (error, warn, info, debug, trace)
+//!
+//! # Error Handling
+//!
+//! The application uses `color-eyre` for enhanced error reporting with:
+//! - Colorized error messages
+//! - Stack traces for debugging
+//! - Contextual error information
+//! - Suggestions for common issues
 
 use clap::{Parser, Subcommand};
 use color_eyre::eyre::Result;
 use uveddi::cli::analyze_command::AnalyzeCommand;
 use uveddi::cli::config_command::ConfigCommand;
 
+/// Uveddi CLI application
+///
+/// A comprehensive code analysis tool that combines static analysis with
+/// AI-powered insights to help developers understand and improve their codebases.
 #[derive(Parser)]
 #[command(name = "uveddi")]
-#[command(about = "A Rust-based code analysis and exploration tool", long_about = None)]
+#[command(about = "A Rust-based code analysis and exploration tool with AI integration")]
+#[command(
+    long_about = "Uveddi performs comprehensive code analysis using static analysis \
+    techniques combined with AI-powered insights. It can detect anti-patterns, analyze \
+    architectural issues, and provide intelligent explanations for code quality problems."
+)]
+#[command(version)]
 struct Cli {
+    /// Subcommand to execute
     #[command(subcommand)]
     command: Commands,
 }
 
+/// Available subcommands for the Uveddi CLI
 #[derive(Subcommand)]
 enum Commands {
-    /// Analyze a codebase at the given path
+    /// Analyze a codebase for quality issues and architectural problems
+    ///
+    /// Performs comprehensive static analysis on the specified path, detecting
+    /// anti-patterns, architectural issues, and code quality problems. Optionally
+    /// integrates with AI providers for enhanced explanations and recommendations.
     Analyze(AnalyzeCommand),
-    /// Configuration management commands
+
+    /// Manage Uveddi configuration settings
+    ///
+    /// View and modify configuration settings for AI providers, output preferences,
+    /// and analysis parameters. Configuration can be stored per-user or per-project.
     Config(ConfigCommand),
 }
 

@@ -17,7 +17,10 @@ pub fn maximal_marginal_relevance<'a>(
         let mut best_idx = 0;
         for (i, chunk) in remaining.iter().enumerate() {
             let relevance = super::cosine_similarity(query_embedding, &chunk.embedding);
-            let diversity = selected.iter().map(|s| super::cosine_similarity(&s.embedding, &chunk.embedding)).fold(0.0, f32::max);
+            let diversity = selected
+                .iter()
+                .map(|s: &IndexedChunk| super::cosine_similarity(&s.embedding, &chunk.embedding))
+                .fold(0.0, f32::max);
             let mmr_score = lambda * relevance - (1.0 - lambda) * diversity;
             if mmr_score > best_score {
                 best_score = mmr_score;

@@ -7,6 +7,7 @@
 use anyhow::Context;
 use chrono::Utc;
 use log::{error, info};
+use std::collections::HashMap;
 use std::path::PathBuf;
 
 use crate::ai::AiAnalysisEngine;
@@ -261,12 +262,14 @@ impl AnalysisOrchestrator {
             "json" => {
                 let report = self
                     .report_generator
-                    .generate_json_report(analysis_run, issues)?;
+                    .generate_json_report(analysis_run, issues, &HashMap::new(), None)
+                    .map_err(|e| crate::error::UveddiError::ReportGeneration(e))?;
                 Ok(report.to_string())
             }
             "markdown" => self
                 .report_generator
-                .generate_markdown_report(analysis_run, issues),
+                .generate_markdown_report(analysis_run, issues, &HashMap::new(), None)
+                .map_err(|e| crate::error::UveddiError::ReportGeneration(e)),
             _ => Err(UveddiError::UnsupportedOutputFormat(
                 config.output_format.clone(),
             ))

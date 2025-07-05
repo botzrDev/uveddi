@@ -1,5 +1,4 @@
-use crate::analysis::graph::dependency::ComponentNode;
-use crate::analysis::graph::dependency::LocalDependencyGraph;
+use crate::analysis::graph::dependency::{ComponentNode, LocalDependencyGraph};
 use crate::database::models::ArchitecturalIssue;
 use log::info;
 use petgraph::algo::tarjan_scc;
@@ -41,13 +40,17 @@ impl CycleDetector {
         // Filter out SCCs with only one node (not a cycle)
         let cycles: Vec<_> = sccs.into_iter().filter(|scc| scc.len() > 1).collect();
 
-        for (cycle_id, cycle) in cycles.iter().enumerate() {
+        for (_cycle_id, cycle) in cycles.iter().enumerate() {
             // Get component names for the cycle description
             let component_names: Vec<String> = cycle
                 .iter()
                 .map(|&node_idx| {
                     let node_ref = &petgraph[node_idx];
-                    node_ref.name.clone()
+                    match node_ref {
+                        ComponentNode::Module { path } => path.clone(),
+                        ComponentNode::Class { name, .. } => name.clone(),
+                        ComponentNode::Function { name, .. } => name.clone(),
+                    }
                 })
                 .collect();
 
@@ -62,10 +65,10 @@ impl CycleDetector {
                 let node_ref = &petgraph[node_idx];
 
                 // Find the file path of the component
-                let file_path = if let Some(ref path) = node_ref.file_path {
-                    path.clone()
-                } else {
-                    "Unknown location".to_string()
+                let file_path = match node_ref {
+                    ComponentNode::Module { path } => path.clone(),
+                    ComponentNode::Class { file_path, .. } => file_path.clone(),
+                    ComponentNode::Function { file_path, .. } => file_path.clone(),
                 };
 
                 issues.push(ArchitecturalIssue {
@@ -73,11 +76,11 @@ impl CycleDetector {
                     analysis_run_id,
                     anti_pattern_type_id: 1, // Assuming 1 is cyclic dependency type
                     file_path,
-                    start_line: node_ref.start_line,
-                    end_line: node_ref.end_line,
+                    start_line: Some(1), // TODO: Extract actual line numbers from AST
+                    end_line: Some(1),
                     severity: "high".to_string(), // Cyclic dependencies are typically high severity
                     description: description.clone(),
-                    code_snippet: None, // Will be populated separately if needed
+                    code_snippet: None,   // Will be populated separately if needed
                     ai_explanation: None, // Will be populated by AI engine
                 });
             }

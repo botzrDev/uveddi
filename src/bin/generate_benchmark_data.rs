@@ -1,46 +1,50 @@
-use std::{fs, io::Write, path::Path};
 use std::fs::File;
+use std::{fs, io::Write, path::Path};
 
 fn main() -> std::io::Result<()> {
     println!("Generating benchmark data...");
-    
+
     // Create base directory
     let base_dir = Path::new("target/benchmark-data");
     fs::create_dir_all(base_dir)?;
-    
+
     // Generate simple size-based datasets
     generate_simple_dataset(base_dir.join("small"), 100, 5)?;
     generate_simple_dataset(base_dir.join("medium"), 500, 20)?;
-    
+
     // Generate synthetic data for each supported language
     generate_rust_project(base_dir.join("rust-project"))?;
     generate_python_project(base_dir.join("python-project"))?;
     generate_javascript_project(base_dir.join("javascript-project"))?;
-    
+
     println!("Benchmark data generation complete!");
     Ok(())
 }
 
 /// Generate a simple dataset with random content files
-fn generate_simple_dataset(dir: impl AsRef<Path>, num_files: usize, complexity: usize) -> std::io::Result<()> {
+fn generate_simple_dataset(
+    dir: impl AsRef<Path>,
+    num_files: usize,
+    complexity: usize,
+) -> std::io::Result<()> {
     let dir = dir.as_ref();
     if dir.exists() {
         fs::remove_dir_all(dir)?;
     }
     fs::create_dir_all(dir)?;
-    
+
     println!("Generating {} files in {}", num_files, dir.display());
-    
+
     for i in 0..num_files {
         let file_path = dir.join(format!("file_{}.txt", i));
         let mut file = fs::File::create(&file_path)?;
-        
+
         // Create content with some variability
         let content_size = 1024 * (5 + (i % complexity));
         let content = vec![b'a' + (i % 26) as u8; content_size];
         file.write_all(&content)?;
     }
-    
+
     Ok(())
 }
 
@@ -48,10 +52,11 @@ fn generate_simple_dataset(dir: impl AsRef<Path>, num_files: usize, complexity: 
 fn generate_rust_project(dir: impl AsRef<Path>) -> std::io::Result<()> {
     let dir = dir.as_ref();
     fs::create_dir_all(dir.join("src"))?;
-    
+
     // Create Cargo.toml
     let mut cargo_toml = File::create(dir.join("Cargo.toml"))?;
-    cargo_toml.write_all(b"[package]
+    cargo_toml.write_all(
+        b"[package]
 name = \"test-project\"
 version = \"0.1.0\"
 edition = \"2021\"
@@ -61,11 +66,13 @@ serde = { version = \"1.0\", features = [\"derive\"] }
 serde_json = \"1.0\"
 tokio = { version = \"1.0\", features = [\"full\"] }
 reqwest = \"0.11\"
-")?;
-    
+",
+    )?;
+
     // Create main.rs with global state (anti-pattern)
     let mut main_rs = File::create(dir.join("src/main.rs"))?;
-    main_rs.write_all(b"mod god_object;
+    main_rs.write_all(
+        b"mod god_object;
 mod cyclic_a;
 mod cyclic_b;
 mod magic_values;
@@ -110,11 +117,13 @@ fn main() {
     // Using cyclic modules
     cyclic_a::function_a();
 }
-")?;
-    
+",
+    )?;
+
     // Create a god object (anti-pattern)
     let mut god_rs = File::create(dir.join("src/god_object.rs"))?;
-    god_rs.write_all(b"// God Object anti-pattern
+    god_rs.write_all(
+        b"// God Object anti-pattern
 pub struct SystemManager {
     config: String,
     database_connection: String,
@@ -214,11 +223,13 @@ impl SystemManager {
         self.cache.clear();
     }
 }
-")?;
-    
+",
+    )?;
+
     // Create cyclic dependency (anti-pattern)
     let mut cyclic_a = File::create(dir.join("src/cyclic_a.rs"))?;
-    cyclic_a.write_all(b"// Part of a cyclic dependency
+    cyclic_a.write_all(
+        b"// Part of a cyclic dependency
 pub mod sub_a {
     pub struct A {
         pub value: i32,
@@ -230,10 +241,12 @@ pub fn function_a() {
     println!(\"Function A called\");
     crate::cyclic_b::function_b();
 }
-")?;
-    
+",
+    )?;
+
     let mut cyclic_b = File::create(dir.join("src/cyclic_b.rs"))?;
-    cyclic_b.write_all(b"// Part of a cyclic dependency
+    cyclic_b.write_all(
+        b"// Part of a cyclic dependency
 use crate::cyclic_a::sub_a::A;
 
 pub fn function_b() {
@@ -241,11 +254,13 @@ pub fn function_b() {
     let a = A { value: 42 };
     println!(\"Value from A: {}\", a.value);
 }
-")?;
-    
+",
+    )?;
+
     // Create magic values (anti-pattern)
     let mut magic_rs = File::create(dir.join("src/magic_values.rs"))?;
-    magic_rs.write_all(b"// Magic values anti-pattern
+    magic_rs.write_all(
+        b"// Magic values anti-pattern
 pub fn calculate_tax(amount: f64) -> f64 {
     // Magic value: 0.07 (tax rate)
     amount * 0.07
@@ -268,8 +283,9 @@ pub fn process_request(request_type: &str) -> u32 {
         _ => 120,          // Default timeout
     }
 }
-")?;
-    
+",
+    )?;
+
     println!("✅ Generated Rust project with anti-patterns");
     Ok(())
 }
@@ -278,17 +294,20 @@ pub fn process_request(request_type: &str) -> u32 {
 fn generate_python_project(dir: impl AsRef<Path>) -> std::io::Result<()> {
     let dir = dir.as_ref();
     fs::create_dir_all(dir.join("src"))?;
-    
+
     // Create requirements.txt
     let mut requirements = File::create(dir.join("requirements.txt"))?;
-    requirements.write_all(b"requests==2.28.1
+    requirements.write_all(
+        b"requests==2.28.1
 flask==2.2.2
 sqlalchemy==1.4.41
-")?;
-    
+",
+    )?;
+
     // Create main.py with various anti-patterns
     let mut main_py = File::create(dir.join("src/main.py"))?;
-    main_py.write_all(b"# Python main with anti-patterns
+    main_py.write_all(
+        b"# Python main with anti-patterns
 from src.god_class import SystemManager
 from src.cyclic_a import function_a
 import os
@@ -313,11 +332,13 @@ def main():
 
 if __name__ == \"__main__\":
     main()
-")?;
-    
+",
+    )?;
+
     // Create god class (anti-pattern)
     let mut god_py = File::create(dir.join("src/god_class.py"))?;
-    god_py.write_all(b"# God Class anti-pattern
+    god_py.write_all(
+        b"# God Class anti-pattern
 class SystemManager:
     def __init__(self):
         self.config = {}
@@ -382,13 +403,15 @@ class SystemManager:
     
     def clear_cache(self):
         self.cache.clear()
-")?;
-    
+",
+    )?;
+
     // Create cyclic dependency (anti-pattern)
     fs::create_dir_all(dir.join("src/subpackage"))?;
-    
+
     let mut cyclic_a = File::create(dir.join("src/cyclic_a.py"))?;
-    cyclic_a.write_all(b"# Part of a cyclic dependency
+    cyclic_a.write_all(
+        b"# Part of a cyclic dependency
 from src.cyclic_b import function_b
 
 class A:
@@ -398,18 +421,21 @@ class A:
 def function_a():
     print(\"Function A called\")
     function_b()
-")?;
-    
+",
+    )?;
+
     let mut cyclic_b = File::create(dir.join("src/cyclic_b.py"))?;
-    cyclic_b.write_all(b"# Part of a cyclic dependency
+    cyclic_b.write_all(
+        b"# Part of a cyclic dependency
 from src.cyclic_a import A
 
 def function_b():
     print(\"Function B called\")
     a = A()
     print(f\"Value from A: {a.value}\")
-")?;
-    
+",
+    )?;
+
     println!("✅ Generated Python project with anti-patterns");
     Ok(())
 }
@@ -418,10 +444,11 @@ def function_b():
 fn generate_javascript_project(dir: impl AsRef<Path>) -> std::io::Result<()> {
     let dir = dir.as_ref();
     fs::create_dir_all(dir.join("src"))?;
-    
+
     // Create package.json
     let mut package_json = File::create(dir.join("package.json"))?;
-    package_json.write_all(b"{
+    package_json.write_all(
+        b"{
   \"name\": \"test-project\",
   \"version\": \"1.0.0\",
   \"description\": \"Test project with anti-patterns\",
@@ -432,11 +459,13 @@ fn generate_javascript_project(dir: impl AsRef<Path>) -> std::io::Result<()> {
     \"lodash\": \"^4.17.21\"
   }
 }
-")?;
-    
+",
+    )?;
+
     // Create index.js with various anti-patterns
     let mut index_js = File::create(dir.join("src/index.js"))?;
-    index_js.write_all(b"// JavaScript main with anti-patterns
+    index_js.write_all(
+        b"// JavaScript main with anti-patterns
 const { SystemManager } = require('./godClass');
 const { functionA } = require('./cyclicA');
 
@@ -460,11 +489,13 @@ function main() {
 }
 
 main();
-")?;
-    
+",
+    )?;
+
     // Create god class (anti-pattern)
     let mut god_js = File::create(dir.join("src/godClass.js"))?;
-    god_js.write_all(b"// God Class anti-pattern
+    god_js.write_all(
+        b"// God Class anti-pattern
 class SystemManager {
     constructor() {
         this.config = {};
@@ -546,11 +577,13 @@ class SystemManager {
 }
 
 module.exports = { SystemManager };
-")?;
-    
+",
+    )?;
+
     // Create cyclic dependency (anti-pattern)
     let mut cyclic_a = File::create(dir.join("src/cyclicA.js"))?;
-    cyclic_a.write_all(b"// Part of a cyclic dependency
+    cyclic_a.write_all(
+        b"// Part of a cyclic dependency
 const { functionB } = require('./cyclicB');
 
 class A {
@@ -565,10 +598,12 @@ function functionA() {
 }
 
 module.exports = { A, functionA };
-")?;
-    
+",
+    )?;
+
     let mut cyclic_b = File::create(dir.join("src/cyclicB.js"))?;
-    cyclic_b.write_all(b"// Part of a cyclic dependency
+    cyclic_b.write_all(
+        b"// Part of a cyclic dependency
 const { A } = require('./cyclicA');
 
 function functionB() {
@@ -578,8 +613,9 @@ function functionB() {
 }
 
 module.exports = { functionB };
-")?;
-    
+",
+    )?;
+
     println!("✅ Generated JavaScript project with anti-patterns");
     Ok(())
 }

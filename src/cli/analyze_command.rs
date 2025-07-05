@@ -1,3 +1,32 @@
+//! Analyze Command Implementation
+//!
+//! This module implements the `analyze` subcommand for the Uveddi CLI.
+//! The analyze command performs comprehensive code analysis on a given path,
+//! optionally integrating AI-powered insights and generating reports.
+//!
+//! # Features
+//!
+//! - Multi-format output (text, JSON, markdown)
+//! - AI-powered analysis with Ollama integration
+//! - Configurable output destinations
+//! - Environment variable support for configuration
+//!
+//! # Usage
+//!
+//! ```bash
+//! # Basic analysis
+//! uveddi analyze ./src
+//!
+//! # With AI analysis
+//! uveddi analyze ./src --enable-ai
+//!
+//! # Custom output format and file
+//! uveddi analyze ./src --output-format json --output analysis.json
+//!
+//! # Using environment variables for Ollama
+//! OLLAMA_API_URL=http://localhost:11434 OLLAMA_MODEL=deepseek-coder uveddi analyze ./src --enable-ai
+//! ```
+
 use anyhow::Context;
 use clap::Args;
 use log::info;
@@ -6,33 +35,106 @@ use std::path::PathBuf;
 use crate::application::{AnalysisConfig, AnalysisOrchestrator};
 use crate::error::UveddiError;
 
+/// Command-line arguments for the analyze subcommand
+///
+/// This struct defines all the command-line options available for the
+/// `analyze` command, including input paths, output configuration,
+/// and AI integration settings.
 #[derive(Args)]
 pub struct AnalyzeCommand {
-    /// Path to analyze
+    /// Path to the project or directory to analyze
+    ///
+    /// Can be a file or directory. When analyzing a directory,
+    /// all supported source files will be recursively processed.
     pub path: PathBuf,
 
-    /// Output format (text, json, markdown)
+    /// Output format for the analysis report
+    ///
+    /// Supported formats:
+    /// - `text`: Plain text format for terminal output
+    /// - `json`: Structured JSON format for programmatic consumption
+    /// - `markdown`: Markdown format for documentation
     #[arg(long, default_value = "markdown")]
     pub output_format: String,
 
-    /// Output file path
+    /// Optional output file path
+    ///
+    /// If not specified, the report will be written to stdout.
+    /// The file extension should match the chosen output format.
     #[arg(long)]
     pub output: Option<PathBuf>,
 
-    /// Enable AI analysis (requires API key or local model)
+    /// Enable AI-powered analysis and explanations
+    ///
+    /// When enabled, the analysis will include AI-generated explanations
+    /// for detected issues and architectural recommendations.
+    /// Requires either an API key or a local Ollama instance.
     #[arg(long)]
     pub enable_ai: bool,
 
-    /// Ollama API URL (for local AI)
+    /// Ollama API URL for local AI analysis
+    ///
+    /// Used when `--enable-ai` is specified and you want to use
+    /// a local Ollama instance instead of external AI services.
+    ///
+    /// Can also be set via the `OLLAMA_API_URL` environment variable.
     #[arg(long, env = "OLLAMA_API_URL")]
     pub ollama_api_url: Option<String>,
 
-    /// Ollama model name (for local AI)
+    /// Ollama model name for local AI analysis
+    ///
+    /// Specifies which Ollama model to use for analysis.
+    /// Common options include "deepseek-coder:6.7b-instruct-q4_0",
+    /// "codellama:7b-instruct", etc.
+    ///
+    /// Can also be set via the `OLLAMA_MODEL` environment variable.
     #[arg(long, env = "OLLAMA_MODEL")]
     pub ollama_model: Option<String>,
 }
 
 impl AnalyzeCommand {
+    /// Execute the analyze command with the provided arguments
+    ///
+    /// This method orchestrates the complete analysis workflow:
+    /// 1. Initialize the analysis orchestrator
+    /// 2. Configure analysis parameters
+    /// 3. Run the analysis
+    /// 4. Generate and output the report
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` - Analysis completed successfully
+    /// * `Err(UveddiError)` - Analysis failed with specific error details
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if:
+    /// - The target path doesn't exist or isn't readable
+    /// - The analysis orchestrator cannot be initialized
+    /// - AI services are enabled but unavailable
+    /// - The output file cannot be written
+    /// - Internal analysis errors occur
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// use uveddi::cli::analyze_command::AnalyzeCommand;
+    /// use std::path::PathBuf;
+    ///
+    /// let command = AnalyzeCommand {
+    ///     path: PathBuf::from("./src"),
+    ///     output_format: "markdown".to_string(),
+    ///     output: None,
+    ///     enable_ai: false,
+    ///     ollama_api_url: None,
+    ///     ollama_model: None,
+    /// };
+    ///
+    /// # tokio_test::block_on(async {
+    /// command.execute().await?;
+    /// # Ok::<(), uveddi::error::UveddiError>(())
+    /// # });
+    /// ```
     pub async fn execute(&self) -> Result<(), UveddiError> {
         info!("Starting analysis of: {}", self.path.display());
 

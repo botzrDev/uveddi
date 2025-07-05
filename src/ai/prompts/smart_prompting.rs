@@ -61,62 +61,73 @@ Given the following architectural issue, provide a detailed explanation and reco
               \"explanation\": \"Why this is an architectural concern\",\n\
               \"refactoring\": \"Recommended solution or refactoring steps\",\n\
               \"confidence\": \"high/medium/low confidence in this assessment\"\n\
-            }\n"
+            }\n",
         );
 
         add_hallucination_mitigation(&prompt)
     }
-    
+
     /// Build a RAG-enhanced prompt with relevant context from codebase
-    pub fn build_rag_prompt(&self, issue: &ArchitecturalIssue, vector_index: &VectorIndex, query_embedding: &ndarray::Array1<f32>) -> String {
+    pub fn build_rag_prompt(
+        &self,
+        issue: &ArchitecturalIssue,
+        vector_index: &VectorIndex,
+        query_embedding: &ndarray::Array1<f32>,
+    ) -> String {
         // Start with the basic prompt
         let mut prompt = self.build_prompt_for_issue(issue);
-        
+
         if !self.use_rag {
             return prompt;
         }
-        
+
         // Get relevant context chunks from the vector index
         let relevant_chunks = if self.diversify_results {
             // Use maximal marginal relevance to diversify results
             use crate::semantic_search::mmr::maximal_marginal_relevance;
             let search_results = vector_index.search(query_embedding, self.max_context_chunks * 2);
             // Convert search results to IndexedChunk references
-            let candidates: Vec<&IndexedChunk> = search_results.iter()
-                .map(|(_, chunk)| *chunk)
-                .collect();
-                
+            let candidates: Vec<&IndexedChunk> =
+                search_results.iter().map(|(_, chunk)| *chunk).collect();
+
             // MMR returns the selected chunks directly, not indices
             maximal_marginal_relevance(
                 query_embedding,
                 &candidates,
                 0.5, // Lambda (diversity parameter) - balance between relevance and diversity
-                self.max_context_chunks // k - number of results to return
+                self.max_context_chunks, // k - number of results to return
             )
         } else {
             // Just use top-k most similar chunks
-            vector_index.search(query_embedding, self.max_context_chunks)
+            vector_index
+                .search(query_embedding, self.max_context_chunks)
                 .into_iter()
-                .map(|(_, chunk)| chunk)
+                .map(|(chunk, _)| chunk)
                 .collect::<Vec<_>>()
         };
-        
+
         // Insert the RAG context
         if !relevant_chunks.is_empty() {
             let context_section = format!(
                 "\n\n### RELEVANT CODEBASE CONTEXT ###\n{}",
-                relevant_chunks.iter()
-                    .map(|chunk| format!("--- {} ---\n{}\n", 
-                        chunk.metadata.get("path").unwrap_or(&"unknown".to_string()), 
-                        chunk.text))
+                relevant_chunks
+                    .iter()
+                    .map(|chunk| format!(
+                        "--- {} ---\n{}\n",
+                        chunk.metadata.get("path").unwrap_or(&"unknown".to_string()),
+                        chunk.text
+                    ))
                     .collect::<Vec<_>>()
                     .join("\n")
             );
-            
+
             // Insert context before the response format
-            prompt.insert_str(prompt.find("Respond in the following").unwrap(), &context_section);
+            prompt.insert_str(
+                prompt.find("Respond in the following").unwrap(),
+                &context_section,
+            );
         }
-        
+
         prompt
     }
 }
@@ -159,6 +170,7 @@ mod tests {
     fn test_add_hallucination_mitigation_appends_instruction() {
         let prompt = "Explain the issue.";
         let mitigated = add_hallucination_mitigation(prompt);
-        assert!(mitigated.contains("IMPORTANT: Base your explanations only on the provided information."));
+        assert!(mitigated
+            .contains("IMPORTANT: Base your explanations only on the provided information."));
     }
 }

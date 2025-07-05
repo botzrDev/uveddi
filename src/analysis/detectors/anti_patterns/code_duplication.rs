@@ -244,9 +244,7 @@ impl CodeDuplicationDetector {
 
                 let source = function_node
                     .utf8_text(parsed_file.source.as_bytes())
-                    .map_err(|e| {
-                        AnalysisError::Analysis(format!("Failed to extract source: {e}"))
-                    })?
+                    .map_err(|e| AnalysisError::Analysis(format!("Failed to extract source: {e}")))?
                     .to_string();
 
                 // Extract function name by finding the identifier child
@@ -394,19 +392,19 @@ impl CodeDuplicationDetector {
     /// The normalized token string
     fn normalize_token(&self, token: &str) -> String {
         // Check if it's a literal (number)
-        if token.chars().all(|c| c.is_numeric() || c == '.')
-            && self.config.ignore_literals {
-                return "_LIT_".to_string();
-            }
+        if token.chars().all(|c| c.is_numeric() || c == '.') && self.config.ignore_literals {
+            return "_LIT_".to_string();
+        }
 
         // Check if it's an identifier (starts with letter or underscore)
         if token
             .chars()
             .next()
             .is_some_and(|c| c.is_alphabetic() || c == '_')
-            && self.config.ignore_identifiers {
-                return "_ID_".to_string();
-            }
+            && self.config.ignore_identifiers
+        {
+            return "_ID_".to_string();
+        }
 
         token.to_string()
     }
@@ -487,10 +485,7 @@ impl CodeDuplicationDetector {
             // Generate fingerprints and add to index
             let fingerprints = self.generate_fingerprints(&block.normalized_tokens);
             for fingerprint in fingerprints {
-                index
-                    .entry(fingerprint)
-                    .or_default()
-                    .push(block.clone());
+                index.entry(fingerprint).or_default().push(block.clone());
             }
         }
 

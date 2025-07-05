@@ -1,7 +1,6 @@
 //! Hybrid search and Reciprocal Rank Fusion (RRF) for code intelligence
 
-use super::{VectorIndex, IndexedChunk};
-use ndarray::Array1;
+use super::IndexedChunk;
 
 /// Placeholder for BM25 or sparse keyword search result
 #[derive(Debug)]
@@ -30,8 +29,15 @@ pub fn reciprocal_rank_fusion<'a>(
     // Sort by combined RRF score
     let mut ranked: Vec<_> = scores.into_iter().collect();
     ranked.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
-    ranked.into_iter().take(k).filter_map(|(id, _)| {
-        dense.iter().find(|(chunk, _)| &chunk.id == id).map(|(chunk, _)| *chunk)
-            .or_else(|| sparse.iter().find(|r| &r.chunk.id == id).map(|r| r.chunk))
-    }).collect()
+    ranked
+        .into_iter()
+        .take(k)
+        .filter_map(|(id, _)| {
+            dense
+                .iter()
+                .find(|(chunk, _)| &chunk.id == id)
+                .map(|(chunk, _)| *chunk)
+                .or_else(|| sparse.iter().find(|r| &r.chunk.id == id).map(|r| r.chunk))
+        })
+        .collect()
 }
