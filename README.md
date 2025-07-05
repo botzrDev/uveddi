@@ -113,7 +113,7 @@ Uveddi is community-driven! We welcome contributions:
 - **Documentation:** Improve guides, examples, and API docs
 - **Bug Reports:** Help us improve reliability and accuracy
 
-See our [Contributing Guide](./CONTRIBUTING.md) for details on how to get started.
+See our [Contributing Guide](./docs/community/GUIDELINES.md) for details on how to get started.
 
 ## 📝 Documentation Standards
 
@@ -121,3 +121,40 @@ See our [Contributing Guide](./CONTRIBUTING.md) for details on how to get starte
 - Complex algorithms need explanatory comments
 - Each module starts with `//!` module documentation
 - See [`docs/commenting_documentation_checklist.md`](./docs/commenting_documentation_checklist.md) for full guidelines
+
+---
+
+# Uveddi
+
+Uveddi is a Rust project for ...
+
+## Build Instructions
+
+```sh
+cargo build
+```
+
+## Run
+
+```sh
+cargo run
+```
+
+## Test
+
+```sh
+cargo test
+```
+
+## Documentation
+
+- See `docs/` for guides, API, and community info
+
+## Contributing
+
+- Please see `docs/community/GUIDELINES.md`
+- Use GitHub Issues for bugs and feature requests
+
+---
+
+(Keep this file up to date with project changes.)

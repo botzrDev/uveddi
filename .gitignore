@@ -1,6 +1,8 @@
 # Rust build artifacts
 /target/
 **/*.rs.bk
+**/debug/
+**/incremental/
 
 # IDE/editor settings
 /.vscode/
@@ -36,6 +38,8 @@ Cargo.lock
 .uveddi/
 .uveddi_cache/
 *.db
+uveddi_cache.db
+**/tmp_*
 
 # Ignore PID files from scripts
 /scripts/*.pid
