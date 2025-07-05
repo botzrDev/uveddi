@@ -15,12 +15,24 @@ pub struct AsyncWalker {
 }
 
 impl AsyncWalker {
-    /// Create a new async walker with specific file extensions to include
+    /// Creates a new `AsyncWalker` with the specified file extensions to include.
+    ///
+    /// # Arguments
+    ///
+    /// * `include_extensions` - Vector of file extensions (e.g., `vec!["rs", "py"]`) to include in the walk.
+    ///
+    /// # Returns
+    ///
+    /// * `AsyncWalker` - A new instance configured for the given extensions.
     pub fn new(include_extensions: Vec<String>) -> Self {
         Self { include_extensions }
     }
 
-    /// Create a walker for common source code files
+    /// Creates an `AsyncWalker` preconfigured for common source code file extensions.
+    ///
+    /// # Returns
+    ///
+    /// * `AsyncWalker` - A new instance for Rust, Python, JS, TS, etc.
     pub fn for_source_code() -> Self {
         Self::new(vec![
             "rs".to_string(),
@@ -32,7 +44,26 @@ impl AsyncWalker {
         ])
     }
 
-    /// Walk directory asynchronously, yielding file paths that match the criteria
+    /// Asynchronously walks a directory, yielding file paths matching the configured extensions.
+    ///
+    /// # Arguments
+    ///
+    /// * `root` - The root directory to start walking from.
+    ///
+    /// # Returns
+    ///
+    /// * `impl Stream<Item = Result<PathBuf, std::io::Error>>` - Stream of file paths or errors.
+    ///
+    /// # Example
+    /// ```rust,ignore
+    /// use uveddi::ingestion::AsyncWalker;
+    /// use tokio_stream::StreamExt;
+    /// let walker = AsyncWalker::for_source_code();
+    /// let mut stream = walker.walk(Path::new("./src"));
+    /// while let Some(Ok(path)) = stream.next().await {
+    ///     println!("Found file: {}", path.display());
+    /// }
+    /// ```
     pub fn walk(&self, root: &Path) -> impl Stream<Item = Result<PathBuf, std::io::Error>> + '_ {
         self.walk_recursive(root.to_path_buf())
     }

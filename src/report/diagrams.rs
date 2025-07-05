@@ -4,7 +4,26 @@ use crate::analysis::dependency::Dependency;
 use crate::models::ArchitecturalIssue;
 use std::collections::HashSet;
 
-/// Generates a Mermaid.js compatible graph representation of code dependencies
+/// Generates a Mermaid.js diagram representing code dependencies and highlights issues.
+///
+/// This function creates a graph in Mermaid.js syntax, showing modules as nodes and dependencies as edges.
+/// Nodes associated with architectural issues are visually highlighted.
+///
+/// # Arguments
+///
+/// * `deps` - Slice of `Dependency` objects representing code dependencies.
+/// * `issues` - Slice of `ArchitecturalIssue` objects to highlight in the diagram.
+///
+/// # Returns
+///
+/// * `String` - Mermaid.js formatted diagram as a string.
+///
+/// # Example
+/// ```rust
+/// use uveddi::report::diagrams::generate_mermaid_diagram;
+/// let diagram = generate_mermaid_diagram(&deps, &issues);
+/// println!("{}", diagram);
+/// ```
 pub fn generate_mermaid_diagram(deps: &[Dependency], issues: &[ArchitecturalIssue]) -> String {
     let mut output = String::from("```mermaid\ngraph TD;\n");
     let mut processed_nodes = HashSet::new();

@@ -9,6 +9,16 @@ pub struct ResultCache {
 }
 
 impl ResultCache {
+    /// Creates a new persistent result cache using a file-based SQLite database.
+    ///
+    /// # Arguments
+    ///
+    /// * `db_path` - Path to the SQLite database file for caching.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(ResultCache)` - The initialized cache instance.
+    /// * `Err(rusqlite::Error)` - If the database cannot be opened or initialized.
     pub fn new(db_path: &Path) -> Result<Self> {
         let conn = Connection::open(db_path)?;
         conn.execute(
@@ -22,8 +32,13 @@ impl ResultCache {
         Ok(Self { conn })
     }
 
-    /// Creates a new ResultCache using an in-memory database
-    /// This is primarily useful for testing to avoid file system conflicts
+    /// Creates a new result cache using an in-memory SQLite database.
+    /// Useful for testing or ephemeral caching.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(ResultCache)` - The initialized in-memory cache.
+    /// * `Err(rusqlite::Error)` - If the database cannot be opened or initialized.
     pub fn new_in_memory() -> Result<Self> {
         let conn = Connection::open_in_memory()?;
         conn.execute(
@@ -43,6 +58,22 @@ impl ResultCache {
         hasher.finish().to_string()
     }
 
+    /// Retrieves a cached value for the given key, if present.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `K` - Key type (must implement `Hash`)
+    /// * `V` - Value type (must implement `DeserializeOwned`)
+    ///
+    /// # Arguments
+    ///
+    /// * `key_data` - Reference to the key data to look up.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(Some(value))` - Cached value if present.
+    /// * `Ok(None)` - If no value is cached for the key.
+    /// * `Err(rusqlite::Error)` - If the query or deserialization fails.
     pub fn get<K: Hash, V: DeserializeOwned>(&self, key_data: &K) -> Result<Option<V>> {
         let key = Self::hash_key(key_data);
         let mut stmt = self
@@ -62,6 +93,22 @@ impl ResultCache {
         Ok(None)
     }
 
+    /// Stores a value in the cache for the given key.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `K` - Key type (must implement `Hash`)
+    /// * `V` - Value type (must implement `Serialize`)
+    ///
+    /// # Arguments
+    ///
+    /// * `key_data` - Reference to the key data to use as the cache key.
+    /// * `value` - Reference to the value to cache.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` - If the value is successfully cached.
+    /// * `Err(rusqlite::Error)` - If the insert or serialization fails.
     pub fn set<K: Hash, V: Serialize>(&self, key_data: &K, value: &V) -> Result<()> {
         let key = Self::hash_key(key_data);
         let value_blob = bincode::serialize(value).unwrap();

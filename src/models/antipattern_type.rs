@@ -12,6 +12,25 @@ pub struct AntiPatternType {
 }
 
 impl AntiPatternType {
+    /// Creates a new `AntiPatternType` instance.
+    ///
+    /// # Arguments
+    ///
+    /// * `id` - Unique identifier for the anti-pattern type.
+    /// * `name` - Name of the anti-pattern.
+    /// * `description` - Description of the anti-pattern.
+    /// * `dsl_rule` - Optional DSL rule for detection.
+    /// * `category` - Optional category for classification.
+    ///
+    /// # Returns
+    ///
+    /// * `AntiPatternType` - The constructed anti-pattern type.
+    ///
+    /// # Example
+    /// ```rust
+    /// use uveddi::models::antipattern_type::AntiPatternType;
+    /// let ap = AntiPatternType::new(1, "God Object", "A class that does too much", None, Some("OO"));
+    /// ```
     pub fn new(
         id: i64,
         name: &str,

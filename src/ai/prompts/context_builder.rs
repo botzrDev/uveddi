@@ -22,6 +22,11 @@ impl Default for ContextBuilder {
 }
 
 impl ContextBuilder {
+    /// Creates a new `ContextBuilder` with empty context fields.
+    ///
+    /// # Returns
+    ///
+    /// * `ContextBuilder` - A new instance with default context.
     pub fn new() -> Self {
         Self {
             context: IssueContext {
@@ -33,6 +38,15 @@ impl ContextBuilder {
         }
     }
 
+    /// Adds issue-specific context (such as code snippet) to the builder.
+    ///
+    /// # Arguments
+    ///
+    /// * `issue` - Reference to the `ArchitecturalIssue` to extract context from.
+    ///
+    /// # Returns
+    ///
+    /// * `Self` - The builder with updated context.
     pub fn add_issue_context(mut self, issue: &ArchitecturalIssue) -> Self {
         if let Some(snippet) = &issue.code_snippet {
             self.context.code_snippet = snippet.clone();
@@ -40,6 +54,15 @@ impl ContextBuilder {
         self
     }
 
+    /// Adds code context (such as language and file context) to the builder.
+    ///
+    /// # Arguments
+    ///
+    /// * `file` - Reference to the parsed file to extract context from.
+    ///
+    /// # Returns
+    ///
+    /// * `Self` - The builder with updated context.
     pub fn add_code_context(mut self, file: &ParsedFile) -> Self {
         self.context.language = format!("{:?}", file.language);
         // TODO: Add surrounding context extraction logic

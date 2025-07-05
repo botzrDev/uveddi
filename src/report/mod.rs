@@ -141,6 +141,11 @@ impl Default for ReportGenerator {
 }
 
 impl ReportGenerator {
+    /// Creates a new `ReportGenerator` with default configuration.
+    ///
+    /// # Returns
+    ///
+    /// * `ReportGenerator` - A new instance with all features enabled by default.
     pub fn new() -> Self {
         Self {
             include_ai_explanations: true,
@@ -151,37 +156,89 @@ impl ReportGenerator {
         }
     }
 
-    /// Configure whether AI explanations should be included in the report
+    /// Configures whether AI explanations should be included in the report.
+    ///
+    /// # Arguments
+    ///
+    /// * `include` - If true, include AI explanations in the report.
+    ///
+    /// # Returns
+    ///
+    /// * `Self` - The updated report generator.
     pub fn with_ai_explanations(mut self, include: bool) -> Self {
         self.include_ai_explanations = include;
         self
     }
 
-    /// Configure whether code snippets should be included in the report
+    /// Configures whether code snippets should be included in the report.
+    ///
+    /// # Arguments
+    ///
+    /// * `include` - If true, include code snippets in the report.
+    ///
+    /// # Returns
+    ///
+    /// * `Self` - The updated report generator.
     pub fn with_code_snippets(mut self, include: bool) -> Self {
         self.include_code_snippets = include;
         self
     }
 
-    /// Configure whether diagrams should be included in the report
+    /// Configures whether diagrams should be included in the report.
+    ///
+    /// # Arguments
+    ///
+    /// * `include` - If true, include diagrams in the report.
+    ///
+    /// # Returns
+    ///
+    /// * `Self` - The updated report generator.
     pub fn with_diagrams(mut self, include: bool) -> Self {
         self.include_diagrams = include;
         self
     }
 
-    /// Configure whether severity summary should be included in the report
+    /// Configures whether a severity summary should be included in the report.
+    ///
+    /// # Arguments
+    ///
+    /// * `include` - If true, include a severity summary in the report.
+    ///
+    /// # Returns
+    ///
+    /// * `Self` - The updated report generator.
     pub fn with_severity_summary(mut self, include: bool) -> Self {
         self.include_severity_summary = include;
         self
     }
 
-    /// Configure whether remediation steps should be included in the report
+    /// Configures whether remediation steps should be included in the report.
+    ///
+    /// # Arguments
+    ///
+    /// * `include` - If true, include remediation steps in the report.
+    ///
+    /// # Returns
+    ///
+    /// * `Self` - The updated report generator.
     pub fn with_remediation_steps(mut self, include: bool) -> Self {
         self.include_remediation_steps = include;
         self
     }
 
-    /// Generate a Markdown report for the given analysis run and issues
+    /// Generates a Markdown report for the given analysis run and issues.
+    ///
+    /// # Arguments
+    ///
+    /// * `analysis_run` - The analysis run metadata.
+    /// * `issues` - Slice of architectural issues to include in the report.
+    /// * `anti_pattern_types` - Map of anti-pattern type IDs to definitions.
+    /// * `output_path` - Optional path to write the report to disk.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(String)` - The generated Markdown report as a string.
+    /// * `Err(std::io::Error)` - If writing to disk fails.
     pub fn generate_markdown_report(
         &self,
         analysis_run: &AnalysisRun,
@@ -585,7 +642,19 @@ impl ReportGenerator {
         diagrams
     }
 
-    /// Generate a JSON report
+    /// Generates a JSON report for the given analysis run and issues.
+    ///
+    /// # Arguments
+    ///
+    /// * `analysis_run` - The analysis run metadata.
+    /// * `issues` - Slice of architectural issues to include in the report.
+    /// * `anti_pattern_types` - Map of anti-pattern type IDs to definitions.
+    /// * `output_path` - Optional path to write the report to disk.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(String)` - The generated JSON report as a string.
+    /// * `Err(std::io::Error)` - If writing to disk fails.
     pub fn generate_json_report(
         &self,
         analysis_run: &AnalysisRun,

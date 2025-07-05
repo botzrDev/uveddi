@@ -26,14 +26,30 @@ use rusqlite::Row;
 use serde::{Deserialize, Serialize};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-/// Convert SystemTime to Unix timestamp
+/// Converts a `SystemTime` to a Unix timestamp (seconds since epoch).
+///
+/// # Arguments
+///
+/// * `time` - The `SystemTime` to convert.
+///
+/// # Returns
+///
+/// * `i64` - The Unix timestamp in seconds.
 pub fn system_time_to_unix_timestamp(time: SystemTime) -> i64 {
     time.duration_since(UNIX_EPOCH)
         .unwrap_or_default()
         .as_secs() as i64
 }
 
-/// Convert Unix timestamp to SystemTime
+/// Converts a Unix timestamp (seconds since epoch) to `SystemTime`.
+///
+/// # Arguments
+///
+/// * `timestamp` - The Unix timestamp in seconds.
+///
+/// # Returns
+///
+/// * `SystemTime` - The corresponding `SystemTime` value.
 pub fn unix_timestamp_to_system_time(timestamp: i64) -> SystemTime {
     UNIX_EPOCH + std::time::Duration::from_secs(timestamp as u64)
 }

@@ -3,7 +3,28 @@
 use super::IndexedChunk;
 use ndarray::Array1;
 
-/// Selects a diverse set of top-k chunks using MMR
+/// Selects a diverse set of top-k chunks using Maximal Marginal Relevance (MMR).
+///
+/// MMR balances relevance to the query with diversity among selected chunks, helping
+/// avoid redundancy in context selection for retrieval-augmented generation (RAG).
+///
+/// # Arguments
+///
+/// * `query_embedding` - Embedding vector representing the search query.
+/// * `candidates` - Slice of references to candidate `IndexedChunk`s.
+/// * `lambda` - Trade-off parameter (0.0 = only diversity, 1.0 = only relevance).
+/// * `k` - Number of results to select.
+///
+/// # Returns
+///
+/// * `Vec<&IndexedChunk>` - Top-k diverse and relevant chunks.
+///
+/// # Example
+/// ```rust
+/// use uveddi::semantic_search::{maximal_marginal_relevance, IndexedChunk};
+/// // ... setup query_embedding and candidates ...
+/// let selected = maximal_marginal_relevance(&query_embedding, &candidates, 0.5, 5);
+/// ```
 pub fn maximal_marginal_relevance<'a>(
     query_embedding: &Array1<f32>,
     candidates: &[&'a IndexedChunk],

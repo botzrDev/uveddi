@@ -9,7 +9,28 @@ pub struct SparseResult<'a> {
     pub chunk: &'a IndexedChunk,
 }
 
-/// Fuse dense and sparse results using Reciprocal Rank Fusion (RRF)
+/// Fuses dense and sparse search results using Reciprocal Rank Fusion (RRF).
+///
+/// RRF combines rankings from multiple sources (e.g., dense vector search and sparse keyword search)
+/// to produce a single, more robust ranking. This is useful for hybrid code search and retrieval-augmented generation.
+///
+/// # Arguments
+///
+/// * `dense` - Slice of tuples of (`IndexedChunk`, score) from dense (embedding) search.
+/// * `sparse` - Slice of `SparseResult` from sparse (keyword/BM25) search.
+/// * `k` - Number of top results to return.
+/// * `rrf_k` - RRF parameter controlling the influence of rank position.
+///
+/// # Returns
+///
+/// * `Vec<&IndexedChunk>` - Top-k fused results ranked by combined RRF score.
+///
+/// # Example
+/// ```rust
+/// use uveddi::semantic_search::{reciprocal_rank_fusion, IndexedChunk, SparseResult};
+/// // ... setup dense and sparse results ...
+/// let fused = reciprocal_rank_fusion(&dense, &sparse, 10, 60);
+/// ```
 pub fn reciprocal_rank_fusion<'a>(
     dense: &[(&'a IndexedChunk, f32)],
     sparse: &[SparseResult<'a>],

@@ -8,6 +8,16 @@ pub struct Database {
 }
 
 impl Database {
+    /// Creates a new database connection and initializes tables if needed.
+    ///
+    /// # Arguments
+    ///
+    /// * `db_path` - Optional path to the SQLite database file. If `None`, uses an in-memory database.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(Database)` - The initialized database instance.
+    /// * `Err(rusqlite::Error)` - If the database cannot be opened or initialized.
     pub fn new(db_path: Option<&Path>) -> Result<Self> {
         let conn = match db_path {
             Some(path) => Connection::open(path)?,
@@ -52,6 +62,16 @@ impl Database {
         Ok(Self { conn })
     }
 
+    /// Gets the project ID for the given path, creating a new project entry if needed.
+    ///
+    /// # Arguments
+    ///
+    /// * `project_path` - Path to the project directory.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(i64)` - The project ID.
+    /// * `Err(rusqlite::Error)` - If the query or insert fails.
     pub fn get_or_create_project_id(&self, project_path: &Path) -> Result<i64> {
         let path_str = project_path.to_string_lossy().to_string();
         let mut stmt = self
@@ -68,6 +88,16 @@ impl Database {
         }
     }
 
+    /// Creates a new analysis run entry for the given project path.
+    ///
+    /// # Arguments
+    ///
+    /// * `project_path` - Path to the project directory.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(AnalysisRun)` - The created analysis run record.
+    /// * `Err(rusqlite::Error)` - If the insert fails.
     pub fn create_analysis_run(&self, project_path: &Path) -> Result<AnalysisRun> {
         let project_id = self.get_or_create_project_id(project_path)?;
         let analysis_run = AnalysisRun {
@@ -98,6 +128,16 @@ impl Database {
         })
     }
 
+    /// Updates an existing analysis run with new status, end time, and metrics.
+    ///
+    /// # Arguments
+    ///
+    /// * `run` - The analysis run to update (must have a valid `run_id`).
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` - If the update succeeds.
+    /// * `Err(rusqlite::Error)` - If the update fails.
     pub fn update_analysis_run(&self, run: &AnalysisRun) -> Result<()> {
         self.conn.execute(
             "UPDATE analysis_runs SET end_time = ?, status = ?, total_files_analyzed = ?, total_issues_found = ? WHERE run_id = ?",
@@ -112,6 +152,16 @@ impl Database {
         Ok(())
     }
 
+    /// Stores a single anti-pattern type in the database, updating its ID if newly inserted.
+    ///
+    /// # Arguments
+    ///
+    /// * `anti_pattern_type` - The anti-pattern type to store (ID will be set if inserted).
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` - If the operation succeeds.
+    /// * `Err(rusqlite::Error)` - If the insert or query fails.
     pub fn store_anti_pattern_type(&self, anti_pattern_type: &mut AntiPatternType) -> Result<()> {
         self.conn.execute(
             "INSERT OR IGNORE INTO anti_pattern_types (name, description, category) VALUES (?, ?, ?)",
@@ -131,7 +181,16 @@ impl Database {
         Ok(())
     }
 
-    /// Stores architectural issues in a transaction to ensure data consistency
+    /// Stores architectural issues in a transaction to ensure data consistency.
+    ///
+    /// # Arguments
+    ///
+    /// * `issues` - Slice of architectural issues to store.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` - If all issues are stored successfully.
+    /// * `Err(rusqlite::Error)` - If any insert fails.
     pub fn store_issues(&mut self, issues: &[ArchitecturalIssue]) -> Result<()> {
         let tx = self.conn.transaction()?;
         for issue in issues {
@@ -153,7 +212,16 @@ impl Database {
         tx.commit()
     }
 
-    /// Stores multiple anti-pattern types in a batch operation
+    /// Stores multiple anti-pattern types in a batch operation.
+    ///
+    /// # Arguments
+    ///
+    /// * `anti_pattern_types` - Mutable slice of anti-pattern types to store (IDs will be set if inserted).
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` - If all types are stored successfully.
+    /// * `Err(rusqlite::Error)` - If any insert or query fails.
     pub fn store_anti_pattern_types_batch(
         &mut self,
         anti_pattern_types: &mut [AntiPatternType],

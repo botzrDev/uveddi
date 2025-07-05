@@ -1,5 +1,25 @@
 use crate::database::models::ArchitecturalIssue;
 
+/// Generates a detailed prompt for an architectural issue to be used by an AI model.
+///
+/// This function formats the issue type, file, line, description, and code snippet
+/// into a structured prompt with instructions for the AI to explain and suggest remediation.
+///
+/// # Arguments
+///
+/// * `issue` - Reference to the `ArchitecturalIssue` to generate a prompt for.
+///
+/// # Returns
+///
+/// * `String` - The formatted prompt for the AI model.
+///
+/// # Example
+/// ```rust
+/// use uveddi::database::models::ArchitecturalIssue;
+/// use uveddi::ai::prompts::prompt_templates::for_issue;
+/// let issue = ArchitecturalIssue { /* ... */ };
+/// let prompt = for_issue(&issue);
+/// ```
 pub fn for_issue(issue: &ArchitecturalIssue) -> String {
     let anti_pattern_name = match issue.anti_pattern_type_id {
         1 => "God Object",

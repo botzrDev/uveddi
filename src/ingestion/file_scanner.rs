@@ -14,6 +14,11 @@ impl Default for FileScanner {
 }
 
 impl FileScanner {
+    /// Creates a new `FileScanner` with default supported extensions and ignore patterns.
+    ///
+    /// # Returns
+    ///
+    /// * `FileScanner` - A new instance with default settings.
     pub fn new() -> Self {
         Self {
             supported_extensions: vec![
@@ -31,6 +36,15 @@ impl FileScanner {
         }
     }
 
+    /// Creates a new `FileScanner` using ignore patterns from a root directory.
+    ///
+    /// # Arguments
+    ///
+    /// * `root_path` - The root directory to scan for `.archlintignore` patterns.
+    ///
+    /// # Returns
+    ///
+    /// * `FileScanner` - A new instance with ignore patterns loaded from the root.
     pub fn from_root(root_path: &Path) -> Self {
         let mut scanner = Self::new();
         let ignore_file = root_path.join(".archlintignore");
@@ -45,7 +59,16 @@ impl FileScanner {
         scanner
     }
 
-    /// Recursively scan directory for Rust source files
+    /// Recursively scans a directory for supported source files.
+    ///
+    /// # Arguments
+    ///
+    /// * `root_path` - The root directory to scan.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(Vec<PathBuf>)` - List of discovered source files.
+    /// * `Err(ScanError)` - If directory traversal fails.
     pub fn scan_directory(&self, root_path: &Path) -> Result<Vec<PathBuf>, ScanError> {
         let mut files = Vec::new();
         self.scan_recursive(root_path, &mut files)?;

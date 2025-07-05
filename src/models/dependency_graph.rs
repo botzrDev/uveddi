@@ -49,6 +49,22 @@ impl DependencyGraph {
     }
 
     /// Retrieves the node string based on its index in the graph.
+    ///
+    /// # Arguments
+    ///
+    /// * `index` - The index of the node in the internal node list.
+    ///
+    /// # Returns
+    ///
+    /// * `Some(&String)` - Reference to the node string if the index is valid.
+    /// * `None` - If the index is out of bounds.
+    ///
+    /// # Example
+    /// ```rust
+    /// use uveddi::models::dependency_graph::DependencyGraph;
+    /// let graph = DependencyGraph::default();
+    /// let node = graph.get_node_from_index(0);
+    /// ```
     pub fn get_node_from_index(&self, index: usize) -> Option<&String> {
         self.nodes.get(index)
     }
