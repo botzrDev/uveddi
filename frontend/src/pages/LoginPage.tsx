@@ -47,7 +47,7 @@ const LoginPage: React.FC = () => {
             <CardTitle>Login</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6" data-testid="login-form">
               {error && (
                 <div className="bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-md p-4">
                   <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
@@ -93,6 +93,7 @@ const LoginPage: React.FC = () => {
                 size="lg"
                 loading={isLoginLoading}
                 className="w-full"
+                data-testid="login-button"
               >
                 Sign in
               </Button>

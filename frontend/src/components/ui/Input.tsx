@@ -14,6 +14,7 @@ interface InputProps {
   className?: string;
   error?: string;
   label?: string;
+  'data-testid'?: string;
 }
 
 const Input: React.FC<InputProps> = ({
@@ -30,6 +31,7 @@ const Input: React.FC<InputProps> = ({
   className = '',
   error,
   label,
+  'data-testid': dataTestId,
 }) => {
   const inputId = id || name;
 
@@ -55,6 +57,7 @@ const Input: React.FC<InputProps> = ({
         onBlur={onBlur}
         disabled={disabled}
         required={required}
+        data-testid={dataTestId || `${name}-input`}
         className={`
           w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm
           placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 

@@ -11,6 +11,7 @@ interface AnimatedTerminalProps {
   className?: string;
   autoStart?: boolean;
   loop?: boolean;
+  'data-testid'?: string;
 }
 
 const AnimatedTerminal: React.FC<AnimatedTerminalProps> = ({
@@ -18,6 +19,7 @@ const AnimatedTerminal: React.FC<AnimatedTerminalProps> = ({
   className = '',
   autoStart = true,
   loop = false,
+  'data-testid': dataTestId,
 }) => {
   const [currentCommandIndex, setCurrentCommandIndex] = useState(0);
   const [currentTyping, setCurrentTyping] = useState('');
@@ -67,7 +69,7 @@ const AnimatedTerminal: React.FC<AnimatedTerminalProps> = ({
   const currentCommand = commands[currentCommandIndex];
 
   return (
-    <div className={`bg-secondary-900 border border-secondary-700 rounded-lg p-6 font-mono text-sm ${className}`}>
+    <div className={`bg-secondary-900 border border-secondary-700 rounded-lg p-6 font-mono text-sm ${className}`} data-testid={dataTestId}>
       <div className="flex items-center mb-4">
         <div className="flex space-x-2">
           <div className="w-3 h-3 bg-red-500 rounded-full"></div>

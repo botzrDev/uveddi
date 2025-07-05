@@ -65,7 +65,7 @@ const RegisterPage: React.FC = () => {
             <CardTitle>Register</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6" data-testid="register-form">
               {error && (
                 <div className="bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-md p-4">
                   <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
@@ -92,6 +92,7 @@ const RegisterPage: React.FC = () => {
                 onChange={(e) => setUsername(e.target.value)}
                 required
                 placeholder="johndoe"
+                data-testid="name-input"
               />
 
               <Input
@@ -123,6 +124,7 @@ const RegisterPage: React.FC = () => {
                 size="lg"
                 loading={isRegisterLoading}
                 className="w-full"
+                data-testid="register-button"
               >
                 Create Account
               </Button>

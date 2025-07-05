@@ -39,7 +39,7 @@ describe('Accessibility Tests', () => {
       cy.visit('/')
       
       // Start keyboard navigation
-      cy.get('body').type('{tab}')
+      cy.get('body').type('{Tab}')
       
       // Should focus on first interactive element
       cy.focused().should('be.visible')
@@ -52,7 +52,7 @@ describe('Accessibility Tests', () => {
         if (tabCount < maxTabs) {
           cy.focused().then(($el) => {
             if ($el.length > 0) {
-              cy.focused().type('{tab}')
+              cy.focused().type('{Tab}')
               tabCount++
               tabNext()
             }
@@ -279,11 +279,11 @@ describe('Accessibility Tests', () => {
         .should('have.length.greaterThan', 0)
       
       // Tab through modal elements
-      cy.get('body').type('{tab}')
+      cy.get('body').type('{Tab}')
       cy.focused().should('be.within', '[data-testid="modal"]')
       
       // Shift+Tab should also stay within modal
-      cy.get('body').type('{shift}{tab}')
+      cy.get('body').type('{shift}{Tab}')
       cy.focused().should('be.within', '[data-testid="modal"]')
     })
   })

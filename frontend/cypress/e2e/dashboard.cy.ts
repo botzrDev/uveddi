@@ -172,10 +172,10 @@ describe('Dashboard', () => {
     cy.visit('/dashboard')
     
     // Tab through interactive elements
-    cy.get('body').type('{tab}')
+    cy.get('body').type('{Tab}')
     cy.focused().should('have.attr', 'data-testid', 'search-input')
     
-    cy.focused().type('{tab}')
+    cy.focused().type('{Tab}')
     cy.focused().should('have.attr', 'data-testid', 'new-analysis-button')
   })
 })

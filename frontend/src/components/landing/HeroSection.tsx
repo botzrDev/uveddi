@@ -17,7 +17,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ terminalCommands }) => {
   };
 
   return (
-    <section className="relative py-24 px-6 overflow-hidden">
+    <section className="relative py-24 px-6 overflow-hidden" data-testid="hero-section">
       <div className="absolute inset-0 bg-gradient-to-br from-secondary-950 via-secondary-900 to-primary-950/20" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary-900/20 via-transparent to-transparent" />
       
@@ -50,6 +50,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ terminalCommands }) => {
               <button 
                 className="ml-4 px-3 py-1 bg-primary-500 hover:bg-primary-600 text-white text-xs rounded transition-all" 
                 onClick={handleCopyCommand}
+                data-testid="get-started-button"
               >
                 Copy
               </button>
@@ -65,6 +66,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ terminalCommands }) => {
             commands={terminalCommands}
             className="shadow-2xl shadow-primary-500/20 border border-secondary-700/50"
             loop={true}
+            data-testid="animated-terminal"
           />
         </div>
       </div>
