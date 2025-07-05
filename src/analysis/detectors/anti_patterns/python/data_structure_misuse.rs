@@ -8,6 +8,12 @@ use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 
 pub struct PyDataStructureMisuseDetector;
 
+impl Default for PyDataStructureMisuseDetector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PyDataStructureMisuseDetector {
     pub fn new() -> Self {
         Self {}

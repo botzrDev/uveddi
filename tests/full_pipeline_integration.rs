@@ -63,16 +63,14 @@ mod tests {
         // Print output for debugging
         let output = cmd.output().expect("Failed to run uveddi");
         let stdout = String::from_utf8_lossy(&output.stdout);
-        println!("CLI OUTPUT:\n{}", stdout);
+        println!("CLI OUTPUT:\n{stdout}");
         assert!(
             !stdout.contains("AI Explanation") && !stdout.contains("ai_explanation"),
-            "Expected no AI explanation in output, got: {}",
-            stdout
+            "Expected no AI explanation in output, got: {stdout}"
         );
         assert!(
             !stdout.contains("confidence") && !stdout.contains("Confidence"),
-            "Expected no confidence in output, got: {}",
-            stdout
+            "Expected no confidence in output, got: {stdout}"
         );
     }
 

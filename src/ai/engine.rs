@@ -18,7 +18,8 @@ impl AiAnalysisEngine {
     pub fn new() -> Self {
         // Try to initialize with Ollama provider if available
         let provider = if let Ok(api_url) = env::var("OLLAMA_API_URL") {
-            let model = env::var("OLLAMA_MODEL").unwrap_or_else(|_| "deepseek-coder:6.7b-instruct-q4_0".to_string());
+            let model = env::var("OLLAMA_MODEL")
+                .unwrap_or_else(|_| "deepseek-coder:6.7b-instruct-q4_0".to_string());
             let ollama_provider = OllamaProvider::new(&model, &api_url);
             Some(Box::new(ollama_provider) as Box<dyn LlmProvider + Send + Sync>)
         } else {
@@ -48,7 +49,7 @@ impl AiAnalysisEngine {
     /// Analyzes a single architectural issue to provide an explanation and recommended solution.
     pub async fn analyze_issue(&self, issue: &mut ArchitecturalIssue) -> Result<(), UveddiError> {
         info!("AI Engine analyzing issue: {}", issue.description);
-        
+
         // If no provider is configured, skip AI analysis
         let provider = match &self.provider {
             Some(provider) => provider,
@@ -60,19 +61,19 @@ impl AiAnalysisEngine {
 
         // Build a smart prompt for the issue
         let prompt = self.prompt_builder.build_prompt_for_issue(issue);
-        
+
         // Generate AI explanation
         match provider.generate_explanation(&prompt).await {
             Ok(explanation) => {
                 info!("Generated AI explanation for issue");
                 issue.ai_explanation = Some(explanation);
-            },
+            }
             Err(e) => {
                 warn!("Failed to generate AI explanation: {e}");
                 // Don't fail the entire analysis if AI fails
             }
         }
-        
+
         Ok(())
     }
 

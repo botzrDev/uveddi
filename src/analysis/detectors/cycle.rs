@@ -45,13 +45,13 @@ impl CycleDetector {
                     .filter_map(|&node_index| {
                         graph
                             .get_node_from_index(node_index)
-                            .and_then(|node| match node {
-                                ComponentNode::Module { path } => Some(path.clone()),
+                            .map(|node| match node {
+                                ComponentNode::Module { path } => path.clone(),
                                 ComponentNode::Class { name: _, file_path } => {
-                                    Some(file_path.clone())
+                                    file_path.clone()
                                 }
                                 ComponentNode::Function { name: _, file_path } => {
-                                    Some(file_path.clone())
+                                    file_path.clone()
                                 }
                             })
                     })

@@ -6,6 +6,12 @@ use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 
 pub struct ResourceLeakDetector;
 
+impl Default for ResourceLeakDetector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ResourceLeakDetector {
     pub fn new() -> Self {
         Self {}

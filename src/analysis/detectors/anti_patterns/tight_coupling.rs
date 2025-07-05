@@ -8,6 +8,12 @@ use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 
 pub struct TightCouplingDetector;
 
+impl Default for TightCouplingDetector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TightCouplingDetector {
     pub fn new() -> Self {
         Self {}

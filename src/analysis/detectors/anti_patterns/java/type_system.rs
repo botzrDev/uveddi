@@ -8,6 +8,12 @@ use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 
 pub struct JavaTypeSystemDetector;
 
+impl Default for JavaTypeSystemDetector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl JavaTypeSystemDetector {
     pub fn new() -> Self {
         Self {}

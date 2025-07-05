@@ -9,6 +9,12 @@ pub struct SmartPromptBuilder {
     // Future: Could add configuration, templates, etc.
 }
 
+impl Default for SmartPromptBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SmartPromptBuilder {
     pub fn new() -> Self {
         SmartPromptBuilder {}
@@ -18,19 +24,15 @@ impl SmartPromptBuilder {
     pub fn build_prompt_for_issue(&self, issue: &ArchitecturalIssue) -> String {
         let issue_context = format!(
             "Anti-pattern Type ID: {}\nDescription: {}\nFile: {}\nSeverity: {}",
-            issue.anti_pattern_type_id,
-            issue.description,
-            issue.file_path,
-            issue.severity
+            issue.anti_pattern_type_id, issue.description, issue.file_path, issue.severity
         );
 
         // Build basic prompt - in future this could use AST context
         let prompt = format!(
             "You are an expert software architect.\n\
 Given the following architectural issue, provide a detailed explanation and recommendation.\n\
-\n{}\n\
-\nRespond in the following JSON format:\n{{\n  \"title\": \"Brief title for the issue\",\n  \"description\": \"Detailed description of the problem\",\n  \"explanation\": \"Why this is an architectural concern\",\n  \"refactoring\": \"Recommended solution or refactoring steps\",\n  \"confidence\": \"high/medium/low confidence in this assessment\"\n}}\n",
-            issue_context
+\n{issue_context}\n\
+\nRespond in the following JSON format:\n{{\n  \"title\": \"Brief title for the issue\",\n  \"description\": \"Detailed description of the problem\",\n  \"explanation\": \"Why this is an architectural concern\",\n  \"refactoring\": \"Recommended solution or refactoring steps\",\n  \"confidence\": \"high/medium/low confidence in this assessment\"\n}}\n"
         );
 
         add_hallucination_mitigation(&prompt)
@@ -52,10 +54,7 @@ Given the following code and context, explain the architectural issue.\n\
 \nCode:\n{code_snippet}\n\
 Context:\n{ast_summary}\n\
 Issue:\n{issue_context}\n\
-Respond in the following JSON format:\n{{\n  \"title\": \"...\",\n  \"description\": \"...\",\n  \"explanation\": \"...\",\n  \"refactoring\": \"...\",\n  \"confidence\": \"...\"\n}}\n",
-        code_snippet = code_snippet,
-        ast_summary = ast_summary,
-        issue_context = issue_context
+Respond in the following JSON format:\n{{\n  \"title\": \"...\",\n  \"description\": \"...\",\n  \"explanation\": \"...\",\n  \"refactoring\": \"...\",\n  \"confidence\": \"...\"\n}}\n"
     )
 }
 
@@ -77,10 +76,7 @@ Given the following ranked context and code structure, explain the architectural
 \nContext Snippets:\n{context}\n\
 AST Structure:\n{ast_summary}\n\
 Issue:\n{issue_context}\n\
-Respond in the following JSON format:\n{{\n  \"title\": \"...\",\n  \"description\": \"...\",\n  \"explanation\": \"...\",\n  \"refactoring\": \"...\",\n  \"confidence\": \"...\"\n}}\n",
-        context = context,
-        ast_summary = ast_summary,
-        issue_context = issue_context
+Respond in the following JSON format:\n{{\n  \"title\": \"...\",\n  \"description\": \"...\",\n  \"explanation\": \"...\",\n  \"refactoring\": \"...\",\n  \"confidence\": \"...\"\n}}\n"
     )
 }
 
@@ -96,7 +92,7 @@ INSTRUCTIONS FOR AI:
 - Do not provide information not grounded in the input.
 ---
 "#;
-    format!("{}\n{}", prompt, mitigation_instructions)
+    format!("{prompt}\n{mitigation_instructions}")
 }
 
 #[cfg(test)]

@@ -8,6 +8,12 @@ use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 
 pub struct JsScopeIssuesDetector;
 
+impl Default for JsScopeIssuesDetector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl JsScopeIssuesDetector {
     pub fn new() -> Self {
         Self {}

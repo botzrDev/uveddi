@@ -75,7 +75,7 @@ impl AstCache {
 
 #[cfg(test)]
 mod tests {
-    
+
     #[test]
     fn test_ast_cache() {
         // Placeholder: actual test would require a real Tree object

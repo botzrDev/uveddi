@@ -8,6 +8,12 @@ use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 
 pub struct StateSynchronizationDetector;
 
+impl Default for StateSynchronizationDetector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl StateSynchronizationDetector {
     pub fn new() -> Self {
         Self {}

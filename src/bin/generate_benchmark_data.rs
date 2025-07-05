@@ -19,7 +19,7 @@ fn generate_dataset(dir: &Path, num_files: usize, complexity: usize) -> std::io:
     fs::create_dir_all(dir)?;
 
     for i in 0..num_files {
-        let file_path = dir.join(format!("module_{}.rs", i));
+        let file_path = dir.join(format!("module_{i}.rs"));
         let mut file = fs::File::create(&file_path)?;
         let content = generate_complex_rust_code(i, complexity, num_files);
         file.write_all(content.as_bytes())?;
@@ -35,33 +35,31 @@ fn generate_dataset(dir: &Path, num_files: usize, complexity: usize) -> std::io:
 
 fn generate_complex_rust_code(file_index: usize, complexity: usize, total_files: usize) -> String {
     let mut code = String::new();
-    code.push_str(&format!("// Module {}\n\n", file_index));
+    code.push_str(&format!("// Module {file_index}\n\n"));
 
     // Add some imports to other generated modules
     for j in 1..=3 {
         let import_index = (file_index + j) % total_files;
         code.push_str(&format!(
-            "use crate::module_{}::Struct{};\n",
-            import_index, import_index
+            "use crate::module_{import_index}::Struct{import_index};\n"
         ));
     }
-    code.push_str("\n");
+    code.push('\n');
 
     // Add a struct definition
-    code.push_str(&format!("pub struct Struct{} {{\n", file_index));
+    code.push_str(&format!("pub struct Struct{file_index} {{\n"));
     for i in 0..complexity {
-        code.push_str(&format!("    field_{}: u32,\n", i));
+        code.push_str(&format!("    field_{i}: u32,\n"));
     }
     code.push_str("}\n\n");
 
     // Add an implementation block with some functions
-    code.push_str(&format!("impl Struct{} {{\n", file_index));
+    code.push_str(&format!("impl Struct{file_index} {{\n"));
     for i in 0..complexity {
         code.push_str(&format!(
-            "    pub fn func_{}(&self, arg: u32) -> u32 {{\n",
-            i
+            "    pub fn func_{i}(&self, arg: u32) -> u32 {{\n"
         ));
-        code.push_str(&format!("        self.field_{} + arg\n", i));
+        code.push_str(&format!("        self.field_{i} + arg\n"));
         code.push_str("    }\n");
     }
     code.push_str("}\n");

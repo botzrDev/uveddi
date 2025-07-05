@@ -19,10 +19,10 @@ use crate::analysis::{AnalysisDetector, AnalysisError};
 use crate::ast::tree_sitter::{ParsedFile, SourceLanguage};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use log::{debug, info};
+use sha2::{Digest, Sha256};
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
 use tree_sitter::{Query, QueryCursor};
-use sha2::{Sha256, Digest};
 
 /// Represents a code block extracted for duplication analysis
 #[derive(Debug, Clone)]
@@ -106,7 +106,7 @@ pub struct DuplicationConfig {
 
 impl Default for DuplicationConfig {
     /// Creates a default configuration optimized for general code duplication detection
-    /// 
+    ///
     /// Default values:
     /// - `min_tokens`: 50 (avoid flagging very small code blocks)
     /// - `min_lines`: 5 (minimum 5 lines for meaningful duplication)
@@ -116,12 +116,12 @@ impl Default for DuplicationConfig {
     /// - `ignore_literals`: true (enable Type-2 detection)
     fn default() -> Self {
         Self {
-            min_tokens: 50,      // Minimum number of tokens for a code block to be considered
-            min_lines: 5,        // Minimum number of lines for a code block
+            min_tokens: 50, // Minimum number of tokens for a code block to be considered
+            min_lines: 5,   // Minimum number of lines for a code block
             similarity_threshold: 0.8, // Threshold for Type-3 clone detection
-            fingerprint_length: 7,     // Length of rolling hash window
-            ignore_identifiers: true,  // Normalize identifiers for Type-2 detection
-            ignore_literals: true,     // Normalize literals for Type-2 detection
+            fingerprint_length: 7, // Length of rolling hash window
+            ignore_identifiers: true, // Normalize identifiers for Type-2 detection
+            ignore_literals: true, // Normalize literals for Type-2 detection
         }
     }
 }
@@ -182,6 +182,12 @@ pub struct CodeDuplicationDetector {
     all_blocks: Arc<Mutex<Vec<CodeBlock>>>,
 }
 
+impl Default for CodeDuplicationDetector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CodeDuplicationDetector {
     /// Creates a new code duplication detector with default configuration
     pub fn new() -> Self {
@@ -189,9 +195,9 @@ impl CodeDuplicationDetector {
     }
 
     /// Creates a new code duplication detector with custom configuration
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `config` - Configuration parameters for the detector
     pub fn with_config(config: DuplicationConfig) -> Self {
         Self {
@@ -202,10 +208,14 @@ impl CodeDuplicationDetector {
     }
 
     /// Extract code blocks from a parsed file using Tree-sitter queries
-    fn extract_code_blocks(&self, parsed_file: &ParsedFile) -> Result<Vec<CodeBlock>, AnalysisError> {
-        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-            AnalysisError::Analysis("No AST available for file".to_string())
-        })?;
+    fn extract_code_blocks(
+        &self,
+        parsed_file: &ParsedFile,
+    ) -> Result<Vec<CodeBlock>, AnalysisError> {
+        let tree = parsed_file
+            .tree
+            .as_ref()
+            .ok_or_else(|| AnalysisError::Analysis("No AST available for file".to_string()))?;
 
         let query_str = match parsed_file.language {
             SourceLanguage::Rust => RUST_FUNCTION_QUERY,
@@ -213,28 +223,30 @@ impl CodeDuplicationDetector {
             SourceLanguage::JavaScript => JAVASCRIPT_FUNCTION_QUERY,
         };
 
-        let query = Query::new(&tree.language(), query_str).map_err(|e| {
-            AnalysisError::Analysis(format!("Failed to create query: {}", e))
-        })?;
+        let query = Query::new(&tree.language(), query_str)
+            .map_err(|e| AnalysisError::Analysis(format!("Failed to create query: {e}")))?;
 
         let mut cursor = QueryCursor::new();
         let matches = cursor.matches(&query, tree.root_node(), parsed_file.source.as_bytes());
 
         let mut blocks = Vec::new();
-        
+
         for match_ in matches {
             if let Some(function_capture) = match_.captures.iter().find(|c| c.index == 0) {
                 let function_node = function_capture.node;
                 let start_line = function_node.start_position().row as u32 + 1;
                 let end_line = function_node.end_position().row as u32 + 1;
-                
+
                 // Skip blocks that are too small
                 if end_line - start_line < self.config.min_lines as u32 {
                     continue;
                 }
 
-                let source = function_node.utf8_text(parsed_file.source.as_bytes())
-                    .map_err(|e| AnalysisError::Analysis(format!("Failed to extract source: {}", e)))?
+                let source = function_node
+                    .utf8_text(parsed_file.source.as_bytes())
+                    .map_err(|e| {
+                        AnalysisError::Analysis(format!("Failed to extract source: {e}"))
+                    })?
                     .to_string();
 
                 // Extract function name by finding the identifier child
@@ -255,8 +267,9 @@ impl CodeDuplicationDetector {
                     }
                 }
 
-                let normalized_tokens = self.normalize_tokens(&source, parsed_file.language.clone())?;
-                
+                let normalized_tokens =
+                    self.normalize_tokens(&source, parsed_file.language.clone())?;
+
                 // Skip blocks with too few tokens
                 if normalized_tokens.len() < self.config.min_tokens {
                     continue;
@@ -285,20 +298,24 @@ impl CodeDuplicationDetector {
     }
 
     /// Normalize tokens for Type-2 clone detection
-    /// 
+    ///
     /// This method performs a simple tokenization of the source code and normalizes
     /// identifiers and literals based on the configuration. In a production system,
     /// this would use a proper lexer for more accurate tokenization.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `source` - The source code to tokenize
     /// * `_language` - The programming language (currently unused)
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// A vector of normalized tokens
-    fn normalize_tokens(&self, source: &str, _language: SourceLanguage) -> Result<Vec<String>, AnalysisError> {
+    fn normalize_tokens(
+        &self,
+        source: &str,
+        _language: SourceLanguage,
+    ) -> Result<Vec<String>, AnalysisError> {
         // Simple tokenization - in a production system, this would use a proper lexer
         let mut tokens = Vec::new();
         let mut current_token = String::new();
@@ -362,48 +379,49 @@ impl CodeDuplicationDetector {
     }
 
     /// Normalize a single token based on configuration
-    /// 
+    ///
     /// This method applies normalization rules to individual tokens:
     /// - Numeric literals are replaced with "_LIT_" if `ignore_literals` is true
     /// - Identifiers are replaced with "_ID_" if `ignore_identifiers` is true
     /// - Other tokens are returned as-is
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `token` - The token to normalize
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// The normalized token string
     fn normalize_token(&self, token: &str) -> String {
         // Check if it's a literal (number)
-        if token.chars().all(|c| c.is_numeric() || c == '.') {
-            if self.config.ignore_literals {
+        if token.chars().all(|c| c.is_numeric() || c == '.')
+            && self.config.ignore_literals {
                 return "_LIT_".to_string();
             }
-        }
 
         // Check if it's an identifier (starts with letter or underscore)
-        if token.chars().next().map_or(false, |c| c.is_alphabetic() || c == '_') {
-            if self.config.ignore_identifiers {
+        if token
+            .chars()
+            .next()
+            .is_some_and(|c| c.is_alphabetic() || c == '_')
+            && self.config.ignore_identifiers {
                 return "_ID_".to_string();
             }
-        }
 
         token.to_string()
     }
 
     /// Compute structural hash for a normalized token sequence
-    /// 
+    ///
     /// Uses SHA-256 to create a hash of the entire token sequence. This is used
     /// for exact matching of Type-1 and Type-2 clones.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `tokens` - The normalized token sequence
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// A hexadecimal string representation of the hash
     fn compute_structural_hash(&self, tokens: &[String]) -> String {
         let mut hasher = Sha256::new();
@@ -414,22 +432,22 @@ impl CodeDuplicationDetector {
     }
 
     /// Generate rolling hash fingerprints for a token sequence (Karp-Rabin algorithm)
-    /// 
+    ///
     /// Creates a series of hash fingerprints using a sliding window approach.
     /// Each fingerprint represents a subsequence of tokens, enabling efficient
     /// partial matching for clone detection.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `tokens` - The token sequence to fingerprint
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// A vector of fingerprint hashes as hexadecimal strings
     fn generate_fingerprints(&self, tokens: &[String]) -> Vec<String> {
         let mut fingerprints = Vec::new();
         let window_size = self.config.fingerprint_length;
-        
+
         if tokens.len() < window_size {
             return fingerprints;
         }
@@ -447,16 +465,16 @@ impl CodeDuplicationDetector {
     }
 
     /// Index code blocks by their fingerprints for fast candidate generation
-    /// 
+    ///
     /// Builds an inverted index mapping fingerprints to code blocks, enabling
     /// efficient lookup of potential clone candidates during analysis.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `blocks` - The code blocks to index
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// Result indicating success or failure of the indexing operation
     fn index_code_blocks(&self, blocks: &[CodeBlock]) -> Result<(), AnalysisError> {
         let mut index = self.fingerprint_index.lock().unwrap();
@@ -469,7 +487,10 @@ impl CodeDuplicationDetector {
             // Generate fingerprints and add to index
             let fingerprints = self.generate_fingerprints(&block.normalized_tokens);
             for fingerprint in fingerprints {
-                index.entry(fingerprint).or_insert_with(Vec::new).push(block.clone());
+                index
+                    .entry(fingerprint)
+                    .or_default()
+                    .push(block.clone());
             }
         }
 
@@ -477,22 +498,22 @@ impl CodeDuplicationDetector {
     }
 
     /// Find clone candidates using fingerprint matching
-    /// 
+    ///
     /// Searches the fingerprint index for code blocks that share a significant
     /// number of fingerprints with the given block. This is the fast candidate
     /// generation stage of the two-stage approach.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `block` - The code block to find candidates for
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// A vector of candidate code blocks for clone verification
     fn find_clone_candidates(&self, block: &CodeBlock) -> Vec<CodeBlock> {
         let index = self.fingerprint_index.lock().unwrap();
         let fingerprints = self.generate_fingerprints(&block.normalized_tokens);
-        
+
         let mut candidates = HashMap::new();
         let mut candidate_scores = HashMap::new();
 
@@ -500,12 +521,15 @@ impl CodeDuplicationDetector {
             if let Some(matching_blocks) = index.get(fingerprint) {
                 for candidate in matching_blocks {
                     // Don't match against itself
-                    if candidate.file_path == block.file_path && 
-                       candidate.start_line == block.start_line {
+                    if candidate.file_path == block.file_path
+                        && candidate.start_line == block.start_line
+                    {
                         continue;
                     }
 
-                    let key = format!("{}:{}", candidate.file_path, candidate.start_line);
+                    let file_path = &candidate.file_path;
+                    let start_line = candidate.start_line;
+                    let key = format!("{file_path}:{start_line}");
                     candidates.insert(key.clone(), candidate.clone());
                     *candidate_scores.entry(key).or_insert(0) += 1;
                 }
@@ -514,25 +538,26 @@ impl CodeDuplicationDetector {
 
         // Filter candidates based on minimum shared fingerprints
         let min_shared = (fingerprints.len() as f64 * self.config.similarity_threshold) as usize;
-        candidates.into_iter()
+        candidates
+            .into_iter()
             .filter(|(key, _)| candidate_scores.get(key).unwrap_or(&0) >= &min_shared)
             .map(|(_, candidate)| candidate)
             .collect()
     }
 
     /// Verify clone candidates using AST structural comparison
-    /// 
+    ///
     /// Performs detailed comparison of two code blocks to determine if they
     /// are true clones and classify their type. This is the verification stage
     /// of the two-stage approach.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `block1` - First code block to compare
     /// * `block2` - Second code block to compare
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// Some(ClonePair) if the blocks are clones, None otherwise
     fn verify_clone_pair(&self, block1: &CodeBlock, block2: &CodeBlock) -> Option<ClonePair> {
         // Exact structural match (Type-1 or Type-2)
@@ -553,7 +578,8 @@ impl CodeDuplicationDetector {
         }
 
         // Check for Type-3 clones using token similarity
-        let similarity = self.calculate_token_similarity(&block1.normalized_tokens, &block2.normalized_tokens);
+        let similarity =
+            self.calculate_token_similarity(&block1.normalized_tokens, &block2.normalized_tokens);
         if similarity >= self.config.similarity_threshold {
             return Some(ClonePair {
                 block1: block1.clone(),
@@ -568,44 +594,50 @@ impl CodeDuplicationDetector {
     }
 
     /// Count shared fingerprints between two blocks
-    /// 
+    ///
     /// Calculates the number of common fingerprints between two code blocks,
     /// which is used as a metric for similarity assessment.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `block1` - First code block
     /// * `block2` - Second code block
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// The number of shared fingerprints
     fn count_shared_fingerprints(&self, block1: &CodeBlock, block2: &CodeBlock) -> usize {
-        let fp1: HashSet<_> = self.generate_fingerprints(&block1.normalized_tokens).into_iter().collect();
-        let fp2: HashSet<_> = self.generate_fingerprints(&block2.normalized_tokens).into_iter().collect();
+        let fp1: HashSet<_> = self
+            .generate_fingerprints(&block1.normalized_tokens)
+            .into_iter()
+            .collect();
+        let fp2: HashSet<_> = self
+            .generate_fingerprints(&block2.normalized_tokens)
+            .into_iter()
+            .collect();
         fp1.intersection(&fp2).count()
     }
 
     /// Calculate token-based similarity using Jaccard coefficient
-    /// 
+    ///
     /// Computes the Jaccard similarity coefficient between two token sequences,
     /// which is the ratio of intersection to union of the token sets.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `tokens1` - First token sequence
     /// * `tokens2` - Second token sequence
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// Similarity score between 0.0 and 1.0
     fn calculate_token_similarity(&self, tokens1: &[String], tokens2: &[String]) -> f64 {
         let set1: HashSet<_> = tokens1.iter().collect();
         let set2: HashSet<_> = tokens2.iter().collect();
-        
+
         let intersection = set1.intersection(&set2).count();
         let union = set1.union(&set2).count();
-        
+
         if union == 0 {
             0.0
         } else {
@@ -614,16 +646,16 @@ impl CodeDuplicationDetector {
     }
 
     /// Convert clone pairs to architectural issues
-    /// 
+    ///
     /// Transforms detected clone pairs into the standard ArchitecturalIssue
     /// format used by the analysis framework.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `clone_pairs` - The detected clone pairs to convert
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// A vector of architectural issues representing the clone pairs
     fn clone_pairs_to_issues(&self, clone_pairs: &[ClonePair]) -> Vec<ArchitecturalIssue> {
         let mut issues = Vec::new();
@@ -631,7 +663,7 @@ impl CodeDuplicationDetector {
         for pair in clone_pairs {
             let severity = match pair.clone_type {
                 CloneType::Type1 => "high",
-                CloneType::Type2 => "medium", 
+                CloneType::Type2 => "medium",
                 CloneType::Type3 => "low",
             };
 
@@ -649,7 +681,10 @@ impl CodeDuplicationDetector {
 
             // Extract code snippet for the issue
             let code_snippet = if pair.block1.source.len() > 200 {
-                format!("{}...", &pair.block1.source[..200])
+                {
+                    let source = &pair.block1.source[..200];
+                    format!("{source}...")
+                }
             } else {
                 pair.block1.source.clone()
             };
@@ -664,7 +699,7 @@ impl CodeDuplicationDetector {
 
             let issue = ArchitecturalIssue {
                 issue_id: None,
-                analysis_run_id: 0, // Will be set by the engine
+                analysis_run_id: 0,      // Will be set by the engine
                 anti_pattern_type_id: 1, // Code duplication type ID
                 file_path: pair.block1.file_path.clone(),
                 start_line: Some(pair.block1.start_line as i32),
@@ -702,19 +737,35 @@ impl AnalysisDetector for CodeDuplicationDetector {
         &self,
         parsed_file: &ParsedFile,
     ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
-        info!("Analyzing file for code duplication: {}", parsed_file.path.display());
+        info!(
+            "Analyzing file for code duplication: {}",
+            parsed_file.path.display()
+        );
 
         // Extract code blocks from the current file
         let blocks = self.extract_code_blocks(parsed_file)?;
-        
-        debug!("Extracted {} code blocks from file: {}", blocks.len(), parsed_file.path.display());
+
+        debug!(
+            "Extracted {} code blocks from file: {}",
+            blocks.len(),
+            parsed_file.path.display()
+        );
         for (i, block) in blocks.iter().enumerate() {
-            debug!("Block {}: lines {}-{}, {} tokens, function: {:?}", 
-                i + 1, block.start_line, block.end_line, block.normalized_tokens.len(), block.function_name);
+            debug!(
+                "Block {}: lines {}-{}, {} tokens, function: {:?}",
+                i + 1,
+                block.start_line,
+                block.end_line,
+                block.normalized_tokens.len(),
+                block.function_name
+            );
         }
-        
+
         if blocks.is_empty() {
-            debug!("No code blocks found in file: {}", parsed_file.path.display());
+            debug!(
+                "No code blocks found in file: {}",
+                parsed_file.path.display()
+            );
             return Ok(vec![]);
         }
 
@@ -723,11 +774,15 @@ impl AnalysisDetector for CodeDuplicationDetector {
 
         // Find clone pairs
         let mut clone_pairs = Vec::new();
-        
+
         for block in &blocks {
             let candidates = self.find_clone_candidates(block);
-            debug!("Found {} candidates for block at line {}", candidates.len(), block.start_line);
-            
+            debug!(
+                "Found {} candidates for block at line {}",
+                candidates.len(),
+                block.start_line
+            );
+
             for candidate in candidates {
                 if let Some(clone_pair) = self.verify_clone_pair(block, &candidate) {
                     debug!("Verified clone pair: {} similarity", clone_pair.similarity);
@@ -753,7 +808,11 @@ impl AnalysisDetector for CodeDuplicationDetector {
              a.block2.file_path == b.block2.file_path && a.block2.start_line == b.block2.start_line)
         });
 
-        info!("Found {} clone pairs in file: {}", clone_pairs.len(), parsed_file.path.display());
+        info!(
+            "Found {} clone pairs in file: {}",
+            clone_pairs.len(),
+            parsed_file.path.display()
+        );
 
         // Convert to architectural issues
         let issues = self.clone_pairs_to_issues(&clone_pairs);

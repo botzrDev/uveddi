@@ -8,6 +8,12 @@ use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 
 pub struct PyPerformanceIssuesDetector;
 
+impl Default for PyPerformanceIssuesDetector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PyPerformanceIssuesDetector {
     pub fn new() -> Self {
         Self {}

@@ -152,8 +152,10 @@ impl GodObjectDetector {
                 .matches(&field_query, body_node, source)
                 .count();
 
-            debug!("Analyzing {}: {} methods, {} fields (thresholds: >{}, >{})", 
-                   name, method_count, field_count, self.method_threshold, self.field_threshold);
+            debug!(
+                "Analyzing {}: {} methods, {} fields (thresholds: >{}, >{})",
+                name, method_count, field_count, self.method_threshold, self.field_threshold
+            );
 
             if let Some(issue) = self.create_issue(
                 parsed_file,
@@ -163,7 +165,7 @@ impl GodObjectDetector {
                 method_count,
                 field_count,
             ) {
-                info!("Found God Object: {}", name);
+                info!("Found God Object: {name}");
                 issues.push(issue);
             }
         }
@@ -194,7 +196,7 @@ impl GodObjectDetector {
         let mut cursor = QueryCursor::new();
         for mat in cursor.matches(&impl_query, root_node, source) {
             if let (Some(name_capture), Some(body_capture)) =
-                (mat.captures.get(0), mat.captures.get(1))
+                (mat.captures.first(), mat.captures.get(1))
             {
                 let name_node = name_capture.node;
                 let body_node = body_capture.node;
@@ -217,7 +219,7 @@ impl GodObjectDetector {
         let mut struct_cursor = QueryCursor::new();
         for mat in struct_cursor.matches(&struct_query, root_node, source) {
             if let (Some(name_capture), Some(body_capture)) =
-                (mat.captures.get(0), mat.captures.get(1))
+                (mat.captures.first(), mat.captures.get(1))
             {
                 let name_node = name_capture.node;
                 let body_node = body_capture.node;
@@ -267,7 +269,10 @@ impl AnalysisDetector for GodObjectDetector {
         &self,
         parsed_file: &ParsedFile,
     ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
-        debug!("Running God Object detection on: {}", parsed_file.path.display());
+        debug!(
+            "Running God Object detection on: {}",
+            parsed_file.path.display()
+        );
         let result = match parsed_file.language {
             SourceLanguage::Rust => self.analyze_rust(parsed_file),
             SourceLanguage::Python => self.analyze_standard(
@@ -283,20 +288,31 @@ impl AnalysisDetector for GodObjectDetector {
                 JAVASCRIPT_FIELD_COUNT_QUERY,
             ),
         };
-        
+
         match &result {
             Ok(issues) => {
                 if issues.is_empty() {
-                    debug!("No God Object issues found in {}", parsed_file.path.display());
+                    debug!(
+                        "No God Object issues found in {}",
+                        parsed_file.path.display()
+                    );
                 } else {
-                    info!("Found {} God Object issues in {}", issues.len(), parsed_file.path.display());
+                    info!(
+                        "Found {} God Object issues in {}",
+                        issues.len(),
+                        parsed_file.path.display()
+                    );
                 }
-            },
+            }
             Err(e) => {
-                debug!("Error analyzing {} for God Objects: {}", parsed_file.path.display(), e);
+                debug!(
+                    "Error analyzing {} for God Objects: {}",
+                    parsed_file.path.display(),
+                    e
+                );
             }
         }
-        
+
         result
     }
 }

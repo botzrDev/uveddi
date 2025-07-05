@@ -8,6 +8,12 @@ use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 
 pub struct JavaResourceManagementDetector;
 
+impl Default for JavaResourceManagementDetector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl JavaResourceManagementDetector {
     pub fn new() -> Self {
         Self {}

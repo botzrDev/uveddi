@@ -8,6 +8,12 @@ use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 
 pub struct PyExceptionHandlingDetector;
 
+impl Default for PyExceptionHandlingDetector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PyExceptionHandlingDetector {
     pub fn new() -> Self {
         Self {}

@@ -21,10 +21,7 @@ impl DependencyExtractor {
     }
 
     /// Extract dependencies from a single file using AST parsing
-    pub fn extract_from_file(
-        &self,
-        file_path: &Path,
-    ) -> Result<Vec<Dependency>, ExtractionError> {
+    pub fn extract_from_file(&self, file_path: &Path) -> Result<Vec<Dependency>, ExtractionError> {
         let parsed_file = self
             .parser
             .clone()

@@ -25,7 +25,11 @@
       "Bash(npm test)",
       "Bash(RUST_BACKTRACE=1 cargo test --test unit_tests test_extract_javascript_dependencies -- --nocapture)",
       "Bash(env)",
-      "Bash(python -m pytest backend/test_database.py -v)"
+      "Bash(python -m pytest backend/test_database.py -v)",
+      "Bash(make test:*)",
+      "Bash(cargo fmt:*)",
+      "Bash(cargo clippy:*)",
+      "Bash(rg:*)"
     ],
     "deny": []
   }

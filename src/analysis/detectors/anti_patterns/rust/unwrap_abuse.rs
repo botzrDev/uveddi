@@ -8,6 +8,12 @@ use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 
 pub struct UnwrapAbuseDetector;
 
+impl Default for UnwrapAbuseDetector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl UnwrapAbuseDetector {
     pub fn new() -> Self {
         Self {}

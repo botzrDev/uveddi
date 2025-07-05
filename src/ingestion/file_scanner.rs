@@ -7,6 +7,12 @@ pub struct FileScanner {
     ignore_patterns: Vec<String>,
 }
 
+impl Default for FileScanner {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl FileScanner {
     pub fn new() -> Self {
         Self {

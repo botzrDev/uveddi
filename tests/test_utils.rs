@@ -2,7 +2,6 @@
 //!
 //! This module provides common setup functions, fixtures, and helpers to reduce code duplication.
 
-
 /// Returns a temporary directory for test isolation.
 pub fn temp_test_dir() -> tempfile::TempDir {
     tempfile::tempdir().expect("Failed to create temp test dir")

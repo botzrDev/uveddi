@@ -8,6 +8,12 @@ use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 
 pub struct CloneAbuseDetector;
 
+impl Default for CloneAbuseDetector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CloneAbuseDetector {
     pub fn new() -> Self {
         Self {}

@@ -8,6 +8,12 @@ use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 
 pub struct JsTypeCoercionDetector;
 
+impl Default for JsTypeCoercionDetector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl JsTypeCoercionDetector {
     pub fn new() -> Self {
         Self {}

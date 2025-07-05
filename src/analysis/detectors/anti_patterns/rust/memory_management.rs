@@ -8,6 +8,12 @@ use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 
 pub struct MemoryManagementDetector;
 
+impl Default for MemoryManagementDetector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MemoryManagementDetector {
     pub fn new() -> Self {
         Self {}

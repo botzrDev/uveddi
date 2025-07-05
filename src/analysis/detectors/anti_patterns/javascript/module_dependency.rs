@@ -8,6 +8,12 @@ use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 
 pub struct JsModuleDependencyDetector;
 
+impl Default for JsModuleDependencyDetector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl JsModuleDependencyDetector {
     pub fn new() -> Self {
         Self {}

@@ -88,7 +88,7 @@ impl AnalysisEngine {
     /// This is primarily useful for testing to avoid database conflicts.
     ///
     /// # Arguments
-    /// 
+    ///
     /// * `cache_path` - Path to the cache database file
     ///
     /// # Errors
@@ -274,7 +274,7 @@ impl AnalysisEngine {
                         Err(e) => warn!("Failed to parse file {}: {}", file_path.display(), e),
                     }
                 }
-                Err(e) => warn!("Error walking directory: {}", e),
+                Err(e) => warn!("Error walking directory: {e}"),
             }
         }
 

@@ -8,6 +8,12 @@ use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 
 pub struct JsAsyncAntipatternsDetector;
 
+impl Default for JsAsyncAntipatternsDetector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl JsAsyncAntipatternsDetector {
     pub fn new() -> Self {
         Self {}

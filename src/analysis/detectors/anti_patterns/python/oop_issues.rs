@@ -8,6 +8,12 @@ use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 
 pub struct PyOopIssuesDetector;
 
+impl Default for PyOopIssuesDetector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PyOopIssuesDetector {
     pub fn new() -> Self {
         Self {}

@@ -8,6 +8,12 @@ use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 
 pub struct InsufficientAccessControlDetector;
 
+impl Default for InsufficientAccessControlDetector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl InsufficientAccessControlDetector {
     pub fn new() -> Self {
         Self {}

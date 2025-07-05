@@ -42,22 +42,20 @@ impl ConfigCommand {
             ConfigSubcommand::Show { file } => {
                 if let Some(path) = file {
                     match Config::from_file(path.to_str().unwrap()) {
-                        Ok(cfg) => println!("{:?}", cfg),
-                        Err(e) => return Err(format!("Failed to load config: {}", e)),
+                        Ok(cfg) => println!("{cfg:?}"),
+                        Err(e) => return Err(format!("Failed to load config: {e}")),
                     }
                 } else {
                     match Config::from_env() {
-                        Ok(cfg) => println!("{:?}", cfg),
-                        Err(e) => return Err(format!("Failed to load config from env: {}", e)),
+                        Ok(cfg) => println!("{cfg:?}"),
+                        Err(e) => return Err(format!("Failed to load config from env: {e}")),
                     }
                 }
             }
             ConfigSubcommand::Set { key, value, file } => {
                 let mut config = match Config::from_file(file.to_str().unwrap()) {
                     Ok(cfg) => cfg,
-                    Err(_) => Config {
-                        ollama_model: None,
-                    },
+                    Err(_) => Config { ollama_model: None },
                 };
                 match key.as_str() {
                     "ollama_model" => config.ollama_model = Some(value.clone()),
@@ -77,7 +75,7 @@ impl ConfigCommand {
                     .unwrap_or("uveddi.toml");
                 match Config::from_file(path) {
                     Ok(_) => println!("Config is valid."),
-                    Err(e) => return Err(format!("Config validation failed: {}", e)),
+                    Err(e) => return Err(format!("Config validation failed: {e}")),
                 }
             }
         }

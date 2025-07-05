@@ -53,9 +53,27 @@ pub struct AnalysisMetadata {
 }
 
 impl AnalysisOrchestrator {
-    ///
+    /// Creates a new `AnalysisOrchestrator` with a database at the specified path.
+    pub fn with_db_path(db_path: &std::path::Path) -> Result<Self, UveddiError> {
+        let database =
+            Database::new(Some(db_path)).context("Failed to initialize database with path")?;
+        let analysis_engine =
+            AnalysisEngine::new().context("Failed to initialize analysis engine")?;
+        let ai_engine = AiAnalysisEngine::new();
+        let report_generator = ReportGenerator::new();
+
+        Ok(Self {
+            database,
+            analysis_engine,
+            ai_engine,
+            report_generator,
+        })
+    }
+
+    /// Creates a new `AnalysisOrchestrator` with an in-memory database.
+    /// Ideal for testing or environments where file system access is restricted.
     pub fn new() -> Result<Self, UveddiError> {
-        let database = Database::new().context("Failed to initialize database")?;
+        let database = Database::new(None).context("Failed to initialize in-memory database")?;
         let analysis_engine =
             AnalysisEngine::new().context("Failed to initialize analysis engine")?;
         let ai_engine = AiAnalysisEngine::new();
@@ -129,13 +147,13 @@ impl AnalysisOrchestrator {
 
         // Store results
         info!("Starting to store {} issues to database", issues.len());
-        
+
         // Set the correct analysis_run_id for all issues
         let analysis_run_id = analysis_run.run_id.expect("Analysis run should have an ID");
         for issue in &mut issues {
             issue.analysis_run_id = analysis_run_id;
         }
-        
+
         self.database
             .store_issues(&issues)
             .context("Failed to store analysis issues")?;
@@ -181,8 +199,7 @@ impl AnalysisOrchestrator {
                 // self.ai_engine = self.ai_engine.clone().with_ollama(&ollama_model, &ollama_api_url);
                 // Placeholder: set Ollama model and API URL if needed
                 info!(
-                    "AI analysis enabled with local Ollama model: {} at {}",
-                    ollama_model, ollama_api_url
+                    "AI analysis enabled with local Ollama model: {ollama_model} at {ollama_api_url}"
                 );
             }
         }
@@ -198,7 +215,6 @@ impl AnalysisOrchestrator {
         }
         Ok(())
     }
-
 
     /// Enhance analysis results with AI insights
     async fn enhance_with_ai_analysis(
@@ -223,7 +239,7 @@ impl AnalysisOrchestrator {
         issues: &[ArchitecturalIssue],
         _duration: std::time::Duration,
     ) -> Result<(), UveddiError> {
-        analysis_run.total_files_analyzed = Some(self.analysis_engine.get_files_analyzed() as i32);
+        analysis_run.total_files_analyzed = Some(self.analysis_engine.get_files_analyzed());
         analysis_run.total_issues_found = Some(issues.len() as i32);
         analysis_run.end_time = Some(Utc::now());
         analysis_run.status = "completed".to_string();
@@ -267,9 +283,7 @@ impl Default for AnalysisOrchestrator {
 
 /// Runs the main application orchestration logic, handling CLI commands and error context.
 pub fn run_app() -> Result<(), UveddiError> {
-    use crate::cli::{
-        analyze_command::AnalyzeCommand, config_command::ConfigCommand,
-    };
+    use crate::cli::{analyze_command::AnalyzeCommand, config_command::ConfigCommand};
     use clap::Parser;
     use log::{error, info};
 
@@ -297,7 +311,9 @@ pub fn run_app() -> Result<(), UveddiError> {
         }
         Commands::Config(command) => {
             info!("Executing config command...");
-            command.execute().map_err(|e| UveddiError::Configuration(e.to_string()))
+            command
+                .execute()
+                .map_err(|e| UveddiError::Configuration(e.to_string()))
         }
     };
     if let Err(e) = result {

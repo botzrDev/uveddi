@@ -149,13 +149,14 @@ impl AstParser {
             if let Ok(mut parsed) = bincode::deserialize::<ParsedFile>(&buf) {
                 if parsed.modified_at == modified_time {
                     // Re-parse the AST since Tree is not serializable
-                    let parser = self
-                        .parsers
-                        .get_mut(&parsed.language)
-                        .ok_or_else(|| AstError::UnsupportedLanguage(format!("{:?}", parsed.language)))?;
-                    let tree = parser.parse(&parsed.source, None).ok_or(AstError::ParseFailed)?;
+                    let parser = self.parsers.get_mut(&parsed.language).ok_or_else(|| {
+                        AstError::UnsupportedLanguage(format!("{:?}", parsed.language))
+                    })?;
+                    let tree = parser
+                        .parse(&parsed.source, None)
+                        .ok_or(AstError::ParseFailed)?;
                     parsed.tree = Some(tree);
-                    
+
                     self.cache
                         .lock()
                         .unwrap()
@@ -171,7 +172,7 @@ impl AstParser {
         let parser = self
             .parsers
             .get_mut(&language)
-            .ok_or_else(|| AstError::UnsupportedLanguage(format!("{:?}", language)))?;
+            .ok_or_else(|| AstError::UnsupportedLanguage(format!("{language:?}")))?;
         let tree = parser.parse(&source, None).ok_or(AstError::ParseFailed)?;
         if tree.root_node().has_error() {
             return Err(AstError::ParseFailed);
@@ -203,8 +204,7 @@ impl AstParser {
                 .extension()
                 .and_then(|s| s.to_str())
                 .ok_or(AstError::UnsupportedLanguage(format!(
-                    "No file extension for {:?}",
-                    file_path
+                    "No file extension for {file_path:?}"
                 )))?;
 
         match extension {
@@ -274,7 +274,7 @@ impl CustomAst {
                 format!("Function: {} ({} params)", name, params.len())
             }
             CustomAst::Variable { name } => {
-                format!("Variable: {}", name)
+                format!("Variable: {name}")
             }
         }
     }
@@ -303,7 +303,7 @@ impl CustomAst {
             }
             CustomAst::Struct { name, methods } => {
                 if issue_context.contains(name) {
-                    Some(format!("struct {} {{ ... }}\nmethods: {:?}", name, methods))
+                    Some(format!("struct {name} {{ ... }}\nmethods: {methods:?}"))
                 } else {
                     None
                 }
@@ -317,7 +317,7 @@ impl CustomAst {
             }
             CustomAst::Variable { name } => {
                 if issue_context.contains(name) {
-                    Some(format!("let {} = ...;", name))
+                    Some(format!("let {name} = ...;"))
                 } else {
                     None
                 }
@@ -363,13 +363,19 @@ impl Clone for AstParser {
         // Re-initialize parsers for each clone
         let mut parsers = std::collections::HashMap::new();
         let mut rust_parser = tree_sitter::Parser::new();
-        rust_parser.set_language(&tree_sitter_rust::language()).unwrap();
+        rust_parser
+            .set_language(&tree_sitter_rust::language())
+            .unwrap();
         parsers.insert(SourceLanguage::Rust, rust_parser);
         let mut python_parser = tree_sitter::Parser::new();
-        python_parser.set_language(&tree_sitter_python::language()).unwrap();
+        python_parser
+            .set_language(&tree_sitter_python::language())
+            .unwrap();
         parsers.insert(SourceLanguage::Python, python_parser);
         let mut javascript_parser = tree_sitter::Parser::new();
-        javascript_parser.set_language(&tree_sitter_javascript::language()).unwrap();
+        javascript_parser
+            .set_language(&tree_sitter_javascript::language())
+            .unwrap();
         parsers.insert(SourceLanguage::JavaScript, javascript_parser);
         AstParser {
             parsers,

@@ -18,9 +18,7 @@ impl Config {
     /// Returns an error if any of the required environment variables are not set.
     pub fn from_env() -> Result<Self, env::VarError> {
         let ollama_model = env::var("OLLAMA_MODEL").ok();
-        Ok(Config {
-            ollama_model,
-        })
+        Ok(Config { ollama_model })
     }
 
     /// Creates a new Config instance by loading values from a file.
@@ -57,13 +55,25 @@ pub trait DatabaseService {
     /// Gets or creates a project ID for the given path.
     fn get_or_create_project_id(&self, project_path: &std::path::Path) -> rusqlite::Result<i64>;
     /// Creates a new analysis run for the given project.
-    fn create_analysis_run(&self, project_path: &std::path::Path) -> rusqlite::Result<crate::database::models::AnalysisRun>;
+    fn create_analysis_run(
+        &self,
+        project_path: &std::path::Path,
+    ) -> rusqlite::Result<crate::database::models::AnalysisRun>;
     /// Updates an existing analysis run.
-    fn update_analysis_run(&self, run: &crate::database::models::AnalysisRun) -> rusqlite::Result<()>;
+    fn update_analysis_run(
+        &self,
+        run: &crate::database::models::AnalysisRun,
+    ) -> rusqlite::Result<()>;
     /// Stores a new anti-pattern type.
-    fn store_anti_pattern_type(&self, anti_pattern_type: &mut crate::database::models::AntiPatternType) -> rusqlite::Result<()>;
+    fn store_anti_pattern_type(
+        &self,
+        anti_pattern_type: &mut crate::database::models::AntiPatternType,
+    ) -> rusqlite::Result<()>;
     /// Stores architectural issues in the database.
-    fn store_issues(&mut self, issues: &[crate::database::models::ArchitecturalIssue]) -> rusqlite::Result<()>;
+    fn store_issues(
+        &mut self,
+        issues: &[crate::database::models::ArchitecturalIssue],
+    ) -> rusqlite::Result<()>;
 }
 
 /// Provides an abstraction for AI-powered analysis engines.
@@ -73,7 +83,12 @@ pub trait AiEngineService {
     /// Analyzes the given codebase path.
     fn analyze(&self, codebase_path: &str) -> Result<(), crate::error::UveddiError>;
     /// Analyzes a single architectural issue asynchronously.
-    fn analyze_issue(&self, issue: &mut crate::database::models::ArchitecturalIssue) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<(), crate::error::UveddiError>> + Send>>;
+    fn analyze_issue(
+        &self,
+        issue: &mut crate::database::models::ArchitecturalIssue,
+    ) -> std::pin::Pin<
+        Box<dyn std::future::Future<Output = Result<(), crate::error::UveddiError>> + Send>,
+    >;
 }
 
 /// Provides an abstraction for AST parsing services.
@@ -81,7 +96,10 @@ pub trait AiEngineService {
 /// Enables the use of different AST backends or mocks for testing.
 pub trait AstService {
     /// Parses a file and returns a parsed AST representation.
-    fn parse_file(&self, file_path: &std::path::Path) -> Result<crate::ast::tree_sitter::ParsedFile, crate::error::UveddiError>;
+    fn parse_file(
+        &self,
+        file_path: &std::path::Path,
+    ) -> Result<crate::ast::tree_sitter::ParsedFile, crate::error::UveddiError>;
 }
 
 /// Provides an abstraction for security checks and permission validation.

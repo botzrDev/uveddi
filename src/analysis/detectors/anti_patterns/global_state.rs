@@ -6,6 +6,12 @@ use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 
 pub struct GlobalStateDetector;
 
+impl Default for GlobalStateDetector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl GlobalStateDetector {
     pub fn new() -> Self {
         Self {}

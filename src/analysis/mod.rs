@@ -49,7 +49,6 @@
 /// // let (issues, graph) = engine.analyze(Path::new("src/")).await.unwrap();
 /// // println!("Found {} issues", issues.len());
 /// ```
-
 pub mod cache;
 pub mod detectors;
 pub mod engine;

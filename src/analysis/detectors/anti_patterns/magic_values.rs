@@ -6,6 +6,12 @@ use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 
 pub struct MagicValuesDetector;
 
+impl Default for MagicValuesDetector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MagicValuesDetector {
     pub fn new() -> Self {
         Self {}

@@ -8,6 +8,12 @@ use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 
 pub struct LifetimeComplexityDetector;
 
+impl Default for LifetimeComplexityDetector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl LifetimeComplexityDetector {
     pub fn new() -> Self {
         Self {}

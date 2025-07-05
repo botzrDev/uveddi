@@ -8,6 +8,12 @@ use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 
 pub struct JavaConcurrencyDetector;
 
+impl Default for JavaConcurrencyDetector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl JavaConcurrencyDetector {
     pub fn new() -> Self {
         Self {}

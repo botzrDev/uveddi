@@ -8,8 +8,11 @@ pub struct Database {
 }
 
 impl Database {
-    pub fn new() -> Result<Self> {
-        let conn = Connection::open("uveddi.db")?;
+    pub fn new(db_path: Option<&Path>) -> Result<Self> {
+        let conn = match db_path {
+            Some(path) => Connection::open(path)?,
+            None => Connection::open_in_memory()?,
+        };
         conn.execute_batch("
             CREATE TABLE IF NOT EXISTS analysis_runs (
                 run_id INTEGER PRIMARY KEY AUTOINCREMENT,

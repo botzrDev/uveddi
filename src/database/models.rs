@@ -59,6 +59,12 @@ pub struct DependencyGraph {
     pub dependencies: Vec<Dependency>,
 }
 
+impl Default for DependencyGraph {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl DependencyGraph {
     pub fn new() -> Self {
         Self {
@@ -75,7 +81,7 @@ impl DependencyGraph {
             let from_module = self.extract_module_name(dep.from_file.as_path());
             self.adjacency_list
                 .entry(from_module.clone())
-                .or_insert_with(HashSet::new)
+                .or_default()
                 .insert(dep.to_module.clone());
             self.module_files.insert(from_module, dep.from_file);
         }

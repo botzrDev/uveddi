@@ -23,7 +23,6 @@ pub struct AnalyzeCommand {
     #[arg(long)]
     pub enable_ai: bool,
 
-
     /// Ollama API URL (for local AI)
     #[arg(long, env = "OLLAMA_API_URL")]
     pub ollama_api_url: Option<String>,

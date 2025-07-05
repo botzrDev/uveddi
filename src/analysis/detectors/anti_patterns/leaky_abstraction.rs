@@ -8,6 +8,12 @@ use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 
 pub struct LeakyAbstractionDetector;
 
+impl Default for LeakyAbstractionDetector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl LeakyAbstractionDetector {
     pub fn new() -> Self {
         Self {}

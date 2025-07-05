@@ -120,12 +120,11 @@ impl ReportGenerator {
         let total_issues = issues.len();
 
         summary.push_str(&format!(
-            "Total Architectural Issues Found: {}\n\n",
-            total_issues
+            "Total Architectural Issues Found: {total_issues}\n\n"
         ));
         summary.push_str("### Issues by Severity:\n");
         for (severity, count) in &severity_breakdown {
-            summary.push_str(&format!("- {}: {}\n", severity, count));
+            summary.push_str(&format!("- {severity}: {count}\n"));
         }
         summary.push('\n');
         summary
@@ -229,11 +228,10 @@ impl ReportGenerator {
                     content.push_str(&format!(
                         r"**Code Context:**
 ```rust
-{}
+{snippet}
 ```
 
-",
-                        snippet
+"
                     ));
                 }
             }
@@ -243,10 +241,9 @@ impl ReportGenerator {
                 if let Some(explanation) = &issue.ai_explanation {
                     content.push_str(&format!(
                         r"**AI Analysis:**
-{}
+{explanation}
 
-",
-                        explanation
+"
                     ));
                 }
             }
@@ -256,10 +253,9 @@ impl ReportGenerator {
                 if let Some(diagram) = self.generate_mermaid_diagram_for_issue(issue) {
                     content.push_str(&format!(
                         r"**Architecture Diagram:**
-{}
+{diagram}
 
-",
-                        diagram
+"
                     ));
                 }
             }
@@ -298,16 +294,16 @@ impl ReportGenerator {
                     graph.get_node_from_index(to_idx),
                 ) {
                     let from_name = match from_node {
-                        ComponentNode::Module { path } => path.split('/').last().unwrap_or(&path),
-                        ComponentNode::Class { name, .. } => &name,
-                        ComponentNode::Function { name, .. } => &name,
+                        ComponentNode::Module { path } => path.split('/').next_back().unwrap_or(path),
+                        ComponentNode::Class { name, .. } => name,
+                        ComponentNode::Function { name, .. } => name,
                     };
                     let to_name = match to_node {
-                        ComponentNode::Module { path } => path.split('/').last().unwrap_or(&path),
-                        ComponentNode::Class { name, .. } => &name,
-                        ComponentNode::Function { name, .. } => &name,
+                        ComponentNode::Module { path } => path.split('/').next_back().unwrap_or(path),
+                        ComponentNode::Class { name, .. } => name,
+                        ComponentNode::Function { name, .. } => name,
                     };
-                    diagram.push_str(&format!("    {} --> {}\n", from_name, to_name));
+                    diagram.push_str(&format!("    {from_name} --> {to_name}\n"));
                 }
             }
         }

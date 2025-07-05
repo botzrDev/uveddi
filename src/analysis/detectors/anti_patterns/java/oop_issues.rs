@@ -8,6 +8,12 @@ use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 
 pub struct JavaOopIssuesDetector;
 
+impl Default for JavaOopIssuesDetector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl JavaOopIssuesDetector {
     pub fn new() -> Self {
         Self {}
