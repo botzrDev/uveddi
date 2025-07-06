@@ -118,6 +118,55 @@ pub struct AnalyzeCommand {
     /// reported as dead code. Example: "main,init,setup,teardown"
     #[arg(long, value_delimiter = ',')]
     pub dead_code_keep_alive: Option<Vec<String>>,
+
+    /// Maximum logical lines of code threshold for large classes
+    ///
+    /// Classes exceeding this threshold will be flagged as potentially too large.
+    /// Default varies by language (Rust: 400, Python: 1000, JavaScript: 800)
+    #[arg(long, value_name = "LINES")]
+    pub large_classes_max_loc: Option<u32>,
+
+    /// Maximum number of methods threshold for large classes
+    ///
+    /// Classes with more methods than this threshold will be flagged.
+    /// Default varies by language (Rust: 20, Python: 20, JavaScript: 25)
+    #[arg(long, value_name = "COUNT")]
+    pub large_classes_max_methods: Option<u32>,
+
+    /// Maximum number of fields threshold for large classes
+    ///
+    /// Classes with more fields than this threshold will be flagged.
+    /// Default varies by language (Rust: 15, Python: 7, JavaScript: 12)
+    #[arg(long, value_name = "COUNT")]
+    pub large_classes_max_fields: Option<u32>,
+
+    /// Maximum cyclomatic complexity threshold for large classes
+    ///
+    /// Classes with higher complexity will be flagged as potentially too complex.
+    /// Default varies by language (Rust: 50, Python: 60, JavaScript: 55)
+    #[arg(long, value_name = "COMPLEXITY")]
+    pub large_classes_max_complexity: Option<u32>,
+
+    /// Maximum LCOM (Lack of Cohesion in Methods) score threshold
+    ///
+    /// Higher values indicate lower cohesion. Range: 0.0 to 1.0
+    /// Default: 0.8 for all languages
+    #[arg(long, value_name = "SCORE")]
+    pub large_classes_max_lcom: Option<f64>,
+
+    /// Patterns to ignore during large classes detection
+    ///
+    /// Comma-separated list of patterns to exclude from analysis.
+    /// Example: "test,spec,mock,generated,fixture"
+    #[arg(long, value_delimiter = ',')]
+    pub large_classes_ignore_patterns: Option<Vec<String>>,
+
+    /// Minimum severity score for large classes reporting (0-100)
+    ///
+    /// Only report issues with severity above this threshold.
+    /// 0-25: Info, 26-50: Low, 51-75: Medium, 76-90: High, 91-100: Critical
+    #[arg(long, value_name = "SCORE", default_value = "25")]
+    pub large_classes_min_severity: Option<u32>,
 }
 
 impl AnalyzeCommand {
@@ -182,6 +231,13 @@ impl AnalyzeCommand {
             dead_code_library_mode: self.dead_code_library_mode,
             dead_code_ignore_patterns: self.dead_code_ignore_patterns.clone(),
             dead_code_keep_alive: self.dead_code_keep_alive.clone(),
+            large_classes_max_loc: self.large_classes_max_loc,
+            large_classes_max_methods: self.large_classes_max_methods,
+            large_classes_max_fields: self.large_classes_max_fields,
+            large_classes_max_complexity: self.large_classes_max_complexity,
+            large_classes_max_lcom: self.large_classes_max_lcom,
+            large_classes_ignore_patterns: self.large_classes_ignore_patterns.clone(),
+            large_classes_min_severity: self.large_classes_min_severity,
         };
 
         // Execute analysis through application layer

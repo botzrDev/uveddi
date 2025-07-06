@@ -60,6 +60,9 @@ pub struct Config {
     
     /// Dead code detection configuration
     pub dead_code: Option<DeadCodeConfig>,
+    
+    /// Large classes detection configuration
+    pub large_classes: Option<LargeClassConfig>,
 }
 
 /// Configuration for dead code detection
@@ -73,6 +76,48 @@ pub struct DeadCodeConfig {
     pub ignore_patterns: Option<Vec<String>>,
     /// Symbols to always consider live
     pub keep_alive_patterns: Option<Vec<String>>,
+}
+
+/// Configuration for large classes detection
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct LargeClassConfig {
+    /// Maximum logical lines of code threshold
+    pub max_logical_loc: Option<u32>,
+    /// Maximum number of methods threshold
+    pub max_methods: Option<u32>,
+    /// Maximum number of fields threshold
+    pub max_fields: Option<u32>,
+    /// Maximum cyclomatic complexity threshold
+    pub max_cyclomatic_complexity: Option<u32>,
+    /// Maximum cognitive complexity threshold
+    pub max_cognitive_complexity: Option<u32>,
+    /// Maximum LCOM score threshold (0.0 to 1.0)
+    pub max_lcom_score: Option<f64>,
+    /// Maximum coupling count threshold
+    pub max_coupling: Option<u32>,
+    /// Patterns to ignore (e.g., test files, generated code)
+    pub ignore_patterns: Option<Vec<String>>,
+    /// Language-specific threshold overrides
+    pub language_overrides: Option<std::collections::HashMap<String, LanguageThresholds>>,
+}
+
+/// Language-specific thresholds for large class detection
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct LanguageThresholds {
+    /// Maximum logical lines of code
+    pub max_logical_loc: Option<u32>,
+    /// Maximum number of methods
+    pub max_methods: Option<u32>,
+    /// Maximum number of fields
+    pub max_fields: Option<u32>,
+    /// Maximum cyclomatic complexity
+    pub max_cyclomatic_complexity: Option<u32>,
+    /// Maximum cognitive complexity
+    pub max_cognitive_complexity: Option<u32>,
+    /// Maximum LCOM score (higher = less cohesive)
+    pub max_lcom_score: Option<f64>,
+    /// Maximum coupling count
+    pub max_coupling: Option<u32>,
 }
 
 impl Config {
@@ -107,7 +152,43 @@ impl Config {
             None
         };
         
-        Ok(Config { ollama_model, dead_code })
+        // Large classes configuration from environment
+        let large_classes = if env::var("LARGE_CLASSES_MAX_LOC").is_ok() ||
+                              env::var("LARGE_CLASSES_MAX_METHODS").is_ok() ||
+                              env::var("LARGE_CLASSES_MAX_FIELDS").is_ok() ||
+                              env::var("LARGE_CLASSES_IGNORE_PATTERNS").is_ok() {
+            Some(LargeClassConfig {
+                max_logical_loc: env::var("LARGE_CLASSES_MAX_LOC")
+                    .ok()
+                    .and_then(|s| s.parse().ok()),
+                max_methods: env::var("LARGE_CLASSES_MAX_METHODS")
+                    .ok()
+                    .and_then(|s| s.parse().ok()),
+                max_fields: env::var("LARGE_CLASSES_MAX_FIELDS")
+                    .ok()
+                    .and_then(|s| s.parse().ok()),
+                max_cyclomatic_complexity: env::var("LARGE_CLASSES_MAX_COMPLEXITY")
+                    .ok()
+                    .and_then(|s| s.parse().ok()),
+                max_cognitive_complexity: env::var("LARGE_CLASSES_MAX_COGNITIVE_COMPLEXITY")
+                    .ok()
+                    .and_then(|s| s.parse().ok()),
+                max_lcom_score: env::var("LARGE_CLASSES_MAX_LCOM")
+                    .ok()
+                    .and_then(|s| s.parse().ok()),
+                max_coupling: env::var("LARGE_CLASSES_MAX_COUPLING")
+                    .ok()
+                    .and_then(|s| s.parse().ok()),
+                ignore_patterns: env::var("LARGE_CLASSES_IGNORE_PATTERNS")
+                    .ok()
+                    .map(|s| s.split(',').map(|p| p.trim().to_string()).collect()),
+                language_overrides: None, // Complex structure, not supported via env vars
+            })
+        } else {
+            None
+        };
+        
+        Ok(Config { ollama_model, dead_code, large_classes })
     }
 
     /// Creates a new Config instance by loading values from a file.

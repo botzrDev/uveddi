@@ -1,6 +1,7 @@
 use crate::analysis::detectors::anti_patterns::code_duplication::CodeDuplicationDetector;
 use crate::analysis::detectors::anti_patterns::dead_code::{DeadCodeDetector, DeadCodeConfig};
 use crate::analysis::detectors::anti_patterns::god_object::GodObjectDetector;
+use crate::analysis::detectors::anti_patterns::large_classes::{LargeClassesDetector, LargeClassConfig};
 use crate::analysis::detectors::cycle::CycleDetector;
 use crate::analysis::detectors::dependency::{Dependency, DependencyExtractor};
 use crate::analysis::extractors::SymbolExtractor;
@@ -103,6 +104,7 @@ impl AnalysisEngine {
                 Box::new(GodObjectDetector::new(5, 8)), // More sensitive thresholds
                 Box::new(CodeDuplicationDetector::new()),
                 Box::new(DeadCodeDetector::with_default_config()),
+                Box::new(LargeClassesDetector::with_default_config()),
             ],
             cycle_detector: CycleDetector::new(),
             files_analyzed: 0,
@@ -131,6 +133,7 @@ impl AnalysisEngine {
                 Box::new(GodObjectDetector::new(5, 8)), // More sensitive thresholds
                 Box::new(CodeDuplicationDetector::new()),
                 Box::new(DeadCodeDetector::with_default_config()),
+                Box::new(LargeClassesDetector::with_default_config()),
             ],
             cycle_detector: CycleDetector::new(),
             files_analyzed: 0,
@@ -329,5 +332,12 @@ impl AnalysisEngine {
         // Remove the old detector and add the new one
         self.detectors.retain(|d| d.get_detector_name() != "DeadCodeDetector");
         self.detectors.push(Box::new(DeadCodeDetector::new(config)));
+    }
+
+    /// Configure the large classes detector with custom settings
+    pub fn configure_large_classes_detector(&mut self, config: LargeClassConfig) {
+        // Remove the old detector and add the new one
+        self.detectors.retain(|d| d.get_detector_name() != "LargeClassesDetector");
+        self.detectors.push(Box::new(LargeClassesDetector::new(config)));
     }
 }
