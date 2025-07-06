@@ -55,5 +55,6 @@ pub mod database;
 pub mod error;
 pub mod ingestion;
 pub mod models;
+pub mod plugins;
 pub mod report;
 pub mod semantic_search;

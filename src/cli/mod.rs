@@ -5,3 +5,4 @@
 
 pub mod analyze_command;
 pub mod config_command;
+pub mod plugin_command;

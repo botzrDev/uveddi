@@ -1,0 +1,223 @@
+// WebAssembly Interface Types definition for Uveddi plugins
+// This defines the contract between the host application and WASM plugins
+
+package uveddi:plugins@1.0.0;
+
+/// Main plugin world that defines the complete interface
+world code-analyzer {
+  // Host imports that plugins can use for logging and configuration
+  import logging: interface {
+    /// Log a message with the specified level
+    /// Level should be one of: "trace", "debug", "info", "warn", "error"
+    log: func(level: string, message: string);
+  }
+  
+  import config: interface {
+    /// Get a configuration value by key
+    get-value: func(key: string) -> option<string>;
+    
+    /// Get the analysis language being processed
+    get-language: func() -> string;
+  }
+
+  // Opaque handle to AST data managed by the plugin
+  resource ast-handle {
+    /// Get the size of the AST data in bytes
+    size: func() -> u64;
+    
+    /// Get the language of the AST
+    language: func() -> string;
+  }
+
+  // Plugin metadata and capabilities
+  record plugin-info {
+    name: string,
+    version: string,
+    author: string,
+    description: string,
+    supported-languages: list<string>,
+    anti-pattern-types: list<string>,
+    requires-graph-analysis: bool,
+  }
+
+  // Configuration for the plugin
+  record plugin-config {
+    severity-threshold: f32,
+    max-issues-per-file: u32,
+    custom-settings: list<tuple<string, string>>,
+  }
+
+  // Represents a detected architectural issue
+  record architectural-issue {
+    file-path: string,
+    start-line: u32,
+    end-line: u32,
+    start-column: u32,
+    end-column: u32,
+    anti-pattern-type: string,
+    message: string,
+    description: string,
+    confidence: f32,
+    severity: severity,
+    suggested-fix: option<string>,
+    metadata: list<tuple<string, string>>,
+  }
+
+  // Severity levels for issues
+  enum severity {
+    low,
+    medium,
+    high,
+    critical,
+  }
+
+  // Dependency information for graph analysis
+  record dependency-info {
+    from-file: string,
+    to-file: string,
+    dependency-type: dependency-type,
+    line-number: u32,
+    symbol-name: option<string>,
+  }
+
+  // Types of dependencies
+  enum dependency-type {
+    import-dep,
+    include-dep,
+    require-dep,
+    inherit-dep,
+    implement-dep,
+    call-dep,
+    reference-dep,
+  }
+
+  // Error types that plugins can return
+  variant plugin-error {
+    /// Invalid input data
+    invalid-input(string),
+    /// Internal processing error
+    processing-error(string),
+    /// Unsupported language or feature
+    unsupported(string),
+    /// Configuration error
+    config-error(string),
+    /// Memory or resource limit exceeded
+    resource-limit(string),
+  }
+
+  // Plugin exports - functions the plugin must implement
+  export plugin-interface: interface {
+    // Plugin metadata and capabilities
+    record plugin-info {
+      name: string,
+      version: string,
+      author: string,
+      description: string,
+      supported-languages: list<string>,
+      anti-pattern-types: list<string>,
+      requires-graph-analysis: bool,
+    }
+    
+    // Configuration for the plugin
+    record plugin-config {
+      severity-threshold: f32,
+      max-issues-per-file: u32,
+      custom-settings: list<tuple<string, string>>,
+    }
+    
+    // Error types that plugins can return
+    variant plugin-error {
+      /// Invalid input data
+      invalid-input(string),
+      /// Plugin processing error
+      processing-error(string),
+      /// Configuration error
+      config-error(string),
+      /// Memory or resource limit exceeded
+      resource-limit(string),
+    }
+    
+    // Handle for AST data in plugin memory space
+    resource ast-handle {
+      /// Get the size of the AST data in bytes
+      size: func() -> u64;
+      
+      /// Get the language of the AST
+      language: func() -> string;
+    }
+    
+    // Represents a detected architectural issue
+    record architectural-issue {
+      file-path: string,
+      start-line: u32,
+      end-line: u32,
+      severity: severity-level,
+      anti-pattern-type: string,
+      description: string,
+      suggestion: option<string>,
+      location: source-location,
+      impact-score: f32,
+    }
+    
+    // Severity levels for issues
+    enum severity-level {
+      low,
+      medium,
+      high,
+      critical,
+    }
+    
+    // Source code location information
+    record source-location {
+      file-path: string,
+      start-line: u32,
+      end-line: u32,
+      start-column: u32,
+      end-column: u32,
+      line-number: u32,
+      symbol-name: option<string>,
+    }
+    
+    // Dependency information for graph analysis
+    record dependency-info {
+      source-file: string,
+      target-file: string,
+      dependency-type: dependency-type,
+      location: source-location,
+    }
+    
+    // Types of dependencies
+    enum dependency-type {
+      import-dep,
+      include-dep,
+      require-dep,
+      inherit-dep,
+      implement-dep,
+      call-dep,
+      reference-dep,
+    }
+    
+    /// Get plugin metadata and capabilities
+    get-info: func() -> plugin-info;
+    
+    /// Initialize the plugin with configuration
+    initialize: func(config: plugin-config) -> result<_, plugin-error>;
+    
+    /// Load AST data and return a handle for zero-copy access
+    /// The ast-buffer is in Apache Arrow IPC streaming format
+    load-ast: func(ast-buffer: list<u8>) -> result<ast-handle, plugin-error>;
+    
+    /// Detect issues in the loaded AST
+    detect-issues: func(ast: borrow<ast-handle>) -> result<list<architectural-issue>, plugin-error>;
+    
+    /// Detect issues based on dependency graph analysis
+    /// The dependency-graph is serialized dependency information
+    detect-graph-issues: func(dependencies: list<dependency-info>) -> result<list<architectural-issue>, plugin-error>;
+    
+    /// Free the resources associated with an AST handle
+    free-ast: func(handle: ast-handle) -> result<_, plugin-error>;
+    
+    /// Cleanup plugin resources (called before unloading)
+    cleanup: func() -> result<_, plugin-error>;
+  }
+}

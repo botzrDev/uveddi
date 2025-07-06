@@ -29,7 +29,9 @@
       "Bash(make test:*)",
       "Bash(cargo fmt:*)",
       "Bash(cargo clippy:*)",
-      "Bash(rg:*)"
+      "Bash(rg:*)",
+      "Bash(cargo clean:*)",
+      "Bash(grep:*)"
     ],
     "deny": []
   }

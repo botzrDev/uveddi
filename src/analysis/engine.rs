@@ -14,6 +14,7 @@ use crate::ast::tree_sitter::AstParser;
 use crate::cache::result_cache::ResultCache;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use crate::ingestion::AsyncWalker;
+use crate::plugins::WasmPluginEngine;
 use log::{info, warn};
 
 use std::path::{Path, PathBuf};
@@ -60,6 +61,7 @@ pub struct AnalysisEngine {
     files_analyzed: i32,
     cache: ResultCache,
     symbol_table: GlobalSymbolTable,
+    plugin_engine: Option<WasmPluginEngine>,
 }
 
 impl AnalysisEngine {
@@ -80,6 +82,12 @@ impl AnalysisEngine {
     pub fn new() -> Result<Self, crate::error::UveddiError> {
         let cache_path = PathBuf::from("uveddi_cache.db");
         Self::with_cache_path(&cache_path)
+    }
+    
+    /// Creates a new analysis engine with WASM plugin support enabled
+    pub async fn new_with_plugins() -> Result<Self, crate::error::UveddiError> {
+        let cache_path = PathBuf::from("uveddi_cache.db");
+        Self::with_cache_path_and_plugins(&cache_path).await
     }
 
     /// Creates a new analysis engine with a custom cache database path
@@ -112,6 +120,40 @@ impl AnalysisEngine {
             files_analyzed: 0,
             cache: ResultCache::new(cache_path)?,
             symbol_table: GlobalSymbolTable::new(),
+            plugin_engine: None,
+        })
+    }
+    
+    /// Creates a new analysis engine with WASM plugin support and custom cache path
+    pub async fn with_cache_path_and_plugins(cache_path: &Path) -> Result<Self, crate::error::UveddiError> {
+        // Initialize plugin engine
+        let plugin_engine = match WasmPluginEngine::new().await {
+            Ok(engine) => {
+                info!("WASM plugin engine initialized successfully");
+                Some(engine)
+            },
+            Err(e) => {
+                warn!("Failed to initialize WASM plugin engine: {}. Continuing without plugins.", e);
+                None
+            }
+        };
+        
+        Ok(Self {
+            ast_parser: AstParser::new()?,
+            dependency_extractor: DependencyExtractor::new()?,
+            symbol_extractor: SymbolExtractor::new(),
+            detectors: vec![
+                Box::new(GodObjectDetector::new(5, 8)), // More sensitive thresholds
+                Box::new(CodeDuplicationDetector::new()),
+                Box::new(DeadCodeDetector::with_default_config()),
+                Box::new(LargeClassesDetector::with_default_config()),
+                Box::new(TightCouplingDetector::default()),
+            ],
+            cycle_detector: CycleDetector::new(),
+            files_analyzed: 0,
+            cache: ResultCache::new(cache_path)?,
+            symbol_table: GlobalSymbolTable::new(),
+            plugin_engine,
         })
     }
 
@@ -142,6 +184,7 @@ impl AnalysisEngine {
             files_analyzed: 0,
             cache: ResultCache::new_in_memory()?,
             symbol_table: GlobalSymbolTable::new(),
+            plugin_engine: None,
         })
     }
 
@@ -342,5 +385,111 @@ impl AnalysisEngine {
         // Remove the old detector and add the new one
         self.detectors.retain(|d| d.get_detector_name() != "LargeClassesDetector");
         self.detectors.push(Box::new(LargeClassesDetector::new(config)));
+    }
+    
+    /// Load all available WASM plugins
+    pub async fn load_plugins(&mut self) -> Result<usize, crate::error::UveddiError> {
+        if let Some(ref mut plugin_engine) = self.plugin_engine {
+            let loaded_plugins = plugin_engine.load_all_plugins().await
+                .map_err(|e| crate::error::UveddiError::PluginError(e.to_string()))?;
+            
+            // TODO: Re-enable when plugin adapter implements AnalysisDetector
+            // Add plugin adapters as detectors
+            // for plugin_id in &loaded_plugins {
+            //     if let Some(adapter) = plugin_engine.get_plugin_adapter(plugin_id).await {
+            //         self.detectors.push(Box::new(adapter));
+            //     }
+            // }
+            
+            info!("Loaded {} WASM plugins", loaded_plugins.len());
+            Ok(loaded_plugins.len())
+        } else {
+            warn!("Plugin engine not initialized. Use new_with_plugins() to enable plugin support.");
+            Ok(0)
+        }
+    }
+    
+    /// Install a new plugin
+    pub async fn install_plugin(
+        &mut self,
+        manifest: crate::plugins::PluginManifest,
+        binary: Vec<u8>,
+    ) -> Result<crate::plugins::PluginId, crate::error::UveddiError> {
+        if let Some(ref mut plugin_engine) = self.plugin_engine {
+            let plugin_id = plugin_engine.install_plugin(manifest, binary).await
+                .map_err(|e| crate::error::UveddiError::PluginError(e.to_string()))?;
+            
+            // TODO: Re-enable when plugin adapter implements AnalysisDetector
+            // Add the new plugin as a detector
+            // if let Some(adapter) = plugin_engine.get_plugin_adapter(&plugin_id).await {
+            //     self.detectors.push(Box::new(adapter));
+            // }
+            
+            Ok(plugin_id)
+        } else {
+            Err(crate::error::UveddiError::PluginError(
+                "Plugin engine not initialized".to_string()
+            ))
+        }
+    }
+    
+    /// Uninstall a plugin
+    pub async fn uninstall_plugin(&mut self, plugin_id: &crate::plugins::PluginId) -> Result<(), crate::error::UveddiError> {
+        if let Some(ref mut plugin_engine) = self.plugin_engine {
+            plugin_engine.uninstall_plugin(plugin_id).await
+                .map_err(|e| crate::error::UveddiError::PluginError(e.to_string()))?;
+            
+            // TODO: Re-enable when plugin adapter implements AnalysisDetector
+            // Reload all adapters to remove the uninstalled plugin
+            // self.detectors.retain(|detector| detector.get_detector_name() != "wasm-plugin-detector");
+            
+            // Re-add remaining plugin adapters
+            // for adapter in plugin_engine.get_all_plugin_adapters().await {
+            //     self.detectors.push(Box::new(adapter));
+            // }
+            
+            Ok(())
+        } else {
+            Err(crate::error::UveddiError::PluginError(
+                "Plugin engine not initialized".to_string()
+            ))
+        }
+    }
+    
+    /// Get plugin statistics
+    pub async fn get_plugin_stats(&self) -> Option<Vec<(crate::plugins::PluginId, crate::plugins::PluginStats)>> {
+        if let Some(ref plugin_engine) = self.plugin_engine {
+            let mut stats = Vec::new();
+            for plugin_id in plugin_engine.list_loaded_plugins().await {
+                if let Some(plugin_stats) = plugin_engine.get_plugin_stats(&plugin_id).await {
+                    stats.push((plugin_id, plugin_stats));
+                }
+            }
+            Some(stats)
+        } else {
+            None
+        }
+    }
+    
+    /// Monitor plugin resource usage
+    pub async fn monitor_plugin_resources(&mut self) -> Result<crate::plugins::ResourceReport, crate::error::UveddiError> {
+        if let Some(ref mut plugin_engine) = self.plugin_engine {
+            plugin_engine.monitor_resources().await
+                .map_err(|e| crate::error::UveddiError::PluginError(e.to_string()))
+        } else {
+            Err(crate::error::UveddiError::PluginError(
+                "Plugin engine not initialized".to_string()
+            ))
+        }
+    }
+    
+    /// Check if plugin engine is available
+    pub fn has_plugin_support(&self) -> bool {
+        self.plugin_engine.is_some()
+    }
+    
+    /// Get registry statistics
+    pub fn get_plugin_registry_stats(&self) -> Option<crate::plugins::registry::RegistryStatistics> {
+        self.plugin_engine.as_ref().map(|engine| engine.get_registry_stats())
     }
 }
