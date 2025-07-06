@@ -25,7 +25,7 @@ fn main() {
 }
 "#;
 
-        let parser = AstParser::new().expect("Failed to create parser");
+        let mut parser = AstParser::new().expect("Failed to create parser");
         let parsed_file = parser
             .parse_content(rust_code, &PathBuf::from("test.rs"), SourceLanguage::Rust)
             .expect("Failed to parse Rust code");
@@ -69,7 +69,7 @@ if __name__ == "__main__":
     used_function()
 "#;
 
-        let parser = AstParser::new().expect("Failed to create parser");
+        let mut parser = AstParser::new().expect("Failed to create parser");
         let parsed_file = parser
             .parse_content(python_code, &PathBuf::from("test.py"), SourceLanguage::Python)
             .expect("Failed to parse Python code");
@@ -105,7 +105,7 @@ function main() {
 main();
 "#;
 
-        let parser = AstParser::new().expect("Failed to create parser");
+        let mut parser = AstParser::new().expect("Failed to create parser");
         let parsed_file = parser
             .parse_content(js_code, &PathBuf::from("test.js"), SourceLanguage::JavaScript)
             .expect("Failed to parse JavaScript code");
@@ -135,7 +135,7 @@ fn private_unused() {
 }
 "#;
 
-        let parser = AstParser::new().expect("Failed to create parser");
+        let mut parser = AstParser::new().expect("Failed to create parser");
         let parsed_file = parser
             .parse_content(rust_code, &PathBuf::from("lib.rs"), SourceLanguage::Rust)
             .expect("Failed to parse Rust code");
@@ -161,7 +161,7 @@ fn unused_function() {
 }
 "#;
 
-        let parser = AstParser::new().expect("Failed to create parser");
+        let mut parser = AstParser::new().expect("Failed to create parser");
         let parsed_file = parser
             .parse_content(rust_code, &PathBuf::from("test.rs"), SourceLanguage::Rust)
             .expect("Failed to parse Rust code");
@@ -193,7 +193,7 @@ fn main() {
 }
 "#;
 
-        let parser = AstParser::new().expect("Failed to create parser");
+        let mut parser = AstParser::new().expect("Failed to create parser");
         let parsed_file = parser
             .parse_content(rust_code, &PathBuf::from("test.rs"), SourceLanguage::Rust)
             .expect("Failed to parse Rust code");

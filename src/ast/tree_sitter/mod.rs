@@ -201,6 +201,31 @@ impl AstParser {
         Ok(parsed)
     }
 
+    /// Parse content directly from a string (useful for testing)
+    pub fn parse_content(&mut self, content: &str, file_path: &Path, language: SourceLanguage) -> Result<ParsedFile, AstError> {
+        let parser = self
+            .parsers
+            .get_mut(&language)
+            .ok_or_else(|| AstError::UnsupportedLanguage(format!("{language:?}")))?;
+        
+        let tree = parser.parse(content, None).ok_or(AstError::ParseFailed)?;
+        if tree.root_node().has_error() {
+            return Err(AstError::ParseFailed);
+        }
+        
+        let custom_ast = Self::tree_to_custom_ast(&tree, content, &language);
+        let parsed = ParsedFile {
+            path: file_path.to_path_buf(),
+            language,
+            tree: Some(tree),
+            source: content.to_string(),
+            custom_ast,
+            modified_at: std::time::SystemTime::now(),
+        };
+        
+        Ok(parsed)
+    }
+
     /// Detect source language from file extension.
     /// Returns SourceLanguage or an error if unsupported.
     fn detect_language(&self, file_path: &Path) -> Result<SourceLanguage, AstError> {
@@ -338,7 +363,7 @@ impl Default for CustomAst {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum SourceLanguage {
     Rust,
     Python,
