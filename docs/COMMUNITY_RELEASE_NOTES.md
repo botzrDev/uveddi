@@ -32,6 +32,10 @@ Uveddi has been simplified and open-sourced as a community-driven architectural 
 - **Code Duplication**: Duplicate code blocks
 - **Magic Values**: Hardcoded constants without explanation
 - **Tight Coupling**: Excessive module dependencies
+- **Long Methods/Functions**: Functions or methods that are excessively long or complex
+- **Large Classes/Files**: Classes or files that exceed a reasonable size, making them hard to maintain
+- **Dead Code**: Unused functions, variables, or modules that can be safely removed
+- **Leaky Abstraction**: Abstractions that expose implementation details or fail to fully encapsulate complexity
 
 ### **Language Support**
 - **Rust**: Full support with struct/impl analysis
