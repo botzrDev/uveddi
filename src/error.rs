@@ -67,9 +67,6 @@ pub enum UveddiError {
     Toml(#[from] toml::de::Error),
 
     #[error("Plugin error: {0}")]
-    Plugin(String),
-
-    #[error("Plugin error: {0}")]
     PluginError(String),
     // WASM error conversion temporarily disabled for debugging
     // #[error("WASM runtime error: {0}")]

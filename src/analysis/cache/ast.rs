@@ -23,7 +23,9 @@ pub struct AstCache {
 
 impl AstCache {
     pub fn new(capacity: usize, cache_dir: PathBuf) -> Self {
-        std::fs::create_dir_all(&cache_dir).unwrap_or_default();
+        if let Err(e) = std::fs::create_dir_all(&cache_dir) {
+            eprintln!("Warning: Failed to create cache directory: {}", e);
+        }
         Self {
             memory_cache: HashMap::new(),
             disk_cache_path: cache_dir,

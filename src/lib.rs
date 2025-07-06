@@ -16,15 +16,17 @@
 //!
 //! ```rust,no_run
 //! use uveddi::config::Config;
-//! use uveddi::application::Application;
+//! use uveddi::application::AnalysisOrchestrator;
 //!
+//! # fn main() -> Result<(), Box<dyn std::error::Error>> {
 //! // Initialize the application with configuration
 //! let config = Config::default();
-//! let mut app = Application::new(config)?;
+//! let mut orchestrator = AnalysisOrchestrator::new()?;
 //!
 //! // Run analysis on a project
-//! app.analyze_project("/path/to/project")?;
-//! # Ok::<(), Box<dyn std::error::Error>>(())
+//! orchestrator.analyze_project("/path/to/project")?;
+//! # Ok(())
+//! # }
 //! ```
 //!
 //! ## Architecture

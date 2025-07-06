@@ -108,7 +108,7 @@ pub type AnalysisError = crate::error::UveddiError;
 /// // println!("Found {} issues", issues.len());
 /// # fn main() {}
 /// ```
-pub trait AnalysisDetector {
+pub trait AnalysisDetector: Send + Sync {
     fn detect_issues(&self, file: &ParsedFile) -> Result<Vec<ArchitecturalIssue>, AnalysisError>;
     fn detect_graph_issues(
         &self,

@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::io::{Read, Write};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 use tree_sitter::{Parser, Tree};
 
@@ -135,7 +135,9 @@ impl AstParser {
         let path_str = file_path.to_string_lossy().to_string();
         let modified_time = fs::metadata(file_path)?.modified()?;
 
-        if let Some(cached) = self.cache.lock().unwrap().get(&path_str) {
+        if let Some(cached) = self.cache.lock()
+            .map_err(|_| AstError::Other("Cache lock poisoned".to_string()))?
+            .get(&path_str) {
             if cached.modified_at == modified_time {
                 return Ok(cached.clone());
             }
@@ -188,11 +190,14 @@ impl AstParser {
         };
         let mut disk_parsed = parsed.clone();
         disk_parsed.tree = None;
-        let encoded = bincode::serialize(&disk_parsed).unwrap();
+        let encoded = bincode::serialize(&disk_parsed)
+            .map_err(|e| AstError::Other(format!("Failed to serialize cache: {}", e)))?;
         if let Ok(mut f) = fs::File::create(&cache_path) {
             f.write_all(&encoded).ok();
         }
-        self.cache.lock().unwrap().insert(path_str, parsed.clone());
+        self.cache.lock()
+            .map_err(|_| AstError::Other("Cache lock poisoned".to_string()))?
+            .insert(path_str, parsed.clone());
         Ok(parsed)
     }
 
@@ -236,7 +241,8 @@ pub struct ParsedFile {
 
 impl ParsedFile {
     pub fn cache_path(file_path: &Path) -> std::path::PathBuf {
-        let mut cache_dir = std::env::current_dir().unwrap();
+        let mut cache_dir = std::env::current_dir()
+            .unwrap_or_else(|_| PathBuf::from("."));
         cache_dir.push(CACHE_DIR);
         fs::create_dir_all(&cache_dir).ok();
         let file_hash = format!("{:x}", md5::compute(file_path.to_string_lossy().as_bytes()));
@@ -349,6 +355,8 @@ pub enum AstError {
     ParseFailed,
     #[error("Unsupported language: {0}")]
     UnsupportedLanguage(String),
+    #[error("Other error: {0}")]
+    Other(String),
 }
 
 // Documentation:

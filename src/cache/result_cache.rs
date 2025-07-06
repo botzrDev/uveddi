@@ -86,7 +86,8 @@ impl ResultCache {
 
         if let Some(result) = rows.next() {
             let value_blob = result?;
-            let value: V = bincode::deserialize(&value_blob).unwrap();
+            let value: V = bincode::deserialize(&value_blob)
+                .map_err(|e| rusqlite::Error::ToSqlConversionFailure(e.into()))?;
             return Ok(Some(value));
         }
 
@@ -111,7 +112,8 @@ impl ResultCache {
     /// * `Err(rusqlite::Error)` - If the insert or serialization fails.
     pub fn set<K: Hash, V: Serialize>(&self, key_data: &K, value: &V) -> Result<()> {
         let key = Self::hash_key(key_data);
-        let value_blob = bincode::serialize(value).unwrap();
+        let value_blob = bincode::serialize(value)
+            .map_err(|e| rusqlite::Error::ToSqlConversionFailure(e.into()))?;
         self.conn.execute(
             "INSERT OR REPLACE INTO cache (key, value) VALUES (?1, ?2)",
             rusqlite::params![key, value_blob],

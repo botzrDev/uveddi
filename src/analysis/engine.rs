@@ -10,6 +10,7 @@ use crate::cache::result_cache::ResultCache;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use crate::ingestion::AsyncWalker;
 use log::{info, warn};
+use rayon::prelude::*;
 use std::path::{Path, PathBuf};
 use tokio_stream::StreamExt;
 
@@ -57,7 +58,7 @@ struct CachedAnalysisResult {
 pub struct AnalysisEngine {
     ast_parser: AstParser,
     dependency_extractor: DependencyExtractor,
-    detectors: Vec<Box<dyn AnalysisDetector>>,
+    detectors: Vec<Box<dyn AnalysisDetector + Send + Sync>>,
     cycle_detector: CycleDetector,
     files_analyzed: i32,
     cache: ResultCache,
