@@ -2,6 +2,7 @@ use crate::analysis::detectors::anti_patterns::code_duplication::CodeDuplication
 use crate::analysis::detectors::anti_patterns::dead_code::{DeadCodeDetector, DeadCodeConfig};
 use crate::analysis::detectors::anti_patterns::god_object::GodObjectDetector;
 use crate::analysis::detectors::anti_patterns::large_classes::{LargeClassesDetector, LargeClassConfig};
+use crate::analysis::detectors::anti_patterns::tight_coupling::TightCouplingDetector;
 use crate::analysis::detectors::cycle::CycleDetector;
 use crate::analysis::detectors::dependency::{Dependency, DependencyExtractor};
 use crate::analysis::extractors::SymbolExtractor;
@@ -105,6 +106,7 @@ impl AnalysisEngine {
                 Box::new(CodeDuplicationDetector::new()),
                 Box::new(DeadCodeDetector::with_default_config()),
                 Box::new(LargeClassesDetector::with_default_config()),
+                Box::new(TightCouplingDetector::default()),
             ],
             cycle_detector: CycleDetector::new(),
             files_analyzed: 0,
@@ -134,6 +136,7 @@ impl AnalysisEngine {
                 Box::new(CodeDuplicationDetector::new()),
                 Box::new(DeadCodeDetector::with_default_config()),
                 Box::new(LargeClassesDetector::with_default_config()),
+                Box::new(TightCouplingDetector::default()),
             ],
             cycle_detector: CycleDetector::new(),
             files_analyzed: 0,

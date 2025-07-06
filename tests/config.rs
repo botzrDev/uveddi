@@ -95,6 +95,8 @@ fn test_config_clone() {
 
     let config = Config {
         ollama_model: Some("test_model".to_string()),
+        dead_code: None,
+        large_classes: None,
     };
 
     let cloned_config = config.clone();
@@ -107,6 +109,8 @@ fn test_config_debug_format() {
 
     let config = Config {
         ollama_model: Some("test_model".to_string()),
+        dead_code: None,
+        large_classes: None,
     };
 
     let debug_str = format!("{config:?}");

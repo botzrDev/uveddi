@@ -24,6 +24,17 @@ fn test_analyze_command_creation() {
         enable_ai: false,
         ollama_api_url: None,
         ollama_model: None,
+        dead_code_confidence: None,
+        dead_code_library_mode: false,
+        dead_code_ignore_patterns: None,
+        dead_code_keep_alive: None,
+        large_classes_max_loc: None,
+        large_classes_max_methods: None,
+        large_classes_max_fields: None,
+        large_classes_max_complexity: None,
+        large_classes_max_lcom: None,
+        large_classes_ignore_patterns: None,
+        large_classes_min_severity: None,
     };
 
     assert_eq!(command.path, PathBuf::from("test_path"));
@@ -46,6 +57,17 @@ fn test_analyze_command_with_all_options() {
         enable_ai: true,
         ollama_api_url: Some("http://localhost:11434".to_string()),
         ollama_model: Some("llama2".to_string()),
+        dead_code_confidence: None,
+        dead_code_library_mode: false,
+        dead_code_ignore_patterns: None,
+        dead_code_keep_alive: None,
+        large_classes_max_loc: None,
+        large_classes_max_methods: None,
+        large_classes_max_fields: None,
+        large_classes_max_complexity: None,
+        large_classes_max_lcom: None,
+        large_classes_ignore_patterns: None,
+        large_classes_min_severity: None,
     };
 
     assert_eq!(command.path, PathBuf::from("src/"));
@@ -71,6 +93,17 @@ async fn test_execute_with_empty_directory() {
         enable_ai: false,
         ollama_api_url: None,
         ollama_model: None,
+        dead_code_confidence: None,
+        dead_code_library_mode: false,
+        dead_code_ignore_patterns: None,
+        dead_code_keep_alive: None,
+        large_classes_max_loc: None,
+        large_classes_max_methods: None,
+        large_classes_max_fields: None,
+        large_classes_max_complexity: None,
+        large_classes_max_lcom: None,
+        large_classes_ignore_patterns: None,
+        large_classes_min_severity: None,
     };
 
     let result = command.execute().await;
@@ -105,6 +138,17 @@ fn main() {
         enable_ai: false,
         ollama_api_url: None,
         ollama_model: None,
+        dead_code_confidence: None,
+        dead_code_library_mode: false,
+        dead_code_ignore_patterns: None,
+        dead_code_keep_alive: None,
+        large_classes_max_loc: None,
+        large_classes_max_methods: None,
+        large_classes_max_fields: None,
+        large_classes_max_complexity: None,
+        large_classes_max_lcom: None,
+        large_classes_ignore_patterns: None,
+        large_classes_min_severity: None,
     };
 
     let result = command.execute().await;
@@ -128,6 +172,17 @@ async fn test_execute_with_output_file() {
         enable_ai: false,
         ollama_api_url: None,
         ollama_model: None,
+        dead_code_confidence: None,
+        dead_code_library_mode: false,
+        dead_code_ignore_patterns: None,
+        dead_code_keep_alive: None,
+        large_classes_max_loc: None,
+        large_classes_max_methods: None,
+        large_classes_max_fields: None,
+        large_classes_max_complexity: None,
+        large_classes_max_lcom: None,
+        large_classes_ignore_patterns: None,
+        large_classes_min_severity: None,
     };
 
     let result = command.execute().await;
@@ -152,6 +207,17 @@ async fn test_execute_with_json_format() {
         enable_ai: false,
         ollama_api_url: None,
         ollama_model: None,
+        dead_code_confidence: None,
+        dead_code_library_mode: false,
+        dead_code_ignore_patterns: None,
+        dead_code_keep_alive: None,
+        large_classes_max_loc: None,
+        large_classes_max_methods: None,
+        large_classes_max_fields: None,
+        large_classes_max_complexity: None,
+        large_classes_max_lcom: None,
+        large_classes_ignore_patterns: None,
+        large_classes_min_severity: None,
     };
 
     let result = command.execute().await;
@@ -172,6 +238,17 @@ async fn test_execute_nonexistent_path() {
         enable_ai: false,
         ollama_api_url: None,
         ollama_model: None,
+        dead_code_confidence: None,
+        dead_code_library_mode: false,
+        dead_code_ignore_patterns: None,
+        dead_code_keep_alive: None,
+        large_classes_max_loc: None,
+        large_classes_max_methods: None,
+        large_classes_max_fields: None,
+        large_classes_max_complexity: None,
+        large_classes_max_lcom: None,
+        large_classes_ignore_patterns: None,
+        large_classes_min_severity: None,
     };
 
     let result = command.execute().await;

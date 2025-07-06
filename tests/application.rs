@@ -23,6 +23,17 @@ fn test_analysis_config_creation() {
         enable_ai: false,
         ollama_api_url: None,
         ollama_model: None,
+        dead_code_confidence: None,
+        dead_code_library_mode: false,
+        dead_code_ignore_patterns: None,
+        dead_code_keep_alive: None,
+        large_classes_max_loc: None,
+        large_classes_max_methods: None,
+        large_classes_max_fields: None,
+        large_classes_max_complexity: None,
+        large_classes_max_lcom: None,
+        large_classes_ignore_patterns: None,
+        large_classes_min_severity: None,
     };
 
     assert_eq!(config.target_path, PathBuf::from("/tmp"));
@@ -44,6 +55,17 @@ async fn test_execute_analysis_nonexistent_path() {
         enable_ai: false,
         ollama_api_url: None,
         ollama_model: None,
+        dead_code_confidence: None,
+        dead_code_library_mode: false,
+        dead_code_ignore_patterns: None,
+        dead_code_keep_alive: None,
+        large_classes_max_loc: None,
+        large_classes_max_methods: None,
+        large_classes_max_fields: None,
+        large_classes_max_complexity: None,
+        large_classes_max_lcom: None,
+        large_classes_ignore_patterns: None,
+        large_classes_min_severity: None,
     };
 
     let result = orchestrator.execute_analysis(config).await;
@@ -64,6 +86,17 @@ async fn test_execute_analysis_empty_directory() {
         enable_ai: false,
         ollama_api_url: None,
         ollama_model: None,
+        dead_code_confidence: None,
+        dead_code_library_mode: false,
+        dead_code_ignore_patterns: None,
+        dead_code_keep_alive: None,
+        large_classes_max_loc: None,
+        large_classes_max_methods: None,
+        large_classes_max_fields: None,
+        large_classes_max_complexity: None,
+        large_classes_max_lcom: None,
+        large_classes_ignore_patterns: None,
+        large_classes_min_severity: None,
     };
 
     let result = orchestrator.execute_analysis(config).await;

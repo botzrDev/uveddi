@@ -11,6 +11,8 @@ pub fn temp_test_dir() -> tempfile::TempDir {
 pub fn sample_config() -> uveddi::config::Config {
     uveddi::config::Config {
         ollama_model: Some("deepseek-coder:6.7b-instruct-q4_0".to_string()),
+        dead_code: None,
+        large_classes: None,
     }
 }
 

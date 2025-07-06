@@ -4,17 +4,29 @@
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+    use crate::analysis::detectors::anti_patterns::tight_coupling::TightCouplingDetector;
+    use crate::ast::tree_sitter::ParsedFile;
+
     #[test]
     #[ignore]
     fn test_tight_coupling_positive() {
-        // TODO: Implement test for excessive dependencies between modules/classes
-        todo!("Implement tight coupling detection test");
+        // TODO: Provide a real parsed file with tight coupling
+        // let parsed = ...;
+        // let detector = TightCouplingDetector::default();
+        // let issues = detector.detect_issues(&parsed).unwrap();
+        // assert!(!issues.is_empty());
+        todo!("Implement positive test for tight coupling");
     }
 
     #[test]
     #[ignore]
     fn test_tight_coupling_negative() {
-        // TODO: Implement negative test for loosely coupled components
+        // TODO: Provide a real parsed file with loose coupling
+        // let parsed = ...;
+        // let detector = TightCouplingDetector::default();
+        // let issues = detector.detect_issues(&parsed).unwrap();
+        // assert!(issues.is_empty());
         todo!("Implement negative test for tight coupling");
     }
 }
