@@ -580,6 +580,13 @@ const RUST_CALL_QUERY: &str = r#"
   function: (field_expression
     field: (field_identifier) @name)
 )
+(call_expression
+  function: (scoped_identifier
+    name: (identifier) @name)
+)
+(macro_invocation
+  macro: (identifier) @name
+)
 "#;
 
 const PYTHON_FUNCTION_QUERY: &str = r#"
