@@ -19,11 +19,11 @@ pub mod tight_coupling;
 // Re-exports for community detectors
 pub use code_duplication::CodeDuplicationDetector;
 pub use cyclic_dependencies::CyclicDependenciesDetector;
-pub use dead_code::DeadCodeDetector;
+// pub use dead_code::DeadCodeDetector; // TODO: Implement
 pub use god_object::GodObjectDetector;
-pub use large_classes::LargeClassesDetector;
+// pub use large_classes::LargeClassesDetector; // TODO: Implement
 pub use leaky_abstraction::LeakyAbstractionDetector;
-pub use long_methods::LongMethodsDetector;
+// pub use long_methods::LongMethodsDetector; // TODO: Implement
 pub use magic_values::MagicValuesDetector;
 pub use tight_coupling::TightCouplingDetector;
 // pub use state_synchronization::StateSynchronizationDetector;
