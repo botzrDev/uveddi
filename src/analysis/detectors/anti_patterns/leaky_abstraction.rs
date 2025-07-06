@@ -284,32 +284,19 @@ impl LeakyAbstractionDetector {
                   type: (_) @field_type))) @struct_decl
 
             ; Detect use statements importing from infrastructure modules
-            (use_declaration
-              argument: (scoped_identifier
-                path: (identifier) @module_name
-                name: (_) @import_name)) @use_stmt
+            (use_declaration) @use_stmt
 
-            ; Detect function signatures with infrastructure types
+            ; Detect public function signatures with return types
             (function_item
-              (visibility_modifier)? @fn_vis
+              (visibility_modifier) @fn_vis
               name: (identifier) @fn_name
-              parameters: (parameters
-                (parameter
-                  pattern: (_) @param_name
-                  type: (type_identifier) @param_type)*)
-              return_type: (type_identifier)? @return_type) @function_decl
+              return_type: (_) @return_type) @function_decl
 
-            ; Detect error type propagation
-            (result_type
-              ok_type: (_) @ok_type
-              error_type: (type_identifier) @error_type) @result_type
+            ; Detect enum variants for infrastructure error types
+            (enum_item
+              name: (type_identifier) @enum_name) @enum_decl
 
-            ; Detect async function signatures with runtime-specific types
-            (function_item
-              (visibility_modifier)? @async_vis
-              "async"
-              name: (identifier) @async_name
-              return_type: (_) @async_return) @async_fn
+
         "#;
 
         let language = tree_sitter_rust::language();
@@ -375,13 +362,10 @@ impl LeakyAbstractionDetector {
                 property: (property_identifier) @dom_method)) @dom_call
 
             ; Detect type annotations referencing framework/infrastructure types (e.g., Express.Request, React.Component)
-            (type_annotation
-              (type_identifier) @type_name) @type_ann
+            ; NOTE: TypeScript-specific, not available in plain JavaScript Tree-sitter
 
             ; Detect generic type parameter pollution
-            (type_parameters
-              (type_parameter
-                name: (type_identifier) @type_param)) @type_params
+            ; NOTE: TypeScript-specific, not available in plain JavaScript Tree-sitter
         "#;
 
         let language = tree_sitter_javascript::language();
@@ -421,9 +405,85 @@ impl LeakyAbstractionDetector {
         self.config.infrastructure_modules.iter().any(|infra| module_name.starts_with(infra))
     }
 
+    /// Checks if a type name represents an infrastructure error type that shouldn't be exposed in public APIs.
+    fn is_infrastructure_error_type(&self, type_text: &str) -> bool {
+        // Check for common infrastructure error type patterns
+        let infrastructure_error_patterns = [
+            "DieselError", "SqlxError", "SeaOrmError", // Database ORMs
+            "tokio::Error", "std::io::Error", "reqwest::Error", // IO and HTTP
+            "serde_json::Error", "toml::de::Error", // Serialization
+            "rusqlite::Error", "postgres::Error", // Database drivers
+        ];
+        
+        infrastructure_error_patterns.iter().any(|pattern| {
+            type_text.contains(pattern) || 
+            // Check for Result<T, InfrastructureError> patterns
+            (type_text.contains("Result<") && type_text.contains(pattern))
+        })
+    }
+
     /// Checks if a given path or module name indicates an internal/private module.
     fn is_internal_module(&self, path: &str) -> bool {
         self.config.internal_patterns.iter().any(|pattern| path.contains(pattern))
+    }
+
+    /// Extracts the module name from a Rust use statement text.
+    fn extract_module_from_use_statement(&self, use_text: &str) -> Option<String> {
+        // Remove "use " prefix and find the first identifier
+        if let Some(content) = use_text.strip_prefix("use ") {
+            // Find the first identifier before :: or ; or whitespace
+            let content = content.trim();
+            if let Some(pos) = content.find("::") {
+                Some(content[..pos].to_string())
+            } else if let Some(pos) = content.find(";") {
+                Some(content[..pos].trim().to_string())
+            } else if let Some(pos) = content.find(" ") {
+                Some(content[..pos].to_string())
+            } else {
+                Some(content.to_string())
+            }
+        } else {
+            None
+        }
+    }
+
+    /// Extracts the module name from a Python import statement.
+    fn extract_python_import_module(&self, import_text: &str) -> Option<String> {
+        // Handle different Python import patterns:
+        // from django.shortcuts import render -> "django"
+        // import django.contrib.auth -> "django"
+        // from myapp.models import User -> "myapp"
+        
+        let text = import_text.trim();
+        
+        if text.starts_with("from ") {
+            // from module.submodule import something
+            if let Some(module_part) = text.strip_prefix("from ") {
+                if let Some(import_pos) = module_part.find(" import ") {
+                    let module = &module_part[..import_pos].trim();
+                    return Some(module.split('.').next()?.to_string());
+                }
+            }
+        } else if text.starts_with("import ") {
+            // import module.submodule
+            if let Some(module_part) = text.strip_prefix("import ") {
+                // Handle multiple imports: import os, sys -> take first
+                let first_module = module_part.split(',').next()?.trim();
+                return Some(first_module.split('.').next()?.to_string());
+            }
+        }
+        
+        None
+    }
+    
+    /// Returns a human-readable name for an architectural layer.
+    fn get_layer_name(&self, layer: &ArchitecturalLayer) -> &'static str {
+        match layer {
+            ArchitecturalLayer::Presentation => "Presentation",
+            ArchitecturalLayer::Application => "Application", 
+            ArchitecturalLayer::Domain => "Domain",
+            ArchitecturalLayer::Infrastructure => "Infrastructure",
+        }
     }
 
     /// Runs leaky abstraction analysis on a single Rust file.
@@ -441,30 +501,34 @@ impl LeakyAbstractionDetector {
                     let capture_name = query.capture_names()[capture.index as usize];
                     
                     match capture_name {
-                        "module_name" => {
-                            if let Ok(module_text) = node.utf8_text(parsed_file.source.as_bytes()) {
-                                if self.is_infrastructure_module(module_text) {
-                                    let layer = self.get_layer_from_path(&parsed_file.path.to_string_lossy());
-                                    if matches!(layer, Some(ArchitecturalLayer::Domain) | Some(ArchitecturalLayer::Application)) {
+                        "use_stmt" => {
+                            // Analyze the entire use declaration
+                            if let Ok(use_text) = node.utf8_text(parsed_file.source.as_bytes()) {
+                                // Extract module name from use statement text
+                                if let Some(module_name) = self.extract_module_from_use_statement(use_text) {
+                                    if self.is_infrastructure_module(&module_name) {
+                                        let layer = self.get_layer_from_path(&parsed_file.path.to_string_lossy());
+                                        if matches!(layer, Some(ArchitecturalLayer::Domain) | Some(ArchitecturalLayer::Application)) {
+                                            issues.push(self.create_issue(
+                                                analysis_run_id,
+                                                &parsed_file.path.to_string_lossy(),
+                                                node,
+                                                LeakType::FrameworkCoupling,
+                                                &format!("Infrastructure module '{}' imported in {} layer", module_name, layer.map(|l| format!("{:?}", l)).unwrap_or_else(|| "unknown".to_string())),
+                                                "high",
+                                            ));
+                                        }
+                                    }
+                                    if self.is_internal_module(&module_name) {
                                         issues.push(self.create_issue(
                                             analysis_run_id,
                                             &parsed_file.path.to_string_lossy(),
                                             node,
-                                            LeakType::FrameworkCoupling,
-                                            &format!("Infrastructure module '{}' imported in {} layer", module_text, layer.map(|l| format!("{:?}", l)).unwrap_or_else(|| "unknown".to_string())),
+                                            LeakType::VisibilityViolation,
+                                            &format!("Direct import of internal module '{}'", module_name),
                                             "high",
                                         ));
                                     }
-                                }
-                                if self.is_internal_module(module_text) {
-                                    issues.push(self.create_issue(
-                                        analysis_run_id,
-                                        &parsed_file.path.to_string_lossy(),
-                                        node,
-                                        LeakType::VisibilityViolation,
-                                        &format!("Direct import of internal module '{}'", module_text),
-                                        "high",
-                                    ));
                                 }
                             }
                         }
@@ -487,17 +551,28 @@ impl LeakyAbstractionDetector {
                                 }
                             }
                         }
-                        "error_type" => {
-                            if let Ok(error_text) = node.utf8_text(parsed_file.source.as_bytes()) {
-                                if self.is_infrastructure_module(error_text) {
-                                    issues.push(self.create_issue(
-                                        analysis_run_id,
-                                        &parsed_file.path.to_string_lossy(),
-                                        node,
-                                        LeakType::ErrorPropagation,
-                                        &format!("Infrastructure error type '{}' propagated to public API", error_text),
-                                        "high",
-                                    ));
+                        "fn_vis" => {
+                            // Check if this is a public function
+                            if let Ok(vis_text) = node.utf8_text(parsed_file.source.as_bytes()) {
+                                if vis_text == "pub" {
+                                    // Look for the corresponding return type in the same match
+                                    for other_capture in match_.captures {
+                                        if query.capture_names()[other_capture.index as usize] == "return_type" {
+                                            if let Ok(return_type_text) = other_capture.node.utf8_text(parsed_file.source.as_bytes()) {
+                                                // Check if return type contains infrastructure error types
+                                                if self.is_infrastructure_error_type(return_type_text) {
+                                                    issues.push(self.create_issue(
+                                                        analysis_run_id,
+                                                        &parsed_file.path.to_string_lossy(),
+                                                        other_capture.node,
+                                                        LeakType::ErrorPropagation,
+                                                        &format!("Infrastructure error type '{}' propagated to public API", return_type_text),
+                                                        "high",
+                                                    ));
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -514,66 +589,54 @@ impl LeakyAbstractionDetector {
     fn analyze_python_file(&self, parsed_file: &ParsedFile, analysis_run_id: i64) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         let mut issues = Vec::new();
         
-        if let Some(query) = &self.python_queries {
-            let tree = parsed_file.tree.as_ref().ok_or_else(|| AnalysisError::Other("No AST available".to_string()))?;
-            let mut cursor = QueryCursor::new();
-            let captures = cursor.captures(query, tree.root_node(), parsed_file.source.as_bytes());
-
-            for (match_, _) in captures {
-                for capture in match_.captures {
-                    let node = capture.node;
-                    let capture_name = query.capture_names()[capture.index as usize];
+        // Check architectural layer violations
+        let file_path_str = parsed_file.path.to_string_lossy();
+        if let Some(current_layer) = self.get_layer_from_path(&file_path_str) {
+            
+            if let Some(query) = &self.python_queries {
+                if let Some(tree) = &parsed_file.tree {
+                    let mut cursor = QueryCursor::new();
+                    let matches = cursor.matches(query, tree.root_node(), parsed_file.source.as_bytes());
                     
-                    match capture_name {
-                        "module_name" | "from_module" => {
-                            if let Ok(module_text) = node.utf8_text(parsed_file.source.as_bytes()) {
-                                if self.is_infrastructure_module(module_text) {
-                                    let layer = self.get_layer_from_path(&parsed_file.path.to_string_lossy());
-                                    if matches!(layer, Some(ArchitecturalLayer::Domain) | Some(ArchitecturalLayer::Application)) {
-                                        issues.push(self.create_issue(
+                    for query_match in matches {
+                        for capture in query_match.captures {
+                            let capture_text = capture.node.utf8_text(parsed_file.source.as_bytes()).unwrap_or("");
+                            
+                            // Extract module name from Python import
+                            if let Some(module_name) = self.extract_python_import_module(capture_text) {
+                                if self.is_infrastructure_module(&module_name) {
+                                    // Check if this is a layer violation (infrastructure should only be in Infrastructure layer)
+                                    if current_layer != ArchitecturalLayer::Infrastructure {
+                                        let issue = ArchitecturalIssue {
+                                            issue_id: None,
                                             analysis_run_id,
-                                            &parsed_file.path.to_string_lossy(),
-                                            node,
-                                            LeakType::FrameworkCoupling,
-                                            &format!("Framework module '{}' imported in {} layer", module_text, layer.map(|l| format!("{:?}", l)).unwrap_or_else(|| "unknown".to_string())),
-                                            "high",
-                                        ));
-                                    }
-                                }
-                                if self.is_internal_module(module_text) {
-                                    issues.push(self.create_issue(
-                                        analysis_run_id,
-                                        &parsed_file.path.to_string_lossy(),
-                                        node,
-                                        LeakType::VisibilityViolation,
-                                        &format!("Direct import of internal module '{}'", module_text),
-                                        "high",
-                                    ));
-                                }
-                            }
-                        }
-                        "model_name" => {
-                            // Detect direct ORM model usage
-                            if let Ok(model_text) = node.utf8_text(parsed_file.source.as_bytes()) {
-                                if model_text.ends_with("Model") || model_text.contains("objects") {
-                                    let layer = self.get_layer_from_path(&parsed_file.path.to_string_lossy());
-                                    if matches!(layer, Some(ArchitecturalLayer::Presentation)) {
-                                        issues.push(self.create_issue(
-                                            analysis_run_id,
-                                            &parsed_file.path.to_string_lossy(),
-                                            node,
-                                            LeakType::LayerViolation,
-                                            "Direct database model usage in presentation layer - use service layer instead",
-                                            "high",
-                                        ));
+                                            anti_pattern_type_id: 1, // TODO: proper mapping
+                                            file_path: parsed_file.path.to_string_lossy().to_string(),
+                                            start_line: Some(capture.node.start_position().row as i32 + 1),
+                                            end_line: Some(capture.node.end_position().row as i32 + 1),
+                                            severity: "high".to_string(),
+                                            description: format!(
+                                                "Framework module '{}' imported in {} layer",
+                                                module_name,
+                                                self.get_layer_name(&current_layer)
+                                            ),
+                                            code_snippet: Some(capture_text.to_string()),
+                                            ai_explanation: None,
+                                        };
+                                        issues.push(issue);
                                     }
                                 }
                             }
                         }
-                        _ => {}
                     }
+                } else {
+                    // Handle case where no tree is available
                 }
+            } else {
+                // Handle case where Python queries are not available  
             }
+        } else {
+            // Handle case where layer could not be determined
         }
 
         Ok(issues)

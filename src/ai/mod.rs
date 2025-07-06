@@ -11,8 +11,9 @@
 pub mod api;
 /// The `engine` submodule contains the core logic for the AI analysis engine.
 pub mod engine;
+/// The `ollama_provider` submodule provides Ollama LLM integration.
+pub mod ollama_provider;
 /// The `prompts` submodule provides tools for building and managing prompts for the AI models.
 pub mod prompts;
 
 pub use engine::AiAnalysisEngine;
-pub use prompts::{IssueContext, PromptGenerator};

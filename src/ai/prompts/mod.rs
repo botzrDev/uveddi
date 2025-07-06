@@ -6,5 +6,4 @@ pub mod context_builder;
 pub mod prompt_templates;
 
 pub use context_builder::IssueContext;
-pub use prompt_templates::PromptGenerator;
 pub mod smart_prompting;

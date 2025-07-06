@@ -369,14 +369,15 @@ impl OllamaProvider {
 }
 
 use crate::ai::api::llm_provider::LlmProvider;
+use crate::error::UveddiError;
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 
 #[async_trait]
 impl LlmProvider for OllamaProvider {
-    async fn generate_explanation(&self, prompt: &str) -> Result<String> {
+    async fn generate_explanation(&self, prompt: &str) -> Result<String, UveddiError> {
         // Call the OllamaProvider's infer method
-        let response = self.infer(prompt).await.map_err(|e| anyhow!(e))?;
+        let response = self.infer(prompt).await.map_err(|e| UveddiError::Other(e.to_string()))?;
         Ok(response)
     }
 
