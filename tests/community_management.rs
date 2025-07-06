@@ -1,9 +1,7 @@
 //! Integration tests for the community management system
 
-use std::collections::HashMap;
 use tempfile::NamedTempFile;
 use uveddi::community::{CommunityDatabase, MemberRole, ActivityType, MemberProfile};
-use uveddi::community::analytics::AnalyticsEngine;
 
 #[test]
 fn test_community_database_full_workflow() {
@@ -180,8 +178,7 @@ fn test_analytics_generation() {
     db.log_activity(&member2.id, ActivityType::ReportGenerated, None, None, None).unwrap();
 
     // Generate analytics
-    let analytics_engine = AnalyticsEngine::new(&db.conn);
-    let analytics = analytics_engine.generate_analytics().unwrap();
+    let analytics = db.generate_analytics().unwrap();
 
     // Verify basic counts
     assert_eq!(analytics.total_members, 3);

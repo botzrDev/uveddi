@@ -6,7 +6,7 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 
 /// Plugin lifecycle manager
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct PluginLifecycleManager {
     active_plugins: Arc<RwLock<HashMap<PluginId, ActivePlugin>>>,
     security_policies: HashMap<PluginId, SecurityPolicy>,
@@ -280,7 +280,7 @@ pub struct ActivePluginRef {
 }
 
 /// Resource monitor for tracking plugin resource usage
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ResourceMonitor {
     monitoring_interval: std::time::Duration,
 }

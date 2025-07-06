@@ -226,3 +226,177 @@ pub struct MemberSession {
     /// Whether session is currently active
     pub is_active: bool,
 }
+
+/// Admin-specific privileges and settings
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AdminProfile {
+    pub member_id: String,
+    pub permissions: AdminPermissions,
+    pub admin_level: AdminLevel,
+    pub assigned_regions: Vec<String>, // Geographic or functional regions they manage
+    pub assigned_teams: Vec<String>,   // Teams they oversee
+    pub admin_notes: Option<String>,   // Internal admin notes
+    pub appointed_by: Option<String>,  // Admin who granted permissions
+    pub appointed_at: DateTime<Utc>,
+    pub last_admin_action: Option<DateTime<Utc>>,
+    pub is_super_admin: bool,          // Root admin privileges
+}
+
+/// Granular admin permissions
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AdminPermissions {
+    pub can_manage_users: bool,
+    pub can_manage_content: bool,
+    pub can_view_analytics: bool,
+    pub can_manage_settings: bool,
+    pub can_manage_admins: bool,       // Only for super admins
+    pub can_export_data: bool,
+    pub can_delete_users: bool,
+    pub can_manage_billing: bool,      // For subscription management
+    pub can_access_logs: bool,
+}
+
+impl Default for AdminPermissions {
+    fn default() -> Self {
+        Self {
+            can_manage_users: false,
+            can_manage_content: false,
+            can_view_analytics: false,
+            can_manage_settings: false,
+            can_manage_admins: false,
+            can_export_data: false,
+            can_delete_users: false,
+            can_manage_billing: false,
+            can_access_logs: false,
+        }
+    }
+}
+
+impl AdminPermissions {
+    /// Create basic moderator permissions
+    pub fn moderator() -> Self {
+        Self {
+            can_manage_users: true,
+            can_manage_content: true,
+            can_view_analytics: true,
+            can_manage_settings: false,
+            can_manage_admins: false,
+            can_export_data: false,
+            can_delete_users: false,
+            can_manage_billing: false,
+            can_access_logs: false,
+        }
+    }
+
+    /// Create full administrator permissions
+    pub fn administrator() -> Self {
+        Self {
+            can_manage_users: true,
+            can_manage_content: true,
+            can_view_analytics: true,
+            can_manage_settings: true,
+            can_manage_admins: false,
+            can_export_data: true,
+            can_delete_users: true,
+            can_manage_billing: true,
+            can_access_logs: true,
+        }
+    }
+
+    /// Create super admin permissions (all access)
+    pub fn super_admin() -> Self {
+        Self {
+            can_manage_users: true,
+            can_manage_content: true,
+            can_view_analytics: true,
+            can_manage_settings: true,
+            can_manage_admins: true,
+            can_export_data: true,
+            can_delete_users: true,
+            can_manage_billing: true,
+            can_access_logs: true,
+        }
+    }
+}
+
+/// Admin hierarchy levels
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum AdminLevel {
+    Moderator,     // Basic admin rights
+    Administrator, // Full admin rights
+    SuperAdmin,    // Root level access
+}
+
+/// Developer-specific profile and access
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DeveloperProfile {
+    pub member_id: String,
+    pub developer_type: DeveloperType,
+    pub specializations: Vec<String>,  // Programming languages, frameworks
+    pub github_verified: bool,
+    pub contribution_score: i32,       // Based on community contributions
+    pub api_access_level: ApiAccessLevel,
+    pub repositories: Vec<String>,     // Associated repositories
+    pub badges: Vec<DeveloperBadge>,
+    pub verified_at: Option<DateTime<Utc>>,
+    pub verification_method: Option<String>, // How they were verified
+    pub mentor_status: bool,           // Can mentor other developers
+    pub beta_tester: bool,             // Access to beta features
+}
+
+/// Types of developers in the community
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum DeveloperType {
+    OpenSource,     // Open source contributor
+    Enterprise,     // Enterprise user
+    Student,        // Student developer
+    Freelancer,     // Independent developer
+    Startup,        // Startup team member
+    Corporate,      // Large company developer
+}
+
+/// API access levels for developers
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ApiAccessLevel {
+    Basic,      // Rate limited, basic endpoints
+    Premium,    // Higher limits, more endpoints
+    Enterprise, // Full access, custom limits
+}
+
+/// Developer badges and achievements
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DeveloperBadge {
+    pub badge_type: BadgeType,
+    pub earned_at: DateTime<Utc>,
+    pub description: String,
+    pub metadata: Option<String>, // Additional context
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum BadgeType {
+    EarlyAdopter,
+    Contributor,
+    Mentor,
+    BugFinder,
+    FeatureRequester,
+    BetaTester,
+    CommunityHelper,
+    CodeReviewer,
+    Documentation,
+    Custom(String),
+}
+
+/// Role-specific settings and permissions
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RolePermissions {
+    pub role: MemberRole,
+    pub can_access_api: bool,
+    pub can_view_source: bool,
+    pub can_download_reports: bool,
+    pub can_create_projects: bool,
+    pub can_share_publicly: bool,
+    pub can_invite_members: bool,
+    pub rate_limit_tier: i32,          // API rate limiting tier
+    pub storage_quota_mb: i64,         // File storage quota
+    pub features: Vec<String>,         // Enabled features list
+}

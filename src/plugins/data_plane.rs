@@ -271,7 +271,7 @@ impl AstHandleManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ast::tree_sitter::{Position, ParsedFile};
+    use crate::ast::tree_sitter::ParsedFile;
     use std::path::PathBuf;
     
     #[test]

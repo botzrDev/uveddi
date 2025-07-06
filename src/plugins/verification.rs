@@ -6,7 +6,7 @@ use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 
 /// Plugin verification system
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct PluginVerifier {
     static_analyzer: StaticAnalyzer,
     signature_verifier: SignatureVerifier,
@@ -132,7 +132,7 @@ impl Default for PluginVerifier {
 }
 
 /// Static analysis component
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct StaticAnalyzer {
     // In a real implementation, this would integrate with tools like Wasmati
 }
@@ -213,7 +213,7 @@ impl StaticAnalyzer {
         report: &mut StaticAnalysisReport,
     ) -> Result<(), VerificationError> {
         // Check for suspicious string patterns
-        let suspicious_strings = [
+        let suspicious_strings: &[&[u8]] = &[
             b"eval",
             b"exec",
             b"system",
@@ -223,7 +223,7 @@ impl StaticAnalyzer {
             b"powershell",
         ];
         
-        for pattern in &suspicious_strings {
+        for pattern in suspicious_strings {
             if let Some(pos) = binary.windows(pattern.len())
                 .position(|window| window == *pattern) {
                 report.vulnerabilities.push(Vulnerability {
@@ -261,7 +261,7 @@ impl StaticAnalyzer {
 }
 
 /// Signature verification component
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SignatureVerifier {
     // In a real implementation, this would store trusted public keys
     trusted_keys: HashMap<String, Vec<u8>>,
@@ -324,7 +324,7 @@ impl SignatureVerifier {
 }
 
 /// Manifest validation component
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ManifestValidator;
 
 impl ManifestValidator {
