@@ -1,0 +1,23 @@
+[book]
+title = "Uveddi Documentation"
+authors = ["Uveddi Contributors"]
+description = "Comprehensive guide to using Uveddi for architectural analysis"
+language = "en"
+multilingual = false
+
+[output.html]
+default-theme = "light"
+preferred-dark-theme = "navy"
+git-repository-url = "https://github.com/botzrDev/uveddi"
+edit-url-template = "https://github.com/botzrDev/uveddi/edit/main/docs/{path}"
+
+[output.html.search]
+enable = true
+limit-results = 10
+
+[output.html.fold]
+enable = true
+level = 1
+
+[preprocessor.links]
+renderers = ["html"]
