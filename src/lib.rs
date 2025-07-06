@@ -37,6 +37,7 @@
 //! - [`analysis`]: Core analysis engines and algorithms
 //! - [`ast`]: Abstract Syntax Tree parsing and manipulation
 //! - [`database`]: Data persistence and querying capabilities
+//! - [`community`]: Community member management and analytics
 //! - [`report`]: Report generation and formatting utilities
 //!
 //! See individual module documentation for detailed usage information.
@@ -50,6 +51,7 @@ pub mod application;
 pub mod ast;
 pub mod cache;
 pub mod cli;
+pub mod community;
 pub mod config;
 pub mod database;
 pub mod error;
