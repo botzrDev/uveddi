@@ -111,7 +111,7 @@ impl DeadCodeDetector {
     }
 
     /// Extract symbol definitions from a parsed file
-    fn extract_symbols(&self, parsed_file: &ParsedFile) -> Result<Vec<Symbol>, AnalysisError> {
+    pub fn extract_symbols(&self, parsed_file: &ParsedFile) -> Result<Vec<Symbol>, AnalysisError> {
         match parsed_file.language {
             SourceLanguage::Rust => self.extract_rust_symbols(parsed_file),
             SourceLanguage::Python => self.extract_python_symbols(parsed_file),
@@ -120,7 +120,7 @@ impl DeadCodeDetector {
     }
 
     /// Extract symbol references/calls from a parsed file
-    fn extract_references(&self, parsed_file: &ParsedFile) -> Result<HashSet<String>, AnalysisError> {
+    pub fn extract_references(&self, parsed_file: &ParsedFile) -> Result<HashSet<String>, AnalysisError> {
         match parsed_file.language {
             SourceLanguage::Rust => self.extract_rust_references(parsed_file),
             SourceLanguage::Python => self.extract_python_references(parsed_file),

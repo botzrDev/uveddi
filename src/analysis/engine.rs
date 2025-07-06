@@ -1,4 +1,5 @@
 use crate::analysis::detectors::anti_patterns::code_duplication::CodeDuplicationDetector;
+use crate::analysis::detectors::anti_patterns::dead_code::{DeadCodeDetector, DeadCodeConfig};
 use crate::analysis::detectors::anti_patterns::god_object::GodObjectDetector;
 use crate::analysis::detectors::cycle::CycleDetector;
 use crate::analysis::detectors::dependency::{Dependency, DependencyExtractor};
@@ -101,6 +102,7 @@ impl AnalysisEngine {
             detectors: vec![
                 Box::new(GodObjectDetector::new(5, 8)), // More sensitive thresholds
                 Box::new(CodeDuplicationDetector::new()),
+                Box::new(DeadCodeDetector::with_default_config()),
             ],
             cycle_detector: CycleDetector::new(),
             files_analyzed: 0,
@@ -128,6 +130,7 @@ impl AnalysisEngine {
             detectors: vec![
                 Box::new(GodObjectDetector::new(5, 8)), // More sensitive thresholds
                 Box::new(CodeDuplicationDetector::new()),
+                Box::new(DeadCodeDetector::with_default_config()),
             ],
             cycle_detector: CycleDetector::new(),
             files_analyzed: 0,
@@ -311,5 +314,20 @@ impl AnalysisEngine {
 
     pub fn get_files_analyzed(&self) -> i32 {
         self.files_analyzed
+    }
+
+    /// Configure the dead code detector with custom settings
+    pub fn configure_dead_code_detector(&mut self, config: DeadCodeConfig) {
+        // Find and replace the dead code detector
+        for detector in &mut self.detectors {
+            if detector.get_detector_name() == "DeadCodeDetector" {
+                // We need to replace the detector since we can't modify it in place
+                break;
+            }
+        }
+        
+        // Remove the old detector and add the new one
+        self.detectors.retain(|d| d.get_detector_name() != "DeadCodeDetector");
+        self.detectors.push(Box::new(DeadCodeDetector::new(config)));
     }
 }

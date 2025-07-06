@@ -90,6 +90,34 @@ pub struct AnalyzeCommand {
     /// Can also be set via the `OLLAMA_MODEL` environment variable.
     #[arg(long, env = "OLLAMA_MODEL")]
     pub ollama_model: Option<String>,
+
+    /// Confidence threshold for dead code detection (0.0 to 1.0)
+    ///
+    /// Only report dead code issues with confidence above this threshold.
+    /// Higher values reduce false positives but may miss some issues.
+    #[arg(long, value_name = "THRESHOLD")]
+    pub dead_code_confidence: Option<f64>,
+
+    /// Enable library mode for dead code detection
+    ///
+    /// In library mode, exported symbols are treated more conservatively
+    /// to avoid false positives for public APIs.
+    #[arg(long)]
+    pub dead_code_library_mode: bool,
+
+    /// Patterns to ignore during dead code detection
+    ///
+    /// Comma-separated list of patterns to exclude from analysis.
+    /// Example: "test,spec,mock,generated"
+    #[arg(long, value_delimiter = ',')]
+    pub dead_code_ignore_patterns: Option<Vec<String>>,
+
+    /// Symbols to always keep alive during dead code detection
+    ///
+    /// Comma-separated list of symbol patterns that should never be
+    /// reported as dead code. Example: "main,init,setup,teardown"
+    #[arg(long, value_delimiter = ',')]
+    pub dead_code_keep_alive: Option<Vec<String>>,
 }
 
 impl AnalyzeCommand {
@@ -150,6 +178,10 @@ impl AnalyzeCommand {
             enable_ai: self.enable_ai,
             ollama_api_url: self.ollama_api_url.clone(),
             ollama_model: self.ollama_model.clone(),
+            dead_code_confidence: self.dead_code_confidence,
+            dead_code_library_mode: self.dead_code_library_mode,
+            dead_code_ignore_patterns: self.dead_code_ignore_patterns.clone(),
+            dead_code_keep_alive: self.dead_code_keep_alive.clone(),
         };
 
         // Execute analysis through application layer

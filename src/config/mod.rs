@@ -50,12 +50,29 @@ use std::{env, fs};
 /// # Fields
 ///
 /// * `ollama_model` - Optional model name for Ollama AI provider
+/// * `dead_code` - Configuration for dead code detection
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Config {
     /// The Ollama model to use for AI-powered analysis
     ///
     /// Examples: "deepseek-coder:6.7b-instruct-q4_0", "codellama:7b-instruct"
     pub ollama_model: Option<String>,
+    
+    /// Dead code detection configuration
+    pub dead_code: Option<DeadCodeConfig>,
+}
+
+/// Configuration for dead code detection
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct DeadCodeConfig {
+    /// Minimum confidence threshold for reporting (0.0 to 1.0)
+    pub confidence_threshold: Option<f64>,
+    /// Whether to analyze exported symbols in library mode
+    pub library_mode: Option<bool>,
+    /// Patterns to ignore (e.g., test files, generated code)
+    pub ignore_patterns: Option<Vec<String>>,
+    /// Symbols to always consider live
+    pub keep_alive_patterns: Option<Vec<String>>,
 }
 
 impl Config {
@@ -66,7 +83,31 @@ impl Config {
     /// Returns an error if any of the required environment variables are not set.
     pub fn from_env() -> Result<Self, env::VarError> {
         let ollama_model = env::var("OLLAMA_MODEL").ok();
-        Ok(Config { ollama_model })
+        
+        // Dead code configuration from environment
+        let dead_code = if env::var("DEAD_CODE_CONFIDENCE_THRESHOLD").is_ok() ||
+                          env::var("DEAD_CODE_LIBRARY_MODE").is_ok() ||
+                          env::var("DEAD_CODE_IGNORE_PATTERNS").is_ok() ||
+                          env::var("DEAD_CODE_KEEP_ALIVE_PATTERNS").is_ok() {
+            Some(DeadCodeConfig {
+                confidence_threshold: env::var("DEAD_CODE_CONFIDENCE_THRESHOLD")
+                    .ok()
+                    .and_then(|s| s.parse().ok()),
+                library_mode: env::var("DEAD_CODE_LIBRARY_MODE")
+                    .ok()
+                    .and_then(|s| s.parse().ok()),
+                ignore_patterns: env::var("DEAD_CODE_IGNORE_PATTERNS")
+                    .ok()
+                    .map(|s| s.split(',').map(|p| p.trim().to_string()).collect()),
+                keep_alive_patterns: env::var("DEAD_CODE_KEEP_ALIVE_PATTERNS")
+                    .ok()
+                    .map(|s| s.split(',').map(|p| p.trim().to_string()).collect()),
+            })
+        } else {
+            None
+        };
+        
+        Ok(Config { ollama_model, dead_code })
     }
 
     /// Creates a new Config instance by loading values from a file.

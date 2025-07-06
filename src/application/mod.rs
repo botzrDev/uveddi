@@ -11,6 +11,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 use crate::analysis::AnalysisEngine;
+use crate::analysis::detectors::anti_patterns::dead_code::DeadCodeConfig;
 use crate::database::crud::Database;
 use crate::database::models::{AnalysisRun, ArchitecturalIssue};
 use crate::error::UveddiError;
@@ -42,6 +43,14 @@ pub struct AnalysisConfig {
     pub ollama_api_url: Option<String>,
     /// The name of the Ollama model to be used for analysis.
     pub ollama_model: Option<String>,
+    /// Confidence threshold for dead code detection (0.0 to 1.0).
+    pub dead_code_confidence: Option<f64>,
+    /// Enable library mode for dead code detection.
+    pub dead_code_library_mode: bool,
+    /// Patterns to ignore during dead code detection.
+    pub dead_code_ignore_patterns: Option<Vec<String>>,
+    /// Symbols to always keep alive during dead code detection.
+    pub dead_code_keep_alive: Option<Vec<String>>,
 }
 
 /// The result of an analysis operation, containing the report content and metadata.
@@ -107,6 +116,9 @@ impl AnalysisOrchestrator {
         }
 
         info!("Starting analysis of: {}", config.target_path.display());
+
+        // Configure dead code detector if settings provided
+        self.configure_dead_code_detector(&config)?;
 
         // Initialize database schema
         self.initialize_database_schema().await?;
@@ -226,6 +238,42 @@ impl AnalysisOrchestrator {
             ))
             .context("Unsupported output format specified")?,
         }
+    }
+
+    /// Configure the dead code detector based on analysis config
+    fn configure_dead_code_detector(&mut self, config: &AnalysisConfig) -> Result<(), UveddiError> {
+        // Check if any dead code configuration is provided
+        if config.dead_code_confidence.is_some() ||
+           config.dead_code_library_mode ||
+           config.dead_code_ignore_patterns.is_some() ||
+           config.dead_code_keep_alive.is_some() {
+            
+            let mut dead_code_config = DeadCodeConfig::default();
+            
+            if let Some(confidence) = config.dead_code_confidence {
+                if confidence < 0.0 || confidence > 1.0 {
+                    return Err(UveddiError::Configuration(
+                        "Dead code confidence threshold must be between 0.0 and 1.0".to_string()
+                    ));
+                }
+                dead_code_config.min_confidence = confidence;
+            }
+            
+            dead_code_config.library_mode = config.dead_code_library_mode;
+            
+            if let Some(ref patterns) = config.dead_code_ignore_patterns {
+                dead_code_config.ignore_patterns = patterns.clone();
+            }
+            
+            if let Some(ref patterns) = config.dead_code_keep_alive {
+                dead_code_config.keep_alive_patterns = patterns.clone();
+            }
+            
+            self.analysis_engine.configure_dead_code_detector(dead_code_config);
+            info!("Dead code detector configured with custom settings");
+        }
+        
+        Ok(())
     }
 }
 
