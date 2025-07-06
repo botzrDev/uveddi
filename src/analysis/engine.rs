@@ -2,15 +2,17 @@ use crate::analysis::detectors::anti_patterns::code_duplication::CodeDuplication
 use crate::analysis::detectors::anti_patterns::god_object::GodObjectDetector;
 use crate::analysis::detectors::cycle::CycleDetector;
 use crate::analysis::detectors::dependency::{Dependency, DependencyExtractor};
+use crate::analysis::extractors::SymbolExtractor;
 use crate::analysis::graph::dependency::LocalDependencyGraph;
 use crate::analysis::graph::dependency::{ComponentNode, LocalDependencyType};
+use crate::analysis::symbols::GlobalSymbolTable;
 use crate::analysis::AnalysisDetector;
 use crate::ast::tree_sitter::AstParser;
 use crate::cache::result_cache::ResultCache;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use crate::ingestion::AsyncWalker;
 use log::{info, warn};
-use rayon::prelude::*;
+
 use std::path::{Path, PathBuf};
 use tokio_stream::StreamExt;
 
@@ -32,15 +34,6 @@ struct CachedAnalysisResult {
 /// - **Caching**: Caches parsing and analysis results for performance
 /// - **Dependency Analysis**: Builds and analyzes dependency graphs
 /// - **Async Processing**: Processes files asynchronously for better performance
-/// - **Error Recovery**: Continues analysis even if individual files fail
-///
-/// ## Architecture:
-///
-/// 1. **File Discovery**: Uses `AsyncWalker` to find source files
-/// 2. **Parsing**: Leverages `AstParser` to create syntax trees
-/// 3. **Detection**: Runs all registered detectors on each file
-/// 4. **Graph Analysis**: Builds dependency graph and runs graph-based detectors
-/// 5. **Result Aggregation**: Combines all detected issues into final report
 ///
 /// ## Usage
 ///
@@ -58,10 +51,12 @@ struct CachedAnalysisResult {
 pub struct AnalysisEngine {
     ast_parser: AstParser,
     dependency_extractor: DependencyExtractor,
+    symbol_extractor: SymbolExtractor,
     detectors: Vec<Box<dyn AnalysisDetector + Send + Sync>>,
     cycle_detector: CycleDetector,
     files_analyzed: i32,
     cache: ResultCache,
+    symbol_table: GlobalSymbolTable,
 }
 
 impl AnalysisEngine {
@@ -102,6 +97,7 @@ impl AnalysisEngine {
         Ok(Self {
             ast_parser: AstParser::new()?,
             dependency_extractor: DependencyExtractor::new()?,
+            symbol_extractor: SymbolExtractor::new(),
             detectors: vec![
                 Box::new(GodObjectDetector::new(5, 8)), // More sensitive thresholds
                 Box::new(CodeDuplicationDetector::new()),
@@ -109,6 +105,7 @@ impl AnalysisEngine {
             cycle_detector: CycleDetector::new(),
             files_analyzed: 0,
             cache: ResultCache::new(cache_path)?,
+            symbol_table: GlobalSymbolTable::new(),
         })
     }
 
@@ -127,6 +124,7 @@ impl AnalysisEngine {
         Ok(Self {
             ast_parser: AstParser::new()?,
             dependency_extractor: DependencyExtractor::new()?,
+            symbol_extractor: SymbolExtractor::new(),
             detectors: vec![
                 Box::new(GodObjectDetector::new(5, 8)), // More sensitive thresholds
                 Box::new(CodeDuplicationDetector::new()),
@@ -134,6 +132,7 @@ impl AnalysisEngine {
             cycle_detector: CycleDetector::new(),
             files_analyzed: 0,
             cache: ResultCache::new_in_memory()?,
+            symbol_table: GlobalSymbolTable::new(),
         })
     }
 
@@ -229,6 +228,14 @@ impl AnalysisEngine {
                     match self.ast_parser.parse_file(&file_path) {
                         Ok(parsed_file) => {
                             self.files_analyzed += 1;
+
+                            // Populate symbol table
+                            if let Err(e) = self
+                                .symbol_extractor
+                                .extract_declarations(&parsed_file, &mut self.symbol_table)
+                            {
+                                warn!("Could not extract symbols from {}: {}", file_path.display(), e);
+                            }
 
                             let mut file_issues = Vec::new();
                             let mut file_dependencies = Vec::new();

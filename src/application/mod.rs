@@ -10,7 +10,6 @@ use log::{error, info};
 use std::collections::HashMap;
 use std::path::PathBuf;
 
-use crate::ai::AiAnalysisEngine;
 use crate::analysis::AnalysisEngine;
 use crate::database::crud::Database;
 use crate::database::models::{AnalysisRun, ArchitecturalIssue};
@@ -23,33 +22,45 @@ use crate::report::ReportGenerator;
 /// and orchestrating the workflow between different system components.
 /// It serves as the boundary between the CLI layer and infrastructure layers.
 pub struct AnalysisOrchestrator {
+    /// The database connection for storing and retrieving analysis results.
     database: Database,
+    /// The core analysis engine that performs code parsing and issue detection.
     analysis_engine: AnalysisEngine,
-    ai_engine: AiAnalysisEngine,
-    report_generator: ReportGenerator,
 }
 
-/// Configuration for analysis operations
+/// Configuration for analysis operations.
 pub struct AnalysisConfig {
+    /// The path to the target directory or file to be analyzed.
     pub target_path: PathBuf,
+    /// The desired output format for the analysis report (e.g., "json", "markdown").
     pub output_format: String,
+    /// An optional path to a file where the report should be saved.
     pub output_file: Option<PathBuf>,
+    /// A flag to enable or disable AI-powered analysis.
     pub enable_ai: bool,
+    /// The URL of the Ollama API endpoint, if applicable.
     pub ollama_api_url: Option<String>,
+    /// The name of the Ollama model to be used for analysis.
     pub ollama_model: Option<String>,
 }
 
-/// Result of an analysis operation
+/// The result of an analysis operation, containing the report content and metadata.
 pub struct AnalysisReport {
+    /// The generated analysis report as a string.
     pub content: String,
+    /// Metadata about the analysis operation.
     pub metadata: AnalysisMetadata,
 }
 
-/// Metadata about the analysis operation
+/// Metadata about the analysis operation.
 pub struct AnalysisMetadata {
+    /// The number of files that were analyzed.
     pub files_analyzed: usize,
+    /// The total number of issues that were found.
     pub issues_found: usize,
+    /// The duration of the analysis.
     pub analysis_duration: std::time::Duration,
+    /// A flag indicating whether AI enhancement was used.
     pub ai_enhanced: bool,
 }
 
@@ -60,14 +71,10 @@ impl AnalysisOrchestrator {
             Database::new(Some(db_path)).context("Failed to initialize database with path")?;
         let analysis_engine =
             AnalysisEngine::new().context("Failed to initialize analysis engine")?;
-        let ai_engine = AiAnalysisEngine::new();
-        let report_generator = ReportGenerator::new();
 
         Ok(Self {
             database,
             analysis_engine,
-            ai_engine,
-            report_generator,
         })
     }
 
@@ -77,14 +84,10 @@ impl AnalysisOrchestrator {
         let database = Database::new(None).context("Failed to initialize in-memory database")?;
         let analysis_engine =
             AnalysisEngine::new().context("Failed to initialize analysis engine")?;
-        let ai_engine = AiAnalysisEngine::new();
-        let report_generator = ReportGenerator::new();
 
         Ok(Self {
             database,
             analysis_engine,
-            ai_engine,
-            report_generator,
         })
     }
 
@@ -105,9 +108,6 @@ impl AnalysisOrchestrator {
 
         info!("Starting analysis of: {}", config.target_path.display());
 
-        // Configure AI if enabled
-        self.configure_ai(&config)?;
-
         // Initialize database schema
         self.initialize_database_schema().await?;
 
@@ -127,17 +127,8 @@ impl AnalysisOrchestrator {
         // Plugin system removed in community version
         info!("Plugin analysis skipped (not available in community version)");
 
-        // Enhance with AI analysis if enabled
-        let ai_enhanced = if config.enable_ai {
-            info!("Starting AI analysis enhancement");
-            self.enhance_with_ai_analysis(&mut issues).await?;
-            info!("AI analysis enhancement completed");
-            true
-        } else {
-            info!("AI analysis disabled, skipping enhancement");
-            false
-        };
-        info!("AI analysis phase completed");
+        let ai_enhanced = false;
+        info!("AI analysis disabled, skipping enhancement");
 
         // Update analysis run record
         info!("Starting analysis run finalization");
@@ -161,7 +152,8 @@ impl AnalysisOrchestrator {
         info!("Issues stored to database successfully");
 
         // Generate report
-        let report_content = self.generate_report(&config, &analysis_run, &issues)?;
+        let report_generator = ReportGenerator::new();
+        let report_content = self.generate_report(&config, &analysis_run, &issues, &report_generator)?;
 
         // Write output file if specified
         if let Some(output_path) = &config.output_file {
@@ -183,52 +175,12 @@ impl AnalysisOrchestrator {
         })
     }
 
-    /// Configure AI providers based on the provided configuration
-    fn configure_ai(&mut self, config: &AnalysisConfig) -> Result<(), UveddiError> {
-        if config.enable_ai {
-            {
-                let ollama_api_url = config
-                    .ollama_api_url
-                    .clone()
-                    .or_else(|| std::env::var("OLLAMA_API_URL").ok())
-                    .unwrap_or_else(|| "http://localhost:11434".to_string());
-                let ollama_model = config
-                    .ollama_model
-                    .clone()
-                    .or_else(|| std::env::var("OLLAMA_MODEL").ok())
-                    .unwrap_or_else(|| "deepseek-coder:6.7b-instruct-q4_0".to_string());
-                // self.ai_engine = self.ai_engine.clone().with_ollama(&ollama_model, &ollama_api_url);
-                // Placeholder: set Ollama model and API URL if needed
-                info!(
-                    "AI analysis enabled with local Ollama model: {ollama_model} at {ollama_api_url}"
-                );
-            }
-        }
-        Ok(())
-    }
-
     /// Initialize database schema with anti-pattern types
     async fn initialize_database_schema(&mut self) -> Result<(), UveddiError> {
         for mut anti_pattern_type in self.analysis_engine.get_anti_pattern_types() {
             self.database
                 .store_anti_pattern_type(&mut anti_pattern_type)
                 .context("Failed to store anti-pattern type")?;
-        }
-        Ok(())
-    }
-
-    /// Enhance analysis results with AI insights
-    async fn enhance_with_ai_analysis(
-        &mut self,
-        issues: &mut Vec<ArchitecturalIssue>,
-    ) -> Result<(), UveddiError> {
-        info!("Enhancing issues with AI analysis...");
-        for issue in issues.iter_mut() {
-            self.ai_engine
-                .analyze_issue(issue)
-                .await
-                .context("Failed to enhance issue with AI analysis")?;
-            info!("AI analysis placeholder for issue in {}", issue.file_path);
         }
         Ok(())
     }
@@ -257,17 +209,16 @@ impl AnalysisOrchestrator {
         config: &AnalysisConfig,
         analysis_run: &AnalysisRun,
         issues: &[ArchitecturalIssue],
+        report_generator: &ReportGenerator,
     ) -> Result<String, UveddiError> {
         match config.output_format.as_str() {
             "json" => {
-                let report = self
-                    .report_generator
+                let report = report_generator
                     .generate_json_report(analysis_run, issues, &HashMap::new(), None)
                     .map_err(|e| crate::error::UveddiError::ReportGeneration(e))?;
                 Ok(report.to_string())
             }
-            "markdown" => self
-                .report_generator
+            "markdown" => report_generator
                 .generate_markdown_report(analysis_run, issues, &HashMap::new(), None)
                 .map_err(|e| crate::error::UveddiError::ReportGeneration(e)),
             _ => Err(UveddiError::UnsupportedOutputFormat(

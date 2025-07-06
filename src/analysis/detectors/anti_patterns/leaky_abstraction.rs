@@ -1,38 +1,38 @@
 //! Advanced Leaky Abstraction Detector
-//!
-//! This detector implements a comprehensive analysis framework for identifying leaky abstractions
-//! across multiple programming languages (Rust, Python, JavaScript/TypeScript). It uses a 
-//! multi-signal approach combining AST analysis, dependency tracking, and architectural pattern
-//! recognition to detect violations of abstraction boundaries.
-//!
-//! ## Detection Capabilities
-//!
-//! ### Rust-Specific Patterns
-//! - Visibility violations (pub vs private boundaries)
-//! - Framework-specific types in public APIs
-//! - ORM/Database types leaking into business logic
-//! - Error type propagation across layers
-//! - Async runtime details in interfaces
-//!
-//! ### Python-Specific Patterns  
-//! - Direct database model usage in views/controllers
-//! - Framework objects in business logic (Flask request, Django models)
-//! - File system paths in public interfaces
-//! - Import violations across architectural layers
-//!
-//! ### JavaScript/TypeScript Patterns
-//! - DOM manipulation in business logic
-//! - Framework-specific objects in domain models
-//! - Infrastructure dependencies in application layer
-//! - Type definition leaks and generic pollution
-//!
-//! ## Architecture
-//!
-//! The detector uses a layered analysis approach:
-//! 1. **Syntactic Analysis**: Tree-sitter queries for pattern matching
-//! 2. **Semantic Analysis**: Symbol resolution and type flow tracking
-//! 3. **Architectural Analysis**: Layer boundary validation
-//! 4. **Cross-file Analysis**: Dependency graph traversal
+// //! 
+// //! This detector implements a comprehensive analysis framework for identifying leaky abstractions
+// //! across multiple programming languages (Rust, Python, JavaScript/TypeScript). It uses a 
+// //! multi-signal approach combining AST analysis, dependency tracking, and architectural pattern
+// //! recognition to detect violations of abstraction boundaries.
+// //! 
+// //! ## Detection Capabilities
+// //! 
+// //! ### Rust-Specific Patterns
+// //! - Visibility violations (pub vs private boundaries)
+// //! - Framework-specific types in public APIs
+// //! - ORM/Database types leaking into business logic
+// //! - Error type propagation across layers
+// //! - Async runtime details in interfaces
+// //! 
+// //! ### Python-Specific Patterns  
+// //! - Direct database model usage in views/controllers
+// //! - Framework objects in business logic (Flask request, Django models)
+// //! - File system paths in public interfaces
+// //! - Import violations across architectural layers
+// //! 
+// //! ### JavaScript/TypeScript Patterns
+// //! - DOM manipulation in business logic
+// //! - Framework-specific objects in domain models
+// //! - Infrastructure dependencies in application layer
+// //! - Type definition leaks and generic pollution
+// //! 
+// //! ## Architecture
+// //! 
+// //! The detector uses a layered analysis approach:
+// //! 1. **Syntactic Analysis**: Tree-sitter queries for pattern matching
+// //! 2. **Semantic Analysis**: Symbol resolution and type flow tracking
+// //! 3. **Architectural Analysis**: Layer boundary validation
+// //! 4. **Cross-file Analysis**: Dependency graph traversal
 
 use crate::analysis::{AnalysisDetector, AnalysisError};
 use crate::ast::tree_sitter::ParsedFile;
@@ -40,58 +40,112 @@ use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use std::collections::{HashMap, HashSet};
 use tree_sitter::{Query, QueryCursor, Node};
 
-/// Configuration for architectural layers and boundaries
+/// Configuration for architectural layers and boundaries.
+///
+/// Defines the rules and patterns for identifying architectural layers and
+/// known infrastructure modules within a project. This configuration drives
+/// the leaky abstraction analysis by providing context about the intended
+/// architecture of the software.
 #[derive(Debug, Clone)]
 pub struct ArchitecturalConfig {
-    /// Mapping of path patterns to architectural layers
+    /// Mapping of path patterns (globs) to architectural layers.
+    ///
+    /// This is the primary mechanism for defining the architecture. For example,
+    /// `{"**/controllers/**": Presentation, "**/services/**": Application}`.
     pub layer_mappings: HashMap<String, ArchitecturalLayer>,
-    /// Known infrastructure modules/frameworks to detect
+    
+    /// A set of known infrastructure module names or prefixes.
+    ///
+    /// This set is used to identify dependencies on frameworks, databases,
+    /// or other external systems (e.g., "django", "sqlx", "react").
     pub infrastructure_modules: HashSet<String>,
-    /// Internal/private module patterns
+    
+    /// A list of patterns used to identify internal or private modules.
+    ///
+    /// Accessing modules whose paths contain these patterns from outside
+    /// their parent component is considered a visibility violation.
     pub internal_patterns: Vec<String>,
 }
 
-/// Architectural layers following Clean Architecture principles
+/// Represents the architectural layers of a system, inspired by Clean Architecture.
+///
+/// Each layer has a distinct responsibility, and dependencies should generally
+/// flow from outer layers (like Presentation) to inner layers (like Domain).
 #[derive(Debug, Clone, PartialEq)]
 pub enum ArchitecturalLayer {
-    /// Presentation layer (UI, controllers, views)
+    /// The outermost layer, responsible for UI and user interaction.
+    /// This includes controllers, views, and API endpoints.
     Presentation,
-    /// Application layer (use cases, services)
+    
+    /// The layer containing application-specific business logic and use cases.
+    /// It orchestrates the domain layer to perform tasks.
     Application, 
-    /// Domain layer (business logic, entities)
+    
+    /// The core layer containing enterprise-wide business logic and entities.
+    /// This layer should be independent of any framework or UI.
     Domain,
-    /// Infrastructure layer (databases, external APIs, frameworks)
+    
+    /// The layer containing all external concerns and implementation details.
+    /// This includes databases, file systems, and third-party API clients.
     Infrastructure,
 }
 
-/// Types of leaky abstraction violations
+/// Enumerates the specific types of leaky abstraction violations that can be detected.
 #[derive(Debug, Clone)]
 pub enum LeakType {
-    /// Visibility boundary violation (accessing private/internal items)
+    /// Occurs when code accesses a private or internal item from an outside module,
+    /// violating encapsulation.
     VisibilityViolation,
-    /// Layer boundary violation (wrong dependency direction)
+    
+    /// A dependency that flows in the wrong direction between architectural layers,
+    /// such as a domain module depending on a presentation module.
     LayerViolation,
-    /// Implementation detail exposure (internal types in public APIs)
+    
+    /// When internal implementation types (e.g., a database model) are exposed
+    /// through a module's public API.
     ImplementationExposure,
-    /// Framework coupling (framework-specific types in business logic)
+    
+    /// When core business logic becomes dependent on types defined by a specific
+    /// framework (e.g., using Express `Request` objects in a service).
     FrameworkCoupling,
-    /// Error propagation (low-level errors bubbling up)
+    
+    /// When low-level error types (e.g., `sql::Error`) are propagated across
+    /// abstraction boundaries instead of being wrapped in domain-specific errors.
     ErrorPropagation,
-    /// Performance leak (abstraction causing performance issues)
+    
+    /// When an abstraction introduces significant, unexpected performance overhead
+    /// (e.g., an ORM causing N+1 query problems).
     PerformanceLeak,
 }
 
-/// Advanced Leaky Abstraction Detector
+/// The primary detector for identifying leaky abstractions in a codebase.
 ///
-/// Implements comprehensive detection of abstraction boundary violations using
-/// multi-language AST analysis, dependency tracking, and architectural pattern recognition.
+/// This struct orchestrates the analysis by combining architectural configuration,
+/// language-specific parsing, and a set of detection heuristics to find violations
+/// of architectural boundaries.
 pub struct LeakyAbstractionDetector {
-    /// Architectural configuration for layer boundaries
-    config: ArchitecturalConfig,
-    /// Language-specific query patterns for Tree-sitter
+    /// The architectural configuration that guides the analysis.
+    pub config: ArchitecturalConfig,
+    
+    /// Compiled Tree-sitter queries for Rust-specific patterns.
     rust_queries: Option<Query>,
-    python_queries: Option<Query>, 
+    
+    /// Compiled Tree-sitter queries for Python-specific patterns. 
+    python_queries: Option<Query>,
+    
+    /// Compiled Tree-sitter queries for JavaScript/TypeScript-specific patterns.
     js_queries: Option<Query>,
+}
+
+impl Clone for LeakyAbstractionDetector {
+    fn clone(&self) -> Self {
+        Self {
+            config: self.config.clone(),
+            rust_queries: None,
+            python_queries: None,
+            js_queries: None,
+        }
+    }
 }
 
 impl Default for LeakyAbstractionDetector {
@@ -101,7 +155,10 @@ impl Default for LeakyAbstractionDetector {
 }
 
 impl LeakyAbstractionDetector {
-    /// Create a new detector with default configuration
+    /// Creates a new `LeakyAbstractionDetector` with a default configuration.
+    ///
+    /// The default configuration includes common file path patterns for architectural
+    /// layers and a list of well-known infrastructure modules for major languages.
     pub fn new() -> Self {
         let config = Self::default_config();
         Self {
@@ -112,7 +169,10 @@ impl LeakyAbstractionDetector {
         }
     }
 
-    /// Create detector with custom architectural configuration
+    /// Creates a new detector with a custom `ArchitecturalConfig`.
+    ///
+    /// This allows for fine-tuning the analysis to match a project's specific
+    /// architectural conventions.
     pub fn with_config(config: ArchitecturalConfig) -> Self {
         Self {
             config,
@@ -122,7 +182,7 @@ impl LeakyAbstractionDetector {
         }
     }
 
-    /// Default architectural configuration
+    /// Provides a default `ArchitecturalConfig` based on common conventions.
     fn default_config() -> ArchitecturalConfig {
         let mut layer_mappings = HashMap::new();
         
@@ -187,7 +247,7 @@ impl LeakyAbstractionDetector {
         }
     }
 
-    /// Initialize language-specific Tree-sitter queries
+    /// Lazily initializes the Tree-sitter queries for a specific language.
     fn init_queries(&mut self, language: &str) -> Result<(), AnalysisError> {
         match language {
             "rust" => {
@@ -210,7 +270,7 @@ impl LeakyAbstractionDetector {
         Ok(())
     }
 
-    /// Create Rust-specific Tree-sitter queries
+    /// Compiles the Tree-sitter queries for analyzing Rust code.
     fn create_rust_queries(&self) -> Result<Query, AnalysisError> {
         let query_source = r#"
             ; Detect public struct fields (potential encapsulation violation)
@@ -257,7 +317,7 @@ impl LeakyAbstractionDetector {
             .map_err(|e| AnalysisError::Other(format!("Failed to create Rust query: {}", e)))
     }
 
-    /// Create Python-specific Tree-sitter queries  
+    /// Compiles the Tree-sitter queries for analyzing Python code.
     fn create_python_queries(&self) -> Result<Query, AnalysisError> {
         let query_source = r#"
             ; Detect imports from infrastructure modules
@@ -295,7 +355,7 @@ impl LeakyAbstractionDetector {
             .map_err(|e| AnalysisError::Other(format!("Failed to create Python query: {}", e)))
     }
 
-    /// Create JavaScript/TypeScript-specific Tree-sitter queries
+    /// Compiles the Tree-sitter queries for analyzing JavaScript and TypeScript code.
     fn create_js_queries(&self) -> Result<Query, AnalysisError> {
         let query_source = r#"
             ; Detect imports from infrastructure modules
@@ -329,7 +389,7 @@ impl LeakyAbstractionDetector {
             .map_err(|e| AnalysisError::Other(format!("Failed to create JS query: {}", e)))
     }
 
-    /// Determine architectural layer from file path
+    /// Determines the architectural layer of a file based on its path.
     fn get_layer_from_path(&self, file_path: &str) -> Option<ArchitecturalLayer> {
         for (pattern, layer) in &self.config.layer_mappings {
             if self.matches_pattern(file_path, pattern) {
@@ -339,11 +399,11 @@ impl LeakyAbstractionDetector {
         None
     }
 
-    /// Simple pattern matching for file paths
+    /// A simple glob-like pattern matcher for file paths.
     fn matches_pattern(&self, path: &str, pattern: &str) -> bool {
         if pattern.starts_with("**/") && pattern.ends_with("/**") {
             let middle = &pattern[3..pattern.len()-3];
-            path.contains(&format!("/{}/", middle)) || path.contains(&format!("\\{}\\", middle))
+            path.contains(&format!("/{}/", middle)) || path.contains(&format!("\\{}/", middle))
         } else if pattern.starts_with("**/") {
             let suffix = &pattern[3..];
             path.ends_with(suffix)
@@ -355,18 +415,18 @@ impl LeakyAbstractionDetector {
         }
     }
 
-    /// Check if a module is an infrastructure dependency
+    /// Checks if a given module name corresponds to a known infrastructure dependency.
     fn is_infrastructure_module(&self, module_name: &str) -> bool {
         self.config.infrastructure_modules.contains(module_name) ||
         self.config.infrastructure_modules.iter().any(|infra| module_name.starts_with(infra))
     }
 
-    /// Check if a path indicates an internal/private module
+    /// Checks if a given path or module name indicates an internal/private module.
     fn is_internal_module(&self, path: &str) -> bool {
         self.config.internal_patterns.iter().any(|pattern| path.contains(pattern))
     }
 
-    /// Analyze Rust-specific leaky abstraction patterns
+    /// Runs leaky abstraction analysis on a single Rust file.
     fn analyze_rust_file(&self, parsed_file: &ParsedFile, analysis_run_id: i64) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         let mut issues = Vec::new();
         
@@ -395,6 +455,16 @@ impl LeakyAbstractionDetector {
                                             "high",
                                         ));
                                     }
+                                }
+                                if self.is_internal_module(module_text) {
+                                    issues.push(self.create_issue(
+                                        analysis_run_id,
+                                        &parsed_file.path.to_string_lossy(),
+                                        node,
+                                        LeakType::VisibilityViolation,
+                                        &format!("Direct import of internal module '{}'", module_text),
+                                        "high",
+                                    ));
                                 }
                             }
                         }
@@ -440,7 +510,7 @@ impl LeakyAbstractionDetector {
         Ok(issues)
     }
 
-    /// Analyze Python-specific leaky abstraction patterns
+    /// Runs leaky abstraction analysis on a single Python file.
     fn analyze_python_file(&self, parsed_file: &ParsedFile, analysis_run_id: i64) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         let mut issues = Vec::new();
         
@@ -469,6 +539,16 @@ impl LeakyAbstractionDetector {
                                             "high",
                                         ));
                                     }
+                                }
+                                if self.is_internal_module(module_text) {
+                                    issues.push(self.create_issue(
+                                        analysis_run_id,
+                                        &parsed_file.path.to_string_lossy(),
+                                        node,
+                                        LeakType::VisibilityViolation,
+                                        &format!("Direct import of internal module '{}'", module_text),
+                                        "high",
+                                    ));
                                 }
                             }
                         }
@@ -499,7 +579,7 @@ impl LeakyAbstractionDetector {
         Ok(issues)
     }
 
-    /// Analyze JavaScript/TypeScript-specific leaky abstraction patterns
+    /// Runs leaky abstraction analysis on a single JavaScript or TypeScript file.
     fn analyze_js_file(&self, parsed_file: &ParsedFile, analysis_run_id: i64) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         let mut issues = Vec::new();
         
@@ -530,6 +610,16 @@ impl LeakyAbstractionDetector {
                                         ));
                                     }
                                 }
+                                if self.is_internal_module(module_name) {
+                                    issues.push(self.create_issue(
+                                        analysis_run_id,
+                                        &parsed_file.path.to_string_lossy(),
+                                        node,
+                                        LeakType::VisibilityViolation,
+                                        &format!("Direct import of internal module '{}'", module_name),
+                                        "high",
+                                    ));
+                                }
                             }
                         }
                         "dom_object" => {
@@ -558,7 +648,7 @@ impl LeakyAbstractionDetector {
         Ok(issues)
     }
 
-    /// Create an architectural issue from detected leak
+    /// Helper function to create a new `ArchitecturalIssue`.
     fn create_issue(
         &self,
         analysis_run_id: i64,
@@ -582,7 +672,7 @@ impl LeakyAbstractionDetector {
         }
     }
 
-    /// Map leak type to anti-pattern type ID
+    /// Maps a `LeakType` to its corresponding `anti_pattern_type_id`.
     fn get_anti_pattern_id_for_leak_type(&self, leak_type: &LeakType) -> i64 {
         match leak_type {
             LeakType::VisibilityViolation => 1,
@@ -661,17 +751,6 @@ impl AnalysisDetector for LeakyAbstractionDetector {
             "python" => detector.analyze_python_file(parsed_file, analysis_run_id),
             "javascript" | "typescript" => detector.analyze_js_file(parsed_file, analysis_run_id),
             _ => Ok(vec![]),
-        }
-    }
-}
-
-impl Clone for LeakyAbstractionDetector {
-    fn clone(&self) -> Self {
-        Self {
-            config: self.config.clone(),
-            rust_queries: None, // Queries will be re-initialized as needed
-            python_queries: None,
-            js_queries: None,
         }
     }
 }

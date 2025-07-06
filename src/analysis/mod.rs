@@ -54,6 +54,8 @@ pub mod detectors;
 pub mod engine;
 pub mod graph;
 pub mod types;
+pub mod symbols;
+pub mod extractors;
 
 #[cfg(test)]
 pub mod tests;

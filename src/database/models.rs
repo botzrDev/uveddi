@@ -38,7 +38,6 @@
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::path::PathBuf;
 
 /// Core analysis run tracking entity
@@ -56,7 +55,7 @@ use std::path::PathBuf;
 /// - `"running"`: Analysis is currently in progress
 /// - `"completed"`: Analysis finished successfully
 /// - `"failed"`: Analysis encountered an error and stopped
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct AnalysisRun {
     /// Unique identifier for this analysis run (auto-generated)
     pub run_id: Option<i64>,
