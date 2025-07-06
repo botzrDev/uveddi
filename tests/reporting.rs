@@ -8,7 +8,8 @@
 #[cfg(test)]
 mod tests {
     use chrono::Utc;
-    use uveddi::database::models::{AnalysisRun, ArchitecturalIssue};
+    use std::collections::HashMap;
+    use uveddi::database::models::{AnalysisRun, ArchitecturalIssue, AntiPatternType};
     use uveddi::report::ReportGenerator;
 
     #[test]
@@ -36,9 +37,19 @@ mod tests {
             code_snippet: Some("struct GodObject { ... }".to_string()),
             ai_explanation: Some("This is a God Object because...".to_string()),
         }];
+        
+        // Create anti_pattern_types HashMap
+        let mut anti_pattern_types = HashMap::new();
+        anti_pattern_types.insert(1, AntiPatternType {
+            anti_pattern_type_id: Some(1),
+            name: "God Object".to_string(),
+            description: "A class that knows too much or does too much".to_string(),
+            category: "structural".to_string(),
+        });
+        
         let generator = ReportGenerator::new();
         let report = generator
-            .generate_markdown_report(&analysis_run, &issues)
+            .generate_markdown_report(&analysis_run, &issues, &anti_pattern_types, None)
             .unwrap();
         assert!(report.contains("God Object"));
         assert!(report.contains("AI Analysis"));
@@ -71,9 +82,19 @@ mod tests {
             code_snippet: Some("struct GodObject { ... }".to_string()),
             ai_explanation: Some("This is a God Object because...".to_string()),
         }];
+        
+        // Create anti_pattern_types HashMap
+        let mut anti_pattern_types = HashMap::new();
+        anti_pattern_types.insert(1, AntiPatternType {
+            anti_pattern_type_id: Some(1),
+            name: "God Object".to_string(),
+            description: "A class that knows too much or does too much".to_string(),
+            category: "structural".to_string(),
+        });
+        
         let generator = ReportGenerator::new();
         let report = generator
-            .generate_json_report(&analysis_run, &issues)
+            .generate_json_report(&analysis_run, &issues, &anti_pattern_types, None)
             .unwrap();
         let report_str = serde_json::to_string(&report).unwrap();
         let json: serde_json::Value = serde_json::from_str(&report_str).unwrap();
@@ -98,9 +119,13 @@ mod tests {
             analysis_config: "{}".to_string(),
         };
         let issues = vec![];
+        
+        // Create anti_pattern_types HashMap (empty for this test)
+        let anti_pattern_types = HashMap::new();
+        
         let generator = ReportGenerator::new();
         let report = generator
-            .generate_markdown_report(&analysis_run, &issues)
+            .generate_markdown_report(&analysis_run, &issues, &anti_pattern_types, None)
             .unwrap();
         assert!(report.contains("**Files Analyzed:** 10"));
         assert!(report.contains("**Issues Found:** 5"));
@@ -131,9 +156,19 @@ mod tests {
             code_snippet: Some("struct GodObject { ... }".to_string()),
             ai_explanation: Some("This is a God Object because...".to_string()),
         }];
+        
+        // Create anti_pattern_types HashMap
+        let mut anti_pattern_types = HashMap::new();
+        anti_pattern_types.insert(1, AntiPatternType {
+            anti_pattern_type_id: Some(1),
+            name: "God Object".to_string(),
+            description: "A class that knows too much or does too much".to_string(),
+            category: "structural".to_string(),
+        });
+        
         let generator = ReportGenerator::new();
         let report = generator
-            .generate_markdown_report(&analysis_run, &issues)
+            .generate_markdown_report(&analysis_run, &issues, &anti_pattern_types, None)
             .unwrap();
         assert!(report.contains("struct GodObject { ... }"));
         assert!(report.contains("This is a God Object because..."));
