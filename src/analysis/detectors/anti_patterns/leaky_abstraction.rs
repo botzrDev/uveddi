@@ -1,38 +1,73 @@
 //! Advanced Leaky Abstraction Detector
-// //! 
-// //! This detector implements a comprehensive analysis framework for identifying leaky abstractions
-// //! across multiple programming languages (Rust, Python, JavaScript/TypeScript). It uses a 
-// //! multi-signal approach combining AST analysis, dependency tracking, and architectural pattern
-// //! recognition to detect violations of abstraction boundaries.
-// //! 
-// //! ## Detection Capabilities
-// //! 
-// //! ### Rust-Specific Patterns
-// //! - Visibility violations (pub vs private boundaries)
-// //! - Framework-specific types in public APIs
-// //! - ORM/Database types leaking into business logic
-// //! - Error type propagation across layers
-// //! - Async runtime details in interfaces
-// //! 
-// //! ### Python-Specific Patterns  
-// //! - Direct database model usage in views/controllers
-// //! - Framework objects in business logic (Flask request, Django models)
-// //! - File system paths in public interfaces
-// //! - Import violations across architectural layers
-// //! 
-// //! ### JavaScript/TypeScript Patterns
-// //! - DOM manipulation in business logic
-// //! - Framework-specific objects in domain models
-// //! - Infrastructure dependencies in application layer
-// //! - Type definition leaks and generic pollution
-// //! 
-// //! ## Architecture
-// //! 
-// //! The detector uses a layered analysis approach:
-// //! 1. **Syntactic Analysis**: Tree-sitter queries for pattern matching
-// //! 2. **Semantic Analysis**: Symbol resolution and type flow tracking
-// //! 3. **Architectural Analysis**: Layer boundary validation
-// //! 4. **Cross-file Analysis**: Dependency graph traversal
+//! 
+//! This detector implements a comprehensive analysis framework for identifying leaky abstractions
+//! across multiple programming languages (Rust, Python, JavaScript/TypeScript). It uses a 
+//! multi-signal approach combining AST analysis, dependency tracking, and architectural pattern
+//! recognition to detect violations of abstraction boundaries.
+//! 
+//! ## Detection Capabilities
+//! 
+//! ### Rust-Specific Patterns
+//! - Visibility violations (pub vs private boundaries)
+//! - Framework-specific types in public APIs
+//! - ORM/Database types leaking into business logic
+//! - Error type propagation across layers
+//! - Async runtime details in interfaces
+//! 
+//! ### Python-Specific Patterns  
+//! - Direct database model usage in views/controllers
+//! - Framework objects in business logic (Flask request, Django models)
+//! - File system paths in public interfaces
+//! - Import violations across architectural layers
+//! 
+//! ### JavaScript/TypeScript Patterns
+//! - DOM manipulation in business logic
+//! - Framework-specific objects in domain models
+//! - Infrastructure dependencies in application layer
+//! - Type definition leaks and generic pollution
+//! 
+//! ## Architecture
+//! 
+//! The detector uses a layered analysis approach:
+//! 1. **Syntactic Analysis**: Tree-sitter queries for pattern matching
+//! 2. **Semantic Analysis**: Symbol resolution and type flow tracking
+//! 3. **Architectural Analysis**: Layer boundary validation
+//! 4. **Cross-file Analysis**: Dependency graph traversal
+//!
+//! ## Configuration
+//!
+//! The detector requires architectural configuration to understand the intended
+//! layer boundaries and infrastructure dependencies:
+//!
+//! ```rust
+//! use uveddi::analysis::detectors::anti_patterns::leaky_abstraction::{
+//!     LeakyAbstractionDetector, ArchitecturalConfig, ArchitecturalLayer
+//! };
+//! use std::collections::{HashMap, HashSet};
+//!
+//! let mut layer_mappings = HashMap::new();
+//! layer_mappings.insert("**/controllers/**".to_string(), ArchitecturalLayer::Presentation);
+//! layer_mappings.insert("**/services/**".to_string(), ArchitecturalLayer::Application);
+//! layer_mappings.insert("**/domain/**".to_string(), ArchitecturalLayer::Domain);
+//!
+//! let mut infrastructure_modules = HashSet::new();
+//! infrastructure_modules.insert("sqlx".to_string());
+//! infrastructure_modules.insert("tokio".to_string());
+//! infrastructure_modules.insert("serde".to_string());
+//!
+//! let config = ArchitecturalConfig {
+//!     layer_mappings,
+//!     infrastructure_modules,
+//!     internal_patterns: vec!["_internal".to_string(), "private".to_string()],
+//! };
+//!
+//! let detector = LeakyAbstractionDetector::new(config);
+//! ```
+//!
+//! ## Performance Considerations
+//! - **Time Complexity**: O(n*m) where n is AST nodes and m is architectural rules
+//! - **Space Complexity**: O(k) where k is the number of detected violations
+//! - **Optimization Notes**: Uses efficient pattern matching and caches rule evaluations
 
 use crate::analysis::{AnalysisDetector, AnalysisError};
 use crate::ast::tree_sitter::ParsedFile;

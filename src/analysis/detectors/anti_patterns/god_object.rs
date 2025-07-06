@@ -1,3 +1,121 @@
+//! God Object Anti-pattern Detector
+//!
+//! ## Overview
+//! Detects "God Objects" - classes or structs that have accumulated too many responsibilities,
+//! violating the Single Responsibility Principle. Also known as "Blob" or "Large Class" 
+//! anti-pattern, these objects become difficult to maintain, test, and understand.
+//!
+//! God Objects typically exhibit:
+//! - Excessive number of methods (high method count)
+//! - Excessive number of fields/attributes (high field count)
+//! - Multiple unrelated responsibilities
+//! - High coupling with many other classes
+//!
+//! ## Detection Strategy
+//! Uses a simple threshold-based approach to identify oversized classes:
+//! 1. **Method Counting**: Counts all methods/functions within classes, structs, and impl blocks
+//! 2. **Field Counting**: Counts all fields/attributes within data structures
+//! 3. **Threshold Comparison**: Compares counts against configurable thresholds
+//! 4. **Severity Assignment**: Assigns severity based on how much thresholds are exceeded
+//!
+//! The detector uses Tree-sitter queries to extract structural information from the AST,
+//! ensuring accurate counting across different language syntaxes.
+//!
+//! ## Supported Languages
+//! - **Rust**: Analyzes `struct` definitions and their associated `impl` blocks
+//!   - Counts methods in all impl blocks for a given struct
+//!   - Counts fields in struct definitions
+//!   - Handles both tuple structs and named field structs
+//! - **Python**: Analyzes `class` definitions
+//!   - Counts methods within class bodies
+//!   - Counts instance variables (self.field assignments)
+//!   - Handles inheritance and nested classes
+//! - **JavaScript**: Analyzes `class` declarations
+//!   - Counts method definitions within class bodies
+//!   - Counts field definitions and constructor assignments
+//!   - Handles both ES6 classes and prototype-based patterns
+//!
+//! ## Configuration
+//! The detector accepts two threshold parameters:
+//! - `method_threshold`: Maximum number of methods before flagging (default: 10)
+//! - `field_threshold`: Maximum number of fields before flagging (default: 8)
+//!
+//! These thresholds are applied uniformly across all languages, though language-specific
+//! defaults could be implemented in future versions.
+//!
+//! ## Examples
+//!
+//! ### Detected Pattern (Rust)
+//! ```rust
+//! // This would be flagged as a God Object (too many methods)
+//! struct UserManager {
+//!     users: Vec<User>,
+//!     sessions: HashMap<String, Session>,
+//!     permissions: PermissionSet,
+//!     audit_log: AuditLog,
+//!     cache: Cache,
+//!     config: Config,
+//!     metrics: Metrics,
+//!     notifications: NotificationService,
+//! }
+//!
+//! impl UserManager {
+//!     fn create_user(&self) { /* ... */ }
+//!     fn delete_user(&self) { /* ... */ }
+//!     fn authenticate(&self) { /* ... */ }
+//!     fn authorize(&self) { /* ... */ }
+//!     fn log_action(&self) { /* ... */ }
+//!     fn send_notification(&self) { /* ... */ }
+//!     fn update_cache(&self) { /* ... */ }
+//!     fn generate_report(&self) { /* ... */ }
+//!     fn backup_data(&self) { /* ... */ }
+//!     fn validate_permissions(&self) { /* ... */ }
+//!     fn handle_session(&self) { /* ... */ }
+//!     // ... more methods (exceeds threshold)
+//! }
+//! ```
+//!
+//! ### Good Pattern (Rust)
+//! ```rust
+//! // Well-designed, focused structs
+//! struct User {
+//!     id: UserId,
+//!     name: String,
+//!     email: String,
+//! }
+//!
+//! struct UserRepository {
+//!     storage: Box<dyn Storage>,
+//! }
+//!
+//! impl UserRepository {
+//!     fn create(&self, user: User) -> Result<(), Error> { /* ... */ }
+//!     fn find_by_id(&self, id: UserId) -> Result<User, Error> { /* ... */ }
+//!     fn update(&self, user: User) -> Result<(), Error> { /* ... */ }
+//!     fn delete(&self, id: UserId) -> Result<(), Error> { /* ... */ }
+//! }
+//! ```
+//!
+//! ## Performance Considerations
+//! - **Time Complexity**: O(n) where n is the number of AST nodes in the file
+//! - **Space Complexity**: O(m) where m is the number of classes/structs found
+//! - **Optimization Notes**: 
+//!   - Uses efficient Tree-sitter queries to minimize AST traversal
+//!   - Caches query compilation for repeated use
+//!   - Processes files independently for parallelization
+//!
+//! ## Limitations
+//! - **Single-file Analysis**: Cannot detect responsibilities spread across multiple files
+//! - **Static Analysis Only**: Cannot detect runtime behavior or dynamic method addition
+//! - **Language Specifics**: May miss language-specific patterns (e.g., Python metaclasses)
+//! - **Threshold Sensitivity**: Simple thresholds may not account for domain complexity
+//! - **No Semantic Analysis**: Counts methods without understanding their relationships
+//!
+//! ## References
+//! - [Fowler, M. "Refactoring: Improving the Design of Existing Code"](https://refactoring.com/)
+//! - [Brown, W. et al. "AntiPatterns: Refactoring Software, Architectures, and Projects in Crisis"](https://www.amazon.com/AntiPatterns-Refactoring-Software-Architectures-Projects/dp/0471197130)
+//! - [Clean Code: A Handbook of Agile Software Craftsmanship](https://www.amazon.com/Clean-Code-Handbook-Software-Craftsmanship/dp/0132350884)
+
 use crate::analysis::{AnalysisDetector, AnalysisError};
 use crate::ast::tree_sitter::{ParsedFile, SourceLanguage};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
@@ -44,13 +162,56 @@ const RUST_FIELD_COUNT_QUERY: &str = "(field_declaration)";
 const PYTHON_FIELD_COUNT_QUERY: &str = r#"(expression_statement (assignment))"#;
 const JAVASCRIPT_FIELD_COUNT_QUERY: &str = "(field_definition)";
 
-/// Detects "God Objects" - classes or structs that have too many responsibilities.
+/// God Object detector that identifies classes/structs with too many responsibilities
+///
+/// This detector implements a threshold-based approach to identify classes or structs
+/// that have grown too large and likely violate the Single Responsibility Principle.
+/// It counts methods and fields within classes/structs and compares them against
+/// configurable thresholds.
+///
+/// # Configuration
+///
+/// The detector accepts two main parameters:
+/// - `method_threshold`: Maximum number of methods before flagging as God Object
+/// - `field_threshold`: Maximum number of fields before flagging as God Object
+///
+/// # Examples
+///
+/// ```rust
+/// use uveddi::analysis::detectors::anti_patterns::god_object::GodObjectDetector;
+///
+/// // Create detector with custom thresholds
+/// let detector = GodObjectDetector::new(15, 10); // 15 methods, 10 fields max
+///
+/// // Create detector with default thresholds
+/// let detector = GodObjectDetector::default(); // 10 methods, 8 fields max
+/// ```
 pub struct GodObjectDetector {
+    /// Maximum number of methods allowed before flagging as God Object
     method_threshold: usize,
+    /// Maximum number of fields allowed before flagging as God Object
     field_threshold: usize,
 }
 
 impl GodObjectDetector {
+    /// Creates a new God Object detector with custom thresholds
+    ///
+    /// # Arguments
+    ///
+    /// * `method_threshold` - Maximum number of methods allowed before flagging as God Object
+    /// * `field_threshold` - Maximum number of fields allowed before flagging as God Object
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use uveddi::analysis::detectors::anti_patterns::god_object::GodObjectDetector;
+    ///
+    /// // Strict thresholds for small, focused classes
+    /// let strict_detector = GodObjectDetector::new(5, 3);
+    ///
+    /// // Lenient thresholds for complex domains
+    /// let lenient_detector = GodObjectDetector::new(20, 15);
+    /// ```
     pub fn new(method_threshold: usize, field_threshold: usize) -> Self {
         Self {
             method_threshold,
