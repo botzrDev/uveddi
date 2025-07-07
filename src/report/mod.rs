@@ -99,13 +99,17 @@
 
 // use crate::analysis::graph::ComponentNode;
 use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
+use crate::models::visualization::{ArchitecturalComponent, DiagramMetadata, DiagramType};
+use crate::analysis::mermaid_generator::{MermaidGenerator, MermaidGenerationError};
 use chrono::{DateTime, Local};
 use log::{error, info};
+use serde::{Serialize, Deserialize};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::fs;
 use std::io::Write;
 use std::path::Path;
+use uuid::Uuid;
 
 /// Configurable report generator with multi-format support
 ///
@@ -132,6 +136,8 @@ pub struct ReportGenerator {
     include_diagrams: bool,
     include_severity_summary: bool,
     include_remediation_steps: bool,
+    /// Mermaid generator for creating diagrams
+    mermaid_generator: Option<MermaidGenerator>,
 }
 
 impl Default for ReportGenerator {
@@ -153,6 +159,7 @@ impl ReportGenerator {
             include_diagrams: true,
             include_severity_summary: true,
             include_remediation_steps: true,
+            mermaid_generator: MermaidGenerator::new().ok(),
         }
     }
 
@@ -298,6 +305,21 @@ impl ReportGenerator {
         }
 
         Ok(report)
+    }
+
+    /// Generate the report header section
+    fn generate_report_header(&self, analysis_run: &AnalysisRun) -> String {
+        format!(
+            "# Uveddi Architecture Analysis Report\n\n\
+            **Analysis Date**: {}\n\
+            **Configuration**: {}\n\
+            **Run ID**: {}\n\n",
+            analysis_run.start_time
+                .unwrap_or_else(|| chrono::Utc::now().naive_utc())
+                .format("%Y-%m-%d %H:%M:%S UTC"),
+            analysis_run.config_name.as_deref().unwrap_or("default"),
+            analysis_run.run_id.map(|id| id.to_string()).unwrap_or_else(|| "unknown".to_string())
+        )
     }
 
     /// Generate the executive summary section
@@ -770,4 +792,285 @@ impl ReportGenerator {
 
         Ok(json)
     }
+
+    /// Generates an enhanced Markdown report with architectural component diagrams.
+    ///
+    /// This method generates a comprehensive report that includes traditional issue
+    /// analysis enhanced with architectural diagrams generated from extracted components.
+    ///
+    /// # Arguments
+    ///
+    /// * `analysis_run` - The analysis run metadata
+    /// * `issues` - Slice of architectural issues to include
+    /// * `anti_pattern_types` - Map of anti-pattern type definitions
+    /// * `components` - Optional architectural components for diagram generation
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(EnhancedReportData)` - The generated report with metadata
+    /// * `Err(ReportGenerationError)` - If generation fails
+    pub fn generate_enhanced_markdown_report(
+        &self,
+        analysis_run: &AnalysisRun,
+        issues: &[ArchitecturalIssue],
+        anti_pattern_types: &HashMap<i64, AntiPatternType>,
+        components: Option<&[ArchitecturalComponent]>,
+    ) -> Result<EnhancedReportData, ReportGenerationError> {
+        let mut report = String::new();
+        let mut diagrams = Vec::new();
+
+        // Generate standard report sections
+        report.push_str(&self.generate_report_header(analysis_run));
+        report.push_str(&self.generate_executive_summary(analysis_run, issues));
+
+        if self.include_severity_summary {
+            report.push_str(&self.generate_severity_summary(issues));
+        }
+
+        // Generate enhanced diagrams section
+        if self.include_diagrams && components.is_some() {
+            let (diagrams_section, generated_diagrams) = 
+                self.generate_enhanced_diagrams_section(issues, anti_pattern_types, components.unwrap())?;
+            report.push_str(&diagrams_section);
+            diagrams.extend(generated_diagrams);
+        }
+
+        report.push_str(&self.generate_detailed_analysis(issues, anti_pattern_types));
+
+        Ok(EnhancedReportData {
+            markdown_content: report,
+            diagrams,
+            components_analyzed: components.map(|c| c.len()).unwrap_or(0),
+            generation_timestamp: chrono::Utc::now(),
+        })
+    }
+
+    /// Generate comprehensive diagrams section using architectural components
+    fn generate_enhanced_diagrams_section(
+        &self,
+        issues: &[ArchitecturalIssue],
+        anti_pattern_types: &HashMap<i64, AntiPatternType>,
+        components: &[ArchitecturalComponent],
+    ) -> Result<(String, Vec<DiagramMetadata>), ReportGenerationError> {
+        let mut section = String::from("## 📊 Architectural Diagrams\n\n");
+        let mut generated_diagrams = Vec::new();
+
+        if let Some(ref generator) = self.mermaid_generator {
+            // Group issues by anti-pattern type for targeted diagram generation
+            let issues_by_type = self.group_issues_by_anti_pattern(issues);
+
+            for (anti_pattern_id, pattern_issues) in issues_by_type {
+                if let Some(anti_pattern) = anti_pattern_types.get(&anti_pattern_id) {
+                    section.push_str(&format!("### {} Analysis\n\n", anti_pattern.name));
+
+                    // Generate appropriate diagram based on anti-pattern type
+                    let diagram_result = self.generate_diagram_for_anti_pattern(
+                        generator, 
+                        components, 
+                        &pattern_issues, 
+                        anti_pattern_id
+                    );
+
+                    match diagram_result {
+                        Ok(diagram) => {
+                            section.push_str("```mermaid\n");
+                            section.push_str(&diagram.mermaid_src);
+                            section.push_str("\n```\n\n");
+                            generated_diagrams.push(diagram);
+                        }
+                        Err(e) => {
+                            error!("Failed to generate diagram for anti-pattern {}: {}", anti_pattern_id, e);
+                            section.push_str("*Diagram generation failed for this anti-pattern.*\n\n");
+                        }
+                    }
+                }
+            }
+
+            // Generate overview component diagram
+            section.push_str("### System Overview\n\n");
+            match generator.generate_diagram(components, DiagramType::Component, None) {
+                Ok(overview_diagram) => {
+                    section.push_str("```mermaid\n");
+                    section.push_str(&overview_diagram.mermaid_src);
+                    section.push_str("\n```\n\n");
+                    generated_diagrams.push(overview_diagram);
+                }
+                Err(e) => {
+                    error!("Failed to generate overview diagram: {}", e);
+                    section.push_str("*Overview diagram generation failed.*\n\n");
+                }
+            }
+        } else {
+            section.push_str("*Diagram generation not available - MermaidGenerator not initialized.*\n\n");
+        }
+
+        Ok((section, generated_diagrams))
+    }
+
+    /// Generate diagram for a specific anti-pattern type
+    fn generate_diagram_for_anti_pattern(
+        &self,
+        generator: &MermaidGenerator,
+        components: &[ArchitecturalComponent],
+        issues: &[ArchitecturalIssue],
+        anti_pattern_id: i64,
+    ) -> Result<DiagramMetadata, MermaidGenerationError> {
+        // Create severity mapping from issues
+        let mut severity_data = HashMap::new();
+        for issue in issues {
+            // Extract component IDs from file paths (simplified)
+            if let Some(component_id) = self.find_component_by_file_path(components, &issue.file_path) {
+                severity_data.insert(component_id, issue.severity.clone());
+            }
+        }
+
+        // Determine diagram type based on anti-pattern
+        let diagram_type = match anti_pattern_id {
+            1 => DiagramType::Dependency, // Assuming 1 is cyclic dependencies
+            2 => DiagramType::Class,      // Assuming 2 is god objects
+            _ => DiagramType::Component,
+        };
+
+        generator.generate_diagram(components, diagram_type, Some(&severity_data))
+    }
+
+    /// Find component by file path
+    fn find_component_by_file_path(
+        &self,
+        components: &[ArchitecturalComponent],
+        file_path: &str,
+    ) -> Option<Uuid> {
+        components
+            .iter()
+            .find(|c| c.file_path.to_string_lossy() == file_path)
+            .map(|c| c.component_id)
+    }
+
+    /// Group issues by anti-pattern type
+    fn group_issues_by_anti_pattern(
+        &self,
+        issues: &[ArchitecturalIssue],
+    ) -> HashMap<i64, Vec<ArchitecturalIssue>> {
+        let mut grouped = HashMap::new();
+        for issue in issues {
+            grouped
+                .entry(issue.anti_pattern_type_id)
+                .or_insert_with(Vec::new)
+                .push(issue.clone());
+        }
+        grouped
+    }
+
+    /// Generate JSON report with diagram metadata
+    pub fn generate_enhanced_json_report(
+        &self,
+        analysis_run: &AnalysisRun,
+        issues: &[ArchitecturalIssue],
+        anti_pattern_types: &[AntiPatternType],
+        components: Option<&[ArchitecturalComponent]>,
+        diagrams: &[DiagramMetadata],
+    ) -> Result<String, serde_json::Error> {
+        let anti_pattern_map: HashMap<i64, &AntiPatternType> = anti_pattern_types
+            .iter()
+            .filter_map(|apt| apt.anti_pattern_type_id.map(|id| (id, apt)))
+            .collect();
+
+        let summary = self.create_enhanced_summary(issues, components, diagrams);
+
+        let report_data = serde_json::json!({
+            "analysis_run": analysis_run,
+            "summary": summary,
+            "issues": issues,
+            "anti_patterns": anti_pattern_types,
+            "components": components.unwrap_or(&[]),
+            "diagrams": diagrams.iter().map(|d| serde_json::json!({
+                "type": d.diagram_type,
+                "mermaid_src": d.mermaid_src,
+                "image_path": d.image_path,
+                "generated_at": d.generated_at,
+                "component_count": d.components.len(),
+                "validation_metrics": d.validation_metrics
+            })).collect::<Vec<_>>(),
+            "metadata": {
+                "report_version": "2.0",
+                "enhanced_features": {
+                    "architectural_components": components.is_some(),
+                    "diagram_generation": !diagrams.is_empty(),
+                    "component_extraction": true
+                }
+            }
+        });
+
+        serde_json::to_string_pretty(&report_data)
+    }
+
+    /// Create enhanced summary with component and diagram information
+    fn create_enhanced_summary(
+        &self,
+        issues: &[ArchitecturalIssue],
+        components: Option<&[ArchitecturalComponent]>,
+        diagrams: &[DiagramMetadata],
+    ) -> serde_json::Value {
+        let mut severity_counts = HashMap::new();
+        for issue in issues {
+            *severity_counts.entry(&issue.severity).or_insert(0) += 1;
+        }
+
+        let component_summary = if let Some(comps) = components {
+            let mut type_counts = HashMap::new();
+            for comp in comps {
+                *type_counts.entry(&comp.component_type).or_insert(0) += 1;
+            }
+            
+            serde_json::json!({
+                "total_components": comps.len(),
+                "by_type": type_counts,
+                "avg_dependencies": comps.iter()
+                    .map(|c| c.dependencies.len())
+                    .sum::<usize>() as f64 / comps.len().max(1) as f64
+            })
+        } else {
+            serde_json::json!(null)
+        };
+
+        serde_json::json!({
+            "total_issues": issues.len(),
+            "by_severity": severity_counts,
+            "components": component_summary,
+            "diagrams_generated": diagrams.len(),
+            "analysis_completeness": if components.is_some() { "enhanced" } else { "standard" }
+        })
+    }
+}
+
+/// Enhanced report data with architectural components and diagrams
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EnhancedReportData {
+    /// Generated markdown content
+    pub markdown_content: String,
+    /// Generated diagram metadata
+    pub diagrams: Vec<DiagramMetadata>,
+    /// Number of architectural components analyzed
+    pub components_analyzed: usize,
+    /// Timestamp when the report was generated
+    pub generation_timestamp: chrono::DateTime<chrono::Utc>,
+}
+
+/// Errors that can occur during report generation
+#[derive(Debug, thiserror::Error)]
+pub enum ReportGenerationError {
+    #[error("Diagram generation failed: {0}")]
+    DiagramGenerationError(#[from] MermaidGenerationError),
+    
+    #[error("Template processing failed: {0}")]
+    TemplateError(String),
+    
+    #[error("Component analysis failed: {0}")]
+    ComponentAnalysisError(String),
+    
+    #[error("IO error: {0}")]
+    IoError(#[from] std::io::Error),
+    
+    #[error("JSON serialization error: {0}")]
+    SerializationError(#[from] serde_json::Error),
 }

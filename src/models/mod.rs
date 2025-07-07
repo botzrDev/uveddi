@@ -21,6 +21,7 @@
 //!
 //! - `antipattern_type`: Defines types and functionality related to anti-patterns detected in code.
 //! - `dependency_graph`: Defines types and functionality for representing and analyzing dependency graphs.
+//! - `visualization`: Defines types and functionality for architectural visualization and diagram generation.
 
 use rusqlite::Row;
 use serde::{Deserialize, Serialize};
@@ -256,6 +257,7 @@ impl FromRow for User {
 
 pub mod antipattern_type;
 pub mod dependency_graph;
+pub mod visualization;
 
 pub use crate::database::models::{
     ArchitecturalIssue as ApiArchitecturalIssue, DependencyType as ApiDependencyType,

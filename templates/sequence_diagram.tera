@@ -1,0 +1,8 @@
+sequenceDiagram
+{% for component in components -%}
+    participant {{ component.id }} as {{ component.name }}
+{% endfor %}
+
+{% for dependency in dependencies -%}
+    {{ dependency.from_id }}->>{{ dependency.to_id }}: {{ dependency.type }}
+{% endfor %}

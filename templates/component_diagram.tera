@@ -1,0 +1,16 @@
+graph {{ layout }}
+{% for component in components -%}
+    {{ component.id }}["{{ component.icon }} {{ component.name }}"]
+{% if component.css_class -%}
+    class {{ component.id }} {{ component.css_class }}
+{% endif -%}
+{% endfor %}
+
+{% for dependency in dependencies -%}
+    {{ dependency.from_id }} --> {{ dependency.to_id }}
+{% endfor %}
+
+{%- for style_name, style in styles %}
+    classDef {{ style_name }} fill:{{ style.fill_color }},stroke:{{ style.stroke_color }},stroke-width:{{ style.stroke_width }}px
+{%- if style.text_color %},color:{{ style.text_color }}{% endif -%}
+{% endfor %}
