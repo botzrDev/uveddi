@@ -383,16 +383,31 @@ impl DeadCodeDetector {
 
     /// Check if a Rust symbol is exported (pub)
     fn is_rust_symbol_exported(&self, node: &tree_sitter::Node, source: &[u8]) -> bool {
-        // Look for 'pub' keyword in the parent nodes
+        // The node we get is the identifier, we need to check the function_item parent
         let mut current = node.parent();
         while let Some(parent) = current {
-            if let Ok(text) = parent.utf8_text(source) {
-                if text.starts_with("pub ") {
-                    return true;
+            let kind = parent.kind();
+            
+            // Check if this is a function_item, struct_item, etc.
+            if kind == "function_item" || kind == "struct_item" || kind == "enum_item" || kind == "const_item" {
+                // Look for a visibility_modifier child that contains "pub"
+                for i in 0..parent.child_count() {
+                    if let Some(child) = parent.child(i) {
+                        if child.kind() == "visibility_modifier" {
+                            if let Ok(text) = child.utf8_text(source) {
+                                return text.contains("pub");
+                            }
+                        }
+                    }
                 }
+                // If we found the declaration node and no pub modifier, it's private
+                return false;
             }
+            
             current = parent.parent();
         }
+        
+        // Default to false if we can't determine visibility
         false
     }
 
@@ -517,8 +532,16 @@ impl AnalysisDetector for DeadCodeDetector {
             debug!("Symbol: {}, referenced: {}, exported: {}, keep_alive: {}", 
                    symbol.name, is_referenced, symbol.is_exported, should_keep);
             
+            // In library mode, only report non-exported symbols
+            // In application mode, report both exported and non-exported unused symbols
+            let should_report = if self.config.library_mode {
+                !symbol.is_exported  // Library mode: only report non-exported symbols
+            } else {
+                true  // Application mode: report all unused symbols
+            };
+            
             if !is_referenced && 
-               !symbol.is_exported && 
+               should_report && 
                !should_keep &&
                symbol.confidence >= self.config.min_confidence {
                 

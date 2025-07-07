@@ -74,7 +74,11 @@ if __name__ == "__main__":
             .parse_content(python_code, &PathBuf::from("app.py"), SourceLanguage::Python)
             .expect("Failed to parse Python code");
 
-        let detector = DeadCodeDetector::with_default_config();
+        // Configure for application mode (not library mode) to detect unused exported symbols
+        let mut config = crate::analysis::detectors::anti_patterns::dead_code::DeadCodeConfig::default();
+        config.library_mode = false; // Application mode - detect unused exports
+        let detector = DeadCodeDetector::new(config);
+        
         let issues = detector
             .detect_issues(&parsed_file)
             .expect("Failed to detect issues");
@@ -140,7 +144,12 @@ fn private_unused() {
             .parse_content(rust_code, &PathBuf::from("lib.rs"), SourceLanguage::Rust)
             .expect("Failed to parse Rust code");
 
-        let detector = DeadCodeDetector::with_default_config();
+        // Configure for library mode to NOT detect unused exported symbols
+        let mut config = crate::analysis::detectors::anti_patterns::dead_code::DeadCodeConfig::default();
+        config.library_mode = true; // Library mode - don't detect unused exports
+        config.min_confidence = 0.5; // Normal threshold
+        let detector = DeadCodeDetector::new(config);
+        
         let issues = detector
             .detect_issues(&parsed_file)
             .expect("Failed to detect issues");
