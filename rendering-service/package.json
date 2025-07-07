@@ -1,0 +1,29 @@
+{
+  "name": "uveddi-rendering-service",
+  "version": "1.0.0",
+  "description": "Image rendering service for Uveddi diagrams using Playwright",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "test": "jest",
+    "install-browsers": "npx playwright install chromium"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "playwright": "^1.40.0",
+    "cors": "^2.8.5",
+    "morgan": "^1.10.0",
+    "helmet": "^7.1.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2",
+    "jest": "^29.7.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": ["diagram", "rendering", "mermaid", "playwright", "svg", "png"],
+  "author": "Uveddi Team",
+  "license": "MIT"
+}
