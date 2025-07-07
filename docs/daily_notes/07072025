@@ -1,0 +1,132 @@
+       📁 Research Files Created                                               │
+│                                                                                                                      │
+│  1 Dead_Code_Detection_Best_Practices.md (Priority: Critical)                                                        │
+│     • Industry tool analysis (ESLint, Pylint, Clippy, SonarQube)                                                     │
+│     • Confidence scoring mechanisms                                                                                  │
+│     • Context handling (library vs application)                                                                      │
+│     • False positive mitigation                                                                                      │
+│  2 Tree_Sitter_Query_Optimization.md (Priority: High)                                                                │
+│     • Grammar documentation review                                                                                   │
+│     • Production query examples                                                                                      │
+│     • Edge cases & advanced patterns                                                                                 │
+│     • Performance optimization                                                                                       │
+│  3 Multi_Language_Test_Strategy.md (Priority: Medium)                                                                │
+│     • Test organization patterns                                                                                     │
+│     • Fixture management strategies                                                                                  │
+│     • Integration testing approaches                                                                                 │
+│     • Coverage measurement techniques                                                                                │
+│  4 Rust_CI_CD_Best_Practices.md (Priority: High)                                                                     │
+│     • GitHub Actions workflows                                                                                       │
+│     • Coverage reporting integration                                                                                 │
+│     • Frontend E2E testing in CI                                                                                     │
+│     • Performance & security testing                                                                                 │
+│  5 Error_Handling_Debug_Patterns.md (Priority: Medium)                                                               │
+│     • Logging strategies                                                                                             │
+│     • Error recovery mechanisms                                                                                      │
+│     • User-friendly error messages                                                                                   │
+│     • Performance monitoring                                                                                         │
+│  6 Frontend_Testing_Infrastructure.md (Priority: Low)                                                                │
+│     • Cypress best practices                                                                                         │
+│     • Backend integration testing                                                                                    │
+│     • Visual & accessibility testing                                                                                 │
+│     • Performance testing                                                                                            │
+│  7 Configuration_Management_Flexibility.md (Priority: Low)                                                           │
+│     • Configuration file formats                                                                                     │
+│     • Rule customization interfaces                                                                                  │
+│     • Plugin architecture patterns                                                                                   │
+│     • Migration strategies                                                                                           │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                📋 Each File Includes                                                 │
+│                                                                                                                      │
+│  • Research Question with priority level                                                                             │
+│  • Specific Areas to Investigate with checkboxes                                                                     │
+│  • Expected Output description                                                                                       │
+│  • Research Findings template with:                                                                                  │
+│     • Executive Summary                                                                                              │
+│     • Key Findings                                                                                                   │
+│     • Implementation Examples                                                                                        │
+│     • Trade-offs Analysis                                                                                            │
+│     • Recommended Next Steps                                                                                         │
+│  • Notes section with research guidance                                                                              │
+│                                                                                 
+
+Certainly! Here are expanded, context-rich research prompts for the research assistant, tailored to Uveddi’s architecture and roadmap:
+
+---
+
+## 1. Security in Rust Web Backends
+
+**Context:**  
+Uveddi’s backend exposes APIs and may process untrusted input, including plugin uploads and user data. The system integrates with a database, runs user-contributed plugins (WASM sandboxed), and may be deployed in cloud or on-prem environments. Security is paramount, especially with extensibility and AI features.
+
+**Research Tasks:**  
+- Survey the latest best practices for securing Rust web APIs, focusing on:
+  - Authentication and authorization strategies (JWT, OAuth2, session-based, etc.).
+  - Input validation and sanitization (especially for file uploads, plugin manifests, and API payloads).
+  - Rate limiting and DoS protection (middleware, reverse proxies, or Rust crates).
+  - Secure error handling and logging (avoiding information leaks).
+  - Database security (SQL injection prevention, connection pool hardening).
+- Identify the most common vulnerabilities in Rust web services (e.g., unsafe code, deserialization bugs, dependency risks) and how to mitigate them.
+- Review recommended crates/frameworks for security hardening (e.g., `axum-extra`, `tower-http`, `jsonwebtoken`, `argon2`, `sentry`, etc.).
+- Gather real-world examples of security incidents or audits in Rust projects and lessons learned.
+
+---
+
+## 2. Automated Testing & CI Tools
+
+**Context:**  
+Uveddi uses Rust’s built-in test framework, with integration and E2E tests. The project aims for high reliability, fast feedback, and code coverage enforcement. CI/CD is (or will be) managed via GitHub Actions or similar.
+
+**Research Tasks:**  
+- Compare leading Rust testing and coverage tools:
+  - Unit, integration, and property-based testing (e.g., `proptest`, `quickcheck`).
+  - Code coverage (e.g., `tarpaulin`, `grcov`), mutation testing, and test reporting.
+  - Parallel and distributed test runners (e.g., `cargo-nextest`).
+- Investigate best practices for structuring tests in large Rust projects:
+  - Directory layout, test data management, and test isolation.
+  - Strategies for E2E and integration tests (e.g., spinning up test databases, mocking external services).
+- Review how top Rust projects structure their CI/CD pipelines for:
+  - Fast feedback (caching, parallel jobs).
+  - Reliable deployment (artifact builds, rollback strategies).
+  - Enforcing code quality (linting, formatting, coverage thresholds).
+- Collect sample CI/CD configurations from open-source Rust projects.
+
+---
+
+## 3. API Documentation Generation
+
+**Context:**  
+Uveddi exposes both internal Rust APIs and (potentially) RESTful endpoints for frontend integration. Documentation must be accurate, up-to-date, and accessible to both internal and external developers.
+
+**Research Tasks:**  
+- Survey tools for generating Rust API documentation:
+  - `cargo doc` for Rust APIs, and how to enhance it (e.g., with `rustdoc` attributes, examples, diagrams).
+  - OpenAPI/Swagger generation for REST endpoints (e.g., `utoipa`, `paperclip`, `okapi`).
+  - Tools for publishing docs (GitHub Pages, Read the Docs, etc.).
+- Investigate workflows for keeping documentation in sync with code:
+  - Doc coverage enforcement in CI (e.g., failing builds if public APIs lack docs).
+  - Automated doc deployment on merge or release.
+- Find examples of projects with exemplary documentation practices and workflows.
+- Explore tools for generating usage examples and code snippets automatically.
+
+---
+
+## 4. Frontend-Backend Integration Patterns
+
+**Context:**  
+Uveddi’s frontend (Vite/React/TypeScript) communicates with a Rust backend. The system may be deployed locally or in the cloud, and must support secure, robust, and versioned API communication.
+
+**Research Tasks:**  
+- Research best practices for integrating Rust backends with modern frontends:
+  - CORS configuration and security (including preflight, credentials, and allowed origins).
+  - API versioning strategies (URL-based, header-based, etc.).
+  - Error handling conventions (standardized error responses, error codes, and user feedback).
+  - Authentication flows (token management, refresh, secure storage in frontend).
+- Identify recommended libraries or patterns for seamless API communication:
+  - Rust-side: `axum`, `warp`, `actix-web` for REST; `utoipa`/OpenAPI for schema sharing.
+  - TypeScript-side: OpenAPI codegen, type-safe API clients, runtime validation.
+- Explore strategies for managing API schema evolution and backward compatibility.
+- Gather case studies of successful Rust+TypeScript full-stack integrations, focusing on developer experience and maintainability.
+
+The research for these items are gathered in individual markdown files here docs/R&D/NEW_Research-2025-07-07

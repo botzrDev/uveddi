@@ -510,9 +510,16 @@ impl AnalysisDetector for DeadCodeDetector {
         for symbol in symbols {
             // Simple heuristic: if a symbol is not referenced in the same file
             // and it's not exported, it might be dead
-            if !references.contains(&symbol.name) && 
+            let is_referenced = references.contains(&symbol.name);
+            let should_keep = self.should_keep_alive(&symbol);
+            
+            // Debug logging for test troubleshooting
+            debug!("Symbol: {}, referenced: {}, exported: {}, keep_alive: {}", 
+                   symbol.name, is_referenced, symbol.is_exported, should_keep);
+            
+            if !is_referenced && 
                !symbol.is_exported && 
-               !self.should_keep_alive(&symbol) &&
+               !should_keep &&
                symbol.confidence >= self.config.min_confidence {
                 
                 let severity = match symbol.confidence {
@@ -629,6 +636,11 @@ const JAVASCRIPT_CALL_QUERY: &str = r#"
 )
 (call_expression
   function: (member_expression
+    property: (property_identifier) @name)
+)
+(call_expression
+  function: (member_expression
+    object: (identifier)
     property: (property_identifier) @name)
 )
 "#;
