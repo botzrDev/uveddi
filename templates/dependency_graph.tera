@@ -1,4 +1,45 @@
+{{!-- Dependency Graph Template --}}
+{{!-- Shows module/component dependencies with highlighting --}}
 graph {{ layout }}
+
+{%- for component in components %}
+  {%- if component.is_highlighted %}
+    {{ component.id }}["⚠️ {{ component.name }}"]
+    class {{ component.id }} highlighted-node
+  {%- else %}
+    {{ component.id }}["{{ component.icon }} {{ component.name }}"]
+    class {{ component.id }} normal-node
+  {%- endif %}
+{%- endfor %}
+
+{%- for dependency in dependencies %}
+  {%- if dependency.is_problematic %}
+    {{ dependency.from_id }} -.->|"{{ dependency.type }}"| {{ dependency.to_id }}
+    linkStyle {{ loop.index0 }} stroke:#FF4444,stroke-width:2px,color:#FF4444
+  {%- else %}
+    {{ dependency.from_id }} -->|"{{ dependency.type }}"| {{ dependency.to_id }}
+  {%- endif %}
+{%- endfor %}
+
+{%- if dependency_groups %}
+  {%- for group in dependency_groups %}
+    subgraph "{{ group.name }}"
+    {%- for node_id in group.nodes %}
+      {{ node_id }}
+    {%- endfor %}
+    end
+  {%- endfor %}
+{%- endif %}
+
+{%- if severity_styles %}
+  {%- for style_name, style in severity_styles %}
+    classDef {{ style_name }} fill:{{ style.fill_color }},stroke:{{ style.stroke_color }},stroke-width:{{ style.stroke_width }}px{{ style.text_color | default("") | prepend(",color:") }}
+  {%- endfor %}
+{%- else %}
+  {{!-- Default dependency graph styles --}}
+  classDef highlighted-node fill:#FF4444,stroke:#CC0000,stroke-width:2px,color:#FFF
+  classDef normal-node fill:#E8F4F8,stroke:#4A90A4,stroke-width:1px
+{%- endif %}}}
 {% for component in components -%}
     {{ component.id }}[{{ component.name }}]
 {% if component.css_class -%}

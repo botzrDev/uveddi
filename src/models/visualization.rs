@@ -32,17 +32,17 @@ pub struct ArchitecturalComponent {
     pub group: Option<String>,
 }
 
-/// Classification of architectural components
+/// Classification of architectural components with language-specific variants
+///
+/// Enhanced component types that provide detailed language-specific information
+/// to improve diagram accuracy and architectural analysis.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum ComponentType {
+    // Generic types
     /// A module or namespace
     Module,
     /// A service in a microservices architecture
     Service,
-    /// A class or struct definition
-    Class,
-    /// A function or method
-    Function,
     /// A database or persistent storage
     Database,
     /// An API endpoint
@@ -57,6 +57,144 @@ pub enum ComponentType {
     MessageBroker,
     /// A cache layer
     Cache,
+
+    // Rust-specific types
+    /// A Rust module with visibility information
+    RustModule { is_public: bool },
+    /// A Rust struct with field information
+    RustStruct { fields: Vec<FieldInfo> },
+    /// A Rust enum with variant information
+    RustEnum { variants: Vec<VariantInfo> },
+    /// A Rust trait with method signatures
+    RustTrait { methods: Vec<MethodSignature> },
+    /// A Rust impl block with implementation details
+    RustImpl { 
+        target_type: String, 
+        trait_impl: Option<String> 
+    },
+    /// A Rust function with signature information
+    RustFunction {
+        is_async: bool,
+        is_const: bool,
+        visibility: Visibility,
+    },
+
+    // Python-specific types
+    /// A Python class with inheritance and method information
+    PythonClass { 
+        bases: Vec<String>,
+        methods: Vec<MethodInfo>,
+        is_abstract: bool,
+    },
+    /// A Python method with classification
+    PythonMethod {
+        is_static: bool,
+        is_class_method: bool,
+        is_property: bool,
+    },
+    /// A Python function
+    PythonFunction {
+        is_async: bool,
+        decorators: Vec<String>,
+    },
+
+    // JavaScript-specific types
+    /// An ES module with export information
+    JavaScriptEsModule { exports: Vec<ExportInfo> },
+    /// A JavaScript class with inheritance
+    JavaScriptClass { extends: Option<String> },
+    /// A JavaScript function with characteristics
+    JavaScriptFunction {
+        is_async: bool,
+        is_generator: bool,
+        is_arrow: bool,
+    },
+
+    // TypeScript-specific types (extends JavaScript types)
+    /// A TypeScript interface
+    TypeScriptInterface { methods: Vec<MethodSignature> },
+    /// A TypeScript type alias
+    TypeScriptType { type_definition: String },
+    /// A TypeScript namespace
+    TypeScriptNamespace { exports: Vec<String> },
+
+    // Legacy generic types for backward compatibility
+    /// A generic class or struct definition
+    Class,
+    /// A generic function or method
+    Function,
+}
+
+/// Field information for structs and classes
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+pub struct FieldInfo {
+    pub name: String,
+    pub field_type: String,
+    pub visibility: Visibility,
+    pub is_optional: bool,
+}
+
+/// Variant information for enums
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+pub struct VariantInfo {
+    pub name: String,
+    pub fields: Option<Vec<FieldInfo>>,
+    pub discriminant: Option<String>,
+}
+
+/// Method signature information
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+pub struct MethodSignature {
+    pub name: String,
+    pub parameters: Vec<ParameterInfo>,
+    pub return_type: Option<String>,
+    pub visibility: Visibility,
+}
+
+/// Method information with implementation details
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+pub struct MethodInfo {
+    pub name: String,
+    pub signature: MethodSignature,
+    pub is_virtual: bool,
+    pub is_override: bool,
+}
+
+/// Parameter information for methods and functions
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+pub struct ParameterInfo {
+    pub name: String,
+    pub param_type: String,
+    pub is_optional: bool,
+    pub default_value: Option<String>,
+}
+
+/// Export information for modules
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+pub struct ExportInfo {
+    pub name: String,
+    pub export_type: ExportType,
+    pub is_default: bool,
+}
+
+/// Types of exports
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+pub enum ExportType {
+    Function,
+    Class,
+    Variable,
+    Type,
+    Namespace,
+}
+
+/// Visibility levels
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+pub enum Visibility {
+    Public,
+    Private,
+    Protected,
+    Internal,
+    Package,
 }
 
 /// Dependency relationship between components
@@ -273,6 +411,53 @@ impl ComponentType {
         matches!(self, ComponentType::ExternalSystem | ComponentType::User)
     }
 
+    /// Check if this component type is language-specific
+    pub fn is_language_specific(&self) -> bool {
+        matches!(self, 
+            ComponentType::RustModule { .. } |
+            ComponentType::RustStruct { .. } |
+            ComponentType::RustEnum { .. } |
+            ComponentType::RustTrait { .. } |
+            ComponentType::RustImpl { .. } |
+            ComponentType::RustFunction { .. } |
+            ComponentType::PythonClass { .. } |
+            ComponentType::PythonMethod { .. } |
+            ComponentType::PythonFunction { .. } |
+            ComponentType::JavaScriptEsModule { .. } |
+            ComponentType::JavaScriptClass { .. } |
+            ComponentType::JavaScriptFunction { .. } |
+            ComponentType::TypeScriptInterface { .. } |
+            ComponentType::TypeScriptType { .. } |
+            ComponentType::TypeScriptNamespace { .. }
+        )
+    }
+
+    /// Get the programming language for language-specific types
+    pub fn language(&self) -> Option<&'static str> {
+        match self {
+            ComponentType::RustModule { .. } |
+            ComponentType::RustStruct { .. } |
+            ComponentType::RustEnum { .. } |
+            ComponentType::RustTrait { .. } |
+            ComponentType::RustImpl { .. } |
+            ComponentType::RustFunction { .. } => Some("rust"),
+            
+            ComponentType::PythonClass { .. } |
+            ComponentType::PythonMethod { .. } |
+            ComponentType::PythonFunction { .. } => Some("python"),
+            
+            ComponentType::JavaScriptEsModule { .. } |
+            ComponentType::JavaScriptClass { .. } |
+            ComponentType::JavaScriptFunction { .. } => Some("javascript"),
+            
+            ComponentType::TypeScriptInterface { .. } |
+            ComponentType::TypeScriptType { .. } |
+            ComponentType::TypeScriptNamespace { .. } => Some("typescript"),
+            
+            _ => None,
+        }
+    }
+
     /// Get icon representation for diagram rendering
     pub fn icon(&self) -> &'static str {
         match self {
@@ -283,7 +468,97 @@ impl ComponentType {
             ComponentType::MessageBroker => "📨",
             ComponentType::Cache => "⚡",
             ComponentType::ExternalSystem => "🔗",
+            
+            // Rust-specific icons
+            ComponentType::RustModule { .. } => "📦",
+            ComponentType::RustStruct { .. } => "🏗️",
+            ComponentType::RustEnum { .. } => "🔀",
+            ComponentType::RustTrait { .. } => "🎭",
+            ComponentType::RustImpl { .. } => "⚙️",
+            ComponentType::RustFunction { .. } => "⚡",
+            
+            // Python-specific icons
+            ComponentType::PythonClass { .. } => "🐍",
+            ComponentType::PythonMethod { .. } => "🔧",
+            ComponentType::PythonFunction { .. } => "⚡",
+            
+            // JavaScript/TypeScript-specific icons
+            ComponentType::JavaScriptEsModule { .. } => "📦",
+            ComponentType::JavaScriptClass { .. } => "🟨",
+            ComponentType::JavaScriptFunction { .. } => "⚡",
+            ComponentType::TypeScriptInterface { .. } => "🔷",
+            ComponentType::TypeScriptType { .. } => "🏷️",
+            ComponentType::TypeScriptNamespace { .. } => "📦",
+            
+            // Generic fallbacks
+            ComponentType::Class => "🏛️",
+            ComponentType::Function => "⚡",
             _ => "📦",
+        }
+    }
+
+    /// Get complexity score for this component type (used for sizing in diagrams)
+    pub fn complexity_score(&self) -> u32 {
+        match self {
+            // High complexity types
+            ComponentType::RustImpl { .. } => 8,
+            ComponentType::PythonClass { methods, .. } => 5 + methods.len() as u32,
+            ComponentType::RustTrait { methods } => 5 + methods.len() as u32,
+            ComponentType::TypeScriptInterface { methods } => 5 + methods.len() as u32,
+            
+            // Medium complexity types
+            ComponentType::RustStruct { fields } => 3 + fields.len() as u32,
+            ComponentType::RustEnum { variants } => 3 + variants.len() as u32,
+            ComponentType::JavaScriptClass { .. } => 5,
+            
+            // Lower complexity types
+            ComponentType::RustFunction { .. } => 2,
+            ComponentType::PythonFunction { .. } => 2,
+            ComponentType::JavaScriptFunction { .. } => 2,
+            ComponentType::Function => 2,
+            
+            // Infrastructure components
+            ComponentType::Service => 6,
+            ComponentType::Database => 4,
+            ComponentType::MessageBroker => 4,
+            
+            // Simple types
+            _ => 1,
+        }
+    }
+
+    /// Get diagram styling class based on component type
+    pub fn style_class(&self) -> &'static str {
+        match self {
+            ComponentType::Service => "service-node",
+            ComponentType::Database => "data-store",
+            ComponentType::Cache => "data-store",
+            ComponentType::User => "external-user",
+            ComponentType::ExternalSystem => "external-system",
+            ComponentType::ApiEndpoint => "api-endpoint",
+            ComponentType::MessageBroker => "message-broker",
+            
+            // Language-specific styles
+            ComponentType::RustModule { .. } |
+            ComponentType::RustStruct { .. } |
+            ComponentType::RustEnum { .. } |
+            ComponentType::RustTrait { .. } |
+            ComponentType::RustImpl { .. } |
+            ComponentType::RustFunction { .. } => "rust-component",
+            
+            ComponentType::PythonClass { .. } |
+            ComponentType::PythonMethod { .. } |
+            ComponentType::PythonFunction { .. } => "python-component",
+            
+            ComponentType::JavaScriptEsModule { .. } |
+            ComponentType::JavaScriptClass { .. } |
+            ComponentType::JavaScriptFunction { .. } => "js-component",
+            
+            ComponentType::TypeScriptInterface { .. } |
+            ComponentType::TypeScriptType { .. } |
+            ComponentType::TypeScriptNamespace { .. } => "ts-component",
+            
+            _ => "generic-component",
         }
     }
 }

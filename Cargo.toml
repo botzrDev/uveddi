@@ -14,11 +14,13 @@ readme = "README.md"
 
 # Feature flags for modular compilation
 [features]
-default = ["analysis", "local-ai"]
+default = ["analysis", "local-ai", "image-rendering"]
 # Core analysis features
 analysis = ["tree-sitter", "tree-sitter-rust", "tree-sitter-python", "tree-sitter-javascript", "tree-sitter-typescript"]
 # Local AI only (Ollama)
 local-ai = ["reqwest"]
+# Image rendering service integration
+image-rendering = ["reqwest", "base64"]
 # WASM plugin system
 wasm-plugins = ["wasmtime", "wasmtime-wasi", "wit-bindgen"]
 
@@ -45,9 +47,15 @@ tree-sitter-rust = { version = "0.21.0", optional = true }
 tree-sitter-python = { version = "0.21.0", optional = true }
 tree-sitter-javascript = { version = "0.21.0", optional = true }
 tree-sitter-typescript = { version = "0.21.0", optional = true }
-# HTTP client for local AI (Ollama) - updated for security fix
+# HTTP client for local AI (Ollama) and image rendering service
 reqwest = { version = "0.12.22", features = ["json"], optional = true }
 rustls = "0.23.28"  # Force newer rustls to get updated ring
+# Template engine for diagram generation
+tera = "1.19.1"
+# Base64 encoding/decoding for image handling
+base64 = { version = "0.22.0", optional = true }
+# UUID generation for component IDs
+uuid = { version = "1.8.0", features = ["v4", "v5", "serde"] }
 walkdir = "2.5.0"
 ignore = "0.4.22"
 toml = "0.8.0"
@@ -66,8 +74,6 @@ arrow-ipc = { version = "51.0.0", optional = true }
 arrow-schema = { version = "51.0.0", optional = true }
 arrow-array = { version = "51.0.0", optional = true }
 wit-bindgen = { version = "0.30.0", optional = true }
-uuid = { version = "1.0", features = ["v4", "v5", "serde"] }
-tera = "1.17.0"
 
 # Security patches to force newer versions
 

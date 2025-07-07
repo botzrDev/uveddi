@@ -1,0 +1,64 @@
+{{!-- Tight Coupling Network Diagram --}}
+{{!-- Visualizes high coupling between components --}}
+graph {{ layout }}
+
+{%- for component in components %}
+  {%- if component.coupling_level == "high" %}
+    {{ component.id }}["🔗 {{ component.name }}<br/>{{ component.coupling_count }} connections"]
+    class {{ component.id }} high-coupling
+  {%- elif component.coupling_level == "medium" %}
+    {{ component.id }}["⚡ {{ component.name }}<br/>{{ component.coupling_count }} connections"]
+    class {{ component.id }} medium-coupling
+  {%- else %}
+    {{ component.id }}["{{ component.icon }} {{ component.name }}"]
+    class {{ component.id }} low-coupling
+  {%- endif %}
+{%- endfor %}
+
+{%- for dependency in dependencies %}
+  {%- if dependency.coupling_strength == "very_high" %}
+    {{ dependency.from_id }} ==>|"{{ dependency.type }}<br/>{{ dependency.strength_value }}"| {{ dependency.to_id }}
+    linkStyle {{ loop.index0 }} stroke:#FF4444,stroke-width:4px,color:#FF4444
+  {%- elif dependency.coupling_strength == "high" %}
+    {{ dependency.from_id }} ==>|"{{ dependency.type }}"| {{ dependency.to_id }}
+    linkStyle {{ loop.index0 }} stroke:#FF8800,stroke-width:3px,color:#FF8800
+  {%- elif dependency.coupling_strength == "medium" %}
+    {{ dependency.from_id }} -->|"{{ dependency.type }}"| {{ dependency.to_id }}
+    linkStyle {{ loop.index0 }} stroke:#FFAA00,stroke-width:2px,color:#FFAA00
+  {%- else %}
+    {{ dependency.from_id }} -.->|"{{ dependency.type }}"| {{ dependency.to_id }}
+  {%- endif %}
+{%- endfor %}
+
+{%- if coupling_clusters %}
+  {%- for cluster in coupling_clusters %}
+    subgraph "Tightly Coupled Cluster: {{ cluster.name }}"
+    {%- for node_id in cluster.nodes %}
+      {{ node_id }}
+    {%- endfor %}
+    end
+  {%- endfor %}
+{%- endif %}
+
+{%- if coupling_metrics %}
+  subgraph "Coupling Metrics"
+    metrics1["Afferent Coupling (Ca): {{ coupling_metrics.avg_afferent }}"]
+    metrics2["Efferent Coupling (Ce): {{ coupling_metrics.avg_efferent }}"]
+    metrics3["Instability (I): {{ coupling_metrics.avg_instability }}"]
+    class metrics1 metric-info
+    class metrics2 metric-info
+    class metrics3 metric-info
+  end
+{%- endif %}
+
+{%- if severity_styles %}
+  {%- for style_name, style in severity_styles %}
+    classDef {{ style_name }} fill:{{ style.fill_color }},stroke:{{ style.stroke_color }},stroke-width:{{ style.stroke_width }}px{{ style.text_color | default("") | prepend(",color:") }}
+  {%- endfor %}
+{%- else %}
+  {{!-- Default styles for Tight Coupling Detection --}}
+  classDef high-coupling fill:#FF4444,stroke:#CC0000,stroke-width:3px,color:#FFF
+  classDef medium-coupling fill:#FF8800,stroke:#CC6600,stroke-width:2px,color:#FFF
+  classDef low-coupling fill:#E8F5E8,stroke:#4CAF50,stroke-width:1px
+  classDef metric-info fill:#F0F8FF,stroke:#87CEEB,stroke-width:1px
+{%- endif %}

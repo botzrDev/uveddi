@@ -101,6 +101,13 @@
 use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
 use crate::models::visualization::{ArchitecturalComponent, DiagramMetadata, DiagramType};
 use crate::analysis::mermaid_generator::{MermaidGenerator, MermaidGenerationError};
+
+#[cfg(feature = "image-rendering")]
+pub mod image_renderer;
+#[cfg(feature = "image-rendering")]
+pub use image_renderer::{ImageRenderer, ImageFormat, RenderedImage, RenderingError};
+
+pub mod diagrams;
 use chrono::{DateTime, Local};
 use log::{error, info};
 use serde::{Serialize, Deserialize};

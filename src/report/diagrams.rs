@@ -1,8 +1,8 @@
-//! Mermaid.js diagram generation for code dependencies
+//! Mermaid.js diagram generation for code dependencies and anti-patterns
 
 use crate::analysis::dependency::Dependency;
-use crate::models::ArchitecturalIssue;
-use std::collections::HashSet;
+use crate::database::models::{ArchitecturalIssue, AntiPatternType};
+use std::collections::{HashMap, HashSet};
 
 /// Generates a Mermaid.js diagram representing code dependencies and highlights issues.
 ///

@@ -1,0 +1,80 @@
+# Development Docker Compose with hot-reload
+version: '3.8'
+
+services:
+  # Development version with cargo watch
+  uveddi-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    environment:
+      - RUST_LOG=debug
+      - DATABASE_URL=sqlite:///app/data/uveddi.db
+      - RENDERING_SERVICE_URL=http://rendering-service-dev:3001
+      - CARGO_TARGET_DIR=/app/target
+    volumes:
+      - .:/app
+      - cargo_cache:/usr/local/cargo/registry
+      - target_cache:/app/target
+    ports:
+      - "8080:8080"
+    depends_on:
+      rendering-service-dev:
+        condition: service_healthy
+    networks:
+      - uveddi-dev-network
+    command: cargo watch -x "run --bin uveddi"
+
+  # Development rendering service with nodemon
+  rendering-service-dev:
+    build:
+      context: .
+      dockerfile: rendering-service/Dockerfile
+      target: development
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - MAX_WORKERS=2
+    volumes:
+      - ./rendering-service:/app
+      - node_modules_cache:/app/node_modules
+    ports:
+      - "3001:3001"
+    networks:
+      - uveddi-dev-network
+    command: npm run dev
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Test database
+  postgres-test:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=uveddi_test
+      - POSTGRES_USER=uveddi_test
+      - POSTGRES_PASSWORD=test_password
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    networks:
+      - uveddi-dev-network
+
+volumes:
+  cargo_cache:
+    driver: local
+  target_cache:
+    driver: local
+  node_modules_cache:
+    driver: local
+  postgres_test_data:
+    driver: local
+
+networks:
+  uveddi-dev-network:
+    driver: bridge

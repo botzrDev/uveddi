@@ -61,6 +61,8 @@ pub mod extractors;
 
 #[cfg(test)]
 pub mod tests;
+#[cfg(test)]
+pub mod visualization_tests;
 
 // Re-exports for convenience
 pub use cache::AstCache;

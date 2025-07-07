@@ -1,0 +1,49 @@
+{{!-- Cyclic Dependencies Directed Graph Template --}}
+{{!-- Highlights circular dependencies between modules/components --}}
+graph {{ layout }}
+
+{%- for component in components %}
+  {%- if component.in_cycle %}
+    {{ component.id }}["⚠️ {{ component.name }}"]
+    class {{ component.id }} cycle-critical
+  {%- elif component.connected_to_cycle %}
+    {{ component.id }}["{{ component.icon }} {{ component.name }}"]
+    class {{ component.id }} cycle-related
+  {%- else %}
+    {{ component.id }}["{{ component.icon }} {{ component.name }}"]
+    class {{ component.id }} normal-component
+  {%- endif %}
+{%- endfor %}
+
+{%- for dependency in dependencies %}
+  {%- if dependency.creates_cycle %}
+    {{ dependency.from_id }} -.->|"🔄 {{ dependency.type }}"| {{ dependency.to_id }}
+    linkStyle {{ loop.index0 }} stroke:#FF4444,stroke-width:3px,color:#FF4444
+  {%- elif dependency.in_cycle_path %}
+    {{ dependency.from_id }} -->|"{{ dependency.type }}"| {{ dependency.to_id }}
+    linkStyle {{ loop.index0 }} stroke:#FF8800,stroke-width:2px,color:#FF8800
+  {%- else %}
+    {{ dependency.from_id }} -->|"{{ dependency.type }}"| {{ dependency.to_id }}
+  {%- endif %}
+{%- endfor %}
+
+{%- if cycles %}
+  {%- for cycle in cycles %}
+    subgraph "Cycle {{ loop.index }}: {{ cycle.name }}"
+    {%- for node_id in cycle.nodes %}
+      {{ node_id }}
+    {%- endfor %}
+    end
+  {%- endfor %}
+{%- endif %}
+
+{%- if severity_styles %}
+  {%- for style_name, style in severity_styles %}
+    classDef {{ style_name }} fill:{{ style.fill_color }},stroke:{{ style.stroke_color }},stroke-width:{{ style.stroke_width }}px{{ style.text_color | default("") | prepend:",color:" }}
+  {%- endfor %}
+{%- else %}
+  {{!-- Default styles for Cyclic Dependencies --}}
+  classDef cycle-critical fill:#FF4444,stroke:#CC0000,stroke-width:3px,color:#FFF
+  classDef cycle-related fill:#FFB366,stroke:#FF8800,stroke-width:2px
+  classDef normal-component fill:#E8F4F8,stroke:#4A90A4,stroke-width:1px
+{%- endif %}
