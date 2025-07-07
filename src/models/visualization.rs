@@ -561,6 +561,40 @@ impl ComponentType {
             _ => "generic-component",
         }
     }
+
+    /// Get a string representation of the component type
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            ComponentType::Module => "module",
+            ComponentType::Service => "service",
+            ComponentType::Database => "database",
+            ComponentType::ApiEndpoint => "api_endpoint",
+            ComponentType::Configuration => "configuration",
+            ComponentType::ExternalSystem => "external_system",
+            ComponentType::User => "user",
+            ComponentType::MessageBroker => "message_broker",
+            ComponentType::Cache => "cache",
+            
+            ComponentType::RustModule { .. } => "rust_module",
+            ComponentType::RustStruct { .. } => "rust_struct",
+            ComponentType::RustEnum { .. } => "rust_enum",
+            ComponentType::RustTrait { .. } => "rust_trait",
+            ComponentType::RustImpl { .. } => "rust_impl",
+            ComponentType::RustFunction { .. } => "rust_function",
+            
+            ComponentType::PythonClass { .. } => "python_class",
+            ComponentType::PythonMethod { .. } => "python_method",
+            ComponentType::PythonFunction { .. } => "python_function",
+            
+            ComponentType::JavaScriptEsModule { .. } => "javascript_es_module",
+            ComponentType::JavaScriptClass { .. } => "javascript_class",
+            ComponentType::JavaScriptFunction { .. } => "javascript_function",
+            
+            ComponentType::TypeScriptInterface { .. } => "typescript_interface",
+            ComponentType::TypeScriptType { .. } => "typescript_type",
+            ComponentType::TypeScriptNamespace { .. } => "typescript_namespace",
+        }
+    }
 }
 
 #[cfg(test)]
