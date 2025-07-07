@@ -11,6 +11,7 @@ This document outlines the current tasks, priorities, and roadmap for the Uveddi
   - [x] Add proper error handling for cache operations
   - [x] Ensure thread safety with Send + Sync trait bounds
   - [x] Resolve compilation issues and dependency conflicts
+  - [x] Fix dead code detection logic and tests (Rust export detection, library mode) ✅
   - [ ] Fix false positives in God Object detector
   - [ ] Improve Code Duplication detection accuracy
   - [ ] Add comprehensive error handling for large codebases (>10k files)
@@ -24,6 +25,7 @@ This document outlines the current tasks, priorities, and roadmap for the Uveddi
   - [ ] Create example analysis reports for different project types
 
 - [ ] **Testing & Quality**
+  - [x] Fix dead code detection tests and improve accuracy ✅
   - [ ] Increase test coverage for anti-pattern detectors
   - [ ] Add integration tests for Ollama AI analysis
   - [ ] Create benchmark suite for performance regression testing
@@ -147,7 +149,7 @@ This TODO list is reviewed and updated:
 
 ---
 
-**Last Updated**: July 6, 2025  
+**Last Updated**: July 7, 2025  
 **Next Review**: Weekly community sync
 
 ## Recent Achievements (July 2025)
@@ -157,6 +159,7 @@ This TODO list is reviewed and updated:
 - ✅ **Error Handling**: Standardized error propagation with proper Result types
 - ✅ **Build Stability**: Resolved all compilation errors and dependency conflicts
 - ✅ **Documentation**: Fixed examples to be compilable and accurate
+- ✅ **Dead Code Detection**: Fixed Rust export detection logic and comprehensive test coverage
 
 **Technical Debt Score Improvement**: 7/10 (High) → 4/10 (Medium) 🚀
 
