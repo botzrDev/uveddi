@@ -314,10 +314,8 @@ impl ReportGenerator {
             **Analysis Date**: {}\n\
             **Configuration**: {}\n\
             **Run ID**: {}\n\n",
-            analysis_run.start_time
-                .unwrap_or_else(|| chrono::Utc::now().naive_utc())
-                .format("%Y-%m-%d %H:%M:%S UTC"),
-            analysis_run.config_name.as_deref().unwrap_or("default"),
+            analysis_run.start_time.format("%Y-%m-%d %H:%M:%S UTC").to_string(),
+            "default", // analysis_run doesn't have config_name field
             analysis_run.run_id.map(|id| id.to_string()).unwrap_or_else(|| "unknown".to_string())
         )
     }
