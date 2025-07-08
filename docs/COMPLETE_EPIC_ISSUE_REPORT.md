@@ -1,28 +1,98 @@
-# Complete Epic Issue Report - All 107 Issues Organized by Epic
+# Complete Epic Issue Report - Jira Synchronized
 
-**Generated**: January 7, 2025  
-**Total Issues**: 107 (UV-1 through UV-107)  
+**Generated**: January 8, 2025  
+**Last Sync**: Based on actual Jira data (UV-1 through UV-100+)  
+**Total Issues Found**: 100+ issues  
 **Total Epics**: 12  
 **Project**: Uveddi Community Edition
 
 ---
 
-## 📊 Executive Summary
+## ⚠️ CRITICAL DISCREPANCIES FOUND
 
-| Epic | Issue Count | Priority Level | Sprint Focus |
-|------|-------------|----------------|--------------|
-| UV-1: Image Rendering Service | 29 issues | High | Current Sprint |
-| UV-95: Complete Detector Implementation | 12 issues | Critical | 5-Sprint Plan |
-| UV-6: Performance & Scalability | 12 issues | Medium | Sprint 2-3 |
-| UV-3: Anti-Pattern Diagram Coverage | 8 issues | High | Current Sprint |
-| UV-50: Advanced Features Pipeline | 9 issues | Low | Post-v1.0 |
-| UV-52: Community Onboarding | 4 issues | Medium | Ongoing |
-| UV-53: Success Metrics & KPIs | 4 issues | Medium | Q1 2025 |
-| UV-51: Release Management | 4 issues | High | February 2025 |
-| UV-4: Language Support Expansion | 4 issues | Medium | March 2025 |
-| UV-5: Enhanced Reporting | 3 issues | Medium | April 2025 |
-| UV-93: Visualization Critical Path | 1 epic | Meta | Current Sprint |
-| **TOTAL** | **107 issues** | **Mixed** | **5 Sprints** |
+**Documentation vs. Jira Reality Check (January 8, 2025)**
+
+### 🚨 Major Issues Discovered:
+1. **Epic UV-95 vs UV-98**: Documentation references "UV-95: Complete Detector Implementation" but Jira shows "UV-98: Complete Anti-Pattern Detector Implementation"
+2. **Issue UV-101 Misplacement**: UV-101 explicitly states it belongs to "Epic UV-95" but UV-95 doesn't exist in current Jira
+3. **UVEDDI-xxx vs UV-xx Codes**: Mixed naming convention with some issues using UVEDDI-xxx format in descriptions
+4. **Epic Organization Problems**: Several issues in UV-1 don't belong there and should be reorganized
+
+### 🔧 Issues Requiring Epic Reassignment:
+- **UV-101**: "UVEDDI-301: Implement image rendering service" → Claims Epic UV-95 (doesn't exist)
+- **UV-108**: "Test Plugin system" → Should be in Plugin/WASM epic, not UV-1
+- **UV-94-UV-88**: Infrastructure issues currently in UV-1 that should have separate epics
+
+### 📋 Action Items:
+1. ✅ **COMPLETED**: Updated documentation header and summary
+2. 🔄 **IN PROGRESS**: Synchronizing epic assignments
+3. ⏳ **PENDING**: Standardize UVEDDI-xxx vs UV-xx naming convention
+4. ⏳ **PENDING**: Reorganize misplaced issues
+
+---
+
+## 📊 Executive Summary (Updated from Jira)
+
+| Epic | Issue Count | Priority Level | Sprint Focus | Status |
+|------|-------------|----------------|--------------|---------|
+| UV-1: Image Rendering Service | 29+ issues | High | Current Sprint | Active |
+| UV-98: Complete Detector Implementation | 6+ issues | Critical | 5-Sprint Plan | Active |
+| UV-6: Performance & Scalability | 8+ issues | Medium | Sprint 2-3 | Active |
+| UV-3: Anti-Pattern Diagram Coverage | 5+ issues | High | Current Sprint | Active |
+| UV-50: Advanced Features Pipeline | 9+ issues | Low | Post-v1.0 | Planned |
+| UV-52: Community Onboarding | 4+ issues | Medium | Ongoing | Active |
+| UV-53: Success Metrics & KPIs | 4+ issues | Medium | Q1 2025 | Active |
+| UV-51: Release Management | 4+ issues | High | February 2025 | Active |
+| UV-4: Language Support Expansion | 4+ issues | Medium | March 2025 | Planned |
+| UV-5: Enhanced Reporting | 3+ issues | Medium | April 2025 | Planned |
+| UV-93: Visualization Critical Path | 1 meta-epic | Meta | Current Sprint | Active |
+| **TOTAL** | **100+ issues** | **Mixed** | **5 Sprints** | **In Progress** |
+
+---
+
+## 🔍 DETAILED JIRA VERIFICATION RESULTS
+
+### **UV-1: Image Rendering Service** - ✅ VERIFIED
+**Jira Status**: Epic exists | **Issues Found**: 29+ confirmed
+
+**✅ Correctly Placed Issues**:
+- UV-7: Set up Puppeteer rendering service integration
+- UV-8-16: Performance optimization and export capabilities
+- UV-78-80: VIZ-003/004 Node.js and HTTP client implementation
+
+**❌ INCORRECTLY PLACED Issues** (Need Reassignment):
+- UV-94: "VIZ-015: Security Hardening" → Should be Infrastructure Epic
+- UV-88: "VIZ-010: API Documentation" → Should be Documentation Epic  
+- UV-87: "VIZ-011: Configuration Management" → Should be Infrastructure Epic
+- UV-86: "VIZ-009: Error Handling & Observability" → Should be Infrastructure Epic
+- UV-85: "VIZ-007: Enhanced Data Models" → Should be Core Architecture Epic
+- UV-84: "VIZ-006: Docker Compose Orchestration" → Should be Infrastructure Epic
+- UV-83: "VIZ-005: Template System Enhancement" → Should be Core Architecture Epic
+
+### **UV-98 vs UV-95: CRITICAL MISMATCH** - ⚠️ REQUIRES ATTENTION
+**Documentation Says**: "UV-95: Complete Detector Implementation"  
+**Jira Reality**: "UV-98: Complete Anti-Pattern Detector Implementation"
+
+**Issues with Epic Confusion**:
+- UV-101: Claims "Epic UV-95" in description but UV-95 doesn't exist as epic
+- UV-95: Exists as regular issue, not epic: "Add missing ComponentType match arms"
+- UV-96-99: Build fix issues under UV-98 epic
+
+### **UV-101: MAJOR DISCREPANCY** - 🚨 CRITICAL
+**Issue**: "UVEDDI-301: Implement image rendering service (Puppeteer + Node.js)"  
+**Claims Epic**: UV-95 (which doesn't exist as epic)  
+**Should Be In**: UV-1 (Image Rendering Service) or UV-98 (if implementation-focused)  
+**Problem**: This is a duplicate/conflicting issue with UV-78 "VIZ-003: Node.js Rendering Service Implementation"
+
+### **UVEDDI-xxx vs UV-xx Naming Issues**:
+- UV-95: "UVEDDI-102: Add missing ComponentType match arms"
+- UV-96: "UVEDDI-101: Fix missing dependency module import"  
+- UV-97: "UVEDDI-103: Resolve tree-sitter import issues"
+- UV-99: "UVEDDI-104: Clean up unused import warnings"
+- UV-100: "UVEDDI-202: Complete Tight Coupling detector"
+- UV-101: "UVEDDI-301: Implement image rendering service"
+
+**Recommendation**: Standardize on UV-xx format for consistency
 
 ---
 
@@ -63,40 +133,40 @@
 - **UV-83**: VIZ-005: Template System Enhancement (Story) - P2
 - **UV-84**: VIZ-006: Docker Compose Orchestration (Task) - P2
 - **UV-85**: VIZ-007: Enhanced Data Models (Story) - P2
-- **UV-87**: VIZ-009: Error Handling & Observability (Task) - P2
+- **UV-86**: VIZ-009: Error Handling & Observability (Task) - P2
 - **UV-88**: VIZ-010: API Documentation (Task) - P3
-- **UV-90**: VIZ-011: Configuration Management (Task) - P3
+- **UV-87**: VIZ-011: Configuration Management (Task) - P3
 - **UV-94**: VIZ-015: Security Hardening (Task) - P2
 
 ### **Implementation Plan Issues**
-- **UV-102**: UVEDDI-301: Implement image rendering service (Puppeteer + Node.js) (Story) - Sprint 4
+- **UV-101**: UVEDDI-301: Implement image rendering service (Puppeteer + Node.js) (Story) - Sprint 4
 
 **Epic Status**: 🚨 **BLOCKED by UV-81** - Must resolve build failures first
 
 ---
 
-## 🔧 EPIC UV-95: Complete Anti-Pattern Detector Implementation
+## 🔧 EPIC UV-98: Complete Anti-Pattern Detector Implementation
 **Focus**: 5-sprint implementation roadmap for complete detector system  
 **Priority**: Critical - Structured Implementation Plan  
 **Issue Count**: 12 issues
 
 ### **Sprint 1: Critical Build Fixes** 🚨
 - **UV-96**: UVEDDI-101: Fix missing dependency module import in report/diagrams.rs (Bug) - 0.5 days
-- **UV-97**: UVEDDI-102: Add missing ComponentType::Class and Function match arms (Bug) - 0.5 days
-- **UV-98**: UVEDDI-103: Resolve tree-sitter import issues in no-default-features build (Bug) - 1 day
+- **UV-95**: UVEDDI-102: Add missing ComponentType::Class and Function match arms (Bug) - 0.5 days
+- **UV-97**: UVEDDI-103: Resolve tree-sitter import issues in no-default-features build (Bug) - 1 day
 - **UV-99**: UVEDDI-104: Clean up unused import warnings across codebase (Task) - 0.5 days
 
 ### **Sprint 2-3: Missing Detector Implementation** 🎯
-- **UV-100**: UVEDDI-201: Implement Magic Values detector with Tree-sitter pattern matching (Story) - 2-3 days
-- **UV-101**: UVEDDI-202: Complete Tight Coupling detector implementation (Story) - 4-5 days
+- **UV-102**: UVEDDI-201: Implement Magic Values detector with Tree-sitter pattern matching (Story) - 2-3 days
+- **UV-100**: UVEDDI-202: Complete Tight Coupling detector implementation (Story) - 4-5 days
 
 ### **Sprint 4: Visualization System Completion** 🔧
 - **UV-103**: UVEDDI-302: Add Long Methods visualization template (Task) - 1-2 days
-- **UV-104**: UVEDDI-303: Expand anti-pattern visualization templates (Task) - 2-3 days
+- **UV-106**: UVEDDI-303: Expand anti-pattern visualization templates (Task) - 2-3 days
 
 ### **Sprint 5: Performance & Polish** ⚡
-- **UV-105**: UVEDDI-401: Optimize JavaScript/TypeScript language support (Story) - 3-4 days
-- **UV-106**: UVEDDI-402: Performance optimization pass (Task) - 2-3 days
+- **UV-104**: UVEDDI-401: Optimize JavaScript/TypeScript language support (Story) - 3-4 days
+- **UV-105**: UVEDDI-402: Performance optimization pass (Task) - 2-3 days
 - **UV-107**: UVEDDI-403: Comprehensive integration testing (Task) - 3-4 days
 
 **Epic Status**: ⏳ **Ready to Start** - Begin with Sprint 1 immediately after UV-81 resolution
@@ -261,6 +331,64 @@
 
 ---
 
+## 📋 RECOMMENDED ACTIONS TO FIX DISCREPANCIES
+
+### **Immediate Actions Required** (Priority 1):
+
+1. **Fix Epic UV-95/UV-98 Confusion**:
+   - ✅ Update documentation to reference UV-98 instead of UV-95
+   - 🔄 Move UV-101 from non-existent "Epic UV-95" to appropriate epic
+   - 🔄 Clarify that UV-95 is an issue, not an epic
+
+2. **Resolve UV-101 Duplicate Issue**:
+   - **UV-101**: "UVEDDI-301: Implement image rendering service" 
+   - **UV-78**: "VIZ-003: Node.js Rendering Service Implementation"
+   - **Action**: Merge or clarify scope differences between these two
+
+3. **Reorganize Misplaced Issues in UV-1**:
+   ```
+   MOVE FROM UV-1 TO NEW EPICS:
+   
+   → Create "Infrastructure Epic":
+     - UV-94: Security Hardening
+     - UV-87: Configuration Management  
+     - UV-86: Error Handling & Observability
+     - UV-84: Docker Compose Orchestration
+   
+   → Create "Documentation Epic":
+     - UV-88: API Documentation
+   
+   → Create "Core Architecture Epic":
+     - UV-85: Enhanced Data Models
+     - UV-83: Template System Enhancement
+   ```
+
+### **Secondary Actions** (Priority 2):
+
+4. **Standardize Naming Convention**:
+   - Choose either UVEDDI-xxx or UV-xx format consistently
+   - Update all issue descriptions to match chosen format
+   - Recommend: Use UV-xx for simplicity and consistency
+
+5. **Verify All Epic Assignments**:
+   - Audit remaining 70+ issues for correct epic placement
+   - Ensure each epic has coherent, related issues
+   - Remove issues that don't belong in their current epics
+
+### **Documentation Updates** (Priority 3):
+
+6. **Update All References**:
+   - Search/replace "UV-95" → "UV-98" in all documentation
+   - Update issue counts in epic summaries
+   - Refresh sprint planning based on actual Jira state
+
+7. **Create Epic Validation Checklist**:
+   - Define criteria for epic membership
+   - Regular sync process between Jira and documentation
+   - Automated validation where possible
+
+---
+
 ## 🚨 Critical Path Analysis
 
 ### **Immediate Blockers (Must Fix First)**
@@ -320,50 +448,3 @@
 
 ## 🔗 Epic Linking Instructions
 
-### **Jira Bulk Operations**
-1. **UV-1 Epic** (29 issues):
-   ```
-   JQL: key in (UV-2,UV-7,UV-8,UV-9,UV-10,UV-11,UV-12,UV-13,UV-14,UV-15,UV-16,UV-17,UV-18,UV-19,UV-20,UV-21,UV-47,UV-48,UV-49,UV-78,UV-80,UV-81,UV-83,UV-84,UV-85,UV-87,UV-88,UV-90,UV-94,UV-102)
-   ```
-
-2. **UV-95 Epic** (12 issues):
-   ```
-   JQL: key in (UV-96,UV-97,UV-98,UV-99,UV-100,UV-101,UV-103,UV-104,UV-105,UV-106,UV-107)
-   ```
-
-3. **UV-3 Epic** (8 issues):
-   ```
-   JQL: key in (UV-24,UV-25,UV-28,UV-32,UV-33,UV-34,UV-79,UV-82)
-   ```
-
-4. **UV-6 Epic** (12 issues):
-   ```
-   JQL: key in (UV-22,UV-26,UV-42,UV-43,UV-44,UV-45,UV-70,UV-71,UV-72,UV-73,UV-91,UV-92)
-   ```
-
-### **Remaining Epics** (Use similar JQL approach)
-- **UV-50**: UV-66,UV-67,UV-68,UV-69,UV-74,UV-75,UV-76,UV-77,UV-89
-- **UV-51**: UV-62,UV-63,UV-64,UV-65
-- **UV-52**: UV-54,UV-55,UV-56,UV-57
-- **UV-53**: UV-58,UV-59,UV-60,UV-61
-- **UV-4**: UV-35,UV-36,UV-38,UV-39
-- **UV-5**: UV-37,UV-40,UV-41
-
----
-
-## 📊 Final Statistics
-
-- **Total Issues**: 107
-- **Total Epics**: 12
-- **Critical Issues**: 5 (blocking)
-- **High Priority Issues**: 45
-- **Medium Priority Issues**: 35
-- **Low Priority Issues**: 22
-- **Estimated Completion**: 5 sprints (20 weeks)
-- **Target Release**: Community Core v1.0 (February 2025)
-
----
-
-**Report Generated**: January 7, 2025  
-**Next Update**: After epic linking completion  
-**Status**: Ready for sprint planning and epic assignment
