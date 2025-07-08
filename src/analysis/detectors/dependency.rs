@@ -1,6 +1,7 @@
 use log::debug;
 use rayon::prelude::*;
 use std::path::{Path, PathBuf};
+#[cfg(feature = "tree-sitter")]
 use tree_sitter::{Query, QueryCursor};
 
 use crate::ast::tree_sitter::{

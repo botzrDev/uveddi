@@ -4,6 +4,7 @@
 name = "uveddi"
 version = "0.1.0"
 edition = "2021"
+resolver = "2"
 description = "A Rust-based code analysis and exploration tool"
 authors = ["Phillip Austin Green <your.email@example.com>"]
 license = "MIT"
@@ -14,9 +15,17 @@ readme = "README.md"
 
 # Feature flags for modular compilation
 [features]
-default = ["analysis", "local-ai", "image-rendering"]
-# Core analysis features
-analysis = ["tree-sitter", "tree-sitter-rust", "tree-sitter-python", "tree-sitter-javascript", "tree-sitter-typescript"]
+default = ["local-ai", "image-rendering"]
+# Tree-sitter parsing functionality (opt-in only)
+tree-sitter = [
+    "dep:tree-sitter",
+    "dep:tree-sitter-rust", 
+    "dep:tree-sitter-python",
+    "dep:tree-sitter-javascript",
+    "dep:tree-sitter-typescript"
+]
+# Core analysis features (without tree-sitter by default)
+analysis = []
 # Local AI only (Ollama)
 local-ai = ["reqwest"]
 # Image rendering service integration

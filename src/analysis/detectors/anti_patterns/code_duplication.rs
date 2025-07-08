@@ -22,6 +22,7 @@ use log::{debug, info};
 use sha2::{Digest, Sha256};
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
+#[cfg(feature = "tree-sitter")]
 use tree_sitter::{Query, QueryCursor};
 
 /// Represents a code block extracted for duplication analysis

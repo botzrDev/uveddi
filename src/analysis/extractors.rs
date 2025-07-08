@@ -2,6 +2,7 @@
 
 use crate::analysis::symbols::{CanonicalSymbol, GlobalSymbolTable, SymbolKind, SourceLocation};
 use crate::ast::tree_sitter::ParsedFile;
+#[cfg(feature = "tree-sitter")]
 use tree_sitter::{Query, QueryCursor};
 use std::sync::atomic::{AtomicU64, Ordering};
 
@@ -19,6 +20,7 @@ impl SymbolExtractor {
     }
 
     /// Extracts all top-level declarations from a file.
+    #[cfg(feature = "tree-sitter")]
     pub fn extract_declarations(
         &self,
         file: &ParsedFile,
@@ -89,5 +91,15 @@ impl SymbolExtractor {
         }
 
         Ok(())
+    }
+
+    /// Stub implementation when tree-sitter is disabled
+    #[cfg(not(feature = "tree-sitter"))]
+    pub fn extract_declarations(
+        &self,
+        _file: &ParsedFile,
+        _symbol_table: &mut GlobalSymbolTable,
+    ) -> Result<(), String> {
+        Err("Tree-sitter feature not enabled - symbol extraction unavailable".to_string())
     }
 }

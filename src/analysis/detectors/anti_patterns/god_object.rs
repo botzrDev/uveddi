@@ -121,6 +121,7 @@ use crate::ast::tree_sitter::{ParsedFile, SourceLanguage};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use log::{debug, info};
 use std::collections::HashMap;
+#[cfg(feature = "tree-sitter")]
 use tree_sitter::{Query, QueryCursor};
 
 // --- Queries for identifying language-specific containers (classes, structs) ---

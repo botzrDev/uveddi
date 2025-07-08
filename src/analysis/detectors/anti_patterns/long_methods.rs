@@ -27,6 +27,7 @@ use crate::ast::tree_sitter::{ParsedFile, SourceLanguage};
 use crate::database::models::{ArchitecturalIssue, AntiPatternType};
 use log::{debug, info};
 use std::collections::HashMap;
+#[cfg(feature = "tree-sitter")]
 use tree_sitter::{Query, QueryCursor, Node};
 
 /// Represents metrics collected for a method/function

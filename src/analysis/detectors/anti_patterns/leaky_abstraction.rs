@@ -73,6 +73,7 @@ use crate::analysis::{AnalysisDetector, AnalysisError};
 use crate::ast::tree_sitter::ParsedFile;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use std::collections::{HashMap, HashSet};
+#[cfg(feature = "tree-sitter")]
 use tree_sitter::{Query, QueryCursor, Node};
 
 /// Configuration for architectural layers and boundaries.

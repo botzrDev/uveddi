@@ -1,5 +1,6 @@
 //! CLI commands for WASM plugin management
 
+#[cfg(feature = "wasm-plugins")]
 use crate::plugins::{WasmPluginEngine};
 use clap::{Args, Subcommand};
 use std::path::PathBuf;

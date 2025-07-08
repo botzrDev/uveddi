@@ -26,6 +26,7 @@ use crate::ast::tree_sitter::{ParsedFile, SourceLanguage};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use log::{debug, info};
 use std::collections::HashSet;
+#[cfg(feature = "tree-sitter")]
 use tree_sitter::{Query, QueryCursor};
 
 /// Represents a symbol (function, variable, class, etc.) found in the code
