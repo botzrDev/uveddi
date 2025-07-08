@@ -3,28 +3,57 @@ use crate::database::models::ArchitecturalIssue;
 use log::info;
 use petgraph::algo::tarjan_scc;
 
-/// A detector for identifying cyclic dependencies between components.
+/// A detector for identifying cyclic dependencies between software components.
+///
+/// This detector analyzes a `LocalDependencyGraph` to find strongly connected components (SCCs),
+/// which represent cycles in the dependency structure. Cycles can indicate design problems
+/// such as tight coupling and poor modularization, making the codebase harder to understand,
+/// maintain, and test.
+///
+/// # Usage
+///
+/// The `CycleDetector` is typically invoked by the analysis engine, which passes a
+/// dependency graph for analysis.
+///
+/// ```rust,ignore
+/// use uveddi::analysis::detectors::cycle::CycleDetector;
+/// use uveddi::analysis::graph::dependency::LocalDependencyGraph;
+///
+/// // Assuming `graph` is a fully constructed LocalDependencyGraph
+/// let detector = CycleDetector::new();
+/// let cycle_issues = detector.detect_cycles(&graph, 1);
+///
+/// for issue in cycle_issues {
+///     println!("Found cycle: {}", issue.description);
+/// }
+/// ```
 pub struct CycleDetector;
 
 impl CycleDetector {
+    /// Creates a new instance of the `CycleDetector`.
+    ///
+    /// # Returns
+    ///
+    /// A `CycleDetector` instance ready to detect cycles.
     pub fn new() -> Self {
         Self
     }
 
-    /// Detects all cycles in the given `DependencyGraph`.
+    /// Detects all cyclic dependencies in the given `LocalDependencyGraph`.
     ///
-    /// This method uses Tarjan's algorithm for finding strongly connected components (SCCs)
-    /// to efficiently identify all cycles. Any SCC with more than one node represents
-    /// a cycle.
+    /// This method implements Tarjan's algorithm for finding strongly connected components (SCCs)
+    /// to efficiently identify all cycles. An SCC with more than one node is considered a
+    /// dependency cycle. For each component in a detected cycle, an `ArchitecturalIssue` is created.
     ///
     /// # Arguments
     ///
-    /// * `graph` - A reference to the `DependencyGraph` to be analyzed.
-    /// * `analysis_run_id` - The ID of the current analysis run for associating the issues.
+    /// * `graph` - A reference to the `LocalDependencyGraph` to be analyzed.
+    /// * `analysis_run_id` - The ID of the current analysis run, used to associate the findings.
     ///
     /// # Returns
     ///
-    /// A `Vec<ArchitecturalIssue>` containing all the cyclic dependency issues found.
+    /// A `Vec<ArchitecturalIssue>` containing all the cyclic dependency issues found. Each issue
+    /// corresponds to a component involved in a cycle.
     pub fn detect_cycles(
         &self,
         graph: &LocalDependencyGraph,
@@ -98,7 +127,9 @@ impl CycleDetector {
     }
 }
 
+/// Provides a default constructor for `CycleDetector`.
 impl Default for CycleDetector {
+    /// Creates a new `CycleDetector` with default settings.
     fn default() -> Self {
         Self::new()
     }

@@ -26,24 +26,20 @@ struct CachedAnalysisResult {
     dependencies: Vec<Dependency>,
 }
 
-/// Core analysis engine that orchestrates the detection of anti-patterns and architectural issues
+/// Represents the core analysis engine that orchestrates code analysis operations.
 ///
-/// The `AnalysisEngine` is the main entry point for running code analysis. It manages
-/// a collection of detectors, coordinates file parsing, builds dependency graphs,
-/// and aggregates results from all analysis phases.
+/// The engine is responsible for:
+/// - Initializing language-specific parsers
+/// - Processing source files into AST representations
+/// - Running registered detectors against the codebase
+/// - Aggregating and reporting analysis results
 ///
-/// ## Key Features:
-///
-/// - **Multi-detector Support**: Runs multiple detectors in parallel
-/// - **Caching**: Caches parsing and analysis results for performance
-/// - **Dependency Analysis**: Builds and analyzes dependency graphs
-/// - **Async Processing**: Processes files asynchronously for better performance
-///
-/// ## Usage
+/// # Examples
 ///
 /// ```no_run
 /// use uveddi::analysis::AnalysisEngine;
 /// use std::path::Path;
+///
 /// #[tokio::main]
 /// async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ///     let mut engine = AnalysisEngine::new()?;
@@ -345,6 +341,10 @@ impl AnalysisEngine {
         Ok((all_issues, all_dependencies))
     }
 
+    /// Returns a list of all anti-pattern types supported by the registered detectors.
+    ///
+    /// This method aggregates the anti-pattern types from all configured detectors,
+    /// including a built-in type for cyclic dependencies.
     pub fn get_anti_pattern_types(&self) -> Vec<AntiPatternType> {
         let mut types = Vec::new();
         for detector in &self.detectors {
@@ -361,11 +361,16 @@ impl AnalysisEngine {
         types
     }
 
+    /// Gets the number of files analyzed in the last run.
     pub fn get_files_analyzed(&self) -> i32 {
         self.files_analyzed
     }
 
-    /// Configure the dead code detector with custom settings
+    /// Configures the dead code detector with custom settings.
+    ///
+    /// # Arguments
+    ///
+    /// * `config` - The configuration for the dead code detector.
     pub fn configure_dead_code_detector(&mut self, config: DeadCodeConfig) {
         // Find and replace the dead code detector
         for detector in &mut self.detectors {
@@ -380,14 +385,26 @@ impl AnalysisEngine {
         self.detectors.push(Box::new(DeadCodeDetector::new(config)));
     }
 
-    /// Configure the large classes detector with custom settings
+    /// Configures the large classes detector with custom settings.
+    ///
+    /// # Arguments
+    ///
+    /// * `config` - The configuration for the large classes detector.
     pub fn configure_large_classes_detector(&mut self, config: LargeClassConfig) {
         // Remove the old detector and add the new one
         self.detectors.retain(|d| d.get_detector_name() != "LargeClassesDetector");
         self.detectors.push(Box::new(LargeClassesDetector::new(config)));
     }
-    
-    /// Load all available WASM plugins
+
+    /// Loads all available WASM plugins from the plugin directory.
+    ///
+    /// This function scans the configured plugin directory, loads each valid WASM plugin,
+    /// and integrates it into the analysis engine as a detector.
+    ///
+    /// # Errors
+    ///
+    /// Returns `UveddiError` if the plugin engine is not initialized or if there's an
+    /// error during plugin loading.
     pub async fn load_plugins(&mut self) -> Result<usize, crate::error::UveddiError> {
         if let Some(ref mut plugin_engine) = self.plugin_engine {
             let loaded_plugins = plugin_engine.load_all_plugins().await
@@ -409,7 +426,17 @@ impl AnalysisEngine {
         }
     }
     
-    /// Install a new plugin
+    /// Installs a new WASM plugin.
+    ///
+    /// # Arguments
+    ///
+    /// * `manifest` - The plugin manifest containing metadata.
+    /// * `binary` - The WASM binary content of the plugin.
+    ///
+    /// # Errors
+    ///
+    /// Returns `UveddiError` if the plugin engine is not initialized or if the
+    /// installation fails.
     pub async fn install_plugin(
         &mut self,
         manifest: crate::plugins::PluginManifest,
@@ -433,7 +460,16 @@ impl AnalysisEngine {
         }
     }
     
-    /// Uninstall a plugin
+    /// Uninstalls a WASM plugin.
+    ///
+    /// # Arguments
+    ///
+    /// * `plugin_id` - The ID of the plugin to uninstall.
+    ///
+    /// # Errors
+    ///
+    /// Returns `UveddiError` if the plugin engine is not initialized or if the
+    /// uninstallation fails.
     pub async fn uninstall_plugin(&mut self, plugin_id: &crate::plugins::PluginId) -> Result<(), crate::error::UveddiError> {
         if let Some(ref mut plugin_engine) = self.plugin_engine {
             plugin_engine.uninstall_plugin(plugin_id).await
@@ -456,7 +492,7 @@ impl AnalysisEngine {
         }
     }
     
-    /// Get plugin statistics
+    /// Retrieves statistics for all loaded plugins.
     pub async fn get_plugin_stats(&self) -> Option<Vec<(crate::plugins::PluginId, crate::plugins::PluginStats)>> {
         if let Some(ref plugin_engine) = self.plugin_engine {
             let mut stats = Vec::new();
@@ -470,8 +506,13 @@ impl AnalysisEngine {
             None
         }
     }
-    
-    /// Monitor plugin resource usage
+
+    /// Monitors and reports the resource usage of all active plugins.
+    ///
+    /// # Errors
+    ///
+    /// Returns `UveddiError` if the plugin engine is not initialized or if
+    /// resource monitoring fails.
     pub async fn monitor_plugin_resources(&mut self) -> Result<crate::plugins::ResourceReport, crate::error::UveddiError> {
         if let Some(ref mut plugin_engine) = self.plugin_engine {
             plugin_engine.monitor_resources().await
@@ -487,8 +528,8 @@ impl AnalysisEngine {
     pub fn has_plugin_support(&self) -> bool {
         self.plugin_engine.is_some()
     }
-    
-    /// Get registry statistics
+
+    /// Gets statistics from the plugin registry.
     pub fn get_plugin_registry_stats(&self) -> Option<crate::plugins::registry::RegistryStatistics> {
         self.plugin_engine.as_ref().map(|engine| engine.get_registry_stats())
     }

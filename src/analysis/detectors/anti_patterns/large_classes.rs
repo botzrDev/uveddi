@@ -30,58 +30,68 @@ use std::collections::HashMap;
 #[cfg(feature = "tree-sitter")]
 use tree_sitter::{Query, QueryCursor};
 
-/// Represents metrics collected for a class/struct
+/// Holds the collected metrics for a single class or struct.
+///
+/// This struct aggregates various size, complexity, and structural metrics that are
+/// used to evaluate whether a class has grown too large or is taking on too many
+/// responsibilities.
 #[derive(Debug, Clone)]
 pub struct ClassMetrics {
-    /// Name of the class/struct
+    /// The name of the class or struct.
     pub name: String,
-    /// File path where the class is defined
+    /// The absolute path to the file where the class is defined.
     pub file_path: String,
-    /// Starting line number
+    /// The line number where the class definition begins.
     pub start_line: u32,
-    /// Ending line number
+    /// The line number where the class definition ends.
     pub end_line: u32,
-    /// Logical Lines of Code (excluding comments and blank lines)
+    /// Logical Lines of Code, excluding comments and blank lines, within the class body.
     pub logical_loc: u32,
-    /// Number of methods/functions
+    /// The total number of methods or functions defined in the class.
     pub method_count: u32,
-    /// Number of fields/attributes
+    /// The total number of fields, properties, or attributes in the class.
     pub field_count: u32,
-    /// Cyclomatic complexity (sum of all methods)
+    /// The sum of the cyclomatic complexity of all methods in the class.
     pub cyclomatic_complexity: u32,
-    /// Cognitive complexity (sum of all methods)
+    /// The sum of the cognitive complexity of all methods in the class.
     pub cognitive_complexity: u32,
-    /// Lack of Cohesion in Methods score
+    /// The Lack of Cohesion in Methods (LCOM) score. A higher score (closer to 1.0)
+    /// indicates lower cohesion, meaning the class may have unrelated responsibilities.
     pub lcom_score: f64,
-    /// Number of external dependencies/imports used
+    /// The number of other classes this class depends on (Coupling Between Objects).
     pub coupling_count: u32,
-    /// Whether the class is exported/public
+    /// Indicates whether the class is public or exported.
     pub is_exported: bool,
-    /// Code snippet of the class definition
+    /// A snippet of the source code where the class is defined.
     pub code_snippet: String,
 }
 
-/// Language-specific thresholds for large class detection
+/// Defines language-specific thresholds for detecting large classes.
+///
+/// Because coding idioms and project structures vary by language, applying a single
+/// set of thresholds is often ineffective. This struct allows for fine-tuning the
+/// detection logic for Rust, Python, and JavaScript.
 #[derive(Debug, Clone)]
 pub struct LanguageThresholds {
-    /// Maximum logical lines of code
+    /// The maximum number of logical lines of code a class can have before being flagged.
     pub max_logical_loc: u32,
-    /// Maximum number of methods
+    /// The maximum number of methods allowed in a class.
     pub max_methods: u32,
-    /// Maximum number of fields
+    /// The maximum number of fields or attributes allowed in a class.
     pub max_fields: u32,
-    /// Maximum cyclomatic complexity
+    /// The maximum total cyclomatic complexity for a class.
     pub max_cyclomatic_complexity: u32,
-    /// Maximum cognitive complexity
+    /// The maximum total cognitive complexity for a class.
     pub max_cognitive_complexity: u32,
-    /// Maximum LCOM score (higher = less cohesive)
+    /// The maximum LCOM score. Scores above this threshold suggest poor cohesion.
     pub max_lcom_score: f64,
-    /// Maximum coupling count
+    /// The maximum number of external dependencies (coupling) allowed.
     pub max_coupling: u32,
 }
 
 impl LanguageThresholds {
-    /// Get thresholds for Rust (conservative due to systems programming)
+    /// Provides conservative thresholds suitable for Rust, which favors smaller,
+    /// more focused structs and `impl` blocks.
     pub fn rust() -> Self {
         Self {
             max_logical_loc: 400,      // Conservative for systems code
@@ -94,7 +104,7 @@ impl LanguageThresholds {
         }
     }
 
-    /// Get thresholds for Python (based on Pylint defaults)
+    /// Provides thresholds based on common Python style guides and tools like Pylint.
     pub fn python() -> Self {
         Self {
             max_logical_loc: 1000,     // Pylint default
@@ -107,7 +117,8 @@ impl LanguageThresholds {
         }
     }
 
-    /// Get thresholds for JavaScript (framework-aware)
+    /// Provides thresholds that are more lenient to accommodate patterns common in
+    /// JavaScript frameworks like React (e.g., components with state and event handlers).
     pub fn javascript() -> Self {
         Self {
             max_logical_loc: 800,      // Accommodates React components
@@ -121,20 +132,29 @@ impl LanguageThresholds {
     }
 }
 
-/// Configuration for the large classes detector
+/// Configures the behavior of the `LargeClassDetector`.
+///
+/// This struct allows for customization of the detection process, including setting
+/// language-specific thresholds, defining a minimum severity score for reporting,
+/// and ignoring certain files.
 #[derive(Debug, Clone)]
 pub struct LargeClassConfig {
-    /// Custom thresholds per language
+    /// A map of `SourceLanguage` to `LanguageThresholds` to be used during analysis.
     pub language_thresholds: HashMap<SourceLanguage, LanguageThresholds>,
-    /// Minimum severity score to report (0-100)
+    /// The minimum severity score (from 0 to 100) an issue must have to be reported.
     pub min_severity_score: u32,
-    /// Patterns to ignore (e.g., generated code, test fixtures)
+    /// A list of string patterns to exclude files from analysis (e.g., test files).
     pub ignore_patterns: Vec<String>,
-    /// Whether to include detailed metric breakdown in descriptions
+    /// If `true`, the generated issue description will include a detailed breakdown
+    /// of the metrics that exceeded their thresholds.
     pub include_metrics_detail: bool,
 }
 
 impl Default for LargeClassConfig {
+    /// Provides a default configuration for the `LargeClassDetector`.
+    ///
+    /// This includes standard thresholds for Rust, Python, and JavaScript, a minimum
+    /// severity score of 25, and patterns to ignore common test directories.
     fn default() -> Self {
         let mut thresholds = HashMap::new();
         thresholds.insert(SourceLanguage::Rust, LanguageThresholds::rust());
@@ -158,21 +178,32 @@ impl Default for LargeClassConfig {
     }
 }
 
-/// Large classes detector implementing multi-metric analysis
+/// Detects "Large Class" anti-patterns using a multi-metric analysis approach.
+///
+/// This detector identifies classes, structs, or other primary data structures that have
+/// grown too large, complex, or non-cohesive. It uses a combination of size, complexity,
+/// and structural metrics to calculate a severity score, which helps distinguish between
+/// moderately large classes and true "God Objects."
+///
+/// The analysis is language-aware, applying different thresholds for Rust, Python, and
+/// JavaScript to account for their distinct coding idioms.
 pub struct LargeClassesDetector {
     pub config: LargeClassConfig,
 }
 
 impl LargeClassesDetector {
+    /// Creates a new `LargeClassesDetector` with the specified configuration.
     pub fn new(config: LargeClassConfig) -> Self {
         Self { config }
     }
 
+    /// Creates a new `LargeClassesDetector` with a default configuration.
     pub fn with_default_config() -> Self {
         Self::new(LargeClassConfig::default())
     }
 
-    /// Extract class metrics from a parsed file
+    /// Extracts `ClassMetrics` from a parsed file by dispatching to the appropriate
+    /// language-specific extraction method.
     fn extract_class_metrics(&self, parsed_file: &ParsedFile) -> Result<Vec<ClassMetrics>, AnalysisError> {
         match parsed_file.language {
             SourceLanguage::Rust => self.extract_rust_metrics(parsed_file),
@@ -181,7 +212,11 @@ impl LargeClassesDetector {
         }
     }
 
-    /// Extract metrics for Rust structs and impl blocks
+    /// Extracts metrics for Rust structs and their associated `impl` blocks.
+    ///
+    /// This function first identifies all `struct` definitions in the file. For each struct,
+    /// it then searches for corresponding `impl` blocks to calculate method-related metrics
+    /// like method count, complexity, and cohesion.
     fn extract_rust_metrics(&self, parsed_file: &ParsedFile) -> Result<Vec<ClassMetrics>, AnalysisError> {
         let mut metrics = Vec::new();
         let source = parsed_file.source.as_bytes();
@@ -234,7 +269,10 @@ impl LargeClassesDetector {
         Ok(metrics)
     }
 
-    /// Extract metrics for Python classes
+    /// Extracts metrics for Python classes.
+    ///
+    /// It uses `tree-sitter` queries to find class definitions and then analyzes their
+    /// bodies to count methods, fields, and calculate complexity and cohesion scores.
     fn extract_python_metrics(&self, parsed_file: &ParsedFile) -> Result<Vec<ClassMetrics>, AnalysisError> {
         let mut metrics = Vec::new();
         let source = parsed_file.source.as_bytes();
@@ -288,7 +326,11 @@ impl LargeClassesDetector {
         Ok(metrics)
     }
 
-    /// Extract metrics for JavaScript classes
+    /// Extracts metrics for JavaScript classes.
+    ///
+    /// This function is designed to handle modern JavaScript (ES6 classes) and can be
+    /// extended to recognize other patterns (e.g., constructor functions). It gathers
+    /// metrics on methods, properties, and dependencies.
     fn extract_javascript_metrics(&self, parsed_file: &ParsedFile) -> Result<Vec<ClassMetrics>, AnalysisError> {
         let mut metrics = Vec::new();
         let source = parsed_file.source.as_bytes();
@@ -342,7 +384,21 @@ impl LargeClassesDetector {
         Ok(metrics)
     }
 
-    /// Calculate severity score based on multi-metric analysis
+    /// Calculates a severity score (0-100) based on how much a class exceeds its thresholds.
+    ///
+    /// This method weighs different categories of metrics (size, complexity, structure)
+    /// to produce a holistic score. A higher score indicates a more severe anti-pattern.
+    /// It also applies a bonus penalty if multiple thresholds are violated, which is a
+    /// strong indicator of a "God Object."
+    ///
+    /// # Arguments
+    ///
+    /// * `metrics` - The collected metrics for the class.
+    /// * `language` - The source language, used to select the correct thresholds.
+    ///
+    /// # Returns
+    ///
+    /// A severity score from 0 to 100.
     pub fn calculate_severity_score(&self, metrics: &ClassMetrics, language: SourceLanguage) -> u32 {
         let default_thresholds = LanguageThresholds::rust();
         let thresholds = self.config.language_thresholds.get(&language)
@@ -401,7 +457,7 @@ impl LargeClassesDetector {
         score.min(100)
     }
 
-    /// Convert severity score to human-readable severity level
+    /// Converts a numeric severity score into a human-readable label.
     fn score_to_severity(&self, score: u32) -> &'static str {
         match score {
             0..=25 => "Info",
@@ -413,7 +469,11 @@ impl LargeClassesDetector {
         }
     }
 
-    /// Generate detailed description with metrics breakdown
+    /// Generates a detailed, human-readable description for a detected issue.
+    ///
+    /// If `include_metrics_detail` is enabled in the configuration, this function provides
+    /// a full breakdown of the metrics, their values, and the thresholds they exceeded.
+    /// It also includes targeted refactoring suggestions based on the specific violations.
     pub fn generate_description(&self, metrics: &ClassMetrics, score: u32, language: SourceLanguage) -> String {
         let default_thresholds = LanguageThresholds::rust();
         let thresholds = self.config.language_thresholds.get(&language)
@@ -451,7 +511,7 @@ impl LargeClassesDetector {
         description
     }
 
-    /// Check if file should be ignored based on patterns
+    /// Checks if a file should be ignored based on the configured patterns.
     fn should_ignore_file(&self, file_path: &str) -> bool {
         self.config.ignore_patterns.iter().any(|pattern| {
             file_path.contains(pattern)
@@ -460,6 +520,10 @@ impl LargeClassesDetector {
 
     // Helper methods for metric calculations
 
+    /// Calculates the Logical Lines of Code (LLOC) for a given AST node.
+    ///
+    /// This method counts non-empty lines that are not comments, providing a more
+    /// accurate measure of code size than a simple line count.
     pub fn calculate_logical_loc(&self, node: &tree_sitter::Node, source: &[u8]) -> u32 {
         if let Ok(text) = node.utf8_text(source) {
             text.lines()
@@ -478,6 +542,10 @@ impl LargeClassesDetector {
         }
     }
 
+    /// Extracts a code snippet from a given AST node.
+    ///
+    /// This is used to provide context in the final architectural issue report. It limits
+    /// the snippet to a maximum number of lines to keep the report concise.
     pub fn extract_code_snippet(&self, node: &tree_sitter::Node, source: &[u8], max_lines: usize) -> String {
         if let Ok(text) = node.utf8_text(source) {
             let lines: Vec<&str> = text.lines().take(max_lines).collect();
@@ -492,6 +560,7 @@ impl LargeClassesDetector {
     }
 
     // Rust-specific helper methods
+    /// Counts the number of fields in a Rust struct definition.
     fn count_rust_struct_fields(&self, struct_node: &tree_sitter::Node, source: &[u8]) -> Result<u32, AnalysisError> {
         let language = struct_node.language();
         let field_query = Query::new(&language, RUST_FIELD_COUNT_QUERY)
@@ -503,6 +572,7 @@ impl LargeClassesDetector {
         Ok(field_count)
     }
 
+    /// Finds all `impl` blocks for a given struct and aggregates method-related metrics.
     fn find_rust_impl_metrics(&self, struct_name: &str, tree: &tree_sitter::Tree, source: &[u8]) -> Result<(u32, u32), AnalysisError> {
         let language = tree.language();
         let impl_query = Query::new(&language, RUST_IMPL_QUERY)
@@ -545,6 +615,10 @@ impl LargeClassesDetector {
         Ok((total_methods, total_complexity))
     }
 
+    /// Calculates a simplified Lack of Cohesion in Methods (LCOM) score for a Rust struct.
+    ///
+    /// This implementation approximates LCOM by measuring the average number of fields
+    /// accessed by each method. A lower average suggests higher cohesion.
     fn calculate_rust_lcom(&self, struct_name: &str, tree: &tree_sitter::Tree, source: &[u8]) -> Result<f64, AnalysisError> {
         // Simplified LCOM calculation based on method-field relationships
         let language = tree.language();
@@ -597,6 +671,7 @@ impl LargeClassesDetector {
         Ok(lcom_score)
     }
 
+    /// Counts the number of `use` statements to approximate coupling for a Rust struct.
     fn count_rust_coupling(&self, node: &tree_sitter::Node, source: &[u8]) -> Result<u32, AnalysisError> {
         let language = node.language();
         let use_query = Query::new(&language, RUST_USE_QUERY)
@@ -608,6 +683,7 @@ impl LargeClassesDetector {
         Ok(coupling_count)
     }
 
+    /// Checks if a Rust struct is marked as `pub`.
     fn is_rust_exported(&self, node: &tree_sitter::Node, source: &[u8]) -> bool {
         // Check for 'pub' keyword
         if let Some(parent) = node.parent() {
@@ -619,6 +695,7 @@ impl LargeClassesDetector {
     }
 
     // Python-specific helper methods
+    /// Counts the number of methods in a Python class.
     fn count_python_methods(&self, body_node: &tree_sitter::Node, source: &[u8]) -> Result<u32, AnalysisError> {
         let language = body_node.language();
         let method_query = Query::new(&language, PYTHON_METHOD_QUERY)
@@ -630,6 +707,7 @@ impl LargeClassesDetector {
         Ok(method_count)
     }
 
+    /// Counts the number of instance attributes (`self.field`) in a Python class.
     fn count_python_fields(&self, body_node: &tree_sitter::Node, source: &[u8]) -> Result<u32, AnalysisError> {
         let language = body_node.language();
         let field_query = Query::new(&language, PYTHON_FIELD_QUERY)
@@ -641,6 +719,7 @@ impl LargeClassesDetector {
         Ok(field_count)
     }
 
+    /// Calculates the cyclomatic complexity for a Python class body.
     fn calculate_python_complexity(&self, body_node: &tree_sitter::Node, source: &[u8]) -> Result<u32, AnalysisError> {
         let language = body_node.language();
         let complexity_query = Query::new(&language, PYTHON_COMPLEXITY_QUERY)
@@ -653,6 +732,7 @@ impl LargeClassesDetector {
         Ok(decision_points + 1)
     }
 
+    /// Calculates a simplified LCOM score for a Python class.
     fn calculate_python_lcom(&self, body_node: &tree_sitter::Node, source: &[u8]) -> Result<f64, AnalysisError> {
         let language = body_node.language();
         let method_query = Query::new(&language, PYTHON_METHOD_QUERY)
@@ -686,37 +766,44 @@ impl LargeClassesDetector {
         Ok(lcom_score)
     }
 
+    /// Placeholder for counting dependencies in a Python class.
     fn count_python_coupling(&self, class_node: &tree_sitter::Node, source: &[u8]) -> Result<u32, AnalysisError> {
         // Implementation for counting imports and external references
         Ok(0) // Placeholder
     }
 
     // JavaScript-specific helper methods
+    /// Placeholder for counting methods in a JavaScript class.
     fn count_javascript_methods(&self, body_node: &tree_sitter::Node, source: &[u8]) -> Result<u32, AnalysisError> {
         // Implementation for counting JavaScript methods
         Ok(0) // Placeholder
     }
 
+    /// Placeholder for counting properties in a JavaScript class.
     fn count_javascript_fields(&self, body_node: &tree_sitter::Node, source: &[u8]) -> Result<u32, AnalysisError> {
         // Implementation for counting JavaScript properties
         Ok(0) // Placeholder
     }
 
+    /// Placeholder for calculating complexity in a JavaScript class.
     fn calculate_javascript_complexity(&self, body_node: &tree_sitter::Node, source: &[u8]) -> Result<u32, AnalysisError> {
         // Implementation for calculating complexity
         Ok(0) // Placeholder
     }
 
+    /// Placeholder for calculating LCOM in a JavaScript class.
     fn calculate_javascript_lcom(&self, body_node: &tree_sitter::Node, source: &[u8]) -> Result<f64, AnalysisError> {
         // Implementation for calculating LCOM score
         Ok(0.0) // Placeholder
     }
 
+    /// Placeholder for counting dependencies in a JavaScript class.
     fn count_javascript_coupling(&self, class_node: &tree_sitter::Node, source: &[u8]) -> Result<u32, AnalysisError> {
         // Implementation for counting imports and dependencies
         Ok(0) // Placeholder
     }
 
+    /// Checks if a JavaScript class is exported.
     fn is_javascript_exported(&self, class_node: &tree_sitter::Node, source: &[u8]) -> bool {
         // Check for export keyword or module.exports
         if let Some(parent) = class_node.parent() {
@@ -728,6 +815,10 @@ impl LargeClassesDetector {
     }
 
     // Helper methods for complexity and field access calculations
+    /// Calculates the cyclomatic complexity for a single method node.
+    ///
+    /// This helper function abstracts the complexity calculation by trying language-specific
+    /// `tree-sitter` queries. It provides a fallback if no specific query matches.
     fn calculate_method_complexity(&self, method_node: &tree_sitter::Node, source: &[u8]) -> Result<u32, AnalysisError> {
         // Simplified complexity calculation - count control flow statements
         let language = method_node.language();
@@ -756,6 +847,10 @@ impl LargeClassesDetector {
         }
     }
 
+    /// Counts field accesses (`self.` or `this.`) within a method.
+    ///
+    /// This is a key component of the simplified LCOM calculation. It uses `tree-sitter`
+    /// queries for accuracy and falls back to simple text matching if needed.
     fn count_field_accesses(&self, method_node: &tree_sitter::Node, source: &[u8]) -> Result<u32, AnalysisError> {
         // Simplified field access counting
         let language = method_node.language();

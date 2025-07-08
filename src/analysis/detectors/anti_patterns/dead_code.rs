@@ -29,28 +29,36 @@ use std::collections::HashSet;
 #[cfg(feature = "tree-sitter")]
 use tree_sitter::{Query, QueryCursor};
 
-/// Represents a symbol (function, variable, class, etc.) found in the code
+/// Represents a symbol (e.g., function, variable, class) identified in the source code.
+///
+/// A `Symbol` captures essential information about a code element, including its name,
+/// type, location, and visibility. This information is used during dead code analysis
+/// to determine if the symbol is ever used.
 #[derive(Debug, Clone)]
 pub struct Symbol {
-    /// Name of the symbol
+    /// The name of the symbol (e.g., `my_function`).
     pub name: String,
-    /// Type of symbol (function, variable, class, etc.)
+    /// The type of the symbol (e.g., `Function`, `Class`).
     pub symbol_type: SymbolType,
-    /// File path where the symbol is defined
+    /// The absolute path to the file where the symbol is defined.
     pub file_path: String,
-    /// Line number where the symbol is defined
+    /// The line number where the symbol's definition begins.
     pub line_number: u32,
-    /// Whether the symbol is exported/public
+    /// Indicates whether the symbol is public or exported, making it an entry point.
     pub is_exported: bool,
-    /// Whether the symbol has been marked as live during reachability analysis
+    /// A flag used during reachability analysis to mark the symbol as used.
     pub is_live: bool,
-    /// Confidence score for dead code detection (0.0 to 1.0)
+    /// A score from 0.0 to 1.0 indicating the confidence that this symbol is dead code.
+    ///
+    /// - **High (0.8-1.0)**: Private/internal symbols with no references.
+    /// - **Medium (0.5-0.7)**: Exported symbols in applications with no apparent usage.
+    /// - **Low (0.2-0.4)**: Symbols in files with dynamic features (e.g., reflection).
     pub confidence: f64,
-    /// Source code snippet of the symbol definition
+    /// A snippet of the source code where the symbol is defined.
     pub code_snippet: String,
 }
 
-/// Types of symbols that can be detected as dead code
+/// Enumerates the different types of symbols that can be analyzed for dead code.
 #[derive(Debug, Clone, PartialEq)]
 pub enum SymbolType {
     Function,
@@ -63,20 +71,33 @@ pub enum SymbolType {
     Import,
 }
 
-/// Configuration for the dead code detector
+/// Configures the behavior of the `DeadCodeDetector`.
+///
+/// This struct allows customization of the detection process, such as setting confidence
+/// thresholds, ignoring specific files, and defining custom entry points.
 #[derive(Debug, Clone)]
 pub struct DeadCodeConfig {
-    /// Minimum confidence threshold for reporting (0.0 to 1.0)
+    /// The minimum confidence score (0.0 to 1.0) a symbol must have to be reported as dead code.
     pub min_confidence: f64,
-    /// Whether to analyze exported symbols in library mode
+    /// If `true`, the detector treats all exported symbols as potential entry points,
+    /// which is suitable for analyzing libraries. If `false`, it assumes an application
+    /// context where unused exports might be dead code.
     pub library_mode: bool,
-    /// Patterns to ignore (e.g., test files, generated code)
+    /// A list of string patterns to exclude files from analysis.
+    /// Useful for ignoring test directories, mocks, or generated code.
     pub ignore_patterns: Vec<String>,
-    /// Symbols to always consider live
+    /// A list of symbol names to always consider "live," regardless of usage.
+    /// Common examples include `main`, `init`, or framework-specific entry points.
     pub keep_alive_patterns: Vec<String>,
 }
 
 impl Default for DeadCodeConfig {
+    /// Provides a default configuration for the `DeadCodeDetector`.
+    ///
+    /// - `min_confidence`: 0.5
+    /// - `library_mode`: `false`
+    /// - `ignore_patterns`: Includes common test and mock directories.
+    /// - `keep_alive_patterns`: Includes `main`, `init`, `setup`, and `teardown`.
     fn default() -> Self {
         Self {
             min_confidence: 0.5,
@@ -97,21 +118,42 @@ impl Default for DeadCodeConfig {
     }
 }
 
-/// Dead code detector that identifies unused symbols across multiple languages
+/// A detector for identifying unused (dead) code in a codebase.
+///
+/// This detector operates by performing a multi-language static analysis:
+/// 1. **Symbol Collection**: It parses all source files to build a comprehensive list of every
+///    function, class, variable, etc., defined in the project.
+/// 2. **Usage Analysis**: It scans the codebase again to find all references to these symbols.
+/// 3. **Reachability Analysis**: Starting from known entry points (like `main` or public APIs),
+///    it traverses the call graph to mark all reachable symbols as "live."
+/// 4. **Reporting**: Any symbol that is not marked as live is reported as potential dead code.
 pub struct DeadCodeDetector {
     config: DeadCodeConfig,
 }
 
 impl DeadCodeDetector {
+    /// Creates a new `DeadCodeDetector` with the given configuration.
     pub fn new(config: DeadCodeConfig) -> Self {
         Self { config }
     }
 
+    /// Creates a new `DeadCodeDetector` with a default configuration.
     pub fn with_default_config() -> Self {
         Self::new(DeadCodeConfig::default())
     }
 
-    /// Extract symbol definitions from a parsed file
+    /// Extracts all symbol definitions from a single parsed file.
+    ///
+    /// This method dispatches to a language-specific extraction function based on the
+    /// `ParsedFile`'s language.
+    ///
+    /// # Arguments
+    ///
+    /// * `parsed_file` - The file to analyze.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing a `Vec<Symbol>` or an `AnalysisError`.
     pub fn extract_symbols(&self, parsed_file: &ParsedFile) -> Result<Vec<Symbol>, AnalysisError> {
         match parsed_file.language {
             SourceLanguage::Rust => self.extract_rust_symbols(parsed_file),
@@ -120,7 +162,18 @@ impl DeadCodeDetector {
         }
     }
 
-    /// Extract symbol references/calls from a parsed file
+    /// Extracts all symbol references (calls, usages) from a single parsed file.
+    ///
+    /// This method is used to build the call graph for reachability analysis. It dispatches
+    /// to a language-specific reference extraction function.
+    ///
+    /// # Arguments
+    ///
+    /// * `parsed_file` - The file to analyze.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing a `HashSet<String>` of referenced symbol names or an `AnalysisError`.
     pub fn extract_references(&self, parsed_file: &ParsedFile) -> Result<HashSet<String>, AnalysisError> {
         match parsed_file.language {
             SourceLanguage::Rust => self.extract_rust_references(parsed_file),
@@ -129,7 +182,9 @@ impl DeadCodeDetector {
         }
     }
 
-    /// Extract Rust symbols (functions, structs, enums, constants)
+    /// Extracts symbols from a Rust source file.
+    ///
+    /// Uses `tree-sitter` queries to find functions, structs, enums, and constants.
     fn extract_rust_symbols(&self, parsed_file: &ParsedFile) -> Result<Vec<Symbol>, AnalysisError> {
         let mut symbols = Vec::new();
         let source = parsed_file.source.as_bytes();
@@ -194,7 +249,9 @@ impl DeadCodeDetector {
         Ok(symbols)
     }
 
-    /// Extract Python symbols (functions, classes, variables)
+    /// Extracts symbols from a Python source file.
+    ///
+    /// Uses `tree-sitter` queries to find function and class definitions.
     fn extract_python_symbols(&self, parsed_file: &ParsedFile) -> Result<Vec<Symbol>, AnalysisError> {
         let mut symbols = Vec::new();
         let source = parsed_file.source.as_bytes();
@@ -261,7 +318,9 @@ impl DeadCodeDetector {
         Ok(symbols)
     }
 
-    /// Extract JavaScript symbols (functions, classes, variables)
+    /// Extracts symbols from a JavaScript source file.
+    ///
+    /// Uses `tree-sitter` queries to find function and class definitions.
     fn extract_javascript_symbols(&self, parsed_file: &ParsedFile) -> Result<Vec<Symbol>, AnalysisError> {
         let mut symbols = Vec::new();
         let source = parsed_file.source.as_bytes();
@@ -301,7 +360,9 @@ impl DeadCodeDetector {
         Ok(symbols)
     }
 
-    /// Extract Rust symbol references (function calls, variable usage)
+    /// Extracts references (calls, usages) to symbols in a Rust source file.
+    ///
+    /// Uses `tree-sitter` queries to find all function and variable usages.
     fn extract_rust_references(&self, parsed_file: &ParsedFile) -> Result<HashSet<String>, AnalysisError> {
         let mut references = HashSet::new();
         let source = parsed_file.source.as_bytes();
@@ -328,7 +389,7 @@ impl DeadCodeDetector {
         Ok(references)
     }
 
-    /// Extract Python symbol references
+    /// Extracts references (calls, usages) to symbols in a Python source file.
     fn extract_python_references(&self, parsed_file: &ParsedFile) -> Result<HashSet<String>, AnalysisError> {
         let mut references = HashSet::new();
         let source = parsed_file.source.as_bytes();
@@ -355,7 +416,7 @@ impl DeadCodeDetector {
         Ok(references)
     }
 
-    /// Extract JavaScript symbol references
+    /// Extracts references (calls, usages) to symbols in a JavaScript source file.
     fn extract_javascript_references(&self, parsed_file: &ParsedFile) -> Result<HashSet<String>, AnalysisError> {
         let mut references = HashSet::new();
         let source = parsed_file.source.as_bytes();

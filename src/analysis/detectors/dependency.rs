@@ -10,18 +10,52 @@ use crate::ast::tree_sitter::{
 };
 pub use crate::database::models::{Dependency, DependencyType};
 
-/// AST-based dependency extractor
+/// Extracts dependencies from source code files using Abstract Syntax Tree (AST) parsing.
+///
+/// This extractor leverages `tree-sitter` to parse source files for various languages
+/// (Rust, Python, JavaScript) and identify import/use statements. It is responsible for
+/// finding direct dependencies within a single file.
+///
+/// # Features
+///
+/// - Supports multiple programming languages through `tree-sitter` grammars.
+/// - Identifies different types of dependencies (e.g., `use`, `import`).
+/// - Resolves module paths for Rust `mod` statements.
+///
+/// # Errors
+///
+/// Returns `ExtractionError` if the `tree-sitter` parser cannot be initialized or if
+/// a query fails to compile.
 pub struct DependencyExtractor {
     parser: AstParser,
 }
 
 impl DependencyExtractor {
+    /// Creates a new `DependencyExtractor`.
+    ///
+    /// This initializes the underlying `AstParser`, which may fail if `tree-sitter`
+    /// grammars are not available.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing the `DependencyExtractor` or an `ExtractionError`.
     pub fn new() -> Result<Self, ExtractionError> {
         let parser = AstParser::new().map_err(ExtractionError::AstError)?;
         Ok(Self { parser })
     }
 
-    /// Extract dependencies from a single file using AST parsing
+    /// Extracts dependencies from a single source file by its path.
+    ///
+    /// This is a convenience method that first parses the file into an AST and then
+    /// calls `extract_from_ast`.
+    ///
+    /// # Arguments
+    ///
+    /// * `file_path` - The path to the source file to analyze.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing a `Vec<Dependency>` or an `ExtractionError`.
     pub fn extract_from_file(&self, file_path: &Path) -> Result<Vec<Dependency>, ExtractionError> {
         let parsed_file = self
             .parser
@@ -31,7 +65,20 @@ impl DependencyExtractor {
         self.extract_from_ast(&parsed_file)
     }
 
-    /// Extracts dependencies from a previously parsed file
+    /// Extracts dependencies from a `ParsedFile` containing a pre-existing AST.
+    ///
+    /// This method runs a language-specific `tree-sitter` query against the AST
+    /// to find all import-like statements. It captures the module paths and constructs
+    /// a list of `Dependency` objects.
+    ///
+    /// # Arguments
+    ///
+    /// * `parsed_file` - A reference to the `ParsedFile` to be analyzed.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing a `Vec<Dependency>` or an `ExtractionError` if the
+    /// `tree-sitter` query fails.
     pub fn extract_from_ast(
         &self,
         parsed_file: &ParsedFile,
@@ -129,49 +176,4 @@ impl DependencyExtractor {
                     if let Some(parent) = parsed_file.path.parent() {
                         let mut path = parent.join(&module_name);
                         if !path.exists() {
-                            path.set_extension("rs");
-                        }
-                        if path.exists() {
-                            module_name = path.to_string_lossy().to_string();
-                        }
-                    }
-                }
-
-                dependencies.push(Dependency {
-                    from_file: parsed_file.path.clone(),
-                    to_module: module_name,
-                    dependency_type: dependency_type.clone(),
-                    line_number: Some(line_number as u32),
-                });
-            }
-        }
-
-        debug!(
-            "Extracted {} dependencies from {}",
-            dependencies.len(),
-            parsed_file.path.display()
-        );
-        Ok(dependencies)
-    }
-
-    /// Extract dependencies from multiple files in parallel using rayon for performance
-    pub fn extract_from_files_parallel(
-        &mut self,
-        file_paths: &[&std::path::Path],
-    ) -> Vec<Result<Vec<Dependency>, ExtractionError>> {
-        file_paths
-            .par_iter()
-            .map(|path| self.extract_from_file(path))
-            .collect()
-    }
-}
-
-#[derive(thiserror::Error, Debug)]
-pub enum ExtractionError {
-    #[error("AST error: {0}")]
-    AstError(#[from] crate::ast::tree_sitter::AstError),
-    #[error("Query error: {0}")]
-    QueryError(String),
-    #[error("IO error reading {0}: {1}")]
-    IoError(PathBuf, std::io::Error),
-}
+                         

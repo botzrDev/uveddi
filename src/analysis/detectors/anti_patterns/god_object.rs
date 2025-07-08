@@ -163,54 +163,53 @@ const RUST_FIELD_COUNT_QUERY: &str = "(field_declaration)";
 const PYTHON_FIELD_COUNT_QUERY: &str = r#"(expression_statement (assignment))"#;
 const JAVASCRIPT_FIELD_COUNT_QUERY: &str = "(field_definition)";
 
-/// God Object detector that identifies classes/structs with too many responsibilities
+/// Detects "God Objects" by analyzing class and struct sizes.
 ///
-/// This detector implements a threshold-based approach to identify classes or structs
-/// that have grown too large and likely violate the Single Responsibility Principle.
-/// It counts methods and fields within classes/structs and compares them against
-/// configurable thresholds.
+/// This detector identifies classes or structs that have grown too large, accumulating
+/// an excessive number of methods and fields. Such objects, often called "God Objects"
+/// violate the Single Responsibility Principle and can lead to maintenance challenges.
 ///
-/// # Configuration
+/// ## Configuration
 ///
 /// The detector accepts two main parameters:
 /// - `method_threshold`: Maximum number of methods before flagging as God Object
 /// - `field_threshold`: Maximum number of fields before flagging as God Object
 ///
-/// # Examples
+/// ## Examples
 ///
 /// ```rust
 /// use uveddi::analysis::detectors::anti_patterns::god_object::GodObjectDetector;
 ///
-/// // Create detector with custom thresholds
-/// let detector = GodObjectDetector::new(15, 10); // 15 methods, 10 fields max
+/// // Create a detector with custom thresholds for methods and fields.
+/// let detector = GodObjectDetector::new(15, 10);
 ///
-/// // Create detector with default thresholds
-/// let detector = GodObjectDetector::default(); // 10 methods, 8 fields max
+/// // Use the default thresholds (10 methods, 8 fields).
+/// let default_detector = GodObjectDetector::default();
 /// ```
 pub struct GodObjectDetector {
-    /// Maximum number of methods allowed before flagging as God Object
+    /// The maximum number of methods a class or struct can have before being flagged.
     method_threshold: usize,
-    /// Maximum number of fields allowed before flagging as God Object
+    /// The maximum number of fields a class or struct can have before being flagged.
     field_threshold: usize,
 }
 
 impl GodObjectDetector {
-    /// Creates a new God Object detector with custom thresholds
+    /// Creates a new `GodObjectDetector` with specified thresholds.
     ///
     /// # Arguments
     ///
-    /// * `method_threshold` - Maximum number of methods allowed before flagging as God Object
-    /// * `field_threshold` - Maximum number of fields allowed before flagging as God Object
+    /// * `method_threshold` - The maximum number of methods allowed.
+    /// * `field_threshold` - The maximum number of fields allowed.
     ///
     /// # Examples
     ///
     /// ```rust
     /// use uveddi::analysis::detectors::anti_patterns::god_object::GodObjectDetector;
     ///
-    /// // Strict thresholds for small, focused classes
+    /// // A detector with strict thresholds for a project with small, focused classes.
     /// let strict_detector = GodObjectDetector::new(5, 3);
     ///
-    /// // Lenient thresholds for complex domains
+    /// // A detector with more lenient thresholds for a legacy or complex system.
     /// let lenient_detector = GodObjectDetector::new(20, 15);
     /// ```
     pub fn new(method_threshold: usize, field_threshold: usize) -> Self {
@@ -220,7 +219,15 @@ impl GodObjectDetector {
         }
     }
 
-    /// Scores the severity of a God Object based on method and field counts.
+    /// Scores the severity of a detected God Object.
+    ///
+    /// The severity is determined by how much the method and field counts exceed
+    /// their respective thresholds. The scoring is as follows:
+    /// - **Medium**: 1-4 total excess members.
+    /// - **High**: 5-10 total excess members.
+    /// - **Critical**: 11 or more total excess members.
+    ///
+    /// Returns `None` if no thresholds are exceeded.
     fn score_severity(&self, method_count: usize, field_count: usize) -> Option<String> {
         let method_excess = method_count.saturating_sub(self.method_threshold);
         let field_excess = field_count.saturating_sub(self.field_threshold);
@@ -239,7 +246,13 @@ impl GodObjectDetector {
         Some(severity.to_string())
     }
 
-    /// Creates an `ArchitecturalIssue` if a God Object is detected.
+    /// Creates an `ArchitecturalIssue` for a detected God Object.
+    ///
+    /// This helper function is called when a God Object is identified. It constructs
+    /// an `ArchitecturalIssue` with relevant details, including the severity,
+    /// file path, line numbers, and a descriptive message.
+    ///
+    /// Returns `None` if the severity score is not high enough to warrant an issue.
     fn create_issue(
         &self,
         parsed_file: &ParsedFile,
@@ -272,8 +285,14 @@ impl GodObjectDetector {
             })
     }
 
-    /// Analyzes a file for God Objects using direct tree-sitter queries.
-    /// This is used for Python and JavaScript where class members are in one block.
+    /// Analyzes a file for God Objects using a standard approach for languages
+    /// like Python and JavaScript, where class members are defined in a single block.
+    ///
+    /// This function executes a series of Tree-sitter queries to:
+    /// 1. Identify all class or container definitions.
+    /// 2. Count the number of methods within each container.
+    /// 3. Count the number of fields within each container.
+    /// 4. Create an issue if the counts exceed the configured thresholds.
     fn analyze_standard(
         &self,
         parsed_file: &ParsedFile,
@@ -334,7 +353,15 @@ impl GodObjectDetector {
         Ok(issues)
     }
 
-    /// Analyzes a Rust file, which requires correlating `struct` and `impl` blocks.
+    /// Analyzes a Rust file for God Objects by correlating `struct` and `impl` blocks.
+    ///
+    /// Rust analysis is more complex because methods (`impl` blocks) are often
+    /// separate from data definitions (`struct` blocks). This function:
+    /// 1. Scans the file to find all `impl` blocks and counts their methods, mapping
+    ///    them to the struct they implement.
+    /// 2. Scans the file again to find all `struct` definitions and counts their fields.
+    /// 3. Combines the method and field counts for each struct and checks them
+    ///    against the thresholds.
     fn analyze_rust(
         &self,
         parsed_file: &ParsedFile,
@@ -476,5 +503,16 @@ impl AnalysisDetector for GodObjectDetector {
         }
 
         result
+    }
+}
+
+impl Default for GodObjectDetector {
+    /// Creates a `GodObjectDetector` with default thresholds.
+    ///
+    /// The default thresholds are:
+    /// - `method_threshold`: 10
+    /// - `field_threshold`: 8
+    fn default() -> Self {
+        Self::new(10, 8)
     }
 }

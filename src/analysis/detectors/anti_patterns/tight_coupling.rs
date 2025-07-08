@@ -10,29 +10,65 @@ use crate::analysis::graph::dependency::{ComponentNode, LocalDependencyGraph};
 use std::collections::HashMap;
 use std::path::Path;
 
-/// Coupling metrics for a component
+/// Holds coupling metrics for a single software component (e.g., a class or module).
+///
+/// These metrics are used to quantify the degree of interdependence between components.
+/// High values can indicate tight coupling, which makes a system harder to maintain.
 #[derive(Debug, Clone, Default)]
 pub struct CouplingMetrics {
+    /// **Fan-in**: The number of other components that depend on this component.
+    /// A high fan-in can be acceptable if the component is a stable, central abstraction.
     pub fan_in: usize,
+    /// **Fan-out**: The number of other components this component depends on.
+    /// A high fan-out suggests the component has too many responsibilities or is overly complex.
     pub fan_out: usize,
-    pub cbo: usize, // Coupling Between Objects
-    pub rfc: usize, // Response For Class
+    /// **Coupling Between Objects (CBO)**: Measures the total number of other components
+    /// a component is coupled to (both dependencies and dependents). In many contexts, this
+    /// is equivalent to fan-out.
+    pub cbo: usize,
+    /// **Response For a Class (RFC)**: The number of methods that can be executed in
+    /// response to a message received by an object of the class. This includes the class's
+    /// own methods and methods called on other objects. A high RFC can indicate high complexity.
+    pub rfc: usize,
 }
 
-/// Language-agnostic dependency
+/// Represents a language-agnostic dependency between two components.
+///
+/// This struct standardizes dependency information extracted from different languages,
+/// allowing for uniform analysis.
 #[derive(Debug, Clone)]
 pub struct Dependency {
+    /// The name or path of the component that has the dependency.
     pub from: String,
+    /// The name or path of the component being depended upon.
     pub to: String,
-    pub kind: String, // e.g., import, call, field access
+    /// The nature of the dependency (e.g., "import", "call", "field access").
+    pub kind: String,
 }
 
-/// Trait for language-specific dependency extraction
+/// A trait for language-specific dependency extraction logic.
+///
+/// To support a new language, a new struct implementing this trait must be created.
+/// It is responsible for using `tree-sitter` to parse a file and identify all
+/// relevant dependencies.
 pub trait LanguageAnalyzer {
+    /// Extracts all dependencies from a given source file.
+    ///
+    /// # Arguments
+    ///
+    /// * `file_path` - The path to the file being analyzed.
+    /// * `parsed_file` - The `ParsedFile` containing the AST for the source file.
+    ///
+    /// # Returns
+    ///
+    /// A `Vec<Dependency>` containing all dependencies found in the file.
     fn extract_dependencies(&self, file_path: &Path, parsed_file: &ParsedFile) -> Vec<Dependency>;
 }
 
-/// Rust analyzer stub (expand for real extraction)
+/// A stub implementation of `LanguageAnalyzer` for Rust.
+///
+/// This serves as a placeholder and would need to be fully implemented with `tree-sitter`
+/// queries to extract `use` statements, function calls, and type references.
 pub struct RustAnalyzer;
 
 impl LanguageAnalyzer for RustAnalyzer {
@@ -42,12 +78,22 @@ impl LanguageAnalyzer for RustAnalyzer {
     }
 }
 
-/// Main Tight Coupling Detector
+/// The main detector for the "Tight Coupling" anti-pattern.
+///
+/// This detector orchestrates the analysis process:
+/// 1. It uses a `LanguageAnalyzer` to extract dependencies from source files.
+/// 2. It builds a `LocalDependencyGraph` to represent the relationships between components.
+/// 3. It calculates coupling metrics (Fan-in, Fan-out, CBO, RFC) for each component.
+/// 4. It compares these metrics against configurable thresholds to identify issues.
 pub struct TightCouplingDetector {
-    // Optionally add config/thresholds here
+    // Configuration for thresholds can be added here.
+    // For example:
+    // pub fan_out_threshold: usize,
+    // pub cbo_threshold: usize,
 }
 
 impl Default for TightCouplingDetector {
+    /// Creates a new `TightCouplingDetector` with default settings.
     fn default() -> Self {
         Self {}
     }
@@ -83,7 +129,10 @@ impl AnalysisDetector for TightCouplingDetector {
 }
 
 impl TightCouplingDetector {
-    /// Build a dependency graph from parsed files using the language analyzer
+    /// Builds a `LocalDependencyGraph` from a set of parsed files.
+    ///
+    /// This method iterates through the provided files, uses the `LanguageAnalyzer` to
+    /// extract dependencies for each, and populates the graph accordingly.
     fn build_dependency_graph<A: LanguageAnalyzer>(
         &self,
         files: &[(String, ParsedFile)],
@@ -101,7 +150,10 @@ impl TightCouplingDetector {
         graph
     }
 
-    /// Calculate coupling metrics for each node
+    /// Calculates coupling metrics for every component in the dependency graph.
+    ///
+    /// It iterates through each node in the graph, calculating its fan-in, fan-out,
+    /// CBO, and RFC, and stores the results in a `HashMap`.
     fn calculate_metrics(&self, graph: &LocalDependencyGraph) -> HashMap<ComponentNode, CouplingMetrics> {
         let mut metrics = HashMap::new();
         let petgraph = graph.get_petgraph();

@@ -18,11 +18,12 @@ use crate::database::models::{AnalysisRun, ArchitecturalIssue};
 use crate::error::UveddiError;
 use crate::report::ReportGenerator;
 
-/// Application layer orchestrator for analysis workflows
+/// Application layer orchestrator for analysis workflows.
 ///
 /// This struct coordinates the analysis process by managing dependencies
-/// and orchestrating the workflow between different system components.
-/// It serves as the boundary between the CLI layer and infrastructure layers.
+/// and orchestrating the workflow between different system components, such as
+/// the `AnalysisEngine` and `Database`. It serves as the primary boundary between the
+/// command-line interface (CLI) and the core infrastructure layers of the application.
 pub struct AnalysisOrchestrator {
     /// The database connection for storing and retrieving analysis results.
     database: Database,
@@ -30,7 +31,10 @@ pub struct AnalysisOrchestrator {
     analysis_engine: AnalysisEngine,
 }
 
-/// Configuration for analysis operations.
+/// Configuration for an analysis operation.
+///
+/// This struct holds all the settings required to perform a codebase analysis,
+/// including target paths, output formats, and detector-specific configurations.
 pub struct AnalysisConfig {
     /// The path to the target directory or file to be analyzed.
     pub target_path: PathBuf,
@@ -68,7 +72,11 @@ pub struct AnalysisConfig {
     pub large_classes_min_severity: Option<u32>,
 }
 
-/// The result of an analysis operation, containing the report content and metadata.
+/// Represents the result of a completed analysis operation.
+///
+/// This struct contains the generated report content along with metadata
+/// about the analysis process, such as the number of files analyzed and
+/// the time taken.
 pub struct AnalysisReport {
     /// The generated analysis report as a string.
     pub content: String,
@@ -76,7 +84,10 @@ pub struct AnalysisReport {
     pub metadata: AnalysisMetadata,
 }
 
-/// Metadata about the analysis operation.
+/// Contains metadata about a completed analysis operation.
+///
+/// This provides key metrics about the analysis run, such as performance
+/// statistics and the scope of the analysis.
 pub struct AnalysisMetadata {
     /// The number of files that were analyzed.
     pub files_analyzed: usize,
@@ -115,7 +126,24 @@ impl AnalysisOrchestrator {
         })
     }
 
-    /// Execute a complete analysis workflow
+    /// Executes a complete analysis workflow based on the provided configuration.
+    ///
+    /// This is the main entry point for running an analysis. The process includes:
+    /// 1. Validating the input configuration and paths.
+    /// 2. Initializing the database schema.
+    /// 3. Creating a new analysis run record in the database.
+    /// 4. Invoking the `AnalysisEngine` to perform code analysis.
+    /// 5. Storing the detected issues in the database.
+    /// 6. Generating a report in the specified format.
+    /// 7. Writing the report to a file if requested.
+    ///
+    /// # Arguments
+    ///
+    /// * `config` - An `AnalysisConfig` struct containing all settings for the run.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing an `AnalysisReport` on success, or an `UveddiError` on failure.
     pub async fn execute_analysis(
         &mut self,
         config: AnalysisConfig,
@@ -372,7 +400,13 @@ impl Default for AnalysisOrchestrator {
     }
 }
 
-/// Runs the main application orchestration logic, handling CLI commands and error context.
+/// Runs the main application logic, parsing command-line arguments and executing the
+/// appropriate commands.
+///
+/// This function initializes the command-line interface, parses the user's input,
+/// and dispatches to the relevant handlers (e.g., `analyze`, `config`). It also
+/// sets up the Tokio runtime for asynchronous operations and handles top-level
+/// error reporting.
 pub fn run_app() -> Result<(), UveddiError> {
     use crate::cli::{analyze_command::AnalyzeCommand, config_command::ConfigCommand};
     use clap::Parser;
