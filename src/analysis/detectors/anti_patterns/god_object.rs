@@ -117,12 +117,10 @@
 //! - [Clean Code: A Handbook of Agile Software Craftsmanship](https://www.amazon.com/Clean-Code-Handbook-Software-Craftsmanship/dp/0132350884)
 
 use crate::analysis::{AnalysisDetector, AnalysisError};
-use crate::ast::tree_sitter::{ParsedFile, SourceLanguage};
+use crate::ast::tree_sitter::{ParsedFile, SourceLanguage, Query, QueryCursor};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use log::{debug, info};
 use std::collections::HashMap;
-#[cfg(feature = "tree-sitter")]
-use tree_sitter::{Query, QueryCursor};
 
 // --- Queries for identifying language-specific containers (classes, structs) ---
 const PYTHON_CLASS_QUERY: &str = r#"
@@ -257,8 +255,8 @@ impl GodObjectDetector {
         &self,
         parsed_file: &ParsedFile,
         name: &str,
-        name_node: tree_sitter::Node,
-        container_node: tree_sitter::Node,
+        name_node: crate::ast::tree_sitter::Node,
+        container_node: crate::ast::tree_sitter::Node,
         method_count: usize,
         field_count: usize,
     ) -> Option<ArchitecturalIssue> {

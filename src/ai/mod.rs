@@ -8,12 +8,17 @@
 //! as well as logic for generating prompts and parsing AI-generated responses.
 
 /// The `api` submodule defines the traits and data structures for interacting with AI providers.
+#[cfg(feature = "ai")]
 pub mod api;
 /// The `engine` submodule contains the core logic for the AI analysis engine.
+#[cfg(feature = "ai")]
 pub mod engine;
 /// The `ollama_provider` submodule provides Ollama LLM integration.
+#[cfg(feature = "ai")]
 pub mod ollama_provider;
 /// The `prompts` submodule provides tools for building and managing prompts for the AI models.
+#[cfg(feature = "ai")]
 pub mod prompts;
 
+#[cfg(feature = "ai")]
 pub use engine::AiAnalysisEngine;

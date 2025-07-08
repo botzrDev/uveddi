@@ -1,3 +1,5 @@
+#![cfg(feature = "ai")]
+
 //! Ollama Provider Integration
 //!
 //! This module provides integration with Ollama, a local LLM runtime that allows
@@ -36,15 +38,19 @@
 //! ```
 
 use log::{debug, info, warn};
+#[cfg(feature = "ai")]
 use reqwest::Client;
+#[cfg(feature = "ai")]
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
+#[cfg(feature = "ai")]
 use tokio::time::timeout;
 
 /// Request payload structure for Ollama API calls
 ///
 /// This structure represents the JSON payload sent to the Ollama API
 /// for text generation requests.
+#[cfg(feature = "ai")]
 #[derive(Serialize, Debug)]
 struct OllamaRequest<'a> {
     /// The model name to use for inference
@@ -62,6 +68,7 @@ struct OllamaRequest<'a> {
 ///
 /// These parameters control how the language model generates text,
 /// affecting creativity, coherence, and output length.
+#[cfg(feature = "ai")]
 #[derive(Serialize, Debug)]
 struct OllamaOptions {
     /// Controls randomness in generation (0.0 = deterministic, 1.0 = very random)
@@ -80,6 +87,7 @@ struct OllamaOptions {
 ///
 /// Represents the JSON response returned by the Ollama API after
 /// a successful text generation request.
+#[cfg(feature = "ai")]
 #[derive(Deserialize, Debug)]
 struct OllamaResponse {
     /// The generated text response
@@ -92,6 +100,7 @@ struct OllamaResponse {
 /// Error response structure from Ollama API
 ///
 /// Used to parse error messages when the Ollama API returns an error status.
+#[cfg(feature = "ai")]
 #[derive(Deserialize, Debug)]
 struct OllamaErrorResponse {
     /// The error message from the API
@@ -120,6 +129,7 @@ struct OllamaErrorResponse {
 ///     max_tokens: 4096,
 /// };
 /// ```
+#[cfg(feature = "ai")]
 #[derive(Clone, Debug)]
 pub struct OllamaConfig {
     /// The Ollama model to use for inference (e.g., "deepseek-coder:6.7b-instruct-q4_0")
@@ -160,6 +170,7 @@ impl Default for OllamaConfig {
 ///
 /// This struct is designed to be used across async tasks. The internal
 /// HTTP client is thread-safe and can be shared between requests.
+#[cfg(feature = "ai")]
 pub struct OllamaProvider {
     /// Configuration settings for this provider instance
     pub config: OllamaConfig,
@@ -368,8 +379,11 @@ impl OllamaProvider {
     }
 }
 
+#[cfg(feature = "ai")]
 use crate::ai::api::llm_provider::LlmProvider;
+#[cfg(feature = "ai")]
 use crate::error::UveddiError;
+#[cfg(feature = "ai")]
 use async_trait::async_trait;
 
 #[async_trait]

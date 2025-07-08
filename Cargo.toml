@@ -26,8 +26,10 @@ tree-sitter = [
 ]
 # Core analysis features (without tree-sitter by default)
 analysis = []
+# AI feature for all AI-related functionality
+ai = ["reqwest", "async-trait"]
 # Local AI only (Ollama)
-local-ai = ["reqwest"]
+local-ai = ["ai"]
 # Image rendering service integration
 image-rendering = ["reqwest", "base64"]
 # WASM plugin system
@@ -35,13 +37,13 @@ wasm-plugins = ["wasmtime", "wasmtime-wasi", "wit-bindgen"]
 
 [dependencies]
 rusqlite = { version = "0.31.0", features = ["bundled"] }
-tokio = { version = "1.37.0", features = ["full"] }
+tokio = { version = "1.37.0", features = ["full"] }  # Always needed
 tokio-stream = { version = "0.1.15", features = ["fs"] }
 futures = "0.3"
 async-stream = "0.3"
 chrono = { version = "0.4.35", features = ["serde"] }
 serde = { version = "1.0.203", features = ["derive"] }
-serde_json = "1.0.117"
+serde_json = { version = "1.0.117" }  # Always needed
 bincode = "1.3.3"
 thiserror = "1.0.61"
 anyhow = "1.0.86"
@@ -57,7 +59,7 @@ tree-sitter-python = { version = "0.21.0", optional = true }
 tree-sitter-javascript = { version = "0.21.0", optional = true }
 tree-sitter-typescript = { version = "0.21.0", optional = true }
 # HTTP client for local AI (Ollama) and image rendering service
-reqwest = { version = "0.12.22", features = ["json"], optional = true }
+reqwest = { version = "0.12.22", features = ["json"], optional = true }  # Make optional
 rustls = "0.23.28"  # Force newer rustls to get updated ring
 # Template engine for diagram generation
 tera = "1.19.1"
@@ -69,7 +71,7 @@ walkdir = "2.5.0"
 ignore = "0.4.22"
 toml = "0.8.0"
 sha2 = "0.10.0"
-async-trait = "0.1.88"
+async-trait = { version = "0.1.88", optional = true }  # Make optional
 md5 = "0.8.0"
 petgraph = "0.8.2"
 color-eyre = "0.6"

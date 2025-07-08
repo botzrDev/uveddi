@@ -25,13 +25,28 @@ pub enum SourceLanguage {
     JavaScript,
 }
 
+impl SourceLanguage {
+    /// Determine language from file path
+    pub fn from_path(path: &Path) -> Self {
+        match path.extension().and_then(|ext| ext.to_str()) {
+            Some("rs") => SourceLanguage::Rust,
+            Some("py") => SourceLanguage::Python,
+            Some("js") | Some("jsx") | Some("ts") | Some("tsx") => SourceLanguage::JavaScript,
+            _ => SourceLanguage::Rust, // Default to Rust
+        }
+    }
+}
+
 /// Parsed file structure stub
 #[derive(Debug, Clone)]
 pub struct ParsedFile {
     pub file_path: String,
     pub language: SourceLanguage,
     pub content: String,
+    pub tree: Option<StubTree>,
     pub custom_ast: Option<CustomAst>,
+    // Add source field to match real implementation
+    pub source: Option<String>,
 }
 
 /// Custom AST representation stub
@@ -41,6 +56,151 @@ pub enum CustomAst {
     Struct { name: String, methods: Vec<String> },
     Function { name: String, params: Vec<String> },
     Variable { name: String },
+}
+
+#[derive(Debug, Clone)]
+pub struct StubTree;
+
+impl StubTree {
+    pub fn as_ref(&self) -> Option<&Self> { None }
+    pub fn root_node(&self) -> StubNode { StubNode }
+    // Add language method for API compatibility
+    pub fn language(&self) -> StubLanguage { StubLanguage }
+}
+
+#[derive(Debug, Clone)]
+pub struct StubNode;
+
+impl StubNode {
+    pub fn kind(&self) -> &str {
+        ""
+    }
+    
+    pub fn start_byte(&self) -> usize {
+        0
+    }
+    
+    pub fn end_byte(&self) -> usize {
+        0
+    }
+    
+    pub fn start_position(&self) -> StubPoint {
+        StubPoint { row: 0, column: 0 }
+    }
+    
+    pub fn end_position(&self) -> StubPoint {
+        StubPoint { row: 0, column: 0 }
+    }
+    
+    pub fn parent(&self) -> Option<StubNode> {
+        None
+    }
+    
+    pub fn child(&self, _index: usize) -> Option<StubNode> {
+        None
+    }
+    
+    pub fn child_count(&self) -> usize {
+        0
+    }
+    
+    pub fn utf8_text<'a>(&self, _source: &'a [u8]) -> Result<&'a str, std::str::Utf8Error> {
+        Ok("")
+    }
+    
+    pub fn walk(&self) -> StubTreeCursor {
+        StubTreeCursor
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct StubPoint {
+    pub row: usize,
+    pub column: usize,
+}
+
+#[derive(Debug, Clone)]
+pub struct StubTreeCursor;
+
+impl StubTreeCursor {
+    pub fn goto_first_child(&mut self) -> bool {
+        false
+    }
+    
+    pub fn goto_next_sibling(&mut self) -> bool {
+        false
+    }
+    
+    pub fn node(&self) -> StubNode {
+        StubNode
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct StubLanguage;
+
+impl StubLanguage {
+    pub fn node_kind_for_id(&self, _id: u16) -> Option<&str> {
+        None
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct StubCapture {
+    pub index: u32,
+    pub node: StubNode,
+}
+
+#[derive(Debug, Clone)]
+pub struct StubMatch {
+    pub pattern_index: usize,
+    pub captures: Vec<StubCapture>,
+}
+
+// Re-export stub types with tree-sitter names for compatibility
+pub use StubNode as Node;
+pub use StubTree as Tree;
+
+#[derive(Debug, Clone)]
+pub struct Query;
+
+impl Query {
+    pub fn new(_lang: &StubLanguage, _pattern: &str) -> Result<Self, AstError> {
+        Err(AstError::TreeSitterDisabled)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct QueryCursor;
+
+impl QueryCursor {
+    pub fn new() -> Self {
+        QueryCursor
+    }
+
+    pub fn matches<'a>(&'a mut self, _query: &Query, _node: StubNode, _source: &[u8]) -> Vec<StubMatch> {
+        Vec::new()
+    }
+}
+
+// Re-export stub match type
+pub use StubMatch as Match;
+
+#[derive(Debug, Clone)]
+pub struct Parser;
+
+impl Parser {
+    pub fn new() -> Result<Self, AstError> {
+        Err(AstError::TreeSitterDisabled)
+    }
+
+    pub fn set_language(&mut self, _language: ()) -> Result<(), AstError> {
+        Err(AstError::TreeSitterDisabled)
+    }
+
+    pub fn parse(&mut self, _source: &[u8], _old_tree: Option<&StubTree>) -> Result<StubTree, AstError> {
+        Err(AstError::TreeSitterDisabled)
+    }
 }
 
 /// AST error types for stub operations
@@ -63,9 +223,22 @@ impl AstParser {
     pub fn new() -> Result<Self, AstError> {
         Ok(AstParser {})
     }
+    
+    // Add parse_file method for API compatibility
+    pub fn parse_file(&self, file_path: &Path) -> Result<ParsedFile, AstError> {
+        let content = std::fs::read_to_string(file_path)?;
+        Ok(ParsedFile {
+            file_path: file_path.to_string_lossy().to_string(),
+            language: SourceLanguage::from_path(file_path),
+            content: content.clone(),
+            source: Some(content),
+            tree: None,
+            custom_ast: None,
+        })
+    }
 
     /// Add a language parser (stub - always returns error)
-    pub fn add_language(&mut self, _lang: SourceLanguage, _parser: ()) {
+    pub fn add_language(&mut self, _lang: SourceLanguage, _parser: Parser) {
         // No-op in stub implementation
     }
 
@@ -81,6 +254,8 @@ impl AstParser {
             file_path: file_path.to_string_lossy().to_string(),
             language,
             content: content.to_string(),
+            source: Some(content.to_string()),
+            tree: None,
             custom_ast: None,
         })
     }

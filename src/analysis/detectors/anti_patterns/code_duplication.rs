@@ -16,14 +16,12 @@
 //! - Provides configurable similarity thresholds
 
 use crate::analysis::{AnalysisDetector, AnalysisError};
-use crate::ast::tree_sitter::{ParsedFile, SourceLanguage};
+use crate::ast::tree_sitter::{ParsedFile, SourceLanguage, Query, QueryCursor};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use log::{debug, info};
 use sha2::{Digest, Sha256};
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
-#[cfg(feature = "tree-sitter")]
-use tree_sitter::{Query, QueryCursor};
 
 /// Represents a contiguous block of code extracted for duplication analysis.
 ///

@@ -22,12 +22,10 @@
 //! - **JavaScript**: Functions, classes, variables, exports
 
 use crate::analysis::{AnalysisDetector, AnalysisError};
-use crate::ast::tree_sitter::{ParsedFile, SourceLanguage};
+use crate::ast::tree_sitter::{ParsedFile, SourceLanguage, Query, QueryCursor};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use log::{debug, info};
 use std::collections::HashSet;
-#[cfg(feature = "tree-sitter")]
-use tree_sitter::{Query, QueryCursor};
 
 /// Represents a symbol (e.g., function, variable, class) identified in the source code.
 ///
@@ -444,7 +442,7 @@ impl DeadCodeDetector {
     }
 
     /// Check if a Rust symbol is exported (pub)
-    fn is_rust_symbol_exported(&self, node: &tree_sitter::Node, source: &[u8]) -> bool {
+    fn is_rust_symbol_exported(&self, node: &crate::ast::tree_sitter::Node, source: &[u8]) -> bool {
         // The node we get is the identifier, we need to check the function_item parent
         let mut current = node.parent();
         while let Some(parent) = current {
@@ -474,7 +472,7 @@ impl DeadCodeDetector {
     }
 
     /// Check if a JavaScript symbol is exported
-    fn is_javascript_symbol_exported(&self, node: &tree_sitter::Node, source: &[u8]) -> bool {
+    fn is_javascript_symbol_exported(&self, node: &crate::ast::tree_sitter::Node, source: &[u8]) -> bool {
         // Look for export keyword or module.exports
         let mut current = node.parent();
         while let Some(parent) = current {
@@ -533,7 +531,7 @@ impl DeadCodeDetector {
     }
 
     /// Extract a code snippet around a node
-    fn extract_code_snippet(&self, node: &tree_sitter::Node, source: &[u8], context_lines: usize) -> String {
+    fn extract_code_snippet(&self, node: &crate::ast::tree_sitter::Node, source: &[u8], context_lines: usize) -> String {
         let start_byte = node.start_byte();
         let end_byte = node.end_byte();
         

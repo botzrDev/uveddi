@@ -52,8 +52,6 @@ impl AstCache {
     pub fn get(&mut self, _path: &Path) -> Option<()> {
         None
     }
-        None
-    }
 
     #[cfg(feature = "tree-sitter")]
     pub fn store(&mut self, path: &Path, tree: Tree) {

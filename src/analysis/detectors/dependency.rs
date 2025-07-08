@@ -6,9 +6,20 @@ use tree_sitter::{Query, QueryCursor};
 
 use crate::ast::tree_sitter::{
     queries::{JAVASCRIPT_IMPORTS_QUERY, PYTHON_IMPORTS_QUERY, RUST_IMPORTS_QUERY},
-    AstParser, ParsedFile, SourceLanguage,
+    AstParser, ParsedFile, SourceLanguage, AstError,
 };
 pub use crate::database::models::{Dependency, DependencyType};
+
+/// Errors that can occur during dependency extraction
+#[derive(Debug, thiserror::Error)]
+pub enum ExtractionError {
+    #[error("AST parsing error: {0}")]
+    AstError(#[from] AstError),
+    #[error("IO error for path {0}: {1}")]
+    IoError(PathBuf, #[source] std::io::Error),
+    #[error("Query compilation error: {0}")]
+    QueryError(String),
+}
 
 /// Extracts dependencies from source code files using Abstract Syntax Tree (AST) parsing.
 ///
@@ -83,7 +94,9 @@ impl DependencyExtractor {
         &self,
         parsed_file: &ParsedFile,
     ) -> Result<Vec<Dependency>, ExtractionError> {
-        let (query_str, dependency_type) = match parsed_file.language {
+        #[cfg(feature = "tree-sitter")]
+        {
+            let (query_str, dependency_type) = match parsed_file.language {
             SourceLanguage::Rust => (RUST_IMPORTS_QUERY, DependencyType::Use),
             SourceLanguage::Python => (PYTHON_IMPORTS_QUERY, DependencyType::Import),
             SourceLanguage::JavaScript => (JAVASCRIPT_IMPORTS_QUERY, DependencyType::Import),
@@ -176,4 +189,60 @@ impl DependencyExtractor {
                     if let Some(parent) = parsed_file.path.parent() {
                         let mut path = parent.join(&module_name);
                         if !path.exists() {
-                         
+                            path.set_extension("rs");
+                        }
+                    }
+                }
+
+                dependencies.push(Dependency {
+                    from_file: parsed_file.path.to_string_lossy().to_string(),
+                    to_module: module_name,
+                    dependency_type,
+                    line_number: line_number as u32,
+                });
+            }
+            }
+
+            Ok(dependencies)
+        }
+
+        #[cfg(not(feature = "tree-sitter"))]
+        {
+            // Fallback regex-based dependency extraction
+            self.extract_with_regex(parsed_file)
+        }
+    }
+    /// Fallback dependency extraction using regex (for when tree-sitter is disabled)
+    fn extract_with_regex(&self, parsed_file: &ParsedFile) -> Result<Vec<Dependency>, ExtractionError> {
+        // Implement basic regex-based dependency extraction
+        // This is a simplified fallback - should be expanded based on language
+        let pattern = match parsed_file.language {
+            SourceLanguage::Rust => r"use\s+([\w:]+)",
+            SourceLanguage::Python => r"import\s+([\w.]+)",
+            SourceLanguage::JavaScript => r#"import\s+.*from\s+['"]([^'"]+)['"]|require\(['"]([^'"]+)['"]\)"#,
+        };
+        
+        // Create regex pattern
+        let re = regex::Regex::new(pattern).map_err(|e| ExtractionError::QueryError(e.to_string()))?;
+        let mut dependencies = Vec::new();
+
+        // Process each line
+        for (line_num, line) in parsed_file.content.lines().enumerate() {
+            if let Some(caps) = re.captures(line) {
+                // Get module name from capture group 1 or 2
+                let module_name = caps.get(1).or_else(|| caps.get(2)).map(|m| m.as_str().to_string());
+                
+                if let Some(name) = module_name {
+                    dependencies.push(Dependency {
+                        from_file: parsed_file.file_path.clone(),
+                        to_module: name,
+                        dependency_type: DependencyType::Import,
+                        line_number: (line_num + 1) as u32,
+                    });
+                }
+            }
+        }
+
+        Ok(dependencies)
+    }
+}
