@@ -1,8 +1,8 @@
 //! Mermaid.js diagram generation for code dependencies and anti-patterns
 
 use crate::models::visualization::Dependency;
-use crate::database::models::{ArchitecturalIssue, AntiPatternType};
-use std::collections::{HashMap, HashSet};
+use crate::database::models::ArchitecturalIssue;
+use std::collections::HashSet;
 
 /// Generates a Mermaid.js diagram representing code dependencies and highlights issues.
 ///
@@ -40,9 +40,9 @@ pub fn generate_mermaid_diagram(deps: &[Dependency], issues: &[ArchitecturalIssu
 
     // Highlight nodes with issues
     for issue in issues {
-        if let Some(file_id) = &issue.file_id {
-            output.push_str(&format!("    {}[\"{}\" class=\"issue\"];\n", file_id, file_id));
-        }
+        // Use file_path as the node identifier for highlighting
+        let node_id = &issue.file_path;
+        output.push_str(&format!("    \"{}\"[\"{}\" class=\"issue\"];\n", node_id, node_id));
     }
     output.push_str("classDef issue fill:#f96,stroke:#333,stroke-width:2px;\n");
     output.push_str("```\n");
@@ -53,7 +53,7 @@ pub fn generate_mermaid_diagram(deps: &[Dependency], issues: &[ArchitecturalIssu
 mod tests {
     use super::*;
     use crate::models::visualization::Dependency;
-    use crate::models::ArchitecturalIssue;
+    use crate::database::models::ArchitecturalIssue;
 
     #[test]
     fn test_generate_mermaid_diagram() {
@@ -64,7 +64,7 @@ mod tests {
                 kind: "imports".to_string(),
             },
         ];
-        let issues = vec![ArchitecturalIssue { file_id: Some("mod1".to_string()), ..Default::default() }];
+        let issues = vec![ArchitecturalIssue { file_path: "mod1".to_string(), ..Default::default() }];
         let diagram = generate_mermaid_diagram(&deps, &issues);
         assert!(diagram.contains("mod1 --> mod2"));
         assert!(diagram.contains("classDef issue"));

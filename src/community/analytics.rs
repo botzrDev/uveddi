@@ -4,9 +4,8 @@
 //! marketing and administrative purposes. Generates reports on member engagement,
 //! growth, and activity patterns.
 
-use crate::community::models::{CommunityMember, MemberActivity, MemberRole, ActivityType};
 use crate::error::UveddiError;
-use chrono::{DateTime, Utc, Duration};
+use chrono::{Utc, Duration};
 use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

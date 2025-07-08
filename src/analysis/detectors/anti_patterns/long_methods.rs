@@ -781,20 +781,7 @@ impl AnalysisDetector for LongMethodsDetector {
                         metrics.name, metrics.logical_loc, metrics.statement_count, 
                         metrics.cyclomatic_complexity, metrics.max_nesting_depth
                     )),
-                        "method_name": metrics.name,
-                        "logical_loc": metrics.logical_loc,
-                        "statement_count": metrics.statement_count,
-                        "parameter_count": metrics.parameter_count,
-                        "max_nesting_depth": metrics.max_nesting_depth,
-                        "cyclomatic_complexity": metrics.cyclomatic_complexity,
-                        "cognitive_complexity": metrics.cognitive_complexity,
-                        "method_type": metrics.method_type,
-                        "is_exported": metrics.is_exported,
-                        "severity_score": severity_score,
-                        "code_snippet": metrics.code_snippet,
-                    }).to_string()),
                 };
-                
                 issues.push(issue);
             }
         }

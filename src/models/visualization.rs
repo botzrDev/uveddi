@@ -61,6 +61,29 @@ pub enum ComponentType {
     Class,
     /// A function or method
     Function,
+    // Language-specific types
+    /// Rust struct with field info
+    RustStruct {
+        fields: Vec<FieldInfo>,
+    },
+    /// Rust module with visibility
+    RustModule {
+        is_public: bool,
+    },
+    /// Rust function with signature
+    RustFunction {
+        signature: MethodSignature,
+    },
+    /// Python class with bases and methods
+    PythonClass {
+        bases: Vec<String>,
+        methods: Vec<MethodSignature>,
+        is_abstract: bool,
+    },
+    /// JavaScript ES module with exports
+    JavaScriptEsModule {
+        exports: Vec<String>,
+    },
 }
 
 /// Represents a dependency relationship between components
@@ -268,6 +291,11 @@ impl ComponentType {
             ComponentType::Cache => "cache",
             ComponentType::Class => "class",
             ComponentType::Function => "function",
+            ComponentType::RustStruct { .. } => "rust_struct",
+            ComponentType::RustModule { .. } => "rust_module",
+            ComponentType::RustFunction { .. } => "rust_function",
+            ComponentType::PythonClass { .. } => "python_class",
+            ComponentType::JavaScriptEsModule { .. } => "js_es_module",
         }
     }
 }
@@ -282,4 +310,39 @@ impl Default for StyleConfig {
             css_classes: vec![],
         }
     }
+}
+
+/// Visibility of a field or method
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+pub enum Visibility {
+    Public,
+    Private,
+    Protected,
+}
+
+/// Information about a struct/class field
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+pub struct FieldInfo {
+    pub name: String,
+    pub field_type: String,
+    pub visibility: Visibility,
+    pub is_optional: bool,
+}
+
+/// Information about a function/method parameter
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+pub struct ParameterInfo {
+    pub name: String,
+    pub param_type: String,
+    pub is_optional: bool,
+}
+
+/// Information about a method or function signature
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+pub struct MethodSignature {
+    pub name: String,
+    pub parameters: Vec<ParameterInfo>,
+    pub return_type: Option<String>,
+    pub visibility: Visibility,
+    pub is_async: bool,
 }

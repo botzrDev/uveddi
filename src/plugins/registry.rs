@@ -5,7 +5,6 @@ use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
-    fs,
 };
 use tokio::fs as async_fs;
 

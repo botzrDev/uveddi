@@ -4,12 +4,12 @@
 //! the main analysis database. Optimized for cloud deployment and admin management.
 
 use crate::community::models::{
-    CommunityMember, MemberActivity, MemberProfile, MemberRole, MemberSession, ActivityType,
+    CommunityMember, MemberActivity, MemberProfile, MemberRole, ActivityType,
     AdminProfile, AdminPermissions, AdminLevel, DeveloperProfile, DeveloperType, 
     ApiAccessLevel, DeveloperBadge, BadgeType, RolePermissions
 };
 use crate::error::UveddiError;
-use chrono::{DateTime, Utc, Duration};
+use chrono::{DateTime, Utc};
 use rusqlite::{Connection, Result as SqlResult, Row};
 use serde_json;
 use std::collections::HashMap;

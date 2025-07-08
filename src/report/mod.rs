@@ -893,18 +893,9 @@ impl ReportGenerator {
 
             // Generate overview component diagram
             section.push_str("### System Overview\n\n");
-            match generator.generate_diagram(components, DiagramType::Component, None) {
-                Ok(overview_diagram) => {
-                    section.push_str("```mermaid\n");
-                    section.push_str(&overview_diagram.mermaid_src);
-                    section.push_str("\n```\n\n");
-                    generated_diagrams.push(overview_diagram);
-                }
-                Err(e) => {
-                    error!("Failed to generate overview diagram: {}", e);
-                    section.push_str("*Overview diagram generation failed.*\n\n");
-                }
-            }
+            // No generic generate_diagram method exists; handle as not supported for now
+            section.push_str("*Overview diagram generation not implemented.*\n\n");
+            // TODO: Implement overview diagram generation if/when supported by MermaidGenerator
         } else {
             section.push_str("*Diagram generation not available - MermaidGenerator not initialized.*\n\n");
         }
@@ -936,7 +927,25 @@ impl ReportGenerator {
             _ => DiagramType::Component,
         };
 
-        generator.generate_diagram(components, diagram_type, Some(&severity_data))
+        match diagram_type {
+            DiagramType::Class => {
+                // God Object diagram: requires god_object_components and member_counts
+                // TODO: Replace with actual logic to extract these from issues/components
+                let god_object_components = components.iter().map(|c| c.component_id).collect::<Vec<_>>();
+                let member_counts = HashMap::new();
+                generator.generate_god_object_diagram(components, &god_object_components, &member_counts)
+            }
+            DiagramType::Dependency => {
+                // Cyclic Dependencies diagram: requires cycles and cycle_edges
+                // TODO: Replace with actual logic to extract these from issues/components
+                let cycles = Vec::new();
+                let cycle_edges = Vec::new();
+                generator.generate_cyclic_dependencies_diagram(components, &cycles, &cycle_edges)
+            }
+            _ => Err(MermaidGenerationError::InvalidSpecError(
+                "Diagram type not supported in report generator".to_string(),
+            )),
+        }
     }
 
     /// Find component by file path

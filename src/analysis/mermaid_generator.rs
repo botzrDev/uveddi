@@ -5,7 +5,7 @@
 //! severity-based styling for comprehensive visualization.
 
 use crate::models::visualization::{
-    ArchitecturalComponent, DiagramMetadata, DiagramSpec, DiagramType, StyleConfig, ValidationMetrics,
+    ArchitecturalComponent, DiagramMetadata, DiagramSpec, DiagramType,
 };
 use serde_json::{json, Value};
 use std::collections::{HashMap, HashSet};

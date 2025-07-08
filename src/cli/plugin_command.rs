@@ -1,9 +1,6 @@
 //! CLI commands for WASM plugin management
 
-use crate::{
-    analysis::AnalysisEngine,
-    plugins::{PluginManifest, PluginId, WasmPluginEngine, SecurityPolicy, Permission},
-};
+use crate::plugins::{WasmPluginEngine};
 use clap::{Args, Subcommand};
 use std::path::PathBuf;
 
@@ -107,7 +104,7 @@ impl PluginCommand {
                 .map_err(|e| crate::error::UveddiError::PluginError(e.to_string()))?;
             
             // Install plugin
-            let mut engine = AnalysisEngine::new_with_plugins().await?;
+            let mut engine = WasmPluginEngine::new().await?;
             let plugin_id = engine.install_plugin(manifest.clone(), binary).await?;
             
             println!("Successfully installed plugin '{}' with ID: {}", manifest.name, plugin_id);
@@ -131,7 +128,7 @@ impl PluginCommand {
         {
             println!("Uninstalling plugin '{}'...", plugin_name);
             
-            let mut engine = AnalysisEngine::new_with_plugins().await?;
+            let mut engine = WasmPluginEngine::new().await?;
             
             // Find plugin by name
             if let Some(stats) = engine.get_plugin_registry_stats() {
@@ -182,7 +179,7 @@ impl PluginCommand {
     async fn show_plugin_stats(&self) -> Result<(), crate::error::UveddiError> {
         #[cfg(feature = "wasm-plugins")]
         {
-            let engine = AnalysisEngine::new_with_plugins().await?;
+            let engine = WasmPluginEngine::new().await?;
             
             if let Some(plugin_stats) = engine.get_plugin_stats().await {
                 println!("Plugin Statistics:");
@@ -215,7 +212,7 @@ impl PluginCommand {
     async fn monitor_plugins(&self) -> Result<(), crate::error::UveddiError> {
         #[cfg(feature = "wasm-plugins")]
         {
-            let mut engine = AnalysisEngine::new_with_plugins().await?;
+            let mut engine = WasmPluginEngine::new().await?;
             
             println!("Monitoring plugin resource usage...");
             let resource_report = engine.monitor_plugin_resources().await?;
