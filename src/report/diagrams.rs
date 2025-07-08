@@ -1,6 +1,6 @@
 //! Mermaid.js diagram generation for code dependencies and anti-patterns
 
-use crate::analysis::dependency::Dependency;
+use crate::models::visualization::Dependency;
 use crate::database::models::{ArchitecturalIssue, AntiPatternType};
 use std::collections::{HashMap, HashSet};
 
@@ -52,7 +52,7 @@ pub fn generate_mermaid_diagram(deps: &[Dependency], issues: &[ArchitecturalIssu
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::analysis::dependency::{Dependency, Node};
+    use crate::models::visualization::Dependency;
     use crate::models::ArchitecturalIssue;
 
     #[test]

@@ -757,7 +757,7 @@ impl AnalysisDetector for LongMethodsDetector {
         
         let method_metrics = self.extract_method_metrics(file)?;
         let thresholds = self.thresholds.get(&file.language)
-            .ok_or_else(|| AnalysisError::UnsupportedLanguage(file.language.to_string()))?;
+            .ok_or_else(|| AnalysisError::UnsupportedLanguage(format!("{:?}", file.language)))?;
         
         for metrics in method_metrics {
             let severity_score = self.calculate_severity_score(&metrics, thresholds);
@@ -765,23 +765,22 @@ impl AnalysisDetector for LongMethodsDetector {
             if severity_score > 25 { // Only report issues above Info level
                 let issue = ArchitecturalIssue {
                     issue_id: None,
-                    analysis_run_id: None,
+                    analysis_run_id: 0,
                     anti_pattern_type_id: 4, // Long Method ID
                     file_path: metrics.file_path.clone(),
-                    start_line: Some(metrics.start_line as i64),
-                    end_line: Some(metrics.end_line as i64),
+                    start_line: Some(metrics.start_line as i32),
+                    end_line: Some(metrics.end_line as i32),
                     severity: Self::get_severity_level(severity_score),
                     description: format!(
                         "Long method '{}' detected: {} lines, {} statements, complexity {}",
                         metrics.name, metrics.logical_loc, metrics.statement_count, metrics.cyclomatic_complexity
                     ),
-                    suggestion: Some(format!(
+                    code_snippet: Some(metrics.code_snippet.clone()),
+                    ai_explanation: Some(format!(
                         "Consider breaking down '{}' into smaller, more focused methods. Current metrics: LOC={}, Statements={}, Complexity={}, Nesting={}",
                         metrics.name, metrics.logical_loc, metrics.statement_count, 
                         metrics.cyclomatic_complexity, metrics.max_nesting_depth
                     )),
-                    confidence: Some(0.85),
-                    metadata: Some(serde_json::json!({
                         "method_name": metrics.name,
                         "logical_loc": metrics.logical_loc,
                         "statement_count": metrics.statement_count,

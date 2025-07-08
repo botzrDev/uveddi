@@ -201,16 +201,25 @@ impl ComponentExtractor {
                         if let Some(source_index) = name_to_component.get(name) {
                             let target_id = components[target_index].component_id;
                             let dependency = Dependency {
-                                target_component_id: target_id,
+                                from: crate::models::visualization::DependencyNode {
+                                    id: components[*source_index].component_id.to_string(),
+                                    name: components[*source_index].name.clone(),
+                                },
+                                to: crate::models::visualization::DependencyNode {
+                                    id: target_id.to_string(),
+                                    name: components[target_index].name.clone(),
+                                },
                                 dependency_type: DependencyType::Calls,
-                                properties: HashMap::new(),
+                                weight: Some(1.0),
+                                target_component_id: Some(target_id.to_string()),
+                                properties: Some(HashMap::new()),
                             };
                             
                             // Avoid duplicate dependencies
                             if !components[*source_index]
                                 .dependencies
                                 .iter()
-                                .any(|d| d.target_component_id == target_id)
+                                .any(|d| d.target_component_id.as_ref() == Some(&target_id.to_string()))
                             {
                                 components[*source_index].dependencies.push(dependency);
                             }
@@ -225,15 +234,24 @@ impl ComponentExtractor {
                         if let Some(source_index) = name_to_component.get(name) {
                             let target_id = components[*target_index].component_id;
                             let dependency = Dependency {
-                                target_component_id: target_id,
+                                from: crate::models::visualization::DependencyNode {
+                                    id: components[*source_index].component_id.to_string(),
+                                    name: components[*source_index].name.clone(),
+                                },
+                                to: crate::models::visualization::DependencyNode {
+                                    id: target_id.to_string(),
+                                    name: components[*target_index].name.clone(),
+                                },
                                 dependency_type: DependencyType::Calls,
-                                properties: HashMap::new(),
+                                weight: Some(1.0),
+                                target_component_id: Some(target_id.to_string()),
+                                properties: Some(HashMap::new()),
                             };
                             
                             if !components[*source_index]
                                 .dependencies
                                 .iter()
-                                .any(|d| d.target_component_id == target_id)
+                                .any(|d| d.target_component_id.as_ref() == Some(&target_id.to_string()))
                             {
                                 components[*source_index].dependencies.push(dependency);
                             }

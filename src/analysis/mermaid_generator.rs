@@ -235,22 +235,24 @@ classDef normal-component fill:#e1f5fe,stroke:#01579b,stroke-width:2px;"#,
         specs.insert(
             DiagramType::Class,
             DiagramSpec {
+                spec_id: Uuid::new_v4(),
+                anti_pattern_type_id: 1,
                 diagram_type: DiagramType::Class,
-                template_name: "class_diagram".to_string(),
-                default_layout: "TD".to_string(),
-                style_config: StyleConfig::default(),
-                template_context: Context::new(),
+                mermaid_template: "classDiagram\n{{#each components}}\n    class {{name}}\n{{/each}}".to_string(),
+                severity_styles: HashMap::new(),
+                layout: crate::models::visualization::DiagramLayout::TopDown,
             },
         );
         
         specs.insert(
             DiagramType::Graph,
             DiagramSpec {
+                spec_id: Uuid::new_v4(),
+                anti_pattern_type_id: 2,
                 diagram_type: DiagramType::Graph,
-                template_name: "dependency_graph".to_string(),
-                default_layout: "TD".to_string(),
-                style_config: StyleConfig::default(),
-                template_context: Context::new(),
+                mermaid_template: "graph TD\n{{#each components}}\n    {{id}}[{{name}}]\n{{/each}}".to_string(),
+                severity_styles: HashMap::new(),
+                layout: crate::models::visualization::DiagramLayout::TopDown,
             },
         );
         
