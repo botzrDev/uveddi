@@ -5,16 +5,24 @@ use std::pin::Pin;
 use std::time::Duration;
 use tokio::time::sleep;
 
+/// Configuration for the retry mechanism.
 #[derive(Debug, Clone)]
 pub struct RetryConfig {
+    /// The maximum number of attempts for an operation.
     pub max_attempts: u32,
+    /// The base delay between retries.
     pub base_delay: Duration,
+    /// The maximum delay between retries.
     pub max_delay: Duration,
+    /// The multiplier for exponential backoff.
     pub backoff_multiplier: f64,
+    /// The jitter factor to randomize delays.
     pub jitter_factor: f64,
-    // REPLACE: retry_on_errors: Vec<String> with:
+    /// Categories of errors that should trigger a retry.
     pub retry_on_categories: Vec<ErrorCategory>,
+    /// Severities of errors that should trigger a retry.
     pub retry_on_severities: Vec<ErrorSeverity>,
+    /// Whether to respect rate limit headers from the server.
     pub respect_rate_limits: bool,
 }
 
@@ -37,15 +45,22 @@ impl Default for RetryConfig {
     }
 }
 
+/// A client that executes operations with a configurable retry strategy.
 pub struct RetryClient {
     config: RetryConfig,
 }
 
 impl RetryClient {
+    /// Creates a new `RetryClient` with the given configuration.
     pub fn new(config: RetryConfig) -> Self {
         Self { config }
     }
 
+    /// Executes an operation with retry logic based on the client's configuration.
+    ///
+    /// The operation is a function that returns a `Future` which resolves to a `Result`.
+    /// If the operation fails with a retryable error, it will be attempted again
+    /// after a delay, until the maximum number of attempts is reached.
     pub async fn execute_with_retry<F, T>(&self, operation: F) -> Result<T, RenderingServiceError>
     where
         F: Fn() -> Pin<Box<dyn Future<Output = Result<T, RenderingServiceError>> + Send>>,
@@ -177,6 +192,11 @@ mod tests {
         let config = RetryConfig {
             max_attempts: 2,
             base_delay: Duration::from_millis(1),
+            retry_on_severities: vec![
+                ErrorSeverity::Low,
+                ErrorSeverity::Medium,
+                ErrorSeverity::High,
+            ],
             ..Default::default()
         };
         let client = RetryClient::new(config);
