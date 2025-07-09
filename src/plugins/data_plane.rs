@@ -85,7 +85,7 @@ impl AstDataPlane {
         
         if let Some(ref tree) = parsed_file.tree {
             let root_node = tree.root_node();
-            let source_bytes = parsed_file.source.as_bytes();
+            let source_bytes = parsed_file.source.as_ref().unwrap_or(&String::new()).as_bytes();
             
             fn visit_tree_sitter_node(
                 node: tree_sitter::Node,
@@ -147,7 +147,7 @@ impl AstDataPlane {
                 None,
                 &mut nodes,
                 &mut node_id,
-                &parsed_file.path.to_string_lossy(),
+                &parsed_file.file_path.to_string(),
                 &format!("{:?}", parsed_file.language),
                 0,
                 source_bytes,

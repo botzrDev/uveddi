@@ -91,7 +91,7 @@ pub struct AnalysisRun {
 /// - `"medium"`: Moderate issues that should be addressed over time  
 /// - `"high"`: Important issues that impact code quality
 /// - `"critical"`: Severe issues that require immediate attention
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct ArchitecturalIssue {
     /// Unique identifier for this issue (auto-generated)
     pub issue_id: Option<i64>,

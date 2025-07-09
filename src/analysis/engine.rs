@@ -109,7 +109,7 @@ impl AnalysisEngine {
                 Box::new(GodObjectDetector::new(5, 8)), // More sensitive thresholds
                 Box::new(CodeDuplicationDetector::new()),
                 Box::new(DeadCodeDetector::with_default_config()),
-                Box::new(LargeClassesDetector::with_default_config()),
+                Box::new(LargeClassDetector::with_default_config()),
                 Box::new(TightCouplingDetector::default()),
             ],
             cycle_detector: CycleDetector::new(),
@@ -142,7 +142,7 @@ impl AnalysisEngine {
                 Box::new(GodObjectDetector::new(5, 8)), // More sensitive thresholds
                 Box::new(CodeDuplicationDetector::new()),
                 Box::new(DeadCodeDetector::with_default_config()),
-                Box::new(LargeClassesDetector::with_default_config()),
+                Box::new(LargeClassDetector::with_default_config()),
                 Box::new(TightCouplingDetector::default()),
             ],
             cycle_detector: CycleDetector::new(),
@@ -173,7 +173,7 @@ impl AnalysisEngine {
                 Box::new(GodObjectDetector::new(5, 8)), // More sensitive thresholds
                 Box::new(CodeDuplicationDetector::new()),
                 Box::new(DeadCodeDetector::with_default_config()),
-                Box::new(LargeClassesDetector::with_default_config()),
+                Box::new(LargeClassDetector::with_default_config()),
                 Box::new(TightCouplingDetector::default()),
             ],
             cycle_detector: CycleDetector::new(),
@@ -392,8 +392,8 @@ impl AnalysisEngine {
     /// * `config` - The configuration for the large classes detector.
     pub fn configure_large_classes_detector(&mut self, config: LargeClassConfig) {
         // Remove the old detector and add the new one
-        self.detectors.retain(|d| d.get_detector_name() != "LargeClassesDetector");
-        self.detectors.push(Box::new(LargeClassesDetector::new(config)));
+        self.detectors.retain(|d| d.get_detector_name() != "LargeClassDetector");
+        self.detectors.push(Box::new(LargeClassDetector::new(config)));
     }
 
     /// Loads all available WASM plugins from the plugin directory.

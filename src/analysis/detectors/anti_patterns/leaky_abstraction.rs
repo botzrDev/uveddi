@@ -341,7 +341,7 @@ impl LeakyAbstractionDetector {
 
         "#;
 
-        let language = tree_sitter_rust::language();
+        let language = ();
         Query::new(&language, query_source)
             .map_err(|e| AnalysisError::Other(format!("Failed to create Rust query: {}", e)))
     }
@@ -379,7 +379,7 @@ impl LeakyAbstractionDetector {
                 attribute: (identifier) @method_name)) @model_call
         "#;
 
-        let language = tree_sitter_python::language();
+        let language = ();
         Query::new(&language, query_source)
             .map_err(|e| AnalysisError::Other(format!("Failed to create Python query: {}", e)))
     }
@@ -410,7 +410,7 @@ impl LeakyAbstractionDetector {
             ; NOTE: TypeScript-specific, not available in plain JavaScript Tree-sitter
         "#;
 
-        let language = tree_sitter_javascript::language();
+        let language = ();
         Query::new(&language, query_source)
             .map_err(|e| AnalysisError::Other(format!("Failed to create JS query: {}", e)))
     }
@@ -540,7 +540,7 @@ impl LeakyAbstractionDetector {
         if let Some(query) = &self.rust_queries {
             let tree = parsed_file.tree.as_ref().ok_or_else(|| AnalysisError::Other("No AST available".to_string()))?;
             let mut cursor = QueryCursor::new();
-            let captures = cursor.captures(query, tree.root_node(), parsed_file.source.as_bytes());
+            let captures = cursor.captures(query, tree.root_node(), parsed_file.source.as_ref().unwrap_or(&String::new()).as_bytes());
 
             for (match_, _) in captures {
                 for capture in match_.captures {
@@ -550,15 +550,15 @@ impl LeakyAbstractionDetector {
                     match capture_name {
                         "use_stmt" => {
                             // Analyze the entire use declaration
-                            if let Ok(use_text) = node.utf8_text(parsed_file.source.as_bytes()) {
+                            if let Ok(use_text) = node.utf8_text(parsed_file.source.as_ref().unwrap_or(&String::new()).as_bytes()) {
                                 // Extract module name from use statement text
                                 if let Some(module_name) = self.extract_module_from_use_statement(use_text) {
                                     if self.is_infrastructure_module(&module_name) {
-                                        let layer = self.get_layer_from_path(&parsed_file.path.to_string_lossy());
+                                        let layer = self.get_layer_from_path(&parsed_file.file_path.to_string());
                                         if matches!(layer, Some(ArchitecturalLayer::Domain) | Some(ArchitecturalLayer::Application)) {
                                             issues.push(self.create_issue(
                                                 analysis_run_id,
-                                                &parsed_file.path.to_string_lossy(),
+                                                &parsed_file.file_path.to_string(),
                                                 node,
                                                 LeakType::FrameworkCoupling,
                                                 &format!("Infrastructure module '{}' imported in {} layer", module_name, layer.map(|l| format!("{:?}", l)).unwrap_or_else(|| "unknown".to_string())),
@@ -569,7 +569,7 @@ impl LeakyAbstractionDetector {
                                     if self.is_internal_module(&module_name) {
                                         issues.push(self.create_issue(
                                             analysis_run_id,
-                                            &parsed_file.path.to_string_lossy(),
+                                            &parsed_file.file_path.to_string(),
                                             node,
                                             LeakType::VisibilityViolation,
                                             &format!("Direct import of internal module '{}'", module_name),
@@ -580,14 +580,14 @@ impl LeakyAbstractionDetector {
                             }
                         }
                         "field_vis" => {
-                            if let Ok(vis_text) = node.utf8_text(parsed_file.source.as_bytes()) {
+                            if let Ok(vis_text) = node.utf8_text(parsed_file.source.as_ref().unwrap_or(&String::new()).as_bytes()) {
                                 if vis_text == "pub" {
                                     // Check if this is exposing internal structure
                                     if let Some(parent) = node.parent() {
                                         if let Some(_struct_node) = parent.parent() {
                                             issues.push(self.create_issue(
                                                 analysis_run_id,
-                                                &parsed_file.path.to_string_lossy(),
+                                                &parsed_file.file_path.to_string(),
                                                 node,
                                                 LeakType::ImplementationExposure,
                                                 "Public field exposes internal structure - consider using getter methods",
@@ -600,17 +600,17 @@ impl LeakyAbstractionDetector {
                         }
                         "fn_vis" => {
                             // Check if this is a public function
-                            if let Ok(vis_text) = node.utf8_text(parsed_file.source.as_bytes()) {
+                            if let Ok(vis_text) = node.utf8_text(parsed_file.source.as_ref().unwrap_or(&String::new()).as_bytes()) {
                                 if vis_text == "pub" {
                                     // Look for the corresponding return type in the same match
                                     for other_capture in match_.captures {
                                         if query.capture_names()[other_capture.index as usize] == "return_type" {
-                                            if let Ok(return_type_text) = other_capture.node.utf8_text(parsed_file.source.as_bytes()) {
+                                            if let Ok(return_type_text) = other_capture.node.utf8_text(parsed_file.source.as_ref().unwrap_or(&String::new()).as_bytes()) {
                                                 // Check if return type contains infrastructure error types
                                                 if self.is_infrastructure_error_type(return_type_text) {
                                                     issues.push(self.create_issue(
                                                         analysis_run_id,
-                                                        &parsed_file.path.to_string_lossy(),
+                                                        &parsed_file.file_path.to_string(),
                                                         other_capture.node,
                                                         LeakType::ErrorPropagation,
                                                         &format!("Infrastructure error type '{}' propagated to public API", return_type_text),
@@ -641,17 +641,17 @@ impl LeakyAbstractionDetector {
         let mut issues = Vec::new();
         
         // Check architectural layer violations
-        let file_path_str = parsed_file.path.to_string_lossy();
+        let file_path_str = parsed_file.file_path.to_string();
         if let Some(current_layer) = self.get_layer_from_path(&file_path_str) {
             
             if let Some(query) = &self.python_queries {
                 if let Some(tree) = &parsed_file.tree {
                     let mut cursor = QueryCursor::new();
-                    let matches = cursor.matches(query, tree.root_node(), parsed_file.source.as_bytes());
+                    let matches = cursor.matches(query, tree.root_node(), parsed_file.source.as_ref().unwrap_or(&String::new()).as_bytes());
                     
                     for query_match in matches {
                         for capture in query_match.captures {
-                            let capture_text = capture.node.utf8_text(parsed_file.source.as_bytes()).unwrap_or("");
+                            let capture_text = capture.node.utf8_text(parsed_file.source.as_ref().unwrap_or(&String::new()).as_bytes()).unwrap_or("");
                             
                             // Extract module name from Python import
                             if let Some(module_name) = self.extract_python_import_module(capture_text) {
@@ -662,7 +662,7 @@ impl LeakyAbstractionDetector {
                                             issue_id: None,
                                             analysis_run_id,
                                             anti_pattern_type_id: 1, // TODO: proper mapping
-                                            file_path: parsed_file.path.to_string_lossy().to_string(),
+                                            file_path: parsed_file.file_path.to_string().to_string(),
                                             start_line: Some(capture.node.start_position().row as i32 + 1),
                                             end_line: Some(capture.node.end_position().row as i32 + 1),
                                             severity: "high".to_string(),
@@ -704,7 +704,7 @@ impl LeakyAbstractionDetector {
         if let Some(query) = &self.js_queries {
             let tree = parsed_file.tree.as_ref().ok_or_else(|| AnalysisError::Other("No AST available".to_string()))?;
             let mut cursor = QueryCursor::new();
-            let captures = cursor.captures(query, tree.root_node(), parsed_file.source.as_bytes());
+            let captures = cursor.captures(query, tree.root_node(), parsed_file.source.as_ref().unwrap_or(&String::new()).as_bytes());
 
             for (match_, _) in captures {
                 for capture in match_.captures {
@@ -713,14 +713,14 @@ impl LeakyAbstractionDetector {
                     
                     match capture_name {
                         "import_source" => {
-                            if let Ok(import_text) = node.utf8_text(parsed_file.source.as_bytes()) {
+                            if let Ok(import_text) = node.utf8_text(parsed_file.source.as_ref().unwrap_or(&String::new()).as_bytes()) {
                                 let module_name = import_text.trim_matches('"').trim_matches('\'');
                                 if self.is_infrastructure_module(module_name) {
-                                    let layer = self.get_layer_from_path(&parsed_file.path.to_string_lossy());
+                                    let layer = self.get_layer_from_path(&parsed_file.file_path.to_string());
                                     if matches!(layer, Some(ArchitecturalLayer::Domain) | Some(ArchitecturalLayer::Application)) {
                                         issues.push(self.create_issue(
                                             analysis_run_id,
-                                            &parsed_file.path.to_string_lossy(),
+                                            &parsed_file.file_path.to_string(),
                                             node,
                                             LeakType::FrameworkCoupling,
                                             &format!("Infrastructure module '{}' imported in {} layer", module_name, layer.map(|l| format!("{:?}", l)).unwrap_or_else(|| "unknown".to_string())),
@@ -731,7 +731,7 @@ impl LeakyAbstractionDetector {
                                 if self.is_internal_module(module_name) {
                                     issues.push(self.create_issue(
                                         analysis_run_id,
-                                        &parsed_file.path.to_string_lossy(),
+                                        &parsed_file.file_path.to_string(),
                                         node,
                                         LeakType::VisibilityViolation,
                                         &format!("Direct import of internal module '{}'", module_name),
@@ -741,13 +741,13 @@ impl LeakyAbstractionDetector {
                             }
                         }
                         "dom_object" => {
-                            if let Ok(dom_text) = node.utf8_text(parsed_file.source.as_bytes()) {
+                            if let Ok(dom_text) = node.utf8_text(parsed_file.source.as_ref().unwrap_or(&String::new()).as_bytes()) {
                                 if dom_text == "document" || dom_text == "window" {
-                                    let layer = self.get_layer_from_path(&parsed_file.path.to_string_lossy());
+                                    let layer = self.get_layer_from_path(&parsed_file.file_path.to_string());
                                     if matches!(layer, Some(ArchitecturalLayer::Domain) | Some(ArchitecturalLayer::Application)) {
                                         issues.push(self.create_issue(
                                             analysis_run_id,
-                                            &parsed_file.path.to_string_lossy(),
+                                            &parsed_file.file_path.to_string(),
                                             node,
                                             LeakType::FrameworkCoupling,
                                             "DOM manipulation in business logic - move to presentation layer",

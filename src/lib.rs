@@ -59,4 +59,5 @@ pub mod ingestion;
 pub mod models;
 pub mod plugins;
 pub mod report;
+pub mod resilience;
 pub mod semantic_search;

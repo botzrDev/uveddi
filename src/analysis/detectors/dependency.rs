@@ -120,7 +120,7 @@ impl DependencyExtractor {
                 .as_ref()
                 .expect("AST tree missing")
                 .root_node(),
-            parsed_file.source.as_bytes(),
+            parsed_file.source.as_ref().unwrap_or(&String::new()).as_bytes(),
         );
 
         let mut dependencies = Vec::new();
@@ -135,7 +135,7 @@ impl DependencyExtractor {
                 let node = capture.node;
                 let line_number = node.start_position().row + 1;
                 let mut module_name = node
-                    .utf8_text(parsed_file.source.as_bytes())
+                    .utf8_text(parsed_file.source.as_ref().unwrap_or(&String::new()).as_bytes())
                     .unwrap_or("")
                     .to_string();
 
@@ -143,7 +143,7 @@ impl DependencyExtractor {
                 if parsed_file.language == SourceLanguage::Rust
                     && dependency_type == DependencyType::Use
                 {
-                    let mut potential_path = parsed_file.path.parent().unwrap().join(&module_name);
+                    let mut potential_path = parsed_file.file_path.parent().unwrap().join(&module_name);
                     if !potential_path.exists() {
                         potential_path.set_extension("rs");
                         if !potential_path.exists() {
@@ -186,7 +186,7 @@ impl DependencyExtractor {
                 }
 
                 if let SourceLanguage::Rust = parsed_file.language {
-                    if let Some(parent) = parsed_file.path.parent() {
+                    if let Some(parent) = parsed_file.file_path.parent() {
                         let mut path = parent.join(&module_name);
                         if !path.exists() {
                             path.set_extension("rs");
@@ -195,7 +195,7 @@ impl DependencyExtractor {
                 }
 
                 dependencies.push(Dependency {
-                    from_file: parsed_file.path.to_string_lossy().to_string(),
+                    from_file: parsed_file.file_path.to_string().to_string(),
                     to_module: module_name,
                     dependency_type,
                     line_number: line_number as u32,
@@ -234,10 +234,10 @@ impl DependencyExtractor {
                 
                 if let Some(name) = module_name {
                     dependencies.push(Dependency {
-                        from_file: parsed_file.file_path.clone(),
+                        from_file: std::path::PathBuf::from(parsed_file.file_path.clone()),
                         to_module: name,
                         dependency_type: DependencyType::Import,
-                        line_number: (line_num + 1) as u32,
+                        line_number: Some((line_num + 1) as u32),
                     });
                 }
             }

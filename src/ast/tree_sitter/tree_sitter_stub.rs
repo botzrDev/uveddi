@@ -17,8 +17,18 @@ pub struct Query;
 pub struct QueryCursor;
 
 /// Stub for tree_sitter::Node
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct Node;
+
+impl Node {
+    pub fn child_count(&self) -> usize { 0 }
+    pub fn child(&self, _index: usize) -> Option<Node> { None }
+}
+
+/// Stub for tree_sitter::TreeCursor
+#[derive(Debug, Clone)]
+pub struct TreeCursor;
+
 
 /// Stub for tree_sitter::Tree
 #[derive(Debug, Clone)]
@@ -145,6 +155,44 @@ impl Node {
     
     pub fn child_by_field_name(&self, _name: &str) -> Option<Node> {
         None
+    }
+
+    pub fn walk(&self) -> TreeCursor {
+        TreeCursor
+    }
+
+    pub fn kind(&self) -> &str {
+        "unknown"
+    }
+
+    pub fn start_byte(&self) -> usize {
+        0
+    }
+
+    pub fn end_byte(&self) -> usize {
+        0
+    }
+}
+
+impl TreeCursor {
+    pub fn node(&self) -> Node {
+        Node
+    }
+
+    pub fn goto_first_child(&mut self) -> bool {
+        false
+    }
+
+    pub fn goto_next_sibling(&mut self) -> bool {
+        false
+    }
+
+    pub fn goto_parent(&mut self) -> bool {
+        false
+    }
+
+    pub fn goto_previous_sibling(&mut self) -> bool {
+        false
     }
 }
 

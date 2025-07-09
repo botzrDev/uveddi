@@ -185,7 +185,9 @@ impl DeadCodeDetector {
     /// Uses `tree-sitter` queries to find functions, structs, enums, and constants.
     fn extract_rust_symbols(&self, parsed_file: &ParsedFile) -> Result<Vec<Symbol>, AnalysisError> {
         let mut symbols = Vec::new();
-        let source = parsed_file.source.as_bytes();
+        let source = parsed_file.source.as_ref()
+            .ok_or_else(|| AnalysisError::AntiPatternDetection("Source code missing".to_string()))?
+            .as_bytes();
         let tree = parsed_file
             .tree
             .as_ref()
@@ -207,7 +209,7 @@ impl DeadCodeDetector {
                     symbols.push(Symbol {
                         name: name.to_string(),
                         symbol_type: SymbolType::Function,
-                        file_path: parsed_file.path.to_string_lossy().to_string(),
+                        file_path: parsed_file.file_path.to_string().to_string(),
                         line_number: (name_node.start_position().row + 1) as u32,
                         is_exported,
                         is_live: false,
@@ -233,7 +235,7 @@ impl DeadCodeDetector {
                     symbols.push(Symbol {
                         name: name.to_string(),
                         symbol_type: SymbolType::Struct,
-                        file_path: parsed_file.path.to_string_lossy().to_string(),
+                        file_path: parsed_file.file_path.to_string().to_string(),
                         line_number: (name_node.start_position().row + 1) as u32,
                         is_exported,
                         is_live: false,
@@ -252,7 +254,7 @@ impl DeadCodeDetector {
     /// Uses `tree-sitter` queries to find function and class definitions.
     fn extract_python_symbols(&self, parsed_file: &ParsedFile) -> Result<Vec<Symbol>, AnalysisError> {
         let mut symbols = Vec::new();
-        let source = parsed_file.source.as_bytes();
+        let source = parsed_file.source.as_ref().unwrap_or(&String::new()).as_bytes();
         let tree = parsed_file
             .tree
             .as_ref()
@@ -270,12 +272,12 @@ impl DeadCodeDetector {
                 if let Ok(name) = name_node.utf8_text(source) {
                     let is_exported = !name.starts_with('_');
                     let code_snippet = self.extract_code_snippet(&name_node, source, 3);
-                    let confidence = self.calculate_python_confidence(name, &parsed_file.path);
+                    let confidence = self.calculate_python_confidence(name, std::path::Path::new(&parsed_file.file_path));
                     
                     symbols.push(Symbol {
                         name: name.to_string(),
                         symbol_type: SymbolType::Function,
-                        file_path: parsed_file.path.to_string_lossy().to_string(),
+                        file_path: parsed_file.file_path.to_string().to_string(),
                         line_number: (name_node.start_position().row + 1) as u32,
                         is_exported,
                         is_live: false,
@@ -297,12 +299,12 @@ impl DeadCodeDetector {
                 if let Ok(name) = name_node.utf8_text(source) {
                     let is_exported = !name.starts_with('_');
                     let code_snippet = self.extract_code_snippet(&name_node, source, 3);
-                    let confidence = self.calculate_python_confidence(name, &parsed_file.path);
+                    let confidence = self.calculate_python_confidence(name, std::path::Path::new(&parsed_file.file_path));
                     
                     symbols.push(Symbol {
                         name: name.to_string(),
                         symbol_type: SymbolType::Class,
-                        file_path: parsed_file.path.to_string_lossy().to_string(),
+                        file_path: parsed_file.file_path.to_string().to_string(),
                         line_number: (name_node.start_position().row + 1) as u32,
                         is_exported,
                         is_live: false,
@@ -321,7 +323,7 @@ impl DeadCodeDetector {
     /// Uses `tree-sitter` queries to find function and class definitions.
     fn extract_javascript_symbols(&self, parsed_file: &ParsedFile) -> Result<Vec<Symbol>, AnalysisError> {
         let mut symbols = Vec::new();
-        let source = parsed_file.source.as_bytes();
+        let source = parsed_file.source.as_ref().unwrap_or(&String::new()).as_bytes();
         let tree = parsed_file
             .tree
             .as_ref()
@@ -339,12 +341,12 @@ impl DeadCodeDetector {
                 if let Ok(name) = name_node.utf8_text(source) {
                     let is_exported = self.is_javascript_symbol_exported(&name_node, source);
                     let code_snippet = self.extract_code_snippet(&name_node, source, 3);
-                    let confidence = self.calculate_javascript_confidence(name, &parsed_file.path);
+                    let confidence = self.calculate_javascript_confidence(name, std::path::Path::new(&parsed_file.file_path));
                     
                     symbols.push(Symbol {
                         name: name.to_string(),
                         symbol_type: SymbolType::Function,
-                        file_path: parsed_file.path.to_string_lossy().to_string(),
+                        file_path: parsed_file.file_path.to_string().to_string(),
                         line_number: (name_node.start_position().row + 1) as u32,
                         is_exported,
                         is_live: false,
@@ -363,7 +365,7 @@ impl DeadCodeDetector {
     /// Uses `tree-sitter` queries to find all function and variable usages.
     fn extract_rust_references(&self, parsed_file: &ParsedFile) -> Result<HashSet<String>, AnalysisError> {
         let mut references = HashSet::new();
-        let source = parsed_file.source.as_bytes();
+        let source = parsed_file.source.as_ref().unwrap_or(&String::new()).as_bytes();
         let tree = parsed_file
             .tree
             .as_ref()
@@ -390,7 +392,7 @@ impl DeadCodeDetector {
     /// Extracts references (calls, usages) to symbols in a Python source file.
     fn extract_python_references(&self, parsed_file: &ParsedFile) -> Result<HashSet<String>, AnalysisError> {
         let mut references = HashSet::new();
-        let source = parsed_file.source.as_bytes();
+        let source = parsed_file.source.as_ref().unwrap_or(&String::new()).as_bytes();
         let tree = parsed_file
             .tree
             .as_ref()
@@ -417,7 +419,7 @@ impl DeadCodeDetector {
     /// Extracts references (calls, usages) to symbols in a JavaScript source file.
     fn extract_javascript_references(&self, parsed_file: &ParsedFile) -> Result<HashSet<String>, AnalysisError> {
         let mut references = HashSet::new();
-        let source = parsed_file.source.as_bytes();
+        let source = parsed_file.source.as_ref().unwrap_or(&String::new()).as_bytes();
         let tree = parsed_file
             .tree
             .as_ref()
@@ -572,7 +574,7 @@ impl AnalysisDetector for DeadCodeDetector {
     fn detect_issues(&self, parsed_file: &ParsedFile) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         debug!(
             "Running Dead Code detection on: {}",
-            parsed_file.path.display()
+            parsed_file.file_path
         );
 
         // For single-file analysis, we can only detect obvious cases
@@ -634,13 +636,13 @@ impl AnalysisDetector for DeadCodeDetector {
         if issues.is_empty() {
             debug!(
                 "No dead code issues found in {}",
-                parsed_file.path.display()
+                parsed_file.file_path
             );
         } else {
             info!(
                 "Found {} potential dead code issues in {}",
                 issues.len(),
-                parsed_file.path.display()
+                parsed_file.file_path
             );
         }
 

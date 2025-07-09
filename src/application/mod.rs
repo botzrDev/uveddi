@@ -338,28 +338,30 @@ impl AnalysisOrchestrator {
             // Apply custom thresholds if provided
             if let Some(max_loc) = config.large_classes_max_loc {
                 // Update all language thresholds with the custom value
-                for threshold in large_classes_config.language_thresholds.values_mut() {
-                    threshold.max_logical_loc = max_loc;
-                }
+                large_classes_config.rust_thresholds.max_logical_loc = max_loc;
+                large_classes_config.python_thresholds.max_logical_loc = max_loc;
+                large_classes_config.javascript_thresholds.max_logical_loc = max_loc;
             }
             
             if let Some(max_methods) = config.large_classes_max_methods {
-                for threshold in large_classes_config.language_thresholds.values_mut() {
-                    threshold.max_methods = max_methods;
-                }
+                large_classes_config.rust_thresholds.max_methods = max_methods;
+                large_classes_config.python_thresholds.max_methods = max_methods;
+                large_classes_config.javascript_thresholds.max_methods = max_methods;
             }
             
             if let Some(max_fields) = config.large_classes_max_fields {
-                for threshold in large_classes_config.language_thresholds.values_mut() {
-                    threshold.max_fields = max_fields;
-                }
+                large_classes_config.rust_thresholds.max_fields = max_fields;
+                large_classes_config.python_thresholds.max_fields = max_fields;
+                large_classes_config.javascript_thresholds.max_fields = max_fields;
             }
             
             if let Some(max_complexity) = config.large_classes_max_complexity {
-                for threshold in large_classes_config.language_thresholds.values_mut() {
-                    threshold.max_cyclomatic_complexity = max_complexity;
-                    threshold.max_cognitive_complexity = max_complexity;
-                }
+                large_classes_config.rust_thresholds.max_cyclomatic_complexity = max_complexity;
+                large_classes_config.python_thresholds.max_cyclomatic_complexity = max_complexity;
+                large_classes_config.javascript_thresholds.max_cyclomatic_complexity = max_complexity;
+                large_classes_config.rust_thresholds.max_cognitive_complexity = max_complexity;
+                large_classes_config.python_thresholds.max_cognitive_complexity = max_complexity;
+                large_classes_config.javascript_thresholds.max_cognitive_complexity = max_complexity;
             }
             
             if let Some(max_lcom) = config.large_classes_max_lcom {
@@ -368,23 +370,24 @@ impl AnalysisOrchestrator {
                         "Large classes LCOM score must be between 0.0 and 1.0".to_string()
                     ));
                 }
-                for threshold in large_classes_config.language_thresholds.values_mut() {
-                    threshold.max_lcom_score = max_lcom;
-                }
+                large_classes_config.rust_thresholds.max_lcom_score = max_lcom;
+                large_classes_config.python_thresholds.max_lcom_score = max_lcom;
+                large_classes_config.javascript_thresholds.max_lcom_score = max_lcom;
             }
             
-            if let Some(ref patterns) = config.large_classes_ignore_patterns {
-                large_classes_config.ignore_patterns = patterns.clone();
-            }
+            // TODO: Add ignore_patterns and min_severity_score fields to LargeClassConfig
+            // if let Some(ref patterns) = config.large_classes_ignore_patterns {
+            //     large_classes_config.ignore_patterns = patterns.clone();
+            // }
             
-            if let Some(min_severity) = config.large_classes_min_severity {
-                if min_severity > 100 {
-                    return Err(UveddiError::Configuration(
-                        "Large classes minimum severity score must be between 0 and 100".to_string()
-                    ));
-                }
-                large_classes_config.min_severity_score = min_severity;
-            }
+            // if let Some(min_severity) = config.large_classes_min_severity {
+            //     if min_severity > 100 {
+            //         return Err(UveddiError::Configuration(
+            //             "Large classes minimum severity score must be between 0 and 100".to_string()
+            //         ));
+            //     }
+            //     large_classes_config.min_severity_score = min_severity;
+            // }
             
             self.analysis_engine.configure_large_classes_detector(large_classes_config);
             info!("Large classes detector configured with custom settings");

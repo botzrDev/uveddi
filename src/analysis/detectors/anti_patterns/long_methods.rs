@@ -204,7 +204,7 @@ impl LongMethodsDetector {
         #[cfg(feature = "tree-sitter")]
         {
         let mut metrics = Vec::new();
-        let source = parsed_file.source.as_bytes();
+        let source = parsed_file.source.as_ref().unwrap_or(&String::new()).as_bytes();
         let tree = parsed_file
             .tree
             .as_ref()
@@ -236,7 +236,7 @@ impl LongMethodsDetector {
 
                     metrics.push(MethodMetrics {
                         name: name.to_string(),
-                        file_path: parsed_file.path.to_string_lossy().to_string(),
+                        file_path: parsed_file.file_path.to_string().to_string(),
                         start_line: (name_node.start_position().row + 1) as u32,
                         end_line: (function_node.end_position().row + 1) as u32,
                         logical_loc,
@@ -268,7 +268,7 @@ impl LongMethodsDetector {
         #[cfg(feature = "tree-sitter")]
         {
         let mut metrics = Vec::new();
-        let source = parsed_file.source.as_bytes();
+        let source = parsed_file.source.as_ref().unwrap_or(&String::new()).as_bytes();
         let tree = parsed_file
             .tree
             .as_ref()
@@ -300,7 +300,7 @@ impl LongMethodsDetector {
 
                     metrics.push(MethodMetrics {
                         name: name.to_string(),
-                        file_path: parsed_file.path.to_string_lossy().to_string(),
+                        file_path: parsed_file.file_path.to_string().to_string(),
                         start_line: (name_node.start_position().row + 1) as u32,
                         end_line: (function_node.end_position().row + 1) as u32,
                         logical_loc,
@@ -332,7 +332,7 @@ impl LongMethodsDetector {
         #[cfg(feature = "tree-sitter")]
         {
         let mut metrics = Vec::new();
-        let source = parsed_file.source.as_bytes();
+        let source = parsed_file.source.as_ref().unwrap_or(&String::new()).as_bytes();
         let tree = parsed_file
             .tree
             .as_ref()
@@ -367,7 +367,7 @@ impl LongMethodsDetector {
 
                 metrics.push(MethodMetrics {
                     name,
-                    file_path: parsed_file.path.to_string_lossy().to_string(),
+                    file_path: parsed_file.file_path.to_string().to_string(),
                     start_line: (function_node.start_position().row + 1) as u32,
                     end_line: (function_node.end_position().row + 1) as u32,
                     logical_loc,
@@ -779,7 +779,7 @@ impl AnalysisDetector for LongMethodsDetector {
     fn detect_issues(&self, file: &ParsedFile) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         let mut issues = Vec::new();
         
-        debug!("Analyzing file: {}", file.path.display());
+        debug!("Analyzing file: {}", file.file_path);
         
         let method_metrics = self.extract_method_metrics(file)?;
         let thresholds = self.thresholds.get(&file.language)
@@ -835,13 +835,13 @@ impl AnalysisDetector for LongMethodsDetector {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ast::tree_sitter::TreeSitterParser;
+    use crate::ast::tree_sitter::AstParser;
     use std::path::PathBuf;
 
-    #[tokio::test]
-    async fn test_long_method_detection_rust() {
+    #[test]
+    fn test_long_method_detection_rust() {
         let detector = LongMethodsDetector::new();
-        let parser = TreeSitterParser::new().expect("Failed to create parser");
+        let parser = AstParser::new().expect("Failed to create parser");
         
         let rust_code = r#"
 fn very_long_function() {
@@ -878,21 +878,20 @@ fn very_long_function() {
 }
 "#;
 
-        let parsed_file = parser.parse_content(rust_code, PathBuf::from("test.rs"), SourceLanguage::Rust)
-            .await
+        let parsed_file = parser.parse_content(rust_code, &PathBuf::from("test.rs"), SourceLanguage::Rust)
             .expect("Failed to parse Rust code");
         
-        let issues = detector.analyze(&[parsed_file]).expect("Analysis failed");
+        let issues = detector.detect_issues(&parsed_file).expect("Analysis failed");
         
         assert!(!issues.is_empty(), "Should detect long method");
-        assert_eq!(issues[0].anti_pattern_type, AntiPatternType::LongMethod);
+        assert_eq!(issues[0].anti_pattern_type_id, 3); // Assuming 3 is the ID for LongMethod
         assert!(issues[0].description.contains("very_long_function"));
     }
 
-    #[tokio::test]
-    async fn test_short_method_no_detection() {
+    #[test]
+    fn test_short_method_no_detection() {
         let detector = LongMethodsDetector::new();
-        let parser = TreeSitterParser::new().expect("Failed to create parser");
+        let parser = AstParser::new().expect("Failed to create parser");
         
         let rust_code = r#"
 fn short_function() {
@@ -900,19 +899,18 @@ fn short_function() {
 }
 "#;
 
-        let parsed_file = parser.parse_content(rust_code, PathBuf::from("test.rs"), SourceLanguage::Rust)
-            .await
+        let parsed_file = parser.parse_content(rust_code, &PathBuf::from("test.rs"), SourceLanguage::Rust)
             .expect("Failed to parse Rust code");
         
-        let issues = detector.analyze(&[parsed_file]).expect("Analysis failed");
+        let issues = detector.detect_issues(&parsed_file).expect("Analysis failed");
         
         assert!(issues.is_empty(), "Should not detect short method");
     }
 
-    #[tokio::test]
-    async fn test_python_long_method_detection() {
+    #[test]
+    fn test_python_long_method_detection() {
         let detector = LongMethodsDetector::new();
-        let parser = TreeSitterParser::new().expect("Failed to create parser");
+        let parser = AstParser::new().expect("Failed to create parser");
         
         let python_code = r#"
 def very_long_function():
@@ -939,14 +937,13 @@ def very_long_function():
     print("Done")
 "#;
 
-        let parsed_file = parser.parse_content(python_code, PathBuf::from("test.py"), SourceLanguage::Python)
-            .await
+        let parsed_file = parser.parse_content(python_code, &PathBuf::from("test.py"), SourceLanguage::Python)
             .expect("Failed to parse Python code");
         
-        let issues = detector.analyze(&[parsed_file]).expect("Analysis failed");
+        let issues = detector.detect_issues(&parsed_file).expect("Analysis failed");
         
         assert!(!issues.is_empty(), "Should detect long method");
-        assert_eq!(issues[0].anti_pattern_type, AntiPatternType::LongMethod);
+        assert_eq!(issues[0].anti_pattern_type_id, 3); // Assuming 3 is the ID for LongMethod
         assert!(issues[0].description.contains("very_long_function"));
     }
 }

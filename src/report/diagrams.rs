@@ -1,5 +1,6 @@
 //! Mermaid.js diagram generation for code dependencies and anti-patterns
 
+use crate::ast::tree_sitter::Node;
 use crate::models::visualization::Dependency;
 use crate::database::models::ArchitecturalIssue;
 use std::collections::HashSet;

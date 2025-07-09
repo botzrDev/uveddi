@@ -6,12 +6,14 @@
 use crate::analysis::{AnalysisDetector, AnalysisError};
 use crate::ast::tree_sitter::{ParsedFile, SourceLanguage};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
-use log::{debug, info};
-use std::collections::HashMap;
+use log::debug;
 
-// Tree-sitter types are only available when the feature is enabled
+// Conditional imports for tree-sitter types
 #[cfg(feature = "tree-sitter")]
 use tree_sitter::{Query, QueryCursor};
+
+#[cfg(not(feature = "tree-sitter"))]
+use crate::ast::tree_sitter::{Query, QueryCursor};
 
 /// Holds the collected metrics for a single class or struct.
 #[derive(Debug, Clone)]
@@ -275,57 +277,66 @@ impl LargeClassDetector {
 }
 
 impl AnalysisDetector for LargeClassDetector {
-    fn detect(&self, parsed_files: &[ParsedFile]) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
-        let mut issues = Vec::new();
+    fn detect_issues(&self, file: &ParsedFile) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
+        let metrics = match file.language {
+            SourceLanguage::Rust => self.extract_rust_metrics(file)?,
+            SourceLanguage::Python => self.extract_python_metrics(file)?,
+            SourceLanguage::JavaScript => self.extract_javascript_metrics(file)?,
+            _ => return Ok(Vec::new()),
+        };
 
-        for parsed_file in parsed_files {
-            let metrics = match parsed_file.language {
-                SourceLanguage::Rust => self.extract_rust_metrics(parsed_file)?,
-                SourceLanguage::Python => self.extract_python_metrics(parsed_file)?,
-                SourceLanguage::JavaScript => self.extract_javascript_metrics(parsed_file)?,
+        let mut issues = Vec::new();
+        for class_metrics in metrics {
+            let thresholds = match file.language {
+                SourceLanguage::Rust => &self.config.rust_thresholds,
+                SourceLanguage::Python => &self.config.python_thresholds,
+                SourceLanguage::JavaScript => &self.config.javascript_thresholds,
                 _ => continue,
             };
 
-            for class_metrics in metrics {
-                let thresholds = match parsed_file.language {
-                    SourceLanguage::Rust => &self.config.rust_thresholds,
-                    SourceLanguage::Python => &self.config.python_thresholds,
-                    SourceLanguage::JavaScript => &self.config.javascript_thresholds,
-                    _ => continue,
+            if class_metrics.logical_loc > thresholds.max_logical_loc ||
+               class_metrics.method_count > thresholds.max_methods ||
+               class_metrics.field_count > thresholds.max_fields {
+                
+                let severity = self.calculate_severity_score(&class_metrics, thresholds);
+                
+                let issue = ArchitecturalIssue {
+                    issue_id: None,
+                    analysis_run_id: 0, // TODO: Get proper analysis run ID
+                    anti_pattern_type_id: 1, // TODO: Get proper ID for LargeClass from database
+                    file_path: class_metrics.file_path.clone(),
+                    start_line: Some(class_metrics.start_line.try_into().unwrap()),
+                    end_line: Some(class_metrics.end_line.try_into().unwrap()),
+                    severity: severity.to_string(),
+                    description: format!(
+                        "Large class '{}' detected: {} LOC, {} methods, {} fields",
+                        class_metrics.name, class_metrics.logical_loc, 
+                        class_metrics.method_count, class_metrics.field_count
+                    ),
+                    code_snippet: Some(class_metrics.code_snippet.clone()),
+                    ai_explanation: Some("Consider breaking this class into smaller, more focused classes".to_string()),
                 };
 
-                if class_metrics.logical_loc > thresholds.max_logical_loc ||
-                   class_metrics.method_count > thresholds.max_methods ||
-                   class_metrics.field_count > thresholds.max_fields {
-                    
-                    let severity = self.calculate_severity_score(&class_metrics, thresholds);
-                    
-                    let issue = ArchitecturalIssue {
-                        id: 0,
-                        anti_pattern_type: AntiPatternType::LargeClass,
-                        file_path: class_metrics.file_path.clone(),
-                        start_line: Some(class_metrics.start_line),
-                        end_line: Some(class_metrics.end_line),
-                        severity,
-                        description: format!(
-                            "Large class '{}' detected: {} LOC, {} methods, {} fields",
-                            class_metrics.name, class_metrics.logical_loc, 
-                            class_metrics.method_count, class_metrics.field_count
-                        ),
-                        suggestion: "Consider breaking this class into smaller, more focused classes".to_string(),
-                        metadata: Some(format!(
-                            "{{\"name\":\"{}\",\"loc\":{},\"methods\":{},\"fields\":{},\"lcom\":{:.2}}}",
-                            class_metrics.name, class_metrics.logical_loc, 
-                            class_metrics.method_count, class_metrics.field_count, class_metrics.lcom_score
-                        )),
-                    };
-
-                    issues.push(issue);
-                }
+                issues.push(issue);
             }
         }
 
         Ok(issues)
+    }
+
+    fn get_detector_name(&self) -> &'static str {
+        "LargeClassDetector"
+    }
+
+    fn get_anti_pattern_types(&self) -> Vec<AntiPatternType> {
+        // Return empty vector since AntiPatternType is now a struct, not an enum
+        Vec::new()
+    }
+
+    fn detect(&self, graph: &crate::analysis::graph::dependency::LocalDependencyGraph) -> Vec<ArchitecturalIssue> {
+        // For the graph-based detect method, we return empty for now
+        // This method is used for dependency-based analysis
+        Vec::new()
     }
 }
 

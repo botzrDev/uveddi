@@ -37,7 +37,7 @@ wasm-plugins = ["wasmtime", "wasmtime-wasi", "wit-bindgen"]
 
 [dependencies]
 rusqlite = { version = "0.31.0", features = ["bundled"] }
-tokio = { version = "1.37.0", features = ["full"] }  # Always needed
+tokio = { version = "1.37.0", features = ["full", "time", "macros"] }  # Always needed
 tokio-stream = { version = "0.1.15", features = ["fs"] }
 futures = "0.3"
 async-stream = "0.3"
@@ -61,6 +61,9 @@ tree-sitter-typescript = { version = "0.21.0", optional = true }
 # HTTP client for local AI (Ollama) and image rendering service
 reqwest = { version = "0.12.22", features = ["json"], optional = true }  # Make optional
 rustls = "0.23.28"  # Force newer rustls to get updated ring
+# Resilience and retry dependencies
+tracing = "0.1"
+rand = "0.8"
 # Template engine for diagram generation
 tera = "1.19.1"
 # Base64 encoding/decoding for image handling

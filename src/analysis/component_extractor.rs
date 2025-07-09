@@ -56,7 +56,7 @@ impl ComponentExtractor {
             }
             
             self.component_cache
-                .insert(parsed_file.path.clone(), components.clone());
+                .insert(parsed_file.file_path.clone().into(), components.clone());
             all_components.extend(components);
         }
 
@@ -74,7 +74,7 @@ impl ComponentExtractor {
         let mut components = Vec::new();
 
         if let Some(ref ast) = parsed_file.custom_ast {
-            components.extend(self.extract_from_ast_node(ast, &parsed_file.path)?);
+            components.extend(self.extract_from_ast_node(ast, &PathBuf::from(&parsed_file.file_path))?);
         }
 
         Ok(components)
@@ -111,7 +111,7 @@ impl ComponentExtractor {
                 };
                 components.push(component);
             }
-            CustomAst::Function { name, params } => {
+            CustomAst::Function { name, parameters } => {
                 // Create a component for the function
                 let component = ArchitecturalComponent {
                     component_id: Uuid::new_v4(),
@@ -120,14 +120,14 @@ impl ComponentExtractor {
                     component_type: ComponentType::Function,
                     dependencies: Vec::new(), // Will be resolved in second pass
                     metrics: ComponentMetrics {
-                        complexity: Some(self.estimate_complexity(params.len())),
+                        complexity: Some(self.estimate_complexity(parameters.len())),
                         ..ComponentMetrics::default()
                     },
                     group: self.infer_group_from_path(file_path),
                 };
                 components.push(component);
             }
-            CustomAst::Variable { name } => {
+            CustomAst::Variable { name, value_type } => {
                 // For variables, we might create components only for significant ones
                 // like database connections, services, etc.
                 if self.is_architectural_variable(name) {
@@ -167,7 +167,7 @@ impl ComponentExtractor {
                     ast,
                     components,
                     &name_to_component,
-                    &parsed_file.path,
+                    &PathBuf::from(&parsed_file.file_path),
                 )?;
             }
         }
@@ -227,7 +227,7 @@ impl ComponentExtractor {
                     }
                 }
             }
-            CustomAst::Function { name, params: _ } => {
+            CustomAst::Function { name, parameters: _ } => {
                 // Analyze function body for calls (simplified heuristic)
                 if let Some(target_name) = self.extract_function_call_target(name) {
                     if let Some(target_index) = name_to_component.get(&target_name) {
@@ -368,10 +368,10 @@ mod tests {
 
     fn create_test_parsed_file() -> ParsedFile {
         ParsedFile {
-            path: PathBuf::from("src/services/user.rs"),
+            file_path: "src/services/user.rs".to_string(),
             language: SourceLanguage::Rust,
             tree: None,
-            source: "".to_string(),
+            content: "".to_string(),
             custom_ast: Some(CustomAst::File {
                 items: vec![
                     CustomAst::Struct {
@@ -380,11 +380,11 @@ mod tests {
                     },
                     CustomAst::Function {
                         name: "validate_email".to_string(),
-                        params: vec!["email".to_string()],
+                        parameters: vec!["email".to_string()],
                     },
                 ],
             }),
-            modified_at: SystemTime::now(),
+            source: None,
         }
     }
 

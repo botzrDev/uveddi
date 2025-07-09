@@ -265,7 +265,7 @@ impl GodObjectDetector {
                 issue_id: None,
                 analysis_run_id: 0, // Will be set by the engine
                 anti_pattern_type_id: 1, // God Object
-                file_path: parsed_file.path.to_str().unwrap_or("").to_string(),
+                file_path: parsed_file.file_path.clone(),
                 start_line: Some((name_node.start_position().row + 1) as i32),
                 end_line: Some((name_node.end_position().row + 1) as i32),
                 severity,
@@ -275,7 +275,7 @@ impl GodObjectDetector {
                 ),
                 code_snippet: Some(
                     container_node
-                        .utf8_text(parsed_file.source.as_bytes())
+                        .utf8_text(parsed_file.source.as_ref().unwrap_or(&String::new()).as_bytes())
                         .unwrap_or("")
                         .to_string(),
                 ),
@@ -299,7 +299,7 @@ impl GodObjectDetector {
         field_query_str: &str,
     ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         let mut issues = Vec::new();
-        let source = parsed_file.source.as_bytes();
+        let source = parsed_file.source.as_ref().unwrap_or(&String::new()).as_bytes();
         let tree = parsed_file
             .tree
             .as_ref()
@@ -365,7 +365,7 @@ impl GodObjectDetector {
         parsed_file: &ParsedFile,
     ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         let mut issues = Vec::new();
-        let source = parsed_file.source.as_bytes();
+        let source = parsed_file.source.as_ref().unwrap_or(&String::new()).as_bytes();
         let tree = parsed_file
             .tree
             .as_ref()
@@ -458,7 +458,7 @@ impl AnalysisDetector for GodObjectDetector {
     ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         debug!(
             "Running God Object detection on: {}",
-            parsed_file.path.display()
+            parsed_file.file_path
         );
         let result = match parsed_file.language {
             SourceLanguage::Rust => self.analyze_rust(parsed_file),
@@ -481,20 +481,20 @@ impl AnalysisDetector for GodObjectDetector {
                 if issues.is_empty() {
                     debug!(
                         "No God Object issues found in {}",
-                        parsed_file.path.display()
+                        parsed_file.file_path
                     );
                 } else {
                     info!(
                         "Found {} God Object issues in {}",
                         issues.len(),
-                        parsed_file.path.display()
+                        parsed_file.file_path
                     );
                 }
             }
             Err(e) => {
                 debug!(
                     "Error analyzing {} for God Objects: {}",
-                    parsed_file.path.display(),
+                    parsed_file.file_path,
                     e
                 );
             }

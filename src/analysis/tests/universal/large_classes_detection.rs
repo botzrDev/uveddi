@@ -4,7 +4,7 @@
 
 #[cfg(test)]
 mod tests {
-    use crate::analysis::detectors::anti_patterns::LargeClassesDetector;
+    use crate::analysis::detectors::anti_patterns::LargeClassDetector;
     use crate::analysis::AnalysisDetector;
     use crate::ast::tree_sitter::{AstParser, SourceLanguage};
     use std::path::PathBuf;
@@ -66,7 +66,7 @@ impl LargeStruct {
             .parse_content(rust_code, &PathBuf::from("large_struct.rs"), SourceLanguage::Rust)
             .expect("Failed to parse Rust code");
 
-        let detector = LargeClassesDetector::with_default_config();
+        let detector = LargeClassDetector::with_default_config();
         let issues = detector
             .detect_issues(&parsed_file)
             .expect("Failed to detect issues");
@@ -125,7 +125,7 @@ impl SmallStruct {
             .parse_content(rust_code, &PathBuf::from("small_struct.rs"), SourceLanguage::Rust)
             .expect("Failed to parse Rust code");
 
-        let detector = LargeClassesDetector::with_default_config();
+        let detector = LargeClassDetector::with_default_config();
         let issues = detector
             .detect_issues(&parsed_file)
             .expect("Failed to detect issues");
@@ -163,7 +163,7 @@ impl TestStruct {
             .parse_content(rust_code, &PathBuf::from("test_struct.rs"), SourceLanguage::Rust)
             .expect("Failed to parse Rust code");
 
-        let detector = LargeClassesDetector::with_default_config();
+        let detector = LargeClassDetector::with_default_config();
         
         // Test logical LOC calculation (should exclude comments and blank lines)
         if let Ok(tree) = parsed_file.tree.as_ref().ok_or("No tree") {
@@ -176,10 +176,10 @@ impl TestStruct {
 
     #[test]
     fn test_severity_scoring_algorithm() {
-        use crate::analysis::detectors::anti_patterns::{LargeClassesDetector, ClassMetrics, LanguageThresholds};
+        use crate::analysis::detectors::anti_patterns::{LargeClassDetector, ClassMetrics, LanguageThresholds};
         use crate::ast::tree_sitter::SourceLanguage;
 
-        let detector = LargeClassesDetector::with_default_config();
+        let detector = LargeClassDetector::with_default_config();
         
         // Test case 1: Class just above thresholds (should be Low severity)
         let metrics_low = ClassMetrics {
@@ -291,7 +291,7 @@ impl TestStruct {
             include_metrics_detail: true,
         };
 
-        let detector = LargeClassesDetector::new(config);
+        let detector = LargeClassDetector::new(config);
         
         // Test that custom thresholds are used
         let custom_rust_thresholds = detector.config.language_thresholds.get(&SourceLanguage::Rust).unwrap();
@@ -316,7 +316,7 @@ class GeneratedTestClass:
             .parse_content(test_code, &PathBuf::from("generated_test_file.py"), SourceLanguage::Python)
             .expect("Failed to parse Python code");
 
-        let detector = LargeClassesDetector::with_default_config();
+        let detector = LargeClassDetector::with_default_config();
         let issues = detector
             .detect_issues(&parsed_file)
             .expect("Failed to detect issues");
@@ -330,7 +330,7 @@ class GeneratedTestClass:
         use crate::analysis::detectors::anti_patterns::ClassMetrics;
         use crate::ast::tree_sitter::SourceLanguage;
 
-        let detector = LargeClassesDetector::with_default_config();
+        let detector = LargeClassDetector::with_default_config();
         
         // Test exactly at threshold
         let metrics_at_threshold = ClassMetrics {
@@ -369,7 +369,7 @@ class GeneratedTestClass:
         use crate::analysis::detectors::anti_patterns::ClassMetrics;
         use crate::ast::tree_sitter::SourceLanguage;
 
-        let detector = LargeClassesDetector::with_default_config();
+        let detector = LargeClassDetector::with_default_config();
         
         let metrics = ClassMetrics {
             name: "TestClass".to_string(),
@@ -448,7 +448,7 @@ class MediumPythonClass:
             .parse_content(python_code, &PathBuf::from("medium_python.py"), SourceLanguage::Python)
             .expect("Failed to parse Python code");
 
-        let detector = LargeClassesDetector::with_default_config();
+        let detector = LargeClassDetector::with_default_config();
         let issues = detector
             .detect_issues(&parsed_file)
             .expect("Failed to detect issues");
@@ -515,7 +515,7 @@ class LargeJavaScriptClass {
             .parse_content(js_code, &PathBuf::from("large_js_class.js"), SourceLanguage::JavaScript)
             .expect("Failed to parse JavaScript code");
 
-        let detector = LargeClassesDetector::with_default_config();
+        let detector = LargeClassDetector::with_default_config();
         let issues = detector
             .detect_issues(&parsed_file)
             .expect("Failed to detect issues");
@@ -550,7 +550,7 @@ impl TestStruct {
             .parse_content(rust_code, &PathBuf::from("test.rs"), SourceLanguage::Rust)
             .expect("Failed to parse Rust code");
 
-        let detector = LargeClassesDetector::with_default_config();
+        let detector = LargeClassDetector::with_default_config();
         
         if let Ok(tree) = parsed_file.tree.as_ref().ok_or("No tree") {
             let snippet = detector.extract_code_snippet(&tree.root_node(), rust_code.as_bytes(), 5);
