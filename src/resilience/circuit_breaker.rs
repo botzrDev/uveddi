@@ -92,14 +92,13 @@ mod tests {
 
     // Create mock critical error (should open circuit)
     fn critical_error() -> RenderingServiceError {
-        RenderingServiceError::ServiceUnavailable {
-            details: "Critical failure".to_string(),
-        }
+        RenderingServiceError::ServiceUnavailable
     }
 
     // Create mock non-critical error (should not open circuit)
     fn non_critical_error() -> RenderingServiceError {
-        RenderingServiceError::InvalidInput {
+        RenderingServiceError::InvalidMermaidSyntax {
+            line: None,
             details: "Non-critical failure".to_string(),
         }
     }
