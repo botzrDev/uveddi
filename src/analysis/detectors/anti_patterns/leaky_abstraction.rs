@@ -70,11 +70,9 @@
 //! - **Optimization Notes**: Uses efficient pattern matching and caches rule evaluations
 
 use crate::analysis::{AnalysisDetector, AnalysisError};
-use crate::ast::tree_sitter::ParsedFile;
+use crate::ast::tree_sitter::{ParsedFile, Query, QueryCursor, Node};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use std::collections::{HashMap, HashSet};
-#[cfg(feature = "tree-sitter")]
-use tree_sitter::{Query, QueryCursor, Node};
 
 /// Defines the configuration for architectural layers and boundaries.
 ///
@@ -871,6 +869,14 @@ impl AnalysisDetector for LeakyAbstractionDetector {
         &self,
         parsed_file: &ParsedFile,
     ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
+        #[cfg(not(feature = "tree-sitter"))]
+        {
+            log::debug!("Tree-sitter feature not enabled, skipping leaky abstraction detection");
+            return Ok(Vec::new());
+        }
+        
+        #[cfg(feature = "tree-sitter")]
+        {
         let mut detector = self.clone();
         let language_str = match parsed_file.language {
             crate::ast::tree_sitter::SourceLanguage::Rust => "rust",
@@ -887,6 +893,7 @@ impl AnalysisDetector for LeakyAbstractionDetector {
             "python" => detector.analyze_python_file(parsed_file, analysis_run_id),
             "javascript" | "typescript" => detector.analyze_js_file(parsed_file, analysis_run_id),
             _ => Ok(vec![]),
+        }
         }
     }
 }

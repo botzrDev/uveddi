@@ -78,6 +78,7 @@ pub enum UveddiError {
 
     // === Network and External Service Errors ===
     #[error("Network error: {0}")]
+    #[cfg(feature = "ai")]
     Network(#[from] reqwest::Error),
 
     // === Validation Errors ===

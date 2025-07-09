@@ -21,7 +21,7 @@ pub use code_duplication::CodeDuplicationDetector;
 pub use cyclic_dependencies::CyclicDependenciesDetector;
 pub use dead_code::DeadCodeDetector;
 pub use god_object::GodObjectDetector;
-pub use large_classes::{LargeClassesDetector, ClassMetrics, LargeClassConfig, LanguageThresholds};
+pub use large_classes::{LargeClassDetector, ClassMetrics, LargeClassConfig, LanguageThresholds};
 pub use leaky_abstraction::LeakyAbstractionDetector;
 pub use long_methods::LongMethodsDetector;
 pub use magic_values::MagicValuesDetector;

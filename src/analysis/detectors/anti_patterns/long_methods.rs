@@ -23,12 +23,10 @@
 //! - **JavaScript**: Framework-aware thresholds for React/Node.js patterns
 
 use crate::analysis::{AnalysisDetector, AnalysisError};
-use crate::ast::tree_sitter::{ParsedFile, SourceLanguage};
+use crate::ast::tree_sitter::{ParsedFile, SourceLanguage, Query, QueryCursor, Node};
 use crate::database::models::{ArchitecturalIssue, AntiPatternType};
 use log::{debug, info};
 use std::collections::HashMap;
-#[cfg(feature = "tree-sitter")]
-use tree_sitter::{Query, QueryCursor, Node};
 
 /// Represents metrics collected for a method/function
 #[derive(Debug, Clone)]
@@ -197,6 +195,14 @@ impl LongMethodsDetector {
 
     /// Extract metrics for Rust functions
     fn extract_rust_metrics(&self, parsed_file: &ParsedFile) -> Result<Vec<MethodMetrics>, AnalysisError> {
+        #[cfg(not(feature = "tree-sitter"))]
+        {
+            log::debug!("Tree-sitter feature not enabled, skipping Rust method metrics extraction");
+            return Ok(Vec::new());
+        }
+        
+        #[cfg(feature = "tree-sitter")]
+        {
         let mut metrics = Vec::new();
         let source = parsed_file.source.as_bytes();
         let tree = parsed_file
@@ -248,10 +254,19 @@ impl LongMethodsDetector {
         }
 
         Ok(metrics)
+        }
     }
 
     /// Extract metrics for Python functions
     fn extract_python_metrics(&self, parsed_file: &ParsedFile) -> Result<Vec<MethodMetrics>, AnalysisError> {
+        #[cfg(not(feature = "tree-sitter"))]
+        {
+            log::debug!("Tree-sitter feature not enabled, skipping Python method metrics extraction");
+            return Ok(Vec::new());
+        }
+        
+        #[cfg(feature = "tree-sitter")]
+        {
         let mut metrics = Vec::new();
         let source = parsed_file.source.as_bytes();
         let tree = parsed_file
@@ -303,10 +318,19 @@ impl LongMethodsDetector {
         }
 
         Ok(metrics)
+        }
     }
 
     /// Extract metrics for JavaScript functions
     fn extract_javascript_metrics(&self, parsed_file: &ParsedFile) -> Result<Vec<MethodMetrics>, AnalysisError> {
+        #[cfg(not(feature = "tree-sitter"))]
+        {
+            log::debug!("Tree-sitter feature not enabled, skipping JavaScript method metrics extraction");
+            return Ok(Vec::new());
+        }
+        
+        #[cfg(feature = "tree-sitter")]
+        {
         let mut metrics = Vec::new();
         let source = parsed_file.source.as_bytes();
         let tree = parsed_file
@@ -360,6 +384,7 @@ impl LongMethodsDetector {
         }
 
         Ok(metrics)
+        }
     }
 
     /// Calculate logical lines of code (excluding comments and blank lines)
