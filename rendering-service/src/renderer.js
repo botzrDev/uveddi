@@ -1,7 +1,15 @@
 const workerPool = require('./worker-pool');
+const ContentAddressableCache = require('./cache');
+
+// Initialize cache with production-ready settings
+const cache = new ContentAddressableCache({
+  cacheDir: process.env.CACHE_DIR || '/tmp/uveddi-cache',
+  maxCacheSize: parseInt(process.env.MAX_CACHE_SIZE) || 1024 * 1024 * 1024, // 1GB
+  maxAge: parseInt(process.env.CACHE_MAX_AGE) || 7 * 24 * 60 * 60 * 1000 // 7 days
+});
 
 /**
- * Renders a Mermaid diagram to SVG or PNG format
+ * Renders a Mermaid diagram to SVG or PNG format with content-addressable caching
  * @param {Object} options - Rendering options
  * @param {string} options.mermaidCode - The Mermaid.js code to render
  * @param {string} options.format - Output format ('svg' or 'png')
@@ -10,6 +18,28 @@ const workerPool = require('./worker-pool');
  * @returns {Object} Rendered diagram data and metadata
  */
 async function renderDiagram({ mermaidCode, format = 'svg', width = 1200, height = 800 }) {
+  const startTime = Date.now();
+  
+  // Generate content-addressable cache key
+  const cacheKey = cache.generateCacheKey(mermaidCode, format, width, height);
+  
+  // Check cache first (Layer 1: Hot Cache)
+  const cachedResult = await cache.get(cacheKey);
+  if (cachedResult) {
+    console.log(`Cache HIT for key: ${cacheKey.substring(0, 8)}... (${Date.now() - startTime}ms)`);
+    return {
+      ...cachedResult,
+      metadata: {
+        ...cachedResult.metadata,
+        render_time_ms: Date.now() - startTime,
+        cache_status: 'hit'
+      }
+    };
+  }
+  
+  console.log(`Cache MISS for key: ${cacheKey.substring(0, 8)}... - rendering...`);
+  
+  // Cache miss - perform actual rendering
   const worker = await workerPool.getWorker();
   
   try {
@@ -84,11 +114,25 @@ async function renderDiagram({ mermaidCode, format = 'svg', width = 1200, height
       throw new Error(`Unsupported format: ${format}`);
     }
     
-    return {
+    const result = {
       format,
       data,
-      dimensions: actualDimensions || { width, height }
+      dimensions: actualDimensions || { width, height },
+      metadata: {
+        render_time_ms: Date.now() - startTime,
+        cache_status: 'miss',
+        cache_key: cacheKey
+      }
     };
+    
+    // Store in cache asynchronously (don't wait for completion)
+    cache.set(cacheKey, result).catch(error => {
+      console.error('Cache storage error:', error);
+    });
+    
+    console.log(`Rendered and cached key: ${cacheKey.substring(0, 8)}... (${result.metadata.render_time_ms}ms)`);
+    
+    return result;
     
   } finally {
     workerPool.releaseWorker(worker);
@@ -124,6 +168,22 @@ async function validateDiagram(mermaidCode) {
 }
 
 /**
+ * Get cache statistics for monitoring
+ * @returns {Object} Cache performance metrics
+ */
+function getCacheStats() {
+  return cache.getStats();
+}
+
+/**
+ * Clear cache (for maintenance/testing)
+ * @returns {Promise<void>}
+ */
+async function clearCache() {
+  return cache.clear();
+}
+
+/**
  * Get supported diagram types and features
  * @returns {Object} Capabilities information
  */
@@ -147,12 +207,19 @@ function getCapabilities() {
     max_viewport_width: 4096,
     max_viewport_height: 4096,
     max_diagram_complexity: 1000,
-    version: '1.0.0'
+    version: '1.0.0',
+    caching: {
+      enabled: true,
+      strategy: 'content-addressable',
+      hash_algorithm: 'sha256'
+    }
   };
 }
 
 module.exports = {
   renderDiagram,
   validateDiagram,
-  getCapabilities
+  getCapabilities,
+  getCacheStats,
+  clearCache
 };

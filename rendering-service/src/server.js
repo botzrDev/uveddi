@@ -14,13 +14,41 @@ app.use(cors());
 app.use(morgan('combined'));
 app.use(express.json({ limit: '10mb' }));
 
-// Health check endpoint
+// Health check endpoint with cache stats
 app.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
-    workers: workerPool.getStatus()
+    workers: workerPool.getStatus(),
+    cache: renderer.getCacheStats(),
+    capabilities: renderer.getCapabilities()
   });
+});
+
+// Cache statistics endpoint for monitoring
+app.get('/cache/stats', (req, res) => {
+  res.json({
+    timestamp: new Date().toISOString(),
+    cache: renderer.getCacheStats()
+  });
+});
+
+// Cache management endpoint (for maintenance)
+app.delete('/cache', async (req, res) => {
+  try {
+    await renderer.clearCache();
+    res.json({
+      success: true,
+      message: 'Cache cleared successfully',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Cache clear error:', error);
+    res.status(500).json({
+      error: 'Failed to clear cache',
+      message: error.message
+    });
+  }
 });
 
 // Main rendering endpoint
@@ -51,6 +79,23 @@ app.post('/render', async (req, res) => {
 
     const renderTime = Date.now() - startTime;
     
+    // Set cache headers for Layer 2 caching (CDN/Browser)
+    if (result.metadata && result.metadata.cache_status === 'hit') {
+      // Cached content - set aggressive caching headers
+      res.set({
+        'Cache-Control': 'public, max-age=31536000, immutable',
+        'ETag': result.metadata.cache_key,
+        'X-Cache-Status': 'hit'
+      });
+    } else {
+      // Fresh content - still cacheable but shorter duration
+      res.set({
+        'Cache-Control': 'public, max-age=86400', // 24 hours
+        'ETag': result.metadata ? result.metadata.cache_key : undefined,
+        'X-Cache-Status': 'miss'
+      });
+    }
+
     res.json({
       success: true,
       format: result.format,
@@ -58,7 +103,9 @@ app.post('/render', async (req, res) => {
       metadata: {
         render_time_ms: renderTime,
         size_bytes: result.data.length,
-        dimensions: result.dimensions
+        dimensions: result.dimensions,
+        cache_status: result.metadata ? result.metadata.cache_status : 'unknown',
+        cache_key: result.metadata ? result.metadata.cache_key?.substring(0, 8) + '...' : undefined
       }
     });
 
