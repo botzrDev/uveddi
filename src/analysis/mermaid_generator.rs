@@ -285,6 +285,192 @@ classDef normal-component fill:#e1f5fe,stroke:#01579b,stroke-width:2px;"#,
             .collect::<Vec<_>>()
             .join("\n")
     }
+
+    /// Generate a general diagram from components and diagram type
+    pub fn generate_diagram(
+        &self,
+        components: &[ArchitecturalComponent],
+        diagram_type: DiagramType,
+    ) -> Result<crate::models::visualization::DiagramResult, MermaidGenerationError> {
+        let mut context = Context::new();
+        context.insert("components", &self.extract_components_for_template(components));
+        context.insert("dependencies", &self.extract_dependencies_for_template(components));
+        
+        let template_name = match diagram_type {
+            DiagramType::Component => "component_diagram",
+            DiagramType::Class => "class_diagram", 
+            DiagramType::Dependency => "dependency_diagram",
+            _ => "default_diagram",
+        };
+        
+        let mermaid_src = self.template_engine
+            .render(template_name, &context)
+            .map_err(|e| MermaidGenerationError::TemplateRenderError(e.to_string()))
+            .map(|s| Self::clean_generated_diagram(&s))?;
+        
+        let component_ids = components.iter().map(|c| c.component_id).collect();
+        Ok(crate::models::visualization::DiagramResult::new(
+            diagram_type,
+            mermaid_src,
+            component_ids,
+        ))
+    }
+
+    /// Generate a dead code diagram highlighting unused components
+    pub fn generate_dead_code_diagram(
+        &self,
+        components: &[ArchitecturalComponent],
+        dead_components: &[Uuid],
+    ) -> Result<crate::models::visualization::DiagramResult, MermaidGenerationError> {
+        let mut context = Context::new();
+        
+        let template_components: Vec<Value> = components
+            .iter()
+            .map(|c| {
+                let is_dead = dead_components.contains(&c.component_id);
+                json!({
+                    "id": c.component_id.to_string(),
+                    "name": c.name,
+                    "type": c.component_type.as_str(),
+                    "is_dead": is_dead,
+                    "style": if is_dead {
+                        "fill:#FFDDDD,stroke:#FF0000,stroke-dasharray: 5 5"
+                    } else {
+                        "fill:#E6F3FF,stroke:#1E88E5"
+                    }
+                })
+            })
+            .collect();
+
+        context.insert("components", &template_components);
+        context.insert("dependencies", &self.extract_dependencies_for_template(components));
+        context.insert("title", "Dead Code Detection");
+
+        let mermaid_src = self.template_engine
+            .render("dead_code_diagram", &context)
+            .map_err(|e| MermaidGenerationError::TemplateRenderError(e.to_string()))
+            .map(|s| Self::clean_generated_diagram(&s))?;
+        
+        let component_ids = components.iter().map(|c| c.component_id).collect();
+        Ok(crate::models::visualization::DiagramResult::new(
+            DiagramType::Component, // or a specific dead code diagram type
+            mermaid_src,
+            component_ids,
+        ))
+    }
+
+    /// Generate a large class diagram highlighting oversized classes
+    pub fn generate_large_class_diagram(
+        &self,
+        components: &[ArchitecturalComponent],
+        large_classes: &[Uuid],
+        class_sizes: &HashMap<Uuid, u32>,
+    ) -> Result<crate::models::visualization::DiagramResult, MermaidGenerationError> {
+        let mut context = Context::new();
+        
+        let template_components: Vec<Value> = components
+            .iter()
+            .map(|c| {
+                let is_large = large_classes.contains(&c.component_id);
+                let size = class_sizes.get(&c.component_id).unwrap_or(&0);
+                json!({
+                    "id": c.component_id.to_string(),
+                    "name": c.name,
+                    "type": c.component_type.as_str(),
+                    "is_large": is_large,
+                    "size": size,
+                    "style": if is_large {
+                        "fill:#FFE6CC,stroke:#FF8800,stroke-width:3px"
+                    } else {
+                        "fill:#E6F3FF,stroke:#1E88E5"
+                    }
+                })
+            })
+            .collect();
+
+        context.insert("components", &template_components);
+        context.insert("dependencies", &self.extract_dependencies_for_template(components));
+        context.insert("title", "Large Class Detection");
+
+        let mermaid_src = self.template_engine
+            .render("large_class_diagram", &context)
+            .map_err(|e| MermaidGenerationError::TemplateRenderError(e.to_string()))
+            .map(|s| Self::clean_generated_diagram(&s))?;
+        
+        let component_ids = components.iter().map(|c| c.component_id).collect();
+        Ok(crate::models::visualization::DiagramResult::new(
+            DiagramType::Class,
+            mermaid_src,
+            component_ids,
+        ))
+    }
+
+    /// Generate a tight coupling diagram highlighting high coupling issues
+    pub fn generate_tight_coupling_diagram(
+        &self,
+        components: &[ArchitecturalComponent],
+        coupling_pairs: &[(Uuid, Uuid)],
+        coupling_scores: &HashMap<(Uuid, Uuid), f64>,
+    ) -> Result<crate::models::visualization::DiagramResult, MermaidGenerationError> {
+        let mut context = Context::new();
+        
+        let coupled_components: std::collections::HashSet<Uuid> = coupling_pairs
+            .iter()
+            .flat_map(|(a, b)| vec![*a, *b])
+            .collect();
+        
+        let template_components: Vec<Value> = components
+            .iter()
+            .map(|c| {
+                let is_coupled = coupled_components.contains(&c.component_id);
+                json!({
+                    "id": c.component_id.to_string(),
+                    "name": c.name,
+                    "type": c.component_type.as_str(),
+                    "is_coupled": is_coupled,
+                    "style": if is_coupled {
+                        "fill:#FFCCCC,stroke:#CC0000,stroke-width:2px"
+                    } else {
+                        "fill:#E6F3FF,stroke:#1E88E5"
+                    }
+                })
+            })
+            .collect();
+
+        context.insert("components", &template_components);
+        context.insert("dependencies", &self.extract_dependencies_for_template(components));
+        context.insert("coupling_pairs", &coupling_pairs);
+        context.insert("coupling_scores", &coupling_scores);
+        context.insert("title", "Tight Coupling Detection");
+
+        let mermaid_src = self.template_engine
+            .render("tight_coupling_diagram", &context)
+            .map_err(|e| MermaidGenerationError::TemplateRenderError(e.to_string()))
+            .map(|s| Self::clean_generated_diagram(&s))?;
+        
+        let component_ids = components.iter().map(|c| c.component_id).collect();
+        Ok(crate::models::visualization::DiagramResult::new(
+            DiagramType::Dependency,
+            mermaid_src,
+            component_ids,
+        ))
+    }
+
+    /// Extract components in a format suitable for templates
+    fn extract_components_for_template(&self, components: &[ArchitecturalComponent]) -> Vec<Value> {
+        components
+            .iter()
+            .map(|c| {
+                json!({
+                    "id": c.component_id.to_string(),
+                    "name": c.name,
+                    "type": c.component_type.as_str(),
+                    "file_path": c.file_path.to_string_lossy(),
+                    "group": c.group
+                })
+            })
+            .collect()
+    }
 }
 
 impl Default for MermaidGenerator {

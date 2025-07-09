@@ -254,7 +254,8 @@ impl DeadCodeDetector {
     /// Uses `tree-sitter` queries to find function and class definitions.
     fn extract_python_symbols(&self, parsed_file: &ParsedFile) -> Result<Vec<Symbol>, AnalysisError> {
         let mut symbols = Vec::new();
-        let source = parsed_file.source.as_ref().unwrap_or(&String::new()).as_bytes();
+        let default_source = String::new();
+        let source = parsed_file.source.as_ref().unwrap_or(&default_source).as_bytes();
         let tree = parsed_file
             .tree
             .as_ref()
@@ -323,7 +324,8 @@ impl DeadCodeDetector {
     /// Uses `tree-sitter` queries to find function and class definitions.
     fn extract_javascript_symbols(&self, parsed_file: &ParsedFile) -> Result<Vec<Symbol>, AnalysisError> {
         let mut symbols = Vec::new();
-        let source = parsed_file.source.as_ref().unwrap_or(&String::new()).as_bytes();
+        let default_source = String::new();
+        let source = parsed_file.source.as_ref().unwrap_or(&default_source).as_bytes();
         let tree = parsed_file
             .tree
             .as_ref()
@@ -365,7 +367,8 @@ impl DeadCodeDetector {
     /// Uses `tree-sitter` queries to find all function and variable usages.
     fn extract_rust_references(&self, parsed_file: &ParsedFile) -> Result<HashSet<String>, AnalysisError> {
         let mut references = HashSet::new();
-        let source = parsed_file.source.as_ref().unwrap_or(&String::new()).as_bytes();
+        let default_source = String::new();
+        let source = parsed_file.source.as_ref().unwrap_or(&default_source).as_bytes();
         let tree = parsed_file
             .tree
             .as_ref()
@@ -392,7 +395,8 @@ impl DeadCodeDetector {
     /// Extracts references (calls, usages) to symbols in a Python source file.
     fn extract_python_references(&self, parsed_file: &ParsedFile) -> Result<HashSet<String>, AnalysisError> {
         let mut references = HashSet::new();
-        let source = parsed_file.source.as_ref().unwrap_or(&String::new()).as_bytes();
+        let default_source = String::new();
+        let source = parsed_file.source.as_ref().unwrap_or(&default_source).as_bytes();
         let tree = parsed_file
             .tree
             .as_ref()
@@ -419,7 +423,8 @@ impl DeadCodeDetector {
     /// Extracts references (calls, usages) to symbols in a JavaScript source file.
     fn extract_javascript_references(&self, parsed_file: &ParsedFile) -> Result<HashSet<String>, AnalysisError> {
         let mut references = HashSet::new();
-        let source = parsed_file.source.as_ref().unwrap_or(&String::new()).as_bytes();
+        let default_source = String::new();
+        let source = parsed_file.source.as_ref().unwrap_or(&default_source).as_bytes();
         let tree = parsed_file
             .tree
             .as_ref()

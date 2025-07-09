@@ -8,7 +8,7 @@ mod tests {
     use crate::analysis::mermaid_generator::{MermaidGenerator, MermaidGenerationError};
     use crate::models::visualization::{
         ArchitecturalComponent, ComponentType, ComponentMetrics, DiagramType, Dependency, DependencyType,
-        FieldInfo, MethodSignature, ParameterInfo, Visibility
+        DependencyNode, FieldInfo, MethodSignature, ParameterInfo, Visibility
     };
     use std::collections::HashMap;
     use std::path::PathBuf;
@@ -44,7 +44,7 @@ mod tests {
                     complexity: Some(8.5),
                     afferent_coupling: 5,
                     efferent_coupling: 12,
-                    coupling_between_objects: Some(17),
+                    coupling_between_objects: Some(17.0),
                     public_methods: Some(8),
                 },
                 group: Some("services".to_string()),
@@ -65,7 +65,7 @@ mod tests {
                     complexity: Some(4.2),
                     afferent_coupling: 3,
                     efferent_coupling: 6,
-                    coupling_between_objects: Some(9),
+                    coupling_between_objects: Some(9.0),
                     public_methods: Some(4),
                 },
                 group: Some("processing".to_string()),
@@ -84,7 +84,7 @@ mod tests {
                     complexity: Some(2.1),
                     afferent_coupling: 2,
                     efferent_coupling: 4,
-                    coupling_between_objects: Some(6),
+                    coupling_between_objects: Some(6.0),
                     public_methods: Some(6),
                 },
                 group: Some("api".to_string()),
@@ -106,9 +106,19 @@ mod tests {
                 component_type: ComponentType::RustModule { is_public: true },
                 dependencies: vec![
                     Dependency {
-                        target_component_id: comp2_id,
+                        from: DependencyNode {
+                            id: comp1_id.to_string(),
+                            name: "ModuleA".to_string(),
+                        },
+                        to: DependencyNode {
+                            id: comp2_id.to_string(),
+                            name: "ModuleB".to_string(),
+                        },
                         dependency_type: DependencyType::Imports,
-                        properties: HashMap::new(),
+                        kind: Some(DependencyType::Imports),
+                        weight: None,
+                        target_component_id: Some(comp2_id.to_string()),
+                        properties: Some(HashMap::new()),
                     }
                 ],
                 metrics: ComponentMetrics::default(),
@@ -121,9 +131,19 @@ mod tests {
                 component_type: ComponentType::RustModule { is_public: true },
                 dependencies: vec![
                     Dependency {
-                        target_component_id: comp3_id,
+                        from: DependencyNode {
+                            id: comp2_id.to_string(),
+                            name: "ModuleB".to_string(),
+                        },
+                        to: DependencyNode {
+                            id: comp3_id.to_string(),
+                            name: "ModuleC".to_string(),
+                        },
                         dependency_type: DependencyType::Imports,
-                        properties: HashMap::new(),
+                        kind: Some(DependencyType::Imports),
+                        weight: None,
+                        target_component_id: Some(comp3_id.to_string()),
+                        properties: Some(HashMap::new()),
                     }
                 ],
                 metrics: ComponentMetrics::default(),
@@ -136,9 +156,19 @@ mod tests {
                 component_type: ComponentType::RustModule { is_public: true },
                 dependencies: vec![
                     Dependency {
-                        target_component_id: comp1_id,
+                        from: DependencyNode {
+                            id: comp3_id.to_string(),
+                            name: "ModuleC".to_string(),
+                        },
+                        to: DependencyNode {
+                            id: comp1_id.to_string(),
+                            name: "ModuleA".to_string(),
+                        },
                         dependency_type: DependencyType::Imports,
-                        properties: HashMap::new(),
+                        kind: Some(DependencyType::Imports),
+                        weight: None,
+                        target_component_id: Some(comp1_id.to_string()),
+                        properties: Some(HashMap::new()),
                     }
                 ],
                 metrics: ComponentMetrics::default(),
@@ -162,9 +192,9 @@ mod tests {
         };
         let js_component = ComponentType::JavaScriptEsModule { exports: vec![] };
 
-        assert_eq!(rust_component.language(), Some("rust"));
-        assert_eq!(python_component.language(), Some("python"));
-        assert_eq!(js_component.language(), Some("javascript"));
+        assert_eq!(rust_component.language(), Some("rust".to_string()));
+        assert_eq!(python_component.language(), Some("python".to_string()));
+        assert_eq!(js_component.language(), Some("javascript".to_string()));
         assert!(rust_component.is_language_specific());
         assert!(python_component.is_language_specific());
         assert!(js_component.is_language_specific());
@@ -175,7 +205,14 @@ mod tests {
         let simple_component = ComponentType::RustFunction { 
             is_async: false, 
             is_const: false, 
-            visibility: Visibility::Public 
+            visibility: Visibility::Public,
+            signature: MethodSignature {
+                name: "simple_function".to_string(),
+                parameters: vec![],
+                return_type: None,
+                visibility: Visibility::Public,
+                is_async: false,
+            }
         };
         let complex_component = ComponentType::RustStruct { 
             fields: vec![
@@ -213,7 +250,6 @@ mod tests {
         let result = generator.generate_diagram(
             &components,
             DiagramType::Component,
-            None,
         );
 
         assert!(result.is_ok());
@@ -280,7 +316,6 @@ mod tests {
         let result = generator.generate_dead_code_diagram(
             &components,
             &dead_code_components,
-            &usage_metrics,
         );
 
         assert!(result.is_ok());
@@ -295,14 +330,16 @@ mod tests {
         let generator = MermaidGenerator::new().expect("Failed to create generator");
         let components = create_test_components();
         
-        let mut size_metrics = HashMap::new();
-        size_metrics.insert(components[0].component_id, (600, 15.5)); // Extra large
-        size_metrics.insert(components[1].component_id, (350, 8.2));  // Large
-        size_metrics.insert(components[2].component_id, (80, 2.1));   // Small
+        let large_classes = vec![components[0].component_id, components[1].component_id];
+        let mut class_sizes = HashMap::new();
+        class_sizes.insert(components[0].component_id, 600); // Extra large
+        class_sizes.insert(components[1].component_id, 350);  // Large
+        class_sizes.insert(components[2].component_id, 80);   // Small
 
         let result = generator.generate_large_class_diagram(
             &components,
-            &size_metrics,
+            &large_classes,
+            &class_sizes,
         );
 
         assert!(result.is_ok());
@@ -318,18 +355,19 @@ mod tests {
         let generator = MermaidGenerator::new().expect("Failed to create generator");
         let components = create_test_components();
         
-        let mut coupling_metrics = HashMap::new();
-        coupling_metrics.insert(components[0].component_id, (5, 12)); // High coupling
-        coupling_metrics.insert(components[1].component_id, (3, 6));  // Medium coupling
-        coupling_metrics.insert(components[2].component_id, (2, 4));  // Low coupling
+        let coupling_pairs = vec![
+            (components[0].component_id, components[1].component_id),
+            (components[1].component_id, components[2].component_id),
+        ];
 
-        let mut coupling_strengths = HashMap::new();
-        coupling_strengths.insert((components[0].component_id, components[1].component_id), 0.9);
+        let mut coupling_scores = HashMap::new();
+        coupling_scores.insert((components[0].component_id, components[1].component_id), 0.9);
+        coupling_scores.insert((components[1].component_id, components[2].component_id), 0.6);
 
         let result = generator.generate_tight_coupling_diagram(
             &components,
-            &coupling_metrics,
-            &coupling_strengths,
+            &coupling_pairs,
+            &coupling_scores,
         );
 
         assert!(result.is_ok());
@@ -352,7 +390,6 @@ mod tests {
         let result = generator.generate_diagram(
             &components,
             DiagramType::Component,
-            Some(&severity_data),
         );
 
         assert!(result.is_ok());
@@ -377,7 +414,6 @@ mod tests {
             let result = generator.generate_diagram(
                 &components,
                 diagram_type.clone(),
-                None,
             );
             
             assert!(result.is_ok(), "Failed to generate {:?}", diagram_type);
@@ -395,7 +431,6 @@ mod tests {
         let result = generator.generate_diagram(
             &components,
             DiagramType::Component,
-            None,
         );
 
         assert!(result.is_ok());

@@ -213,6 +213,7 @@ impl ComponentExtractor {
                                 weight: Some(1.0),
                                 target_component_id: Some(target_id.to_string()),
                                 properties: Some(HashMap::new()),
+                                kind: Some(DependencyType::Calls),
                             };
                             
                             // Avoid duplicate dependencies
@@ -246,6 +247,7 @@ impl ComponentExtractor {
                                 weight: Some(1.0),
                                 target_component_id: Some(target_id.to_string()),
                                 properties: Some(HashMap::new()),
+                                kind: Some(DependencyType::Calls),
                             };
                             
                             if !components[*source_index]

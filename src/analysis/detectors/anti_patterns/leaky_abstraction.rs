@@ -536,21 +536,23 @@ impl LeakyAbstractionDetector {
     /// - Propagating low-level infrastructure errors in public function signatures.
     fn analyze_rust_file(&self, parsed_file: &ParsedFile, analysis_run_id: i64) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         let mut issues = Vec::new();
+        let empty_source = String::new();
+        let source_bytes = parsed_file.source.as_ref().unwrap_or(&empty_source).as_bytes();
         
         if let Some(query) = &self.rust_queries {
             let tree = parsed_file.tree.as_ref().ok_or_else(|| AnalysisError::Other("No AST available".to_string()))?;
             let mut cursor = QueryCursor::new();
-            let captures = cursor.captures(query, tree.root_node(), parsed_file.source.as_ref().unwrap_or(&String::new()).as_bytes());
+            let captures = cursor.captures(query, tree.root_node(), source_bytes);
 
             for (match_, _) in captures {
-                for capture in match_.captures {
+                for capture in &match_.captures {
                     let node = capture.node;
                     let capture_name = query.capture_names()[capture.index as usize];
                     
                     match capture_name {
                         "use_stmt" => {
                             // Analyze the entire use declaration
-                            if let Ok(use_text) = node.utf8_text(parsed_file.source.as_ref().unwrap_or(&String::new()).as_bytes()) {
+                            if let Ok(use_text) = node.utf8_text(source_bytes) {
                                 // Extract module name from use statement text
                                 if let Some(module_name) = self.extract_module_from_use_statement(use_text) {
                                     if self.is_infrastructure_module(&module_name) {
@@ -580,7 +582,7 @@ impl LeakyAbstractionDetector {
                             }
                         }
                         "field_vis" => {
-                            if let Ok(vis_text) = node.utf8_text(parsed_file.source.as_ref().unwrap_or(&String::new()).as_bytes()) {
+                            if let Ok(vis_text) = node.utf8_text(source_bytes) {
                                 if vis_text == "pub" {
                                     // Check if this is exposing internal structure
                                     if let Some(parent) = node.parent() {
@@ -600,12 +602,12 @@ impl LeakyAbstractionDetector {
                         }
                         "fn_vis" => {
                             // Check if this is a public function
-                            if let Ok(vis_text) = node.utf8_text(parsed_file.source.as_ref().unwrap_or(&String::new()).as_bytes()) {
+                            if let Ok(vis_text) = node.utf8_text(source_bytes) {
                                 if vis_text == "pub" {
                                     // Look for the corresponding return type in the same match
-                                    for other_capture in match_.captures {
+                                    for other_capture in &match_.captures {
                                         if query.capture_names()[other_capture.index as usize] == "return_type" {
-                                            if let Ok(return_type_text) = other_capture.node.utf8_text(parsed_file.source.as_ref().unwrap_or(&String::new()).as_bytes()) {
+                                            if let Ok(return_type_text) = other_capture.node.utf8_text(source_bytes) {
                                                 // Check if return type contains infrastructure error types
                                                 if self.is_infrastructure_error_type(return_type_text) {
                                                     issues.push(self.create_issue(
@@ -639,6 +641,8 @@ impl LeakyAbstractionDetector {
     /// they don't belong (e.g., `Domain`, `Application`).
     fn analyze_python_file(&self, parsed_file: &ParsedFile, analysis_run_id: i64) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         let mut issues = Vec::new();
+        let empty_source = String::new();
+        let source_bytes = parsed_file.source.as_ref().unwrap_or(&empty_source).as_bytes();
         
         // Check architectural layer violations
         let file_path_str = parsed_file.file_path.to_string();
@@ -647,11 +651,11 @@ impl LeakyAbstractionDetector {
             if let Some(query) = &self.python_queries {
                 if let Some(tree) = &parsed_file.tree {
                     let mut cursor = QueryCursor::new();
-                    let matches = cursor.matches(query, tree.root_node(), parsed_file.source.as_ref().unwrap_or(&String::new()).as_bytes());
+                    let matches = cursor.matches(query, tree.root_node(), source_bytes);
                     
                     for query_match in matches {
                         for capture in query_match.captures {
-                            let capture_text = capture.node.utf8_text(parsed_file.source.as_ref().unwrap_or(&String::new()).as_bytes()).unwrap_or("");
+                            let capture_text = capture.node.utf8_text(source_bytes).unwrap_or("");
                             
                             // Extract module name from Python import
                             if let Some(module_name) = self.extract_python_import_module(capture_text) {
@@ -700,20 +704,22 @@ impl LeakyAbstractionDetector {
     /// - Performing direct DOM manipulation (`document`, `window`) in business logic.
     fn analyze_js_file(&self, parsed_file: &ParsedFile, analysis_run_id: i64) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         let mut issues = Vec::new();
+        let empty_source = String::new();
+        let source_bytes = parsed_file.source.as_ref().unwrap_or(&empty_source).as_bytes();
         
         if let Some(query) = &self.js_queries {
             let tree = parsed_file.tree.as_ref().ok_or_else(|| AnalysisError::Other("No AST available".to_string()))?;
             let mut cursor = QueryCursor::new();
-            let captures = cursor.captures(query, tree.root_node(), parsed_file.source.as_ref().unwrap_or(&String::new()).as_bytes());
+            let captures = cursor.captures(query, tree.root_node(), source_bytes);
 
             for (match_, _) in captures {
-                for capture in match_.captures {
+                for capture in &match_.captures {
                     let node = capture.node;
                     let capture_name = query.capture_names()[capture.index as usize];
                     
                     match capture_name {
                         "import_source" => {
-                            if let Ok(import_text) = node.utf8_text(parsed_file.source.as_ref().unwrap_or(&String::new()).as_bytes()) {
+                            if let Ok(import_text) = node.utf8_text(source_bytes) {
                                 let module_name = import_text.trim_matches('"').trim_matches('\'');
                                 if self.is_infrastructure_module(module_name) {
                                     let layer = self.get_layer_from_path(&parsed_file.file_path.to_string());
@@ -741,7 +747,7 @@ impl LeakyAbstractionDetector {
                             }
                         }
                         "dom_object" => {
-                            if let Ok(dom_text) = node.utf8_text(parsed_file.source.as_ref().unwrap_or(&String::new()).as_bytes()) {
+                            if let Ok(dom_text) = node.utf8_text(source_bytes) {
                                 if dom_text == "document" || dom_text == "window" {
                                     let layer = self.get_layer_from_path(&parsed_file.file_path.to_string());
                                     if matches!(layer, Some(ArchitecturalLayer::Domain) | Some(ArchitecturalLayer::Application)) {

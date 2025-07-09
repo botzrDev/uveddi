@@ -17,12 +17,37 @@ pub struct Query;
 pub struct QueryCursor;
 
 /// Stub for tree_sitter::Node
+/// A stub for `tree_sitter::Node<'a>`. This struct MUST include a lifetime
+/// parameter to maintain API compatibility with the real tree-sitter Node.
 #[derive(Debug, Clone, Copy)]
-pub struct Node;
+pub struct Node<'a> {
+    _phantom: std::marker::PhantomData<&'a ()>,
+}
 
-impl Node {
+impl<'a> Node<'a> {
+    pub fn new() -> Self {
+        Node {
+            _phantom: std::marker::PhantomData,
+        }
+    }
+    
     pub fn child_count(&self) -> usize { 0 }
-    pub fn child(&self, _index: usize) -> Option<Node> { None }
+    pub fn child(&self, _index: usize) -> Option<Node<'a>> { None }
+    pub fn kind(&self) -> &'static str { "stub" }
+    pub fn start_byte(&self) -> usize { 0 }
+    pub fn end_byte(&self) -> usize { 0 }
+    pub fn start_position(&self) -> Point { Point { row: 0, column: 0 } }
+    pub fn end_position(&self) -> Point { Point { row: 0, column: 0 } }
+    pub fn utf8_text(&self, _source: &'a [u8]) -> Result<&'a str, std::str::Utf8Error> {
+        Ok("")
+    }
+    pub fn parent(&self) -> Option<Node<'a>> { None }
+    pub fn next_sibling(&self) -> Option<Node<'a>> { None }
+    pub fn prev_sibling(&self) -> Option<Node<'a>> { None }
+    pub fn child_by_field_name(&self, _name: &str) -> Option<Node<'a>> { None }
+    pub fn walk(&self) -> TreeCursor { TreeCursor }
+    pub fn id(&self) -> usize { 0 }
+    pub fn name(&self) -> &'static str { "stub" }
 }
 
 /// Stub for tree_sitter::TreeCursor
@@ -33,6 +58,16 @@ pub struct TreeCursor;
 /// Stub for tree_sitter::Tree
 #[derive(Debug, Clone)]
 pub struct Tree;
+
+impl Tree {
+    pub fn root_node(&self) -> Node<'_> {
+        Node::new()
+    }
+    
+    pub fn language(&self) -> () {
+        ()
+    }
+}
 
 /// Stub for tree_sitter::Parser
 #[derive(Debug, Clone)]
@@ -46,13 +81,13 @@ pub struct Point {
 }
 
 #[derive(Debug, Clone)]
-pub struct QueryMatch {
-    pub captures: Vec<QueryCapture>,
+pub struct QueryMatch<'a> {
+    pub captures: Vec<QueryCapture<'a>>,
 }
 
 #[derive(Debug, Clone)]
-pub struct QueryCapture {
-    pub node: Node,
+pub struct QueryCapture<'a> {
+    pub node: Node<'a>,
     pub index: u32,
 }
 
@@ -107,8 +142,12 @@ pub enum AstError {
     ParseError(String),
     #[error("IO error: {0}")]
     IoError(#[from] std::io::Error),
+    #[error("IO error: {0}")]
+    Io(std::io::Error),
     #[error("Cache error: {0}")]
     CacheError(String),
+    #[error("Unsupported language: {0}")]
+    UnsupportedLanguage(String),
 }
 
 // Stub implementations for tree-sitter types
@@ -127,56 +166,20 @@ impl QueryCursor {
         Self
     }
     
-    pub fn captures<'a>(&'a mut self, _query: &'a Query, _node: Node, _source: &'a [u8]) -> std::iter::Empty<(QueryMatch, usize)> {
+    pub fn captures<'a>(&'a mut self, _query: &'a Query, _node: Node<'a>, _source: &'a [u8]) -> std::iter::Empty<(QueryMatch<'a>, usize)> {
         std::iter::empty()
     }
     
-    pub fn matches<'a>(&'a mut self, _query: &'a Query, _node: Node, _source: &'a [u8]) -> std::iter::Empty<QueryMatch> {
+    pub fn matches<'a>(&'a mut self, _query: &'a Query, _node: Node<'a>, _source: &'a [u8]) -> std::iter::Empty<QueryMatch<'a>> {
         std::iter::empty()
     }
 }
 
-impl Node {
-    pub fn utf8_text(&self, _source: &[u8]) -> Result<&str, std::str::Utf8Error> {
-        Ok("")
-    }
-    
-    pub fn start_position(&self) -> Point {
-        Point { row: 0, column: 0 }
-    }
-    
-    pub fn end_position(&self) -> Point {
-        Point { row: 0, column: 0 }
-    }
-    
-    pub fn parent(&self) -> Option<Node> {
-        None
-    }
-    
-    pub fn child_by_field_name(&self, _name: &str) -> Option<Node> {
-        None
-    }
-
-    pub fn walk(&self) -> TreeCursor {
-        TreeCursor
-    }
-
-    pub fn kind(&self) -> &str {
-        "unknown"
-    }
-
-    pub fn start_byte(&self) -> usize {
-        0
-    }
-
-    pub fn end_byte(&self) -> usize {
-        0
-    }
-}
+// Note: Additional Node methods are implemented above in the main impl block
 
 impl TreeCursor {
-    pub fn node(&self) -> Node {
-        Node
+    pub fn node(&self) -> Node<'_> {
+        Node::new()
     }
 
     pub fn goto_first_child(&mut self) -> bool {
@@ -196,15 +199,7 @@ impl TreeCursor {
     }
 }
 
-impl Tree {
-    pub fn root_node(&self) -> Node {
-        Node
-    }
-    
-    pub fn language(&self) -> () {
-        ()
-    }
-}
+// Note: Tree implementation is above
 
 impl Parser {
     pub fn new() -> Result<Self, AstError> {

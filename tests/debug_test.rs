@@ -1,6 +1,6 @@
-use crate::analysis::detectors::anti_patterns::DeadCodeDetector;
-use crate::analysis::AnalysisDetector;
-use crate::ast::tree_sitter::{AstParser, SourceLanguage};
+use uveddi::analysis::detectors::anti_patterns::dead_code::DeadCodeDetector;
+use uveddi::analysis::AnalysisDetector;
+use uveddi::ast::tree_sitter::{AstParser, SourceLanguage};
 use std::path::PathBuf;
 
 #[test]
@@ -21,7 +21,7 @@ fn private_unused() {
         .expect("Failed to parse Rust code");
 
     // Configure for library mode to NOT detect unused exported symbols
-    let mut config = crate::analysis::detectors::anti_patterns::dead_code::DeadCodeConfig::default();
+    let mut config = uveddi::analysis::detectors::anti_patterns::dead_code::DeadCodeConfig::default();
     config.library_mode = true; // Library mode - don't detect unused exports
     config.min_confidence = 0.0; // Lower threshold to see everything
     let detector = DeadCodeDetector::new(config);

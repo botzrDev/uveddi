@@ -27,7 +27,7 @@ fn test_multilang_ast_parsing_and_caching() {
     let js_ast = parser.parse_file(&js_path).unwrap();
     // Test cache hit
     let rust_ast2 = parser.parse_file(&rust_path).unwrap();
-    assert_eq!(rust_ast.path, rust_ast2.path);
+    assert_eq!(rust_ast.file_path, rust_ast2.file_path);
     assert_eq!(rust_ast.language, SourceLanguage::Rust);
     assert_eq!(py_ast.language, SourceLanguage::Python);
     assert_eq!(js_ast.language, SourceLanguage::JavaScript);

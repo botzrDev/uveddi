@@ -12,7 +12,7 @@ use uveddi::analysis::component_extractor::{ComponentExtractor, ComponentExtract
 use uveddi::analysis::mermaid_generator::{MermaidGenerator, MermaidGenerationError};
 use uveddi::ast::tree_sitter::{CustomAst, ParsedFile, SourceLanguage};
 use uveddi::models::visualization::{
-    ArchitecturalComponent, ComponentMetrics, ComponentType, DiagramType, Dependency, DependencyType,
+    ArchitecturalComponent, ComponentMetrics, ComponentType, DependencyNode, DiagramMetadata, DiagramType, Dependency, DependencyType,
 };
 use uveddi::report::{ReportGenerator, ReportGenerationError};
 use uveddi::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
@@ -49,7 +49,7 @@ async fn test_mermaid_diagram_generation() {
     
     // Test component diagram generation
     let component_diagram = generator
-        .generate_diagram(&components, DiagramType::Component, None)
+        .generate_diagram(&components, DiagramType::Component)
         .unwrap();
     
     assert!(component_diagram.mermaid_src.contains("graph"));
@@ -59,7 +59,7 @@ async fn test_mermaid_diagram_generation() {
     
     // Test dependency diagram generation
     let dependency_diagram = generator
-        .generate_diagram(&components, DiagramType::Dependency, None)
+        .generate_diagram(&components, DiagramType::Dependency)
         .unwrap();
     
     assert!(dependency_diagram.mermaid_src.contains("-->"));
@@ -77,7 +77,7 @@ async fn test_severity_based_styling() {
     severity_data.insert(components[1].component_id, "medium".to_string());
     
     let diagram = generator
-        .generate_diagram(&components, DiagramType::Component, Some(&severity_data))
+        .generate_diagram(&components, DiagramType::Component)
         .unwrap();
     
     // Verify styling is applied
@@ -119,7 +119,7 @@ async fn test_anti_pattern_specific_diagrams() {
     let highlighted_components = vec![components[0].component_id, components[1].component_id];
     
     let dependency_graph = generator
-        .generate_dependency_graph(&components, &highlighted_components)
+        .generate_diagram(&components, DiagramType::Dependency)
         .unwrap();
     
     assert!(dependency_graph.mermaid_src.contains("graph"));
@@ -138,9 +138,19 @@ async fn test_json_report_with_diagrams() {
     // Generate diagrams first
     let generator = MermaidGenerator::new().unwrap();
     let overview_diagram = generator
-        .generate_diagram(&components, DiagramType::Component, None)
+        .generate_diagram(&components, DiagramType::Component)
         .unwrap();
-    let diagrams = vec![overview_diagram];
+    
+    // Convert DiagramResult to DiagramMetadata for the report
+    let diagram_metadata = DiagramMetadata {
+        diagram_type: overview_diagram.diagram_type,
+        mermaid_src: overview_diagram.mermaid_src,
+        image_path: None,
+        generated_at: chrono::Utc::now(),
+        components: overview_diagram.components,
+        validation_metrics: None,
+    };
+    let diagrams = vec![diagram_metadata];
     
     let json_report = report_generator
         .generate_enhanced_json_report(
@@ -172,7 +182,7 @@ async fn test_error_handling() {
     // Test mermaid generation with empty components
     let generator = MermaidGenerator::new().unwrap();
     let empty_components = vec![];
-    let result = generator.generate_diagram(&empty_components, DiagramType::Component, None);
+    let result = generator.generate_diagram(&empty_components, DiagramType::Component);
     assert!(result.is_ok()); // Should handle empty gracefully
 }
 
@@ -180,33 +190,33 @@ async fn test_error_handling() {
 
 fn create_test_service_file() -> ParsedFile {
     ParsedFile {
-        path: PathBuf::from("src/services/user.rs"),
+        file_path: "src/services/user.rs".to_string(),
         language: SourceLanguage::Rust,
+        content: "pub struct UserService { db: Database }".to_string(),
         tree: None,
-        source: "pub struct UserService { db: Database }".to_string(),
+        source: Some("pub struct UserService { db: Database }".to_string()),
         custom_ast: Some(CustomAst::File {
             items: vec![CustomAst::Struct {
                 name: "UserService".to_string(),
                 methods: vec!["create_user".to_string(), "get_user".to_string()],
             }],
         }),
-        modified_at: SystemTime::now(),
     }
 }
 
 fn create_test_controller_file() -> ParsedFile {
     ParsedFile {
-        path: PathBuf::from("src/controllers/user.rs"),
+        file_path: "src/controllers/user.rs".to_string(),
         language: SourceLanguage::Rust,
+        content: "pub struct UserController { service: UserService }".to_string(),
         tree: None,
-        source: "pub struct UserController { service: UserService }".to_string(),
+        source: Some("pub struct UserController { service: UserService }".to_string()),
         custom_ast: Some(CustomAst::File {
             items: vec![CustomAst::Struct {
                 name: "UserController".to_string(),
                 methods: vec!["handle_create".to_string(), "handle_get".to_string()],
             }],
         }),
-        modified_at: SystemTime::now(),
     }
 }
 
@@ -221,16 +231,26 @@ fn create_test_components() -> Vec<ArchitecturalComponent> {
             file_path: PathBuf::from("src/services/user.rs"),
             component_type: ComponentType::Service,
             dependencies: vec![Dependency {
-                target_component_id: db_service_id,
+                from: DependencyNode {
+                    id: user_service_id.to_string(),
+                    name: "UserService".to_string(),
+                },
+                to: DependencyNode {
+                    id: db_service_id.to_string(),
+                    name: "DatabaseService".to_string(),
+                },
                 dependency_type: DependencyType::Calls,
-                properties: HashMap::new(),
+                kind: Some(DependencyType::Calls),
+                weight: None,
+                target_component_id: Some(db_service_id.to_string()),
+                properties: Some(HashMap::new()),
             }],
             metrics: ComponentMetrics {
                 lines_of_code: Some(150),
                 complexity: Some(8.5),
                 afferent_coupling: 2,
                 efferent_coupling: 1,
-                coupling_between_objects: Some(3),
+                coupling_between_objects: Some(3.0),
                 public_methods: Some(5),
             },
             group: Some("services".to_string()),
@@ -246,7 +266,7 @@ fn create_test_components() -> Vec<ArchitecturalComponent> {
                 complexity: Some(12.0),
                 afferent_coupling: 5,
                 efferent_coupling: 0,
-                coupling_between_objects: Some(2),
+                coupling_between_objects: Some(2.0),
                 public_methods: Some(8),
             },
             group: Some("services".to_string()),
@@ -265,9 +285,19 @@ fn create_cyclic_dependency_components() -> Vec<ArchitecturalComponent> {
             file_path: PathBuf::from("src/a.rs"),
             component_type: ComponentType::Module,
             dependencies: vec![Dependency {
-                target_component_id: comp_b_id,
+                from: DependencyNode {
+                    id: comp_a_id.to_string(),
+                    name: "ComponentA".to_string(),
+                },
+                to: DependencyNode {
+                    id: comp_b_id.to_string(),
+                    name: "ComponentB".to_string(),
+                },
                 dependency_type: DependencyType::Calls,
-                properties: HashMap::new(),
+                kind: Some(DependencyType::Calls),
+                weight: None,
+                target_component_id: Some(comp_b_id.to_string()),
+                properties: Some(HashMap::new()),
             }],
             metrics: ComponentMetrics::default(),
             group: None,
@@ -278,9 +308,19 @@ fn create_cyclic_dependency_components() -> Vec<ArchitecturalComponent> {
             file_path: PathBuf::from("src/b.rs"),
             component_type: ComponentType::Module,
             dependencies: vec![Dependency {
-                target_component_id: comp_a_id,
+                from: DependencyNode {
+                    id: comp_b_id.to_string(),
+                    name: "ComponentB".to_string(),
+                },
+                to: DependencyNode {
+                    id: comp_a_id.to_string(),
+                    name: "ComponentA".to_string(),
+                },
                 dependency_type: DependencyType::Calls,
-                properties: HashMap::new(),
+                kind: Some(DependencyType::Calls),
+                weight: None,
+                target_component_id: Some(comp_a_id.to_string()),
+                properties: Some(HashMap::new()),
             }],
             metrics: ComponentMetrics::default(),
             group: None,
@@ -336,24 +376,20 @@ fn create_test_anti_pattern_types() -> HashMap<i64, AntiPatternType> {
     map.insert(
         1,
         AntiPatternType {
-            type_id: Some(1),
+            anti_pattern_type_id: Some(1),
             name: "Cyclic Dependency".to_string(),
             description: "Circular dependencies between components".to_string(),
-            severity_weight: 0.8,
-            detection_rules: "{}".to_string(),
-            remediation_guide: "Break the cycle by introducing abstractions".to_string(),
+            category: "structural".to_string(),
         },
     );
     
     map.insert(
         2,
         AntiPatternType {
-            type_id: Some(2),
+            anti_pattern_type_id: Some(2),
             name: "God Object".to_string(),
             description: "Classes with too many responsibilities".to_string(),
-            severity_weight: 0.6,
-            detection_rules: "{}".to_string(),
-            remediation_guide: "Split into smaller, focused classes".to_string(),
+            category: "behavioral".to_string(),
         },
     );
     

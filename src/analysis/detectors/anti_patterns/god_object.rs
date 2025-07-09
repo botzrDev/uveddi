@@ -274,10 +274,13 @@ impl GodObjectDetector {
                     name, method_count, field_count, self.method_threshold, self.field_threshold
                 ),
                 code_snippet: Some(
-                    container_node
-                        .utf8_text(parsed_file.source.as_ref().unwrap_or(&String::new()).as_bytes())
-                        .unwrap_or("")
-                        .to_string(),
+                    {
+                        let empty_source = String::new();
+                        container_node
+                            .utf8_text(parsed_file.source.as_ref().unwrap_or(&empty_source).as_bytes())
+                            .unwrap_or("")
+                            .to_string()
+                    }
                 ),
                 ai_explanation: None,
             })
@@ -299,7 +302,8 @@ impl GodObjectDetector {
         field_query_str: &str,
     ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         let mut issues = Vec::new();
-        let source = parsed_file.source.as_ref().unwrap_or(&String::new()).as_bytes();
+        let empty_source = String::new();
+        let source = parsed_file.source.as_ref().unwrap_or(&empty_source).as_bytes();
         let tree = parsed_file
             .tree
             .as_ref()
@@ -365,7 +369,8 @@ impl GodObjectDetector {
         parsed_file: &ParsedFile,
     ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         let mut issues = Vec::new();
-        let source = parsed_file.source.as_ref().unwrap_or(&String::new()).as_bytes();
+        let empty_source = String::new();
+        let source = parsed_file.source.as_ref().unwrap_or(&empty_source).as_bytes();
         let tree = parsed_file
             .tree
             .as_ref()

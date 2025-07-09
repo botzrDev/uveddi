@@ -73,6 +73,9 @@ pub enum ComponentType {
     /// Rust function with signature
     RustFunction {
         signature: MethodSignature,
+        is_async: bool,
+        is_const: bool,
+        visibility: Visibility,
     },
     /// Python class with bases and methods
     PythonClass {
@@ -95,6 +98,8 @@ pub struct Dependency {
     pub to: DependencyNode,
     /// Type of dependency relationship
     pub dependency_type: DependencyType,
+    /// Kind of dependency (alias for dependency_type for backwards compatibility)
+    pub kind: Option<DependencyType>,
     /// Strength or weight of the dependency
     pub weight: Option<f64>,
     /// Target component ID for backwards compatibility
@@ -121,6 +126,8 @@ pub enum DependencyType {
     Calls,
     /// Import or use statement
     Import,
+    /// Import or use statement (alias for backwards compatibility)
+    Imports,
     /// Class inheritance relationship
     Inheritance,
     /// Interface implementation
@@ -298,6 +305,51 @@ impl ComponentType {
             ComponentType::JavaScriptEsModule { .. } => "js_es_module",
         }
     }
+
+    /// Get the programming language associated with this component type
+    pub fn language(&self) -> Option<String> {
+        match self {
+            ComponentType::RustStruct { .. } |
+            ComponentType::RustModule { .. } |
+            ComponentType::RustFunction { .. } => Some("rust".to_string()),
+            ComponentType::PythonClass { .. } => Some("python".to_string()),
+            ComponentType::JavaScriptEsModule { .. } => Some("javascript".to_string()),
+            _ => None,
+        }
+    }
+
+    /// Check if this component type is language-specific
+    pub fn is_language_specific(&self) -> bool {
+        matches!(self,
+            ComponentType::RustStruct { .. } |
+            ComponentType::RustModule { .. } |
+            ComponentType::RustFunction { .. } |
+            ComponentType::PythonClass { .. } |
+            ComponentType::JavaScriptEsModule { .. }
+        )
+    }
+
+    /// Calculate a complexity score for this component type
+    pub fn complexity_score(&self) -> u32 {
+        match self {
+            ComponentType::Module => 10,
+            ComponentType::Service => 50,
+            ComponentType::Database => 30,
+            ComponentType::ApiEndpoint => 20,
+            ComponentType::Configuration => 5,
+            ComponentType::ExternalSystem => 40,
+            ComponentType::User => 1,
+            ComponentType::MessageBroker => 35,
+            ComponentType::Cache => 15,
+            ComponentType::Class => 25,
+            ComponentType::Function => 10,
+            ComponentType::RustStruct { fields } => 10 + fields.len() as u32 * 2,
+            ComponentType::RustModule { .. } => 15,
+            ComponentType::RustFunction { .. } => 12,
+            ComponentType::PythonClass { methods, .. } => 25 + methods.len() as u32 * 3,
+            ComponentType::JavaScriptEsModule { exports } => 20 + exports.len() as u32 * 2,
+        }
+    }
 }
 
 impl Default for StyleConfig {
@@ -345,4 +397,34 @@ pub struct MethodSignature {
     pub return_type: Option<String>,
     pub visibility: Visibility,
     pub is_async: bool,
+}
+
+/// Result of diagram generation containing the rendered diagram and metadata
+#[derive(Debug, Clone)]
+pub struct DiagramResult {
+    /// Type of diagram generated
+    pub diagram_type: DiagramType,
+    /// Generated Mermaid.js source code
+    pub mermaid_src: String,
+    /// Components included in the diagram
+    pub components: Vec<Uuid>,
+    /// Optional path to generated image file
+    pub image_path: Option<PathBuf>,
+    /// Timestamp when diagram was generated
+    pub generated_at: chrono::DateTime<chrono::Utc>,
+    /// Optional validation metrics
+    pub validation_metrics: Option<ValidationMetrics>,
+}
+
+impl DiagramResult {
+    pub fn new(diagram_type: DiagramType, mermaid_src: String, components: Vec<Uuid>) -> Self {
+        Self {
+            diagram_type,
+            mermaid_src,
+            components,
+            image_path: None,
+            generated_at: chrono::Utc::now(),
+            validation_metrics: None,
+        }
+    }
 }

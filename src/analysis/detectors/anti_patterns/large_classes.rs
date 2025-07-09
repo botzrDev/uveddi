@@ -4,7 +4,7 @@
 //! God Objects, and Blob anti-patterns as described in the Large Class Research document.
 
 use crate::analysis::{AnalysisDetector, AnalysisError};
-use crate::ast::tree_sitter::{ParsedFile, SourceLanguage};
+use crate::ast::tree_sitter::{self, ParsedFile, SourceLanguage};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use log::debug;
 
@@ -125,8 +125,9 @@ impl Default for LargeClassConfig {
 }
 
 /// The Large Class anti-pattern detector.
+#[derive(Debug, Clone)]
 pub struct LargeClassDetector {
-    config: LargeClassConfig,
+    pub config: LargeClassConfig,
 }
 
 impl LargeClassDetector {
@@ -263,16 +264,56 @@ impl LargeClassDetector {
         Ok(0)
     }
 
-    fn calculate_severity_score(&self, metrics: &ClassMetrics, thresholds: &LanguageThresholds) -> u32 {
-        let size_score = ((metrics.logical_loc as f64 / thresholds.max_logical_loc as f64) * 100.0).min(100.0);
-        let complexity_score = ((metrics.cyclomatic_complexity as f64 / thresholds.max_cyclomatic_complexity as f64) * 100.0).min(100.0);
-        let structural_score = (metrics.lcom_score * 100.0).min(100.0);
+    #[cfg(not(feature = "tree-sitter"))]
+    pub fn calculate_logical_loc(&self, node: &tree_sitter::Node, source: &[u8]) -> u32 {
+        0
+    }
 
-        let weighted_score = (size_score * self.config.severity_weights.size_weight) +
-                           (complexity_score * self.config.severity_weights.complexity_weight) +
-                           (structural_score * self.config.severity_weights.structural_weight);
+    #[cfg(not(feature = "tree-sitter"))]
+    pub fn extract_code_snippet(&self, node: &tree_sitter::Node, source: &[u8], max_lines: usize) -> String {
+        String::new()
+    }
 
-        weighted_score as u32
+    pub fn generate_description(&self, metrics: &ClassMetrics, severity: u32, language: SourceLanguage) -> String {
+        format!(
+            "Large class '{}' detected with severity {}. Language: {:?}. Metrics: {} LOC, {} methods, {} fields.",
+            metrics.name, severity, language, metrics.logical_loc, metrics.method_count, metrics.field_count
+        )
+    }
+
+    pub fn get_language_thresholds(&self, language: &SourceLanguage) -> Option<&LanguageThresholds> {
+        match language {
+            SourceLanguage::Rust => Some(&self.config.rust_thresholds),
+            SourceLanguage::Python => Some(&self.config.python_thresholds),
+            SourceLanguage::JavaScript => Some(&self.config.javascript_thresholds),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn calculate_severity_score(&self, metrics: &ClassMetrics, thresholds: &LanguageThresholds) -> u32 {
+        let mut score = 0;
+        let w = &self.config.severity_weights;
+
+        if metrics.logical_loc > thresholds.max_logical_loc {
+            score += (w.size_weight * ((metrics.logical_loc - thresholds.max_logical_loc) as f64)) as u32;
+        }
+        if metrics.method_count > thresholds.max_methods {
+            score += (w.size_weight * ((metrics.method_count - thresholds.max_methods) * 5) as f64) as u32;
+        }
+        if metrics.field_count > thresholds.max_fields {
+            score += (w.size_weight * ((metrics.field_count - thresholds.max_fields) * 5) as f64) as u32;
+        }
+        if metrics.cyclomatic_complexity > thresholds.max_cyclomatic_complexity {
+            score += (w.complexity_weight * ((metrics.cyclomatic_complexity - thresholds.max_cyclomatic_complexity) as f64)) as u32;
+        }
+        if metrics.lcom_score > thresholds.max_lcom_score {
+            score += (w.structural_weight * ((metrics.lcom_score - thresholds.max_lcom_score) * 100.0) as f64) as u32;
+        }
+        if metrics.coupling_count > thresholds.max_coupling {
+            score += (w.structural_weight * ((metrics.coupling_count - thresholds.max_coupling) * 2) as f64) as u32;
+        }
+        
+        score
     }
 }
 

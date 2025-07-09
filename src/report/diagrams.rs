@@ -60,9 +60,19 @@ mod tests {
     fn test_generate_mermaid_diagram() {
         let deps = vec![
             Dependency {
-                from: Node { id: "mod1".to_string(), name: "Module1".to_string() },
-                to: Node { id: "mod2".to_string(), name: "Module2".to_string() },
-                kind: "imports".to_string(),
+                from: crate::models::visualization::DependencyNode {
+                    id: "mod1".to_string(), 
+                    name: "Module1".to_string(),
+                },
+                to: crate::models::visualization::DependencyNode {
+                    id: "mod2".to_string(), 
+                    name: "Module2".to_string(),
+                },
+                dependency_type: crate::models::visualization::DependencyType::Imports,
+                kind: Some(crate::models::visualization::DependencyType::Imports),
+                weight: None,
+                target_component_id: Some("mod2".to_string()),
+                properties: Some(std::collections::HashMap::new()),
             },
         ];
         let issues = vec![ArchitecturalIssue { file_path: "mod1".to_string(), ..Default::default() }];
