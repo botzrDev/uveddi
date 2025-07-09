@@ -1,6 +1,12 @@
 const workerPool = require('./worker-pool');
 const ContentAddressableCache = require('./cache');
 
+// Logger will be passed in from server.js
+let logger = console;
+function setLogger(newLogger) {
+  logger = newLogger;
+}
+
 // Initialize cache with production-ready settings
 const cache = new ContentAddressableCache({
   cacheDir: process.env.CACHE_DIR || '/tmp/uveddi-cache',
@@ -26,7 +32,11 @@ async function renderDiagram({ mermaidCode, format = 'svg', width = 1200, height
   // Check cache first (Layer 1: Hot Cache)
   const cachedResult = await cache.get(cacheKey);
   if (cachedResult) {
-    console.log(`Cache HIT for key: ${cacheKey.substring(0, 8)}... (${Date.now() - startTime}ms)`);
+    logger.info({
+      msg: 'Cache hit',
+      cacheKey: cacheKey.substring(0, 8),
+      durationMs: Date.now() - startTime
+    }, `Cache HIT for key: ${cacheKey.substring(0, 8)}...`);
     return {
       ...cachedResult,
       metadata: {
@@ -37,7 +47,10 @@ async function renderDiagram({ mermaidCode, format = 'svg', width = 1200, height
     };
   }
   
-  console.log(`Cache MISS for key: ${cacheKey.substring(0, 8)}... - rendering...`);
+  logger.info({
+    msg: 'Cache miss',
+    cacheKey: cacheKey.substring(0, 8)
+  }, `Cache MISS for key: ${cacheKey.substring(0, 8)}... - rendering...`);
   
   // Cache miss - perform actual rendering
   const worker = await workerPool.getWorker();
@@ -127,10 +140,22 @@ async function renderDiagram({ mermaidCode, format = 'svg', width = 1200, height
     
     // Store in cache asynchronously (don't wait for completion)
     cache.set(cacheKey, result).catch(error => {
-      console.error('Cache storage error:', error);
+      logger.error({
+        msg: 'Cache storage error',
+        error: error.message,
+        stack: error.stack,
+        severity: 'Warning',
+        category: 'CacheStorage'
+      }, 'Failed to store in cache');
     });
     
-    console.log(`Rendered and cached key: ${cacheKey.substring(0, 8)}... (${result.metadata.render_time_ms}ms)`);
+    logger.info({
+      msg: 'Rendering completed',
+      cacheKey: cacheKey.substring(0, 8),
+      renderTimeMs: result.metadata.render_time_ms,
+      format: result.format,
+      dimensions: result.dimensions
+    }, `Rendered and cached key: ${cacheKey.substring(0, 8)}...`);
     
     return result;
     
@@ -221,5 +246,6 @@ module.exports = {
   validateDiagram,
   getCapabilities,
   getCacheStats,
-  clearCache
+  clearCache,
+  setLogger
 };

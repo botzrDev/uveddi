@@ -2,8 +2,22 @@ const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 const helmet = require('helmet');
+const pino = require('pino');
 const renderer = require('./renderer');
 const workerPool = require('./worker-pool');
+
+// Initialize structured logger
+const logger = pino({
+  level: process.env.LOG_LEVEL || 'info',
+  formatters: {
+    level: (label) => ({ level: label })
+  },
+  timestamp: () => `,"timestamp":"${new Date().toISOString()}"`
+});
+
+// Pass logger to renderer and worker pool
+renderer.setLogger(logger);
+workerPool.setLogger(logger);
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -43,10 +57,18 @@ app.delete('/cache', async (req, res) => {
       timestamp: new Date().toISOString()
     });
   } catch (error) {
-    console.error('Cache clear error:', error);
+    logger.error({
+      msg: 'Cache clear error',
+      error: error.message,
+      stack: error.stack,
+      severity: error.severity || 'Error',
+      category: error.category || 'CacheFailure'
+    }, 'Failed to clear cache');
     res.status(500).json({
       error: 'Failed to clear cache',
-      message: error.message
+      message: error.message,
+      severity: error.severity || 'Error',
+      category: error.category || 'CacheFailure'
     });
   }
 });
@@ -110,10 +132,18 @@ app.post('/render', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Rendering error:', error);
+    logger.error({
+      msg: 'Rendering error',
+      error: error.message,
+      stack: error.stack,
+      severity: error.severity || 'Error',
+      category: error.category || 'RenderingFailure'
+    }, 'Rendering failed');
     res.status(500).json({
       error: 'Rendering failed',
-      message: error.message
+      message: error.message,
+      severity: error.severity || 'Error',
+      category: error.category || 'RenderingFailure'
     });
   }
 });
@@ -174,32 +204,48 @@ app.post('/render/batch', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Batch rendering error:', error);
+    logger.error({
+      msg: 'Batch rendering error',
+      error: error.message,
+      stack: error.stack,
+      severity: error.severity || 'Error',
+      category: error.category || 'BatchRenderingFailure'
+    }, 'Batch rendering failed');
     res.status(500).json({
       error: 'Batch rendering failed',
-      message: error.message
+      message: error.message,
+      severity: error.severity || 'Error',
+      category: error.category || 'BatchRenderingFailure'
     });
   }
 });
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error('Unhandled error:', err);
+  logger.error({
+    msg: 'Unhandled error',
+    error: err.message,
+    stack: err.stack,
+    severity: err.severity || 'Critical',
+    category: err.category || 'UnhandledError'
+  }, 'Internal server error');
   res.status(500).json({
     error: 'Internal server error',
-    message: err.message
+    message: err.message,
+    severity: err.severity || 'Critical',
+    category: err.category || 'UnhandledError'
   });
 });
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {
-  console.log('SIGTERM received, shutting down gracefully...');
+  logger.info('SIGTERM received, shutting down gracefully...');
   await workerPool.shutdown();
   process.exit(0);
 });
 
 process.on('SIGINT', async () => {
-  console.log('SIGINT received, shutting down gracefully...');
+  logger.info('SIGINT received, shutting down gracefully...');
   await workerPool.shutdown();
   process.exit(0);
 });
@@ -210,11 +256,17 @@ async function startServer() {
     await workerPool.initialize();
     
     app.listen(PORT, () => {
-      console.log(`Uveddi Rendering Service listening on port ${PORT}`);
-      console.log(`Health check: http://localhost:${PORT}/health`);
+    logger.info(`Uveddi Rendering Service listening on port ${PORT}`);
+    logger.info(`Health check: http://localhost:${PORT}/health`);
     });
   } catch (error) {
-    console.error('Failed to start server:', error);
+    logger.fatal({
+      msg: 'Failed to start server',
+      error: error.message,
+      stack: error.stack,
+      severity: 'Critical',
+      category: 'ServerStartupFailure'
+    }, 'Server startup failed');
     process.exit(1);
   }
 }

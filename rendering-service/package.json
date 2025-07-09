@@ -16,7 +16,9 @@
     "express": "^4.18.2",
     "helmet": "^7.1.0",
     "morgan": "^1.10.0",
-    "playwright": "^1.40.0"
+    "playwright": "^1.40.0",
+    "pino": "^8.17.0",
+    "pino-pretty": "^10.2.3"
   },
   "devDependencies": {
     "jest": "^29.7.0",

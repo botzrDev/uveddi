@@ -2,6 +2,13 @@ const { chromium } = require('playwright');
 
 class WorkerPool {
   constructor() {
+    this.logger = console;
+  }
+
+  setLogger(newLogger) {
+    this.logger = newLogger;
+  }
+  constructor() {
     this.workers = [];
     this.maxWorkers = process.env.MAX_WORKERS || 3;
     this.currentWorker = 0;
@@ -9,7 +16,9 @@ class WorkerPool {
   }
 
   async initialize() {
-    console.log('Initializing browser worker pool...');
+    this.logger.info('Initializing browser worker pool...');
+    
+    try {
     
     // Launch browser with optimized settings
     this.browser = await chromium.launch({
@@ -50,7 +59,20 @@ class WorkerPool {
       });
     }
 
-    console.log(`Browser worker pool initialized with ${this.maxWorkers} workers`);
+    this.logger.info({
+      msg: 'Worker pool initialized',
+      workerCount: this.maxWorkers
+    }, `Browser worker pool initialized with ${this.maxWorkers} workers`);
+    } catch (error) {
+      this.logger.fatal({
+        msg: 'Worker pool initialization failed',
+        error: error.message,
+        stack: error.stack,
+        severity: 'Critical',
+        category: 'WorkerPoolInitializationFailure'
+      }, 'Failed to initialize worker pool');
+      throw error;
+    }
   }
 
   async setupMermaidEnvironment(page) {
@@ -142,7 +164,14 @@ class WorkerPool {
       await new Promise(resolve => setTimeout(resolve, 10));
     }
     
-    throw new Error('No available workers');
+    const error = new Error('No available workers');
+    this.logger.error({
+      msg: 'Worker pool exhausted',
+      error: error.message,
+      severity: 'Error',
+      category: 'WorkerPoolExhausted'
+    }, 'No available workers');
+    throw error;
   }
 
   releaseWorker(worker) {
@@ -159,15 +188,29 @@ class WorkerPool {
   }
 
   async shutdown() {
-    console.log('Shutting down browser worker pool...');
+    this.logger.info('Shutting down browser worker pool...');
     
-    if (this.browser) {
-      await this.browser.close();
+    try {
+      if (this.browser) {
+        await this.browser.close();
+      }
+      
+      this.workers = [];
+      this.logger.info('Browser worker pool shut down');
+    } catch (error) {
+      this.logger.error({
+        msg: 'Worker pool shutdown error',
+        error: error.message,
+        stack: error.stack,
+        severity: 'Error',
+        category: 'WorkerPoolShutdownFailure'
+      }, 'Failed to shutdown worker pool');
+      throw error;
     }
-    
-    this.workers = [];
-    console.log('Browser worker pool shut down');
   }
 }
 
-module.exports = new WorkerPool();
+const workerPool = new WorkerPool();
+
+// Export singleton instance
+module.exports = workerPool;

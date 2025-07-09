@@ -9,6 +9,9 @@
 use crate::analysis::detectors::dependency::ExtractionError;
 use thiserror::Error;
 
+// Import rendering service errors for use in this module
+use super::rendering::RenderingServiceError;
+
 /// Unified error type for all Uveddi operations with comprehensive documentation
 #[derive(Debug, Error)]
 pub enum UveddiError {
@@ -80,6 +83,10 @@ pub enum UveddiError {
     #[error("Network error: {0}")]
     #[cfg(feature = "ai")]
     Network(#[from] reqwest::Error),
+
+    // === Rendering Service Errors ===
+    #[error("Rendering service error: {0}")]
+    RenderingService(#[from] RenderingServiceError),
 
     // === Validation Errors ===
     #[error("Validation error: {0}")]
