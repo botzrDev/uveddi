@@ -6,7 +6,9 @@
 pub mod retry;
 pub mod circuit_breaker;
 pub mod fallback;
+pub mod metrics;
 
 pub use retry::{RetryClient, RetryConfig};
 pub use circuit_breaker::CircuitBreaker;
 pub use fallback::{FallbackManager, FallbackConfig, FallbackMode};
+pub use metrics::{MetricsCollector, MetricsConfig, ErrorMetrics, MetricsFormat};
