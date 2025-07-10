@@ -102,7 +102,8 @@ fn main() -> Result<()> {
     // Start health monitoring server in a separate thread
     let health_monitor_clone = Arc::clone(&health_monitor);
     std::thread::spawn(move || {
-        let rt = tokio::runtime::Runtime::new().unwrap();
+        let rt = tokio::runtime::Runtime::new()
+            .expect("FATAL [UV-150]: Failed to initialize async runtime. This indicates a critical system resource issue. See error handling policy.");
         rt.block_on(server::run_server(health_monitor_clone));
     });
 

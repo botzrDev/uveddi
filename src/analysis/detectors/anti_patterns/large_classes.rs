@@ -4,16 +4,9 @@
 //! God Objects, and Blob anti-patterns as described in the Large Class Research document.
 
 use crate::analysis::{AnalysisDetector, AnalysisError};
-use crate::ast::tree_sitter::{self, ParsedFile, SourceLanguage};
+use crate::ast::{ParsedFile, SourceLanguage, Query, Node};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use log::debug;
-
-// Conditional imports for tree-sitter types
-#[cfg(feature = "tree-sitter")]
-use tree_sitter::Query;
-
-#[cfg(not(feature = "tree-sitter"))]
-use crate::ast::tree_sitter::Query;
 
 /// Holds the collected metrics for a single class or struct.
 #[derive(Debug, Clone)]
@@ -233,44 +226,44 @@ impl LargeClassDetector {
 
     // Helper methods that are only available with tree-sitter
     #[cfg(feature = "tree-sitter")]
-    pub fn calculate_logical_loc(&self, node: &tree_sitter::Node, source: &[u8]) -> u32 {
+    pub fn calculate_logical_loc(&self, node: &Node, source: &[u8]) -> u32 {
         // Implementation
         0
     }
 
     #[cfg(feature = "tree-sitter")]
-    pub fn extract_code_snippet(&self, node: &tree_sitter::Node, source: &[u8], max_lines: usize) -> String {
+    pub fn extract_code_snippet(&self, node: &Node, source: &[u8], max_lines: usize) -> String {
         // Implementation
         String::new()
     }
 
     #[cfg(feature = "tree-sitter")]
-    fn count_rust_struct_fields(&self, struct_node: &tree_sitter::Node, source: &[u8]) -> Result<u32, AnalysisError> {
+    fn count_rust_struct_fields(&self, struct_node: &Node, source: &[u8]) -> Result<u32, AnalysisError> {
         Ok(0)
     }
 
     #[cfg(feature = "tree-sitter")]
-    fn find_rust_impl_metrics(&self, struct_name: &str, tree: &tree_sitter::Tree, source: &[u8]) -> Result<(u32, u32), AnalysisError> {
+    fn find_rust_impl_metrics(&self, struct_name: &str, tree: &crate::ast::Tree, source: &[u8]) -> Result<(u32, u32), AnalysisError> {
         Ok((0, 0))
     }
 
     #[cfg(feature = "tree-sitter")]
-    fn calculate_rust_lcom(&self, struct_name: &str, tree: &tree_sitter::Tree, source: &[u8]) -> Result<f64, AnalysisError> {
+    fn calculate_rust_lcom(&self, struct_name: &str, tree: &crate::ast::Tree, source: &[u8]) -> Result<f64, AnalysisError> {
         Ok(0.0)
     }
 
     #[cfg(feature = "tree-sitter")]
-    fn count_rust_coupling(&self, node: &tree_sitter::Node, source: &[u8]) -> Result<u32, AnalysisError> {
+    fn count_rust_coupling(&self, node: &Node, source: &[u8]) -> Result<u32, AnalysisError> {
         Ok(0)
     }
 
     #[cfg(not(feature = "tree-sitter"))]
-    pub fn calculate_logical_loc(&self, node: &tree_sitter::Node, source: &[u8]) -> u32 {
+    pub fn calculate_logical_loc(&self, node: &Node, source: &[u8]) -> u32 {
         0
     }
 
     #[cfg(not(feature = "tree-sitter"))]
-    pub fn extract_code_snippet(&self, node: &tree_sitter::Node, source: &[u8], max_lines: usize) -> String {
+    pub fn extract_code_snippet(&self, node: &Node, source: &[u8], max_lines: usize) -> String {
         String::new()
     }
 

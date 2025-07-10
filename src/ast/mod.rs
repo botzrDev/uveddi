@@ -31,4 +31,13 @@
 //! ```
 
 pub mod tree_sitter;
-pub use tree_sitter::{AstParser, CustomAst};
+pub use tree_sitter::{
+    AstParser, 
+    CustomAst,
+    ParsedFile,
+    SourceLanguage,
+    AstError,
+    Query,
+    QueryCursor,
+    Node
+};

@@ -16,7 +16,7 @@
 //! - Provides configurable similarity thresholds
 
 use crate::analysis::{AnalysisDetector, AnalysisError};
-use crate::ast::tree_sitter::{ParsedFile, SourceLanguage, Query, QueryCursor};
+use crate::ast::{ParsedFile, SourceLanguage, Query, QueryCursor};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use log::{debug, info};
 use sha2::{Digest, Sha256};
@@ -469,8 +469,9 @@ impl CodeDuplicationDetector {
     /// detection process, allowing for efficient identification of potential clone
     /// candidates across the entire codebase.
     fn index_code_blocks(&self, blocks: &[CodeBlock]) -> Result<(), AnalysisError> {
-        let mut index = self.fingerprint_index.lock().unwrap();
-        let mut all_blocks = self.all_blocks.lock().unwrap();
+        // UV-150: Use safe_lock_analysis_data for mutex lock error handling
+        let mut index = safe_lock_analysis_data(&self.fingerprint_index, "index_code_blocks")?;
+        let mut all_blocks = safe_lock_analysis_data(&self.all_blocks, "index_code_blocks")?;
 
         for block in blocks {
             // Add to global collection
@@ -492,7 +493,11 @@ impl CodeDuplicationDetector {
     /// a significant number of fingerprints with the target block. This is the fast
     /// candidate generation stage of the two-stage detection approach.
     fn find_clone_candidates(&self, block: &CodeBlock) -> Vec<CodeBlock> {
-        let index = self.fingerprint_index.lock().unwrap();
+        // UV-150: Use safe_lock_analysis_data for mutex lock error handling
+        let index = match safe_lock_analysis_data(&self.fingerprint_index, "find_clone_candidates") {
+            Ok(guard) => guard,
+            Err(_) => return Vec::new(), // Graceful degradation: return no candidates if lock fails
+        };
         let fingerprints = self.generate_fingerprints(&block.normalized_tokens);
 
         let mut candidates = HashMap::new();
@@ -666,6 +671,20 @@ impl CodeDuplicationDetector {
     }
 }
 
+/// Helper for safe mutex locking with error propagation (UV-150)
+///
+/// This function ensures consistent handling of mutex poison errors in analysis operations.
+/// Returns a Result with AnalysisError::ConcurrencyFailure if the lock is poisoned.
+fn safe_lock_analysis_data<'a, T>(
+    mutex: &'a std::sync::Mutex<T>,
+    operation: &'static str,
+) -> Result<std::sync::MutexGuard<'a, T>, crate::analysis::AnalysisError> {
+    mutex.lock().map_err(|_| crate::analysis::AnalysisError::Analysis(format!(
+        "Concurrency failure during {} (mutex poisoned). See UV-150 error handling policy.",
+        operation
+    )))
+}
+
 impl AnalysisDetector for CodeDuplicationDetector {
     /// Returns the unique name of this detector.
     fn get_detector_name(&self) -> &'static str {
@@ -772,7 +791,7 @@ impl AnalysisDetector for CodeDuplicationDetector {
              a.block2.file_path == b.block1.file_path && a.block2.start_line == b.block1.start_line) ||
             // Check if this is an exact duplicate
             (a.block1.file_path == b.block1.file_path && a.block1.start_line == b.block1.start_line &&
-             a.block2.file_path == b.block2.file_path && a.block2.start_line == b.block2.start_line)
+             a.block2.file_path == b.block2.file_path && a.block2.start_line == b.block2.end_line)
         });
 
         info!(

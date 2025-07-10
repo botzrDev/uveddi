@@ -138,27 +138,29 @@ impl MermaidGenerator {
             })
             .collect();
         
-        // Transform dependencies with cycle information
-        let template_dependencies: Vec<Value> = self.extract_dependencies_for_template(components)
-            .into_iter()
-            .map(|mut dep| {
-                let dep_obj = dep.as_object_mut().unwrap();
+        // Transform dependencies with cycle information (UV-150: error propagation)
+        let template_dependencies: Vec<Value> = {
+            let deps = self.extract_dependencies_for_template(components);
+            let mut result = Vec::with_capacity(deps.len());
+            for mut dep in deps {
+                let dep_obj = dep.as_object_mut().ok_or_else(|| {
+                    MermaidGenerationError::InvalidSpecError(
+                        "Invalid dependency structure in diagram data (see UV-150 error handling policy)".to_string()
+                    )
+                })?;
                 let from = dep_obj.get("from").and_then(|v| v.as_str()).unwrap_or("");
                 let to = dep_obj.get("to").and_then(|v| v.as_str()).unwrap_or("");
-                
-                // Parse UUIDs for comparison
                 if let (Ok(from_uuid), Ok(to_uuid)) = (Uuid::parse_str(from), Uuid::parse_str(to)) {
                     let is_cycle_edge = cycle_edge_set.contains(&(from_uuid, to_uuid));
                     dep_obj.insert("is_cycle_edge".to_string(), json!(is_cycle_edge));
-                    
                     if is_cycle_edge {
                         dep_obj.insert("style".to_string(), json!("stroke:#FF0000,stroke-width:4px"));
                     }
                 }
-                
-                dep
-            })
-            .collect();
+                result.push(dep);
+            }
+            result
+        };
         
         context.insert("components", &template_components);
         context.insert("dependencies", &template_dependencies);

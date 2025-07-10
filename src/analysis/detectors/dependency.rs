@@ -19,6 +19,8 @@ pub enum ExtractionError {
     IoError(PathBuf, #[source] std::io::Error),
     #[error("Query compilation error: {0}")]
     QueryError(String),
+    #[error("Invalid file path: {path} - Reason: {reason}")]
+    InvalidPath { path: PathBuf, reason: String },
 }
 
 /// Extracts dependencies from source code files using Abstract Syntax Tree (AST) parsing.
@@ -143,17 +145,22 @@ impl DependencyExtractor {
                 if parsed_file.language == SourceLanguage::Rust
                     && dependency_type == DependencyType::Use
                 {
-                    let mut potential_path = parsed_file.file_path.parent().unwrap().join(&module_name);
+                    // UV-150: Strategic error handling for path operations (Category V)
+                    let parent_dir = parsed_file.file_path.parent()
+                        .ok_or_else(|| ExtractionError::InvalidPath {
+                            path: parsed_file.file_path.clone(),
+                            reason: "File path has no parent directory (see UV-150 error handling policy)".to_string(),
+                        })?;
+                    let mut potential_path = parent_dir.join(&module_name);
                     if !potential_path.exists() {
                         potential_path.set_extension("rs");
                         if !potential_path.exists() {
                             // Check for module/mod.rs
-                            let mod_path = parsed_file
-                                .path
-                                .parent()
-                                .unwrap()
-                                .join(&module_name)
-                                .join("mod.rs");
+                            let mod_parent = parsed_file.path.parent().ok_or_else(|| ExtractionError::InvalidPath {
+                                path: parsed_file.path.clone(),
+                                reason: "File path has no parent directory for mod.rs (see UV-150)".to_string(),
+                            })?;
+                            let mod_path = mod_parent.join(&module_name).join("mod.rs");
                             if mod_path.exists() {
                                 potential_path = mod_path;
                             }

@@ -8,7 +8,10 @@ use std::fs;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
-use tree_sitter::{Parser, Tree};
+use tree_sitter::{Parser, Tree, Query, QueryCursor, Node};
+
+// Re-export tree-sitter types for public API
+pub use tree_sitter::{Query, QueryCursor, Node};
 
 pub mod queries;
 
@@ -55,7 +58,7 @@ impl AstParser {
         tree: &Tree,
         source: &str,
         language: &SourceLanguage,
-    ) -> Option<CustomAst> {
+    ) -> Result<CustomAst, AstError> {
         let root = tree.root_node();
         let mut items = Vec::new();
         match language {
@@ -69,7 +72,7 @@ impl AstParser {
                             if let Some(name_node) = child.child_by_field_name("name") {
                                 let name = name_node
                                     .utf8_text(source.as_bytes())
-                                    .unwrap_or("")
+                                    .map_err(|_| AstError::Other("Failed to get node text".to_string()))?
                                     .to_string();
                                 struct_names.push(name.clone());
                                 structs.insert(name, Vec::new());
@@ -79,7 +82,7 @@ impl AstParser {
                             if let Some(type_node) = child.child_by_field_name("type") {
                                 let type_name = type_node
                                     .utf8_text(source.as_bytes())
-                                    .unwrap_or("")
+                                    .map_err(|_| AstError::Other("Failed to get node text".to_string()))?
                                     .to_string();
                                 let mut methods = Vec::new();
                                 if let Some(body_node) = child.child_by_field_name("body") {
@@ -90,7 +93,7 @@ impl AstParser {
                                             {
                                                 let method_name = name_node
                                                     .utf8_text(source.as_bytes())
-                                                    .unwrap_or("")
+                                                    .map_err(|_| AstError::Other("Failed to get node text".to_string()))?
                                                     .to_string();
                                                 methods.push(method_name);
                                             }
@@ -121,7 +124,7 @@ impl AstParser {
                             if let Some(name_node) = child.child_by_field_name("name") {
                                 let name = name_node
                                     .utf8_text(source.as_bytes())
-                                    .unwrap_or("")
+                                    .map_err(|_| AstError::Other("Failed to get node text".to_string()))?
                                     .to_string();
                                 items.push(CustomAst::Struct {
                                     name,
@@ -133,7 +136,7 @@ impl AstParser {
                             if let Some(name_node) = child.child_by_field_name("name") {
                                 let name = name_node
                                     .utf8_text(source.as_bytes())
-                                    .unwrap_or("")
+                                    .map_err(|_| AstError::Other("Failed to get node text".to_string()))?
                                     .to_string();
                                 items.push(CustomAst::Function {
                                     name,
@@ -153,7 +156,7 @@ impl AstParser {
                             if let Some(name_node) = child.child_by_field_name("name") {
                                 let name = name_node
                                     .utf8_text(source.as_bytes())
-                                    .unwrap_or("")
+                                    .map_err(|_| AstError::Other("Failed to get node text".to_string()))?
                                     .to_string();
                                 items.push(CustomAst::Function {
                                     name,
@@ -165,7 +168,7 @@ impl AstParser {
                             if let Some(name_node) = child.child_by_field_name("name") {
                                 let name = name_node
                                     .utf8_text(source.as_bytes())
-                                    .unwrap_or("")
+                                    .map_err(|_| AstError::Other("Failed to get node text".to_string()))?
                                     .to_string();
                                 items.push(CustomAst::Struct {
                                     name,
@@ -178,7 +181,7 @@ impl AstParser {
                 }
             }
         }
-        Some(CustomAst::File { items })
+        Ok(CustomAst::File { items })
     }
 
     /// Parse file and extract dependencies (ER-F-003), with AST caching.
@@ -212,10 +215,10 @@ impl AstParser {
                         .ok_or(AstError::ParseFailed)?;
                     parsed.tree = Some(tree);
 
-                    self.cache
-                        .lock()
-                        .unwrap()
-                        .insert(path_str.clone(), parsed.clone());
+        self.cache
+            .lock()
+            .map_err(|_| AstError::Other("Cache lock poisoned".to_string()))?
+            .insert(path_str.clone(), parsed.clone());
                     return Ok(parsed);
                 }
             }
@@ -232,7 +235,7 @@ impl AstParser {
         if tree.root_node().has_error() {
             return Err(AstError::ParseFailed);
         }
-        let custom_ast = Self::tree_to_custom_ast(&tree, &source, &language);
+        let custom_ast = Self::tree_to_custom_ast(&tree, &source, &language)?;
         let parsed = ParsedFile {
             path: file_path.to_path_buf(),
             language,
@@ -266,7 +269,7 @@ impl AstParser {
             return Err(AstError::ParseFailed);
         }
         
-        let custom_ast = Self::tree_to_custom_ast(&tree, content, &language);
+        let custom_ast = Self::tree_to_custom_ast(&tree, content, &language)?;
         let parsed = ParsedFile {
             path: file_path.to_path_buf(),
             language,
@@ -384,17 +387,17 @@ impl Clone for AstParser {
         let mut rust_parser = tree_sitter::Parser::new();
         rust_parser
             .set_language(&tree_sitter_rust::language())
-            .unwrap();
+            .map_err(|e| AstError::TreeSitterLanguage(e))?;
         parsers.insert(SourceLanguage::Rust, rust_parser);
         let mut python_parser = tree_sitter::Parser::new();
         python_parser
             .set_language(&tree_sitter_python::language())
-            .unwrap();
+            .map_err(|e| AstError::TreeSitterLanguage(e))?;
         parsers.insert(SourceLanguage::Python, python_parser);
         let mut javascript_parser = tree_sitter::Parser::new();
         javascript_parser
             .set_language(&tree_sitter_javascript::language())
-            .unwrap();
+            .map_err(|e| AstError::TreeSitterLanguage(e))?;
         parsers.insert(SourceLanguage::JavaScript, javascript_parser);
         AstParser {
             parsers,

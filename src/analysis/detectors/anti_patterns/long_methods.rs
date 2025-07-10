@@ -23,10 +23,11 @@
 //! - **JavaScript**: Framework-aware thresholds for React/Node.js patterns
 
 use crate::analysis::{AnalysisDetector, AnalysisError};
-use crate::ast::tree_sitter::{ParsedFile, SourceLanguage, Query, QueryCursor, Node};
+use crate::ast::{ParsedFile, SourceLanguage, Query, QueryCursor, Node};
 use crate::database::models::{ArchitecturalIssue, AntiPatternType};
-use log::{debug, info};
+use log::debug;
 use std::collections::HashMap;
+use log::info;
 
 /// Represents metrics collected for a method/function
 #[derive(Debug, Clone)]
@@ -204,7 +205,9 @@ impl LongMethodsDetector {
         #[cfg(feature = "tree-sitter")]
         {
         let mut metrics = Vec::new();
-        let source = parsed_file.source.as_ref().unwrap_or(&String::new()).as_bytes();
+        let source = parsed_file.source.as_ref()
+            .ok_or_else(|| AnalysisError::AntiPatternDetection("Source content missing".to_string()))?
+            .as_bytes();
         let tree = parsed_file
             .tree
             .as_ref()
@@ -212,7 +215,7 @@ impl LongMethodsDetector {
         let language = tree.language();
 
         let function_query = Query::new(&language, RUST_FUNCTION_QUERY)
-            .map_err(|e| AnalysisError::QueryError(e.to_string()))?;
+            .map_err(|e| AnalysisError::QueryError(format!("Failed to create Rust function query: {}", e)))?;
         
         let mut cursor = QueryCursor::new();
         for mat in cursor.matches(&function_query, tree.root_node(), source) {
@@ -276,7 +279,7 @@ impl LongMethodsDetector {
         let language = tree.language();
 
         let function_query = Query::new(&language, PYTHON_FUNCTION_QUERY)
-            .map_err(|e| AnalysisError::QueryError(e.to_string()))?;
+            .map_err(|e| AnalysisError::QueryError(format!("Failed to create Python function query: {}", e)))?;
         
         let mut cursor = QueryCursor::new();
         for mat in cursor.matches(&function_query, tree.root_node(), source) {
@@ -340,7 +343,7 @@ impl LongMethodsDetector {
         let language = tree.language();
 
         let function_query = Query::new(&language, JAVASCRIPT_FUNCTION_QUERY)
-            .map_err(|e| AnalysisError::QueryError(e.to_string()))?;
+            .map_err(|e| AnalysisError::QueryError(format!("Failed to create JavaScript function query: {}", e)))?;
         
         let mut cursor = QueryCursor::new();
         for mat in cursor.matches(&function_query, tree.root_node(), source) {
@@ -350,7 +353,9 @@ impl LongMethodsDetector {
                 
                 // Handle anonymous functions
                 let name = if let Some(name_capture) = mat.captures.first() {
-                    name_capture.node.utf8_text(source).unwrap_or("anonymous").to_string()
+                    name_capture.node.utf8_text(source)
+                        .map(|s| s.to_string())
+                        .unwrap_or_else(|_| "anonymous".to_string())
                 } else {
                     "anonymous".to_string()
                 };
@@ -580,10 +585,12 @@ impl LongMethodsDetector {
                     let param_count = cursor.node().child_count() as u32;
                     // Subtract 1 for 'self' parameter if present
                     if param_count > 0 {
-                        if let Ok(first_param) = cursor.node().child(0).unwrap().utf8_text(source) {
-                            if first_param == "self" {
-                                return Ok(param_count - 1);
-                            }
+                        let first_param_node = cursor.node().child(0)
+                            .ok_or_else(|| AnalysisError::AntiPatternDetection("Missing first parameter node in Python function parameters".to_string()))?;
+                        let first_param_text = first_param_node.utf8_text(source)
+                            .map_err(|e| AnalysisError::AntiPatternDetection(format!("Failed to extract first parameter text: {}", e)))?;
+                        if first_param_text == "self" {
+                            return Ok(param_count - 1);
                         }
                     }
                     return Ok(param_count);
@@ -653,7 +660,7 @@ impl LongMethodsDetector {
         let end_line = node.end_position().row + context_lines;
         
         let lines: Vec<&str> = source.split(|&b| b == b'\n')
-            .map(|line| std::str::from_utf8(line).unwrap_or(""))
+            .map(|line| std::str::from_utf8(line).unwrap_or_else(|_| ""))
             .collect();
         
         lines.get(start_line..=end_line.min(lines.len().saturating_sub(1)))
