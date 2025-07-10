@@ -1,5 +1,5 @@
 const workerPool = require('./worker-pool');
-const ContentAddressableCache = require('./cache');
+const AdvancedCache = require('./cache');
 
 // Logger will be passed in from server.js
 let logger = console;
@@ -7,8 +7,8 @@ function setLogger(newLogger) {
   logger = newLogger;
 }
 
-// Initialize cache with production-ready settings
-const cache = new ContentAddressableCache({
+// Initialize advanced cache
+const cache = new AdvancedCache({
   cacheDir: process.env.CACHE_DIR || '/tmp/uveddi-cache',
   maxCacheSize: parseInt(process.env.MAX_CACHE_SIZE) || 1024 * 1024 * 1024, // 1GB
   maxAge: parseInt(process.env.CACHE_MAX_AGE) || 7 * 24 * 60 * 60 * 1000 // 7 days
@@ -193,6 +193,14 @@ async function validateDiagram(mermaidCode) {
 }
 
 /**
+ * UV-8: Expose predictive cache warming for repeated renders
+ * @param {Array<string>} diagramKeys - List of cache keys to warm
+ */
+async function warmCache(diagramKeys) {
+  return cache.predictiveCacheWarm(diagramKeys);
+}
+
+/**
  * Get cache statistics for monitoring
  * @returns {Object} Cache performance metrics
  */
@@ -247,5 +255,6 @@ module.exports = {
   getCapabilities,
   getCacheStats,
   clearCache,
-  setLogger
+  setLogger,
+  warmCache // UV-8: Export cache warming
 };

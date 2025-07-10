@@ -1,18 +1,17 @@
 const { chromium } = require('playwright');
+const { bufferPool } = require('./memory_optimizer');
 
 class WorkerPool {
   constructor() {
     this.logger = console;
-  }
-
-  setLogger(newLogger) {
-    this.logger = newLogger;
-  }
-  constructor() {
     this.workers = [];
     this.maxWorkers = process.env.MAX_WORKERS || 3;
     this.currentWorker = 0;
     this.browser = null;
+  }
+
+  setLogger(newLogger) {
+    this.logger = newLogger;
   }
 
   async initialize() {
@@ -151,7 +150,11 @@ class WorkerPool {
     // Simple round-robin selection
     let attempts = 0;
     while (attempts < this.maxWorkers * 2) {
+      // UV-8: Optionally pre-allocate rendering buffers from pool for hot path
       const worker = this.workers[this.currentWorker];
+      if (!worker.buffer) {
+        worker.buffer = bufferPool.acquire();
+      }
       this.currentWorker = (this.currentWorker + 1) % this.maxWorkers;
       
       if (!worker.busy) {
@@ -175,6 +178,11 @@ class WorkerPool {
   }
 
   releaseWorker(worker) {
+    // UV-8: Release rendering buffer back to pool
+    if (worker.buffer) {
+      bufferPool.release(worker.buffer);
+      worker.buffer = null;
+    }
     worker.busy = false;
   }
 

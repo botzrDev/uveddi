@@ -288,4 +288,23 @@ class ContentAddressableCache {
   }
 }
 
-module.exports = ContentAddressableCache;
+class AdvancedCache extends ContentAddressableCache {
+  // UV-8: Predictive cache warming using access patterns
+  async predictiveCacheWarm(diagramKeys) {
+    for (const key of diagramKeys) {
+      // Preload cache entries if not present
+      const cached = await this.get(key);
+      if (!cached) {
+        // Optionally trigger background render or prefetch
+        // This is a stub for future ML-based prediction
+      }
+    }
+  }
+  // UV-8: Context-aware invalidation using dependency graphs (stub)
+  async invalidateByDependency(depKey) {
+    // Invalidate all cache entries related to a dependency
+    // This is a stub for future dependency graph integration
+  }
+}
+
+module.exports = AdvancedCache;

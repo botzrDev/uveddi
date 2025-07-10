@@ -348,6 +348,16 @@ class BenchmarkRunner {
   }
 }
 
+class PerformanceValidator {
+  // UV-8: Validate memory, cache, and rendering optimizations
+  async validateOptimizations() {
+    // Run regression tests, collect metrics, compare to baseline
+    // Optionally invoke renderer.getCacheStats(), workerPool.getStatus(), etc.
+    // This is a stub for future automated validation
+    console.log('Validating optimizations (UV-8)...');
+  }
+}
+
 // Run benchmarks if called directly
 if (require.main === module) {
   const runner = new BenchmarkRunner();
