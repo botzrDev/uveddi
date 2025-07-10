@@ -20,9 +20,12 @@ use log::{info, warn};
 use std::path::{Path, PathBuf};
 use tokio_stream::StreamExt;
 
+/// Represents a cached analysis result for a file
 #[derive(serde::Serialize, serde::Deserialize, Debug)]
 struct CachedAnalysisResult {
+    /// The architectural issues found in the file
     issues: Vec<ArchitecturalIssue>,
+    /// The dependencies extracted from the file
     dependencies: Vec<Dependency>,
 }
 
@@ -244,6 +247,31 @@ impl AnalysisEngine {
         Ok((file_issues, dependency_graph))
     }
 
+    /// Analyzes files in the given path and collects dependencies
+    ///
+    /// This internal method:
+    /// 1. Walks the directory tree to find source files
+    /// 2. Checks the cache for existing analysis results
+    /// 3. Parses and analyzes files not found in cache
+    /// 4. Extracts symbols and dependencies
+    /// 5. Caches the results for future use
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - Directory or file path to analyze
+    ///
+    /// # Returns
+    ///
+    /// A tuple containing:
+    /// - `Vec<ArchitecturalIssue>` - Issues found in the files
+    /// - `Vec<Dependency>` - Dependencies extracted from the files
+    ///
+    /// # Errors
+    ///
+    /// Returns `UveddiError` if:
+    /// - File walking fails
+    /// - Parsing errors occur
+    /// - Cache operations fail
     async fn analyze_files_and_collect_dependencies(
         &mut self,
         path: &Path,

@@ -1,3 +1,5 @@
+#![cfg(feature = "tree-sitter")]
+
 use std::fs::File;
 use std::io::Write;
 use tempfile::tempdir;

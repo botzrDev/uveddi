@@ -10,10 +10,10 @@ use log::debug;
 
 // Conditional imports for tree-sitter types
 #[cfg(feature = "tree-sitter")]
-use tree_sitter::{Query, QueryCursor};
+use tree_sitter::Query;
 
 #[cfg(not(feature = "tree-sitter"))]
-use crate::ast::tree_sitter::{Query, QueryCursor};
+use crate::ast::tree_sitter::Query;
 
 /// Holds the collected metrics for a single class or struct.
 #[derive(Debug, Clone)]
