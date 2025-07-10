@@ -43,10 +43,16 @@
 //! - Contextual error information
 //! - Suggestions for common issues
 
+use std::sync::Arc;
+use tokio::sync::Mutex;
 use clap::{Parser, Subcommand};
 use color_eyre::eyre::Result;
 use uveddi::cli::analyze_command::AnalyzeCommand;
 use uveddi::cli::config_command::ConfigCommand;
+use uveddi::resilience::health::HealthMonitor;
+use crate::server::run_server;
+
+mod server;
 
 /// Uveddi CLI application
 ///
@@ -89,5 +95,17 @@ fn main() -> Result<()> {
     // Set up color_eyre for better error reporting
     color_eyre::install()?;
     env_logger::init();
+
+    // Create health monitor instance
+    let health_monitor = Arc::new(Mutex::new(HealthMonitor::new()));
+    
+    // Start health monitoring server in a separate thread
+    let health_monitor_clone = Arc::clone(&health_monitor);
+    std::thread::spawn(move || {
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        rt.block_on(server::run_server(health_monitor_clone));
+    });
+
+    // Run main application
     uveddi::application::run_app().map_err(|e| color_eyre::eyre::eyre!(e))
 }

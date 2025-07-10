@@ -3,12 +3,14 @@
 //! This module includes implementations for common resilience strategies like
 //! retry mechanisms with exponential backoff and jitter.
 
-pub mod retry;
 pub mod circuit_breaker;
 pub mod fallback;
+pub mod health;
 pub mod metrics;
+pub mod retry;
 
-pub use retry::{RetryClient, RetryConfig};
 pub use circuit_breaker::CircuitBreaker;
-pub use fallback::{FallbackManager, FallbackConfig, FallbackMode};
-pub use metrics::{MetricsCollector, MetricsConfig, ErrorMetrics, MetricsFormat};
+pub use fallback::{FallbackConfig, FallbackManager, FallbackMode};
+pub use health::HealthMonitor;
+pub use metrics::{ErrorMetrics, MetricsCollector, MetricsConfig, MetricsFormat};
+pub use retry::{RetryClient, RetryConfig};
