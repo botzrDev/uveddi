@@ -3,7 +3,7 @@
 //! Detects import or dependency cycles between modules or components.
 
 use crate::analysis::{AnalysisDetector, AnalysisError};
-use crate::ast::tree_sitter::ParsedFile;
+use crate::ast::tree_sitter_impl::ParsedFile;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 
 pub struct CyclicDependenciesDetector;

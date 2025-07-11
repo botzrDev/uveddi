@@ -211,7 +211,7 @@ impl LargeClassDetector {
     #[cfg(feature = "tree-sitter")]
     fn extract_python_metrics(
         &self,
-        parsed_file: &ParsedFile,
+        _parsed_file: &ParsedFile,
     ) -> Result<Vec<ClassMetrics>, AnalysisError> {
         // Implementation with tree-sitter
         Ok(Vec::new()) // Simplified for now
@@ -229,7 +229,7 @@ impl LargeClassDetector {
     #[cfg(feature = "tree-sitter")]
     fn extract_javascript_metrics(
         &self,
-        parsed_file: &ParsedFile,
+        _parsed_file: &ParsedFile,
     ) -> Result<Vec<ClassMetrics>, AnalysisError> {
         // Implementation with tree-sitter
         Ok(Vec::new()) // Simplified for now
@@ -246,13 +246,13 @@ impl LargeClassDetector {
 
     // Helper methods that are only available with tree-sitter
     #[cfg(feature = "tree-sitter")]
-    pub fn calculate_logical_loc(&self, node: &Node, source: &[u8]) -> u32 {
+    pub fn calculate_logical_loc(&self, _node: &Node, _source: &[u8]) -> u32 {
         // Implementation
         0
     }
 
     #[cfg(feature = "tree-sitter")]
-    pub fn extract_code_snippet(&self, node: &Node, source: &[u8], max_lines: usize) -> String {
+    pub fn extract_code_snippet(&self, _node: &Node, _source: &[u8], _max_lines: usize) -> String {
         // Implementation
         String::new()
     }
@@ -260,8 +260,8 @@ impl LargeClassDetector {
     #[cfg(feature = "tree-sitter")]
     fn count_rust_struct_fields(
         &self,
-        struct_node: &Node,
-        source: &[u8],
+        _struct_node: &Node,
+        _source: &[u8],
     ) -> Result<u32, AnalysisError> {
         Ok(0)
     }
@@ -269,9 +269,9 @@ impl LargeClassDetector {
     #[cfg(feature = "tree-sitter")]
     fn find_rust_impl_metrics(
         &self,
-        struct_name: &str,
-        tree: &Tree,
-        source: &[u8],
+        _struct_name: &str,
+        _tree: &Tree,
+        _source: &[u8],
     ) -> Result<(u32, u32), AnalysisError> {
         Ok((0, 0))
     }
@@ -279,25 +279,25 @@ impl LargeClassDetector {
     #[cfg(feature = "tree-sitter")]
     fn calculate_rust_lcom(
         &self,
-        struct_name: &str,
-        tree: &Tree,
-        source: &[u8],
+        _struct_name: &str,
+        _tree: &Tree,
+        _source: &[u8],
     ) -> Result<f64, AnalysisError> {
         Ok(0.0)
     }
 
     #[cfg(feature = "tree-sitter")]
-    fn count_rust_coupling(&self, node: &Node, source: &[u8]) -> Result<u32, AnalysisError> {
+    fn count_rust_coupling(&self, _node: &Node, _source: &[u8]) -> Result<u32, AnalysisError> {
         Ok(0)
     }
 
     #[cfg(not(feature = "tree-sitter"))]
-    pub fn calculate_logical_loc(&self, node: &Node, source: &[u8]) -> u32 {
+    pub fn calculate_logical_loc(&self, _node: &Node, _source: &[u8]) -> u32 {
         0
     }
 
     #[cfg(not(feature = "tree-sitter"))]
-    pub fn extract_code_snippet(&self, node: &Node, source: &[u8], max_lines: usize) -> String {
+    pub fn extract_code_snippet(&self, _node: &Node, _source: &[u8], _max_lines: usize) -> String {
         String::new()
     }
 

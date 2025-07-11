@@ -1,126 +1,118 @@
-//! Error types and error handling for Uveddi
-//!
-//! This module defines the unified error type [`UveddiError`] used throughout the codebase.
-//! All fallible operations should return `Result<T, UveddiError>`. Error variants cover
-//! filesystem, database, AST parsing, AI provider, report generation, and configuration errors.
-//!
-//! [`UveddiError`]: enum.UveddiError.html
+use std::path::PathBuf;
 
-use crate::analysis::detectors::dependency::ExtractionError;
+use crate::{
+    analysis::errors::AnalysisError,
+    ast::tree_sitter_impl::AstError,
+    plugins::errors::PluginError,
+    report::errors::ReportGenerationError,
+    resilience::rendering_service::RenderingServiceError,
+};
+use clap::error::Error as ClapError;
+use reqwest::Error as ReqwestError;
+use rusqlite::Error as RusqliteError;
 use thiserror::Error;
 
-// Import rendering service errors for use in this module
-use super::rendering::RenderingServiceError;
-
-/// Unified error type for all Uveddi operations with comprehensive documentation
-#[derive(Debug, Error)]
-pub enum UveddiError {
-    // === Path and File System Errors ===
-    #[error("Path not found: {0}")]
-    PathNotFound(String),
-    #[error("Invalid input path: {path}")]
-    InvalidInputPath { path: std::path::PathBuf },
-    #[error("IO error: {0}")]
-    Io(#[from] std::io::Error),
-
-    // === Database Errors ===
-    #[error("Database error: {0}")]
-    Database(#[from] rusqlite::Error),
-
-    // === AST Parsing Errors ===
-    #[error("AST parsing error: {0}")]
-    AstParsing(String),
-    #[error("Tree-sitter query error: {0}")]
-    QueryError(String),
-    #[error("Language not supported: {0}")]
+#[derive(Error, Debug)]
+pub enum ExtractionError {
+    #[error("AST extraction error: {0}")]
+    AstError(AstError),
+    #[error("File read error: {0}")]
+    FileReadError(#[from] std::io::Error),
+    #[error("Unsupported language: {0}")]
     UnsupportedLanguage(String),
+}
 
+#[derive(Error, Debug)]
+pub enum UveddiError {
     #[error("Analysis error: {0}")]
-    Analysis(String),
-
-    #[error("Anti-pattern detection error: {0}")]
-    AntiPatternDetection(String),
-
-    // === AI Provider Errors ===
-    #[error("AI API error: {provider}: {message}")]
-    AiApi { provider: String, message: String },
-    #[error("AI context building error: {0}")]
-    AiContext(String),
-    #[error("AI response parsing error: {0}")]
-    AiResponseParsing(String),
-    #[error("No AI providers available")]
-    NoAiProviders,
-
-    // === Report Generation Errors ===
-    #[error("Report generation error: {0}")]
-    ReportGeneration(String),
-    #[error("Unsupported output format: {0}")]
-    UnsupportedOutputFormat(String),
-    #[error("JSON serialization error: {0}")]
-    JsonSerialization(#[from] serde_json::Error),
-
-    // === Configuration Errors ===
-    #[error("Configuration error: {0}")]
-    Configuration(String),
-    #[error("Missing required configuration: {0}")]
-    MissingConfiguration(String),
-    #[error("CLI argument error: {0}")]
-    Clap(#[from] clap::Error),
-    #[error("TOML parsing error: {0}")]
-    Toml(#[from] toml::de::Error),
-
-    #[error("Plugin error: {0}")]
-    PluginError(String),
-    // WASM error conversion temporarily disabled for debugging
-    // #[error("WASM runtime error: {0}")]
-    // WasmRuntimeError(#[from] wasmtime::Error),
-
-    // === Cache Errors ===
-    #[error("Cache error: {0}")]
-    Cache(String),
-
-    // === Network and External Service Errors ===
-    #[error("Network error: {0}")]
-    #[cfg(feature = "ai")]
-    Network(#[from] reqwest::Error),
-
-    // === Rendering Service Errors ===
+    AnalysisError(#[from] AnalysisError),
+    #[error("Extraction error: {0}")]
+    ExtractionError(#[from] ExtractionError),
     #[error("Rendering service error: {0}")]
-    RenderingService(#[from] RenderingServiceError),
-
-    // === Validation Errors ===
-    #[error("Validation error: {0}")]
-    Validation(String),
-
-    #[error("Other error: {0}")]
-    Other(String),
+    RenderingServiceError(#[from] RenderingServiceError),
+    #[error("Database error: {0}")]
+    DatabaseError(#[from] RusqliteError),
+    #[error("Configuration error: {0}")]
+    ConfigError(String),
+    #[error("Report generation error: {0}")]
+    ReportError(#[from] ReportGenerationError),
+    #[error("Plugin error: {0}")]
+    PluginError(#[from] PluginError),
+    #[error("Network error: {0}")]
+    NetworkError(#[from] ReqwestError),
+    #[error("Command line error: {0}")]
+    CliError(#[from] ClapError),
+    #[error("Generic error: {0}")]
+    GenericError(#[from] anyhow::Error),
+    #[error("IO error: {0}")]
+    IoError(#[from] std::io::Error),
+    #[error("Serialization error: {0}")]
+    SerializationError(#[from] serde_json::Error),
+    #[error("Path error: {0}")]
+    PathError(PathBuf),
 }
 
-// Comprehensive From implementations for common error types
-impl From<crate::ast::tree_sitter_impl::AstError> for UveddiError {
-    fn from(err: crate::ast::tree_sitter_impl::AstError) -> Self {
-        match err {
-            crate::ast::tree_sitter_impl::AstError::Io(io_err) => UveddiError::Io(io_err),
-            crate::ast::tree_sitter_impl::AstError::UnsupportedLanguage(lang) => {
-                UveddiError::UnsupportedLanguage(lang)
-            }
-            _ => UveddiError::AstParsing(err.to_string()),
+
+impl UveddiError {
+    pub fn severity(&self) -> ErrorSeverity {
+        match self {
+            UveddiError::AnalysisError(_)
+            | UveddiError::ExtractionError(_)
+            | UveddiError::DatabaseError(_)
+            | UveddiError::PluginError(_) => ErrorSeverity::High,
+            UveddiError::RenderingServiceError(_)
+            | UveddiError::ReportError(_)
+            | UveddiError::NetworkError(_) => ErrorSeverity::Medium,
+            _ => ErrorSeverity::Low,
+        }
+    }
+
+    pub fn category(&self) -> ErrorCategory {
+        match self {
+            UveddiError::AnalysisError(_) => ErrorCategory::Analysis,
+            UveddiError::ExtractionError(_) => ErrorCategory::Extraction,
+            UveddiError::DatabaseError(_) => ErrorCategory::Database,
+            UveddiError::ConfigError(_) => ErrorCategory::Configuration,
+            UveddiError::ReportError(_) => ErrorCategory::Reporting,
+            UveddiError::PluginError(_) => ErrorCategory::Plugin,
+            UveddiError::NetworkError(_) => ErrorCategory::Network,
+            UveddiError::CliError(_) => ErrorCategory::Cli,
+            UveddiError::IoError(_) => ErrorCategory::Io,
+            UveddiError::SerializationError(_) => ErrorCategory::Serialization,
+            UveddiError::PathError(_) => ErrorCategory::Path,
+            UveddiError::RenderingServiceError(_) => ErrorCategory::Rendering,
+            UveddiError::GenericError(_) => ErrorCategory::Generic,
         }
     }
 }
 
-impl From<ExtractionError> for UveddiError {
-    fn from(err: ExtractionError) -> Self {
-        match err {
-            ExtractionError::AstError(ast_err) => ast_err.into(),
-            ExtractionError::IoError(_path, io_err) => UveddiError::Io(io_err),
-            _ => UveddiError::Analysis(err.to_string()),
-        }
-    }
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ErrorSeverity {
+    Low,
+    Medium,
+    High,
+    Critical,
 }
 
-impl From<anyhow::Error> for UveddiError {
-    fn from(err: anyhow::Error) -> Self {
-        UveddiError::Other(err.to_string())
-    }
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ErrorCategory {
+    Analysis,
+    Extraction,
+    Database,
+    Configuration,
+    Reporting,
+    Plugin,
+    Network,
+    Cli,
+    Io,
+    Serialization,
+    Path,
+    Rendering,
+    Generic,
+}
+
+pub trait ErrorHandler {
+    fn handle_error(&self, error: &UveddiError);
+    fn log_error(&self, error: &UveddiError);
+    fn can_retry(&self, error: &UveddiError) -> bool;
 }

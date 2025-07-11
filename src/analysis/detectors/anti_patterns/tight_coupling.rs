@@ -5,7 +5,7 @@
 
 use crate::analysis::graph::dependency::{ComponentNode, LocalDependencyGraph};
 use crate::analysis::{AnalysisDetector, AnalysisError};
-use crate::ast::tree_sitter::ParsedFile;
+use crate::ast::tree_sitter_impl::ParsedFile;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use std::collections::HashMap;
 use std::path::Path;
@@ -198,7 +198,7 @@ impl TightCouplingDetector {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ast::tree_sitter::ParsedFile;
+    use crate::ast::tree_sitter_impl::ParsedFile;
 
     #[test]
     fn test_metrics_empty_graph() {

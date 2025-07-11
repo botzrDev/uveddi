@@ -1,7 +1,7 @@
 //! Magic Values anti-pattern detector (scaffold)
 
 use crate::analysis::{AnalysisDetector, AnalysisError};
-use crate::ast::tree_sitter::ParsedFile;
+use crate::ast::tree_sitter_impl::ParsedFile;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 
 pub struct MagicValuesDetector;

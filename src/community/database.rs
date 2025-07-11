@@ -8,7 +8,7 @@ use crate::community::models::{
     CommunityMember, DeveloperBadge, DeveloperProfile, DeveloperType, MemberActivity,
     MemberProfile, MemberRole, RolePermissions,
 };
-use crate::error::UveddiError;
+use crate::error::{UveddiError, RusqliteError};
 use chrono::{DateTime, Utc};
 use rusqlite::{Connection, Result as SqlResult, Row};
 use serde_json;
@@ -200,11 +200,11 @@ impl CommunityDatabase {
         };
 
         let languages_json = serde_json::to_string(&member.profile.languages).map_err(|e| {
-            UveddiError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e)))
+            UveddiError::DatabaseError(rusqlite::Error::ToSqlConversionFailure(Box::new(e)))
         })?;
         let custom_fields_json =
             serde_json::to_string(&member.profile.custom_fields).map_err(|e| {
-                UveddiError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e)))
+                UveddiError::DatabaseError(rusqlite::Error::ToSqlConversionFailure(Box::new(e)))
             })?;
 
         self.conn.execute(
@@ -345,10 +345,10 @@ impl CommunityDatabase {
         profile: &MemberProfile,
     ) -> Result<bool, UveddiError> {
         let languages_json = serde_json::to_string(&profile.languages).map_err(|e| {
-            UveddiError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e)))
+            UveddiError::DatabaseError(rusqlite::Error::ToSqlConversionFailure(Box::new(e)))
         })?;
         let custom_fields_json = serde_json::to_string(&profile.custom_fields).map_err(|e| {
-            UveddiError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e)))
+            UveddiError::DatabaseError(rusqlite::Error::ToSqlConversionFailure(Box::new(e)))
         })?;
 
         let affected = self.conn.execute(
@@ -444,7 +444,7 @@ impl CommunityDatabase {
     ) -> Result<i64, UveddiError> {
         let metadata: HashMap<String, String> = HashMap::new();
         let metadata_json = serde_json::to_string(&metadata).map_err(|e| {
-            UveddiError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e)))
+            UveddiError::DatabaseError(rusqlite::Error::ToSqlConversionFailure(Box::new(e)))
         })?;
 
         self.conn.execute(
@@ -596,13 +596,13 @@ impl CommunityDatabase {
         };
 
         let permissions_json = serde_json::to_string(&permissions).map_err(|e| {
-            UveddiError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e)))
+            UveddiError::DatabaseError(rusqlite::Error::ToSqlConversionFailure(Box::new(e)))
         })?;
         let regions_json = serde_json::to_string(&admin_profile.assigned_regions).map_err(|e| {
-            UveddiError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e)))
+            UveddiError::DatabaseError(rusqlite::Error::ToSqlConversionFailure(Box::new(e)))
         })?;
         let teams_json = serde_json::to_string(&admin_profile.assigned_teams).map_err(|e| {
-            UveddiError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e)))
+            UveddiError::DatabaseError(rusqlite::Error::ToSqlConversionFailure(Box::new(e)))
         })?;
 
         let level_str = match admin_level {
@@ -685,7 +685,7 @@ impl CommunityDatabase {
         }) {
             Ok(profile) => Ok(Some(profile)),
             Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
-            Err(e) => Err(UveddiError::Database(e)),
+            Err(e) => Err(UveddiError::DatabaseError(e)),
         }
     }
 
@@ -696,7 +696,7 @@ impl CommunityDatabase {
         permissions: AdminPermissions,
     ) -> Result<(), UveddiError> {
         let permissions_json = serde_json::to_string(&permissions).map_err(|e| {
-            UveddiError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e)))
+            UveddiError::DatabaseError(rusqlite::Error::ToSqlConversionFailure(Box::new(e)))
         })?;
 
         self.conn.execute(
@@ -818,10 +818,10 @@ impl CommunityDatabase {
         };
 
         let specializations_json = serde_json::to_string(&specializations).map_err(|e| {
-            UveddiError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e)))
+            UveddiError::DatabaseError(rusqlite::Error::ToSqlConversionFailure(Box::new(e)))
         })?;
         let repositories_json = serde_json::to_string(&dev_profile.repositories).map_err(|e| {
-            UveddiError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e)))
+            UveddiError::DatabaseError(rusqlite::Error::ToSqlConversionFailure(Box::new(e)))
         })?;
 
         let dev_type_str = match developer_type {
@@ -917,7 +917,7 @@ impl CommunityDatabase {
         }) {
             Ok(profile) => Ok(Some(profile)),
             Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
-            Err(e) => Err(UveddiError::Database(e)),
+            Err(e) => Err(UveddiError::DatabaseError(e)),
         }
     }
 
@@ -1000,7 +1000,7 @@ impl CommunityDatabase {
         }) {
             Ok(permissions) => Ok(Some(permissions)),
             Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
-            Err(e) => Err(UveddiError::Database(e)),
+            Err(e) => Err(UveddiError::DatabaseError(e)),
         }
     }
 
