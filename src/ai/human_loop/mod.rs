@@ -10,7 +10,7 @@ pub fn request_human_verification_cli(suggestion: &AiSuggestion) -> bool {
     println!("Description: {}", suggestion.description);
     println!("Explanation: {}", suggestion.explanation);
     println!("Refactoring: {}", suggestion.refactoring);
-    println!("Confidence: {}", suggestion.confidence.as_deref().unwrap_or("unknown"));
+    println!("Confidence: {}", suggestion.confidence.as_ref().unwrap_or("unknown"));
     println!("======================================");
     println!("\nDo you accept this suggestion? [y]es / [n]o / [c]larify: ");
     print!("> ");
@@ -48,7 +48,7 @@ pub fn log_user_feedback(suggestion: &AiSuggestion, action: &str) {
             chrono::Utc::now().to_rfc3339(),
             action,
             suggestion.title,
-            suggestion.confidence.as_deref().unwrap_or("unknown")
+            suggestion.confidence.as_ref().unwrap_or("unknown")
         );
         let _ = file.write_all(log_entry.as_bytes());
     }

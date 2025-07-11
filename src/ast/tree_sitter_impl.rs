@@ -11,14 +11,12 @@ use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::num::NonZeroUsize;
-use tree_sitter::{Parser, Tree, Query, QueryCursor, Node};
+use tree_sitter::{Parser, Tree};
 use lru::LruCache;
 use tracing::{info, warn};
 
 // Re-export tree-sitter types for public API
-pub use tree_sitter::{Query, QueryCursor, Node};
 
-pub mod queries;
 
 const CACHE_DIR: &str = ".uveddi_cache";
 
@@ -308,7 +306,7 @@ impl AstParser {
             .parsers
             .get_mut(&language)
             .ok_or_else(|| AstError::UnsupportedLanguage(format!("{language:?}")))?;
-        let tree = parser.parse(&source, None).ok_or(AstError::ParseFailed)?;
+        let tree = parser.parse(&*source, None).ok_or(AstError::ParseFailed)?;
         if tree.root_node().has_error() {
             return Err(AstError::ParseFailed);
         }
@@ -417,7 +415,7 @@ impl ParsedFile {
     /// Extract a tree-sitter parsing summary for debugging.
     /// Returns a human-readable summary of the parsed AST structure.
     pub fn summary(&self) -> String {
-        match &self.custom_ast {
+        match &*self.custom_ast {
             Some(ast) => format!("Parsed {}: {:?}", self.path.display(), ast),
             None => format!("Parsed {} (no AST)", self.path.display()),
         }

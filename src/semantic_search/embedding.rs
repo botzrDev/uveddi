@@ -1,6 +1,7 @@
 //! Embedding model integration for semantic search
 
 use ndarray::Array1;
+use std::hash::{Hash, Hasher};
 
 /// Trait for embedding models (local or API)
 pub trait EmbeddingModel {

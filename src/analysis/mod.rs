@@ -72,7 +72,7 @@ pub use detectors::{CycleDetector, Dependency, DependencyExtractor};
 pub use engine::AnalysisEngine;
 pub use graph::{ComponentNode, LocalDependencyGraph, LocalDependencyType};
 
-use crate::ast::tree_sitter::ParsedFile;
+use crate::ast::ParsedFile;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 
 pub type AnalysisError = crate::error::UveddiError;

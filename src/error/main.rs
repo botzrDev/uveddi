@@ -97,11 +97,11 @@ pub enum UveddiError {
 }
 
 // Comprehensive From implementations for common error types
-impl From<crate::ast::tree_sitter::AstError> for UveddiError {
-    fn from(err: crate::ast::tree_sitter::AstError) -> Self {
+impl From<crate::ast::tree_sitter_impl::AstError> for UveddiError {
+    fn from(err: crate::ast::tree_sitter_impl::AstError) -> Self {
         match err {
-            crate::ast::tree_sitter::AstError::Io(io_err) => UveddiError::Io(io_err),
-            crate::ast::tree_sitter::AstError::UnsupportedLanguage(lang) => {
+            crate::ast::tree_sitter_impl::AstError::Io(io_err) => UveddiError::Io(io_err),
+            crate::ast::tree_sitter_impl::AstError::UnsupportedLanguage(lang) => {
                 UveddiError::UnsupportedLanguage(lang)
             }
             _ => UveddiError::AstParsing(err.to_string()),

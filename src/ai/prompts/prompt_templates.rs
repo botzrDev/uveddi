@@ -31,8 +31,8 @@ pub fn for_issue(issue: &ArchitecturalIssue) -> String {
 
     let code_context = issue
         .code_snippet
-        .as_deref()
-        .unwrap_or("No code snippet available.");
+        .as_ref()
+        .map_or("No code snippet available.", |v| v.as_str());
 
     format!(
         r#"

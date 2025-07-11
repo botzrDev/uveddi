@@ -140,11 +140,7 @@ impl LargeClassDetector {
         parsed_file: &ParsedFile,
     ) -> Result<Vec<ClassMetrics>, AnalysisError> {
         let mut metrics = Vec::new();
-        let source = parsed_file
-            .content
-            .as_deref()
-            .map(str::as_bytes)
-            .unwrap_or(&[]);
+        let source = parsed_file.content.as_bytes();
         let tree = parsed_file
             .tree
             .as_ref()

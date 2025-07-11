@@ -189,11 +189,7 @@ impl DeadCodeDetector {
     /// Uses `tree-sitter` queries to find functions, structs, enums, and constants.
     fn extract_rust_symbols(&self, parsed_file: &ParsedFile) -> Result<Vec<Symbol>, AnalysisError> {
         let mut symbols = Vec::new();
-        let source = parsed_file
-            .content
-            .as_deref()
-            .map(str::as_bytes)
-            .unwrap_or(&[]);
+        let source = parsed_file.content.as_bytes();
         let tree = parsed_file
             .tree
             .as_ref()
@@ -392,7 +388,7 @@ impl DeadCodeDetector {
     ) -> Result<HashSet<String>, AnalysisError> {
         let mut references = HashSet::new();
         let default_source = String::new();
-        let source = parsed_file.content.as_bytes();
+        let source = parsed_file.source.as_bytes();
         let tree = parsed_file
             .tree
             .as_ref()
@@ -423,7 +419,7 @@ impl DeadCodeDetector {
     ) -> Result<HashSet<String>, AnalysisError> {
         let mut references = HashSet::new();
         let default_source = String::new();
-        let source = parsed_file.content.as_bytes();
+        let source = parsed_file.source.as_bytes();
         let tree = parsed_file
             .tree
             .as_ref()
@@ -454,7 +450,7 @@ impl DeadCodeDetector {
     ) -> Result<HashSet<String>, AnalysisError> {
         let mut references = HashSet::new();
         let default_source = String::new();
-        let source = parsed_file.content.as_bytes();
+        let source = parsed_file.source.as_bytes();
         let tree = parsed_file
             .tree
             .as_ref()
@@ -676,7 +672,7 @@ impl AnalysisDetector for DeadCodeDetector {
             info!(
                 "Found {} potential dead code issues in {}",
                 issues.len(),
-                parsed_file.file_path
+                parsed_file.path
             );
         }
 

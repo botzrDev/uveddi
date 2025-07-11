@@ -350,10 +350,10 @@ impl AnalysisEngine {
                                 ),
                             }
 
-                            // UV-153: Use move semantics instead of cloning large vectors
+                            // UV-153: Cache first, then move data to avoid cloning
                             let result_to_cache = CachedAnalysisResult {
-                                issues: file_issues.clone(), // Still need clone for cache
-                                dependencies: file_dependencies.clone(), // Still need clone for cache
+                                issues: file_issues.clone(),
+                                dependencies: file_dependencies.clone(),
                             };
 
                             if let Err(e) = self.cache.set(&file_path, &result_to_cache) {
@@ -364,9 +364,9 @@ impl AnalysisEngine {
                                 );
                             }
 
-                            // UV-153: Move data instead of extending after clone
-                            all_issues.extend(file_issues.into_iter());
-                            all_dependencies.extend(file_dependencies.into_iter());
+                            // UV-153: Move data instead of extending cloned data
+                            all_issues.extend(file_issues);
+                            all_dependencies.extend(file_dependencies);
                         }
                         Err(e) => warn!("Failed to parse file {}: {}", file_path.display(), e),
                     }

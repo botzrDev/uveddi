@@ -212,11 +212,7 @@ impl LongMethodsDetector {
         #[cfg(feature = "tree-sitter")]
         {
             let mut metrics = Vec::new();
-            let source = parsed_file
-                .content
-                .as_deref()
-                .map(str::as_bytes)
-                .unwrap_or(&[]);
+            let source = parsed_file.content.as_bytes();
             let tree = parsed_file.tree.as_ref().ok_or_else(|| {
                 AnalysisError::AntiPatternDetection("AST tree missing".to_string())
             })?;
@@ -288,11 +284,7 @@ impl LongMethodsDetector {
         #[cfg(feature = "tree-sitter")]
         {
             let mut metrics = Vec::new();
-            let source = parsed_file
-                .content
-                .as_deref()
-                .map(str::as_bytes)
-                .unwrap_or(&[]);
+            let source = parsed_file.content.as_bytes();
             let tree = parsed_file.tree.as_ref().ok_or_else(|| {
                 AnalysisError::AntiPatternDetection("AST tree missing".to_string())
             })?;
@@ -365,7 +357,7 @@ impl LongMethodsDetector {
         #[cfg(feature = "tree-sitter")]
         {
             let mut metrics = Vec::new();
-            let source = parsed_file.content.as_deref().unwrap_or("").as_bytes();
+            let source = parsed_file.content.as_bytes();
             let tree = parsed_file.tree.as_ref().ok_or_else(|| {
                 AnalysisError::AntiPatternDetection("AST tree missing".to_string())
             })?;

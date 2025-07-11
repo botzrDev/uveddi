@@ -276,7 +276,7 @@ impl CodeDuplicationDetector {
                     loop {
                         let child = cursor.node();
                         if child.kind() == "identifier" {
-                            if let Ok(name) = child.utf8_text(parsed_file.content.as_bytes()) {
+                            if let Ok(name) = child.utf8_text(parsed_file.source.as_bytes()) {
                                 function_name = Some(name.to_string());
                                 break;
                             }
@@ -752,7 +752,7 @@ impl AnalysisDetector for CodeDuplicationDetector {
         }
 
         if blocks.is_empty() {
-            debug!("No code blocks found in file: {}", parsed_file.file_path);
+            debug!("No code blocks found in file: {}", parsed_file.path);
             return Ok(vec![]);
         }
 
@@ -798,7 +798,7 @@ impl AnalysisDetector for CodeDuplicationDetector {
         info!(
             "Found {} clone pairs in file: {}",
             clone_pairs.len(),
-            parsed_file.file_path
+            parsed_file.path
         );
 
         // Convert to architectural issues

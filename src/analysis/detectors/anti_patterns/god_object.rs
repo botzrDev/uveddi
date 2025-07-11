@@ -278,7 +278,7 @@ impl GodObjectDetector {
                     {
                         let empty_source = String::new();
                         container_node
-                            .utf8_text(parsed_file.content.as_deref().unwrap_or(&empty_source).as_bytes())
+                            .utf8_text(parsed_file.content.as_ref().unwrap_or(&empty_source).as_bytes())
                             .unwrap_or("")
                             .to_string()
                     }
@@ -304,11 +304,7 @@ impl GodObjectDetector {
     ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         let mut issues = Vec::new();
         let empty_source = String::new();
-        let source = parsed_file
-            .content
-            .as_deref()
-            .map(str::as_bytes)
-            .unwrap_or(&[]);
+        let source = parsed_file.content.as_bytes();
         let tree = parsed_file
             .tree
             .as_ref()
@@ -375,11 +371,7 @@ impl GodObjectDetector {
     ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         let mut issues = Vec::new();
         let empty_source = String::new();
-        let source = parsed_file
-            .content
-            .as_deref()
-            .map(str::as_bytes)
-            .unwrap_or(&[]);
+        let source = parsed_file.content.as_bytes();
         let tree = parsed_file
             .tree
             .as_ref()

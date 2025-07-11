@@ -153,7 +153,7 @@ impl DependencyExtractor {
                     let node = capture.node;
                     let line_number = node.start_position().row + 1;
                     let mut module_name = node
-                        .utf8_text(parsed_file.content.as_deref().unwrap_or("").as_bytes())
+                        .utf8_text(parsed_file.content.as_ref().unwrap_or("").as_bytes())
                         .unwrap_or("")
                         .to_string();
 
@@ -256,7 +256,7 @@ impl DependencyExtractor {
         let mut dependencies = Vec::new();
 
         // Process each line
-        for (line_num, line) in parsed_file.source.lines().enumerate() {
+        for (line_num, line) in parsed_file.content.lines().enumerate() {
             if let Some(caps) = re.captures(line) {
                 // Get module name from capture group 1 or 2
                 let module_name = caps
@@ -269,7 +269,7 @@ impl DependencyExtractor {
                         from_file: std::path::PathBuf::from(parsed_file.file_path.clone()),
                         to_module: name,
                         dependency_type: DependencyType::Import,
-                        line_number: (line_num + 1) as u32,
+                        line_number: Some((line_num + 1) as u32),
                     });
                 }
             }
