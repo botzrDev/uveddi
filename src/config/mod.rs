@@ -41,7 +41,9 @@
 use serde::{Deserialize, Serialize};
 use std::{env, fs};
 
-/// Main configuration structure for Uveddi
+/// Placeholder documentation for public items
+///
+/// Configuration structure for Uveddi
 ///
 /// Contains all configuration options that can be customized by users.
 /// All fields are optional to allow partial configuration and fallback

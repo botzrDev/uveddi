@@ -7,6 +7,8 @@ use chrono::{DateTime, Utc, Duration};
 use serde::{Serialize, Deserialize};
 use std::path::Path;
 
+/// Placeholder documentation for public items
+
 // Models
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum MemberRole {
@@ -116,12 +118,22 @@ pub struct MemberProfile {
     pub updated_at: DateTime<Utc>,
 }
 
+/// Placeholder documentation for public items
+
 // Database
 pub struct CommunityDatabase {
     connection: Connection,
 }
 
 impl CommunityDatabase {
+    /// Creates a new instance of `CommunityDatabase`
+    /// # Arguments
+    ///
+    /// * `db_path` - A reference to a `Path` object representing the database file path
+    ///
+    /// # Returns
+    ///
+    /// * `Result<Self, Box<dyn std::error::Error>>` - Returns `Ok` with the `CommunityDatabase` instance on success, or an error on failure
     pub fn new(db_path: &Path) -> Result<Self, Box<dyn std::error::Error>> {
         let connection = Connection::open(db_path)?;
         let db = CommunityDatabase { connection };
@@ -129,6 +141,10 @@ impl CommunityDatabase {
         Ok(db)
     }
 
+    /// Initializes the database schema by creating the necessary tables and indexes
+    /// # Returns
+    ///
+    /// * `Result<(), Box<dyn std::error::Error>>` - Returns `Ok(())` on success, or an error on failure
     fn init_schema(&self) -> Result<(), Box<dyn std::error::Error>> {
         // Members table
         self.connection.execute(
@@ -204,6 +220,14 @@ impl CommunityDatabase {
         Ok(())
     }
 
+    /// Registers a new community member in the database
+    /// # Arguments
+    ///
+    /// * `member` - A reference to a `CommunityMember` object containing the member's information
+    ///
+    /// # Returns
+    ///
+    /// * `Result<i64, Box<dyn std::error::Error>>` - Returns `Ok` with the new member's ID on success, or an error on failure
     pub fn register_member(&self, member: &CommunityMember) -> Result<i64, Box<dyn std::error::Error>> {
         let mut stmt = self.connection.prepare(
             "INSERT INTO community_members (email, username, role, display_name, created_at, last_active, is_active)
@@ -223,6 +247,14 @@ impl CommunityDatabase {
         Ok(id)
     }
 
+    /// Retrieves a community member by their email address
+    /// # Arguments
+    ///
+    /// * `email` - A string slice representing the member's email address
+    ///
+    /// # Returns
+    ///
+    /// * `Result<Option<CommunityMember>, Box<dyn std::error::Error>>` - Returns `Ok` with an `Option<CommunityMember>` containing the member's information if found, or `None` if not found
     pub fn get_member_by_email(&self, email: &str) -> Result<Option<CommunityMember>, Box<dyn std::error::Error>> {
         let mut stmt = self.connection.prepare(
             "SELECT id, email, username, role, display_name, created_at, last_active, is_active
@@ -251,6 +283,15 @@ impl CommunityDatabase {
         Ok(None)
     }
 
+    /// Updates a community member's role
+    /// # Arguments
+    ///
+    /// * `member_id` - The ID of the member whose role is to be updated
+    /// * `new_role` - A reference to a `MemberRole` enum representing the new role
+    ///
+    /// # Returns
+    ///
+    /// * `Result<(), Box<dyn std::error::Error>>` - Returns `Ok(())` on success, or an error on failure
     pub fn update_member_role(&self, member_id: i64, new_role: &MemberRole) -> Result<(), Box<dyn std::error::Error>> {
         self.connection.execute(
             "UPDATE community_members SET role = ?1 WHERE id = ?2",
@@ -259,6 +300,14 @@ impl CommunityDatabase {
         Ok(())
     }
 
+    /// Logs a member activity in the database
+    /// # Arguments
+    ///
+    /// * `activity` - A reference to a `MemberActivity` object containing the activity's information
+    ///
+    /// # Returns
+    ///
+    /// * `Result<i64, Box<dyn std::error::Error>>` - Returns `Ok` with the new activity's ID on success, or an error on failure
     pub fn log_activity(&self, activity: &MemberActivity) -> Result<i64, Box<dyn std::error::Error>> {
         let mut stmt = self.connection.prepare(
             "INSERT INTO member_activities (member_id, activity_type, description, metadata, timestamp)
@@ -282,6 +331,14 @@ impl CommunityDatabase {
         Ok(id)
     }
 
+    /// Updates a member's profile information
+    /// # Arguments
+    ///
+    /// * `profile` - A reference to a `MemberProfile` object containing the profile's information
+    ///
+    /// # Returns
+    ///
+    /// * `Result<(), Box<dyn std::error::Error>>` - Returns `Ok(())` on success, or an error on failure
     pub fn update_profile(&self, profile: &MemberProfile) -> Result<(), Box<dyn std::error::Error>> {
         self.connection.execute(
             "INSERT OR REPLACE INTO member_profiles 
@@ -307,6 +364,10 @@ impl CommunityDatabase {
         Ok(())
     }
 
+    /// Retrieves the total count of active members
+    /// # Returns
+    ///
+    /// * `Result<i64, Box<dyn std::error::Error>>` - Returns `Ok` with the count of active members on success, or an error on failure
     pub fn get_member_count(&self) -> Result<i64, Box<dyn std::error::Error>> {
         let count: i64 = self.connection.query_row(
             "SELECT COUNT(*) FROM community_members WHERE is_active = 1",
@@ -316,6 +377,14 @@ impl CommunityDatabase {
         Ok(count)
     }
 
+    /// Retrieves recent activities from members
+    /// # Arguments
+    ///
+    /// * `limit` - The maximum number of activities to retrieve
+    ///
+    /// # Returns
+    ///
+    /// * `Result<Vec<MemberActivity>, Box<dyn std::error::Error>>` - Returns `Ok` with a vector of `MemberActivity` objects on success, or an error on failure
     pub fn get_recent_activities(&self, limit: i64) -> Result<Vec<MemberActivity>, Box<dyn std::error::Error>> {
         let mut stmt = self.connection.prepare(
             "SELECT id, member_id, activity_type, description, metadata, timestamp
@@ -344,6 +413,8 @@ impl CommunityDatabase {
         Ok(activities)
     }
 }
+
+/// Placeholder documentation for public items
 
 // Demo function
 fn main() -> Result<(), Box<dyn std::error::Error>> {

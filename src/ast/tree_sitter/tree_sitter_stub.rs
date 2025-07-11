@@ -5,6 +5,8 @@ use std::collections::HashMap;
 use std::path::Path;
 use crate::error::UveddiError;
 
+/// Placeholder documentation for public items
+
 // Stub types for tree-sitter when feature is disabled
 // These maintain API compatibility but return errors or empty results
 

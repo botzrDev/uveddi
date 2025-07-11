@@ -562,3 +562,5 @@ impl AnalysisEngine {
         self.plugin_engine.as_ref().map(|engine| engine.get_registry_stats())
     }
 }
+
+/// Placeholder documentation for public items

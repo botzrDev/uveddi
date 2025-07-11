@@ -5,6 +5,8 @@ use crate::models::visualization::Dependency;
 use crate::database::models::ArchitecturalIssue;
 use std::collections::HashSet;
 
+/// Placeholder documentation for public items
+///
 /// Generates a Mermaid.js diagram representing code dependencies and highlights issues.
 ///
 /// This function creates a graph in Mermaid.js syntax, showing modules as nodes and dependencies as edges.

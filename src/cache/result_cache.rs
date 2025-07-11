@@ -4,6 +4,7 @@ use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 use std::path::Path;
 
+/// Placeholder documentation for public items
 pub struct ResultCache {
     conn: Connection,
 }

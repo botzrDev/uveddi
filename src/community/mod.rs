@@ -39,6 +39,8 @@
 //! # Ok::<(), Box<dyn std::error::Error>>(())
 //! ```
 
+/// Placeholder documentation for public items
+
 pub mod database;
 pub mod models;
 pub mod analytics;

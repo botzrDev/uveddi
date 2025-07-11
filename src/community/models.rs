@@ -7,6 +7,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+/// Placeholder documentation for public items
 /// Member roles with hierarchical permissions
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum MemberRole {
@@ -48,6 +49,7 @@ impl MemberRole {
     }
 }
 
+/// Placeholder documentation for public items
 /// Core community member entity
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CommunityMember {
@@ -73,6 +75,7 @@ pub struct CommunityMember {
     pub avatar_url: Option<String>,
 }
 
+/// Placeholder documentation for public items
 /// Member profile information for marketing analytics
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct MemberProfile {
@@ -96,6 +99,7 @@ pub struct MemberProfile {
     pub custom_fields: HashMap<String, String>,
 }
 
+/// Placeholder documentation for public items
 /// Activity types for tracking member engagement
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ActivityType {
@@ -185,6 +189,7 @@ impl ActivityType {
     }
 }
 
+/// Placeholder documentation for public items
 /// Member activity tracking for engagement analytics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MemberActivity {
@@ -206,6 +211,7 @@ pub struct MemberActivity {
     pub metadata: HashMap<String, String>,
 }
 
+/// Placeholder documentation for public items
 /// Member session tracking for authentication and security
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MemberSession {
@@ -227,6 +233,7 @@ pub struct MemberSession {
     pub is_active: bool,
 }
 
+/// Placeholder documentation for public items
 /// Admin-specific privileges and settings
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AdminProfile {
@@ -242,6 +249,7 @@ pub struct AdminProfile {
     pub is_super_admin: bool,          // Root admin privileges
 }
 
+/// Placeholder documentation for public items
 /// Granular admin permissions
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AdminPermissions {
@@ -319,6 +327,7 @@ impl AdminPermissions {
     }
 }
 
+/// Placeholder documentation for public items
 /// Admin hierarchy levels
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum AdminLevel {
@@ -327,6 +336,7 @@ pub enum AdminLevel {
     SuperAdmin,    // Root level access
 }
 
+/// Placeholder documentation for public items
 /// Developer-specific profile and access
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DeveloperProfile {
@@ -344,6 +354,7 @@ pub struct DeveloperProfile {
     pub beta_tester: bool,             // Access to beta features
 }
 
+/// Placeholder documentation for public items
 /// Types of developers in the community
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum DeveloperType {
@@ -355,6 +366,7 @@ pub enum DeveloperType {
     Corporate,      // Large company developer
 }
 
+/// Placeholder documentation for public items
 /// API access levels for developers
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ApiAccessLevel {
@@ -363,6 +375,7 @@ pub enum ApiAccessLevel {
     Enterprise, // Full access, custom limits
 }
 
+/// Placeholder documentation for public items
 /// Developer badges and achievements
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DeveloperBadge {
@@ -372,6 +385,7 @@ pub struct DeveloperBadge {
     pub metadata: Option<String>, // Additional context
 }
 
+/// Placeholder documentation for public items
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum BadgeType {
     EarlyAdopter,
@@ -386,6 +400,7 @@ pub enum BadgeType {
     Custom(String),
 }
 
+/// Placeholder documentation for public items
 /// Role-specific settings and permissions
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RolePermissions {

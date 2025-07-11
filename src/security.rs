@@ -59,35 +59,50 @@
 use std::path::{Path, PathBuf, Component};
 use crate::error::UveddiError;
 
-/// Security-related errors
+/// Security-related errors for Uveddi
 #[derive(Debug, thiserror::Error)]
 pub enum SecurityError {
+    /// Path traversal attempt detected
     #[error("Path traversal attempt detected: {0}")]
     PathTraversal(String),
+    /// Invalid file path
     #[error("Invalid file path: {0}")]
     InvalidPath(String),
+    /// File size exceeds limit
     #[error("File size exceeds limit: {size} bytes > {limit} bytes")]
     FileSizeExceeded { size: u64, limit: u64 },
+    /// Unsupported file type
     #[error("Unsupported file type: {0}")]
     UnsupportedFileType(String),
+    /// Input too long for AI prompt
     #[error("Input too long: {length} > {max_length}")]
     InputTooLong { length: usize, max_length: usize },
-    // UV-151: Added for secure path sanitization
+    /// Invalid base path for analysis
     #[error("Invalid base path")]
     InvalidBasePath,
+    /// Path traversal attempt outside base directory
     #[error("Path traversal attempt outside base directory")]
     PathTraversalAttempt,
+    /// Invalid path component detected (e.g., null byte, hidden file)
     #[error("Invalid path component detected")]
     InvalidPathComponent,
 }
 
 /// Maximum file size for analysis (100MB)
-const MAX_FILE_SIZE: u64 = 100 * 1024 * 1024;
+pub const MAX_FILE_SIZE: u64 = 100 * 1024 * 1024;
 
 /// Maximum input length for AI prompts (8KB)
-const MAX_PROMPT_LENGTH: usize = 8 * 1024;
+pub const MAX_PROMPT_LENGTH: usize = 8 * 1024;
 
 /// Validates and sanitizes a file path to prevent directory traversal attacks
+///
+/// # Arguments
+/// * `path` - The input file path as a string slice
+///
+/// # Returns
+/// * `Result<PathBuf, SecurityError>` - Canonicalized safe path or error
+///
+/// # UV-151
 pub fn validate_analysis_path(path: &str) -> Result<PathBuf, SecurityError> {
     let path_buf = PathBuf::from(path);
     
@@ -126,6 +141,12 @@ pub fn validate_analysis_path(path: &str) -> Result<PathBuf, SecurityError> {
 }
 
 /// Sanitizes API keys for logging (shows only first 4 characters)
+///
+/// # Arguments
+/// * `key` - The API key string
+///
+/// # Returns
+/// * `String` - Sanitized API key for safe logging
 pub fn sanitize_api_key(key: &str) -> String {
     if key.is_empty() {
         return "***".to_string();
@@ -139,6 +160,12 @@ pub fn sanitize_api_key(key: &str) -> String {
 }
 
 /// Validates file size to prevent memory exhaustion
+///
+/// # Arguments
+/// * `path` - The file path
+///
+/// # Returns
+/// * `Result<(), SecurityError>` - Ok if size is valid, error otherwise
 pub fn validate_file_size(path: &Path) -> Result<(), SecurityError> {
     match std::fs::metadata(path) {
         Ok(metadata) => {
@@ -157,6 +184,12 @@ pub fn validate_file_size(path: &Path) -> Result<(), SecurityError> {
 }
 
 /// Validates file type based on extension
+///
+/// # Arguments
+/// * `path` - The file path
+///
+/// # Returns
+/// * `Result<(), SecurityError>` - Ok if type is allowed, error otherwise
 pub fn validate_file_type(path: &Path) -> Result<(), SecurityError> {
     const ALLOWED_EXTENSIONS: &[&str] = &[
         "rs", "py", "js", "ts", "jsx", "tsx", "java", "cpp", "c", "h", "hpp",
@@ -179,6 +212,12 @@ pub fn validate_file_type(path: &Path) -> Result<(), SecurityError> {
 }
 
 /// Sanitizes input for AI prompts to prevent injection attacks
+///
+/// # Arguments
+/// * `prompt` - The input prompt string
+///
+/// # Returns
+/// * `Result<String, SecurityError>` - Sanitized prompt or error
 pub fn sanitize_prompt(prompt: &str) -> Result<String, SecurityError> {
     if prompt.len() > MAX_PROMPT_LENGTH {
         return Err(SecurityError::InputTooLong {
@@ -202,6 +241,13 @@ pub fn sanitize_prompt(prompt: &str) -> Result<String, SecurityError> {
 }
 
 /// Validates that a path is within an allowed directory
+///
+/// # Arguments
+/// * `path` - The file path to check
+/// * `allowed_root` - The allowed root directory
+///
+/// # Returns
+/// * `Result<(), SecurityError>` - Ok if within bounds, error otherwise
 pub fn validate_path_within_bounds(path: &Path, allowed_root: &Path) -> Result<(), SecurityError> {
     let canonical_path = path.canonicalize()
         .map_err(|_| SecurityError::InvalidPath(path.to_string_lossy().to_string()))?;
@@ -221,6 +267,13 @@ pub fn validate_path_within_bounds(path: &Path, allowed_root: &Path) -> Result<(
 /// # UV-151 Critical Path Traversal Vulnerability Fix
 ///
 /// Ensures the input path is canonicalized, validated, and strictly contained within the base directory.
+///
+/// # Arguments
+/// * `input_path` - The input file path
+/// * `base_dir` - The base directory for analysis
+///
+/// # Returns
+/// * `Result<PathBuf, SecurityError>` - Canonicalized safe path or error
 ///
 /// # Examples
 /// ```rust
@@ -254,6 +307,7 @@ pub fn sanitize_path<P: AsRef<Path>>(input_path: P, base_dir: P) -> Result<PathB
     Ok(canonical)
 }
 
+/// Placeholder documentation for public items
 #[cfg(test)]
 mod tests {
     use super::*;

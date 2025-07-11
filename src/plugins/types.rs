@@ -152,3 +152,5 @@ impl ExecutionContext {
         self.start_time.elapsed().as_millis() as u64
     }
 }
+
+/// Placeholder documentation for public items

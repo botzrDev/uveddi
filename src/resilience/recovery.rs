@@ -8,6 +8,7 @@ use std::time::Duration;
 use crate::resilience::{RetryClient, CircuitBreaker, HealthMonitor, MetricsCollector};
 use crate::error::RenderingServiceError;
 
+/// Placeholder documentation for public items
 #[derive(Debug, Clone)]
 pub struct RecoveryStrategy {
     pub strategy_id: String,

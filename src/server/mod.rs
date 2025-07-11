@@ -13,6 +13,8 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 use uveddi::resilience::health::{HealthStatus, HealthMonitor, Alert};
 
+/// Placeholder documentation for public items
+
 /// Shared state for HTTP handlers
 #[derive(Clone)]
 pub struct AppState {

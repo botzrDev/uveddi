@@ -19,6 +19,7 @@ pub struct WasmPluginEngine {
 
 impl WasmPluginEngine {
     /// Create a new WASM plugin engine
+    /// Placeholder documentation for public items
     pub async fn new() -> Result<Self, PluginError> {
         #[cfg(not(feature = "wasm-plugins"))]
         {
@@ -45,6 +46,7 @@ impl WasmPluginEngine {
     }
     
     /// Create a new engine with custom configuration
+    /// Placeholder documentation for public items
     pub async fn with_config(
         plugins_dir: &Path,
         security_policy: SecurityPolicy,
@@ -72,6 +74,7 @@ impl WasmPluginEngine {
     }
     
     /// Load a plugin from the registry
+    /// Placeholder documentation for public items
     pub async fn load_plugin(&mut self, plugin_id: &PluginId) -> Result<(), PluginError> {
         if !self.enabled {
             return Err(PluginError::Unsupported("Plugin engine is disabled".to_string()));
@@ -115,6 +118,7 @@ impl WasmPluginEngine {
     }
     
     /// Unload a plugin
+    /// Placeholder documentation for public items
     pub async fn unload_plugin(&mut self, plugin_id: &PluginId) -> Result<(), PluginError> {
         log::info!("Unloading plugin: {}", plugin_id);
         
@@ -129,6 +133,7 @@ impl WasmPluginEngine {
     }
     
     /// Load all plugins from the registry
+    /// Placeholder documentation for public items
     pub async fn load_all_plugins(&mut self) -> Result<Vec<PluginId>, PluginError> {
         let mut loaded_plugins = Vec::new();
         let plugin_ids = self.registry.list_plugins();
@@ -150,6 +155,7 @@ impl WasmPluginEngine {
     }
     
     /// Install a new plugin
+    /// Placeholder documentation for public items
     pub async fn install_plugin(
         &mut self,
         manifest: PluginManifest,
@@ -169,6 +175,7 @@ impl WasmPluginEngine {
     }
     
     /// Uninstall a plugin
+    /// Placeholder documentation for public items
     pub async fn uninstall_plugin(&mut self, plugin_id: &PluginId) -> Result<(), PluginError> {
         log::info!("Uninstalling plugin: {}", plugin_id);
         
@@ -186,42 +193,50 @@ impl WasmPluginEngine {
     }
     
     /// Get a plugin adapter for use with the analysis engine
+    /// Placeholder documentation for public items
     pub async fn get_plugin_adapter(&self, plugin_id: &PluginId) -> Option<WasmPluginAdapter> {
         self.plugin_adapters.read().await.get(plugin_id).cloned()
     }
     
     /// Get all plugin adapters
+    /// Placeholder documentation for public items
     pub async fn get_all_plugin_adapters(&self) -> Vec<WasmPluginAdapter> {
         self.plugin_adapters.read().await.values().cloned().collect()
     }
     
     /// List loaded plugins
+    /// Placeholder documentation for public items
     pub async fn list_loaded_plugins(&self) -> Vec<PluginId> {
         self.plugin_adapters.read().await.keys().cloned().collect()
     }
     
     /// Get plugin statistics
+    /// Placeholder documentation for public items
     pub async fn get_plugin_stats(&self, plugin_id: &PluginId) -> Option<PluginStats> {
         self.lifecycle_manager.get_plugin_stats(plugin_id).await
     }
     
     /// Get registry statistics
+    /// Placeholder documentation for public items
     pub fn get_registry_stats(&self) -> crate::plugins::registry::RegistryStatistics {
         self.registry.get_statistics()
     }
     
     /// Monitor resource usage of all plugins
+    /// Placeholder documentation for public items
     pub async fn monitor_resources(&mut self) -> Result<ResourceReport, PluginError> {
         self.lifecycle_manager.monitor_resources().await
     }
     
     /// Enable or disable the plugin engine
+    /// Placeholder documentation for public items
     pub fn set_enabled(&mut self, enabled: bool) {
         self.enabled = enabled;
         log::info!("Plugin engine {}", if enabled { "enabled" } else { "disabled" });
     }
     
     /// Check if plugin engine is enabled
+    /// Placeholder documentation for public items
     pub fn is_enabled(&self) -> bool {
         self.enabled
     }
@@ -252,11 +267,13 @@ impl WasmPluginAdapter {
     }
     
     /// Get the plugin ID
+    /// Placeholder documentation for public items
     pub fn plugin_id(&self) -> &PluginId {
         &self.plugin_id
     }
     
     /// Get the plugin manifest
+    /// Placeholder documentation for public items
     pub fn manifest(&self) -> &PluginManifest {
         &self.manifest
     }

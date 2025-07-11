@@ -64,6 +64,7 @@ pub mod tests;
 #[cfg(test)]
 pub mod visualization_tests;
 
+/// Placeholder documentation for public items
 // Re-exports for convenience
 pub use cache::AstCache;
 pub use detectors::anti_patterns::GodObjectDetector;

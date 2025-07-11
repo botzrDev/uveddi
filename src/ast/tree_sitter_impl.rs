@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use std::fs;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use tree_sitter::{Parser, Tree, Query, QueryCursor, Node};
 
 // Re-export tree-sitter types for public API
@@ -225,7 +225,7 @@ impl AstParser {
         }
 
         // Parse and cache
-        let source = fs::read_to_string(file_path)?;
+        let source = Arc::new(fs::read_to_string(file_path)?);
         let language = self.detect_language(file_path)?;
         let parser = self
             .parsers
@@ -235,7 +235,7 @@ impl AstParser {
         if tree.root_node().has_error() {
             return Err(AstError::ParseFailed);
         }
-        let custom_ast = Self::tree_to_custom_ast(&tree, &source, &language)?;
+        let custom_ast = Arc::new(Self::tree_to_custom_ast(&tree, &source, &language)?);
         let parsed = ParsedFile {
             path: file_path.to_path_buf(),
             language,
@@ -274,8 +274,8 @@ impl AstParser {
             path: file_path.to_path_buf(),
             language,
             tree: Some(tree),
-            source: content.to_string(),
-            custom_ast,
+            source: Arc::new(content.to_string()),
+            custom_ast: Arc::new(custom_ast),
             modified_at: std::time::SystemTime::now(),
         };
         
@@ -305,8 +305,10 @@ pub struct ParsedFile {
     pub language: SourceLanguage,
     #[serde(skip)]
     pub tree: Option<Tree>,
-    pub source: String,
-    pub custom_ast: Option<CustomAst>,
+    #[serde(skip)]
+    pub source: Arc<String>,
+    #[serde(skip)]
+    pub custom_ast: Arc<Option<CustomAst>>,
     pub modified_at: std::time::SystemTime,
 }
 

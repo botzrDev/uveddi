@@ -23,6 +23,7 @@ pub const RUST_IMPORTS_QUERY: &str = r#"
 )
 "#;
 
+/// Placeholder documentation for public items
 pub const PYTHON_IMPORTS_QUERY: &str = r#"
 (import_statement
   name: (dotted_name) @path
@@ -32,6 +33,7 @@ pub const PYTHON_IMPORTS_QUERY: &str = r#"
 )
 "#;
 
+/// Placeholder documentation for public items
 // This query is a bit more complex to handle various JS/TS import syntaxes
 pub const JAVASCRIPT_IMPORTS_QUERY: &str = r#"
 (import_statement

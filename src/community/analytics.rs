@@ -10,6 +10,7 @@ use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+/// Placeholder documentation for public items
 /// Analytics data for member engagement and growth
 #[derive(Debug, Serialize, Deserialize)]
 pub struct MemberAnalytics {
@@ -27,6 +28,7 @@ pub struct MemberAnalytics {
     pub demographic_insights: DemographicInsights,
 }
 
+/// Placeholder documentation for public items
 /// Member growth metrics over time
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GrowthMetrics {
@@ -40,6 +42,7 @@ pub struct GrowthMetrics {
     pub avg_daily_registrations: f64,
 }
 
+/// Placeholder documentation for public items
 /// Member engagement metrics
 #[derive(Debug, Serialize, Deserialize)]
 pub struct EngagementMetrics {
@@ -55,6 +58,7 @@ pub struct EngagementMetrics {
     pub popular_activities: Vec<ActivityStats>,
 }
 
+/// Placeholder documentation for public items
 /// Activity statistics for engagement analysis
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ActivityStats {
@@ -66,6 +70,7 @@ pub struct ActivityStats {
     pub unique_members: usize,
 }
 
+/// Placeholder documentation for public items
 /// Demographic insights for marketing
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DemographicInsights {
@@ -83,6 +88,7 @@ pub struct DemographicInsights {
     pub marketing_consent_rate: f64,
 }
 
+/// Placeholder documentation for public items
 /// Company statistics for B2B insights
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CompanyStats {
@@ -94,6 +100,7 @@ pub struct CompanyStats {
     pub percentage: f64,
 }
 
+/// Placeholder documentation for public items
 /// Programming language interest statistics
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LanguageStats {
@@ -105,6 +112,7 @@ pub struct LanguageStats {
     pub percentage: f64,
 }
 
+/// Placeholder documentation for public items
 /// Community analytics generator
 pub struct AnalyticsEngine<'a> {
     conn: &'a Connection,

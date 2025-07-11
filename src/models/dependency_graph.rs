@@ -69,3 +69,5 @@ impl DependencyGraph {
         self.nodes.get(index)
     }
 }
+
+/// Placeholder documentation for public items

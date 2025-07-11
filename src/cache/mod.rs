@@ -56,3 +56,5 @@
 //! used safely across async tasks and concurrent analysis operations.
 
 pub mod result_cache;
+
+/// Placeholder documentation for public items

@@ -4,10 +4,15 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AntiPatternType {
+    /// Unique identifier for the anti-pattern type.
     pub id: i64,
+    /// Name of the anti-pattern.
     pub name: String,
+    /// Description of the anti-pattern.
     pub description: String,
-    pub dsl_rule: Option<String>, // DSL rule for detection (optional for now)
+    /// DSL rule for detection (optional for now)
+    pub dsl_rule: Option<String>,
+    /// Optional category for classification.
     pub category: Option<String>,
 }
 

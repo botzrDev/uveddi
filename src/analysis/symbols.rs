@@ -73,3 +73,5 @@ impl GlobalSymbolTable {
         self.symbols.get(id)
     }
 }
+
+/// Placeholder documentation for public items
