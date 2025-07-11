@@ -1,6 +1,6 @@
 //! Security framework for WASM plugins using capability-based security
 
-use crate::plugins::{errors::*, types::*};
+use crate::plugins::{errors::*, types::{PluginId, PluginStats, ResourceLimits}};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::path::PathBuf;

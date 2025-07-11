@@ -1,6 +1,6 @@
 //! Plugin lifecycle management for loading, unloading, and monitoring
 
-use crate::plugins::{errors::*, types::*, registry::*, security::*, verification::*, data_plane::*};
+use crate::plugins::{errors::*, types::{PluginId, PluginStats, ResourceLimits}, registry::*, security::*, verification::*, data_plane::*};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
