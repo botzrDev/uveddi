@@ -1,6 +1,6 @@
 //! Plugin lifecycle management for loading, unloading, and monitoring
 
-use crate::plugins::{errors::*, types::{PluginId, PluginStats, ResourceLimits}, registry::*, security::*, verification::*, data_plane::*};
+use crate::plugins::{errors::*, types::{PluginId, PluginStats, ResourceLimits, PluginStatus}, registry::*, security::*, verification::*, data_plane::*};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -105,8 +105,6 @@ impl PluginLifecycleManager {
         {
             return Err(PluginError::Unsupported("WASM plugins not enabled".to_string()));
         }
-        
-        Ok(())
     }
     
     /// Unload a plugin and cleanup resources

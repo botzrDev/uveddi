@@ -22,10 +22,11 @@
 //! - **JavaScript**: Functions, classes, variables, exports
 
 use crate::analysis::{AnalysisDetector, AnalysisError};
-use crate::ast::tree_sitter::{ParsedFile, SourceLanguage, Query, QueryCursor};
+use crate::ast::{ParsedFile, SourceLanguage};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use log::{debug, info};
 use std::collections::HashSet;
+use tree_sitter::{Node, Query, QueryCursor};
 
 /// Represents a symbol (e.g., function, variable, class) identified in the source code.
 ///
@@ -185,7 +186,7 @@ impl DeadCodeDetector {
     /// Uses `tree-sitter` queries to find functions, structs, enums, and constants.
     fn extract_rust_symbols(&self, parsed_file: &ParsedFile) -> Result<Vec<Symbol>, AnalysisError> {
         let mut symbols = Vec::new();
-        let source = parsed_file.source.as_ref()
+        let source = parsed_file.content.as_ref()
             .ok_or_else(|| AnalysisError::AntiPatternDetection("Source code missing".to_string()))?
             .as_bytes();
         let tree = parsed_file
@@ -255,7 +256,7 @@ impl DeadCodeDetector {
     fn extract_python_symbols(&self, parsed_file: &ParsedFile) -> Result<Vec<Symbol>, AnalysisError> {
         let mut symbols = Vec::new();
         let default_source = String::new();
-        let source = parsed_file.source.as_ref().unwrap_or(&default_source).as_bytes();
+        let source = parsed_file.content.as_bytes();
         let tree = parsed_file
             .tree
             .as_ref()
@@ -325,7 +326,7 @@ impl DeadCodeDetector {
     fn extract_javascript_symbols(&self, parsed_file: &ParsedFile) -> Result<Vec<Symbol>, AnalysisError> {
         let mut symbols = Vec::new();
         let default_source = String::new();
-        let source = parsed_file.source.as_ref().unwrap_or(&default_source).as_bytes();
+        let source = parsed_file.content.as_bytes();
         let tree = parsed_file
             .tree
             .as_ref()
@@ -368,7 +369,7 @@ impl DeadCodeDetector {
     fn extract_rust_references(&self, parsed_file: &ParsedFile) -> Result<HashSet<String>, AnalysisError> {
         let mut references = HashSet::new();
         let default_source = String::new();
-        let source = parsed_file.source.as_ref().unwrap_or(&default_source).as_bytes();
+        let source = parsed_file.content.as_bytes();
         let tree = parsed_file
             .tree
             .as_ref()
@@ -396,7 +397,7 @@ impl DeadCodeDetector {
     fn extract_python_references(&self, parsed_file: &ParsedFile) -> Result<HashSet<String>, AnalysisError> {
         let mut references = HashSet::new();
         let default_source = String::new();
-        let source = parsed_file.source.as_ref().unwrap_or(&default_source).as_bytes();
+        let source = parsed_file.content.as_bytes();
         let tree = parsed_file
             .tree
             .as_ref()
@@ -424,7 +425,7 @@ impl DeadCodeDetector {
     fn extract_javascript_references(&self, parsed_file: &ParsedFile) -> Result<HashSet<String>, AnalysisError> {
         let mut references = HashSet::new();
         let default_source = String::new();
-        let source = parsed_file.source.as_ref().unwrap_or(&default_source).as_bytes();
+        let source = parsed_file.content.as_bytes();
         let tree = parsed_file
             .tree
             .as_ref()
@@ -449,7 +450,7 @@ impl DeadCodeDetector {
     }
 
     /// Check if a Rust symbol is exported (pub)
-    fn is_rust_symbol_exported(&self, node: &crate::ast::tree_sitter::Node, source: &[u8]) -> bool {
+    fn is_rust_symbol_exported(&self, node: &Node, source: &[u8]) -> bool {
         // The node we get is the identifier, we need to check the function_item parent
         let mut current = node.parent();
         while let Some(parent) = current {
@@ -479,7 +480,7 @@ impl DeadCodeDetector {
     }
 
     /// Check if a JavaScript symbol is exported
-    fn is_javascript_symbol_exported(&self, node: &crate::ast::tree_sitter::Node, source: &[u8]) -> bool {
+    fn is_javascript_symbol_exported(&self, node: &Node, source: &[u8]) -> bool {
         // Look for export keyword or module.exports
         let mut current = node.parent();
         while let Some(parent) = current {
@@ -538,7 +539,7 @@ impl DeadCodeDetector {
     }
 
     /// Extract a code snippet around a node
-    fn extract_code_snippet(&self, node: &crate::ast::tree_sitter::Node, source: &[u8], context_lines: usize) -> String {
+    fn extract_code_snippet(&self, node: &Node, source: &[u8], context_lines: usize) -> String {
         let start_byte = node.start_byte();
         let end_byte = node.end_byte();
         

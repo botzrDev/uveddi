@@ -8,10 +8,17 @@ use tree_sitter::{Parser, Tree};
 use crate::error::UveddiError;
 
 /// Tree-sitter parser implementation (feature enabled)
-#[derive(Debug)]
 pub struct AstParser {
     parsers: HashMap<SourceLanguage, Parser>,
     cache: Mutex<HashMap<String, CachedAst>>,
+}
+
+impl std::fmt::Debug for AstParser {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("AstParser")
+            .field("cache", &self.cache)
+            .finish()
+    }
 }
 
 /// Cached AST structure
@@ -27,6 +34,19 @@ pub enum SourceLanguage {
     Rust,
     Python,
     JavaScript,
+}
+
+impl SourceLanguage {
+    pub fn from_path(path: &Path) -> Option<Self> {
+        path.extension()
+            .and_then(|ext| ext.to_str())
+            .and_then(|ext_str| match ext_str {
+                "rs" => Some(SourceLanguage::Rust),
+                "py" => Some(SourceLanguage::Python),
+                "js" | "ts" | "jsx" | "tsx" => Some(SourceLanguage::JavaScript),
+                _ => None,
+            })
+    }
 }
 
 /// Parsed file structure containing AST and metadata

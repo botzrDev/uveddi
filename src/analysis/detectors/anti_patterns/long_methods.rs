@@ -23,11 +23,12 @@
 //! - **JavaScript**: Framework-aware thresholds for React/Node.js patterns
 
 use crate::analysis::{AnalysisDetector, AnalysisError};
-use crate::ast::{ParsedFile, SourceLanguage, Query, QueryCursor, Node};
+use crate::ast::{ParsedFile, SourceLanguage};
 use crate::database::models::{ArchitecturalIssue, AntiPatternType};
 use log::debug;
 use std::collections::HashMap;
 use log::info;
+use tree_sitter::{Node, Query, QueryCursor};
 
 /// Represents metrics collected for a method/function
 #[derive(Debug, Clone)]
@@ -205,7 +206,7 @@ impl LongMethodsDetector {
         #[cfg(feature = "tree-sitter")]
         {
         let mut metrics = Vec::new();
-        let source = parsed_file.source.as_ref()
+        let source = parsed_file.content.as_ref()
             .ok_or_else(|| AnalysisError::AntiPatternDetection("Source content missing".to_string()))?
             .as_bytes();
         let tree = parsed_file
@@ -271,7 +272,7 @@ impl LongMethodsDetector {
         #[cfg(feature = "tree-sitter")]
         {
         let mut metrics = Vec::new();
-        let source = parsed_file.source.as_ref().unwrap_or(&String::new()).as_bytes();
+        let source = parsed_file.content.as_ref().unwrap_or(&String::new()).as_bytes();
         let tree = parsed_file
             .tree
             .as_ref()
@@ -335,7 +336,7 @@ impl LongMethodsDetector {
         #[cfg(feature = "tree-sitter")]
         {
         let mut metrics = Vec::new();
-        let source = parsed_file.source.as_ref().unwrap_or(&String::new()).as_bytes();
+        let source = parsed_file.content.as_ref().unwrap_or(&String::new()).as_bytes();
         let tree = parsed_file
             .tree
             .as_ref()

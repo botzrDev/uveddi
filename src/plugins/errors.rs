@@ -168,29 +168,30 @@ macro_rules! verification_error {
 /// Placeholder documentation for public items
 impl PluginError {
     /// Returns a string describing the error
-    pub fn description(&self) -> &str {
-        match *self {
-            PluginError::Runtime(ref err) => err.description(),
-            PluginError::Instantiation(ref desc) => desc,
-            PluginError::Verification(ref err) => err.description(),
-            PluginError::Loading(ref desc) => desc,
-            PluginError::Execution(ref desc) => desc,
-            PluginError::ResourceLimit(ref desc) => desc,
-            PluginError::SecurityViolation(ref desc) => desc,
-            PluginError::DataPlane(ref err) => err.description(),
-            PluginError::Registry(ref err) => err.description(),
-            PluginError::Configuration(ref desc) => desc,
-            PluginError::Io(ref err) => err.description(),
-            PluginError::Json(ref err) => err.description(),
-            PluginError::NotFound(ref desc) => desc,
-            PluginError::AlreadyExists(ref desc) => desc,
-            PluginError::InvalidState { ref expected, ref actual } => {
-                format!("Invalid state: expected {}, found {}", expected, actual).as_str()
+    pub fn description(&self) -> String {
+        match self {
+            #[cfg(feature = "wasm-plugins")]
+            PluginError::Runtime(ref err) => err.to_string(),
+            PluginError::Instantiation(ref desc) => desc.clone(),
+            PluginError::Verification(ref err) => err.to_string(),
+            PluginError::Loading(ref desc) => desc.clone(),
+            PluginError::Execution(ref desc) => desc.clone(),
+            PluginError::ResourceLimit(ref desc) => desc.clone(),
+            PluginError::SecurityViolation(ref desc) => desc.clone(),
+            PluginError::DataPlane(ref err) => err.to_string(),
+            PluginError::Registry(ref err) => err.to_string(),
+            PluginError::Configuration(ref desc) => desc.clone(),
+            PluginError::Io(ref err) => err.to_string(),
+            PluginError::Json(ref err) => err.to_string(),
+            PluginError::NotFound(ref desc) => desc.clone(),
+            PluginError::AlreadyExists(ref desc) => desc.clone(),
+            PluginError::InvalidState { expected, actual } => {
+                format!("Invalid state: expected {}, found {}", expected, actual)
             },
             PluginError::Timeout { timeout_ms } => {
-                format!("Operation timed out after {}ms", timeout_ms).as_str()
+                format!("Operation timed out after {}ms", timeout_ms)
             },
-            PluginError::Unsupported(ref desc) => desc,
+            PluginError::Unsupported(ref desc) => desc.clone(),
         }
     }
 }

@@ -195,4 +195,3 @@ mod tests {
     }
 }
 
-/// Placeholder documentation for public items

@@ -114,13 +114,14 @@
 //! ## References
 //! - [Fowler, M. "Refactoring: Improving the Design of Existing Code"](https://refactoring.com/)
 //! - [Brown, W. et al. "AntiPatterns: Refactoring Software, Architectures, and Projects in Crisis"](https://www.amazon.com/AntiPatterns-Refactoring-Software-Architectures-Projects/dp/0471197130)
-//! - [Clean Code: A Handbook of Agile Software Craftsmanship](https://www.amazon.com/Clean-Code-Handbook-Software-Craftsmanship/dp/0132350884)
+//! - [Clean Code: A Handbook of Agile Software Craftsmanship](https://www.amazon.com/Clean-code-Handbook-Software-Craftsmanship/dp/0132350884)
 
 use crate::analysis::{AnalysisDetector, AnalysisError};
-use crate::ast::tree_sitter::{ParsedFile, SourceLanguage, Query, QueryCursor};
+use crate::ast::{ParsedFile, SourceLanguage};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use log::{debug, info};
 use std::collections::HashMap;
+use tree_sitter::{Node, Query, QueryCursor};
 
 // --- Queries for identifying language-specific containers (classes, structs) ---
 const PYTHON_CLASS_QUERY: &str = r#"
@@ -255,8 +256,8 @@ impl GodObjectDetector {
         &self,
         parsed_file: &ParsedFile,
         name: &str,
-        name_node: crate::ast::tree_sitter::Node,
-        container_node: crate::ast::tree_sitter::Node,
+        name_node: Node,
+        container_node: Node,
         method_count: usize,
         field_count: usize,
     ) -> Option<ArchitecturalIssue> {
@@ -277,7 +278,7 @@ impl GodObjectDetector {
                     {
                         let empty_source = String::new();
                         container_node
-                            .utf8_text(parsed_file.source.as_ref().unwrap_or(&empty_source).as_bytes())
+                            .utf8_text(parsed_file.content.as_ref().unwrap_or(&empty_source).as_bytes())
                             .unwrap_or("")
                             .to_string()
                     }
@@ -303,7 +304,7 @@ impl GodObjectDetector {
     ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         let mut issues = Vec::new();
         let empty_source = String::new();
-        let source = parsed_file.source.as_ref().unwrap_or(&empty_source).as_bytes();
+        let source = parsed_file.content.as_deref().unwrap_or(empty_source.as_str()).as_bytes();
         let tree = parsed_file
             .tree
             .as_ref()
@@ -370,7 +371,7 @@ impl GodObjectDetector {
     ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         let mut issues = Vec::new();
         let empty_source = String::new();
-        let source = parsed_file.source.as_ref().unwrap_or(&empty_source).as_bytes();
+        let source = parsed_file.content.as_deref().unwrap_or(empty_source.as_str()).as_bytes();
         let tree = parsed_file
             .tree
             .as_ref()

@@ -4,9 +4,10 @@
 //! God Objects, and Blob anti-patterns as described in the Large Class Research document.
 
 use crate::analysis::{AnalysisDetector, AnalysisError};
-use crate::ast::{ParsedFile, SourceLanguage, Query, Node};
+use crate::ast::{ParsedFile, SourceLanguage};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use log::debug;
+use tree_sitter::{Node, Query, QueryCursor, Tree};
 
 /// Holds the collected metrics for a single class or struct.
 #[derive(Debug, Clone)]
@@ -136,7 +137,7 @@ impl LargeClassDetector {
     #[cfg(feature = "tree-sitter")]
     fn extract_rust_metrics(&self, parsed_file: &ParsedFile) -> Result<Vec<ClassMetrics>, AnalysisError> {
         let mut metrics = Vec::new();
-        let source = parsed_file.source.as_ref()
+        let source = parsed_file.content.as_deref()
             .ok_or_else(|| AnalysisError::AntiPatternDetection("Source code missing".to_string()))?
             .as_bytes();
         let tree = parsed_file.tree.as_ref()
@@ -243,12 +244,12 @@ impl LargeClassDetector {
     }
 
     #[cfg(feature = "tree-sitter")]
-    fn find_rust_impl_metrics(&self, struct_name: &str, tree: &crate::ast::Tree, source: &[u8]) -> Result<(u32, u32), AnalysisError> {
+    fn find_rust_impl_metrics(&self, struct_name: &str, tree: &Tree, source: &[u8]) -> Result<(u32, u32), AnalysisError> {
         Ok((0, 0))
     }
 
     #[cfg(feature = "tree-sitter")]
-    fn calculate_rust_lcom(&self, struct_name: &str, tree: &crate::ast::Tree, source: &[u8]) -> Result<f64, AnalysisError> {
+    fn calculate_rust_lcom(&self, struct_name: &str, tree: &Tree, source: &[u8]) -> Result<f64, AnalysisError> {
         Ok(0.0)
     }
 

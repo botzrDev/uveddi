@@ -56,7 +56,7 @@ impl SymbolExtractor {
             .map_err(|e| e.to_string())?;
         
         let mut cursor = QueryCursor::new();
-        let captures = cursor.captures(&query, tree.root_node(), file.source.as_ref().unwrap_or(&String::new()).as_bytes());
+        let captures = cursor.captures(&query, tree.root_node(), file.content.as_bytes());
 
         for (match_, _) in captures {
             if let Some(name_capture) = match_.captures.iter().find(|c| query.capture_names()[c.index as usize] == "name") {
@@ -73,7 +73,7 @@ impl SymbolExtractor {
                     _ => SymbolKind::Unknown,
                 };
                 
-                let symbol_name = node.utf8_text(file.source.as_ref().unwrap_or(&String::new()).as_bytes()).unwrap_or("").to_string();
+                let symbol_name = node.utf8_text(file.content.as_bytes()).unwrap_or("").to_string();
                 let id = SYMBOL_ID_COUNTER.fetch_add(1, Ordering::SeqCst);
 
                 let symbol = CanonicalSymbol {
@@ -81,7 +81,7 @@ impl SymbolExtractor {
                     name: symbol_name,
                     kind,
                     location: SourceLocation {
-                        file_path: file.path.to_str().unwrap().to_string(),
+                        file_path: file.file_path.clone(),
                         start_byte: node.start_byte(),
                         end_byte: node.end_byte(),
                     },

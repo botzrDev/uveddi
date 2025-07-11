@@ -36,8 +36,5 @@ pub use tree_sitter::{
     CustomAst,
     ParsedFile,
     SourceLanguage,
-    AstError,
-    Query,
-    QueryCursor,
-    Node
+    AstError
 };

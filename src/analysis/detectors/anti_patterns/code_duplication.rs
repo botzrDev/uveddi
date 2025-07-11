@@ -16,12 +16,13 @@
 //! - Provides configurable similarity thresholds
 
 use crate::analysis::{AnalysisDetector, AnalysisError};
-use crate::ast::{ParsedFile, SourceLanguage, Query, QueryCursor};
+use crate::ast::{ParsedFile, SourceLanguage};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use log::{debug, info};
 use sha2::{Digest, Sha256};
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
+use tree_sitter::{Query, QueryCursor};
 
 /// Represents a contiguous block of code extracted for duplication analysis.
 ///
@@ -248,7 +249,7 @@ impl CodeDuplicationDetector {
             .map_err(|e| AnalysisError::Analysis(format!("Failed to create query: {e}")))?;
 
         let mut cursor = QueryCursor::new();
-        let matches = cursor.matches(&query, tree.root_node(), parsed_file.source.as_ref().expect("Missing source code").as_bytes());
+        let matches = cursor.matches(&query, tree.root_node(), parsed_file.content.as_bytes());
 
         let mut blocks = Vec::new();
 
@@ -264,7 +265,7 @@ impl CodeDuplicationDetector {
                 }
 
                 let source = function_node
-                    .utf8_text(parsed_file.source.as_ref().expect("Missing source code").as_bytes())
+                    .utf8_text(parsed_file.content.as_bytes())
                     .map_err(|e| AnalysisError::Analysis(format!("Failed to extract source: {e}")))?
                     .to_string();
 
@@ -275,7 +276,7 @@ impl CodeDuplicationDetector {
                     loop {
                         let child = cursor.node();
                         if child.kind() == "identifier" {
-                            if let Ok(name) = child.utf8_text(parsed_file.source.as_ref().expect("Missing source code").as_bytes()) {
+                            if let Ok(name) = child.utf8_text(parsed_file.content.as_bytes()) {
                                 function_name = Some(name.to_string());
                                 break;
                             }

@@ -111,7 +111,7 @@ impl ComponentExtractor {
                 };
                 components.push(component);
             }
-            CustomAst::Function { name, parameters } => {
+            CustomAst::Function { name, params } => {
                 // Create a component for the function
                 let component = ArchitecturalComponent {
                     component_id: Uuid::new_v4(),
@@ -120,14 +120,14 @@ impl ComponentExtractor {
                     component_type: ComponentType::Function,
                     dependencies: Vec::new(), // Will be resolved in second pass
                     metrics: ComponentMetrics {
-                        complexity: Some(self.estimate_complexity(parameters.len())),
+                        complexity: Some(self.estimate_complexity(params.len())),
                         ..ComponentMetrics::default()
                     },
                     group: self.infer_group_from_path(file_path),
                 };
                 components.push(component);
             }
-            CustomAst::Variable { name, value_type } => {
+            CustomAst::Variable { name, .. } => {
                 // For variables, we might create components only for significant ones
                 // like database connections, services, etc.
                 if self.is_architectural_variable(name) {
@@ -228,7 +228,7 @@ impl ComponentExtractor {
                     }
                 }
             }
-            CustomAst::Function { name, parameters: _ } => {
+            CustomAst::Function { name, .. } => {
                 // Analyze function body for calls (simplified heuristic)
                 if let Some(target_name) = self.extract_function_call_target(name) {
                     if let Some(target_index) = name_to_component.get(&target_name) {
