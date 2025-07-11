@@ -53,11 +53,11 @@ pub mod cache;
 pub mod component_extractor;
 pub mod detectors;
 pub mod engine;
+pub mod extractors;
 pub mod graph;
 pub mod mermaid_generator;
-pub mod types;
 pub mod symbols;
-pub mod extractors;
+pub mod types;
 
 #[cfg(test)]
 pub mod tests;

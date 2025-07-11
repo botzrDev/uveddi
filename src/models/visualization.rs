@@ -63,13 +63,9 @@ pub enum ComponentType {
     Function,
     // Language-specific types
     /// Rust struct with field info
-    RustStruct {
-        fields: Vec<FieldInfo>,
-    },
+    RustStruct { fields: Vec<FieldInfo> },
     /// Rust module with visibility
-    RustModule {
-        is_public: bool,
-    },
+    RustModule { is_public: bool },
     /// Rust function with signature
     RustFunction {
         signature: MethodSignature,
@@ -84,9 +80,7 @@ pub enum ComponentType {
         is_abstract: bool,
     },
     /// JavaScript ES module with exports
-    JavaScriptEsModule {
-        exports: Vec<String>,
-    },
+    JavaScriptEsModule { exports: Vec<String> },
 }
 
 /// Represents a dependency relationship between components
@@ -309,9 +303,9 @@ impl ComponentType {
     /// Get the programming language associated with this component type
     pub fn language(&self) -> Option<String> {
         match self {
-            ComponentType::RustStruct { .. } |
-            ComponentType::RustModule { .. } |
-            ComponentType::RustFunction { .. } => Some("rust".to_string()),
+            ComponentType::RustStruct { .. }
+            | ComponentType::RustModule { .. }
+            | ComponentType::RustFunction { .. } => Some("rust".to_string()),
             ComponentType::PythonClass { .. } => Some("python".to_string()),
             ComponentType::JavaScriptEsModule { .. } => Some("javascript".to_string()),
             _ => None,
@@ -320,12 +314,13 @@ impl ComponentType {
 
     /// Check if this component type is language-specific
     pub fn is_language_specific(&self) -> bool {
-        matches!(self,
-            ComponentType::RustStruct { .. } |
-            ComponentType::RustModule { .. } |
-            ComponentType::RustFunction { .. } |
-            ComponentType::PythonClass { .. } |
-            ComponentType::JavaScriptEsModule { .. }
+        matches!(
+            self,
+            ComponentType::RustStruct { .. }
+                | ComponentType::RustModule { .. }
+                | ComponentType::RustFunction { .. }
+                | ComponentType::PythonClass { .. }
+                | ComponentType::JavaScriptEsModule { .. }
         )
     }
 
@@ -428,4 +423,3 @@ impl DiagramResult {
         }
     }
 }
-

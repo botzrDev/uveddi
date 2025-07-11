@@ -39,12 +39,11 @@
 //! # Ok::<(), Box<dyn std::error::Error>>(())
 //! ```
 
+pub mod analytics;
 /// Placeholder documentation for public items
-
 pub mod database;
 pub mod models;
-pub mod analytics;
 
-pub use database::CommunityDatabase;
-pub use models::{CommunityMember, MemberRole, MemberActivity, MemberProfile, ActivityType};
 pub use analytics::MemberAnalytics;
+pub use database::CommunityDatabase;
+pub use models::{ActivityType, CommunityMember, MemberActivity, MemberProfile, MemberRole};

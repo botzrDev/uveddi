@@ -135,28 +135,36 @@ impl LargeClassDetector {
 
     // When tree-sitter is available, use full AST analysis
     #[cfg(feature = "tree-sitter")]
-    fn extract_rust_metrics(&self, parsed_file: &ParsedFile) -> Result<Vec<ClassMetrics>, AnalysisError> {
+    fn extract_rust_metrics(
+        &self,
+        parsed_file: &ParsedFile,
+    ) -> Result<Vec<ClassMetrics>, AnalysisError> {
         let mut metrics = Vec::new();
-        let source = parsed_file.content.as_deref()
-            .ok_or_else(|| AnalysisError::AntiPatternDetection("Source code missing".to_string()))?
-            .as_bytes();
-        let tree = parsed_file.tree.as_ref()
+        let source = parsed_file
+            .content
+            .as_deref()
+            .map(str::as_bytes)
+            .unwrap_or(&[]);
+        let tree = parsed_file
+            .tree
+            .as_ref()
             .ok_or_else(|| AnalysisError::AntiPatternDetection("AST tree missing".to_string()))?;
         let language = tree.language();
 
         // Query for struct definitions
         let struct_query = Query::new(&language, RUST_STRUCT_QUERY)
             .map_err(|e| AnalysisError::QueryError(e.to_string()))?;
-        
+
         let mut cursor = QueryCursor::new();
         for mat in cursor.matches(&struct_query, tree.root_node(), source) {
             if let Some(name_capture) = mat.captures.first() {
                 let name_node = name_capture.node;
                 let struct_node = name_node.parent().unwrap_or(name_node);
-                
+
                 if let Ok(name) = name_node.utf8_text(source) {
                     let field_count = self.count_rust_struct_fields(&struct_node, source)?;
-                    let (method_count, cyclomatic_complexity) = self.find_rust_impl_metrics(name, tree, source)?;
+                    let (method_count, cyclomatic_complexity) =
+                        self.find_rust_impl_metrics(name, tree, source)?;
                     let logical_loc = self.calculate_logical_loc(&struct_node, source);
                     let lcom_score = if self.config.enable_lcom_analysis {
                         self.calculate_rust_lcom(name, tree, source)?
@@ -195,32 +203,47 @@ impl LargeClassDetector {
 
     // When tree-sitter is NOT available, return empty results
     #[cfg(not(feature = "tree-sitter"))]
-    fn extract_rust_metrics(&self, _parsed_file: &ParsedFile) -> Result<Vec<ClassMetrics>, AnalysisError> {
+    fn extract_rust_metrics(
+        &self,
+        _parsed_file: &ParsedFile,
+    ) -> Result<Vec<ClassMetrics>, AnalysisError> {
         debug!("Tree-sitter feature not enabled, skipping Rust metrics extraction");
         Ok(Vec::new())
     }
 
     // Similar pattern for Python and JavaScript
     #[cfg(feature = "tree-sitter")]
-    fn extract_python_metrics(&self, parsed_file: &ParsedFile) -> Result<Vec<ClassMetrics>, AnalysisError> {
+    fn extract_python_metrics(
+        &self,
+        parsed_file: &ParsedFile,
+    ) -> Result<Vec<ClassMetrics>, AnalysisError> {
         // Implementation with tree-sitter
         Ok(Vec::new()) // Simplified for now
     }
 
     #[cfg(not(feature = "tree-sitter"))]
-    fn extract_python_metrics(&self, _parsed_file: &ParsedFile) -> Result<Vec<ClassMetrics>, AnalysisError> {
+    fn extract_python_metrics(
+        &self,
+        _parsed_file: &ParsedFile,
+    ) -> Result<Vec<ClassMetrics>, AnalysisError> {
         debug!("Tree-sitter feature not enabled, skipping Python metrics extraction");
         Ok(Vec::new())
     }
 
     #[cfg(feature = "tree-sitter")]
-    fn extract_javascript_metrics(&self, parsed_file: &ParsedFile) -> Result<Vec<ClassMetrics>, AnalysisError> {
+    fn extract_javascript_metrics(
+        &self,
+        parsed_file: &ParsedFile,
+    ) -> Result<Vec<ClassMetrics>, AnalysisError> {
         // Implementation with tree-sitter
         Ok(Vec::new()) // Simplified for now
     }
 
     #[cfg(not(feature = "tree-sitter"))]
-    fn extract_javascript_metrics(&self, _parsed_file: &ParsedFile) -> Result<Vec<ClassMetrics>, AnalysisError> {
+    fn extract_javascript_metrics(
+        &self,
+        _parsed_file: &ParsedFile,
+    ) -> Result<Vec<ClassMetrics>, AnalysisError> {
         debug!("Tree-sitter feature not enabled, skipping JavaScript metrics extraction");
         Ok(Vec::new())
     }
@@ -239,17 +262,31 @@ impl LargeClassDetector {
     }
 
     #[cfg(feature = "tree-sitter")]
-    fn count_rust_struct_fields(&self, struct_node: &Node, source: &[u8]) -> Result<u32, AnalysisError> {
+    fn count_rust_struct_fields(
+        &self,
+        struct_node: &Node,
+        source: &[u8],
+    ) -> Result<u32, AnalysisError> {
         Ok(0)
     }
 
     #[cfg(feature = "tree-sitter")]
-    fn find_rust_impl_metrics(&self, struct_name: &str, tree: &Tree, source: &[u8]) -> Result<(u32, u32), AnalysisError> {
+    fn find_rust_impl_metrics(
+        &self,
+        struct_name: &str,
+        tree: &Tree,
+        source: &[u8],
+    ) -> Result<(u32, u32), AnalysisError> {
         Ok((0, 0))
     }
 
     #[cfg(feature = "tree-sitter")]
-    fn calculate_rust_lcom(&self, struct_name: &str, tree: &Tree, source: &[u8]) -> Result<f64, AnalysisError> {
+    fn calculate_rust_lcom(
+        &self,
+        struct_name: &str,
+        tree: &Tree,
+        source: &[u8],
+    ) -> Result<f64, AnalysisError> {
         Ok(0.0)
     }
 
@@ -268,14 +305,22 @@ impl LargeClassDetector {
         String::new()
     }
 
-    pub fn generate_description(&self, metrics: &ClassMetrics, severity: u32, language: SourceLanguage) -> String {
+    pub fn generate_description(
+        &self,
+        metrics: &ClassMetrics,
+        severity: u32,
+        language: SourceLanguage,
+    ) -> String {
         format!(
             "Large class '{}' detected with severity {}. Language: {:?}. Metrics: {} LOC, {} methods, {} fields.",
             metrics.name, severity, language, metrics.logical_loc, metrics.method_count, metrics.field_count
         )
     }
 
-    pub fn get_language_thresholds(&self, language: &SourceLanguage) -> Option<&LanguageThresholds> {
+    pub fn get_language_thresholds(
+        &self,
+        language: &SourceLanguage,
+    ) -> Option<&LanguageThresholds> {
         match language {
             SourceLanguage::Rust => Some(&self.config.rust_thresholds),
             SourceLanguage::Python => Some(&self.config.python_thresholds),
@@ -284,29 +329,42 @@ impl LargeClassDetector {
         }
     }
 
-    pub(crate) fn calculate_severity_score(&self, metrics: &ClassMetrics, thresholds: &LanguageThresholds) -> u32 {
+    pub(crate) fn calculate_severity_score(
+        &self,
+        metrics: &ClassMetrics,
+        thresholds: &LanguageThresholds,
+    ) -> u32 {
         let mut score = 0;
         let w = &self.config.severity_weights;
 
         if metrics.logical_loc > thresholds.max_logical_loc {
-            score += (w.size_weight * ((metrics.logical_loc - thresholds.max_logical_loc) as f64)) as u32;
+            score += (w.size_weight * ((metrics.logical_loc - thresholds.max_logical_loc) as f64))
+                as u32;
         }
         if metrics.method_count > thresholds.max_methods {
-            score += (w.size_weight * ((metrics.method_count - thresholds.max_methods) * 5) as f64) as u32;
+            score += (w.size_weight * ((metrics.method_count - thresholds.max_methods) * 5) as f64)
+                as u32;
         }
         if metrics.field_count > thresholds.max_fields {
-            score += (w.size_weight * ((metrics.field_count - thresholds.max_fields) * 5) as f64) as u32;
+            score +=
+                (w.size_weight * ((metrics.field_count - thresholds.max_fields) * 5) as f64) as u32;
         }
         if metrics.cyclomatic_complexity > thresholds.max_cyclomatic_complexity {
-            score += (w.complexity_weight * ((metrics.cyclomatic_complexity - thresholds.max_cyclomatic_complexity) as f64)) as u32;
+            score += (w.complexity_weight
+                * ((metrics.cyclomatic_complexity - thresholds.max_cyclomatic_complexity) as f64))
+                as u32;
         }
         if metrics.lcom_score > thresholds.max_lcom_score {
-            score += (w.structural_weight * ((metrics.lcom_score - thresholds.max_lcom_score) * 100.0) as f64) as u32;
+            score += (w.structural_weight
+                * ((metrics.lcom_score - thresholds.max_lcom_score) * 100.0) as f64)
+                as u32;
         }
         if metrics.coupling_count > thresholds.max_coupling {
-            score += (w.structural_weight * ((metrics.coupling_count - thresholds.max_coupling) * 2) as f64) as u32;
+            score += (w.structural_weight
+                * ((metrics.coupling_count - thresholds.max_coupling) * 2) as f64)
+                as u32;
         }
-        
+
         score
     }
 }
@@ -329,15 +387,15 @@ impl AnalysisDetector for LargeClassDetector {
                 _ => continue,
             };
 
-            if class_metrics.logical_loc > thresholds.max_logical_loc ||
-               class_metrics.method_count > thresholds.max_methods ||
-               class_metrics.field_count > thresholds.max_fields {
-                
+            if class_metrics.logical_loc > thresholds.max_logical_loc
+                || class_metrics.method_count > thresholds.max_methods
+                || class_metrics.field_count > thresholds.max_fields
+            {
                 let severity = self.calculate_severity_score(&class_metrics, thresholds);
-                
+
                 let issue = ArchitecturalIssue {
                     issue_id: None,
-                    analysis_run_id: 0, // TODO: Get proper analysis run ID
+                    analysis_run_id: 0,      // TODO: Get proper analysis run ID
                     anti_pattern_type_id: 1, // TODO: Get proper ID for LargeClass from database
                     file_path: class_metrics.file_path.clone(),
                     start_line: Some(class_metrics.start_line.try_into().unwrap()),
@@ -345,11 +403,16 @@ impl AnalysisDetector for LargeClassDetector {
                     severity: severity.to_string(),
                     description: format!(
                         "Large class '{}' detected: {} LOC, {} methods, {} fields",
-                        class_metrics.name, class_metrics.logical_loc, 
-                        class_metrics.method_count, class_metrics.field_count
+                        class_metrics.name,
+                        class_metrics.logical_loc,
+                        class_metrics.method_count,
+                        class_metrics.field_count
                     ),
                     code_snippet: Some(class_metrics.code_snippet.clone()),
-                    ai_explanation: Some("Consider breaking this class into smaller, more focused classes".to_string()),
+                    ai_explanation: Some(
+                        "Consider breaking this class into smaller, more focused classes"
+                            .to_string(),
+                    ),
                 };
 
                 issues.push(issue);
@@ -368,7 +431,10 @@ impl AnalysisDetector for LargeClassDetector {
         Vec::new()
     }
 
-    fn detect(&self, graph: &crate::analysis::graph::dependency::LocalDependencyGraph) -> Vec<ArchitecturalIssue> {
+    fn detect(
+        &self,
+        graph: &crate::analysis::graph::dependency::LocalDependencyGraph,
+    ) -> Vec<ArchitecturalIssue> {
         // For the graph-based detect method, we return empty for now
         // This method is used for dependency-based analysis
         Vec::new()

@@ -2,7 +2,7 @@
 //!
 //! ## Overview
 //! Detects "God Objects" - classes or structs that have accumulated too many responsibilities,
-//! violating the Single Responsibility Principle. Also known as "Blob" or "Large Class" 
+//! violating the Single Responsibility Principle. Also known as "Blob" or "Large Class"
 //! anti-pattern, these objects become difficult to maintain, test, and understand.
 //!
 //! God Objects typically exhibit:
@@ -99,7 +99,7 @@
 //! ## Performance Considerations
 //! - **Time Complexity**: O(n) where n is the number of AST nodes in the file
 //! - **Space Complexity**: O(m) where m is the number of classes/structs found
-//! - **Optimization Notes**: 
+//! - **Optimization Notes**:
 //!   - Uses efficient Tree-sitter queries to minimize AST traversal
 //!   - Caches query compilation for repeated use
 //!   - Processes files independently for parallelization
@@ -278,7 +278,7 @@ impl GodObjectDetector {
                     {
                         let empty_source = String::new();
                         container_node
-                            .utf8_text(parsed_file.content.as_ref().unwrap_or(&empty_source).as_bytes())
+                            .utf8_text(parsed_file.content.as_deref().unwrap_or(&empty_source).as_bytes())
                             .unwrap_or("")
                             .to_string()
                     }
@@ -304,7 +304,11 @@ impl GodObjectDetector {
     ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         let mut issues = Vec::new();
         let empty_source = String::new();
-        let source = parsed_file.content.as_deref().unwrap_or(empty_source.as_str()).as_bytes();
+        let source = parsed_file
+            .content
+            .as_deref()
+            .map(str::as_bytes)
+            .unwrap_or(&[]);
         let tree = parsed_file
             .tree
             .as_ref()
@@ -371,7 +375,11 @@ impl GodObjectDetector {
     ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         let mut issues = Vec::new();
         let empty_source = String::new();
-        let source = parsed_file.content.as_deref().unwrap_or(empty_source.as_str()).as_bytes();
+        let source = parsed_file
+            .content
+            .as_deref()
+            .map(str::as_bytes)
+            .unwrap_or(&[]);
         let tree = parsed_file
             .tree
             .as_ref()
@@ -462,10 +470,7 @@ impl AnalysisDetector for GodObjectDetector {
         &self,
         parsed_file: &ParsedFile,
     ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
-        debug!(
-            "Running God Object detection on: {}",
-            parsed_file.file_path
-        );
+        debug!("Running God Object detection on: {}", parsed_file.file_path);
         let result = match parsed_file.language {
             SourceLanguage::Rust => self.analyze_rust(parsed_file),
             SourceLanguage::Python => self.analyze_standard(
@@ -485,10 +490,7 @@ impl AnalysisDetector for GodObjectDetector {
         match &result {
             Ok(issues) => {
                 if issues.is_empty() {
-                    debug!(
-                        "No God Object issues found in {}",
-                        parsed_file.file_path
-                    );
+                    debug!("No God Object issues found in {}", parsed_file.file_path);
                 } else {
                     info!(
                         "Found {} God Object issues in {}",
@@ -500,8 +502,7 @@ impl AnalysisDetector for GodObjectDetector {
             Err(e) => {
                 debug!(
                     "Error analyzing {} for God Objects: {}",
-                    parsed_file.file_path,
-                    e
+                    parsed_file.file_path, e
                 );
             }
         }

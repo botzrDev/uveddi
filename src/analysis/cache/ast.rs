@@ -2,9 +2,9 @@
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
-use std::fs;
 #[cfg(feature = "tree-sitter")]
 use tree_sitter::Tree;
 

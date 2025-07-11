@@ -20,7 +20,7 @@ impl MemberRole {
     pub fn as_str(&self) -> &'static str {
         match self {
             MemberRole::Member => "member",
-            MemberRole::Developer => "developer", 
+            MemberRole::Developer => "developer",
             MemberRole::Admin => "admin",
         }
     }
@@ -100,12 +100,17 @@ impl CommunityDatabase {
             CREATE INDEX IF NOT EXISTS idx_member_email ON community_members(email);
             CREATE INDEX IF NOT EXISTS idx_member_role ON community_members(role);
             CREATE INDEX IF NOT EXISTS idx_member_active ON community_members(is_active);
-            "#
+            "#,
         )?;
         Ok(())
     }
 
-    pub fn register_member(&self, email: &str, name: &str, role: MemberRole) -> SqlResult<CommunityMember> {
+    pub fn register_member(
+        &self,
+        email: &str,
+        name: &str,
+        role: MemberRole,
+    ) -> SqlResult<CommunityMember> {
         let member = CommunityMember {
             id: Uuid::new_v4().to_string(),
             email: email.to_string(),
@@ -160,15 +165,16 @@ impl CommunityDatabase {
                    avatar_url, company, job_title, languages, experience_level, use_case,
                    referral_source, newsletter_subscribed, marketing_consent, custom_fields
             FROM community_members WHERE email = ?1
-            "#
+            "#,
         )?;
 
         let member_iter = stmt.query_map([email], |row| {
             let languages_json: String = row.get(11)?;
             let custom_fields_json: String = row.get(17)?;
-            
+
             let languages: Vec<String> = serde_json::from_str(&languages_json).unwrap_or_default();
-            let custom_fields: HashMap<String, String> = serde_json::from_str(&custom_fields_json).unwrap_or_default();
+            let custom_fields: HashMap<String, String> =
+                serde_json::from_str(&custom_fields_json).unwrap_or_default();
 
             let last_active_str: Option<String> = row.get(5)?;
             let last_active = last_active_str
@@ -214,15 +220,16 @@ impl CommunityDatabase {
                    avatar_url, company, job_title, languages, experience_level, use_case,
                    referral_source, newsletter_subscribed, marketing_consent, custom_fields
             FROM community_members WHERE is_active = 1 ORDER BY created_at DESC
-            "#
+            "#,
         )?;
 
         let member_iter = stmt.query_map([], |row| {
             let languages_json: String = row.get(11)?;
             let custom_fields_json: String = row.get(17)?;
-            
+
             let languages: Vec<String> = serde_json::from_str(&languages_json).unwrap_or_default();
-            let custom_fields: HashMap<String, String> = serde_json::from_str(&custom_fields_json).unwrap_or_default();
+            let custom_fields: HashMap<String, String> =
+                serde_json::from_str(&custom_fields_json).unwrap_or_default();
 
             let last_active_str: Option<String> = row.get(5)?;
             let last_active = last_active_str
@@ -273,7 +280,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Register some demo members
     println!("\n📝 Registering demo members...");
-    
+
     let alice = db.register_member("alice@techcorp.com", "Alice Johnson", MemberRole::Developer)?;
     println!("   Registered: {} ({})", alice.name, alice.email);
 
@@ -286,7 +293,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Test retrieval
     println!("\n🔍 Testing member retrieval...");
     if let Some(retrieved_alice) = db.get_member_by_email("alice@techcorp.com")? {
-        println!("   Found Alice: {} with ID {}", retrieved_alice.name, retrieved_alice.id);
+        println!(
+            "   Found Alice: {} with ID {}",
+            retrieved_alice.name, retrieved_alice.id
+        );
         assert_eq!(retrieved_alice.role, MemberRole::Developer);
         println!("   ✅ Role correctly set to Developer");
     }
@@ -297,14 +307,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     for member in &members {
         let role_emoji = match member.role {
             MemberRole::Admin => "👑",
-            MemberRole::Developer => "💻", 
+            MemberRole::Developer => "💻",
             MemberRole::Member => "👤",
         };
-        println!("   {} {} ({}) - {}", 
-                 role_emoji, 
-                 member.name, 
-                 member.email,
-                 member.role.as_str()
+        println!(
+            "   {} {} ({}) - {}",
+            role_emoji,
+            member.name,
+            member.email,
+            member.role.as_str()
         );
     }
 
@@ -317,7 +328,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     assert!(members.iter().any(|m| m.role == MemberRole::Admin));
     assert!(members.iter().any(|m| m.role == MemberRole::Developer));
     assert!(members.iter().any(|m| m.role == MemberRole::Member));
-    
+
     println!("🎉 All assertions passed!");
 
     Ok(())

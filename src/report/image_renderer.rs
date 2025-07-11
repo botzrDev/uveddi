@@ -143,22 +143,22 @@ pub struct RenderedImage {
 pub enum RenderingError {
     #[error("HTTP request failed: {0}")]
     HttpError(#[from] reqwest::Error),
-    
+
     #[error("Rendering service returned error: {0}")]
     ServiceError(String),
-    
+
     #[error("Invalid response format: {0}")]
     InvalidResponse(String),
-    
+
     #[error("Base64 decode error: {0}")]
     Base64Error(#[from] base64::DecodeError),
-    
+
     #[error("Service unavailable")]
     ServiceUnavailable,
-    
+
     #[error("Request timeout")]
     Timeout,
-    
+
     #[error("Too many retries")]
     TooManyRetries,
 }
@@ -182,16 +182,13 @@ impl ImageRenderer {
     /// Check if the rendering service is healthy
     pub async fn health_check(&self) -> Result<HealthResponse, RenderingError> {
         let url = format!("{}/health", self.config.base_url);
-        
-        let response = self.client
-            .get(&url)
-            .send()
-            .await?;
-            
+
+        let response = self.client.get(&url).send().await?;
+
         if !response.status().is_success() {
             return Err(RenderingError::ServiceUnavailable);
         }
-        
+
         let health: HealthResponse = response.json().await?;
         Ok(health)
     }
@@ -211,7 +208,7 @@ impl ImageRenderer {
         };
 
         let mut retries = 0;
-        
+
         loop {
             match self.try_render_single(&request).await {
                 Ok(image) => return Ok(image),
@@ -225,38 +222,40 @@ impl ImageRenderer {
         }
     }
 
-    async fn try_render_single(&self, request: &RenderRequest) -> Result<RenderedImage, RenderingError> {
+    async fn try_render_single(
+        &self,
+        request: &RenderRequest,
+    ) -> Result<RenderedImage, RenderingError> {
         let url = format!("{}/render", self.config.base_url);
-        
-        let response = self.client
-            .post(&url)
-            .json(request)
-            .send()
-            .await?;
-            
+
+        let response = self.client.post(&url).json(request).send().await?;
+
         if !response.status().is_success() {
-            return Err(RenderingError::ServiceError(
-                format!("HTTP {}", response.status())
-            ));
+            return Err(RenderingError::ServiceError(format!(
+                "HTTP {}",
+                response.status()
+            )));
         }
-        
-        let render_response: RenderResponse = response.json().await
+
+        let render_response: RenderResponse = response
+            .json()
+            .await
             .map_err(|e| RenderingError::InvalidResponse(e.to_string()))?;
-            
+
         if !render_response.success {
             return Err(RenderingError::ServiceError(
-                "Rendering failed on service side".to_string()
+                "Rendering failed on service side".to_string(),
             ));
         }
-        
+
         let data = match request.format {
             ImageFormat::Svg => render_response.data.into_bytes(),
             ImageFormat::Png => {
-                use base64::{Engine as _, engine::general_purpose};
+                use base64::{engine::general_purpose, Engine as _};
                 general_purpose::STANDARD.decode(render_response.data)?
             }
         };
-        
+
         Ok(RenderedImage {
             format: request.format.clone(),
             data,
@@ -289,31 +288,30 @@ impl ImageRenderer {
         };
 
         let url = format!("{}/render/batch", self.config.base_url);
-        
-        let response = self.client
-            .post(&url)
-            .json(&request)
-            .send()
-            .await?;
-            
+
+        let response = self.client.post(&url).json(&request).send().await?;
+
         if !response.status().is_success() {
-            return Err(RenderingError::ServiceError(
-                format!("HTTP {}", response.status())
-            ));
+            return Err(RenderingError::ServiceError(format!(
+                "HTTP {}",
+                response.status()
+            )));
         }
-        
-        let batch_response: BatchRenderResponse = response.json().await
+
+        let batch_response: BatchRenderResponse = response
+            .json()
+            .await
             .map_err(|e| RenderingError::InvalidResponse(e.to_string()))?;
-        
+
         let mut results = Vec::new();
-        
+
         for result in batch_response.results {
             if result.success {
                 if let (Some(data_str), Some(format_str)) = (result.data, result.format) {
                     let data = match format {
                         ImageFormat::Svg => data_str.into_bytes(),
                         ImageFormat::Png => {
-                            use base64::{Engine as _, engine::general_purpose};
+                            use base64::{engine::general_purpose, Engine as _};
                             match general_purpose::STANDARD.decode(data_str) {
                                 Ok(data) => data,
                                 Err(e) => {
@@ -323,21 +321,25 @@ impl ImageRenderer {
                             }
                         }
                     };
-                    
+
                     results.push(Ok(RenderedImage {
                         format: format.clone(),
                         data,
                         dimensions: (800, 600), // Default dimensions for batch
-                        render_time_ms: 0, // Not available in batch response
+                        render_time_ms: 0,      // Not available in batch response
                     }));
                 } else {
-                    results.push(Err("Missing data or format in successful result".to_string()));
+                    results.push(Err(
+                        "Missing data or format in successful result".to_string()
+                    ));
                 }
             } else {
-                results.push(Err(result.error.unwrap_or_else(|| "Unknown error".to_string())));
+                results.push(Err(result
+                    .error
+                    .unwrap_or_else(|| "Unknown error".to_string())));
             }
         }
-        
+
         Ok(results)
     }
 
@@ -350,7 +352,7 @@ impl ImageRenderer {
         tokio::fs::write(file_path, &image.data)
             .await
             .map_err(|e| RenderingError::ServiceError(format!("Failed to write file: {}", e)))?;
-        
+
         Ok(())
     }
 }
@@ -368,7 +370,7 @@ mod tests {
     #[tokio::test]
     async fn test_health_check() {
         let renderer = ImageRenderer::new();
-        
+
         // This test requires the rendering service to be running
         // In CI/CD, this would be handled by docker-compose
         match renderer.health_check().await {
@@ -387,14 +389,17 @@ mod tests {
     #[tokio::test]
     async fn test_render_simple_diagram() {
         let renderer = ImageRenderer::new();
-        
+
         let mermaid_code = r#"
 graph TD
     A[Start] --> B[Process]
     B --> C[End]
 "#;
 
-        match renderer.render_diagram(mermaid_code, ImageFormat::Svg, None).await {
+        match renderer
+            .render_diagram(mermaid_code, ImageFormat::Svg, None)
+            .await
+        {
             Ok(image) => {
                 assert!(!image.data.is_empty());
                 assert!(matches!(image.format, ImageFormat::Svg));

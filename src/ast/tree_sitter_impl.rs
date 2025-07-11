@@ -1,14 +1,19 @@
+
 // Real tree-sitter implementation - compiled when feature "tree-sitter" is enabled
 
 use bincode;
-use md5;
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
+use std::num::NonZeroUsize;
 use tree_sitter::{Parser, Tree, Query, QueryCursor, Node};
+use lru::LruCache;
+use tracing::{info, warn};
 
 // Re-export tree-sitter types for public API
 pub use tree_sitter::{Query, QueryCursor, Node};
@@ -18,17 +23,34 @@ pub mod queries;
 const CACHE_DIR: &str = ".uveddi_cache";
 
 /// Multi-language AST parser for Rust, Python, and JavaScript/TypeScript using tree-sitter.
-/// - Caches ASTs in-memory for performance.
+/// - Caches ASTs in-memory with bounded LRU cache for memory safety (UV-152).
 /// - To add new languages, implement dynamic grammar loading (see TODO).
 /// - Used for all dependency extraction and anti-pattern detection in Sprint 2.
 pub struct AstParser {
     parsers: HashMap<SourceLanguage, Parser>,
-    cache: Mutex<HashMap<String, ParsedFile>>, // AST cache by file path
+    cache: Mutex<LruCache<String, ParsedFile>>, // Bounded LRU cache by file path
+    max_cache_size: NonZeroUsize,
+    cache_hits: Arc<Mutex<u64>>,
+    cache_misses: Arc<Mutex<u64>>,
 }
 
 impl AstParser {
-    /// Initialize parsers for supported languages (ER-F-002)
+    /// Initialize parsers for supported languages with default cache size (ER-F-002)
     pub fn new() -> Result<Self, AstError> {
+        // Default cache size - can be overridden via environment variable
+        let default_cache_size = std::env::var("UVEDDI_AST_CACHE_SIZE")
+            .ok()
+            .and_then(|s| s.parse().ok())
+            .unwrap_or(1000);
+        
+        Self::with_cache_size(default_cache_size)
+    }
+
+    /// Initialize parsers with custom cache size
+    pub fn with_cache_size(cache_size: usize) -> Result<Self, AstError> {
+        let max_size = NonZeroUsize::new(cache_size)
+            .ok_or_else(|| AstError::Other("Cache size must be > 0".to_string()))?;
+
         let mut parsers = HashMap::new();
         let mut rust_parser = Parser::new();
         rust_parser.set_language(&tree_sitter_rust::language())?;
@@ -42,15 +64,54 @@ impl AstParser {
         javascript_parser.set_language(&tree_sitter_javascript::language())?;
         parsers.insert(SourceLanguage::JavaScript, javascript_parser);
 
+        info!("Initialized AST parser with LRU cache size: {}", cache_size);
+
         Ok(AstParser {
             parsers,
-            cache: Mutex::new(HashMap::new()),
+            cache: Mutex::new(LruCache::new(max_size)),
+            max_cache_size: max_size,
+            cache_hits: Arc::new(Mutex::new(0)),
+            cache_misses: Arc::new(Mutex::new(0)),
         })
     }
 
     /// Dynamically add a new language parser at runtime
     pub fn add_language(&mut self, lang: SourceLanguage, parser: Parser) {
         self.parsers.insert(lang, parser);
+    }
+
+    /// Get cache statistics for monitoring (UV-152)
+    pub fn get_cache_stats(&self) -> CacheStats {
+        let cache = self.cache.lock().unwrap();
+        let hits = *self.cache_hits.lock().unwrap();
+        let misses = *self.cache_misses.lock().unwrap();
+        let total_requests = hits + misses;
+        let hit_rate = if total_requests > 0 {
+            hits as f64 / total_requests as f64
+        } else {
+            0.0
+        };
+
+        CacheStats {
+            current_size: cache.len(),
+            max_size: self.max_cache_size.get(),
+            hits,
+            misses,
+            hit_rate,
+            total_requests,
+        }
+    }
+
+    /// Clear cache statistics
+    pub fn reset_cache_stats(&self) {
+        *self.cache_hits.lock().unwrap() = 0;
+        *self.cache_misses.lock().unwrap() = 0;
+    }
+
+    /// Get current cache utilization as percentage
+    pub fn get_cache_utilization(&self) -> f64 {
+        let cache = self.cache.lock().unwrap();
+        cache.len() as f64 / self.max_cache_size.get() as f64 * 100.0
     }
 
     /// Transform tree-sitter CST to custom AST (basic implementation for demonstration)
@@ -191,13 +252,27 @@ impl AstParser {
         let path_str = file_path.to_string_lossy().to_string();
         let modified_time = fs::metadata(file_path)?.modified()?;
 
-        if let Some(cached) = self.cache.lock()
-            .map_err(|_| AstError::Other("Cache lock poisoned".to_string()))?
-            .get(&path_str) {
-            if cached.modified_at == modified_time {
-                return Ok(cached.clone());
+        // Check LRU cache first
+        {
+            let mut cache = self.cache.lock()
+                .map_err(|_| AstError::Other("Cache lock poisoned".to_string()))?;
+            
+            if let Some(cached) = cache.get(&path_str) {
+                if cached.modified_at == modified_time {
+                    // Cache hit - increment counter and return
+                    *self.cache_hits.lock().unwrap() += 1;
+                    info!("AST cache HIT for: {}", file_path.display());
+                    return Ok(cached.clone());
+                } else {
+                    // File was modified, remove stale entry
+                    cache.pop(&path_str);
+                }
             }
         }
+        
+        // Cache miss - increment counter
+        *self.cache_misses.lock().unwrap() += 1;
+        info!("AST cache MISS for: {}", file_path.display());
 
         // Try disk cache
         let cache_path = ParsedFile::cache_path(file_path);
@@ -215,10 +290,12 @@ impl AstParser {
                         .ok_or(AstError::ParseFailed)?;
                     parsed.tree = Some(tree);
 
-        self.cache
-            .lock()
-            .map_err(|_| AstError::Other("Cache lock poisoned".to_string()))?
-            .insert(path_str.clone(), parsed.clone());
+                    // Insert into LRU cache
+                    {
+                        let mut cache = self.cache.lock()
+                            .map_err(|_| AstError::Other("Cache lock poisoned".to_string()))?;
+                        cache.put(path_str.clone(), parsed.clone());
+                    }
                     return Ok(parsed);
                 }
             }
@@ -251,9 +328,23 @@ impl AstParser {
         if let Ok(mut f) = fs::File::create(&cache_path) {
             f.write_all(&encoded).ok();
         }
-        self.cache.lock()
-            .map_err(|_| AstError::Other("Cache lock poisoned".to_string()))?
-            .insert(path_str, parsed.clone());
+        // Insert into LRU cache
+        {
+            let mut cache = self.cache.lock()
+                .map_err(|_| AstError::Other("Cache lock poisoned".to_string()))?;
+            
+            if let Some(evicted) = cache.push(path_str.clone(), parsed.clone()) {
+                warn!("AST cache evicted entry for: {}", evicted.0);
+            }
+            
+            let stats = self.get_cache_stats();
+            if stats.current_size % 100 == 0 {
+                info!("AST cache utilization: {:.1}% ({}/{})", 
+                      stats.current_size as f64 / stats.max_size as f64 * 100.0,
+                      stats.current_size, stats.max_size);
+            }
+        }
+        
         Ok(parsed)
     }
 
@@ -314,12 +405,13 @@ pub struct ParsedFile {
 
 impl ParsedFile {
     pub fn cache_path(file_path: &Path) -> std::path::PathBuf {
-        let mut hasher = md5::Context::new();
-        hasher.consume(file_path.to_string_lossy().as_bytes());
-        let hash = format!("{:x}", hasher.compute());
+        let mut hasher = DefaultHasher::new();
+        file_path.hash(&mut hasher);
+        let hash = hasher.finish();
+        let hex_digest = format!("{:x}", hash);
         std::env::temp_dir()
             .join(CACHE_DIR)
-            .join(format!("{}.ast", hash))
+            .join(format!("{}.ast", hex_digest))
     }
 
     /// Extract a tree-sitter parsing summary for debugging.
@@ -353,6 +445,17 @@ impl ParsedFile {
     }
 }
 
+/// Cache statistics for monitoring AST parser performance (UV-152)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CacheStats {
+    pub current_size: usize,
+    pub max_size: usize,
+    pub hits: u64,
+    pub misses: u64,
+    pub hit_rate: f64,
+    pub total_requests: u64,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum CustomAst {
     File { items: Vec<CustomAst> },
@@ -384,26 +487,135 @@ pub enum AstError {
 
 impl Clone for AstParser {
     fn clone(&self) -> Self {
-        // Re-initialize parsers for each clone
-        let mut parsers = std::collections::HashMap::new();
-        let mut rust_parser = tree_sitter::Parser::new();
-        rust_parser
-            .set_language(&tree_sitter_rust::language())
-            .map_err(|e| AstError::TreeSitterLanguage(e))?;
-        parsers.insert(SourceLanguage::Rust, rust_parser);
-        let mut python_parser = tree_sitter::Parser::new();
-        python_parser
-            .set_language(&tree_sitter_python::language())
-            .map_err(|e| AstError::TreeSitterLanguage(e))?;
-        parsers.insert(SourceLanguage::Python, python_parser);
-        let mut javascript_parser = tree_sitter::Parser::new();
-        javascript_parser
-            .set_language(&tree_sitter_javascript::language())
-            .map_err(|e| AstError::TreeSitterLanguage(e))?;
-        parsers.insert(SourceLanguage::JavaScript, javascript_parser);
-        AstParser {
-            parsers,
-            cache: std::sync::Mutex::new(std::collections::HashMap::new()),
-        }
+        // More efficient clone implementation (UV-153)
+        // Share cache size configuration but create new cache instance
+        let cache_size = self.max_cache_size.get();
+        
+        // Re-use the with_cache_size constructor for consistency
+        Self::with_cache_size(cache_size)
+            .expect("Cache size should be valid since it was validated before")
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::env;
+    use tempfile::tempdir;
+
+    #[test]
+    fn test_lru_cache_basic_functionality() {
+        // Test with small cache size to verify LRU behavior
+        let mut parser = AstParser::with_cache_size(2).unwrap();
+        
+        // Create temporary test files
+        let temp_dir = tempdir().unwrap();
+        let file1 = temp_dir.path().join("test1.rs");
+        let file2 = temp_dir.path().join("test2.rs");
+        let file3 = temp_dir.path().join("test3.rs");
+        
+        std::fs::write(&file1, "fn main() {}").unwrap();
+        std::fs::write(&file2, "fn test() {}").unwrap();
+        std::fs::write(&file3, "fn hello() {}").unwrap();
+        
+        // Parse files to fill cache
+        let _parsed1 = parser.parse_file(&file1).unwrap();
+        let _parsed2 = parser.parse_file(&file2).unwrap();
+        
+        let stats = parser.get_cache_stats();
+        assert_eq!(stats.current_size, 2);
+        assert_eq!(stats.misses, 2);
+        assert_eq!(stats.hits, 0);
+        
+        // Parse third file - should evict first file
+        let _parsed3 = parser.parse_file(&file3).unwrap();
+        
+        let stats = parser.get_cache_stats();
+        assert_eq!(stats.current_size, 2); // Still 2 (cache size limit)
+        assert_eq!(stats.misses, 3);
+        
+        // Re-parse file1 - should be cache miss (evicted)
+        let _parsed1_again = parser.parse_file(&file1).unwrap();
+        
+        let stats = parser.get_cache_stats();
+        assert_eq!(stats.misses, 4); // Cache miss because file1 was evicted
+        
+        // Re-parse file2 - should be cache hit (still in cache)
+        let _parsed2_again = parser.parse_file(&file2).unwrap();
+        
+        let stats = parser.get_cache_stats();
+        assert_eq!(stats.hits, 1); // Cache hit
+        assert!(stats.hit_rate > 0.0);
+    }
+
+    #[test]
+    fn test_cache_size_configuration() {
+        // Test environment variable configuration
+        env::set_var("UVEDDI_AST_CACHE_SIZE", "500");
+        let parser = AstParser::new().unwrap();
+        let stats = parser.get_cache_stats();
+        assert_eq!(stats.max_size, 500);
+        
+        // Test custom size
+        let parser2 = AstParser::with_cache_size(100).unwrap();
+        let stats2 = parser2.get_cache_stats();
+        assert_eq!(stats2.max_size, 100);
+        
+        // Clean up
+        env::remove_var("UVEDDI_AST_CACHE_SIZE");
+    }
+
+    #[test]
+    fn test_cache_utilization() {
+        let mut parser = AstParser::with_cache_size(10).unwrap();
+        
+        assert_eq!(parser.get_cache_utilization(), 0.0);
+        
+        // Create and parse a test file
+        let temp_dir = tempdir().unwrap();
+        let file = temp_dir.path().join("test.rs");
+        std::fs::write(&file, "fn main() {}").unwrap();
+        
+        let _parsed = parser.parse_file(&file).unwrap();
+        
+        assert_eq!(parser.get_cache_utilization(), 10.0); // 1/10 * 100%
+    }
+
+    #[test]
+    fn test_cache_stats_reset() {
+        let mut parser = AstParser::with_cache_size(5).unwrap();
+        
+        let temp_dir = tempdir().unwrap();
+        let file = temp_dir.path().join("test.rs");
+        std::fs::write(&file, "fn main() {}").unwrap();
+        
+        // Generate some cache activity
+        let _parsed = parser.parse_file(&file).unwrap();
+        let _parsed_again = parser.parse_file(&file).unwrap();
+        
+        let stats = parser.get_cache_stats();
+        assert!(stats.hits > 0);
+        assert!(stats.misses > 0);
+        
+        // Reset stats
+        parser.reset_cache_stats();
+        
+        let stats_after_reset = parser.get_cache_stats();
+        assert_eq!(stats_after_reset.hits, 0);
+        assert_eq!(stats_after_reset.misses, 0);
+        assert_eq!(stats_after_reset.hit_rate, 0.0);
+    }
+
+    #[test]
+    fn test_efficient_clone() {
+        let parser1 = AstParser::with_cache_size(100).unwrap();
+        let parser2 = parser1.clone();
+        
+        // Both should have same cache size
+        assert_eq!(parser1.get_cache_stats().max_size, parser2.get_cache_stats().max_size);
+        
+        // But separate cache instances (different stats)
+        assert_eq!(parser2.get_cache_stats().current_size, 0);
+    }
+}
+

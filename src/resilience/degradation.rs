@@ -1,12 +1,12 @@
 //! Graceful degradation strategies (UV-175)
-//! 
+//!
 //! Provides adaptive service level management and degradation.
 
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::time::Duration;
-use serde::{Serialize, Deserialize};
 
-use crate::resilience::{HealthMonitor, MetricsCollector, GracefulFailureHandler};
+use crate::resilience::{GracefulFailureHandler, HealthMonitor, MetricsCollector};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ServiceLevel {
@@ -69,7 +69,10 @@ impl DegradationEngine {
         }
     }
 
-    pub async fn apply_degradation_strategy(&mut self, _strategy: &DegradationStrategy) -> Result<(), DegradationError> {
+    pub async fn apply_degradation_strategy(
+        &mut self,
+        _strategy: &DegradationStrategy,
+    ) -> Result<(), DegradationError> {
         // TODO: UV-175 - Apply degradation strategy
         Ok(())
     }
@@ -79,7 +82,10 @@ impl DegradationEngine {
         vec![]
     }
 
-    pub async fn execute_recovery(&mut self, _recovery: RecoveryOpportunity) -> Result<(), DegradationError> {
+    pub async fn execute_recovery(
+        &mut self,
+        _recovery: RecoveryOpportunity,
+    ) -> Result<(), DegradationError> {
         // TODO: UV-175 - Execute recovery
         Ok(())
     }

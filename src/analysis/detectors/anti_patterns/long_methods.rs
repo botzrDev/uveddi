@@ -24,10 +24,10 @@
 
 use crate::analysis::{AnalysisDetector, AnalysisError};
 use crate::ast::{ParsedFile, SourceLanguage};
-use crate::database::models::{ArchitecturalIssue, AntiPatternType};
+use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use log::debug;
-use std::collections::HashMap;
 use log::info;
+use std::collections::HashMap;
 use tree_sitter::{Node, Query, QueryCursor};
 
 /// Represents metrics collected for a method/function
@@ -82,10 +82,10 @@ impl LanguageThresholds {
     /// Get thresholds for Rust (conservative due to systems programming)
     pub fn rust() -> Self {
         Self {
-            max_logical_loc: 50,           // Conservative for systems code
-            max_statements: 30,            // Rust encourages smaller functions
-            max_parameters: 7,             // Rust type system helps with this
-            max_nesting_depth: 4,          // Match-based patterns reduce nesting
+            max_logical_loc: 50,  // Conservative for systems code
+            max_statements: 30,   // Rust encourages smaller functions
+            max_parameters: 7,    // Rust type system helps with this
+            max_nesting_depth: 4, // Match-based patterns reduce nesting
             max_cyclomatic_complexity: 15,
             max_cognitive_complexity: 12,
         }
@@ -106,10 +106,10 @@ impl LanguageThresholds {
     /// Get thresholds for JavaScript (framework-aware)
     pub fn javascript() -> Self {
         Self {
-            max_logical_loc: 80,           // ESLint complexity defaults
-            max_statements: 40,            // JavaScript function standards
-            max_parameters: 4,             // JavaScript callback patterns
-            max_nesting_depth: 4,          // Callback hell prevention
+            max_logical_loc: 80,  // ESLint complexity defaults
+            max_statements: 40,   // JavaScript function standards
+            max_parameters: 4,    // JavaScript callback patterns
+            max_nesting_depth: 4, // Callback hell prevention
             max_cyclomatic_complexity: 12,
             max_cognitive_complexity: 18,
         }
@@ -176,7 +176,7 @@ impl LongMethodsDetector {
         thresholds.insert(SourceLanguage::Rust, LanguageThresholds::rust());
         thresholds.insert(SourceLanguage::Python, LanguageThresholds::python());
         thresholds.insert(SourceLanguage::JavaScript, LanguageThresholds::javascript());
-        
+
         Self { thresholds }
     }
 
@@ -186,7 +186,10 @@ impl LongMethodsDetector {
     }
 
     /// Extract method metrics from a parsed file
-    fn extract_method_metrics(&self, parsed_file: &ParsedFile) -> Result<Vec<MethodMetrics>, AnalysisError> {
+    fn extract_method_metrics(
+        &self,
+        parsed_file: &ParsedFile,
+    ) -> Result<Vec<MethodMetrics>, AnalysisError> {
         match parsed_file.language {
             SourceLanguage::Rust => self.extract_rust_metrics(parsed_file),
             SourceLanguage::Python => self.extract_python_metrics(parsed_file),
@@ -196,116 +199,219 @@ impl LongMethodsDetector {
     }
 
     /// Extract metrics for Rust functions
-    fn extract_rust_metrics(&self, parsed_file: &ParsedFile) -> Result<Vec<MethodMetrics>, AnalysisError> {
+    fn extract_rust_metrics(
+        &self,
+        parsed_file: &ParsedFile,
+    ) -> Result<Vec<MethodMetrics>, AnalysisError> {
         #[cfg(not(feature = "tree-sitter"))]
         {
             log::debug!("Tree-sitter feature not enabled, skipping Rust method metrics extraction");
             return Ok(Vec::new());
         }
-        
+
         #[cfg(feature = "tree-sitter")]
         {
-        let mut metrics = Vec::new();
-        let source = parsed_file.content.as_ref()
-            .ok_or_else(|| AnalysisError::AntiPatternDetection("Source content missing".to_string()))?
-            .as_bytes();
-        let tree = parsed_file
-            .tree
-            .as_ref()
-            .ok_or_else(|| AnalysisError::AntiPatternDetection("AST tree missing".to_string()))?;
-        let language = tree.language();
+            let mut metrics = Vec::new();
+            let source = parsed_file
+                .content
+                .as_deref()
+                .map(str::as_bytes)
+                .unwrap_or(&[]);
+            let tree = parsed_file.tree.as_ref().ok_or_else(|| {
+                AnalysisError::AntiPatternDetection("AST tree missing".to_string())
+            })?;
+            let language = tree.language();
 
-        let function_query = Query::new(&language, RUST_FUNCTION_QUERY)
-            .map_err(|e| AnalysisError::QueryError(format!("Failed to create Rust function query: {}", e)))?;
-        
-        let mut cursor = QueryCursor::new();
-        for mat in cursor.matches(&function_query, tree.root_node(), source) {
-            if let (Some(name_capture), Some(body_capture)) = 
-                (mat.captures.first(), mat.captures.get(1)) {
-                
-                let name_node = name_capture.node;
-                let body_node = body_capture.node;
-                let function_node = mat.captures.get(2).map(|c| c.node).unwrap_or(name_node);
-                
-                if let Ok(name) = name_node.utf8_text(source) {
-                    let logical_loc = self.calculate_logical_loc(&function_node, source);
-                    let statement_count = self.count_statements(&body_node, source)?;
-                    let parameter_count = self.count_rust_parameters(&function_node, source)?;
-                    let max_nesting_depth = self.calculate_max_nesting_depth(&body_node, source);
-                    let cyclomatic_complexity = self.calculate_cyclomatic_complexity(&body_node, source)?;
-                    let cognitive_complexity = self.calculate_cognitive_complexity(&body_node, source)?;
-                    let is_exported = self.is_rust_exported(&function_node, source);
-                    let code_snippet = self.extract_code_snippet(&function_node, source, 5);
-                    let method_type = self.determine_rust_method_type(&function_node, source);
+            let function_query = Query::new(&language, RUST_FUNCTION_QUERY).map_err(|e| {
+                AnalysisError::QueryError(format!("Failed to create Rust function query: {}", e))
+            })?;
 
-                    metrics.push(MethodMetrics {
-                        name: name.to_string(),
-                        file_path: parsed_file.file_path.to_string().to_string(),
-                        start_line: (name_node.start_position().row + 1) as u32,
-                        end_line: (function_node.end_position().row + 1) as u32,
-                        logical_loc,
-                        statement_count,
-                        parameter_count,
-                        max_nesting_depth,
-                        cyclomatic_complexity,
-                        cognitive_complexity,
-                        is_exported,
-                        code_snippet,
-                        method_type,
-                    });
+            let mut cursor = QueryCursor::new();
+            for mat in cursor.matches(&function_query, tree.root_node(), source) {
+                if let (Some(name_capture), Some(body_capture)) =
+                    (mat.captures.first(), mat.captures.get(1))
+                {
+                    let name_node = name_capture.node;
+                    let body_node = body_capture.node;
+                    let function_node = mat.captures.get(2).map(|c| c.node).unwrap_or(name_node);
+
+                    if let Ok(name) = name_node.utf8_text(source) {
+                        let logical_loc = self.calculate_logical_loc(&function_node, source);
+                        let statement_count = self.count_statements(&body_node, source)?;
+                        let parameter_count = self.count_rust_parameters(&function_node, source)?;
+                        let max_nesting_depth =
+                            self.calculate_max_nesting_depth(&body_node, source);
+                        let cyclomatic_complexity =
+                            self.calculate_cyclomatic_complexity(&body_node, source)?;
+                        let cognitive_complexity =
+                            self.calculate_cognitive_complexity(&body_node, source)?;
+                        let is_exported = self.is_rust_exported(&function_node, source);
+                        let code_snippet = self.extract_code_snippet(&function_node, source, 5);
+                        let method_type = self.determine_rust_method_type(&function_node, source);
+
+                        metrics.push(MethodMetrics {
+                            name: name.to_string(),
+                            file_path: parsed_file.file_path.to_string().to_string(),
+                            start_line: (name_node.start_position().row + 1) as u32,
+                            end_line: (function_node.end_position().row + 1) as u32,
+                            logical_loc,
+                            statement_count,
+                            parameter_count,
+                            max_nesting_depth,
+                            cyclomatic_complexity,
+                            cognitive_complexity,
+                            is_exported,
+                            code_snippet,
+                            method_type,
+                        });
+                    }
                 }
             }
-        }
 
-        Ok(metrics)
+            Ok(metrics)
         }
     }
 
     /// Extract metrics for Python functions
-    fn extract_python_metrics(&self, parsed_file: &ParsedFile) -> Result<Vec<MethodMetrics>, AnalysisError> {
+    fn extract_python_metrics(
+        &self,
+        parsed_file: &ParsedFile,
+    ) -> Result<Vec<MethodMetrics>, AnalysisError> {
         #[cfg(not(feature = "tree-sitter"))]
         {
-            log::debug!("Tree-sitter feature not enabled, skipping Python method metrics extraction");
+            log::debug!(
+                "Tree-sitter feature not enabled, skipping Python method metrics extraction"
+            );
             return Ok(Vec::new());
         }
-        
+
         #[cfg(feature = "tree-sitter")]
         {
-        let mut metrics = Vec::new();
-        let source = parsed_file.content.as_ref().unwrap_or(&String::new()).as_bytes();
-        let tree = parsed_file
-            .tree
-            .as_ref()
-            .ok_or_else(|| AnalysisError::AntiPatternDetection("AST tree missing".to_string()))?;
-        let language = tree.language();
+            let mut metrics = Vec::new();
+            let source = parsed_file
+                .content
+                .as_deref()
+                .map(str::as_bytes)
+                .unwrap_or(&[]);
+            let tree = parsed_file.tree.as_ref().ok_or_else(|| {
+                AnalysisError::AntiPatternDetection("AST tree missing".to_string())
+            })?;
+            let language = tree.language();
 
-        let function_query = Query::new(&language, PYTHON_FUNCTION_QUERY)
-            .map_err(|e| AnalysisError::QueryError(format!("Failed to create Python function query: {}", e)))?;
-        
-        let mut cursor = QueryCursor::new();
-        for mat in cursor.matches(&function_query, tree.root_node(), source) {
-            if let (Some(name_capture), Some(body_capture)) = 
-                (mat.captures.first(), mat.captures.get(1)) {
-                
-                let name_node = name_capture.node;
-                let body_node = body_capture.node;
-                let function_node = mat.captures.get(2).map(|c| c.node).unwrap_or(name_node);
-                
-                if let Ok(name) = name_node.utf8_text(source) {
+            let function_query = Query::new(&language, PYTHON_FUNCTION_QUERY).map_err(|e| {
+                AnalysisError::QueryError(format!("Failed to create Python function query: {}", e))
+            })?;
+
+            let mut cursor = QueryCursor::new();
+            for mat in cursor.matches(&function_query, tree.root_node(), source) {
+                if let (Some(name_capture), Some(body_capture)) =
+                    (mat.captures.first(), mat.captures.get(1))
+                {
+                    let name_node = name_capture.node;
+                    let body_node = body_capture.node;
+                    let function_node = mat.captures.get(2).map(|c| c.node).unwrap_or(name_node);
+
+                    if let Ok(name) = name_node.utf8_text(source) {
+                        let logical_loc = self.calculate_logical_loc(&function_node, source);
+                        let statement_count = self.count_statements(&body_node, source)?;
+                        let parameter_count =
+                            self.count_python_parameters(&function_node, source)?;
+                        let max_nesting_depth =
+                            self.calculate_max_nesting_depth(&body_node, source);
+                        let cyclomatic_complexity =
+                            self.calculate_cyclomatic_complexity(&body_node, source)?;
+                        let cognitive_complexity =
+                            self.calculate_cognitive_complexity(&body_node, source)?;
+                        let is_exported = !name.starts_with('_');
+                        let code_snippet = self.extract_code_snippet(&function_node, source, 5);
+                        let method_type = self.determine_python_method_type(&function_node, source);
+
+                        metrics.push(MethodMetrics {
+                            name: name.to_string(),
+                            file_path: parsed_file.file_path.to_string().to_string(),
+                            start_line: (name_node.start_position().row + 1) as u32,
+                            end_line: (function_node.end_position().row + 1) as u32,
+                            logical_loc,
+                            statement_count,
+                            parameter_count,
+                            max_nesting_depth,
+                            cyclomatic_complexity,
+                            cognitive_complexity,
+                            is_exported,
+                            code_snippet,
+                            method_type,
+                        });
+                    }
+                }
+            }
+
+            Ok(metrics)
+        }
+    }
+
+    /// Extract metrics for JavaScript functions
+    fn extract_javascript_metrics(
+        &self,
+        parsed_file: &ParsedFile,
+    ) -> Result<Vec<MethodMetrics>, AnalysisError> {
+        #[cfg(not(feature = "tree-sitter"))]
+        {
+            log::debug!(
+                "Tree-sitter feature not enabled, skipping JavaScript method metrics extraction"
+            );
+            return Ok(Vec::new());
+        }
+
+        #[cfg(feature = "tree-sitter")]
+        {
+            let mut metrics = Vec::new();
+            let source = parsed_file.content.as_deref().unwrap_or("").as_bytes();
+            let tree = parsed_file.tree.as_ref().ok_or_else(|| {
+                AnalysisError::AntiPatternDetection("AST tree missing".to_string())
+            })?;
+            let language = tree.language();
+
+            let function_query = Query::new(&language, JAVASCRIPT_FUNCTION_QUERY).map_err(|e| {
+                AnalysisError::QueryError(format!(
+                    "Failed to create JavaScript function query: {}",
+                    e
+                ))
+            })?;
+
+            let mut cursor = QueryCursor::new();
+            for mat in cursor.matches(&function_query, tree.root_node(), source) {
+                if let Some(body_capture) = mat.captures.get(1) {
+                    let body_node = body_capture.node;
+                    let function_node = mat.captures.get(2).map(|c| c.node).unwrap_or(body_node);
+
+                    // Handle anonymous functions
+                    let name = if let Some(name_capture) = mat.captures.first() {
+                        name_capture
+                            .node
+                            .utf8_text(source)
+                            .map(|s| s.to_string())
+                            .unwrap_or_else(|_| "anonymous".to_string())
+                    } else {
+                        "anonymous".to_string()
+                    };
+
                     let logical_loc = self.calculate_logical_loc(&function_node, source);
                     let statement_count = self.count_statements(&body_node, source)?;
-                    let parameter_count = self.count_python_parameters(&function_node, source)?;
+                    let parameter_count =
+                        self.count_javascript_parameters(&function_node, source)?;
                     let max_nesting_depth = self.calculate_max_nesting_depth(&body_node, source);
-                    let cyclomatic_complexity = self.calculate_cyclomatic_complexity(&body_node, source)?;
-                    let cognitive_complexity = self.calculate_cognitive_complexity(&body_node, source)?;
-                    let is_exported = !name.starts_with('_');
+                    let cyclomatic_complexity =
+                        self.calculate_cyclomatic_complexity(&body_node, source)?;
+                    let cognitive_complexity =
+                        self.calculate_cognitive_complexity(&body_node, source)?;
+                    let is_exported = self.is_javascript_exported(&function_node, source);
                     let code_snippet = self.extract_code_snippet(&function_node, source, 5);
-                    let method_type = self.determine_python_method_type(&function_node, source);
+                    let method_type = self.determine_javascript_method_type(&function_node, source);
 
                     metrics.push(MethodMetrics {
-                        name: name.to_string(),
+                        name,
                         file_path: parsed_file.file_path.to_string().to_string(),
-                        start_line: (name_node.start_position().row + 1) as u32,
+                        start_line: (function_node.start_position().row + 1) as u32,
                         end_line: (function_node.end_position().row + 1) as u32,
                         logical_loc,
                         statement_count,
@@ -319,77 +425,8 @@ impl LongMethodsDetector {
                     });
                 }
             }
-        }
 
-        Ok(metrics)
-        }
-    }
-
-    /// Extract metrics for JavaScript functions
-    fn extract_javascript_metrics(&self, parsed_file: &ParsedFile) -> Result<Vec<MethodMetrics>, AnalysisError> {
-        #[cfg(not(feature = "tree-sitter"))]
-        {
-            log::debug!("Tree-sitter feature not enabled, skipping JavaScript method metrics extraction");
-            return Ok(Vec::new());
-        }
-        
-        #[cfg(feature = "tree-sitter")]
-        {
-        let mut metrics = Vec::new();
-        let source = parsed_file.content.as_ref().unwrap_or(&String::new()).as_bytes();
-        let tree = parsed_file
-            .tree
-            .as_ref()
-            .ok_or_else(|| AnalysisError::AntiPatternDetection("AST tree missing".to_string()))?;
-        let language = tree.language();
-
-        let function_query = Query::new(&language, JAVASCRIPT_FUNCTION_QUERY)
-            .map_err(|e| AnalysisError::QueryError(format!("Failed to create JavaScript function query: {}", e)))?;
-        
-        let mut cursor = QueryCursor::new();
-        for mat in cursor.matches(&function_query, tree.root_node(), source) {
-            if let Some(body_capture) = mat.captures.get(1) {
-                let body_node = body_capture.node;
-                let function_node = mat.captures.get(2).map(|c| c.node).unwrap_or(body_node);
-                
-                // Handle anonymous functions
-                let name = if let Some(name_capture) = mat.captures.first() {
-                    name_capture.node.utf8_text(source)
-                        .map(|s| s.to_string())
-                        .unwrap_or_else(|_| "anonymous".to_string())
-                } else {
-                    "anonymous".to_string()
-                };
-
-                let logical_loc = self.calculate_logical_loc(&function_node, source);
-                let statement_count = self.count_statements(&body_node, source)?;
-                let parameter_count = self.count_javascript_parameters(&function_node, source)?;
-                let max_nesting_depth = self.calculate_max_nesting_depth(&body_node, source);
-                let cyclomatic_complexity = self.calculate_cyclomatic_complexity(&body_node, source)?;
-                let cognitive_complexity = self.calculate_cognitive_complexity(&body_node, source)?;
-                let is_exported = self.is_javascript_exported(&function_node, source);
-                let code_snippet = self.extract_code_snippet(&function_node, source, 5);
-                let method_type = self.determine_javascript_method_type(&function_node, source);
-
-                metrics.push(MethodMetrics {
-                    name,
-                    file_path: parsed_file.file_path.to_string().to_string(),
-                    start_line: (function_node.start_position().row + 1) as u32,
-                    end_line: (function_node.end_position().row + 1) as u32,
-                    logical_loc,
-                    statement_count,
-                    parameter_count,
-                    max_nesting_depth,
-                    cyclomatic_complexity,
-                    cognitive_complexity,
-                    is_exported,
-                    code_snippet,
-                    method_type,
-                });
-            }
-        }
-
-        Ok(metrics)
+            Ok(metrics)
         }
     }
 
@@ -403,12 +440,13 @@ impl LongMethodsDetector {
             if let Some(line) = source.split(|&b| b == b'\n').nth(line_num) {
                 let line_str = String::from_utf8_lossy(line);
                 let trimmed = line_str.trim();
-                
+
                 // Skip empty lines and comment-only lines
-                if !trimmed.is_empty() 
-                    && !trimmed.starts_with("//") 
-                    && !trimmed.starts_with('#') 
-                    && !trimmed.starts_with("/*") {
+                if !trimmed.is_empty()
+                    && !trimmed.starts_with("//")
+                    && !trimmed.starts_with('#')
+                    && !trimmed.starts_with("/*")
+                {
                     logical_lines += 1;
                 }
             }
@@ -421,7 +459,7 @@ impl LongMethodsDetector {
     fn count_statements(&self, node: &Node, _source: &[u8]) -> Result<u32, AnalysisError> {
         let mut count = 0;
         let mut _cursor = node.walk();
-        
+
         // Walk through all child nodes and count statement-like nodes
         if _cursor.goto_first_child() {
             loop {
@@ -429,24 +467,39 @@ impl LongMethodsDetector {
                 if self.is_statement_node(node_type) {
                     count += 1;
                 }
-                
+
                 if !_cursor.goto_next_sibling() {
                     break;
                 }
             }
         }
-        
+
         Ok(count)
     }
 
     /// Determine if a node type represents a statement
     fn is_statement_node(&self, node_type: &str) -> bool {
-        matches!(node_type, 
-            "expression_statement" | "if_statement" | "while_statement" | "for_statement" |
-            "return_statement" | "break_statement" | "continue_statement" | "assignment" |
-            "let_declaration" | "const_declaration" | "var_declaration" | "function_declaration" |
-            "if_expression" | "while_expression" | "for_expression" | "loop_expression" |
-            "match_expression" | "call_expression" | "macro_invocation"
+        matches!(
+            node_type,
+            "expression_statement"
+                | "if_statement"
+                | "while_statement"
+                | "for_statement"
+                | "return_statement"
+                | "break_statement"
+                | "continue_statement"
+                | "assignment"
+                | "let_declaration"
+                | "const_declaration"
+                | "var_declaration"
+                | "function_declaration"
+                | "if_expression"
+                | "while_expression"
+                | "for_expression"
+                | "loop_expression"
+                | "match_expression"
+                | "call_expression"
+                | "macro_invocation"
         )
     }
 
@@ -455,86 +508,117 @@ impl LongMethodsDetector {
         fn traverse_depth(node: &Node, current_depth: u32) -> u32 {
             let mut max_depth = current_depth;
             let mut cursor = node.walk();
-            
+
             if cursor.goto_first_child() {
                 loop {
                     let child_node = cursor.node();
                     let node_type = child_node.kind();
-                    
-                    let new_depth = if matches!(node_type, 
-                        "if_statement" | "while_statement" | "for_statement" | "block" |
-                        "if_expression" | "while_expression" | "for_expression" | "loop_expression" |
-                        "match_expression" | "try_statement" | "catch_clause") {
+
+                    let new_depth = if matches!(
+                        node_type,
+                        "if_statement"
+                            | "while_statement"
+                            | "for_statement"
+                            | "block"
+                            | "if_expression"
+                            | "while_expression"
+                            | "for_expression"
+                            | "loop_expression"
+                            | "match_expression"
+                            | "try_statement"
+                            | "catch_clause"
+                    ) {
                         current_depth + 1
                     } else {
                         current_depth
                     };
-                    
+
                     let child_max = traverse_depth(&child_node, new_depth);
                     max_depth = max_depth.max(child_max);
-                    
+
                     if !cursor.goto_next_sibling() {
                         break;
                     }
                 }
             }
-            
+
             max_depth
         }
-        
+
         traverse_depth(node, 0)
     }
 
     /// Calculate cyclomatic complexity
-    fn calculate_cyclomatic_complexity(&self, node: &Node, _source: &[u8]) -> Result<u32, AnalysisError> {
+    fn calculate_cyclomatic_complexity(
+        &self,
+        node: &Node,
+        _source: &[u8],
+    ) -> Result<u32, AnalysisError> {
         let mut complexity = 1; // Base complexity
         let mut cursor = node.walk();
-        
+
         fn traverse_complexity(node: &Node, complexity: &mut u32) {
             let mut cursor = node.walk();
-            
+
             if cursor.goto_first_child() {
                 loop {
                     let child_node = cursor.node();
                     let node_type = child_node.kind();
-                    
+
                     // Increment complexity for decision points
-                    if matches!(node_type, 
-                        "if_statement" | "while_statement" | "for_statement" | "match_expression" |
-                        "if_expression" | "while_expression" | "for_expression" | "loop_expression" |
-                        "conditional_expression" | "logical_and" | "logical_or" | "match_arm" |
-                        "case_statement" | "catch_clause") {
+                    if matches!(
+                        node_type,
+                        "if_statement"
+                            | "while_statement"
+                            | "for_statement"
+                            | "match_expression"
+                            | "if_expression"
+                            | "while_expression"
+                            | "for_expression"
+                            | "loop_expression"
+                            | "conditional_expression"
+                            | "logical_and"
+                            | "logical_or"
+                            | "match_arm"
+                            | "case_statement"
+                            | "catch_clause"
+                    ) {
                         *complexity += 1;
                     }
-                    
+
                     traverse_complexity(&child_node, complexity);
-                    
+
                     if !cursor.goto_next_sibling() {
                         break;
                     }
                 }
             }
         }
-        
+
         traverse_complexity(node, &mut complexity);
         Ok(complexity)
     }
 
     /// Calculate cognitive complexity (more nuanced than cyclomatic)
-    fn calculate_cognitive_complexity(&self, node: &Node, _source: &[u8]) -> Result<u32, AnalysisError> {
+    fn calculate_cognitive_complexity(
+        &self,
+        node: &Node,
+        _source: &[u8],
+    ) -> Result<u32, AnalysisError> {
         let mut complexity = 0;
-        
+
         fn traverse_cognitive(node: &Node, complexity: &mut u32, nesting_level: u32) {
             let mut cursor = node.walk();
-            
+
             if cursor.goto_first_child() {
                 loop {
                     let child_node = cursor.node();
                     let node_type = child_node.kind();
-                    
+
                     let (increment, increases_nesting) = match node_type {
                         "if_statement" | "if_expression" => (1, true),
-                        "while_statement" | "while_expression" | "for_statement" | "for_expression" => (1, true),
+                        "while_statement" | "while_expression" | "for_statement"
+                        | "for_expression" => (1, true),
                         "match_expression" => (1, true),
                         "logical_and" | "logical_or" => (1, false),
                         "conditional_expression" => (1, true),
@@ -542,21 +626,25 @@ impl LongMethodsDetector {
                         "break_statement" | "continue_statement" => (1, false),
                         _ => (0, false),
                     };
-                    
+
                     if increment > 0 {
                         *complexity += increment + nesting_level;
                     }
-                    
-                    let new_nesting = if increases_nesting { nesting_level + 1 } else { nesting_level };
+
+                    let new_nesting = if increases_nesting {
+                        nesting_level + 1
+                    } else {
+                        nesting_level
+                    };
                     traverse_cognitive(&child_node, complexity, new_nesting);
-                    
+
                     if !cursor.goto_next_sibling() {
                         break;
                     }
                 }
             }
         }
-        
+
         traverse_cognitive(node, &mut complexity, 0);
         Ok(complexity)
     }
@@ -586,10 +674,18 @@ impl LongMethodsDetector {
                     let param_count = cursor.node().child_count() as u32;
                     // Subtract 1 for 'self' parameter if present
                     if param_count > 0 {
-                        let first_param_node = cursor.node().child(0)
-                            .ok_or_else(|| AnalysisError::AntiPatternDetection("Missing first parameter node in Python function parameters".to_string()))?;
-                        let first_param_text = first_param_node.utf8_text(source)
-                            .map_err(|e| AnalysisError::AntiPatternDetection(format!("Failed to extract first parameter text: {}", e)))?;
+                        let first_param_node = cursor.node().child(0).ok_or_else(|| {
+                            AnalysisError::AntiPatternDetection(
+                                "Missing first parameter node in Python function parameters"
+                                    .to_string(),
+                            )
+                        })?;
+                        let first_param_text = first_param_node.utf8_text(source).map_err(|e| {
+                            AnalysisError::AntiPatternDetection(format!(
+                                "Failed to extract first parameter text: {}",
+                                e
+                            ))
+                        })?;
                         if first_param_text == "self" {
                             return Ok(param_count - 1);
                         }
@@ -605,7 +701,11 @@ impl LongMethodsDetector {
     }
 
     /// Count parameters in a JavaScript function
-    fn count_javascript_parameters(&self, node: &Node, _source: &[u8]) -> Result<u32, AnalysisError> {
+    fn count_javascript_parameters(
+        &self,
+        node: &Node,
+        _source: &[u8],
+    ) -> Result<u32, AnalysisError> {
         let mut cursor = node.walk();
         if cursor.goto_first_child() {
             loop {
@@ -659,12 +759,14 @@ impl LongMethodsDetector {
     fn extract_code_snippet(&self, node: &Node, source: &[u8], context_lines: usize) -> String {
         let start_line = node.start_position().row.saturating_sub(context_lines);
         let end_line = node.end_position().row + context_lines;
-        
-        let lines: Vec<&str> = source.split(|&b| b == b'\n')
+
+        let lines: Vec<&str> = source
+            .split(|&b| b == b'\n')
             .map(|line| std::str::from_utf8(line).unwrap_or_else(|_| ""))
             .collect();
-        
-        lines.get(start_line..=end_line.min(lines.len().saturating_sub(1)))
+
+        lines
+            .get(start_line..=end_line.min(lines.len().saturating_sub(1)))
             .unwrap_or(&[])
             .join("\n")
     }
@@ -673,7 +775,7 @@ impl LongMethodsDetector {
     fn determine_rust_method_type(&self, node: &Node, _source: &[u8]) -> String {
         let mut cursor = node.walk();
         let mut method_type = "function".to_string();
-        
+
         // Check for async
         if cursor.goto_first_child() {
             loop {
@@ -686,7 +788,7 @@ impl LongMethodsDetector {
                 }
             }
         }
-        
+
         // Check if it's in an impl block
         let mut parent_cursor = node.walk();
         while parent_cursor.goto_parent() {
@@ -695,7 +797,7 @@ impl LongMethodsDetector {
                 break;
             }
         }
-        
+
         method_type
     }
 
@@ -703,7 +805,7 @@ impl LongMethodsDetector {
     fn determine_python_method_type(&self, node: &Node, _source: &[u8]) -> String {
         let mut cursor = node.walk();
         let mut method_type = "function".to_string();
-        
+
         // Check for async
         if cursor.goto_first_child() {
             loop {
@@ -716,7 +818,7 @@ impl LongMethodsDetector {
                 }
             }
         }
-        
+
         // Check if it's in a class
         let mut parent_cursor = node.walk();
         while parent_cursor.goto_parent() {
@@ -725,7 +827,7 @@ impl LongMethodsDetector {
                 break;
             }
         }
-        
+
         method_type
     }
 
@@ -741,32 +843,43 @@ impl LongMethodsDetector {
     }
 
     /// Calculate severity score for a method
-    fn calculate_severity_score(&self, metrics: &MethodMetrics, thresholds: &LanguageThresholds) -> u32 {
+    fn calculate_severity_score(
+        &self,
+        metrics: &MethodMetrics,
+        thresholds: &LanguageThresholds,
+    ) -> u32 {
         let mut score = 0;
-        
+
         // Size metrics (40% of score)
         if metrics.logical_loc > thresholds.max_logical_loc {
-            score += ((metrics.logical_loc as f64 / thresholds.max_logical_loc as f64) * 40.0) as u32;
+            score +=
+                ((metrics.logical_loc as f64 / thresholds.max_logical_loc as f64) * 40.0) as u32;
         }
-        
+
         // Complexity metrics (35% of score)
         if metrics.cyclomatic_complexity > thresholds.max_cyclomatic_complexity {
-            score += ((metrics.cyclomatic_complexity as f64 / thresholds.max_cyclomatic_complexity as f64) * 20.0) as u32;
+            score += ((metrics.cyclomatic_complexity as f64
+                / thresholds.max_cyclomatic_complexity as f64)
+                * 20.0) as u32;
         }
-        
+
         if metrics.cognitive_complexity > thresholds.max_cognitive_complexity {
-            score += ((metrics.cognitive_complexity as f64 / thresholds.max_cognitive_complexity as f64) * 15.0) as u32;
+            score += ((metrics.cognitive_complexity as f64
+                / thresholds.max_cognitive_complexity as f64)
+                * 15.0) as u32;
         }
-        
+
         // Structural metrics (25% of score)
         if metrics.parameter_count > thresholds.max_parameters {
-            score += ((metrics.parameter_count as f64 / thresholds.max_parameters as f64) * 15.0) as u32;
+            score +=
+                ((metrics.parameter_count as f64 / thresholds.max_parameters as f64) * 15.0) as u32;
         }
-        
+
         if metrics.max_nesting_depth > thresholds.max_nesting_depth {
-            score += ((metrics.max_nesting_depth as f64 / thresholds.max_nesting_depth as f64) * 10.0) as u32;
+            score += ((metrics.max_nesting_depth as f64 / thresholds.max_nesting_depth as f64)
+                * 10.0) as u32;
         }
-        
+
         score.min(100)
     }
 
@@ -786,17 +899,20 @@ impl LongMethodsDetector {
 impl AnalysisDetector for LongMethodsDetector {
     fn detect_issues(&self, file: &ParsedFile) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         let mut issues = Vec::new();
-        
+
         debug!("Analyzing file: {}", file.file_path);
-        
+
         let method_metrics = self.extract_method_metrics(file)?;
-        let thresholds = self.thresholds.get(&file.language)
+        let thresholds = self
+            .thresholds
+            .get(&file.language)
             .ok_or_else(|| AnalysisError::UnsupportedLanguage(format!("{:?}", file.language)))?;
-        
+
         for metrics in method_metrics {
             let severity_score = self.calculate_severity_score(&metrics, thresholds);
-            
-            if severity_score > 25 { // Only report issues above Info level
+
+            if severity_score > 25 {
+                // Only report issues above Info level
                 let issue = ArchitecturalIssue {
                     issue_id: None,
                     analysis_run_id: 0,
@@ -812,14 +928,14 @@ impl AnalysisDetector for LongMethodsDetector {
                     code_snippet: Some(metrics.code_snippet.clone()),
                     ai_explanation: Some(format!(
                         "Consider breaking down '{}' into smaller, more focused methods. Current metrics: LOC={}, Statements={}, Complexity={}, Nesting={}",
-                        metrics.name, metrics.logical_loc, metrics.statement_count, 
+                        metrics.name, metrics.logical_loc, metrics.statement_count,
                         metrics.cyclomatic_complexity, metrics.max_nesting_depth
                     )),
                 };
                 issues.push(issue);
             }
         }
-        
+
         info!("Long Methods detector found {} issues", issues.len());
         Ok(issues)
     }
@@ -850,7 +966,7 @@ mod tests {
     fn test_long_method_detection_rust() {
         let detector = LongMethodsDetector::new();
         let parser = AstParser::new().expect("Failed to create parser");
-        
+
         let rust_code = r#"
 fn very_long_function() {
     let x = 1;
@@ -886,11 +1002,14 @@ fn very_long_function() {
 }
 "#;
 
-        let parsed_file = parser.parse_content(rust_code, &PathBuf::from("test.rs"), SourceLanguage::Rust)
+        let parsed_file = parser
+            .parse_content(rust_code, &PathBuf::from("test.rs"), SourceLanguage::Rust)
             .expect("Failed to parse Rust code");
-        
-        let issues = detector.detect_issues(&parsed_file).expect("Analysis failed");
-        
+
+        let issues = detector
+            .detect_issues(&parsed_file)
+            .expect("Analysis failed");
+
         assert!(!issues.is_empty(), "Should detect long method");
         assert_eq!(issues[0].anti_pattern_type_id, 3); // Assuming 3 is the ID for LongMethod
         assert!(issues[0].description.contains("very_long_function"));
@@ -900,18 +1019,21 @@ fn very_long_function() {
     fn test_short_method_no_detection() {
         let detector = LongMethodsDetector::new();
         let parser = AstParser::new().expect("Failed to create parser");
-        
+
         let rust_code = r#"
 fn short_function() {
     println!("Hello, world!");
 }
 "#;
 
-        let parsed_file = parser.parse_content(rust_code, &PathBuf::from("test.rs"), SourceLanguage::Rust)
+        let parsed_file = parser
+            .parse_content(rust_code, &PathBuf::from("test.rs"), SourceLanguage::Rust)
             .expect("Failed to parse Rust code");
-        
-        let issues = detector.detect_issues(&parsed_file).expect("Analysis failed");
-        
+
+        let issues = detector
+            .detect_issues(&parsed_file)
+            .expect("Analysis failed");
+
         assert!(issues.is_empty(), "Should not detect short method");
     }
 
@@ -919,7 +1041,7 @@ fn short_function() {
     fn test_python_long_method_detection() {
         let detector = LongMethodsDetector::new();
         let parser = AstParser::new().expect("Failed to create parser");
-        
+
         let python_code = r#"
 def very_long_function():
     x = 1
@@ -945,11 +1067,18 @@ def very_long_function():
     print("Done")
 "#;
 
-        let parsed_file = parser.parse_content(python_code, &PathBuf::from("test.py"), SourceLanguage::Python)
+        let parsed_file = parser
+            .parse_content(
+                python_code,
+                &PathBuf::from("test.py"),
+                SourceLanguage::Python,
+            )
             .expect("Failed to parse Python code");
-        
-        let issues = detector.detect_issues(&parsed_file).expect("Analysis failed");
-        
+
+        let issues = detector
+            .detect_issues(&parsed_file)
+            .expect("Analysis failed");
+
         assert!(!issues.is_empty(), "Should detect long method");
         assert_eq!(issues[0].anti_pattern_type_id, 3); // Assuming 3 is the ID for LongMethod
         assert!(issues[0].description.contains("very_long_function"));

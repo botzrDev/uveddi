@@ -390,7 +390,10 @@ use async_trait::async_trait;
 impl LlmProvider for OllamaProvider {
     async fn generate_explanation(&self, prompt: &str) -> Result<String, UveddiError> {
         // Call the OllamaProvider's infer method
-        let response = self.infer(prompt).await.map_err(|e| UveddiError::Other(e.to_string()))?;
+        let response = self
+            .infer(prompt)
+            .await
+            .map_err(|e| UveddiError::Other(e.to_string()))?;
         Ok(response)
     }
 

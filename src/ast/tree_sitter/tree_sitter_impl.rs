@@ -1,11 +1,11 @@
 // Implementation file for tree-sitter enabled builds
 // UV-97: Tree-sitter feature gating implementation
 
+use crate::error::UveddiError;
 use std::collections::HashMap;
 use std::path::Path;
 use std::sync::Mutex;
 use tree_sitter::{Parser, Tree};
-use crate::error::UveddiError;
 
 /// Tree-sitter parser implementation (feature enabled)
 pub struct AstParser {
@@ -87,7 +87,7 @@ impl AstParser {
     /// Create a new AST parser with language support
     pub fn new() -> Result<Self, AstError> {
         let mut parsers = HashMap::new();
-        
+
         // Initialize Rust parser
         let mut rust_parser = tree_sitter::Parser::new();
         rust_parser
@@ -128,9 +128,11 @@ impl AstParser {
         language: SourceLanguage,
     ) -> Result<ParsedFile, AstError> {
         // Check cache first
-        if let Some(cached) = self.cache.lock()
+        if let Some(cached) = self
+            .cache
+            .lock()
             .map_err(|e| AstError::Other(format!("Cache lock error: {}", e)))?
-            .get(&file_path.to_string_lossy().to_string()) 
+            .get(&file_path.to_string_lossy().to_string())
         {
             if let Ok(metadata) = std::fs::metadata(file_path) {
                 if let Ok(modified) = metadata.modified() {
@@ -152,8 +154,7 @@ impl AstParser {
             AstError::UnsupportedLanguage(format!("No parser for {:?}", language))
         })?;
 
-        let tree = parser.parse(content, None)
-            .ok_or(AstError::ParseFailed)?;
+        let tree = parser.parse(content, None).ok_or(AstError::ParseFailed)?;
 
         // Cache the result
         self.cache
@@ -202,10 +203,9 @@ impl ParsedFile {
     pub fn cache_path(file_path: &Path) -> std::path::PathBuf {
         let mut cache_path = std::env::temp_dir();
         cache_path.push("uveddi_ast_cache");
-        cache_path.push(format!("{}.cache", 
-            file_path.file_name()
-                .unwrap_or_default()
-                .to_string_lossy()
+        cache_path.push(format!(
+            "{}.cache",
+            file_path.file_name().unwrap_or_default().to_string_lossy()
         ));
         cache_path
     }

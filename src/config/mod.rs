@@ -59,10 +59,10 @@ pub struct Config {
     ///
     /// Examples: "deepseek-coder:6.7b-instruct-q4_0", "codellama:7b-instruct"
     pub ollama_model: Option<String>,
-    
+
     /// Dead code detection configuration
     pub dead_code: Option<DeadCodeConfig>,
-    
+
     /// Large classes detection configuration
     pub large_classes: Option<LargeClassConfig>,
 }
@@ -130,12 +130,13 @@ impl Config {
     /// Returns an error if any of the required environment variables are not set.
     pub fn from_env() -> Result<Self, env::VarError> {
         let ollama_model = env::var("OLLAMA_MODEL").ok();
-        
+
         // Dead code configuration from environment
-        let dead_code = if env::var("DEAD_CODE_CONFIDENCE_THRESHOLD").is_ok() ||
-                          env::var("DEAD_CODE_LIBRARY_MODE").is_ok() ||
-                          env::var("DEAD_CODE_IGNORE_PATTERNS").is_ok() ||
-                          env::var("DEAD_CODE_KEEP_ALIVE_PATTERNS").is_ok() {
+        let dead_code = if env::var("DEAD_CODE_CONFIDENCE_THRESHOLD").is_ok()
+            || env::var("DEAD_CODE_LIBRARY_MODE").is_ok()
+            || env::var("DEAD_CODE_IGNORE_PATTERNS").is_ok()
+            || env::var("DEAD_CODE_KEEP_ALIVE_PATTERNS").is_ok()
+        {
             Some(DeadCodeConfig {
                 confidence_threshold: env::var("DEAD_CODE_CONFIDENCE_THRESHOLD")
                     .ok()
@@ -153,12 +154,13 @@ impl Config {
         } else {
             None
         };
-        
+
         // Large classes configuration from environment
-        let large_classes = if env::var("LARGE_CLASSES_MAX_LOC").is_ok() ||
-                              env::var("LARGE_CLASSES_MAX_METHODS").is_ok() ||
-                              env::var("LARGE_CLASSES_MAX_FIELDS").is_ok() ||
-                              env::var("LARGE_CLASSES_IGNORE_PATTERNS").is_ok() {
+        let large_classes = if env::var("LARGE_CLASSES_MAX_LOC").is_ok()
+            || env::var("LARGE_CLASSES_MAX_METHODS").is_ok()
+            || env::var("LARGE_CLASSES_MAX_FIELDS").is_ok()
+            || env::var("LARGE_CLASSES_IGNORE_PATTERNS").is_ok()
+        {
             Some(LargeClassConfig {
                 max_logical_loc: env::var("LARGE_CLASSES_MAX_LOC")
                     .ok()
@@ -189,8 +191,12 @@ impl Config {
         } else {
             None
         };
-        
-        Ok(Config { ollama_model, dead_code, large_classes })
+
+        Ok(Config {
+            ollama_model,
+            dead_code,
+            large_classes,
+        })
     }
 
     /// Creates a new Config instance by loading values from a file.

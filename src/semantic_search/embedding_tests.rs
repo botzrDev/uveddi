@@ -17,9 +17,12 @@ mod tests {
         // assert!(embedding_result.is_ok());
         // let embedding = embedding_result.unwrap();
         // assert_eq!(embedding.source, file_path.to_string_lossy());
-        
+
         // Placeholder assertion for now
-        assert!(true, "Embedding test placeholder - TODO: implement create_embedding");
+        assert!(
+            true,
+            "Embedding test placeholder - TODO: implement create_embedding"
+        );
         // assert!(!embedding.vector.is_empty());  // Disabled until embedding is implemented
     }
 }

@@ -495,7 +495,8 @@ impl CodeDuplicationDetector {
     /// candidate generation stage of the two-stage detection approach.
     fn find_clone_candidates(&self, block: &CodeBlock) -> Vec<CodeBlock> {
         // UV-150: Use safe_lock_analysis_data for mutex lock error handling
-        let index = match safe_lock_analysis_data(&self.fingerprint_index, "find_clone_candidates") {
+        let index = match safe_lock_analysis_data(&self.fingerprint_index, "find_clone_candidates")
+        {
             Ok(guard) => guard,
             Err(_) => return Vec::new(), // Graceful degradation: return no candidates if lock fails
         };
@@ -680,10 +681,12 @@ fn safe_lock_analysis_data<'a, T>(
     mutex: &'a std::sync::Mutex<T>,
     operation: &'static str,
 ) -> Result<std::sync::MutexGuard<'a, T>, crate::analysis::AnalysisError> {
-    mutex.lock().map_err(|_| crate::analysis::AnalysisError::Analysis(format!(
-        "Concurrency failure during {} (mutex poisoned). See UV-150 error handling policy.",
-        operation
-    )))
+    mutex.lock().map_err(|_| {
+        crate::analysis::AnalysisError::Analysis(format!(
+            "Concurrency failure during {} (mutex poisoned). See UV-150 error handling policy.",
+            operation
+        ))
+    })
 }
 
 impl AnalysisDetector for CodeDuplicationDetector {
@@ -749,10 +752,7 @@ impl AnalysisDetector for CodeDuplicationDetector {
         }
 
         if blocks.is_empty() {
-            debug!(
-            "No code blocks found in file: {}",
-            parsed_file.file_path
-            );
+            debug!("No code blocks found in file: {}", parsed_file.file_path);
             return Ok(vec![]);
         }
 

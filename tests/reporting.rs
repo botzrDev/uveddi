@@ -9,7 +9,7 @@
 mod tests {
     use chrono::Utc;
     use std::collections::HashMap;
-    use uveddi::database::models::{AnalysisRun, ArchitecturalIssue, AntiPatternType};
+    use uveddi::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
     use uveddi::report::ReportGenerator;
 
     #[test]
@@ -37,16 +37,19 @@ mod tests {
             code_snippet: Some("struct GodObject { ... }".to_string()),
             ai_explanation: Some("This is a God Object because...".to_string()),
         }];
-        
+
         // Create anti_pattern_types HashMap
         let mut anti_pattern_types = HashMap::new();
-        anti_pattern_types.insert(1, AntiPatternType {
-            anti_pattern_type_id: Some(1),
-            name: "God Object".to_string(),
-            description: "A class that knows too much or does too much".to_string(),
-            category: "structural".to_string(),
-        });
-        
+        anti_pattern_types.insert(
+            1,
+            AntiPatternType {
+                anti_pattern_type_id: Some(1),
+                name: "God Object".to_string(),
+                description: "A class that knows too much or does too much".to_string(),
+                category: "structural".to_string(),
+            },
+        );
+
         let generator = ReportGenerator::new();
         let report = generator
             .generate_markdown_report(&analysis_run, &issues, &anti_pattern_types, None)
@@ -82,16 +85,19 @@ mod tests {
             code_snippet: Some("struct GodObject { ... }".to_string()),
             ai_explanation: Some("This is a God Object because...".to_string()),
         }];
-        
+
         // Create anti_pattern_types HashMap
         let mut anti_pattern_types = HashMap::new();
-        anti_pattern_types.insert(1, AntiPatternType {
-            anti_pattern_type_id: Some(1),
-            name: "God Object".to_string(),
-            description: "A class that knows too much or does too much".to_string(),
-            category: "structural".to_string(),
-        });
-        
+        anti_pattern_types.insert(
+            1,
+            AntiPatternType {
+                anti_pattern_type_id: Some(1),
+                name: "God Object".to_string(),
+                description: "A class that knows too much or does too much".to_string(),
+                category: "structural".to_string(),
+            },
+        );
+
         let generator = ReportGenerator::new();
         let report = generator
             .generate_json_report(&analysis_run, &issues, &anti_pattern_types, None)
@@ -119,10 +125,10 @@ mod tests {
             analysis_config: "{}".to_string(),
         };
         let issues = vec![];
-        
+
         // Create anti_pattern_types HashMap (empty for this test)
         let anti_pattern_types = HashMap::new();
-        
+
         let generator = ReportGenerator::new();
         let report = generator
             .generate_markdown_report(&analysis_run, &issues, &anti_pattern_types, None)
@@ -156,16 +162,19 @@ mod tests {
             code_snippet: Some("struct GodObject { ... }".to_string()),
             ai_explanation: Some("This is a God Object because...".to_string()),
         }];
-        
+
         // Create anti_pattern_types HashMap
         let mut anti_pattern_types = HashMap::new();
-        anti_pattern_types.insert(1, AntiPatternType {
-            anti_pattern_type_id: Some(1),
-            name: "God Object".to_string(),
-            description: "A class that knows too much or does too much".to_string(),
-            category: "structural".to_string(),
-        });
-        
+        anti_pattern_types.insert(
+            1,
+            AntiPatternType {
+                anti_pattern_type_id: Some(1),
+                name: "God Object".to_string(),
+                description: "A class that knows too much or does too much".to_string(),
+                category: "structural".to_string(),
+            },
+        );
+
         let generator = ReportGenerator::new();
         let report = generator
             .generate_markdown_report(&analysis_run, &issues, &anti_pattern_types, None)

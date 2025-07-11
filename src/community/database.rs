@@ -4,9 +4,9 @@
 //! the main analysis database. Optimized for cloud deployment and admin management.
 
 use crate::community::models::{
-    CommunityMember, MemberActivity, MemberProfile, MemberRole, ActivityType,
-    AdminProfile, AdminPermissions, AdminLevel, DeveloperProfile, DeveloperType, 
-    ApiAccessLevel, DeveloperBadge, BadgeType, RolePermissions
+    ActivityType, AdminLevel, AdminPermissions, AdminProfile, ApiAccessLevel, BadgeType,
+    CommunityMember, DeveloperBadge, DeveloperProfile, DeveloperType, MemberActivity,
+    MemberProfile, MemberRole, RolePermissions,
 };
 use crate::error::UveddiError;
 use chrono::{DateTime, Utc};
@@ -199,10 +199,13 @@ impl CommunityDatabase {
             avatar_url: None,
         };
 
-        let languages_json = serde_json::to_string(&member.profile.languages)
-            .map_err(|e| UveddiError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
-        let custom_fields_json = serde_json::to_string(&member.profile.custom_fields)
-            .map_err(|e| UveddiError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
+        let languages_json = serde_json::to_string(&member.profile.languages).map_err(|e| {
+            UveddiError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e)))
+        })?;
+        let custom_fields_json =
+            serde_json::to_string(&member.profile.custom_fields).map_err(|e| {
+                UveddiError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e)))
+            })?;
 
         self.conn.execute(
             r#"
@@ -246,12 +249,10 @@ impl CommunityDatabase {
                    avatar_url, company, job_title, languages, experience_level, use_case,
                    referral_source, newsletter_subscribed, marketing_consent, custom_fields
             FROM community_members WHERE email = ?1
-            "#
+            "#,
         )?;
 
-        let mut member_iter = stmt.query_map([email], |row| {
-            self.row_to_member(row)
-        })?;
+        let mut member_iter = stmt.query_map([email], |row| self.row_to_member(row))?;
 
         // Clippy fix UV-151: Replace for loop with if-let for single result
         if let Some(member) = member_iter.next() {
@@ -269,12 +270,10 @@ impl CommunityDatabase {
                    avatar_url, company, job_title, languages, experience_level, use_case,
                    referral_source, newsletter_subscribed, marketing_consent, custom_fields
             FROM community_members WHERE id = ?1
-            "#
+            "#,
         )?;
 
-        let mut member_iter = stmt.query_map([id], |row| {
-            self.row_to_member(row)
-        })?;
+        let mut member_iter = stmt.query_map([id], |row| self.row_to_member(row))?;
 
         // Clippy fix UV-151: Replace for loop with if-let for single result
         if let Some(member) = member_iter.next() {
@@ -297,7 +296,8 @@ impl CommunityDatabase {
                    avatar_url, company, job_title, languages, experience_level, use_case,
                    referral_source, newsletter_subscribed, marketing_consent, custom_fields
             FROM community_members WHERE 1=1
-        "#.to_string();
+        "#
+        .to_string();
 
         let mut params: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
         let mut param_count = 0;
@@ -328,10 +328,8 @@ impl CommunityDatabase {
 
         let mut stmt = self.conn.prepare(&sql)?;
         let param_refs: Vec<&dyn rusqlite::ToSql> = params.iter().map(|p| p.as_ref()).collect();
-        
-        let member_iter = stmt.query_map(&param_refs[..], |row| {
-            self.row_to_member(row)
-        })?;
+
+        let member_iter = stmt.query_map(&param_refs[..], |row| self.row_to_member(row))?;
 
         let mut members = Vec::new();
         for member in member_iter {
@@ -346,10 +344,12 @@ impl CommunityDatabase {
         member_id: &str,
         profile: &MemberProfile,
     ) -> Result<bool, UveddiError> {
-        let languages_json = serde_json::to_string(&profile.languages)
-            .map_err(|e| UveddiError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
-        let custom_fields_json = serde_json::to_string(&profile.custom_fields)
-            .map_err(|e| UveddiError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
+        let languages_json = serde_json::to_string(&profile.languages).map_err(|e| {
+            UveddiError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e)))
+        })?;
+        let custom_fields_json = serde_json::to_string(&profile.custom_fields).map_err(|e| {
+            UveddiError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e)))
+        })?;
 
         let affected = self.conn.execute(
             r#"
@@ -381,7 +381,11 @@ impl CommunityDatabase {
     }
 
     /// Update member role (admin function)
-    pub fn update_member_role(&self, member_id: &str, new_role: MemberRole) -> Result<bool, UveddiError> {
+    pub fn update_member_role(
+        &self,
+        member_id: &str,
+        new_role: MemberRole,
+    ) -> Result<bool, UveddiError> {
         let affected = self.conn.execute(
             "UPDATE community_members SET role = ?1 WHERE id = ?2",
             (new_role.as_str(), member_id),
@@ -417,7 +421,13 @@ impl CommunityDatabase {
         )?;
 
         if affected > 0 {
-            self.log_activity(member_id, ActivityType::AccountDeactivated, None, None, None)?;
+            self.log_activity(
+                member_id,
+                ActivityType::AccountDeactivated,
+                None,
+                None,
+                None,
+            )?;
         }
 
         Ok(affected > 0)
@@ -433,8 +443,9 @@ impl CommunityDatabase {
         user_agent: Option<&str>,
     ) -> Result<i64, UveddiError> {
         let metadata: HashMap<String, String> = HashMap::new();
-        let metadata_json = serde_json::to_string(&metadata)
-            .map_err(|e| UveddiError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
+        let metadata_json = serde_json::to_string(&metadata).map_err(|e| {
+            UveddiError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e)))
+        })?;
 
         self.conn.execute(
             r#"
@@ -485,13 +496,12 @@ impl CommunityDatabase {
             FROM member_activity 
             WHERE member_id = ?1 
             ORDER BY timestamp DESC
-            "#.to_string()
+            "#
+            .to_string()
         };
 
         let mut stmt = self.conn.prepare(&sql)?;
-        let activity_iter = stmt.query_map([member_id], |row| {
-            self.row_to_activity(row)
-        })?;
+        let activity_iter = stmt.query_map([member_id], |row| self.row_to_activity(row))?;
 
         let mut activities = Vec::new();
         for activity in activity_iter {
@@ -504,11 +514,10 @@ impl CommunityDatabase {
     fn row_to_member(&self, row: &Row) -> SqlResult<CommunityMember> {
         let languages_json: String = row.get(11)?;
         let custom_fields_json: String = row.get(17)?;
-        
-        let languages: Vec<String> = serde_json::from_str(&languages_json)
-            .unwrap_or_default();
-        let custom_fields: HashMap<String, String> = serde_json::from_str(&custom_fields_json)
-            .unwrap_or_default();
+
+        let languages: Vec<String> = serde_json::from_str(&languages_json).unwrap_or_default();
+        let custom_fields: HashMap<String, String> =
+            serde_json::from_str(&custom_fields_json).unwrap_or_default();
 
         let last_active_str: Option<String> = row.get(5)?;
         let last_active = last_active_str
@@ -544,8 +553,8 @@ impl CommunityDatabase {
     /// Helper method to convert database row to MemberActivity
     fn row_to_activity(&self, row: &Row) -> SqlResult<MemberActivity> {
         let metadata_json: String = row.get(7)?;
-        let metadata: HashMap<String, String> = serde_json::from_str(&metadata_json)
-            .unwrap_or_default();
+        let metadata: HashMap<String, String> =
+            serde_json::from_str(&metadata_json).unwrap_or_default();
 
         Ok(MemberActivity {
             id: Some(row.get(0)?),
@@ -586,16 +595,19 @@ impl CommunityDatabase {
             is_super_admin: matches!(admin_level, AdminLevel::SuperAdmin),
         };
 
-        let permissions_json = serde_json::to_string(&permissions)
-            .map_err(|e| UveddiError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
-        let regions_json = serde_json::to_string(&admin_profile.assigned_regions)
-            .map_err(|e| UveddiError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
-        let teams_json = serde_json::to_string(&admin_profile.assigned_teams)
-            .map_err(|e| UveddiError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
+        let permissions_json = serde_json::to_string(&permissions).map_err(|e| {
+            UveddiError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e)))
+        })?;
+        let regions_json = serde_json::to_string(&admin_profile.assigned_regions).map_err(|e| {
+            UveddiError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e)))
+        })?;
+        let teams_json = serde_json::to_string(&admin_profile.assigned_teams).map_err(|e| {
+            UveddiError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e)))
+        })?;
 
         let level_str = match admin_level {
             AdminLevel::Moderator => "moderator",
-            AdminLevel::Administrator => "administrator", 
+            AdminLevel::Administrator => "administrator",
             AdminLevel::SuperAdmin => "super_admin",
         };
 
@@ -661,10 +673,13 @@ impl CommunityDatabase {
                 admin_notes: row.get(5)?,
                 appointed_by: row.get(6)?,
                 appointed_at: DateTime::parse_from_rfc3339(&appointed_at_str)
-                    .unwrap().with_timezone(&Utc),
-                last_admin_action: last_action_str.map(|s| 
-                    DateTime::parse_from_rfc3339(&s).unwrap().with_timezone(&Utc)
-                ),
+                    .unwrap()
+                    .with_timezone(&Utc),
+                last_admin_action: last_action_str.map(|s| {
+                    DateTime::parse_from_rfc3339(&s)
+                        .unwrap()
+                        .with_timezone(&Utc)
+                }),
                 is_super_admin: row.get(9)?,
             })
         }) {
@@ -680,8 +695,9 @@ impl CommunityDatabase {
         member_id: &str,
         permissions: AdminPermissions,
     ) -> Result<(), UveddiError> {
-        let permissions_json = serde_json::to_string(&permissions)
-            .map_err(|e| UveddiError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
+        let permissions_json = serde_json::to_string(&permissions).map_err(|e| {
+            UveddiError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e)))
+        })?;
 
         self.conn.execute(
             "UPDATE admin_profiles SET permissions = ?1, last_admin_action = ?2 WHERE member_id = ?3",
@@ -713,9 +729,13 @@ impl CommunityDatabase {
                 name: row.get(2)?,
                 role: MemberRole::from_str(&row.get::<_, String>(3)?),
                 created_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(4)?)
-                    .unwrap().with_timezone(&Utc),
-                last_active: row.get::<_, Option<String>>(5)?
-                    .map(|s| DateTime::parse_from_rfc3339(&s).unwrap().with_timezone(&Utc)),
+                    .unwrap()
+                    .with_timezone(&Utc),
+                last_active: row.get::<_, Option<String>>(5)?.map(|s| {
+                    DateTime::parse_from_rfc3339(&s)
+                        .unwrap()
+                        .with_timezone(&Utc)
+                }),
                 is_active: row.get(6)?,
                 profile: MemberProfile::default(), // We'll fetch this separately if needed
                 email_verified: false,
@@ -750,9 +770,13 @@ impl CommunityDatabase {
                 admin_notes: row.get(11)?,
                 appointed_by: row.get(12)?,
                 appointed_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(13)?)
-                    .unwrap().with_timezone(&Utc),
-                last_admin_action: row.get::<_, Option<String>>(14)?
-                    .map(|s| DateTime::parse_from_rfc3339(&s).unwrap().with_timezone(&Utc)),
+                    .unwrap()
+                    .with_timezone(&Utc),
+                last_admin_action: row.get::<_, Option<String>>(14)?.map(|s| {
+                    DateTime::parse_from_rfc3339(&s)
+                        .unwrap()
+                        .with_timezone(&Utc)
+                }),
                 is_super_admin: row.get(15)?,
             };
 
@@ -793,10 +817,12 @@ impl CommunityDatabase {
             beta_tester: false,
         };
 
-        let specializations_json = serde_json::to_string(&specializations)
-            .map_err(|e| UveddiError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
-        let repositories_json = serde_json::to_string(&dev_profile.repositories)
-            .map_err(|e| UveddiError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
+        let specializations_json = serde_json::to_string(&specializations).map_err(|e| {
+            UveddiError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e)))
+        })?;
+        let repositories_json = serde_json::to_string(&dev_profile.repositories).map_err(|e| {
+            UveddiError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e)))
+        })?;
 
         let dev_type_str = match developer_type {
             DeveloperType::OpenSource => "opensource",
@@ -831,7 +857,10 @@ impl CommunityDatabase {
     }
 
     /// Get developer profile for a member
-    pub fn get_developer_profile(&self, member_id: &str) -> Result<Option<DeveloperProfile>, UveddiError> {
+    pub fn get_developer_profile(
+        &self,
+        member_id: &str,
+    ) -> Result<Option<DeveloperProfile>, UveddiError> {
         let mut stmt = self.conn.prepare(
             r#"
             SELECT member_id, developer_type, specializations, github_verified, contribution_score,
@@ -876,8 +905,11 @@ impl CommunityDatabase {
                 api_access_level,
                 repositories,
                 badges: Vec::new(), // We'll fetch these separately
-                verified_at: row.get::<_, Option<String>>(7)?
-                    .map(|s| DateTime::parse_from_rfc3339(&s).unwrap().with_timezone(&Utc)),
+                verified_at: row.get::<_, Option<String>>(7)?.map(|s| {
+                    DateTime::parse_from_rfc3339(&s)
+                        .unwrap()
+                        .with_timezone(&Utc)
+                }),
                 verification_method: row.get(8)?,
                 mentor_status: row.get(9)?,
                 beta_tester: row.get(10)?,
@@ -935,7 +967,10 @@ impl CommunityDatabase {
     }
 
     /// Get role permissions
-    pub fn get_role_permissions(&self, role: &MemberRole) -> Result<Option<RolePermissions>, UveddiError> {
+    pub fn get_role_permissions(
+        &self,
+        role: &MemberRole,
+    ) -> Result<Option<RolePermissions>, UveddiError> {
         let mut stmt = self.conn.prepare(
             r#"
             SELECT role, can_access_api, can_view_source, can_download_reports,
@@ -970,7 +1005,9 @@ impl CommunityDatabase {
     }
 
     /// Generate community analytics
-    pub fn generate_analytics(&self) -> Result<crate::community::analytics::MemberAnalytics, UveddiError> {
+    pub fn generate_analytics(
+        &self,
+    ) -> Result<crate::community::analytics::MemberAnalytics, UveddiError> {
         let analytics_engine = crate::community::analytics::AnalyticsEngine::new(&self.conn);
         analytics_engine.generate_analytics()
     }
@@ -991,7 +1028,9 @@ mod tests {
         let temp_file = NamedTempFile::new().unwrap();
         let db = CommunityDatabase::new(temp_file.path()).unwrap();
 
-        let member = db.register_member("test@example.com", "Test User", MemberRole::Member).unwrap();
+        let member = db
+            .register_member("test@example.com", "Test User", MemberRole::Member)
+            .unwrap();
         assert_eq!(member.email, "test@example.com");
         assert_eq!(member.name, "Test User");
         assert_eq!(member.role, MemberRole::Member);
@@ -1009,9 +1048,13 @@ mod tests {
         let temp_file = NamedTempFile::new().unwrap();
         let db = CommunityDatabase::new(temp_file.path()).unwrap();
 
-        let member = db.register_member("test@example.com", "Test User", MemberRole::Member).unwrap();
-        
-        let updated = db.update_member_role(&member.id, MemberRole::Developer).unwrap();
+        let member = db
+            .register_member("test@example.com", "Test User", MemberRole::Member)
+            .unwrap();
+
+        let updated = db
+            .update_member_role(&member.id, MemberRole::Developer)
+            .unwrap();
         assert!(updated);
 
         let retrieved = db.get_member_by_id(&member.id).unwrap().unwrap();
@@ -1023,18 +1066,32 @@ mod tests {
         let temp_file = NamedTempFile::new().unwrap();
         let db = CommunityDatabase::new(temp_file.path()).unwrap();
 
-        let member = db.register_member("test@example.com", "Test User", MemberRole::Member).unwrap();
-        
+        let member = db
+            .register_member("test@example.com", "Test User", MemberRole::Member)
+            .unwrap();
+
         // Log some activities
-        db.log_activity(&member.id, ActivityType::Login, None, None, None).unwrap();
-        db.log_activity(&member.id, ActivityType::DashboardView, Some("Viewed main dashboard"), None, None).unwrap();
+        db.log_activity(&member.id, ActivityType::Login, None, None, None)
+            .unwrap();
+        db.log_activity(
+            &member.id,
+            ActivityType::DashboardView,
+            Some("Viewed main dashboard"),
+            None,
+            None,
+        )
+        .unwrap();
 
         let activities = db.get_member_activity(&member.id, Some(10)).unwrap();
-        
+
         // Should have registration + login + dashboard view = 3 activities
         assert_eq!(activities.len(), 3);
-        assert!(activities.iter().any(|a| matches!(a.activity_type, ActivityType::Login)));
-        assert!(activities.iter().any(|a| matches!(a.activity_type, ActivityType::Registration)));
+        assert!(activities
+            .iter()
+            .any(|a| matches!(a.activity_type, ActivityType::Login)));
+        assert!(activities
+            .iter()
+            .any(|a| matches!(a.activity_type, ActivityType::Registration)));
     }
 
     #[test]
@@ -1042,12 +1099,17 @@ mod tests {
         let temp_file = NamedTempFile::new().unwrap();
         let db = CommunityDatabase::new(temp_file.path()).unwrap();
 
-        db.register_member("user1@example.com", "User 1", MemberRole::Member).unwrap();
-        db.register_member("user2@example.com", "User 2", MemberRole::Developer).unwrap();
-        db.register_member("admin@example.com", "Admin", MemberRole::Admin).unwrap();
+        db.register_member("user1@example.com", "User 1", MemberRole::Member)
+            .unwrap();
+        db.register_member("user2@example.com", "User 2", MemberRole::Developer)
+            .unwrap();
+        db.register_member("admin@example.com", "Admin", MemberRole::Admin)
+            .unwrap();
 
         // Test role filtering
-        let developers = db.list_members(Some(MemberRole::Developer), true, None, None).unwrap();
+        let developers = db
+            .list_members(Some(MemberRole::Developer), true, None, None)
+            .unwrap();
         assert_eq!(developers.len(), 1);
         assert_eq!(developers[0].role, MemberRole::Developer);
 

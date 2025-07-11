@@ -54,7 +54,9 @@ impl GodObject {
         // Should detect the GodObject struct as having too many methods and fields
         assert!(!issues.is_empty(), "Should detect god object issues");
         assert!(
-            issues.iter().any(|issue| issue.description.contains("GodObject")),
+            issues
+                .iter()
+                .any(|issue| issue.description.contains("GodObject")),
             "Should detect GodObject struct"
         );
     }
@@ -99,6 +101,9 @@ impl WellDesignedStruct {
             .expect("Failed to detect issues");
 
         // Should not detect any god object issues for well-designed struct
-        assert!(issues.is_empty(), "Should not detect any god object issues for well-designed struct");
+        assert!(
+            issues.is_empty(),
+            "Should not detect any god object issues for well-designed struct"
+        );
     }
 }

@@ -38,17 +38,23 @@ fn main() {
         // Should detect unused_function as dead code
         assert!(!issues.is_empty(), "Should detect dead code");
         assert!(
-            issues.iter().any(|issue| issue.description.contains("'unused_function'")),
+            issues
+                .iter()
+                .any(|issue| issue.description.contains("'unused_function'")),
             "Should detect unused_function as dead code"
         );
-        
+
         // Should not detect used_function or main as dead code
         assert!(
-            !issues.iter().any(|issue| issue.description.contains("'used_function'")),
+            !issues
+                .iter()
+                .any(|issue| issue.description.contains("'used_function'")),
             "Should not detect used_function as dead code"
         );
         assert!(
-            !issues.iter().any(|issue| issue.description.contains("'main'")),
+            !issues
+                .iter()
+                .any(|issue| issue.description.contains("'main'")),
             "Should not detect main as dead code"
         );
     }
@@ -71,24 +77,34 @@ if __name__ == "__main__":
 
         let mut parser = AstParser::new().expect("Failed to create parser");
         let parsed_file = parser
-            .parse_content(python_code, &PathBuf::from("app.py"), SourceLanguage::Python)
+            .parse_content(
+                python_code,
+                &PathBuf::from("app.py"),
+                SourceLanguage::Python,
+            )
             .expect("Failed to parse Python code");
 
         // Configure for application mode (not library mode) to detect unused exported symbols
-        let mut config = crate::analysis::detectors::anti_patterns::dead_code::DeadCodeConfig::default();
+        let mut config =
+            crate::analysis::detectors::anti_patterns::dead_code::DeadCodeConfig::default();
         config.library_mode = false; // Application mode - detect unused exports
         let detector = DeadCodeDetector::new(config);
-        
+
         let issues = detector
             .detect_issues(&parsed_file)
             .expect("Failed to detect issues");
 
         // Should detect unused functions
         assert!(!issues.is_empty(), "Should detect dead code");
-        
+
         // Check that unused_function is detected
-        let unused_detected = issues.iter().any(|issue| issue.description.contains("'unused_function'"));
-        assert!(unused_detected, "Should detect unused_function as dead code");
+        let unused_detected = issues
+            .iter()
+            .any(|issue| issue.description.contains("'unused_function'"));
+        assert!(
+            unused_detected,
+            "Should detect unused_function as dead code"
+        );
     }
 
     #[test]
@@ -111,7 +127,11 @@ main();
 
         let mut parser = AstParser::new().expect("Failed to create parser");
         let parsed_file = parser
-            .parse_content(js_code, &PathBuf::from("app.js"), SourceLanguage::JavaScript)
+            .parse_content(
+                js_code,
+                &PathBuf::from("app.js"),
+                SourceLanguage::JavaScript,
+            )
             .expect("Failed to parse JavaScript code");
 
         let detector = DeadCodeDetector::with_default_config();
@@ -122,7 +142,9 @@ main();
         // Should detect unused function
         assert!(!issues.is_empty(), "Should detect dead code");
         assert!(
-            issues.iter().any(|issue| issue.description.contains("'unusedFunction'")),
+            issues
+                .iter()
+                .any(|issue| issue.description.contains("'unusedFunction'")),
             "Should detect unusedFunction as dead code"
         );
     }
@@ -145,21 +167,29 @@ fn private_unused() {
             .expect("Failed to parse Rust code");
 
         // Configure for library mode to NOT detect unused exported symbols
-        let mut config = crate::analysis::detectors::anti_patterns::dead_code::DeadCodeConfig::default();
+        let mut config =
+            crate::analysis::detectors::anti_patterns::dead_code::DeadCodeConfig::default();
         config.library_mode = true; // Library mode - don't detect unused exports
         config.min_confidence = 0.5; // Normal threshold
         let detector = DeadCodeDetector::new(config);
-        
+
         let issues = detector
             .detect_issues(&parsed_file)
             .expect("Failed to detect issues");
 
         // Should detect private_unused but not exported_function
-        let private_detected = issues.iter().any(|issue| issue.description.contains("'private_unused'"));
-        let exported_detected = issues.iter().any(|issue| issue.description.contains("'exported_function'"));
-        
+        let private_detected = issues
+            .iter()
+            .any(|issue| issue.description.contains("'private_unused'"));
+        let exported_detected = issues
+            .iter()
+            .any(|issue| issue.description.contains("'exported_function'"));
+
         assert!(private_detected, "Should detect private unused function");
-        assert!(!exported_detected, "Should not detect exported function as dead code");
+        assert!(
+            !exported_detected,
+            "Should not detect exported function as dead code"
+        );
     }
 
     #[test]
@@ -181,7 +211,7 @@ fn unused_function() {
             .expect("Failed to detect issues");
 
         assert!(!issues.is_empty(), "Should detect dead code");
-        
+
         // Check that severity is assigned based on confidence
         let issue = &issues[0];
         assert!(
@@ -213,6 +243,9 @@ fn main() {
             .expect("Failed to detect issues");
 
         // Should not detect any dead code since all functions are used
-        assert!(issues.is_empty(), "Should not detect any dead code when all functions are used");
+        assert!(
+            issues.is_empty(),
+            "Should not detect any dead code when all functions are used"
+        );
     }
 }

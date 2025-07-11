@@ -1,33 +1,33 @@
 //! Advanced Leaky Abstraction Detector
-//! 
+//!
 //! This detector implements a comprehensive analysis framework for identifying leaky abstractions
-//! across multiple programming languages (Rust, Python, JavaScript/TypeScript). It uses a 
+//! across multiple programming languages (Rust, Python, JavaScript/TypeScript). It uses a
 //! multi-signal approach combining AST analysis, dependency tracking, and architectural pattern
 //! recognition to detect violations of abstraction boundaries.
-//! 
+//!
 //! ## Detection Capabilities
-//! 
+//!
 //! ### Rust-Specific Patterns
 //! - Visibility violations (pub vs private boundaries)
 //! - Framework-specific types in public APIs
 //! - ORM/Database types leaking into business logic
 //! - Error type propagation across layers
 //! - Async runtime details in interfaces
-//! 
+//!
 //! ### Python-Specific Patterns  
 //! - Direct database model usage in views/controllers
 //! - Framework objects in business logic (Flask request, Django models)
 //! - File system paths in public interfaces
 //! - Import violations across architectural layers
-//! 
+//!
 //! ### JavaScript/TypeScript Patterns
 //! - DOM manipulation in business logic
 //! - Framework-specific objects in domain models
 //! - Infrastructure dependencies in application layer
 //! - Type definition leaks and generic pollution
-//! 
+//!
 //! ## Architecture
-//! 
+//!
 //! The detector uses a layered analysis approach:
 //! 1. **Syntactic Analysis**: Tree-sitter queries for pattern matching
 //! 2. **Semantic Analysis**: Symbol resolution and type flow tracking
@@ -68,11 +68,12 @@
 //! - **Time Complexity**: O(n*m) where n is AST nodes and m is architectural rules
 //! - **Space Complexity**: O(k) where k is the number of detected violations
 //! - **Optimization Notes**: Uses efficient pattern matching and caches rule evaluations
-
+//!
 use crate::analysis::{AnalysisDetector, AnalysisError};
 use crate::ast::{ParsedFile, SourceLanguage};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use std::collections::{HashMap, HashSet};
+use strum_macros::EnumString;
 use tree_sitter::{Node, Query, QueryCursor};
 
 /// Defines the configuration for architectural layers and boundaries.
@@ -87,13 +88,13 @@ pub struct ArchitecturalConfig {
     /// This is the primary mechanism for defining the architecture. For example:
     /// `{"**/controllers/**": Presentation, "**/services/**": Application}`.
     pub layer_mappings: HashMap<String, ArchitecturalLayer>,
-    
+
     /// A set of module names or prefixes that are considered infrastructure.
     ///
     /// This set helps identify dependencies on frameworks, databases, or other
     /// external systems (e.g., "django", "sqlx", "react").
     pub infrastructure_modules: HashSet<String>,
-    
+
     /// A list of patterns used to identify internal or private modules.
     ///
     /// Accessing modules whose paths contain these patterns from outside their
@@ -105,21 +106,21 @@ pub struct ArchitecturalConfig {
 ///
 /// Each layer has a specific responsibility, and dependencies should generally flow
 /// from outer layers (e.g., `Presentation`) to inner layers (e.g., `Domain`).
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, EnumString)]
 pub enum ArchitecturalLayer {
     /// The outermost layer, responsible for UI, API endpoints, and user interaction.
     /// It translates user input into application-level commands.
     Presentation,
-    
+
     /// The layer that contains application-specific business logic and use cases.
     /// It orchestrates the domain layer to perform tasks and is the primary entry
     /// point for application operations.
-    Application, 
-    
+    Application,
+
     /// The core of the application, containing enterprise-wide business logic and entities.
     /// This layer should be independent of any framework, UI, or database.
     Domain,
-    
+
     /// The layer that contains all external concerns and implementation details, such as
     /// databases, file systems, and third-party API clients. It implements interfaces
     /// defined by the application or domain layers.
@@ -132,25 +133,25 @@ pub enum LeakType {
     /// A violation of encapsulation where code accesses a private or internal item
     /// from an outside module.
     VisibilityViolation,
-    
+
     /// A dependency that flows in the wrong direction between architectural layers,
     /// such as a domain module depending on a presentation module.
     LayerViolation,
-    
+
     /// Occurs when internal implementation types (e.g., a database model or ORM entity)
     /// are exposed through a module's public API.
     ImplementationExposure,
-    
+
     /// Occurs when core business logic (domain or application layers) becomes directly
     /// dependent on types defined by a specific framework (e.g., using an Express `Request`
     /// object in a service class).
     FrameworkCoupling,
-    
+
     /// Occurs when low-level, implementation-specific error types (e.g., `sql::Error`)
     /// are propagated across abstraction boundaries instead of being wrapped in
     /// domain-specific errors.
     ErrorPropagation,
-    
+
     /// An abstraction that introduces significant, unexpected performance overhead,
     /// such as an Object-Relational Mapper (ORM) causing an N+1 query problem.
     PerformanceLeak,
@@ -188,9 +189,7 @@ impl LeakyAbstractionDetector {
     /// layers and a list of well-known infrastructure modules for Rust, Python, and JavaScript.
     pub fn new() -> Self {
         let config = Self::default_config();
-        Self {
-            config,
-        }
+        Self { config }
     }
 
     /// Creates a new detector with a custom `ArchitecturalConfig`.
@@ -202,9 +201,7 @@ impl LeakyAbstractionDetector {
     ///
     /// * `config` - The `ArchitecturalConfig` to use for analysis.
     pub fn with_config(config: ArchitecturalConfig) -> Self {
-        Self {
-            config,
-        }
+        Self { config }
     }
 
     /// Provides a default `ArchitecturalConfig` based on common project conventions.
@@ -212,23 +209,50 @@ impl LeakyAbstractionDetector {
         let mut layer_mappings = HashMap::new();
 
         // Common patterns for different layers
-        layer_mappings.insert("**/controllers/**".to_string(), ArchitecturalLayer::Presentation);
+        layer_mappings.insert(
+            "**/controllers/**".to_string(),
+            ArchitecturalLayer::Presentation,
+        );
         layer_mappings.insert("**/views/**".to_string(), ArchitecturalLayer::Presentation);
         layer_mappings.insert("**/ui/**".to_string(), ArchitecturalLayer::Presentation);
-        layer_mappings.insert("**/handlers/**".to_string(), ArchitecturalLayer::Presentation);
+        layer_mappings.insert(
+            "**/handlers/**".to_string(),
+            ArchitecturalLayer::Presentation,
+        );
 
-        layer_mappings.insert("**/services/**".to_string(), ArchitecturalLayer::Application);
-        layer_mappings.insert("**/use_cases/**".to_string(), ArchitecturalLayer::Application);
-        layer_mappings.insert("**/application/**".to_string(), ArchitecturalLayer::Application);
+        layer_mappings.insert(
+            "**/services/**".to_string(),
+            ArchitecturalLayer::Application,
+        );
+        layer_mappings.insert(
+            "**/use_cases/**".to_string(),
+            ArchitecturalLayer::Application,
+        );
+        layer_mappings.insert(
+            "**/application/**".to_string(),
+            ArchitecturalLayer::Application,
+        );
 
         layer_mappings.insert("**/domain/**".to_string(), ArchitecturalLayer::Domain);
         layer_mappings.insert("**/models/**".to_string(), ArchitecturalLayer::Domain);
         layer_mappings.insert("**/entities/**".to_string(), ArchitecturalLayer::Domain);
 
-        layer_mappings.insert("**/repositories/**".to_string(), ArchitecturalLayer::Infrastructure);
-        layer_mappings.insert("**/infrastructure/**".to_string(), ArchitecturalLayer::Infrastructure);
-        layer_mappings.insert("**/adapters/**".to_string(), ArchitecturalLayer::Infrastructure);
-        layer_mappings.insert("**/external/**".to_string(), ArchitecturalLayer::Infrastructure);
+        layer_mappings.insert(
+            "**/repositories/**".to_string(),
+            ArchitecturalLayer::Infrastructure,
+        );
+        layer_mappings.insert(
+            "**/infrastructure/**".to_string(),
+            ArchitecturalLayer::Infrastructure,
+        );
+        layer_mappings.insert(
+            "**/adapters/**".to_string(),
+            ArchitecturalLayer::Infrastructure,
+        );
+        layer_mappings.insert(
+            "**/external/**".to_string(),
+            ArchitecturalLayer::Infrastructure,
+        );
 
         let mut infrastructure_modules = HashSet::new();
         // Rust frameworks/ORMs
@@ -275,13 +299,13 @@ impl LeakyAbstractionDetector {
     /// A simple glob-like pattern matcher for file paths.
     fn matches_pattern(&self, path: &str, pattern: &str) -> bool {
         if pattern.starts_with("**/") && pattern.ends_with("/**") {
-            let middle = &pattern[3..pattern.len()-3];
+            let middle = &pattern[3..pattern.len() - 3];
             path.contains(&format!("/{}/", middle)) || path.contains(&format!("\\{}/", middle))
         } else if pattern.starts_with("**/") {
             let suffix = &pattern[3..];
             path.ends_with(suffix)
         } else if pattern.ends_with("/**") {
-            let prefix = &pattern[..pattern.len()-3];
+            let prefix = &pattern[..pattern.len() - 3];
             path.starts_with(prefix)
         } else {
             path.contains(pattern)
@@ -290,22 +314,32 @@ impl LeakyAbstractionDetector {
 
     /// Checks if a given module name corresponds to a known infrastructure dependency.
     fn is_infrastructure_module(&self, module_name: &str) -> bool {
-        self.config.infrastructure_modules.contains(module_name) ||
-        self.config.infrastructure_modules.iter().any(|infra| module_name.starts_with(infra))
+        self.config.infrastructure_modules.contains(module_name)
+            || self
+                .config
+                .infrastructure_modules
+                .iter()
+                .any(|infra| module_name.starts_with(infra))
     }
 
     /// Checks if a type name represents an infrastructure error type that should not be exposed.
     fn is_infrastructure_error_type(&self, type_text: &str) -> bool {
         // Check for common infrastructure error type patterns
         let infrastructure_error_patterns = [
-            "DieselError", "SqlxError", "SeaOrmError", // Database ORMs
-            "tokio::Error", "std::io::Error", "reqwest::Error", // IO and HTTP
-            "serde_json::Error", "toml::de::Error", // Serialization
-            "rusqlite::Error", "postgres::Error", // Database drivers
+            "DieselError",
+            "SqlxError",
+            "SeaOrmError", // Database ORMs
+            "tokio::Error",
+            "std::io::Error",
+            "reqwest::Error", // IO and HTTP
+            "serde_json::Error",
+            "toml::de::Error", // Serialization
+            "rusqlite::Error",
+            "postgres::Error", // Database drivers
         ];
-        
+
         infrastructure_error_patterns.iter().any(|pattern| {
-            type_text.contains(pattern) || 
+            type_text.contains(pattern) ||
             // Check for Result<T, InfrastructureError> patterns
             (type_text.contains("Result<") && type_text.contains(pattern))
         })
@@ -313,7 +347,10 @@ impl LeakyAbstractionDetector {
 
     /// Checks if a given path or module name indicates an internal or private module.
     fn is_internal_module(&self, path: &str) -> bool {
-        self.config.internal_patterns.iter().any(|pattern| path.contains(pattern))
+        self.config
+            .internal_patterns
+            .iter()
+            .any(|pattern| path.contains(pattern))
     }
 
     /// Extracts the root module name from a Rust `use` statement.
@@ -342,9 +379,9 @@ impl LeakyAbstractionDetector {
         // from django.shortcuts import render -> "django"
         // import django.contrib.auth -> "django"
         // from myapp.models import User -> "myapp"
-        
+
         let text = import_text.trim();
-        
+
         if text.starts_with("from ") {
             // from module.submodule import something
             if let Some(module_part) = text.strip_prefix("from ") {
@@ -361,15 +398,26 @@ impl LeakyAbstractionDetector {
                 return Some(first_module.split('.').next()?.to_string());
             }
         }
-        
+
         None
     }
-    
+
+    /// Determines the architectural layer of a given file path based on configured mappings.
+    /// Returns `None` if the layer cannot be determined.
+    fn get_layer_from_path(&self, file_path: &str) -> Option<ArchitecturalLayer> {
+        for (pattern, layer) in &self.config.layer_mappings {
+            if self.matches_pattern(file_path, pattern) {
+                return Some(layer.clone()); // Return a cloned ArchitecturalLayer
+            }
+        }
+        None
+    }
+
     /// Returns a human-readable name for an architectural layer.
-    fn get_layer_name(&self, layer: &ArchitecturalLayer) -> &'static str {
+    fn get_layer_name_string(&self, layer: &ArchitecturalLayer) -> &'static str {
         match layer {
             ArchitecturalLayer::Presentation => "Presentation",
-            ArchitecturalLayer::Application => "Application", 
+            ArchitecturalLayer::Application => "Application",
             ArchitecturalLayer::Domain => "Domain",
             ArchitecturalLayer::Infrastructure => "Infrastructure",
         }
@@ -381,11 +429,22 @@ impl LeakyAbstractionDetector {
     /// - Importing infrastructure modules into domain or application layers.
     /// - Exposing public fields in structs, which violates encapsulation.
     /// - Propagating low-level infrastructure errors in public function signatures.
-    fn analyze_rust_file(&self, parsed_file: &ParsedFile, analysis_run_id: i64) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
+    fn analyze_rust_file(
+        &self,
+        parsed_file: &ParsedFile,
+        analysis_run_id: i64,
+    ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         let mut issues = Vec::new();
         let empty_source = String::new();
-        let source_bytes = parsed_file.content.as_deref().unwrap_or("").as_bytes();
-        let tree = parsed_file.tree.as_ref().ok_or_else(|| AnalysisError::Other("No AST available".to_string()))?;
+        let source_bytes = parsed_file
+            .content
+            .as_deref()
+            .map(str::as_bytes)
+            .unwrap_or(&[]);
+        let tree = parsed_file
+            .tree
+            .as_ref()
+            .ok_or_else(|| AnalysisError::Other("No AST available".to_string()))?;
         let language = tree.language();
 
         let query_source = r#"
@@ -415,7 +474,7 @@ impl LeakyAbstractionDetector {
 
         let query = Query::new(&language, query_source)
             .map_err(|e| AnalysisError::Other(format!("Failed to create Rust query: {}", e)))?;
-        
+
         let mut cursor = QueryCursor::new();
         let captures = cursor.captures(&query, tree.root_node(), source_bytes);
 
@@ -423,16 +482,23 @@ impl LeakyAbstractionDetector {
             for capture in &match_.captures {
                 let node = capture.node;
                 let capture_name = query.capture_names()[capture.index as usize];
-                
+
                 match capture_name {
                     "use_stmt" => {
                         // Analyze the entire use declaration
                         if let Ok(use_text) = node.utf8_text(source_bytes) {
                             // Extract module name from use statement text
-                            if let Some(module_name) = self.extract_module_from_use_statement(use_text) {
+                            if let Some(module_name) =
+                                self.extract_module_from_use_statement(use_text)
+                            {
                                 if self.is_infrastructure_module(&module_name) {
-                                    let layer = self.get_layer_name(&parsed_file.file_path.to_string());
-                                    if matches!(layer, Some(ArchitecturalLayer::Domain) | Some(ArchitecturalLayer::Application)) {
+                                    let layer = self
+                                        .get_layer_from_path(&parsed_file.file_path.to_string());
+                                    if matches!(
+                                        layer,
+                                        Some(ArchitecturalLayer::Domain)
+                                            | Some(ArchitecturalLayer::Application)
+                                    ) {
                                         issues.push(self.create_issue(
                                             analysis_run_id,
                                             &parsed_file.file_path.to_string(),
@@ -449,7 +515,10 @@ impl LeakyAbstractionDetector {
                                         &parsed_file.file_path.to_string(),
                                         node,
                                         LeakType::VisibilityViolation,
-                                        &format!("Direct import of internal module '{}'", module_name),
+                                        &format!(
+                                            "Direct import of internal module '{}'",
+                                            module_name
+                                        ),
                                         "high",
                                     ));
                                 }
@@ -481,8 +550,12 @@ impl LeakyAbstractionDetector {
                             if vis_text == "pub" {
                                 // Look for the corresponding return type in the same match
                                 for other_capture in &match_.captures {
-                                    if query.capture_names()[other_capture.index as usize] == "return_type" {
-                                        if let Ok(return_type_text) = other_capture.node.utf8_text(source_bytes) {
+                                    if query.capture_names()[other_capture.index as usize]
+                                        == "return_type"
+                                    {
+                                        if let Ok(return_type_text) =
+                                            other_capture.node.utf8_text(source_bytes)
+                                        {
                                             // Check if return type contains infrastructure error types
                                             if self.is_infrastructure_error_type(return_type_text) {
                                                 issues.push(self.create_issue(
@@ -513,15 +586,22 @@ impl LeakyAbstractionDetector {
     /// This method focuses on identifying layer violations by checking for imports
     /// of known infrastructure modules (e.g., `django`, `flask`) in layers where
     /// they don't belong (e.g., `Domain`, `Application`).
-    fn analyze_python_file(&self, parsed_file: &ParsedFile, analysis_run_id: i64) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
+    fn analyze_python_file(
+        &self,
+        parsed_file: &ParsedFile,
+        analysis_run_id: i64,
+    ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         let mut issues = Vec::new();
         let empty_source = String::new();
-        let source_bytes = parsed_file.content.as_deref().unwrap_or("").as_bytes();
-        
+        let source_bytes = parsed_file
+            .content
+            .as_deref()
+            .map(str::as_bytes)
+            .unwrap_or(&[]);
+
         // Check architectural layer violations
         let file_path_str = parsed_file.file_path.to_string();
-        if let Some(current_layer) = self.get_layer_name(&file_path_str) {
-            
+        if let Some(current_layer) = self.get_layer_from_path(&file_path_str) {
             if let Some(tree) = &parsed_file.tree {
                 let language = tree.language();
                 let query_source = r#"
@@ -554,17 +634,18 @@ impl LeakyAbstractionDetector {
                         object: (identifier) @model_name
                         attribute: (identifier) @method_name)) @model_call
                 "#;
-        
-                let query = Query::new(&language, query_source)
-                    .map_err(|e| AnalysisError::Other(format!("Failed to create Python query: {}", e)))?;
+
+                let query = Query::new(&language, query_source).map_err(|e| {
+                    AnalysisError::Other(format!("Failed to create Python query: {}", e))
+                })?;
 
                 let mut cursor = QueryCursor::new();
                 let matches = cursor.matches(&query, tree.root_node(), source_bytes);
-                
+
                 for query_match in matches {
                     for capture in query_match.captures {
                         let capture_text = capture.node.utf8_text(source_bytes).unwrap_or("");
-                        
+
                         // Extract module name from Python import
                         if let Some(module_name) = self.extract_python_import_module(capture_text) {
                             if self.is_infrastructure_module(&module_name) {
@@ -575,13 +656,15 @@ impl LeakyAbstractionDetector {
                                         analysis_run_id,
                                         anti_pattern_type_id: 1, // TODO: proper mapping
                                         file_path: parsed_file.file_path.to_string().to_string(),
-                                        start_line: Some(capture.node.start_position().row as i32 + 1),
+                                        start_line: Some(
+                                            capture.node.start_position().row as i32 + 1,
+                                        ),
                                         end_line: Some(capture.node.end_position().row as i32 + 1),
                                         severity: "high".to_string(),
                                         description: format!(
                                             "Framework module '{}' imported in {} layer",
                                             module_name,
-                                            self.get_layer_name(&current_layer)
+                                            self.get_layer_name_string(&current_layer)
                                         ),
                                         code_snippet: Some(capture_text.to_string()),
                                         ai_explanation: None,
@@ -607,11 +690,22 @@ impl LeakyAbstractionDetector {
     /// This method checks for common frontend and backend leaks, such as:
     /// - Importing infrastructure modules (e.g., `express`, `react`) into core logic layers.
     /// - Performing direct DOM manipulation (`document`, `window`) in business logic.
-    fn analyze_js_file(&self, parsed_file: &ParsedFile, analysis_run_id: i64) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
+    fn analyze_js_file(
+        &self,
+        parsed_file: &ParsedFile,
+        analysis_run_id: i64,
+    ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         let mut issues = Vec::new();
         let empty_source = String::new();
-        let source_bytes = parsed_file.content.as_deref().unwrap_or("").as_bytes();
-        let tree = parsed_file.tree.as_ref().ok_or_else(|| AnalysisError::Other("No AST available".to_string()))?;
+        let source_bytes = parsed_file
+            .content
+            .as_deref()
+            .map(str::as_bytes)
+            .unwrap_or(&[]);
+        let tree = parsed_file
+            .tree
+            .as_ref()
+            .ok_or_else(|| AnalysisError::Other("No AST available".to_string()))?;
         let language = tree.language();
 
         let query_source = r#"
@@ -648,20 +742,31 @@ impl LeakyAbstractionDetector {
             for capture in &match_.captures {
                 let node = capture.node;
                 let capture_name = query.capture_names()[capture.index as usize];
-                
+
                 match capture_name {
                     "import_source" => {
                         if let Ok(import_text) = node.utf8_text(source_bytes) {
                             let module_name = import_text.trim_matches('"').trim_matches('\'');
                             if self.is_infrastructure_module(module_name) {
-                                let layer = self.get_layer_name(&parsed_file.file_path.to_string());
-                                if matches!(layer, Some(ArchitecturalLayer::Domain) | Some(ArchitecturalLayer::Application)) {
+                                let layer =
+                                    self.get_layer_from_path(&parsed_file.file_path.to_string());
+                                if matches!(
+                                    layer,
+                                    Some(ArchitecturalLayer::Domain)
+                                        | Some(ArchitecturalLayer::Application)
+                                ) {
                                     issues.push(self.create_issue(
                                         analysis_run_id,
                                         &parsed_file.file_path.to_string(),
                                         node,
                                         LeakType::FrameworkCoupling,
-                                        &format!("Infrastructure module '{}' imported in {} layer", module_name, layer.map(|l| format!("{:?}", l)).unwrap_or_else(|| "unknown".to_string())),
+                                        &format!(
+                                                "Infrastructure module '{}' imported in {} layer",
+                                                module_name,
+                                                layer
+                                                    .map(|l| format!("{:?}", l))
+                                                    .unwrap_or_else(|| "unknown".to_string())
+                                            ),
                                         "high",
                                     ));
                                 }
@@ -681,8 +786,13 @@ impl LeakyAbstractionDetector {
                     "dom_object" => {
                         if let Ok(dom_text) = node.utf8_text(source_bytes) {
                             if dom_text == "document" || dom_text == "window" {
-                                let layer = self.get_layer_name(&parsed_file.file_path.to_string());
-                                if matches!(layer, Some(ArchitecturalLayer::Domain) | Some(ArchitecturalLayer::Application)) {
+                                let layer =
+                                    self.get_layer_from_path(&parsed_file.file_path.to_string());
+                                if matches!(
+                                    layer,
+                                    Some(ArchitecturalLayer::Domain)
+                                        | Some(ArchitecturalLayer::Application)
+                                ) {
                                     issues.push(self.create_issue(
                                         analysis_run_id,
                                         &parsed_file.file_path.to_string(),
@@ -752,31 +862,37 @@ impl AnalysisDetector for LeakyAbstractionDetector {
             AntiPatternType {
                 anti_pattern_type_id: Some(1),
                 name: "Visibility Violation".to_string(),
-                description: "Accessing private or internal implementation details across module boundaries".to_string(),
+                description:
+                    "Accessing private or internal implementation details across module boundaries"
+                        .to_string(),
                 category: "structural".to_string(),
             },
             AntiPatternType {
                 anti_pattern_type_id: Some(2),
                 name: "Layer Violation".to_string(),
-                description: "Dependencies flowing in wrong direction between architectural layers".to_string(),
+                description: "Dependencies flowing in wrong direction between architectural layers"
+                    .to_string(),
                 category: "structural".to_string(),
             },
             AntiPatternType {
                 anti_pattern_type_id: Some(3),
                 name: "Implementation Exposure".to_string(),
-                description: "Internal implementation details exposed through public interfaces".to_string(),
+                description: "Internal implementation details exposed through public interfaces"
+                    .to_string(),
                 category: "structural".to_string(),
             },
             AntiPatternType {
                 anti_pattern_type_id: Some(4),
                 name: "Framework Coupling".to_string(),
-                description: "Framework-specific types or objects used in business logic".to_string(),
+                description: "Framework-specific types or objects used in business logic"
+                    .to_string(),
                 category: "structural".to_string(),
             },
             AntiPatternType {
                 anti_pattern_type_id: Some(5),
                 name: "Error Propagation".to_string(),
-                description: "Low-level error types propagating through abstraction boundaries".to_string(),
+                description: "Low-level error types propagating through abstraction boundaries"
+                    .to_string(),
                 category: "behavioral".to_string(),
             },
             AntiPatternType {
@@ -811,24 +927,26 @@ impl AnalysisDetector for LeakyAbstractionDetector {
             log::debug!("Tree-sitter feature not enabled, skipping leaky abstraction detection");
             return Ok(Vec::new());
         }
-        
+
         #[cfg(feature = "tree-sitter")]
         {
-        let detector = self.clone();
-        let language_str = match parsed_file.language {
-            SourceLanguage::Rust => "rust",
-            SourceLanguage::Python => "python", 
-            SourceLanguage::JavaScript => "javascript",
-        };
-        
-        let analysis_run_id = 1; // TODO: Get from context
-        
-        match language_str {
-            "rust" => detector.analyze_rust_file(parsed_file, analysis_run_id),
-            "python" => detector.analyze_python_file(parsed_file, analysis_run_id),
-            "javascript" | "typescript" => detector.analyze_js_file(parsed_file, analysis_run_id),
-            _ => Ok(vec![]),
-        }
+            let detector = self.clone();
+            let language_str = match parsed_file.language {
+                SourceLanguage::Rust => "rust",
+                SourceLanguage::Python => "python",
+                SourceLanguage::JavaScript => "javascript",
+            };
+
+            let analysis_run_id = 1; // TODO: Get from context
+
+            match language_str {
+                "rust" => detector.analyze_rust_file(parsed_file, analysis_run_id),
+                "python" => detector.analyze_python_file(parsed_file, analysis_run_id),
+                "javascript" | "typescript" => {
+                    detector.analyze_js_file(parsed_file, analysis_run_id)
+                }
+                _ => Ok(vec![]),
+            }
         }
     }
 }

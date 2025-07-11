@@ -83,9 +83,9 @@ pub struct ResourceLimits {
 impl Default for ResourceLimits {
     fn default() -> Self {
         Self {
-            max_memory: 256 * 1024 * 1024,    // 256MB
-            max_fuel: 10_000_000,             // 10M instructions
-            max_execution_time_ms: 30_000,    // 30 seconds
+            max_memory: 256 * 1024 * 1024, // 256MB
+            max_fuel: 10_000_000,          // 10M instructions
+            max_execution_time_ms: 30_000, // 30 seconds
             max_file_handles: 10,
         }
     }
@@ -126,14 +126,19 @@ pub struct PluginStats {
 }
 
 impl PluginStats {
-    pub fn record_execution(&mut self, execution_time_ms: u64, fuel_consumed: u64, memory_usage: u64) {
+    pub fn record_execution(
+        &mut self,
+        execution_time_ms: u64,
+        fuel_consumed: u64,
+        memory_usage: u64,
+    ) {
         self.invocations += 1;
         self.total_execution_time_ms += execution_time_ms;
         self.avg_execution_time_ms = self.total_execution_time_ms as f64 / self.invocations as f64;
         self.total_fuel_consumed += fuel_consumed;
         self.peak_memory_usage = self.peak_memory_usage.max(memory_usage);
     }
-    
+
     pub fn record_error(&mut self, error: String) {
         self.error_count += 1;
         self.last_error = Some(error);
@@ -164,7 +169,7 @@ impl ExecutionContext {
             memory_limit: limits.max_memory,
         }
     }
-    
+
     pub fn elapsed_ms(&self) -> u64 {
         self.start_time.elapsed().as_millis() as u64
     }
@@ -194,4 +199,3 @@ mod tests {
         assert_eq!(status, deserialized);
     }
 }
-

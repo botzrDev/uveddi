@@ -10,4 +10,3 @@ pub mod large_classes_detection;
 pub mod long_methods_detection;
 pub mod magic_values_detection;
 pub mod tight_coupling_detection;
-

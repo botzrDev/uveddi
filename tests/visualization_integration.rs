@@ -10,35 +10,36 @@ use uuid::Uuid;
 use uveddi::analysis::component_extractor::ComponentExtractor;
 use uveddi::analysis::mermaid_generator::MermaidGenerator;
 use uveddi::ast::tree_sitter::{CustomAst, ParsedFile, SourceLanguage};
+use uveddi::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
 use uveddi::models::visualization::{
-    ArchitecturalComponent, ComponentMetrics, ComponentType, DependencyNode, DiagramMetadata, DiagramType, Dependency, DependencyType,
+    ArchitecturalComponent, ComponentMetrics, ComponentType, Dependency, DependencyNode,
+    DependencyType, DiagramMetadata, DiagramType,
 };
 use uveddi::report::ReportGenerator;
-use uveddi::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
 
 #[tokio::test]
 #[ignore = "Requires rendering service on localhost:3001"]
 async fn test_component_extraction_pipeline() {
     let mut extractor = ComponentExtractor::new();
-    
+
     // Create test parsed files with mock AST data
-    let parsed_files = vec![
-        create_test_service_file(),
-        create_test_controller_file(),
-    ];
-    
+    let parsed_files = vec![create_test_service_file(), create_test_controller_file()];
+
     let components = extractor.extract_components(&parsed_files).unwrap();
-    
+
     // Verify components were extracted
     assert!(components.len() >= 2);
     assert!(components.iter().any(|c| c.name == "UserService"));
     assert!(components.iter().any(|c| c.name == "UserController"));
-    
+
     // Verify component types are correctly identified
     let user_service = components.iter().find(|c| c.name == "UserService").unwrap();
     assert_eq!(user_service.component_type, ComponentType::Service);
-    
-    let user_controller = components.iter().find(|c| c.name == "UserController").unwrap();
+
+    let user_controller = components
+        .iter()
+        .find(|c| c.name == "UserController")
+        .unwrap();
     assert_eq!(user_controller.component_type, ComponentType::Class);
 }
 
@@ -47,22 +48,22 @@ async fn test_component_extraction_pipeline() {
 async fn test_mermaid_diagram_generation() {
     let generator = MermaidGenerator::new().unwrap();
     let components = create_test_components();
-    
+
     // Test component diagram generation
     let component_diagram = generator
         .generate_diagram(&components, DiagramType::Component)
         .unwrap();
-    
+
     assert!(component_diagram.mermaid_src.contains("graph"));
     assert!(component_diagram.mermaid_src.contains("UserService"));
     assert!(component_diagram.mermaid_src.contains("DatabaseService"));
     assert_eq!(component_diagram.diagram_type, DiagramType::Component);
-    
+
     // Test dependency diagram generation
     let dependency_diagram = generator
         .generate_diagram(&components, DiagramType::Dependency)
         .unwrap();
-    
+
     assert!(dependency_diagram.mermaid_src.contains("-->"));
     assert_eq!(dependency_diagram.diagram_type, DiagramType::Dependency);
 }
@@ -72,16 +73,16 @@ async fn test_mermaid_diagram_generation() {
 async fn test_severity_based_styling() {
     let generator = MermaidGenerator::new().unwrap();
     let components = create_test_components();
-    
+
     // Create severity data
     let mut severity_data = HashMap::new();
     severity_data.insert(components[0].component_id, "critical".to_string());
     severity_data.insert(components[1].component_id, "medium".to_string());
-    
+
     let diagram = generator
         .generate_diagram(&components, DiagramType::Component)
         .unwrap();
-    
+
     // Verify styling is applied
     assert!(diagram.mermaid_src.contains("classDef"));
     assert!(diagram.mermaid_src.contains("critical") || diagram.mermaid_src.contains("medium"));
@@ -95,7 +96,7 @@ async fn test_enhanced_report_generation() {
     let issues = create_test_issues();
     let anti_pattern_types = create_test_anti_pattern_types();
     let components = create_test_components();
-    
+
     let enhanced_report = report_generator
         .generate_enhanced_markdown_report(
             &analysis_run,
@@ -104,9 +105,11 @@ async fn test_enhanced_report_generation() {
             Some(&components),
         )
         .unwrap();
-    
+
     // Verify enhanced report contains expected sections
-    assert!(enhanced_report.markdown_content.contains("📊 Architectural Diagrams"));
+    assert!(enhanced_report
+        .markdown_content
+        .contains("📊 Architectural Diagrams"));
     assert!(enhanced_report.markdown_content.contains("System Overview"));
     assert!(enhanced_report.markdown_content.contains("```mermaid"));
     assert!(!enhanced_report.diagrams.is_empty());
@@ -118,14 +121,14 @@ async fn test_enhanced_report_generation() {
 async fn test_anti_pattern_specific_diagrams() {
     let generator = MermaidGenerator::new().unwrap();
     let components = create_cyclic_dependency_components();
-    
+
     // Test cyclic dependency visualization
     let highlighted_components = vec![components[0].component_id, components[1].component_id];
-    
+
     let dependency_graph = generator
         .generate_diagram(&components, DiagramType::Dependency)
         .unwrap();
-    
+
     assert!(dependency_graph.mermaid_src.contains("graph"));
     assert!(dependency_graph.mermaid_src.contains("-->"));
     assert_eq!(dependency_graph.diagram_type, DiagramType::Dependency);
@@ -139,13 +142,13 @@ async fn test_json_report_with_diagrams() {
     let issues = create_test_issues();
     let anti_pattern_types = create_test_anti_pattern_types_vec();
     let components = create_test_components();
-    
+
     // Generate diagrams first
     let generator = MermaidGenerator::new().unwrap();
     let overview_diagram = generator
         .generate_diagram(&components, DiagramType::Component)
         .unwrap();
-    
+
     // Convert DiagramResult to DiagramMetadata for the report
     let diagram_metadata = DiagramMetadata {
         diagram_type: overview_diagram.diagram_type,
@@ -156,7 +159,7 @@ async fn test_json_report_with_diagrams() {
         validation_metrics: None,
     };
     let diagrams = vec![diagram_metadata];
-    
+
     let json_report = report_generator
         .generate_enhanced_json_report(
             &analysis_run,
@@ -166,10 +169,10 @@ async fn test_json_report_with_diagrams() {
             &diagrams,
         )
         .unwrap();
-    
+
     // Parse and verify JSON structure
     let json_data: serde_json::Value = serde_json::from_str(&json_report).unwrap();
-    
+
     assert!(json_data["diagrams"].is_array());
     assert!(json_data["components"].is_array());
     assert!(json_data["metadata"]["enhanced_features"]["architectural_components"].is_boolean());
@@ -183,7 +186,7 @@ async fn test_error_handling() {
     let invalid_parsed_files = vec![]; // Empty should still work
     let result = extractor.extract_components(&invalid_parsed_files);
     assert!(result.is_ok());
-    
+
     // Test mermaid generation with empty components
     let generator = MermaidGenerator::new().unwrap();
     let empty_components = vec![];
@@ -228,7 +231,7 @@ fn create_test_controller_file() -> ParsedFile {
 fn create_test_components() -> Vec<ArchitecturalComponent> {
     let user_service_id = Uuid::new_v4();
     let db_service_id = Uuid::new_v4();
-    
+
     vec![
         ArchitecturalComponent {
             component_id: user_service_id,
@@ -282,7 +285,7 @@ fn create_test_components() -> Vec<ArchitecturalComponent> {
 fn create_cyclic_dependency_components() -> Vec<ArchitecturalComponent> {
     let comp_a_id = Uuid::new_v4();
     let comp_b_id = Uuid::new_v4();
-    
+
     vec![
         ArchitecturalComponent {
             component_id: comp_a_id,
@@ -377,7 +380,7 @@ fn create_test_issues() -> Vec<ArchitecturalIssue> {
 
 fn create_test_anti_pattern_types() -> HashMap<i64, AntiPatternType> {
     let mut map = HashMap::new();
-    
+
     map.insert(
         1,
         AntiPatternType {
@@ -387,7 +390,7 @@ fn create_test_anti_pattern_types() -> HashMap<i64, AntiPatternType> {
             category: "structural".to_string(),
         },
     );
-    
+
     map.insert(
         2,
         AntiPatternType {
@@ -397,7 +400,7 @@ fn create_test_anti_pattern_types() -> HashMap<i64, AntiPatternType> {
             category: "behavioral".to_string(),
         },
     );
-    
+
     map
 }
 

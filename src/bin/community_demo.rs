@@ -97,12 +97,17 @@ impl CommunityDatabase {
             CREATE INDEX IF NOT EXISTS idx_member_email ON community_members(email);
             CREATE INDEX IF NOT EXISTS idx_member_role ON community_members(role);
             CREATE INDEX IF NOT EXISTS idx_member_active ON community_members(is_active);
-            "#
+            "#,
         )?;
         Ok(())
     }
 
-    pub fn register_member(&self, email: &str, name: &str, role: MemberRole) -> SqlResult<CommunityMember> {
+    pub fn register_member(
+        &self,
+        email: &str,
+        name: &str,
+        role: MemberRole,
+    ) -> SqlResult<CommunityMember> {
         let member = CommunityMember {
             id: Uuid::new_v4().to_string(),
             email: email.to_string(),
@@ -157,15 +162,16 @@ impl CommunityDatabase {
                    avatar_url, company, job_title, languages, experience_level, use_case,
                    referral_source, newsletter_subscribed, marketing_consent, custom_fields
             FROM community_members WHERE email = ?1
-            "#
+            "#,
         )?;
 
         let member_iter = stmt.query_map([email], |row| {
             let languages_json: String = row.get(11)?;
             let custom_fields_json: String = row.get(17)?;
-            
+
             let languages: Vec<String> = serde_json::from_str(&languages_json).unwrap_or_default();
-            let custom_fields: HashMap<String, String> = serde_json::from_str(&custom_fields_json).unwrap_or_default();
+            let custom_fields: HashMap<String, String> =
+                serde_json::from_str(&custom_fields_json).unwrap_or_default();
 
             let last_active_str: Option<String> = row.get(5)?;
             let last_active = last_active_str
@@ -211,15 +217,16 @@ impl CommunityDatabase {
                    avatar_url, company, job_title, languages, experience_level, use_case,
                    referral_source, newsletter_subscribed, marketing_consent, custom_fields
             FROM community_members WHERE is_active = 1 ORDER BY created_at DESC
-            "#
+            "#,
         )?;
 
         let member_iter = stmt.query_map([], |row| {
             let languages_json: String = row.get(11)?;
             let custom_fields_json: String = row.get(17)?;
-            
+
             let languages: Vec<String> = serde_json::from_str(&languages_json).unwrap_or_default();
-            let custom_fields: HashMap<String, String> = serde_json::from_str(&custom_fields_json).unwrap_or_default();
+            let custom_fields: HashMap<String, String> =
+                serde_json::from_str(&custom_fields_json).unwrap_or_default();
 
             let last_active_str: Option<String> = row.get(5)?;
             let last_active = last_active_str
@@ -259,7 +266,11 @@ impl CommunityDatabase {
         Ok(members)
     }
 
-    pub fn update_member_profile(&self, member_id: &str, profile: &MemberProfile) -> SqlResult<bool> {
+    pub fn update_member_profile(
+        &self,
+        member_id: &str,
+        profile: &MemberProfile,
+    ) -> SqlResult<bool> {
         let languages_json = serde_json::to_string(&profile.languages).unwrap();
         let custom_fields_json = serde_json::to_string(&profile.custom_fields).unwrap();
 
@@ -303,15 +314,16 @@ impl CommunityDatabase {
                    avatar_url, company, job_title, languages, experience_level, use_case,
                    referral_source, newsletter_subscribed, marketing_consent, custom_fields
             FROM community_members WHERE is_active = 1 AND role = ?1 ORDER BY created_at DESC
-            "#
+            "#,
         )?;
 
         let member_iter = stmt.query_map([role.as_str()], |row| {
             let languages_json: String = row.get(11)?;
             let custom_fields_json: String = row.get(17)?;
-            
+
             let languages: Vec<String> = serde_json::from_str(&languages_json).unwrap_or_default();
-            let custom_fields: HashMap<String, String> = serde_json::from_str(&custom_fields_json).unwrap_or_default();
+            let custom_fields: HashMap<String, String> =
+                serde_json::from_str(&custom_fields_json).unwrap_or_default();
 
             let last_active_str: Option<String> = row.get(5)?;
             let last_active = last_active_str
@@ -362,7 +374,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Register some demo members
     println!("\n📝 Registering demo members...");
-    
+
     let alice = db.register_member("alice@techcorp.com", "Alice Johnson", MemberRole::Developer)?;
     println!("   Registered: {} ({})", alice.name, alice.email);
 
@@ -377,7 +389,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut alice_profile = MemberProfile {
         company: Some("TechCorp Inc.".to_string()),
         job_title: Some("Senior Software Engineer".to_string()),
-        languages: vec!["Rust".to_string(), "Python".to_string(), "TypeScript".to_string()],
+        languages: vec![
+            "Rust".to_string(),
+            "Python".to_string(),
+            "TypeScript".to_string(),
+        ],
         experience_level: Some("advanced".to_string()),
         use_case: Some("Code quality analysis for large codebase".to_string()),
         referral_source: Some("GitHub".to_string()),
@@ -385,8 +401,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         marketing_consent: true,
         custom_fields: HashMap::new(),
     };
-    alice_profile.custom_fields.insert("team_size".to_string(), "15".to_string());
-    alice_profile.custom_fields.insert("deployment_frequency".to_string(), "weekly".to_string());
+    alice_profile
+        .custom_fields
+        .insert("team_size".to_string(), "15".to_string());
+    alice_profile
+        .custom_fields
+        .insert("deployment_frequency".to_string(), "weekly".to_string());
 
     db.update_member_profile(&alice.id, &alice_profile)?;
     println!("   Updated profile for {}", alice.name);
@@ -415,11 +435,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Test retrieval
     println!("\n🔍 Testing member retrieval...");
     if let Some(retrieved_alice) = db.get_member_by_email("alice@techcorp.com")? {
-        println!("   Found Alice: {} with company {}", 
-                 retrieved_alice.name, 
-                 retrieved_alice.profile.company.as_ref().unwrap_or(&"None".to_string()));
+        println!(
+            "   Found Alice: {} with company {}",
+            retrieved_alice.name,
+            retrieved_alice
+                .profile
+                .company
+                .as_ref()
+                .unwrap_or(&"None".to_string())
+        );
         println!("   Languages: {:?}", retrieved_alice.profile.languages);
-        println!("   Custom fields: {:?}", retrieved_alice.profile.custom_fields);
+        println!(
+            "   Custom fields: {:?}",
+            retrieved_alice.profile.custom_fields
+        );
     }
 
     // Display member list
@@ -428,26 +457,31 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     for member in &members {
         let role_emoji = match member.role {
             MemberRole::Admin => "👑",
-            MemberRole::Developer => "💻", 
+            MemberRole::Developer => "💻",
             MemberRole::Member => "👤",
         };
-        println!("   {} {} ({}) - {} - Company: {}", 
-                 role_emoji, 
-                 member.name, 
-                 member.email,
-                 member.role.as_str(),
-                 member.profile.company.as_ref().unwrap_or(&"None".to_string())
+        println!(
+            "   {} {} ({}) - {} - Company: {}",
+            role_emoji,
+            member.name,
+            member.email,
+            member.role.as_str(),
+            member
+                .profile
+                .company
+                .as_ref()
+                .unwrap_or(&"None".to_string())
         );
     }
 
     // Generate analytics
     println!("\n📊 Community Analytics:");
     println!("   Total Members: {}", members.len());
-    
+
     let developers = db.list_members_by_role(MemberRole::Developer)?;
     let admins = db.list_members_by_role(MemberRole::Admin)?;
     let regular_members = db.list_members_by_role(MemberRole::Member)?;
-    
+
     println!("   Members by Role:");
     println!("     member: {}", regular_members.len());
     println!("     developer: {}", developers.len());
@@ -475,11 +509,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     println!("\n📈 Marketing Insights:");
-    println!("   Newsletter subscription rate: {:.1}%", 
-             (newsletter_subscribers as f64 / members.len() as f64) * 100.0);
-    println!("   Marketing consent rate: {:.1}%", 
-             (marketing_consents as f64 / members.len() as f64) * 100.0);
-    
+    println!(
+        "   Newsletter subscription rate: {:.1}%",
+        (newsletter_subscribers as f64 / members.len() as f64) * 100.0
+    );
+    println!(
+        "   Marketing consent rate: {:.1}%",
+        (marketing_consents as f64 / members.len() as f64) * 100.0
+    );
+
     if !companies.is_empty() {
         println!("   Top Companies:");
         for (company, count) in &companies {
@@ -503,7 +541,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     assert!(members.iter().any(|m| m.role == MemberRole::Admin));
     assert!(members.iter().any(|m| m.role == MemberRole::Developer));
     assert_eq!(developers.len(), 2); // Alice and promoted Bob
-    
+
     println!("🎉 All assertions passed! The community database is working perfectly.");
 
     Ok(())

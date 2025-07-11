@@ -2,7 +2,7 @@
 
 use chrono::Utc;
 use std::collections::HashMap;
-use uveddi::database::models::{AnalysisRun, ArchitecturalIssue, AntiPatternType};
+use uveddi::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
 use uveddi::report::ReportGenerator;
 
 #[test]
@@ -29,16 +29,19 @@ fn report_includes_ai_explanation_when_present() {
         code_snippet: Some("struct GodObject { ... }".to_string()),
         ai_explanation: Some("This is an AI explanation.".to_string()),
     }];
-    
+
     // Create anti_pattern_types HashMap
     let mut anti_pattern_types = HashMap::new();
-    anti_pattern_types.insert(1, AntiPatternType {
-        anti_pattern_type_id: Some(1),
-        name: "God Object".to_string(),
-        description: "A class that knows too much or does too much".to_string(),
-        category: "structural".to_string(),
-    });
-    
+    anti_pattern_types.insert(
+        1,
+        AntiPatternType {
+            anti_pattern_type_id: Some(1),
+            name: "God Object".to_string(),
+            description: "A class that knows too much or does too much".to_string(),
+            category: "structural".to_string(),
+        },
+    );
+
     let report = ReportGenerator::new()
         .generate_markdown_report(&run, &issues, &anti_pattern_types, None)
         .unwrap();
@@ -70,16 +73,19 @@ fn report_excludes_ai_explanation_when_absent() {
         code_snippet: Some("struct GodObject { ... }".to_string()),
         ai_explanation: None,
     }];
-    
+
     // Create anti_pattern_types HashMap
     let mut anti_pattern_types = HashMap::new();
-    anti_pattern_types.insert(1, AntiPatternType {
-        anti_pattern_type_id: Some(1),
-        name: "God Object".to_string(),
-        description: "A class that knows too much or does too much".to_string(),
-        category: "structural".to_string(),
-    });
-    
+    anti_pattern_types.insert(
+        1,
+        AntiPatternType {
+            anti_pattern_type_id: Some(1),
+            name: "God Object".to_string(),
+            description: "A class that knows too much or does too much".to_string(),
+            category: "structural".to_string(),
+        },
+    );
+
     let report = ReportGenerator::new()
         .generate_markdown_report(&run, &issues, &anti_pattern_types, None)
         .unwrap();

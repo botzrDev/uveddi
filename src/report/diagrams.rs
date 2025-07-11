@@ -1,7 +1,7 @@
 //! Mermaid.js diagram generation for code dependencies and anti-patterns
 
-use crate::models::visualization::Dependency;
 use crate::database::models::ArchitecturalIssue;
+use crate::models::visualization::Dependency;
 use std::collections::HashSet;
 
 /// Placeholder documentation for public items
@@ -44,7 +44,10 @@ pub fn generate_mermaid_diagram(deps: &[Dependency], issues: &[ArchitecturalIssu
     for issue in issues {
         // Use file_path as the node identifier for highlighting
         let node_id = &issue.file_path;
-        output.push_str(&format!("    \"{}\"[\"{}\" class=\"issue\"];\n", node_id, node_id));
+        output.push_str(&format!(
+            "    \"{}\"[\"{}\" class=\"issue\"];\n",
+            node_id, node_id
+        ));
     }
     output.push_str("classDef issue fill:#f96,stroke:#333,stroke-width:2px;\n");
     output.push_str("```\n");
@@ -54,29 +57,30 @@ pub fn generate_mermaid_diagram(deps: &[Dependency], issues: &[ArchitecturalIssu
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::visualization::Dependency;
     use crate::database::models::ArchitecturalIssue;
+    use crate::models::visualization::Dependency;
 
     #[test]
     fn test_generate_mermaid_diagram() {
-        let deps = vec![
-            Dependency {
-                from: crate::models::visualization::DependencyNode {
-                    id: "mod1".to_string(), 
-                    name: "Module1".to_string(),
-                },
-                to: crate::models::visualization::DependencyNode {
-                    id: "mod2".to_string(), 
-                    name: "Module2".to_string(),
-                },
-                dependency_type: crate::models::visualization::DependencyType::Imports,
-                kind: Some(crate::models::visualization::DependencyType::Imports),
-                weight: None,
-                target_component_id: Some("mod2".to_string()),
-                properties: Some(std::collections::HashMap::new()),
+        let deps = vec![Dependency {
+            from: crate::models::visualization::DependencyNode {
+                id: "mod1".to_string(),
+                name: "Module1".to_string(),
             },
-        ];
-        let issues = vec![ArchitecturalIssue { file_path: "mod1".to_string(), ..Default::default() }];
+            to: crate::models::visualization::DependencyNode {
+                id: "mod2".to_string(),
+                name: "Module2".to_string(),
+            },
+            dependency_type: crate::models::visualization::DependencyType::Imports,
+            kind: Some(crate::models::visualization::DependencyType::Imports),
+            weight: None,
+            target_component_id: Some("mod2".to_string()),
+            properties: Some(std::collections::HashMap::new()),
+        }];
+        let issues = vec![ArchitecturalIssue {
+            file_path: "mod1".to_string(),
+            ..Default::default()
+        }];
         let diagram = generate_mermaid_diagram(&deps, &issues);
         assert!(diagram.contains("mod1 --> mod2"));
         assert!(diagram.contains("classDef issue"));

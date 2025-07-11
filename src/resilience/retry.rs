@@ -97,14 +97,14 @@ impl RetryClient {
                     }
 
                     // Handle rate limiting specially
-                    let actual_delay =
-                        if let RenderingServiceError::RateLimitExceeded { retry_after_seconds } =
-                            &error
-                        {
-                            self.calculate_rate_limit_delay(*retry_after_seconds)
-                        } else {
-                            self.calculate_exponential_delay(delay)
-                        };
+                    let actual_delay = if let RenderingServiceError::RateLimitExceeded {
+                        retry_after_seconds,
+                    } = &error
+                    {
+                        self.calculate_rate_limit_delay(*retry_after_seconds)
+                    } else {
+                        self.calculate_exponential_delay(delay)
+                    };
 
                     tracing::warn!(
                         attempt = attempt,
@@ -128,7 +128,8 @@ impl RetryClient {
 
     fn should_retry_error(&self, error: &RenderingServiceError) -> bool {
         // Use the error's built-in retry logic
-        if !error.is_retryable() { // NOTE: Corrected method name from should_retry to is_retryable
+        if !error.is_retryable() {
+            // NOTE: Corrected method name from should_retry to is_retryable
             return false;
         }
 

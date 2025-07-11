@@ -1,12 +1,12 @@
 //! Error recovery and retry mechanisms (UV-176)
-//! 
+//!
 //! Provides advanced, coordinated recovery across components.
 
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use crate::resilience::{RetryClient, CircuitBreaker, HealthMonitor, MetricsCollector};
 use crate::error::RenderingServiceError;
+use crate::resilience::{CircuitBreaker, HealthMonitor, MetricsCollector, RetryClient};
 
 /// Placeholder documentation for public items
 #[derive(Debug, Clone)]
@@ -103,7 +103,10 @@ impl RecoveryManager {
     }
 
     /// Performs preemptive recovery based on predicted failures.
-    pub async fn preemptive_recovery(&self, _predicted_failure: PredictedFailure) -> Result<(), RecoveryError> {
+    pub async fn preemptive_recovery(
+        &self,
+        _predicted_failure: PredictedFailure,
+    ) -> Result<(), RecoveryError> {
         // TODO: UV-176 - Preemptive recovery
         Ok(())
     }

@@ -6,12 +6,8 @@
 
 use chrono::Utc;
 use std::collections::HashMap;
-use uveddi::community::{
-    CommunityDatabase, MemberRole, ActivityType, MemberProfile,
-};
-use uveddi::community::models::{
-    AdminPermissions, AdminLevel, DeveloperType, BadgeType
-};
+use uveddi::community::models::{AdminLevel, AdminPermissions, BadgeType, DeveloperType};
+use uveddi::community::{ActivityType, CommunityDatabase, MemberProfile, MemberRole};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("🚀 Enhanced Uveddi Community Database Demo");
@@ -23,7 +19,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Register members with different roles
     println!("\n📝 Registering community members with different roles...");
-    
+
     let alice = db.register_member("alice@techcorp.com", "Alice Johnson", MemberRole::Developer)?;
     println!("   Registered: {} ({})", alice.name, alice.role.as_str());
 
@@ -31,9 +27,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("   Registered: {} ({})", bob.name, bob.role.as_str());
 
     let admin_user = db.register_member("admin@uveddi.com", "Phillip Green", MemberRole::Admin)?;
-    println!("   Registered: {} ({})", admin_user.name, admin_user.role.as_str());
+    println!(
+        "   Registered: {} ({})",
+        admin_user.name,
+        admin_user.role.as_str()
+    );
 
-    let carol = db.register_member("carol@enterprise.com", "Carol Williams", MemberRole::Developer)?;
+    let carol = db.register_member(
+        "carol@enterprise.com",
+        "Carol Williams",
+        MemberRole::Developer,
+    )?;
     println!("   Registered: {} ({})", carol.name, carol.role.as_str());
 
     // Create admin profile for the admin user
@@ -49,31 +53,42 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Create developer profiles
     println!("\n💻 Setting up developer profiles...");
-    
+
     let alice_dev_profile = db.create_developer_profile(
         &alice.id,
         DeveloperType::Enterprise,
-        vec!["Rust".to_string(), "Python".to_string(), "DevOps".to_string()],
+        vec![
+            "Rust".to_string(),
+            "Python".to_string(),
+            "DevOps".to_string(),
+        ],
     )?;
     println!("   Created enterprise developer profile for {}", alice.name);
 
     let carol_dev_profile = db.create_developer_profile(
         &carol.id,
         DeveloperType::OpenSource,
-        vec!["JavaScript".to_string(), "TypeScript".to_string(), "React".to_string()],
+        vec![
+            "JavaScript".to_string(),
+            "TypeScript".to_string(),
+            "React".to_string(),
+        ],
     )?;
-    println!("   Created open source developer profile for {}", carol.name);
+    println!(
+        "   Created open source developer profile for {}",
+        carol.name
+    );
 
     // Award some developer badges
     println!("\n🏆 Awarding developer badges...");
-    
+
     db.award_developer_badge(
         &alice.id,
         BadgeType::EarlyAdopter,
         "Early adopter of Uveddi platform",
         Some(r#"{"join_date": "2025-01-01", "feature": "beta_testing"}"#),
     )?;
-    
+
     db.award_developer_badge(
         &alice.id,
         BadgeType::Contributor,
@@ -95,7 +110,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut alice_profile = MemberProfile {
         company: Some("TechCorp Inc.".to_string()),
         job_title: Some("Senior Software Engineer".to_string()),
-        languages: vec!["Rust".to_string(), "Python".to_string(), "TypeScript".to_string()],
+        languages: vec![
+            "Rust".to_string(),
+            "Python".to_string(),
+            "TypeScript".to_string(),
+        ],
         experience_level: Some("advanced".to_string()),
         use_case: Some("Enterprise code quality analysis".to_string()),
         referral_source: Some("GitHub".to_string()),
@@ -103,8 +122,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         marketing_consent: true,
         custom_fields: HashMap::new(),
     };
-    alice_profile.custom_fields.insert("team_size".to_string(), "25".to_string());
-    alice_profile.custom_fields.insert("deployment_env".to_string(), "kubernetes".to_string());
+    alice_profile
+        .custom_fields
+        .insert("team_size".to_string(), "25".to_string());
+    alice_profile
+        .custom_fields
+        .insert("deployment_env".to_string(), "kubernetes".to_string());
 
     db.update_member_profile(&alice.id, &alice_profile)?;
     println!("   Updated profile for {} (Developer)", alice.name);
@@ -112,70 +135,138 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Promote Bob to Developer after he shows interest
     println!("\n⬆️ Promoting member roles...");
     db.update_member_role(&bob.id, MemberRole::Developer)?;
-    
+
     // Create developer profile for the newly promoted Bob
     let bob_dev_profile = db.create_developer_profile(
         &bob.id,
         DeveloperType::Startup,
         vec!["Go".to_string(), "JavaScript".to_string()],
     )?;
-    
+
     println!("   Promoted {} to Developer and created profile", bob.name);
 
     // Log various activities showing role-specific actions
     println!("\n📊 Logging role-specific activities...");
-    
+
     // Regular user activities
-    db.log_activity(&alice.id, ActivityType::Login, None, Some("192.168.1.100"), Some("Mozilla/5.0"))?;
-    db.log_activity(&alice.id, ActivityType::ApiCall, Some("Analyzed large codebase"), None, None)?;
-    db.log_activity(&alice.id, ActivityType::ReportGenerated, Some("Generated enterprise report"), None, None)?;
-    
+    db.log_activity(
+        &alice.id,
+        ActivityType::Login,
+        None,
+        Some("192.168.1.100"),
+        Some("Mozilla/5.0"),
+    )?;
+    db.log_activity(
+        &alice.id,
+        ActivityType::ApiCall,
+        Some("Analyzed large codebase"),
+        None,
+        None,
+    )?;
+    db.log_activity(
+        &alice.id,
+        ActivityType::ReportGenerated,
+        Some("Generated enterprise report"),
+        None,
+        None,
+    )?;
+
     // Developer-specific activities
-    db.log_activity(&carol.id, ActivityType::Login, None, Some("10.0.0.50"), Some("Chrome/91.0"))?;
-    db.log_activity(&carol.id, ActivityType::PluginInstall, Some("Installed custom linting plugin"), None, None)?;
-    db.log_activity(&carol.id, ActivityType::ForumPost, Some("Helped community member with setup"), None, None)?;
-    
+    db.log_activity(
+        &carol.id,
+        ActivityType::Login,
+        None,
+        Some("10.0.0.50"),
+        Some("Chrome/91.0"),
+    )?;
+    db.log_activity(
+        &carol.id,
+        ActivityType::PluginInstall,
+        Some("Installed custom linting plugin"),
+        None,
+        None,
+    )?;
+    db.log_activity(
+        &carol.id,
+        ActivityType::ForumPost,
+        Some("Helped community member with setup"),
+        None,
+        None,
+    )?;
+
     // Admin activities
-    db.log_activity(&admin_user.id, ActivityType::AdminAction, Some("Reviewed user permissions"), None, None)?;
-    db.log_activity(&admin_user.id, ActivityType::RoleChanged, Some("Promoted user to developer"), None, None)?;
+    db.log_activity(
+        &admin_user.id,
+        ActivityType::AdminAction,
+        Some("Reviewed user permissions"),
+        None,
+        None,
+    )?;
+    db.log_activity(
+        &admin_user.id,
+        ActivityType::RoleChanged,
+        Some("Promoted user to developer"),
+        None,
+        None,
+    )?;
 
     println!("   Logged {} activities across different roles", 7);
 
     // Display enhanced member information by role
     println!("\n👥 Community Members by Role:");
-    
+
     // List all admins with their permissions
     let admins = db.list_admins()?;
     println!("\n   🔧 Administrators ({}):", admins.len());
     for (member, admin_profile) in &admins {
-        println!("     {} {} ({}) - Level: {:?}", 
-                 if admin_profile.is_super_admin { "👑" } else { "🔧" },
-                 member.name, 
-                 member.email,
-                 admin_profile.admin_level
+        println!(
+            "     {} {} ({}) - Level: {:?}",
+            if admin_profile.is_super_admin {
+                "👑"
+            } else {
+                "🔧"
+            },
+            member.name,
+            member.email,
+            admin_profile.admin_level
         );
-        println!("       Appointed: {}", admin_profile.appointed_at.format("%Y-%m-%d"));
-        println!("       Can manage users: {}", admin_profile.permissions.can_manage_users);
-        println!("       Can manage admins: {}", admin_profile.permissions.can_manage_admins);
+        println!(
+            "       Appointed: {}",
+            admin_profile.appointed_at.format("%Y-%m-%d")
+        );
+        println!(
+            "       Can manage users: {}",
+            admin_profile.permissions.can_manage_users
+        );
+        println!(
+            "       Can manage admins: {}",
+            admin_profile.permissions.can_manage_admins
+        );
     }
 
     // List all developers with their profiles
     let all_members = db.list_members(None, true, None, None)?;
-    let developers: Vec<_> = all_members.iter()
+    let developers: Vec<_> = all_members
+        .iter()
         .filter(|m| m.role.is_developer_or_higher() && !m.role.is_admin())
         .collect();
-    
+
     println!("\n   💻 Developers ({}):", developers.len());
     for member in &developers {
         if let Ok(Some(dev_profile)) = db.get_developer_profile(&member.id) {
-            println!("     💻 {} ({}) - Type: {:?}", 
-                     member.name, 
-                     member.email,
-                     dev_profile.developer_type
+            println!(
+                "     💻 {} ({}) - Type: {:?}",
+                member.name, member.email, dev_profile.developer_type
             );
-            println!("       Specializations: {}", dev_profile.specializations.join(", "));
+            println!(
+                "       Specializations: {}",
+                dev_profile.specializations.join(", ")
+            );
             println!("       API Access: {:?}", dev_profile.api_access_level);
-            println!("       Contribution Score: {}", dev_profile.contribution_score);
+            println!(
+                "       Contribution Score: {}",
+                dev_profile.contribution_score
+            );
             println!("       GitHub Verified: {}", dev_profile.github_verified);
             println!("       Mentor Status: {}", dev_profile.mentor_status);
         }
@@ -185,13 +276,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("\n🔐 Role Permissions Overview:");
     for role in [MemberRole::Member, MemberRole::Developer, MemberRole::Admin] {
         if let Ok(Some(permissions)) = db.get_role_permissions(&role) {
-            println!("   {} Role: {}", 
-                     match role {
-                         MemberRole::Member => "👤",
-                         MemberRole::Developer => "💻",
-                         MemberRole::Admin => "👑",
-                     },
-                     role.as_str()
+            println!(
+                "   {} Role: {}",
+                match role {
+                    MemberRole::Member => "👤",
+                    MemberRole::Developer => "💻",
+                    MemberRole::Admin => "👑",
+                },
+                role.as_str()
             );
             println!("     API Access: {}", permissions.can_access_api);
             println!("     View Source: {}", permissions.can_view_source);
@@ -206,11 +298,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("\n📊 Enhanced Community Analytics:");
     let all_members = db.list_members(None, true, None, None)?;
     println!("   Total Active Members: {}", all_members.len());
-    
-    let member_count = all_members.iter().filter(|m| matches!(m.role, MemberRole::Member)).count();
-    let dev_count = all_members.iter().filter(|m| matches!(m.role, MemberRole::Developer)).count();
-    let admin_count = all_members.iter().filter(|m| matches!(m.role, MemberRole::Admin)).count();
-    
+
+    let member_count = all_members
+        .iter()
+        .filter(|m| matches!(m.role, MemberRole::Member))
+        .count();
+    let dev_count = all_members
+        .iter()
+        .filter(|m| matches!(m.role, MemberRole::Developer))
+        .count();
+    let admin_count = all_members
+        .iter()
+        .filter(|m| matches!(m.role, MemberRole::Admin))
+        .count();
+
     println!("   Members by Role:");
     println!("     👤 Members: {}", member_count);
     println!("     💻 Developers: {}", dev_count);
@@ -220,10 +321,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("\n📈 Recent Community Activity:");
     let recent_activities = db.get_member_activity(&alice.id, Some(3))?;
     for activity in recent_activities {
-        println!("   {} - {} {}",
-                 activity.timestamp.format("%Y-%m-%d %H:%M"),
-                 activity.activity_type.as_str(),
-                 activity.description.map(|d| format!("({})", d)).unwrap_or_default()
+        println!(
+            "   {} - {} {}",
+            activity.timestamp.format("%Y-%m-%d %H:%M"),
+            activity.activity_type.as_str(),
+            activity
+                .description
+                .map(|d| format!("({})", d))
+                .unwrap_or_default()
         );
     }
 

@@ -31,10 +31,4 @@
 //! ```
 
 pub mod tree_sitter;
-pub use tree_sitter::{
-    AstParser, 
-    CustomAst,
-    ParsedFile,
-    SourceLanguage,
-    AstError
-};
+pub use tree_sitter::{AstError, AstParser, CacheStats, CustomAst, ParsedFile, SourceLanguage};

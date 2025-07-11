@@ -10,9 +10,9 @@ use log::{error, info};
 use std::collections::HashMap;
 use std::path::PathBuf;
 
-use crate::analysis::AnalysisEngine;
 use crate::analysis::detectors::anti_patterns::dead_code::DeadCodeConfig;
 use crate::analysis::detectors::anti_patterns::large_classes::LargeClassConfig;
+use crate::analysis::AnalysisEngine;
 use crate::database::crud::Database;
 use crate::database::models::{AnalysisRun, ArchitecturalIssue};
 use crate::error::UveddiError;
@@ -162,7 +162,7 @@ impl AnalysisOrchestrator {
 
         // Configure dead code detector if settings provided
         self.configure_dead_code_detector(&config)?;
-        
+
         // Configure large classes detector if settings provided
         self.configure_large_classes_detector(&config)?;
 
@@ -211,7 +211,8 @@ impl AnalysisOrchestrator {
 
         // Generate report
         let report_generator = ReportGenerator::new();
-        let report_content = self.generate_report(&config, &analysis_run, &issues, &report_generator)?;
+        let report_content =
+            self.generate_report(&config, &analysis_run, &issues, &report_generator)?;
 
         // Write output file if specified
         if let Some(output_path) = &config.output_file {
@@ -289,52 +290,56 @@ impl AnalysisOrchestrator {
     /// Configure the dead code detector based on analysis config
     fn configure_dead_code_detector(&mut self, config: &AnalysisConfig) -> Result<(), UveddiError> {
         // Check if any dead code configuration is provided
-        if config.dead_code_confidence.is_some() ||
-           config.dead_code_library_mode ||
-           config.dead_code_ignore_patterns.is_some() ||
-           config.dead_code_keep_alive.is_some() {
-            
+        if config.dead_code_confidence.is_some()
+            || config.dead_code_library_mode
+            || config.dead_code_ignore_patterns.is_some()
+            || config.dead_code_keep_alive.is_some()
+        {
             let mut dead_code_config = DeadCodeConfig::default();
-            
+
             if let Some(confidence) = config.dead_code_confidence {
                 if confidence < 0.0 || confidence > 1.0 {
                     return Err(UveddiError::Configuration(
-                        "Dead code confidence threshold must be between 0.0 and 1.0".to_string()
+                        "Dead code confidence threshold must be between 0.0 and 1.0".to_string(),
                     ));
                 }
                 dead_code_config.min_confidence = confidence;
             }
-            
+
             dead_code_config.library_mode = config.dead_code_library_mode;
-            
+
             if let Some(ref patterns) = config.dead_code_ignore_patterns {
                 dead_code_config.ignore_patterns = patterns.clone();
             }
-            
+
             if let Some(ref patterns) = config.dead_code_keep_alive {
                 dead_code_config.keep_alive_patterns = patterns.clone();
             }
-            
-            self.analysis_engine.configure_dead_code_detector(dead_code_config);
+
+            self.analysis_engine
+                .configure_dead_code_detector(dead_code_config);
             info!("Dead code detector configured with custom settings");
         }
-        
+
         Ok(())
     }
 
     /// Configure the large classes detector based on analysis config
-    fn configure_large_classes_detector(&mut self, config: &AnalysisConfig) -> Result<(), UveddiError> {
+    fn configure_large_classes_detector(
+        &mut self,
+        config: &AnalysisConfig,
+    ) -> Result<(), UveddiError> {
         // Check if any large classes configuration is provided
-        if config.large_classes_max_loc.is_some() ||
-           config.large_classes_max_methods.is_some() ||
-           config.large_classes_max_fields.is_some() ||
-           config.large_classes_max_complexity.is_some() ||
-           config.large_classes_max_lcom.is_some() ||
-           config.large_classes_ignore_patterns.is_some() ||
-           config.large_classes_min_severity.is_some() {
-            
+        if config.large_classes_max_loc.is_some()
+            || config.large_classes_max_methods.is_some()
+            || config.large_classes_max_fields.is_some()
+            || config.large_classes_max_complexity.is_some()
+            || config.large_classes_max_lcom.is_some()
+            || config.large_classes_ignore_patterns.is_some()
+            || config.large_classes_min_severity.is_some()
+        {
             let mut large_classes_config = LargeClassConfig::default();
-            
+
             // Apply custom thresholds if provided
             if let Some(max_loc) = config.large_classes_max_loc {
                 // Update all language thresholds with the custom value
@@ -342,44 +347,56 @@ impl AnalysisOrchestrator {
                 large_classes_config.python_thresholds.max_logical_loc = max_loc;
                 large_classes_config.javascript_thresholds.max_logical_loc = max_loc;
             }
-            
+
             if let Some(max_methods) = config.large_classes_max_methods {
                 large_classes_config.rust_thresholds.max_methods = max_methods;
                 large_classes_config.python_thresholds.max_methods = max_methods;
                 large_classes_config.javascript_thresholds.max_methods = max_methods;
             }
-            
+
             if let Some(max_fields) = config.large_classes_max_fields {
                 large_classes_config.rust_thresholds.max_fields = max_fields;
                 large_classes_config.python_thresholds.max_fields = max_fields;
                 large_classes_config.javascript_thresholds.max_fields = max_fields;
             }
-            
+
             if let Some(max_complexity) = config.large_classes_max_complexity {
-                large_classes_config.rust_thresholds.max_cyclomatic_complexity = max_complexity;
-                large_classes_config.python_thresholds.max_cyclomatic_complexity = max_complexity;
-                large_classes_config.javascript_thresholds.max_cyclomatic_complexity = max_complexity;
-                large_classes_config.rust_thresholds.max_cognitive_complexity = max_complexity;
-                large_classes_config.python_thresholds.max_cognitive_complexity = max_complexity;
-                large_classes_config.javascript_thresholds.max_cognitive_complexity = max_complexity;
+                large_classes_config
+                    .rust_thresholds
+                    .max_cyclomatic_complexity = max_complexity;
+                large_classes_config
+                    .python_thresholds
+                    .max_cyclomatic_complexity = max_complexity;
+                large_classes_config
+                    .javascript_thresholds
+                    .max_cyclomatic_complexity = max_complexity;
+                large_classes_config
+                    .rust_thresholds
+                    .max_cognitive_complexity = max_complexity;
+                large_classes_config
+                    .python_thresholds
+                    .max_cognitive_complexity = max_complexity;
+                large_classes_config
+                    .javascript_thresholds
+                    .max_cognitive_complexity = max_complexity;
             }
-            
+
             if let Some(max_lcom) = config.large_classes_max_lcom {
                 if max_lcom < 0.0 || max_lcom > 1.0 {
                     return Err(UveddiError::Configuration(
-                        "Large classes LCOM score must be between 0.0 and 1.0".to_string()
+                        "Large classes LCOM score must be between 0.0 and 1.0".to_string(),
                     ));
                 }
                 large_classes_config.rust_thresholds.max_lcom_score = max_lcom;
                 large_classes_config.python_thresholds.max_lcom_score = max_lcom;
                 large_classes_config.javascript_thresholds.max_lcom_score = max_lcom;
             }
-            
+
             // TODO: Add ignore_patterns and min_severity_score fields to LargeClassConfig
             // if let Some(ref patterns) = config.large_classes_ignore_patterns {
             //     large_classes_config.ignore_patterns = patterns.clone();
             // }
-            
+
             // if let Some(min_severity) = config.large_classes_min_severity {
             //     if min_severity > 100 {
             //         return Err(UveddiError::Configuration(
@@ -388,11 +405,12 @@ impl AnalysisOrchestrator {
             //     }
             //     large_classes_config.min_severity_score = min_severity;
             // }
-            
-            self.analysis_engine.configure_large_classes_detector(large_classes_config);
+
+            self.analysis_engine
+                .configure_large_classes_detector(large_classes_config);
             info!("Large classes detector configured with custom settings");
         }
-        
+
         Ok(())
     }
 }

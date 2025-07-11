@@ -25,7 +25,7 @@
 //!
 //! ```rust
 //! use uveddi::plugins::{WasmPluginEngine, PluginRegistry};
-//! 
+//!
 //! #[tokio::main]
 //! async fn main() -> Result<(), Box<dyn std::error::Error>> {
 //!     let mut engine = WasmPluginEngine::new().await?;
@@ -41,51 +41,53 @@
 //! }
 //! ```
 
+pub mod data_plane;
 pub mod engine;
+pub mod errors;
+pub mod lifecycle;
 pub mod registry;
 pub mod security;
-pub mod data_plane;
-pub mod verification;
-pub mod lifecycle;
-pub mod errors;
 pub mod types;
+pub mod verification;
 
 // Re-exports for convenience
-pub use engine::WasmPluginEngine;
-pub use registry::{PluginRegistry, PluginMetadata, PluginManifest};
-pub use security::{SecurityPolicy, Permission};
 pub use data_plane::AstDataPlane;
-pub use verification::{PluginVerifier, VerificationReport};
-pub use lifecycle::{PluginLifecycleManager, ResourceReport};
+pub use engine::WasmPluginEngine;
 pub use errors::{PluginError, PluginResult};
+pub use lifecycle::{PluginLifecycleManager, ResourceReport};
+pub use registry::{PluginManifest, PluginMetadata, PluginRegistry};
+pub use security::{Permission, SecurityPolicy};
 pub use types::*;
+pub use verification::{PluginVerifier, VerificationReport};
 
 // Feature gate for WASM plugin system
 #[cfg(feature = "wasm-plugins")]
 pub mod wasm {
     pub use super::*;
-    
+
     // Generate bindings from WIT file
     wasmtime::component::bindgen!({
         path: "wit/plugin.wit",
         world: "code-analyzer",
         async: true,
     });
-    
+
     // pub use self::exports::uveddi::plugins::*;
 }
 
 #[cfg(not(feature = "wasm-plugins"))]
 pub mod wasm {
     //! Stub implementation when WASM plugins are disabled
-    
+
     use crate::error::UveddiError;
-    
+
     pub struct WasmPluginEngine;
-    
+
     impl WasmPluginEngine {
         pub async fn new() -> Result<Self, UveddiError> {
-            Err(UveddiError::PluginError("WASM plugins not enabled. Compile with --features wasm-plugins".to_string()))
+            Err(UveddiError::PluginError(
+                "WASM plugins not enabled. Compile with --features wasm-plugins".to_string(),
+            ))
         }
     }
 }

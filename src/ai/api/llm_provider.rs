@@ -1,5 +1,5 @@
-use anyhow::Result;
 use crate::error::UveddiError;
+use anyhow::Result;
 use async_trait::async_trait;
 
 /// A trait for Large Language Model (LLM) providers, defining a common interface for generating text.

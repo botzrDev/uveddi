@@ -1,7 +1,7 @@
 //! Service health monitoring and alerting system (UV-173)
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::{Duration, SystemTime};
-use serde::{Deserialize, Serialize};
 
 /// Placeholder documentation for public items
 /// Health status for individual components

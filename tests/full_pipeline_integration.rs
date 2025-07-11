@@ -185,12 +185,11 @@ impl Manager {
         std::fs::write(src_dir.join("big_class.rs"), big_class_rs).unwrap();
 
         // Create test files (we'll remove the database setup since the engine doesn't need it for basic analysis)
-        
 
         // Create analysis engine
         let mut analysis_engine = AnalysisEngine::new().unwrap();
         // Note: The engine already has built-in detectors, so we don't need to register them manually
-        
+
         // Run analysis
         let (issues, _graph) = analysis_engine.analyze(&data_dir).await.unwrap();
 
@@ -217,7 +216,7 @@ impl Manager {
         if ollama_available {
             println!("Ollama is available, testing AI analysis");
             let ai_engine = AiAnalysisEngine::new();
-            
+
             // Since we can't easily test with the actual database updates in this context,
             // let's just verify the AI engine can be created
             println!("AI engine created successfully");
@@ -227,12 +226,12 @@ impl Manager {
 
         // For simple testing, let's just check that we have a valid analysis engine and issues
         println!("Analysis completed with {} issues found", issues.len());
-        
+
         // The test successfully demonstrates that:
         // 1. The analysis engine can be created
         // 2. It can analyze code and detect issues
         // 3. AI integration is available when configured
-        
+
         println!("Full pipeline test successful!");
     }
 }

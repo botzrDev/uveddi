@@ -4,13 +4,13 @@
 //! during service degradation. Integrates with circuit breaker, fallback, and metrics
 //! systems to provide coordinated failure response.
 
-use crate::error::{RenderingServiceError, ErrorCategory, ErrorSeverity};
+use crate::error::{ErrorCategory, ErrorSeverity, RenderingServiceError};
 use crate::resilience::{CircuitBreaker, FallbackManager, MetricsCollector};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, SystemTime};
 use tokio::sync::RwLock;
-use serde::{Deserialize, Serialize};
 use tracing::{info, warn};
 
 /// Levels of service degradation
@@ -134,12 +134,15 @@ impl FailureHistory {
             return None;
         }
 
-        let avg_recovery = self.recovery_times.iter().sum::<Duration>() / self.recovery_times.len() as u32;
+        let avg_recovery =
+            self.recovery_times.iter().sum::<Duration>() / self.recovery_times.len() as u32;
         Some(avg_recovery)
     }
 
     fn get_failure_rate(&self) -> f64 {
-        let recent_failures = self.failures.iter()
+        let recent_failures = self
+            .failures
+            .iter()
             .filter(|f| f.timestamp > SystemTime::now() - Duration::from_secs(300)) // Last 5 minutes
             .count();
         recent_failures as f64 / 5.0 // Failures per minute
@@ -178,7 +181,8 @@ impl Default for GracefulHandlerConfig {
         );
         message_templates.insert(
             "severe".to_string(),
-            "Service is experiencing significant issues. Limited functionality is available.".to_string()
+            "Service is experiencing significant issues. Limited functionality is available."
+                .to_string(),
         );
         message_templates.insert(
             "critical".to_string(),
@@ -273,7 +277,8 @@ impl GracefulFailureHandler {
             user_message,
             estimated_recovery,
             is_fallback,
-        ).with_technical_details(technical_details)
+        )
+        .with_technical_details(technical_details)
     }
 
     /// Handle a successful operation and potentially recover from degradation
@@ -289,7 +294,9 @@ impl GracefulFailureHandler {
             {
                 let mut history = self.failure_history.write().await;
                 if let Some(last_recovery) = history.last_recovery {
-                    let recovery_time = SystemTime::now().duration_since(last_recovery).unwrap_or_default();
+                    let recovery_time = SystemTime::now()
+                        .duration_since(last_recovery)
+                        .unwrap_or_default();
                     history.record_recovery(recovery_time);
                 }
             }
@@ -322,7 +329,7 @@ impl GracefulFailureHandler {
     pub async fn get_failure_stats(&self) -> FailureStats {
         let history = self.failure_history.read().await;
         let current_degradation = self.get_current_degradation().await;
-        
+
         FailureStats {
             current_degradation,
             failure_rate: history.get_failure_rate(),
@@ -356,7 +363,11 @@ impl GracefulFailureHandler {
     }
 
     /// Generate user-friendly message based on degradation level and error
-    fn generate_user_message(&self, level: &DegradationLevel, error: &RenderingServiceError) -> String {
+    fn generate_user_message(
+        &self,
+        level: &DegradationLevel,
+        error: &RenderingServiceError,
+    ) -> String {
         let template_key = match level {
             DegradationLevel::Normal => return "Service is operating normally.".to_string(),
             DegradationLevel::Minor => "minor",
@@ -365,23 +376,27 @@ impl GracefulFailureHandler {
             DegradationLevel::Critical => "critical",
         };
 
-        let base_message = self.config.message_templates
+        let base_message = self
+            .config
+            .message_templates
             .get(template_key)
             .cloned()
             .unwrap_or_else(|| "Service is experiencing issues.".to_string());
 
         // Add specific context based on error type
         match error {
-            RenderingServiceError::RateLimitExceeded { retry_after_seconds } => {
+            RenderingServiceError::RateLimitExceeded {
+                retry_after_seconds,
+            } => {
                 if let Some(seconds) = retry_after_seconds {
                     format!("{} Please try again in {} seconds.", base_message, seconds)
                 } else {
                     format!("{} Please try again in a few moments.", base_message)
                 }
-            },
+            }
             RenderingServiceError::MemoryExhaustion { .. } => {
                 format!("{} High demand is causing delays.", base_message)
-            },
+            }
             _ => base_message,
         }
     }
@@ -400,13 +415,16 @@ pub struct FailureStats {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::resilience::{CircuitBreaker, FallbackManager, FallbackConfig, MetricsCollector, MetricsConfig};
+    use crate::resilience::{
+        CircuitBreaker, FallbackConfig, FallbackManager, MetricsCollector, MetricsConfig,
+    };
     use std::time::Duration;
     use tokio::time::sleep;
 
     async fn create_test_handler() -> GracefulFailureHandler {
         let config = GracefulHandlerConfig::default();
-        let circuit_breaker = Arc::new(RwLock::new(CircuitBreaker::new(3, Duration::from_secs(10))));
+        let circuit_breaker =
+            Arc::new(RwLock::new(CircuitBreaker::new(3, Duration::from_secs(10))));
         let fallback_manager = Arc::new(FallbackManager::new(FallbackConfig::default()));
         let metrics_collector = Arc::new(MetricsCollector::new(MetricsConfig::default()));
 
@@ -417,7 +435,7 @@ mod tests {
     async fn test_normal_response() {
         let handler = create_test_handler().await;
         let response = handler.handle_success("test_data".to_string()).await;
-        
+
         assert_eq!(response.degradation_level, DegradationLevel::Normal);
         assert_eq!(response.data, "test_data");
         assert!(!response.is_fallback);
@@ -429,9 +447,9 @@ mod tests {
         let handler = create_test_handler().await;
         let error = RenderingServiceError::ServiceUnavailable;
         let fallback_data = Some("fallback_data".to_string());
-        
+
         let response = handler.handle_failure(&error, fallback_data).await;
-        
+
         assert_ne!(response.degradation_level, DegradationLevel::Normal);
         assert!(response.is_fallback);
         assert!(response.user_message.is_some());
@@ -442,13 +460,13 @@ mod tests {
     async fn test_degradation_escalation() {
         let handler = create_test_handler().await;
         let error = RenderingServiceError::ServiceUnavailable;
-        
+
         // Record multiple failures to escalate degradation
         for _ in 0..5 {
             handler.handle_failure(&error, None::<String>).await;
             sleep(Duration::from_millis(100)).await;
         }
-        
+
         let stats = handler.get_failure_stats().await;
         assert!(stats.failure_rate > 0.0);
         assert!(stats.recent_failures > 0);
@@ -458,25 +476,33 @@ mod tests {
     async fn test_recovery_detection() {
         let handler = create_test_handler().await;
         let error = RenderingServiceError::ServiceUnavailable;
-        
+
         // Cause degradation
         handler.handle_failure(&error, None::<String>).await;
-        assert_ne!(handler.get_current_degradation().await, DegradationLevel::Normal);
-        
+        assert_ne!(
+            handler.get_current_degradation().await,
+            DegradationLevel::Normal
+        );
+
         // Recover
         handler.handle_success("recovery_data".to_string()).await;
-        assert_eq!(handler.get_current_degradation().await, DegradationLevel::Normal);
+        assert_eq!(
+            handler.get_current_degradation().await,
+            DegradationLevel::Normal
+        );
     }
 
     #[tokio::test]
     async fn test_user_message_generation() {
         let handler = create_test_handler().await;
-        let rate_limit_error = RenderingServiceError::RateLimitExceeded { 
-            retry_after_seconds: Some(30) 
+        let rate_limit_error = RenderingServiceError::RateLimitExceeded {
+            retry_after_seconds: Some(30),
         };
-        
-        let response = handler.handle_failure(&rate_limit_error, None::<String>).await;
-        
+
+        let response = handler
+            .handle_failure(&rate_limit_error, None::<String>)
+            .await;
+
         assert!(response.user_message.is_some());
         let message = response.user_message.unwrap();
         assert!(message.contains("30 seconds"));
@@ -486,12 +512,14 @@ mod tests {
     async fn test_circuit_breaker_integration() {
         let handler = create_test_handler().await;
         let critical_error = RenderingServiceError::ServiceUnavailable;
-        
+
         // Trigger circuit breaker
         for _ in 0..3 {
-            handler.handle_failure(&critical_error, None::<String>).await;
+            handler
+                .handle_failure(&critical_error, None::<String>)
+                .await;
         }
-        
+
         let cb = handler.circuit_breaker.read().await;
         assert!(cb.is_open());
     }
@@ -500,13 +528,13 @@ mod tests {
     async fn test_failure_rate_calculation() {
         let handler = create_test_handler().await;
         let error = RenderingServiceError::ConnectionTimeout { timeout: 5000 };
-        
+
         // Record failures over time
         for _ in 0..3 {
             handler.handle_failure(&error, None::<String>).await;
             sleep(Duration::from_millis(50)).await;
         }
-        
+
         let stats = handler.get_failure_stats().await;
         assert!(stats.failure_rate > 0.0);
     }
@@ -514,15 +542,26 @@ mod tests {
     #[tokio::test]
     async fn test_configuration_customization() {
         let mut config = GracefulHandlerConfig::default();
-        config.degradation_thresholds.insert(DegradationLevel::Critical, 0.1);
-        
-        let circuit_breaker = Arc::new(RwLock::new(CircuitBreaker::new(3, Duration::from_secs(10))));
+        config
+            .degradation_thresholds
+            .insert(DegradationLevel::Critical, 0.1);
+
+        let circuit_breaker =
+            Arc::new(RwLock::new(CircuitBreaker::new(3, Duration::from_secs(10))));
         let fallback_manager = Arc::new(FallbackManager::new(FallbackConfig::default()));
         let metrics_collector = Arc::new(MetricsCollector::new(MetricsConfig::default()));
-        
-        let handler = GracefulFailureHandler::new(config, circuit_breaker, fallback_manager, metrics_collector);
-        
+
+        let handler = GracefulFailureHandler::new(
+            config,
+            circuit_breaker,
+            fallback_manager,
+            metrics_collector,
+        );
+
         // Test that custom thresholds are applied
-        assert_eq!(handler.config.degradation_thresholds[&DegradationLevel::Critical], 0.1);
+        assert_eq!(
+            handler.config.degradation_thresholds[&DegradationLevel::Critical],
+            0.1
+        );
     }
 }

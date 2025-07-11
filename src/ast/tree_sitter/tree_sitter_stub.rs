@@ -1,9 +1,9 @@
 // Stub implementation file for tree-sitter disabled builds
 // UV-97: Tree-sitter feature gating implementation
 
+use crate::error::UveddiError;
 use std::collections::HashMap;
 use std::path::Path;
-use crate::error::UveddiError;
 
 /// Placeholder documentation for public items
 
@@ -32,30 +32,57 @@ impl<'a> Node<'a> {
             _phantom: std::marker::PhantomData,
         }
     }
-    
-    pub fn child_count(&self) -> usize { 0 }
-    pub fn child(&self, _index: usize) -> Option<Node<'a>> { None }
-    pub fn kind(&self) -> &'static str { "stub" }
-    pub fn start_byte(&self) -> usize { 0 }
-    pub fn end_byte(&self) -> usize { 0 }
-    pub fn start_position(&self) -> Point { Point { row: 0, column: 0 } }
-    pub fn end_position(&self) -> Point { Point { row: 0, column: 0 } }
+
+    pub fn child_count(&self) -> usize {
+        0
+    }
+    pub fn child(&self, _index: usize) -> Option<Node<'a>> {
+        None
+    }
+    pub fn kind(&self) -> &'static str {
+        "stub"
+    }
+    pub fn start_byte(&self) -> usize {
+        0
+    }
+    pub fn end_byte(&self) -> usize {
+        0
+    }
+    pub fn start_position(&self) -> Point {
+        Point { row: 0, column: 0 }
+    }
+    pub fn end_position(&self) -> Point {
+        Point { row: 0, column: 0 }
+    }
     pub fn utf8_text(&self, _source: &'a [u8]) -> Result<&'a str, std::str::Utf8Error> {
         Ok("")
     }
-    pub fn parent(&self) -> Option<Node<'a>> { None }
-    pub fn next_sibling(&self) -> Option<Node<'a>> { None }
-    pub fn prev_sibling(&self) -> Option<Node<'a>> { None }
-    pub fn child_by_field_name(&self, _name: &str) -> Option<Node<'a>> { None }
-    pub fn walk(&self) -> TreeCursor { TreeCursor }
-    pub fn id(&self) -> usize { 0 }
-    pub fn name(&self) -> &'static str { "stub" }
+    pub fn parent(&self) -> Option<Node<'a>> {
+        None
+    }
+    pub fn next_sibling(&self) -> Option<Node<'a>> {
+        None
+    }
+    pub fn prev_sibling(&self) -> Option<Node<'a>> {
+        None
+    }
+    pub fn child_by_field_name(&self, _name: &str) -> Option<Node<'a>> {
+        None
+    }
+    pub fn walk(&self) -> TreeCursor {
+        TreeCursor
+    }
+    pub fn id(&self) -> usize {
+        0
+    }
+    pub fn name(&self) -> &'static str {
+        "stub"
+    }
 }
 
 /// Stub for tree_sitter::TreeCursor
 #[derive(Debug, Clone)]
 pub struct TreeCursor;
-
 
 /// Stub for tree_sitter::Tree
 #[derive(Debug, Clone)]
@@ -65,7 +92,7 @@ impl Tree {
     pub fn root_node(&self) -> Node<'_> {
         Node::new()
     }
-    
+
     pub fn language(&self) -> () {
         ()
     }
@@ -127,10 +154,21 @@ pub struct ParsedFile {
 /// Custom AST representation stub
 #[derive(Debug, Clone)]
 pub enum CustomAst {
-    File { items: Vec<CustomAst> },
-    Struct { name: String, methods: Vec<String> },
-    Function { name: String, parameters: Vec<String> },
-    Variable { name: String, value_type: String },
+    File {
+        items: Vec<CustomAst>,
+    },
+    Struct {
+        name: String,
+        methods: Vec<String>,
+    },
+    Function {
+        name: String,
+        parameters: Vec<String>,
+    },
+    Variable {
+        name: String,
+        value_type: String,
+    },
 }
 
 /// AST error types for stub implementation
@@ -155,9 +193,11 @@ pub enum AstError {
 // Stub implementations for tree-sitter types
 impl Query {
     pub fn new(_language: &(), _query: &str) -> Result<Self, AstError> {
-        Err(AstError::FeatureNotEnabled("tree-sitter feature not enabled".to_string()))
+        Err(AstError::FeatureNotEnabled(
+            "tree-sitter feature not enabled".to_string(),
+        ))
     }
-    
+
     pub fn capture_names(&self) -> &[&str] {
         &[]
     }
@@ -167,12 +207,22 @@ impl QueryCursor {
     pub fn new() -> Self {
         Self
     }
-    
-    pub fn captures<'a>(&'a mut self, _query: &'a Query, _node: Node<'a>, _source: &'a [u8]) -> std::iter::Empty<(QueryMatch<'a>, usize)> {
+
+    pub fn captures<'a>(
+        &'a mut self,
+        _query: &'a Query,
+        _node: Node<'a>,
+        _source: &'a [u8],
+    ) -> std::iter::Empty<(QueryMatch<'a>, usize)> {
         std::iter::empty()
     }
-    
-    pub fn matches<'a>(&'a mut self, _query: &'a Query, _node: Node<'a>, _source: &'a [u8]) -> std::iter::Empty<QueryMatch<'a>> {
+
+    pub fn matches<'a>(
+        &'a mut self,
+        _query: &'a Query,
+        _node: Node<'a>,
+        _source: &'a [u8],
+    ) -> std::iter::Empty<QueryMatch<'a>> {
         std::iter::empty()
     }
 }
@@ -205,13 +255,17 @@ impl TreeCursor {
 
 impl Parser {
     pub fn new() -> Result<Self, AstError> {
-        Err(AstError::FeatureNotEnabled("tree-sitter feature not enabled".to_string()))
+        Err(AstError::FeatureNotEnabled(
+            "tree-sitter feature not enabled".to_string(),
+        ))
     }
-    
+
     pub fn set_language(&mut self, _language: &()) -> Result<(), AstError> {
-        Err(AstError::FeatureNotEnabled("tree-sitter feature not enabled".to_string()))
+        Err(AstError::FeatureNotEnabled(
+            "tree-sitter feature not enabled".to_string(),
+        ))
     }
-    
+
     pub fn parse(&mut self, _input: &str, _old_tree: Option<&Tree>) -> Option<Tree> {
         None
     }
@@ -220,12 +274,16 @@ impl Parser {
 impl AstParser {
     /// Create a new AST parser stub (always returns error)
     pub fn new() -> Result<Self, AstError> {
-        Err(AstError::FeatureNotEnabled("Tree-sitter feature not enabled".to_string()))
+        Err(AstError::FeatureNotEnabled(
+            "Tree-sitter feature not enabled".to_string(),
+        ))
     }
 
     /// Parse a file (stub - returns error)
     pub fn parse_file(&self, _file_path: &Path) -> Result<ParsedFile, AstError> {
-        Err(AstError::FeatureNotEnabled("Tree-sitter feature not enabled".to_string()))
+        Err(AstError::FeatureNotEnabled(
+            "Tree-sitter feature not enabled".to_string(),
+        ))
     }
 
     /// Parse content directly (stub - returns minimal ParsedFile)
@@ -268,10 +326,9 @@ impl ParsedFile {
     pub fn cache_path(file_path: &Path) -> std::path::PathBuf {
         let mut cache_path = std::env::temp_dir();
         cache_path.push("uveddi_ast_cache_stub");
-        cache_path.push(format!("{}.cache", 
-            file_path.file_name()
-                .unwrap_or_default()
-                .to_string_lossy()
+        cache_path.push(format!(
+            "{}.cache",
+            file_path.file_name().unwrap_or_default().to_string_lossy()
         ));
         cache_path
     }

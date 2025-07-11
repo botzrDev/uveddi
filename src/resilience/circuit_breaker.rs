@@ -1,5 +1,5 @@
-use std::time::{Duration, Instant};
 use crate::error::RenderingServiceError;
+use std::time::{Duration, Instant};
 
 /// Represents the state of a circuit breaker
 #[derive(Debug, PartialEq, Eq)]
@@ -106,24 +106,24 @@ mod tests {
     #[test]
     fn should_not_open_circuit_on_non_critical_errors() {
         let mut cb = CircuitBreaker::new(3, Duration::from_secs(10));
-        
+
         // Record multiple non-critical errors
         for _ in 0..5 {
             cb.record_failure(&non_critical_error());
         }
-        
+
         assert!(cb.is_closed(), "Circuit should remain closed");
     }
 
     #[test]
     fn should_open_circuit_on_critical_errors() {
         let mut cb = CircuitBreaker::new(3, Duration::from_secs(10));
-        
+
         // Record critical errors
         cb.record_failure(&critical_error());
         cb.record_failure(&critical_error());
         assert!(cb.is_closed(), "Should remain closed before threshold");
-        
+
         cb.record_failure(&critical_error());
         assert!(cb.is_open(), "Should open after reaching threshold");
     }
@@ -131,12 +131,12 @@ mod tests {
     #[test]
     fn should_reset_after_success() {
         let mut cb = CircuitBreaker::new(2, Duration::from_secs(10));
-        
+
         // Record failures
         cb.record_failure(&critical_error());
         cb.record_failure(&critical_error());
         assert!(cb.is_open(), "Circuit should be open");
-        
+
         // Record success
         cb.record_success();
         assert!(cb.is_closed(), "Circuit should close after success");

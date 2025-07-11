@@ -73,5 +73,3 @@ impl GlobalSymbolTable {
         self.symbols.get(id)
     }
 }
-
-

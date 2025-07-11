@@ -5,7 +5,7 @@
 //! growth, and activity patterns.
 
 use crate::error::UveddiError;
-use chrono::{Utc, Duration};
+use chrono::{Duration, Utc};
 use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -145,7 +145,9 @@ impl<'a> AnalyticsEngine<'a> {
 
     /// Get total number of registered members
     fn get_total_members(&self) -> Result<usize, UveddiError> {
-        let mut stmt = self.conn.prepare("SELECT COUNT(*) FROM community_members WHERE is_active = 1")?;
+        let mut stmt = self
+            .conn
+            .prepare("SELECT COUNT(*) FROM community_members WHERE is_active = 1")?;
         let count: i64 = stmt.query_row([], |row| row.get(0))?;
         Ok(count as usize)
     }
@@ -154,7 +156,7 @@ impl<'a> AnalyticsEngine<'a> {
     fn get_active_members(&self, within_duration: Duration) -> Result<usize, UveddiError> {
         let cutoff = Utc::now() - within_duration;
         let mut stmt = self.conn.prepare(
-            "SELECT COUNT(*) FROM community_members WHERE is_active = 1 AND last_active >= ?1"
+            "SELECT COUNT(*) FROM community_members WHERE is_active = 1 AND last_active >= ?1",
         )?;
         let count: i64 = stmt.query_row([cutoff.to_rfc3339()], |row| row.get(0))?;
         Ok(count as usize)
@@ -163,7 +165,7 @@ impl<'a> AnalyticsEngine<'a> {
     /// Get member distribution by role
     fn get_members_by_role(&self) -> Result<HashMap<String, usize>, UveddiError> {
         let mut stmt = self.conn.prepare(
-            "SELECT role, COUNT(*) FROM community_members WHERE is_active = 1 GROUP BY role"
+            "SELECT role, COUNT(*) FROM community_members WHERE is_active = 1 GROUP BY role",
         )?;
         let rows = stmt.query_map([], |row| {
             Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)? as usize))
@@ -185,9 +187,9 @@ impl<'a> AnalyticsEngine<'a> {
         let two_months_ago = now - Duration::days(60);
 
         // New members in last week
-        let mut stmt = self.conn.prepare(
-            "SELECT COUNT(*) FROM community_members WHERE created_at >= ?1"
-        )?;
+        let mut stmt = self
+            .conn
+            .prepare("SELECT COUNT(*) FROM community_members WHERE created_at >= ?1")?;
         let new_members_week: i64 = stmt.query_row([week_ago.to_rfc3339()], |row| row.get(0))?;
 
         // New members in last month
@@ -195,11 +197,11 @@ impl<'a> AnalyticsEngine<'a> {
 
         // New members in previous month (for growth rate calculation)
         let mut stmt_prev = self.conn.prepare(
-            "SELECT COUNT(*) FROM community_members WHERE created_at >= ?1 AND created_at < ?2"
+            "SELECT COUNT(*) FROM community_members WHERE created_at >= ?1 AND created_at < ?2",
         )?;
         let prev_month_members: i64 = stmt_prev.query_row(
             [two_months_ago.to_rfc3339(), month_ago.to_rfc3339()],
-            |row| row.get(0)
+            |row| row.get(0),
         )?;
 
         // Calculate growth rate
@@ -228,10 +230,10 @@ impl<'a> AnalyticsEngine<'a> {
 
         // Daily active users
         let daily_active_users = self.get_active_members(Duration::days(1))?;
-        
+
         // Weekly active users
         let weekly_active_users = self.get_active_members(Duration::days(7))?;
-        
+
         // Monthly active users
         let monthly_active_users = self.get_active_members(Duration::days(30))?;
 
@@ -244,9 +246,9 @@ impl<'a> AnalyticsEngine<'a> {
             GROUP BY activity_type 
             ORDER BY count DESC 
             LIMIT 10
-            "#
+            "#,
         )?;
-        
+
         let activity_rows = stmt.query_map([month_ago.to_rfc3339()], |row| {
             Ok(ActivityStats {
                 activity_type: row.get(0)?,
@@ -285,9 +287,9 @@ impl<'a> AnalyticsEngine<'a> {
             GROUP BY company 
             ORDER BY count DESC 
             LIMIT 10
-            "#
+            "#,
         )?;
-        
+
         let company_rows = stmt.query_map([], |row| {
             let count = row.get::<_, i64>(1)? as usize;
             Ok(CompanyStats {
@@ -312,9 +314,9 @@ impl<'a> AnalyticsEngine<'a> {
             FROM community_members 
             WHERE is_active = 1 AND experience_level IS NOT NULL
             GROUP BY experience_level
-            "#
+            "#,
         )?;
-        
+
         let exp_rows = stmt.query_map([], |row| {
             Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)? as usize))
         })?;
@@ -332,9 +334,9 @@ impl<'a> AnalyticsEngine<'a> {
             FROM community_members 
             WHERE is_active = 1 AND referral_source IS NOT NULL
             GROUP BY referral_source
-            "#
+            "#,
         )?;
-        
+
         let ref_rows = stmt.query_map([], |row| {
             Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)? as usize))
         })?;
@@ -349,7 +351,7 @@ impl<'a> AnalyticsEngine<'a> {
         let mut stmt = self.conn.prepare(
             "SELECT newsletter_subscribed, marketing_consent FROM community_members WHERE is_active = 1"
         )?;
-        
+
         let consent_rows = stmt.query_map([], |row| {
             Ok((row.get::<_, bool>(0)?, row.get::<_, bool>(1)?))
         })?;
@@ -360,18 +362,26 @@ impl<'a> AnalyticsEngine<'a> {
 
         for row in consent_rows {
             let (newsletter, marketing) = row?;
-            if newsletter { newsletter_count += 1; }
-            if marketing { marketing_count += 1; }
+            if newsletter {
+                newsletter_count += 1;
+            }
+            if marketing {
+                marketing_count += 1;
+            }
             total_count += 1;
         }
 
         let newsletter_subscription_rate = if total_count > 0 {
             (newsletter_count as f64 / total_count as f64) * 100.0
-        } else { 0.0 };
+        } else {
+            0.0
+        };
 
         let marketing_consent_rate = if total_count > 0 {
             (marketing_count as f64 / total_count as f64) * 100.0
-        } else { 0.0 };
+        } else {
+            0.0
+        };
 
         Ok(DemographicInsights {
             top_companies,
@@ -386,12 +396,10 @@ impl<'a> AnalyticsEngine<'a> {
     /// Calculate programming language interest statistics
     fn calculate_language_interests(&self) -> Result<Vec<LanguageStats>, UveddiError> {
         let mut stmt = self.conn.prepare(
-            "SELECT languages FROM community_members WHERE is_active = 1 AND languages IS NOT NULL"
+            "SELECT languages FROM community_members WHERE is_active = 1 AND languages IS NOT NULL",
         )?;
-        
-        let language_rows = stmt.query_map([], |row| {
-            row.get::<_, String>(0)
-        })?;
+
+        let language_rows = stmt.query_map([], |row| row.get::<_, String>(0))?;
 
         let mut language_counts: HashMap<String, usize> = HashMap::new();
         let mut total_members = 0;
@@ -413,7 +421,9 @@ impl<'a> AnalyticsEngine<'a> {
                 member_count: count,
                 percentage: if total_members > 0 {
                     (count as f64 / total_members as f64) * 100.0
-                } else { 0.0 },
+                } else {
+                    0.0
+                },
             })
             .collect();
 

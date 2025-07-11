@@ -43,14 +43,14 @@
 //! - Contextual error information
 //! - Suggestions for common issues
 
-use std::sync::Arc;
-use tokio::sync::Mutex;
+use crate::server::run_server;
 use clap::{Parser, Subcommand};
 use color_eyre::eyre::Result;
+use std::sync::Arc;
+use tokio::sync::Mutex;
 use uveddi::cli::analyze_command::AnalyzeCommand;
 use uveddi::cli::config_command::ConfigCommand;
 use uveddi::resilience::health::HealthMonitor;
-use crate::server::run_server;
 
 mod server;
 
@@ -98,7 +98,7 @@ fn main() -> Result<()> {
 
     // Create health monitor instance
     let health_monitor = Arc::new(Mutex::new(HealthMonitor::new()));
-    
+
     // Start health monitoring server in a separate thread
     let health_monitor_clone = Arc::clone(&health_monitor);
     std::thread::spawn(move || {

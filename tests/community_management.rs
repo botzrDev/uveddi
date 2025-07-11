@@ -1,7 +1,7 @@
 //! Integration tests for the community management system
 
 use tempfile::NamedTempFile;
-use uveddi::community::{CommunityDatabase, MemberRole, ActivityType, MemberProfile};
+use uveddi::community::{ActivityType, CommunityDatabase, MemberProfile, MemberRole};
 
 #[test]
 fn test_community_database_full_workflow() {
@@ -9,7 +9,9 @@ fn test_community_database_full_workflow() {
     let db = CommunityDatabase::new(temp_file.path()).unwrap();
 
     // Test member registration
-    let member = db.register_member("test@example.com", "Test User", MemberRole::Member).unwrap();
+    let member = db
+        .register_member("test@example.com", "Test User", MemberRole::Member)
+        .unwrap();
     assert_eq!(member.email, "test@example.com");
     assert_eq!(member.name, "Test User");
     assert_eq!(member.role, MemberRole::Member);
@@ -30,45 +32,66 @@ fn test_community_database_full_workflow() {
     profile.experience_level = Some("intermediate".to_string());
     profile.newsletter_subscribed = true;
     profile.marketing_consent = true;
-    profile.custom_fields.insert("team_size".to_string(), "5".to_string());
+    profile
+        .custom_fields
+        .insert("team_size".to_string(), "5".to_string());
 
     let updated = db.update_member_profile(&member.id, &profile).unwrap();
     assert!(updated);
 
     // Verify profile was updated
     let updated_member = db.get_member_by_id(&member.id).unwrap().unwrap();
-    assert_eq!(updated_member.profile.company, Some("Test Corp".to_string()));
+    assert_eq!(
+        updated_member.profile.company,
+        Some("Test Corp".to_string())
+    );
     assert_eq!(updated_member.profile.languages.len(), 2);
     assert!(updated_member.profile.newsletter_subscribed);
 
     // Test role update
-    let role_updated = db.update_member_role(&member.id, MemberRole::Developer).unwrap();
+    let role_updated = db
+        .update_member_role(&member.id, MemberRole::Developer)
+        .unwrap();
     assert!(role_updated);
 
     let role_checked = db.get_member_by_id(&member.id).unwrap().unwrap();
     assert_eq!(role_checked.role, MemberRole::Developer);
 
     // Test activity logging
-    let activity_id = db.log_activity(
-        &member.id,
-        ActivityType::Login,
-        Some("Test login"),
-        Some("127.0.0.1"),
-        Some("test-agent"),
-    ).unwrap();
+    let activity_id = db
+        .log_activity(
+            &member.id,
+            ActivityType::Login,
+            Some("Test login"),
+            Some("127.0.0.1"),
+            Some("test-agent"),
+        )
+        .unwrap();
     assert!(activity_id > 0);
 
     // Log more activities
-    db.log_activity(&member.id, ActivityType::DashboardView, None, None, None).unwrap();
-    db.log_activity(&member.id, ActivityType::ReportGenerated, Some("Test report"), None, None).unwrap();
+    db.log_activity(&member.id, ActivityType::DashboardView, None, None, None)
+        .unwrap();
+    db.log_activity(
+        &member.id,
+        ActivityType::ReportGenerated,
+        Some("Test report"),
+        None,
+        None,
+    )
+    .unwrap();
 
     // Test activity retrieval
     let activities = db.get_member_activity(&member.id, Some(10)).unwrap();
     assert!(activities.len() >= 4); // Registration + Profile Update + Role Change + Login + Dashboard + Report
 
     // Check for specific activities
-    let has_login = activities.iter().any(|a| matches!(a.activity_type, ActivityType::Login));
-    let has_registration = activities.iter().any(|a| matches!(a.activity_type, ActivityType::Registration));
+    let has_login = activities
+        .iter()
+        .any(|a| matches!(a.activity_type, ActivityType::Login));
+    let has_registration = activities
+        .iter()
+        .any(|a| matches!(a.activity_type, ActivityType::Registration));
     assert!(has_login);
     assert!(has_registration);
 
@@ -76,10 +99,14 @@ fn test_community_database_full_workflow() {
     let all_members = db.list_members(None, true, None, None).unwrap();
     assert_eq!(all_members.len(), 1);
 
-    let developers = db.list_members(Some(MemberRole::Developer), true, None, None).unwrap();
+    let developers = db
+        .list_members(Some(MemberRole::Developer), true, None, None)
+        .unwrap();
     assert_eq!(developers.len(), 1);
 
-    let admins = db.list_members(Some(MemberRole::Admin), true, None, None).unwrap();
+    let admins = db
+        .list_members(Some(MemberRole::Admin), true, None, None)
+        .unwrap();
     assert_eq!(admins.len(), 0);
 
     // Test member deactivation
@@ -126,12 +153,21 @@ fn test_activity_types() {
     // Test activity type string conversion
     assert_eq!(ActivityType::Login.as_str(), "login");
     assert_eq!(ActivityType::Registration.as_str(), "registration");
-    assert_eq!(ActivityType::Custom("test".to_string()).as_str(), "custom:test");
+    assert_eq!(
+        ActivityType::Custom("test".to_string()).as_str(),
+        "custom:test"
+    );
 
     // Test activity type parsing
-    assert!(matches!(ActivityType::from_str("login"), ActivityType::Login));
-    assert!(matches!(ActivityType::from_str("registration"), ActivityType::Registration));
-    
+    assert!(matches!(
+        ActivityType::from_str("login"),
+        ActivityType::Login
+    ));
+    assert!(matches!(
+        ActivityType::from_str("registration"),
+        ActivityType::Registration
+    ));
+
     if let ActivityType::Custom(desc) = ActivityType::from_str("custom:test") {
         assert_eq!(desc, "test");
     } else {
@@ -152,9 +188,15 @@ fn test_analytics_generation() {
     let db = CommunityDatabase::new(temp_file.path()).unwrap();
 
     // Create test data
-    let member1 = db.register_member("user1@example.com", "User One", MemberRole::Member).unwrap();
-    let member2 = db.register_member("user2@example.com", "User Two", MemberRole::Developer).unwrap();
-    let admin = db.register_member("admin@example.com", "Admin", MemberRole::Admin).unwrap();
+    let member1 = db
+        .register_member("user1@example.com", "User One", MemberRole::Member)
+        .unwrap();
+    let member2 = db
+        .register_member("user2@example.com", "User Two", MemberRole::Developer)
+        .unwrap();
+    let admin = db
+        .register_member("admin@example.com", "Admin", MemberRole::Admin)
+        .unwrap();
 
     // Add some profile data
     let mut profile1 = MemberProfile::default();
@@ -172,10 +214,14 @@ fn test_analytics_generation() {
     db.update_member_profile(&member2.id, &profile2).unwrap();
 
     // Log some activities
-    db.log_activity(&member1.id, ActivityType::Login, None, None, None).unwrap();
-    db.log_activity(&member1.id, ActivityType::DashboardView, None, None, None).unwrap();
-    db.log_activity(&member2.id, ActivityType::Login, None, None, None).unwrap();
-    db.log_activity(&member2.id, ActivityType::ReportGenerated, None, None, None).unwrap();
+    db.log_activity(&member1.id, ActivityType::Login, None, None, None)
+        .unwrap();
+    db.log_activity(&member1.id, ActivityType::DashboardView, None, None, None)
+        .unwrap();
+    db.log_activity(&member2.id, ActivityType::Login, None, None, None)
+        .unwrap();
+    db.log_activity(&member2.id, ActivityType::ReportGenerated, None, None, None)
+        .unwrap();
 
     // Generate analytics
     let analytics = db.generate_analytics().unwrap();
@@ -204,7 +250,9 @@ fn test_analytics_generation() {
 
     // Check language interests
     assert!(analytics.demographic_insights.language_interests.len() > 0);
-    let rust_stats = analytics.demographic_insights.language_interests
+    let rust_stats = analytics
+        .demographic_insights
+        .language_interests
         .iter()
         .find(|lang| lang.language == "Rust");
     assert!(rust_stats.is_some());
@@ -222,7 +270,8 @@ fn test_member_listing_with_pagination() {
             &format!("user{}@example.com", i),
             &format!("User {}", i),
             MemberRole::Member,
-        ).unwrap();
+        )
+        .unwrap();
     }
 
     // Test pagination
@@ -238,7 +287,7 @@ fn test_member_listing_with_pagination() {
     // Ensure no overlap between pages
     let page1_emails: Vec<&str> = page1.iter().map(|m| m.email.as_str()).collect();
     let page2_emails: Vec<&str> = page2.iter().map(|m| m.email.as_str()).collect();
-    
+
     for email in &page1_emails {
         assert!(!page2_emails.contains(email));
     }

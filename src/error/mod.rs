@@ -8,4 +8,4 @@ pub mod main;
 pub mod rendering;
 
 pub use main::UveddiError;
-pub use rendering::{RenderingServiceError, ErrorSeverity, ErrorCategory};
+pub use rendering::{ErrorCategory, ErrorSeverity, RenderingServiceError};

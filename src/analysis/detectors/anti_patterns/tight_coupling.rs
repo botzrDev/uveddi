@@ -3,10 +3,10 @@
 //! Detects excessive dependencies between components/modules/classes.
 //! Implements CBO, RFC, fan-in, fan-out metrics and cycle detection.
 
+use crate::analysis::graph::dependency::{ComponentNode, LocalDependencyGraph};
 use crate::analysis::{AnalysisDetector, AnalysisError};
 use crate::ast::tree_sitter::ParsedFile;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
-use crate::analysis::graph::dependency::{ComponentNode, LocalDependencyGraph};
 use std::collections::HashMap;
 use std::path::Path;
 
@@ -72,7 +72,11 @@ pub trait LanguageAnalyzer {
 pub struct RustAnalyzer;
 
 impl LanguageAnalyzer for RustAnalyzer {
-    fn extract_dependencies(&self, _file_path: &Path, _parsed_file: &ParsedFile) -> Vec<Dependency> {
+    fn extract_dependencies(
+        &self,
+        _file_path: &Path,
+        _parsed_file: &ParsedFile,
+    ) -> Vec<Dependency> {
         // TODO: Use Tree-sitter queries to extract Rust dependencies
         vec![]
     }
@@ -142,9 +146,17 @@ impl TightCouplingDetector {
         for (path, parsed) in files {
             let deps = analyzer.extract_dependencies(Path::new(path), parsed);
             for dep in deps {
-                let from = ComponentNode::Module { path: dep.from.clone() };
-                let to = ComponentNode::Module { path: dep.to.clone() };
-                graph.add_dependency(&from, &to, crate::analysis::graph::dependency::LocalDependencyType::Import);
+                let from = ComponentNode::Module {
+                    path: dep.from.clone(),
+                };
+                let to = ComponentNode::Module {
+                    path: dep.to.clone(),
+                };
+                graph.add_dependency(
+                    &from,
+                    &to,
+                    crate::analysis::graph::dependency::LocalDependencyType::Import,
+                );
             }
         }
         graph
@@ -154,7 +166,10 @@ impl TightCouplingDetector {
     ///
     /// It iterates through each node in the graph, calculating its fan-in, fan-out,
     /// CBO, and RFC, and stores the results in a `HashMap`.
-    fn calculate_metrics(&self, graph: &LocalDependencyGraph) -> HashMap<ComponentNode, CouplingMetrics> {
+    fn calculate_metrics(
+        &self,
+        graph: &LocalDependencyGraph,
+    ) -> HashMap<ComponentNode, CouplingMetrics> {
         let mut metrics = HashMap::new();
         let petgraph = graph.get_petgraph();
         for node_idx in petgraph.node_indices() {
@@ -165,7 +180,15 @@ impl TightCouplingDetector {
                     .count();
                 let cbo = fan_out;
                 let rfc = fan_out + fan_in;
-                metrics.insert(node.clone(), CouplingMetrics { fan_in, fan_out, cbo, rfc });
+                metrics.insert(
+                    node.clone(),
+                    CouplingMetrics {
+                        fan_in,
+                        fan_out,
+                        cbo,
+                        rfc,
+                    },
+                );
             }
         }
         metrics

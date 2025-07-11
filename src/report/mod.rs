@@ -98,19 +98,19 @@
 //! ```
 
 // use crate::analysis::graph::ComponentNode;
+use crate::analysis::mermaid_generator::{MermaidGenerationError, MermaidGenerator};
 use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
 use crate::models::visualization::{ArchitecturalComponent, DiagramMetadata, DiagramType};
-use crate::analysis::mermaid_generator::{MermaidGenerator, MermaidGenerationError};
 
 #[cfg(feature = "image-rendering")]
 pub mod image_renderer;
 #[cfg(feature = "image-rendering")]
-pub use image_renderer::{ImageRenderer, ImageFormat, RenderedImage, RenderingError};
+pub use image_renderer::{ImageFormat, ImageRenderer, RenderedImage, RenderingError};
 
 pub mod diagrams;
 use chrono::{DateTime, Local};
 use log::{error, info};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::fs;
@@ -321,9 +321,15 @@ impl ReportGenerator {
             **Analysis Date**: {}\n\
             **Configuration**: {}\n\
             **Run ID**: {}\n\n",
-            analysis_run.start_time.format("%Y-%m-%d %H:%M:%S UTC").to_string(),
+            analysis_run
+                .start_time
+                .format("%Y-%m-%d %H:%M:%S UTC")
+                .to_string(),
             "default", // analysis_run doesn't have config_name field
-            analysis_run.run_id.map(|id| id.to_string()).unwrap_or_else(|| "unknown".to_string())
+            analysis_run
+                .run_id
+                .map(|id| id.to_string())
+                .unwrap_or_else(|| "unknown".to_string())
         )
     }
 
@@ -834,8 +840,11 @@ impl ReportGenerator {
 
         // Generate enhanced diagrams section
         if self.include_diagrams && components.is_some() {
-            let (diagrams_section, generated_diagrams) = 
-                self.generate_enhanced_diagrams_section(issues, anti_pattern_types, components.unwrap())?;
+            let (diagrams_section, generated_diagrams) = self.generate_enhanced_diagrams_section(
+                issues,
+                anti_pattern_types,
+                components.unwrap(),
+            )?;
             report.push_str(&diagrams_section);
             diagrams.extend(generated_diagrams);
         }
@@ -870,10 +879,10 @@ impl ReportGenerator {
 
                     // Generate appropriate diagram based on anti-pattern type
                     let diagram_result = self.generate_diagram_for_anti_pattern(
-                        generator, 
-                        components, 
-                        &pattern_issues, 
-                        anti_pattern_id
+                        generator,
+                        components,
+                        &pattern_issues,
+                        anti_pattern_id,
                     );
 
                     match diagram_result {
@@ -884,8 +893,12 @@ impl ReportGenerator {
                             generated_diagrams.push(diagram);
                         }
                         Err(e) => {
-                            error!("Failed to generate diagram for anti-pattern {}: {}", anti_pattern_id, e);
-                            section.push_str("*Diagram generation failed for this anti-pattern.*\n\n");
+                            error!(
+                                "Failed to generate diagram for anti-pattern {}: {}",
+                                anti_pattern_id, e
+                            );
+                            section
+                                .push_str("*Diagram generation failed for this anti-pattern.*\n\n");
                         }
                     }
                 }
@@ -897,7 +910,9 @@ impl ReportGenerator {
             section.push_str("*Overview diagram generation not implemented.*\n\n");
             // TODO: Implement overview diagram generation if/when supported by MermaidGenerator
         } else {
-            section.push_str("*Diagram generation not available - MermaidGenerator not initialized.*\n\n");
+            section.push_str(
+                "*Diagram generation not available - MermaidGenerator not initialized.*\n\n",
+            );
         }
 
         Ok((section, generated_diagrams))
@@ -915,7 +930,9 @@ impl ReportGenerator {
         let mut severity_data = HashMap::new();
         for issue in issues {
             // Extract component IDs from file paths (simplified)
-            if let Some(component_id) = self.find_component_by_file_path(components, &issue.file_path) {
+            if let Some(component_id) =
+                self.find_component_by_file_path(components, &issue.file_path)
+            {
                 severity_data.insert(component_id, issue.severity.clone());
             }
         }
@@ -931,9 +948,16 @@ impl ReportGenerator {
             DiagramType::Class => {
                 // God Object diagram: requires god_object_components and member_counts
                 // TODO: Replace with actual logic to extract these from issues/components
-                let god_object_components = components.iter().map(|c| c.component_id).collect::<Vec<_>>();
+                let god_object_components = components
+                    .iter()
+                    .map(|c| c.component_id)
+                    .collect::<Vec<_>>();
                 let member_counts = HashMap::new();
-                generator.generate_god_object_diagram(components, &god_object_components, &member_counts)
+                generator.generate_god_object_diagram(
+                    components,
+                    &god_object_components,
+                    &member_counts,
+                )
             }
             DiagramType::Dependency => {
                 // Cyclic Dependencies diagram: requires cycles and cycle_edges
@@ -1035,7 +1059,7 @@ impl ReportGenerator {
             for comp in comps {
                 *type_counts.entry(&comp.component_type).or_insert(0) += 1;
             }
-            
+
             serde_json::json!({
                 "total_components": comps.len(),
                 "by_type": type_counts,
@@ -1075,16 +1099,16 @@ pub struct EnhancedReportData {
 pub enum ReportGenerationError {
     #[error("Diagram generation failed: {0}")]
     DiagramGenerationError(#[from] MermaidGenerationError),
-    
+
     #[error("Template processing failed: {0}")]
     TemplateError(String),
-    
+
     #[error("Component analysis failed: {0}")]
     ComponentAnalysisError(String),
-    
+
     #[error("IO error: {0}")]
     IoError(#[from] std::io::Error),
-    
+
     #[error("JSON serialization error: {0}")]
     SerializationError(#[from] serde_json::Error),
 }

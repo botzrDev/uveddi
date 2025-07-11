@@ -2,16 +2,10 @@
 //!
 //! This module implements the HTTP API using Axum framework
 
-use axum::{
-    routing::get,
-    Router,
-    Json,
-    extract::State,
-    http::StatusCode
-};
+use axum::{extract::State, http::StatusCode, routing::get, Json, Router};
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use uveddi::resilience::health::{HealthStatus, HealthMonitor, Alert};
+use uveddi::resilience::health::{Alert, HealthMonitor, HealthStatus};
 
 /// Placeholder documentation for public items
 
@@ -22,7 +16,9 @@ pub struct AppState {
 }
 
 /// Initialize the HTTP server
-pub async fn run_server(health_monitor: Arc<Mutex<HealthMonitor>>) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn run_server(
+    health_monitor: Arc<Mutex<HealthMonitor>>,
+) -> Result<(), Box<dyn std::error::Error>> {
     let app_state = AppState { health_monitor };
 
     let app = Router::new()
@@ -32,7 +28,7 @@ pub async fn run_server(health_monitor: Arc<Mutex<HealthMonitor>>) -> Result<(),
         .with_state(app_state);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
-    
+
     println!("Health monitoring server running on http://localhost:3000");
     axum::serve(listener, app).await?;
     Ok(())

@@ -24,7 +24,10 @@ impl Default for FallbackConfig {
 #[derive(Debug, PartialEq)]
 pub enum FallbackMode {
     Normal,
-    MermaidOnly { triggered_at: Instant, reason: String },
+    MermaidOnly {
+        triggered_at: Instant,
+        reason: String,
+    },
 }
 
 pub struct FallbackManager {
@@ -51,7 +54,7 @@ impl FallbackManager {
         // Check if this error should trigger fallback
         if error.should_trigger_fallback() {
             self.consecutive_fallback_triggers += 1;
-            
+
             // Trigger fallback after 3 consecutive critical errors
             if self.consecutive_fallback_triggers >= 3 {
                 let reason = format!("Triggered by consecutive errors: {}", error);
@@ -78,9 +81,13 @@ impl FallbackManager {
 
     pub fn attempt_recovery(&mut self) -> bool {
         // Only attempt recovery if in fallback mode
-        if let FallbackMode::MermaidOnly { triggered_at, reason } = &self.mode {
+        if let FallbackMode::MermaidOnly {
+            triggered_at,
+            reason,
+        } = &self.mode
+        {
             let fallback_duration = triggered_at.elapsed();
-            
+
             // Check if we've exceeded max fallback duration
             if fallback_duration > self.config.max_fallback_duration {
                 info!(
@@ -91,9 +98,11 @@ impl FallbackManager {
                 self.consecutive_fallback_triggers = 0;
                 return true;
             }
-            
+
             // Check if recovery interval has passed and automatic recovery is enabled
-            if self.config.enable_automatic_recovery && fallback_duration > self.config.recovery_check_interval {
+            if self.config.enable_automatic_recovery
+                && fallback_duration > self.config.recovery_check_interval
+            {
                 info!("Recovering from fallback mode: {}", reason);
                 self.mode = FallbackMode::Normal;
                 self.consecutive_fallback_triggers = 0;
@@ -174,7 +183,7 @@ mod tests {
         let mut config = FallbackConfig::default();
         config.recovery_check_interval = Duration::from_millis(50);
         config.max_fallback_duration = Duration::from_millis(100);
-        
+
         let mut manager = FallbackManager::new(config);
         manager.trigger_fallback("Test recovery".to_string());
 
@@ -199,7 +208,7 @@ mod tests {
         let mut config = FallbackConfig::default();
         config.enable_automatic_recovery = false;
         config.recovery_check_interval = Duration::from_millis(50);
-        
+
         let mut manager = FallbackManager::new(config);
         manager.trigger_fallback("Test disabled recovery".to_string());
 

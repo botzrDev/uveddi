@@ -1,11 +1,11 @@
 //! Fallback strategy for service availability detection (UV-177)
-//! 
+//!
 //! Provides proactive health checking and preemptive fallback activation.
 
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, SystemTime};
 
-use crate::resilience::{HealthMonitor, MetricsCollector, FallbackManager};
+use crate::resilience::{FallbackManager, HealthMonitor, MetricsCollector};
 
 /// Configuration for availability detection and monitoring.
 #[derive(Debug, Clone)]

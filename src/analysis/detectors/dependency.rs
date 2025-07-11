@@ -1,13 +1,13 @@
 use log::debug;
 use rayon::prelude::*;
-use std::path::{Path, PathBuf};
 use std::fs;
+use std::path::{Path, PathBuf};
 #[cfg(feature = "tree-sitter")]
 use tree_sitter::{Query, QueryCursor};
 
 use crate::ast::tree_sitter::{
     queries::{JAVASCRIPT_IMPORTS_QUERY, PYTHON_IMPORTS_QUERY, RUST_IMPORTS_QUERY},
-    AstParser, ParsedFile, SourceLanguage, AstError,
+    AstError, AstParser, ParsedFile, SourceLanguage,
 };
 pub use crate::database::models::{Dependency, DependencyType};
 
@@ -72,12 +72,16 @@ impl DependencyExtractor {
     /// # Returns
     ///
     /// A `Result` containing a `Vec<Dependency>` or an `ExtractionError`.
-    pub fn extract_from_file(&mut self, file_path: &Path) -> Result<Vec<Dependency>, ExtractionError> {
+    pub fn extract_from_file(
+        &mut self,
+        file_path: &Path,
+    ) -> Result<Vec<Dependency>, ExtractionError> {
         let content = std::fs::read_to_string(file_path)
             .map_err(|e| ExtractionError::IoError(file_path.to_path_buf(), e))?;
 
-        let language = SourceLanguage::from_path(file_path)
-            .ok_or_else(|| ExtractionError::UnsupportedLanguage(file_path.to_string_lossy().to_string()))?;
+        let language = SourceLanguage::from_path(file_path).ok_or_else(|| {
+            ExtractionError::UnsupportedLanguage(file_path.to_string_lossy().to_string())
+        })?;
 
         let parsed_file = self
             .parser
@@ -107,115 +111,119 @@ impl DependencyExtractor {
         #[cfg(feature = "tree-sitter")]
         {
             let (query_str, dependency_type) = match parsed_file.language {
-            SourceLanguage::Rust => (RUST_IMPORTS_QUERY, DependencyType::Use),
-            SourceLanguage::Python => (PYTHON_IMPORTS_QUERY, DependencyType::Import),
-            SourceLanguage::JavaScript => (JAVASCRIPT_IMPORTS_QUERY, DependencyType::Import),
-        };
+                SourceLanguage::Rust => (RUST_IMPORTS_QUERY, DependencyType::Use),
+                SourceLanguage::Python => (PYTHON_IMPORTS_QUERY, DependencyType::Import),
+                SourceLanguage::JavaScript => (JAVASCRIPT_IMPORTS_QUERY, DependencyType::Import),
+            };
 
-        let query = Query::new(
-            &parsed_file
-                .tree
-                .as_ref()
-                .expect("AST tree missing")
-                .language(),
-            query_str,
-        )
-        .map_err(|e| ExtractionError::QueryError(e.to_string()))?;
+            let query = Query::new(
+                &parsed_file
+                    .tree
+                    .as_ref()
+                    .expect("AST tree missing")
+                    .language(),
+                query_str,
+            )
+            .map_err(|e| ExtractionError::QueryError(e.to_string()))?;
 
-        let mut cursor = QueryCursor::new();
-        let matches = cursor.matches(
-            &query,
-            parsed_file
-                .tree
-                .as_ref()
-                .expect("AST tree missing")
-                .root_node(),
-            parsed_file.content.as_deref().unwrap_or("").as_bytes(),
-        );
+            let mut cursor = QueryCursor::new();
+            let matches = cursor.matches(
+                &query,
+                parsed_file
+                    .tree
+                    .as_ref()
+                    .expect("AST tree missing")
+                    .root_node(),
+                parsed_file
+                    .content
+                    .as_deref()
+                    .map(str::as_bytes)
+                    .unwrap_or(&[]),
+            );
 
-        let mut dependencies = Vec::new();
-        for mat in matches {
-            for capture in mat.captures {
-                // Only process captures named "path"
-                let capture_name = query.capture_names()[capture.index as usize];
-                if capture_name != "path" {
-                    continue;
-                }
+            let mut dependencies = Vec::new();
+            for mat in matches {
+                for capture in mat.captures {
+                    // Only process captures named "path"
+                    let capture_name = query.capture_names()[capture.index as usize];
+                    if capture_name != "path" {
+                        continue;
+                    }
 
-                let node = capture.node;
-                let line_number = node.start_position().row + 1;
-                let mut module_name = node
-                    .utf8_text(parsed_file.content.as_deref().unwrap_or("").as_bytes())
-                    .unwrap_or("")
-                    .to_string();
+                    let node = capture.node;
+                    let line_number = node.start_position().row + 1;
+                    let mut module_name = node
+                        .utf8_text(parsed_file.content.as_deref().unwrap_or("").as_bytes())
+                        .unwrap_or("")
+                        .to_string();
 
-                // For Rust, resolve `mod` statements to file paths
-                if parsed_file.language == SourceLanguage::Rust
-                    && dependency_type == DependencyType::Use
-                {
-                    // UV-150: Strategic error handling for path operations (Category V)
-                    let parent_dir = Path::new(&parsed_file.file_path).parent()
+                    // For Rust, resolve `mod` statements to file paths
+                    if parsed_file.language == SourceLanguage::Rust
+                        && dependency_type == DependencyType::Use
+                    {
+                        // UV-150: Strategic error handling for path operations (Category V)
+                        let parent_dir = Path::new(&parsed_file.file_path).parent()
                         .ok_or_else(|| ExtractionError::InvalidPath {
                             path: PathBuf::from(parsed_file.file_path.clone()),
                             reason: "File path has no parent directory (see UV-150 error handling policy)".to_string(),
                         })?;
-                    let mut potential_path = parent_dir.join(&module_name);
-                    if !potential_path.exists() {
-                        potential_path.set_extension("rs");
+                        let mut potential_path = parent_dir.join(&module_name);
                         if !potential_path.exists() {
-                            // Check for module/mod.rs
-                            let mod_parent = Path::new(&parsed_file.file_path).parent().ok_or_else(|| ExtractionError::InvalidPath {
+                            potential_path.set_extension("rs");
+                            if !potential_path.exists() {
+                                // Check for module/mod.rs
+                                let mod_parent = Path::new(&parsed_file.file_path).parent().ok_or_else(|| ExtractionError::InvalidPath {
                                 path: PathBuf::from(parsed_file.file_path.clone()),
                                 reason: "File path has no parent directory for mod.rs (see UV-150)".to_string(),
                             })?;
-                            let mod_path = mod_parent.join(&module_name).join("mod.rs");
-                            if mod_path.exists() {
-                                potential_path = mod_path;
+                                let mod_path = mod_parent.join(&module_name).join("mod.rs");
+                                if mod_path.exists() {
+                                    potential_path = mod_path;
+                                }
+                            }
+                        }
+                        if potential_path.exists() {
+                            module_name = potential_path.to_string_lossy().into_owned();
+                        }
+                    }
+
+                    // Clean up the module name (e.g., remove quotes from strings)
+                    if module_name.starts_with('"') && module_name.ends_with('"')
+                        || module_name.starts_with('\'') && module_name.ends_with('\'')
+                    {
+                        module_name = module_name[1..module_name.len() - 1].to_string();
+                    }
+
+                    // Normalize JS/TS import paths to match file stem (e.g., './b.js' -> 'b')
+                    if let SourceLanguage::JavaScript = parsed_file.language {
+                        if module_name.starts_with("./") {
+                            let name = module_name.trim_start_matches("./");
+                            if let Some(stripped) = name.strip_suffix(".js") {
+                                module_name = stripped.to_string();
+                            } else if let Some(stripped) = name.strip_suffix(".ts") {
+                                module_name = stripped.to_string();
+                            } else {
+                                module_name = name.to_string();
                             }
                         }
                     }
-                    if potential_path.exists() {
-                        module_name = potential_path.to_string_lossy().into_owned();
-                    }
-                }
 
-                // Clean up the module name (e.g., remove quotes from strings)
-                if module_name.starts_with('"') && module_name.ends_with('"')
-                    || module_name.starts_with('\'') && module_name.ends_with('\'')
-                {
-                    module_name = module_name[1..module_name.len() - 1].to_string();
-                }
-
-                // Normalize JS/TS import paths to match file stem (e.g., './b.js' -> 'b')
-                if let SourceLanguage::JavaScript = parsed_file.language {
-                    if module_name.starts_with("./") {
-                        let name = module_name.trim_start_matches("./");
-                        if let Some(stripped) = name.strip_suffix(".js") {
-                            module_name = stripped.to_string();
-                        } else if let Some(stripped) = name.strip_suffix(".ts") {
-                            module_name = stripped.to_string();
-                        } else {
-                            module_name = name.to_string();
+                    if let SourceLanguage::Rust = parsed_file.language {
+                        if let Some(parent) = Path::new(&parsed_file.file_path).parent() {
+                            let mut path = parent.join(&module_name);
+                            if !path.exists() {
+                                path.set_extension("rs");
+                            }
                         }
                     }
-                }
 
-                if let SourceLanguage::Rust = parsed_file.language {
-                    if let Some(parent) = Path::new(&parsed_file.file_path).parent() {
-                        let mut path = parent.join(&module_name);
-                        if !path.exists() {
-                            path.set_extension("rs");
-                        }
-                    }
+                    dependencies.push(Dependency {
+                        from_file: PathBuf::from(parsed_file.file_path.clone()),
+                        to_module: module_name,
+                        dependency_type,
+                        line_number: Some((line_number + 1) as u32),
+                    });
                 }
-
-                dependencies.push(Dependency {
-                    from_file: PathBuf::from(parsed_file.file_path.clone()),
-                    to_module: module_name,
-                    dependency_type,
-                    line_number: Some(line_number as u32),
-                });
-            }
             }
 
             Ok(dependencies)
@@ -228,25 +236,34 @@ impl DependencyExtractor {
         }
     }
     /// Fallback dependency extraction using regex (for when tree-sitter is disabled)
-    fn extract_with_regex(&self, parsed_file: &ParsedFile) -> Result<Vec<Dependency>, ExtractionError> {
+    fn extract_with_regex(
+        &self,
+        parsed_file: &ParsedFile,
+    ) -> Result<Vec<Dependency>, ExtractionError> {
         // Implement basic regex-based dependency extraction
         // This is a simplified fallback - should be expanded based on language
         let pattern = match parsed_file.language {
             SourceLanguage::Rust => r"use\s+([\w:]+)",
             SourceLanguage::Python => r"import\s+([\w.]+)",
-            SourceLanguage::JavaScript => r#"import\s+.*from\s+['"]([^'"]+)['"]|require\(['"]([^'"]+)['"]\)"#,
+            SourceLanguage::JavaScript => {
+                r#"import\s+.*from\s+['"]([^'"]+)['"]|require\(['"]([^'"]+)['"]\)"#
+            }
         };
-        
+
         // Create regex pattern
-        let re = regex::Regex::new(pattern).map_err(|e| ExtractionError::QueryError(e.to_string()))?;
+        let re =
+            regex::Regex::new(pattern).map_err(|e| ExtractionError::QueryError(e.to_string()))?;
         let mut dependencies = Vec::new();
 
         // Process each line
-        for (line_num, line) in parsed_file.content.lines().enumerate() {
+        for (line_num, line) in parsed_file.source.lines().enumerate() {
             if let Some(caps) = re.captures(line) {
                 // Get module name from capture group 1 or 2
-                let module_name = caps.get(1).or_else(|| caps.get(2)).map(|m| m.as_str().to_string());
-                
+                let module_name = caps
+                    .get(1)
+                    .or_else(|| caps.get(2))
+                    .map(|m| m.as_str().to_string());
+
                 if let Some(name) = module_name {
                     dependencies.push(Dependency {
                         from_file: std::path::PathBuf::from(parsed_file.file_path.clone()),

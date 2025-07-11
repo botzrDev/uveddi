@@ -39,12 +39,12 @@ impl MermaidGenerator {
     pub fn new() -> Result<Self, MermaidGenerationError> {
         let mut tera = Tera::new("templates/diagrams/*")
             .unwrap_or_else(|_| Tera::new("").expect("Failed to create empty Tera instance"));
-        
+
         // Register built-in templates
         Self::register_builtin_templates(&mut tera)?;
-        
+
         let diagram_specs = Self::create_default_specs();
-        
+
         Ok(Self {
             template_engine: tera,
             diagram_specs,
@@ -60,14 +60,14 @@ impl MermaidGenerator {
     ) -> Result<DiagramMetadata, MermaidGenerationError> {
         let mut context = Context::new();
         context.insert("layout", "TD");
-        
+
         // Transform components with God Object information
         let template_components: Vec<Value> = components
             .iter()
             .map(|c| {
                 let is_god_object = god_object_components.contains(&c.component_id);
                 let member_count = member_counts.get(&c.component_id).unwrap_or(&0);
-                
+
                 json!({
                     "id": c.component_id.to_string(),
                     "name": c.name,
@@ -83,11 +83,14 @@ impl MermaidGenerator {
                 })
             })
             .collect();
-        
+
         context.insert("components", &template_components);
-        context.insert("dependencies", &self.extract_dependencies_for_template(components));
+        context.insert(
+            "dependencies",
+            &self.extract_dependencies_for_template(components),
+        );
         context.insert("title", "God Object Detection");
-        
+
         let mermaid_src = self
             .template_engine
             .render("god_object_diagram", &context)
@@ -107,22 +110,22 @@ impl MermaidGenerator {
     pub fn generate_cyclic_dependencies_diagram(
         &self,
         components: &[ArchitecturalComponent],
-        cycles: &[Vec<Uuid>], // Each inner Vec represents a cycle
+        cycles: &[Vec<Uuid>],         // Each inner Vec represents a cycle
         cycle_edges: &[(Uuid, Uuid)], // Edges that create cycles
     ) -> Result<DiagramMetadata, MermaidGenerationError> {
         let mut context = Context::new();
         context.insert("layout", "TD");
-        
+
         // Flatten all cycle components
         let cycle_components: HashSet<Uuid> = cycles.iter().flatten().cloned().collect();
         let cycle_edge_set: HashSet<(Uuid, Uuid)> = cycle_edges.iter().cloned().collect();
-        
+
         // Transform components with cycle information
         let template_components: Vec<Value> = components
             .iter()
             .map(|c| {
                 let is_in_cycle = cycle_components.contains(&c.component_id);
-                
+
                 json!({
                     "id": c.component_id.to_string(),
                     "name": c.name,
@@ -137,7 +140,7 @@ impl MermaidGenerator {
                 })
             })
             .collect();
-        
+
         // Transform dependencies with cycle information (UV-150: error propagation)
         let template_dependencies: Vec<Value> = {
             let deps = self.extract_dependencies_for_template(components);
@@ -154,19 +157,22 @@ impl MermaidGenerator {
                     let is_cycle_edge = cycle_edge_set.contains(&(from_uuid, to_uuid));
                     dep_obj.insert("is_cycle_edge".to_string(), json!(is_cycle_edge));
                     if is_cycle_edge {
-                        dep_obj.insert("style".to_string(), json!("stroke:#FF0000,stroke-width:4px"));
+                        dep_obj.insert(
+                            "style".to_string(),
+                            json!("stroke:#FF0000,stroke-width:4px"),
+                        );
                     }
                 }
                 result.push(dep);
             }
             result
         };
-        
+
         context.insert("components", &template_components);
         context.insert("dependencies", &template_dependencies);
         context.insert("cycles", cycles);
         context.insert("title", "Cyclic Dependencies Detection");
-        
+
         let mermaid_src = self
             .template_engine
             .render("cyclic_dependencies_diagram", &context)
@@ -233,38 +239,43 @@ classDef normal-component fill:#e1f5fe,stroke:#01579b,stroke-width:2px;"#,
     /// Create default diagram specifications
     fn create_default_specs() -> HashMap<DiagramType, DiagramSpec> {
         let mut specs = HashMap::new();
-        
+
         specs.insert(
             DiagramType::Class,
             DiagramSpec {
                 spec_id: Uuid::new_v4(),
                 anti_pattern_type_id: 1,
                 diagram_type: DiagramType::Class,
-                mermaid_template: "classDiagram\n{{#each components}}\n    class {{name}}\n{{/each}}".to_string(),
+                mermaid_template:
+                    "classDiagram\n{{#each components}}\n    class {{name}}\n{{/each}}".to_string(),
                 severity_styles: HashMap::new(),
                 layout: crate::models::visualization::DiagramLayout::TopDown,
             },
         );
-        
+
         specs.insert(
             DiagramType::Graph,
             DiagramSpec {
                 spec_id: Uuid::new_v4(),
                 anti_pattern_type_id: 2,
                 diagram_type: DiagramType::Graph,
-                mermaid_template: "graph TD\n{{#each components}}\n    {{id}}[{{name}}]\n{{/each}}".to_string(),
+                mermaid_template: "graph TD\n{{#each components}}\n    {{id}}[{{name}}]\n{{/each}}"
+                    .to_string(),
                 severity_styles: HashMap::new(),
                 layout: crate::models::visualization::DiagramLayout::TopDown,
             },
         );
-        
+
         specs
     }
 
     /// Extract dependencies in template-friendly format
-    fn extract_dependencies_for_template(&self, components: &[ArchitecturalComponent]) -> Vec<Value> {
+    fn extract_dependencies_for_template(
+        &self,
+        components: &[ArchitecturalComponent],
+    ) -> Vec<Value> {
         let mut dependencies = Vec::new();
-        
+
         for component in components {
             for dep in &component.dependencies {
                 dependencies.push(json!({
@@ -274,7 +285,7 @@ classDef normal-component fill:#e1f5fe,stroke:#01579b,stroke-width:2px;"#,
                 }));
             }
         }
-        
+
         dependencies
     }
 
@@ -295,21 +306,28 @@ classDef normal-component fill:#e1f5fe,stroke:#01579b,stroke-width:2px;"#,
         diagram_type: DiagramType,
     ) -> Result<crate::models::visualization::DiagramResult, MermaidGenerationError> {
         let mut context = Context::new();
-        context.insert("components", &self.extract_components_for_template(components));
-        context.insert("dependencies", &self.extract_dependencies_for_template(components));
-        
+        context.insert(
+            "components",
+            &self.extract_components_for_template(components),
+        );
+        context.insert(
+            "dependencies",
+            &self.extract_dependencies_for_template(components),
+        );
+
         let template_name = match diagram_type {
             DiagramType::Component => "component_diagram",
-            DiagramType::Class => "class_diagram", 
+            DiagramType::Class => "class_diagram",
             DiagramType::Dependency => "dependency_diagram",
             _ => "default_diagram",
         };
-        
-        let mermaid_src = self.template_engine
+
+        let mermaid_src = self
+            .template_engine
             .render(template_name, &context)
             .map_err(|e| MermaidGenerationError::TemplateRenderError(e.to_string()))
             .map(|s| Self::clean_generated_diagram(&s))?;
-        
+
         let component_ids = components.iter().map(|c| c.component_id).collect();
         Ok(crate::models::visualization::DiagramResult::new(
             diagram_type,
@@ -325,7 +343,7 @@ classDef normal-component fill:#e1f5fe,stroke:#01579b,stroke-width:2px;"#,
         dead_components: &[Uuid],
     ) -> Result<crate::models::visualization::DiagramResult, MermaidGenerationError> {
         let mut context = Context::new();
-        
+
         let template_components: Vec<Value> = components
             .iter()
             .map(|c| {
@@ -345,14 +363,18 @@ classDef normal-component fill:#e1f5fe,stroke:#01579b,stroke-width:2px;"#,
             .collect();
 
         context.insert("components", &template_components);
-        context.insert("dependencies", &self.extract_dependencies_for_template(components));
+        context.insert(
+            "dependencies",
+            &self.extract_dependencies_for_template(components),
+        );
         context.insert("title", "Dead Code Detection");
 
-        let mermaid_src = self.template_engine
+        let mermaid_src = self
+            .template_engine
             .render("dead_code_diagram", &context)
             .map_err(|e| MermaidGenerationError::TemplateRenderError(e.to_string()))
             .map(|s| Self::clean_generated_diagram(&s))?;
-        
+
         let component_ids = components.iter().map(|c| c.component_id).collect();
         Ok(crate::models::visualization::DiagramResult::new(
             DiagramType::Component, // or a specific dead code diagram type
@@ -369,7 +391,7 @@ classDef normal-component fill:#e1f5fe,stroke:#01579b,stroke-width:2px;"#,
         class_sizes: &HashMap<Uuid, u32>,
     ) -> Result<crate::models::visualization::DiagramResult, MermaidGenerationError> {
         let mut context = Context::new();
-        
+
         let template_components: Vec<Value> = components
             .iter()
             .map(|c| {
@@ -391,14 +413,18 @@ classDef normal-component fill:#e1f5fe,stroke:#01579b,stroke-width:2px;"#,
             .collect();
 
         context.insert("components", &template_components);
-        context.insert("dependencies", &self.extract_dependencies_for_template(components));
+        context.insert(
+            "dependencies",
+            &self.extract_dependencies_for_template(components),
+        );
         context.insert("title", "Large Class Detection");
 
-        let mermaid_src = self.template_engine
+        let mermaid_src = self
+            .template_engine
             .render("large_class_diagram", &context)
             .map_err(|e| MermaidGenerationError::TemplateRenderError(e.to_string()))
             .map(|s| Self::clean_generated_diagram(&s))?;
-        
+
         let component_ids = components.iter().map(|c| c.component_id).collect();
         Ok(crate::models::visualization::DiagramResult::new(
             DiagramType::Class,
@@ -415,12 +441,12 @@ classDef normal-component fill:#e1f5fe,stroke:#01579b,stroke-width:2px;"#,
         coupling_scores: &HashMap<(Uuid, Uuid), f64>,
     ) -> Result<crate::models::visualization::DiagramResult, MermaidGenerationError> {
         let mut context = Context::new();
-        
+
         let coupled_components: std::collections::HashSet<Uuid> = coupling_pairs
             .iter()
             .flat_map(|(a, b)| vec![*a, *b])
             .collect();
-        
+
         let template_components: Vec<Value> = components
             .iter()
             .map(|c| {
@@ -440,16 +466,20 @@ classDef normal-component fill:#e1f5fe,stroke:#01579b,stroke-width:2px;"#,
             .collect();
 
         context.insert("components", &template_components);
-        context.insert("dependencies", &self.extract_dependencies_for_template(components));
+        context.insert(
+            "dependencies",
+            &self.extract_dependencies_for_template(components),
+        );
         context.insert("coupling_pairs", &coupling_pairs);
         context.insert("coupling_scores", &coupling_scores);
         context.insert("title", "Tight Coupling Detection");
 
-        let mermaid_src = self.template_engine
+        let mermaid_src = self
+            .template_engine
             .render("tight_coupling_diagram", &context)
             .map_err(|e| MermaidGenerationError::TemplateRenderError(e.to_string()))
             .map(|s| Self::clean_generated_diagram(&s))?;
-        
+
         let component_ids = components.iter().map(|c| c.component_id).collect();
         Ok(crate::models::visualization::DiagramResult::new(
             DiagramType::Dependency,
@@ -500,7 +530,7 @@ mod tests {
   
   B --> C  "#;
         let cleaned = MermaidGenerator::clean_generated_diagram(messy_diagram);
-        
+
         assert_eq!(cleaned, "graph TD\nA --> B\nB --> C");
     }
 }

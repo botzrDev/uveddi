@@ -1,47 +1,50 @@
 //! Comprehensive Leaky Abstraction Detection Tests
-//! 
+//!
 //! This module provides extensive testing for the advanced leaky abstraction detector,
 //! covering multiple programming languages and architectural patterns.
 
 #[cfg(test)]
 mod tests {
     use crate::analysis::detectors::anti_patterns::leaky_abstraction::{
-        LeakyAbstractionDetector, ArchitecturalConfig, ArchitecturalLayer
+        ArchitecturalConfig, ArchitecturalLayer, LeakyAbstractionDetector,
     };
     use crate::analysis::AnalysisDetector;
     use crate::ast::tree_sitter::{AstParser, ParsedFile};
-    use tempfile::tempdir;
+    use std::collections::{HashMap, HashSet};
     use std::fs::File;
     use std::io::Write;
-    use std::collections::{HashMap, HashSet};
+    use tempfile::tempdir;
 
     fn create_parsed_file(content: &str, language: &str, file_path: &str) -> ParsedFile {
         let temp_dir = tempdir().unwrap();
         let _file_extension = match language {
             "rust" => ".rs",
-            "python" => ".py", 
+            "python" => ".py",
             "javascript" => ".js",
             _ => ".txt",
         };
-        
+
         // Create the full path structure to match layer mappings
         // Convert paths like "src/domain/user.rs" to actual directory structure
-        let test_file_path = temp_dir.path().join(file_path).with_extension(match language {
-            "rust" => "rs",
-            "python" => "py", 
-            "javascript" => "js",
-            _ => "txt",
-        });
-        
+        let test_file_path = temp_dir
+            .path()
+            .join(file_path)
+            .with_extension(match language {
+                "rust" => "rs",
+                "python" => "py",
+                "javascript" => "js",
+                _ => "txt",
+            });
+
         // Ensure parent directories exist
         if let Some(parent) = test_file_path.parent() {
             std::fs::create_dir_all(parent).unwrap();
         }
-        
+
         // Write content to temporary file
         let mut file = File::create(&test_file_path).unwrap();
         writeln!(file, "{}", content).unwrap();
-        
+
         // Parse the file
         let mut parser = AstParser::new().unwrap();
         parser.parse_file(&test_file_path).unwrap()
@@ -50,9 +53,18 @@ mod tests {
     fn create_test_config() -> ArchitecturalConfig {
         let mut layer_mappings = HashMap::new();
         layer_mappings.insert("**/domain/**".to_string(), ArchitecturalLayer::Domain);
-        layer_mappings.insert("**/services/**".to_string(), ArchitecturalLayer::Application);
-        layer_mappings.insert("**/controllers/**".to_string(), ArchitecturalLayer::Presentation);
-        layer_mappings.insert("**/infrastructure/**".to_string(), ArchitecturalLayer::Infrastructure);
+        layer_mappings.insert(
+            "**/services/**".to_string(),
+            ArchitecturalLayer::Application,
+        );
+        layer_mappings.insert(
+            "**/controllers/**".to_string(),
+            ArchitecturalLayer::Presentation,
+        );
+        layer_mappings.insert(
+            "**/infrastructure/**".to_string(),
+            ArchitecturalLayer::Infrastructure,
+        );
 
         let mut infrastructure_modules = HashSet::new();
         infrastructure_modules.insert("diesel".to_string());
@@ -96,11 +108,14 @@ mod tests {
         let parsed_file = create_parsed_file(rust_code, "rust", "src/domain/user.rs");
 
         let issues = detector.detect_issues(&parsed_file).unwrap();
-        
-        assert!(!issues.is_empty(), "Should detect infrastructure import in domain layer");
-        assert!(issues.iter().any(|issue| 
-            issue.description.contains("Infrastructure module 'diesel' imported in Domain layer")
-        ));
+
+        assert!(
+            !issues.is_empty(),
+            "Should detect infrastructure import in domain layer"
+        );
+        assert!(issues.iter().any(|issue| issue
+            .description
+            .contains("Infrastructure module 'diesel' imported in Domain layer")));
     }
 
     #[test]
@@ -127,11 +142,11 @@ mod tests {
         let parsed_file = create_parsed_file(rust_code, "rust", "src/infrastructure/database.rs");
 
         let issues = detector.detect_issues(&parsed_file).unwrap();
-        
+
         assert!(!issues.is_empty(), "Should detect public field exposure");
-        assert!(issues.iter().any(|issue| 
-            issue.description.contains("Public field exposes internal structure")
-        ));
+        assert!(issues.iter().any(|issue| issue
+            .description
+            .contains("Public field exposes internal structure")));
     }
 
     #[test]
@@ -157,20 +172,24 @@ mod tests {
 
         let config = create_test_config();
         let detector = LeakyAbstractionDetector::with_config(config);
-        let parsed_file = create_parsed_file(python_code, "python", "src/controllers/user_views.py");
+        let parsed_file =
+            create_parsed_file(python_code, "python", "src/controllers/user_views.py");
 
         let issues = detector.detect_issues(&parsed_file).unwrap();
-        
+
         // Debug output
         println!("Django test issues:");
         for issue in &issues {
             println!("  - {}", issue.description);
         }
-        
-        assert!(!issues.is_empty(), "Should detect Django model usage in view");
-        assert!(issues.iter().any(|issue| 
-            issue.description.contains("Framework module 'django' imported in Presentation layer")
-        ));
+
+        assert!(
+            !issues.is_empty(),
+            "Should detect Django model usage in view"
+        );
+        assert!(issues.iter().any(|issue| issue
+            .description
+            .contains("Framework module 'django' imported in Presentation layer")));
     }
 
     #[test]
@@ -199,8 +218,11 @@ mod tests {
         let parsed_file = create_parsed_file(python_code, "python", "src/domain/user.py");
 
         let issues = detector.detect_issues(&parsed_file).unwrap();
-        
-        assert!(!issues.is_empty(), "Should detect infrastructure imports in domain");
+
+        assert!(
+            !issues.is_empty(),
+            "Should detect infrastructure imports in domain"
+        );
         // Should detect both requests and sqlalchemy as infrastructure concerns
         assert!(issues.len() >= 1);
     }
@@ -243,11 +265,14 @@ mod tests {
         let parsed_file = create_parsed_file(js_code, "javascript", "src/services/user_service.js");
 
         let issues = detector.detect_issues(&parsed_file).unwrap();
-        
-        assert!(!issues.is_empty(), "Should detect DOM manipulation in business logic");
-        assert!(issues.iter().any(|issue| 
-            issue.description.contains("DOM manipulation in business logic")
-        ));
+
+        assert!(
+            !issues.is_empty(),
+            "Should detect DOM manipulation in business logic"
+        );
+        assert!(issues.iter().any(|issue| issue
+            .description
+            .contains("DOM manipulation in business logic")));
     }
 
     #[test]
@@ -290,8 +315,11 @@ mod tests {
         let parsed_file = create_parsed_file(js_code, "javascript", "src/domain/user.js");
 
         let issues = detector.detect_issues(&parsed_file).unwrap();
-        
-        assert!(!issues.is_empty(), "Should detect infrastructure imports in domain");
+
+        assert!(
+            !issues.is_empty(),
+            "Should detect infrastructure imports in domain"
+        );
         // Should detect express, prisma, and axios imports
         assert!(issues.len() >= 2);
     }
@@ -319,10 +347,11 @@ mod tests {
 
         let config = create_test_config();
         let detector = LeakyAbstractionDetector::with_config(config);
-        let parsed_file = create_parsed_file(rust_code, "rust", "src/controllers/user_controller.rs");
+        let parsed_file =
+            create_parsed_file(rust_code, "rust", "src/controllers/user_controller.rs");
 
         let issues = detector.detect_issues(&parsed_file).unwrap();
-        
+
         // This test demonstrates layer violation detection
         // The exact detection depends on the AST structure and query patterns
     }
@@ -371,13 +400,16 @@ mod tests {
 
         let config = create_test_config();
         let detector = LeakyAbstractionDetector::with_config(config);
-        let parsed_file = create_parsed_file(rust_code, "rust", "src/controllers/user_controller.rs");
+        let parsed_file =
+            create_parsed_file(rust_code, "rust", "src/controllers/user_controller.rs");
 
         let issues = detector.detect_issues(&parsed_file).unwrap();
-        
+
         // Should have no violations for properly structured code
-        assert!(issues.is_empty() || issues.iter().all(|issue| issue.severity != "high"), 
-                "Well-structured code should have no high-severity violations");
+        assert!(
+            issues.is_empty() || issues.iter().all(|issue| issue.severity != "high"),
+            "Well-structured code should have no high-severity violations"
+        );
     }
 
     #[test]
@@ -425,11 +457,11 @@ mod tests {
         let parsed_file = create_parsed_file(rust_code, "rust", "src/services/user_service.rs");
 
         let issues = detector.detect_issues(&parsed_file).unwrap();
-        
+
         assert!(!issues.is_empty(), "Should detect error type propagation");
-        assert!(issues.iter().any(|issue| 
-            issue.description.contains("Infrastructure error type") && 
-            issue.description.contains("propagated to public API")
+        assert!(issues.iter().any(
+            |issue| issue.description.contains("Infrastructure error type")
+                && issue.description.contains("propagated to public API")
         ));
     }
 
@@ -462,7 +494,7 @@ mod tests {
         let parsed_file = create_parsed_file(python_code, "python", "src/services/user_service.py");
 
         let issues = detector.detect_issues(&parsed_file).unwrap();
-        
+
         assert!(!issues.is_empty(), "Should detect framework coupling");
         // Should detect flask, django, and fastapi imports in service layer
     }
@@ -497,17 +529,22 @@ mod tests {
         let parsed_file = create_parsed_file(rust_code, "rust", "src/business/logic.rs");
         let issues = detector.detect_issues(&parsed_file).unwrap();
 
-        assert!(!issues.is_empty(), "Should detect custom infrastructure module in business layer");
-        assert!(issues.iter().any(|issue| 
-            issue.description.contains("custom_orm")
-        ));
+        assert!(
+            !issues.is_empty(),
+            "Should detect custom infrastructure module in business layer"
+        );
+        assert!(issues
+            .iter()
+            .any(|issue| issue.description.contains("custom_orm")));
     }
 
     #[test]
     fn test_performance_characteristics() {
         // Test with larger code samples to ensure performance
-        let large_rust_code = (0..100).map(|i| format!(
-            r#"
+        let large_rust_code = (0..100)
+            .map(|i| {
+                format!(
+                    r#"
             use diesel::prelude::*;
             
             pub struct Entity{} {{
@@ -519,8 +556,12 @@ mod tests {
                     Ok(())
                 }}
             }}
-            "#, i, i, i, i
-        )).collect::<Vec<_>>().join("\n");
+            "#,
+                    i, i, i, i
+                )
+            })
+            .collect::<Vec<_>>()
+            .join("\n");
 
         let detector = LeakyAbstractionDetector::new();
         let parsed_file = create_parsed_file(&large_rust_code, "rust", "src/domain/large_file.rs");
@@ -531,6 +572,9 @@ mod tests {
 
         // Should complete in reasonable time (less than 1 second for this test)
         assert!(duration.as_secs() < 1, "Analysis should be fast");
-        assert!(!issues.is_empty(), "Should detect multiple violations in large file");
+        assert!(
+            !issues.is_empty(),
+            "Should detect multiple violations in large file"
+        );
     }
 }

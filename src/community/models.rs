@@ -34,7 +34,7 @@ impl MemberRole {
     pub fn as_str(&self) -> &'static str {
         match self {
             MemberRole::Member => "member",
-            MemberRole::Developer => "developer", 
+            MemberRole::Developer => "developer",
             MemberRole::Admin => "admin",
         }
     }
@@ -110,25 +110,25 @@ pub enum ActivityType {
     ProfileUpdate,
     EmailVerified,
     PasswordReset,
-    
+
     /// Feature usage
     DashboardView,
     AnalysisDownload,
     ReportGenerated,
     ApiCall,
     PluginInstall,
-    
+
     /// Community engagement
     ForumPost,
     CommentPosted,
     DocumentationView,
     TutorialComplete,
-    
+
     /// Admin activities
     AdminAction,
     RoleChanged,
     AccountDeactivated,
-    
+
     /// Custom activity (with description)
     Custom(String),
 }
@@ -164,7 +164,7 @@ impl ActivityType {
         if let Some(custom_desc) = s.strip_prefix("custom:") {
             return ActivityType::Custom(custom_desc.to_string());
         }
-        
+
         match s {
             "registration" => ActivityType::Registration,
             "login" => ActivityType::Login,
@@ -246,7 +246,7 @@ pub struct AdminProfile {
     pub appointed_by: Option<String>,  // Admin who granted permissions
     pub appointed_at: DateTime<Utc>,
     pub last_admin_action: Option<DateTime<Utc>>,
-    pub is_super_admin: bool,          // Root admin privileges
+    pub is_super_admin: bool, // Root admin privileges
 }
 
 /// Placeholder documentation for public items
@@ -257,10 +257,10 @@ pub struct AdminPermissions {
     pub can_manage_content: bool,
     pub can_view_analytics: bool,
     pub can_manage_settings: bool,
-    pub can_manage_admins: bool,       // Only for super admins
+    pub can_manage_admins: bool, // Only for super admins
     pub can_export_data: bool,
     pub can_delete_users: bool,
-    pub can_manage_billing: bool,      // For subscription management
+    pub can_manage_billing: bool, // For subscription management
     pub can_access_logs: bool,
 }
 
@@ -342,28 +342,28 @@ pub enum AdminLevel {
 pub struct DeveloperProfile {
     pub member_id: String,
     pub developer_type: DeveloperType,
-    pub specializations: Vec<String>,  // Programming languages, frameworks
+    pub specializations: Vec<String>, // Programming languages, frameworks
     pub github_verified: bool,
-    pub contribution_score: i32,       // Based on community contributions
+    pub contribution_score: i32, // Based on community contributions
     pub api_access_level: ApiAccessLevel,
-    pub repositories: Vec<String>,     // Associated repositories
+    pub repositories: Vec<String>, // Associated repositories
     pub badges: Vec<DeveloperBadge>,
     pub verified_at: Option<DateTime<Utc>>,
     pub verification_method: Option<String>, // How they were verified
-    pub mentor_status: bool,           // Can mentor other developers
-    pub beta_tester: bool,             // Access to beta features
+    pub mentor_status: bool,                 // Can mentor other developers
+    pub beta_tester: bool,                   // Access to beta features
 }
 
 /// Placeholder documentation for public items
 /// Types of developers in the community
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum DeveloperType {
-    OpenSource,     // Open source contributor
-    Enterprise,     // Enterprise user
-    Student,        // Student developer
-    Freelancer,     // Independent developer
-    Startup,        // Startup team member
-    Corporate,      // Large company developer
+    OpenSource, // Open source contributor
+    Enterprise, // Enterprise user
+    Student,    // Student developer
+    Freelancer, // Independent developer
+    Startup,    // Startup team member
+    Corporate,  // Large company developer
 }
 
 /// Placeholder documentation for public items
@@ -411,7 +411,7 @@ pub struct RolePermissions {
     pub can_create_projects: bool,
     pub can_share_publicly: bool,
     pub can_invite_members: bool,
-    pub rate_limit_tier: i32,          // API rate limiting tier
-    pub storage_quota_mb: i64,         // File storage quota
-    pub features: Vec<String>,         // Enabled features list
+    pub rate_limit_tier: i32,  // API rate limiting tier
+    pub storage_quota_mb: i64, // File storage quota
+    pub features: Vec<String>, // Enabled features list
 }

@@ -48,13 +48,13 @@ impl ComponentExtractor {
         // First pass: Extract all components and build registry
         for parsed_file in parsed_files {
             let components = self.extract_from_file(parsed_file)?;
-            
+
             // Register components for dependency resolution
             for component in &components {
                 self.component_registry
                     .insert(component.name.clone(), component.component_id);
             }
-            
+
             self.component_cache
                 .insert(parsed_file.file_path.clone().into(), components.clone());
             all_components.extend(components);
@@ -74,7 +74,8 @@ impl ComponentExtractor {
         let mut components = Vec::new();
 
         if let Some(ref ast) = parsed_file.custom_ast {
-            components.extend(self.extract_from_ast_node(ast, &PathBuf::from(&parsed_file.file_path))?);
+            components
+                .extend(self.extract_from_ast_node(ast, &PathBuf::from(&parsed_file.file_path))?);
         }
 
         Ok(components)
@@ -215,13 +216,11 @@ impl ComponentExtractor {
                                 properties: Some(HashMap::new()),
                                 kind: Some(DependencyType::Calls),
                             };
-                            
+
                             // Avoid duplicate dependencies
-                            if !components[*source_index]
-                                .dependencies
-                                .iter()
-                                .any(|d| d.target_component_id.as_ref() == Some(&target_id.to_string()))
-                            {
+                            if !components[*source_index].dependencies.iter().any(|d| {
+                                d.target_component_id.as_ref() == Some(&target_id.to_string())
+                            }) {
                                 components[*source_index].dependencies.push(dependency);
                             }
                         }
@@ -249,12 +248,10 @@ impl ComponentExtractor {
                                 properties: Some(HashMap::new()),
                                 kind: Some(DependencyType::Calls),
                             };
-                            
-                            if !components[*source_index]
-                                .dependencies
-                                .iter()
-                                .any(|d| d.target_component_id.as_ref() == Some(&target_id.to_string()))
-                            {
+
+                            if !components[*source_index].dependencies.iter().any(|d| {
+                                d.target_component_id.as_ref() == Some(&target_id.to_string())
+                            }) {
                                 components[*source_index].dependencies.push(dependency);
                             }
                         }
@@ -280,10 +277,20 @@ impl ComponentExtractor {
     /// Check if a variable name indicates an architectural component
     fn is_architectural_variable(&self, name: &str) -> bool {
         let architectural_patterns = [
-            "db", "database", "connection", "client", "service", "handler",
-            "router", "middleware", "cache", "queue", "broker", "gateway",
+            "db",
+            "database",
+            "connection",
+            "client",
+            "service",
+            "handler",
+            "router",
+            "middleware",
+            "cache",
+            "queue",
+            "broker",
+            "gateway",
         ];
-        
+
         let name_lower = name.to_lowercase();
         architectural_patterns
             .iter()
@@ -293,7 +300,7 @@ impl ComponentExtractor {
     /// Infer component type from variable name
     fn infer_component_type_from_name(&self, name: &str) -> ComponentType {
         let name_lower = name.to_lowercase();
-        
+
         if name_lower.contains("db") || name_lower.contains("database") {
             ComponentType::Database
         } else if name_lower.contains("cache") {
@@ -323,7 +330,10 @@ impl ComponentExtractor {
     ) -> Option<usize> {
         // Very simplified heuristic - in reality would need proper call analysis
         for (component_name, &index) in name_to_component {
-            if method_name.to_lowercase().contains(&component_name.to_lowercase()) {
+            if method_name
+                .to_lowercase()
+                .contains(&component_name.to_lowercase())
+            {
                 return Some(index);
             }
         }
@@ -354,10 +364,10 @@ impl Default for ComponentExtractor {
 pub enum ComponentExtractionError {
     #[error("Failed to parse AST node: {0}")]
     AstParseError(String),
-    
+
     #[error("Dependency resolution failed: {0}")]
     DependencyResolutionError(String),
-    
+
     #[error("Component registration failed: {0}")]
     ComponentRegistrationError(String),
 }
@@ -394,9 +404,9 @@ mod tests {
     fn test_component_extraction() {
         let mut extractor = ComponentExtractor::new();
         let parsed_files = vec![create_test_parsed_file()];
-        
+
         let components = extractor.extract_components(&parsed_files).unwrap();
-        
+
         assert_eq!(components.len(), 2);
         assert!(components.iter().any(|c| c.name == "UserService"));
         assert!(components.iter().any(|c| c.name == "validate_email"));
@@ -405,7 +415,7 @@ mod tests {
     #[test]
     fn test_architectural_variable_detection() {
         let extractor = ComponentExtractor::new();
-        
+
         assert!(extractor.is_architectural_variable("database_client"));
         assert!(extractor.is_architectural_variable("user_service"));
         assert!(extractor.is_architectural_variable("redis_cache"));
@@ -415,7 +425,7 @@ mod tests {
     #[test]
     fn test_component_type_inference() {
         let extractor = ComponentExtractor::new();
-        
+
         assert_eq!(
             extractor.infer_component_type_from_name("database_client"),
             ComponentType::Database

@@ -55,7 +55,11 @@ impl ConfigCommand {
             ConfigSubcommand::Set { key, value, file } => {
                 let mut config = match Config::from_file(file.to_str().unwrap()) {
                     Ok(cfg) => cfg,
-                    Err(_) => Config { ollama_model: None, dead_code: None, large_classes: None },
+                    Err(_) => Config {
+                        ollama_model: None,
+                        dead_code: None,
+                        large_classes: None,
+                    },
                 };
                 match key.as_str() {
                     "ollama_model" => config.ollama_model = Some(value.clone()),
