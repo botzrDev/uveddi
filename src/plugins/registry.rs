@@ -1,6 +1,6 @@
 //! Plugin registry for discovery and metadata management
 
-use crate::plugins::{errors::*, types::*, security::Permission};
+use crate::plugins::{errors::*, types::{PluginId, PluginStatus}, security::Permission};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,

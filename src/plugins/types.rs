@@ -9,12 +9,29 @@ use uuid::Uuid;
 pub struct PluginId(pub Uuid);
 
 impl PluginId {
+    /// Create a new PluginId with a random UUID.
     pub fn new() -> Self {
         Self(Uuid::new_v4())
     }
-    
+    /// Create a PluginId from a name (UUID v5).
     pub fn from_name(name: &str) -> Self {
         Self(Uuid::new_v5(&Uuid::NAMESPACE_DNS, name.as_bytes()))
+    }
+    /// Get the inner Uuid reference.
+    pub fn as_uuid(&self) -> &Uuid {
+        &self.0
+    }
+}
+
+impl From<Uuid> for PluginId {
+    fn from(uuid: Uuid) -> Self {
+        Self(uuid)
+    }
+}
+
+impl From<PluginId> for Uuid {
+    fn from(id: PluginId) -> Self {
+        id.0
     }
 }
 
@@ -150,6 +167,31 @@ impl ExecutionContext {
     
     pub fn elapsed_ms(&self) -> u64 {
         self.start_time.elapsed().as_millis() as u64
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn test_plugin_id_generation() {
+        let id1 = PluginId::new();
+        let id2 = PluginId::new();
+        assert_ne!(id1, id2);
+    }
+    #[test]
+    fn test_plugin_id_conversions() {
+        let uuid = Uuid::new_v4();
+        let id = PluginId::from(uuid);
+        assert_eq!(Uuid::from(id.clone()), uuid);
+        assert_eq!(id.as_uuid(), &uuid);
+    }
+    #[test]
+    fn test_plugin_status_serialization() {
+        let status = PluginStatus::Ready;
+        let serialized = serde_json::to_string(&status).unwrap();
+        let deserialized: PluginStatus = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(status, deserialized);
     }
 }
 

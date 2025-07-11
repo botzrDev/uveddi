@@ -1,7 +1,7 @@
 //! Main WASM plugin engine that orchestrates the plugin system
 
 use crate::{
-    plugins::{errors::*, types::*, registry::*, security::*, data_plane::*, lifecycle::*},
+    plugins::{errors::*, types::{PluginId, PluginStatus}, registry::*, security::*, data_plane::*, lifecycle::*},
 };
 use std::{collections::HashMap, path::Path, sync::Arc};
 use tokio::sync::RwLock;
