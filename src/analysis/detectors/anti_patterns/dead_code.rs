@@ -40,7 +40,7 @@ pub struct Symbol {
     /// The type of the symbol (e.g., `Function`, `Class`).
     pub symbol_type: SymbolType,
     /// The absolute path to the file where the symbol is defined.
-    pub file_path: String,
+    pub path: std::path::PathBuf, // Change to pub path: PathBuf
     /// The line number where the symbol's definition begins.
     pub line_number: u32,
     /// Indicates whether the symbol is public or exported, making it an entry point.
@@ -189,7 +189,7 @@ impl DeadCodeDetector {
     /// Uses `tree-sitter` queries to find functions, structs, enums, and constants.
     fn extract_rust_symbols(&self, parsed_file: &ParsedFile) -> Result<Vec<Symbol>, AnalysisError> {
         let mut symbols = Vec::new();
-        let source = parsed_file.content.as_bytes();
+        let source = parsed_file.source.as_bytes();
         let tree = parsed_file
             .tree
             .as_ref()
@@ -211,7 +211,7 @@ impl DeadCodeDetector {
                     symbols.push(Symbol {
                         name: name.to_string(),
                         symbol_type: SymbolType::Function,
-                        file_path: parsed_file.file_path.to_string().to_string(),
+                        path: parsed_file.path.clone(), // Use parsed_file.path
                         line_number: (name_node.start_position().row + 1) as u32,
                         is_exported,
                         is_live: false,
@@ -237,7 +237,7 @@ impl DeadCodeDetector {
                     symbols.push(Symbol {
                         name: name.to_string(),
                         symbol_type: SymbolType::Struct,
-                        file_path: parsed_file.file_path.to_string().to_string(),
+                        path: parsed_file.path.clone(), // Use parsed_file.path
                         line_number: (name_node.start_position().row + 1) as u32,
                         is_exported,
                         is_live: false,
@@ -260,7 +260,7 @@ impl DeadCodeDetector {
     ) -> Result<Vec<Symbol>, AnalysisError> {
         let mut symbols = Vec::new();
         let default_source = String::new();
-        let source = parsed_file.content.as_bytes();
+        let source = parsed_file.source.as_bytes();
         let tree = parsed_file
             .tree
             .as_ref()
@@ -280,13 +280,13 @@ impl DeadCodeDetector {
                     let code_snippet = self.extract_code_snippet(&name_node, source, 3);
                     let confidence = self.calculate_python_confidence(
                         name,
-                        std::path::Path::new(&parsed_file.file_path),
+                        std::path::Path::new(&parsed_file.path),
                     );
 
                     symbols.push(Symbol {
                         name: name.to_string(),
                         symbol_type: SymbolType::Function,
-                        file_path: parsed_file.file_path.to_string().to_string(),
+                        path: parsed_file.path.clone(), // Use parsed_file.path
                         line_number: (name_node.start_position().row + 1) as u32,
                         is_exported,
                         is_live: false,
@@ -310,13 +310,13 @@ impl DeadCodeDetector {
                     let code_snippet = self.extract_code_snippet(&name_node, source, 3);
                     let confidence = self.calculate_python_confidence(
                         name,
-                        std::path::Path::new(&parsed_file.file_path),
+                        std::path::Path::new(&parsed_file.path),
                     );
 
                     symbols.push(Symbol {
                         name: name.to_string(),
                         symbol_type: SymbolType::Class,
-                        file_path: parsed_file.file_path.to_string().to_string(),
+                        path: parsed_file.path.clone(), // Use parsed_file.path
                         line_number: (name_node.start_position().row + 1) as u32,
                         is_exported,
                         is_live: false,
@@ -339,7 +339,7 @@ impl DeadCodeDetector {
     ) -> Result<Vec<Symbol>, AnalysisError> {
         let mut symbols = Vec::new();
         let default_source = String::new();
-        let source = parsed_file.content.as_bytes();
+        let source = parsed_file.source.as_bytes();
         let tree = parsed_file
             .tree
             .as_ref()
@@ -359,13 +359,13 @@ impl DeadCodeDetector {
                     let code_snippet = self.extract_code_snippet(&name_node, source, 3);
                     let confidence = self.calculate_javascript_confidence(
                         name,
-                        std::path::Path::new(&parsed_file.file_path),
+                        std::path::Path::new(&parsed_file.path),
                     );
 
                     symbols.push(Symbol {
                         name: name.to_string(),
                         symbol_type: SymbolType::Function,
-                        file_path: parsed_file.file_path.to_string().to_string(),
+                        path: parsed_file.path.clone(), // Use parsed_file.path
                         line_number: (name_node.start_position().row + 1) as u32,
                         is_exported,
                         is_live: false,
@@ -650,7 +650,7 @@ impl AnalysisDetector for DeadCodeDetector {
                     issue_id: None,
                     analysis_run_id: 0,
                     anti_pattern_type_id: 2, // Dead Code
-                    file_path: symbol.file_path,
+                    file_path: symbol.path.display().to_string(), // Use symbol.path.display()
                     start_line: Some(symbol.line_number as i32),
                     end_line: Some(symbol.line_number as i32),
                     severity: severity.to_string(),

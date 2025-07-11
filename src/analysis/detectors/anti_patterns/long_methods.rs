@@ -212,7 +212,7 @@ impl LongMethodsDetector {
         #[cfg(feature = "tree-sitter")]
         {
             let mut metrics = Vec::new();
-            let source = parsed_file.content.as_bytes();
+            let source = parsed_file.source.as_bytes();
             let tree = parsed_file.tree.as_ref().ok_or_else(|| {
                 AnalysisError::AntiPatternDetection("AST tree missing".to_string())
             })?;
@@ -247,7 +247,7 @@ impl LongMethodsDetector {
 
                         metrics.push(MethodMetrics {
                             name: name.to_string(),
-                            file_path: parsed_file.file_path.to_string().to_string(),
+                            file_path: parsed_file.path.display().to_string(),
                             start_line: (name_node.start_position().row + 1) as u32,
                             end_line: (function_node.end_position().row + 1) as u32,
                             logical_loc,
@@ -284,7 +284,7 @@ impl LongMethodsDetector {
         #[cfg(feature = "tree-sitter")]
         {
             let mut metrics = Vec::new();
-            let source = parsed_file.content.as_bytes();
+            let source = parsed_file.source.as_bytes();
             let tree = parsed_file.tree.as_ref().ok_or_else(|| {
                 AnalysisError::AntiPatternDetection("AST tree missing".to_string())
             })?;
@@ -320,7 +320,7 @@ impl LongMethodsDetector {
 
                         metrics.push(MethodMetrics {
                             name: name.to_string(),
-                            file_path: parsed_file.file_path.to_string().to_string(),
+                            file_path: parsed_file.path.display().to_string(),
                             start_line: (name_node.start_position().row + 1) as u32,
                             end_line: (function_node.end_position().row + 1) as u32,
                             logical_loc,
@@ -357,7 +357,7 @@ impl LongMethodsDetector {
         #[cfg(feature = "tree-sitter")]
         {
             let mut metrics = Vec::new();
-            let source = parsed_file.content.as_bytes();
+            let source = parsed_file.source.as_bytes();
             let tree = parsed_file.tree.as_ref().ok_or_else(|| {
                 AnalysisError::AntiPatternDetection("AST tree missing".to_string())
             })?;
@@ -402,7 +402,7 @@ impl LongMethodsDetector {
 
                     metrics.push(MethodMetrics {
                         name,
-                        file_path: parsed_file.file_path.to_string().to_string(),
+                        file_path: parsed_file.path.display().to_string(),
                         start_line: (function_node.start_position().row + 1) as u32,
                         end_line: (function_node.end_position().row + 1) as u32,
                         logical_loc,
@@ -892,7 +892,7 @@ impl AnalysisDetector for LongMethodsDetector {
     fn detect_issues(&self, file: &ParsedFile) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         let mut issues = Vec::new();
 
-        debug!("Analyzing file: {}", file.file_path);
+        debug!("Analyzing file: {}", file.path.display());
 
         let method_metrics = self.extract_method_metrics(file)?;
         let thresholds = self

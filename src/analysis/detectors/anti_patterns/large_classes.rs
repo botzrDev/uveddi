@@ -140,7 +140,7 @@ impl LargeClassDetector {
         parsed_file: &ParsedFile,
     ) -> Result<Vec<ClassMetrics>, AnalysisError> {
         let mut metrics = Vec::new();
-        let source = parsed_file.content.as_bytes();
+        let source = parsed_file.source.as_bytes();
         let tree = parsed_file
             .tree
             .as_ref()
@@ -175,7 +175,7 @@ impl LargeClassDetector {
 
                     let class_metrics = ClassMetrics {
                         name: name.to_string(),
-                        file_path: parsed_file.file_path.clone(),
+                        file_path: parsed_file.path.display().to_string(),
                         start_line: struct_node.start_position().row as u32 + 1,
                         end_line: struct_node.end_position().row as u32 + 1,
                         logical_loc,

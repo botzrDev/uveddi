@@ -249,7 +249,7 @@ impl CodeDuplicationDetector {
             .map_err(|e| AnalysisError::Analysis(format!("Failed to create query: {e}")))?;
 
         let mut cursor = QueryCursor::new();
-        let matches = cursor.matches(&query, tree.root_node(), parsed_file.content.as_bytes());
+        let matches = cursor.matches(&query, tree.root_node(), parsed_file.source.as_bytes());
 
         let mut blocks = Vec::new();
 
@@ -265,7 +265,7 @@ impl CodeDuplicationDetector {
                 }
 
                 let source = function_node
-                    .utf8_text(parsed_file.content.as_bytes())
+                    .utf8_text(parsed_file.source.as_bytes())
                     .map_err(|e| AnalysisError::Analysis(format!("Failed to extract source: {e}")))?
                     .to_string();
 
@@ -298,7 +298,7 @@ impl CodeDuplicationDetector {
                 let structural_hash = self.compute_structural_hash(&normalized_tokens);
 
                 let block = CodeBlock {
-                    file_path: parsed_file.file_path.clone(),
+                    file_path: parsed_file.path.display().to_string(), // TODO UV-222: Use Arc<PathBuf> for O(1) clones
                     start_line,
                     end_line,
                     start_byte: function_node.start_byte(),
@@ -657,7 +657,7 @@ impl CodeDuplicationDetector {
                 issue_id: None,
                 analysis_run_id: 0,      // Will be set by the engine
                 anti_pattern_type_id: 1, // Code duplication type ID
-                file_path: pair.block1.file_path.clone(),
+                file_path: pair.block1.file_path.clone(), // TODO UV-222: Use Arc<PathBuf> for O(1) clones
                 start_line: Some(pair.block1.start_line as i32),
                 end_line: Some(pair.block1.end_line as i32),
                 severity: severity.to_string(),
@@ -729,7 +729,7 @@ impl AnalysisDetector for CodeDuplicationDetector {
     ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         info!(
             "Analyzing file for code duplication: {}",
-            parsed_file.file_path
+            parsed_file.path.display()
         );
 
         // Extract code blocks from the current file
@@ -738,7 +738,7 @@ impl AnalysisDetector for CodeDuplicationDetector {
         debug!(
             "Extracted {} code blocks from file: {}",
             blocks.len(),
-            parsed_file.file_path
+            parsed_file.path.display()
         );
         for (i, block) in blocks.iter().enumerate() {
             debug!(
@@ -752,7 +752,7 @@ impl AnalysisDetector for CodeDuplicationDetector {
         }
 
         if blocks.is_empty() {
-            debug!("No code blocks found in file: {}", parsed_file.path);
+            debug!("No code blocks found in file: {}", parsed_file.path.display());
             return Ok(vec![]);
         }
 
@@ -798,7 +798,7 @@ impl AnalysisDetector for CodeDuplicationDetector {
         info!(
             "Found {} clone pairs in file: {}",
             clone_pairs.len(),
-            parsed_file.path
+            parsed_file.path.display()
         );
 
         // Convert to architectural issues

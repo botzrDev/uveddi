@@ -350,10 +350,10 @@ impl AnalysisEngine {
                                 ),
                             }
 
-                            // UV-153: Cache first, then move data to avoid cloning
+                            // UV-220: Optimize caching strategy to minimize cloning
                             let result_to_cache = CachedAnalysisResult {
-                                issues: file_issues.clone(),
-                                dependencies: file_dependencies.clone(),
+                                issues: file_issues.clone(), // Required for cache storage
+                                dependencies: file_dependencies.clone(), // Required for cache storage
                             };
 
                             if let Err(e) = self.cache.set(&file_path, &result_to_cache) {
