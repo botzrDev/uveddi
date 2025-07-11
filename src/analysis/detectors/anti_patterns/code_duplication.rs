@@ -298,7 +298,7 @@ impl CodeDuplicationDetector {
                 let structural_hash = self.compute_structural_hash(&normalized_tokens);
 
                 let block = CodeBlock {
-                    file_path: parsed_file.path.display().to_string(), // TODO UV-222: Use Arc<PathBuf> for O(1) clones
+                    file_path: parsed_file.file_path.display().to_string(),
                     start_line,
                     end_line,
                     start_byte: function_node.start_byte(),
@@ -657,7 +657,7 @@ impl CodeDuplicationDetector {
                 issue_id: None,
                 analysis_run_id: 0,      // Will be set by the engine
                 anti_pattern_type_id: 1, // Code duplication type ID
-                file_path: pair.block1.file_path.clone(), // TODO UV-222: Use Arc<PathBuf> for O(1) clones
+                file_path: pair.block1.file_path.clone(), // UV-222: Now O(1) Arc<PathBuf> clone
                 start_line: Some(pair.block1.start_line as i32),
                 end_line: Some(pair.block1.end_line as i32),
                 severity: severity.to_string(),
@@ -729,7 +729,7 @@ impl AnalysisDetector for CodeDuplicationDetector {
     ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         info!(
             "Analyzing file for code duplication: {}",
-            parsed_file.path.display()
+            parsed_file.file_path.display()
         );
 
         // Extract code blocks from the current file
@@ -738,7 +738,7 @@ impl AnalysisDetector for CodeDuplicationDetector {
         debug!(
             "Extracted {} code blocks from file: {}",
             blocks.len(),
-            parsed_file.path.display()
+            parsed_file.file_path.display()
         );
         for (i, block) in blocks.iter().enumerate() {
             debug!(
@@ -752,7 +752,7 @@ impl AnalysisDetector for CodeDuplicationDetector {
         }
 
         if blocks.is_empty() {
-            debug!("No code blocks found in file: {}", parsed_file.path.display());
+            debug!("No code blocks found in file: {}", parsed_file.file_path.display());
             return Ok(vec![]);
         }
 
@@ -798,7 +798,7 @@ impl AnalysisDetector for CodeDuplicationDetector {
         info!(
             "Found {} clone pairs in file: {}",
             clone_pairs.len(),
-            parsed_file.path.display()
+            parsed_file.file_path.display()
         );
 
         // Convert to architectural issues

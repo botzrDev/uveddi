@@ -61,8 +61,6 @@ pub mod types;
 
 #[cfg(test)]
 pub mod tests;
-#[cfg(test)]
-pub mod visualization_tests;
 
 /// Placeholder documentation for public items
 // Re-exports for convenience

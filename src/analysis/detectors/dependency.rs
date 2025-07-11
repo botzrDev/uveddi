@@ -218,7 +218,7 @@ impl DependencyExtractor {
                     }
 
                     dependencies.push(Dependency {
-                        from_file: PathBuf::from(parsed_file.file_path.clone()),
+                        from_file: (**parsed_file.file_path).clone(), // UV-222: Clone PathBuf from Arc instead of converting
                         to_module: module_name,
                         dependency_type,
                         line_number: Some((line_number + 1) as u32),
@@ -266,7 +266,7 @@ impl DependencyExtractor {
 
                 if let Some(name) = module_name {
                     dependencies.push(Dependency {
-                        from_file: std::path::PathBuf::from(parsed_file.file_path.clone()),
+                        from_file: (**parsed_file.file_path).clone(), // UV-222: Clone PathBuf from Arc instead of converting
                         to_module: name,
                         dependency_type: DependencyType::Import,
                         line_number: Some((line_num + 1) as u32),

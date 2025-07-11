@@ -300,6 +300,7 @@ impl AnalysisEngine {
                             "CACHE HIT: Using cached analysis for {}",
                             file_path.display()
                         );
+                        // UV-220: Use move semantics for cached result aggregation
                         all_issues.extend(cached_result.issues);
                         all_dependencies.extend(cached_result.dependencies);
                         self.files_analyzed += 1;
@@ -350,7 +351,7 @@ impl AnalysisEngine {
                                 ),
                             }
 
-                            // UV-220: Optimize caching strategy to minimize cloning
+                            // UV-220: Streaming aggregation - process results efficiently
                             let result_to_cache = CachedAnalysisResult {
                                 issues: file_issues.clone(), // Required for cache storage
                                 dependencies: file_dependencies.clone(), // Required for cache storage
@@ -364,7 +365,7 @@ impl AnalysisEngine {
                                 );
                             }
 
-                            // UV-153: Move data instead of extending cloned data
+                            // UV-220: Move semantics for efficient aggregation
                             all_issues.extend(file_issues);
                             all_dependencies.extend(file_dependencies);
                         }

@@ -489,7 +489,7 @@ impl LeakyAbstractionDetector {
                             {
                                 if self.is_infrastructure_module(&module_name) {
                                     let layer = self
-                                        .get_layer_from_path(&parsed_file.path.display().to_string());
+                                        .get_layer_from_path(&parsed_file.file_path.display().to_string());
                                     if matches!(
                                         layer,
                                         Some(ArchitecturalLayer::Domain)
@@ -497,7 +497,7 @@ impl LeakyAbstractionDetector {
                                     ) {
                                         issues.push(self.create_issue(
                                             analysis_run_id,
-                                            &parsed_file.path.display().to_string(),
+                                            &parsed_file.file_path.display().to_string(),
                                             node,
                                             LeakType::FrameworkCoupling,
                                             &format!("Infrastructure module '{}' imported in {} layer", module_name, layer.map(|l| format!("{:?}", l)).unwrap_or_else(|| "unknown".to_string())),
@@ -508,7 +508,7 @@ impl LeakyAbstractionDetector {
                                 if self.is_internal_module(&module_name) {
                                     issues.push(self.create_issue(
                                         analysis_run_id,
-                                        &parsed_file.path.display().to_string(),
+                                        &parsed_file.file_path.display().to_string(),
                                         node,
                                         LeakType::VisibilityViolation,
                                         &format!(
@@ -529,7 +529,7 @@ impl LeakyAbstractionDetector {
                                     if let Some(_struct_node) = parent.parent() {
                                         issues.push(self.create_issue(
                                             analysis_run_id,
-                                            &parsed_file.path.display().to_string(),
+                                            &parsed_file.file_path.display().to_string(),
                                             node,
                                             LeakType::ImplementationExposure,
                                             "Public field exposes internal structure - consider using getter methods",
@@ -556,7 +556,7 @@ impl LeakyAbstractionDetector {
                                             if self.is_infrastructure_error_type(return_type_text) {
                                                 issues.push(self.create_issue(
                                                     analysis_run_id,
-                                                    &parsed_file.path.display().to_string(),
+                                                    &parsed_file.file_path.display().to_string(),
                                                     other_capture.node,
                                                     LeakType::ErrorPropagation,
                                                     &format!("Infrastructure error type '{}' propagated to public API", return_type_text),
@@ -592,7 +592,7 @@ impl LeakyAbstractionDetector {
         let source_bytes = parsed_file.source.as_bytes();
 
         // Check architectural layer violations
-        let file_path_str = parsed_file.path.display().to_string();
+        let file_path_str = parsed_file.file_path.display().to_string();
         if let Some(current_layer) = self.get_layer_from_path(&file_path_str) {
             if let Some(tree) = &parsed_file.tree {
                 let language = tree.language();
@@ -647,7 +647,7 @@ impl LeakyAbstractionDetector {
                                         issue_id: None,
                                         analysis_run_id,
                                         anti_pattern_type_id: 1, // TODO: proper mapping
-                                        file_path: parsed_file.path.display().to_string().to_string(),
+                                        file_path: parsed_file.file_path.display().to_string().to_string(),
                                         start_line: Some(
                                             capture.node.start_position().row as i32 + 1,
                                         ),
@@ -737,7 +737,7 @@ impl LeakyAbstractionDetector {
                             let module_name = import_text.trim_matches('"').trim_matches('\'');
                             if self.is_infrastructure_module(module_name) {
                                 let layer =
-                                    self.get_layer_from_path(&parsed_file.path.display().to_string());
+                                    self.get_layer_from_path(&parsed_file.file_path.display().to_string());
                                 if matches!(
                                     layer,
                                     Some(ArchitecturalLayer::Domain)
@@ -745,7 +745,7 @@ impl LeakyAbstractionDetector {
                                 ) {
                                     issues.push(self.create_issue(
                                         analysis_run_id,
-                                        &parsed_file.path.display().to_string(),
+                                        &parsed_file.file_path.display().to_string(),
                                         node,
                                         LeakType::FrameworkCoupling,
                                         &format!(
@@ -762,7 +762,7 @@ impl LeakyAbstractionDetector {
                             if self.is_internal_module(module_name) {
                                 issues.push(self.create_issue(
                                     analysis_run_id,
-                                    &parsed_file.path.display().to_string(),
+                                    &parsed_file.file_path.display().to_string(),
                                     node,
                                     LeakType::VisibilityViolation,
                                     &format!("Direct import of internal module '{}'", module_name),
@@ -775,7 +775,7 @@ impl LeakyAbstractionDetector {
                         if let Ok(dom_text) = node.utf8_text(source_bytes) {
                             if dom_text == "document" || dom_text == "window" {
                                 let layer =
-                                    self.get_layer_from_path(&parsed_file.path.display().to_string());
+                                    self.get_layer_from_path(&parsed_file.file_path.display().to_string());
                                 if matches!(
                                     layer,
                                     Some(ArchitecturalLayer::Domain)
@@ -783,7 +783,7 @@ impl LeakyAbstractionDetector {
                                 ) {
                                     issues.push(self.create_issue(
                                         analysis_run_id,
-                                        &parsed_file.path.display().to_string(),
+                                        &parsed_file.file_path.display().to_string(),
                                         node,
                                         LeakType::FrameworkCoupling,
                                         "DOM manipulation in business logic - move to presentation layer",

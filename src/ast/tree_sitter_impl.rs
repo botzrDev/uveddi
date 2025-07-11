@@ -1,4 +1,3 @@
-
 // Real tree-sitter implementation - compiled when feature "tree-sitter" is enabled
 
 use bincode;
@@ -11,6 +10,7 @@ use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::num::NonZeroUsize;
+use std::borrow::Cow;
 use tree_sitter::{Parser, Tree};
 use lru::LruCache;
 use tracing::{info, warn};
@@ -312,7 +312,7 @@ impl AstParser {
         }
         let custom_ast = Arc::new(Self::tree_to_custom_ast(&tree, &source, &language)?);
         let parsed = ParsedFile {
-            path: file_path.to_path_buf(),
+            file_path: Arc::new(file_path.to_path_buf()), // UV-222: Create Arc<PathBuf> for efficient sharing
             language,
             tree: Some(tree),
             source: source.clone(),
@@ -360,7 +360,7 @@ impl AstParser {
         
         let custom_ast = Self::tree_to_custom_ast(&tree, content, &language)?;
         let parsed = ParsedFile {
-            path: file_path.to_path_buf(),
+            file_path: Arc::new(file_path.to_path_buf()), // UV-222: Create Arc<PathBuf> for efficient sharing
             language,
             tree: Some(tree),
             source: Arc::new(content.to_string()),
@@ -390,7 +390,7 @@ impl AstParser {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ParsedFile {
-    pub path: PathBuf,
+    pub file_path: Arc<PathBuf>, // UV-222: Arc<PathBuf> for O(1) clones instead of expensive PathBuf clones
     pub language: SourceLanguage,
     #[serde(skip)]
     pub tree: Option<Tree>,
@@ -416,26 +416,78 @@ impl ParsedFile {
     /// Returns a human-readable summary of the parsed AST structure.
     pub fn summary(&self) -> String {
         match &*self.custom_ast {
-            Some(ast) => format!("Parsed {}: {:?}", self.path.display(), ast),
-            None => format!("Parsed {} (no AST)", self.path.display()),
+            Some(ast) => format!("Parsed {}: {:?}", self.file_path.display(), ast),
+            None => format!("Parsed {} (no AST)", self.file_path.display()),
         }
     }
 
-    /// Get a specific code segment from the parsed file
-    /// This is a placeholder implementation for code segment extraction
-    pub fn extract_relevant_code(&self, issue_context: &str) -> Option<String> {
-        // For now, just return a simple context around the issue
-        // In the future, this could use the AST to find the exact function/class
+    /// Get the source code as a string slice
+    pub fn source(&self) -> &str {
+        &self.source
+    }
+
+    /// Get the file path
+    pub fn path(&self) -> &Path {
+        &self.file_path
+    }
+
+    /// Extract code segment with Copy-on-Write optimization (UV-221)
+    pub fn extract_code_segment<'a>(&'a self, start: usize, end: usize) -> Cow<'a, str> {
+        if start == 0 && end == self.source.len() {
+            // No allocation for full source
+            Cow::Borrowed(&*self.source)
+        } else if start < end && end <= self.source.len() {
+            // Clone only when needed for partial extraction
+            Cow::Owned(self.source[start..end].to_string())
+        } else {
+            // Invalid range, return empty
+            Cow::Borrowed("")
+        }
+    }
+
+    /// Extract lines with Copy-on-Write optimization (UV-221)
+    pub fn extract_lines<'a>(&'a self, start_line: usize, end_line: usize) -> Cow<'a, str> {
+        let lines: Vec<&str> = self.source.lines().collect();
+        
+        if start_line == 0 && end_line >= lines.len() {
+            // Full source requested
+            Cow::Borrowed(&*self.source)
+        } else if start_line < end_line && end_line <= lines.len() {
+            // Extract specific lines
+            let extracted = lines[start_line..end_line].join("\n");
+            Cow::Owned(extracted)
+        } else {
+            // Invalid range
+            Cow::Borrowed("")
+        }
+    }
+
+    /// Get code snippet around a specific line (UV-221)
+    pub fn get_context_snippet<'a>(&'a self, line: usize, context_lines: usize) -> Cow<'a, str> {
+        let lines: Vec<&str> = self.source.lines().collect();
+        
+        if lines.is_empty() {
+            return Cow::Borrowed("");
+        }
+        
+        let start = line.saturating_sub(context_lines);
+        let end = std::cmp::min(line + context_lines + 1, lines.len());
+        
+        self.extract_lines(start, end)
+    }
+
+    /// Get a specific code segment from the parsed file (UV-221 optimized)
+    /// This is an optimized implementation using Copy-on-Write for code segment extraction
+    pub fn extract_relevant_code(&self, issue_context: &str) -> Option<Cow<str>> {
         let lines: Vec<&str> = self.source.lines().collect();
         
         // Look for lines containing the issue context
         for (i, line) in lines.iter().enumerate() {
             if line.contains(issue_context) {
-                // Return 3 lines of context around the match
+                // Return 3 lines of context around the match using CoW
                 let start = i.saturating_sub(3);
                 let end = std::cmp::min(i + 4, lines.len());
-                let context_lines = &lines[start..end];
-                return Some(context_lines.join("\n"));
+                return Some(self.extract_lines(start, end));
             }
         }
         

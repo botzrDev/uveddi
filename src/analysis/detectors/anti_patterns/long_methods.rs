@@ -247,7 +247,7 @@ impl LongMethodsDetector {
 
                         metrics.push(MethodMetrics {
                             name: name.to_string(),
-                            file_path: parsed_file.path.display().to_string(),
+                            file_path: parsed_file.file_path.display().to_string(),
                             start_line: (name_node.start_position().row + 1) as u32,
                             end_line: (function_node.end_position().row + 1) as u32,
                             logical_loc,
@@ -320,7 +320,7 @@ impl LongMethodsDetector {
 
                         metrics.push(MethodMetrics {
                             name: name.to_string(),
-                            file_path: parsed_file.path.display().to_string(),
+                            file_path: parsed_file.file_path.display().to_string(),
                             start_line: (name_node.start_position().row + 1) as u32,
                             end_line: (function_node.end_position().row + 1) as u32,
                             logical_loc,
@@ -402,7 +402,7 @@ impl LongMethodsDetector {
 
                     metrics.push(MethodMetrics {
                         name,
-                        file_path: parsed_file.path.display().to_string(),
+                        file_path: parsed_file.file_path.display().to_string(),
                         start_line: (function_node.start_position().row + 1) as u32,
                         end_line: (function_node.end_position().row + 1) as u32,
                         logical_loc,
@@ -578,7 +578,7 @@ impl LongMethodsDetector {
                         *complexity += 1;
                     }
 
-                    traverse_complexity(&child_node, complexity);
+                    traverse_complexity(node, complexity);
 
                     if !cursor.goto_next_sibling() {
                         break;
@@ -892,7 +892,7 @@ impl AnalysisDetector for LongMethodsDetector {
     fn detect_issues(&self, file: &ParsedFile) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         let mut issues = Vec::new();
 
-        debug!("Analyzing file: {}", file.path.display());
+        debug!("Analyzing file: {}", file.file_path.display());
 
         let method_metrics = self.extract_method_metrics(file)?;
         let thresholds = self

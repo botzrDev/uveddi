@@ -211,7 +211,7 @@ impl DeadCodeDetector {
                     symbols.push(Symbol {
                         name: name.to_string(),
                         symbol_type: SymbolType::Function,
-                        path: parsed_file.path.clone(), // Use parsed_file.path
+                        path: (*parsed_file.file_path).clone(),
                         line_number: (name_node.start_position().row + 1) as u32,
                         is_exported,
                         is_live: false,
@@ -237,7 +237,7 @@ impl DeadCodeDetector {
                     symbols.push(Symbol {
                         name: name.to_string(),
                         symbol_type: SymbolType::Struct,
-                        path: parsed_file.path.clone(), // Use parsed_file.path
+                        path: (*parsed_file.file_path).clone(),
                         line_number: (name_node.start_position().row + 1) as u32,
                         is_exported,
                         is_live: false,
@@ -280,13 +280,13 @@ impl DeadCodeDetector {
                     let code_snippet = self.extract_code_snippet(&name_node, source, 3);
                     let confidence = self.calculate_python_confidence(
                         name,
-                        std::path::Path::new(&parsed_file.path),
+                        &(*parsed_file.file_path),
                     );
 
                     symbols.push(Symbol {
                         name: name.to_string(),
                         symbol_type: SymbolType::Function,
-                        path: parsed_file.path.clone(), // Use parsed_file.path
+                        path: (*parsed_file.file_path).clone(),
                         line_number: (name_node.start_position().row + 1) as u32,
                         is_exported,
                         is_live: false,
@@ -310,13 +310,13 @@ impl DeadCodeDetector {
                     let code_snippet = self.extract_code_snippet(&name_node, source, 3);
                     let confidence = self.calculate_python_confidence(
                         name,
-                        std::path::Path::new(&parsed_file.path),
+                        &(*parsed_file.file_path),
                     );
 
                     symbols.push(Symbol {
                         name: name.to_string(),
                         symbol_type: SymbolType::Class,
-                        path: parsed_file.path.clone(), // Use parsed_file.path
+                        path: (*parsed_file.file_path).clone(),
                         line_number: (name_node.start_position().row + 1) as u32,
                         is_exported,
                         is_live: false,
@@ -359,13 +359,13 @@ impl DeadCodeDetector {
                     let code_snippet = self.extract_code_snippet(&name_node, source, 3);
                     let confidence = self.calculate_javascript_confidence(
                         name,
-                        std::path::Path::new(&parsed_file.path),
+                        &(*parsed_file.file_path),
                     );
 
                     symbols.push(Symbol {
                         name: name.to_string(),
                         symbol_type: SymbolType::Function,
-                        path: parsed_file.path.clone(), // Use parsed_file.path
+                        path: (*parsed_file.file_path).clone(),
                         line_number: (name_node.start_position().row + 1) as u32,
                         is_exported,
                         is_live: false,
@@ -606,7 +606,7 @@ impl AnalysisDetector for DeadCodeDetector {
         &self,
         parsed_file: &ParsedFile,
     ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
-        debug!("Running Dead Code detection on: {}", parsed_file.file_path);
+        debug!("Running Dead Code detection on: {}", parsed_file.file_path.display());
 
         // For single-file analysis, we can only detect obvious cases
         // Full dead code detection requires cross-file analysis
@@ -667,12 +667,12 @@ impl AnalysisDetector for DeadCodeDetector {
         }
 
         if issues.is_empty() {
-            debug!("No dead code issues found in {}", parsed_file.file_path);
+            debug!("No dead code issues found in {}", parsed_file.file_path.display());
         } else {
             info!(
                 "Found {} potential dead code issues in {}",
                 issues.len(),
-                parsed_file.path
+                parsed_file.file_path.display()
             );
         }
 

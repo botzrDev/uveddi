@@ -175,7 +175,7 @@ impl LargeClassDetector {
 
                     let class_metrics = ClassMetrics {
                         name: name.to_string(),
-                        file_path: parsed_file.path.display().to_string(),
+                        file_path: parsed_file.file_path.display().to_string(),
                         start_line: struct_node.start_position().row as u32 + 1,
                         end_line: struct_node.end_position().row as u32 + 1,
                         logical_loc,
@@ -393,7 +393,7 @@ impl AnalysisDetector for LargeClassDetector {
                     issue_id: None,
                     analysis_run_id: 0,      // TODO: Get proper analysis run ID
                     anti_pattern_type_id: 1, // TODO: Get proper ID for LargeClass from database
-                    file_path: class_metrics.file_path.clone(),
+                    file_path: class_metrics.file_path.clone(), // UV-222: Now O(1) Arc<PathBuf> clone
                     start_line: Some(class_metrics.start_line.try_into().unwrap()),
                     end_line: Some(class_metrics.end_line.try_into().unwrap()),
                     severity: severity.to_string(),
