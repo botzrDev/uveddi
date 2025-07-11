@@ -72,6 +72,13 @@ pub enum SecurityError {
     UnsupportedFileType(String),
     #[error("Input too long: {length} > {max_length}")]
     InputTooLong { length: usize, max_length: usize },
+    // UV-151: Added for secure path sanitization
+    #[error("Invalid base path")]
+    InvalidBasePath,
+    #[error("Path traversal attempt outside base directory")]
+    PathTraversalAttempt,
+    #[error("Invalid path component detected")]
+    InvalidPathComponent,
 }
 
 /// Maximum file size for analysis (100MB)
@@ -206,5 +213,152 @@ pub fn validate_path_within_bounds(path: &Path, allowed_root: &Path) -> Result<(
         Ok(())
     } else {
         Err(SecurityError::PathTraversal(path.to_string_lossy().to_string()))
+    }
+}
+
+/// Securely sanitizes a file path to prevent directory traversal and related attacks
+///
+/// # UV-151 Critical Path Traversal Vulnerability Fix
+///
+/// Ensures the input path is canonicalized, validated, and strictly contained within the base directory.
+///
+/// # Examples
+/// ```rust
+/// let safe_path = sanitize_path("src/main.rs", "src").unwrap();
+/// ```
+pub fn sanitize_path<P: AsRef<Path>>(input_path: P, base_dir: P) -> Result<PathBuf, SecurityError> {
+    // Canonicalize the base directory
+    let base = base_dir.as_ref().canonicalize()
+        .map_err(|_| SecurityError::InvalidBasePath)?;
+
+    // Join and canonicalize the input path
+    let path = base.join(input_path.as_ref());
+    let canonical = path.canonicalize()
+        .map_err(|_| SecurityError::InvalidPathComponent)?;
+
+    // Ensure the canonical path is within the base directory
+    if !canonical.starts_with(&base) {
+        return Err(SecurityError::PathTraversalAttempt);
+    }
+
+    // Additional validation for path components
+    for component in canonical.components() {
+        if let std::path::Component::Normal(name) = component {
+            let name_str = name.to_string_lossy();
+            if name_str.contains('\0') || name_str.starts_with('.') {
+                return Err(SecurityError::InvalidPathComponent);
+            }
+        }
+    }
+
+    Ok(canonical)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+    use std::os::unix::fs::symlink;
+    use tempfile::tempdir;
+
+    // UV-151: Security test suite for sanitize_path
+    #[test]
+    fn test_basic_traversal_attempt() {
+        let dir = tempdir().unwrap();
+        let result = sanitize_path("../../etc/passwd", dir.path());
+        assert!(matches!(result, Err(SecurityError::PathTraversalAttempt)));
+    }
+
+    #[test]
+    fn test_symlink_attack() {
+        let dir = tempdir().unwrap();
+        let target = dir.path().join("target.txt");
+        fs::write(&target, "safe").unwrap();
+        let link = dir.path().join("link.txt");
+        
+        // Only test symlinks on Unix systems
+        #[cfg(unix)]
+        {
+            symlink(&target, &link).unwrap();
+            let result = sanitize_path("link.txt", dir.path());
+            assert!(result.is_ok());
+        }
+        
+        #[cfg(not(unix))]
+        {
+            // On non-Unix systems, just test a regular file
+            fs::write(&link, "safe").unwrap();
+            let result = sanitize_path("link.txt", dir.path());
+            assert!(result.is_ok());
+        }
+    }
+
+    #[test]
+    fn test_null_byte_injection() {
+        let dir = tempdir().unwrap();
+        let result = sanitize_path("file\0.txt", dir.path());
+        assert!(matches!(result, Err(SecurityError::InvalidPathComponent)));
+    }
+
+    #[test]
+    fn test_unicode_normalization_attack() {
+        let dir = tempdir().unwrap();
+        let file = dir.path().join("unicodé.txt");
+        fs::write(&file, "safe").unwrap();
+        let result = sanitize_path("unicodé.txt", dir.path());
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_hidden_file_blocked() {
+        let dir = tempdir().unwrap();
+        let file = dir.path().join(".env");
+        fs::write(&file, "secret").unwrap();
+        let result = sanitize_path(".env", dir.path());
+        assert!(matches!(result, Err(SecurityError::InvalidPathComponent)));
+    }
+
+    #[test]
+    fn test_valid_path() {
+        let dir = tempdir().unwrap();
+        let file = dir.path().join("main.rs");
+        fs::write(&file, "fn main() {}\n").unwrap();
+        let result = sanitize_path("main.rs", dir.path());
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_invalid_base_dir() {
+        let result = sanitize_path("main.rs", "/nonexistent_base_dir");
+        assert!(matches!(result, Err(SecurityError::InvalidBasePath)));
+    }
+
+    #[test]
+    fn test_dot_file_blocked() {
+        let dir = tempdir().unwrap();
+        let file = dir.path().join(".hidden");
+        fs::write(&file, "hidden").unwrap();
+        let result = sanitize_path(".hidden", dir.path());
+        assert!(matches!(result, Err(SecurityError::InvalidPathComponent)));
+    }
+
+    #[test]
+    fn test_path_outside_base() {
+        let dir = tempdir().unwrap();
+        let outside = std::env::temp_dir().join("outside.txt");
+        fs::write(&outside, "outside").unwrap();
+        let result = sanitize_path(outside, dir.path());
+        assert!(matches!(result, Err(SecurityError::PathTraversalAttempt)));
+    }
+
+    #[test]
+    fn test_valid_nested_path() {
+        let dir = tempdir().unwrap();
+        let nested = dir.path().join("nested");
+        fs::create_dir(&nested).unwrap();
+        let file = nested.join("file.txt");
+        fs::write(&file, "nested").unwrap();
+        let result = sanitize_path("nested/file.txt", dir.path());
+        assert!(result.is_ok());
     }
 }

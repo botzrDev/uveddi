@@ -249,14 +249,16 @@ impl CommunityDatabase {
             "#
         )?;
 
-        let member_iter = stmt.query_map([email], |row| {
+        let mut member_iter = stmt.query_map([email], |row| {
             self.row_to_member(row)
         })?;
 
-        for member in member_iter {
-            return Ok(Some(member?));
+        // Clippy fix UV-151: Replace for loop with if-let for single result
+        if let Some(member) = member_iter.next() {
+            Ok(Some(member?))
+        } else {
+            Ok(None)
         }
-        Ok(None)
     }
 
     /// Get member by ID
@@ -270,14 +272,16 @@ impl CommunityDatabase {
             "#
         )?;
 
-        let member_iter = stmt.query_map([id], |row| {
+        let mut member_iter = stmt.query_map([id], |row| {
             self.row_to_member(row)
         })?;
 
-        for member in member_iter {
-            return Ok(Some(member?));
+        // Clippy fix UV-151: Replace for loop with if-let for single result
+        if let Some(member) = member_iter.next() {
+            Ok(Some(member?))
+        } else {
+            Ok(None)
         }
-        Ok(None)
     }
 
     /// List all members with optional filtering
