@@ -15,8 +15,8 @@ readme = "README.md"
 
 # Feature flags for modular compilation
 [features]
-default = ["local-ai", "image-rendering"]
-# Tree-sitter parsing functionality (opt-in only)
+default = ["local-ai", "image-rendering", "tree-sitter"]
+# Tree-sitter parsing functionality (enabled by default)
 tree-sitter = [
     "dep:tree-sitter",
     "dep:tree-sitter-rust", 
