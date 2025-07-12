@@ -12,7 +12,7 @@ use crate::analysis::graph::dependency::LocalDependencyGraph;
 use crate::analysis::graph::dependency::{ComponentNode, LocalDependencyType};
 use crate::analysis::symbols::GlobalSymbolTable;
 use crate::analysis::AnalysisDetector;
-use crate::ast::AstParser;
+use crate::ast::tree_sitter_impl::AstParser;
 use crate::cache::result_cache::ResultCache;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use crate::ingestion::AsyncWalker;
@@ -455,7 +455,7 @@ impl AnalysisEngine {
             let loaded_plugins = plugin_engine
                 .load_all_plugins()
                 .await
-                .map_err(|e| crate::error::UveddiError::PluginError(e.to_string()))?;
+                .map_err(crate::error::UveddiError::from)?;
 
             // TODO: Re-enable when plugin adapter implements AnalysisDetector
             // Add plugin adapters as detectors
@@ -495,7 +495,7 @@ impl AnalysisEngine {
             let plugin_id = plugin_engine
                 .install_plugin(manifest, binary)
                 .await
-                .map_err(|e| crate::error::UveddiError::PluginError(e.to_string()))?;
+                .map_err(crate::error::UveddiError::from)?;
 
             // TODO: Re-enable when plugin adapter implements AnalysisDetector
             // Add the new plugin as a detector
@@ -506,7 +506,7 @@ impl AnalysisEngine {
             Ok(plugin_id)
         } else {
             Err(crate::error::UveddiError::PluginError(
-                "Plugin engine not initialized".to_string(),
+                crate::plugins::errors::PluginError::Execution("Plugin engine not initialized".to_string())
             ))
         }
     }
@@ -529,7 +529,7 @@ impl AnalysisEngine {
             plugin_engine
                 .uninstall_plugin(plugin_id)
                 .await
-                .map_err(|e| crate::error::UveddiError::PluginError(e.to_string()))?;
+                .map_err(crate::error::UveddiError::from)?;
 
             // TODO: Re-enable when plugin adapter implements AnalysisDetector
             // Reload all adapters to remove the uninstalled plugin
@@ -543,7 +543,7 @@ impl AnalysisEngine {
             Ok(())
         } else {
             Err(crate::error::UveddiError::PluginError(
-                "Plugin engine not initialized".to_string(),
+                crate::plugins::errors::PluginError::Execution("Plugin engine not initialized".to_string())
             ))
         }
     }
@@ -578,10 +578,12 @@ impl AnalysisEngine {
             plugin_engine
                 .monitor_resources()
                 .await
-                .map_err(|e| crate::error::UveddiError::PluginError(e.to_string()))
+                .map_err(|e| crate::error::UveddiError::PluginError(
+                    crate::plugins::errors::PluginError::Execution(e.to_string())
+                ))
         } else {
             Err(crate::error::UveddiError::PluginError(
-                "Plugin engine not initialized".to_string(),
+                crate::plugins::errors::PluginError::Execution("Plugin engine not initialized".to_string())
             ))
         }
     }

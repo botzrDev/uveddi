@@ -177,6 +177,27 @@ impl AstParser {
         })
     }
 
+    /// Parse content and return a ParsedFile
+    /// UV-METHODS-001: Implements missing parse_content method for long_methods detector
+    pub fn parse_content(
+        &mut self,
+        content: &str,
+        file_path: &std::path::PathBuf,
+        language: SourceLanguage,
+    ) -> Result<ParsedFile, AstError> {
+        let parser = self.parsers.get_mut(&language)
+            .ok_or_else(|| AstError::UnsupportedLanguage(format!("{:?}", language)))?;
+        let tree = parser.parse(content, None)
+            .ok_or_else(|| AstError::ParseError("Failed to parse content".to_string()))?;
+        Ok(ParsedFile {
+            file_path: file_path.to_string_lossy().to_string(),
+            language,
+            content: content.to_string(),
+            tree: Some(tree),
+            custom_ast: None,
+        })
+    }
+
     /// Clear the AST cache
     pub fn clear_cache(&mut self) -> Result<(), AstError> {
         self.cache

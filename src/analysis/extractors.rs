@@ -1,7 +1,7 @@
 //! Logic for extracting symbols from an AST.
 
 use crate::analysis::symbols::{CanonicalSymbol, GlobalSymbolTable, SourceLocation, SymbolKind};
-use crate::ast::tree_sitter::ParsedFile;
+use crate::ast::tree_sitter_impl::ParsedFile;
 use std::sync::atomic::{AtomicU64, Ordering};
 #[cfg(feature = "tree-sitter")]
 use tree_sitter::{Query, QueryCursor};
@@ -27,9 +27,9 @@ impl SymbolExtractor {
         symbol_table: &mut GlobalSymbolTable,
     ) -> Result<(), String> {
         let language = match file.language {
-            crate::ast::tree_sitter::SourceLanguage::Rust => "rust",
-            crate::ast::tree_sitter::SourceLanguage::Python => "python",
-            crate::ast::tree_sitter::SourceLanguage::JavaScript => "javascript",
+            crate::ast::tree_sitter_impl::SourceLanguage::Rust => "rust",
+            crate::ast::tree_sitter_impl::SourceLanguage::Python => "python",
+            crate::ast::tree_sitter_impl::SourceLanguage::JavaScript => "javascript",
             // Add other languages as needed
         };
 
@@ -61,7 +61,7 @@ impl SymbolExtractor {
         let query = Query::new(&tree.language(), query_source).map_err(|e| e.to_string())?;
 
         let mut cursor = QueryCursor::new();
-        let captures = cursor.captures(&query, tree.root_node(), file.content.as_bytes());
+        let captures = cursor.captures(&query, tree.root_node(), file.source.as_bytes());
 
         for (match_, _) in captures {
             if let Some(name_capture) = match_
@@ -87,7 +87,7 @@ impl SymbolExtractor {
                 };
 
                 let symbol_name = node
-                    .utf8_text(file.content.as_bytes())
+                    .utf8_text(file.source.as_bytes())
                     .unwrap_or("")
                     .to_string();
                 let id = SYMBOL_ID_COUNTER.fetch_add(1, Ordering::SeqCst);
@@ -97,7 +97,7 @@ impl SymbolExtractor {
                     name: symbol_name,
                     kind,
                     location: SourceLocation {
-                        file_path: file.file_path.clone(),
+                        file_path: file.file_path.to_string_lossy().to_string(),
                         start_byte: node.start_byte(),
                         end_byte: node.end_byte(),
                     },

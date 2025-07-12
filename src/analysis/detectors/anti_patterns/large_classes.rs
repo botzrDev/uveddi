@@ -149,7 +149,7 @@ impl LargeClassDetector {
 
         // Query for struct definitions
         let struct_query = Query::new(&language, RUST_STRUCT_QUERY)
-            .map_err(|e| AnalysisError::DependencyExtractionError(e.to_string()))?;
+            .map_err(|e| AnalysisError::AntiPatternDetectionError(e.to_string()))?;
 
         let mut cursor = QueryCursor::new();
         for mat in cursor.matches(&struct_query, tree.root_node(), source) {

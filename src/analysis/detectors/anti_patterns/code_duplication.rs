@@ -16,6 +16,7 @@
 //! - Provides configurable similarity thresholds
 
 use crate::analysis::{AnalysisDetector, AnalysisError};
+use crate::error::UveddiError;
 use crate::ast::{ParsedFile, SourceLanguage};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use log::{debug, info};
@@ -237,7 +238,11 @@ impl CodeDuplicationDetector {
         let tree = parsed_file
             .tree
             .as_ref()
-            .ok_or_else(|| AnalysisError::Analysis("No AST available for file".to_string()))?;
+            .ok_or_else(|| {
+                UveddiError::AnalysisError(AnalysisError::AntiPatternDetectionError(
+                    "No AST available for file".to_string(),
+                ))
+            })?;
 
         let query_str = match parsed_file.language {
             SourceLanguage::Rust => RUST_FUNCTION_QUERY,
@@ -245,8 +250,11 @@ impl CodeDuplicationDetector {
             SourceLanguage::JavaScript => JAVASCRIPT_FUNCTION_QUERY,
         };
 
-        let query = Query::new(&tree.language(), query_str)
-            .map_err(|e| AnalysisError::Analysis(format!("Failed to create query: {e}")))?;
+        let query = Query::new(&tree.language(), query_str).map_err(|e| {
+            UveddiError::AnalysisError(AnalysisError::AntiPatternDetectionError(format!(
+                "Failed to create query: {e}"
+            )))
+        })?;
 
         let mut cursor = QueryCursor::new();
         let matches = cursor.matches(&query, tree.root_node(), parsed_file.source.as_bytes());
@@ -266,7 +274,11 @@ impl CodeDuplicationDetector {
 
                 let source = function_node
                     .utf8_text(parsed_file.source.as_bytes())
-                    .map_err(|e| AnalysisError::Analysis(format!("Failed to extract source: {e}")))?
+                    .map_err(|e| {
+                        UveddiError::AnalysisError(AnalysisError::AntiPatternDetectionError(format!(
+                            "Failed to extract source: {e}"
+                        )))
+                    })?
                     .to_string();
 
                 // Extract function name by finding the identifier child
@@ -682,7 +694,7 @@ fn safe_lock_analysis_data<'a, T>(
     operation: &'static str,
 ) -> Result<std::sync::MutexGuard<'a, T>, crate::analysis::AnalysisError> {
     mutex.lock().map_err(|_| {
-        crate::analysis::AnalysisError::Analysis(format!(
+        AnalysisError::AntiPatternDetectionError(format!(
             "Concurrency failure during {} (mutex poisoned). See UV-150 error handling policy.",
             operation
         ))

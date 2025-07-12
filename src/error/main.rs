@@ -4,6 +4,7 @@ use crate::{
     plugins::errors::PluginError,
     analysis::errors::AnalysisError,
     report::errors::ReportGenerationError,
+    analysis::detectors::dependency::ExtractionError as DependencyExtractionError,
 };
 use clap::error::Error as ClapError;
 use reqwest::Error as ReqwestError;
@@ -29,6 +30,10 @@ pub enum UveddiError {
     AnalysisError(#[from] AnalysisError),
     #[error("Extraction error: {0}")]
     ExtractionError(#[from] ExtractionError),
+    #[error("AST error: {0}")]
+    AstError(#[from] AstError),
+    #[error("Dependency extraction error: {0}")]
+    DependencyExtractionError(#[from] DependencyExtractionError),
     // === Service & Infrastructure Errors ===
     #[error("Rendering service error: {0}")]
     RenderingServiceError(#[from] RenderingServiceError),
@@ -89,6 +94,8 @@ impl UveddiError {
         match self {
             UveddiError::AnalysisError(_)
             | UveddiError::ExtractionError(_)
+            | UveddiError::AstError(_)
+            | UveddiError::DependencyExtractionError(_)
             | UveddiError::DatabaseError(_)
             | UveddiError::PluginError(_) => ErrorSeverity::High,
             UveddiError::RenderingServiceError(_)
@@ -101,6 +108,8 @@ impl UveddiError {
         match self {
             UveddiError::AnalysisError(_) => ErrorCategory::Analysis,
             UveddiError::ExtractionError(_) => ErrorCategory::Extraction,
+            UveddiError::AstError(_) => ErrorCategory::Analysis,
+            UveddiError::DependencyExtractionError(_) => ErrorCategory::Extraction,
             UveddiError::DatabaseError(_) => ErrorCategory::Database,
             UveddiError::ConfigError(_) => ErrorCategory::Configuration,
             UveddiError::ReportError(_) => ErrorCategory::Reporting,

@@ -316,7 +316,7 @@ impl AstParser {
             language,
             tree: Some(tree),
             source: source.clone(),
-            custom_ast: custom_ast.clone(),
+            custom_ast: Arc::new(Some(custom_ast.as_ref().clone())),
             modified_at: modified_time,
         };
         let mut disk_parsed = parsed.clone();
@@ -364,7 +364,7 @@ impl AstParser {
             language,
             tree: Some(tree),
             source: Arc::new(content.to_string()),
-            custom_ast: Arc::new(custom_ast),
+            custom_ast: Arc::new(Some(custom_ast)),
             modified_at: std::time::SystemTime::now(),
         };
         

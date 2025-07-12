@@ -1,4 +1,4 @@
-use crate::error::{ErrorCategory, ErrorSeverity, RenderingServiceError};
+use crate::error::rendering::{ErrorCategory, ErrorSeverity, RenderingServiceError};
 use std::cmp::max;
 use std::future::Future;
 use std::pin::Pin;

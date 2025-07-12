@@ -4,7 +4,7 @@
 //! during service degradation. Integrates with circuit breaker, fallback, and metrics
 //! systems to provide coordinated failure response.
 
-use crate::error::{ErrorCategory, ErrorSeverity, RenderingServiceError};
+use crate::error::{ErrorCategory, RenderingServiceError};
 use crate::resilience::{CircuitBreaker, FallbackManager, MetricsCollector};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -354,11 +354,11 @@ impl GracefulFailureHandler {
 
         // Determine degradation level based on error severity and failure rate
         match error.severity() {
-            ErrorSeverity::Critical => DegradationLevel::Critical,
-            ErrorSeverity::High => DegradationLevel::Severe,
-            ErrorSeverity::Medium => DegradationLevel::Moderate,
-            ErrorSeverity::Low => DegradationLevel::Minor,
-            ErrorSeverity::Security => DegradationLevel::Critical,
+            crate::error::rendering::ErrorSeverity::Critical => DegradationLevel::Critical,
+            crate::error::rendering::ErrorSeverity::High => DegradationLevel::Severe,
+            crate::error::rendering::ErrorSeverity::Medium => DegradationLevel::Moderate,
+            crate::error::rendering::ErrorSeverity::Low => DegradationLevel::Minor,
+            crate::error::rendering::ErrorSeverity::Security => DegradationLevel::Critical,
         }
     }
 

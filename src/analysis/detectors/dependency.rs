@@ -5,10 +5,10 @@ use std::path::{Path, PathBuf};
 #[cfg(feature = "tree-sitter")]
 use tree_sitter::{Query, QueryCursor};
 
-use crate::ast::tree_sitter::{
-    queries::{JAVASCRIPT_IMPORTS_QUERY, PYTHON_IMPORTS_QUERY, RUST_IMPORTS_QUERY},
+use crate::ast::tree_sitter_impl::{
     AstError, AstParser, ParsedFile, SourceLanguage,
 };
+use crate::ast::tree_sitter::queries::{JAVASCRIPT_IMPORTS_QUERY, PYTHON_IMPORTS_QUERY, RUST_IMPORTS_QUERY};
 pub use crate::database::models::{Dependency, DependencyType};
 
 /// Errors that can occur during dependency extraction
