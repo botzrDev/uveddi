@@ -315,41 +315,6 @@ pub fn validate_model_name(model: &str) -> Result<(), SecurityError> {
 ///
 /// # Returns
 /// * `Result<String, SecurityError>` - Sanitized description or error
-/// Validates directory depth to prevent infinite recursion
-///
-/// # Arguments
-/// * `depth` - Current directory depth
-///
-/// # Returns
-/// * `Result<(), SecurityError>` - Ok if depth is valid, error otherwise
-pub fn validate_directory_depth(depth: usize) -> Result<(), SecurityError> {
-    if depth > MAX_DIRECTORY_DEPTH {
-        Err(SecurityError::DirectoryDepthExceeded {
-            depth,
-            max_depth: MAX_DIRECTORY_DEPTH,
-        })
-    } else {
-        Ok(())
-    }
-}
-
-/// Validates file count to prevent resource exhaustion
-///
-/// # Arguments
-/// * `count` - Current file count
-///
-/// # Returns
-/// * `Result<(), SecurityError>` - Ok if count is valid, error otherwise
-pub fn validate_file_count(count: usize) -> Result<(), SecurityError> {
-    if count > MAX_FILES_PER_ANALYSIS {
-        Err(SecurityError::TooManyFiles {
-            count,
-            max_count: MAX_FILES_PER_ANALYSIS,
-        })
-    } else {
-        Ok(())
-    }
-}
 
 pub fn sanitize_description(description: &str) -> Result<String, SecurityError> {
     if description.len() > MAX_DESCRIPTION_LENGTH {
@@ -534,7 +499,7 @@ mod tests {
         let dir = tempdir().unwrap();
         let file = dir.path().join("unicodé.txt");
         fs::write(&file, "safe").unwrap();
-        let result = sanitize_path("unicodé.txt", dir.path());
+        let result = sanitize_path("unicodé.txt", &dir.path());
         assert!(result.is_ok());
     }
 
@@ -543,7 +508,7 @@ mod tests {
         let dir = tempdir().unwrap();
         let file = dir.path().join(".env");
         fs::write(&file, "secret").unwrap();
-        let result = sanitize_path(".env", dir.path());
+        let result = sanitize_path(".env", &dir.path());
         assert!(matches!(result, Err(SecurityError::InvalidPathComponent)));
     }
 
@@ -552,7 +517,7 @@ mod tests {
         let dir = tempdir().unwrap();
         let file = dir.path().join("main.rs");
         fs::write(&file, "fn main() {}\n").unwrap();
-        let result = sanitize_path("main.rs", dir.path());
+        let result = sanitize_path("main.rs", &dir.path());
         assert!(result.is_ok());
     }
 
@@ -567,7 +532,7 @@ mod tests {
         let dir = tempdir().unwrap();
         let file = dir.path().join(".hidden");
         fs::write(&file, "hidden").unwrap();
-        let result = sanitize_path(".hidden", dir.path());
+        let result = sanitize_path(".hidden", &dir.path());
         assert!(matches!(result, Err(SecurityError::InvalidPathComponent)));
     }
 
@@ -576,7 +541,7 @@ mod tests {
         let dir = tempdir().unwrap();
         let outside = std::env::temp_dir().join("outside.txt");
         fs::write(&outside, "outside").unwrap();
-        let result = sanitize_path(outside, dir.path());
+        let result = sanitize_path(outside, &dir.path());
         assert!(matches!(result, Err(SecurityError::PathTraversalAttempt)));
     }
 
@@ -587,7 +552,7 @@ mod tests {
         fs::create_dir(&nested).unwrap();
         let file = nested.join("file.txt");
         fs::write(&file, "nested").unwrap();
-        let result = sanitize_path("nested/file.txt", dir.path());
+        let result = sanitize_path("nested/file.txt", &dir.path());
         assert!(result.is_ok());
     }
 }

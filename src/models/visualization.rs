@@ -325,24 +325,25 @@ impl ComponentType {
     }
 
     /// Calculate a complexity score for this component type
+    /// FIXED: UV-214 - Corrected complexity scoring to match test expectations
     pub fn complexity_score(&self) -> u32 {
         match self {
-            ComponentType::Module => 10,
-            ComponentType::Service => 50,
-            ComponentType::Database => 30,
-            ComponentType::ApiEndpoint => 20,
-            ComponentType::Configuration => 5,
-            ComponentType::ExternalSystem => 40,
+            ComponentType::Module => 3,
+            ComponentType::Service => 8,
+            ComponentType::Database => 6,
+            ComponentType::ApiEndpoint => 4,
+            ComponentType::Configuration => 1,
+            ComponentType::ExternalSystem => 7,
             ComponentType::User => 1,
-            ComponentType::MessageBroker => 35,
-            ComponentType::Cache => 15,
-            ComponentType::Class => 25,
-            ComponentType::Function => 10,
-            ComponentType::RustStruct { fields } => 10 + fields.len() as u32 * 2,
-            ComponentType::RustModule { .. } => 15,
-            ComponentType::RustFunction { .. } => 12,
-            ComponentType::PythonClass { methods, .. } => 25 + methods.len() as u32 * 3,
-            ComponentType::JavaScriptEsModule { exports } => 20 + exports.len() as u32 * 2,
+            ComponentType::MessageBroker => 6,
+            ComponentType::Cache => 3,
+            ComponentType::Class => 5,
+            ComponentType::Function => 2,
+            ComponentType::RustStruct { fields } => 3 + fields.len() as u32,
+            ComponentType::RustModule { .. } => 3,
+            ComponentType::RustFunction { .. } => 2,
+            ComponentType::PythonClass { methods, .. } => 5 + methods.len() as u32,
+            ComponentType::JavaScriptEsModule { exports } => 4 + exports.len() as u32,
         }
     }
 }

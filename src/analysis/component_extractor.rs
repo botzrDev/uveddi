@@ -377,13 +377,13 @@ mod tests {
     use super::*;
     use crate::ast::tree_sitter::SourceLanguage;
     use std::time::SystemTime;
+    use std::sync::Arc;
 
     fn create_test_parsed_file() -> ParsedFile {
         ParsedFile {
-            file_path: "src/services/user.rs".to_string(),
+            file_path: Arc::new(PathBuf::from("src/services/user.rs")),
             language: SourceLanguage::Rust,
             tree: None,
-            content: "".to_string(),
             custom_ast: Some(CustomAst::File {
                 items: vec![
                     CustomAst::Struct {
@@ -392,11 +392,11 @@ mod tests {
                     },
                     CustomAst::Function {
                         name: "validate_email".to_string(),
-                        parameters: vec!["email".to_string()],
+                        params: vec!["email".to_string()],
                     },
                 ],
             }),
-            source: None,
+            source: Arc::new("".to_string()),
         }
     }
 
