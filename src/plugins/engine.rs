@@ -30,7 +30,7 @@ impl WasmPluginEngine {
         {
             return Err(PluginError::Unsupported(
                 "WASM plugins not enabled. Compile with --features wasm-plugins".to_string(),
-            ));
+            ).into());
         }
 
         #[cfg(feature = "wasm-plugins")]
@@ -60,7 +60,7 @@ impl WasmPluginEngine {
         {
             return Err(PluginError::Unsupported(
                 "WASM plugins not enabled".to_string(),
-            ));
+            ).into());
         }
 
         #[cfg(feature = "wasm-plugins")]
@@ -84,7 +84,7 @@ impl WasmPluginEngine {
         if !self.enabled {
             return Err(PluginError::Unsupported(
                 "Plugin engine is disabled".to_string(),
-            ));
+            ).into());
         }
 
         log::info!("Loading plugin: {}", plugin_id);

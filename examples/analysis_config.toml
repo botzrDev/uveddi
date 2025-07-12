@@ -1,0 +1,99 @@
+# Uveddi Analysis Engine Configuration
+# 
+# This file demonstrates how to configure the Uveddi analysis engine using TOML.
+# You can customize detector settings, cache behavior, and plugin support.
+
+# ===== CACHE CONFIGURATION =====
+# Maximum number of analysis results to cache in memory
+cache_size = 1000
+
+# Path to the cache database file (SQLite)
+# Set to null or omit to use in-memory cache
+cache_path = "uveddi_cache.db"
+
+# ===== PLUGIN CONFIGURATION =====
+# Enable WASM plugin support
+# When true, the engine will initialize the plugin system and
+# automatically load any available WASM-based detectors
+enable_plugins = true
+
+# ===== DETECTOR CONFIGURATIONS =====
+# Configure individual detectors with custom parameters
+# Each detector section corresponds to a detector type
+
+[detectors.god_object]
+# God Object detector identifies classes/structs with too many responsibilities
+# threshold_methods: Maximum number of methods before flagging (default: 5)
+# threshold_fields: Maximum number of fields before flagging (default: 8)
+threshold_methods = 5
+threshold_fields = 8
+
+[detectors.code_duplication]
+# Code Duplication detector finds repeated code patterns
+# This detector uses default settings (no configuration options currently)
+
+[detectors.dead_code]
+# Dead Code detector identifies unused functions, variables, and imports
+# This detector uses default settings (no configuration options currently)
+
+[detectors.large_classes]
+# Large Classes detector identifies oversized class definitions
+# This detector uses default settings (no configuration options currently)
+
+[detectors.tight_coupling]
+# Tight Coupling detector identifies excessive dependencies between modules
+# This detector uses default settings (no configuration options currently)
+
+# ===== EXAMPLE: CUSTOM DETECTOR CONFIGURATIONS =====
+# Uncomment and modify these sections to customize detector behavior
+
+# [detectors.god_object]
+# # More strict thresholds for enterprise codebases
+# threshold_methods = 3
+# threshold_fields = 5
+
+# [detectors.magic_values]
+# # Magic Values detector (if implemented)
+# threshold = 3
+# exclude = [0, 1, -1]  # Common acceptable magic values
+
+# ===== CONFIGURATION PROFILES =====
+# You can create different configuration files for different scenarios:
+#
+# development.toml - Relaxed settings for development
+# [detectors.god_object]
+# threshold_methods = 10
+# threshold_fields = 15
+#
+# production.toml - Strict settings for production code
+# [detectors.god_object]
+# threshold_methods = 3
+# threshold_fields = 5
+#
+# legacy.toml - Very relaxed settings for legacy codebases
+# [detectors.god_object]
+# threshold_methods = 20
+# threshold_fields = 25
+
+# ===== USAGE INSTRUCTIONS =====
+# 
+# 1. Command Line Usage:
+#    $ uveddi analyze --config analysis_config.toml /path/to/source
+#
+# 2. Programmatic Usage:
+#    let config = AnalysisConfig::from_file(Path::new("analysis_config.toml"))?;
+#    let engine = config.create_engine().await?;
+#    let (issues, graph) = engine.analyze(Path::new("src/")).await?;
+#
+# 3. Builder Pattern Usage:
+#    let engine = AnalysisEngineBuilder::new()
+#        .from_config(&config)
+#        .enable_plugins()
+#        .build().await?;
+
+# ===== NOTES =====
+# - All detector configurations are optional
+# - Omitted detectors will use default settings
+# - Invalid detector names will cause configuration loading to fail
+# - Plugin support requires the 'wasm-plugins' feature to be enabled
+# - Cache settings affect performance vs memory usage trade-offs

@@ -51,11 +51,16 @@
 /// ```
 pub mod cache;
 pub mod component_extractor;
+pub mod config;
+pub mod detector_factory;
+pub mod detector_registry;
 pub mod detectors;
 pub mod engine;
+pub mod engine_builder;
 pub mod extractors;
 pub mod graph;
 pub mod mermaid_generator;
+pub mod plugin_adapter;
 pub mod symbols;
 pub mod types;
 pub mod errors;
@@ -66,10 +71,15 @@ pub mod tests;
 /// Placeholder documentation for public items
 // Re-exports for convenience
 pub use cache::AstCache;
+pub use config::AnalysisConfig;
+pub use detector_factory::{DetectorConfig, DetectorFactory};
+pub use detector_registry::DetectorRegistry;
 pub use detectors::anti_patterns::GodObjectDetector;
 pub use detectors::{CycleDetector, Dependency, DependencyExtractor};
 pub use engine::AnalysisEngine;
+pub use engine_builder::AnalysisEngineBuilder;
 pub use graph::{ComponentNode, LocalDependencyGraph, LocalDependencyType};
+pub use plugin_adapter::{WasmPluginDetectorAdapter, WasmPluginAdapterFactory};
 
 use crate::ast::ParsedFile;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};

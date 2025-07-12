@@ -3,6 +3,7 @@ use crate::ast::tree_sitter_impl::AstError;
 use crate::analysis::detectors::dependency::ExtractionError;
 use crate::analysis::component_extractor::ComponentExtractionError;
 use crate::analysis::mermaid_generator::MermaidGenerationError;
+use crate::plugins::errors::PluginError;
 
 #[derive(Error, Debug)]
 pub enum AnalysisError {
@@ -26,4 +27,6 @@ pub enum AnalysisError {
     GraphAnalysisError(String),
     #[error("Tree-sitter query error: {0}")]
     QueryError(String),
+    #[error("Plugin error: {0}")]
+    PluginError(#[from] PluginError),
 }

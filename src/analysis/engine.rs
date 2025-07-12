@@ -1,10 +1,7 @@
-use crate::analysis::detectors::anti_patterns::code_duplication::CodeDuplicationDetector;
 use crate::analysis::detectors::anti_patterns::dead_code::{DeadCodeConfig, DeadCodeDetector};
-use crate::analysis::detectors::anti_patterns::god_object::GodObjectDetector;
 use crate::analysis::detectors::anti_patterns::large_classes::{
     LargeClassConfig, LargeClassDetector,
 };
-use crate::analysis::detectors::anti_patterns::tight_coupling::TightCouplingDetector;
 use crate::analysis::detectors::cycle::CycleDetector;
 use crate::analysis::detectors::dependency::{Dependency, DependencyExtractor};
 use crate::analysis::extractors::SymbolExtractor;
@@ -81,14 +78,121 @@ impl AnalysisEngine {
     /// - AST parser initialization fails
     /// - Dependency extractor setup fails
     pub fn new() -> crate::error::Result<Self> {
+        let default_detectors = crate::analysis::detector_factory::DetectorFactory::create_default_detectors();
         let cache_path = PathBuf::from("uveddi_cache.db");
-        Self::with_cache_path(&cache_path)
+        Self::with_detectors(default_detectors, Some(&cache_path), false)
+    }
+
+    /// Create engine with injected detectors (DEPENDENCY INJECTION)
+    ///
+    /// Creates an AnalysisEngine with a custom set of detectors, enabling
+    /// dependency injection for better testability and flexibility.
+    ///
+    /// # Arguments
+    ///
+    /// * `detectors` - Vector of detectors to use for analysis
+    /// * `cache_path` - Optional path to cache database (None for in-memory cache)
+    /// * `enable_plugins` - Whether to enable WASM plugin support
+    ///
+    /// # Returns
+    ///
+    /// A configured AnalysisEngine instance
+    ///
+    /// # Errors
+    ///
+    /// Returns `UveddiError` if:
+    /// - Cache database cannot be created
+    /// - AST parser initialization fails
+    /// - Dependency extractor setup fails
+    pub fn with_detectors(
+        detectors: Vec<Box<dyn AnalysisDetector + Send + Sync>>,
+        cache_path: Option<&Path>,
+        enable_plugins: bool,
+    ) -> crate::error::Result<Self> {
+        let cache = if let Some(path) = cache_path {
+            ResultCache::new(path)?
+        } else {
+            ResultCache::new_in_memory()?
+        };
+        
+        Ok(Self {
+            ast_parser: AstParser::new()?,
+            dependency_extractor: DependencyExtractor::new()?,
+            symbol_extractor: SymbolExtractor::new(),
+            detectors, // INJECTED DETECTORS
+            cycle_detector: CycleDetector::new(),
+            files_analyzed: 0,
+            cache,
+            symbol_table: GlobalSymbolTable::new(),
+            plugin_engine: if enable_plugins {
+                // Plugin engine will be initialized separately for async operations
+                None
+            } else {
+                None
+            },
+        })
+    }
+
+    /// Create engine with injected detectors and plugin support (ASYNC VERSION)
+    ///
+    /// Creates an AnalysisEngine with custom detectors and initializes the
+    /// WASM plugin engine if requested.
+    ///
+    /// # Arguments
+    ///
+    /// * `detectors` - Vector of detectors to use for analysis
+    /// * `cache_path` - Optional path to cache database (None for in-memory cache)
+    ///
+    /// # Returns
+    ///
+    /// A configured AnalysisEngine instance with plugin support
+    ///
+    /// # Errors
+    ///
+    /// Returns `UveddiError` if initialization fails
+    pub async fn with_detectors_and_plugins(
+        detectors: Vec<Box<dyn AnalysisDetector + Send + Sync>>,
+        cache_path: Option<&Path>,
+    ) -> crate::error::Result<Self> {
+        let cache = if let Some(path) = cache_path {
+            ResultCache::new(path)?
+        } else {
+            ResultCache::new_in_memory()?
+        };
+        
+        // Initialize plugin engine
+        let plugin_engine = match WasmPluginEngine::new().await {
+            Ok(engine) => {
+                info!("WASM plugin engine initialized successfully");
+                Some(engine)
+            }
+            Err(e) => {
+                warn!(
+                    "Failed to initialize WASM plugin engine: {}. Continuing without plugins.",
+                    e
+                );
+                None
+            }
+        };
+        
+        Ok(Self {
+            ast_parser: AstParser::new()?,
+            dependency_extractor: DependencyExtractor::new()?,
+            symbol_extractor: SymbolExtractor::new(),
+            detectors, // INJECTED DETECTORS
+            cycle_detector: CycleDetector::new(),
+            files_analyzed: 0,
+            cache,
+            symbol_table: GlobalSymbolTable::new(),
+            plugin_engine,
+        })
     }
 
     /// Creates a new analysis engine with WASM plugin support enabled
     pub async fn new_with_plugins() -> crate::error::Result<Self> {
+        let default_detectors = crate::analysis::detector_factory::DetectorFactory::create_default_detectors();
         let cache_path = PathBuf::from("uveddi_cache.db");
-        Self::with_cache_path_and_plugins(&cache_path).await
+        Self::with_detectors_and_plugins(default_detectors, Some(&cache_path)).await
     }
 
     /// Creates a new analysis engine with a custom cache database path
@@ -106,61 +210,16 @@ impl AnalysisEngine {
     /// - AST parser initialization fails
     /// - Dependency extractor setup fails
     pub fn with_cache_path(cache_path: &Path) -> crate::error::Result<Self> {
-        Ok(Self {
-            ast_parser: AstParser::new()?,
-            dependency_extractor: DependencyExtractor::new()?,
-            symbol_extractor: SymbolExtractor::new(),
-            detectors: vec![
-                Box::new(GodObjectDetector::new(5, 8)), // More sensitive thresholds
-                Box::new(CodeDuplicationDetector::new()),
-                Box::new(DeadCodeDetector::with_default_config()),
-                Box::new(LargeClassDetector::with_default_config()),
-                Box::new(TightCouplingDetector::default()),
-            ],
-            cycle_detector: CycleDetector::new(),
-            files_analyzed: 0,
-            cache: ResultCache::new(cache_path)?,
-            symbol_table: GlobalSymbolTable::new(),
-            plugin_engine: None,
-        })
+        let default_detectors = crate::analysis::detector_factory::DetectorFactory::create_default_detectors();
+        Self::with_detectors(default_detectors, Some(cache_path), false)
     }
 
     /// Creates a new analysis engine with WASM plugin support and custom cache path
     pub async fn with_cache_path_and_plugins(
         cache_path: &Path,
     ) -> crate::error::Result<Self> {
-        // Initialize plugin engine
-        let plugin_engine = match WasmPluginEngine::new().await {
-            Ok(engine) => {
-                info!("WASM plugin engine initialized successfully");
-                Some(engine)
-            }
-            Err(e) => {
-                warn!(
-                    "Failed to initialize WASM plugin engine: {}. Continuing without plugins.",
-                    e
-                );
-                None
-            }
-        };
-
-        Ok(Self {
-            ast_parser: AstParser::new()?,
-            dependency_extractor: DependencyExtractor::new()?,
-            symbol_extractor: SymbolExtractor::new(),
-            detectors: vec![
-                Box::new(GodObjectDetector::new(5, 8)), // More sensitive thresholds
-                Box::new(CodeDuplicationDetector::new()),
-                Box::new(DeadCodeDetector::with_default_config()),
-                Box::new(LargeClassDetector::with_default_config()),
-                Box::new(TightCouplingDetector::default()),
-            ],
-            cycle_detector: CycleDetector::new(),
-            files_analyzed: 0,
-            cache: ResultCache::new(cache_path)?,
-            symbol_table: GlobalSymbolTable::new(),
-            plugin_engine,
-        })
+        let default_detectors = crate::analysis::detector_factory::DetectorFactory::create_default_detectors();
+        Self::with_detectors_and_plugins(default_detectors, Some(cache_path)).await
     }
 
     /// Creates a new analysis engine with an in-memory cache database
@@ -175,23 +234,8 @@ impl AnalysisEngine {
     /// - AST parser initialization fails
     /// - Dependency extractor setup fails
     pub fn new_with_memory_cache() -> crate::error::Result<Self> {
-        Ok(Self {
-            ast_parser: AstParser::new()?,
-            dependency_extractor: DependencyExtractor::new()?,
-            symbol_extractor: SymbolExtractor::new(),
-            detectors: vec![
-                Box::new(GodObjectDetector::new(5, 8)), // More sensitive thresholds
-                Box::new(CodeDuplicationDetector::new()),
-                Box::new(DeadCodeDetector::with_default_config()),
-                Box::new(LargeClassDetector::with_default_config()),
-                Box::new(TightCouplingDetector::default()),
-            ],
-            cycle_detector: CycleDetector::new(),
-            files_analyzed: 0,
-            cache: ResultCache::new_in_memory()?,
-            symbol_table: GlobalSymbolTable::new(),
-            plugin_engine: None,
-        })
+        let default_detectors = crate::analysis::detector_factory::DetectorFactory::create_default_detectors();
+        Self::with_detectors(default_detectors, None, false)
     }
 
     /// Performs comprehensive analysis on a directory or file
@@ -591,6 +635,77 @@ impl AnalysisEngine {
     /// Check if plugin engine is available
     pub fn has_plugin_support(&self) -> bool {
         self.plugin_engine.is_some()
+    }
+
+    /// Add plugin detectors dynamically
+    ///
+    /// Scans the plugin engine for loaded plugins and creates detector adapters
+    /// for each one, integrating them into the analysis engine's detector pipeline.
+    ///
+    /// # Errors
+    ///
+    /// Returns `UveddiError` if plugin integration fails
+    pub async fn add_plugin_detectors(&mut self) -> crate::error::Result<usize> {
+        if let Some(ref plugin_engine) = self.plugin_engine {
+            use std::sync::Arc;
+            use tokio::sync::RwLock;
+            
+            // Create shared reference to plugin engine for adapters
+            let shared_engine = Arc::new(RwLock::new(plugin_engine.clone()));
+            let adapter_factory = crate::analysis::WasmPluginAdapterFactory::new(shared_engine);
+            
+            // Create adapters for all loaded plugins
+            match adapter_factory.create_all_adapters().await {
+                Ok(mut plugin_adapters) => {
+                    let count = plugin_adapters.len();
+                    self.detectors.append(&mut plugin_adapters);
+                    log::info!("Added {} plugin detectors", count);
+                    Ok(count)
+                }
+                Err(e) => {
+                    log::error!("Failed to create plugin adapters: {}", e);
+                    Err(crate::error::UveddiError::PluginError(
+                        crate::plugins::errors::PluginError::Execution(e.to_string())
+                    ))
+                }
+            }
+        } else {
+            Ok(0) // No plugin engine, no detectors added
+        }
+    }
+
+    /// Remove plugin detectors from the detector pipeline
+    ///
+    /// Removes all WASM plugin detectors from the current detector set.
+    /// This is useful when reloading plugins or disabling plugin support.
+    pub fn remove_plugin_detectors(&mut self) -> usize {
+        let initial_count = self.detectors.len();
+        self.detectors.retain(|detector| {
+            detector.get_detector_name() != "wasm-plugin-detector"
+        });
+        let removed_count = initial_count - self.detectors.len();
+        
+        if removed_count > 0 {
+            log::info!("Removed {} plugin detectors", removed_count);
+        }
+        
+        removed_count
+    }
+
+    /// Reload plugin detectors
+    ///
+    /// Removes existing plugin detectors and reloads them from the plugin engine.
+    /// This is useful when plugins have been added, removed, or updated.
+    ///
+    /// # Errors
+    ///
+    /// Returns `UveddiError` if plugin reloading fails
+    pub async fn reload_plugin_detectors(&mut self) -> crate::error::Result<usize> {
+        // Remove existing plugin detectors
+        self.remove_plugin_detectors();
+        
+        // Add current plugin detectors
+        self.add_plugin_detectors().await
     }
 
     /// Gets statistics from the plugin registry.
