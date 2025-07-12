@@ -276,9 +276,9 @@ impl GodObjectDetector {
                 ),
                 code_snippet: Some(
                     {
-                        let empty_source = String::new();
+                        let source_str = parsed_file.source.as_str();
                         container_node
-                            .utf8_text(parsed_file.source.as_ref().unwrap_or(&empty_source).as_bytes())
+                            .utf8_text(source_str.as_bytes())
                             .unwrap_or("")
                             .to_string()
                     }
@@ -308,15 +308,15 @@ impl GodObjectDetector {
         let tree = parsed_file
             .tree
             .as_ref()
-            .ok_or_else(|| AnalysisError::AntiPatternDetectionError("AST tree missing".to_string()))?;
+            .ok_or_else(|| crate::analysis::errors::AnalysisError::AntiPatternDetectionError("AST tree missing".to_string()))?;
         let language = tree.language();
 
         let container_query = Query::new(&language, container_query_str)
-            .map_err(|e| AnalysisError::QueryError(e.to_string()))?;
+            .map_err(|e| crate::analysis::errors::AnalysisError::QueryError(e.to_string()))?;
         let method_query = Query::new(&language, method_query_str)
-            .map_err(|e| AnalysisError::QueryError(e.to_string()))?;
+            .map_err(|e| crate::analysis::errors::AnalysisError::QueryError(e.to_string()))?;
         let field_query = Query::new(&language, field_query_str)
-            .map_err(|e| AnalysisError::QueryError(e.to_string()))?;
+            .map_err(|e| crate::analysis::errors::AnalysisError::QueryError(e.to_string()))?;
 
         let mut cursor = QueryCursor::new();
         for mat in cursor.matches(&container_query, tree.root_node(), source) {
@@ -375,16 +375,16 @@ impl GodObjectDetector {
         let tree = parsed_file
             .tree
             .as_ref()
-            .ok_or_else(|| AnalysisError::AntiPatternDetectionError("AST tree missing".to_string()))?;
+            .ok_or_else(|| crate::analysis::errors::AnalysisError::AntiPatternDetectionError("AST tree missing".to_string()))?;
         let language = tree.language();
         let root_node = tree.root_node();
 
         // 1. Find all impl blocks and count their methods
         let mut impl_method_counts: HashMap<String, usize> = HashMap::new();
         let impl_query = Query::new(&language, RUST_IMPL_QUERY)
-            .map_err(|e| AnalysisError::QueryError(e.to_string()))?;
+            .map_err(|e| crate::analysis::errors::AnalysisError::QueryError(e.to_string()))?;
         let function_query = Query::new(&language, RUST_FUNCTION_COUNT_QUERY)
-            .map_err(|e| AnalysisError::QueryError(e.to_string()))?;
+            .map_err(|e| crate::analysis::errors::AnalysisError::QueryError(e.to_string()))?;
 
         let mut cursor = QueryCursor::new();
         for mat in cursor.matches(&impl_query, root_node, source) {
@@ -405,9 +405,9 @@ impl GodObjectDetector {
 
         // 2. Find all structs, count their fields, and check against method counts
         let struct_query = Query::new(&language, RUST_STRUCT_QUERY)
-            .map_err(|e| AnalysisError::QueryError(e.to_string()))?;
+            .map_err(|e| crate::analysis::errors::AnalysisError::QueryError(e.to_string()))?;
         let field_query = Query::new(&language, RUST_FIELD_COUNT_QUERY)
-            .map_err(|e| AnalysisError::QueryError(e.to_string()))?;
+            .map_err(|e| crate::analysis::errors::AnalysisError::QueryError(e.to_string()))?;
 
         let mut struct_cursor = QueryCursor::new();
         for mat in struct_cursor.matches(&struct_query, root_node, source) {

@@ -1,0 +1,3 @@
+// ...existing code...
+// FailureClassifier stub for UV-219
+pub struct FailureClassifier;

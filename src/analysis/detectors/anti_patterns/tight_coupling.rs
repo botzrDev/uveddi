@@ -122,7 +122,7 @@ impl AnalysisDetector for TightCouplingDetector {
         parsed_file: &ParsedFile,
     ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         // For now, analyze only the current file (expand to project-wide in engine)
-        let file_path = parsed_file.file_path.to_string().to_string();
+        let file_path = parsed_file.file_path.to_string_lossy().to_string();
         let rust_analyzer = RustAnalyzer;
         let files = vec![(file_path.clone(), parsed_file.clone())];
         let graph = self.build_dependency_graph(&files, &rust_analyzer);

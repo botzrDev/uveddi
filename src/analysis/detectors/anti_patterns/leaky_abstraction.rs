@@ -440,7 +440,7 @@ impl LeakyAbstractionDetector {
         let tree = parsed_file
             .tree
             .as_ref()
-            .ok_or_else(|| AnalysisError::DetectionError("No AST available".to_string()))?;
+            .ok_or_else(|| crate::analysis::errors::AnalysisError::DetectionError("No AST available".to_string()))?;
         let language = tree.language();
 
         let query_source = r#"
@@ -469,7 +469,7 @@ impl LeakyAbstractionDetector {
         "#;
 
         let query = Query::new(&language, query_source)
-            .map_err(|e| AnalysisError::DetectionError(format!("Failed to create Rust query: {}", e)))?;
+            .map_err(|e| crate::analysis::errors::AnalysisError::DetectionError(format!("Failed to create Rust query: {}", e)))?;
 
         let mut cursor = QueryCursor::new();
         let captures = cursor.captures(&query, tree.root_node(), source_bytes);
@@ -628,7 +628,7 @@ impl LeakyAbstractionDetector {
                 "#;
 
                 let query = Query::new(&language, query_source).map_err(|e| {
-                    AnalysisError::Other(format!("Failed to create Python query: {}", e))
+                    crate::analysis::errors::AnalysisError::Other(format!("Failed to create Python query: {}", e))
                 })?;
 
                 let mut cursor = QueryCursor::new();
@@ -693,7 +693,7 @@ impl LeakyAbstractionDetector {
         let tree = parsed_file
             .tree
             .as_ref()
-            .ok_or_else(|| AnalysisError::DetectionError("No AST available".to_string()))?;
+            .ok_or_else(|| crate::analysis::errors::AnalysisError::DetectionError("No AST available".to_string()))?;
         let language = tree.language();
 
         let query_source = r#"
@@ -721,7 +721,7 @@ impl LeakyAbstractionDetector {
         "#;
 
         let query = Query::new(&language, query_source)
-            .map_err(|e| AnalysisError::Other(format!("Failed to create JS query: {}", e)))?;
+            .map_err(|e| crate::analysis::errors::AnalysisError::Other(format!("Failed to create JS query: {}", e)))?;
 
         let mut cursor = QueryCursor::new();
         let captures = cursor.captures(&query, tree.root_node(), source_bytes);

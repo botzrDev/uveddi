@@ -51,6 +51,8 @@ use tokio::sync::Mutex;
 use uveddi::cli::analyze_command::AnalyzeCommand;
 use uveddi::cli::config_command::ConfigCommand;
 use uveddi::resilience::health::HealthMonitor;
+use uveddi::monitoring::dashboard::MonitoringDashboard;
+use uveddi::config::monitoring::MonitoringConfig;
 
 mod server;
 
@@ -105,6 +107,15 @@ fn main() -> Result<()> {
         let rt = tokio::runtime::Runtime::new()
             .expect("FATAL [UV-150]: Failed to initialize async runtime. This indicates a critical system resource issue. See error handling policy.");
         rt.block_on(server::run_server(health_monitor_clone));
+    });
+
+    // Initialize monitoring system (UV-219)
+    let monitoring_config = MonitoringConfig::default();
+    let rt = tokio::runtime::Runtime::new()
+        .expect("FATAL [UV-219]: Failed to initialize async runtime for monitoring.");
+    rt.block_on(async {
+        let monitoring_dashboard = MonitoringDashboard::new(monitoring_config).await.expect("Failed to init monitoring dashboard");
+        monitoring_dashboard.start().await.expect("Failed to start monitoring dashboard");
     });
 
     // Run main application

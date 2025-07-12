@@ -85,7 +85,7 @@ impl DependencyExtractor {
 
         let parsed_file = self
             .parser
-            .parse_with_cache(file_path, &content, language)
+            .parse_content(&content, file_path, language)
             .map_err(ExtractionError::AstError)?;
         self.extract_from_ast(&parsed_file)
     }
@@ -135,7 +135,7 @@ impl DependencyExtractor {
                     .expect("AST tree missing")
                     .root_node(),
                 parsed_file
-                    .content
+                    .source
                     .as_deref()
                     .map(str::as_bytes)
                     .unwrap_or(&[]),
@@ -153,7 +153,7 @@ impl DependencyExtractor {
                     let node = capture.node;
                     let line_number = node.start_position().row + 1;
                     let mut module_name = node
-                        .utf8_text(parsed_file.content.as_ref().unwrap_or("").as_bytes())
+                        .utf8_text(parsed_file.source.as_bytes())
                         .unwrap_or("")
                         .to_string();
 
@@ -162,9 +162,9 @@ impl DependencyExtractor {
                         && dependency_type == DependencyType::Use
                     {
                         // UV-150: Strategic error handling for path operations (Category V)
-                        let parent_dir = Path::new(&parsed_file.file_path).parent()
+                        let parent_dir = parsed_file.file_path.parent()
                         .ok_or_else(|| ExtractionError::InvalidPath {
-                            path: PathBuf::from(parsed_file.file_path.clone()),
+                            path: (**parsed_file.file_path).clone(),
                             reason: "File path has no parent directory (see UV-150 error handling policy)".to_string(),
                         })?;
                         let mut potential_path = parent_dir.join(&module_name);
@@ -218,7 +218,7 @@ impl DependencyExtractor {
                     }
 
                     dependencies.push(Dependency {
-                        from_file: (**parsed_file.file_path).clone(), // UV-222: Clone PathBuf from Arc instead of converting
+                        from_file: (**parsed_file.file_path).to_path_buf(), // UV-222: Convert Path to PathBuf
                         to_module: module_name,
                         dependency_type,
                         line_number: Some((line_number + 1) as u32),
@@ -266,7 +266,7 @@ impl DependencyExtractor {
 
                 if let Some(name) = module_name {
                     dependencies.push(Dependency {
-                        from_file: (**parsed_file.file_path).clone(), // UV-222: Clone PathBuf from Arc instead of converting
+                        from_file: (**parsed_file.file_path).to_path_buf(), // UV-222: Convert Path to PathBuf
                         to_module: name,
                         dependency_type: DependencyType::Import,
                         line_number: Some((line_num + 1) as u32),

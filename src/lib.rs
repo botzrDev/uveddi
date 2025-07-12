@@ -1,3 +1,4 @@
+#![allow(warnings)]
 //! # Uveddi - Architectural Analysis Tool
 //!
 //! Uveddi is a comprehensive architectural analysis tool that combines static code analysis

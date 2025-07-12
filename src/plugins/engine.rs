@@ -100,8 +100,7 @@ impl WasmPluginEngine {
         let binary = self
             .registry
             .load_plugin_binary(plugin_id)
-            .await
-            .map_err(|e| PluginError::Registry(e))?;
+            .await?;
 
         // Use default security policy (could be customized per plugin)
         let security_policy = self.default_security_policy.clone();
@@ -180,8 +179,7 @@ impl WasmPluginEngine {
         let plugin_id = self
             .registry
             .register_plugin(manifest, binary)
-            .await
-            .map_err(|e| PluginError::Registry(e))?;
+            .await?;
 
         // Automatically load the plugin
         self.load_plugin(&plugin_id).await?;
@@ -203,8 +201,7 @@ impl WasmPluginEngine {
         // Unregister from registry
         self.registry
             .unregister_plugin(plugin_id)
-            .await
-            .map_err(|e| PluginError::Registry(e))?;
+            .await?;
 
         log::info!("Successfully uninstalled plugin: {}", plugin_id);
         Ok(())

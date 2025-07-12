@@ -147,7 +147,7 @@ impl DetectorRegistry {
     /// ```
     pub fn load_from_config(&mut self, configs: &HashMap<String, DetectorConfig>) -> Result<(), UveddiError> {
         for (name, detector_config) in configs {
-            let detector = self.factory.create_detector(name, detector_config)?;
+            let detector = DetectorFactory::create_detector(name, detector_config)?;
             self.register(name.clone(), detector);
         }
         Ok(())

@@ -688,13 +688,13 @@ impl CodeDuplicationDetector {
 /// Helper for safe mutex locking with error propagation (UV-150)
 ///
 /// This function ensures consistent handling of mutex poison errors in analysis operations.
-/// Returns a Result with AnalysisError::ConcurrencyFailure if the lock is poisoned.
+/// Returns a Result with crate::analysis::errors::AnalysisError::ConcurrencyFailure if the lock is poisoned.
 fn safe_lock_analysis_data<'a, T>(
     mutex: &'a std::sync::Mutex<T>,
     operation: &'static str,
-) -> Result<std::sync::MutexGuard<'a, T>, crate::analysis::AnalysisError> {
+) -> Result<std::sync::MutexGuard<'a, T>, crate::analysis::errors::AnalysisError> {
     mutex.lock().map_err(|_| {
-        AnalysisError::SymbolResolutionError(format!(
+        crate::analysis::errors::AnalysisError::SymbolResolutionError(format!(
             "Concurrency failure during {} (mutex poisoned). See UV-150 error handling policy.",
             operation
         ))

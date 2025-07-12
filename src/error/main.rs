@@ -5,6 +5,7 @@ use crate::{
     analysis::errors::AnalysisError,
     report::errors::ReportGenerationError,
     analysis::detectors::dependency::ExtractionError as DependencyExtractionError,
+    security::SecurityError,
 };
 use clap::error::Error as ClapError;
 use reqwest::Error as ReqwestError;
@@ -41,6 +42,8 @@ pub enum UveddiError {
     DatabaseError(#[from] RusqliteError),
     #[error("Plugin error: {0}")]
     PluginError(#[from] PluginError),
+    #[error("Security error: {0}")]
+    SecurityError(#[from] SecurityError),
     // === External System Errors ===
     #[error("Network error: {0}")]
     NetworkError(#[from] ReqwestError),
@@ -97,7 +100,8 @@ impl UveddiError {
             | UveddiError::AstError(_)
             | UveddiError::DependencyExtractionError(_)
             | UveddiError::DatabaseError(_)
-            | UveddiError::PluginError(_) => ErrorSeverity::High,
+            | UveddiError::PluginError(_) 
+            | UveddiError::SecurityError(_) => ErrorSeverity::High,
             UveddiError::RenderingServiceError(_)
             | UveddiError::ReportError(_)
             | UveddiError::NetworkError(_) => ErrorSeverity::Medium,
@@ -114,6 +118,7 @@ impl UveddiError {
             UveddiError::ConfigError(_) => ErrorCategory::Configuration,
             UveddiError::ReportError(_) => ErrorCategory::Reporting,
             UveddiError::PluginError(_) => ErrorCategory::Plugin,
+            UveddiError::SecurityError(_) => ErrorCategory::ServiceSpecific,
             UveddiError::NetworkError(_) => ErrorCategory::Network,
             UveddiError::CliError(_) => ErrorCategory::Cli,
             UveddiError::IoError(_) => ErrorCategory::Io,

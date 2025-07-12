@@ -82,14 +82,20 @@ impl AstParser {
     /// Get cache statistics for monitoring (UV-152)
     pub fn get_cache_stats(&self) -> CacheStats {
         let cache = self.cache.lock().unwrap();
-        let hits = *self.cache_hits.lock().unwrap_or_else(|_| {
-            tracing::warn!("Cache hits lock poisoned, returning 0");
-            std::sync::Arc::new(std::sync::Mutex::new(0)).lock().unwrap()
-        });
-        let misses = *self.cache_misses.lock().unwrap_or_else(|_| {
-            tracing::warn!("Cache misses lock poisoned, returning 0");
-            std::sync::Arc::new(std::sync::Mutex::new(0)).lock().unwrap()
-        });
+        let hits = match self.cache_hits.lock() {
+            Ok(guard) => *guard,
+            Err(_) => {
+                tracing::warn!("Cache hits lock poisoned, returning 0");
+                0
+            }
+        };
+        let misses = match self.cache_misses.lock() {
+            Ok(guard) => *guard,
+            Err(_) => {
+                tracing::warn!("Cache misses lock poisoned, returning 0");
+                0
+            }
+        };
         let total_requests = hits + misses;
         let hit_rate = if total_requests > 0 {
             hits as f64 / total_requests as f64
@@ -532,6 +538,19 @@ pub enum SourceLanguage {
     Rust,
     Python,
     JavaScript,
+}
+
+impl SourceLanguage {
+    pub fn from_path(path: &Path) -> Option<Self> {
+        path.extension()
+            .and_then(|ext| ext.to_str())
+            .and_then(|ext_str| match ext_str {
+                "rs" => Some(SourceLanguage::Rust),
+                "py" => Some(SourceLanguage::Python),
+                "js" | "ts" | "jsx" | "tsx" => Some(SourceLanguage::JavaScript),
+                _ => None,
+            })
+    }
 }
 
 #[derive(Debug, thiserror::Error)]

@@ -29,4 +29,8 @@ pub enum AnalysisError {
     QueryError(String),
     #[error("Plugin error: {0}")]
     PluginError(#[from] PluginError),
+    #[error("Other analysis error: {0}")]
+    Other(String),
+    #[error("Unsupported language: {0}")]
+    UnsupportedLanguage(String),
 }

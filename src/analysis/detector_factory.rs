@@ -161,6 +161,11 @@ impl DetectorConfig {
     pub fn has_param(&self, key: &str) -> bool {
         self.params.contains_key(key)
     }
+
+    /// Get all parameters for serialization
+    pub fn params(&self) -> &HashMap<String, i32> {
+        &self.params
+    }
 }
 
 #[cfg(test)]

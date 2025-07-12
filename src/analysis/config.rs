@@ -302,7 +302,7 @@ impl Serialize for DetectorConfig {
     where
         S: serde::Serializer,
     {
-        self.params.serialize(serializer)
+        self.params().serialize(serializer)
     }
 }
 

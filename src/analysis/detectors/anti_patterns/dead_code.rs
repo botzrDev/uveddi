@@ -195,13 +195,13 @@ impl DeadCodeDetector {
             .tree
             .as_ref()
             .ok_or_else(|| {
-                UveddiError::AnalysisError(AnalysisError::DetectionError("AST tree missing".to_string()))
+                UveddiError::AnalysisError(crate::analysis::errors::AnalysisError::DetectionError("AST tree missing".to_string()))
             })?;
         let language = tree.language();
 
         // Query for function definitions
         let function_query = Query::new(&language, RUST_FUNCTION_QUERY)
-            .map_err(|e| UveddiError::AnalysisError(AnalysisError::DetectionError(e.to_string())))?;
+            .map_err(|e| UveddiError::AnalysisError(crate::analysis::errors::AnalysisError::DetectionError(e.to_string())))?;
 
         let mut cursor = QueryCursor::new();
         for mat in cursor.matches(&function_query, tree.root_node(), source) {
@@ -227,7 +227,7 @@ impl DeadCodeDetector {
 
         // Query for struct definitions
         let struct_query = Query::new(&language, RUST_STRUCT_QUERY)
-            .map_err(|e| UveddiError::AnalysisError(AnalysisError::DetectionError(e.to_string())))?;
+            .map_err(|e| UveddiError::AnalysisError(crate::analysis::errors::AnalysisError::DetectionError(e.to_string())))?;
 
         let mut cursor = QueryCursor::new();
         for mat in cursor.matches(&struct_query, tree.root_node(), source) {
@@ -268,13 +268,13 @@ impl DeadCodeDetector {
             .tree
             .as_ref()
             .ok_or_else(|| {
-                UveddiError::AnalysisError(AnalysisError::DetectionError("AST tree missing".to_string()))
+                UveddiError::AnalysisError(crate::analysis::errors::AnalysisError::DetectionError("AST tree missing".to_string()))
             })?;
         let language = tree.language();
 
         // Query for function definitions
         let function_query = Query::new(&language, PYTHON_FUNCTION_QUERY)
-            .map_err(|e| UveddiError::AnalysisError(AnalysisError::DetectionError(e.to_string())))?;
+            .map_err(|e| UveddiError::AnalysisError(crate::analysis::errors::AnalysisError::DetectionError(e.to_string())))?;
 
         let mut cursor = QueryCursor::new();
         for mat in cursor.matches(&function_query, tree.root_node(), source) {
@@ -304,7 +304,7 @@ impl DeadCodeDetector {
 
         // Query for class definitions
         let class_query = Query::new(&language, PYTHON_CLASS_QUERY)
-            .map_err(|e| UveddiError::AnalysisError(AnalysisError::DetectionError(e.to_string())))?;
+            .map_err(|e| UveddiError::AnalysisError(crate::analysis::errors::AnalysisError::DetectionError(e.to_string())))?;
 
         let mut cursor = QueryCursor::new();
         for mat in cursor.matches(&class_query, tree.root_node(), source) {
@@ -349,13 +349,13 @@ impl DeadCodeDetector {
             .tree
             .as_ref()
             .ok_or_else(|| {
-                UveddiError::AnalysisError(AnalysisError::DetectionError("AST tree missing".to_string()))
+                UveddiError::AnalysisError(crate::analysis::errors::AnalysisError::DetectionError("AST tree missing".to_string()))
             })?;
         let language = tree.language();
 
         // Query for function declarations
         let function_query = Query::new(&language, JAVASCRIPT_FUNCTION_QUERY)
-            .map_err(|e| UveddiError::AnalysisError(AnalysisError::DetectionError(e.to_string())))?;
+            .map_err(|e| UveddiError::AnalysisError(crate::analysis::errors::AnalysisError::DetectionError(e.to_string())))?;
 
         let mut cursor = QueryCursor::new();
         for mat in cursor.matches(&function_query, tree.root_node(), source) {
@@ -400,13 +400,13 @@ impl DeadCodeDetector {
             .tree
             .as_ref()
             .ok_or_else(|| {
-                UveddiError::AnalysisError(AnalysisError::DetectionError("AST tree missing".to_string()))
+                UveddiError::AnalysisError(crate::analysis::errors::AnalysisError::DetectionError("AST tree missing".to_string()))
             })?;
         let language = tree.language();
 
         // Query for function calls
         let call_query = Query::new(&language, RUST_CALL_QUERY)
-            .map_err(|e| UveddiError::AnalysisError(AnalysisError::DetectionError(e.to_string())))?;
+            .map_err(|e| UveddiError::AnalysisError(crate::analysis::errors::AnalysisError::DetectionError(e.to_string())))?;
 
         let mut cursor = QueryCursor::new();
         for mat in cursor.matches(&call_query, tree.root_node(), source) {
@@ -433,13 +433,13 @@ impl DeadCodeDetector {
             .tree
             .as_ref()
             .ok_or_else(|| {
-                UveddiError::AnalysisError(AnalysisError::DetectionError("AST tree missing".to_string()))
+                UveddiError::AnalysisError(crate::analysis::errors::AnalysisError::DetectionError("AST tree missing".to_string()))
             })?;
         let language = tree.language();
 
         // Query for function calls
         let call_query = Query::new(&language, PYTHON_CALL_QUERY)
-            .map_err(|e| UveddiError::AnalysisError(AnalysisError::DetectionError(e.to_string())))?;
+            .map_err(|e| UveddiError::AnalysisError(crate::analysis::errors::AnalysisError::DetectionError(e.to_string())))?;
 
         let mut cursor = QueryCursor::new();
         for mat in cursor.matches(&call_query, tree.root_node(), source) {
@@ -466,13 +466,13 @@ impl DeadCodeDetector {
             .tree
             .as_ref()
             .ok_or_else(|| {
-                UveddiError::AnalysisError(AnalysisError::DetectionError("AST tree missing".to_string()))
+                UveddiError::AnalysisError(crate::analysis::errors::AnalysisError::DetectionError("AST tree missing".to_string()))
             })?;
         let language = tree.language();
 
         // Query for function calls
         let call_query = Query::new(&language, JAVASCRIPT_CALL_QUERY)
-            .map_err(|e| UveddiError::AnalysisError(AnalysisError::DetectionError(e.to_string())))?;
+            .map_err(|e| UveddiError::AnalysisError(crate::analysis::errors::AnalysisError::DetectionError(e.to_string())))?;
 
         let mut cursor = QueryCursor::new();
         for mat in cursor.matches(&call_query, tree.root_node(), source) {

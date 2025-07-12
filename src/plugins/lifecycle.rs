@@ -46,13 +46,14 @@ impl PluginLifecycleManager {
         let verification_report = self
             .verifier
             .verify_plugin(&binary, &manifest, &security_policy)
-            .await?;
+            .await
+            .map_err(|e| PluginError::Verification(e))?;
 
         match verification_report.overall_status {
             crate::plugins::verification::VerificationStatus::Rejected(reason) => {
                 return Err(PluginError::Verification(
                     crate::plugins::errors::VerificationError::StaticAnalysis(reason),
-                ));
+                ).into());
             }
             crate::plugins::verification::VerificationStatus::Warning(warning) => {
                 log::warn!("Plugin {} loaded with warnings: {}", plugin_id, warning);
@@ -117,7 +118,7 @@ impl PluginLifecycleManager {
         {
             return Err(PluginError::Unsupported(
                 "WASM plugins not enabled".to_string(),
-            ));
+            ).into());
         }
     }
 

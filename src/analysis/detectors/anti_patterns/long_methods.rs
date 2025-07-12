@@ -214,12 +214,12 @@ impl LongMethodsDetector {
             let mut metrics = Vec::new();
             let source = parsed_file.source.as_bytes();
             let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-                AnalysisError::AntiPatternDetectionError("AST tree missing".to_string())
+                crate::analysis::errors::AnalysisError::AntiPatternDetectionError("AST tree missing".to_string())
             })?;
             let language = tree.language();
 
             let function_query = Query::new(&language, RUST_FUNCTION_QUERY).map_err(|e| {
-                AnalysisError::AntiPatternDetectionError(format!("Failed to create Rust function query: {}", e))
+                crate::analysis::errors::AnalysisError::AntiPatternDetectionError(format!("Failed to create Rust function query: {}", e))
             })?;
 
             let mut cursor = QueryCursor::new();
@@ -286,12 +286,12 @@ impl LongMethodsDetector {
             let mut metrics = Vec::new();
             let source = parsed_file.source.as_bytes();
             let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-                AnalysisError::AntiPatternDetectionError("AST tree missing".to_string())
+                crate::analysis::errors::AnalysisError::AntiPatternDetectionError("AST tree missing".to_string())
             })?;
             let language = tree.language();
 
             let function_query = Query::new(&language, PYTHON_FUNCTION_QUERY).map_err(|e| {
-                AnalysisError::AntiPatternDetectionError(format!("Failed to create Python function query: {}", e))
+                crate::analysis::errors::AnalysisError::AntiPatternDetectionError(format!("Failed to create Python function query: {}", e))
             })?;
 
             let mut cursor = QueryCursor::new();
@@ -359,12 +359,12 @@ impl LongMethodsDetector {
             let mut metrics = Vec::new();
             let source = parsed_file.source.as_bytes();
             let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-                AnalysisError::AntiPatternDetectionError("AST tree missing".to_string())
+                crate::analysis::errors::AnalysisError::AntiPatternDetectionError("AST tree missing".to_string())
             })?;
             let language = tree.language();
 
             let function_query = Query::new(&language, JAVASCRIPT_FUNCTION_QUERY).map_err(|e| {
-                AnalysisError::AntiPatternDetectionError(format!(
+                crate::analysis::errors::AnalysisError::AntiPatternDetectionError(format!(
                     "Failed to create JavaScript function query: {}",
                     e
                 ))
@@ -667,13 +667,13 @@ impl LongMethodsDetector {
                     // Subtract 1 for 'self' parameter if present
                     if param_count > 0 {
                         let first_param_node = cursor.node().child(0).ok_or_else(|| {
-                            AnalysisError::AntiPatternDetection(
+                            crate::analysis::errors::AnalysisError::AntiPatternDetectionError(
                                 "Missing first parameter node in Python function parameters"
                                     .to_string(),
                             )
                         })?;
                         let first_param_text = first_param_node.utf8_text(source).map_err(|e| {
-                            AnalysisError::AntiPatternDetection(format!(
+                            crate::analysis::errors::AnalysisError::AntiPatternDetectionError(format!(
                                 "Failed to extract first parameter text: {}",
                                 e
                             ))
@@ -898,7 +898,7 @@ impl AnalysisDetector for LongMethodsDetector {
         let thresholds = self
             .thresholds
             .get(&file.language)
-            .ok_or_else(|| AnalysisError::UnsupportedLanguage(format!("{:?}", file.language)))?;
+            .ok_or_else(|| crate::analysis::errors::AnalysisError::UnsupportedLanguage(format!("{:?}", file.language)))?;
 
         for metrics in method_metrics {
             let severity_score = self.calculate_severity_score(&metrics, thresholds);

@@ -82,7 +82,7 @@ impl WasmPluginDetectorAdapter {
         Ok(Self {
             plugin_id,
             manifest,
-            plugin_engine,
+            plugin_engine: plugin_engine.clone(),
             anti_pattern_types,
         })
     }

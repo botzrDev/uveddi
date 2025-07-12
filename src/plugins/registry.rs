@@ -67,21 +67,21 @@ impl PluginRegistry {
         let binary_path = plugin_dir.join("plugin.wasm");
 
         if !manifest_path.exists() {
-            return Err(RegistryError::Validation(
+            return Err(PluginError::Registry(RegistryError::Validation(
                 "Plugin manifest (plugin.toml) not found".to_string(),
-            ));
+            )).into());
         }
 
         if !binary_path.exists() {
-            return Err(RegistryError::Validation(
+            return Err(PluginError::Registry(RegistryError::Validation(
                 "Plugin binary (plugin.wasm) not found".to_string(),
-            ));
+            )).into());
         }
 
         // Load and parse manifest
         let manifest_content = async_fs::read_to_string(&manifest_path).await?;
         let manifest: PluginManifest = toml::from_str(&manifest_content)
-            .map_err(|e| RegistryError::ManifestParse(e.to_string()))?;
+            .map_err(|e| PluginError::Registry(RegistryError::ManifestParse(e.to_string())))?;
 
         // Create plugin metadata
         let plugin_id = PluginId::from_name(&manifest.name);
@@ -110,10 +110,10 @@ impl PluginRegistry {
 
         // Check if plugin already exists
         if self.plugins.contains_key(&plugin_id) {
-            return Err(RegistryError::Validation(format!(
+            return Err(PluginError::Registry(RegistryError::Validation(format!(
                 "Plugin '{}' already exists",
                 manifest.name
-            )));
+            ))).into());
         }
 
         // Create plugin directory
@@ -123,7 +123,7 @@ impl PluginRegistry {
         // Write manifest file
         let manifest_path = plugin_dir.join("plugin.toml");
         let manifest_content = toml::to_string_pretty(&manifest)
-            .map_err(|e| RegistryError::ManifestParse(e.to_string()))?;
+            .map_err(|e| PluginError::Registry(RegistryError::ManifestParse(e.to_string())))?;
         async_fs::write(&manifest_path, manifest_content).await?;
 
         // Write binary file
@@ -154,7 +154,7 @@ impl PluginRegistry {
         let metadata = self
             .plugins
             .remove(plugin_id)
-            .ok_or_else(|| RegistryError::Validation(format!("Plugin {} not found", plugin_id)))?;
+            .ok_or_else(|| PluginError::Registry(RegistryError::Validation(format!("Plugin {} not found", plugin_id))))?;
 
         // Remove plugin directory
         let plugin_dir = metadata.binary_path.parent().unwrap();
@@ -183,7 +183,7 @@ impl PluginRegistry {
         let metadata = self
             .plugins
             .get(plugin_id)
-            .ok_or_else(|| RegistryError::Validation(format!("Plugin {} not found", plugin_id)))?;
+            .ok_or_else(|| PluginError::Registry(RegistryError::Validation(format!("Plugin {} not found", plugin_id))))?;
 
         let binary = async_fs::read(&metadata.binary_path).await?;
         Ok(binary)
