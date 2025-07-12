@@ -152,10 +152,8 @@ impl AnalysisOrchestrator {
 
         // Validate input path
         if !config.target_path.exists() {
-            return Err(UveddiError::PathNotFound(
-                config.target_path.display().to_string(),
-            ))
-            .context("Input path validation failed")?;
+            return Err(UveddiError::PathError(config.target_path.clone()))
+                .context("Input path validation failed")?;
         }
 
         info!("Starting analysis of: {}", config.target_path.display());
@@ -274,14 +272,14 @@ impl AnalysisOrchestrator {
             "json" => {
                 let report = report_generator
                     .generate_json_report(analysis_run, issues, &HashMap::new(), None)
-                    .map_err(|e| crate::error::UveddiError::ReportGeneration(e))?;
+                    .map_err(|e| crate::error::UveddiError::ReportError(e))?;
                 Ok(report.to_string())
             }
             "markdown" => report_generator
                 .generate_markdown_report(analysis_run, issues, &HashMap::new(), None)
-                .map_err(|e| crate::error::UveddiError::ReportGeneration(e)),
-            _ => Err(UveddiError::UnsupportedOutputFormat(
-                config.output_format.clone(),
+                .map_err(|e| crate::error::UveddiError::ReportError(e)),
+            _ => Err(UveddiError::ConfigError(format!(
+                "Unsupported output format specified: {}", config.output_format)
             ))
             .context("Unsupported output format specified")?,
         }
@@ -299,7 +297,7 @@ impl AnalysisOrchestrator {
 
             if let Some(confidence) = config.dead_code_confidence {
                 if confidence < 0.0 || confidence > 1.0 {
-                    return Err(UveddiError::Configuration(
+                    return Err(UveddiError::ConfigError(
                         "Dead code confidence threshold must be between 0.0 and 1.0".to_string(),
                     ));
                 }
@@ -383,7 +381,7 @@ impl AnalysisOrchestrator {
 
             if let Some(max_lcom) = config.large_classes_max_lcom {
                 if max_lcom < 0.0 || max_lcom > 1.0 {
-                    return Err(UveddiError::Configuration(
+                    return Err(UveddiError::ConfigError(
                         "Large classes LCOM score must be between 0.0 and 1.0".to_string(),
                     ));
                 }
@@ -453,13 +451,13 @@ pub fn run_app() -> Result<(), UveddiError> {
             info!("Executing analyze command...");
             tokio::runtime::Runtime::new()?
                 .block_on(command.execute())
-                .map_err(|e| UveddiError::Analysis(e.to_string()))
+                .map_err(|e| UveddiError::AnalysisError(e))
         }
         Commands::Config(command) => {
             info!("Executing config command...");
             command
                 .execute()
-                .map_err(|e| UveddiError::Configuration(e.to_string()))
+                .map_err(|e| UveddiError::ConfigError(e.to_string()))
         }
     };
     if let Err(e) = result {

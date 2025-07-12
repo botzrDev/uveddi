@@ -214,12 +214,12 @@ impl LongMethodsDetector {
             let mut metrics = Vec::new();
             let source = parsed_file.source.as_bytes();
             let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-                AnalysisError::AntiPatternDetection("AST tree missing".to_string())
+                AnalysisError::AntiPatternDetectionError("AST tree missing".to_string())
             })?;
             let language = tree.language();
 
             let function_query = Query::new(&language, RUST_FUNCTION_QUERY).map_err(|e| {
-                AnalysisError::QueryError(format!("Failed to create Rust function query: {}", e))
+                AnalysisError::DependencyExtractionError(format!("Failed to create Rust function query: {}", e))
             })?;
 
             let mut cursor = QueryCursor::new();
@@ -286,12 +286,12 @@ impl LongMethodsDetector {
             let mut metrics = Vec::new();
             let source = parsed_file.source.as_bytes();
             let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-                AnalysisError::AntiPatternDetection("AST tree missing".to_string())
+                AnalysisError::AntiPatternDetectionError("AST tree missing".to_string())
             })?;
             let language = tree.language();
 
             let function_query = Query::new(&language, PYTHON_FUNCTION_QUERY).map_err(|e| {
-                AnalysisError::QueryError(format!("Failed to create Python function query: {}", e))
+                AnalysisError::DependencyExtractionError(format!("Failed to create Python function query: {}", e))
             })?;
 
             let mut cursor = QueryCursor::new();
@@ -359,12 +359,12 @@ impl LongMethodsDetector {
             let mut metrics = Vec::new();
             let source = parsed_file.source.as_bytes();
             let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-                AnalysisError::AntiPatternDetection("AST tree missing".to_string())
+                AnalysisError::AntiPatternDetectionError("AST tree missing".to_string())
             })?;
             let language = tree.language();
 
             let function_query = Query::new(&language, JAVASCRIPT_FUNCTION_QUERY).map_err(|e| {
-                AnalysisError::QueryError(format!(
+                AnalysisError::DependencyExtractionError(format!(
                     "Failed to create JavaScript function query: {}",
                     e
                 ))

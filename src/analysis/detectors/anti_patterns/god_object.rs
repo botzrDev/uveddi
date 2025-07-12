@@ -308,7 +308,7 @@ impl GodObjectDetector {
         let tree = parsed_file
             .tree
             .as_ref()
-            .ok_or_else(|| AnalysisError::AntiPatternDetection("AST tree missing".to_string()))?;
+            .ok_or_else(|| AnalysisError::AntiPatternDetectionError("AST tree missing".to_string()))?;
         let language = tree.language();
 
         let container_query = Query::new(&language, container_query_str)
@@ -375,7 +375,7 @@ impl GodObjectDetector {
         let tree = parsed_file
             .tree
             .as_ref()
-            .ok_or_else(|| AnalysisError::AntiPatternDetection("AST tree missing".to_string()))?;
+            .ok_or_else(|| AnalysisError::AntiPatternDetectionError("AST tree missing".to_string()))?;
         let language = tree.language();
         let root_node = tree.root_node();
 

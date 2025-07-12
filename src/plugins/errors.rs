@@ -138,12 +138,6 @@ pub enum RegistryError {
     Io(#[from] std::io::Error),
 }
 
-impl From<PluginError> for crate::error::UveddiError {
-    fn from(err: PluginError) -> Self {
-        crate::error::UveddiError::PluginError(err.to_string())
-    }
-}
-
 // Helper macros for error creation
 #[macro_export]
 macro_rules! plugin_error {

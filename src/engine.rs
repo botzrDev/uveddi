@@ -1,7 +1,7 @@
 //! Engine module for Uveddi
 //!
-//! This module is intended to provide the main orchestration logic for codebase analysis.
-//! (Currently a stub. Implement analysis engine logic here.)
+//! This module provides the main orchestration logic for codebase analysis.
+//! Currently delegated to AnalysisEngine in the analysis module.
 
-
-let _codebase_path = /* existing code */;
+// Re-export the main analysis engine
+pub use crate::analysis::AnalysisEngine as Engine;

@@ -101,6 +101,7 @@
 use crate::analysis::mermaid_generator::{MermaidGenerationError, MermaidGenerator};
 use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
 use crate::models::visualization::{ArchitecturalComponent, DiagramMetadata, DiagramType};
+pub mod errors;
 
 #[cfg(feature = "image-rendering")]
 pub mod image_renderer;

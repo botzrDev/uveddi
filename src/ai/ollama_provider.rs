@@ -393,7 +393,7 @@ impl LlmProvider for OllamaProvider {
         let response = self
             .infer(prompt)
             .await
-            .map_err(|e| UveddiError::Other(e.to_string()))?;
+            .map_err(|e| UveddiError::GenericError(anyhow::anyhow!(e)))?;
         Ok(response)
     }
 

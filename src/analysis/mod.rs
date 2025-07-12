@@ -58,6 +58,7 @@ pub mod graph;
 pub mod mermaid_generator;
 pub mod symbols;
 pub mod types;
+pub mod errors;
 
 #[cfg(test)]
 pub mod tests;

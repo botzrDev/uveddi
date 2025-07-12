@@ -1,16 +1,16 @@
 use std::path::PathBuf;
-
 use crate::{
-    analysis::errors::AnalysisError,
     ast::tree_sitter_impl::AstError,
     plugins::errors::PluginError,
+    analysis::errors::AnalysisError,
     report::errors::ReportGenerationError,
-    resilience::rendering_service::RenderingServiceError,
 };
 use clap::error::Error as ClapError;
 use reqwest::Error as ReqwestError;
 use rusqlite::Error as RusqliteError;
 use thiserror::Error;
+use serde::{Serialize, Deserialize};
+use crate::error::rendering::RenderingServiceError;
 
 #[derive(Error, Debug)]
 pub enum ExtractionError {
@@ -24,34 +24,65 @@ pub enum ExtractionError {
 
 #[derive(Error, Debug)]
 pub enum UveddiError {
+    // === Core Analysis Errors ===
     #[error("Analysis error: {0}")]
     AnalysisError(#[from] AnalysisError),
     #[error("Extraction error: {0}")]
     ExtractionError(#[from] ExtractionError),
+    // === Service & Infrastructure Errors ===
     #[error("Rendering service error: {0}")]
     RenderingServiceError(#[from] RenderingServiceError),
     #[error("Database error: {0}")]
     DatabaseError(#[from] RusqliteError),
-    #[error("Configuration error: {0}")]
-    ConfigError(String),
-    #[error("Report generation error: {0}")]
-    ReportError(#[from] ReportGenerationError),
     #[error("Plugin error: {0}")]
     PluginError(#[from] PluginError),
+    // === External System Errors ===
     #[error("Network error: {0}")]
     NetworkError(#[from] ReqwestError),
+    #[error("Report generation error: {0}")]
+    ReportError(#[from] ReportGenerationError),
+    // === System Errors ===
+    #[error("Configuration error: {0}")]
+    ConfigError(String),
     #[error("Command line error: {0}")]
     CliError(#[from] ClapError),
-    #[error("Generic error: {0}")]
-    GenericError(#[from] anyhow::Error),
     #[error("IO error: {0}")]
     IoError(#[from] std::io::Error),
     #[error("Serialization error: {0}")]
     SerializationError(#[from] serde_json::Error),
     #[error("Path error: {0}")]
     PathError(PathBuf),
+    #[error("Generic error: {0}")]
+    GenericError(#[from] anyhow::Error),
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum ErrorCategory {
+    Analysis,
+    Extraction,
+    Rendering,
+    Database,
+    Plugin,
+    Network,
+    Reporting,
+    Configuration,
+    Cli,
+    Io,
+    Serialization,
+    Path,
+    ServiceCommunication,
+    ResourceExhaustion,
+    ServiceSpecific,
+    Generic,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum ErrorSeverity {
+    Low,
+    Medium,
+    High,
+    Critical,
+}
 
 impl UveddiError {
     pub fn severity(&self) -> ErrorSeverity {
@@ -66,7 +97,6 @@ impl UveddiError {
             _ => ErrorSeverity::Low,
         }
     }
-
     pub fn category(&self) -> ErrorCategory {
         match self {
             UveddiError::AnalysisError(_) => ErrorCategory::Analysis,
@@ -84,31 +114,6 @@ impl UveddiError {
             UveddiError::GenericError(_) => ErrorCategory::Generic,
         }
     }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ErrorSeverity {
-    Low,
-    Medium,
-    High,
-    Critical,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ErrorCategory {
-    Analysis,
-    Extraction,
-    Database,
-    Configuration,
-    Reporting,
-    Plugin,
-    Network,
-    Cli,
-    Io,
-    Serialization,
-    Path,
-    Rendering,
-    Generic,
 }
 
 pub trait ErrorHandler {
