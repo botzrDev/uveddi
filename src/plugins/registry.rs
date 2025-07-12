@@ -23,7 +23,7 @@ pub struct PluginRegistry {
 
 impl PluginRegistry {
     /// Create a new plugin registry
-    pub async fn new<P: AsRef<Path>>(registry_path: P) -> Result<Self, RegistryError> {
+    pub async fn new<P: AsRef<Path>>(registry_path: P) -> crate::error::Result<Self> {
         let registry_path = registry_path.as_ref().to_path_buf();
 
         // Ensure registry directory exists
@@ -44,7 +44,7 @@ impl PluginRegistry {
     }
 
     /// Discover plugins in the registry directory
-    pub async fn discover_plugins(&mut self) -> Result<(), RegistryError> {
+    pub async fn discover_plugins(&mut self) -> crate::error::Result<()> {
         let mut entries = async_fs::read_dir(&self.registry_path).await?;
 
         while let Some(entry) = entries.next_entry().await? {
@@ -62,7 +62,7 @@ impl PluginRegistry {
     }
 
     /// Load a plugin from a directory
-    async fn load_plugin_from_directory(&mut self, plugin_dir: &Path) -> Result<(), RegistryError> {
+    async fn load_plugin_from_directory(&mut self, plugin_dir: &Path) -> crate::error::Result<()> {
         let manifest_path = plugin_dir.join("plugin.toml");
         let binary_path = plugin_dir.join("plugin.wasm");
 
@@ -105,7 +105,7 @@ impl PluginRegistry {
         &mut self,
         manifest: PluginManifest,
         binary: Vec<u8>,
-    ) -> Result<PluginId, RegistryError> {
+    ) -> crate::error::Result<PluginId> {
         let plugin_id = PluginId::from_name(&manifest.name);
 
         // Check if plugin already exists
@@ -150,7 +150,7 @@ impl PluginRegistry {
     }
 
     /// Unregister a plugin
-    pub async fn unregister_plugin(&mut self, plugin_id: &PluginId) -> Result<(), RegistryError> {
+    pub async fn unregister_plugin(&mut self, plugin_id: &PluginId) -> crate::error::Result<()> {
         let metadata = self
             .plugins
             .remove(plugin_id)
@@ -179,7 +179,7 @@ impl PluginRegistry {
     }
 
     /// Load plugin binary
-    pub async fn load_plugin_binary(&self, plugin_id: &PluginId) -> Result<Vec<u8>, RegistryError> {
+    pub async fn load_plugin_binary(&self, plugin_id: &PluginId) -> crate::error::Result<Vec<u8>> {
         let metadata = self
             .plugins
             .get(plugin_id)

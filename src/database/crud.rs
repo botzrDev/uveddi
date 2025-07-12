@@ -1,7 +1,8 @@
 use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
-use crate::security::{self, SecurityError};
+use crate::security;
+use crate::error::Result;
 use chrono::Utc;
-use rusqlite::{Connection, Result};
+use rusqlite::Connection;
 use std::path::Path;
 
 pub struct Database {
@@ -18,11 +19,11 @@ impl Database {
     /// # Returns
     ///
     /// * `Ok(Database)` - The initialized database instance.
-    /// * `Err(rusqlite::Error)` - If the database cannot be opened or initialized.
+    /// * `Err(UveddiError)` - If the database cannot be opened or initialized.
     pub fn new(db_path: Option<&Path>) -> Result<Self> {
         let conn = match db_path {
-            Some(path) => Connection::open(path)?,
-            None => Connection::open_in_memory()?,
+            Some(path) => Connection::open(path).map_err(crate::error::UveddiError::from)?,
+            None => Connection::open_in_memory().map_err(crate::error::UveddiError::from)?,
         };
         conn.execute_batch("
             CREATE TABLE IF NOT EXISTS analysis_runs (
@@ -59,7 +60,7 @@ impl Database {
                 project_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 path TEXT NOT NULL UNIQUE
             );
-        ")?;
+        ").map_err(crate::error::UveddiError::from)?;
         Ok(Self { conn })
     }
 
@@ -72,7 +73,7 @@ impl Database {
     /// # Returns
     ///
     /// * `Ok(i64)` - The project ID.
-    /// * `Err(rusqlite::Error)` - If the query or insert fails.
+    /// * `Err(UveddiError)` - If the query or insert fails.
     pub fn get_or_create_project_id(&self, project_path: &Path) -> Result<i64> {
         let path_str = project_path.to_string_lossy().to_string();
         let mut stmt = self
@@ -98,7 +99,7 @@ impl Database {
     /// # Returns
     ///
     /// * `Ok(AnalysisRun)` - The created analysis run record.
-    /// * `Err(rusqlite::Error)` - If the insert fails.
+    /// * `Err(UveddiError)` - If the insert fails.
     pub fn create_analysis_run(&self, project_path: &Path) -> Result<AnalysisRun> {
         let project_id = self.get_or_create_project_id(project_path)?;
         let analysis_run = AnalysisRun {
@@ -138,7 +139,7 @@ impl Database {
     /// # Returns
     ///
     /// * `Ok(())` - If the update succeeds.
-    /// * `Err(rusqlite::Error)` - If the update fails.
+    /// * `Err(UveddiError)` - If the update fails.
     pub fn update_analysis_run(&self, run: &AnalysisRun) -> Result<()> {
         self.conn.execute(
             "UPDATE analysis_runs SET end_time = ?, status = ?, total_files_analyzed = ?, total_issues_found = ? WHERE run_id = ?",
@@ -162,11 +163,11 @@ impl Database {
     /// # Returns
     ///
     /// * `Ok(())` - If the operation succeeds.
-    /// * `Err(rusqlite::Error)` - If the insert or query fails.
+    /// * `Err(UveddiError)` - If the insert or query fails.
     pub fn store_anti_pattern_type(&self, anti_pattern_type: &mut AntiPatternType) -> Result<()> {
         // Validate and sanitize description
         anti_pattern_type.description = security::sanitize_description(&anti_pattern_type.description)
-            .map_err(|e| rusqlite::Error::InvalidColumnType(0, "description".to_string(), rusqlite::types::Type::Text))?;
+            .map_err(|_| crate::error::UveddiError::ConfigError("Invalid description format".to_string()))?;
         self.conn.execute(
             "INSERT OR IGNORE INTO anti_pattern_types (name, description, category) VALUES (?, ?, ?)",
             rusqlite::params![
@@ -194,18 +195,18 @@ impl Database {
     /// # Returns
     ///
     /// * `Ok(())` - If all issues are stored successfully.
-    /// * `Err(rusqlite::Error)` - If any insert fails.
+    /// * `Err(UveddiError)` - If any insert fails.
     pub fn store_issues(&mut self, issues: &[ArchitecturalIssue]) -> Result<()> {
         let tx = self.conn.transaction()?;
         for issue in issues {
             // Validate and sanitize description
             let sanitized_description = security::sanitize_description(&issue.description)
-                .map_err(|e| rusqlite::Error::InvalidColumnType(0, "description".to_string(), rusqlite::types::Type::Text))?;
+                .map_err(|_| crate::error::UveddiError::ConfigError("Invalid description format".to_string()))?;
             
             // Validate and sanitize AI explanation if present
             let sanitized_ai_explanation = if let Some(ref explanation) = issue.ai_explanation {
                 Some(security::sanitize_description(explanation)
-                    .map_err(|e| rusqlite::Error::InvalidColumnType(0, "ai_explanation".to_string(), rusqlite::types::Type::Text))?)
+                    .map_err(|_| crate::error::UveddiError::ConfigError("Invalid AI explanation format".to_string()))?)
             } else {
                 None
             };
@@ -224,7 +225,7 @@ impl Database {
                 ],
             )?;
         }
-        tx.commit()
+        tx.commit().map_err(crate::error::UveddiError::from)
     }
 
     /// Stores multiple anti-pattern types in a batch operation.
@@ -236,7 +237,7 @@ impl Database {
     /// # Returns
     ///
     /// * `Ok(())` - If all types are stored successfully.
-    /// * `Err(rusqlite::Error)` - If any insert or query fails.
+    /// * `Err(UveddiError)` - If any insert or query fails.
     pub fn store_anti_pattern_types_batch(
         &mut self,
         anti_pattern_types: &mut [AntiPatternType],
@@ -249,7 +250,7 @@ impl Database {
             for anti_pattern_type in anti_pattern_types.iter_mut() {
                 // Validate and sanitize description
                 anti_pattern_type.description = security::sanitize_description(&anti_pattern_type.description)
-                    .map_err(|e| rusqlite::Error::InvalidColumnType(0, "description".to_string(), rusqlite::types::Type::Text))?;
+                    .map_err(|_| crate::error::UveddiError::ConfigError("Invalid description format".to_string()))?;
                 
                 stmt.execute(rusqlite::params![
                     anti_pattern_type.name,

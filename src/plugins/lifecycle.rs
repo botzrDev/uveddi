@@ -39,7 +39,7 @@ impl PluginLifecycleManager {
         manifest: PluginManifest,
         binary: Vec<u8>,
         security_policy: SecurityPolicy,
-    ) -> Result<(), PluginError> {
+    ) -> crate::error::Result<()> {
         log::info!("Loading plugin: {}", plugin_id);
 
         // 1. Verify the plugin
@@ -122,7 +122,7 @@ impl PluginLifecycleManager {
     }
 
     /// Unload a plugin and cleanup resources
-    pub async fn unload_plugin(&mut self, plugin_id: &PluginId) -> Result<(), PluginError> {
+    pub async fn unload_plugin(&mut self, plugin_id: &PluginId) -> crate::error::Result<()> {
         log::info!("Unloading plugin: {}", plugin_id);
 
         let mut active_plugins = self.active_plugins.write().await;
@@ -163,7 +163,7 @@ impl PluginLifecycleManager {
     }
 
     /// Monitor resource usage of all active plugins
-    pub async fn monitor_resources(&mut self) -> Result<ResourceReport, PluginError> {
+    pub async fn monitor_resources(&mut self) -> crate::error::Result<ResourceReport> {
         let active_plugins = self.active_plugins.read().await;
         let mut report = ResourceReport::new();
 
@@ -182,7 +182,7 @@ impl PluginLifecycleManager {
     fn add_host_functions(
         &self,
         linker: &mut wasmtime::component::Linker<(HostState, wasmtime_wasi::WasiCtx)>,
-    ) -> Result<(), PluginError> {
+    ) -> crate::error::Result<()> {
         // Add logging function
         linker.func_wrap(
             "logging",
@@ -273,7 +273,7 @@ impl ActivePlugin {
     }
 
     /// Call plugin cleanup function
-    pub async fn cleanup(&mut self) -> Result<(), PluginError> {
+    pub async fn cleanup(&mut self) -> crate::error::Result<()> {
         #[cfg(feature = "wasm-plugins")]
         {
             // Call the cleanup function if it exists
@@ -316,7 +316,7 @@ impl ResourceMonitor {
     pub async fn monitor_plugin(
         &self,
         plugin: &ActivePlugin,
-    ) -> Result<PluginResourceReport, PluginError> {
+    ) -> crate::error::Result<PluginResourceReport> {
         let mut report = PluginResourceReport {
             plugin_id: plugin.id.clone(),
             memory_usage: 0,

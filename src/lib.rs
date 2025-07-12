@@ -62,3 +62,6 @@ pub mod report;
 pub mod resilience;
 pub mod security;
 pub mod semantic_search;
+
+// Re-export the unified Result type for convenience
+pub use error::Result;

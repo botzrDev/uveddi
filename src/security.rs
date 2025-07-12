@@ -127,7 +127,7 @@ pub const MAX_DESCRIPTION_LENGTH: usize = 10 * 1024;
 /// * `Result<PathBuf, SecurityError>` - Canonicalized safe path or error
 ///
 /// # UV-151
-pub fn validate_analysis_path(path: &str) -> Result<PathBuf, SecurityError> {
+pub fn validate_analysis_path(path: &str) -> crate::error::Result<PathBuf> {
     let path_buf = PathBuf::from(path);
     
     // Check for directory traversal attempts
@@ -141,7 +141,7 @@ pub fn validate_analysis_path(path: &str) -> Result<PathBuf, SecurityError> {
                 if name_str.starts_with('.') && name_str.len() > 1 {
                     // Allow .rs, .py, etc. but block hidden files like .env
                     if !name_str.contains('.') || name_str.starts_with("..") {
-                        return Err(SecurityError::PathTraversal(path.to_string()));
+                        return Err(crate::error::UveddiError::SecurityError(SecurityError::PathTraversal(path.to_string())));
                     }
                 }
             }
@@ -190,7 +190,7 @@ pub fn sanitize_api_key(key: &str) -> String {
 ///
 /// # Returns
 /// * `Result<(), SecurityError>` - Ok if size is valid, error otherwise
-pub fn validate_file_size(path: &Path) -> Result<(), SecurityError> {
+pub fn validate_file_size(path: &Path) -> crate::error::Result<()> {
     match std::fs::metadata(path) {
         Ok(metadata) => {
             let size = metadata.len();
@@ -214,7 +214,7 @@ pub fn validate_file_size(path: &Path) -> Result<(), SecurityError> {
 ///
 /// # Returns
 /// * `Result<(), SecurityError>` - Ok if type is allowed, error otherwise
-pub fn validate_file_type(path: &Path) -> Result<(), SecurityError> {
+pub fn validate_file_type(path: &Path) -> crate::error::Result<()> {
     const ALLOWED_EXTENSIONS: &[&str] = &[
         "rs", "py", "js", "ts", "jsx", "tsx", "java", "cpp", "c", "h", "hpp",
         "go", "rb", "php", "swift", "kt", "scala", "clj", "hs", "ml", "fs",
@@ -242,7 +242,7 @@ pub fn validate_file_type(path: &Path) -> Result<(), SecurityError> {
 ///
 /// # Returns
 /// * `Result<String, SecurityError>` - Sanitized prompt or error
-pub fn sanitize_prompt(prompt: &str) -> Result<String, SecurityError> {
+pub fn sanitize_prompt(prompt: &str) -> crate::error::Result<String> {
     if prompt.len() > MAX_PROMPT_LENGTH {
         return Err(SecurityError::InputTooLong {
             length: prompt.len(),
@@ -271,7 +271,7 @@ pub fn sanitize_prompt(prompt: &str) -> Result<String, SecurityError> {
 ///
 /// # Returns
 /// * `Result<url::Url, SecurityError>` - Parsed URL or error
-pub fn validate_api_url(url: &str) -> Result<url::Url, SecurityError> {
+pub fn validate_api_url(url: &str) -> crate::error::Result<url::Url> {
     use url::Url;
     
     let parsed_url = Url::parse(url)
@@ -291,7 +291,7 @@ pub fn validate_api_url(url: &str) -> Result<url::Url, SecurityError> {
 ///
 /// # Returns
 /// * `Result<(), SecurityError>` - Ok if valid, error otherwise
-pub fn validate_model_name(model: &str) -> Result<(), SecurityError> {
+pub fn validate_model_name(model: &str) -> crate::error::Result<()> {
     // Model names should be alphanumeric with hyphens, colons, and dots
     if model.is_empty() || model.len() > 100 {
         return Err(SecurityError::InvalidModelName("Model name length invalid".to_string()));
@@ -316,7 +316,7 @@ pub fn validate_model_name(model: &str) -> Result<(), SecurityError> {
 /// # Returns
 /// * `Result<String, SecurityError>` - Sanitized description or error
 
-pub fn sanitize_description(description: &str) -> Result<String, SecurityError> {
+pub fn sanitize_description(description: &str) -> crate::error::Result<String> {
     if description.len() > MAX_DESCRIPTION_LENGTH {
         return Err(SecurityError::DescriptionTooLong {
             length: description.len(),
@@ -351,7 +351,7 @@ pub fn sanitize_description(description: &str) -> Result<String, SecurityError> 
 ///
 /// # Returns
 /// * `Result<(), SecurityError>` - Ok if within limits, error otherwise
-pub fn validate_directory_depth(depth: usize) -> Result<(), SecurityError> {
+pub fn validate_directory_depth(depth: usize) -> crate::error::Result<()> {
     if depth > MAX_DIRECTORY_DEPTH {
         Err(SecurityError::DirectoryDepthExceeded {
             depth,
@@ -369,7 +369,7 @@ pub fn validate_directory_depth(depth: usize) -> Result<(), SecurityError> {
 ///
 /// # Returns
 /// * `Result<(), SecurityError>` - Ok if within limits, error otherwise
-pub fn validate_file_count(count: usize) -> Result<(), SecurityError> {
+pub fn validate_file_count(count: usize) -> crate::error::Result<()> {
     if count > MAX_FILES_PER_ANALYSIS {
         Err(SecurityError::TooManyFiles {
             count,
@@ -388,7 +388,7 @@ pub fn validate_file_count(count: usize) -> Result<(), SecurityError> {
 ///
 /// # Returns
 /// * `Result<(), SecurityError>` - Ok if within bounds, error otherwise
-pub fn validate_path_within_bounds(path: &Path, allowed_root: &Path) -> Result<(), SecurityError> {
+pub fn validate_path_within_bounds(path: &Path, allowed_root: &Path) -> crate::error::Result<()> {
     let canonical_path = path.canonicalize()
         .map_err(|_| SecurityError::InvalidPath(path.to_string_lossy().to_string()))?;
     
@@ -419,7 +419,7 @@ pub fn validate_path_within_bounds(path: &Path, allowed_root: &Path) -> Result<(
 /// ```rust
 /// let safe_path = sanitize_path("src/main.rs", "src").unwrap();
 /// ```
-pub fn sanitize_path<P: AsRef<Path>>(input_path: P, base_dir: P) -> Result<PathBuf, SecurityError> {
+pub fn sanitize_path<P: AsRef<Path>>(input_path: P, base_dir: P) -> crate::error::Result<PathBuf> {
     // Canonicalize the base directory
     let base = base_dir.as_ref().canonicalize()
         .map_err(|_| SecurityError::InvalidBasePath)?;

@@ -82,8 +82,14 @@ impl AstParser {
     /// Get cache statistics for monitoring (UV-152)
     pub fn get_cache_stats(&self) -> CacheStats {
         let cache = self.cache.lock().unwrap();
-        let hits = *self.cache_hits.lock().unwrap();
-        let misses = *self.cache_misses.lock().unwrap();
+        let hits = *self.cache_hits.lock().unwrap_or_else(|_| {
+            tracing::warn!("Cache hits lock poisoned, returning 0");
+            std::sync::Arc::new(std::sync::Mutex::new(0)).lock().unwrap()
+        });
+        let misses = *self.cache_misses.lock().unwrap_or_else(|_| {
+            tracing::warn!("Cache misses lock poisoned, returning 0");
+            std::sync::Arc::new(std::sync::Mutex::new(0)).lock().unwrap()
+        });
         let total_requests = hits + misses;
         let hit_rate = if total_requests > 0 {
             hits as f64 / total_requests as f64

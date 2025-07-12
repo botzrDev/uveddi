@@ -3,6 +3,11 @@
 use thiserror::Error;
 
 /// Result type for plugin operations
+/// 
+/// **DEPRECATED**: Use `crate::error::Result<T>` instead for consistency.
+/// This type alias is maintained for backward compatibility but will be removed
+/// in a future version. All new code should use the unified Result type.
+#[deprecated(since = "0.1.0", note = "Use crate::error::Result<T> instead")]
 pub type PluginResult<T> = Result<T, PluginError>;
 
 /// Comprehensive error types for the plugin system

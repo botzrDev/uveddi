@@ -25,7 +25,7 @@ pub struct WasmPluginEngine {
 impl WasmPluginEngine {
     /// Create a new WASM plugin engine
     /// Placeholder documentation for public items
-    pub async fn new() -> Result<Self, PluginError> {
+    pub async fn new() -> crate::error::Result<Self> {
         #[cfg(not(feature = "wasm-plugins"))]
         {
             return Err(PluginError::Unsupported(
@@ -55,7 +55,7 @@ impl WasmPluginEngine {
     pub async fn with_config(
         plugins_dir: &Path,
         security_policy: SecurityPolicy,
-    ) -> Result<Self, PluginError> {
+    ) -> crate::error::Result<Self> {
         #[cfg(not(feature = "wasm-plugins"))]
         {
             return Err(PluginError::Unsupported(
@@ -80,7 +80,7 @@ impl WasmPluginEngine {
 
     /// Load a plugin from the registry
     /// Placeholder documentation for public items
-    pub async fn load_plugin(&mut self, plugin_id: &PluginId) -> Result<(), PluginError> {
+    pub async fn load_plugin(&mut self, plugin_id: &PluginId) -> crate::error::Result<()> {
         if !self.enabled {
             return Err(PluginError::Unsupported(
                 "Plugin engine is disabled".to_string(),
@@ -131,7 +131,7 @@ impl WasmPluginEngine {
 
     /// Unload a plugin
     /// Placeholder documentation for public items
-    pub async fn unload_plugin(&mut self, plugin_id: &PluginId) -> Result<(), PluginError> {
+    pub async fn unload_plugin(&mut self, plugin_id: &PluginId) -> crate::error::Result<()> {
         log::info!("Unloading plugin: {}", plugin_id);
 
         // Remove adapter
@@ -146,7 +146,7 @@ impl WasmPluginEngine {
 
     /// Load all plugins from the registry
     /// Placeholder documentation for public items
-    pub async fn load_all_plugins(&mut self) -> Result<Vec<PluginId>, PluginError> {
+    pub async fn load_all_plugins(&mut self) -> crate::error::Result<Vec<PluginId>> {
         let mut loaded_plugins = Vec::new();
         let plugin_ids = self.registry.list_plugins();
 
@@ -173,7 +173,7 @@ impl WasmPluginEngine {
         &mut self,
         manifest: PluginManifest,
         binary: Vec<u8>,
-    ) -> Result<PluginId, PluginError> {
+    ) -> crate::error::Result<PluginId> {
         log::info!("Installing plugin: {}", manifest.name);
 
         // Register in the registry
@@ -192,7 +192,7 @@ impl WasmPluginEngine {
 
     /// Uninstall a plugin
     /// Placeholder documentation for public items
-    pub async fn uninstall_plugin(&mut self, plugin_id: &PluginId) -> Result<(), PluginError> {
+    pub async fn uninstall_plugin(&mut self, plugin_id: &PluginId) -> crate::error::Result<()> {
         log::info!("Uninstalling plugin: {}", plugin_id);
 
         // Unload if loaded
@@ -247,7 +247,7 @@ impl WasmPluginEngine {
 
     /// Monitor resource usage of all plugins
     /// Placeholder documentation for public items
-    pub async fn monitor_resources(&mut self) -> Result<ResourceReport, PluginError> {
+    pub async fn monitor_resources(&mut self) -> crate::error::Result<ResourceReport> {
         self.lifecycle_manager.monitor_resources().await
     }
 

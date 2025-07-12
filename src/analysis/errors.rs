@@ -14,6 +14,8 @@ pub enum AnalysisError {
     MetricCalculationError(String),
     #[error("Anti-pattern detection error: {0}")]
     AntiPatternDetectionError(String),
+    #[error("Detection error: {0}")]
+    DetectionError(String),
     #[error("Component extraction error: {0}")]
     ComponentExtractionError(#[from] ComponentExtractionError),
     #[error("Mermaid generation error: {0}")]

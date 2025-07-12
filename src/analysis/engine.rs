@@ -80,13 +80,13 @@ impl AnalysisEngine {
     /// - Cache database cannot be created
     /// - AST parser initialization fails
     /// - Dependency extractor setup fails
-    pub fn new() -> Result<Self, crate::error::UveddiError> {
+    pub fn new() -> crate::error::Result<Self> {
         let cache_path = PathBuf::from("uveddi_cache.db");
         Self::with_cache_path(&cache_path)
     }
 
     /// Creates a new analysis engine with WASM plugin support enabled
-    pub async fn new_with_plugins() -> Result<Self, crate::error::UveddiError> {
+    pub async fn new_with_plugins() -> crate::error::Result<Self> {
         let cache_path = PathBuf::from("uveddi_cache.db");
         Self::with_cache_path_and_plugins(&cache_path).await
     }
@@ -105,7 +105,7 @@ impl AnalysisEngine {
     /// - Cache database cannot be created
     /// - AST parser initialization fails
     /// - Dependency extractor setup fails
-    pub fn with_cache_path(cache_path: &Path) -> Result<Self, crate::error::UveddiError> {
+    pub fn with_cache_path(cache_path: &Path) -> crate::error::Result<Self> {
         Ok(Self {
             ast_parser: AstParser::new()?,
             dependency_extractor: DependencyExtractor::new()?,
@@ -128,7 +128,7 @@ impl AnalysisEngine {
     /// Creates a new analysis engine with WASM plugin support and custom cache path
     pub async fn with_cache_path_and_plugins(
         cache_path: &Path,
-    ) -> Result<Self, crate::error::UveddiError> {
+    ) -> crate::error::Result<Self> {
         // Initialize plugin engine
         let plugin_engine = match WasmPluginEngine::new().await {
             Ok(engine) => {
@@ -174,7 +174,7 @@ impl AnalysisEngine {
     /// - Cache database cannot be created
     /// - AST parser initialization fails
     /// - Dependency extractor setup fails
-    pub fn new_with_memory_cache() -> Result<Self, crate::error::UveddiError> {
+    pub fn new_with_memory_cache() -> crate::error::Result<Self> {
         Ok(Self {
             ast_parser: AstParser::new()?,
             dependency_extractor: DependencyExtractor::new()?,
@@ -222,7 +222,7 @@ impl AnalysisEngine {
     pub async fn analyze(
         &mut self,
         path: &Path,
-    ) -> Result<(Vec<ArchitecturalIssue>, LocalDependencyGraph), crate::error::UveddiError> {
+    ) -> crate::error::Result<(Vec<ArchitecturalIssue>, LocalDependencyGraph)> {
         let (mut file_issues, all_dependencies) =
             self.analyze_files_and_collect_dependencies(path).await?;
 
@@ -282,7 +282,7 @@ impl AnalysisEngine {
     async fn analyze_files_and_collect_dependencies(
         &mut self,
         path: &Path,
-    ) -> Result<(Vec<ArchitecturalIssue>, Vec<Dependency>), crate::error::UveddiError> {
+    ) -> crate::error::Result<(Vec<ArchitecturalIssue>, Vec<Dependency>)> {
         let mut all_issues = Vec::new();
         let mut all_dependencies = Vec::new();
         self.files_analyzed = 0;
@@ -450,7 +450,7 @@ impl AnalysisEngine {
     ///
     /// Returns `UveddiError` if the plugin engine is not initialized or if there's an
     /// error during plugin loading.
-    pub async fn load_plugins(&mut self) -> Result<usize, crate::error::UveddiError> {
+    pub async fn load_plugins(&mut self) -> crate::error::Result<usize> {
         if let Some(ref mut plugin_engine) = self.plugin_engine {
             let loaded_plugins = plugin_engine
                 .load_all_plugins()
@@ -490,7 +490,7 @@ impl AnalysisEngine {
         &mut self,
         manifest: crate::plugins::PluginManifest,
         binary: Vec<u8>,
-    ) -> Result<crate::plugins::PluginId, crate::error::UveddiError> {
+    ) -> crate::error::Result<crate::plugins::PluginId> {
         if let Some(ref mut plugin_engine) = self.plugin_engine {
             let plugin_id = plugin_engine
                 .install_plugin(manifest, binary)
@@ -524,7 +524,7 @@ impl AnalysisEngine {
     pub async fn uninstall_plugin(
         &mut self,
         plugin_id: &crate::plugins::PluginId,
-    ) -> Result<(), crate::error::UveddiError> {
+    ) -> crate::error::Result<()> {
         if let Some(ref mut plugin_engine) = self.plugin_engine {
             plugin_engine
                 .uninstall_plugin(plugin_id)
@@ -573,7 +573,7 @@ impl AnalysisEngine {
     /// resource monitoring fails.
     pub async fn monitor_plugin_resources(
         &mut self,
-    ) -> Result<crate::plugins::ResourceReport, crate::error::UveddiError> {
+    ) -> crate::error::Result<crate::plugins::ResourceReport> {
         if let Some(ref mut plugin_engine) = self.plugin_engine {
             plugin_engine
                 .monitor_resources()

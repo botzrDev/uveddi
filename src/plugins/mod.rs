@@ -53,7 +53,8 @@ pub mod verification;
 // Re-exports for convenience
 pub use data_plane::AstDataPlane;
 pub use engine::WasmPluginEngine;
-pub use errors::{PluginError, PluginResult};
+pub use errors::PluginError;
+// Note: PluginResult is deprecated - use crate::error::Result<T> instead
 pub use lifecycle::{PluginLifecycleManager, ResourceReport};
 pub use registry::{PluginManifest, PluginMetadata, PluginRegistry};
 pub use security::{Permission, SecurityPolicy};

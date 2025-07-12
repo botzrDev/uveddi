@@ -37,18 +37,18 @@ pub struct ConfigCommand {
 }
 
 impl ConfigCommand {
-    pub fn execute(&self) -> Result<(), String> {
+    pub fn execute(&self) -> crate::error::Result<()> {
         match &self.command {
             ConfigSubcommand::Show { file } => {
                 if let Some(path) = file {
                     match Config::from_file(path.to_str().unwrap()) {
                         Ok(cfg) => println!("{cfg:?}"),
-                        Err(e) => return Err(format!("Failed to load config: {e}")),
+                        Err(e) => return Err(crate::error::UveddiError::ConfigError(format!("Failed to load config: {e}"))),
                     }
                 } else {
                     match Config::from_env() {
                         Ok(cfg) => println!("{cfg:?}"),
-                        Err(e) => return Err(format!("Failed to load config from env: {e}")),
+                        Err(e) => return Err(crate::error::UveddiError::ConfigError(format!("Failed to load config from env: {e}"))),
                     }
                 }
             }
@@ -63,13 +63,13 @@ impl ConfigCommand {
                 };
                 match key.as_str() {
                     "ollama_model" => config.ollama_model = Some(value.clone()),
-                    _ => return Err("Unknown config key".to_string()),
+                    _ => return Err(crate::error::UveddiError::ConfigError("Unknown config key".to_string())),
                 }
-                let toml = toml::to_string_pretty(&config).map_err(|e| e.to_string())?;
-                let mut file_handle = fs::File::create(file).map_err(|e| e.to_string())?;
+                let toml = toml::to_string_pretty(&config).map_err(|e| crate::error::UveddiError::ConfigError(e.to_string()))?;
+                let mut file_handle = fs::File::create(file).map_err(|e| crate::error::UveddiError::Io(e))?;
                 file_handle
                     .write_all(toml.as_bytes())
-                    .map_err(|e| e.to_string())?;
+                    .map_err(|e| crate::error::UveddiError::Io(e))?;
                 println!("Config updated in {}", file.display());
             }
             ConfigSubcommand::Validate { file } => {
@@ -79,7 +79,7 @@ impl ConfigCommand {
                     .unwrap_or("uveddi.toml");
                 match Config::from_file(path) {
                     Ok(_) => println!("Config is valid."),
-                    Err(e) => return Err(format!("Config validation failed: {e}")),
+                    Err(e) => return Err(crate::error::UveddiError::ConfigError(format!("Config validation failed: {e}"))),
                 }
             }
         }
