@@ -2,6 +2,14 @@
 
 ## Configuration Methods
 
+Uveddi is pre-configured with sensible defaults. As of vX.Y.Z, the "tree-sitter" feature is enabled by default for all supported languages, providing advanced parsing and analysis out of the box.
+
+### Disabling Tree-sitter (Advanced)
+If you need to disable tree-sitter for compatibility or debugging, use the following environment variable or cargo feature flag:
+
+- Environment: `UVEDDI_DISABLE_TREE_SITTER=1`
+- Cargo: `--no-default-features --features="..."`
+
 Uveddi can be configured through multiple methods, with the following precedence:
 1. Command-line arguments
 2. Environment variables
@@ -76,3 +84,4 @@ ai.timeout = 60
 Activate a profile:
 ```bash
 uveddi --profile prod analyze ./project
+```

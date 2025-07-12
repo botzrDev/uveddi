@@ -14,6 +14,7 @@ Uveddi is an AI-powered CLI tool for architectural analysis of codebases, design
 - **Privacy-focused**: All analysis happens locally
 - **Extensible architecture**: Plugin system for custom detectors
 - **Comprehensive reporting**: Markdown, JSON, and interactive outputs
+- **Tree-sitter enabled by default**: Advanced parsing for supported languages is now always on for improved accuracy and performance. No manual configuration required.
 
 ## Installation
 

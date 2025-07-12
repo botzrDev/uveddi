@@ -36,6 +36,9 @@
   uveddi analyze ./project --ai-provider anthropic
   ```
 
+### Tree-sitter Feature
+- As of vX.Y.Z, Tree-sitter is enabled by default for all supported languages. This provides more accurate parsing and analysis. If you encounter issues related to parsing, you may disable Tree-sitter via environment variable (`UVEDDI_DISABLE_TREE_SITTER=1`) or cargo feature flags.
+
 ## Error Messages
 
 | Error | Solution |
