@@ -60,4 +60,5 @@ pub mod models;
 pub mod plugins;
 pub mod report;
 pub mod resilience;
+pub mod security;
 pub mod semantic_search;

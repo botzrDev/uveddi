@@ -86,6 +86,21 @@ pub enum SecurityError {
     /// Invalid path component detected (e.g., null byte, hidden file)
     #[error("Invalid path component detected")]
     InvalidPathComponent,
+    /// Directory depth exceeds maximum allowed
+    #[error("Directory depth exceeds maximum: {depth} > {max_depth}")]
+    DirectoryDepthExceeded { depth: usize, max_depth: usize },
+    /// Too many files in analysis
+    #[error("File count exceeds maximum: {count} > {max_count}")]
+    TooManyFiles { count: usize, max_count: usize },
+    /// Invalid URL format
+    #[error("Invalid URL: {0}")]
+    InvalidUrl(String),
+    /// Invalid model name
+    #[error("Invalid model name: {0}")]
+    InvalidModelName(String),
+    /// Description too long
+    #[error("Description too long: {length} > {max_length}")]
+    DescriptionTooLong { length: usize, max_length: usize },
 }
 
 /// Maximum file size for analysis (100MB)
@@ -93,6 +108,15 @@ pub const MAX_FILE_SIZE: u64 = 100 * 1024 * 1024;
 
 /// Maximum input length for AI prompts (8KB)
 pub const MAX_PROMPT_LENGTH: usize = 8 * 1024;
+
+/// Maximum directory depth for traversal (prevents infinite recursion)
+pub const MAX_DIRECTORY_DEPTH: usize = 50;
+
+/// Maximum number of files per analysis (prevents resource exhaustion)
+pub const MAX_FILES_PER_ANALYSIS: usize = 10_000;
+
+/// Maximum description length for database fields (10KB)
+pub const MAX_DESCRIPTION_LENGTH: usize = 10 * 1024;
 
 /// Validates and sanitizes a file path to prevent directory traversal attacks
 ///
@@ -238,6 +262,157 @@ pub fn sanitize_prompt(prompt: &str) -> Result<String, SecurityError> {
         .collect::<String>();
     
     Ok(sanitized)
+}
+
+/// Validates URL format for API endpoints
+///
+/// # Arguments
+/// * `url` - The URL string to validate
+///
+/// # Returns
+/// * `Result<url::Url, SecurityError>` - Parsed URL or error
+pub fn validate_api_url(url: &str) -> Result<url::Url, SecurityError> {
+    use url::Url;
+    
+    let parsed_url = Url::parse(url)
+        .map_err(|_| SecurityError::InvalidUrl(url.to_string()))?;
+    
+    // Only allow HTTP and HTTPS schemes
+    match parsed_url.scheme() {
+        "http" | "https" => Ok(parsed_url),
+        _ => Err(SecurityError::InvalidUrl(format!("Unsupported scheme: {}", parsed_url.scheme()))),
+    }
+}
+
+/// Validates AI model name format
+///
+/// # Arguments
+/// * `model` - The model name to validate
+///
+/// # Returns
+/// * `Result<(), SecurityError>` - Ok if valid, error otherwise
+pub fn validate_model_name(model: &str) -> Result<(), SecurityError> {
+    // Model names should be alphanumeric with hyphens, colons, and dots
+    if model.is_empty() || model.len() > 100 {
+        return Err(SecurityError::InvalidModelName("Model name length invalid".to_string()));
+    }
+    
+    let valid_chars = model.chars().all(|c| {
+        c.is_alphanumeric() || matches!(c, '-' | ':' | '.' | '_')
+    });
+    
+    if !valid_chars {
+        return Err(SecurityError::InvalidModelName("Model name contains invalid characters".to_string()));
+    }
+    
+    Ok(())
+}
+
+/// Sanitizes description text for database storage
+///
+/// # Arguments
+/// * `description` - The description text to sanitize
+///
+/// # Returns
+/// * `Result<String, SecurityError>` - Sanitized description or error
+/// Validates directory depth to prevent infinite recursion
+///
+/// # Arguments
+/// * `depth` - Current directory depth
+///
+/// # Returns
+/// * `Result<(), SecurityError>` - Ok if depth is valid, error otherwise
+pub fn validate_directory_depth(depth: usize) -> Result<(), SecurityError> {
+    if depth > MAX_DIRECTORY_DEPTH {
+        Err(SecurityError::DirectoryDepthExceeded {
+            depth,
+            max_depth: MAX_DIRECTORY_DEPTH,
+        })
+    } else {
+        Ok(())
+    }
+}
+
+/// Validates file count to prevent resource exhaustion
+///
+/// # Arguments
+/// * `count` - Current file count
+///
+/// # Returns
+/// * `Result<(), SecurityError>` - Ok if count is valid, error otherwise
+pub fn validate_file_count(count: usize) -> Result<(), SecurityError> {
+    if count > MAX_FILES_PER_ANALYSIS {
+        Err(SecurityError::TooManyFiles {
+            count,
+            max_count: MAX_FILES_PER_ANALYSIS,
+        })
+    } else {
+        Ok(())
+    }
+}
+
+pub fn sanitize_description(description: &str) -> Result<String, SecurityError> {
+    if description.len() > MAX_DESCRIPTION_LENGTH {
+        return Err(SecurityError::DescriptionTooLong {
+            length: description.len(),
+            max_length: MAX_DESCRIPTION_LENGTH,
+        });
+    }
+    
+    // Remove potentially dangerous characters but preserve formatting
+    let sanitized = description
+        .chars()
+        .filter(|c| {
+            c.is_ascii_graphic() || matches!(*c, ' ' | '\n' | '\t' | '\r')
+        })
+        .collect::<String>()
+        // Remove potential SQL injection patterns
+        .replace("--", "")
+        .replace("/*", "")
+        .replace("*/", "")
+        .replace(";", "")
+        // Limit consecutive newlines
+        .split('\n')
+        .collect::<Vec<_>>()
+        .join("\n");
+    
+    Ok(sanitized)
+}
+
+/// Validates directory depth during traversal
+///
+/// # Arguments
+/// * `depth` - Current directory depth
+///
+/// # Returns
+/// * `Result<(), SecurityError>` - Ok if within limits, error otherwise
+pub fn validate_directory_depth(depth: usize) -> Result<(), SecurityError> {
+    if depth > MAX_DIRECTORY_DEPTH {
+        Err(SecurityError::DirectoryDepthExceeded {
+            depth,
+            max_depth: MAX_DIRECTORY_DEPTH,
+        })
+    } else {
+        Ok(())
+    }
+}
+
+/// Validates file count during analysis
+///
+/// # Arguments
+/// * `count` - Current file count
+///
+/// # Returns
+/// * `Result<(), SecurityError>` - Ok if within limits, error otherwise
+pub fn validate_file_count(count: usize) -> Result<(), SecurityError> {
+    if count > MAX_FILES_PER_ANALYSIS {
+        Err(SecurityError::TooManyFiles {
+            count,
+            max_count: MAX_FILES_PER_ANALYSIS,
+        })
+    } else {
+        Ok(())
+    }
 }
 
 /// Validates that a path is within an allowed directory

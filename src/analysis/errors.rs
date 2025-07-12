@@ -22,4 +22,6 @@ pub enum AnalysisError {
     SymbolResolutionError(String),
     #[error("Graph analysis error: {0}")]
     GraphAnalysisError(String),
+    #[error("Tree-sitter query error: {0}")]
+    QueryError(String),
 }

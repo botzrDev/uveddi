@@ -14,6 +14,7 @@ use std::borrow::Cow;
 use tree_sitter::{Parser, Tree};
 use lru::LruCache;
 use tracing::{info, warn};
+use crate::security;
 
 // Re-export tree-sitter types for public API
 
@@ -247,6 +248,12 @@ impl AstParser {
     /// Returns a parsed AST for the file, using cache if available.
     /// Errors if the file cannot be parsed or language is unsupported.
     pub fn parse_file(&mut self, file_path: &Path) -> Result<ParsedFile, AstError> {
+        // Security validation: Validate file size, type, and path
+        security::validate_file_size(file_path)
+            .map_err(|e| AstError::Other(format!("Security validation failed: {}", e)))?;
+        security::validate_file_type(file_path)
+            .map_err(|e| AstError::Other(format!("Security validation failed: {}", e)))?;
+        
         let path_str = file_path.to_string_lossy().to_string();
         let modified_time = fs::metadata(file_path)?.modified()?;
 

@@ -3,9 +3,10 @@
 
 use crate::error::UveddiError;
 use std::collections::HashMap;
-use std::path::Path;
-use std::sync::Mutex;
+use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex};
 use tree_sitter::{Parser, Tree};
+use serde::{Serialize, Deserialize};
 
 /// Tree-sitter parser implementation (feature enabled)
 pub struct AstParser {
@@ -50,11 +51,13 @@ impl SourceLanguage {
 }
 
 /// Parsed file structure containing AST and metadata
-#[derive(Debug, Clone)]
+
+
+#[derive(Debug, Clone, Serialize, Deserialize)] // Add Serialize/Deserialize
 pub struct ParsedFile {
-    pub file_path: String,
+    pub file_path: Arc<PathBuf>, // Changed to Arc<PathBuf>
     pub language: SourceLanguage,
-    pub content: String,
+    pub source: Arc<String>, // Renamed from content to source, and changed to Arc<String>
     pub tree: Option<Tree>,
     pub custom_ast: Option<CustomAst>,
 }
@@ -140,7 +143,7 @@ impl AstParser {
                         return Ok(ParsedFile {
                             file_path: file_path.to_string_lossy().to_string(),
                             language,
-                            content: content.to_string(),
+                            source: Arc::new(content.to_string()),
                             tree: Some(cached.tree.clone()),
                             custom_ast: None,
                         });
@@ -171,7 +174,7 @@ impl AstParser {
         Ok(ParsedFile {
             file_path: file_path.to_string_lossy().to_string(),
             language,
-            content: content.to_string(),
+            source: Arc::new(content.to_string()),
             tree: Some(tree),
             custom_ast: None,
         })
@@ -188,11 +191,11 @@ impl AstParser {
         let parser = self.parsers.get_mut(&language)
             .ok_or_else(|| AstError::UnsupportedLanguage(format!("{:?}", language)))?;
         let tree = parser.parse(content, None)
-            .ok_or_else(|| AstError::ParseError("Failed to parse content".to_string()))?;
+            .ok_or_else(|| AstError::ParseFailed)?;
         Ok(ParsedFile {
             file_path: file_path.to_string_lossy().to_string(),
             language,
-            content: content.to_string(),
+            source: Arc::new(content.to_string()),
             tree: Some(tree),
             custom_ast: None,
         })

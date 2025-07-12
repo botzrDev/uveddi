@@ -239,7 +239,7 @@ impl CodeDuplicationDetector {
             .tree
             .as_ref()
             .ok_or_else(|| {
-                UveddiError::AnalysisError(AnalysisError::AntiPatternDetectionError(
+                UveddiError::AstError(crate::ast::tree_sitter_impl::AstError::Other(
                     "No AST available for file".to_string(),
                 ))
             })?;
@@ -251,7 +251,7 @@ impl CodeDuplicationDetector {
         };
 
         let query = Query::new(&tree.language(), query_str).map_err(|e| {
-            UveddiError::AnalysisError(AnalysisError::AntiPatternDetectionError(format!(
+            UveddiError::AstError(crate::ast::tree_sitter_impl::AstError::Other(format!(
                 "Failed to create query: {e}"
             )))
         })?;
@@ -275,7 +275,7 @@ impl CodeDuplicationDetector {
                 let source = function_node
                     .utf8_text(parsed_file.source.as_bytes())
                     .map_err(|e| {
-                        UveddiError::AnalysisError(AnalysisError::AntiPatternDetectionError(format!(
+                        UveddiError::AstError(crate::ast::tree_sitter_impl::AstError::Other(format!(
                             "Failed to extract source: {e}"
                         )))
                     })?
@@ -694,7 +694,7 @@ fn safe_lock_analysis_data<'a, T>(
     operation: &'static str,
 ) -> Result<std::sync::MutexGuard<'a, T>, crate::analysis::AnalysisError> {
     mutex.lock().map_err(|_| {
-        AnalysisError::AntiPatternDetectionError(format!(
+        AnalysisError::SymbolResolutionError(format!(
             "Concurrency failure during {} (mutex poisoned). See UV-150 error handling policy.",
             operation
         ))

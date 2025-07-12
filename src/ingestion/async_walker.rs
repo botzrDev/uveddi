@@ -8,10 +8,14 @@ use std::path::{Path, PathBuf};
 use std::pin::Pin;
 use tokio::fs;
 use tokio_stream::{wrappers::ReadDirStream, StreamExt};
+use crate::security;
 
-/// Async file walker that yields file paths
+/// Async file walker that yields file paths with security validation
 pub struct AsyncWalker {
     include_extensions: Vec<String>,
+    max_depth: Option<usize>,
+    max_files: Option<usize>,
+    validate_security: bool,
 }
 
 impl AsyncWalker {
@@ -25,7 +29,36 @@ impl AsyncWalker {
     ///
     /// * `AsyncWalker` - A new instance configured for the given extensions.
     pub fn new(include_extensions: Vec<String>) -> Self {
-        Self { include_extensions }
+        Self { 
+            include_extensions,
+            max_depth: None,
+            max_files: None,
+            validate_security: false,
+        }
+    }
+
+    /// Creates a new `AsyncWalker` with security validation enabled
+    ///
+    /// # Arguments
+    ///
+    /// * `include_extensions` - Vector of file extensions to include
+    /// * `max_depth` - Maximum directory depth (None for default limit)
+    /// * `max_files` - Maximum number of files (None for default limit)
+    ///
+    /// # Returns
+    ///
+    /// * `AsyncWalker` - A new instance with security validation
+    pub fn new_with_security(
+        include_extensions: Vec<String>, 
+        max_depth: Option<usize>, 
+        max_files: Option<usize>
+    ) -> Self {
+        Self { 
+            include_extensions,
+            max_depth,
+            max_files,
+            validate_security: true,
+        }
     }
 
     /// Creates an `AsyncWalker` preconfigured for common source code file extensions.
@@ -42,6 +75,26 @@ impl AsyncWalker {
             "ts".to_string(),
             "tsx".to_string(),
         ])
+    }
+
+    /// Creates a secure `AsyncWalker` for source code with validation enabled
+    ///
+    /// # Returns
+    ///
+    /// * `AsyncWalker` - A new instance with security validation
+    pub fn for_source_code_secure() -> Self {
+        Self::new_with_security(
+            vec![
+                "rs".to_string(),
+                "py".to_string(),
+                "js".to_string(),
+                "jsx".to_string(),
+                "ts".to_string(),
+                "tsx".to_string(),
+            ],
+            None, // Use default max depth
+            None, // Use default max files
+        )
     }
 
     /// Asynchronously walks a directory, yielding file paths matching the configured extensions.
@@ -73,9 +126,17 @@ impl AsyncWalker {
         path: PathBuf,
     ) -> Pin<Box<dyn Stream<Item = Result<PathBuf, std::io::Error>> + Send + '_>> {
         Box::pin(async_stream::stream! {
-            let mut stack = vec![path];
+            let mut stack = vec![(path, 0usize)]; // (path, depth)
+            let mut file_count = 0usize;
 
-            while let Some(current_path) = stack.pop() {
+            while let Some((current_path, depth)) = stack.pop() {
+                // Validate directory depth if security is enabled
+                if self.validate_security {
+                    if let Err(e) = security::validate_directory_depth(depth) {
+                        yield Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, e.to_string()));
+                        continue;
+                    }
+                }
                 let metadata = match fs::metadata(&current_path).await {
                     Ok(metadata) => metadata,
                     Err(e) => {
@@ -86,6 +147,30 @@ impl AsyncWalker {
 
                 if metadata.is_file() {
                     if self.should_include_file(&current_path) {
+                        // Validate file count if security is enabled
+                        if self.validate_security {
+                            file_count += 1;
+                            let max_files = self.max_files.unwrap_or(security::MAX_FILES_PER_ANALYSIS);
+                            if let Err(e) = security::validate_file_count(file_count) {
+                                yield Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, e.to_string()));
+                                continue;
+                            }
+                            if file_count > max_files {
+                                yield Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, 
+                                    format!("File count {} exceeds maximum {}", file_count, max_files)));
+                                continue;
+                            }
+                            
+                            // Validate file size and type
+                            if let Err(e) = security::validate_file_size(&current_path) {
+                                yield Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, e.to_string()));
+                                continue;
+                            }
+                            if let Err(e) = security::validate_file_type(&current_path) {
+                                yield Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, e.to_string()));
+                                continue;
+                            }
+                        }
                         yield Ok(current_path);
                     }
                 } else if metadata.is_dir() {
@@ -101,7 +186,7 @@ impl AsyncWalker {
                     while let Some(entry_result) = entries.next().await {
                         match entry_result {
                             Ok(entry) => {
-                                stack.push(entry.path());
+                                stack.push((entry.path(), depth + 1));
                             }
                             Err(e) => {
                                 yield Err(e);

@@ -38,6 +38,7 @@
 //! # Ok::<(), Box<dyn std::error::Error>>(())
 //! ```
 
+use crate::security::{self, SecurityError};
 use serde::{Deserialize, Serialize};
 use std::{env, fs};
 
@@ -128,8 +129,13 @@ impl Config {
     /// # Errors
     ///
     /// Returns an error if any of the required environment variables are not set.
-    pub fn from_env() -> Result<Self, env::VarError> {
+    pub fn from_env() -> Result<Self, Box<dyn std::error::Error>> {
         let ollama_model = env::var("OLLAMA_MODEL").ok();
+        
+        // Validate model name if provided
+        if let Some(ref model) = ollama_model {
+            security::validate_model_name(model)?;
+        }
 
         // Dead code configuration from environment
         let dead_code = if env::var("DEAD_CODE_CONFIDENCE_THRESHOLD").is_ok()

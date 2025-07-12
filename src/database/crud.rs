@@ -1,4 +1,5 @@
 use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
+use crate::security::{self, SecurityError};
 use chrono::Utc;
 use rusqlite::{Connection, Result};
 use std::path::Path;
@@ -163,6 +164,9 @@ impl Database {
     /// * `Ok(())` - If the operation succeeds.
     /// * `Err(rusqlite::Error)` - If the insert or query fails.
     pub fn store_anti_pattern_type(&self, anti_pattern_type: &mut AntiPatternType) -> Result<()> {
+        // Validate and sanitize description
+        anti_pattern_type.description = security::sanitize_description(&anti_pattern_type.description)
+            .map_err(|e| rusqlite::Error::InvalidColumnType(0, "description".to_string(), rusqlite::types::Type::Text))?;
         self.conn.execute(
             "INSERT OR IGNORE INTO anti_pattern_types (name, description, category) VALUES (?, ?, ?)",
             rusqlite::params![
@@ -194,6 +198,17 @@ impl Database {
     pub fn store_issues(&mut self, issues: &[ArchitecturalIssue]) -> Result<()> {
         let tx = self.conn.transaction()?;
         for issue in issues {
+            // Validate and sanitize description
+            let sanitized_description = security::sanitize_description(&issue.description)
+                .map_err(|e| rusqlite::Error::InvalidColumnType(0, "description".to_string(), rusqlite::types::Type::Text))?;
+            
+            // Validate and sanitize AI explanation if present
+            let sanitized_ai_explanation = if let Some(ref explanation) = issue.ai_explanation {
+                Some(security::sanitize_description(explanation)
+                    .map_err(|e| rusqlite::Error::InvalidColumnType(0, "ai_explanation".to_string(), rusqlite::types::Type::Text))?)
+            } else {
+                None
+            };
             tx.execute(
                 "INSERT INTO architectural_issues (analysis_run_id, anti_pattern_type_id, file_path, start_line, end_line, severity, description, code_snippet, ai_explanation) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 rusqlite::params![
@@ -203,9 +218,9 @@ impl Database {
                     issue.start_line,
                     issue.end_line,
                     issue.severity,
-                    issue.description,
+                    sanitized_description,
                     issue.code_snippet,
-                    issue.ai_explanation,
+                    sanitized_ai_explanation,
                 ],
             )?;
         }
@@ -232,6 +247,10 @@ impl Database {
                 "INSERT OR IGNORE INTO anti_pattern_types (name, description, category) VALUES (?, ?, ?)"
             )?;
             for anti_pattern_type in anti_pattern_types.iter_mut() {
+                // Validate and sanitize description
+                anti_pattern_type.description = security::sanitize_description(&anti_pattern_type.description)
+                    .map_err(|e| rusqlite::Error::InvalidColumnType(0, "description".to_string(), rusqlite::types::Type::Text))?;
+                
                 stmt.execute(rusqlite::params![
                     anti_pattern_type.name,
                     anti_pattern_type.description,

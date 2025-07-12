@@ -56,7 +56,7 @@ impl ComponentExtractor {
             }
 
             self.component_cache
-                .insert(parsed_file.file_path.clone().into(), components.clone());
+                .insert(parsed_file.file_path.as_ref().clone(), components.clone());
             all_components.extend(components);
         }
 
@@ -75,7 +75,7 @@ impl ComponentExtractor {
 
         if let Some(ref ast) = parsed_file.custom_ast {
             components
-                .extend(self.extract_from_ast_node(ast, &PathBuf::from(&parsed_file.file_path))?);
+                .extend(self.extract_from_ast_node(ast, parsed_file.file_path.as_ref())?);
         }
 
         Ok(components)
@@ -168,7 +168,7 @@ impl ComponentExtractor {
                     ast,
                     components,
                     &name_to_component,
-                    &PathBuf::from(&parsed_file.file_path),
+                    parsed_file.file_path.as_ref(),
                 )?;
             }
         }
