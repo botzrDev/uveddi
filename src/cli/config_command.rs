@@ -66,10 +66,10 @@ impl ConfigCommand {
                     _ => return Err(crate::error::UveddiError::ConfigError("Unknown config key".to_string())),
                 }
                 let toml = toml::to_string_pretty(&config).map_err(|e| crate::error::UveddiError::ConfigError(e.to_string()))?;
-                let mut file_handle = fs::File::create(file).map_err(|e| crate::error::UveddiError::Io(e))?;
+                let mut file_handle = fs::File::create(file).map_err(|e| crate::error::UveddiError::IoError(e))?;
                 file_handle
                     .write_all(toml.as_bytes())
-                    .map_err(|e| crate::error::UveddiError::Io(e))?;
+                    .map_err(|e| crate::error::UveddiError::IoError(e))?;
                 println!("Config updated in {}", file.display());
             }
             ConfigSubcommand::Validate { file } => {

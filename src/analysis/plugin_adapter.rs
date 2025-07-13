@@ -190,7 +190,7 @@ impl AnalysisDetector for WasmPluginDetectorAdapter {
                 // If no current runtime, create a new one
                 tokio::runtime::Runtime::new()
                     .map(|rt| rt.handle().clone())
-                    .map_err(|e| AnalysisError::PluginError(format!("Failed to create runtime: {}", e)))
+                    .map_err(|e| AnalysisError::PluginError(crate::plugins::errors::PluginError::Execution(format!("Failed to create runtime: {}", e))))
             })?;
 
         // Execute the async operation

@@ -31,7 +31,8 @@
       "Bash(cargo clippy:*)",
       "Bash(rg:*)",
       "Bash(cargo clean:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(cargo rustc:*)"
     ],
     "deny": []
   }

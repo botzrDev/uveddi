@@ -38,6 +38,9 @@
 //! # Ok::<(), Box<dyn std::error::Error>>(())
 //! ```
 
+// TODO: Re-enable when monitoring dependencies are properly configured
+// pub mod monitoring;
+
 use crate::security::{self, SecurityError};
 use serde::{Deserialize, Serialize};
 use std::{env, fs};

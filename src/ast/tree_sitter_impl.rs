@@ -303,7 +303,7 @@ impl AstParser {
                         AstError::UnsupportedLanguage(format!("{:?}", parsed.language))
                     })?;
                     let tree = parser
-                        .parse(&parsed.source, None)
+                        .parse(&*parsed.source, None)
                         .ok_or(AstError::ParseFailed)?;
                     parsed.tree = Some(tree);
 

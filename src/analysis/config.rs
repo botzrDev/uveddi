@@ -311,8 +311,12 @@ impl<'de> Deserialize<'de> for DetectorConfig {
     where
         D: serde::Deserializer<'de>,
     {
-        let params = HashMap::deserialize(deserializer)?;
-        Ok(DetectorConfig { params })
+        let params: HashMap<String, i32> = HashMap::deserialize(deserializer)?;
+        let mut config = DetectorConfig::new();
+        for (key, value) in params {
+            config = config.with_param(&key, value);
+        }
+        Ok(config)
     }
 }
 

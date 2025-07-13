@@ -136,9 +136,7 @@ impl DependencyExtractor {
                     .root_node(),
                 parsed_file
                     .source
-                    .as_deref()
-                    .map(str::as_bytes)
-                    .unwrap_or(&[]),
+                    .as_bytes(),
             );
 
             let mut dependencies = Vec::new();
@@ -164,7 +162,7 @@ impl DependencyExtractor {
                         // UV-150: Strategic error handling for path operations (Category V)
                         let parent_dir = parsed_file.file_path.parent()
                         .ok_or_else(|| ExtractionError::InvalidPath {
-                            path: (**parsed_file.file_path).clone(),
+                            path: parsed_file.file_path.as_ref().clone(),
                             reason: "File path has no parent directory (see UV-150 error handling policy)".to_string(),
                         })?;
                         let mut potential_path = parent_dir.join(&module_name);
@@ -172,8 +170,8 @@ impl DependencyExtractor {
                             potential_path.set_extension("rs");
                             if !potential_path.exists() {
                                 // Check for module/mod.rs
-                                let mod_parent = Path::new(&parsed_file.file_path).parent().ok_or_else(|| ExtractionError::InvalidPath {
-                                path: PathBuf::from(parsed_file.file_path.clone()),
+                                let mod_parent = parsed_file.file_path.as_path().parent().ok_or_else(|| ExtractionError::InvalidPath {
+                                path: parsed_file.file_path.as_ref().clone(),
                                 reason: "File path has no parent directory for mod.rs (see UV-150)".to_string(),
                             })?;
                                 let mod_path = mod_parent.join(&module_name).join("mod.rs");
@@ -209,7 +207,7 @@ impl DependencyExtractor {
                     }
 
                     if let SourceLanguage::Rust = parsed_file.language {
-                        if let Some(parent) = Path::new(&parsed_file.file_path).parent() {
+                        if let Some(parent) = parsed_file.file_path.as_path().parent() {
                             let mut path = parent.join(&module_name);
                             if !path.exists() {
                                 path.set_extension("rs");
@@ -218,9 +216,9 @@ impl DependencyExtractor {
                     }
 
                     dependencies.push(Dependency {
-                        from_file: (**parsed_file.file_path).to_path_buf(), // UV-222: Convert Path to PathBuf
+                        from_file: parsed_file.file_path.as_ref().clone(), // UV-222: Convert Arc<PathBuf> to PathBuf
                         to_module: module_name,
-                        dependency_type,
+                        dependency_type: dependency_type.clone(),
                         line_number: Some((line_number + 1) as u32),
                     });
                 }
@@ -256,7 +254,7 @@ impl DependencyExtractor {
         let mut dependencies = Vec::new();
 
         // Process each line
-        for (line_num, line) in parsed_file.content.lines().enumerate() {
+        for (line_num, line) in parsed_file.source.lines().enumerate() {
             if let Some(caps) = re.captures(line) {
                 // Get module name from capture group 1 or 2
                 let module_name = caps
@@ -266,7 +264,7 @@ impl DependencyExtractor {
 
                 if let Some(name) = module_name {
                     dependencies.push(Dependency {
-                        from_file: (**parsed_file.file_path).to_path_buf(), // UV-222: Convert Path to PathBuf
+                        from_file: parsed_file.file_path.as_ref().clone(), // UV-222: Convert Arc<PathBuf> to PathBuf
                         to_module: name,
                         dependency_type: DependencyType::Import,
                         line_number: Some((line_num + 1) as u32),

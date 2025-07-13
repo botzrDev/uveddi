@@ -30,7 +30,7 @@ pub struct CachedAst {
 }
 
 /// Source language enumeration
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SourceLanguage {
     Rust,
     Python,
@@ -58,7 +58,9 @@ pub struct ParsedFile {
     pub file_path: Arc<PathBuf>, // Changed to Arc<PathBuf>
     pub language: SourceLanguage,
     pub source: Arc<String>, // Renamed from content to source, and changed to Arc<String>
+    #[serde(skip)]
     pub tree: Option<Tree>,
+    #[serde(skip)]
     pub custom_ast: Option<CustomAst>,
 }
 
@@ -141,7 +143,7 @@ impl AstParser {
                 if let Ok(modified) = metadata.modified() {
                     if modified <= cached.timestamp {
                         return Ok(ParsedFile {
-                            file_path: file_path.to_string_lossy().to_string(),
+                            file_path: Arc::new(file_path.to_path_buf()),
                             language,
                             source: Arc::new(content.to_string()),
                             tree: Some(cached.tree.clone()),
@@ -172,7 +174,7 @@ impl AstParser {
             );
 
         Ok(ParsedFile {
-            file_path: file_path.to_string_lossy().to_string(),
+            file_path: Arc::new(file_path.to_path_buf()),
             language,
             source: Arc::new(content.to_string()),
             tree: Some(tree),
@@ -193,7 +195,7 @@ impl AstParser {
         let tree = parser.parse(content, None)
             .ok_or_else(|| AstError::ParseFailed)?;
         Ok(ParsedFile {
-            file_path: file_path.to_string_lossy().to_string(),
+            file_path: Arc::new(file_path.to_path_buf()),
             language,
             source: Arc::new(content.to_string()),
             tree: Some(tree),

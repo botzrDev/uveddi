@@ -134,7 +134,7 @@ pub fn validate_analysis_path(path: &str) -> crate::error::Result<PathBuf> {
     for component in path_buf.components() {
         match component {
             Component::ParentDir => {
-                return Err(SecurityError::PathTraversal(path.to_string()));
+                return Err(crate::error::UveddiError::SecurityError(SecurityError::PathTraversal(path.to_string())));
             }
             Component::Normal(name) => {
                 let name_str = name.to_string_lossy();
@@ -156,7 +156,7 @@ pub fn validate_analysis_path(path: &str) -> crate::error::Result<PathBuf> {
             // If canonicalization fails, ensure the path doesn't contain suspicious patterns
             let path_str = path_buf.to_string_lossy();
             if path_str.contains("..") || path_str.contains("~") {
-                Err(SecurityError::PathTraversal(path.to_string()))
+                Err(crate::error::UveddiError::SecurityError(SecurityError::PathTraversal(path.to_string())))
             } else {
                 Ok(path_buf)
             }
@@ -195,15 +195,15 @@ pub fn validate_file_size(path: &Path) -> crate::error::Result<()> {
         Ok(metadata) => {
             let size = metadata.len();
             if size > MAX_FILE_SIZE {
-                Err(SecurityError::FileSizeExceeded {
+                Err(crate::error::UveddiError::SecurityError(SecurityError::FileSizeExceeded {
                     size,
                     limit: MAX_FILE_SIZE,
-                })
+                }))
             } else {
                 Ok(())
             }
         }
-        Err(_) => Err(SecurityError::InvalidPath(path.to_string_lossy().to_string())),
+        Err(_) => Err(crate::error::UveddiError::SecurityError(SecurityError::InvalidPath(path.to_string_lossy().to_string()))),
     }
 }
 
@@ -227,7 +227,7 @@ pub fn validate_file_type(path: &Path) -> crate::error::Result<()> {
         if ALLOWED_EXTENSIONS.contains(&ext_lower.as_str()) {
             Ok(())
         } else {
-            Err(SecurityError::UnsupportedFileType(extension.to_string()))
+            Err(crate::error::UveddiError::SecurityError(SecurityError::UnsupportedFileType(extension.to_string())))
         }
     } else {
         // Allow files without extensions for now (like Dockerfile, Makefile)
@@ -244,10 +244,10 @@ pub fn validate_file_type(path: &Path) -> crate::error::Result<()> {
 /// * `Result<String, SecurityError>` - Sanitized prompt or error
 pub fn sanitize_prompt(prompt: &str) -> crate::error::Result<String> {
     if prompt.len() > MAX_PROMPT_LENGTH {
-        return Err(SecurityError::InputTooLong {
+        return Err(crate::error::UveddiError::SecurityError(SecurityError::InputTooLong {
             length: prompt.len(),
             max_length: MAX_PROMPT_LENGTH,
-        });
+        }));
     }
     
     let sanitized = prompt
@@ -280,7 +280,7 @@ pub fn validate_api_url(url: &str) -> crate::error::Result<url::Url> {
     // Only allow HTTP and HTTPS schemes
     match parsed_url.scheme() {
         "http" | "https" => Ok(parsed_url),
-        _ => Err(SecurityError::InvalidUrl(format!("Unsupported scheme: {}", parsed_url.scheme()))),
+        _ => Err(crate::error::UveddiError::SecurityError(SecurityError::InvalidUrl(format!("Unsupported scheme: {}", parsed_url.scheme())))),
     }
 }
 
@@ -294,7 +294,7 @@ pub fn validate_api_url(url: &str) -> crate::error::Result<url::Url> {
 pub fn validate_model_name(model: &str) -> crate::error::Result<()> {
     // Model names should be alphanumeric with hyphens, colons, and dots
     if model.is_empty() || model.len() > 100 {
-        return Err(SecurityError::InvalidModelName("Model name length invalid".to_string()));
+        return Err(crate::error::UveddiError::SecurityError(SecurityError::InvalidModelName("Model name length invalid".to_string())));
     }
     
     let valid_chars = model.chars().all(|c| {
@@ -302,7 +302,7 @@ pub fn validate_model_name(model: &str) -> crate::error::Result<()> {
     });
     
     if !valid_chars {
-        return Err(SecurityError::InvalidModelName("Model name contains invalid characters".to_string()));
+        return Err(crate::error::UveddiError::SecurityError(SecurityError::InvalidModelName("Model name contains invalid characters".to_string())));
     }
     
     Ok(())
@@ -318,10 +318,10 @@ pub fn validate_model_name(model: &str) -> crate::error::Result<()> {
 
 pub fn sanitize_description(description: &str) -> crate::error::Result<String> {
     if description.len() > MAX_DESCRIPTION_LENGTH {
-        return Err(SecurityError::DescriptionTooLong {
+        return Err(crate::error::UveddiError::SecurityError(SecurityError::DescriptionTooLong {
             length: description.len(),
             max_length: MAX_DESCRIPTION_LENGTH,
-        });
+        }));
     }
     
     // Remove potentially dangerous characters but preserve formatting
@@ -353,10 +353,10 @@ pub fn sanitize_description(description: &str) -> crate::error::Result<String> {
 /// * `Result<(), SecurityError>` - Ok if within limits, error otherwise
 pub fn validate_directory_depth(depth: usize) -> crate::error::Result<()> {
     if depth > MAX_DIRECTORY_DEPTH {
-        Err(SecurityError::DirectoryDepthExceeded {
+        Err(crate::error::UveddiError::SecurityError(SecurityError::DirectoryDepthExceeded {
             depth,
             max_depth: MAX_DIRECTORY_DEPTH,
-        })
+        }))
     } else {
         Ok(())
     }
@@ -371,10 +371,10 @@ pub fn validate_directory_depth(depth: usize) -> crate::error::Result<()> {
 /// * `Result<(), SecurityError>` - Ok if within limits, error otherwise
 pub fn validate_file_count(count: usize) -> crate::error::Result<()> {
     if count > MAX_FILES_PER_ANALYSIS {
-        Err(SecurityError::TooManyFiles {
+        Err(crate::error::UveddiError::SecurityError(SecurityError::TooManyFiles {
             count,
             max_count: MAX_FILES_PER_ANALYSIS,
-        })
+        }))
     } else {
         Ok(())
     }
@@ -390,15 +390,15 @@ pub fn validate_file_count(count: usize) -> crate::error::Result<()> {
 /// * `Result<(), SecurityError>` - Ok if within bounds, error otherwise
 pub fn validate_path_within_bounds(path: &Path, allowed_root: &Path) -> crate::error::Result<()> {
     let canonical_path = path.canonicalize()
-        .map_err(|_| SecurityError::InvalidPath(path.to_string_lossy().to_string()))?;
+        .map_err(|_| crate::error::UveddiError::SecurityError(SecurityError::InvalidPath(path.to_string_lossy().to_string())))?;
     
     let canonical_root = allowed_root.canonicalize()
-        .map_err(|_| SecurityError::InvalidPath(allowed_root.to_string_lossy().to_string()))?;
+        .map_err(|_| crate::error::UveddiError::SecurityError(SecurityError::InvalidPath(allowed_root.to_string_lossy().to_string())))?;
     
     if canonical_path.starts_with(canonical_root) {
         Ok(())
     } else {
-        Err(SecurityError::PathTraversal(path.to_string_lossy().to_string()))
+        Err(crate::error::UveddiError::SecurityError(SecurityError::PathTraversal(path.to_string_lossy().to_string())))
     }
 }
 
@@ -422,16 +422,16 @@ pub fn validate_path_within_bounds(path: &Path, allowed_root: &Path) -> crate::e
 pub fn sanitize_path<P: AsRef<Path>>(input_path: P, base_dir: P) -> crate::error::Result<PathBuf> {
     // Canonicalize the base directory
     let base = base_dir.as_ref().canonicalize()
-        .map_err(|_| SecurityError::InvalidBasePath)?;
+        .map_err(|_| crate::error::UveddiError::SecurityError(SecurityError::InvalidBasePath))?;
 
     // Join and canonicalize the input path
     let path = base.join(input_path.as_ref());
     let canonical = path.canonicalize()
-        .map_err(|_| SecurityError::InvalidPathComponent)?;
+        .map_err(|_| crate::error::UveddiError::SecurityError(SecurityError::InvalidPathComponent))?;
 
     // Ensure the canonical path is within the base directory
     if !canonical.starts_with(&base) {
-        return Err(SecurityError::PathTraversalAttempt);
+        return Err(crate::error::UveddiError::SecurityError(SecurityError::PathTraversalAttempt));
     }
 
     // Additional validation for path components
@@ -439,7 +439,7 @@ pub fn sanitize_path<P: AsRef<Path>>(input_path: P, base_dir: P) -> crate::error
         if let std::path::Component::Normal(name) = component {
             let name_str = name.to_string_lossy();
             if name_str.contains('\0') || name_str.starts_with('.') {
-                return Err(SecurityError::InvalidPathComponent);
+                return Err(crate::error::UveddiError::SecurityError(SecurityError::InvalidPathComponent));
             }
         }
     }

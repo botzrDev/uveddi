@@ -272,12 +272,12 @@ impl AnalysisOrchestrator {
             "json" => {
                 let report = report_generator
                     .generate_json_report(analysis_run, issues, &HashMap::new(), None)
-                    .map_err(|e| crate::error::UveddiError::ReportError(crate::report::errors::ReportGenerationError::SerializationError(e.to_string())))?;
+                    .map_err(|e| crate::error::UveddiError::ReportError(crate::report::errors::ReportGenerationError::DataExtractionError(e.to_string())))?;
                 Ok(report.to_string())
             }
             "markdown" => report_generator
                 .generate_markdown_report(analysis_run, issues, &HashMap::new(), None)
-                .map_err(|e| crate::error::UveddiError::ReportError(crate::report::errors::ReportGenerationError::SerializationError(e.to_string()))),
+                .map_err(|e| crate::error::UveddiError::ReportError(crate::report::errors::ReportGenerationError::DataExtractionError(e.to_string()))),
             _ => Err(UveddiError::ConfigError(format!(
                 "Unsupported output format specified: {}", config.output_format)
             ))
@@ -451,7 +451,7 @@ pub fn run_app() -> Result<(), UveddiError> {
             info!("Executing analyze command...");
             tokio::runtime::Runtime::new()?
                 .block_on(command.execute())
-                .map_err(|e| UveddiError::AnalysisError(crate::analysis::AnalysisError::AntiPatternDetectionError(e.to_string())))
+                .map_err(|e| UveddiError::AnalysisError(crate::analysis::errors::AnalysisError::AntiPatternDetectionError(e.to_string())))
         }
         Commands::Config(command) => {
             info!("Executing config command...");
