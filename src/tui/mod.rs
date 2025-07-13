@@ -26,6 +26,6 @@ pub mod state;
 pub mod themes;
 
 pub use app::{AppState, AppScreen};
-pub use events::EventHandler;
+pub use events::{EventHandler, EventLoopStats, run_tui};
 pub use messages::AppMessage;
 pub use terminal::{TerminalManager, TerminalInfo};

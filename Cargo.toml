@@ -112,6 +112,11 @@ persisted = "1.0"
 
 # Security patches to force newer versions
 
+[[bin]]
+name = "tui_test"
+path = "src/bin/tui_test.rs"
+required-features = ["tui"]
+
 [dev-dependencies]
 tempfile = "3.0"
 tokio-test = "0.4"
