@@ -1,9 +1,11 @@
 // Stub implementation file for tree-sitter disabled builds
 // UV-97: Tree-sitter feature gating implementation
+// UV-178: Fix API compatibility issues
 
-use crate::error::UveddiError;
-use std::collections::HashMap;
-use std::path::Path;
+use serde::{Deserialize, Serialize};
+use std::path::{Path, PathBuf};
+use std::sync::Arc;
+use std::time::SystemTime;
 
 /// Placeholder documentation for public items
 
@@ -14,7 +16,7 @@ use std::path::Path;
 #[derive(Debug, Clone)]
 pub struct Query;
 
-/// Stub for tree_sitter::QueryCursor  
+/// Stub for tree_sitter::QueryCursor
 #[derive(Debug, Clone)]
 pub struct QueryCursor;
 
@@ -75,9 +77,6 @@ impl<'a> Node<'a> {
     pub fn id(&self) -> usize {
         0
     }
-    pub fn name(&self) -> &'static str {
-        "stub"
-    }
 }
 
 /// Stub for tree_sitter::TreeCursor
@@ -85,7 +84,7 @@ impl<'a> Node<'a> {
 pub struct TreeCursor;
 
 /// Stub for tree_sitter::Tree
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Tree;
 
 impl Tree {
@@ -103,7 +102,7 @@ impl Tree {
 pub struct Parser;
 
 /// Additional stub types needed
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct Point {
     pub row: usize,
     pub column: usize,
@@ -121,11 +120,17 @@ pub struct QueryCapture<'a> {
 }
 
 /// Source language enumeration (always available)
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SourceLanguage {
     Rust,
     Python,
     JavaScript,
+}
+
+impl SourceLanguage {
+    pub fn from_path(_path: &Path) -> Option<Self> {
+        None // Stub implementation
+    }
 }
 
 /// Tree-sitter parser stub (feature disabled)
@@ -141,18 +146,19 @@ pub struct CachedAst {
 }
 
 /// Parsed file structure stub
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ParsedFile {
-    pub file_path: String,
+    pub file_path: Arc<PathBuf>,
     pub language: SourceLanguage,
-    pub content: String,
+    pub source: Arc<String>,
+    #[serde(skip)]
     pub tree: Option<Tree>,
+    #[serde(skip)]
     pub custom_ast: Option<CustomAst>,
-    pub source: Option<String>,
 }
 
 /// Custom AST representation stub
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum CustomAst {
     File {
         items: Vec<CustomAst>,
@@ -163,11 +169,10 @@ pub enum CustomAst {
     },
     Function {
         name: String,
-        parameters: Vec<String>,
+        parameters: Vec<String>, // Corrected from 'params' as per instructions
     },
     Variable {
         name: String,
-        value_type: String,
     },
 }
 
@@ -181,13 +186,19 @@ pub enum AstError {
     #[error("Parse error: {0}")]
     ParseError(String),
     #[error("IO error: {0}")]
-    IoError(#[from] std::io::Error),
-    #[error("IO error: {0}")]
-    Io(std::io::Error),
-    #[error("Cache error: {0}")]
-    CacheError(String),
+    Io(#[from] std::io::Error),
+    #[error("Tree-sitter language error: {0}")]
+    TreeSitterLanguage(String),
+    #[error("AST parsing failed")]
+    ParseFailed,
     #[error("Unsupported language: {0}")]
     UnsupportedLanguage(String),
+    #[error("Cache error: {0}")]
+    CacheError(String),
+    #[error("Anti-pattern detection error: {0}")]
+    AntiPatternDetectionError(String),
+    #[error("Other error: {0}")]
+    Other(String),
 }
 
 // Stub implementations for tree-sitter types
@@ -227,31 +238,23 @@ impl QueryCursor {
     }
 }
 
-// Note: Additional Node methods are implemented above in the main impl block
-
 impl TreeCursor {
     pub fn node(&self) -> Node<'_> {
         Node::new()
     }
-
     pub fn goto_first_child(&mut self) -> bool {
         false
     }
-
     pub fn goto_next_sibling(&mut self) -> bool {
         false
     }
-
-    pub fn goto_parent(&mut self) -> bool {
-        false
-    }
-
     pub fn goto_previous_sibling(&mut self) -> bool {
         false
     }
+    pub fn goto_parent(&mut self) -> bool {
+        false
+    }
 }
-
-// Note: Tree implementation is above
 
 impl Parser {
     pub fn new() -> Result<Self, AstError> {
@@ -272,44 +275,33 @@ impl Parser {
 }
 
 impl AstParser {
-    /// Create a new AST parser stub (always returns error)
     pub fn new() -> Result<Self, AstError> {
         Err(AstError::FeatureNotEnabled(
             "Tree-sitter feature not enabled".to_string(),
         ))
     }
 
-    /// Parse a file (stub - returns error)
-    pub fn parse_file(&self, _file_path: &Path) -> Result<ParsedFile, AstError> {
+    pub fn parse_file(&mut self, _path: &Path) -> Result<ParsedFile, AstError> {
         Err(AstError::FeatureNotEnabled(
             "Tree-sitter feature not enabled".to_string(),
         ))
     }
 
-    /// Parse content directly (stub - returns minimal ParsedFile)
     pub fn parse_content(
-        &self,
-        content: &str,
-        file_path: &Path,
-        language: SourceLanguage,
+        &mut self,
+        _content: &str,
+        _path: &Path,
+        _language: SourceLanguage,
     ) -> Result<ParsedFile, AstError> {
-        // Return a minimal ParsedFile without tree-sitter functionality
-        Ok(ParsedFile {
-            file_path: file_path.to_string_lossy().to_string(),
-            language,
-            content: content.to_string(),
-            source: Some(content.to_string()),
-            tree: None,
-            custom_ast: None,
-        })
+        Err(AstError::FeatureNotEnabled(
+            "Tree-sitter feature not enabled".to_string(),
+        ))
     }
 
-    /// Clear the AST cache (stub - no-op)
     pub fn clear_cache(&mut self) -> Result<(), AstError> {
         Ok(())
     }
 
-    /// Get available parsers (stub - returns empty list)
     pub fn get_available_parsers(&self) -> Vec<SourceLanguage> {
         Vec::new()
     }
@@ -317,15 +309,15 @@ impl AstParser {
 
 impl Default for AstParser {
     fn default() -> Self {
-        Self::new().expect("Failed to create default AstParser stub")
+        // This will panic, which is acceptable for a stub that should not be called.
+        Self::new().expect("Default AstParser stub should not be created")
     }
 }
 
 impl ParsedFile {
-    /// Get cache path for a file (stub implementation)
-    pub fn cache_path(file_path: &Path) -> std::path::PathBuf {
+    pub fn cache_path(file_path: &Path) -> PathBuf {
         let mut cache_path = std::env::temp_dir();
-        cache_path.push("uveddi_ast_cache_stub");
+        cache_path.push("uveddi_ast_cache");
         cache_path.push(format!(
             "{}.cache",
             file_path.file_name().unwrap_or_default().to_string_lossy()
@@ -334,7 +326,49 @@ impl ParsedFile {
     }
 }
 
-/// Create a test AST parser stub for testing
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LanguageThresholds {
+    pub max_logical_loc: u32,
+    pub max_methods: u32,
+    pub max_fields: u32,
+    pub max_cyclomatic_complexity: u32,
+    pub max_cognitive_complexity: u32,
+    pub max_lcom_score: f64,
+    pub max_coupling: u32,
+}
+
+impl LanguageThresholds {
+    pub fn rust() -> Self {
+        Self {
+            max_logical_loc: 100,
+            max_methods: 10,
+            max_fields: 10,
+            max_cyclomatic_complexity: 15,
+            max_cognitive_complexity: 20,
+            max_lcom_score: 0.8,
+            max_coupling: 5,
+        }
+    }
+    pub fn python() -> Self {
+        Self::rust()
+    }
+    pub fn javascript() -> Self {
+        Self::rust()
+    }
+}
+
 pub fn create_test_ast_parser() -> Result<AstParser, AstError> {
     AstParser::new()
+}
+
+pub mod language {
+    pub fn rust() -> &'static () {
+        &()
+    }
+    pub fn python() -> &'static () {
+        &()
+    }
+    pub fn javascript() -> &'static () {
+        &()
+    }
 }

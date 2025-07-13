@@ -28,7 +28,7 @@ use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use log::debug;
 use log::info;
 use std::collections::HashMap;
-use tree_sitter::{Node, Query, QueryCursor};
+use crate::ast::tree_sitter::{Node, Query, QueryCursor};
 
 /// Represents metrics collected for a method/function
 #[derive(Debug, Clone)]

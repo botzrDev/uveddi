@@ -23,7 +23,7 @@ use log::{debug, info};
 use sha2::{Digest, Sha256};
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
-use tree_sitter::{Query, QueryCursor};
+use crate::ast::tree_sitter::{Query, QueryCursor};
 
 /// Represents a contiguous block of code extracted for duplication analysis.
 ///

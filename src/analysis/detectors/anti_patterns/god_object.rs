@@ -122,7 +122,7 @@ use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use log::{debug, info, warn};
 use std::collections::{HashMap, HashSet};
-use tree_sitter::{Node, Query, QueryCursor};
+use crate::ast::tree_sitter::{Node, Query, QueryCursor};
 
 // --- Queries for identifying language-specific containers (classes, structs) ---
 const PYTHON_CLASS_QUERY: &str = r#"

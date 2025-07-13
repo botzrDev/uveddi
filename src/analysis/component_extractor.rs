@@ -112,7 +112,7 @@ impl ComponentExtractor {
                 };
                 components.push(component);
             }
-            CustomAst::Function { name, params } => {
+            CustomAst::Function { name, parameters } => {
                 // Create a component for the function
                 let component = ArchitecturalComponent {
                     component_id: Uuid::new_v4(),
@@ -121,7 +121,7 @@ impl ComponentExtractor {
                     component_type: ComponentType::Function,
                     dependencies: Vec::new(), // Will be resolved in second pass
                     metrics: ComponentMetrics {
-                        complexity: Some(self.estimate_complexity(params.len())),
+                        complexity: Some(self.estimate_complexity(parameters.len())),
                         ..ComponentMetrics::default()
                     },
                     group: self.infer_group_from_path(file_path),
@@ -392,7 +392,7 @@ mod tests {
                     },
                     CustomAst::Function {
                         name: "validate_email".to_string(),
-                        params: vec!["email".to_string()],
+                        parameters: vec!["email".to_string()],
                     },
                 ],
             }),

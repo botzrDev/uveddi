@@ -504,7 +504,7 @@ impl AnalysisEngine {
         {
             // When tree-sitter is disabled, just parse normally
             // AST caching is not as beneficial without tree-sitter
-            self.ast_parser.parse_file(path)
+            self.ast_parser.parse_file(path).map_err(crate::error::UveddiError::from)
         }
     }
 

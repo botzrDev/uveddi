@@ -17,4 +17,10 @@ pub use tree_sitter_impl::*;
 #[cfg(not(feature = "tree-sitter"))]
 pub use tree_sitter_stub::*;
 
+// Re-export tree-sitter types for compatibility
+#[cfg(feature = "tree-sitter")]
+pub use tree_sitter::{Node, Query, QueryCursor, Tree};
+#[cfg(not(feature = "tree-sitter"))]
+pub use tree_sitter_stub::{Node, Query, QueryCursor, Tree};
+
 pub mod queries;

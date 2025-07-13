@@ -7,7 +7,7 @@ use crate::analysis::{AnalysisDetector, AnalysisError};
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use log::debug;
-use tree_sitter::{Node, Query, QueryCursor, Tree};
+use crate::ast::tree_sitter::{Node, Query, QueryCursor, Tree};
 
 /// Holds the collected metrics for a single class or struct.
 #[derive(Debug, Clone)]

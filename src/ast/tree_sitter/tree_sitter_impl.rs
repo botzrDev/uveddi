@@ -69,7 +69,7 @@ pub struct ParsedFile {
 pub enum CustomAst {
     File { items: Vec<CustomAst> },
     Struct { name: String, methods: Vec<String> },
-    Function { name: String, params: Vec<String> },
+    Function { name: String, parameters: Vec<String> },
     Variable { name: String },
 }
 

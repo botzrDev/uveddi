@@ -27,7 +27,7 @@ use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use log::{debug, info};
 use std::collections::HashSet;
-use tree_sitter::{Node, Query, QueryCursor};
+use crate::ast::tree_sitter::{Node, Query, QueryCursor};
 
 /// Represents a symbol (e.g., function, variable, class) identified in the source code.
 ///
