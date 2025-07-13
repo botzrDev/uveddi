@@ -9,7 +9,7 @@
 mod tests {
     use crate::analysis::detectors::anti_patterns::code_duplication::CodeDuplicationDetector;
     use crate::analysis::AnalysisDetector;
-    use crate::ast::tree_sitter::AstParser;
+    use crate::ast::tree_sitter_impl::AstParser;
     use std::fs::File;
     use std::io::Write;
     use tempfile::TempDir;

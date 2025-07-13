@@ -23,7 +23,7 @@
 
 use crate::analysis::{AnalysisDetector, AnalysisError};
 use crate::error::UveddiError;
-use crate::ast::{ParsedFile, SourceLanguage};
+use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use log::{debug, info};
 use std::collections::HashSet;

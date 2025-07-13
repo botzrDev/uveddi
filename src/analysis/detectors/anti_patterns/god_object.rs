@@ -118,7 +118,7 @@
 
 use crate::analysis::{AnalysisDetector, AnalysisError};
 use crate::analysis::errors::AnalysisError as CoreAnalysisError;
-use crate::ast::{ParsedFile, SourceLanguage};
+use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use log::{debug, info, warn};
 use std::collections::{HashMap, HashSet};

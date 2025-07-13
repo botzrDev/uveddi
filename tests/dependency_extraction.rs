@@ -6,7 +6,7 @@ mod tests {
     use std::io::Write;
     use tempfile::tempdir;
     use uveddi::analysis::DependencyExtractor;
-    use uveddi::ast::tree_sitter::AstParser;
+    use uveddi::ast::tree_sitter_impl::AstParser;
 
     fn create_temp_file(dir: &tempfile::TempDir, name: &str, content: &str) -> std::path::PathBuf {
         let file_path = dir.path().join(name);

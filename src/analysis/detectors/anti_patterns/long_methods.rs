@@ -23,7 +23,7 @@
 //! - **JavaScript**: Framework-aware thresholds for React/Node.js patterns
 
 use crate::analysis::{AnalysisDetector, AnalysisError};
-use crate::ast::{ParsedFile, SourceLanguage};
+use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use log::debug;
 use log::info;
@@ -951,13 +951,13 @@ impl AnalysisDetector for LongMethodsDetector {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ast::tree_sitter::AstParser;
+    use crate::ast::tree_sitter_impl::AstParser;
     use std::path::PathBuf;
 
     #[test]
     fn test_long_method_detection_rust() {
         let detector = LongMethodsDetector::new();
-        let parser = AstParser::new().expect("Failed to create parser");
+        let mut parser = AstParser::new().expect("Failed to create parser");
 
         let rust_code = r#"
 fn very_long_function() {
@@ -1010,7 +1010,7 @@ fn very_long_function() {
     #[test]
     fn test_short_method_no_detection() {
         let detector = LongMethodsDetector::new();
-        let parser = AstParser::new().expect("Failed to create parser");
+        let mut parser = AstParser::new().expect("Failed to create parser");
 
         let rust_code = r#"
 fn short_function() {
@@ -1032,7 +1032,7 @@ fn short_function() {
     #[test]
     fn test_python_long_method_detection() {
         let detector = LongMethodsDetector::new();
-        let parser = AstParser::new().expect("Failed to create parser");
+        let mut parser = AstParser::new().expect("Failed to create parser");
 
         let python_code = r#"
 def very_long_function():

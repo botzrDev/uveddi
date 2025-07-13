@@ -7,7 +7,7 @@ mod tests {
     use tempfile::tempdir;
     use uveddi::analysis::AnalysisDetector;
     use uveddi::analysis::GodObjectDetector;
-    use uveddi::ast::tree_sitter::AstParser;
+    use uveddi::ast::tree_sitter_impl::AstParser;
 
     #[test]
     fn detects_god_object_rust() {

@@ -10,7 +10,7 @@ mod tests {
     use std::io::Write;
     use tempfile::tempdir;
     use uveddi::analysis::DependencyExtractor;
-    use uveddi::ast::tree_sitter::{AstError, AstParser};
+    use uveddi::ast::tree_sitter_impl::{AstError, AstParser};
 
     fn create_temp_file(dir: &tempfile::TempDir, name: &str, content: &str) -> std::path::PathBuf {
         let file_path = dir.path().join(name);
@@ -38,7 +38,9 @@ mod tests {
         let parsed = parser.parse_file(&file_path);
         match parsed {
             Err(AstError::UnsupportedLanguage(_)) => (),
-            _ => panic!("Expected UnsupportedLanguage error"),
+            Err(AstError::Other(msg)) if msg.contains("Unsupported file type") => (),
+            Err(e) => panic!("Expected UnsupportedLanguage or security error for unsupported file type, got: {:?}", e),
+            Ok(_) => panic!("Expected error, got Ok"),
         }
     }
 

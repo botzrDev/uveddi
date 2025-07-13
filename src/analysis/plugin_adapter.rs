@@ -1,5 +1,5 @@
 use crate::analysis::{AnalysisDetector, AnalysisError};
-use crate::ast::ParsedFile;
+use crate::ast::tree_sitter_impl::ParsedFile;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use crate::plugins::{PluginId, PluginManifest, WasmPluginEngine};
 use std::sync::Arc;
@@ -285,12 +285,14 @@ mod tests {
             version: "1.0.0".to_string(),
             description: "Test plugin".to_string(),
             author: "Test Author".to_string(),
+            permissions: vec![],
+            supported_languages: vec!["rust".to_string()],
             anti_pattern_types: vec![
                 "god-object".to_string(),
                 "dead-code".to_string(),
                 "unknown-pattern".to_string(), // Should be filtered out
             ],
-            wasm_file: "plugin.wasm".to_string(),
+            signature: None,
         };
 
         let types = WasmPluginDetectorAdapter::convert_manifest_patterns(&manifest);

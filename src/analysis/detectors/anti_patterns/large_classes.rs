@@ -4,7 +4,7 @@
 //! God Objects, and Blob anti-patterns as described in the Large Class Research document.
 
 use crate::analysis::{AnalysisDetector, AnalysisError};
-use crate::ast::{ParsedFile, SourceLanguage};
+use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use log::debug;
 use tree_sitter::{Node, Query, QueryCursor, Tree};

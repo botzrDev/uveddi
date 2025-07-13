@@ -460,7 +460,7 @@ mod tests {
     fn test_basic_traversal_attempt() {
         let dir = tempdir().unwrap();
         let result = sanitize_path("../../etc/passwd", dir.path());
-        assert!(matches!(result, Err(SecurityError::PathTraversalAttempt)));
+        assert!(matches!(result, Err(crate::error::UveddiError::SecurityError(SecurityError::PathTraversalAttempt))));
     }
 
     #[test]
@@ -491,7 +491,7 @@ mod tests {
     fn test_null_byte_injection() {
         let dir = tempdir().unwrap();
         let result = sanitize_path("file\0.txt", dir.path());
-        assert!(matches!(result, Err(SecurityError::InvalidPathComponent)));
+        assert!(matches!(result, Err(crate::error::UveddiError::SecurityError(SecurityError::InvalidPathComponent))));
     }
 
     #[test]
@@ -508,8 +508,8 @@ mod tests {
         let dir = tempdir().unwrap();
         let file = dir.path().join(".env");
         fs::write(&file, "secret").unwrap();
-        let result = sanitize_path(".env", &dir.path());
-        assert!(matches!(result, Err(SecurityError::InvalidPathComponent)));
+        let result = sanitize_path(".env", dir.path().to_path_buf());
+        assert!(matches!(result, Err(crate::error::UveddiError::SecurityError(SecurityError::InvalidPathComponent))));
     }
 
     #[test]
@@ -517,14 +517,14 @@ mod tests {
         let dir = tempdir().unwrap();
         let file = dir.path().join("main.rs");
         fs::write(&file, "fn main() {}\n").unwrap();
-        let result = sanitize_path("main.rs", &dir.path());
+        let result = sanitize_path("main.rs", dir.path().to_path_buf());
         assert!(result.is_ok());
     }
 
     #[test]
     fn test_invalid_base_dir() {
         let result = sanitize_path("main.rs", "/nonexistent_base_dir");
-        assert!(matches!(result, Err(SecurityError::InvalidBasePath)));
+        assert!(matches!(result, Err(crate::error::UveddiError::SecurityError(SecurityError::InvalidBasePath))));
     }
 
     #[test]
@@ -532,8 +532,8 @@ mod tests {
         let dir = tempdir().unwrap();
         let file = dir.path().join(".hidden");
         fs::write(&file, "hidden").unwrap();
-        let result = sanitize_path(".hidden", &dir.path());
-        assert!(matches!(result, Err(SecurityError::InvalidPathComponent)));
+        let result = sanitize_path(".hidden", &dir.path().to_path_buf());
+        assert!(matches!(result, Err(crate::error::UveddiError::SecurityError(SecurityError::InvalidPathComponent))));
     }
 
     #[test]
@@ -541,8 +541,8 @@ mod tests {
         let dir = tempdir().unwrap();
         let outside = std::env::temp_dir().join("outside.txt");
         fs::write(&outside, "outside").unwrap();
-        let result = sanitize_path(outside, &dir.path());
-        assert!(matches!(result, Err(SecurityError::PathTraversalAttempt)));
+        let result = sanitize_path(outside, dir.path().to_path_buf());
+        assert!(matches!(result, Err(crate::error::UveddiError::SecurityError(SecurityError::PathTraversalAttempt))));
     }
 
     #[test]
@@ -552,7 +552,7 @@ mod tests {
         fs::create_dir(&nested).unwrap();
         let file = nested.join("file.txt");
         fs::write(&file, "nested").unwrap();
-        let result = sanitize_path("nested/file.txt", &dir.path());
+        let result = sanitize_path("nested/file.txt", &dir.path().to_path_buf());
         assert!(result.is_ok());
     }
 }

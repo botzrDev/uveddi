@@ -38,7 +38,7 @@ impl MermaidGenerator {
     /// Create a new Mermaid generator with default templates
     pub fn new() -> Result<Self, MermaidGenerationError> {
         let mut tera = Tera::new("templates/*.tera")
-            .unwrap_or_else(|_| Tera::new("").expect("Failed to create empty Tera instance"));
+            .unwrap_or_else(|_| Tera::default());
 
         // Register built-in templates
         Self::register_builtin_templates(&mut tera)?;

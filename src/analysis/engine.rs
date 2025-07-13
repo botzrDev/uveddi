@@ -9,6 +9,7 @@ use crate::analysis::graph::dependency::LocalDependencyGraph;
 use crate::analysis::graph::dependency::{ComponentNode, LocalDependencyType};
 use crate::analysis::symbols::GlobalSymbolTable;
 use crate::analysis::AnalysisDetector;
+use crate::analysis::cache::ast::{AstCache, CacheConfig};
 use crate::ast::tree_sitter_impl::AstParser;
 use crate::cache::result_cache::ResultCache;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
@@ -60,6 +61,7 @@ pub struct AnalysisEngine {
     cache: ResultCache,
     symbol_table: GlobalSymbolTable,
     plugin_engine: Option<WasmPluginEngine>,
+    ast_cache: AstCache,
 }
 
 impl AnalysisEngine {
@@ -115,6 +117,10 @@ impl AnalysisEngine {
             ResultCache::new_in_memory()?
         };
         
+        // Initialize AST cache with default configuration
+        let ast_cache_config = CacheConfig::default();
+        let ast_cache = AstCache::new(ast_cache_config)?;
+        
         Ok(Self {
             ast_parser: AstParser::new()?,
             dependency_extractor: DependencyExtractor::new()?,
@@ -130,6 +136,7 @@ impl AnalysisEngine {
             } else {
                 None
             },
+            ast_cache,
         })
     }
 
@@ -175,6 +182,10 @@ impl AnalysisEngine {
             }
         };
         
+        // Initialize AST cache with default configuration
+        let ast_cache_config = CacheConfig::default();
+        let ast_cache = AstCache::new(ast_cache_config)?;
+        
         Ok(Self {
             ast_parser: AstParser::new()?,
             dependency_extractor: DependencyExtractor::new()?,
@@ -185,6 +196,7 @@ impl AnalysisEngine {
             cache,
             symbol_table: GlobalSymbolTable::new(),
             plugin_engine,
+            ast_cache,
         })
     }
 
@@ -353,7 +365,7 @@ impl AnalysisEngine {
 
                     info!("CACHE MISS: Analyzing file: {}", file_path.display());
 
-                    match self.ast_parser.parse_file(&file_path) {
+                    match self.parse_file_with_cache(&file_path).await {
                         Ok(parsed_file) => {
                             self.files_analyzed += 1;
 
@@ -450,6 +462,72 @@ impl AnalysisEngine {
     /// Gets the number of files analyzed in the last run.
     pub fn get_files_analyzed(&self) -> i32 {
         self.files_analyzed
+    }
+
+    /// Parses a file using the AST cache for performance optimization
+    async fn parse_file_with_cache(&mut self, path: &Path) -> crate::error::Result<crate::ast::ParsedFile> {
+        #[cfg(feature = "tree-sitter")]
+        {
+            // Try to get from AST cache first
+            if let Some(cached_tree) = self.ast_cache.get(path) {
+                info!("AST CACHE HIT: Using cached AST for {}", path.display());
+                // Create ParsedFile from cached tree
+                // We need to read the file source and create a ParsedFile manually
+                if let Ok(source_content) = std::fs::read_to_string(path) {
+                    let parsed_file = crate::ast::ParsedFile {
+                        file_path: std::sync::Arc::new(path.to_path_buf()),
+                        language: self.detect_language_from_path(path),
+                        tree: Some((*cached_tree).clone()),
+                        source: std::sync::Arc::new(source_content),
+                        custom_ast: std::sync::Arc::new(None),
+                        modified_at: std::fs::metadata(path)?.modified()?,
+                    };
+                    return Ok(parsed_file);
+                }
+            }
+            
+            info!("AST CACHE MISS: Parsing file {}", path.display());
+            // Parse the file normally
+            let parsed_file = self.ast_parser.parse_file(path)?;
+            
+            // Try to cache the AST if available
+            if let Some(ref tree) = parsed_file.tree {
+                if let Err(e) = self.ast_cache.store(path, tree.clone()) {
+                    warn!("Failed to cache AST for {:?}: {}", path, e);
+                }
+            }
+            
+            Ok(parsed_file)
+        }
+        
+        #[cfg(not(feature = "tree-sitter"))]
+        {
+            // When tree-sitter is disabled, just parse normally
+            // AST caching is not as beneficial without tree-sitter
+            self.ast_parser.parse_file(path)
+        }
+    }
+
+    /// Detects programming language from file path extension
+    fn detect_language_from_path(&self, path: &Path) -> crate::ast::SourceLanguage {
+        use crate::ast::SourceLanguage;
+        
+        match path.extension().and_then(|ext| ext.to_str()) {
+            Some("rs") => SourceLanguage::Rust,
+            Some("py") => SourceLanguage::Python,
+            Some("js") | Some("ts") | Some("jsx") | Some("tsx") => SourceLanguage::JavaScript,
+            _ => SourceLanguage::JavaScript, // Default fallback
+        }
+    }
+
+    /// Returns AST cache metrics for observability
+    pub fn get_ast_cache_metrics(&self) -> serde_json::Value {
+        self.ast_cache.export_metrics_for_observability()
+    }
+
+    /// Clears the AST cache
+    pub fn clear_ast_cache(&self) {
+        self.ast_cache.clear();
     }
 
     /// Configures the dead code detector with custom settings.

@@ -70,7 +70,7 @@
 //! - **Optimization Notes**: Uses efficient pattern matching and caches rule evaluations
 //!
 use crate::analysis::{AnalysisDetector, AnalysisError};
-use crate::ast::{ParsedFile, SourceLanguage};
+use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use std::collections::{HashMap, HashSet};
 use strum_macros::EnumString;
