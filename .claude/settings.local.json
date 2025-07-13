@@ -33,7 +33,8 @@
       "Bash(cargo clean:*)",
       "Bash(grep:*)",
       "Bash(cargo rustc:*)",
-      "Bash(cargo:*)"
+      "Bash(cargo:*)",
+      "Bash(git add:*)"
     ],
     "deny": []
   }

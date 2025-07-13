@@ -29,12 +29,16 @@ Add TUI dependencies to Cargo.toml and create the initial module structure for t
 src/tui/mod.rs
 src/tui/app.rs
 src/tui/events.rs
+src/tui/messages.rs
+src/tui/terminal.rs
 src/tui/ui/mod.rs
 src/tui/ui/main_menu.rs
 src/tui/ui/analyze_form.rs
 src/tui/ui/config_editor.rs
 src/tui/ui/report_viewer.rs
 src/tui/ui/components/mod.rs
+src/tui/ui/components/logo.rs
+src/tui/ui/components/form_inputs.rs
 src/tui/state/mod.rs
 src/tui/themes/mod.rs
 ```
@@ -51,11 +55,25 @@ crossterm = "0.29"
 # Input Handling
 tui-input = "0.14"
 
+# Error Handling & Logging
+color-eyre = "0.6"
+log = "0.4"
+env_logger = "0.11"
+
 # Configuration Management
 confy = "1.0"
 
 # State Persistence
 persisted = "1.0"
+
+# Async Runtime (optional, for future async features)
+tokio = { version = "1.0", features = ["full"], optional = true }
+
+# Development Dependencies
+[dev-dependencies]
+assert_cmd = "2.0"
+predicates = "3.0"
+tempfile = "3.0"
 ```
 
 ## 📝 Code Templates
@@ -116,6 +134,82 @@ pub use events::EventHandler;
 
 // TODO: Implement async event loop
 // This file will contain the main event handling logic
+```
+
+### src/tui/messages.rs
+```rust
+//! Centralized message definitions for the TUI
+//!
+//! Contains all message types used throughout the TUI system.
+//! This ensures consistency across all components and prevents
+//! message definition duplication.
+
+use crossterm::event::KeyEvent;
+
+/// All possible messages that can trigger state changes in the TUI
+#[derive(Debug, Clone, PartialEq)]
+pub enum AppMessage {
+    /// Terminal input events
+    KeyPressed(KeyEvent),
+    
+    /// Navigation messages
+    NavigateToMainMenu,
+    NavigateToAnalyze,
+    NavigateToConfig,
+    NavigateToReports,
+    NavigateToPlugins,
+    
+    /// Application control
+    Quit,
+    Tick,
+    
+    /// UI interaction messages
+    MenuItemSelected(usize),
+    FormFieldChanged(String),
+    
+    /// Help and information
+    ShowHelp,
+    ShowAbout,
+    
+    /// Terminal events
+    TerminalResized(u16, u16),
+    
+    /// Logo and theming
+    LogoAnimationComplete,
+    ThemeChanged(String),
+    
+    /// Form validation
+    ValidationError(String),
+    ValidationCleared,
+    
+    /// Analysis workflow
+    AnalysisStarted,
+    AnalysisCompleted(String),
+    AnalysisError(String),
+    
+    /// Configuration management
+    ConfigLoaded,
+    ConfigSaved,
+    ConfigError(String),
+    
+    /// Plugin management
+    PluginLoaded(String),
+    PluginUnloaded(String),
+    PluginError(String),
+}
+
+// TODO: Implement message handling and routing
+```
+
+### src/tui/terminal.rs
+```rust
+//! Terminal initialization and management for the TUI
+//!
+//! Handles terminal setup, cleanup, and panic recovery to ensure
+//! the user's terminal is always left in a clean state.
+
+// TODO: Implement terminal management
+// This file will contain terminal setup and cleanup logic
 ```
 
 ### src/tui/ui/mod.rs

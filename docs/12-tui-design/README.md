@@ -9,6 +9,9 @@ This directory contains detailed task assignments for implementing the Uveddi Te
 - **[F2: Basic TEA Structure](F2-Basic-TEA-Structure.md)** ⭐⭐⭐☆☆
 - **[F3: Terminal Initialization](F3-Terminal-Initialization.md)** ⭐⭐☆☆☆
 
+### Branding & Visual Identity
+- **[Logo & ASCII Art Specification](LOGO-ASCII-ART-SPEC.md)** 📋 (Reference Document)
+
 ### Core UI Tasks (Phase 2)
 - **[U1: Main Menu Component](U1-Main-Menu-Component.md)** ⭐⭐⭐☆☆
 - **[U2: Basic Input Components](U2-Basic-Input-Components.md)** ⭐⭐⭐☆☆
@@ -116,6 +119,7 @@ Each task includes:
 ## 🎨 Design Principles
 
 ### User Experience
+- **Professional branding** with prominent Uveddi logo on startup
 - **Keyboard-first design** with comprehensive shortcuts
 - **Intuitive navigation** with clear visual feedback
 - **Helpful error messages** with actionable suggestions

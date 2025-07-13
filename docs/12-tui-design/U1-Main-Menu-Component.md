@@ -18,6 +18,9 @@ Create the main navigation menu with keyboard support, visual styling, and icons
 
 ## ✅ Acceptance Criteria
 
+- [ ] **Uveddi logo displays prominently at top of main menu**
+- [ ] **Logo adapts to different terminal sizes (large/compact/text-only)**
+- [ ] **Logo colors follow theme system and look professional**
 - [ ] Menu displays 4 main options (Analyze, Config, Reports, Plugins)
 - [ ] Arrow keys and vim-style keys (j/k) navigate selection
 - [ ] Enter key triggers navigation to selected screen
@@ -26,6 +29,10 @@ Create the main navigation menu with keyboard support, visual styling, and icons
 - [ ] Icons and descriptions are clearly displayed
 - [ ] Menu integrates properly with TEA architecture
 - [ ] Responsive layout adapts to terminal size
+- [ ] **Accessibility: Clear focus indicators for keyboard navigation**
+- [ ] **Accessibility: Screen reader friendly text descriptions**
+- [ ] **Performance: Menu renders within 16ms (60fps target)**
+- [ ] **Error handling: Graceful degradation when terminal lacks color support**
 
 ## 📝 Implementation
 
@@ -36,6 +43,7 @@ Create the main navigation menu with keyboard support, visual styling, and icons
 //!
 //! Provides the primary interface for navigating between different
 //! application screens with keyboard controls and visual feedback.
+//! Features the prominent Uveddi logo and branding.
 
 use ratatui::{
     prelude::*,
@@ -44,7 +52,10 @@ use ratatui::{
     style::{Color, Modifier, Style},
     text::{Line, Span},
 };
-use crate::tui::app::{AppState, AppMessage};
+use crate::tui::{
+    app::{AppState, AppMessage},
+    ui::components::logo::UveddiLogo,
+};
 
 /// Main menu item configuration
 #[derive(Debug, Clone)]
@@ -65,12 +76,15 @@ pub struct MenuItem {
 pub struct MainMenu {
     /// Available menu items
     items: Vec<MenuItem>,
+    /// Uveddi logo component
+    logo: UveddiLogo,
 }
 
 impl MainMenu {
     /// Create a new main menu with default items
     pub fn new() -> Self {
         Self {
+            logo: UveddiLogo::new(),
             items: vec![
                 MenuItem {
                     title: "Analyze Code".to_string(),
@@ -121,18 +135,18 @@ impl MainMenu {
     
     /// Render the main menu
     pub fn render(&self, frame: &mut Frame, area: Rect, app_state: &AppState) {
-        // Create main layout
+        // Create main layout with space for logo
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
-                Constraint::Length(3),  // Header
+                Constraint::Length(8),  // Logo area (increased for logo)
                 Constraint::Min(8),     // Menu items
                 Constraint::Length(4),  // Footer/help
             ])
             .split(area);
         
-        // Render header
-        self.render_header(frame, chunks[0], app_state);
+        // Render logo and header
+        self.render_logo_header(frame, chunks[0], app_state);
         
         // Render menu items
         self.render_menu_items(frame, chunks[1], app_state);
@@ -141,28 +155,32 @@ impl MainMenu {
         self.render_footer(frame, chunks[2], app_state);
     }
     
-    /// Render the header with title and version
-    fn render_header(&self, frame: &mut Frame, area: Rect, app_state: &AppState) {
-        let title_block = Block::default()
-            .borders(Borders::ALL)
-            .style(Style::default().fg(Color::Cyan))
-            .title(Span::styled(
-                "Uveddi - Code Analysis Tool",
-                Style::default().fg(Color::White).add_modifier(Modifier::BOLD),
-            ));
+    /// Render the logo and header section
+    fn render_logo_header(&self, frame: &mut Frame, area: Rect, app_state: &AppState) {
+        // Split logo area into logo and subtitle
+        let logo_chunks = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([
+                Constraint::Length(6),  // Logo ASCII art
+                Constraint::Length(2),  // Subtitle and version
+            ])
+            .split(area);
         
-        let title_content = Paragraph::new(vec![
+        // Render the Uveddi logo
+        self.logo.render(frame, logo_chunks[0], area.width);
+        
+        // Render subtitle with version
+        let subtitle_content = Paragraph::new(vec![
             Line::from(vec![
-                Span::styled("Welcome to ", Style::default().fg(Color::Gray)),
-                Span::styled("Uveddi TUI", Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)),
-                Span::styled(" v", Style::default().fg(Color::Gray)),
+                Span::styled("Code Analysis & Quality Insights ", Style::default().fg(Color::Gray)),
+                Span::styled("v", Style::default().fg(Color::DarkGray)),
                 Span::styled(&app_state.version, Style::default().fg(Color::Yellow)),
             ]),
         ])
-        .block(title_block)
-        .alignment(ratatui::layout::Alignment::Center);
+        .alignment(ratatui::layout::Alignment::Center)
+        .style(Style::default().fg(Color::Gray));
         
-        frame.render_widget(title_content, area);
+        frame.render_widget(subtitle_content, logo_chunks[1]);
     }
     
     /// Render the menu items with selection highlighting
@@ -521,6 +539,24 @@ fn render_placeholder(frame: &mut Frame, message: &str) {
    - Number keys 1-4 work for direct selection
    - Shortcuts match menu item positions
 
+4. **Accessibility Testing**:
+   - Focus indicators are clearly visible
+   - Color-blind friendly color combinations
+   - Works in monochrome terminals
+   - Keyboard navigation is intuitive
+
+5. **Performance Testing**:
+   - Menu renders smoothly without flicker
+   - Keypress response time < 50ms
+   - Memory usage remains stable
+   - CPU usage minimal during idle state
+
+6. **Integration Testing**:
+   - Logo component integrates seamlessly
+   - TEA message flow works correctly
+   - State persistence across navigation
+   - Error states display appropriately
+
 ### Code Quality
 ```bash
 # Compilation check
@@ -558,10 +594,174 @@ cargo clippy -- -D warnings
 - [ ] Visual layout adapts to different terminal sizes
 - [ ] All tests pass
 
+### Create src/tui/ui/components/logo.rs
+
+```rust
+//! Uveddi logo component with responsive ASCII art
+//!
+//! Displays the Uveddi brand logo with different variants based on terminal size
+
+use ratatui::{
+    prelude::*,
+    widgets::{Block, Borders, Paragraph},
+    style::{Color, Modifier, Style},
+    text::{Line, Span},
+};
+
+/// Logo variant based on terminal size
+#[derive(Debug, Clone, PartialEq)]
+pub enum LogoVariant {
+    Large,      // Full ASCII art for wide terminals (≥80 chars)
+    Compact,    // Simplified version for medium terminals (60-79 chars)
+    TextOnly,   // Simple text for narrow terminals (<60 chars)
+}
+
+/// Uveddi logo component
+pub struct UveddiLogo {
+    variant: LogoVariant,
+    colors: LogoColors,
+}
+
+#[derive(Debug, Clone)]
+pub struct LogoColors {
+    pub primary: Style,     // Main "UVEDDI" text
+    pub accent: Style,      // Decorative elements
+    pub border: Style,      // Box borders
+    pub subtitle: Style,    // Tagline text
+}
+
+impl Default for LogoColors {
+    fn default() -> Self {
+        Self {
+            primary: Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD),
+            accent: Style::default().fg(Color::Yellow),
+            border: Style::default().fg(Color::Blue),
+            subtitle: Style::default().fg(Color::Gray).italic(),
+        }
+    }
+}
+
+impl UveddiLogo {
+    /// Create a new logo component
+    pub fn new() -> Self {
+        Self {
+            variant: LogoVariant::Large,
+            colors: LogoColors::default(),
+        }
+    }
+    
+    /// Select appropriate logo variant based on terminal width
+    pub fn select_variant(width: u16) -> LogoVariant {
+        match width {
+            w if w >= 80 => LogoVariant::Large,
+            w if w >= 60 => LogoVariant::Compact,
+            _ => LogoVariant::TextOnly,
+        }
+    }
+    
+    /// Render the logo
+    pub fn render(&self, frame: &mut Frame, area: Rect, terminal_width: u16) {
+        let variant = Self::select_variant(terminal_width);
+        
+        match variant {
+            LogoVariant::Large => self.render_large_logo(frame, area),
+            LogoVariant::Compact => self.render_compact_logo(frame, area),
+            LogoVariant::TextOnly => self.render_text_logo(frame, area),
+        }
+    }
+    
+    /// Render large logo for wide terminals
+    fn render_large_logo(&self, frame: &mut Frame, area: Rect) {
+        let logo_lines = vec![
+            Line::from(vec![
+                Span::styled("██    ██ ██    ██ ███████ ██████  ██████  ██ ", self.colors.primary),
+            ]),
+            Line::from(vec![
+                Span::styled("██    ██ ██    ██ ██      ██   ██ ██   ██ ██ ", self.colors.primary),
+            ]),
+            Line::from(vec![
+                Span::styled("██    ██ ██    ██ █████   ██   ██ ██   ██ ██ ", self.colors.primary),
+            ]),
+            Line::from(vec![
+                Span::styled("██    ██  ██  ██  ██      ██   ██ ██   ██ ██ ", self.colors.primary),
+            ]),
+            Line::from(vec![
+                Span::styled(" ██████    ████   ███████ ██████  ██████  ██ ", self.colors.primary),
+            ]),
+        ];
+        
+        let logo_paragraph = Paragraph::new(logo_lines)
+            .alignment(ratatui::layout::Alignment::Center)
+            .style(self.colors.primary);
+        
+        frame.render_widget(logo_paragraph, area);
+    }
+    
+    /// Render compact logo for medium terminals
+    fn render_compact_logo(&self, frame: &mut Frame, area: Rect) {
+        let logo_lines = vec![
+            Line::from(vec![
+                Span::styled("┌─ ", self.colors.border),
+                Span::styled("UVEDDI", self.colors.primary),
+                Span::styled(" ─┐", self.colors.border),
+            ]),
+            Line::from(vec![
+                Span::styled("│ ", self.colors.border),
+                Span::styled("Analysis", self.colors.accent),
+                Span::styled(" │", self.colors.border),
+            ]),
+            Line::from(vec![
+                Span::styled("└─ ", self.colors.border),
+                Span::styled("──────", self.colors.border),
+                Span::styled(" ─┘", self.colors.border),
+            ]),
+            Line::from(vec![
+                Span::styled("  🔍 🤖 📊  ", self.colors.accent),
+            ]),
+        ];
+        
+        let logo_paragraph = Paragraph::new(logo_lines)
+            .alignment(ratatui::layout::Alignment::Center);
+        
+        frame.render_widget(logo_paragraph, area);
+    }
+    
+    /// Render text-only logo for narrow terminals
+    fn render_text_logo(&self, frame: &mut Frame, area: Rect) {
+        let logo_lines = vec![
+            Line::from(vec![
+                Span::styled("═══ ", self.colors.border),
+                Span::styled("UVEDDI", self.colors.primary),
+                Span::styled(" ═══", self.colors.border),
+            ]),
+            Line::from(vec![
+                Span::styled("Code Analysis", self.colors.subtitle),
+            ]),
+        ];
+        
+        let logo_paragraph = Paragraph::new(logo_lines)
+            .alignment(ratatui::layout::Alignment::Center);
+        
+        frame.render_widget(logo_paragraph, area);
+    }
+}
+```
+
+### Update src/tui/ui/components/mod.rs
+
+```rust
+//! Reusable UI components for the TUI
+
+pub mod logo;
+
+pub use logo::UveddiLogo;
+```
+
 ## 🔄 Next Steps
 
 After completing this task:
 1. Task E1: Basic Event Loop (to handle the menu interactions)
 2. Task U2: Basic Input Components (for the analysis form)
 3. Task P1: Basic Theming (to improve visual appearance)
-4. Integration testing with the complete TUI system
+4. **Logo Component Integration** (see LOGO-ASCII-ART-SPEC.md)
+5. Integration testing with the complete TUI system

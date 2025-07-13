@@ -8,6 +8,9 @@ use crate::plugins::{
     types::{PluginId, PluginStats, PluginStatus, ResourceLimits, HostState, PluginConfig},
     verification::*,
 };
+
+#[cfg(feature = "wasm-plugins")]
+use crate::plugins::types::HostContext;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;

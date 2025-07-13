@@ -34,6 +34,8 @@ local-ai = ["ai"]
 image-rendering = ["reqwest", "base64"]
 # WASM plugin system
 wasm-plugins = ["wasmtime", "wasmtime-wasi", "wit-bindgen"]
+# Terminal User Interface
+tui = ["ratatui", "crossterm", "tui-input"]
 
 [dependencies]
 rusqlite = { version = "0.31.0", features = ["bundled"] }
@@ -96,6 +98,17 @@ tokio-tungstenite = "0.20"
 questdb = "0.1"
 criterion = { version = "0.5", features = ["html_reports"] }
 sysinfo = "0.30"
+
+# TUI Core Dependencies (optional via tui feature)
+ratatui = { version = "0.29", optional = true }
+crossterm = { version = "0.29", optional = true }
+tui-input = { version = "0.14", optional = true }
+
+# Configuration Management (for TUI settings)
+confy = "1.0"
+
+# State Persistence (for TUI state)
+persisted = "1.0"
 
 # Security patches to force newer versions
 
