@@ -459,7 +459,7 @@ mod tests {
     #[test]
     fn test_basic_traversal_attempt() {
         let dir = tempdir().unwrap();
-        let result = sanitize_path("../../etc/passwd", dir.path());
+        let result = sanitize_path("../../etc/passwd", dir.path().to_path_buf());
         assert!(matches!(result, Err(crate::error::UveddiError::SecurityError(SecurityError::PathTraversalAttempt))));
     }
 
@@ -474,7 +474,7 @@ mod tests {
         #[cfg(unix)]
         {
             symlink(&target, &link).unwrap();
-            let result = sanitize_path("link.txt", dir.path());
+            let result = sanitize_path("link.txt", dir.path().to_path_buf());
             assert!(result.is_ok());
         }
         
@@ -482,7 +482,7 @@ mod tests {
         {
             // On non-Unix systems, just test a regular file
             fs::write(&link, "safe").unwrap();
-            let result = sanitize_path("link.txt", dir.path());
+            let result = sanitize_path("link.txt", dir.path().to_path_buf());
             assert!(result.is_ok());
         }
     }
@@ -490,7 +490,7 @@ mod tests {
     #[test]
     fn test_null_byte_injection() {
         let dir = tempdir().unwrap();
-        let result = sanitize_path("file\0.txt", dir.path());
+        let result = sanitize_path("file\0.txt", dir.path().to_path_buf());
         assert!(matches!(result, Err(crate::error::UveddiError::SecurityError(SecurityError::InvalidPathComponent))));
     }
 
@@ -499,7 +499,7 @@ mod tests {
         let dir = tempdir().unwrap();
         let file = dir.path().join("unicodé.txt");
         fs::write(&file, "safe").unwrap();
-        let result = sanitize_path("unicodé.txt", &dir.path());
+        let result = sanitize_path("unicodé.txt", dir.path().to_path_buf());
         assert!(result.is_ok());
     }
 
@@ -532,7 +532,7 @@ mod tests {
         let dir = tempdir().unwrap();
         let file = dir.path().join(".hidden");
         fs::write(&file, "hidden").unwrap();
-        let result = sanitize_path(".hidden", &dir.path().to_path_buf());
+        let result = sanitize_path(".hidden", dir.path().to_path_buf());
         assert!(matches!(result, Err(crate::error::UveddiError::SecurityError(SecurityError::InvalidPathComponent))));
     }
 
@@ -552,7 +552,7 @@ mod tests {
         fs::create_dir(&nested).unwrap();
         let file = nested.join("file.txt");
         fs::write(&file, "nested").unwrap();
-        let result = sanitize_path("nested/file.txt", &dir.path().to_path_buf());
+        let result = sanitize_path("nested/file.txt", dir.path().to_path_buf());
         assert!(result.is_ok());
     }
 }
