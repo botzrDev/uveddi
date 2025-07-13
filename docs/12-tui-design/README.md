@@ -13,9 +13,15 @@ This directory contains detailed task assignments for implementing the Uveddi Te
 - **[Logo & ASCII Art Specification](LOGO-ASCII-ART-SPEC.md)** 📋 (Reference Document)
 
 ### Core UI Tasks (Phase 2)
-- **[U1: Main Menu Component](U1-Main-Menu-Component.md)** ⭐⭐⭐☆☆
-- **[U2: Basic Input Components](U2-Basic-Input-Components.md)** ⭐⭐⭐☆☆
-- **[U3: Analysis Form Layout](U3-Analysis-Form-Layout.md)** ⭐⭐⭐⭐☆
+- **[U1: Main Menu Component](U1-Main-Menu-Component.md)** ⭐⭐⭐☆☆ ✅ **COMPLETED**
+- **[U2: Basic Input Components](U2-Basic-Input-Components.md)** ⭐⭐⭐☆☆ ✅ **COMPLETED**
+- **[U3: Analysis Form Layout](U3-Analysis-Form-Layout.md)** ⭐⭐⭐⭐☆ ✅ **COMPLETED**
+
+#### U3 Documentation
+- **[User Guide](U3-USER-GUIDE.md)** 📖 Complete navigation and usage guide
+- **[Developer Guide](U3-DEVELOPER-GUIDE.md)** 🔧 Architecture and implementation details
+- **[Integration Patterns](U3-INTEGRATION-PATTERNS.md)** 🔗 Reusable form patterns
+- **[Troubleshooting Guide](U3-TROUBLESHOOTING.md)** 🚨 Common issues and solutions
 
 ### Event Handling Tasks (Phase 3)
 - **[E1: Basic Event Loop](E1-Basic-Event-Loop.md)** ⭐⭐⭐☆☆
