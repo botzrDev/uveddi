@@ -35,7 +35,21 @@
       "Bash(cargo rustc:*)",
       "Bash(cargo:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(timeout 30s cargo test test_app_state_initialization --test tui_integration --features tui)",
+      "Bash(chmod:*)",
+      "Bash(timeout 600s cargo test --test tui_integration --features tui -- --nocapture)",
+      "Bash(timeout 60s cargo test test_app_state_initialization --test tui_integration --features tui -- --nocapture)",
+      "Bash(timeout 60s cargo test test_basic_message_handling --test tui_integration --features tui -- --nocapture)",
+      "Bash(timeout 60s cargo test --test tui_form_validation --features tui -- --nocapture)",
+      "Bash(timeout 60s cargo test --test tui_e2e --features tui -- --nocapture)",
+      "Bash(timeout 60s cargo test --test tui_performance --features tui -- --nocapture)",
+      "Bash(/home/austingreen/Documents/botzr/projects/uveddi/scripts/test_results.sh:*)",
+      "Bash(timeout 30s cargo test test_analyze_command_creation --test tui_integration --features tui -- --nocapture)",
+      "Bash(timeout 30s cargo test test_analysis_config_conversion --test tui_integration --features tui -- --nocapture)",
+      "Bash(timeout 30s cargo test test_error_handling_invalid_path --test tui_integration --features tui -- --nocapture)",
+      "Bash(timeout 30s cargo test test_form_validation_empty_path --test tui_form_validation --features tui -- --nocapture)",
+      "Bash(timeout 30s cargo test test_form_validation_invalid_confidence --test tui_form_validation --features tui -- --nocapture)"
     ],
     "deny": []
   }
