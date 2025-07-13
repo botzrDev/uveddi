@@ -67,6 +67,30 @@ pub struct HostState {
     pub resource_limits: ResourceLimits,
 }
 
+/// Wrapper type for WASI context to avoid orphan rule issues
+#[cfg(feature = "wasm-plugins")]
+pub struct HostContext {
+    pub host_state: HostState,
+    pub wasi_ctx: wasmtime_wasi::WasiCtx,
+}
+
+#[cfg(feature = "wasm-plugins")]
+impl wasmtime_wasi::WasiView for HostContext {
+    fn ctx(&mut self) -> &mut wasmtime_wasi::WasiCtx {
+        &mut self.wasi_ctx
+    }
+}
+
+// Implement the required Host traits for HostContext
+#[cfg(feature = "wasm-plugins")]
+impl wasmtime_wasi::bindings::cli::environment::Host for HostContext {}
+
+#[cfg(feature = "wasm-plugins")]
+impl wasmtime_wasi::bindings::cli::exit::Host for HostContext {}
+
+#[cfg(feature = "wasm-plugins")]
+impl wasmtime_wasi::bindings::filesystem::types::Host for HostContext {}
+
 /// Resource limits enforced on plugin execution
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResourceLimits {

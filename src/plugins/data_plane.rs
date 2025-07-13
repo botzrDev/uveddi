@@ -92,10 +92,11 @@ impl AstDataPlane {
 
         if let Some(ref tree) = parsed_file.tree {
             let root_node = tree.root_node();
+            let default_source = String::new();
             let source_bytes = parsed_file
                 .source
                 .as_ref()
-                .unwrap_or(&String::new())
+                .unwrap_or(&default_source)
                 .as_bytes();
 
             fn visit_tree_sitter_node(

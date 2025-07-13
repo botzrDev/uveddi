@@ -8,6 +8,8 @@ use crate::plugins::{
     security::*,
     types::{PluginId, PluginStats, PluginStatus, ResourceLimits},
 };
+use crate::ast::tree_sitter::ParsedFile;
+use crate::models::ArchitecturalIssue;
 use std::{collections::HashMap, path::Path, sync::Arc};
 use tokio::sync::RwLock;
 
@@ -40,8 +42,7 @@ impl WasmPluginEngine {
             Ok(Self {
                 lifecycle_manager: PluginLifecycleManager::new(),
                 registry: PluginRegistry::new(&plugins_dir)
-                    .await
-                    .map_err(|e| PluginError::Registry(e))?,
+                    .await?,
                 data_plane: AstDataPlane::new().map_err(|e| PluginError::DataPlane(e))?,
                 default_security_policy: SecurityPolicy::restrictive(),
                 plugin_adapters: Arc::new(RwLock::new(HashMap::new())),
@@ -68,8 +69,7 @@ impl WasmPluginEngine {
             Ok(Self {
                 lifecycle_manager: PluginLifecycleManager::new(),
                 registry: PluginRegistry::new(plugins_dir)
-                    .await
-                    .map_err(|e| PluginError::Registry(e))?,
+                    .await?,
                 data_plane: AstDataPlane::new().map_err(|e| PluginError::DataPlane(e))?,
                 default_security_policy: security_policy,
                 plugin_adapters: Arc::new(RwLock::new(HashMap::new())),

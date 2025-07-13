@@ -1,7 +1,7 @@
 //! CLI commands for WASM plugin management
 
 #[cfg(feature = "wasm-plugins")]
-use crate::plugins::WasmPluginEngine;
+use crate::plugins::{WasmPluginEngine, PluginManifest, PluginId};
 use clap::{Args, Subcommand};
 use std::path::PathBuf;
 
@@ -119,14 +119,14 @@ impl PluginCommand {
             // Read binary file
             let binary = tokio::fs::read(&binary_path)
                 .await
-                .map_err(|e| crate::error::UveddiError::Io(e))?;
+                .map_err(|e| crate::error::UveddiError::IoError(e))?;
 
             // Read and parse manifest
             let manifest_content = tokio::fs::read_to_string(&manifest_path)
                 .await
-                .map_err(|e| crate::error::UveddiError::Io(e))?;
+                .map_err(|e| crate::error::UveddiError::IoError(e))?;
             let manifest: PluginManifest = toml::from_str(&manifest_content)
-                .map_err(|e| crate::error::UveddiError::PluginError(e.to_string()))?;
+                .map_err(|e| crate::error::UveddiError::PluginError(crate::plugins::errors::PluginError::Configuration(e.to_string())))?;
 
             // Install plugin
             let mut engine = WasmPluginEngine::new().await?;
@@ -167,19 +167,13 @@ impl PluginCommand {
             let mut engine = WasmPluginEngine::new().await?;
 
             // Find plugin by name
-            if let Some(stats) = engine.get_plugin_registry_stats() {
-                // For simplicity, we'll create a plugin ID from the name
-                // In a real implementation, you'd search the registry properly
-                let plugin_id = PluginId::from_name(&plugin_name);
+            let stats = engine.get_registry_stats();
+            // For simplicity, we'll create a plugin ID from the name
+            // In a real implementation, you'd search the registry properly
+            let plugin_id = PluginId::from_name(&plugin_name);
 
-                engine.uninstall_plugin(&plugin_id).await?;
-                println!("Successfully uninstalled plugin '{}'", plugin_name);
-            } else {
-                return Err(crate::error::UveddiError::PluginError(format!(
-                    "Plugin '{}' not found",
-                    plugin_name
-                )));
-            }
+            engine.uninstall_plugin(&plugin_id).await?;
+            println!("Successfully uninstalled plugin '{}'", plugin_name);
         }
 
         #[cfg(not(feature = "wasm-plugins"))]
@@ -222,9 +216,12 @@ impl PluginCommand {
         {
             let engine = WasmPluginEngine::new().await?;
 
-            if let Some(plugin_stats) = engine.get_plugin_stats().await {
+            // Get all loaded plugins and their stats
+            let loaded_plugins = engine.list_loaded_plugins().await;
+            if !loaded_plugins.is_empty() {
                 println!("Plugin Statistics:");
-                for (plugin_id, stats) in plugin_stats {
+                for plugin_id in loaded_plugins {
+                    if let Some(stats) = engine.get_plugin_stats(&plugin_id).await {
                     println!("  Plugin: {}", plugin_id);
                     println!("    Invocations: {}", stats.invocations);
                     println!(
@@ -242,6 +239,7 @@ impl PluginCommand {
                         println!("    Last error: {}", error);
                     }
                     println!();
+                    }
                 }
             } else {
                 println!("No plugin statistics available (plugin engine not initialized)");
@@ -264,7 +262,7 @@ impl PluginCommand {
             let mut engine = WasmPluginEngine::new().await?;
 
             println!("Monitoring plugin resource usage...");
-            let resource_report = engine.monitor_plugin_resources().await?;
+            let resource_report = engine.monitor_resources().await?;
 
             println!("Resource Report:");
             println!(
@@ -314,14 +312,14 @@ impl PluginCommand {
             // Read binary file
             let binary = tokio::fs::read(&binary_path)
                 .await
-                .map_err(|e| crate::error::UveddiError::Io(e))?;
+                .map_err(|e| crate::error::UveddiError::IoError(e))?;
 
             // Read and parse manifest
             let manifest_content = tokio::fs::read_to_string(&manifest_path)
                 .await
-                .map_err(|e| crate::error::UveddiError::Io(e))?;
+                .map_err(|e| crate::error::UveddiError::IoError(e))?;
             let manifest: PluginManifest = toml::from_str(&manifest_content)
-                .map_err(|e| crate::error::UveddiError::PluginError(e.to_string()))?;
+                .map_err(|e| crate::error::UveddiError::PluginError(crate::plugins::errors::PluginError::Configuration(e.to_string())))?;
 
             // Verify plugin
             let verifier = PluginVerifier::new();
@@ -384,7 +382,7 @@ impl PluginCommand {
                 }
                 Err(e) => {
                     println!("Verification failed: {}", e);
-                    return Err(crate::error::UveddiError::PluginError(e.to_string()));
+                    return Err(crate::error::UveddiError::PluginError(crate::plugins::errors::PluginError::Configuration(e.to_string())));
                 }
             }
         }

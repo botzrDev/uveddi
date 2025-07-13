@@ -156,18 +156,18 @@ impl SecurityPolicy {
 
         // Configure standard I/O based on permissions
         if self.has_permission(&Permission::Logging) {
-            builder = builder.inherit_stdout().inherit_stderr();
+            builder.inherit_stdout().inherit_stderr();
         }
 
         // Configure environment variables
         for permission in &self.permissions {
             if let Permission::EnvRead(var) = permission {
                 if var == "*" {
-                    builder = builder.inherit_env();
+                    builder.inherit_env();
                     break;
                 } else {
                     if let Ok(value) = std::env::var(var) {
-                        builder = builder.env(var, &value);
+                        builder.env(var, &value);
                     }
                 }
             }
@@ -177,24 +177,21 @@ impl SecurityPolicy {
         for permission in &self.permissions {
             match permission {
                 Permission::FileRead(path) => {
-                    if let Ok(dir) = wasmtime_wasi::DirPerms::all().open_dir(path) {
-                        builder = builder.preopened_dir(
-                            dir,
-                            wasmtime_wasi::DirPerms::READ,
-                            wasmtime_wasi::FilePerms::READ,
-                            path,
-                        )?;
-                    }
+                    // Use the modern WASI API for directory preopen
+                    builder.preopened_dir(
+                        path,
+                        path.to_string_lossy(),
+                        wasmtime_wasi::DirPerms::READ,
+                        wasmtime_wasi::FilePerms::READ,
+                    )?;
                 }
                 Permission::FileWrite(path) => {
-                    if let Ok(dir) = wasmtime_wasi::DirPerms::all().open_dir(path) {
-                        builder = builder.preopened_dir(
-                            dir,
-                            wasmtime_wasi::DirPerms::all(),
-                            wasmtime_wasi::FilePerms::all(),
-                            path,
-                        )?;
-                    }
+                    builder.preopened_dir(
+                        path,
+                        path.to_string_lossy(),
+                        wasmtime_wasi::DirPerms::all(),
+                        wasmtime_wasi::FilePerms::all(),
+                    )?;
                 }
                 _ => {}
             }
