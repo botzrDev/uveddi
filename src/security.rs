@@ -453,13 +453,14 @@ mod tests {
     use super::*;
     use std::fs;
     use std::os::unix::fs::symlink;
+    use std::path::Path;
     use tempfile::tempdir;
 
     // UV-151: Security test suite for sanitize_path
     #[test]
     fn test_basic_traversal_attempt() {
         let dir = tempdir().unwrap();
-        let result = sanitize_path("../../etc/passwd", dir.path().to_path_buf());
+        let result = sanitize_path(Path::new("../../etc/passwd"), dir.path());
         assert!(matches!(result, Err(crate::error::UveddiError::SecurityError(SecurityError::PathTraversalAttempt))));
     }
 
@@ -474,7 +475,7 @@ mod tests {
         #[cfg(unix)]
         {
             symlink(&target, &link).unwrap();
-            let result = sanitize_path("link.txt", dir.path().to_path_buf());
+            let result = sanitize_path(Path::new("link.txt"), dir.path());
             assert!(result.is_ok());
         }
         
@@ -482,7 +483,7 @@ mod tests {
         {
             // On non-Unix systems, just test a regular file
             fs::write(&link, "safe").unwrap();
-            let result = sanitize_path("link.txt", dir.path().to_path_buf());
+            let result = sanitize_path(Path::new("link.txt"), dir.path());
             assert!(result.is_ok());
         }
     }
@@ -490,7 +491,7 @@ mod tests {
     #[test]
     fn test_null_byte_injection() {
         let dir = tempdir().unwrap();
-        let result = sanitize_path("file\0.txt", dir.path().to_path_buf());
+        let result = sanitize_path(Path::new("file\0.txt"), dir.path());
         assert!(matches!(result, Err(crate::error::UveddiError::SecurityError(SecurityError::InvalidPathComponent))));
     }
 
@@ -499,7 +500,7 @@ mod tests {
         let dir = tempdir().unwrap();
         let file = dir.path().join("unicodé.txt");
         fs::write(&file, "safe").unwrap();
-        let result = sanitize_path("unicodé.txt", dir.path().to_path_buf());
+        let result = sanitize_path(Path::new("unicodé.txt"), dir.path());
         assert!(result.is_ok());
     }
 
@@ -508,7 +509,7 @@ mod tests {
         let dir = tempdir().unwrap();
         let file = dir.path().join(".env");
         fs::write(&file, "secret").unwrap();
-        let result = sanitize_path(".env", dir.path().to_path_buf());
+        let result = sanitize_path(Path::new(".env"), dir.path());
         assert!(matches!(result, Err(crate::error::UveddiError::SecurityError(SecurityError::InvalidPathComponent))));
     }
 
@@ -517,7 +518,7 @@ mod tests {
         let dir = tempdir().unwrap();
         let file = dir.path().join("main.rs");
         fs::write(&file, "fn main() {}\n").unwrap();
-        let result = sanitize_path("main.rs", dir.path().to_path_buf());
+        let result = sanitize_path(Path::new("main.rs"), dir.path());
         assert!(result.is_ok());
     }
 
@@ -532,7 +533,7 @@ mod tests {
         let dir = tempdir().unwrap();
         let file = dir.path().join(".hidden");
         fs::write(&file, "hidden").unwrap();
-        let result = sanitize_path(".hidden", dir.path().to_path_buf());
+        let result = sanitize_path(Path::new(".hidden"), dir.path());
         assert!(matches!(result, Err(crate::error::UveddiError::SecurityError(SecurityError::InvalidPathComponent))));
     }
 
@@ -541,7 +542,7 @@ mod tests {
         let dir = tempdir().unwrap();
         let outside = std::env::temp_dir().join("outside.txt");
         fs::write(&outside, "outside").unwrap();
-        let result = sanitize_path(outside, dir.path().to_path_buf());
+        let result = sanitize_path(&outside, &dir.path().to_path_buf());
         assert!(matches!(result, Err(crate::error::UveddiError::SecurityError(SecurityError::PathTraversalAttempt))));
     }
 
@@ -552,7 +553,7 @@ mod tests {
         fs::create_dir(&nested).unwrap();
         let file = nested.join("file.txt");
         fs::write(&file, "nested").unwrap();
-        let result = sanitize_path("nested/file.txt", dir.path().to_path_buf());
+        let result = sanitize_path(Path::new("nested/file.txt"), dir.path());
         assert!(result.is_ok());
     }
 }

@@ -43,7 +43,6 @@
 //! - Contextual error information
 //! - Suggestions for common issues
 
-use crate::server::run_server;
 use clap::{Parser, Subcommand};
 use color_eyre::eyre::Result;
 use std::sync::Arc;
@@ -107,7 +106,7 @@ fn main() -> Result<()> {
     std::thread::spawn(move || {
         let rt = tokio::runtime::Runtime::new()
             .expect("FATAL [UV-150]: Failed to initialize async runtime. This indicates a critical system resource issue. See error handling policy.");
-        rt.block_on(server::run_server(health_monitor_clone));
+        let _ = rt.block_on(server::run_server(health_monitor_clone));
     });
 
     // TODO: Re-enable when monitoring dependencies are properly configured

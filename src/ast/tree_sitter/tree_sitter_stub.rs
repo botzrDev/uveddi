@@ -324,6 +324,21 @@ impl ParsedFile {
         ));
         cache_path
     }
+
+    /// Get the source code as a string slice
+    pub fn source(&self) -> &str {
+        &self.source
+    }
+
+    /// Get the file path
+    pub fn path(&self) -> &Path {
+        &self.file_path
+    }
+
+    /// Extract a summary for debugging
+    pub fn summary(&self) -> String {
+        format!("Parsed {} (stub implementation)", self.file_path.display())
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

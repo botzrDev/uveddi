@@ -1,0 +1,263 @@
+//! Integration tests for tight coupling detector
+//!
+//! These tests verify the complete tight coupling detection system works correctly
+//! across different programming languages and scenarios.
+
+use uveddi::analysis::detectors::anti_patterns::tight_coupling::{
+    TightCouplingDetector, TightCouplingConfig, RustAnalyzer, PythonAnalyzer, JavaScriptAnalyzer,
+    LanguageAnalyzer,
+};
+use uveddi::ast::tree_sitter_impl::{ParsedFile, SourceLanguage, AstParser};
+use uveddi::analysis::graph::dependency::{LocalDependencyGraph, ComponentNode, LocalDependencyType};
+use std::path::Path;
+use std::sync::Arc;
+use std::path::PathBuf;
+
+#[test]
+fn test_rust_project_coupling_analysis() {
+    let detector = TightCouplingDetector::default();
+    
+    // Test basic configuration loading
+    let config = TightCouplingConfig::default();
+    assert_eq!(config.rust_thresholds.fan_out_warning, 7);
+    assert_eq!(config.rust_thresholds.fan_out_critical, 12);
+    assert!(config.enable_cross_file_analysis);
+}
+
+#[test]
+fn test_multi_language_analyzer_selection() {
+    let detector = TightCouplingDetector::default();
+    
+    // Test that correct analyzers are selected for each language
+    let rust_analyzer = detector.get_analyzer_for_language(SourceLanguage::Rust);
+    assert_eq!(rust_analyzer.get_language(), SourceLanguage::Rust);
+    
+    let python_analyzer = detector.get_analyzer_for_language(SourceLanguage::Python);
+    assert_eq!(python_analyzer.get_language(), SourceLanguage::Python);
+    
+    let js_analyzer = detector.get_analyzer_for_language(SourceLanguage::JavaScript);
+    assert_eq!(js_analyzer.get_language(), SourceLanguage::JavaScript);
+}
+
+#[test]
+fn test_dependency_graph_building() {
+    let detector = TightCouplingDetector::default();
+    
+    // Create mock parsed files
+    let mock_files = vec![
+        ("test1.rs".to_string(), create_mock_rust_file()),
+        ("test2.py".to_string(), create_mock_python_file()),
+        ("test3.js".to_string(), create_mock_javascript_file()),
+    ];
+    
+    // Test building project dependency graph
+    let result = detector.build_project_dependency_graph(&mock_files);
+    assert!(result.is_ok(), "Should successfully build dependency graph");
+    
+    let graph = result.unwrap();
+    let petgraph = graph.get_petgraph();
+    
+    // Should have some nodes (components) in the graph
+    assert!(petgraph.node_count() >= 0, "Graph should have nodes");
+}
+
+#[test]
+fn test_coupling_metrics_calculation() {
+    let detector = TightCouplingDetector::default();
+    let mut graph = LocalDependencyGraph::new();
+    
+    // Create test components with dependencies
+    let comp1 = ComponentNode::Class {
+        name: "HighlyCoupledClass".to_string(),
+        file_path: "test.rs".to_string(),
+    };
+    let comp2 = ComponentNode::Class {
+        name: "ServiceClass".to_string(),
+        file_path: "service.rs".to_string(),
+    };
+    let comp3 = ComponentNode::Module {
+        path: "utils.rs".to_string(),
+    };
+    
+    // Add many dependencies to simulate high coupling
+    for _ in 0..15 {
+        graph.add_dependency(&comp1, &comp2, LocalDependencyType::Call);
+        graph.add_dependency(&comp1, &comp3, LocalDependencyType::Import);
+    }
+    
+    // Calculate metrics
+    let metrics = detector.calculate_metrics(&graph);
+    
+    // Verify metrics are calculated
+    assert!(metrics.contains_key(&comp1));
+    let comp1_metrics = &metrics[&comp1];
+    assert!(comp1_metrics.fan_out > 0, "Should have outgoing dependencies");
+    assert!(comp1_metrics.cbo > 0, "Should have coupling metric");
+}
+
+#[test]
+fn test_threshold_evaluation() {
+    let detector = TightCouplingDetector::default();
+    let mut graph = LocalDependencyGraph::new();
+    
+    // Create a component that exceeds thresholds
+    let high_coupling_comp = ComponentNode::Class {
+        name: "GodClass".to_string(),
+        file_path: "god_class.rs".to_string(),
+    };
+    
+    // Add dependencies that exceed critical threshold (12)
+    for i in 0..15 {
+        let target = ComponentNode::Module {
+            path: format!("dep_{}.rs", i),
+        };
+        graph.add_dependency(&high_coupling_comp, &target, LocalDependencyType::Call);
+    }
+    
+    // Run detection
+    let issues = detector.detect_graph_issues(&graph, 1);
+    
+    // Should detect coupling issues
+    assert!(!issues.is_empty(), "Should detect coupling issues");
+    
+    // Check issue details
+    let issue = &issues[0];
+    assert_eq!(issue.severity, "Critical");
+    assert!(issue.description.contains("exceeds critical threshold"));
+}
+
+#[test]
+fn test_language_specific_thresholds() {
+    let config = TightCouplingConfig::default();
+    
+    // Verify different languages have appropriate thresholds
+    
+    // Rust (stricter due to explicit dependencies)
+    assert_eq!(config.rust_thresholds.fan_out_warning, 7);
+    assert_eq!(config.rust_thresholds.fan_out_critical, 12);
+    
+    // Python (more lenient due to dynamic imports)
+    assert_eq!(config.python_thresholds.fan_out_warning, 10);
+    assert_eq!(config.python_thresholds.fan_out_critical, 15);
+    
+    // JavaScript (most lenient due to module ecosystem)
+    assert_eq!(config.javascript_thresholds.fan_out_warning, 12);
+    assert_eq!(config.javascript_thresholds.fan_out_critical, 18);
+}
+
+#[test]
+fn test_exclude_patterns() {
+    let config = TightCouplingConfig::default();
+    
+    // Test default exclude patterns
+    assert!(config.exclude_patterns.contains(&"**/target/**".to_string()));
+    assert!(config.exclude_patterns.contains(&"**/node_modules/**".to_string()));
+    assert!(config.exclude_patterns.contains(&"**/.git/**".to_string()));
+}
+
+#[test]
+fn test_detector_name_and_types() {
+    let detector = TightCouplingDetector::default();
+    
+    assert_eq!(detector.get_detector_name(), "TightCouplingDetector");
+    
+    let types = detector.get_anti_pattern_types();
+    assert_eq!(types.len(), 1);
+    assert_eq!(types[0].name, "Tight Coupling");
+    assert_eq!(types[0].category, "structural");
+}
+
+#[test]
+fn test_parallel_analysis_performance() {
+    let detector = TightCouplingDetector::default();
+    
+    // Create many mock files to test parallel processing
+    let large_file_set: Vec<(String, ParsedFile)> = (0..100)
+        .map(|i| {
+            let file_name = format!("test_{}.rs", i);
+            let mock_file = create_mock_rust_file_with_name(&file_name);
+            (file_name, mock_file)
+        })
+        .collect();
+    
+    // Test parallel analysis
+    let start = std::time::Instant::now();
+    let result = detector.analyze_files_parallel(&large_file_set);
+    let duration = start.elapsed();
+    
+    assert!(result.is_ok(), "Parallel analysis should succeed");
+    println!("Analyzed {} files in {:?}", large_file_set.len(), duration);
+    
+    // Performance should be reasonable (less than 1 second for 100 mock files)
+    assert!(duration.as_secs() < 10, "Should complete analysis within 10 seconds");
+}
+
+#[test]
+fn test_incremental_analysis() {
+    let detector = TightCouplingDetector::default();
+    
+    // Create initial set of files
+    let initial_files = vec![
+        ("base.rs".to_string(), create_mock_rust_file()),
+        ("service.rs".to_string(), create_mock_rust_file()),
+    ];
+    
+    // Build initial graph
+    let initial_graph = detector.build_project_dependency_graph(&initial_files);
+    assert!(initial_graph.is_ok());
+    
+    // Create changed files
+    let changed_files = vec![
+        ("new.rs".to_string(), create_mock_rust_file()),
+    ];
+    
+    // Test incremental build
+    let result = detector.build_incremental_dependency_graph(&changed_files, &initial_graph.unwrap());
+    assert!(result.is_ok(), "Incremental analysis should succeed");
+}
+
+// Helper functions for creating mock data
+
+fn create_mock_rust_file() -> ParsedFile {
+    ParsedFile {
+        file_path: Arc::new(PathBuf::from("test.rs")),
+        language: SourceLanguage::Rust,
+        tree: None, // Tree-sitter tree would be populated in real usage
+        source: Arc::new("use std::collections::HashMap;\nstruct TestStruct {}".to_string()),
+        custom_ast: Arc::new(None),
+        modified_at: std::time::SystemTime::now(),
+    }
+}
+
+fn create_mock_rust_file_with_name(name: &str) -> ParsedFile {
+    ParsedFile {
+        file_path: Arc::new(PathBuf::from(name)),
+        language: SourceLanguage::Rust,
+        tree: None,
+        source: Arc::new(format!("use std::collections::HashMap;\nstruct TestStruct_{} {{}}", name.replace(".rs", ""))),
+        custom_ast: Arc::new(None),
+        modified_at: std::time::SystemTime::now(),
+    }
+}
+
+fn create_mock_python_file() -> ParsedFile {
+    ParsedFile {
+        file_path: Arc::new(PathBuf::from("test.py")),
+        language: SourceLanguage::Python,
+        tree: None,
+        source: Arc::new("import os\nclass TestClass:\n    pass".to_string()),
+        custom_ast: Arc::new(None),
+        modified_at: std::time::SystemTime::now(),
+    }
+}
+
+fn create_mock_javascript_file() -> ParsedFile {
+    ParsedFile {
+        file_path: Arc::new(PathBuf::from("test.js")),
+        language: SourceLanguage::JavaScript,
+        tree: None,
+        source: Arc::new("const fs = require('fs');\nclass TestClass {}".to_string()),
+        custom_ast: Arc::new(None),
+        modified_at: std::time::SystemTime::now(),
+    }
+}

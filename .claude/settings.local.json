@@ -32,7 +32,8 @@
       "Bash(rg:*)",
       "Bash(cargo clean:*)",
       "Bash(grep:*)",
-      "Bash(cargo rustc:*)"
+      "Bash(cargo rustc:*)",
+      "Bash(cargo:*)"
     ],
     "deny": []
   }
