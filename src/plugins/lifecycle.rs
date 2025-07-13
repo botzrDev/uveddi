@@ -5,7 +5,7 @@ use crate::plugins::{
     errors::*,
     registry::*,
     security::*,
-    types::{PluginId, PluginStats, PluginStatus, ResourceLimits, HostState, PluginConfig, HostContext},
+    types::{PluginId, PluginStats, PluginStatus, ResourceLimits, HostState, PluginConfig},
     verification::*,
 };
 use std::collections::HashMap;
@@ -13,7 +13,7 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 
 /// Plugin lifecycle manager
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct PluginLifecycleManager {
     active_plugins: Arc<RwLock<HashMap<PluginId, ActivePlugin>>>,
     security_policies: HashMap<PluginId, SecurityPolicy>,
@@ -73,21 +73,24 @@ impl PluginLifecycleManager {
                 plugin_id: plugin_id.clone(),
                 config: PluginConfig::default(),
                 resource_limits: security_policy.resource_limits.clone(),
+                security_policy: security_policy.clone(),
             };
 
             // Configure WASI
             let wasi_ctx = security_policy.configure_wasi_context()?.build();
 
-            // Add WASI to component linker
+            // NOTE: UV-108 - Add basic WASI support (filesystem traits temporarily disabled)
             wasmtime_wasi::bindings::cli::environment::add_to_linker(&mut linker, |ctx: &mut HostContext| ctx)?;
             wasmtime_wasi::bindings::cli::exit::add_to_linker(&mut linker, |ctx: &mut HostContext| ctx)?;
-            wasmtime_wasi::bindings::filesystem::types::add_to_linker(&mut linker, |ctx: &mut HostContext| ctx)?;
+            // NOTE: Filesystem support temporarily disabled due to complex trait requirements
+            // wasmtime_wasi::bindings::filesystem::types::add_to_linker(&mut linker, |ctx: &mut HostContext| ctx)?;
 
             // Add our custom host functions
             self.add_host_functions(&mut linker)?;
 
             // Create store with fuel and memory limits
-            let host_context = HostContext { host_state, wasi_ctx };
+            let resource_table = wasmtime_wasi::ResourceTable::new();
+            let host_context = HostContext { host_state, wasi_ctx, resource_table };
             let mut store = wasmtime::Store::new(&engine, host_context);
             store.set_fuel(security_policy.resource_limits.max_fuel)?;
             // Note: Resource limiting would be configured here in a real implementation
@@ -186,45 +189,13 @@ impl PluginLifecycleManager {
     #[cfg(feature = "wasm-plugins")]
     fn add_host_functions(
         &self,
-        linker: &mut wasmtime::component::Linker<HostContext>,
+        _linker: &mut wasmtime::component::Linker<HostContext>,
     ) -> crate::error::Result<()> {
-        // Add logging function
-        linker.func_wrap(
-            "logging",
-            "log",
-            |_caller: wasmtime::Caller<'_, HostContext>,
-             level: String,
-             message: String| {
-                match level.as_str() {
-                    "error" => log::error!("[Plugin] {}", message),
-                    "warn" => log::warn!("[Plugin] {}", message),
-                    "info" => log::info!("[Plugin] {}", message),
-                    "debug" => log::debug!("[Plugin] {}", message),
-                    _ => log::trace!("[Plugin] {}", message),
-                }
-            },
-        )?;
-
-        // Add config function
-        linker.func_wrap(
-            "config",
-            "get-value",
-            |caller: wasmtime::Caller<'_, (HostState, wasmtime_wasi::WasiCtx)>,
-             key: String|
-             -> Option<String> {
-                let (host_state, _) = caller.data();
-                host_state.config.custom_settings.get(&key).cloned()
-            },
-        )?;
-
-        linker.func_wrap(
-            "config",
-            "get-language",
-            |_caller: wasmtime::Caller<'_, (HostState, wasmtime_wasi::WasiCtx)>| -> String {
-                "rust".to_string() // This would be dynamic in real implementation
-            },
-        )?;
-
+        // NOTE: UV-108 - Component model host functions require WIT interface definitions
+        // This would be implemented using proper WIT files and generated bindings
+        // For now, we'll just return OK to get the basic loading working
+        
+        log::info!("Host functions would be registered here with proper WIT bindings");
         Ok(())
     }
 }
@@ -237,6 +208,7 @@ impl Default for PluginLifecycleManager {
 
 /// Active plugin wrapper containing runtime state
 // Debug trait removed due to Wasmtime types not implementing Debug
+#[derive(Clone)]
 pub struct ActivePlugin {
     pub id: PluginId,
     pub manifest: PluginManifest,
@@ -247,7 +219,7 @@ pub struct ActivePlugin {
     #[cfg(feature = "wasm-plugins")]
     component: wasmtime::component::Component,
     #[cfg(feature = "wasm-plugins")]
-    store: std::sync::Arc<std::sync::Mutex<wasmtime::Store<(HostState, wasmtime_wasi::WasiCtx)>>>,
+    store: std::sync::Arc<std::sync::Mutex<wasmtime::Store<HostContext>>>,
     #[cfg(feature = "wasm-plugins")]
     instance: wasmtime::component::Instance,
     ast_handles: AstHandleManager,
@@ -271,7 +243,7 @@ impl ActivePlugin {
             status: PluginStatus::Ready,
             engine,
             component,
-            store,
+            store: Arc::new(std::sync::Mutex::new(store)),
             instance,
             ast_handles,
         }

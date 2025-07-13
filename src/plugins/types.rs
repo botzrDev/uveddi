@@ -3,6 +3,9 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use uuid::Uuid;
+#[cfg(feature = "wasm-plugins")]
+use wasmtime_wasi::TrappableError;
+use crate::plugins::SecurityPolicy;
 
 /// Unique identifier for a plugin instance
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -65,6 +68,7 @@ pub struct HostState {
     pub plugin_id: PluginId,
     pub config: PluginConfig,
     pub resource_limits: ResourceLimits,
+    pub security_policy: SecurityPolicy, // Add this field
 }
 
 /// Wrapper type for WASI context to avoid orphan rule issues
@@ -72,6 +76,7 @@ pub struct HostState {
 pub struct HostContext {
     pub host_state: HostState,
     pub wasi_ctx: wasmtime_wasi::WasiCtx,
+    pub resource_table: wasmtime_wasi::ResourceTable, // Added for WASI Host trait
 }
 
 #[cfg(feature = "wasm-plugins")]
@@ -79,17 +84,68 @@ impl wasmtime_wasi::WasiView for HostContext {
     fn ctx(&mut self) -> &mut wasmtime_wasi::WasiCtx {
         &mut self.wasi_ctx
     }
+    fn table(&mut self) -> &mut wasmtime_wasi::ResourceTable {
+        &mut self.resource_table
+    }
 }
 
 // Implement the required Host traits for HostContext
 #[cfg(feature = "wasm-plugins")]
-impl wasmtime_wasi::bindings::cli::environment::Host for HostContext {}
+impl wasmtime_wasi::bindings::cli::environment::Host for HostContext {
+    fn get_environment(&mut self) -> Result<Vec<(String, String)>, anyhow::Error> {
+        // NOTE: UV-108 - Security policy controls environment variable access
+        let mut env_vars = Vec::new();
+        // NOTE: UV-108 - Use security_policy.permissions, not resource_limits.permissions
+        for permission in &self.host_state.security_policy.permissions {
+            if let crate::plugins::security::Permission::EnvRead(var) = permission {
+                if var == "*" {
+                    env_vars.extend(std::env::vars());
+                    break;
+                } else if let Ok(value) = std::env::var(var) {
+                    env_vars.push((var.clone(), value));
+                }
+            }
+        }
+        Ok(env_vars)
+    }
+    fn get_arguments(&mut self) -> Result<Vec<String>, anyhow::Error> {
+        // NOTE: UV-108 - Use custom_settings for arguments if present
+        if let Some(args) = self.host_state.config.custom_settings.get("arguments") {
+            Ok(args.split_whitespace().map(|s| s.to_string()).collect())
+        } else {
+            Ok(Vec::new())
+        }
+    }
+    fn initial_cwd(&mut self) -> Result<Option<String>, anyhow::Error> {
+        Ok(Some("/tmp/plugin_workspace".to_string()))
+    }
+}
 
 #[cfg(feature = "wasm-plugins")]
-impl wasmtime_wasi::bindings::cli::exit::Host for HostContext {}
+impl wasmtime_wasi::bindings::cli::exit::Host for HostContext {
+    fn exit(&mut self, status: Result<(), ()>) -> Result<(), anyhow::Error> {
+        match status {
+            Ok(()) => log::info!("Plugin {} exited successfully", self.host_state.plugin_id),
+            Err(()) => log::warn!("Plugin {} exited with error", self.host_state.plugin_id),
+        }
+        Ok(())
+    }
+}
 
-#[cfg(feature = "wasm-plugins")]
-impl wasmtime_wasi::bindings::filesystem::types::Host for HostContext {}
+// NOTE: UV-108 - Temporarily removing complex filesystem traits to focus on core functionality
+// These would be implemented for full WASI filesystem support
+// #[cfg(feature = "wasm-plugins")]
+// impl wasmtime_wasi::bindings::filesystem::types::Host for HostContext { ... }
+
+// NOTE: UV-108 - Temporarily removing complex filesystem traits to focus on core functionality
+// These would be implemented for full WASI filesystem support
+// #[cfg(feature = "wasm-plugins")]
+// impl wasmtime_wasi::bindings::filesystem::types::HostDirectoryEntryStream for HostContext { ... }
+
+// NOTE: UV-108 - Temporarily removing complex filesystem traits to focus on core functionality
+// These would be implemented for full WASI filesystem support
+// #[cfg(feature = "wasm-plugins")]
+// impl wasmtime_wasi::bindings::filesystem::types::HostDescriptor for HostContext { ... }
 
 /// Resource limits enforced on plugin execution
 #[derive(Debug, Clone, Serialize, Deserialize)]

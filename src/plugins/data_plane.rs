@@ -92,12 +92,7 @@ impl AstDataPlane {
 
         if let Some(ref tree) = parsed_file.tree {
             let root_node = tree.root_node();
-            let default_source = String::new();
-            let source_bytes = parsed_file
-                .source
-                .as_ref()
-                .unwrap_or(&default_source)
-                .as_bytes();
+            let source_bytes = parsed_file.source.as_bytes();
 
             fn visit_tree_sitter_node(
                 node: tree_sitter::Node,
@@ -160,7 +155,7 @@ impl AstDataPlane {
                 None,
                 &mut nodes,
                 &mut node_id,
-                &parsed_file.file_path.to_string(),
+                &parsed_file.file_path.as_ref().display().to_string(),
                 &format!("{:?}", parsed_file.language),
                 0,
                 source_bytes,
@@ -204,7 +199,7 @@ pub struct AstInfo {
 }
 
 /// AST handle manager for tracking handles in plugin memory
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct AstHandleManager {
     handles: HashMap<u32, AstHandleData>,
     next_id: u32,

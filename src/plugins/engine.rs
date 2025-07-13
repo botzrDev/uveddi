@@ -14,7 +14,7 @@ use std::{collections::HashMap, path::Path, sync::Arc};
 use tokio::sync::RwLock;
 
 /// Main WASM plugin engine
-#[derive(Debug)]
+// Debug removed due to PluginLifecycleManager not implementing Debug
 pub struct WasmPluginEngine {
     lifecycle_manager: PluginLifecycleManager,
     registry: PluginRegistry,
@@ -266,7 +266,8 @@ impl WasmPluginEngine {
 }
 
 /// Adapter that implements AnalysisDetector for WASM plugins
-#[derive(Debug, Clone)]
+// Debug removed due to PluginLifecycleManager not implementing Debug
+#[derive(Clone)]
 pub struct WasmPluginAdapter {
     plugin_id: PluginId,
     manifest: PluginManifest,
