@@ -7,9 +7,12 @@
 //! - Error handling and notifications
 
 pub mod logo;
-// pub mod form_inputs; // Will be implemented in U2
+pub mod form_inputs;
 
 pub use logo::UveddiLogo;
+pub use form_inputs::{TextInput, Toggle, Dropdown, NumericInput, PathPicker, ValidationResult};
 
-// TODO: Implement reusable UI components
-// Components will be added as separate files in U2 and other tasks
+// TODO: Add more reusable UI components as needed
+// - Progress bars and gauges
+// - Table/list components
+// - Modal dialogs
