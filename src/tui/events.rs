@@ -163,10 +163,13 @@ impl EventHandler {
     }
     
     /// Handle keys for main menu screen
-    fn handle_main_menu_keys(&self, key_event: KeyEvent, _app_state: &AppState) -> Vec<AppMessage> {
-        // Main menu key handling will be delegated to the MainMenu component
-        // For now, just pass the key event through
-        vec![AppMessage::KeyPressed(key_event)]
+    fn handle_main_menu_keys(&self, key_event: KeyEvent, app_state: &AppState) -> Vec<AppMessage> {
+        use crate::tui::ui::main_menu::MainMenu;
+        
+        // Delegate to MainMenu component for keyboard handling
+        let main_menu = MainMenu::new();
+        let mut app_state_copy = app_state.clone();
+        main_menu.handle_key_input(key_event.code, &mut app_state_copy)
     }
     
     /// Handle keys for analyze form screen

@@ -7,31 +7,36 @@
 //! - Reusable UI component library
 
 pub mod main_menu;
-pub mod analyze_form;
-pub mod config_editor;
-pub mod report_viewer;
+// pub mod analyze_form;     // Will be implemented in later tasks
+// pub mod config_editor;    // Will be implemented in later tasks
+// pub mod report_viewer;    // Will be implemented in later tasks
 pub mod components;
 
 use ratatui::prelude::*;
 use crate::tui::app::{AppState, AppScreen};
+use self::main_menu::MainMenu;
 
 /// Main UI renderer that coordinates all components
 pub fn render(frame: &mut Frame, app_state: &AppState) {
     match app_state.current_screen {
         AppScreen::MainMenu => {
-            // TODO: Use MainMenu component when implemented in U1
-            render_placeholder(frame, "Main Menu - Coming Soon!");
+            let main_menu = MainMenu::new();
+            main_menu.render(frame, frame.area(), app_state);
         }
         AppScreen::AnalyzeForm => {
+            // TODO: Implement in later task
             render_placeholder(frame, "Analyze Form - Coming Soon!");
         }
         AppScreen::ConfigEditor => {
+            // TODO: Implement in later task
             render_placeholder(frame, "Config Editor - Coming Soon!");
         }
         AppScreen::ReportViewer => {
+            // TODO: Implement in later task
             render_placeholder(frame, "Report Viewer - Coming Soon!");
         }
         AppScreen::PluginManager => {
+            // TODO: Implement in later task
             render_placeholder(frame, "Plugin Manager - Coming Soon!");
         }
     }
@@ -46,13 +51,13 @@ fn render_placeholder(frame: &mut Frame, message: &str) {
     let placeholder = Paragraph::new(vec![
         Line::from(message),
         Line::from(""),
-        Line::from("Press 'q' to quit, 'Esc' to return to main menu"),
+        Line::from("Press Esc to return to main menu"),
         Line::from("Press 'F1' for help"),
     ])
     .block(
         Block::default()
             .borders(Borders::ALL)
-            .title("Uveddi TUI")
+            .title("Under Development")
             .style(Style::default().fg(Color::Yellow)),
     )
     .style(Style::default().fg(Color::Gray))

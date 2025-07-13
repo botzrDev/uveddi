@@ -26,7 +26,7 @@ pub enum AppScreen {
 ///
 /// This struct represents the single source of truth for the entire TUI application.
 /// All state changes must go through the update function to maintain predictability.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct AppState {
     /// Current active screen
     pub current_screen: AppScreen,
