@@ -40,7 +40,7 @@ use crate::error::UveddiError;
 /// This struct defines all the command-line options available for the
 /// `analyze` command, including input paths, output configuration,
 /// and AI integration settings.
-#[derive(Args)]
+#[derive(Args, Debug, Clone, PartialEq)]
 pub struct AnalyzeCommand {
     /// Path to the project or directory to analyze
     ///

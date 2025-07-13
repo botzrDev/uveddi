@@ -7,14 +7,14 @@
 //! - Reusable UI component library
 
 pub mod main_menu;
-// pub mod analyze_form;     // Will be implemented in later tasks
+pub mod analyze_form;
 // pub mod config_editor;    // Will be implemented in later tasks
 // pub mod report_viewer;    // Will be implemented in later tasks
 pub mod components;
 
 use ratatui::prelude::*;
 use crate::tui::app::{AppState, AppScreen};
-use self::main_menu::MainMenu;
+use self::{main_menu::MainMenu, analyze_form::AnalyzeForm};
 
 /// Main UI renderer that coordinates all components
 pub fn render(frame: &mut Frame, app_state: &AppState) {
@@ -24,8 +24,8 @@ pub fn render(frame: &mut Frame, app_state: &AppState) {
             main_menu.render(frame, frame.area(), app_state);
         }
         AppScreen::AnalyzeForm => {
-            // TODO: Implement in later task
-            render_placeholder(frame, "Analyze Form - Coming Soon!");
+            let analyze_form = AnalyzeForm::new();
+            analyze_form.render(frame, frame.area(), app_state);
         }
         AppScreen::ConfigEditor => {
             // TODO: Implement in later task

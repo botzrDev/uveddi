@@ -90,6 +90,7 @@ impl AppState {
             AppMessage::ThemeChanged(theme) => self.handle_theme_change(theme),
             AppMessage::ValidationError(error) => self.handle_validation_error(error),
             AppMessage::ValidationCleared => self.handle_validation_cleared(),
+            AppMessage::StartAnalysis(command) => self.handle_start_analysis(command),
             AppMessage::AnalysisStarted => self.handle_analysis_started(),
             AppMessage::AnalysisCompleted(result) => self.handle_analysis_completed(result),
             AppMessage::AnalysisError(error) => self.handle_analysis_error(error),
@@ -250,6 +251,17 @@ impl AppState {
     fn handle_validation_cleared(&mut self) -> Vec<AppMessage> {
         self.error_message = None;
         vec![]
+    }
+    
+    /// Handle start analysis command
+    fn handle_start_analysis(&mut self, command: crate::cli::analyze_command::AnalyzeCommand) -> Vec<AppMessage> {
+        self.status_message = Some(format!("Starting analysis of: {}", command.path.display()));
+        // TODO: In a real implementation, this would:
+        // 1. Validate the command
+        // 2. Execute the analysis in a background thread
+        // 3. Navigate to a progress/results screen
+        // For now, just show a status message and navigate back to main menu
+        vec![AppMessage::AnalysisStarted]
     }
     
     /// Handle analysis started

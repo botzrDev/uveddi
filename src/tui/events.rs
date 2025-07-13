@@ -174,8 +174,66 @@ impl EventHandler {
     
     /// Handle keys for analyze form screen
     fn handle_analyze_form_keys(&self, key_event: KeyEvent, _app_state: &AppState) -> Vec<AppMessage> {
-        // This will be implemented when the analyze form is created
-        vec![AppMessage::KeyPressed(key_event)]
+        use crate::tui::ui::analyze_form::AnalyzeForm;
+        use ratatui::crossterm::event::{KeyCode as RatatuiKeyCode, KeyModifiers as RatatuiKeyModifiers, KeyEvent as RatatuiKeyEvent};
+        use crossterm::event::{KeyCode, KeyModifiers};
+        
+        // Convert crossterm KeyEvent to ratatui's crossterm KeyEvent
+        let ratatui_key_code = match key_event.code {
+            KeyCode::Backspace => RatatuiKeyCode::Backspace,
+            KeyCode::Enter => RatatuiKeyCode::Enter,
+            KeyCode::Left => RatatuiKeyCode::Left,
+            KeyCode::Right => RatatuiKeyCode::Right,
+            KeyCode::Up => RatatuiKeyCode::Up,
+            KeyCode::Down => RatatuiKeyCode::Down,
+            KeyCode::Home => RatatuiKeyCode::Home,
+            KeyCode::End => RatatuiKeyCode::End,
+            KeyCode::PageUp => RatatuiKeyCode::PageUp,
+            KeyCode::PageDown => RatatuiKeyCode::PageDown,
+            KeyCode::Tab => RatatuiKeyCode::Tab,
+            KeyCode::BackTab => RatatuiKeyCode::BackTab,
+            KeyCode::Delete => RatatuiKeyCode::Delete,
+            KeyCode::Insert => RatatuiKeyCode::Insert,
+            KeyCode::F(n) => RatatuiKeyCode::F(n),
+            KeyCode::Char(c) => RatatuiKeyCode::Char(c),
+            KeyCode::Null => RatatuiKeyCode::Null,
+            KeyCode::Esc => RatatuiKeyCode::Esc,
+            KeyCode::CapsLock => RatatuiKeyCode::CapsLock,
+            KeyCode::Menu => RatatuiKeyCode::Menu,
+            KeyCode::ScrollLock => RatatuiKeyCode::ScrollLock,
+            KeyCode::NumLock => RatatuiKeyCode::NumLock,
+            KeyCode::PrintScreen => RatatuiKeyCode::PrintScreen,
+            KeyCode::Pause => RatatuiKeyCode::Pause,
+            KeyCode::KeypadBegin => RatatuiKeyCode::KeypadBegin,
+            KeyCode::Media(_) => RatatuiKeyCode::Null, // Map media keys to null for simplicity
+            KeyCode::Modifier(_) => RatatuiKeyCode::Null, // Map modifier keys to null
+        };
+        
+        let mut ratatui_modifiers = RatatuiKeyModifiers::empty();
+        if key_event.modifiers.contains(KeyModifiers::SHIFT) {
+            ratatui_modifiers |= RatatuiKeyModifiers::SHIFT;
+        }
+        if key_event.modifiers.contains(KeyModifiers::CONTROL) {
+            ratatui_modifiers |= RatatuiKeyModifiers::CONTROL;
+        }
+        if key_event.modifiers.contains(KeyModifiers::ALT) {
+            ratatui_modifiers |= RatatuiKeyModifiers::ALT;
+        }
+        if key_event.modifiers.contains(KeyModifiers::SUPER) {
+            ratatui_modifiers |= RatatuiKeyModifiers::SUPER;
+        }
+        if key_event.modifiers.contains(KeyModifiers::HYPER) {
+            ratatui_modifiers |= RatatuiKeyModifiers::HYPER;
+        }
+        if key_event.modifiers.contains(KeyModifiers::META) {
+            ratatui_modifiers |= RatatuiKeyModifiers::META;
+        }
+        
+        let ratatui_key_event = RatatuiKeyEvent::new(ratatui_key_code, ratatui_modifiers);
+        
+        // Delegate to AnalyzeForm component for keyboard handling
+        let mut analyze_form = AnalyzeForm::new();
+        analyze_form.handle_key(ratatui_key_event)
     }
     
     /// Handle keys for config editor screen

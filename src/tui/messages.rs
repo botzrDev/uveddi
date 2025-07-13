@@ -5,6 +5,7 @@
 //! message definition duplication.
 
 use crossterm::event::KeyEvent;
+use crate::cli::analyze_command::AnalyzeCommand;
 
 /// All possible messages that can trigger state changes in the TUI
 #[derive(Debug, Clone, PartialEq)]
@@ -43,6 +44,7 @@ pub enum AppMessage {
     ValidationCleared,
     
     /// Analysis workflow
+    StartAnalysis(AnalyzeCommand),
     AnalysisStarted,
     AnalysisCompleted(String),
     AnalysisError(String),

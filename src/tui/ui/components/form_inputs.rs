@@ -480,6 +480,11 @@ impl NumericInput {
         self.text_input.value().parse().ok()
     }
     
+    /// Set the numeric value
+    pub fn set_value(&mut self, value: &str) {
+        self.text_input.set_value(value);
+    }
+    
     /// Set focus state
     pub fn set_focused(&mut self, focused: bool) {
         self.text_input.set_focused(focused);

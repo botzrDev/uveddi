@@ -34,7 +34,8 @@
       "Bash(grep:*)",
       "Bash(cargo rustc:*)",
       "Bash(cargo:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": []
   }
