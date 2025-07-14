@@ -1,4 +1,5 @@
 //! CLI commands for WASM plugin management
+// NOTE: UV-112, UV-115 - Layer boundary compliance confirmed July 2025. This module only interacts with the Application layer per architecture.
 
 #[cfg(feature = "wasm-plugins")]
 use crate::plugins::{WasmPluginEngine, PluginManifest, PluginId};

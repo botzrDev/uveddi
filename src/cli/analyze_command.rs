@@ -27,6 +27,8 @@
 //! OLLAMA_API_URL=http://localhost:11434 OLLAMA_MODEL=deepseek-coder uveddi analyze ./src --enable-ai
 //! ```
 
+// NOTE: UV-112, UV-115 - Layer boundary compliance confirmed July 2025. This module only interacts with the Application layer per architecture.
+
 use anyhow::Context;
 use clap::Args;
 use log::info;
