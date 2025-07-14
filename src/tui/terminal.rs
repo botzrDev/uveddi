@@ -76,17 +76,17 @@ impl TerminalManager {
 /// This function:
 /// - Enables raw mode for direct key capture
 /// - Enters alternate screen to preserve user's terminal content
-/// - Hides the cursor for cleaner appearance
-/// - Optionally enables mouse capture
+/// - Shows the cursor for form input visibility
+/// - Enables mouse capture
 pub fn setup_terminal() -> Result<Terminal<CrosstermBackend<Stdout>>> {
     // Enable raw mode for direct key input
     enable_raw_mode()?;
     
-    // Enter alternate screen and hide cursor
+    // Enter alternate screen and show cursor for form inputs
     execute!(
         io::stdout(),
         EnterAlternateScreen,
-        Hide,
+        Show,
         EnableMouseCapture
     )?;
     

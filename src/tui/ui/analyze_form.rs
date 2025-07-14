@@ -682,9 +682,9 @@ impl AnalyzeForm {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
-                Constraint::Length(4), // Path input
-                Constraint::Length(4), // Output format
-                Constraint::Length(4), // Output file
+                Constraint::Length(5), // Path input (20% bigger: 4 -> 5)
+                Constraint::Length(5), // Output format (20% bigger: 4 -> 5)
+                Constraint::Length(5), // Output file (20% bigger: 4 -> 5)
                 Constraint::Min(0),    // Remaining space
             ])
             .split(area);
@@ -699,9 +699,9 @@ impl AnalyzeForm {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
-                Constraint::Length(2), // Enable AI toggle
-                Constraint::Length(4), // Ollama API URL
-                Constraint::Length(4), // Ollama Model
+                Constraint::Length(3), // Enable AI toggle (20% bigger: 2 -> 3)
+                Constraint::Length(5), // Ollama API URL (20% bigger: 4 -> 5)
+                Constraint::Length(5), // Ollama Model (20% bigger: 4 -> 5)
                 Constraint::Min(0),    // Remaining space
             ])
             .split(area);
@@ -716,10 +716,10 @@ impl AnalyzeForm {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
-                Constraint::Length(4), // Confidence
-                Constraint::Length(2), // Library mode toggle
-                Constraint::Length(4), // Ignore patterns
-                Constraint::Length(4), // Keep alive patterns
+                Constraint::Length(5), // Confidence (20% bigger: 4 -> 5)
+                Constraint::Length(3), // Library mode toggle (20% bigger: 2 -> 3)
+                Constraint::Length(5), // Ignore patterns (20% bigger: 4 -> 5)
+                Constraint::Length(5), // Keep alive patterns (20% bigger: 4 -> 5)
                 Constraint::Min(0),    // Remaining space
             ])
             .split(area);
@@ -735,13 +735,13 @@ impl AnalyzeForm {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
-                Constraint::Length(4), // Max LOC
-                Constraint::Length(4), // Max Methods
-                Constraint::Length(4), // Max Fields
-                Constraint::Length(4), // Max Complexity
-                Constraint::Length(4), // Max LCOM
-                Constraint::Length(4), // Ignore patterns
-                Constraint::Length(4), // Min Severity
+                Constraint::Length(5), // Max LOC (20% bigger: 4 -> 5)
+                Constraint::Length(5), // Max Methods (20% bigger: 4 -> 5)
+                Constraint::Length(5), // Max Fields (20% bigger: 4 -> 5)
+                Constraint::Length(5), // Max Complexity (20% bigger: 4 -> 5)
+                Constraint::Length(5), // Max LCOM (20% bigger: 4 -> 5)
+                Constraint::Length(5), // Ignore patterns (20% bigger: 4 -> 5)
+                Constraint::Length(5), // Min Severity (20% bigger: 4 -> 5)
                 Constraint::Min(0),    // Remaining space
             ])
             .split(area);

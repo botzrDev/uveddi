@@ -157,9 +157,9 @@ impl TextInput {
         
         // Render input box
         let input_style = if self.is_focused {
-            Style::default().fg(Color::White).bg(Color::DarkGray)
+            Style::default().fg(Color::Yellow).bg(Color::Black)
         } else {
-            Style::default().fg(Color::Gray)
+            Style::default().fg(Color::White).bg(Color::Black)
         };
         
         let border_style = if self.error.is_some() {
@@ -170,14 +170,32 @@ impl TextInput {
             Style::default().fg(Color::Gray)
         };
         
-        let display_value = if self.value().is_empty() && !self.is_focused {
+        let current_value = self.input.value();
+        let display_value = if current_value.is_empty() && !self.is_focused {
             self.placeholder.as_deref().unwrap_or("")
         } else {
-            self.input.value()
+            current_value
         };
         
-        let input_paragraph = Paragraph::new(display_value)
-            .style(input_style)
+        // Debug: Show typed text even when not focused for debugging
+        let debug_display = if current_value.is_empty() {
+            if self.is_focused {
+                "_" // Show cursor placeholder when focused and empty
+            } else {
+                self.placeholder.as_deref().unwrap_or("")
+            }
+        } else {
+            current_value // Always show typed text
+        };
+        
+        let display_style = if current_value.is_empty() && !self.is_focused {
+            Style::default().fg(Color::DarkGray) // Placeholder style
+        } else {
+            Style::default().fg(Color::White).bg(Color::Black).add_modifier(Modifier::BOLD)
+        };
+        
+        let input_paragraph = Paragraph::new(debug_display)
+            .style(display_style)
             .block(
                 Block::default()
                     .borders(Borders::ALL)
@@ -186,12 +204,15 @@ impl TextInput {
         
         frame.render_widget(input_paragraph, chunks[1]);
         
-        // Set cursor position if focused
+        // Set cursor position if focused (move up to align with text)
         if self.is_focused {
-            frame.set_cursor_position((
-                chunks[1].x + 1 + self.input.visual_cursor() as u16,
-                chunks[1].y + 1,
-            ));
+            let cursor_x = chunks[1].x + 1 + self.input.visual_cursor() as u16;
+            let cursor_y = chunks[1].y + 1; // Position cursor in the middle of the input box
+            
+            // Ensure cursor is within bounds
+            if cursor_x < chunks[1].x + chunks[1].width - 1 {
+                frame.set_cursor_position((cursor_x, cursor_y));
+            }
         }
         
         // Render error message
