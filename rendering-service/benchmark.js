@@ -8,6 +8,7 @@
 const axios = require('axios');
 const fs = require('fs').promises;
 const path = require('path');
+const os = require('os');
 
 const BASE_URL = process.env.RENDERING_SERVICE_URL || 'http://localhost:3001';
 const BENCHMARK_ITERATIONS = 50;
@@ -79,6 +80,13 @@ const TEST_DIAGRAMS = {
   `
 };
 
+const LOAD_SCENARIOS = [
+  { name: 'light', concurrent: 5, iterations: 10 },
+  { name: 'normal', concurrent: 10, iterations: 50 },
+  { name: 'peak', concurrent: 50, iterations: 200 },
+  { name: 'stress', concurrent: 200, iterations: 500 }
+];
+
 class BenchmarkRunner {
   constructor() {
     this.results = {
@@ -116,6 +124,12 @@ class BenchmarkRunner {
     // Run concurrent load tests
     console.log(`\n⚡ Testing concurrent load (${CONCURRENT_REQUESTS} requests)...`);
     await this.testConcurrentLoad();
+
+    // Scenario-based load tests
+    for (const scenario of LOAD_SCENARIOS) {
+      console.log(`\n🧪 Scenario: ${scenario.name} (${scenario.concurrent} concurrent, ${scenario.iterations} iterations)`);
+      await this.runScenarioLoadTest(scenario);
+    }
 
     // Generate report
     await this.generateReport();
@@ -283,6 +297,50 @@ class BenchmarkRunner {
       failed_requests: failed.length,
       throughput_req_per_sec: CONCURRENT_REQUESTS / totalTime * 1000,
       results: results
+    };
+  }
+
+  async runScenarioLoadTest(scenario) {
+    const times = [];
+    const errors = [];
+    const promises = [];
+    const startTime = Date.now();
+    for (let i = 0; i < scenario.concurrent; i++) {
+      promises.push((async () => {
+        for (let j = 0; j < scenario.iterations; j++) {
+          try {
+            const reqStart = Date.now();
+            await axios.post(`${BASE_URL}/render`, {
+              mermaid_code: TEST_DIAGRAMS.medium,
+              format: 'svg'
+            });
+            times.push(Date.now() - reqStart);
+          } catch (error) {
+            errors.push({ iteration: j, error: error.message, status: error.response?.status });
+          }
+        }
+      })());
+    }
+    await Promise.all(promises);
+    const totalTime = Date.now() - startTime;
+    const stats = this.calculateStats(times);
+
+    // Resource monitoring
+    const resourceStats = {
+      cpu: os.loadavg(),
+      memory: process.memoryUsage(),
+      free_mem: os.freemem(),
+      total_mem: os.totalmem(),
+      timestamp: new Date().toISOString()
+    };
+    console.log(`   Scenario ${scenario.name}: ${times.length} requests, ${errors.length} errors, avg ${stats.mean.toFixed(2)}ms, total ${totalTime}ms`);
+    this.results[`scenario_${scenario.name}`] = {
+      scenario,
+      times,
+      errors,
+      stats,
+      total_time_ms: totalTime,
+      resource_stats: resourceStats
     };
   }
 

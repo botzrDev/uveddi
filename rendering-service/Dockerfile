@@ -1,7 +1,7 @@
 # Multi-stage Docker build for Uveddi Rendering Service
 
 # Stage 1: Node.js service setup
-FROM node:18-alpine AS node-stage
+FROM node:18-bullseye AS node-stage
 
 WORKDIR /app
 

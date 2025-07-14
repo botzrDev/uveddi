@@ -1,0 +1,42 @@
+name: Performance Benchmark
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+      - name: Install dependencies
+        run: |
+          cd rendering-service
+          npm install
+      - name: Start rendering service
+        run: |
+          docker-compose up -d rendering-service
+      - name: Run benchmark suite
+        run: |
+          cd rendering-service
+          node benchmark.js
+      - name: Upload benchmark report
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-report
+          path: rendering-service/benchmark-report.json
+      - name: Fail on regression
+        run: |
+          node rendering-service/scripts/check_regression.js || exit 1
+        continue-on-error: false
+      - name: Stop rendering service
+        run: |
+          docker-compose down
