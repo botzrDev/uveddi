@@ -79,6 +79,7 @@ impl AnalysisEngine {
     /// - Cache database cannot be created
     /// - AST parser initialization fails
     /// - Dependency extractor setup fails
+    #[inline]
     pub fn new() -> crate::error::Result<Self> {
         let default_detectors = crate::analysis::detector_factory::DetectorFactory::create_default_detectors();
         let cache_path = PathBuf::from("uveddi_cache.db");
@@ -106,6 +107,7 @@ impl AnalysisEngine {
     /// - Cache database cannot be created
     /// - AST parser initialization fails
     /// - Dependency extractor setup fails
+    #[inline]
     pub fn with_detectors(
         detectors: Vec<Box<dyn AnalysisDetector + Send + Sync>>,
         cache_path: Option<&Path>,

@@ -253,6 +253,8 @@ impl AppState {
     }
     
     /// Handle validation error
+    /// Handle validation errors (cold path - errors are rare)
+    #[cold]
     fn handle_validation_error(&mut self, error: String) -> Vec<AppMessage> {
         self.error_message = Some(error);
         vec![]
@@ -307,6 +309,8 @@ impl AppState {
     }
     
     /// Handle analysis error
+    /// Handle analysis errors (cold path - errors are rare)
+    #[cold]
     fn handle_analysis_error(&mut self, error: String) -> Vec<AppMessage> {
         self.error_message = Some(format!("Analysis failed: {}", error));
         vec![]
@@ -325,6 +329,8 @@ impl AppState {
     }
     
     /// Handle config error
+    /// Handle configuration errors (cold path - errors are rare)
+    #[cold]
     fn handle_config_error(&mut self, error: String) -> Vec<AppMessage> {
         self.error_message = Some(format!("Configuration error: {}", error));
         vec![]
@@ -343,6 +349,8 @@ impl AppState {
     }
     
     /// Handle plugin error
+    /// Handle plugin errors (cold path - errors are rare)
+    #[cold]
     fn handle_plugin_error(&mut self, error: String) -> Vec<AppMessage> {
         self.error_message = Some(format!("Plugin error: {}", error));
         vec![]

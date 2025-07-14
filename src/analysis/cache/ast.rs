@@ -164,6 +164,10 @@ impl AstCache {
 
     /// Retrieves an AST from the cache if valid
     #[cfg(feature = "tree-sitter")]
+    /// Gets a cached AST from the cache.
+    /// 
+    /// This is a hot path method called for every file analysis.
+    #[inline]
     pub fn get(&self, path: &Path) -> Option<Arc<Tree>> {
         let start_time = Instant::now();
         
