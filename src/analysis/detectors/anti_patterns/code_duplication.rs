@@ -21,6 +21,7 @@ use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use crate::error::UveddiError;
 use log::{debug, info, warn};
+use rayon::prelude::*;
 use sha2::{Digest, Sha256};
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
@@ -239,6 +240,10 @@ pub struct CodeDuplicationDetector {
     fingerprint_index: Arc<Mutex<HashMap<String, Vec<CodeBlock>>>>,
     /// A collection of all code blocks analyzed so far, used for cross-file comparison.
     all_blocks: Arc<Mutex<Vec<CodeBlock>>>,
+    /// Cache for CFG computations to avoid recomputing expensive control flow graphs
+    cfg_cache: Arc<Mutex<HashMap<String, crate::analysis::cfg::ControlFlowGraph>>>,
+    /// Cache for semantic features to avoid recomputing expensive feature extraction
+    semantic_cache: Arc<Mutex<HashMap<String, crate::analysis::semantic::SemanticFeatures>>>,
 }
 
 impl Default for CodeDuplicationDetector {
@@ -263,6 +268,8 @@ impl CodeDuplicationDetector {
             config,
             fingerprint_index: Arc::new(Mutex::new(HashMap::new())),
             all_blocks: Arc::new(Mutex::new(Vec::new())),
+            cfg_cache: Arc::new(Mutex::new(HashMap::new())),
+            semantic_cache: Arc::new(Mutex::new(HashMap::new())),
         }
     }
 
@@ -791,6 +798,21 @@ impl AnalysisDetector for CodeDuplicationDetector {
         // Phase 1: Extract code blocks from the current file
         let mut blocks = self.extract_code_blocks(parsed_file)?;
 
+        // Phase 2: Enhance blocks with CFG and semantic analysis (if enabled)
+        // Use parallel processing for large numbers of blocks
+        if blocks.len() > 10 && (self.config.enable_cfg_analysis || self.config.enable_semantic_features) {
+            debug!("Using parallel processing for {} blocks", blocks.len());
+            self.process_blocks_parallel(&mut blocks, parsed_file)?;
+        } else {
+            // Use sequential processing for small numbers of blocks
+            if self.config.enable_cfg_analysis {
+                self.enhance_blocks_with_cfg(&mut blocks, parsed_file)?;
+            }
+            if self.config.enable_semantic_features {
+                self.enhance_blocks_with_semantic_features(&mut blocks, parsed_file)?;
+            }
+        }
+
         debug!(
             "Extracted {} code blocks from file: {}",
             blocks.len(),
@@ -815,37 +837,34 @@ impl AnalysisDetector for CodeDuplicationDetector {
             return Ok(vec![]);
         }
 
-        // Phase 2: NEW - Semantic enhancement
-        if self.config.enable_cfg_analysis {
-            self.enhance_blocks_with_cfg(&mut blocks, parsed_file)?;
-        }
-        
-        if self.config.enable_semantic_features {
-            self.enhance_blocks_with_semantic_features(&mut blocks, parsed_file)?;
-        }
-
         // Index the blocks for future comparisons
         self.index_code_blocks(&blocks)?;
 
-        // Find clone pairs
-        let mut clone_pairs = Vec::new();
+        // Find clone pairs - use parallel processing for large block sets
+        let mut clone_pairs = if blocks.len() > 20 {
+            debug!("Using parallel clone detection for {} blocks", blocks.len());
+            self.find_clone_candidates_parallel(&blocks)
+        } else {
+            debug!("Using sequential clone detection for {} blocks", blocks.len());
+            let mut clone_pairs = Vec::new();
+            for block in &blocks {
+                let candidates = self.find_clone_candidates(block);
+                debug!(
+                    "Found {} candidates for block at line {}",
+                    candidates.len(),
+                    block.start_line
+                );
 
-        for block in &blocks {
-            let candidates = self.find_clone_candidates(block);
-            debug!(
-                "Found {} candidates for block at line {}",
-                candidates.len(),
-                block.start_line
-            );
-
-            for candidate in candidates {
-                // Enhanced verification with semantic analysis
-                if let Some(clone_pair) = self.verify_clone_pair_enhanced(block, &candidate) {
-                    debug!("Verified clone pair: {} similarity", clone_pair.similarity);
-                    clone_pairs.push(clone_pair);
+                for candidate in candidates {
+                    // Enhanced verification with semantic analysis
+                    if let Some(clone_pair) = self.verify_clone_pair_enhanced(block, &candidate) {
+                        debug!("Verified clone pair: {} similarity", clone_pair.similarity);
+                        clone_pairs.push(clone_pair);
+                    }
                 }
             }
-        }
+            clone_pairs
+        };
 
         // Remove duplicate pairs (A-B and B-A)
         // Sort pairs by first block location for consistent ordering
@@ -1064,5 +1083,238 @@ impl CodeDuplicationDetector {
         } else {
             dot_product / (norm1 * norm2)
         }
+    }
+
+    /// Process blocks in parallel for CFG and semantic analysis
+    fn process_blocks_parallel(
+        &self,
+        blocks: &mut [CodeBlock],
+        parsed_file: &ParsedFile,
+    ) -> Result<(), AnalysisError> {
+        if !self.config.enable_cfg_analysis && !self.config.enable_semantic_features {
+            return Ok(()); // Nothing to do
+        }
+
+        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
+            AnalysisError::AntiPatternDetectionError("AST tree missing for parallel processing".to_string())
+        })?;
+
+        // Use a custom parallel iterator that works with mutable references
+        blocks.par_iter_mut().try_for_each(|block| -> Result<(), AnalysisError> {
+            // Find function node for this block
+            let function_node = self.find_function_node_for_block_simple(tree, block, parsed_file)?;
+            
+            if let Some(node) = function_node {
+                // Process CFG if enabled
+                if self.config.enable_cfg_analysis {
+                    if let Ok(Some(cfg)) = self.get_or_compute_cfg(&node, parsed_file.source.as_bytes(), &parsed_file.language) {
+                        // Generate CFG hash
+                        let cfg_hash = cfg.compute_structural_hash();
+                        block.cfg = Some(cfg);
+                        block.cfg_hash = Some(cfg_hash);
+                    }
+                }
+
+                // Process semantic features if enabled and we have a CFG
+                if self.config.enable_semantic_features && block.cfg.is_some() {
+                    if let Some(ref cfg) = block.cfg {
+                        if let Ok(Some(features)) = self.get_or_compute_semantic_features(cfg, &node, parsed_file.source.as_str(), &parsed_file.language) {
+                            block.semantic_features = Some(features);
+                        }
+                    }
+                }
+            }
+            
+            Ok(())
+        })?;
+
+        Ok(())
+    }
+
+    /// Simplified function node finder for parallel processing
+    fn find_function_node_for_block_simple<'a>(
+        &self,
+        tree: &'a tree_sitter::Tree,
+        block: &CodeBlock,
+        parsed_file: &ParsedFile,
+    ) -> Result<Option<tree_sitter::Node<'a>>, AnalysisError> {
+        use tree_sitter::{Query, QueryCursor};
+        
+        let language = tree.language();
+        let source = parsed_file.source.as_bytes();
+        
+        // Use the appropriate query based on language
+        let query_str = match parsed_file.language {
+            SourceLanguage::Rust => "(function_item name: (identifier) @name body: (block) @body) @function",
+            SourceLanguage::Python => "(function_definition name: (identifier) @name body: (block) @body) @function",
+            SourceLanguage::JavaScript => "(function_declaration name: (identifier) @name body: (statement_block) @body) @function",
+            _ => return Ok(None), // Unsupported language
+        };
+        
+        let query = Query::new(&language, query_str).map_err(|e| {
+            AnalysisError::AntiPatternDetectionError(format!("Failed to create function query: {}", e))
+        })?;
+        
+        let mut cursor = QueryCursor::new();
+        
+        for mat in cursor.matches(&query, tree.root_node(), source) {
+            if mat.captures.len() >= 3 {
+                let function_node = mat.captures[0].node; // @function
+                let start_line = function_node.start_position().row + 1;
+                let end_line = function_node.end_position().row + 1;
+                
+                // Check if this function overlaps with our block
+                if start_line <= block.end_line as usize && end_line >= block.start_line as usize {
+                    return Ok(Some(function_node));
+                }
+            }
+        }
+        
+        Ok(None)
+    }
+
+    /// Process clone candidate verification in parallel
+    fn find_clone_candidates_parallel(&self, blocks: &[CodeBlock]) -> Vec<ClonePair> {
+        blocks.par_iter()
+            .flat_map(|block| {
+                let candidates = self.find_clone_candidates(block);
+                candidates.into_par_iter()
+                    .filter_map(|candidate| self.verify_clone_pair_enhanced(block, &candidate))
+                    .collect::<Vec<_>>()
+            })
+            .collect()
+    }
+
+    /// Generate a cache key for CFG based on function content and language
+    fn generate_cfg_cache_key(&self, source: &str, language: &SourceLanguage) -> String {
+        let mut hasher = Sha256::new();
+        hasher.update(source.as_bytes());
+        hasher.update(format!("{:?}", language).as_bytes());
+        format!("{:x}", hasher.finalize())
+    }
+
+    /// Generate a cache key for semantic features based on CFG hash and function content
+    fn generate_semantic_cache_key(&self, cfg_hash: &str, source: &str) -> String {
+        let mut hasher = Sha256::new();
+        hasher.update(cfg_hash.as_bytes());
+        hasher.update(source.as_bytes());
+        format!("{:x}", hasher.finalize())
+    }
+
+    /// Get or compute CFG for a function, using cache when possible
+    fn get_or_compute_cfg(
+        &self,
+        function_node: &tree_sitter::Node,
+        source: &[u8],
+        language: &SourceLanguage,
+    ) -> Result<Option<crate::analysis::cfg::ControlFlowGraph>, AnalysisError> {
+        let function_source = function_node.utf8_text(source)
+            .map_err(|e| AnalysisError::AntiPatternDetectionError(format!("Failed to extract function text: {}", e)))?;
+        
+        let cache_key = self.generate_cfg_cache_key(function_source, language);
+        
+        // Try to get from cache first
+        if let Ok(cache) = self.cfg_cache.lock() {
+            if let Some(cached_cfg) = cache.get(&cache_key) {
+                debug!("CFG cache hit for key: {}", cache_key);
+                return Ok(Some(cached_cfg.clone()));
+            }
+        }
+        
+        // Cache miss - compute CFG
+        debug!("CFG cache miss for key: {}", cache_key);
+        let mut cfg_builder = crate::analysis::cfg::CfgBuilder::new();
+        
+        match cfg_builder.build_from_ast(*function_node, function_source, language.clone()) {
+            Ok(cfg) => {
+                // Store in cache
+                if let Ok(mut cache) = self.cfg_cache.lock() {
+                    cache.insert(cache_key, cfg.clone());
+                    
+                    // Limit cache size to prevent memory issues
+                    if cache.len() > 1000 {
+                        // Remove oldest entries (simple strategy)
+                        let keys_to_remove: Vec<_> = cache.keys().take(100).cloned().collect();
+                        for key in keys_to_remove {
+                            cache.remove(&key);
+                        }
+                    }
+                }
+                Ok(Some(cfg))
+            }
+            Err(e) => {
+                warn!("Failed to build CFG: {}", e);
+                Ok(None)
+            }
+        }
+    }
+
+    /// Get or compute semantic features for a function, using cache when possible
+    fn get_or_compute_semantic_features(
+        &self,
+        cfg: &crate::analysis::cfg::ControlFlowGraph,
+        function_node: &tree_sitter::Node,
+        source: &str,
+        language: &SourceLanguage,
+    ) -> Result<Option<crate::analysis::semantic::SemanticFeatures>, AnalysisError> {
+        let cfg_hash = cfg.compute_structural_hash();
+        let function_source = function_node.utf8_text(source.as_bytes())
+            .map_err(|e| AnalysisError::AntiPatternDetectionError(format!("Failed to extract function text: {}", e)))?;
+        
+        let cache_key = self.generate_semantic_cache_key(&cfg_hash, function_source);
+        
+        // Try to get from cache first
+        if let Ok(cache) = self.semantic_cache.lock() {
+            if let Some(cached_features) = cache.get(&cache_key) {
+                debug!("Semantic cache hit for key: {}", cache_key);
+                return Ok(Some(cached_features.clone()));
+            }
+        }
+        
+        // Cache miss - compute semantic features
+        debug!("Semantic cache miss for key: {}", cache_key);
+        let analyzer = crate::analysis::semantic::SemanticAnalyzer::new(language.clone());
+        
+        match analyzer.extract_features(cfg, function_node, source) {
+            Ok(features) => {
+                // Store in cache
+                if let Ok(mut cache) = self.semantic_cache.lock() {
+                    cache.insert(cache_key, features.clone());
+                    
+                    // Limit cache size to prevent memory issues
+                    if cache.len() > 1000 {
+                        // Remove oldest entries (simple strategy)
+                        let keys_to_remove: Vec<_> = cache.keys().take(100).cloned().collect();
+                        for key in keys_to_remove {
+                            cache.remove(&key);
+                        }
+                    }
+                }
+                Ok(Some(features))
+            }
+            Err(e) => {
+                warn!("Failed to extract semantic features: {}", e);
+                Ok(None)
+            }
+        }
+    }
+
+    /// Clear all caches to free memory
+    pub fn clear_caches(&self) -> Result<(), AnalysisError> {
+        if let Ok(mut cache) = self.cfg_cache.lock() {
+            cache.clear();
+        }
+        if let Ok(mut cache) = self.semantic_cache.lock() {
+            cache.clear();
+        }
+        debug!("Cleared CFG and semantic caches");
+        Ok(())
+    }
+
+    /// Get cache statistics for monitoring
+    pub fn get_cache_stats(&self) -> (usize, usize) {
+        let cfg_size = self.cfg_cache.lock().map(|c| c.len()).unwrap_or(0);
+        let semantic_size = self.semantic_cache.lock().map(|c| c.len()).unwrap_or(0);
+        (cfg_size, semantic_size)
     }
 }
