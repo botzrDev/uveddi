@@ -254,7 +254,7 @@ pub mod error;
 pub mod ingestion;
 pub mod models;
 // TODO: Re-enable when monitoring dependencies are properly configured
-// pub mod monitoring;
+pub mod monitoring;
 pub mod plugins;
 pub mod report;
 pub mod resilience;

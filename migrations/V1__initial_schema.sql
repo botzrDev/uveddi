@@ -103,6 +103,31 @@ CREATE TABLE plugins (
     last_updated INTEGER NOT NULL -- Unix timestamp
 );
 
+-- UV-2: LifecycleEvent table for component lifecycle tracking
+CREATE TABLE lifecycle_events (
+    event_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    component_id TEXT NOT NULL,
+    event_type TEXT NOT NULL CHECK (event_type IN ('Created', 'Modified', 'Used', 'Deleted')),
+    timestamp INTEGER NOT NULL, -- Unix timestamp
+    details TEXT,
+    run_id INTEGER, -- Optional link to analysis run
+    FOREIGN KEY (run_id) REFERENCES analysis_runs(run_id)
+);
+
+-- UV-2: Performance metrics table for component-level analysis
+CREATE TABLE performance_metrics (
+    metric_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    component_id TEXT NOT NULL,
+    analysis_run_id INTEGER NOT NULL,
+    execution_time_ms INTEGER NOT NULL,
+    memory_usage_bytes INTEGER NOT NULL,
+    ast_parse_time_ms INTEGER,
+    symbol_resolution_time_ms INTEGER,
+    dependency_extraction_time_ms INTEGER,
+    timestamp INTEGER NOT NULL,
+    FOREIGN KEY (analysis_run_id) REFERENCES analysis_runs(run_id)
+);
+
 -- Create indexes for better query performance
 CREATE INDEX idx_analysis_runs_project_id ON analysis_runs(project_id);
 CREATE INDEX idx_analysis_runs_start_time ON analysis_runs(start_time);
@@ -112,6 +137,12 @@ CREATE INDEX idx_architectural_issues_severity ON architectural_issues(severity)
 CREATE INDEX idx_code_snippets_issue_id ON code_snippets(issue_id);
 CREATE INDEX idx_reports_run_id ON reports(run_id);
 CREATE INDEX idx_diagrams_report_id ON diagrams(report_id);
+CREATE INDEX idx_lifecycle_events_component_id ON lifecycle_events(component_id);
+CREATE INDEX idx_lifecycle_events_event_type ON lifecycle_events(event_type);
+CREATE INDEX idx_lifecycle_events_timestamp ON lifecycle_events(timestamp);
+CREATE INDEX idx_performance_metrics_component_id ON performance_metrics(component_id);
+CREATE INDEX idx_performance_metrics_analysis_run_id ON performance_metrics(analysis_run_id);
+CREATE INDEX idx_performance_metrics_timestamp ON performance_metrics(timestamp);
 
 -- Insert some default anti-pattern types
 INSERT INTO anti_pattern_types (name, description, category, detection_heuristic_notes) VALUES

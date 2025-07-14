@@ -3,14 +3,20 @@
 //! Provides real-time test execution monitoring, failure categorization,
 //! and performance tracking for the Uveddi static code analysis platform.
 
-pub mod dashboard;
+// Temporarily commented out modules with external dependencies
+// pub mod dashboard;
 pub mod metrics;
-pub mod websocket;
-pub mod database;
-pub mod classification;
+// pub mod websocket;
+// pub mod database;
+// pub mod classification;
+pub mod memory_monitor;
+pub mod performance_metrics_collector;
 
-pub use dashboard::MonitoringDashboard;
+// Temporarily commented out exports with external dependencies
+// pub use dashboard::MonitoringDashboard;
 pub use metrics::{TestMetrics, TestExecution, TestResult};
-pub use websocket::WebSocketManager;
-pub use database::MonitoringDatabase;
-pub use classification::FailureClassifier;
+// pub use websocket::WebSocketManager;
+// pub use database::MonitoringDatabase;
+// pub use classification::FailureClassifier;
+pub use memory_monitor::MemoryMonitor;
+pub use performance_metrics_collector::PerformanceMetricsCollector;

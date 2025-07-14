@@ -116,6 +116,11 @@ impl DependencyExtractor {
                 SourceLanguage::JavaScript => (JAVASCRIPT_IMPORTS_QUERY, DependencyType::Import),
             };
 
+            // UV-2: Semantic dependency classification for function calls and data transformations
+            // TODO: Extend tree-sitter queries to capture function calls (ControlFlow) and assignments (DataFlow)
+            // Example: If capture_name == "call", set dependency_type = DependencyType::ControlFlow
+            // Example: If capture_name == "assignment", set dependency_type = DependencyType::DataFlow
+
             let query = Query::new(
                 &parsed_file
                     .tree
@@ -213,10 +218,18 @@ impl DependencyExtractor {
                         }
                     }
 
+                    let mut detected_type = dependency_type.clone();
+                    // UV-2: Classify dependency type based on AST capture name
+                    if capture_name == "call" {
+                        detected_type = DependencyType::ControlFlow;
+                    } else if capture_name == "assignment" {
+                        detected_type = DependencyType::DataFlow;
+                    }
+
                     dependencies.push(Dependency {
-                        from_file: parsed_file.file_path.as_ref().clone(), // UV-222: Convert Arc<PathBuf> to PathBuf
+                        from_file: parsed_file.file_path.as_ref().clone(),
                         to_module: module_name,
-                        dependency_type: dependency_type.clone(),
+                        dependency_type: detected_type,
                         line_number: Some((line_number + 1) as u32),
                     });
                 }

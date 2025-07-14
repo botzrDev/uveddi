@@ -63,6 +63,64 @@ impl GlobalSymbolTable {
         }
     }
 
+    /// Creates a new symbol table with SQLite persistence (UV-2)
+    ///
+    /// # Arguments
+    /// * `db_path` - Path to the SQLite database file
+    ///
+    /// # Returns
+    /// * `Result<Self, Box<dyn std::error::Error>>` - Symbol table instance or error
+    pub fn new_with_persistence(db_path: &std::path::Path) -> Result<Self, Box<dyn std::error::Error>> {
+        // UV-2: Follow ResultCache pattern for SQLite persistence
+        // Use rusqlite for SQLite integration
+        use rusqlite::{Connection, params};
+        let conn = Connection::open(db_path)?;
+        // Create symbols table if not exists
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS symbols (
+                id INTEGER PRIMARY KEY,
+                name TEXT NOT NULL,
+                kind TEXT NOT NULL,
+                file_path TEXT NOT NULL,
+                start_byte INTEGER,
+                end_byte INTEGER
+            )",
+            [],
+        )?;
+        // Load symbols from DB
+        let mut stmt = conn.prepare("SELECT id, name, kind, file_path, start_byte, end_byte FROM symbols")?;
+        let symbol_iter = stmt.query_map([], |row| {
+            Ok(CanonicalSymbol {
+                id: row.get(0)?,
+                name: row.get(1)?,
+                kind: match row.get::<_, String>(2)?.as_str() {
+                    "Function" => SymbolKind::Function,
+                    "Method" => SymbolKind::Method,
+                    "Class" => SymbolKind::Class,
+                    "Struct" => SymbolKind::Struct,
+                    "Trait" => SymbolKind::Trait,
+                    "Interface" => SymbolKind::Interface,
+                    "Module" => SymbolKind::Module,
+                    "Variable" => SymbolKind::Variable,
+                    "Parameter" => SymbolKind::Parameter,
+                    "TypeAlias" => SymbolKind::TypeAlias,
+                    _ => SymbolKind::Unknown,
+                },
+                location: SourceLocation {
+                    file_path: row.get(3)?,
+                    start_byte: row.get(4)?,
+                    end_byte: row.get(5)?,
+                },
+            })
+        })?;
+        let mut symbols = HashMap::new();
+        for symbol in symbol_iter {
+            let sym = symbol?;
+            symbols.insert(sym.id, sym);
+        }
+        Ok(Self { symbols })
+    }
+
     /// Adds a symbol to the table.
     pub fn add_symbol(&mut self, symbol: CanonicalSymbol) {
         self.symbols.insert(symbol.id, symbol);
@@ -71,5 +129,23 @@ impl GlobalSymbolTable {
     /// Retrieves a symbol by its ID.
     pub fn get_symbol(&self, id: &SymbolId) -> Option<&CanonicalSymbol> {
         self.symbols.get(id)
+    }
+
+    /// Persists a symbol to SQLite (UV-2)
+    pub fn persist_symbol(&self, db_path: &std::path::Path, symbol: &CanonicalSymbol) -> Result<(), Box<dyn std::error::Error>> {
+        use rusqlite::{Connection, params};
+        let conn = Connection::open(db_path)?;
+        conn.execute(
+            "INSERT OR REPLACE INTO symbols (id, name, kind, file_path, start_byte, end_byte) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+            params![
+                symbol.id,
+                symbol.name,
+                format!("{:?}", symbol.kind),
+                symbol.location.file_path,
+                symbol.location.start_byte,
+                symbol.location.end_byte,
+            ],
+        )?;
+        Ok(())
     }
 }

@@ -147,6 +147,8 @@ pub struct ComponentMetrics {
     pub coupling_between_objects: Option<f64>,
     /// Number of public methods/functions
     pub public_methods: Option<u32>,
+    /// Optional runtime performance metrics
+    pub performance: Option<PerformanceMetrics>,
 }
 
 /// Specification for generating diagrams from architectural components
@@ -264,6 +266,59 @@ pub struct ValidationMetrics {
     pub overall_quality: f64,
 }
 
+/// UV-2: Global symbol registry for advanced cross-file symbol resolution
+/// Global registry for mapping symbols to their definitions and locations across files
+#[derive(Debug, Default)]
+pub struct GlobalSymbolRegistry {
+    /// Maps fully qualified symbol names to their locations and metadata
+    pub symbols: HashMap<String, SymbolInfo>,
+}
+
+/// Metadata for a symbol in the registry
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SymbolInfo {
+    pub name: String,
+    pub file_path: PathBuf,
+    pub component_id: Uuid,
+    pub language: Option<String>,
+    pub last_modified: Option<chrono::DateTime<chrono::Utc>>, // For lifecycle tracking
+}
+
+/// Runtime performance metrics for a component
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct PerformanceMetrics {
+    pub execution_time_ms: Option<f64>,
+    pub memory_usage_bytes: Option<u64>,
+    pub io_operations: Option<u32>,
+    pub last_profiled: Option<chrono::DateTime<chrono::Utc>>,
+}
+
+/// Semantic dependency classification
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+pub enum SemanticDependencyType {
+    DataFlow,
+    ControlFlow,
+    EventFlow,
+    Other,
+}
+
+/// Lifecycle event tracking
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LifecycleEvent {
+    pub event_type: LifecycleEventType,
+    pub timestamp: chrono::DateTime<chrono::Utc>,
+    pub component_id: Uuid,
+    pub details: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum LifecycleEventType {
+    Created,
+    Modified,
+    Used,
+    Deleted,
+}
+
 impl Default for ComponentMetrics {
     fn default() -> Self {
         Self {
@@ -273,6 +328,7 @@ impl Default for ComponentMetrics {
             efferent_coupling: 0,
             coupling_between_objects: None,
             public_methods: None,
+            performance: None,
         }
     }
 }
@@ -424,3 +480,6 @@ impl DiagramResult {
         }
     }
 }
+
+// TODO: UV-2 - Integrate hooks for emitting lifecycle events during component creation/modification/usage
+// NOTE: UV-2 - These enhancements support advanced symbol resolution, performance metrics, semantic dependency classification, and lifecycle tracking.

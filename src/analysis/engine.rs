@@ -12,13 +12,16 @@ use crate::analysis::symbols::GlobalSymbolTable;
 use crate::analysis::AnalysisDetector;
 use crate::ast::tree_sitter_impl::AstParser;
 use crate::cache::result_cache::ResultCache;
-use crate::database::models::{AntiPatternType, ArchitecturalIssue};
+use crate::database::models::{AntiPatternType, ArchitecturalIssue, PerformanceMetricsConfig, ComponentPerformanceMetrics};
 use crate::ingestion::AsyncWalker;
+use crate::monitoring::performance_metrics_collector::PerformanceMetricsCollector;
 use crate::plugins::WasmPluginEngine;
 use log::{info, warn};
 
 use std::path::{Path, PathBuf};
+use std::time::Instant;
 use tokio_stream::StreamExt;
+use chrono::Utc;
 
 /// Represents a cached analysis result for a file
 #[derive(serde::Serialize, serde::Deserialize, Debug)]
@@ -284,6 +287,9 @@ impl AnalysisEngine {
         &mut self,
         path: &Path,
     ) -> crate::error::Result<(Vec<ArchitecturalIssue>, LocalDependencyGraph)> {
+        // UV-2: Initialize metrics collector
+        let metrics_config = PerformanceMetricsConfig::default();
+        let mut metrics_collector = PerformanceMetricsCollector::new(metrics_config, self.files_analyzed as usize);
         let (mut file_issues, all_dependencies) =
             self.analyze_files_and_collect_dependencies(path).await?;
 
@@ -310,6 +316,14 @@ impl AnalysisEngine {
         for detector in &self.detectors {
             let issues = detector.detect(&dependency_graph);
             file_issues.extend(issues);
+        }
+
+        // UV-2: Record metrics for the analysis run
+        metrics_collector.record_analysis_metrics(file_issues.len(), self.files_analyzed as usize);
+
+        // UV-2: Emit metrics to the monitoring system
+        if let Err(e) = metrics_collector.emit_metrics() {
+            warn!("Failed to emit performance metrics: {}", e);
         }
 
         Ok((file_issues, dependency_graph))
@@ -347,10 +361,10 @@ impl AnalysisEngine {
         let mut all_issues = Vec::new();
         let mut all_dependencies = Vec::new();
         self.files_analyzed = 0;
-
         let walker = AsyncWalker::for_source_code();
         let mut file_stream = walker.walk(path);
-
+        let mut component_index = 0;
+        let mut metrics_collector = PerformanceMetricsCollector::new(PerformanceMetricsConfig::default(), 0);
         while let Some(file_result) = file_stream.next().await {
             match file_result {
                 Ok(file_path) => {
@@ -388,7 +402,9 @@ impl AnalysisEngine {
 
                             let mut file_issues = Vec::new();
                             let mut file_dependencies = Vec::new();
-
+                            // UV-2: Metrics collection hooks
+                            let memory_before = metrics_collector.capture_memory_snapshot();
+                            let start_time = Instant::now();
                             // Run file-level detectors
                             for detector in &self.detectors {
                                 match detector.detect_issues(&parsed_file) {
@@ -426,9 +442,27 @@ impl AnalysisEngine {
                                 );
                             }
 
+                            let execution_time = start_time.elapsed();
+                            let memory_after = metrics_collector.capture_memory_snapshot();
+                            let has_issue = !file_issues.is_empty();
+
                             // UV-220: Move semantics for efficient aggregation
                             all_issues.extend(file_issues);
                             all_dependencies.extend(file_dependencies);
+                            if metrics_collector.should_sample(component_index, has_issue) {
+                                metrics_collector.record_component_metrics(ComponentPerformanceMetrics {
+                                    metric_id: None,
+                                    component_id: file_path.to_string_lossy().to_string(),
+                                    analysis_run_id: 0, // To be set by higher-level process
+                                    execution_time_ms: execution_time.as_millis() as u64,
+                                    memory_usage_bytes: memory_after.saturating_sub(memory_before),
+                                    ast_parse_time_ms: None,
+                                    symbol_resolution_time_ms: None,
+                                    dependency_extraction_time_ms: None,
+                                    timestamp: Utc::now(),
+                                });
+                            }
+                            component_index += 1;
                         }
                         Err(e) => warn!("Failed to parse file {}: {}", file_path.display(), e),
                     }

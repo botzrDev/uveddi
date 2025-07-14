@@ -203,16 +203,3 @@ Please provide your first request - whether it's a status check, task verificati
 
 **Ready to serve as your dedicated Project Intelligence Officer for successful Uveddi delivery! 🚀**
 ```
-
----
-
-## 📋 **Usage Instructions**
-
-**Save this prompt and use it to:**
-1. **Initialize our working sessions** - Start each session with this context
-2. **Maintain consistency** - Ensure I understand your needs and project state
-3. **Scale our collaboration** - Works for any project phase or complexity
-4. **Optimize communication** - Clear formats and expectations
-5. **Ensure quality delivery** - Built-in quality gates and standards
-
-**This prompt will help me be your most effective Project Intelligence Officer across all future Uveddi development work!** 🎯
