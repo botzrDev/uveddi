@@ -4,7 +4,6 @@
 //! role-specific functionality for admins and developers.
 //! Run with: `cargo run --example enhanced_community_demo`
 
-use chrono::Utc;
 use std::collections::HashMap;
 use uveddi::community::models::{AdminLevel, AdminPermissions, BadgeType, DeveloperType};
 use uveddi::community::{ActivityType, CommunityDatabase, MemberProfile, MemberRole};
@@ -43,7 +42,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create admin profile for the admin user
     println!("\n👑 Setting up admin profiles...");
     let admin_permissions = AdminPermissions::super_admin();
-    let admin_profile = db.create_admin_profile(
+    let _admin_profile = db.create_admin_profile(
         &admin_user.id,
         admin_permissions,
         AdminLevel::SuperAdmin,
@@ -54,7 +53,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create developer profiles
     println!("\n💻 Setting up developer profiles...");
 
-    let alice_dev_profile = db.create_developer_profile(
+    let _alice_dev_profile = db.create_developer_profile(
         &alice.id,
         DeveloperType::Enterprise,
         vec![
@@ -65,7 +64,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     )?;
     println!("   Created enterprise developer profile for {}", alice.name);
 
-    let carol_dev_profile = db.create_developer_profile(
+    let _carol_dev_profile = db.create_developer_profile(
         &carol.id,
         DeveloperType::OpenSource,
         vec![
@@ -137,7 +136,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     db.update_member_role(&bob.id, MemberRole::Developer)?;
 
     // Create developer profile for the newly promoted Bob
-    let bob_dev_profile = db.create_developer_profile(
+    let _bob_dev_profile = db.create_developer_profile(
         &bob.id,
         DeveloperType::Startup,
         vec!["Go".to_string(), "JavaScript".to_string()],

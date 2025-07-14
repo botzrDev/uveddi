@@ -2,7 +2,7 @@ use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use std::fs;
 use std::sync::Arc;
 use tempfile::TempDir;
-use uveddi::analysis::cache::ast::{AstCache, CacheConfig, CacheableAst};
+use uveddi::analysis::cache::ast::{AstCache, CacheConfig};
 
 fn create_benchmark_cache() -> (AstCache, TempDir) {
     let temp_dir = TempDir::new().unwrap();
@@ -106,7 +106,8 @@ fn bench_lru_update_performance(c: &mut Criterion) {
     c.bench_function("lru_update_1000_files", |b| {
         b.iter(|| {
             for file in &test_files {
-                cache.update_lru_order(file);
+                // Use public API instead of private method
+                let _ = cache.get(file); // This will update LRU order internally
             }
         })
     });
@@ -119,7 +120,8 @@ fn bench_hash_calculation_performance(c: &mut Criterion) {
     c.bench_function("hash_calculation_100_files", |b| {
         b.iter(|| {
             for file in &test_files {
-                black_box(cache.calculate_file_hash(file).unwrap());
+                // Use public API - get() will calculate hash internally
+                black_box(cache.get(file));
             }
         })
     });
@@ -168,11 +170,9 @@ fn bench_memory_pressure(c: &mut Criterion) {
     
     c.bench_function("memory_pressure_eviction", |b| {
         b.iter(|| {
-            // This should trigger multiple evictions
+            // This should trigger multiple evictions through normal cache operations
             for file in &test_files {
-                cache.update_lru_order(file);
-                // Simulate memory usage
-                let _ = cache.ensure_cache_capacity(1024);
+                let _ = cache.get(file); // This will trigger LRU updates and potential evictions
             }
         })
     });
@@ -184,8 +184,7 @@ fn bench_metrics_collection(c: &mut Criterion) {
     
     // Generate some cache activity
     for file in &test_files {
-        cache.get(file); // Cache miss
-        cache.update_lru_order(file);
+        cache.get(file); // Cache miss - this will also update LRU order internally
     }
     
     c.bench_function("metrics_collection_and_export", |b| {

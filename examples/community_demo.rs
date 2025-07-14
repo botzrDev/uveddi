@@ -3,7 +3,6 @@
 //! This example demonstrates how to use the community member management system.
 //! Run with: `cargo run --example community_demo`
 
-use chrono::Utc;
 use std::collections::HashMap;
 use uveddi::community::{ActivityType, CommunityDatabase, MemberProfile, MemberRole};
 

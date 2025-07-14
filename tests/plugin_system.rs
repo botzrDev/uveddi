@@ -1,12 +1,9 @@
 //! Comprehensive tests for the WASM plugin system
 
-use std::path::PathBuf;
-use tempfile::TempDir;
 use uveddi::{
     analysis::AnalysisEngine,
     plugins::{
-        AstDataPlane, Permission, PluginLifecycleManager, PluginManifest, PluginRegistry,
-        PluginVerifier, SecurityPolicy, WasmPluginEngine,
+        WasmPluginEngine,
     },
 };
 

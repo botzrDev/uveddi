@@ -509,7 +509,7 @@ fn function_{}() {{\n    let x = {};\n    println!(\"Value: {{}}\", x);\n}}",
 
     #[tokio::test]
     async fn test_concurrent_plugin_execution() {
-        let (_temp_dir, mut manager) = setup_test_environment().await;
+        let (_temp_dir, manager) = setup_test_environment().await;
         
         let num_plugins = 3;
         let mut plugin_ids = Vec::new();
@@ -761,7 +761,7 @@ fn function_{}() {{\n    let x = {};\n    println!(\"Value: {{}}\", x);\n}}",
             let mut processed_files = 0;
             let pipeline_start = Instant::now();
             
-            for (_i, parsed_file) in test_files.iter().take(10).enumerate() { // Limit to 10 for test speed
+            for (_i, _parsed_file) in test_files.iter().take(10).enumerate() { // Limit to 10 for test speed
                 // Simulate AST processing
                 #[cfg(feature = "wasm-plugins")]
                 {

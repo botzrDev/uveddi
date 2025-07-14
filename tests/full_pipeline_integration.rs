@@ -11,7 +11,6 @@ mod tests {
     use predicates::prelude::*;
     use std::fs::File;
     use std::io::Write;
-    use std::path::{Path, PathBuf};
     use std::process::Command;
     use std::time::Duration;
     use tempfile::{tempdir, TempDir};
@@ -215,7 +214,7 @@ impl Manager {
 
         if ollama_available {
             println!("Ollama is available, testing AI analysis");
-            let ai_engine = AiAnalysisEngine::new();
+            let _ai_engine = AiAnalysisEngine::new();
 
             // Since we can't easily test with the actual database updates in this context,
             // let's just verify the AI engine can be created

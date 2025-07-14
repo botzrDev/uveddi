@@ -194,7 +194,7 @@ fn test_analytics_generation() {
     let member2 = db
         .register_member("user2@example.com", "User Two", MemberRole::Developer)
         .unwrap();
-    let admin = db
+    let _admin = db
         .register_member("admin@example.com", "Admin", MemberRole::Admin)
         .unwrap();
 

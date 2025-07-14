@@ -7,12 +7,15 @@
 
 use std::path::PathBuf;
 use std::time::Duration;
+// TUI tests require the 'tui' feature to be enabled
+#[cfg(feature = "tui")]
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
+#[cfg(feature = "tui")]
 use uveddi::tui::{AppMessage, AppScreen, AppState};
-use uveddi::cli::analyze_command::AnalyzeCommand;
 
 /// Create a comprehensive test project with various code patterns
+#[cfg(feature = "tui")]
 async fn create_comprehensive_test_project() -> std::io::Result<PathBuf> {
     let test_dir = PathBuf::from("./tmp/e2e_test_project");
     tokio::fs::create_dir_all(&test_dir).await?;
@@ -224,6 +227,7 @@ async fn cleanup_test_project(path: &PathBuf) -> std::io::Result<()> {
 }
 
 /// Simulate a complete user workflow through the TUI
+#[cfg(feature = "tui")]
 #[tokio::test]
 async fn test_complete_user_workflow() {
     let test_project = create_comprehensive_test_project().await.unwrap();
@@ -286,6 +290,7 @@ async fn test_complete_user_workflow() {
 }
 
 /// Test keyboard event handling throughout the application
+#[cfg(feature = "tui")]
 #[tokio::test]
 async fn test_keyboard_event_workflow() {
     let mut app_state = AppState::new();
@@ -324,6 +329,7 @@ async fn test_keyboard_event_workflow() {
 }
 
 /// Test menu navigation with keyboard
+#[cfg(feature = "tui")]
 #[tokio::test]
 async fn test_menu_keyboard_navigation() {
     let mut app_state = AppState::new();
@@ -365,6 +371,7 @@ async fn test_menu_keyboard_navigation() {
 }
 
 /// Test direct navigation shortcuts
+#[cfg(feature = "tui")]
 #[tokio::test]
 async fn test_direct_navigation_shortcuts() {
     let mut app_state = AppState::new();
@@ -395,6 +402,7 @@ async fn test_direct_navigation_shortcuts() {
 
 /// Test error handling workflow
 #[tokio::test]
+#[cfg(feature = "tui")]
 async fn test_error_handling_workflow() {
     let mut app_state = AppState::new();
     
@@ -444,6 +452,7 @@ async fn test_error_handling_workflow() {
 }
 
 /// Test state consistency during rapid operations
+#[cfg(feature = "tui")]
 #[tokio::test]
 async fn test_rapid_state_transitions() {
     let mut app_state = AppState::new();
@@ -473,6 +482,7 @@ async fn test_rapid_state_transitions() {
 }
 
 /// Test concurrent TUI operations simulation
+#[cfg(feature = "tui")]
 #[tokio::test]
 async fn test_concurrent_operations_simulation() {
     let test_project = create_comprehensive_test_project().await.unwrap();
@@ -524,7 +534,7 @@ async fn test_concurrent_operations_simulation() {
     
     let mut futures = Vec::new();
     for cmd in commands {
-        futures.push(cmd.execute());
+        futures.push(Box::pin(cmd.execute()));
     }
     
     let results = tokio::time::timeout(
@@ -551,6 +561,7 @@ async fn test_concurrent_operations_simulation() {
 }
 
 /// Test full application lifecycle
+#[cfg(feature = "tui")]
 #[tokio::test]
 async fn test_application_lifecycle() {
     let test_project = create_comprehensive_test_project().await.unwrap();

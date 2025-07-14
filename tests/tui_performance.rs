@@ -6,8 +6,10 @@
 
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
+#[cfg(feature = "tui")]
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
+#[cfg(feature = "tui")]
 use uveddi::tui::{AppMessage, AppScreen, AppState};
 use uveddi::cli::analyze_command::AnalyzeCommand;
 
@@ -17,6 +19,7 @@ const STRESS_TEST_DURATION: Duration = Duration::from_secs(5);
 const PERFORMANCE_THRESHOLD_MS: u128 = 100;
 
 /// Create a large test project for performance testing
+#[cfg(feature = "tui")]
 async fn create_large_test_project() -> std::io::Result<PathBuf> {
     let test_dir = PathBuf::from("./tmp/performance_test_project");
     tokio::fs::create_dir_all(&test_dir).await?;
@@ -144,6 +147,7 @@ fn main() {
 }
 
 /// Clean up performance test project
+#[cfg(feature = "tui")]
 async fn cleanup_performance_test_project(path: &PathBuf) -> std::io::Result<()> {
     if path.exists() {
         tokio::fs::remove_dir_all(path).await?;
@@ -152,6 +156,7 @@ async fn cleanup_performance_test_project(path: &PathBuf) -> std::io::Result<()>
 }
 
 /// Test rapid state updates performance
+#[cfg(feature = "tui")]
 #[tokio::test]
 async fn test_rapid_state_updates_performance() {
     let mut app_state = AppState::new();
@@ -187,6 +192,7 @@ async fn test_rapid_state_updates_performance() {
 }
 
 /// Test menu navigation performance under rapid input
+#[cfg(feature = "tui")]
 #[tokio::test]
 async fn test_menu_navigation_performance() {
     let mut app_state = AppState::new();
@@ -216,6 +222,7 @@ async fn test_menu_navigation_performance() {
 }
 
 /// Test memory usage during extended operation
+#[cfg(feature = "tui")]
 #[tokio::test]
 async fn test_memory_usage_stability() {
     let mut app_state = AppState::new();
@@ -259,6 +266,7 @@ async fn test_memory_usage_stability() {
 }
 
 /// Test analysis command creation performance
+#[cfg(feature = "tui")]
 #[tokio::test]
 async fn test_command_creation_performance() {
     let test_project = create_large_test_project().await.unwrap();
@@ -302,6 +310,7 @@ async fn test_command_creation_performance() {
 }
 
 /// Test concurrent state operations
+#[cfg(feature = "tui")]
 #[tokio::test]
 async fn test_concurrent_state_operations() {
     use std::sync::{Arc, Mutex};
@@ -312,7 +321,7 @@ async fn test_concurrent_state_operations() {
     
     // Spawn multiple threads to simulate concurrent access
     let handles: Vec<_> = (0..10).map(|thread_id| {
-        let app_state_clone = Arc::clone(&app_state);
+        let app_state_clone: Arc<Mutex<AppState>> = Arc::clone(&app_state);
         thread::spawn(move || {
             for i in 0..100 {
                 let message = match (thread_id + i) % 5 {
@@ -350,6 +359,7 @@ async fn test_concurrent_state_operations() {
 }
 
 /// Test large project analysis performance (simulated)
+#[cfg(feature = "tui")]
 #[tokio::test]
 async fn test_large_project_simulation() {
     let test_project = create_large_test_project().await.unwrap();
@@ -403,6 +413,7 @@ async fn test_large_project_simulation() {
 }
 
 /// Stress test with rapid operations
+#[cfg(feature = "tui")]
 #[tokio::test]
 async fn test_stress_operations() {
     let mut app_state = AppState::new();
@@ -446,6 +457,7 @@ async fn test_stress_operations() {
 }
 
 /// Test message handling performance with complex messages
+#[cfg(feature = "tui")]
 #[tokio::test]
 async fn test_complex_message_performance() {
     let mut app_state = AppState::new();

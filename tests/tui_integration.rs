@@ -15,9 +15,11 @@
 
 use std::path::PathBuf;
 
-use uveddi::application::{AnalysisConfig, AnalysisOrchestrator};
+#[cfg(feature = "tui")]
+use uveddi::application::AnalysisOrchestrator;
 use uveddi::cli::analyze_command::AnalyzeCommand;
 use uveddi::error::UveddiError;
+#[cfg(feature = "tui")]
 use uveddi::tui::{AppMessage, AppScreen, AppState};
 
 /// Helper function to create a minimal test project structure
@@ -65,6 +67,7 @@ async fn cleanup_test_project(path: &PathBuf) -> std::io::Result<()> {
     Ok(())
 }
 
+#[cfg(feature = "tui")]
 #[tokio::test]
 async fn test_app_state_initialization() {
     let app_state = AppState::new();
@@ -76,6 +79,7 @@ async fn test_app_state_initialization() {
     assert!(app_state.error_message.is_none());
 }
 
+#[cfg(feature = "tui")]
 #[tokio::test]
 async fn test_basic_message_handling() {
     let mut app_state = AppState::new();
@@ -96,6 +100,7 @@ async fn test_basic_message_handling() {
     assert!(messages.is_empty());
 }
 
+#[cfg(feature = "tui")]
 #[tokio::test]
 async fn test_menu_navigation_wrapping() {
     let mut app_state = AppState::new();
@@ -116,6 +121,7 @@ async fn test_menu_navigation_wrapping() {
     assert_eq!(app_state.selected_menu_item, 0); // Should wrap to beginning
 }
 
+#[cfg(feature = "tui")]
 #[tokio::test]
 async fn test_analyze_command_creation() {
     let test_path = create_test_project("cmd_creation_test").await.unwrap();
@@ -149,6 +155,7 @@ async fn test_analyze_command_creation() {
     cleanup_test_project(&test_path).await.unwrap();
 }
 
+#[cfg(feature = "tui")]
 #[tokio::test]
 async fn test_analysis_config_conversion() {
     let test_path = create_test_project("config_conversion_test").await.unwrap();
@@ -207,6 +214,7 @@ async fn test_analysis_config_conversion() {
     cleanup_test_project(&test_path).await.unwrap();
 }
 
+#[cfg(feature = "tui")]
 #[tokio::test]
 async fn test_backend_analysis_orchestrator_integration() {
     let test_path = create_test_project("orchestrator_test").await.unwrap();
@@ -345,6 +353,7 @@ async fn test_tui_to_cli_command_pipeline() {
     cleanup_test_project(&test_path).await.unwrap();
 }
 
+#[cfg(feature = "tui")]
 #[tokio::test]
 async fn test_concurrent_form_submissions() {
     let test_path1 = create_test_project("concurrent_test_1").await.unwrap();
