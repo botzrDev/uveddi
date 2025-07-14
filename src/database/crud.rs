@@ -166,8 +166,7 @@ impl Database {
     /// * `Err(UveddiError)` - If the insert or query fails.
     pub fn store_anti_pattern_type(&self, anti_pattern_type: &mut AntiPatternType) -> Result<()> {
         // Validate and sanitize description
-        anti_pattern_type.description = security::sanitize_description(&anti_pattern_type.description)
-            .map_err(|_| crate::error::UveddiError::ConfigError("Invalid description format".to_string()))?;
+        anti_pattern_type.description = security::sanitize_description(&anti_pattern_type.description);
         self.conn.execute(
             "INSERT OR IGNORE INTO anti_pattern_types (name, description, category) VALUES (?, ?, ?)",
             rusqlite::params![
@@ -200,13 +199,10 @@ impl Database {
         let tx = self.conn.transaction()?;
         for issue in issues {
             // Validate and sanitize description
-            let sanitized_description = security::sanitize_description(&issue.description)
-                .map_err(|_| crate::error::UveddiError::ConfigError("Invalid description format".to_string()))?;
-            
+            let sanitized_description = security::sanitize_description(&issue.description);
             // Validate and sanitize AI explanation if present
             let sanitized_ai_explanation = if let Some(ref explanation) = issue.ai_explanation {
-                Some(security::sanitize_description(explanation)
-                    .map_err(|_| crate::error::UveddiError::ConfigError("Invalid AI explanation format".to_string()))?)
+                Some(security::sanitize_description(explanation))
             } else {
                 None
             };
@@ -249,8 +245,7 @@ impl Database {
             )?;
             for anti_pattern_type in anti_pattern_types.iter_mut() {
                 // Validate and sanitize description
-                anti_pattern_type.description = security::sanitize_description(&anti_pattern_type.description)
-                    .map_err(|_| crate::error::UveddiError::ConfigError("Invalid description format".to_string()))?;
+                anti_pattern_type.description = security::sanitize_description(&anti_pattern_type.description);
                 
                 stmt.execute(rusqlite::params![
                     anti_pattern_type.name,
