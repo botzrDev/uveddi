@@ -134,7 +134,7 @@ impl Config {
     /// Returns an error if any of the required environment variables are not set.
     pub fn from_env() -> crate::error::Result<Self> {
         let ollama_model = env::var("OLLAMA_MODEL").ok();
-        
+
         // Validate model name if provided
         if let Some(ref model) = ollama_model {
             security::validate_model_name(&model).map_err(crate::error::UveddiError::from)?;
@@ -219,7 +219,8 @@ impl Config {
     /// Returns an error if the file cannot be read or if the contents cannot be parsed.
     pub fn from_file(path: &str) -> crate::error::Result<Self> {
         let content = fs::read_to_string(path).map_err(crate::error::UveddiError::from)?;
-        let config: Config = toml::from_str(&content).map_err(|e| crate::error::UveddiError::ConfigError(e.to_string()))?;
+        let config: Config = toml::from_str(&content)
+            .map_err(|e| crate::error::UveddiError::ConfigError(e.to_string()))?;
         Ok(config)
     }
 }

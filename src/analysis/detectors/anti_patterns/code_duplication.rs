@@ -16,14 +16,14 @@
 //! - Provides configurable similarity thresholds
 
 use crate::analysis::{AnalysisDetector, AnalysisError};
-use crate::error::UveddiError;
+use crate::ast::tree_sitter::{Query, QueryCursor};
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
+use crate::error::UveddiError;
 use log::{debug, info};
 use sha2::{Digest, Sha256};
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
-use crate::ast::tree_sitter::{Query, QueryCursor};
 
 /// Represents a contiguous block of code extracted for duplication analysis.
 ///
@@ -235,14 +235,11 @@ impl CodeDuplicationDetector {
         &self,
         parsed_file: &ParsedFile,
     ) -> Result<Vec<CodeBlock>, AnalysisError> {
-        let tree = parsed_file
-            .tree
-            .as_ref()
-            .ok_or_else(|| {
-                UveddiError::AstError(crate::ast::tree_sitter_impl::AstError::Other(
-                    "No AST available for file".to_string(),
-                ))
-            })?;
+        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
+            UveddiError::AstError(crate::ast::tree_sitter_impl::AstError::Other(
+                "No AST available for file".to_string(),
+            ))
+        })?;
 
         let query_str = match parsed_file.language {
             SourceLanguage::Rust => RUST_FUNCTION_QUERY,
@@ -275,9 +272,9 @@ impl CodeDuplicationDetector {
                 let source = function_node
                     .utf8_text(parsed_file.source.as_bytes())
                     .map_err(|e| {
-                        UveddiError::AstError(crate::ast::tree_sitter_impl::AstError::Other(format!(
-                            "Failed to extract source: {e}"
-                        )))
+                        UveddiError::AstError(crate::ast::tree_sitter_impl::AstError::Other(
+                            format!("Failed to extract source: {e}"),
+                        ))
                     })?
                     .to_string();
 
@@ -764,7 +761,10 @@ impl AnalysisDetector for CodeDuplicationDetector {
         }
 
         if blocks.is_empty() {
-            debug!("No code blocks found in file: {}", parsed_file.file_path.display());
+            debug!(
+                "No code blocks found in file: {}",
+                parsed_file.file_path.display()
+            );
             return Ok(vec![]);
         }
 

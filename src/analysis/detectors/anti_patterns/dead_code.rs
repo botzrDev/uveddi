@@ -22,12 +22,12 @@
 //! - **JavaScript**: Functions, classes, variables, exports
 
 use crate::analysis::{AnalysisDetector, AnalysisError};
-use crate::error::UveddiError;
+use crate::ast::tree_sitter::{Node, Query, QueryCursor};
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
+use crate::error::UveddiError;
 use log::{debug, info};
 use std::collections::HashSet;
-use crate::ast::tree_sitter::{Node, Query, QueryCursor};
 
 /// Represents a symbol (e.g., function, variable, class) identified in the source code.
 ///
@@ -191,17 +191,19 @@ impl DeadCodeDetector {
     fn extract_rust_symbols(&self, parsed_file: &ParsedFile) -> Result<Vec<Symbol>, AnalysisError> {
         let mut symbols = Vec::new();
         let source = parsed_file.source.as_bytes();
-        let tree = parsed_file
-            .tree
-            .as_ref()
-            .ok_or_else(|| {
-                UveddiError::AnalysisError(crate::analysis::errors::AnalysisError::DetectionError("AST tree missing".to_string()))
-            })?;
+        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
+            UveddiError::AnalysisError(crate::analysis::errors::AnalysisError::DetectionError(
+                "AST tree missing".to_string(),
+            ))
+        })?;
         let language = tree.language();
 
         // Query for function definitions
-        let function_query = Query::new(&language, RUST_FUNCTION_QUERY)
-            .map_err(|e| UveddiError::AnalysisError(crate::analysis::errors::AnalysisError::DetectionError(e.to_string())))?;
+        let function_query = Query::new(&language, RUST_FUNCTION_QUERY).map_err(|e| {
+            UveddiError::AnalysisError(crate::analysis::errors::AnalysisError::DetectionError(
+                e.to_string(),
+            ))
+        })?;
 
         let mut cursor = QueryCursor::new();
         for mat in cursor.matches(&function_query, tree.root_node(), source) {
@@ -226,8 +228,11 @@ impl DeadCodeDetector {
         }
 
         // Query for struct definitions
-        let struct_query = Query::new(&language, RUST_STRUCT_QUERY)
-            .map_err(|e| UveddiError::AnalysisError(crate::analysis::errors::AnalysisError::DetectionError(e.to_string())))?;
+        let struct_query = Query::new(&language, RUST_STRUCT_QUERY).map_err(|e| {
+            UveddiError::AnalysisError(crate::analysis::errors::AnalysisError::DetectionError(
+                e.to_string(),
+            ))
+        })?;
 
         let mut cursor = QueryCursor::new();
         for mat in cursor.matches(&struct_query, tree.root_node(), source) {
@@ -264,17 +269,19 @@ impl DeadCodeDetector {
         let mut symbols = Vec::new();
         let default_source = String::new();
         let source = parsed_file.source.as_bytes();
-        let tree = parsed_file
-            .tree
-            .as_ref()
-            .ok_or_else(|| {
-                UveddiError::AnalysisError(crate::analysis::errors::AnalysisError::DetectionError("AST tree missing".to_string()))
-            })?;
+        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
+            UveddiError::AnalysisError(crate::analysis::errors::AnalysisError::DetectionError(
+                "AST tree missing".to_string(),
+            ))
+        })?;
         let language = tree.language();
 
         // Query for function definitions
-        let function_query = Query::new(&language, PYTHON_FUNCTION_QUERY)
-            .map_err(|e| UveddiError::AnalysisError(crate::analysis::errors::AnalysisError::DetectionError(e.to_string())))?;
+        let function_query = Query::new(&language, PYTHON_FUNCTION_QUERY).map_err(|e| {
+            UveddiError::AnalysisError(crate::analysis::errors::AnalysisError::DetectionError(
+                e.to_string(),
+            ))
+        })?;
 
         let mut cursor = QueryCursor::new();
         for mat in cursor.matches(&function_query, tree.root_node(), source) {
@@ -283,10 +290,8 @@ impl DeadCodeDetector {
                 if let Ok(name) = name_node.utf8_text(source) {
                     let is_exported = !name.starts_with('_');
                     let code_snippet = self.extract_code_snippet(&name_node, source, 3);
-                    let confidence = self.calculate_python_confidence(
-                        name,
-                        &(*parsed_file.file_path),
-                    );
+                    let confidence =
+                        self.calculate_python_confidence(name, &(*parsed_file.file_path));
 
                     symbols.push(Symbol {
                         name: name.to_string(),
@@ -303,8 +308,11 @@ impl DeadCodeDetector {
         }
 
         // Query for class definitions
-        let class_query = Query::new(&language, PYTHON_CLASS_QUERY)
-            .map_err(|e| UveddiError::AnalysisError(crate::analysis::errors::AnalysisError::DetectionError(e.to_string())))?;
+        let class_query = Query::new(&language, PYTHON_CLASS_QUERY).map_err(|e| {
+            UveddiError::AnalysisError(crate::analysis::errors::AnalysisError::DetectionError(
+                e.to_string(),
+            ))
+        })?;
 
         let mut cursor = QueryCursor::new();
         for mat in cursor.matches(&class_query, tree.root_node(), source) {
@@ -313,10 +321,8 @@ impl DeadCodeDetector {
                 if let Ok(name) = name_node.utf8_text(source) {
                     let is_exported = !name.starts_with('_');
                     let code_snippet = self.extract_code_snippet(&name_node, source, 3);
-                    let confidence = self.calculate_python_confidence(
-                        name,
-                        &(*parsed_file.file_path),
-                    );
+                    let confidence =
+                        self.calculate_python_confidence(name, &(*parsed_file.file_path));
 
                     symbols.push(Symbol {
                         name: name.to_string(),
@@ -345,17 +351,19 @@ impl DeadCodeDetector {
         let mut symbols = Vec::new();
         let default_source = String::new();
         let source = parsed_file.source.as_bytes();
-        let tree = parsed_file
-            .tree
-            .as_ref()
-            .ok_or_else(|| {
-                UveddiError::AnalysisError(crate::analysis::errors::AnalysisError::DetectionError("AST tree missing".to_string()))
-            })?;
+        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
+            UveddiError::AnalysisError(crate::analysis::errors::AnalysisError::DetectionError(
+                "AST tree missing".to_string(),
+            ))
+        })?;
         let language = tree.language();
 
         // Query for function declarations
-        let function_query = Query::new(&language, JAVASCRIPT_FUNCTION_QUERY)
-            .map_err(|e| UveddiError::AnalysisError(crate::analysis::errors::AnalysisError::DetectionError(e.to_string())))?;
+        let function_query = Query::new(&language, JAVASCRIPT_FUNCTION_QUERY).map_err(|e| {
+            UveddiError::AnalysisError(crate::analysis::errors::AnalysisError::DetectionError(
+                e.to_string(),
+            ))
+        })?;
 
         let mut cursor = QueryCursor::new();
         for mat in cursor.matches(&function_query, tree.root_node(), source) {
@@ -364,10 +372,8 @@ impl DeadCodeDetector {
                 if let Ok(name) = name_node.utf8_text(source) {
                     let is_exported = self.is_javascript_symbol_exported(&name_node, source);
                     let code_snippet = self.extract_code_snippet(&name_node, source, 3);
-                    let confidence = self.calculate_javascript_confidence(
-                        name,
-                        &(*parsed_file.file_path),
-                    );
+                    let confidence =
+                        self.calculate_javascript_confidence(name, &(*parsed_file.file_path));
 
                     symbols.push(Symbol {
                         name: name.to_string(),
@@ -396,17 +402,19 @@ impl DeadCodeDetector {
         let mut references = HashSet::new();
         let default_source = String::new();
         let source = parsed_file.source.as_bytes();
-        let tree = parsed_file
-            .tree
-            .as_ref()
-            .ok_or_else(|| {
-                UveddiError::AnalysisError(crate::analysis::errors::AnalysisError::DetectionError("AST tree missing".to_string()))
-            })?;
+        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
+            UveddiError::AnalysisError(crate::analysis::errors::AnalysisError::DetectionError(
+                "AST tree missing".to_string(),
+            ))
+        })?;
         let language = tree.language();
 
         // Query for function calls
-        let call_query = Query::new(&language, RUST_CALL_QUERY)
-            .map_err(|e| UveddiError::AnalysisError(crate::analysis::errors::AnalysisError::DetectionError(e.to_string())))?;
+        let call_query = Query::new(&language, RUST_CALL_QUERY).map_err(|e| {
+            UveddiError::AnalysisError(crate::analysis::errors::AnalysisError::DetectionError(
+                e.to_string(),
+            ))
+        })?;
 
         let mut cursor = QueryCursor::new();
         for mat in cursor.matches(&call_query, tree.root_node(), source) {
@@ -429,17 +437,19 @@ impl DeadCodeDetector {
         let mut references = HashSet::new();
         let default_source = String::new();
         let source = parsed_file.source.as_bytes();
-        let tree = parsed_file
-            .tree
-            .as_ref()
-            .ok_or_else(|| {
-                UveddiError::AnalysisError(crate::analysis::errors::AnalysisError::DetectionError("AST tree missing".to_string()))
-            })?;
+        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
+            UveddiError::AnalysisError(crate::analysis::errors::AnalysisError::DetectionError(
+                "AST tree missing".to_string(),
+            ))
+        })?;
         let language = tree.language();
 
         // Query for function calls
-        let call_query = Query::new(&language, PYTHON_CALL_QUERY)
-            .map_err(|e| UveddiError::AnalysisError(crate::analysis::errors::AnalysisError::DetectionError(e.to_string())))?;
+        let call_query = Query::new(&language, PYTHON_CALL_QUERY).map_err(|e| {
+            UveddiError::AnalysisError(crate::analysis::errors::AnalysisError::DetectionError(
+                e.to_string(),
+            ))
+        })?;
 
         let mut cursor = QueryCursor::new();
         for mat in cursor.matches(&call_query, tree.root_node(), source) {
@@ -462,17 +472,19 @@ impl DeadCodeDetector {
         let mut references = HashSet::new();
         let default_source = String::new();
         let source = parsed_file.source.as_bytes();
-        let tree = parsed_file
-            .tree
-            .as_ref()
-            .ok_or_else(|| {
-                UveddiError::AnalysisError(crate::analysis::errors::AnalysisError::DetectionError("AST tree missing".to_string()))
-            })?;
+        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
+            UveddiError::AnalysisError(crate::analysis::errors::AnalysisError::DetectionError(
+                "AST tree missing".to_string(),
+            ))
+        })?;
         let language = tree.language();
 
         // Query for function calls
-        let call_query = Query::new(&language, JAVASCRIPT_CALL_QUERY)
-            .map_err(|e| UveddiError::AnalysisError(crate::analysis::errors::AnalysisError::DetectionError(e.to_string())))?;
+        let call_query = Query::new(&language, JAVASCRIPT_CALL_QUERY).map_err(|e| {
+            UveddiError::AnalysisError(crate::analysis::errors::AnalysisError::DetectionError(
+                e.to_string(),
+            ))
+        })?;
 
         let mut cursor = QueryCursor::new();
         for mat in cursor.matches(&call_query, tree.root_node(), source) {
@@ -619,7 +631,10 @@ impl AnalysisDetector for DeadCodeDetector {
         &self,
         parsed_file: &ParsedFile,
     ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
-        debug!("Running Dead Code detection on: {}", parsed_file.file_path.display());
+        debug!(
+            "Running Dead Code detection on: {}",
+            parsed_file.file_path.display()
+        );
 
         // For single-file analysis, we can only detect obvious cases
         // Full dead code detection requires cross-file analysis
@@ -680,7 +695,10 @@ impl AnalysisDetector for DeadCodeDetector {
         }
 
         if issues.is_empty() {
-            debug!("No dead code issues found in {}", parsed_file.file_path.display());
+            debug!(
+                "No dead code issues found in {}",
+                parsed_file.file_path.display()
+            );
         } else {
             info!(
                 "Found {} potential dead code issues in {}",

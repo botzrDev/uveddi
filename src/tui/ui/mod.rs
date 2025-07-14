@@ -6,15 +6,15 @@
 //! - Report viewers and data visualization
 //! - Reusable UI component library
 
-pub mod main_menu;
 pub mod analyze_form;
+pub mod main_menu;
 // pub mod config_editor;    // Will be implemented in later tasks
 // pub mod report_viewer;    // Will be implemented in later tasks
 pub mod components;
 
+use self::{analyze_form::AnalyzeForm, main_menu::MainMenu};
+use crate::tui::app::{AppScreen, AppState};
 use ratatui::prelude::*;
-use crate::tui::app::{AppState, AppScreen};
-use self::{main_menu::MainMenu, analyze_form::AnalyzeForm};
 
 /// Main UI renderer that coordinates all components
 pub fn render(frame: &mut Frame, app_state: &AppState) {
@@ -24,7 +24,9 @@ pub fn render(frame: &mut Frame, app_state: &AppState) {
             main_menu.render(frame, frame.area(), app_state);
         }
         AppScreen::AnalyzeForm => {
-            app_state.analyze_form.render(frame, frame.area(), app_state);
+            app_state
+                .analyze_form
+                .render(frame, frame.area(), app_state);
         }
         AppScreen::ConfigEditor => {
             // TODO: Implement in later task
@@ -43,10 +45,10 @@ pub fn render(frame: &mut Frame, app_state: &AppState) {
 
 /// Render placeholder screen for unimplemented features
 fn render_placeholder(frame: &mut Frame, message: &str) {
-    use ratatui::widgets::{Block, Borders, Paragraph};
     use ratatui::style::{Color, Style};
     use ratatui::text::Line;
-    
+    use ratatui::widgets::{Block, Borders, Paragraph};
+
     let placeholder = Paragraph::new(vec![
         Line::from(message),
         Line::from(""),
@@ -61,6 +63,6 @@ fn render_placeholder(frame: &mut Frame, message: &str) {
     )
     .style(Style::default().fg(Color::Gray))
     .alignment(ratatui::layout::Alignment::Center);
-    
+
     frame.render_widget(placeholder, frame.area());
 }

@@ -56,8 +56,8 @@
 //! - **Access Control**: Role-based permissions for analysis features
 //! - **Data Privacy**: Anonymization of sensitive code patterns
 
-use std::path::{Path, PathBuf, Component};
 use crate::error::UveddiError;
+use std::path::{Component, Path, PathBuf};
 
 /// Security-related errors for Uveddi
 #[derive(Debug, thiserror::Error)]
@@ -105,11 +105,15 @@ pub const MAX_FILES_PER_ANALYSIS: usize = 10000;
 
 /// Validate file size for analysis
 pub fn validate_file_size(path: &Path) -> Result<(), SecurityError> {
-    let metadata = std::fs::metadata(path).map_err(|_| SecurityError::InvalidPath(path.display().to_string()))?;
+    let metadata = std::fs::metadata(path)
+        .map_err(|_| SecurityError::InvalidPath(path.display().to_string()))?;
     let size = metadata.len();
     let max_size = 10 * 1024 * 1024; // 10MB
     if size > max_size {
-        return Err(SecurityError::FileSizeExceeded { size, limit: max_size });
+        return Err(SecurityError::FileSizeExceeded {
+            size,
+            limit: max_size,
+        });
     }
     Ok(())
 }
@@ -117,7 +121,12 @@ pub fn validate_file_size(path: &Path) -> Result<(), SecurityError> {
 /// Validate file type for analysis
 pub fn validate_file_type(path: &Path) -> Result<(), SecurityError> {
     let allowed = ["rs", "py", "js", "jsx", "ts", "tsx"];
-    let ext = path.extension().and_then(|e| e.to_str()).ok_or(SecurityError::UnsupportedFileType("No extension".to_string()))?;
+    let ext =
+        path.extension()
+            .and_then(|e| e.to_str())
+            .ok_or(SecurityError::UnsupportedFileType(
+                "No extension".to_string(),
+            ))?;
     if !allowed.contains(&ext) {
         return Err(SecurityError::UnsupportedFileType(ext.to_string()));
     }
@@ -140,7 +149,9 @@ pub fn validate_model_name(name: &str) -> Result<(), SecurityError> {
 
 /// Sanitize description for database insertion
 pub fn sanitize_description(desc: &str) -> String {
-    desc.chars().filter(|c| !c.is_control() || *c == '\n' || *c == '\t').collect()
+    desc.chars()
+        .filter(|c| !c.is_control() || *c == '\n' || *c == '\t')
+        .collect()
 }
 
 /// Validate directory depth
@@ -155,7 +166,10 @@ pub fn validate_directory_depth(depth: usize) -> Result<(), SecurityError> {
 /// Validate file count for analysis
 pub fn validate_file_count(count: usize) -> Result<(), SecurityError> {
     if count > MAX_FILES_PER_ANALYSIS {
-        return Err(SecurityError::TooManyFiles { count, max_count: MAX_FILES_PER_ANALYSIS });
+        return Err(SecurityError::TooManyFiles {
+            count,
+            max_count: MAX_FILES_PER_ANALYSIS,
+        });
     }
     Ok(())
 }

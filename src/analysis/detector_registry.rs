@@ -1,4 +1,6 @@
-use crate::analysis::{AnalysisDetector, DetectorFactory, DetectorConfig, WasmPluginAdapterFactory};
+use crate::analysis::{
+    AnalysisDetector, DetectorConfig, DetectorFactory, WasmPluginAdapterFactory,
+};
 use crate::error::UveddiError;
 use std::collections::HashMap;
 
@@ -23,13 +25,13 @@ use std::collections::HashMap;
 ///
 /// # fn example() -> Result<(), uveddi::error::UveddiError> {
 /// let mut registry = DetectorRegistry::new();
-/// 
+///
 /// // Load default detectors
 /// registry.load_defaults();
 ///
 /// // Or load from configuration
 /// let mut configs = HashMap::new();
-/// configs.insert("god_object".to_string(), 
+/// configs.insert("god_object".to_string(),
 ///     DetectorConfig::new().with_param("threshold_methods", 10));
 /// registry.load_from_config(&configs)?;
 ///
@@ -51,7 +53,7 @@ impl DetectorRegistry {
             factory: DetectorFactory,
         }
     }
-    
+
     /// Register a detector with a custom name
     ///
     /// # Arguments
@@ -65,13 +67,13 @@ impl DetectorRegistry {
     /// use uveddi::analysis::{DetectorRegistry, GodObjectDetector};
     ///
     /// let mut registry = DetectorRegistry::new();
-    /// registry.register("custom_god_object".to_string(), 
+    /// registry.register("custom_god_object".to_string(),
     ///     Box::new(GodObjectDetector::new(15, 20)));
     /// ```
     pub fn register(&mut self, name: String, detector: Box<dyn AnalysisDetector + Send + Sync>) {
         self.detectors.insert(name, detector);
     }
-    
+
     /// Get all registered detectors
     ///
     /// Consumes the registry and returns all detectors that were registered.
@@ -83,7 +85,7 @@ impl DetectorRegistry {
     pub fn get_all_detectors(self) -> Vec<Box<dyn AnalysisDetector + Send + Sync>> {
         self.detectors.into_values().collect()
     }
-    
+
     /// Get a list of all registered detector names
     ///
     /// # Returns
@@ -92,7 +94,7 @@ impl DetectorRegistry {
     pub fn get_detector_names(&self) -> Vec<String> {
         self.detectors.keys().cloned().collect()
     }
-    
+
     /// Check if a detector with the given name is registered
     ///
     /// # Arguments
@@ -105,12 +107,12 @@ impl DetectorRegistry {
     pub fn has_detector(&self, name: &str) -> bool {
         self.detectors.contains_key(name)
     }
-    
+
     /// Get the number of registered detectors
     pub fn count(&self) -> usize {
         self.detectors.len()
     }
-    
+
     /// Load detectors from configuration
     ///
     /// Creates detectors based on a configuration mapping and registers them
@@ -133,26 +135,29 @@ impl DetectorRegistry {
     /// # fn example() -> Result<(), uveddi::error::UveddiError> {
     /// let mut registry = DetectorRegistry::new();
     /// let mut configs = HashMap::new();
-    /// 
-    /// configs.insert("god_object".to_string(), 
+    ///
+    /// configs.insert("god_object".to_string(),
     ///     DetectorConfig::new()
     ///         .with_param("threshold_methods", 15)
     ///         .with_param("threshold_fields", 20));
     /// configs.insert("code_duplication".to_string(), DetectorConfig::new());
-    /// 
+    ///
     /// registry.load_from_config(&configs)?;
     /// assert_eq!(registry.count(), 2);
     /// # Ok(())
     /// # }
     /// ```
-    pub fn load_from_config(&mut self, configs: &HashMap<String, DetectorConfig>) -> Result<(), UveddiError> {
+    pub fn load_from_config(
+        &mut self,
+        configs: &HashMap<String, DetectorConfig>,
+    ) -> Result<(), UveddiError> {
         for (name, detector_config) in configs {
             let detector = DetectorFactory::create_detector(name, detector_config)?;
             self.register(name.clone(), detector);
         }
         Ok(())
     }
-    
+
     /// Load default detector set
     ///
     /// Registers the standard set of detectors with predefined names.
@@ -170,12 +175,12 @@ impl DetectorRegistry {
         let defaults = DetectorFactory::create_default_detectors();
         let detector_names = vec![
             "god_object",
-            "code_duplication", 
+            "code_duplication",
             "dead_code",
             "large_classes",
             "tight_coupling",
         ];
-        
+
         for (i, detector) in defaults.into_iter().enumerate() {
             if let Some(&name) = detector_names.get(i) {
                 self.register(name.to_string(), detector);
@@ -185,7 +190,7 @@ impl DetectorRegistry {
             }
         }
     }
-    
+
     /// Remove a detector by name
     ///
     /// # Arguments
@@ -198,7 +203,7 @@ impl DetectorRegistry {
     pub fn remove_detector(&mut self, name: &str) -> bool {
         self.detectors.remove(name).is_some()
     }
-    
+
     /// Clear all registered detectors
     pub fn clear(&mut self) {
         self.detectors.clear();
@@ -228,26 +233,26 @@ impl DetectorRegistry {
     /// # async fn example() -> Result<(), uveddi::error::UveddiError> {
     /// let mut registry = DetectorRegistry::new();
     /// let plugin_engine = Arc::new(RwLock::new(WasmPluginEngine::new().await?));
-    /// 
+    ///
     /// registry.load_plugin_detectors(plugin_engine).await?;
     /// println!("Loaded {} detectors including plugins", registry.count());
     /// # Ok(())
     /// # }
     /// ```
     pub async fn load_plugin_detectors(
-        &mut self, 
-        plugin_engine: std::sync::Arc<tokio::sync::RwLock<crate::plugins::WasmPluginEngine>>
+        &mut self,
+        plugin_engine: std::sync::Arc<tokio::sync::RwLock<crate::plugins::WasmPluginEngine>>,
     ) -> Result<usize, UveddiError> {
         let adapter_factory = WasmPluginAdapterFactory::new(plugin_engine);
         let plugin_adapters = adapter_factory.create_all_adapters().await?;
-        
+
         let mut count = 0;
         for (i, adapter) in plugin_adapters.into_iter().enumerate() {
             let plugin_name = format!("plugin_{}", i);
             self.register(plugin_name, adapter);
             count += 1;
         }
-        
+
         log::info!("Loaded {} plugin detectors into registry", count);
         Ok(count)
     }
@@ -261,18 +266,17 @@ impl DetectorRegistry {
     /// The number of plugin detectors that were removed
     pub fn remove_plugin_detectors(&mut self) -> usize {
         let initial_count = self.detectors.len();
-        
+
         // Remove detectors that are WASM plugin adapters
-        self.detectors.retain(|_name, detector| {
-            detector.get_detector_name() != "wasm-plugin-detector"
-        });
-        
+        self.detectors
+            .retain(|_name, detector| detector.get_detector_name() != "wasm-plugin-detector");
+
         let removed_count = initial_count - self.detectors.len();
-        
+
         if removed_count > 0 {
             log::info!("Removed {} plugin detectors from registry", removed_count);
         }
-        
+
         removed_count
     }
 }
@@ -302,9 +306,9 @@ mod tests {
     fn test_register_detector() {
         let mut registry = DetectorRegistry::new();
         let detector = Box::new(GodObjectDetector::new(5, 8));
-        
+
         registry.register("test_detector".to_string(), detector);
-        
+
         assert_eq!(registry.count(), 1);
         assert!(registry.has_detector("test_detector"));
         assert!(!registry.has_detector("nonexistent"));
@@ -314,7 +318,7 @@ mod tests {
     fn test_load_defaults() {
         let mut registry = DetectorRegistry::new();
         registry.load_defaults();
-        
+
         assert_eq!(registry.count(), 5);
         assert!(registry.has_detector("god_object"));
         assert!(registry.has_detector("code_duplication"));
@@ -327,11 +331,13 @@ mod tests {
     fn test_load_from_config() {
         let mut registry = DetectorRegistry::new();
         let mut configs = HashMap::new();
-        
-        configs.insert("god_object".to_string(), 
-            DetectorConfig::new().with_param("threshold_methods", 10));
+
+        configs.insert(
+            "god_object".to_string(),
+            DetectorConfig::new().with_param("threshold_methods", 10),
+        );
         configs.insert("code_duplication".to_string(), DetectorConfig::new());
-        
+
         let result = registry.load_from_config(&configs);
         assert!(result.is_ok());
         assert_eq!(registry.count(), 2);
@@ -341,9 +347,9 @@ mod tests {
     fn test_load_from_config_invalid_detector() {
         let mut registry = DetectorRegistry::new();
         let mut configs = HashMap::new();
-        
+
         configs.insert("invalid_detector".to_string(), DetectorConfig::new());
-        
+
         let result = registry.load_from_config(&configs);
         assert!(result.is_err());
     }
@@ -352,14 +358,12 @@ mod tests {
     fn test_get_all_detectors() {
         let mut registry = DetectorRegistry::new();
         registry.load_defaults();
-        
+
         let detectors = registry.get_all_detectors();
         assert_eq!(detectors.len(), 5);
-        
+
         // Verify detector types
-        let detector_names: Vec<&str> = detectors.iter()
-            .map(|d| d.get_detector_name())
-            .collect();
+        let detector_names: Vec<&str> = detectors.iter().map(|d| d.get_detector_name()).collect();
         assert!(detector_names.contains(&"GodObjectDetector"));
         assert!(detector_names.contains(&"CodeDuplicationDetector"));
     }
@@ -368,12 +372,12 @@ mod tests {
     fn test_remove_detector() {
         let mut registry = DetectorRegistry::new();
         registry.load_defaults();
-        
+
         assert!(registry.has_detector("god_object"));
         assert!(registry.remove_detector("god_object"));
         assert!(!registry.has_detector("god_object"));
         assert_eq!(registry.count(), 4);
-        
+
         // Removing non-existent detector should return false
         assert!(!registry.remove_detector("nonexistent"));
     }
@@ -382,7 +386,7 @@ mod tests {
     fn test_clear() {
         let mut registry = DetectorRegistry::new();
         registry.load_defaults();
-        
+
         assert_eq!(registry.count(), 5);
         registry.clear();
         assert_eq!(registry.count(), 0);

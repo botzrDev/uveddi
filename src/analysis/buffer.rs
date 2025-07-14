@@ -3,8 +3,8 @@
 //! This module provides compile-time optimized buffer structures that can be used
 //! throughout the analysis pipeline for improved performance and memory efficiency.
 
-use std::fmt;
 use std::error::Error;
+use std::fmt;
 
 /// A compile-time sized buffer for byte data
 ///
@@ -329,25 +329,25 @@ mod tests {
     #[test]
     fn test_fixed_buffer_basic_operations() {
         let mut buffer = FixedBuffer::<4>::new();
-        
+
         assert_eq!(buffer.len(), 0);
         assert_eq!(buffer.capacity(), 4);
         assert!(buffer.is_empty());
         assert!(!buffer.is_full());
-        
+
         buffer.push(b'A').unwrap();
         assert_eq!(buffer.len(), 1);
         assert_eq!(buffer.as_slice(), b"A");
-        
+
         buffer.extend_from_slice(b"BC").unwrap();
         assert_eq!(buffer.len(), 3);
         assert_eq!(buffer.as_slice(), b"ABC");
-        
+
         buffer.push(b'D').unwrap();
         assert!(buffer.is_full());
         assert_eq!(buffer.len(), 4);
         assert_eq!(buffer.as_slice(), b"ABCD");
-        
+
         // Should fail when buffer is full
         assert_eq!(buffer.push(b'E'), Err(BufferError::BufferFull));
     }
@@ -355,19 +355,19 @@ mod tests {
     #[test]
     fn test_fixed_string_basic_operations() {
         let mut string = FixedString::<10>::new();
-        
+
         assert_eq!(string.len(), 0);
         assert_eq!(string.capacity(), 10);
         assert!(string.is_empty());
-        
+
         string.push_str("Hello").unwrap();
         assert_eq!(string.len(), 5);
         assert_eq!(string.as_str(), "Hello");
-        
+
         string.push_char(' ').unwrap();
         string.push_str("Hi").unwrap();
         assert_eq!(string.as_str(), "Hello Hi");
-        
+
         // Should fail when buffer is full
         assert_eq!(string.push_str("World"), Err(BufferError::BufferFull));
     }
@@ -375,11 +375,11 @@ mod tests {
     #[test]
     fn test_unicode_support() {
         let mut string = FixedString::<20>::new();
-        
+
         string.push_str("Hello").unwrap();
         string.push_char('🌍').unwrap(); // 4-byte UTF-8 character
         string.push_str("!").unwrap();
-        
+
         assert_eq!(string.as_str(), "Hello🌍!");
     }
 }

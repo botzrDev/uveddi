@@ -2,11 +2,11 @@
 // UV-97: Tree-sitter feature gating implementation
 
 use crate::error::UveddiError;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use tree_sitter::{Parser, Tree};
-use serde::{Serialize, Deserialize};
 
 /// Tree-sitter parser implementation (feature enabled)
 pub struct AstParser {
@@ -52,7 +52,6 @@ impl SourceLanguage {
 
 /// Parsed file structure containing AST and metadata
 
-
 #[derive(Debug, Clone, Serialize, Deserialize)] // Add Serialize/Deserialize
 pub struct ParsedFile {
     pub file_path: Arc<PathBuf>, // Changed to Arc<PathBuf>
@@ -67,10 +66,20 @@ pub struct ParsedFile {
 /// Custom AST representation
 #[derive(Debug, Clone)]
 pub enum CustomAst {
-    File { items: Vec<CustomAst> },
-    Struct { name: String, methods: Vec<String> },
-    Function { name: String, parameters: Vec<String> },
-    Variable { name: String },
+    File {
+        items: Vec<CustomAst>,
+    },
+    Struct {
+        name: String,
+        methods: Vec<String>,
+    },
+    Function {
+        name: String,
+        parameters: Vec<String>,
+    },
+    Variable {
+        name: String,
+    },
 }
 
 /// AST error types for tree-sitter operations
@@ -190,9 +199,12 @@ impl AstParser {
         file_path: &std::path::PathBuf,
         language: SourceLanguage,
     ) -> Result<ParsedFile, AstError> {
-        let parser = self.parsers.get_mut(&language)
+        let parser = self
+            .parsers
+            .get_mut(&language)
             .ok_or_else(|| AstError::UnsupportedLanguage(format!("{:?}", language)))?;
-        let tree = parser.parse(content, None)
+        let tree = parser
+            .parse(content, None)
             .ok_or_else(|| AstError::ParseFailed)?;
         Ok(ParsedFile {
             file_path: Arc::new(file_path.to_path_buf()),

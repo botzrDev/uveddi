@@ -3,12 +3,12 @@
 //! This module provides async file walking functionality to replace the
 //! synchronous walkdir usage for better performance on large codebases.
 
+use crate::security;
 use futures::stream::Stream;
 use std::path::{Path, PathBuf};
 use std::pin::Pin;
 use tokio::fs;
 use tokio_stream::{wrappers::ReadDirStream, StreamExt};
-use crate::security;
 
 /// Async file walker that yields file paths with security validation
 pub struct AsyncWalker {
@@ -29,7 +29,7 @@ impl AsyncWalker {
     ///
     /// * `AsyncWalker` - A new instance configured for the given extensions.
     pub fn new(include_extensions: Vec<String>) -> Self {
-        Self { 
+        Self {
             include_extensions,
             max_depth: None,
             max_files: None,
@@ -49,11 +49,11 @@ impl AsyncWalker {
     ///
     /// * `AsyncWalker` - A new instance with security validation
     pub fn new_with_security(
-        include_extensions: Vec<String>, 
-        max_depth: Option<usize>, 
-        max_files: Option<usize>
+        include_extensions: Vec<String>,
+        max_depth: Option<usize>,
+        max_files: Option<usize>,
     ) -> Self {
-        Self { 
+        Self {
             include_extensions,
             max_depth,
             max_files,
@@ -156,11 +156,11 @@ impl AsyncWalker {
                                 continue;
                             }
                             if file_count > max_files {
-                                yield Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, 
+                                yield Err(std::io::Error::new(std::io::ErrorKind::InvalidInput,
                                     format!("File count {} exceeds maximum {}", file_count, max_files)));
                                 continue;
                             }
-                            
+
                             // Validate file size and type
                             if let Err(e) = security::validate_file_size(&current_path) {
                                 yield Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, e.to_string()));

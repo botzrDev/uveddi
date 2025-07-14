@@ -8,7 +8,7 @@ use crate::community::models::{
     CommunityMember, DeveloperBadge, DeveloperProfile, DeveloperType, MemberActivity,
     MemberProfile, MemberRole, RolePermissions,
 };
-use crate::error::{UveddiError, RusqliteError};
+use crate::error::{RusqliteError, UveddiError};
 use chrono::{DateTime, Utc};
 use rusqlite::{Connection, Result as SqlResult, Row};
 use serde_json;

@@ -3,13 +3,13 @@
 //! Manages the core event loop using crossterm for terminal events
 //! and integrates with the TEA architecture for state management.
 
+use color_eyre::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyModifiers};
 use ratatui::prelude::*;
 use std::time::{Duration, Instant};
-use color_eyre::Result;
 
 use crate::tui::{
-    app::{AppState, AppScreen},
+    app::{AppScreen, AppState},
     messages::AppMessage,
     terminal::TerminalManager,
     ui,
@@ -34,7 +34,7 @@ impl EventHandler {
     pub fn new() -> Self {
         let target_fps = 60;
         let frame_duration = Duration::from_millis(1000 / target_fps as u64);
-        
+
         Self {
             target_fps,
             frame_duration,
@@ -43,25 +43,25 @@ impl EventHandler {
             tick_rate: 4, // 4 ticks per second
         }
     }
-    
+
     /// Run the main event loop
     pub fn run(&mut self, mut app_state: AppState) -> Result<()> {
         // Initialize terminal
         let mut terminal_manager = TerminalManager::new()?;
-        
+
         // Check terminal suitability
         if !terminal_manager.is_size_adequate()? {
             eprintln!("Warning: Terminal size may be too small for optimal experience");
             eprintln!("Recommended minimum: 80x24 characters");
         }
-        
+
         // Main event loop
         let mut should_render = true;
-        
+
         loop {
             // Handle events
             let messages = self.handle_events(&mut app_state)?;
-            
+
             // Process any generated messages
             for message in messages {
                 let new_messages = app_state.update(message);
@@ -71,13 +71,13 @@ impl EventHandler {
                 }
                 should_render = true;
             }
-            
+
             // Handle periodic ticks
             if self.should_tick() {
                 app_state.update(AppMessage::Tick);
                 should_render = true;
             }
-            
+
             // Render if needed and enough time has passed
             if should_render && self.should_render() {
                 terminal_manager.terminal_mut().draw(|frame| {
@@ -86,24 +86,24 @@ impl EventHandler {
                 should_render = false;
                 self.last_frame = Instant::now();
             }
-            
+
             // Check for quit condition
             if app_state.should_quit {
                 break;
             }
-            
+
             // Small sleep to prevent 100% CPU usage
             std::thread::sleep(Duration::from_millis(1));
         }
-        
+
         // Terminal cleanup happens automatically when TerminalManager drops
         Ok(())
     }
-    
+
     /// Handle terminal events and return generated messages
     fn handle_events(&mut self, app_state: &mut AppState) -> Result<Vec<AppMessage>> {
         let mut messages = Vec::new();
-        
+
         // Check for events with a short timeout to keep the loop responsive
         if event::poll(Duration::from_millis(1))? {
             match event::read()? {
@@ -120,10 +120,10 @@ impl EventHandler {
                 _ => {} // Ignore other events for now
             }
         }
-        
+
         Ok(messages)
     }
-    
+
     /// Handle keyboard events
     fn handle_key_event(&self, key_event: KeyEvent, app_state: &AppState) -> Vec<AppMessage> {
         // Global key handlers that work on any screen
@@ -135,12 +135,12 @@ impl EventHandler {
             KeyCode::Char('c') if key_event.modifiers.contains(KeyModifiers::CONTROL) => {
                 return vec![AppMessage::Quit];
             }
-            
+
             // Global help
             KeyCode::F(1) => {
                 return vec![AppMessage::ShowHelp];
             }
-            
+
             // Global navigation
             KeyCode::Esc => {
                 // Only navigate to main menu if not already there
@@ -148,10 +148,10 @@ impl EventHandler {
                     return vec![AppMessage::NavigateToMainMenu];
                 }
             }
-            
+
             _ => {} // Continue to screen-specific handling
         }
-        
+
         // Delegate to screen-specific key handling
         match app_state.current_screen {
             AppScreen::MainMenu => self.handle_main_menu_keys(key_event, app_state),
@@ -161,22 +161,29 @@ impl EventHandler {
             AppScreen::PluginManager => self.handle_plugin_manager_keys(key_event, app_state),
         }
     }
-    
+
     /// Handle keys for main menu screen
     fn handle_main_menu_keys(&self, key_event: KeyEvent, app_state: &AppState) -> Vec<AppMessage> {
         use crate::tui::ui::main_menu::MainMenu;
-        
+
         // Delegate to MainMenu component for keyboard handling
         let main_menu = MainMenu::new();
         let mut app_state_copy = app_state.clone();
         main_menu.handle_key_input(key_event.code, &mut app_state_copy)
     }
-    
+
     /// Handle keys for analyze form screen
-    fn handle_analyze_form_keys(&self, key_event: KeyEvent, app_state: &AppState) -> Vec<AppMessage> {
-        use ratatui::crossterm::event::{KeyCode as RatatuiKeyCode, KeyModifiers as RatatuiKeyModifiers, KeyEvent as RatatuiKeyEvent};
+    fn handle_analyze_form_keys(
+        &self,
+        key_event: KeyEvent,
+        app_state: &AppState,
+    ) -> Vec<AppMessage> {
         use crossterm::event::{KeyCode, KeyModifiers};
-        
+        use ratatui::crossterm::event::{
+            KeyCode as RatatuiKeyCode, KeyEvent as RatatuiKeyEvent,
+            KeyModifiers as RatatuiKeyModifiers,
+        };
+
         // Convert crossterm KeyEvent to ratatui's crossterm KeyEvent
         let ratatui_key_code = match key_event.code {
             KeyCode::Backspace => RatatuiKeyCode::Backspace,
@@ -207,7 +214,7 @@ impl EventHandler {
             KeyCode::Media(_) => RatatuiKeyCode::Null, // Map media keys to null for simplicity
             KeyCode::Modifier(_) => RatatuiKeyCode::Null, // Map modifier keys to null
         };
-        
+
         let mut ratatui_modifiers = RatatuiKeyModifiers::empty();
         if key_event.modifiers.contains(KeyModifiers::SHIFT) {
             ratatui_modifiers |= RatatuiKeyModifiers::SHIFT;
@@ -227,31 +234,43 @@ impl EventHandler {
         if key_event.modifiers.contains(KeyModifiers::META) {
             ratatui_modifiers |= RatatuiKeyModifiers::META;
         }
-        
+
         let ratatui_key_event = RatatuiKeyEvent::new(ratatui_key_code, ratatui_modifiers);
-        
+
         // Return a message to handle form key input with the persistent state
         vec![AppMessage::FormKeyPressed(ratatui_key_event)]
     }
-    
+
     /// Handle keys for config editor screen
-    fn handle_config_editor_keys(&self, key_event: KeyEvent, _app_state: &AppState) -> Vec<AppMessage> {
+    fn handle_config_editor_keys(
+        &self,
+        key_event: KeyEvent,
+        _app_state: &AppState,
+    ) -> Vec<AppMessage> {
         // This will be implemented when the config editor is created
         vec![AppMessage::KeyPressed(key_event)]
     }
-    
+
     /// Handle keys for report viewer screen
-    fn handle_report_viewer_keys(&self, key_event: KeyEvent, _app_state: &AppState) -> Vec<AppMessage> {
+    fn handle_report_viewer_keys(
+        &self,
+        key_event: KeyEvent,
+        _app_state: &AppState,
+    ) -> Vec<AppMessage> {
         // This will be implemented when the report viewer is created
         vec![AppMessage::KeyPressed(key_event)]
     }
-    
+
     /// Handle keys for plugin manager screen
-    fn handle_plugin_manager_keys(&self, key_event: KeyEvent, _app_state: &AppState) -> Vec<AppMessage> {
+    fn handle_plugin_manager_keys(
+        &self,
+        key_event: KeyEvent,
+        _app_state: &AppState,
+    ) -> Vec<AppMessage> {
         // This will be implemented when the plugin manager is created
         vec![AppMessage::KeyPressed(key_event)]
     }
-    
+
     /// Handle mouse events (placeholder for future implementation)
     fn handle_mouse_event(
         &self,
@@ -261,18 +280,18 @@ impl EventHandler {
         // Mouse support can be added later
         vec![]
     }
-    
+
     /// Check if it's time to render a frame
     fn should_render(&self) -> bool {
         self.last_frame.elapsed() >= self.frame_duration
     }
-    
+
     /// Check if it's time for a tick event
     fn should_tick(&mut self) -> bool {
         let tick_duration = Duration::from_millis(1000 / self.tick_rate as u64);
         let elapsed_ticks = self.last_frame.elapsed().as_millis() / tick_duration.as_millis();
         let should_tick = elapsed_ticks > self.tick_count as u128;
-        
+
         if should_tick {
             self.tick_count += 1;
             // Reset tick count periodically to prevent overflow
@@ -280,10 +299,10 @@ impl EventHandler {
                 self.tick_count = 0;
             }
         }
-        
+
         should_tick
     }
-    
+
     /// Get performance statistics
     pub fn get_stats(&self) -> EventLoopStats {
         EventLoopStats {
@@ -292,7 +311,7 @@ impl EventHandler {
             tick_rate: self.tick_rate,
         }
     }
-    
+
     /// Calculate actual FPS based on frame timing
     fn calculate_actual_fps(&self) -> f32 {
         let elapsed = self.last_frame.elapsed();
@@ -322,25 +341,25 @@ pub struct EventLoopStats {
 pub fn run_tui() -> Result<()> {
     // Initialize the application state
     let app_state = AppState::new();
-    
+
     // Create and run the event handler
     let mut event_handler = EventHandler::new();
     event_handler.run(app_state)?;
-    
+
     Ok(())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_event_handler_creation() {
         let handler = EventHandler::new();
         assert_eq!(handler.target_fps, 60);
         assert_eq!(handler.tick_rate, 4);
     }
-    
+
     #[test]
     fn test_frame_timing() {
         let handler = EventHandler::new();
@@ -348,28 +367,28 @@ mod tests {
         assert!(handler.frame_duration.as_millis() >= 16);
         assert!(handler.frame_duration.as_millis() <= 17);
     }
-    
+
     #[test]
     fn test_global_key_handling() {
         let handler = EventHandler::new();
         let app_state = AppState::new();
-        
+
         // Test quit key
         let quit_key = KeyEvent::new(KeyCode::Char('q'), KeyModifiers::NONE);
         let messages = handler.handle_key_event(quit_key, &app_state);
         assert!(matches!(messages.first(), Some(AppMessage::Quit)));
-        
+
         // Test Ctrl+C
         let ctrl_c = KeyEvent::new(KeyCode::Char('c'), KeyModifiers::CONTROL);
         let messages = handler.handle_key_event(ctrl_c, &app_state);
         assert!(matches!(messages.first(), Some(AppMessage::Quit)));
-        
+
         // Test help key
         let help_key = KeyEvent::new(KeyCode::F(1), KeyModifiers::NONE);
         let messages = handler.handle_key_event(help_key, &app_state);
         assert!(matches!(messages.first(), Some(AppMessage::ShowHelp)));
     }
-    
+
     #[test]
     fn test_performance_stats() {
         let handler = EventHandler::new();

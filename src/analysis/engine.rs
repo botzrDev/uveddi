@@ -1,3 +1,4 @@
+use crate::analysis::cache::ast::{AstCache, CacheConfig};
 use crate::analysis::detectors::anti_patterns::dead_code::{DeadCodeConfig, DeadCodeDetector};
 use crate::analysis::detectors::anti_patterns::large_classes::{
     LargeClassConfig, LargeClassDetector,
@@ -9,7 +10,6 @@ use crate::analysis::graph::dependency::LocalDependencyGraph;
 use crate::analysis::graph::dependency::{ComponentNode, LocalDependencyType};
 use crate::analysis::symbols::GlobalSymbolTable;
 use crate::analysis::AnalysisDetector;
-use crate::analysis::cache::ast::{AstCache, CacheConfig};
 use crate::ast::tree_sitter_impl::AstParser;
 use crate::cache::result_cache::ResultCache;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
@@ -81,7 +81,8 @@ impl AnalysisEngine {
     /// - Dependency extractor setup fails
     #[inline]
     pub fn new() -> crate::error::Result<Self> {
-        let default_detectors = crate::analysis::detector_factory::DetectorFactory::create_default_detectors();
+        let default_detectors =
+            crate::analysis::detector_factory::DetectorFactory::create_default_detectors();
         let cache_path = PathBuf::from("uveddi_cache.db");
         Self::with_detectors(default_detectors, Some(&cache_path), false)
     }
@@ -118,11 +119,11 @@ impl AnalysisEngine {
         } else {
             ResultCache::new_in_memory()?
         };
-        
+
         // Initialize AST cache with default configuration
         let ast_cache_config = CacheConfig::default();
         let ast_cache = AstCache::new(ast_cache_config)?;
-        
+
         Ok(Self {
             ast_parser: AstParser::new()?,
             dependency_extractor: DependencyExtractor::new()?,
@@ -168,7 +169,7 @@ impl AnalysisEngine {
         } else {
             ResultCache::new_in_memory()?
         };
-        
+
         // Initialize plugin engine
         let plugin_engine = match WasmPluginEngine::new().await {
             Ok(engine) => {
@@ -183,11 +184,11 @@ impl AnalysisEngine {
                 None
             }
         };
-        
+
         // Initialize AST cache with default configuration
         let ast_cache_config = CacheConfig::default();
         let ast_cache = AstCache::new(ast_cache_config)?;
-        
+
         Ok(Self {
             ast_parser: AstParser::new()?,
             dependency_extractor: DependencyExtractor::new()?,
@@ -204,7 +205,8 @@ impl AnalysisEngine {
 
     /// Creates a new analysis engine with WASM plugin support enabled
     pub async fn new_with_plugins() -> crate::error::Result<Self> {
-        let default_detectors = crate::analysis::detector_factory::DetectorFactory::create_default_detectors();
+        let default_detectors =
+            crate::analysis::detector_factory::DetectorFactory::create_default_detectors();
         let cache_path = PathBuf::from("uveddi_cache.db");
         Self::with_detectors_and_plugins(default_detectors, Some(&cache_path)).await
     }
@@ -224,15 +226,15 @@ impl AnalysisEngine {
     /// - AST parser initialization fails
     /// - Dependency extractor setup fails
     pub fn with_cache_path(cache_path: &Path) -> crate::error::Result<Self> {
-        let default_detectors = crate::analysis::detector_factory::DetectorFactory::create_default_detectors();
+        let default_detectors =
+            crate::analysis::detector_factory::DetectorFactory::create_default_detectors();
         Self::with_detectors(default_detectors, Some(cache_path), false)
     }
 
     /// Creates a new analysis engine with WASM plugin support and custom cache path
-    pub async fn with_cache_path_and_plugins(
-        cache_path: &Path,
-    ) -> crate::error::Result<Self> {
-        let default_detectors = crate::analysis::detector_factory::DetectorFactory::create_default_detectors();
+    pub async fn with_cache_path_and_plugins(cache_path: &Path) -> crate::error::Result<Self> {
+        let default_detectors =
+            crate::analysis::detector_factory::DetectorFactory::create_default_detectors();
         Self::with_detectors_and_plugins(default_detectors, Some(cache_path)).await
     }
 
@@ -248,7 +250,8 @@ impl AnalysisEngine {
     /// - AST parser initialization fails
     /// - Dependency extractor setup fails
     pub fn new_with_memory_cache() -> crate::error::Result<Self> {
-        let default_detectors = crate::analysis::detector_factory::DetectorFactory::create_default_detectors();
+        let default_detectors =
+            crate::analysis::detector_factory::DetectorFactory::create_default_detectors();
         Self::with_detectors(default_detectors, None, false)
     }
 
@@ -411,7 +414,7 @@ impl AnalysisEngine {
 
                             // UV-220: Streaming aggregation - process results efficiently
                             let result_to_cache = CachedAnalysisResult {
-                                issues: file_issues.clone(), // Required for cache storage
+                                issues: file_issues.clone(),             // Required for cache storage
                                 dependencies: file_dependencies.clone(), // Required for cache storage
                             };
 
@@ -467,7 +470,10 @@ impl AnalysisEngine {
     }
 
     /// Parses a file using the AST cache for performance optimization
-    async fn parse_file_with_cache(&mut self, path: &Path) -> crate::error::Result<crate::ast::ParsedFile> {
+    async fn parse_file_with_cache(
+        &mut self,
+        path: &Path,
+    ) -> crate::error::Result<crate::ast::ParsedFile> {
         #[cfg(feature = "tree-sitter")]
         {
             // Try to get from AST cache first
@@ -487,33 +493,35 @@ impl AnalysisEngine {
                     return Ok(parsed_file);
                 }
             }
-            
+
             info!("AST CACHE MISS: Parsing file {}", path.display());
             // Parse the file normally
             let parsed_file = self.ast_parser.parse_file(path)?;
-            
+
             // Try to cache the AST if available
             if let Some(ref tree) = parsed_file.tree {
                 if let Err(e) = self.ast_cache.store(path, tree.clone()) {
                     warn!("Failed to cache AST for {:?}: {}", path, e);
                 }
             }
-            
+
             Ok(parsed_file)
         }
-        
+
         #[cfg(not(feature = "tree-sitter"))]
         {
             // When tree-sitter is disabled, just parse normally
             // AST caching is not as beneficial without tree-sitter
-            self.ast_parser.parse_file(path).map_err(crate::error::UveddiError::from)
+            self.ast_parser
+                .parse_file(path)
+                .map_err(crate::error::UveddiError::from)
         }
     }
 
     /// Detects programming language from file path extension
     fn detect_language_from_path(&self, path: &Path) -> crate::ast::SourceLanguage {
         use crate::ast::SourceLanguage;
-        
+
         match path.extension().and_then(|ext| ext.to_str()) {
             Some("rs") => SourceLanguage::Rust,
             Some("py") => SourceLanguage::Python,
@@ -630,7 +638,9 @@ impl AnalysisEngine {
             Ok(plugin_id)
         } else {
             Err(crate::error::UveddiError::PluginError(
-                crate::plugins::errors::PluginError::Execution("Plugin engine not initialized".to_string())
+                crate::plugins::errors::PluginError::Execution(
+                    "Plugin engine not initialized".to_string(),
+                ),
             ))
         }
     }
@@ -667,7 +677,9 @@ impl AnalysisEngine {
             Ok(())
         } else {
             Err(crate::error::UveddiError::PluginError(
-                crate::plugins::errors::PluginError::Execution("Plugin engine not initialized".to_string())
+                crate::plugins::errors::PluginError::Execution(
+                    "Plugin engine not initialized".to_string(),
+                ),
             ))
         }
     }
@@ -699,15 +711,16 @@ impl AnalysisEngine {
         &mut self,
     ) -> crate::error::Result<crate::plugins::ResourceReport> {
         if let Some(ref mut plugin_engine) = self.plugin_engine {
-            plugin_engine
-                .monitor_resources()
-                .await
-                .map_err(|e| crate::error::UveddiError::PluginError(
-                    crate::plugins::errors::PluginError::Execution(e.to_string())
-                ))
+            plugin_engine.monitor_resources().await.map_err(|e| {
+                crate::error::UveddiError::PluginError(
+                    crate::plugins::errors::PluginError::Execution(e.to_string()),
+                )
+            })
         } else {
             Err(crate::error::UveddiError::PluginError(
-                crate::plugins::errors::PluginError::Execution("Plugin engine not initialized".to_string())
+                crate::plugins::errors::PluginError::Execution(
+                    "Plugin engine not initialized".to_string(),
+                ),
             ))
         }
     }
@@ -742,15 +755,14 @@ impl AnalysisEngine {
     /// This is useful when reloading plugins or disabling plugin support.
     pub fn remove_plugin_detectors(&mut self) -> usize {
         let initial_count = self.detectors.len();
-        self.detectors.retain(|detector| {
-            detector.get_detector_name() != "wasm-plugin-detector"
-        });
+        self.detectors
+            .retain(|detector| detector.get_detector_name() != "wasm-plugin-detector");
         let removed_count = initial_count - self.detectors.len();
-        
+
         if removed_count > 0 {
             log::info!("Removed {} plugin detectors", removed_count);
         }
-        
+
         removed_count
     }
 
@@ -765,7 +777,7 @@ impl AnalysisEngine {
     pub async fn reload_plugin_detectors(&mut self) -> crate::error::Result<usize> {
         // Remove existing plugin detectors
         self.remove_plugin_detectors();
-        
+
         // Add current plugin detectors
         self.add_plugin_detectors().await
     }

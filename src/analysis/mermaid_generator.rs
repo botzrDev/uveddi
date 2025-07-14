@@ -37,8 +37,7 @@ pub struct MermaidGenerator {
 impl MermaidGenerator {
     /// Create a new Mermaid generator with default templates
     pub fn new() -> Result<Self, MermaidGenerationError> {
-        let mut tera = Tera::new("templates/*.tera")
-            .unwrap_or_else(|_| Tera::default());
+        let mut tera = Tera::new("templates/*.tera").unwrap_or_else(|_| Tera::default());
 
         // Register built-in templates
         Self::register_builtin_templates(&mut tera)?;
@@ -80,7 +79,7 @@ impl MermaidGenerator {
                 } else {
                     "low"
                 };
-                
+
                 json!({
                     "id": c.component_id.to_string(),
                     "name": c.name,
@@ -111,7 +110,7 @@ impl MermaidGenerator {
                 } else {
                     "low"
                 };
-                
+
                 json!({
                     "from_id": from_id.to_string(),
                     "to_id": to_id.to_string(),
@@ -214,7 +213,7 @@ impl MermaidGenerator {
 
         let template_name = match diagram_type {
             DiagramType::Component => "component_diagram",
-            DiagramType::Class => "class_diagram", 
+            DiagramType::Class => "class_diagram",
             DiagramType::Dependency => "dependency_graph",
             DiagramType::Sequence => "sequence_diagram",
             _ => "component_diagram",
@@ -301,7 +300,7 @@ impl MermaidGenerator {
                 } else {
                     "normal"
                 };
-                
+
                 json!({
                     "id": c.component_id.to_string(),
                     "name": c.name,
@@ -415,7 +414,8 @@ classDef default fill:#e1f5fe,stroke:#01579b,stroke-width:2px;"#,
                 spec_id: Uuid::new_v4(),
                 anti_pattern_type_id: 1,
                 diagram_type: DiagramType::Component,
-                mermaid_template: "graph TD\n{{#each components}}\n    {{id}}[{{name}}]\n{{/each}}".to_string(),
+                mermaid_template: "graph TD\n{{#each components}}\n    {{id}}[{{name}}]\n{{/each}}"
+                    .to_string(),
                 severity_styles: HashMap::new(),
                 layout: crate::models::visualization::DiagramLayout::TopDown,
             },
@@ -425,7 +425,10 @@ classDef default fill:#e1f5fe,stroke:#01579b,stroke-width:2px;"#,
     }
 
     /// Extract dependencies in template-friendly format
-    fn extract_dependencies_for_template(&self, components: &[ArchitecturalComponent]) -> Vec<Value> {
+    fn extract_dependencies_for_template(
+        &self,
+        components: &[ArchitecturalComponent],
+    ) -> Vec<Value> {
         let mut dependencies = Vec::new();
 
         for component in components {

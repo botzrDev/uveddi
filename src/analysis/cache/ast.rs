@@ -1,5 +1,5 @@
 //! Comprehensive AST disk and memory cache for Uveddi
-//! 
+//!
 //! This module provides a production-ready AST caching system with:
 //! - Thread-safe concurrent access using Arc/RwLock
 //! - LRU eviction policy for memory management
@@ -9,14 +9,14 @@
 //! - Memory-mapped storage support for large ASTs
 
 use serde::{Deserialize, Serialize};
+use std::collections::hash_map::DefaultHasher;
 use std::collections::HashMap;
 use std::fs;
-use std::path::{Path, PathBuf};
-use std::time::{SystemTime, Instant};
-use std::sync::{Arc, Mutex, RwLock};
 use std::hash::{Hash, Hasher};
-use std::collections::hash_map::DefaultHasher;
-use tracing::{debug, info, warn, error};
+use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex, RwLock};
+use std::time::{Instant, SystemTime};
+use tracing::{debug, error, info, warn};
 
 #[cfg(feature = "tree-sitter")]
 use tree_sitter::Tree;
@@ -139,10 +139,12 @@ impl AstCache {
         if config.enable_disk_cache {
             std::fs::create_dir_all(&config.disk_cache_path)?;
         }
-        
-        info!("Initializing AST cache with config: max_entries={}, max_memory={}MB, disk_cache={}", 
-              config.max_memory_entries, config.max_memory_size_mb, config.enable_disk_cache);
-        
+
+        info!(
+            "Initializing AST cache with config: max_entries={}, max_memory={}MB, disk_cache={}",
+            config.max_memory_entries, config.max_memory_size_mb, config.enable_disk_cache
+        );
+
         Ok(Self {
             cache: Arc::new(RwLock::new(HashMap::new())),
             lru_order: Arc::new(Mutex::new(Vec::new())),
@@ -165,12 +167,12 @@ impl AstCache {
     /// Retrieves an AST from the cache if valid
     #[cfg(feature = "tree-sitter")]
     /// Gets a cached AST from the cache.
-    /// 
+    ///
     /// This is a hot path method called for every file analysis.
     #[inline]
     pub fn get(&self, path: &Path) -> Option<Arc<Tree>> {
         let start_time = Instant::now();
-        
+
         // Update metrics
         {
             let mut metrics = self.metrics.lock().unwrap();
@@ -209,30 +211,30 @@ impl AstCache {
                         return None;
                     }
                 }
-                
+
                 // Update access tracking for LRU
                 cached_ast.access_count += 1;
                 cached_ast.last_accessed = Instant::now();
-                
+
                 // Update cache with new access info
                 {
                     let mut cache = self.cache.write().unwrap();
                     cache.insert(path.to_path_buf(), cached_ast.clone());
                 }
-                
+
                 // Update LRU order
                 self.update_lru_order(path);
-                
+
                 // Update metrics
                 {
                     let mut metrics = self.metrics.lock().unwrap();
                     metrics.cache_hits += 1;
                     let lookup_time = start_time.elapsed().as_millis() as f64;
-                    metrics.average_lookup_time_ms = 
+                    metrics.average_lookup_time_ms =
                         (metrics.average_lookup_time_ms + lookup_time) / 2.0;
                     metrics.update_hit_rate();
                 }
-                
+
                 debug!("Cache hit for: {:?}", path);
                 return cached_ast.ast;
             } else {
@@ -247,7 +249,7 @@ impl AstCache {
             metrics.cache_misses += 1;
             metrics.update_hit_rate();
         }
-        
+
         debug!("Cache miss for: {:?}", path);
         None
     }
@@ -256,7 +258,7 @@ impl AstCache {
     #[cfg(not(feature = "tree-sitter"))]
     pub fn get(&self, path: &Path) -> Option<Arc<CacheableAst>> {
         let start_time = Instant::now();
-        
+
         // Update metrics
         {
             let mut metrics = self.metrics.lock().unwrap();
@@ -284,26 +286,26 @@ impl AstCache {
                 // Update access tracking for LRU
                 cached_ast.access_count += 1;
                 cached_ast.last_accessed = Instant::now();
-                
+
                 // Update cache with new access info
                 {
                     let mut cache = self.cache.write().unwrap();
                     cache.insert(path.to_path_buf(), cached_ast.clone());
                 }
-                
+
                 // Update LRU order
                 self.update_lru_order(path);
-                
+
                 // Update metrics
                 {
                     let mut metrics = self.metrics.lock().unwrap();
                     metrics.cache_hits += 1;
                     let lookup_time = start_time.elapsed().as_millis() as f64;
-                    metrics.average_lookup_time_ms = 
+                    metrics.average_lookup_time_ms =
                         (metrics.average_lookup_time_ms + lookup_time) / 2.0;
                     metrics.update_hit_rate();
                 }
-                
+
                 debug!("Cache hit for: {:?}", path);
                 return cached_ast.ast;
             } else {
@@ -318,7 +320,7 @@ impl AstCache {
             metrics.cache_misses += 1;
             metrics.update_hit_rate();
         }
-        
+
         debug!("Cache miss for: {:?}", path);
         None
     }
@@ -329,10 +331,10 @@ impl AstCache {
         let file_hash = self.calculate_file_hash(path)?;
         let file_modified = fs::metadata(path)?.modified()?;
         let language = self.detect_language(path);
-        
+
         // Estimate memory size (simplified approximation)
         let memory_size = std::mem::size_of::<Tree>() + 1024; // Base estimate
-        
+
         let cached_ast = CachedAST {
             ast: Some(Arc::new(tree)),
             file_hash,
@@ -346,36 +348,40 @@ impl AstCache {
 
         // Check if we need to evict entries
         self.ensure_cache_capacity(memory_size)?;
-        
+
         // Store in cache
         {
             let mut cache = self.cache.write().unwrap();
             cache.insert(path.to_path_buf(), cached_ast);
         }
-        
+
         // Update LRU order
         self.update_lru_order(path);
-        
+
         // Update memory usage
         {
             let mut memory_usage = self.memory_usage.lock().unwrap();
             *memory_usage += memory_size;
         }
-        
+
         info!("Stored AST in cache for: {:?}", path);
         Ok(())
     }
 
     /// Stores a cacheable AST when tree-sitter is disabled
     #[cfg(not(feature = "tree-sitter"))]
-    pub fn store(&self, path: &Path, ast_data: CacheableAst) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn store(
+        &self,
+        path: &Path,
+        ast_data: CacheableAst,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let file_hash = self.calculate_file_hash(path)?;
         let file_modified = fs::metadata(path)?.modified()?;
         let language = self.detect_language(path);
-        
+
         // Estimate memory size
         let memory_size = ast_data.data.len() + std::mem::size_of::<CacheableAst>();
-        
+
         let cached_ast = CachedAST {
             ast: Some(Arc::new(ast_data)),
             file_hash,
@@ -389,22 +395,22 @@ impl AstCache {
 
         // Check if we need to evict entries
         self.ensure_cache_capacity(memory_size)?;
-        
+
         // Store in cache
         {
             let mut cache = self.cache.write().unwrap();
             cache.insert(path.to_path_buf(), cached_ast);
         }
-        
+
         // Update LRU order
         self.update_lru_order(path);
-        
+
         // Update memory usage
         {
             let mut memory_usage = self.memory_usage.lock().unwrap();
             *memory_usage += memory_size;
         }
-        
+
         info!("Stored AST in cache for: {:?}", path);
         Ok(())
     }
@@ -413,32 +419,35 @@ impl AstCache {
     fn update_lru_order(&self, path: &Path) {
         let mut lru_order = self.lru_order.lock().unwrap();
         let path_buf = path.to_path_buf();
-        
+
         // Remove if already exists
         lru_order.retain(|p| p != &path_buf);
-        
+
         // Add to front (most recently used)
         lru_order.insert(0, path_buf);
     }
 
     /// Ensures cache capacity by evicting LRU entries if needed
-    fn ensure_cache_capacity(&self, new_entry_size: usize) -> Result<(), Box<dyn std::error::Error>> {
+    fn ensure_cache_capacity(
+        &self,
+        new_entry_size: usize,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         if !self.config.lru_eviction_enabled {
             return Ok(());
         }
 
         let current_memory = *self.memory_usage.lock().unwrap();
         let max_memory = self.config.max_memory_size_mb * 1024 * 1024;
-        
+
         // Check if we need to evict
-        while (current_memory + new_entry_size) > max_memory || 
-              self.cache.read().unwrap().len() >= self.config.max_memory_entries {
-            
+        while (current_memory + new_entry_size) > max_memory
+            || self.cache.read().unwrap().len() >= self.config.max_memory_entries
+        {
             if !self.evict_lru_entry()? {
                 break; // No more entries to evict
             }
         }
-        
+
         Ok(())
     }
 
@@ -626,11 +635,11 @@ mod tests {
     #[test]
     fn test_cache_miss_metrics() {
         let (cache, temp_dir) = create_test_cache();
-        
+
         // Create test file
         let test_file = temp_dir.path().join("test.rs");
         fs::write(&test_file, "fn main() {}").unwrap();
-        
+
         // First access should be a miss
         #[cfg(feature = "tree-sitter")]
         {
@@ -654,14 +663,14 @@ mod tests {
     #[test]
     fn test_file_hash_calculation() {
         let (cache, temp_dir) = create_test_cache();
-        
+
         let test_file = temp_dir.path().join("test.rs");
         fs::write(&test_file, "fn main() {}").unwrap();
-        
+
         let hash1 = cache.calculate_file_hash(&test_file).unwrap();
         let hash2 = cache.calculate_file_hash(&test_file).unwrap();
         assert_eq!(hash1, hash2);
-        
+
         // Modify file and check hash changes
         fs::write(&test_file, "fn main() { println!(); }").unwrap();
         let hash3 = cache.calculate_file_hash(&test_file).unwrap();
@@ -671,21 +680,33 @@ mod tests {
     #[test]
     fn test_language_detection() {
         let (cache, temp_dir) = create_test_cache();
-        
-        assert_eq!(cache.detect_language(&temp_dir.path().join("test.rs")), "rs");
-        assert_eq!(cache.detect_language(&temp_dir.path().join("test.py")), "py");
-        assert_eq!(cache.detect_language(&temp_dir.path().join("test.js")), "js");
-        assert_eq!(cache.detect_language(&temp_dir.path().join("test")), "unknown");
+
+        assert_eq!(
+            cache.detect_language(&temp_dir.path().join("test.rs")),
+            "rs"
+        );
+        assert_eq!(
+            cache.detect_language(&temp_dir.path().join("test.py")),
+            "py"
+        );
+        assert_eq!(
+            cache.detect_language(&temp_dir.path().join("test.js")),
+            "js"
+        );
+        assert_eq!(
+            cache.detect_language(&temp_dir.path().join("test")),
+            "unknown"
+        );
     }
 
     #[test]
     fn test_cache_clear() {
         let (cache, _temp_dir) = create_test_cache();
-        
+
         // Add some dummy data to LRU order
         cache.update_lru_order(&std::path::Path::new("test.rs"));
         assert_eq!(cache.lru_order.lock().unwrap().len(), 1);
-        
+
         cache.clear();
         assert_eq!(cache.size(), 0);
         assert_eq!(cache.memory_usage(), 0);
@@ -695,10 +716,10 @@ mod tests {
     #[test]
     fn test_memory_usage_tracking() {
         let (cache, _temp_dir) = create_test_cache();
-        
+
         let initial_usage = cache.memory_usage();
         assert_eq!(initial_usage, 0);
-        
+
         // Memory usage should be tracked correctly
         // (This test is limited without actual AST storage)
     }
@@ -706,13 +727,13 @@ mod tests {
     #[test]
     fn test_lru_order_updates() {
         let (cache, temp_dir) = create_test_cache();
-        
+
         let path1 = temp_dir.path().join("test1.rs");
         let path2 = temp_dir.path().join("test2.rs");
-        
+
         cache.update_lru_order(&path1);
         cache.update_lru_order(&path2);
-        
+
         let lru_order = cache.lru_order.lock().unwrap();
         assert_eq!(lru_order.len(), 2);
         assert_eq!(lru_order[0], path2); // Most recently used
@@ -723,27 +744,29 @@ mod tests {
     fn test_thread_safety() {
         let (cache, temp_dir) = create_test_cache();
         let cache = Arc::new(cache);
-        
-        let handles: Vec<_> = (0..10).map(|i| {
-            let cache_clone = Arc::clone(&cache);
-            let temp_path = temp_dir.path().to_path_buf();
-            
-            std::thread::spawn(move || {
-                let test_file = temp_path.join(format!("test{}.rs", i));
-                fs::write(&test_file, format!("fn test{i}() {{}}")).unwrap();
-                
-                // Simulate concurrent access
-                for _ in 0..10 {
-                    let _ = cache_clone.get(&test_file);
-                    cache_clone.update_lru_order(&test_file);
-                }
+
+        let handles: Vec<_> = (0..10)
+            .map(|i| {
+                let cache_clone = Arc::clone(&cache);
+                let temp_path = temp_dir.path().to_path_buf();
+
+                std::thread::spawn(move || {
+                    let test_file = temp_path.join(format!("test{}.rs", i));
+                    fs::write(&test_file, format!("fn test{i}() {{}}")).unwrap();
+
+                    // Simulate concurrent access
+                    for _ in 0..10 {
+                        let _ = cache_clone.get(&test_file);
+                        cache_clone.update_lru_order(&test_file);
+                    }
+                })
             })
-        }).collect();
-        
+            .collect();
+
         for handle in handles {
             handle.join().unwrap();
         }
-        
+
         // Should not panic and metrics should be consistent
         let metrics = cache.get_metrics();
         assert!(metrics.total_requests > 0);
@@ -752,10 +775,10 @@ mod tests {
     #[test]
     fn test_metrics_export() {
         let (cache, _temp_dir) = create_test_cache();
-        
+
         let exported = cache.export_metrics_for_observability();
         assert!(exported.get("ast_cache").is_some());
-        
+
         let ast_cache_metrics = &exported["ast_cache"];
         assert!(ast_cache_metrics.get("total_requests").is_some());
         assert!(ast_cache_metrics.get("cache_hits").is_some());
@@ -774,7 +797,7 @@ mod tests {
     #[test]
     fn test_cache_capacity_management() {
         let (cache, _temp_dir) = create_test_cache();
-        
+
         // Test that capacity management doesn't panic
         let result = cache.ensure_cache_capacity(1024);
         assert!(result.is_ok());
@@ -786,41 +809,43 @@ mod tests {
     #[cfg(feature = "tree-sitter")]
     fn test_cache_hit_miss_with_real_trees() {
         use tree_sitter::{Language, Parser};
-        
+
         let (cache, temp_dir) = create_test_cache();
-        
+
         // Create a test file
         let test_file = temp_dir.path().join("test.rs");
         fs::write(&test_file, "fn main() { println!(\"Hello, world!\"); }").unwrap();
-        
+
         // Create a simple tree-sitter tree
         let mut parser = Parser::new();
-        extern "C" { fn tree_sitter_rust() -> Language; }
+        extern "C" {
+            fn tree_sitter_rust() -> Language;
+        }
         let language = unsafe { tree_sitter_rust() };
         parser.set_language(&language).unwrap();
-        
+
         let source_code = fs::read_to_string(&test_file).unwrap();
         let tree = parser.parse(&source_code, None).unwrap();
-        
+
         // First access - should be a miss
         assert!(cache.get(&test_file).is_none());
         let metrics = cache.get_metrics();
         assert_eq!(metrics.cache_misses, 1);
         assert_eq!(metrics.total_requests, 1);
-        
+
         // Store the tree
         cache.store(&test_file, tree).unwrap();
-        
+
         // Second access - should be a hit
         let cached_tree = cache.get(&test_file);
         assert!(cached_tree.is_some());
-        
+
         let metrics = cache.get_metrics();
         assert_eq!(metrics.cache_hits, 1);
         assert_eq!(metrics.cache_misses, 1);
         assert_eq!(metrics.total_requests, 2);
         assert_eq!(metrics.hit_rate, 50.0);
-        
+
         // Verify memory usage tracking
         assert!(cache.memory_usage() > 0);
     }
@@ -829,30 +854,30 @@ mod tests {
     #[cfg(not(feature = "tree-sitter"))]
     fn test_cache_hit_miss_without_tree_sitter() {
         let (cache, temp_dir) = create_test_cache();
-        
+
         // Create a test file
         let test_file = temp_dir.path().join("test.rs");
         fs::write(&test_file, "fn main() { println!(\"Hello, world!\"); }").unwrap();
-        
+
         // Create a cacheable AST
         let ast_data = CacheableAst {
             data: b"mock_ast_data".to_vec(),
             timestamp: std::time::SystemTime::now(),
             language: "rust".to_string(),
         };
-        
+
         // First access - should be a miss
         assert!(cache.get(&test_file).is_none());
         let metrics = cache.get_metrics();
         assert_eq!(metrics.cache_misses, 1);
-        
+
         // Store the AST
         cache.store(&test_file, ast_data).unwrap();
-        
+
         // Second access - should be a hit
         let cached_ast = cache.get(&test_file);
         assert!(cached_ast.is_some());
-        
+
         let metrics = cache.get_metrics();
         assert_eq!(metrics.cache_hits, 1);
         assert_eq!(metrics.cache_misses, 1);
@@ -863,7 +888,7 @@ mod tests {
     fn test_lru_eviction_behavior() {
         let temp_dir = TempDir::new().unwrap();
         let config = CacheConfig {
-            max_memory_entries: 3,  // Very small for testing
+            max_memory_entries: 3, // Very small for testing
             max_memory_size_mb: 1,
             enable_disk_cache: false,
             disk_cache_path: temp_dir.path().to_path_buf(),
@@ -872,14 +897,16 @@ mod tests {
             cache_metrics_enabled: true,
         };
         let cache = AstCache::new(config).unwrap();
-        
+
         // Create test files
-        let files: Vec<_> = (1..=5).map(|i| {
-            let file = temp_dir.path().join(format!("test{}.rs", i));
-            fs::write(&file, format!("fn test{}() {{}}", i)).unwrap();
-            file
-        }).collect();
-        
+        let files: Vec<_> = (1..=5)
+            .map(|i| {
+                let file = temp_dir.path().join(format!("test{}.rs", i));
+                fs::write(&file, format!("fn test{}() {{}}", i)).unwrap();
+                file
+            })
+            .collect();
+
         // Simulate storing in cache (without actual trees for simplicity)
         for (i, file) in files.iter().enumerate().take(3) {
             cache.update_lru_order(file);
@@ -889,19 +916,19 @@ mod tests {
                 *memory_usage += 1024; // 1KB per entry
             }
         }
-        
+
         // Access first file to make it most recently used
         cache.update_lru_order(&files[0]);
-        
+
         // Check LRU order: files[0] should be first (most recent)
         {
             let lru_order = cache.lru_order.lock().unwrap();
             assert_eq!(lru_order[0], files[0]);
         }
-        
+
         // Add fourth file - should trigger eviction of oldest
         cache.update_lru_order(&files[3]);
-        
+
         // Check that we don't exceed max entries in LRU
         {
             let lru_order = cache.lru_order.lock().unwrap();
@@ -912,27 +939,27 @@ mod tests {
     #[test]
     fn test_file_modification_invalidation() {
         let (cache, temp_dir) = create_test_cache();
-        
+
         // Create test file with initial content
         let test_file = temp_dir.path().join("test.rs");
         fs::write(&test_file, "fn main() { println!(\"v1\"); }").unwrap();
-        
+
         // Calculate initial hash
         let hash1 = cache.calculate_file_hash(&test_file).unwrap();
-        
+
         // Simulate caching (add to LRU and memory tracking)
         cache.update_lru_order(&test_file);
-        
+
         // Wait a moment to ensure timestamp difference
         std::thread::sleep(std::time::Duration::from_millis(10));
-        
+
         // Modify file content
         fs::write(&test_file, "fn main() { println!(\"v2\"); }").unwrap();
-        
+
         // Hash should be different
         let hash2 = cache.calculate_file_hash(&test_file).unwrap();
         assert_ne!(hash1, hash2);
-        
+
         // Cache should miss due to modification time difference
         assert!(cache.get(&test_file).is_none());
     }
@@ -950,14 +977,14 @@ mod tests {
             cache_metrics_enabled: true,
         };
         let cache = AstCache::new(config).unwrap();
-        
+
         // Test that ensure_cache_capacity works correctly
         let small_size = 1024; // 1KB
         assert!(cache.ensure_cache_capacity(small_size).is_ok());
-        
+
         let huge_size = 2 * 1024 * 1024; // 2MB - exceeds our 1MB limit
         assert!(cache.ensure_cache_capacity(huge_size).is_ok()); // Should not error, but might evict
-        
+
         // Verify memory usage doesn't exceed limits after operations
         assert!(cache.memory_usage() <= 1024 * 1024); // Should be under 1MB
     }
@@ -966,43 +993,53 @@ mod tests {
     fn test_concurrent_stress_test() {
         let (cache, temp_dir) = create_test_cache();
         let cache = Arc::new(cache);
-        
+
         // Create multiple test files
-        let test_files: Vec<_> = (0..50).map(|i| {
-            let file = temp_dir.path().join(format!("stress_test_{}.rs", i));
-            fs::write(&file, format!("fn stress_test_{}() {{}}", i)).unwrap();
-            file
-        }).collect();
-        
-        // Launch concurrent operations
-        let handles: Vec<_> = (0..10).map(|thread_id| {
-            let cache_clone = Arc::clone(&cache);
-            let files_clone = test_files.clone();
-            
-            std::thread::spawn(move || {
-                for i in 0..100 {
-                    let file_idx = (thread_id * 100 + i) % files_clone.len();
-                    let file = &files_clone[file_idx];
-                    
-                    // Mix of read and update operations
-                    match i % 3 {
-                        0 => { let _ = cache_clone.get(file); },
-                        1 => { cache_clone.update_lru_order(file); },
-                        _ => { let _ = cache_clone.calculate_file_hash(file); },
-                    }
-                }
+        let test_files: Vec<_> = (0..50)
+            .map(|i| {
+                let file = temp_dir.path().join(format!("stress_test_{}.rs", i));
+                fs::write(&file, format!("fn stress_test_{}() {{}}", i)).unwrap();
+                file
             })
-        }).collect();
-        
+            .collect();
+
+        // Launch concurrent operations
+        let handles: Vec<_> = (0..10)
+            .map(|thread_id| {
+                let cache_clone = Arc::clone(&cache);
+                let files_clone = test_files.clone();
+
+                std::thread::spawn(move || {
+                    for i in 0..100 {
+                        let file_idx = (thread_id * 100 + i) % files_clone.len();
+                        let file = &files_clone[file_idx];
+
+                        // Mix of read and update operations
+                        match i % 3 {
+                            0 => {
+                                let _ = cache_clone.get(file);
+                            }
+                            1 => {
+                                cache_clone.update_lru_order(file);
+                            }
+                            _ => {
+                                let _ = cache_clone.calculate_file_hash(file);
+                            }
+                        }
+                    }
+                })
+            })
+            .collect();
+
         // Wait for all threads to complete
         for handle in handles {
             handle.join().unwrap();
         }
-        
+
         // Verify cache is still in valid state
         let metrics = cache.get_metrics();
         assert!(metrics.total_requests > 0);
-        
+
         // Should not have crashed or deadlocked
         assert!(cache.size() >= 0);
     }
@@ -1010,7 +1047,7 @@ mod tests {
     #[test]
     fn test_config_edge_cases() {
         let temp_dir = TempDir::new().unwrap();
-        
+
         // Test with eviction disabled
         let config_no_eviction = CacheConfig {
             max_memory_entries: 2,
@@ -1022,10 +1059,10 @@ mod tests {
             cache_metrics_enabled: true,
         };
         let cache = AstCache::new(config_no_eviction).unwrap();
-        
+
         // Should not evict even when over limit
         assert!(cache.ensure_cache_capacity(2 * 1024 * 1024).is_ok());
-        
+
         // Test with metrics disabled
         let config_no_metrics = CacheConfig {
             max_memory_entries: 10,
@@ -1037,7 +1074,7 @@ mod tests {
             cache_metrics_enabled: false,
         };
         let cache = AstCache::new(config_no_metrics).unwrap();
-        
+
         // Metrics should still work (just not be updated)
         let metrics = cache.get_metrics();
         assert_eq!(metrics.total_requests, 0);
@@ -1046,28 +1083,28 @@ mod tests {
     #[test]
     fn test_error_handling_resilience() {
         let (cache, temp_dir) = create_test_cache();
-        
+
         // Test with non-existent file
         let fake_file = temp_dir.path().join("non_existent.rs");
         assert!(cache.get(&fake_file).is_none());
-        
+
         // Should increment miss counter even for non-existent files
         let metrics = cache.get_metrics();
         assert_eq!(metrics.cache_misses, 1);
-        
+
         // Test hash calculation with non-existent file
         assert!(cache.calculate_file_hash(&fake_file).is_err());
-        
+
         // Test with file that gets deleted after creation
         let temp_file = temp_dir.path().join("temp.rs");
         fs::write(&temp_file, "fn temp() {}").unwrap();
-        
+
         let hash = cache.calculate_file_hash(&temp_file);
         assert!(hash.is_ok());
-        
+
         // Delete file
         fs::remove_file(&temp_file).unwrap();
-        
+
         // Should handle gracefully
         assert!(cache.get(&temp_file).is_none());
         assert!(cache.calculate_file_hash(&temp_file).is_err());
@@ -1076,26 +1113,26 @@ mod tests {
     #[test]
     fn test_cache_invalidation_scenarios() {
         let (cache, temp_dir) = create_test_cache();
-        
+
         let test_file = temp_dir.path().join("invalidation_test.rs");
         fs::write(&test_file, "fn original() {}").unwrap();
-        
+
         // Simulate cached entry
         cache.update_lru_order(&test_file);
         {
             let mut memory_usage = cache.memory_usage.lock().unwrap();
             *memory_usage += 2048;
         }
-        
+
         let initial_memory = cache.memory_usage();
         assert_eq!(initial_memory, 2048);
-        
+
         // Invalidate the entry
         cache.invalidate_entry(&test_file);
-        
+
         // Memory should be reduced
         assert_eq!(cache.memory_usage(), 0);
-        
+
         // LRU order should be updated
         {
             let lru_order = cache.lru_order.lock().unwrap();
@@ -1106,30 +1143,30 @@ mod tests {
     #[test]
     fn test_metrics_accuracy() {
         let (cache, temp_dir) = create_test_cache();
-        
+
         let test_file = temp_dir.path().join("metrics_test.rs");
         fs::write(&test_file, "fn metrics_test() {}").unwrap();
-        
+
         // Perform a series of operations and verify metrics
-        
+
         // 3 misses
         for _ in 0..3 {
             assert!(cache.get(&test_file).is_none());
         }
-        
+
         let metrics = cache.get_metrics();
         assert_eq!(metrics.total_requests, 3);
         assert_eq!(metrics.cache_misses, 3);
         assert_eq!(metrics.cache_hits, 0);
         assert_eq!(metrics.hit_rate, 0.0);
-        
+
         // Update LRU to simulate a stored entry
         cache.update_lru_order(&test_file);
-        
+
         // Test exported metrics format
         let exported = cache.export_metrics_for_observability();
         let ast_metrics = &exported["ast_cache"];
-        
+
         assert_eq!(ast_metrics["total_requests"], 3);
         assert_eq!(ast_metrics["cache_misses"], 3);
         assert_eq!(ast_metrics["cache_hits"], 0);
@@ -1140,7 +1177,7 @@ mod tests {
     #[test]
     fn test_multiple_language_detection() {
         let (cache, temp_dir) = create_test_cache();
-        
+
         let test_cases = vec![
             ("test.rs", "rs"),
             ("test.py", "py"),
@@ -1154,7 +1191,7 @@ mod tests {
             ("makefile", "unknown"),
             ("test", "unknown"),
         ];
-        
+
         for (filename, expected_lang) in test_cases {
             let path = temp_dir.path().join(filename);
             let detected = cache.detect_language(&path);
@@ -1165,24 +1202,26 @@ mod tests {
     #[test]
     fn test_cache_size_tracking() {
         let (cache, temp_dir) = create_test_cache();
-        
+
         // Initially empty
         assert_eq!(cache.size(), 0);
-        
+
         // Add entries to LRU (simulating cache entries)
-        let files: Vec<_> = (1..=5).map(|i| {
-            let file = temp_dir.path().join(format!("size_test_{}.rs", i));
-            fs::write(&file, format!("fn test{}() {{}}", i)).unwrap();
-            cache.update_lru_order(&file);
-            file
-        }).collect();
-        
+        let files: Vec<_> = (1..=5)
+            .map(|i| {
+                let file = temp_dir.path().join(format!("size_test_{}.rs", i));
+                fs::write(&file, format!("fn test{}() {{}}", i)).unwrap();
+                cache.update_lru_order(&file);
+                file
+            })
+            .collect();
+
         // LRU order should track the files
         {
             let lru_order = cache.lru_order.lock().unwrap();
             assert_eq!(lru_order.len(), 5);
         }
-        
+
         // Clear should reset everything
         cache.clear();
         assert_eq!(cache.size(), 0);
@@ -1196,27 +1235,27 @@ mod tests {
     #[test]
     fn test_cache_clone_behavior() {
         let (cache, temp_dir) = create_test_cache();
-        
+
         // Add some state to original cache
         let test_file = temp_dir.path().join("clone_test.rs");
         fs::write(&test_file, "fn clone_test() {}").unwrap();
         cache.update_lru_order(&test_file);
-        
+
         // Clone the cache
         let cloned_cache = cache.clone();
-        
+
         // Both should share the same state (Arc references)
         {
             let original_lru = cache.lru_order.lock().unwrap();
             let cloned_lru = cloned_cache.lru_order.lock().unwrap();
             assert_eq!(original_lru.len(), cloned_lru.len());
         }
-        
+
         // Operations on clone should affect original
         let test_file2 = temp_dir.path().join("clone_test2.rs");
         fs::write(&test_file2, "fn clone_test2() {}").unwrap();
         cloned_cache.update_lru_order(&test_file2);
-        
+
         // Original should see the change
         {
             let original_lru = cache.lru_order.lock().unwrap();

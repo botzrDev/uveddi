@@ -1,5 +1,7 @@
 //! Main WASM plugin engine that orchestrates the plugin system
 
+use crate::ast::tree_sitter::ParsedFile;
+use crate::models::ArchitecturalIssue;
 use crate::plugins::{
     data_plane::*,
     errors::*,
@@ -8,8 +10,6 @@ use crate::plugins::{
     security::*,
     types::{PluginId, PluginStats, PluginStatus, ResourceLimits},
 };
-use crate::ast::tree_sitter::ParsedFile;
-use crate::models::ArchitecturalIssue;
 use std::{collections::HashMap, path::Path, sync::Arc};
 use tokio::sync::RwLock;
 
@@ -32,7 +32,8 @@ impl WasmPluginEngine {
         {
             return Err(PluginError::Unsupported(
                 "WASM plugins not enabled. Compile with --features wasm-plugins".to_string(),
-            ).into());
+            )
+            .into());
         }
 
         #[cfg(feature = "wasm-plugins")]
@@ -41,8 +42,7 @@ impl WasmPluginEngine {
 
             Ok(Self {
                 lifecycle_manager: PluginLifecycleManager::new(),
-                registry: PluginRegistry::new(&plugins_dir)
-                    .await?,
+                registry: PluginRegistry::new(&plugins_dir).await?,
                 data_plane: AstDataPlane::new().map_err(|e| PluginError::DataPlane(e))?,
                 default_security_policy: SecurityPolicy::restrictive(),
                 plugin_adapters: Arc::new(RwLock::new(HashMap::new())),
@@ -59,17 +59,14 @@ impl WasmPluginEngine {
     ) -> crate::error::Result<Self> {
         #[cfg(not(feature = "wasm-plugins"))]
         {
-            return Err(PluginError::Unsupported(
-                "WASM plugins not enabled".to_string(),
-            ).into());
+            return Err(PluginError::Unsupported("WASM plugins not enabled".to_string()).into());
         }
 
         #[cfg(feature = "wasm-plugins")]
         {
             Ok(Self {
                 lifecycle_manager: PluginLifecycleManager::new(),
-                registry: PluginRegistry::new(plugins_dir)
-                    .await?,
+                registry: PluginRegistry::new(plugins_dir).await?,
                 data_plane: AstDataPlane::new().map_err(|e| PluginError::DataPlane(e))?,
                 default_security_policy: security_policy,
                 plugin_adapters: Arc::new(RwLock::new(HashMap::new())),
@@ -82,9 +79,7 @@ impl WasmPluginEngine {
     /// Placeholder documentation for public items
     pub async fn load_plugin(&mut self, plugin_id: &PluginId) -> crate::error::Result<()> {
         if !self.enabled {
-            return Err(PluginError::Unsupported(
-                "Plugin engine is disabled".to_string(),
-            ).into());
+            return Err(PluginError::Unsupported("Plugin engine is disabled".to_string()).into());
         }
 
         log::info!("Loading plugin: {}", plugin_id);
@@ -97,10 +92,7 @@ impl WasmPluginEngine {
             .clone();
 
         // Load plugin binary
-        let binary = self
-            .registry
-            .load_plugin_binary(plugin_id)
-            .await?;
+        let binary = self.registry.load_plugin_binary(plugin_id).await?;
 
         // Use default security policy (could be customized per plugin)
         let security_policy = self.default_security_policy.clone();
@@ -176,10 +168,7 @@ impl WasmPluginEngine {
         log::info!("Installing plugin: {}", manifest.name);
 
         // Register in the registry
-        let plugin_id = self
-            .registry
-            .register_plugin(manifest, binary)
-            .await?;
+        let plugin_id = self.registry.register_plugin(manifest, binary).await?;
 
         // Automatically load the plugin
         self.load_plugin(&plugin_id).await?;
@@ -199,9 +188,7 @@ impl WasmPluginEngine {
         }
 
         // Unregister from registry
-        self.registry
-            .unregister_plugin(plugin_id)
-            .await?;
+        self.registry.unregister_plugin(plugin_id).await?;
 
         log::info!("Successfully uninstalled plugin: {}", plugin_id);
         Ok(())

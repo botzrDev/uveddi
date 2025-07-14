@@ -19,16 +19,16 @@
 pub mod main;
 pub mod rendering;
 
-pub use main::{UveddiError, ErrorCategory, ErrorSeverity, ExtractionError, ErrorHandler};
+pub use main::{ErrorCategory, ErrorHandler, ErrorSeverity, ExtractionError, UveddiError};
 pub use rendering::RenderingServiceError;
 
 // Re-export rusqlite error for convenience
 pub use rusqlite::Error as RusqliteError;
 
 /// Unified Result type for all Uveddi operations
-/// 
+///
 /// This type alias provides consistent error handling across all public APIs.
-/// All functions that can fail should return `Result<T>` instead of 
+/// All functions that can fail should return `Result<T>` instead of
 /// `std::result::Result<T, SpecificError>`.
 ///
 /// # Examples

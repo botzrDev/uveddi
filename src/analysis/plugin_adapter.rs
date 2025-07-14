@@ -67,12 +67,14 @@ impl WasmPluginDetectorAdapter {
         plugin_engine: Arc<RwLock<WasmPluginEngine>>,
     ) -> Result<Self, AnalysisError> {
         let engine = plugin_engine.read().await;
-        
+
         // Get plugin adapter from engine (which contains the manifest)
-        let plugin_adapter = engine
-            .get_plugin_adapter(&plugin_id)
-            .await
-            .ok_or_else(|| AnalysisError::PluginError(crate::plugins::errors::PluginError::NotFound(format!("Plugin {} not loaded", plugin_id))))?;
+        let plugin_adapter = engine.get_plugin_adapter(&plugin_id).await.ok_or_else(|| {
+            AnalysisError::PluginError(crate::plugins::errors::PluginError::NotFound(format!(
+                "Plugin {} not loaded",
+                plugin_id
+            )))
+        })?;
 
         let manifest = plugin_adapter.manifest().clone();
 
@@ -92,75 +94,83 @@ impl WasmPluginDetectorAdapter {
         manifest
             .anti_pattern_types
             .iter()
-            .filter_map(|pattern_str| {
-                match pattern_str.as_str() {
-                    "god-object" => Some(AntiPatternType {
-                        anti_pattern_type_id: None,
-                        name: "God Object".to_string(),
-                        description: "A class that centralizes too many responsibilities.".to_string(),
-                        category: "Abstraction-Based".to_string(),
-                    }),
-                    "large-classes" => Some(AntiPatternType {
-                        anti_pattern_type_id: None,
-                        name: "Large Classes".to_string(),
-                        description: "Classes that are too large and complex.".to_string(),
-                        category: "Size-Based".to_string(),
-                    }),
-                    "dead-code" => Some(AntiPatternType {
-                        anti_pattern_type_id: None,
-                        name: "Dead Code".to_string(),
-                        description: "Unused code that should be removed.".to_string(),
-                        category: "Structural".to_string(),
-                    }),
-                    "code-duplication" => Some(AntiPatternType {
-                        anti_pattern_type_id: None,
-                        name: "Code Duplication".to_string(),
-                        description: "Duplicated code blocks that should be refactored.".to_string(),
-                        category: "Structural".to_string(),
-                    }),
-                    "tight-coupling" => Some(AntiPatternType {
-                        anti_pattern_type_id: None,
-                        name: "Tight Coupling".to_string(),
-                        description: "Excessive dependencies between modules.".to_string(),
-                        category: "Coupling-Based".to_string(),
-                    }),
-                    "cyclic-dependencies" => Some(AntiPatternType {
-                        anti_pattern_type_id: None,
-                        name: "Cyclic Dependencies".to_string(),
-                        description: "Circular dependencies between modules.".to_string(),
-                        category: "Structural".to_string(),
-                    }),
-                    "long-methods" => Some(AntiPatternType {
-                        anti_pattern_type_id: None,
-                        name: "Long Methods".to_string(),
-                        description: "Methods that are too long and complex.".to_string(),
-                        category: "Size-Based".to_string(),
-                    }),
-                    "magic-values" => Some(AntiPatternType {
-                        anti_pattern_type_id: None,
-                        name: "Magic Values".to_string(),
-                        description: "Hard-coded values that should be constants.".to_string(),
-                        category: "Clarity-Based".to_string(),
-                    }),
-                    _ => {
-                        log::warn!("Unknown anti-pattern type in plugin manifest: {}", pattern_str);
-                        None
-                    }
+            .filter_map(|pattern_str| match pattern_str.as_str() {
+                "god-object" => Some(AntiPatternType {
+                    anti_pattern_type_id: None,
+                    name: "God Object".to_string(),
+                    description: "A class that centralizes too many responsibilities.".to_string(),
+                    category: "Abstraction-Based".to_string(),
+                }),
+                "large-classes" => Some(AntiPatternType {
+                    anti_pattern_type_id: None,
+                    name: "Large Classes".to_string(),
+                    description: "Classes that are too large and complex.".to_string(),
+                    category: "Size-Based".to_string(),
+                }),
+                "dead-code" => Some(AntiPatternType {
+                    anti_pattern_type_id: None,
+                    name: "Dead Code".to_string(),
+                    description: "Unused code that should be removed.".to_string(),
+                    category: "Structural".to_string(),
+                }),
+                "code-duplication" => Some(AntiPatternType {
+                    anti_pattern_type_id: None,
+                    name: "Code Duplication".to_string(),
+                    description: "Duplicated code blocks that should be refactored.".to_string(),
+                    category: "Structural".to_string(),
+                }),
+                "tight-coupling" => Some(AntiPatternType {
+                    anti_pattern_type_id: None,
+                    name: "Tight Coupling".to_string(),
+                    description: "Excessive dependencies between modules.".to_string(),
+                    category: "Coupling-Based".to_string(),
+                }),
+                "cyclic-dependencies" => Some(AntiPatternType {
+                    anti_pattern_type_id: None,
+                    name: "Cyclic Dependencies".to_string(),
+                    description: "Circular dependencies between modules.".to_string(),
+                    category: "Structural".to_string(),
+                }),
+                "long-methods" => Some(AntiPatternType {
+                    anti_pattern_type_id: None,
+                    name: "Long Methods".to_string(),
+                    description: "Methods that are too long and complex.".to_string(),
+                    category: "Size-Based".to_string(),
+                }),
+                "magic-values" => Some(AntiPatternType {
+                    anti_pattern_type_id: None,
+                    name: "Magic Values".to_string(),
+                    description: "Hard-coded values that should be constants.".to_string(),
+                    category: "Clarity-Based".to_string(),
+                }),
+                _ => {
+                    log::warn!(
+                        "Unknown anti-pattern type in plugin manifest: {}",
+                        pattern_str
+                    );
+                    None
                 }
             })
             .collect()
     }
 
     /// Async version of detect_issues for internal use
-    async fn detect_issues_async(&self, file: &ParsedFile) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
+    async fn detect_issues_async(
+        &self,
+        file: &ParsedFile,
+    ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         let engine = self.plugin_engine.read().await;
-        
+
         // Get the plugin adapter
         match engine.get_plugin_adapter(&self.plugin_id).await {
             Some(_adapter) => {
                 // For now, return empty results as the actual WASM execution
                 // is complex and would require the full WASM runtime integration
-                log::info!("Plugin {} would analyze file: {:?}", self.plugin_id, file.path());
+                log::info!(
+                    "Plugin {} would analyze file: {:?}",
+                    self.plugin_id,
+                    file.path()
+                );
                 Ok(Vec::new())
             }
             None => {
@@ -185,18 +195,19 @@ impl AnalysisDetector for WasmPluginDetectorAdapter {
     fn detect_issues(&self, file: &ParsedFile) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         // Since WASM operations are async but this trait requires sync,
         // we need to create a runtime to bridge the gap
-        let rt = tokio::runtime::Handle::try_current()
-            .or_else(|_| {
-                // If no current runtime, create a new one
-                tokio::runtime::Runtime::new()
-                    .map(|rt| rt.handle().clone())
-                    .map_err(|e| AnalysisError::PluginError(crate::plugins::errors::PluginError::Execution(format!("Failed to create runtime: {}", e))))
-            })?;
+        let rt = tokio::runtime::Handle::try_current().or_else(|_| {
+            // If no current runtime, create a new one
+            tokio::runtime::Runtime::new()
+                .map(|rt| rt.handle().clone())
+                .map_err(|e| {
+                    AnalysisError::PluginError(crate::plugins::errors::PluginError::Execution(
+                        format!("Failed to create runtime: {}", e),
+                    ))
+                })
+        })?;
 
         // Execute the async operation
-        rt.block_on(async {
-            self.detect_issues_async(file).await
-        })
+        rt.block_on(async { self.detect_issues_async(file).await })
     }
 
     fn get_anti_pattern_types(&self) -> Vec<AntiPatternType> {
@@ -235,7 +246,9 @@ impl WasmPluginAdapterFactory {
     /// # Returns
     ///
     /// A vector of adapters for all currently loaded plugins
-    pub async fn create_all_adapters(&self) -> Result<Vec<Box<dyn AnalysisDetector + Send + Sync>>, AnalysisError> {
+    pub async fn create_all_adapters(
+        &self,
+    ) -> Result<Vec<Box<dyn AnalysisDetector + Send + Sync>>, AnalysisError> {
         let engine = self.plugin_engine.read().await;
         let plugin_ids = engine.list_loaded_plugins().await;
         drop(engine); // Release the read lock
@@ -243,7 +256,9 @@ impl WasmPluginAdapterFactory {
         let mut adapters: Vec<Box<dyn AnalysisDetector + Send + Sync>> = Vec::new();
 
         for plugin_id in plugin_ids {
-            match WasmPluginDetectorAdapter::new(plugin_id.clone(), self.plugin_engine.clone()).await {
+            match WasmPluginDetectorAdapter::new(plugin_id.clone(), self.plugin_engine.clone())
+                .await
+            {
                 Ok(adapter) => {
                     adapters.push(Box::new(adapter));
                     log::info!("Created adapter for plugin: {}", plugin_id);
@@ -267,7 +282,10 @@ impl WasmPluginAdapterFactory {
     /// # Returns
     ///
     /// An adapter for the specified plugin
-    pub async fn create_adapter(&self, plugin_id: PluginId) -> Result<Box<dyn AnalysisDetector + Send + Sync>, AnalysisError> {
+    pub async fn create_adapter(
+        &self,
+        plugin_id: PluginId,
+    ) -> Result<Box<dyn AnalysisDetector + Send + Sync>, AnalysisError> {
         let adapter = WasmPluginDetectorAdapter::new(plugin_id, self.plugin_engine.clone()).await?;
         Ok(Box::new(adapter))
     }
@@ -296,7 +314,7 @@ mod tests {
         };
 
         let types = WasmPluginDetectorAdapter::convert_manifest_patterns(&manifest);
-        
+
         // Should have 2 valid patterns (unknown-pattern filtered out)
         assert_eq!(types.len(), 2);
         assert!(types.iter().any(|t| t.name == "God Object"));
@@ -307,16 +325,16 @@ mod tests {
     async fn test_adapter_factory() {
         // This test would require a mock plugin engine
         // For now, we'll just test the factory creation
-        let engine = Arc::new(RwLock::new(
-            WasmPluginEngine::new().await.unwrap_or_else(|_| {
+        let engine = Arc::new(RwLock::new(WasmPluginEngine::new().await.unwrap_or_else(
+            |_| {
                 // Create a stub engine for testing
                 // In practice, this would be handled differently
                 panic!("Plugin engine creation failed in test");
-            })
-        ));
+            },
+        )));
 
         let factory = WasmPluginAdapterFactory::new(engine);
-        
+
         // Factory should be created successfully
         assert!(true); // Placeholder assertion
     }

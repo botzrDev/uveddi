@@ -4,14 +4,14 @@
 //! under various load conditions, ensuring responsive user interactions
 //! and efficient resource utilization.
 
-use std::path::PathBuf;
-use std::time::{Duration, Instant};
 #[cfg(feature = "tui")]
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use std::path::PathBuf;
+use std::time::{Duration, Instant};
 
+use uveddi::cli::analyze_command::AnalyzeCommand;
 #[cfg(feature = "tui")]
 use uveddi::tui::{AppMessage, AppScreen, AppState};
-use uveddi::cli::analyze_command::AnalyzeCommand;
 
 /// Performance test configuration
 const RAPID_UPDATES_COUNT: usize = 10_000;
@@ -23,11 +23,12 @@ const PERFORMANCE_THRESHOLD_MS: u128 = 100;
 async fn create_large_test_project() -> std::io::Result<PathBuf> {
     let test_dir = PathBuf::from("./tmp/performance_test_project");
     tokio::fs::create_dir_all(&test_dir).await?;
-    
+
     // Create multiple files to test scalability
     for i in 0..10 {
         let file_path = test_dir.join(format!("module_{}.rs", i));
-        let content = format!(r#"
+        let content = format!(
+            r#"
 // Module {} for performance testing
 use std::collections::{{HashMap, BTreeMap}};
 
@@ -116,14 +117,18 @@ struct UnusedStruct{} {{
 pub fn public_function_{}() -> TestStruct{} {{
     TestStruct{}::new()
 }}
-"#, i, i, i, i, i, i, i, i, i, i);
-        
+"#,
+            i, i, i, i, i, i, i, i, i, i
+        );
+
         tokio::fs::write(&file_path, content).await?;
     }
-    
+
     // Create a main file that uses some of the modules
     let main_rs = test_dir.join("main.rs");
-    tokio::fs::write(&main_rs, r#"
+    tokio::fs::write(
+        &main_rs,
+        r#"
 mod module_0;
 mod module_1;
 mod module_2;
@@ -141,8 +146,10 @@ fn main() {
     
     println!("Performance test project main");
 }
-"#).await?;
-    
+"#,
+    )
+    .await?;
+
     Ok(test_dir)
 }
 
@@ -161,7 +168,7 @@ async fn cleanup_performance_test_project(path: &PathBuf) -> std::io::Result<()>
 async fn test_rapid_state_updates_performance() {
     let mut app_state = AppState::new();
     let start_time = Instant::now();
-    
+
     // Perform many rapid state updates
     for i in 0..RAPID_UPDATES_COUNT {
         let message = match i % 5 {
@@ -173,19 +180,30 @@ async fn test_rapid_state_updates_performance() {
         };
         app_state.update(message);
     }
-    
+
     let duration = start_time.elapsed();
     let updates_per_second = RAPID_UPDATES_COUNT as f64 / duration.as_secs_f64();
-    
+
     println!("Rapid state updates performance:");
     println!("  {} updates in {:?}", RAPID_UPDATES_COUNT, duration);
     println!("  {:.0} updates per second", updates_per_second);
-    println!("  {:.3} ms per update", duration.as_millis() as f64 / RAPID_UPDATES_COUNT as f64);
-    
+    println!(
+        "  {:.3} ms per update",
+        duration.as_millis() as f64 / RAPID_UPDATES_COUNT as f64
+    );
+
     // Performance assertion - should handle at least 1000 updates per second
-    assert!(updates_per_second > 1000.0, "State updates too slow: {:.0} updates/sec", updates_per_second);
-    assert!(duration.as_millis() < PERFORMANCE_THRESHOLD_MS, "Total time too long: {:?}", duration);
-    
+    assert!(
+        updates_per_second > 1000.0,
+        "State updates too slow: {:.0} updates/sec",
+        updates_per_second
+    );
+    assert!(
+        duration.as_millis() < PERFORMANCE_THRESHOLD_MS,
+        "Total time too long: {:?}",
+        duration
+    );
+
     // Verify final state is consistent
     assert_eq!(app_state.current_screen, AppScreen::MainMenu);
     assert!(!app_state.should_quit);
@@ -197,7 +215,7 @@ async fn test_rapid_state_updates_performance() {
 async fn test_menu_navigation_performance() {
     let mut app_state = AppState::new();
     let start_time = Instant::now();
-    
+
     let key_events = vec![
         KeyEvent::new(KeyCode::Down, KeyModifiers::NONE),
         KeyEvent::new(KeyCode::Up, KeyModifiers::NONE),
@@ -205,20 +223,27 @@ async fn test_menu_navigation_performance() {
         KeyEvent::new(KeyCode::Char('k'), KeyModifiers::NONE),
         KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE),
     ];
-    
+
     // Simulate rapid keyboard input
     for i in 0..1000 {
         let key_event = &key_events[i % key_events.len()];
         app_state.update(AppMessage::KeyPressed(*key_event));
     }
-    
+
     let duration = start_time.elapsed();
     println!("Menu navigation performance:");
     println!("  1000 key events in {:?}", duration);
-    println!("  {:.3} ms per key event", duration.as_millis() as f64 / 1000.0);
-    
+    println!(
+        "  {:.3} ms per key event",
+        duration.as_millis() as f64 / 1000.0
+    );
+
     // Should handle keyboard input very quickly
-    assert!(duration.as_millis() < 50, "Menu navigation too slow: {:?}", duration);
+    assert!(
+        duration.as_millis() < 50,
+        "Menu navigation too slow: {:?}",
+        duration
+    );
 }
 
 /// Test memory usage during extended operation
@@ -226,10 +251,10 @@ async fn test_menu_navigation_performance() {
 #[tokio::test]
 async fn test_memory_usage_stability() {
     let mut app_state = AppState::new();
-    
+
     // Initial memory baseline (simple approximation)
     let initial_size = std::mem::size_of_val(&app_state);
-    
+
     // Perform many operations that could cause memory leaks
     for _i in 0..10000 {
         // Cycle through different screens
@@ -238,27 +263,34 @@ async fn test_memory_usage_stability() {
         app_state.update(AppMessage::NavigateToReports);
         app_state.update(AppMessage::NavigateToPlugins);
         app_state.update(AppMessage::NavigateToMainMenu);
-        
+
         // Simulate error conditions
         app_state.update(AppMessage::MenuItemSelected(999));
         app_state.update(AppMessage::FormFieldChanged("test_input".to_string()));
-        
+
         // Clear errors by navigating
         app_state.update(AppMessage::NavigateToMainMenu);
     }
-    
+
     // Check memory hasn't grown significantly
     let final_size = std::mem::size_of_val(&app_state);
-    
+
     println!("Memory usage stability:");
     println!("  Initial size: {} bytes", initial_size);
     println!("  Final size: {} bytes", final_size);
-    println!("  Growth: {} bytes", final_size as i64 - initial_size as i64);
-    
+    println!(
+        "  Growth: {} bytes",
+        final_size as i64 - initial_size as i64
+    );
+
     // Memory usage should remain stable (allowing for some variance)
-    assert!((final_size as i64 - initial_size as i64).abs() < 1000, 
-            "Excessive memory growth: {} -> {} bytes", initial_size, final_size);
-    
+    assert!(
+        (final_size as i64 - initial_size as i64).abs() < 1000,
+        "Excessive memory growth: {} -> {} bytes",
+        initial_size,
+        final_size
+    );
+
     // Verify final state is clean
     assert_eq!(app_state.current_screen, AppScreen::MainMenu);
     assert!(!app_state.should_quit);
@@ -271,42 +303,79 @@ async fn test_memory_usage_stability() {
 async fn test_command_creation_performance() {
     let test_project = create_large_test_project().await.unwrap();
     let start_time = Instant::now();
-    
+
     // Create many AnalyzeCommand instances
     let mut commands = Vec::new();
     for i in 0..1000 {
         let command = AnalyzeCommand {
             path: test_project.clone(),
-            output_format: if i % 2 == 0 { "json".to_string() } else { "markdown".to_string() },
-            output: if i % 3 == 0 { Some(PathBuf::from(format!("output_{}.txt", i))) } else { None },
+            output_format: if i % 2 == 0 {
+                "json".to_string()
+            } else {
+                "markdown".to_string()
+            },
+            output: if i % 3 == 0 {
+                Some(PathBuf::from(format!("output_{}.txt", i)))
+            } else {
+                None
+            },
             enable_ai: i % 4 == 0,
-            ollama_api_url: if i % 5 == 0 { Some("http://localhost:11434".to_string()) } else { None },
-            ollama_model: if i % 6 == 0 { Some("deepseek-coder".to_string()) } else { None },
+            ollama_api_url: if i % 5 == 0 {
+                Some("http://localhost:11434".to_string())
+            } else {
+                None
+            },
+            ollama_model: if i % 6 == 0 {
+                Some("deepseek-coder".to_string())
+            } else {
+                None
+            },
             dead_code_confidence: Some(0.1 + (i as f64 % 10.0) / 10.0),
             dead_code_library_mode: i % 2 == 0,
-            dead_code_ignore_patterns: if i % 3 == 0 { Some(vec!["test".to_string()]) } else { None },
-            dead_code_keep_alive: if i % 4 == 0 { Some(vec!["main".to_string()]) } else { None },
+            dead_code_ignore_patterns: if i % 3 == 0 {
+                Some(vec!["test".to_string()])
+            } else {
+                None
+            },
+            dead_code_keep_alive: if i % 4 == 0 {
+                Some(vec!["main".to_string()])
+            } else {
+                None
+            },
             large_classes_max_loc: Some(100 + (i % 500) as u32),
             large_classes_max_methods: Some(10 + (i % 20) as u32),
             large_classes_max_fields: Some(5 + (i % 15) as u32),
             large_classes_max_complexity: Some(20 + (i % 50) as u32),
             large_classes_max_lcom: Some(0.1 + (i as f64 % 8.0) / 10.0),
-            large_classes_ignore_patterns: if i % 7 == 0 { Some(vec!["generated".to_string()]) } else { None },
+            large_classes_ignore_patterns: if i % 7 == 0 {
+                Some(vec!["generated".to_string()])
+            } else {
+                None
+            },
             large_classes_min_severity: Some((i % 100) as u32),
         };
         commands.push(command);
     }
-    
+
     let duration = start_time.elapsed();
     println!("Command creation performance:");
     println!("  1000 commands created in {:?}", duration);
-    println!("  {:.3} ms per command", duration.as_millis() as f64 / 1000.0);
-    
+    println!(
+        "  {:.3} ms per command",
+        duration.as_millis() as f64 / 1000.0
+    );
+
     // Should create commands very quickly
-    assert!(duration.as_millis() < 100, "Command creation too slow: {:?}", duration);
+    assert!(
+        duration.as_millis() < 100,
+        "Command creation too slow: {:?}",
+        duration
+    );
     assert_eq!(commands.len(), 1000);
-    
-    cleanup_performance_test_project(&test_project).await.unwrap();
+
+    cleanup_performance_test_project(&test_project)
+        .await
+        .unwrap();
 }
 
 /// Test concurrent state operations
@@ -315,47 +384,56 @@ async fn test_command_creation_performance() {
 async fn test_concurrent_state_operations() {
     use std::sync::{Arc, Mutex};
     use std::thread;
-    
+
     let app_state = Arc::new(Mutex::new(AppState::new()));
     let start_time = Instant::now();
-    
+
     // Spawn multiple threads to simulate concurrent access
-    let handles: Vec<_> = (0..10).map(|thread_id| {
-        let app_state_clone: Arc<Mutex<AppState>> = Arc::clone(&app_state);
-        thread::spawn(move || {
-            for i in 0..100 {
-                let message = match (thread_id + i) % 5 {
-                    0 => AppMessage::NavigateToAnalyze,
-                    1 => AppMessage::NavigateToConfig,
-                    2 => AppMessage::NavigateToReports,
-                    3 => AppMessage::NavigateToPlugins,
-                    _ => AppMessage::NavigateToMainMenu,
-                };
-                
-                if let Ok(mut state) = app_state_clone.lock() {
-                    state.update(message);
+    let handles: Vec<_> = (0..10)
+        .map(|thread_id| {
+            let app_state_clone: Arc<Mutex<AppState>> = Arc::clone(&app_state);
+            thread::spawn(move || {
+                for i in 0..100 {
+                    let message = match (thread_id + i) % 5 {
+                        0 => AppMessage::NavigateToAnalyze,
+                        1 => AppMessage::NavigateToConfig,
+                        2 => AppMessage::NavigateToReports,
+                        3 => AppMessage::NavigateToPlugins,
+                        _ => AppMessage::NavigateToMainMenu,
+                    };
+
+                    if let Ok(mut state) = app_state_clone.lock() {
+                        state.update(message);
+                    }
                 }
-            }
+            })
         })
-    }).collect();
-    
+        .collect();
+
     // Wait for all threads to complete
     for handle in handles {
         handle.join().unwrap();
     }
-    
+
     let duration = start_time.elapsed();
     println!("Concurrent state operations:");
     println!("  10 threads × 100 operations in {:?}", duration);
-    println!("  {:.3} ms per operation", duration.as_millis() as f64 / 1000.0);
-    
+    println!(
+        "  {:.3} ms per operation",
+        duration.as_millis() as f64 / 1000.0
+    );
+
     // Verify final state is consistent
     let final_state = app_state.lock().unwrap();
     assert!(!final_state.should_quit);
     println!("  Final state: {:?}", final_state.current_screen);
-    
+
     // Performance should be reasonable even with contention
-    assert!(duration.as_millis() < 1000, "Concurrent operations too slow: {:?}", duration);
+    assert!(
+        duration.as_millis() < 1000,
+        "Concurrent operations too slow: {:?}",
+        duration
+    );
 }
 
 /// Test large project analysis performance (simulated)
@@ -363,7 +441,7 @@ async fn test_concurrent_state_operations() {
 #[tokio::test]
 async fn test_large_project_simulation() {
     let test_project = create_large_test_project().await.unwrap();
-    
+
     let analyze_command = AnalyzeCommand {
         path: test_project.clone(),
         output_format: "markdown".to_string(),
@@ -383,33 +461,39 @@ async fn test_large_project_simulation() {
         large_classes_ignore_patterns: None,
         large_classes_min_severity: Some(0),
     };
-    
+
     let start_time = Instant::now();
-    
+
     // Execute with timeout to prevent hanging
     let result = tokio::time::timeout(Duration::from_secs(30), analyze_command.execute()).await;
-    
+
     let duration = start_time.elapsed();
-    
+
     match result {
         Ok(Ok(_)) => {
             println!("Large project analysis performance:");
             println!("  Analysis completed in {:?}", duration);
-            
+
             // For a project with 10 files, should complete within reasonable time
-            assert!(duration.as_secs() < 20, "Analysis took too long: {:?}", duration);
-        },
+            assert!(
+                duration.as_secs() < 20,
+                "Analysis took too long: {:?}",
+                duration
+            );
+        }
         Ok(Err(e)) => {
             println!("Large project analysis failed (may be expected): {:?}", e);
             println!("  Failed after {:?}", duration);
-        },
+        }
         Err(_) => {
             println!("Large project analysis timed out after {:?}", duration);
             // Timeout is acceptable for performance testing
         }
     }
-    
-    cleanup_performance_test_project(&test_project).await.unwrap();
+
+    cleanup_performance_test_project(&test_project)
+        .await
+        .unwrap();
 }
 
 /// Stress test with rapid operations
@@ -419,7 +503,7 @@ async fn test_stress_operations() {
     let mut app_state = AppState::new();
     let start_time = Instant::now();
     let mut operation_count = 0;
-    
+
     // Perform rapid operations for a fixed duration
     while start_time.elapsed() < STRESS_TEST_DURATION {
         let operations = vec![
@@ -434,23 +518,27 @@ async fn test_stress_operations() {
             AppMessage::MenuItemSelected(3),
             AppMessage::FormFieldChanged("test".to_string()),
         ];
-        
+
         for operation in operations {
             app_state.update(operation);
             operation_count += 1;
         }
     }
-    
+
     let duration = start_time.elapsed();
     let ops_per_second = operation_count as f64 / duration.as_secs_f64();
-    
+
     println!("Stress test results:");
     println!("  {} operations in {:?}", operation_count, duration);
     println!("  {:.0} operations per second", ops_per_second);
-    
+
     // Should maintain high throughput under stress
-    assert!(ops_per_second > 10000.0, "Stress test throughput too low: {:.0} ops/sec", ops_per_second);
-    
+    assert!(
+        ops_per_second > 10000.0,
+        "Stress test throughput too low: {:.0} ops/sec",
+        ops_per_second
+    );
+
     // Verify application is still in a consistent state
     assert!(!app_state.should_quit);
     println!("  Final state: {:?}", app_state.current_screen);
@@ -462,7 +550,7 @@ async fn test_stress_operations() {
 async fn test_complex_message_performance() {
     let mut app_state = AppState::new();
     let start_time = Instant::now();
-    
+
     // Test with complex keyboard events
     let complex_events = vec![
         KeyEvent::new(KeyCode::Char('q'), KeyModifiers::NONE),
@@ -479,23 +567,30 @@ async fn test_complex_message_performance() {
         KeyEvent::new(KeyCode::Char('j'), KeyModifiers::NONE),
         KeyEvent::new(KeyCode::Char('k'), KeyModifiers::NONE),
     ];
-    
+
     // Reset state for each test to avoid quit condition
     for _ in 0..1000 {
         app_state = AppState::new(); // Reset to avoid accumulated quit states
-        
+
         for &event in &complex_events {
             app_state.update(AppMessage::KeyPressed(event));
         }
     }
-    
+
     let duration = start_time.elapsed();
     let total_events = 1000 * complex_events.len();
-    
+
     println!("Complex message performance:");
     println!("  {} complex events in {:?}", total_events, duration);
-    println!("  {:.3} ms per event", duration.as_millis() as f64 / total_events as f64);
-    
+    println!(
+        "  {:.3} ms per event",
+        duration.as_millis() as f64 / total_events as f64
+    );
+
     // Should handle complex events quickly
-    assert!(duration.as_millis() < 500, "Complex message handling too slow: {:?}", duration);
+    assert!(
+        duration.as_millis() < 500,
+        "Complex message handling too slow: {:?}",
+        duration
+    );
 }

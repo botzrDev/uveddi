@@ -1,4 +1,4 @@
-use crate::analysis::{AnalysisDetector, AnalysisEngine, AnalysisConfig};
+use crate::analysis::{AnalysisConfig, AnalysisDetector, AnalysisEngine};
 use crate::error::UveddiError;
 use std::path::{Path, PathBuf};
 
@@ -38,7 +38,7 @@ impl AnalysisEngineBuilder {
     pub fn new() -> Self {
         Self::default()
     }
-    
+
     /// Add a detector to the engine
     ///
     /// # Arguments
@@ -58,7 +58,7 @@ impl AnalysisEngineBuilder {
         self.detectors.push(detector);
         self
     }
-    
+
     /// Set custom cache path
     ///
     /// # Arguments
@@ -68,7 +68,7 @@ impl AnalysisEngineBuilder {
         self.cache_path = Some(path);
         self
     }
-    
+
     /// Enable plugin support
     ///
     /// When enabled, the engine will initialize the WASM plugin system
@@ -77,7 +77,7 @@ impl AnalysisEngineBuilder {
         self.enable_plugins = true;
         self
     }
-    
+
     /// Use in-memory cache (for testing)
     ///
     /// This is primarily useful for testing scenarios where you want
@@ -86,7 +86,7 @@ impl AnalysisEngineBuilder {
         self.use_memory_cache = true;
         self
     }
-    
+
     /// Load configuration from file
     ///
     /// Loads an AnalysisConfig from a TOML file and applies its settings
@@ -114,7 +114,7 @@ impl AnalysisEngineBuilder {
         let config = AnalysisConfig::from_file(config_path)?;
         self.from_config(&config)
     }
-    
+
     /// Load configuration from AnalysisConfig
     ///
     /// Applies settings from an AnalysisConfig instance to the builder.
@@ -146,22 +146,22 @@ impl AnalysisEngineBuilder {
         } else {
             registry.load_from_config(&config.detectors)?;
         }
-        
+
         // Apply configuration settings
         if let Some(ref cache_path) = config.cache_path {
             self.cache_path = Some(PathBuf::from(cache_path));
         }
-        
+
         if config.enable_plugins {
             self.enable_plugins = true;
         }
-        
+
         // Set detectors from registry
         self.detectors = registry.get_all_detectors();
-        
+
         Ok(self)
     }
-    
+
     /// Build the AnalysisEngine with configured options
     ///
     /// Creates an `AnalysisEngine` instance using the builder's configuration.
@@ -185,13 +185,13 @@ impl AnalysisEngineBuilder {
         } else {
             self.detectors
         };
-        
+
         let cache_path = if self.use_memory_cache {
             None
         } else {
             self.cache_path.as_deref()
         };
-        
+
         let mut engine = if self.enable_plugins {
             if let Some(path) = cache_path {
                 AnalysisEngine::with_detectors_and_plugins(detectors, Some(path)).await?
@@ -201,7 +201,7 @@ impl AnalysisEngineBuilder {
         } else {
             AnalysisEngine::with_detectors(detectors, cache_path, false)?
         };
-        
+
         // If plugins are enabled, automatically load plugin detectors
         if self.enable_plugins && engine.has_plugin_support() {
             match engine.add_plugin_detectors().await {
@@ -214,7 +214,7 @@ impl AnalysisEngineBuilder {
                 }
             }
         }
-        
+
         Ok(engine)
     }
 }
@@ -226,12 +226,11 @@ mod tests {
 
     #[tokio::test]
     async fn test_builder_with_default_detectors() {
-        let builder = AnalysisEngineBuilder::new()
-            .with_memory_cache();
-        
+        let builder = AnalysisEngineBuilder::new().with_memory_cache();
+
         let engine = builder.build().await;
         assert!(engine.is_ok());
-        
+
         let engine = engine.unwrap();
         // Should have default detectors plus cycle detector
         assert!(engine.get_anti_pattern_types().len() >= 5);
@@ -242,10 +241,10 @@ mod tests {
         let builder = AnalysisEngineBuilder::new()
             .add_detector(Box::new(GodObjectDetector::new(10, 15)))
             .with_memory_cache();
-        
+
         let engine = builder.build().await;
         assert!(engine.is_ok());
-        
+
         let engine = engine.unwrap();
         // Should have our custom detector plus cycle detector
         assert!(engine.get_anti_pattern_types().len() >= 1);
@@ -257,7 +256,7 @@ mod tests {
             .add_detector(Box::new(GodObjectDetector::new(5, 8)))
             .enable_plugins()
             .with_memory_cache();
-        
+
         // Builder should be properly configured
         assert_eq!(builder.detectors.len(), 1);
         assert!(builder.enable_plugins);
@@ -267,12 +266,11 @@ mod tests {
     #[test]
     fn test_builder_from_config() {
         let config = AnalysisConfig::default();
-        let builder = AnalysisEngineBuilder::new()
-            .from_config(&config);
-        
+        let builder = AnalysisEngineBuilder::new().from_config(&config);
+
         assert!(builder.is_ok());
         let builder = builder.unwrap();
-        
+
         // Should have default detectors loaded from config
         assert_eq!(builder.detectors.len(), 5);
         assert!(builder.enable_plugins == config.enable_plugins);
@@ -280,9 +278,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_builder_with_config_file() {
-        use tempfile::NamedTempFile;
         use std::io::Write;
-        
+        use tempfile::NamedTempFile;
+
         // Create a temporary config file
         let mut temp_file = NamedTempFile::new().unwrap();
         let config_content = r#"
@@ -294,13 +292,12 @@ threshold_methods = 10
 threshold_fields = 15
 "#;
         temp_file.write_all(config_content.as_bytes()).unwrap();
-        
-        let builder = AnalysisEngineBuilder::new()
-            .from_config_file(temp_file.path());
-        
+
+        let builder = AnalysisEngineBuilder::new().from_config_file(temp_file.path());
+
         assert!(builder.is_ok());
         let builder = builder.unwrap();
-        
+
         // Should have configured detectors
         assert!(builder.detectors.len() > 0);
         assert!(!builder.enable_plugins); // Should respect config setting
@@ -309,13 +306,14 @@ threshold_fields = 15
     #[tokio::test]
     async fn test_builder_config_overrides() {
         let config = AnalysisConfig::default();
-        
+
         let engine = AnalysisEngineBuilder::new()
-            .from_config(&config).unwrap()
+            .from_config(&config)
+            .unwrap()
             .with_memory_cache() // Override cache setting
             .build()
             .await;
-        
+
         assert!(engine.is_ok());
     }
 }

@@ -1,6 +1,6 @@
 use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
-use crate::security;
 use crate::error::Result;
+use crate::security;
 use chrono::Utc;
 use rusqlite::Connection;
 use std::path::Path;
@@ -166,7 +166,8 @@ impl Database {
     /// * `Err(UveddiError)` - If the insert or query fails.
     pub fn store_anti_pattern_type(&self, anti_pattern_type: &mut AntiPatternType) -> Result<()> {
         // Validate and sanitize description
-        anti_pattern_type.description = security::sanitize_description(&anti_pattern_type.description);
+        anti_pattern_type.description =
+            security::sanitize_description(&anti_pattern_type.description);
         self.conn.execute(
             "INSERT OR IGNORE INTO anti_pattern_types (name, description, category) VALUES (?, ?, ?)",
             rusqlite::params![
@@ -245,8 +246,9 @@ impl Database {
             )?;
             for anti_pattern_type in anti_pattern_types.iter_mut() {
                 // Validate and sanitize description
-                anti_pattern_type.description = security::sanitize_description(&anti_pattern_type.description);
-                
+                anti_pattern_type.description =
+                    security::sanitize_description(&anti_pattern_type.description);
+
                 stmt.execute(rusqlite::params![
                     anti_pattern_type.name,
                     anti_pattern_type.description,

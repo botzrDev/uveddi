@@ -1,9 +1,9 @@
-use crate::analysis::AnalysisDetector;
 use crate::analysis::detectors::anti_patterns::code_duplication::CodeDuplicationDetector;
 use crate::analysis::detectors::anti_patterns::dead_code::DeadCodeDetector;
 use crate::analysis::detectors::anti_patterns::god_object::GodObjectDetector;
 use crate::analysis::detectors::anti_patterns::large_classes::LargeClassDetector;
 use crate::analysis::detectors::anti_patterns::tight_coupling::TightCouplingDetector;
+use crate::analysis::AnalysisDetector;
 use crate::error::UveddiError;
 use std::collections::HashMap;
 
@@ -33,7 +33,7 @@ impl DetectorFactory {
             Box::new(TightCouplingDetector::default()),
         ]
     }
-    
+
     /// Create detector by name with configuration
     ///
     /// Creates a specific detector instance based on the provided name and
@@ -53,8 +53,8 @@ impl DetectorFactory {
     ///
     /// Returns `UveddiError::ConfigError` if the detector name is not recognized
     pub fn create_detector(
-        name: &str, 
-        config: &DetectorConfig
+        name: &str,
+        config: &DetectorConfig,
     ) -> Result<Box<dyn AnalysisDetector + Send + Sync>, UveddiError> {
         match name {
             "god_object" => Ok(Box::new(GodObjectDetector::new(
@@ -65,10 +65,13 @@ impl DetectorFactory {
             "dead_code" => Ok(Box::new(DeadCodeDetector::with_default_config())),
             "large_classes" => Ok(Box::new(LargeClassDetector::with_default_config())),
             "tight_coupling" => Ok(Box::new(TightCouplingDetector::default())),
-            _ => Err(UveddiError::ConfigError(format!("Unknown detector: {}", name))),
+            _ => Err(UveddiError::ConfigError(format!(
+                "Unknown detector: {}",
+                name
+            ))),
         }
     }
-    
+
     /// Create detectors from a configuration map
     ///
     /// Creates multiple detectors based on a configuration mapping. This is
@@ -82,15 +85,15 @@ impl DetectorFactory {
     ///
     /// A vector of created detectors or an error if any detector creation fails
     pub fn create_detectors_from_config(
-        configs: &HashMap<String, DetectorConfig>
+        configs: &HashMap<String, DetectorConfig>,
     ) -> Result<Vec<Box<dyn AnalysisDetector + Send + Sync>>, UveddiError> {
         let mut detectors = Vec::new();
-        
+
         for (name, config) in configs {
             let detector = Self::create_detector(name, config)?;
             detectors.push(detector);
         }
-        
+
         Ok(detectors)
     }
 }
@@ -110,7 +113,7 @@ impl DetectorConfig {
     pub fn new() -> Self {
         Self::default()
     }
-    
+
     /// Add a parameter to the configuration
     ///
     /// # Arguments
@@ -125,7 +128,7 @@ impl DetectorConfig {
         self.params.insert(key.to_string(), value);
         self
     }
-    
+
     /// Get a parameter value
     ///
     /// # Arguments
@@ -138,7 +141,7 @@ impl DetectorConfig {
     pub fn get(&self, key: &str) -> Option<i32> {
         self.params.get(key).copied()
     }
-    
+
     /// Set a parameter value
     ///
     /// # Arguments
@@ -148,7 +151,7 @@ impl DetectorConfig {
     pub fn set(&mut self, key: &str, value: i32) {
         self.params.insert(key.to_string(), value);
     }
-    
+
     /// Check if a parameter exists
     ///
     /// # Arguments
@@ -176,12 +179,10 @@ mod tests {
     fn test_create_default_detectors() {
         let detectors = DetectorFactory::create_default_detectors();
         assert_eq!(detectors.len(), 5);
-        
+
         // Verify each detector type is present
-        let detector_names: Vec<&str> = detectors.iter()
-            .map(|d| d.get_detector_name())
-            .collect();
-        
+        let detector_names: Vec<&str> = detectors.iter().map(|d| d.get_detector_name()).collect();
+
         assert!(detector_names.contains(&"GodObjectDetector"));
         assert!(detector_names.contains(&"CodeDuplicationDetector"));
         assert!(detector_names.contains(&"DeadCodeDetector"));
@@ -194,7 +195,7 @@ mod tests {
         let config = DetectorConfig::new()
             .with_param("threshold_methods", 10)
             .with_param("threshold_fields", 15);
-        
+
         let detector = DetectorFactory::create_detector("god_object", &config);
         assert!(detector.is_ok());
         assert_eq!(detector.unwrap().get_detector_name(), "GodObjectDetector");
@@ -210,18 +211,18 @@ mod tests {
     #[test]
     fn test_detector_config() {
         let mut config = DetectorConfig::new();
-        
+
         assert!(!config.has_param("test_param"));
         assert_eq!(config.get("test_param"), None);
-        
+
         config.set("test_param", 42);
         assert!(config.has_param("test_param"));
         assert_eq!(config.get("test_param"), Some(42));
-        
+
         let config2 = DetectorConfig::new()
             .with_param("param1", 1)
             .with_param("param2", 2);
-        
+
         assert_eq!(config2.get("param1"), Some(1));
         assert_eq!(config2.get("param2"), Some(2));
     }
@@ -229,10 +230,12 @@ mod tests {
     #[test]
     fn test_create_detectors_from_config() {
         let mut configs = HashMap::new();
-        configs.insert("god_object".to_string(), 
-            DetectorConfig::new().with_param("threshold_methods", 10));
+        configs.insert(
+            "god_object".to_string(),
+            DetectorConfig::new().with_param("threshold_methods", 10),
+        );
         configs.insert("code_duplication".to_string(), DetectorConfig::new());
-        
+
         let detectors = DetectorFactory::create_detectors_from_config(&configs);
         assert!(detectors.is_ok());
         assert_eq!(detectors.unwrap().len(), 2);

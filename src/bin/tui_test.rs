@@ -8,13 +8,13 @@ use uveddi::tui::events::run_tui;
 fn main() -> Result<()> {
     // Initialize color_eyre for better error reporting
     color_eyre::install()?;
-    
+
     // Initialize logging
     env_logger::init();
-    
+
     // Run the TUI
     run_tui()?;
-    
+
     println!("Thanks for using Uveddi TUI!");
     Ok(())
 }

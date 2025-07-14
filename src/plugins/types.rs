@@ -1,11 +1,11 @@
 //! Type definitions for the WASM plugin system
 
+use crate::plugins::SecurityPolicy;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use uuid::Uuid;
 #[cfg(feature = "wasm-plugins")]
 use wasmtime_wasi::TrappableError;
-use crate::plugins::SecurityPolicy;
 
 /// Unique identifier for a plugin instance
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]

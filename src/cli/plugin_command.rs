@@ -2,7 +2,7 @@
 // NOTE: UV-112, UV-115 - Layer boundary compliance confirmed July 2025. This module only interacts with the Application layer per architecture.
 
 #[cfg(feature = "wasm-plugins")]
-use crate::plugins::{WasmPluginEngine, PluginManifest, PluginId};
+use crate::plugins::{PluginId, PluginManifest, WasmPluginEngine};
 use clap::{Args, Subcommand};
 use std::path::PathBuf;
 
@@ -126,8 +126,11 @@ impl PluginCommand {
             let manifest_content = tokio::fs::read_to_string(&manifest_path)
                 .await
                 .map_err(|e| crate::error::UveddiError::IoError(e))?;
-            let manifest: PluginManifest = toml::from_str(&manifest_content)
-                .map_err(|e| crate::error::UveddiError::PluginError(crate::plugins::errors::PluginError::Configuration(e.to_string())))?;
+            let manifest: PluginManifest = toml::from_str(&manifest_content).map_err(|e| {
+                crate::error::UveddiError::PluginError(
+                    crate::plugins::errors::PluginError::Configuration(e.to_string()),
+                )
+            })?;
 
             // Install plugin
             let mut engine = WasmPluginEngine::new().await?;
@@ -223,23 +226,23 @@ impl PluginCommand {
                 println!("Plugin Statistics:");
                 for plugin_id in loaded_plugins {
                     if let Some(stats) = engine.get_plugin_stats(&plugin_id).await {
-                    println!("  Plugin: {}", plugin_id);
-                    println!("    Invocations: {}", stats.invocations);
-                    println!(
-                        "    Total execution time: {}ms",
-                        stats.total_execution_time_ms
-                    );
-                    println!(
-                        "    Average execution time: {:.2}ms",
-                        stats.avg_execution_time_ms
-                    );
-                    println!("    Total fuel consumed: {}", stats.total_fuel_consumed);
-                    println!("    Peak memory usage: {} bytes", stats.peak_memory_usage);
-                    println!("    Error count: {}", stats.error_count);
-                    if let Some(ref error) = stats.last_error {
-                        println!("    Last error: {}", error);
-                    }
-                    println!();
+                        println!("  Plugin: {}", plugin_id);
+                        println!("    Invocations: {}", stats.invocations);
+                        println!(
+                            "    Total execution time: {}ms",
+                            stats.total_execution_time_ms
+                        );
+                        println!(
+                            "    Average execution time: {:.2}ms",
+                            stats.avg_execution_time_ms
+                        );
+                        println!("    Total fuel consumed: {}", stats.total_fuel_consumed);
+                        println!("    Peak memory usage: {} bytes", stats.peak_memory_usage);
+                        println!("    Error count: {}", stats.error_count);
+                        if let Some(ref error) = stats.last_error {
+                            println!("    Last error: {}", error);
+                        }
+                        println!();
                     }
                 }
             } else {
@@ -319,8 +322,11 @@ impl PluginCommand {
             let manifest_content = tokio::fs::read_to_string(&manifest_path)
                 .await
                 .map_err(|e| crate::error::UveddiError::IoError(e))?;
-            let manifest: PluginManifest = toml::from_str(&manifest_content)
-                .map_err(|e| crate::error::UveddiError::PluginError(crate::plugins::errors::PluginError::Configuration(e.to_string())))?;
+            let manifest: PluginManifest = toml::from_str(&manifest_content).map_err(|e| {
+                crate::error::UveddiError::PluginError(
+                    crate::plugins::errors::PluginError::Configuration(e.to_string()),
+                )
+            })?;
 
             // Verify plugin
             let verifier = PluginVerifier::new();
@@ -383,7 +389,9 @@ impl PluginCommand {
                 }
                 Err(e) => {
                     println!("Verification failed: {}", e);
-                    return Err(crate::error::UveddiError::PluginError(crate::plugins::errors::PluginError::Configuration(e.to_string())));
+                    return Err(crate::error::UveddiError::PluginError(
+                        crate::plugins::errors::PluginError::Configuration(e.to_string()),
+                    ));
                 }
             }
         }

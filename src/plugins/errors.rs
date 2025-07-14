@@ -3,7 +3,7 @@
 use thiserror::Error;
 
 /// Result type for plugin operations
-/// 
+///
 /// **DEPRECATED**: Use `crate::error::Result<T>` instead for consistency.
 /// This type alias is maintained for backward compatibility but will be removed
 /// in a future version. All new code should use the unified Result type.

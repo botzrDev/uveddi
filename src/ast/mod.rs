@@ -32,4 +32,6 @@
 
 pub mod tree_sitter;
 pub mod tree_sitter_impl;
-pub use tree_sitter_impl::{AstParser, CacheStats, ParsedFile, AstError, CustomAst, SourceLanguage};
+pub use tree_sitter_impl::{
+    AstError, AstParser, CacheStats, CustomAst, ParsedFile, SourceLanguage,
+};

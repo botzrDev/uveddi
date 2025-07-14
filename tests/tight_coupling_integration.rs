@@ -1,13 +1,15 @@
 //! Integration tests for tight coupling detector
 //! Tests only public API functionality
 
+use std::path::Path;
 use uveddi::analysis::detectors::anti_patterns::tight_coupling::{
-    TightCouplingDetector, TightCouplingConfig,
+    TightCouplingConfig, TightCouplingDetector,
+};
+use uveddi::analysis::graph::dependency::{
+    ComponentNode, LocalDependencyGraph, LocalDependencyType,
 };
 use uveddi::analysis::AnalysisDetector;
-use uveddi::ast::tree_sitter_impl::{ParsedFile, SourceLanguage, AstParser};
-use uveddi::analysis::graph::dependency::{LocalDependencyGraph, ComponentNode, LocalDependencyType};
-use std::path::Path;
+use uveddi::ast::tree_sitter_impl::{AstParser, ParsedFile, SourceLanguage};
 
 fn create_test_rust_file_with_high_coupling() -> ParsedFile {
     let source = r#"
@@ -49,9 +51,14 @@ impl HighlyCoupledStruct {
     }
 }
 "#;
-    
+
     let mut parser = AstParser::new().expect("Failed to create parser");
-    parser.parse_content(source, Path::new("test_high_coupling.rs"), SourceLanguage::Rust)
+    parser
+        .parse_content(
+            source,
+            Path::new("test_high_coupling.rs"),
+            SourceLanguage::Rust,
+        )
         .expect("Failed to parse test source")
 }
 
@@ -80,19 +87,20 @@ class DataProcessor:
         self.cache[filename].append(data)
         return data
 "#;
-    
+
     let mut parser = AstParser::new().expect("Failed to create parser");
-    parser.parse_content(source, Path::new("test_python.py"), SourceLanguage::Python)
+    parser
+        .parse_content(source, Path::new("test_python.py"), SourceLanguage::Python)
         .expect("Failed to parse test source")
 }
 
 #[test]
 fn test_detector_basic_functionality() {
     let detector = TightCouplingDetector::default();
-    
+
     // Test detector name
     assert_eq!(detector.get_detector_name(), "TightCouplingDetector");
-    
+
     // Test anti-pattern types
     let types = detector.get_anti_pattern_types();
     assert_eq!(types.len(), 1);
@@ -103,19 +111,19 @@ fn test_detector_basic_functionality() {
 #[test]
 fn test_configuration_defaults() {
     let config = TightCouplingConfig::default();
-    
+
     // Test Rust thresholds
     assert_eq!(config.rust_thresholds.fan_out_warning, 7);
     assert_eq!(config.rust_thresholds.fan_out_critical, 12);
-    
+
     // Test Python thresholds
     assert_eq!(config.python_thresholds.fan_out_warning, 8);
     assert_eq!(config.python_thresholds.fan_out_critical, 15);
-    
+
     // Test JavaScript thresholds
     assert_eq!(config.javascript_thresholds.fan_out_warning, 6);
     assert_eq!(config.javascript_thresholds.fan_out_critical, 10);
-    
+
     // Test configuration flags
     assert!(config.enable_cross_file_analysis);
     assert!(!config.include_test_files);
@@ -125,19 +133,25 @@ fn test_configuration_defaults() {
 fn test_rust_file_analysis() {
     let detector = TightCouplingDetector::default();
     let test_file = create_test_rust_file_with_high_coupling();
-    
+
     // Test single file analysis
     let result = detector.detect_issues(&test_file);
     assert!(result.is_ok(), "Analysis should complete without errors");
-    
+
     let issues = result.unwrap();
     println!("Found {} tight coupling issues in Rust file", issues.len());
-    
+
     // Verify issue structure if any are found
     for issue in &issues {
-        assert!(!issue.description.is_empty(), "Issue should have description");
+        assert!(
+            !issue.description.is_empty(),
+            "Issue should have description"
+        );
         assert!(!issue.severity.is_empty(), "Issue should have severity");
-        assert!(issue.file_path.contains("test_high_coupling.rs"), "Issue should reference correct file");
+        assert!(
+            issue.file_path.contains("test_high_coupling.rs"),
+            "Issue should reference correct file"
+        );
         println!("Rust Issue: {}", issue.description);
     }
 }
@@ -146,18 +160,30 @@ fn test_rust_file_analysis() {
 fn test_python_file_analysis() {
     let detector = TightCouplingDetector::default();
     let test_file = create_test_python_file();
-    
+
     // Test Python file analysis
     let result = detector.detect_issues(&test_file);
-    assert!(result.is_ok(), "Python analysis should complete without errors");
-    
+    assert!(
+        result.is_ok(),
+        "Python analysis should complete without errors"
+    );
+
     let issues = result.unwrap();
-    println!("Found {} tight coupling issues in Python file", issues.len());
-    
+    println!(
+        "Found {} tight coupling issues in Python file",
+        issues.len()
+    );
+
     // Verify issue structure if any are found
     for issue in &issues {
-        assert!(!issue.description.is_empty(), "Issue should have description");
-        assert!(issue.file_path.contains("test_python.py"), "Issue should reference correct file");
+        assert!(
+            !issue.description.is_empty(),
+            "Issue should have description"
+        );
+        assert!(
+            issue.file_path.contains("test_python.py"),
+            "Issue should reference correct file"
+        );
         println!("Python Issue: {}", issue.description);
     }
 }
@@ -165,41 +191,47 @@ fn test_python_file_analysis() {
 #[test]
 fn test_dependency_graph_analysis() {
     let detector = TightCouplingDetector::default();
-    
+
     // Create a simple dependency graph for testing
     let mut graph = LocalDependencyGraph::new();
-    
+
     // Add some test components
-    let component1 = ComponentNode::Module { 
-        path: "src/main.rs".to_string() 
+    let component1 = ComponentNode::Module {
+        path: "src/main.rs".to_string(),
     };
-    let component2 = ComponentNode::Module { 
-        path: "src/lib.rs".to_string() 
+    let component2 = ComponentNode::Module {
+        path: "src/lib.rs".to_string(),
     };
-    let component3 = ComponentNode::Class { 
+    let component3 = ComponentNode::Class {
         name: "TestClass".to_string(),
         file_path: "src/test.rs".to_string(),
     };
-    
+
     // Add nodes to graph
     graph.add_component(component1.clone());
     graph.add_component(component2.clone());
     graph.add_component(component3.clone());
-    
+
     // Add some dependencies
     graph.add_dependency(&component1, &component2, LocalDependencyType::Import);
     graph.add_dependency(&component2, &component3, LocalDependencyType::Call);
-    
+
     // Test that the graph has components
-    assert!(graph.get_petgraph().node_count() > 0, "Graph should have nodes");
-    
+    assert!(
+        graph.get_petgraph().node_count() > 0,
+        "Graph should have nodes"
+    );
+
     // Test graph-level analysis through public API
     let issues = detector.detect_graph_issues(&graph, 1);
     println!("Found {} graph-level coupling issues", issues.len());
-    
+
     // Verify issues have proper analysis_run_id
     for issue in &issues {
-        assert_eq!(issue.analysis_run_id, 1, "Issue should have correct analysis_run_id");
+        assert_eq!(
+            issue.analysis_run_id, 1,
+            "Issue should have correct analysis_run_id"
+        );
         println!("Graph Issue: {}", issue.description);
     }
 }
@@ -210,10 +242,10 @@ fn test_detector_creation_with_custom_config() {
     let mut config = TightCouplingConfig::default();
     config.rust_thresholds.fan_out_warning = 5;
     config.rust_thresholds.fan_out_critical = 8;
-    
+
     let detector = TightCouplingDetector::new(config.clone());
     assert_eq!(detector.get_detector_name(), "TightCouplingDetector");
-    
+
     // Test that the detector works with custom config
     let test_file = create_test_rust_file_with_high_coupling();
     let result = detector.detect_issues(&test_file);
@@ -223,16 +255,16 @@ fn test_detector_creation_with_custom_config() {
 #[test]
 fn test_multi_language_support() {
     let detector = TightCouplingDetector::default();
-    
+
     // Test Rust file
     let rust_file = create_test_rust_file_with_high_coupling();
     let rust_result = detector.detect_issues(&rust_file);
     assert!(rust_result.is_ok(), "Rust analysis should work");
-    
+
     // Test Python file
     let python_file = create_test_python_file();
     let python_result = detector.detect_issues(&python_file);
     assert!(python_result.is_ok(), "Python analysis should work");
-    
+
     println!("Multi-language support verified: Rust and Python files analyzed successfully");
 }

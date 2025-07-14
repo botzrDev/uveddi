@@ -6,11 +6,11 @@
 //! - Progress bars and status displays
 //! - Error handling and notifications
 
-pub mod logo;
 pub mod form_inputs;
+pub mod logo;
 
+pub use form_inputs::{Dropdown, NumericInput, PathPicker, TextInput, Toggle, ValidationResult};
 pub use logo::UveddiLogo;
-pub use form_inputs::{TextInput, Toggle, Dropdown, NumericInput, PathPicker, ValidationResult};
 
 // TODO: Add more reusable UI components as needed
 // - Progress bars and gauges

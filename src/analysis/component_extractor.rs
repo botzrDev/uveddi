@@ -74,8 +74,7 @@ impl ComponentExtractor {
         let mut components = Vec::new();
 
         if let Some(ref ast) = parsed_file.custom_ast {
-            components
-                .extend(self.extract_from_ast_node(ast, parsed_file.file_path.as_ref())?);
+            components.extend(self.extract_from_ast_node(ast, parsed_file.file_path.as_ref())?);
         }
 
         Ok(components)
@@ -376,8 +375,8 @@ pub enum ComponentExtractionError {
 mod tests {
     use super::*;
     use crate::ast::tree_sitter::SourceLanguage;
-    use std::time::SystemTime;
     use std::sync::Arc;
+    use std::time::SystemTime;
 
     fn create_test_parsed_file() -> ParsedFile {
         ParsedFile {

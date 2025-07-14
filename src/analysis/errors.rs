@@ -1,9 +1,9 @@
-use thiserror::Error;
-use crate::ast::tree_sitter_impl::AstError;
-use crate::analysis::detectors::dependency::ExtractionError;
 use crate::analysis::component_extractor::ComponentExtractionError;
+use crate::analysis::detectors::dependency::ExtractionError;
 use crate::analysis::mermaid_generator::MermaidGenerationError;
+use crate::ast::tree_sitter_impl::AstError;
 use crate::plugins::errors::PluginError;
+use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum AnalysisError {

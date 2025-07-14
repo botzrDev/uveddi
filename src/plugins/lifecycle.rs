@@ -5,7 +5,7 @@ use crate::plugins::{
     errors::*,
     registry::*,
     security::*,
-    types::{PluginId, PluginStats, PluginStatus, ResourceLimits, HostState, PluginConfig},
+    types::{HostState, PluginConfig, PluginId, PluginStats, PluginStatus, ResourceLimits},
     verification::*,
 };
 
@@ -56,7 +56,8 @@ impl PluginLifecycleManager {
             crate::plugins::verification::VerificationStatus::Rejected(reason) => {
                 return Err(PluginError::Verification(
                     crate::plugins::errors::VerificationError::StaticAnalysis(reason),
-                ).into());
+                )
+                .into());
             }
             crate::plugins::verification::VerificationStatus::Warning(warning) => {
                 log::warn!("Plugin {} loaded with warnings: {}", plugin_id, warning);
@@ -83,8 +84,14 @@ impl PluginLifecycleManager {
             let wasi_ctx = security_policy.configure_wasi_context()?.build();
 
             // NOTE: UV-108 - Add basic WASI support (filesystem traits temporarily disabled)
-            wasmtime_wasi::bindings::cli::environment::add_to_linker(&mut linker, |ctx: &mut HostContext| ctx)?;
-            wasmtime_wasi::bindings::cli::exit::add_to_linker(&mut linker, |ctx: &mut HostContext| ctx)?;
+            wasmtime_wasi::bindings::cli::environment::add_to_linker(
+                &mut linker,
+                |ctx: &mut HostContext| ctx,
+            )?;
+            wasmtime_wasi::bindings::cli::exit::add_to_linker(
+                &mut linker,
+                |ctx: &mut HostContext| ctx,
+            )?;
             // NOTE: Filesystem support temporarily disabled due to complex trait requirements
             // wasmtime_wasi::bindings::filesystem::types::add_to_linker(&mut linker, |ctx: &mut HostContext| ctx)?;
 
@@ -93,7 +100,11 @@ impl PluginLifecycleManager {
 
             // Create store with fuel and memory limits
             let resource_table = wasmtime_wasi::ResourceTable::new();
-            let host_context = HostContext { host_state, wasi_ctx, resource_table };
+            let host_context = HostContext {
+                host_state,
+                wasi_ctx,
+                resource_table,
+            };
             let mut store = wasmtime::Store::new(&engine, host_context);
             store.set_fuel(security_policy.resource_limits.max_fuel)?;
             // Note: Resource limiting would be configured here in a real implementation
@@ -126,9 +137,7 @@ impl PluginLifecycleManager {
 
         #[cfg(not(feature = "wasm-plugins"))]
         {
-            return Err(PluginError::Unsupported(
-                "WASM plugins not enabled".to_string(),
-            ).into());
+            return Err(PluginError::Unsupported("WASM plugins not enabled".to_string()).into());
         }
     }
 
@@ -197,7 +206,7 @@ impl PluginLifecycleManager {
         // NOTE: UV-108 - Component model host functions require WIT interface definitions
         // This would be implemented using proper WIT files and generated bindings
         // For now, we'll just return OK to get the basic loading working
-        
+
         log::info!("Host functions would be registered here with proper WIT bindings");
         Ok(())
     }
@@ -380,12 +389,22 @@ impl MemoryLimiter {
 
 #[cfg(feature = "wasm-plugins")]
 impl wasmtime::ResourceLimiter for MemoryLimiter {
-    fn memory_growing(&mut self, current: usize, desired: usize, maximum: Option<usize>) -> Result<bool, anyhow::Error> {
+    fn memory_growing(
+        &mut self,
+        current: usize,
+        desired: usize,
+        maximum: Option<usize>,
+    ) -> Result<bool, anyhow::Error> {
         let desired_bytes = desired as u64 * 65536; // WASM page size
         Ok(desired_bytes <= self.max_memory)
     }
 
-    fn table_growing(&mut self, current: u32, desired: u32, maximum: Option<u32>) -> Result<bool, anyhow::Error> {
+    fn table_growing(
+        &mut self,
+        current: u32,
+        desired: u32,
+        maximum: Option<u32>,
+    ) -> Result<bool, anyhow::Error> {
         // Allow table growth for now
         Ok(true)
     }

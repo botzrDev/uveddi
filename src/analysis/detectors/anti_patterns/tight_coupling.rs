@@ -11,18 +11,20 @@
 //! - Cross-file dependency analysis
 //! - Context-aware severity assessment
 
+use crate::analysis::graph::dependency::{
+    ComponentNode, DependencyEdge, LocalDependencyGraph, LocalDependencyType,
+};
 use crate::analysis::{AnalysisDetector, AnalysisError};
-use crate::database::models::{AntiPatternType, ArchitecturalIssue};
-use crate::analysis::graph::dependency::{LocalDependencyGraph, ComponentNode, LocalDependencyType, DependencyEdge};
+use crate::ast::tree_sitter::{Node, Query, QueryCursor, Tree};
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
-use crate::ast::tree_sitter::{Query, QueryCursor, Node, Tree};
+use crate::database::models::{AntiPatternType, ArchitecturalIssue};
+use petgraph::graph::{DiGraph, NodeIndex};
+use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::Path;
-use petgraph::graph::{DiGraph, NodeIndex};
-use tracing::{debug, info, warn};
 use std::sync::Arc;
-use rayon::prelude::*;
+use tracing::{debug, info, warn};
 
 /// Represents a dependency relationship between components
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -37,19 +39,19 @@ pub struct Dependency {
 /// Strength of dependency coupling
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum DependencyStrength {
-    Weak,    // Loose coupling (interfaces, abstractions)
-    Medium,  // Moderate coupling (data structures, method calls)
-    Strong,  // Tight coupling (direct field access, inheritance)
+    Weak,   // Loose coupling (interfaces, abstractions)
+    Medium, // Moderate coupling (data structures, method calls)
+    Strong, // Tight coupling (direct field access, inheritance)
 }
 
 /// Coupling metrics for a component
 #[derive(Debug, Clone, Default)]
 pub struct CouplingMetrics {
-    pub fan_out: usize,      // Number of components this depends on
-    pub fan_in: usize,       // Number of components depending on this
-    pub cbo: usize,          // Coupling Between Objects
-    pub rfc: usize,          // Response for Class
-    pub lcom: f64,           // Lack of Cohesion in Methods
+    pub fan_out: usize, // Number of components this depends on
+    pub fan_in: usize,  // Number of components depending on this
+    pub cbo: usize,     // Coupling Between Objects
+    pub rfc: usize,     // Response for Class
+    pub lcom: f64,      // Lack of Cohesion in Methods
 }
 
 /// Language-specific coupling thresholds
@@ -79,7 +81,11 @@ pub struct TightCouplingConfig {
 
 /// Trait for language-specific dependency analysis
 pub trait LanguageAnalyzer {
-    fn extract_dependencies(&self, file_path: &Path, parsed_file: &ParsedFile) -> Result<Vec<Dependency>, AnalysisError>;
+    fn extract_dependencies(
+        &self,
+        file_path: &Path,
+        parsed_file: &ParsedFile,
+    ) -> Result<Vec<Dependency>, AnalysisError>;
     fn get_language(&self) -> SourceLanguage;
 }
 
@@ -192,7 +198,10 @@ impl TightCouplingDetector {
     }
 
     /// Calculate coupling metrics for components
-    fn calculate_metrics(&self, graph: &LocalDependencyGraph) -> HashMap<ComponentNode, CouplingMetrics> {
+    fn calculate_metrics(
+        &self,
+        graph: &LocalDependencyGraph,
+    ) -> HashMap<ComponentNode, CouplingMetrics> {
         let mut metrics = HashMap::new();
         let petgraph = graph.get_petgraph();
 
@@ -204,13 +213,16 @@ impl TightCouplingDetector {
                 component_metrics.fan_out = petgraph.edges(node_index).count();
 
                 // Calculate fan-in (incoming dependencies)
-                component_metrics.fan_in = petgraph.edges_directed(node_index, petgraph::Direction::Incoming).count();
+                component_metrics.fan_in = petgraph
+                    .edges_directed(node_index, petgraph::Direction::Incoming)
+                    .count();
 
                 // CBO = fan-in + fan-out
                 component_metrics.cbo = component_metrics.fan_in + component_metrics.fan_out;
 
                 // RFC approximation (would need method-level analysis for accuracy)
-                component_metrics.rfc = component_metrics.fan_out + self.estimate_local_methods(component);
+                component_metrics.rfc =
+                    component_metrics.fan_out + self.estimate_local_methods(component);
 
                 metrics.insert(component.clone(), component_metrics);
             }
@@ -222,8 +234,8 @@ impl TightCouplingDetector {
     /// Estimate local methods for RFC calculation
     fn estimate_local_methods(&self, component: &ComponentNode) -> usize {
         match component {
-            ComponentNode::Class { .. } => 5, // Average methods per class
-            ComponentNode::Module { .. } => 3, // Average functions per module
+            ComponentNode::Class { .. } => 5,    // Average methods per class
+            ComponentNode::Module { .. } => 3,   // Average functions per module
             ComponentNode::Function { .. } => 1, // Single function
         }
     }
@@ -348,7 +360,7 @@ impl TightCouplingDetector {
         files: &[(String, ParsedFile)],
     ) -> Result<LocalDependencyGraph, AnalysisError> {
         info!("Building dependency graph for {} files", files.len());
-        
+
         // Extract dependencies in parallel
         let all_dependencies: Result<Vec<Vec<Dependency>>, AnalysisError> = files
             .par_iter()
@@ -357,9 +369,9 @@ impl TightCouplingDetector {
                 analyzer.extract_dependencies(Path::new(file_path), parsed_file)
             })
             .collect();
-        
+
         let dependencies_list = all_dependencies?;
-        
+
         // Build graph sequentially (graph modifications need to be sequential)
         let mut graph = LocalDependencyGraph::new();
         for dependencies in dependencies_list {
@@ -371,24 +383,30 @@ impl TightCouplingDetector {
                 );
             }
         }
-        
-        info!("Built dependency graph with {} nodes", graph.get_petgraph().node_count());
+
+        info!(
+            "Built dependency graph with {} nodes",
+            graph.get_petgraph().node_count()
+        );
         Ok(graph)
     }
-    
+
     /// Build dependency graph incrementally for changed files only
     pub fn build_incremental_dependency_graph(
         &self,
         changed_files: &[(String, ParsedFile)],
         existing_graph: &LocalDependencyGraph,
     ) -> Result<LocalDependencyGraph, AnalysisError> {
-        info!("Building incremental dependency graph for {} changed files", changed_files.len());
-        
+        info!(
+            "Building incremental dependency graph for {} changed files",
+            changed_files.len()
+        );
+
         // For now, rebuild completely - in future could optimize to only update affected nodes
         // This would require tracking file->component mappings and dependency provenance
         self.build_project_dependency_graph(changed_files)
     }
-    
+
     /// Analyze multiple files in parallel and return coupling issues
     pub fn analyze_files_parallel(
         &self,
@@ -400,7 +418,7 @@ impl TightCouplingDetector {
                 .par_iter()
                 .map(|(_, parsed_file)| self.detect_issues(parsed_file))
                 .collect();
-            
+
             let all_issues = issues_result?.into_iter().flatten().collect();
             Ok(all_issues)
         } else {
@@ -425,8 +443,11 @@ impl CrossFileAnalysisDetector for TightCouplingDetector {
         &self,
         files: &[(String, ParsedFile)],
     ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
-        info!("Starting cross-file coupling analysis for {} files", files.len());
-        
+        info!(
+            "Starting cross-file coupling analysis for {} files",
+            files.len()
+        );
+
         // Use optimized parallel analysis
         self.analyze_files_parallel(files)
     }
@@ -440,9 +461,9 @@ impl TightCouplingDetector {
             ComponentNode::Function { file_path, .. } => file_path,
             ComponentNode::Module { path } => path,
         };
-        
-        SourceLanguage::from_path(Path::new(file_path))
-            .unwrap_or(SourceLanguage::Rust) // Default fallback
+
+        SourceLanguage::from_path(Path::new(file_path)).unwrap_or(SourceLanguage::Rust)
+        // Default fallback
     }
 }
 
@@ -451,7 +472,7 @@ impl AnalysisDetector for TightCouplingDetector {
         // Single-file analysis for basic coupling detection
         let analyzer = self.get_analyzer_for_language(file.language);
         let dependencies = analyzer.extract_dependencies(file.path(), file)?;
-        
+
         // Create simple metrics based on file-level dependencies
         let mut component_deps: HashMap<String, usize> = HashMap::new();
         for dep in dependencies {
@@ -465,7 +486,7 @@ impl AnalysisDetector for TightCouplingDetector {
 
         let mut issues = Vec::new();
         let thresholds = self.get_thresholds_for_language(file.language);
-        
+
         for (component_name, dep_count) in component_deps {
             if dep_count >= thresholds.fan_out_critical {
                 issues.push(ArchitecturalIssue {
@@ -485,7 +506,7 @@ impl AnalysisDetector for TightCouplingDetector {
                 });
             }
         }
-        
+
         Ok(issues)
     }
 
@@ -494,27 +515,31 @@ impl AnalysisDetector for TightCouplingDetector {
         graph: &LocalDependencyGraph,
         analysis_run_id: i64,
     ) -> Vec<ArchitecturalIssue> {
-        debug!("Starting graph-level tight coupling analysis with {} nodes", 
-               graph.get_petgraph().node_count());
-        
+        debug!(
+            "Starting graph-level tight coupling analysis with {} nodes",
+            graph.get_petgraph().node_count()
+        );
+
         // Calculate coupling metrics for all components
         let metrics = self.calculate_metrics(graph);
-        
+
         // Group components by language for threshold evaluation
-        let mut issues_by_language: HashMap<SourceLanguage, Vec<ArchitecturalIssue>> = HashMap::new();
-        
+        let mut issues_by_language: HashMap<SourceLanguage, Vec<ArchitecturalIssue>> =
+            HashMap::new();
+
         for (component, metric) in &metrics {
             let language = self.infer_language_from_component(component);
             let component_issues = self.evaluate_coupling_issues(
                 &[(component.clone(), metric.clone())].into_iter().collect(),
                 language,
             );
-            
-            issues_by_language.entry(language)
+
+            issues_by_language
+                .entry(language)
                 .or_insert_with(Vec::new)
                 .extend(component_issues);
         }
-        
+
         // Flatten all issues and set analysis_run_id
         let mut all_issues: Vec<ArchitecturalIssue> = issues_by_language
             .into_values()
@@ -524,12 +549,14 @@ impl AnalysisDetector for TightCouplingDetector {
                 issue
             })
             .collect();
-        
-        info!("Found {} tight coupling issues in dependency graph", all_issues.len());
-        
+
+        info!(
+            "Found {} tight coupling issues in dependency graph",
+            all_issues.len()
+        );
+
         all_issues
     }
-    
 
     fn get_detector_name(&self) -> &'static str {
         "TightCouplingDetector"
@@ -546,18 +573,39 @@ impl AnalysisDetector for TightCouplingDetector {
 }
 
 impl LanguageAnalyzer for RustAnalyzer {
-    fn extract_dependencies(&self, file_path: &Path, parsed_file: &ParsedFile) -> Result<Vec<Dependency>, AnalysisError> {
+    fn extract_dependencies(
+        &self,
+        file_path: &Path,
+        parsed_file: &ParsedFile,
+    ) -> Result<Vec<Dependency>, AnalysisError> {
         let mut dependencies = Vec::new();
-        
+
         if let Some(tree) = &parsed_file.tree {
-            dependencies.extend(self.extract_use_declarations(file_path, tree, &parsed_file.source)?);                       dependencies.extend(self.extract_function_calls(file_path, tree, &parsed_file.source)?);
-            dependencies.extend(self.extract_struct_instantiations(file_path, tree, &parsed_file.source)?);
-            dependencies.extend(self.extract_trait_implementations(file_path, tree, &parsed_file.source)?);
+            dependencies.extend(self.extract_use_declarations(
+                file_path,
+                tree,
+                &parsed_file.source,
+            )?);
+            dependencies.extend(self.extract_function_calls(
+                file_path,
+                tree,
+                &parsed_file.source,
+            )?);
+            dependencies.extend(self.extract_struct_instantiations(
+                file_path,
+                tree,
+                &parsed_file.source,
+            )?);
+            dependencies.extend(self.extract_trait_implementations(
+                file_path,
+                tree,
+                &parsed_file.source,
+            )?);
         }
-        
+
         Ok(dependencies)
     }
-    
+
     fn get_language(&self) -> SourceLanguage {
         SourceLanguage::Rust
     }
@@ -577,7 +625,7 @@ impl RustAnalyzer {
             path: (identifier) @module
             name: (identifier) @item)) @use_decl
     "#;
-    
+
     const CALL_QUERY: &'static str = r#"
         (call_expression
           function: (scoped_identifier
@@ -589,14 +637,14 @@ impl RustAnalyzer {
             value: (identifier) @object
             field: (field_identifier) @method)) @method_call
     "#;
-    
+
     const STRUCT_QUERY: &'static str = r#"
         (struct_expression
           name: (scoped_type_identifier
             path: (identifier) @module
             name: (type_identifier) @struct)) @instantiation
     "#;
-    
+
     fn extract_use_declarations(
         &self,
         file_path: &Path,
@@ -604,25 +652,34 @@ impl RustAnalyzer {
         source: &str,
     ) -> Result<Vec<Dependency>, AnalysisError> {
         let mut dependencies = Vec::new();
-        let query = Query::new(&tree_sitter_rust::language(), Self::USE_QUERY)
-            .map_err(|e| AnalysisError::AnalysisError(crate::analysis::errors::AnalysisError::QueryError(format!("Failed to create use query: {}", e))))?;
-        
+        let query = Query::new(&tree_sitter_rust::language(), Self::USE_QUERY).map_err(|e| {
+            AnalysisError::AnalysisError(crate::analysis::errors::AnalysisError::QueryError(
+                format!("Failed to create use query: {}", e),
+            ))
+        })?;
+
         let mut cursor = QueryCursor::new();
         let matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
-        
+
         for m in matches {
             for capture in m.captures {
-                let node_text = capture.node.utf8_text(source.as_bytes())
-                    .map_err(|e| AnalysisError::AnalysisError(crate::analysis::errors::AnalysisError::QueryError(format!("Failed to get node text: {}", e))))?;
-                
+                let node_text = capture.node.utf8_text(source.as_bytes()).map_err(|e| {
+                    AnalysisError::AnalysisError(
+                        crate::analysis::errors::AnalysisError::QueryError(format!(
+                            "Failed to get node text: {}",
+                            e
+                        )),
+                    )
+                })?;
+
                 let from_component = ComponentNode::Module {
                     path: file_path.to_string_lossy().to_string(),
                 };
-                
+
                 let to_component = ComponentNode::Module {
                     path: node_text.to_string(),
                 };
-                
+
                 dependencies.push(Dependency {
                     from_component,
                     to_component,
@@ -632,10 +689,10 @@ impl RustAnalyzer {
                 });
             }
         }
-        
+
         Ok(dependencies)
     }
-    
+
     fn extract_function_calls(
         &self,
         file_path: &Path,
@@ -643,27 +700,36 @@ impl RustAnalyzer {
         source: &str,
     ) -> Result<Vec<Dependency>, AnalysisError> {
         let mut dependencies = Vec::new();
-        let query = Query::new(&tree_sitter_rust::language(), Self::CALL_QUERY)
-            .map_err(|e| AnalysisError::AnalysisError(crate::analysis::errors::AnalysisError::QueryError(format!("Failed to create call query: {}", e))))?;
-        
+        let query = Query::new(&tree_sitter_rust::language(), Self::CALL_QUERY).map_err(|e| {
+            AnalysisError::AnalysisError(crate::analysis::errors::AnalysisError::QueryError(
+                format!("Failed to create call query: {}", e),
+            ))
+        })?;
+
         let mut cursor = QueryCursor::new();
         let matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
-        
+
         for m in matches {
             if let Some(capture) = m.captures.first() {
-                let node_text = capture.node.utf8_text(source.as_bytes())
-                    .map_err(|e| AnalysisError::AnalysisError(crate::analysis::errors::AnalysisError::QueryError(format!("Failed to get node text: {}", e))))?;
-                
+                let node_text = capture.node.utf8_text(source.as_bytes()).map_err(|e| {
+                    AnalysisError::AnalysisError(
+                        crate::analysis::errors::AnalysisError::QueryError(format!(
+                            "Failed to get node text: {}",
+                            e
+                        )),
+                    )
+                })?;
+
                 let from_component = ComponentNode::Function {
                     name: "caller".to_string(), // Would need more context to get actual function name
                     file_path: file_path.to_string_lossy().to_string(),
                 };
-                
+
                 let to_component = ComponentNode::Function {
                     name: node_text.to_string(),
                     file_path: "external".to_string(),
                 };
-                
+
                 dependencies.push(Dependency {
                     from_component,
                     to_component,
@@ -673,10 +739,10 @@ impl RustAnalyzer {
                 });
             }
         }
-        
+
         Ok(dependencies)
     }
-    
+
     fn extract_struct_instantiations(
         &self,
         file_path: &Path,
@@ -684,27 +750,36 @@ impl RustAnalyzer {
         source: &str,
     ) -> Result<Vec<Dependency>, AnalysisError> {
         let mut dependencies = Vec::new();
-        let query = Query::new(&tree_sitter_rust::language(), Self::STRUCT_QUERY)
-            .map_err(|e| AnalysisError::AnalysisError(crate::analysis::errors::AnalysisError::QueryError(format!("Failed to create struct query: {}", e))))?;
-        
+        let query = Query::new(&tree_sitter_rust::language(), Self::STRUCT_QUERY).map_err(|e| {
+            AnalysisError::AnalysisError(crate::analysis::errors::AnalysisError::QueryError(
+                format!("Failed to create struct query: {}", e),
+            ))
+        })?;
+
         let mut cursor = QueryCursor::new();
         let matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
-        
+
         for m in matches {
             if let Some(capture) = m.captures.first() {
-                let node_text = capture.node.utf8_text(source.as_bytes())
-                    .map_err(|e| AnalysisError::AnalysisError(crate::analysis::errors::AnalysisError::QueryError(format!("Failed to get node text: {}", e))))?;
-                
+                let node_text = capture.node.utf8_text(source.as_bytes()).map_err(|e| {
+                    AnalysisError::AnalysisError(
+                        crate::analysis::errors::AnalysisError::QueryError(format!(
+                            "Failed to get node text: {}",
+                            e
+                        )),
+                    )
+                })?;
+
                 let from_component = ComponentNode::Function {
                     name: "instantiator".to_string(),
                     file_path: file_path.to_string_lossy().to_string(),
                 };
-                
+
                 let to_component = ComponentNode::Class {
                     name: node_text.to_string(),
                     file_path: "external".to_string(),
                 };
-                
+
                 dependencies.push(Dependency {
                     from_component,
                     to_component,
@@ -714,10 +789,10 @@ impl RustAnalyzer {
                 });
             }
         }
-        
+
         Ok(dependencies)
     }
-    
+
     fn extract_trait_implementations(
         &self,
         file_path: &Path,
@@ -725,23 +800,25 @@ impl RustAnalyzer {
         source: &str,
     ) -> Result<Vec<Dependency>, AnalysisError> {
         let mut dependencies = Vec::new();
-        
+
         // Simple implementation - would need more sophisticated parsing
         let impl_query = r#"
             (impl_item
               trait: (type_identifier) @trait_name
               type: (type_identifier) @type_name) @impl_block
         "#;
-        
+
         if let Ok(query) = Query::new(&tree_sitter_rust::language(), impl_query) {
             let mut cursor = QueryCursor::new();
             let matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
-            
+
             for m in matches {
                 if let Some(capture) = m.captures.first() {
-                    let trait_name = capture.node.utf8_text(source.as_bytes())
+                    let trait_name = capture
+                        .node
+                        .utf8_text(source.as_bytes())
                         .unwrap_or("unknown_trait");
-                    
+
                     dependencies.push(Dependency {
                         from_component: ComponentNode::Class {
                             name: "impl_struct".to_string(),
@@ -758,24 +835,28 @@ impl RustAnalyzer {
                 }
             }
         }
-        
+
         Ok(dependencies)
     }
 }
 
 impl LanguageAnalyzer for PythonAnalyzer {
-    fn extract_dependencies(&self, file_path: &Path, parsed_file: &ParsedFile) -> Result<Vec<Dependency>, AnalysisError> {
+    fn extract_dependencies(
+        &self,
+        file_path: &Path,
+        parsed_file: &ParsedFile,
+    ) -> Result<Vec<Dependency>, AnalysisError> {
         let mut dependencies = Vec::new();
-        
+
         if let Some(tree) = &parsed_file.tree {
             dependencies.extend(self.extract_imports(file_path, tree, &parsed_file.source)?);
             dependencies.extend(self.extract_calls(file_path, tree, &parsed_file.source)?);
             dependencies.extend(self.extract_inheritance(file_path, tree, &parsed_file.source)?);
         }
-        
+
         Ok(dependencies)
     }
-    
+
     fn get_language(&self) -> SourceLanguage {
         SourceLanguage::Python
     }
@@ -795,7 +876,7 @@ impl PythonAnalyzer {
           name: (import_list
             (dotted_name) @item)) @from_import_list
     "#;
-    
+
     const CALL_QUERY: &'static str = r#"
         (call
           function: (attribute
@@ -805,7 +886,7 @@ impl PythonAnalyzer {
         (call
           function: (identifier) @function) @function_call
     "#;
-    
+
     fn extract_imports(
         &self,
         file_path: &Path,
@@ -813,16 +894,18 @@ impl PythonAnalyzer {
         source: &str,
     ) -> Result<Vec<Dependency>, AnalysisError> {
         let mut dependencies = Vec::new();
-        
+
         if let Ok(query) = Query::new(&tree_sitter_python::language(), Self::IMPORT_QUERY) {
             let mut cursor = QueryCursor::new();
             let matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
-            
+
             for m in matches {
                 for capture in m.captures {
-                    let module_name = capture.node.utf8_text(source.as_bytes())
+                    let module_name = capture
+                        .node
+                        .utf8_text(source.as_bytes())
                         .unwrap_or("unknown_module");
-                    
+
                     dependencies.push(Dependency {
                         from_component: ComponentNode::Module {
                             path: file_path.to_string_lossy().to_string(),
@@ -837,10 +920,10 @@ impl PythonAnalyzer {
                 }
             }
         }
-        
+
         Ok(dependencies)
     }
-    
+
     fn extract_calls(
         &self,
         file_path: &Path,
@@ -848,16 +931,18 @@ impl PythonAnalyzer {
         source: &str,
     ) -> Result<Vec<Dependency>, AnalysisError> {
         let mut dependencies = Vec::new();
-        
+
         if let Ok(query) = Query::new(&tree_sitter_python::language(), Self::CALL_QUERY) {
             let mut cursor = QueryCursor::new();
             let matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
-            
+
             for m in matches {
                 if let Some(capture) = m.captures.first() {
-                    let function_name = capture.node.utf8_text(source.as_bytes())
+                    let function_name = capture
+                        .node
+                        .utf8_text(source.as_bytes())
                         .unwrap_or("unknown_function");
-                    
+
                     dependencies.push(Dependency {
                         from_component: ComponentNode::Function {
                             name: "caller".to_string(),
@@ -874,10 +959,10 @@ impl PythonAnalyzer {
                 }
             }
         }
-        
+
         Ok(dependencies)
     }
-    
+
     fn extract_inheritance(
         &self,
         file_path: &Path,
@@ -885,25 +970,29 @@ impl PythonAnalyzer {
         source: &str,
     ) -> Result<Vec<Dependency>, AnalysisError> {
         let mut dependencies = Vec::new();
-        
+
         let inheritance_query = r#"
             (class_definition
               name: (identifier) @class_name
               superclasses: (argument_list
                 (identifier) @parent_class)) @class_def
         "#;
-        
+
         if let Ok(query) = Query::new(&tree_sitter_python::language(), inheritance_query) {
             let mut cursor = QueryCursor::new();
             let matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
-            
+
             for m in matches {
                 if m.captures.len() >= 2 {
-                    let class_name = m.captures[0].node.utf8_text(source.as_bytes())
+                    let class_name = m.captures[0]
+                        .node
+                        .utf8_text(source.as_bytes())
                         .unwrap_or("unknown_class");
-                    let parent_name = m.captures[1].node.utf8_text(source.as_bytes())
+                    let parent_name = m.captures[1]
+                        .node
+                        .utf8_text(source.as_bytes())
                         .unwrap_or("unknown_parent");
-                    
+
                     dependencies.push(Dependency {
                         from_component: ComponentNode::Class {
                             name: class_name.to_string(),
@@ -920,24 +1009,36 @@ impl PythonAnalyzer {
                 }
             }
         }
-        
+
         Ok(dependencies)
     }
 }
 
 impl LanguageAnalyzer for JavaScriptAnalyzer {
-    fn extract_dependencies(&self, file_path: &Path, parsed_file: &ParsedFile) -> Result<Vec<Dependency>, AnalysisError> {
+    fn extract_dependencies(
+        &self,
+        file_path: &Path,
+        parsed_file: &ParsedFile,
+    ) -> Result<Vec<Dependency>, AnalysisError> {
         let mut dependencies = Vec::new();
-        
+
         if let Some(tree) = &parsed_file.tree {
             dependencies.extend(self.extract_es6_imports(file_path, tree, &parsed_file.source)?);
-            dependencies.extend(self.extract_commonjs_requires(file_path, tree, &parsed_file.source)?);
-            dependencies.extend(self.extract_function_calls(file_path, tree, &parsed_file.source)?);
+            dependencies.extend(self.extract_commonjs_requires(
+                file_path,
+                tree,
+                &parsed_file.source,
+            )?);
+            dependencies.extend(self.extract_function_calls(
+                file_path,
+                tree,
+                &parsed_file.source,
+            )?);
         }
-        
+
         Ok(dependencies)
     }
-    
+
     fn get_language(&self) -> SourceLanguage {
         SourceLanguage::JavaScript
     }
@@ -962,7 +1063,7 @@ impl JavaScriptAnalyzer {
               function: (identifier) @require
               arguments: (arguments (string) @module)))) @require_call
     "#;
-    
+
     fn extract_es6_imports(
         &self,
         file_path: &Path,
@@ -970,18 +1071,21 @@ impl JavaScriptAnalyzer {
         source: &str,
     ) -> Result<Vec<Dependency>, AnalysisError> {
         let mut dependencies = Vec::new();
-        
+
         if let Ok(query) = Query::new(&tree_sitter_javascript::language(), Self::IMPORT_QUERY) {
             let mut cursor = QueryCursor::new();
             let matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
-            
+
             for m in matches {
                 for capture in m.captures {
                     if capture.index == query.capture_index_for_name("module").unwrap_or(u32::MAX) {
-                        let module_name = capture.node.utf8_text(source.as_bytes())
+                        let module_name = capture
+                            .node
+                            .utf8_text(source.as_bytes())
                             .unwrap_or("unknown_module")
-                            .trim_matches('"').trim_matches('\'');
-                        
+                            .trim_matches('"')
+                            .trim_matches('\'');
+
                         dependencies.push(Dependency {
                             from_component: ComponentNode::Module {
                                 path: file_path.to_string_lossy().to_string(),
@@ -997,10 +1101,10 @@ impl JavaScriptAnalyzer {
                 }
             }
         }
-        
+
         Ok(dependencies)
     }
-    
+
     fn extract_commonjs_requires(
         &self,
         file_path: &Path,
@@ -1008,24 +1112,27 @@ impl JavaScriptAnalyzer {
         source: &str,
     ) -> Result<Vec<Dependency>, AnalysisError> {
         let mut dependencies = Vec::new();
-        
+
         let require_query = r#"
             (call_expression
               function: (identifier) @require_func
               arguments: (arguments (string) @module)) @require_call
         "#;
-        
+
         if let Ok(query) = Query::new(&tree_sitter_javascript::language(), require_query) {
             let mut cursor = QueryCursor::new();
             let matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
-            
+
             for m in matches {
                 for capture in m.captures {
                     if capture.index == query.capture_index_for_name("module").unwrap_or(u32::MAX) {
-                        let module_name = capture.node.utf8_text(source.as_bytes())
+                        let module_name = capture
+                            .node
+                            .utf8_text(source.as_bytes())
                             .unwrap_or("unknown_module")
-                            .trim_matches('"').trim_matches('\'');
-                        
+                            .trim_matches('"')
+                            .trim_matches('\'');
+
                         dependencies.push(Dependency {
                             from_component: ComponentNode::Module {
                                 path: file_path.to_string_lossy().to_string(),
@@ -1041,10 +1148,10 @@ impl JavaScriptAnalyzer {
                 }
             }
         }
-        
+
         Ok(dependencies)
     }
-    
+
     fn extract_function_calls(
         &self,
         file_path: &Path,
@@ -1052,7 +1159,7 @@ impl JavaScriptAnalyzer {
         source: &str,
     ) -> Result<Vec<Dependency>, AnalysisError> {
         let mut dependencies = Vec::new();
-        
+
         let call_query = r#"
             (call_expression
               function: (member_expression
@@ -1062,16 +1169,18 @@ impl JavaScriptAnalyzer {
             (call_expression
               function: (identifier) @function) @function_call
         "#;
-        
+
         if let Ok(query) = Query::new(&tree_sitter_javascript::language(), call_query) {
             let mut cursor = QueryCursor::new();
             let matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
-            
+
             for m in matches {
                 if let Some(capture) = m.captures.first() {
-                    let function_name = capture.node.utf8_text(source.as_bytes())
+                    let function_name = capture
+                        .node
+                        .utf8_text(source.as_bytes())
                         .unwrap_or("unknown_function");
-                    
+
                     dependencies.push(Dependency {
                         from_component: ComponentNode::Function {
                             name: "caller".to_string(),
@@ -1088,7 +1197,7 @@ impl JavaScriptAnalyzer {
                 }
             }
         }
-        
+
         Ok(dependencies)
     }
 }
@@ -1112,32 +1221,32 @@ mod tests {
         assert_eq!(types.len(), 1);
         assert_eq!(types[0].name, "Tight Coupling");
     }
-    
+
     #[test]
     fn test_default_configuration() {
         let config = TightCouplingConfig::default();
-        
+
         // Test Rust thresholds
         assert_eq!(config.rust_thresholds.fan_out_warning, 7);
         assert_eq!(config.rust_thresholds.fan_out_critical, 12);
-        
+
         // Test Python thresholds
         assert_eq!(config.python_thresholds.fan_out_warning, 10);
         assert_eq!(config.python_thresholds.fan_out_critical, 15);
-        
+
         // Test JavaScript thresholds
         assert_eq!(config.javascript_thresholds.fan_out_warning, 12);
         assert_eq!(config.javascript_thresholds.fan_out_critical, 18);
-        
+
         assert!(config.enable_cross_file_analysis);
         assert!(!config.include_test_files);
     }
-    
+
     #[test]
     fn test_coupling_metrics_calculation() {
         let detector = TightCouplingDetector::default();
         let mut graph = LocalDependencyGraph::new();
-        
+
         // Add test components
         let comp1 = ComponentNode::Class {
             name: "TestClass1".to_string(),
@@ -1147,62 +1256,72 @@ mod tests {
             name: "TestClass2".to_string(),
             file_path: "test2.rs".to_string(),
         };
-        
+
         // Add dependency
         graph.add_dependency(&comp1, &comp2, LocalDependencyType::Call);
-        
+
         let metrics = detector.calculate_metrics(&graph);
-        
+
         // Verify metrics calculation
         assert!(metrics.contains_key(&comp1));
         assert!(metrics.contains_key(&comp2));
-        
+
         let comp1_metrics = &metrics[&comp1];
         assert_eq!(comp1_metrics.fan_out, 1); // comp1 depends on comp2
-        assert_eq!(comp1_metrics.fan_in, 0);  // nothing depends on comp1
-        
+        assert_eq!(comp1_metrics.fan_in, 0); // nothing depends on comp1
+
         let comp2_metrics = &metrics[&comp2];
         assert_eq!(comp2_metrics.fan_out, 0); // comp2 depends on nothing
-        assert_eq!(comp2_metrics.fan_in, 1);  // comp1 depends on comp2
+        assert_eq!(comp2_metrics.fan_in, 1); // comp1 depends on comp2
     }
-    
+
     #[test]
     fn test_language_analyzer_selection() {
         let detector = TightCouplingDetector::default();
-        
+
         let rust_analyzer = detector.get_analyzer_for_language(SourceLanguage::Rust);
         assert_eq!(rust_analyzer.get_language(), SourceLanguage::Rust);
-        
+
         let python_analyzer = detector.get_analyzer_for_language(SourceLanguage::Python);
         assert_eq!(python_analyzer.get_language(), SourceLanguage::Python);
-        
+
         let js_analyzer = detector.get_analyzer_for_language(SourceLanguage::JavaScript);
         assert_eq!(js_analyzer.get_language(), SourceLanguage::JavaScript);
     }
-    
+
     #[test]
     fn test_dependency_strength_classification() {
         use DependencyStrength::*;
-        
+
         // Test that different dependency types have appropriate strengths
         let import_dep = Dependency {
-            from_component: ComponentNode::Module { path: "a.rs".to_string() },
-            to_component: ComponentNode::Module { path: "b.rs".to_string() },
+            from_component: ComponentNode::Module {
+                path: "a.rs".to_string(),
+            },
+            to_component: ComponentNode::Module {
+                path: "b.rs".to_string(),
+            },
             dependency_type: LocalDependencyType::Import,
             line_number: Some(1),
             strength: Medium,
         };
-        
+
         assert_eq!(import_dep.strength, Medium);
-        
+
         let inheritance_dep = Dependency {
-            from_component: ComponentNode::Class { name: "Child".to_string(), file_path: "child.rs".to_string() },
-            to_component: ComponentNode::Class { name: "Parent".to_string(), file_path: "parent.rs".to_string() },
+            from_component: ComponentNode::Class {
+                name: "Child".to_string(),
+                file_path: "child.rs".to_string(),
+            },
+            to_component: ComponentNode::Class {
+                name: "Parent".to_string(),
+                file_path: "parent.rs".to_string(),
+            },
             dependency_type: LocalDependencyType::Inheritance,
             line_number: Some(5),
             strength: Strong,
         };
-        
+
         assert_eq!(inheritance_dep.strength, Strong);
     }
 }

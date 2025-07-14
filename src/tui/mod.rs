@@ -20,12 +20,12 @@
 pub mod app;
 pub mod events;
 pub mod messages;
-pub mod terminal;
-pub mod ui;
 pub mod state;
+pub mod terminal;
 pub mod themes;
+pub mod ui;
 
-pub use app::{AppState, AppScreen};
-pub use events::{EventHandler, EventLoopStats, run_tui};
+pub use app::{AppScreen, AppState};
+pub use events::{run_tui, EventHandler, EventLoopStats};
 pub use messages::AppMessage;
-pub use terminal::{TerminalManager, TerminalInfo};
+pub use terminal::{TerminalInfo, TerminalManager};

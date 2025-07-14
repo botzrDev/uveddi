@@ -1,30 +1,30 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId, Throughput};
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use std::fs;
 use std::path::Path;
 use std::sync::Arc;
 use tempfile::TempDir;
-use uveddi::analysis::{AnalysisEngine, detectors::anti_patterns::GodObjectDetector};
+use uveddi::analysis::buffer::{FixedBuffer, FixedString, LargeBuffer, MediumBuffer, SmallBuffer};
 use uveddi::analysis::cache::ast::{AstCache, CacheConfig};
-use uveddi::analysis::buffer::{FixedBuffer, FixedString, SmallBuffer, MediumBuffer, LargeBuffer};
+use uveddi::analysis::{detectors::anti_patterns::GodObjectDetector, AnalysisEngine};
 
 /// Creates a temporary directory with test Rust files of varying complexity
 fn create_test_project(temp_dir: &TempDir, file_count: usize) -> Vec<std::path::PathBuf> {
     let mut files = Vec::new();
-    
+
     for i in 0..file_count {
         let complexity = match i % 4 {
             0 => "simple",
-            1 => "medium", 
+            1 => "medium",
             2 => "complex",
             _ => "very_complex",
         };
-        
+
         let file_path = temp_dir.path().join(format!("test_file_{}.rs", i));
         let content = generate_rust_code(complexity, i);
         fs::write(&file_path, content).unwrap();
         files.push(file_path);
     }
-    
+
     files
 }
 
@@ -42,7 +42,7 @@ fn generate_rust_code(complexity: &str, seed: usize) -> String {
                 code.push_str(&format!("    field_{}: i32,\n", i));
             }
             code.push_str("}\n\n");
-            
+
             code.push_str(&format!("impl MediumStruct{} {{\n", seed));
             for i in 0..8 {
                 code.push_str(&format!(
@@ -52,7 +52,7 @@ fn generate_rust_code(complexity: &str, seed: usize) -> String {
             }
             code.push_str("}\n");
             code
-        },
+        }
         "complex" => {
             let mut code = String::new();
             code.push_str(&format!("pub struct ComplexStruct{} {{\n", seed));
@@ -60,7 +60,7 @@ fn generate_rust_code(complexity: &str, seed: usize) -> String {
                 code.push_str(&format!("    field_{}: i32,\n", i));
             }
             code.push_str("}\n\n");
-            
+
             code.push_str(&format!("impl ComplexStruct{} {{\n", seed));
             for i in 0..15 {
                 code.push_str(&format!(
@@ -70,7 +70,7 @@ fn generate_rust_code(complexity: &str, seed: usize) -> String {
             }
             code.push_str("}\n");
             code
-        },
+        }
         "very_complex" => {
             let mut code = String::new();
             code.push_str(&format!("pub struct VeryComplexStruct{} {{\n", seed));
@@ -78,7 +78,7 @@ fn generate_rust_code(complexity: &str, seed: usize) -> String {
                 code.push_str(&format!("    field_{}: i32,\n", i));
             }
             code.push_str("}\n\n");
-            
+
             code.push_str(&format!("impl VeryComplexStruct{} {{\n", seed));
             for i in 0..30 {
                 code.push_str(&format!(
@@ -88,7 +88,7 @@ fn generate_rust_code(complexity: &str, seed: usize) -> String {
             }
             code.push_str("}\n");
             code
-        },
+        }
         _ => "".to_string(),
     }
 }
@@ -96,11 +96,11 @@ fn generate_rust_code(complexity: &str, seed: usize) -> String {
 /// Benchmark God Object detection across different file sizes
 fn bench_god_object_detection(c: &mut Criterion) {
     let mut group = c.benchmark_group("god_object_detection");
-    
+
     for &file_count in &[10, 50, 100, 500] {
         let temp_dir = TempDir::new().unwrap();
         let files = create_test_project(&temp_dir, file_count);
-        
+
         group.throughput(Throughput::Elements(file_count as u64));
         group.bench_with_input(
             BenchmarkId::new("files", file_count),
@@ -127,14 +127,16 @@ fn create_mock_parsed_file(file_path: &Path, source: &str) -> uveddi::ast::Parse
     #[cfg(feature = "tree-sitter")]
     {
         use tree_sitter::{Language, Parser};
-        
+
         let mut parser = Parser::new();
-        extern "C" { fn tree_sitter_rust() -> Language; }
+        extern "C" {
+            fn tree_sitter_rust() -> Language;
+        }
         let language = unsafe { tree_sitter_rust() };
         parser.set_language(&language).unwrap();
-        
+
         let tree = parser.parse(source, None);
-        
+
         uveddi::ast::ParsedFile {
             file_path: Arc::new(file_path.to_path_buf()),
             source: source.to_string(),
@@ -156,11 +158,11 @@ fn create_mock_parsed_file(file_path: &Path, source: &str) -> uveddi::ast::Parse
 /// Benchmark full analysis pipeline with different configurations
 fn bench_analysis_pipeline(c: &mut Criterion) {
     let mut group = c.benchmark_group("analysis_pipeline");
-    
+
     for &file_count in &[10, 50, 100] {
         let temp_dir = TempDir::new().unwrap();
         let _files = create_test_project(&temp_dir, file_count);
-        
+
         group.throughput(Throughput::Elements(file_count as u64));
         group.bench_with_input(
             BenchmarkId::new("full_analysis", file_count),
@@ -183,11 +185,11 @@ fn bench_analysis_pipeline(c: &mut Criterion) {
 /// Benchmark memory usage patterns during analysis
 fn bench_memory_usage(c: &mut Criterion) {
     let mut group = c.benchmark_group("memory_usage");
-    
+
     group.bench_function("memory_allocation_pattern", |b| {
         b.iter_custom(|iters| {
             let start = std::time::Instant::now();
-            
+
             for _ in 0..iters {
                 // Simulate memory allocation patterns during analysis
                 let _cache = AstCache::new(CacheConfig::default()).unwrap();
@@ -195,54 +197,52 @@ fn bench_memory_usage(c: &mut Criterion) {
                 // Simulate some analysis work
                 let _buffer = vec![0u8; 1024 * 1024]; // 1MB allocation
             }
-            
+
             start.elapsed()
         });
     });
-    
+
     group.finish();
 }
 
 /// Benchmark const generic buffer performance
 fn bench_const_generic_buffers(c: &mut Criterion) {
     let mut group = c.benchmark_group("const_generic_buffers");
-    
+
     // Test different buffer sizes
     for &size in &[256, 1024, 8192] {
         group.bench_with_input(
             BenchmarkId::new("fixed_buffer_operations", size),
             &size,
             |b, &size| {
-                b.iter(|| {
-                    match size {
-                        256 => {
-                            let mut buffer = SmallBuffer::new();
-                            for i in 0..200 {
-                                buffer.push(i as u8).unwrap();
-                            }
-                            black_box(buffer.as_slice());
+                b.iter(|| match size {
+                    256 => {
+                        let mut buffer = SmallBuffer::new();
+                        for i in 0..200 {
+                            buffer.push(i as u8).unwrap();
                         }
-                        1024 => {
-                            let mut buffer = MediumBuffer::new();
-                            for i in 0..800 {
-                                buffer.push(i as u8).unwrap();
-                            }
-                            black_box(buffer.as_slice());
-                        }
-                        8192 => {
-                            let mut buffer = LargeBuffer::new();
-                            for i in 0..6000 {
-                                buffer.push(i as u8).unwrap();
-                            }
-                            black_box(buffer.as_slice());
-                        }
-                        _ => {}
+                        black_box(buffer.as_slice());
                     }
+                    1024 => {
+                        let mut buffer = MediumBuffer::new();
+                        for i in 0..800 {
+                            buffer.push(i as u8).unwrap();
+                        }
+                        black_box(buffer.as_slice());
+                    }
+                    8192 => {
+                        let mut buffer = LargeBuffer::new();
+                        for i in 0..6000 {
+                            buffer.push(i as u8).unwrap();
+                        }
+                        black_box(buffer.as_slice());
+                    }
+                    _ => {}
                 });
             },
         );
     }
-    
+
     // Compare with Vec<u8>
     group.bench_function("vec_u8_operations", |b| {
         b.iter(|| {
@@ -253,14 +253,14 @@ fn bench_const_generic_buffers(c: &mut Criterion) {
             black_box(buffer.as_slice());
         });
     });
-    
+
     group.finish();
 }
 
 /// Benchmark string operations with const generics
 fn bench_const_generic_strings(c: &mut Criterion) {
     let mut group = c.benchmark_group("const_generic_strings");
-    
+
     group.bench_function("fixed_string_operations", |b| {
         b.iter(|| {
             let mut string = FixedString::<1024>::new();
@@ -273,7 +273,7 @@ fn bench_const_generic_strings(c: &mut Criterion) {
             black_box(string.as_str());
         });
     });
-    
+
     group.bench_function("string_operations", |b| {
         b.iter(|| {
             let mut string = String::with_capacity(1024);
@@ -286,36 +286,45 @@ fn bench_const_generic_strings(c: &mut Criterion) {
             black_box(string.as_str());
         });
     });
-    
+
     group.finish();
 }
 
 /// Benchmark AST cache performance with different configurations
 fn bench_ast_cache_configurations(c: &mut Criterion) {
     let mut group = c.benchmark_group("ast_cache_configurations");
-    
+
     let temp_dir = TempDir::new().unwrap();
     let files = create_test_project(&temp_dir, 100);
-    
+
     // Test different cache configurations
     let configs = vec![
-        ("small_cache", CacheConfig {
-            max_memory_entries: 100,
-            max_memory_size_mb: 10,
-            ..Default::default()
-        }),
-        ("medium_cache", CacheConfig {
-            max_memory_entries: 1000,
-            max_memory_size_mb: 50,
-            ..Default::default()
-        }),
-        ("large_cache", CacheConfig {
-            max_memory_entries: 10000,
-            max_memory_size_mb: 500,
-            ..Default::default()
-        }),
+        (
+            "small_cache",
+            CacheConfig {
+                max_memory_entries: 100,
+                max_memory_size_mb: 10,
+                ..Default::default()
+            },
+        ),
+        (
+            "medium_cache",
+            CacheConfig {
+                max_memory_entries: 1000,
+                max_memory_size_mb: 50,
+                ..Default::default()
+            },
+        ),
+        (
+            "large_cache",
+            CacheConfig {
+                max_memory_entries: 10000,
+                max_memory_size_mb: 500,
+                ..Default::default()
+            },
+        ),
     ];
-    
+
     for (name, config) in configs {
         group.bench_function(name, |b| {
             let cache = AstCache::new(config).unwrap();
@@ -326,23 +335,26 @@ fn bench_ast_cache_configurations(c: &mut Criterion) {
             });
         });
     }
-    
+
     group.finish();
 }
 
 /// Benchmark error handling performance
 fn bench_error_handling(c: &mut Criterion) {
     let mut group = c.benchmark_group("error_handling");
-    
+
     group.bench_function("error_creation_and_propagation", |b| {
         b.iter(|| {
             for i in 0..1000 {
                 let result: Result<i32, uveddi::error::UveddiError> = if i % 10 == 0 {
-                    Err(uveddi::error::UveddiError::ConfigError(format!("Error {}", i)))
+                    Err(uveddi::error::UveddiError::ConfigError(format!(
+                        "Error {}",
+                        i
+                    )))
                 } else {
                     Ok(i)
                 };
-                
+
                 match result {
                     Ok(value) => black_box(value),
                     Err(e) => {
@@ -353,21 +365,21 @@ fn bench_error_handling(c: &mut Criterion) {
             }
         });
     });
-    
+
     group.finish();
 }
 
 /// Benchmark concurrent operations
 fn bench_concurrent_operations(c: &mut Criterion) {
     let mut group = c.benchmark_group("concurrent_operations");
-    
+
     group.bench_function("concurrent_analysis", |b| {
         b.iter(|| {
             let rt = tokio::runtime::Runtime::new().unwrap();
             rt.block_on(async {
                 let temp_dir = TempDir::new().unwrap();
                 let _files = create_test_project(&temp_dir, 50);
-                
+
                 let handles = (0..4).map(|_| {
                     let path = temp_dir.path().to_path_buf();
                     tokio::spawn(async move {
@@ -376,24 +388,24 @@ fn bench_concurrent_operations(c: &mut Criterion) {
                         black_box(result);
                     })
                 });
-                
+
                 futures::future::join_all(handles).await;
             });
         });
     });
-    
+
     group.finish();
 }
 
 /// Benchmark regression tests for performance
 fn bench_performance_regression(c: &mut Criterion) {
     let mut group = c.benchmark_group("performance_regression");
-    
+
     // This benchmark serves as a regression test for overall performance
     group.bench_function("baseline_performance", |b| {
         let temp_dir = TempDir::new().unwrap();
         let _files = create_test_project(&temp_dir, 25);
-        
+
         b.iter(|| {
             let rt = tokio::runtime::Runtime::new().unwrap();
             rt.block_on(async {
@@ -403,7 +415,7 @@ fn bench_performance_regression(c: &mut Criterion) {
             });
         });
     });
-    
+
     group.finish();
 }
 

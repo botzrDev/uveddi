@@ -19,10 +19,12 @@ use uveddi::tui::{AppMessage, AppScreen, AppState};
 async fn create_comprehensive_test_project() -> std::io::Result<PathBuf> {
     let test_dir = PathBuf::from("./tmp/e2e_test_project");
     tokio::fs::create_dir_all(&test_dir).await?;
-    
+
     // Create main.rs with dead code
     let main_rs = test_dir.join("main.rs");
-    tokio::fs::write(&main_rs, r#"
+    tokio::fs::write(
+        &main_rs,
+        r#"
 // Main module with various patterns for analysis
 use std::collections::HashMap;
 
@@ -144,11 +146,15 @@ pub fn main() {
     println!("Field2: {}", instance.method2());
     println!("Complex result: {}", instance.complex_method(350));
 }
-"#).await?;
-    
+"#,
+    )
+    .await?;
+
     // Create lib.rs for additional analysis
     let lib_rs = test_dir.join("lib.rs");
-    tokio::fs::write(&lib_rs, r#"
+    tokio::fs::write(
+        &lib_rs,
+        r#"
 //! Library module for testing
 pub mod utils;
 
@@ -182,11 +188,15 @@ pub mod tightly_coupled {
         }
     }
 }
-"#).await?;
-    
+"#,
+    )
+    .await?;
+
     // Create utils.rs
     let utils_rs = test_dir.join("utils.rs");
-    tokio::fs::write(&utils_rs, r#"
+    tokio::fs::write(
+        &utils_rs,
+        r#"
 //! Utility module
 
 pub struct UtilityStruct {
@@ -213,8 +223,10 @@ impl UtilityStruct {
         println!("Unused utility method");
     }
 }
-"#).await?;
-    
+"#,
+    )
+    .await?;
+
     Ok(test_dir)
 }
 
@@ -231,16 +243,16 @@ async fn cleanup_test_project(path: &PathBuf) -> std::io::Result<()> {
 #[tokio::test]
 async fn test_complete_user_workflow() {
     let test_project = create_comprehensive_test_project().await.unwrap();
-    
+
     // Step 1: Initialize TUI application
     let mut app_state = AppState::new();
     assert_eq!(app_state.current_screen, AppScreen::MainMenu);
-    
+
     // Step 2: Navigate to analyze form
     let messages = app_state.update(AppMessage::NavigateToAnalyze);
     assert_eq!(app_state.current_screen, AppScreen::AnalyzeForm);
     assert!(messages.is_empty());
-    
+
     // Step 3: Simulate form submission (convert to AnalyzeCommand)
     let analyze_command = AnalyzeCommand {
         path: test_project.clone(),
@@ -261,31 +273,34 @@ async fn test_complete_user_workflow() {
         large_classes_ignore_patterns: None,
         large_classes_min_severity: Some(0), // Show all issues
     };
-    
+
     // Step 4: Execute analysis (backend integration)
     let result = analyze_command.execute().await;
-    
+
     // Step 5: Verify analysis completed or failed with expected error
     match result {
         Ok(_) => {
             println!("Complete workflow test: Analysis completed successfully");
-            
+
             // Step 6: Navigate to reports view
             let messages = app_state.update(AppMessage::NavigateToReports);
             assert_eq!(app_state.current_screen, AppScreen::ReportViewer);
             assert!(messages.is_empty());
-        },
+        }
         Err(e) => {
             // Analysis might fail in test environment - this is acceptable
-            println!("Complete workflow test: Analysis failed (expected in test environment): {:?}", e);
+            println!(
+                "Complete workflow test: Analysis failed (expected in test environment): {:?}",
+                e
+            );
         }
     }
-    
+
     // Step 7: Navigate back to main menu
     let messages = app_state.update(AppMessage::NavigateToMainMenu);
     assert_eq!(app_state.current_screen, AppScreen::MainMenu);
     assert!(messages.is_empty());
-    
+
     cleanup_test_project(&test_project).await.unwrap();
 }
 
@@ -294,32 +309,32 @@ async fn test_complete_user_workflow() {
 #[tokio::test]
 async fn test_keyboard_event_workflow() {
     let mut app_state = AppState::new();
-    
+
     // Test global quit shortcut
     let quit_key = KeyEvent::new(KeyCode::Char('q'), KeyModifiers::NONE);
     let messages = app_state.update(AppMessage::KeyPressed(quit_key));
     assert_eq!(messages, vec![AppMessage::Quit]);
     assert!(app_state.should_quit);
-    
+
     // Reset state
     app_state = AppState::new();
-    
+
     // Test Ctrl+C quit
     let ctrl_c = KeyEvent::new(KeyCode::Char('c'), KeyModifiers::CONTROL);
     let messages = app_state.update(AppMessage::KeyPressed(ctrl_c));
     assert_eq!(messages, vec![AppMessage::Quit]);
     assert!(app_state.should_quit);
-    
+
     // Reset state
     app_state = AppState::new();
-    
+
     // Test Escape to main menu
     app_state.update(AppMessage::NavigateToAnalyze);
     let esc_key = KeyEvent::new(KeyCode::Esc, KeyModifiers::NONE);
     let messages = app_state.update(AppMessage::KeyPressed(esc_key));
     assert_eq!(messages, vec![AppMessage::NavigateToMainMenu]);
     assert_eq!(app_state.current_screen, AppScreen::MainMenu);
-    
+
     // Test F1 help
     let f1_key = KeyEvent::new(KeyCode::F(1), KeyModifiers::NONE);
     let messages = app_state.update(AppMessage::KeyPressed(f1_key));
@@ -335,36 +350,36 @@ async fn test_menu_keyboard_navigation() {
     let mut app_state = AppState::new();
     assert_eq!(app_state.current_screen, AppScreen::MainMenu);
     assert_eq!(app_state.selected_menu_item, 0);
-    
+
     // Test down arrow navigation
     let down_key = KeyEvent::new(KeyCode::Down, KeyModifiers::NONE);
     let messages = app_state.update(AppMessage::KeyPressed(down_key));
     assert!(messages.is_empty());
     assert_eq!(app_state.selected_menu_item, 1);
-    
+
     // Test 'j' (vim-style) navigation
     let j_key = KeyEvent::new(KeyCode::Char('j'), KeyModifiers::NONE);
     let messages = app_state.update(AppMessage::KeyPressed(j_key));
     assert!(messages.is_empty());
     assert_eq!(app_state.selected_menu_item, 2);
-    
+
     // Test up arrow navigation
     let up_key = KeyEvent::new(KeyCode::Up, KeyModifiers::NONE);
     let messages = app_state.update(AppMessage::KeyPressed(up_key));
     assert!(messages.is_empty());
     assert_eq!(app_state.selected_menu_item, 1);
-    
+
     // Test 'k' (vim-style) navigation
     let k_key = KeyEvent::new(KeyCode::Char('k'), KeyModifiers::NONE);
     let messages = app_state.update(AppMessage::KeyPressed(k_key));
     assert!(messages.is_empty());
     assert_eq!(app_state.selected_menu_item, 0);
-    
+
     // Test Enter to select current item
     let enter_key = KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE);
     let messages = app_state.update(AppMessage::KeyPressed(enter_key));
     assert_eq!(messages, vec![AppMessage::MenuItemSelected(0)]);
-    
+
     // The menu selection should trigger navigation
     let messages = app_state.update(AppMessage::MenuItemSelected(0));
     assert_eq!(messages, vec![AppMessage::NavigateToAnalyze]);
@@ -375,26 +390,26 @@ async fn test_menu_keyboard_navigation() {
 #[tokio::test]
 async fn test_direct_navigation_shortcuts() {
     let mut app_state = AppState::new();
-    
+
     // Test direct navigation with number keys
     let one_key = KeyEvent::new(KeyCode::Char('1'), KeyModifiers::NONE);
     let messages = app_state.update(AppMessage::KeyPressed(one_key));
     assert_eq!(messages, vec![AppMessage::NavigateToAnalyze]);
-    
+
     app_state.update(AppMessage::NavigateToMainMenu);
-    
+
     let two_key = KeyEvent::new(KeyCode::Char('2'), KeyModifiers::NONE);
     let messages = app_state.update(AppMessage::KeyPressed(two_key));
     assert_eq!(messages, vec![AppMessage::NavigateToConfig]);
-    
+
     app_state.update(AppMessage::NavigateToMainMenu);
-    
+
     let three_key = KeyEvent::new(KeyCode::Char('3'), KeyModifiers::NONE);
     let messages = app_state.update(AppMessage::KeyPressed(three_key));
     assert_eq!(messages, vec![AppMessage::NavigateToReports]);
-    
+
     app_state.update(AppMessage::NavigateToMainMenu);
-    
+
     let four_key = KeyEvent::new(KeyCode::Char('4'), KeyModifiers::NONE);
     let messages = app_state.update(AppMessage::KeyPressed(four_key));
     assert_eq!(messages, vec![AppMessage::NavigateToPlugins]);
@@ -405,17 +420,21 @@ async fn test_direct_navigation_shortcuts() {
 #[cfg(feature = "tui")]
 async fn test_error_handling_workflow() {
     let mut app_state = AppState::new();
-    
+
     // Test invalid menu selection
     let messages = app_state.update(AppMessage::MenuItemSelected(999));
     assert!(messages.is_empty());
     assert!(app_state.error_message.is_some());
-    assert!(app_state.error_message.as_ref().unwrap().contains("Invalid menu selection"));
-    
+    assert!(app_state
+        .error_message
+        .as_ref()
+        .unwrap()
+        .contains("Invalid menu selection"));
+
     // Test that navigation clears error messages
     app_state.update(AppMessage::NavigateToAnalyze);
     assert!(app_state.error_message.is_none());
-    
+
     // Simulate analysis error
     let invalid_command = AnalyzeCommand {
         path: PathBuf::from("/definitely/does/not/exist"),
@@ -436,14 +455,14 @@ async fn test_error_handling_workflow() {
         large_classes_ignore_patterns: None,
         large_classes_min_severity: None,
     };
-    
+
     // This should fail gracefully
     let result = tokio::time::timeout(Duration::from_secs(5), invalid_command.execute()).await;
-    
+
     match result {
         Ok(analysis_result) => {
             assert!(analysis_result.is_err(), "Expected error for invalid path");
-        },
+        }
         Err(_) => {
             // Timeout occurred - this is also acceptable for this test
             println!("Analysis timed out (acceptable for error handling test)");
@@ -456,7 +475,7 @@ async fn test_error_handling_workflow() {
 #[tokio::test]
 async fn test_rapid_state_transitions() {
     let mut app_state = AppState::new();
-    
+
     // Perform rapid state transitions
     for i in 0..100 {
         let message = match i % 5 {
@@ -466,17 +485,17 @@ async fn test_rapid_state_transitions() {
             3 => AppMessage::NavigateToPlugins,
             _ => AppMessage::NavigateToMainMenu,
         };
-        
+
         let previous_version = app_state.version.clone();
         let messages = app_state.update(message);
-        
+
         // Verify state consistency
         assert!(messages.is_empty());
         assert_eq!(app_state.selected_menu_item, 0);
         assert!(!app_state.should_quit);
         assert_eq!(app_state.version, previous_version);
     }
-    
+
     // Final state should be main menu
     assert_eq!(app_state.current_screen, AppScreen::MainMenu);
 }
@@ -486,7 +505,7 @@ async fn test_rapid_state_transitions() {
 #[tokio::test]
 async fn test_concurrent_operations_simulation() {
     let test_project = create_comprehensive_test_project().await.unwrap();
-    
+
     // Create multiple analysis commands as if from different TUI sessions
     let commands = vec![
         AnalyzeCommand {
@@ -528,35 +547,35 @@ async fn test_concurrent_operations_simulation() {
             large_classes_min_severity: Some(20),
         },
     ];
-    
+
     // Execute with timeout to prevent hanging
     let timeout_duration = Duration::from_secs(30);
-    
+
     let mut futures = Vec::new();
     for cmd in commands {
         futures.push(Box::pin(cmd.execute()));
     }
-    
-    let results = tokio::time::timeout(
-        timeout_duration,
-        futures::future::join_all(futures)
-    ).await;
-    
+
+    let results = tokio::time::timeout(timeout_duration, futures::future::join_all(futures)).await;
+
     match results {
         Ok(analysis_results) => {
             // Check that operations completed
             for (i, result) in analysis_results.into_iter().enumerate() {
                 match result {
                     Ok(_) => println!("Concurrent operation {} completed successfully", i),
-                    Err(e) => println!("Concurrent operation {} failed (may be expected): {:?}", i, e),
+                    Err(e) => println!(
+                        "Concurrent operation {} failed (may be expected): {:?}",
+                        i, e
+                    ),
                 }
             }
-        },
+        }
         Err(_) => {
             println!("Concurrent operations timed out (acceptable for test environment)");
         }
     }
-    
+
     cleanup_test_project(&test_project).await.unwrap();
 }
 
@@ -565,20 +584,20 @@ async fn test_concurrent_operations_simulation() {
 #[tokio::test]
 async fn test_application_lifecycle() {
     let test_project = create_comprehensive_test_project().await.unwrap();
-    
+
     // Application startup
     let mut app_state = AppState::new();
     assert_eq!(app_state.current_screen, AppScreen::MainMenu);
     assert!(!app_state.should_quit);
     assert!(app_state.status_message.is_some());
-    
+
     // User explores different screens
     app_state.update(AppMessage::NavigateToAnalyze);
     app_state.update(AppMessage::NavigateToConfig);
     app_state.update(AppMessage::NavigateToReports);
     app_state.update(AppMessage::NavigateToPlugins);
     app_state.update(AppMessage::NavigateToMainMenu);
-    
+
     // User performs analysis
     let analyze_command = AnalyzeCommand {
         path: test_project.clone(),
@@ -599,35 +618,36 @@ async fn test_application_lifecycle() {
         large_classes_ignore_patterns: None,
         large_classes_min_severity: Some(0),
     };
-    
+
     // Try analysis with timeout
-    let analysis_result = tokio::time::timeout(
-        Duration::from_secs(10),
-        analyze_command.execute()
-    ).await;
-    
+    let analysis_result =
+        tokio::time::timeout(Duration::from_secs(10), analyze_command.execute()).await;
+
     match analysis_result {
         Ok(Ok(_)) => println!("Application lifecycle test: Analysis completed"),
-        Ok(Err(e)) => println!("Application lifecycle test: Analysis failed (expected): {:?}", e),
+        Ok(Err(e)) => println!(
+            "Application lifecycle test: Analysis failed (expected): {:?}",
+            e
+        ),
         Err(_) => println!("Application lifecycle test: Analysis timed out (acceptable)"),
     }
-    
+
     // User checks reports
     app_state.update(AppMessage::NavigateToReports);
     assert_eq!(app_state.current_screen, AppScreen::ReportViewer);
-    
+
     // User configures settings
     app_state.update(AppMessage::NavigateToConfig);
     assert_eq!(app_state.current_screen, AppScreen::ConfigEditor);
-    
+
     // User manages plugins
     app_state.update(AppMessage::NavigateToPlugins);
     assert_eq!(app_state.current_screen, AppScreen::PluginManager);
-    
+
     // Application shutdown
     app_state.update(AppMessage::Quit);
     assert!(app_state.should_quit);
     assert!(app_state.status_message.is_some());
-    
+
     cleanup_test_project(&test_project).await.unwrap();
 }

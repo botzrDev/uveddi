@@ -4,10 +4,10 @@
 //! God Objects, and Blob anti-patterns as described in the Large Class Research document.
 
 use crate::analysis::{AnalysisDetector, AnalysisError};
+use crate::ast::tree_sitter::{Node, Query, QueryCursor, Tree};
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use log::debug;
-use crate::ast::tree_sitter::{Node, Query, QueryCursor, Tree};
 
 /// Holds the collected metrics for a single class or struct.
 #[derive(Debug, Clone)]
@@ -141,15 +141,17 @@ impl LargeClassDetector {
     ) -> Result<Vec<ClassMetrics>, AnalysisError> {
         let mut metrics = Vec::new();
         let source = parsed_file.source.as_bytes();
-        let tree = parsed_file
-            .tree
-            .as_ref()
-            .ok_or_else(|| crate::analysis::errors::AnalysisError::AntiPatternDetectionError("AST tree missing".to_string()))?;
+        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
+            crate::analysis::errors::AnalysisError::AntiPatternDetectionError(
+                "AST tree missing".to_string(),
+            )
+        })?;
         let language = tree.language();
 
         // Query for struct definitions
-        let struct_query = Query::new(&language, RUST_STRUCT_QUERY)
-            .map_err(|e| crate::analysis::errors::AnalysisError::AntiPatternDetectionError(e.to_string()))?;
+        let struct_query = Query::new(&language, RUST_STRUCT_QUERY).map_err(|e| {
+            crate::analysis::errors::AnalysisError::AntiPatternDetectionError(e.to_string())
+        })?;
 
         let mut cursor = QueryCursor::new();
         for mat in cursor.matches(&struct_query, tree.root_node(), source) {

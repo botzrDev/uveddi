@@ -70,11 +70,11 @@
 //! - **Optimization Notes**: Uses efficient pattern matching and caches rule evaluations
 //!
 use crate::analysis::{AnalysisDetector, AnalysisError};
+use crate::ast::tree_sitter::{Node, Query, QueryCursor};
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use std::collections::{HashMap, HashSet};
 use strum_macros::EnumString;
-use crate::ast::tree_sitter::{Node, Query, QueryCursor};
 
 /// Defines the configuration for architectural layers and boundaries.
 ///
@@ -437,10 +437,9 @@ impl LeakyAbstractionDetector {
         let mut issues = Vec::new();
         let empty_source = String::new();
         let source_bytes = parsed_file.source.as_bytes();
-        let tree = parsed_file
-            .tree
-            .as_ref()
-            .ok_or_else(|| crate::analysis::errors::AnalysisError::DetectionError("No AST available".to_string()))?;
+        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
+            crate::analysis::errors::AnalysisError::DetectionError("No AST available".to_string())
+        })?;
         let language = tree.language();
 
         let query_source = r#"
@@ -468,8 +467,12 @@ impl LeakyAbstractionDetector {
               name: (type_identifier) @enum_name) @enum_decl
         "#;
 
-        let query = Query::new(&language, query_source)
-            .map_err(|e| crate::analysis::errors::AnalysisError::DetectionError(format!("Failed to create Rust query: {}", e)))?;
+        let query = Query::new(&language, query_source).map_err(|e| {
+            crate::analysis::errors::AnalysisError::DetectionError(format!(
+                "Failed to create Rust query: {}",
+                e
+            ))
+        })?;
 
         let mut cursor = QueryCursor::new();
         let captures = cursor.captures(&query, tree.root_node(), source_bytes);
@@ -488,8 +491,9 @@ impl LeakyAbstractionDetector {
                                 self.extract_module_from_use_statement(use_text)
                             {
                                 if self.is_infrastructure_module(&module_name) {
-                                    let layer = self
-                                        .get_layer_from_path(&parsed_file.file_path.display().to_string());
+                                    let layer = self.get_layer_from_path(
+                                        &parsed_file.file_path.display().to_string(),
+                                    );
                                     if matches!(
                                         layer,
                                         Some(ArchitecturalLayer::Domain)
@@ -628,7 +632,10 @@ impl LeakyAbstractionDetector {
                 "#;
 
                 let query = Query::new(&language, query_source).map_err(|e| {
-                    crate::analysis::errors::AnalysisError::Other(format!("Failed to create Python query: {}", e))
+                    crate::analysis::errors::AnalysisError::Other(format!(
+                        "Failed to create Python query: {}",
+                        e
+                    ))
                 })?;
 
                 let mut cursor = QueryCursor::new();
@@ -647,7 +654,11 @@ impl LeakyAbstractionDetector {
                                         issue_id: None,
                                         analysis_run_id,
                                         anti_pattern_type_id: 1, // TODO: proper mapping
-                                        file_path: parsed_file.file_path.display().to_string().to_string(),
+                                        file_path: parsed_file
+                                            .file_path
+                                            .display()
+                                            .to_string()
+                                            .to_string(),
                                         start_line: Some(
                                             capture.node.start_position().row as i32 + 1,
                                         ),
@@ -690,10 +701,9 @@ impl LeakyAbstractionDetector {
         let mut issues = Vec::new();
         let empty_source = String::new();
         let source_bytes = parsed_file.source.as_bytes();
-        let tree = parsed_file
-            .tree
-            .as_ref()
-            .ok_or_else(|| crate::analysis::errors::AnalysisError::DetectionError("No AST available".to_string()))?;
+        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
+            crate::analysis::errors::AnalysisError::DetectionError("No AST available".to_string())
+        })?;
         let language = tree.language();
 
         let query_source = r#"
@@ -720,8 +730,12 @@ impl LeakyAbstractionDetector {
             ; NOTE: TypeScript-specific, not available in plain JavaScript Tree-sitter
         "#;
 
-        let query = Query::new(&language, query_source)
-            .map_err(|e| crate::analysis::errors::AnalysisError::Other(format!("Failed to create JS query: {}", e)))?;
+        let query = Query::new(&language, query_source).map_err(|e| {
+            crate::analysis::errors::AnalysisError::Other(format!(
+                "Failed to create JS query: {}",
+                e
+            ))
+        })?;
 
         let mut cursor = QueryCursor::new();
         let captures = cursor.captures(&query, tree.root_node(), source_bytes);
@@ -736,8 +750,9 @@ impl LeakyAbstractionDetector {
                         if let Ok(import_text) = node.utf8_text(source_bytes) {
                             let module_name = import_text.trim_matches('"').trim_matches('\'');
                             if self.is_infrastructure_module(module_name) {
-                                let layer =
-                                    self.get_layer_from_path(&parsed_file.file_path.display().to_string());
+                                let layer = self.get_layer_from_path(
+                                    &parsed_file.file_path.display().to_string(),
+                                );
                                 if matches!(
                                     layer,
                                     Some(ArchitecturalLayer::Domain)
@@ -774,8 +789,9 @@ impl LeakyAbstractionDetector {
                     "dom_object" => {
                         if let Ok(dom_text) = node.utf8_text(source_bytes) {
                             if dom_text == "document" || dom_text == "window" {
-                                let layer =
-                                    self.get_layer_from_path(&parsed_file.file_path.display().to_string());
+                                let layer = self.get_layer_from_path(
+                                    &parsed_file.file_path.display().to_string(),
+                                );
                                 if matches!(
                                     layer,
                                     Some(ArchitecturalLayer::Domain)

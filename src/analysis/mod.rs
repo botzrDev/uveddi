@@ -88,7 +88,7 @@
 /// # async fn example() -> uveddi::Result<()> {
 /// // Shared cache across multiple analysis runs
 /// let cache = Arc::new(AstCache::with_capacity(1000)?);
-/// 
+///
 /// let engine = AnalysisEngine::builder()
 ///     .with_cache(cache.clone())
 ///     .with_parallel_processing(true)
@@ -109,13 +109,13 @@ pub mod detector_registry;
 pub mod detectors;
 pub mod engine;
 pub mod engine_builder;
+pub mod errors;
 pub mod extractors;
 pub mod graph;
 pub mod mermaid_generator;
 pub mod plugin_adapter;
 pub mod symbols;
 pub mod types;
-pub mod errors;
 
 #[cfg(test)]
 pub mod tests;
@@ -131,7 +131,7 @@ pub use detectors::{CycleDetector, Dependency, DependencyExtractor};
 pub use engine::AnalysisEngine;
 pub use engine_builder::AnalysisEngineBuilder;
 pub use graph::{ComponentNode, LocalDependencyGraph, LocalDependencyType};
-pub use plugin_adapter::{WasmPluginDetectorAdapter, WasmPluginAdapterFactory};
+pub use plugin_adapter::{WasmPluginAdapterFactory, WasmPluginDetectorAdapter};
 
 use crate::ast::ParsedFile;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};

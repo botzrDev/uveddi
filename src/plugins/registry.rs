@@ -69,13 +69,15 @@ impl PluginRegistry {
         if !manifest_path.exists() {
             return Err(PluginError::Registry(RegistryError::Validation(
                 "Plugin manifest (plugin.toml) not found".to_string(),
-            )).into());
+            ))
+            .into());
         }
 
         if !binary_path.exists() {
             return Err(PluginError::Registry(RegistryError::Validation(
                 "Plugin binary (plugin.wasm) not found".to_string(),
-            )).into());
+            ))
+            .into());
         }
 
         // Load and parse manifest
@@ -113,7 +115,8 @@ impl PluginRegistry {
             return Err(PluginError::Registry(RegistryError::Validation(format!(
                 "Plugin '{}' already exists",
                 manifest.name
-            ))).into());
+            )))
+            .into());
         }
 
         // Create plugin directory
@@ -151,10 +154,12 @@ impl PluginRegistry {
 
     /// Unregister a plugin
     pub async fn unregister_plugin(&mut self, plugin_id: &PluginId) -> crate::error::Result<()> {
-        let metadata = self
-            .plugins
-            .remove(plugin_id)
-            .ok_or_else(|| PluginError::Registry(RegistryError::Validation(format!("Plugin {} not found", plugin_id))))?;
+        let metadata = self.plugins.remove(plugin_id).ok_or_else(|| {
+            PluginError::Registry(RegistryError::Validation(format!(
+                "Plugin {} not found",
+                plugin_id
+            )))
+        })?;
 
         // Remove plugin directory
         let plugin_dir = metadata.binary_path.parent().unwrap();
@@ -180,10 +185,12 @@ impl PluginRegistry {
 
     /// Load plugin binary
     pub async fn load_plugin_binary(&self, plugin_id: &PluginId) -> crate::error::Result<Vec<u8>> {
-        let metadata = self
-            .plugins
-            .get(plugin_id)
-            .ok_or_else(|| PluginError::Registry(RegistryError::Validation(format!("Plugin {} not found", plugin_id))))?;
+        let metadata = self.plugins.get(plugin_id).ok_or_else(|| {
+            PluginError::Registry(RegistryError::Validation(format!(
+                "Plugin {} not found",
+                plugin_id
+            )))
+        })?;
 
         let binary = async_fs::read(&metadata.binary_path).await?;
         Ok(binary)
