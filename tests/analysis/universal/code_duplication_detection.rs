@@ -34,6 +34,13 @@ mod tests {
             fingerprint_length: 5,
             ignore_identifiers: true,
             ignore_literals: true,
+            // NEW: Semantic analysis settings
+            enable_cfg_analysis: false, // Disable for basic testing
+            enable_semantic_features: false, // Disable for basic testing
+            cfg_similarity_weight: 0.3,
+            semantic_similarity_threshold: 0.75,
+            wl_kernel_iterations: 3,
+            max_cfg_nodes: 1000,
         };
 
         CodeDuplicationDetector::with_config(config)
@@ -451,6 +458,13 @@ fn handle_request(request: &str) -> String {
             fingerprint_length: 7,
             ignore_identifiers: true,
             ignore_literals: true,
+            // NEW: Semantic analysis settings
+            enable_cfg_analysis: false, // Disable for basic testing
+            enable_semantic_features: false, // Disable for basic testing
+            cfg_similarity_weight: 0.3,
+            semantic_similarity_threshold: 0.75,
+            wl_kernel_iterations: 3,
+            max_cfg_nodes: 1000,
         };
 
         let strict_detector = CodeDuplicationDetector::with_config(strict_config);
@@ -493,6 +507,13 @@ fn handle_values(values: Vec<i32>) -> Vec<i32> {
             fingerprint_length: 5,
             ignore_identifiers: true,
             ignore_literals: true,
+            // NEW: Semantic analysis settings
+            enable_cfg_analysis: false, // Disable for basic testing
+            enable_semantic_features: false, // Disable for basic testing
+            cfg_similarity_weight: 0.3,
+            semantic_similarity_threshold: 0.75,
+            wl_kernel_iterations: 3,
+            max_cfg_nodes: 1000,
         };
 
         let lenient_detector = CodeDuplicationDetector::with_config(lenient_config);

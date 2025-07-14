@@ -219,6 +219,7 @@ impl LongMethodsDetector {
                 )
             })?;
             let language = tree.language();
+            
 
             let function_query = Query::new(&language, RUST_FUNCTION_QUERY).map_err(|e| {
                 crate::analysis::errors::AnalysisError::AntiPatternDetectionError(format!(
@@ -228,13 +229,15 @@ impl LongMethodsDetector {
             })?;
 
             let mut cursor = QueryCursor::new();
-            for mat in cursor.matches(&function_query, tree.root_node(), source) {
+            let matches: Vec<_> = cursor.matches(&function_query, tree.root_node(), source).collect();
+            
+            for mat in matches {
                 if let (Some(name_capture), Some(body_capture)) =
-                    (mat.captures.first(), mat.captures.get(1))
+                    (mat.captures.get(1), mat.captures.get(2))
                 {
                     let name_node = name_capture.node;
                     let body_node = body_capture.node;
-                    let function_node = mat.captures.get(2).map(|c| c.node).unwrap_or(name_node);
+                    let function_node = mat.captures.get(0).map(|c| c.node).unwrap_or(name_node);
 
                     if let Ok(name) = name_node.utf8_text(source) {
                         let logical_loc = self.calculate_logical_loc(&function_node, source);
@@ -307,11 +310,11 @@ impl LongMethodsDetector {
             let mut cursor = QueryCursor::new();
             for mat in cursor.matches(&function_query, tree.root_node(), source) {
                 if let (Some(name_capture), Some(body_capture)) =
-                    (mat.captures.first(), mat.captures.get(1))
+                    (mat.captures.get(1), mat.captures.get(2))
                 {
                     let name_node = name_capture.node;
                     let body_node = body_capture.node;
-                    let function_node = mat.captures.get(2).map(|c| c.node).unwrap_or(name_node);
+                    let function_node = mat.captures.get(0).map(|c| c.node).unwrap_or(name_node);
 
                     if let Ok(name) = name_node.utf8_text(source) {
                         let logical_loc = self.calculate_logical_loc(&function_node, source);
@@ -590,7 +593,7 @@ impl LongMethodsDetector {
                         *complexity += 1;
                     }
 
-                    traverse_complexity(node, complexity);
+                    traverse_complexity(&child_node, complexity);
 
                     if !cursor.goto_next_sibling() {
                         break;
@@ -1015,8 +1018,9 @@ fn very_long_function() {
             .detect_issues(&parsed_file)
             .expect("Analysis failed");
 
+
         assert!(!issues.is_empty(), "Should detect long method");
-        assert_eq!(issues[0].anti_pattern_type_id, 3); // Assuming 3 is the ID for LongMethod
+        assert_eq!(issues[0].anti_pattern_type_id, 4); // LongMethod ID is 4
         assert!(issues[0].description.contains("very_long_function"));
     }
 
@@ -1084,8 +1088,9 @@ def very_long_function():
             .detect_issues(&parsed_file)
             .expect("Analysis failed");
 
+
         assert!(!issues.is_empty(), "Should detect long method");
-        assert_eq!(issues[0].anti_pattern_type_id, 3); // Assuming 3 is the ID for LongMethod
+        assert_eq!(issues[0].anti_pattern_type_id, 4); // LongMethod ID is 4
         assert!(issues[0].description.contains("very_long_function"));
     }
 }

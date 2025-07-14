@@ -102,6 +102,7 @@
 /// ```
 pub mod buffer;
 pub mod cache;
+pub mod cfg;
 pub mod component_extractor;
 pub mod config;
 pub mod detector_factory;
@@ -114,6 +115,7 @@ pub mod extractors;
 pub mod graph;
 pub mod mermaid_generator;
 pub mod plugin_adapter;
+pub mod semantic;
 pub mod symbols;
 pub mod types;
 

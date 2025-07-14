@@ -51,7 +51,8 @@
       "Bash(timeout 30s cargo test test_form_validation_empty_path --test tui_form_validation --features tui -- --nocapture)",
       "Bash(timeout 30s cargo test test_form_validation_invalid_confidence --test tui_form_validation --features tui -- --nocapture)",
       "Bash(RUST_BACKTRACE=1 cargo run --bin tui_test --features tui)",
-      "Bash(tty)"
+      "Bash(tty)",
+      "Bash(RUST_LOG=debug cargo test --lib test_long_method_detection_rust -- --nocapture)"
     ],
     "deny": []
   }

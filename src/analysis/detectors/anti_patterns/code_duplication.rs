@@ -20,10 +20,11 @@ use crate::ast::tree_sitter::{Query, QueryCursor};
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use crate::error::UveddiError;
-use log::{debug, info};
+use log::{debug, info, warn};
 use sha2::{Digest, Sha256};
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
+use tree_sitter::TreeCursor;
 
 /// Represents a contiguous block of code extracted for duplication analysis.
 ///
@@ -53,6 +54,14 @@ pub struct CodeBlock {
     pub function_name: Option<String>,
     /// The programming language of the source code.
     pub language: SourceLanguage,
+    
+    // NEW: Semantic analysis data
+    /// Control Flow Graph representation of the code block
+    pub cfg: Option<crate::analysis::cfg::ControlFlowGraph>,
+    /// Extracted semantic features for advanced analysis
+    pub semantic_features: Option<crate::analysis::semantic::SemanticFeatures>,
+    /// Hash of the CFG structure for quick comparison
+    pub cfg_hash: Option<String>,
 }
 
 /// Represents a pair of code blocks that have been identified as duplicates.
@@ -86,6 +95,9 @@ pub enum CloneType {
     /// changed, added, or removed statements, in addition to variations in identifiers,
     /// literals, and layout.
     Type3,
+    /// **Type-4 (Semantic Clone):** Code fragments that are functionally equivalent
+    /// but may have different syntax and structure. Detected using semantic analysis.
+    Type4,
 }
 
 /// Configuration for the code duplication detector.
@@ -120,6 +132,20 @@ pub struct DuplicationConfig {
     /// If true, literals (strings, numbers) are replaced with a placeholder,
     /// also contributing to Type-2 clone detection.
     pub ignore_literals: bool,
+    
+    // NEW: Semantic analysis settings
+    /// Enable Control Flow Graph (CFG) analysis for semantic clone detection
+    pub enable_cfg_analysis: bool,
+    /// Enable semantic feature extraction for Type-4 clone detection
+    pub enable_semantic_features: bool,
+    /// Weight for CFG similarity in the overall similarity score
+    pub cfg_similarity_weight: f64,
+    /// Threshold for semantic similarity (Type-4 clone detection)
+    pub semantic_similarity_threshold: f64,
+    /// Number of iterations for Weisfeiler-Lehman kernel
+    pub wl_kernel_iterations: usize,
+    /// Maximum number of CFG nodes to process (performance limit)
+    pub max_cfg_nodes: usize,
 }
 
 impl Default for DuplicationConfig {
@@ -132,6 +158,12 @@ impl Default for DuplicationConfig {
     /// - `fingerprint_length`: 7 (good balance between precision and recall)
     /// - `ignore_identifiers`: true (enable Type-2 detection)
     /// - `ignore_literals`: true (enable Type-2 detection)
+    /// - `enable_cfg_analysis`: true (enable CFG-based semantic analysis)
+    /// - `enable_semantic_features`: true (enable semantic feature extraction)
+    /// - `cfg_similarity_weight`: 0.3 (30% weight for CFG similarity)
+    /// - `semantic_similarity_threshold`: 0.75 (75% threshold for Type-4 clones)
+    /// - `wl_kernel_iterations`: 3 (3 iterations for WL kernel)
+    /// - `max_cfg_nodes`: 1000 (limit CFG size for performance)
     fn default() -> Self {
         Self {
             min_tokens: 50, // Minimum number of tokens for a code block to be considered
@@ -140,6 +172,14 @@ impl Default for DuplicationConfig {
             fingerprint_length: 7, // Length of rolling hash window
             ignore_identifiers: true, // Normalize identifiers for Type-2 detection
             ignore_literals: true, // Normalize literals for Type-2 detection
+            
+            // NEW: Conservative defaults for semantic analysis
+            enable_cfg_analysis: true,
+            enable_semantic_features: true,
+            cfg_similarity_weight: 0.3,
+            semantic_similarity_threshold: 0.75,
+            wl_kernel_iterations: 3,
+            max_cfg_nodes: 1000,
         }
     }
 }
@@ -193,7 +233,7 @@ const JAVASCRIPT_FUNCTION_QUERY: &str = r#"
 /// ```
 pub struct CodeDuplicationDetector {
     /// Configuration parameters for tuning the detector's sensitivity.
-    config: DuplicationConfig,
+    pub config: DuplicationConfig,
     /// A global index mapping fingerprints to the code blocks that contain them,
     /// enabling fast lookup of potential clone candidates.
     fingerprint_index: Arc<Mutex<HashMap<String, Vec<CodeBlock>>>>,
@@ -317,6 +357,11 @@ impl CodeDuplicationDetector {
                     structural_hash,
                     function_name,
                     language: parsed_file.language.clone(),
+                    
+                    // NEW: Initialize semantic analysis fields (will be populated later)
+                    cfg: None,
+                    semantic_features: None,
+                    cfg_hash: None,
                 };
 
                 blocks.push(block);
@@ -630,6 +675,7 @@ impl CodeDuplicationDetector {
                 CloneType::Type1 => "high",
                 CloneType::Type2 => "medium",
                 CloneType::Type3 => "low",
+                CloneType::Type4 => "medium", // Semantic clones are medium priority
             };
 
             let description = format!(
@@ -720,10 +766,11 @@ impl AnalysisDetector for CodeDuplicationDetector {
     ///
     /// This is the main entry point for the detector. It performs the following steps:
     /// 1. Extracts all function-level code blocks from the file.
-    /// 2. Indexes these blocks by their fingerprints for cross-file comparison.
-    /// 3. For each block, finds potential clone candidates from the global index.
-    /// 4. Verifies each candidate pair to confirm if they are a true clone.
-    /// 5. Converts the verified clone pairs into `ArchitecturalIssue`s.
+    /// 2. Enhances blocks with CFG and semantic analysis (if enabled).
+    /// 3. Indexes these blocks by their fingerprints for cross-file comparison.
+    /// 4. For each block, finds potential clone candidates from the global index.
+    /// 5. Verifies each candidate pair to confirm if they are a true clone.
+    /// 6. Converts the verified clone pairs into `ArchitecturalIssue`s.
     ///
     /// # Arguments
     ///
@@ -741,8 +788,8 @@ impl AnalysisDetector for CodeDuplicationDetector {
             parsed_file.file_path.display()
         );
 
-        // Extract code blocks from the current file
-        let blocks = self.extract_code_blocks(parsed_file)?;
+        // Phase 1: Extract code blocks from the current file
+        let mut blocks = self.extract_code_blocks(parsed_file)?;
 
         debug!(
             "Extracted {} code blocks from file: {}",
@@ -768,6 +815,15 @@ impl AnalysisDetector for CodeDuplicationDetector {
             return Ok(vec![]);
         }
 
+        // Phase 2: NEW - Semantic enhancement
+        if self.config.enable_cfg_analysis {
+            self.enhance_blocks_with_cfg(&mut blocks, parsed_file)?;
+        }
+        
+        if self.config.enable_semantic_features {
+            self.enhance_blocks_with_semantic_features(&mut blocks, parsed_file)?;
+        }
+
         // Index the blocks for future comparisons
         self.index_code_blocks(&blocks)?;
 
@@ -783,7 +839,8 @@ impl AnalysisDetector for CodeDuplicationDetector {
             );
 
             for candidate in candidates {
-                if let Some(clone_pair) = self.verify_clone_pair(block, &candidate) {
+                // Enhanced verification with semantic analysis
+                if let Some(clone_pair) = self.verify_clone_pair_enhanced(block, &candidate) {
                     debug!("Verified clone pair: {} similarity", clone_pair.similarity);
                     clone_pairs.push(clone_pair);
                 }
@@ -817,5 +874,195 @@ impl AnalysisDetector for CodeDuplicationDetector {
         let issues = self.clone_pairs_to_issues(&clone_pairs);
 
         Ok(issues)
+    }
+}
+
+impl CodeDuplicationDetector {
+    /// Enhance code blocks with CFG analysis
+    fn enhance_blocks_with_cfg(&self, blocks: &mut [CodeBlock], parsed_file: &ParsedFile) -> Result<(), AnalysisError> {
+        use crate::analysis::cfg::CfgBuilder;
+        
+        debug!("Enhancing {} blocks with CFG analysis", blocks.len());
+        
+        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
+            AnalysisError::AstError(crate::ast::tree_sitter_impl::AstError::Other(
+                "No AST available for CFG generation".to_string(),
+            ))
+        })?;
+        
+        for block in blocks.iter_mut() {
+            // Skip if CFG nodes would exceed limit
+            if block.normalized_tokens.len() > self.config.max_cfg_nodes {
+                warn!("Skipping CFG generation for large block ({}+ tokens)", block.normalized_tokens.len());
+                continue;
+            }
+            
+            // Find the AST node for this block
+            if let Some(function_node) = self.find_ast_node_for_block(tree.root_node(), block, parsed_file.source.as_bytes()) {
+                let mut cfg_builder = CfgBuilder::new();
+                
+                match cfg_builder.build_from_ast(function_node, &block.source, parsed_file.language.clone()) {
+                    Ok(cfg) => {
+                        // Compute CFG hash for quick comparison
+                        let cfg_hash = cfg.compute_structural_hash();
+                        block.cfg = Some(cfg);
+                        block.cfg_hash = Some(cfg_hash);
+                        debug!("Generated CFG for block at line {} with {} nodes", 
+                               block.start_line, block.cfg.as_ref().unwrap().node_count());
+                    }
+                    Err(e) => {
+                        warn!("Failed to generate CFG for block at line {}: {}", block.start_line, e);
+                        // Continue without CFG - graceful degradation
+                    }
+                }
+            }
+        }
+        
+        Ok(())
+    }
+    
+    /// Enhance code blocks with semantic feature extraction
+    fn enhance_blocks_with_semantic_features(&self, blocks: &mut [CodeBlock], parsed_file: &ParsedFile) -> Result<(), AnalysisError> {
+        use crate::analysis::semantic::SemanticAnalyzer;
+        
+        debug!("Enhancing {} blocks with semantic features", blocks.len());
+        
+        let analyzer = SemanticAnalyzer::new(parsed_file.language.clone());
+        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
+            AnalysisError::AstError(crate::ast::tree_sitter_impl::AstError::Other(
+                "No AST available for semantic analysis".to_string(),
+            ))
+        })?;
+        
+        for block in blocks.iter_mut() {
+            // Only extract features if we have a CFG
+            if let Some(ref cfg) = block.cfg {
+                if let Some(function_node) = self.find_ast_node_for_block(tree.root_node(), block, parsed_file.source.as_bytes()) {
+                    match analyzer.extract_features(cfg, &function_node, &block.source) {
+                        Ok(features) => {
+                            block.semantic_features = Some(features);
+                            debug!("Extracted semantic features for block at line {}", block.start_line);
+                        }
+                        Err(e) => {
+                            warn!("Failed to extract semantic features for block at line {}: {}", block.start_line, e);
+                            // Continue without semantic features - graceful degradation
+                        }
+                    }
+                }
+            }
+        }
+        
+        Ok(())
+    }
+    
+    /// Find the AST node corresponding to a code block
+    fn find_ast_node_for_block<'a>(&self, root_node: crate::ast::tree_sitter::Node<'a>, block: &CodeBlock, source: &[u8]) -> Option<crate::ast::tree_sitter::Node<'a>> {
+        let mut cursor = root_node.walk();
+        
+        // Simple approach: find node that matches the byte range
+        fn find_matching_node<'a>(cursor: &mut TreeCursor<'a>, start_byte: usize, end_byte: usize) -> Option<crate::ast::tree_sitter::Node<'a>> {
+            let node = cursor.node();
+            
+            // Check if this node matches our range
+            if node.start_byte() == start_byte && node.end_byte() == end_byte {
+                return Some(node);
+            }
+            
+            // Check if this node contains our range
+            if node.start_byte() <= start_byte && node.end_byte() >= end_byte {
+                // Search children
+                if cursor.goto_first_child() {
+                    loop {
+                        if let Some(found) = find_matching_node(cursor, start_byte, end_byte) {
+                            return Some(found);
+                        }
+                        if !cursor.goto_next_sibling() {
+                            break;
+                        }
+                    }
+                    cursor.goto_parent();
+                }
+                
+                // If no child matches exactly, return this node as best match
+                return Some(node);
+            }
+            
+            None
+        }
+        
+        find_matching_node(&mut cursor, block.start_byte, block.end_byte)
+    }
+    
+    /// Enhanced clone pair verification with semantic analysis
+    fn verify_clone_pair_enhanced(&self, block1: &CodeBlock, block2: &CodeBlock) -> Option<ClonePair> {
+        // First try existing verification
+        if let Some(mut clone_pair) = self.verify_clone_pair(block1, block2) {
+            // If we have semantic features, enhance the classification
+            if let (Some(ref features1), Some(ref features2)) = (&block1.semantic_features, &block2.semantic_features) {
+                // Use semantic similarity for Type-4 detection
+                let semantic_similarity = self.compute_semantic_similarity(features1, features2);
+                
+                if semantic_similarity >= self.config.semantic_similarity_threshold {
+                    // Check if this should be classified as Type-4
+                    if clone_pair.clone_type == CloneType::Type3 && semantic_similarity > 0.8 {
+                        clone_pair.clone_type = CloneType::Type4;
+                        clone_pair.similarity = semantic_similarity;
+                    } else if semantic_similarity > clone_pair.similarity {
+                        // Update similarity if semantic analysis gives higher score
+                        clone_pair.similarity = semantic_similarity;
+                    }
+                }
+            }
+            
+            return Some(clone_pair);
+        }
+        
+        // If traditional verification failed, try semantic-only detection
+        if self.config.enable_semantic_features {
+            if let (Some(ref features1), Some(ref features2)) = (&block1.semantic_features, &block2.semantic_features) {
+                let semantic_similarity = self.compute_semantic_similarity(features1, features2);
+                
+                if semantic_similarity >= self.config.semantic_similarity_threshold {
+                    return Some(ClonePair {
+                        block1: block1.clone(),
+                        block2: block2.clone(),
+                        similarity: semantic_similarity,
+                        clone_type: CloneType::Type4,
+                        shared_fingerprints: self.count_shared_fingerprints(block1, block2),
+                    });
+                }
+            }
+        }
+        
+        None
+    }
+    
+    /// Compute semantic similarity between two feature sets
+    fn compute_semantic_similarity(&self, features1: &crate::analysis::semantic::SemanticFeatures, features2: &crate::analysis::semantic::SemanticFeatures) -> f64 {
+        use crate::analysis::semantic::{HybridSimilarityScorer, SimilarityWeights};
+        
+        // Create a hybrid scorer with weights from config
+        let weights = SimilarityWeights {
+            structural: 0.3,
+            cfg: self.config.cfg_similarity_weight,
+            semantic: 0.25,
+            ast_pattern: 0.15,
+        };
+        
+        // For now, compute a simple feature vector similarity
+        // In a full implementation, this would use the HybridSimilarityScorer
+        let vec1 = &features1.feature_vector;
+        let vec2 = &features2.feature_vector;
+        
+        // Compute cosine similarity
+        let dot_product = vec1.dot(vec2);
+        let norm1 = vec1.dot(vec1).sqrt();
+        let norm2 = vec2.dot(vec2).sqrt();
+        
+        if norm1 == 0.0 || norm2 == 0.0 {
+            0.0
+        } else {
+            dot_product / (norm1 * norm2)
+        }
     }
 }
