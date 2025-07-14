@@ -637,11 +637,15 @@ impl AnalysisEngine {
 
             Ok(plugin_id)
         } else {
-            Err(crate::error::UveddiError::PluginError(
-                crate::plugins::errors::PluginError::Execution(
+            Err(crate::error::UveddiError::PluginError {
+                plugin: "unknown".to_string(),
+                plugin_type: "WASM".to_string(),
+                message: "Plugin engine not initialized".to_string(),
+                suggestion: "Initialize plugin engine before installing plugins".to_string(),
+                source: Some(crate::plugins::errors::PluginError::Execution(
                     "Plugin engine not initialized".to_string(),
-                ),
-            ))
+                )),
+            })
         }
     }
 
@@ -676,11 +680,15 @@ impl AnalysisEngine {
 
             Ok(())
         } else {
-            Err(crate::error::UveddiError::PluginError(
-                crate::plugins::errors::PluginError::Execution(
+            Err(crate::error::UveddiError::PluginError {
+                plugin: "unknown".to_string(),
+                plugin_type: "WASM".to_string(),
+                message: "Plugin engine not initialized".to_string(),
+                suggestion: "Initialize plugin engine before uninstalling plugins".to_string(),
+                source: Some(crate::plugins::errors::PluginError::Execution(
                     "Plugin engine not initialized".to_string(),
-                ),
-            ))
+                )),
+            })
         }
     }
 
@@ -712,16 +720,24 @@ impl AnalysisEngine {
     ) -> crate::error::Result<crate::plugins::ResourceReport> {
         if let Some(ref mut plugin_engine) = self.plugin_engine {
             plugin_engine.monitor_resources().await.map_err(|e| {
-                crate::error::UveddiError::PluginError(
-                    crate::plugins::errors::PluginError::Execution(e.to_string()),
-                )
+                crate::error::UveddiError::PluginError {
+                    plugin: "unknown".to_string(),
+                    plugin_type: "WASM".to_string(),
+                    message: e.to_string(),
+                    suggestion: "Check plugin status and retry operation".to_string(),
+                    source: Some(crate::plugins::errors::PluginError::Execution(e.to_string())),
+                }
             })
         } else {
-            Err(crate::error::UveddiError::PluginError(
-                crate::plugins::errors::PluginError::Execution(
+            Err(crate::error::UveddiError::PluginError {
+                plugin: "unknown".to_string(),
+                plugin_type: "WASM".to_string(),
+                message: "Plugin engine not initialized".to_string(),
+                suggestion: "Initialize plugin engine before monitoring resources".to_string(),
+                source: Some(crate::plugins::errors::PluginError::Execution(
                     "Plugin engine not initialized".to_string(),
-                ),
-            ))
+                )),
+            })
         }
     }
 

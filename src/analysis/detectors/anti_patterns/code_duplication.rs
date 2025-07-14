@@ -236,7 +236,7 @@ impl CodeDuplicationDetector {
         parsed_file: &ParsedFile,
     ) -> Result<Vec<CodeBlock>, AnalysisError> {
         let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-            UveddiError::AstError(crate::ast::tree_sitter_impl::AstError::Other(
+            AnalysisError::AstError(crate::ast::tree_sitter_impl::AstError::Other(
                 "No AST available for file".to_string(),
             ))
         })?;
@@ -248,7 +248,7 @@ impl CodeDuplicationDetector {
         };
 
         let query = Query::new(&tree.language(), query_str).map_err(|e| {
-            UveddiError::AstError(crate::ast::tree_sitter_impl::AstError::Other(format!(
+            AnalysisError::AstError(crate::ast::tree_sitter_impl::AstError::Other(format!(
                 "Failed to create query: {e}"
             )))
         })?;
@@ -272,7 +272,7 @@ impl CodeDuplicationDetector {
                 let source = function_node
                     .utf8_text(parsed_file.source.as_bytes())
                     .map_err(|e| {
-                        UveddiError::AstError(crate::ast::tree_sitter_impl::AstError::Other(
+                        AnalysisError::AstError(crate::ast::tree_sitter_impl::AstError::Other(
                             format!("Failed to extract source: {e}"),
                         ))
                     })?

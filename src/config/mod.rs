@@ -220,7 +220,7 @@ impl Config {
     pub fn from_file(path: &str) -> crate::error::Result<Self> {
         let content = fs::read_to_string(path).map_err(crate::error::UveddiError::from)?;
         let config: Config = toml::from_str(&content)
-            .map_err(|e| crate::error::UveddiError::ConfigError(e.to_string()))?;
+            .map_err(|e| crate::error::UveddiError::config_error(&e.to_string(), path))?;
         Ok(config)
     }
 }

@@ -65,10 +65,10 @@ impl DetectorFactory {
             "dead_code" => Ok(Box::new(DeadCodeDetector::with_default_config())),
             "large_classes" => Ok(Box::new(LargeClassDetector::with_default_config())),
             "tight_coupling" => Ok(Box::new(TightCouplingDetector::default())),
-            _ => Err(UveddiError::ConfigError(format!(
-                "Unknown detector: {}",
-                name
-            ))),
+            _ => Err(UveddiError::config_error(
+                &format!("Unknown detector: {}", name),
+                "detector factory",
+            )),
         }
     }
 

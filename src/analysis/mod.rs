@@ -130,13 +130,13 @@ pub use detectors::anti_patterns::GodObjectDetector;
 pub use detectors::{CycleDetector, Dependency, DependencyExtractor};
 pub use engine::AnalysisEngine;
 pub use engine_builder::AnalysisEngineBuilder;
+pub use errors::AnalysisError;
 pub use graph::{ComponentNode, LocalDependencyGraph, LocalDependencyType};
 pub use plugin_adapter::{WasmPluginAdapterFactory, WasmPluginDetectorAdapter};
 
 use crate::ast::ParsedFile;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 
-pub type AnalysisError = crate::error::UveddiError;
 
 /// Core analysis trait for all detectors
 ///

@@ -46,18 +46,20 @@ impl ConfigCommand {
                     match Config::from_file(path.to_str().unwrap()) {
                         Ok(cfg) => println!("{cfg:?}"),
                         Err(e) => {
-                            return Err(crate::error::UveddiError::ConfigError(format!(
-                                "Failed to load config: {e}"
-                            )))
+                            return Err(crate::error::UveddiError::config_error(
+                                &format!("Failed to load config: {e}"),
+                                "config file",
+                            ))
                         }
                     }
                 } else {
                     match Config::from_env() {
                         Ok(cfg) => println!("{cfg:?}"),
                         Err(e) => {
-                            return Err(crate::error::UveddiError::ConfigError(format!(
-                                "Failed to load config from env: {e}"
-                            )))
+                            return Err(crate::error::UveddiError::config_error(
+                                &format!("Failed to load config from env: {e}"),
+                                "environment variables",
+                            ))
                         }
                     }
                 }
@@ -74,18 +76,19 @@ impl ConfigCommand {
                 match key.as_str() {
                     "ollama_model" => config.ollama_model = Some(value.clone()),
                     _ => {
-                        return Err(crate::error::UveddiError::ConfigError(
-                            "Unknown config key".to_string(),
+                        return Err(crate::error::UveddiError::config_error(
+                            "Unknown config key",
+                            "config key validation",
                         ))
                     }
                 }
                 let toml = toml::to_string_pretty(&config)
-                    .map_err(|e| crate::error::UveddiError::ConfigError(e.to_string()))?;
+                    .map_err(|e| crate::error::UveddiError::config_error(&e.to_string(), "config serialization"))?;
                 let mut file_handle =
-                    fs::File::create(file).map_err(|e| crate::error::UveddiError::IoError(e))?;
+                    fs::File::create(file).map_err(|e| crate::error::UveddiError::io_error("creating config file", &file.display().to_string(), e))?;
                 file_handle
                     .write_all(toml.as_bytes())
-                    .map_err(|e| crate::error::UveddiError::IoError(e))?;
+                    .map_err(|e| crate::error::UveddiError::io_error("writing config file", &file.display().to_string(), e))?;
                 println!("Config updated in {}", file.display());
             }
             ConfigSubcommand::Validate { file } => {
@@ -96,9 +99,10 @@ impl ConfigCommand {
                 match Config::from_file(path) {
                     Ok(_) => println!("Config is valid."),
                     Err(e) => {
-                        return Err(crate::error::UveddiError::ConfigError(format!(
-                            "Config validation failed: {e}"
-                        )))
+                        return Err(crate::error::UveddiError::config_error(
+                            &format!("Config validation failed: {e}"),
+                            "config validation",
+                        ))
                     }
                 }
             }

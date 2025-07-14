@@ -152,7 +152,11 @@ impl AnalysisOrchestrator {
 
         // Validate input path
         if !config.target_path.exists() {
-            return Err(UveddiError::PathError(config.target_path.clone()))
+            return Err(UveddiError::PathError {
+                path: config.target_path.display().to_string(),
+                reason: "Path does not exist".to_string(),
+                suggestion: "Verify the path exists and is accessible".to_string(),
+            })
                 .context("Input path validation failed")?;
         }
 
@@ -273,10 +277,10 @@ impl AnalysisOrchestrator {
                 let report = report_generator
                     .generate_json_report(analysis_run, issues, &HashMap::new(), None)
                     .map_err(|e| {
-                        crate::error::UveddiError::ReportError(
+                        crate::error::UveddiError::from(
                             crate::report::errors::ReportGenerationError::DataExtractionError(
                                 e.to_string(),
-                            ),
+                            )
                         )
                     })?;
                 Ok(report.to_string())
@@ -284,16 +288,16 @@ impl AnalysisOrchestrator {
             "markdown" => report_generator
                 .generate_markdown_report(analysis_run, issues, &HashMap::new(), None)
                 .map_err(|e| {
-                    crate::error::UveddiError::ReportError(
+                    crate::error::UveddiError::from(
                         crate::report::errors::ReportGenerationError::DataExtractionError(
                             e.to_string(),
-                        ),
+                        )
                     )
                 }),
-            _ => Err(UveddiError::ConfigError(format!(
-                "Unsupported output format specified: {}",
-                config.output_format
-            )))
+            _ => Err(UveddiError::config_error(
+                &format!("Unsupported output format specified: {}", config.output_format),
+                "output format",
+            ))
             .context("Unsupported output format specified")?,
         }
     }
@@ -310,8 +314,9 @@ impl AnalysisOrchestrator {
 
             if let Some(confidence) = config.dead_code_confidence {
                 if confidence < 0.0 || confidence > 1.0 {
-                    return Err(UveddiError::ConfigError(
-                        "Dead code confidence threshold must be between 0.0 and 1.0".to_string(),
+                    return Err(UveddiError::config_error(
+                        "Dead code confidence threshold must be between 0.0 and 1.0",
+                        "config validation",
                     ));
                 }
                 dead_code_config.min_confidence = confidence;
@@ -394,8 +399,9 @@ impl AnalysisOrchestrator {
 
             if let Some(max_lcom) = config.large_classes_max_lcom {
                 if max_lcom < 0.0 || max_lcom > 1.0 {
-                    return Err(UveddiError::ConfigError(
-                        "Large classes LCOM score must be between 0.0 and 1.0".to_string(),
+                    return Err(UveddiError::config_error(
+                        "Large classes LCOM score must be between 0.0 and 1.0",
+                        "config validation",
                     ));
                 }
                 large_classes_config.rust_thresholds.max_lcom_score = max_lcom;
@@ -465,18 +471,14 @@ pub fn run_app() -> Result<(), UveddiError> {
             tokio::runtime::Runtime::new()?
                 .block_on(command.execute())
                 .map_err(|e| {
-                    UveddiError::AnalysisError(
-                        crate::analysis::errors::AnalysisError::AntiPatternDetectionError(
-                            e.to_string(),
-                        ),
-                    )
+                    UveddiError::analysis_error("unknown", 0, &e.to_string(), "analyze command")
                 })
         }
         Commands::Config(command) => {
             info!("Executing config command...");
             command
                 .execute()
-                .map_err(|e| UveddiError::ConfigError(e.to_string()))
+.map_err(|e| UveddiError::config_error(&e.to_string(), "config validation"))
         }
     };
     if let Err(e) = result {

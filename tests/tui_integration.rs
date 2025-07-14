@@ -17,10 +17,11 @@ use std::path::PathBuf;
 
 #[cfg(feature = "tui")]
 use uveddi::application::AnalysisOrchestrator;
+use uveddi::analysis::AnalysisConfig;
 use uveddi::cli::analyze_command::AnalyzeCommand;
 use uveddi::error::UveddiError;
 #[cfg(feature = "tui")]
-use uveddi::tui::{AppMessage, AppScreen, AppState};
+use uveddi::tui::{AppState, AppMessage, AppScreen};
 
 /// Helper function to create a minimal test project structure
 async fn create_test_project(base_path: &str) -> std::io::Result<PathBuf> {
@@ -321,7 +322,7 @@ async fn test_error_handling_invalid_path() {
 
     // Verify error type
     match result.unwrap_err() {
-        UveddiError::IoError(_) | UveddiError::PathError(_) | UveddiError::GenericError(_) => {
+        UveddiError::IoError { .. } | UveddiError::PathError { .. } | UveddiError::GenericError { .. } => {
             // Expected error types for invalid paths
         }
         other => panic!("Unexpected error type: {:?}", other),

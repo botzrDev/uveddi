@@ -86,11 +86,15 @@ pub mod wasm {
 
     impl WasmPluginEngine {
         pub async fn new() -> Result<Self, UveddiError> {
-            Err(UveddiError::PluginError(
-                crate::plugins::errors::PluginError::Execution(
+            Err(UveddiError::PluginError {
+                plugin: "WASM engine".to_string(),
+                plugin_type: "WASM".to_string(),
+                message: "WASM plugins not enabled. Compile with --features wasm-plugins".to_string(),
+                suggestion: "Enable the 'wasm-plugins' feature in Cargo.toml".to_string(),
+                source: Some(crate::plugins::errors::PluginError::Execution(
                     "WASM plugins not enabled. Compile with --features wasm-plugins".to_string(),
-                ),
-            ))
+                )),
+            })
         }
     }
 }

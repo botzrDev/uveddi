@@ -109,15 +109,17 @@ impl AnalysisConfig {
     /// ```
     pub fn from_file(path: &Path) -> Result<Self, UveddiError> {
         let content = std::fs::read_to_string(path).map_err(|e| {
-            UveddiError::ConfigError(format!(
-                "Failed to read config file '{}': {}",
-                path.display(),
-                e
-            ))
+            UveddiError::config_error(
+                &format!("Failed to read config file '{}': {}", path.display(), e),
+                &path.display().to_string(),
+            )
         })?;
 
         toml::from_str(&content)
-            .map_err(|e| UveddiError::ConfigError(format!("Failed to parse TOML config: {}", e)))
+            .map_err(|e| UveddiError::config_error(
+                &format!("Failed to parse TOML config: {}", e),
+                &path.display().to_string(),
+            ))
     }
 
     /// Save configuration to TOML file
@@ -133,15 +135,17 @@ impl AnalysisConfig {
     /// - File cannot be written
     pub fn save_to_file(&self, path: &Path) -> Result<(), UveddiError> {
         let toml_content = toml::to_string_pretty(self).map_err(|e| {
-            UveddiError::ConfigError(format!("Failed to serialize config to TOML: {}", e))
+            UveddiError::config_error(
+                &format!("Failed to serialize config to TOML: {}", e),
+                &path.display().to_string(),
+            )
         })?;
 
         std::fs::write(path, toml_content).map_err(|e| {
-            UveddiError::ConfigError(format!(
-                "Failed to write config file '{}': {}",
-                path.display(),
-                e
-            ))
+            UveddiError::config_error(
+                &format!("Failed to write config file '{}': {}", path.display(), e),
+                &path.display().to_string(),
+            )
         })
     }
 

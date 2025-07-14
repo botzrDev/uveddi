@@ -44,22 +44,20 @@ mod error_message_quality_tests {
         assert!(message.contains("Create the required file"));
     }
 
-    #[test]
-    fn test_network_error_suggestions() {
+    #[tokio::test]
+    async fn test_network_error_suggestions() {
         // Mock reqwest error for testing
         let mock_url = "http://localhost:11434/api/generate";
 
         // Test timeout scenario
-        let timeout_error = reqwest::Error::from(
-            reqwest::ClientBuilder::new()
-                .timeout(std::time::Duration::from_millis(1))
-                .build()
-                .unwrap()
-                .get("http://httpbin.org/delay/10")
-                .send()
-                .await
-                .unwrap_err(),
-        );
+        let timeout_error = reqwest::ClientBuilder::new()
+            .timeout(std::time::Duration::from_millis(1))
+            .build()
+            .unwrap()
+            .get("http://httpbin.org/delay/10")
+            .send()
+            .await
+            .unwrap_err();
 
         let error = UveddiError::network_error("AI inference request", mock_url, timeout_error);
 
@@ -73,7 +71,7 @@ mod error_message_quality_tests {
     #[test]
     fn test_database_error_recovery_hints() {
         let sqlite_error = rusqlite::Error::SqliteFailure(
-            rusqlite::ffi::Error::new(rusqlite::ErrorCode::DatabaseLocked),
+            rusqlite::ffi::Error::new(rusqlite::ErrorCode::DatabaseLocked as i32),
             Some("database is locked".to_string()),
         );
 
@@ -166,7 +164,7 @@ mod error_message_quality_tests {
                 "query",
                 "db",
                 rusqlite::Error::SqliteFailure(
-                    rusqlite::ffi::Error::new(rusqlite::ErrorCode::DatabaseCorrupt),
+                    rusqlite::ffi::Error::new(rusqlite::ErrorCode::DatabaseCorrupt as i32),
                     None,
                 ),
             ),

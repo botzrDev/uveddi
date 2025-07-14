@@ -393,7 +393,12 @@ impl LlmProvider for OllamaProvider {
         let response = self
             .infer(prompt)
             .await
-            .map_err(|e| UveddiError::GenericError(anyhow::anyhow!(e)))?;
+            .map_err(|e| UveddiError::GenericError {
+                message: e.to_string(),
+                context: "Ollama request failed".to_string(),
+                suggestion: "Check Ollama service status and connectivity".to_string(),
+                source: Some(anyhow::anyhow!(e)),
+            })?;
         Ok(response)
     }
 
