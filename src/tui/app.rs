@@ -256,11 +256,30 @@ impl AppState {
     /// Handle start analysis command
     fn handle_start_analysis(&mut self, command: crate::cli::analyze_command::AnalyzeCommand) -> Vec<AppMessage> {
         self.status_message = Some(format!("Starting analysis of: {}", command.path.display()));
-        // TODO: In a real implementation, this would:
-        // 1. Validate the command
-        // 2. Execute the analysis in a background thread
-        // 3. Navigate to a progress/results screen
-        // For now, just show a status message and navigate back to main menu
+        
+        // Spawn the analysis task in a background thread
+        let command_clone = command.clone();
+        std::thread::spawn(move || {
+            // Create a tokio runtime for the async analysis
+            let rt = tokio::runtime::Runtime::new().unwrap();
+            let result = rt.block_on(async {
+                command_clone.execute().await
+            });
+            
+            match result {
+                Ok(_) => {
+                    // Analysis completed successfully
+                    // In a real implementation, we'd send a message back to the UI
+                    // For now, we just log the success
+                    println!("Analysis completed successfully!");
+                }
+                Err(e) => {
+                    // Analysis failed
+                    eprintln!("Analysis failed: {}", e);
+                }
+            }
+        });
+        
         vec![AppMessage::AnalysisStarted]
     }
     

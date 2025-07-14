@@ -49,7 +49,9 @@
       "Bash(timeout 30s cargo test test_analysis_config_conversion --test tui_integration --features tui -- --nocapture)",
       "Bash(timeout 30s cargo test test_error_handling_invalid_path --test tui_integration --features tui -- --nocapture)",
       "Bash(timeout 30s cargo test test_form_validation_empty_path --test tui_form_validation --features tui -- --nocapture)",
-      "Bash(timeout 30s cargo test test_form_validation_invalid_confidence --test tui_form_validation --features tui -- --nocapture)"
+      "Bash(timeout 30s cargo test test_form_validation_invalid_confidence --test tui_form_validation --features tui -- --nocapture)",
+      "Bash(RUST_BACKTRACE=1 cargo run --bin tui_test --features tui)",
+      "Bash(tty)"
     ],
     "deny": []
   }

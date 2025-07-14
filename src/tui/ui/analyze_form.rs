@@ -330,6 +330,14 @@ impl AnalyzeForm {
                 self.previous_section();
                 vec![]
             }
+            KeyCode::Left if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                self.previous_section();
+                vec![]
+            }
+            KeyCode::Right if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                self.next_section();
+                vec![]
+            }
             
             // Navigation between fields
             KeyCode::Tab => {
@@ -337,6 +345,14 @@ impl AnalyzeForm {
                 vec![]
             }
             KeyCode::BackTab => {
+                self.previous_field();
+                vec![]
+            }
+            KeyCode::Down => {
+                self.next_field();
+                vec![]
+            }
+            KeyCode::Up => {
                 self.previous_field();
                 vec![]
             }
@@ -351,7 +367,7 @@ impl AnalyzeForm {
                 vec![AppMessage::NavigateToMainMenu]
             }
             
-            // Pass key to current input
+            // Pass key to current input (but not navigation keys)
             _ => {
                 if let Some(field) = self.current_field {
                     self.handle_field_input(field, key);
@@ -742,10 +758,10 @@ impl AnalyzeForm {
         let help_text = vec![
             Line::from(vec![
                 Span::styled("Navigation: ", Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)),
-                Span::styled("Tab", Style::default().fg(Color::Green)),
-                Span::styled(" next field  ", Style::default().fg(Color::Gray)),
-                Span::styled("Ctrl+Tab", Style::default().fg(Color::Green)),
-                Span::styled(" next section", Style::default().fg(Color::Gray)),
+                Span::styled("↑↓/Tab", Style::default().fg(Color::Green)),
+                Span::styled(" field  ", Style::default().fg(Color::Gray)),
+                Span::styled("Ctrl+←→/Ctrl+Tab", Style::default().fg(Color::Green)),
+                Span::styled(" section", Style::default().fg(Color::Gray)),
             ]),
             Line::from(vec![
                 Span::styled("Actions: ", Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)),

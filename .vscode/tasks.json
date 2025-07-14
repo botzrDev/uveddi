@@ -39,6 +39,20 @@
 				"$rustc"
 			],
 			"isBackground": false
+		},
+		{
+			"label": "Run TUI",
+			"type": "shell",
+			"command": "cargo",
+			"args": ["run", "--bin", "tui_test", "--features", "tui"],
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": true,
+				"panel": "new"
+			},
+			"problemMatcher": []
 		}
 	]
 }
