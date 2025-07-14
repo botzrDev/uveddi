@@ -6,6 +6,7 @@
 //! - Predictable state transitions through update function
 
 use crate::tui::messages::AppMessage;
+use crate::tui::ui::analyze_form::AnalyzeForm;
 
 /// Represents the different screens/views in the TUI application
 #[derive(Debug, Clone, PartialEq)]
@@ -45,6 +46,9 @@ pub struct AppState {
     
     /// Application version for display
     pub version: String,
+    
+    /// Analyze form state (persists between key presses)
+    pub analyze_form: AnalyzeForm,
 }
 
 impl AppState {
@@ -57,6 +61,7 @@ impl AppState {
             error_message: None,
             status_message: Some("Welcome to Uveddi TUI! Press '?' for help".to_string()),
             version: env!("CARGO_PKG_VERSION").to_string(),
+            analyze_form: AnalyzeForm::new(),
         }
     }
     
@@ -74,6 +79,7 @@ impl AppState {
     pub fn update(&mut self, message: AppMessage) -> Vec<AppMessage> {
         match message {
             AppMessage::KeyPressed(key) => self.handle_key_input(key),
+            AppMessage::FormKeyPressed(key) => self.handle_form_key_input(key),
             AppMessage::NavigateToMainMenu => self.navigate_to_screen(AppScreen::MainMenu),
             AppMessage::NavigateToAnalyze => self.navigate_to_screen(AppScreen::AnalyzeForm),
             AppMessage::NavigateToConfig => self.navigate_to_screen(AppScreen::ConfigEditor),
@@ -101,6 +107,11 @@ impl AppState {
             AppMessage::PluginUnloaded(plugin) => self.handle_plugin_unloaded(plugin),
             AppMessage::PluginError(error) => self.handle_plugin_error(error),
         }
+    }
+    
+    /// Handle form keyboard input events with persistent state
+    fn handle_form_key_input(&mut self, key: ratatui::crossterm::event::KeyEvent) -> Vec<AppMessage> {
+        self.analyze_form.handle_key(key)
     }
     
     /// Handle keyboard input events

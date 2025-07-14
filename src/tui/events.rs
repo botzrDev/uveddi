@@ -173,8 +173,7 @@ impl EventHandler {
     }
     
     /// Handle keys for analyze form screen
-    fn handle_analyze_form_keys(&self, key_event: KeyEvent, _app_state: &AppState) -> Vec<AppMessage> {
-        use crate::tui::ui::analyze_form::AnalyzeForm;
+    fn handle_analyze_form_keys(&self, key_event: KeyEvent, app_state: &AppState) -> Vec<AppMessage> {
         use ratatui::crossterm::event::{KeyCode as RatatuiKeyCode, KeyModifiers as RatatuiKeyModifiers, KeyEvent as RatatuiKeyEvent};
         use crossterm::event::{KeyCode, KeyModifiers};
         
@@ -231,9 +230,8 @@ impl EventHandler {
         
         let ratatui_key_event = RatatuiKeyEvent::new(ratatui_key_code, ratatui_modifiers);
         
-        // Delegate to AnalyzeForm component for keyboard handling
-        let mut analyze_form = AnalyzeForm::new();
-        analyze_form.handle_key(ratatui_key_event)
+        // Return a message to handle form key input with the persistent state
+        vec![AppMessage::FormKeyPressed(ratatui_key_event)]
     }
     
     /// Handle keys for config editor screen

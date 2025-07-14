@@ -176,6 +176,7 @@ impl FormField {
 }
 
 /// All form input components organized by type
+#[derive(Debug, Clone)]
 struct AnalyzeFormInputs {
     // Basic Settings
     path_picker: PathPicker,
@@ -284,6 +285,7 @@ impl AnalyzeFormInputs {
 }
 
 /// Analysis form state and input management
+#[derive(Debug, Clone)]
 pub struct AnalyzeForm {
     /// Current active section
     current_section: FormSection,

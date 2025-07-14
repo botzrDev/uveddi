@@ -5,6 +5,7 @@
 //! message definition duplication.
 
 use crossterm::event::KeyEvent;
+use ratatui::crossterm::event::KeyEvent as RatatuiKeyEvent;
 use crate::cli::analyze_command::AnalyzeCommand;
 
 /// All possible messages that can trigger state changes in the TUI
@@ -12,6 +13,9 @@ use crate::cli::analyze_command::AnalyzeCommand;
 pub enum AppMessage {
     /// Terminal input events
     KeyPressed(KeyEvent),
+    
+    /// Form key input events (for persistent form state)
+    FormKeyPressed(RatatuiKeyEvent),
     
     /// Navigation messages
     NavigateToMainMenu,

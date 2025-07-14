@@ -24,8 +24,7 @@ pub fn render(frame: &mut Frame, app_state: &AppState) {
             main_menu.render(frame, frame.area(), app_state);
         }
         AppScreen::AnalyzeForm => {
-            let analyze_form = AnalyzeForm::new();
-            analyze_form.render(frame, frame.area(), app_state);
+            app_state.analyze_form.render(frame, frame.area(), app_state);
         }
         AppScreen::ConfigEditor => {
             // TODO: Implement in later task
