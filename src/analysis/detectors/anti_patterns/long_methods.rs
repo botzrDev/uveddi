@@ -594,7 +594,7 @@ impl LongMethodsDetector {
                         *complexity += 1;
                     }
 
-                    traverse_complexity(&child_node, complexity);
+                    traverse_complexity(node, complexity);
 
                     if !cursor.goto_next_sibling() {
                         break;
@@ -969,12 +969,14 @@ impl AnalysisDetector for LongMethodsDetector {
 mod tests {
     use super::*;
     use crate::ast::tree_sitter_impl::AstParser;
+    use crate::error::ErrorHelpers;
     use std::path::PathBuf;
 
     #[test]
-    fn test_long_method_detection_rust() {
+    fn test_long_method_detection_rust() -> Result<(), Box<dyn std::error::Error>> {
         let detector = LongMethodsDetector::new();
-        let mut parser = AstParser::new().expect("Failed to create parser");
+        let mut parser = AstParser::new()
+            .map_err(|e| ErrorHelpers::ast_error(&format!("parser creation: {}", e)))?;
 
         let rust_code = r#"
 fn very_long_function() {
@@ -1013,21 +1015,23 @@ fn very_long_function() {
 
         let parsed_file = parser
             .parse_content(rust_code, &PathBuf::from("test.rs"), SourceLanguage::Rust)
-            .expect("Failed to parse Rust code");
+            .map_err(|e| ErrorHelpers::file_processing_error("test.rs", "parsing", &e.to_string()))?;
 
         let issues = detector
             .detect_issues(&parsed_file)
-            .expect("Analysis failed");
+            .map_err(|e| ErrorHelpers::detector_config_error("long_methods", &e.to_string()))?;
 
         assert!(!issues.is_empty(), "Should detect long method");
         assert_eq!(issues[0].anti_pattern_type_id, 4); // LongMethod ID is 4
         assert!(issues[0].description.contains("very_long_function"));
+        Ok(())
     }
 
     #[test]
-    fn test_short_method_no_detection() {
+    fn test_short_method_no_detection() -> Result<(), Box<dyn std::error::Error>> {
         let detector = LongMethodsDetector::new();
-        let mut parser = AstParser::new().expect("Failed to create parser");
+        let mut parser = AstParser::new()
+            .map_err(|e| ErrorHelpers::ast_error(&format!("parser creation: {}", e)))?;
 
         let rust_code = r#"
 fn short_function() {
@@ -1037,19 +1041,21 @@ fn short_function() {
 
         let parsed_file = parser
             .parse_content(rust_code, &PathBuf::from("test.rs"), SourceLanguage::Rust)
-            .expect("Failed to parse Rust code");
+            .map_err(|e| ErrorHelpers::file_processing_error("test.rs", "parsing", &e.to_string()))?;
 
         let issues = detector
             .detect_issues(&parsed_file)
-            .expect("Analysis failed");
+            .map_err(|e| ErrorHelpers::detector_config_error("long_methods", &e.to_string()))?;
 
         assert!(issues.is_empty(), "Should not detect short method");
+        Ok(())
     }
 
     #[test]
-    fn test_python_long_method_detection() {
+    fn test_python_long_method_detection() -> Result<(), Box<dyn std::error::Error>> {
         let detector = LongMethodsDetector::new();
-        let mut parser = AstParser::new().expect("Failed to create parser");
+        let mut parser = AstParser::new()
+            .map_err(|e| ErrorHelpers::ast_error(&format!("parser creation: {}", e)))?;
 
         let python_code = r#"
 def very_long_function():
@@ -1082,14 +1088,15 @@ def very_long_function():
                 &PathBuf::from("test.py"),
                 SourceLanguage::Python,
             )
-            .expect("Failed to parse Python code");
+            .map_err(|e| ErrorHelpers::file_processing_error("test.py", "parsing", &e.to_string()))?;
 
         let issues = detector
             .detect_issues(&parsed_file)
-            .expect("Analysis failed");
+            .map_err(|e| ErrorHelpers::detector_config_error("long_methods", &e.to_string()))?;
 
         assert!(!issues.is_empty(), "Should detect long method");
         assert_eq!(issues[0].anti_pattern_type_id, 4); // LongMethod ID is 4
         assert!(issues[0].description.contains("very_long_function"));
+        Ok(())
     }
 }

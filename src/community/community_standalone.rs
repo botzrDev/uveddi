@@ -266,12 +266,18 @@ impl CommunityDatabase {
                 id: Some(row.get(0)?),
                 email: row.get(1)?,
                 username: row.get(2)?,
-                role: MemberRole::from_string(&row.get::<_, String>(3)?).unwrap(),
+                role: MemberRole::from_string(&row.get::<_, String>(3)?)
+                    .map_err(|e| rusqlite::Error::InvalidColumnType(3, "role".to_string(), rusqlite::types::Type::Text))?,
                 display_name: row.get(4)?,
                 created_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(5)?)
-                    .unwrap().with_timezone(&Utc),
-                last_active: row.get::<_, Option<String>>(6)?
-                    .map(|s| DateTime::parse_from_rfc3339(&s).unwrap().with_timezone(&Utc)),
+                    .map_err(|_| rusqlite::Error::InvalidColumnType(5, "created_at".to_string(), rusqlite::types::Type::Text))?
+                    .with_timezone(&Utc),
+                last_active: match row.get::<_, Option<String>>(6)? {
+                    Some(s) => Some(DateTime::parse_from_rfc3339(&s)
+                        .map_err(|_| rusqlite::Error::InvalidColumnType(6, "last_active".to_string(), rusqlite::types::Type::Text))?
+                        .with_timezone(&Utc)),
+                    None => None,
+                },
                 is_active: row.get(7)?,
             })
         })?;
@@ -397,11 +403,13 @@ impl CommunityDatabase {
             Ok(MemberActivity {
                 id: Some(row.get(0)?),
                 member_id: row.get(1)?,
-                activity_type: ActivityType::from_string(&row.get::<_, String>(2)?).unwrap(),
+                activity_type: ActivityType::from_string(&row.get::<_, String>(2)?)
+                    .map_err(|_| rusqlite::Error::InvalidColumnType(2, "activity_type".to_string(), rusqlite::types::Type::Text))?,
                 description: row.get(3)?,
                 metadata: row.get(4)?,
                 timestamp: DateTime::parse_from_rfc3339(&row.get::<_, String>(5)?)
-                    .unwrap().with_timezone(&Utc),
+                    .map_err(|_| rusqlite::Error::InvalidColumnType(5, "timestamp".to_string(), rusqlite::types::Type::Text))?
+                    .with_timezone(&Utc),
             })
         })?;
 
