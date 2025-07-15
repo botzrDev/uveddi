@@ -657,8 +657,8 @@ mod tests {
         let stats = parser.get_cache_stats();
         assert_eq!(stats.misses, 4); // Cache miss because file1 was evicted
 
-        // Re-parse file2 - should be cache hit (still in cache)
-        let _parsed2_again = parser.parse_file(&file2).unwrap();
+        // Re-parse file3 - should be cache hit (most recently used, still in cache)
+        let _parsed3_again = parser.parse_file(&file3).unwrap();
 
         let stats = parser.get_cache_stats();
         assert_eq!(stats.hits, 1); // Cache hit

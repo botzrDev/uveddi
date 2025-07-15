@@ -235,6 +235,12 @@ impl AstCache {
             Ok(modified) => modified,
             Err(_) => {
                 debug!("Failed to get file metadata for: {:?}", path);
+                // Still count as cache miss even for non-existent files
+                {
+                    let mut metrics = self.metrics.lock().unwrap();
+                    metrics.cache_misses += 1;
+                    metrics.update_hit_rate();
+                }
                 return None;
             }
         };
@@ -943,7 +949,7 @@ mod tests {
         let exported = cache.export_metrics_for_observability();
         assert!(exported.get("ast_cache").is_some());
 
-        let ast_cache_metrics = &exported["ast_cache"];
+        let ast_cache_metrics = &exported["ast_cache"]["regular_cache"];
         assert!(ast_cache_metrics.get("total_requests").is_some());
         assert!(ast_cache_metrics.get("cache_hits").is_some());
         assert!(ast_cache_metrics.get("hit_rate_percent").is_some());
@@ -1306,7 +1312,26 @@ mod tests {
         let test_file = temp_dir.path().join("invalidation_test.rs");
         fs::write(&test_file, "fn original() {}").unwrap();
 
-        // Simulate cached entry
+        // Simulate cached entry by actually storing something in the cache
+        let cached_ast = CachedAST {
+            #[cfg(feature = "tree-sitter")]
+            ast: None,
+            #[cfg(not(feature = "tree-sitter"))]
+            ast: None,
+            file_hash: "test_hash".to_string(),
+            last_modified: std::time::SystemTime::now(),
+            access_count: 1,
+            last_accessed: std::time::Instant::now(),
+            memory_size_bytes: 2048,
+            language: "rs".to_string(),
+            is_memory_mapped: false,
+        };
+
+        // Store in cache and update memory tracking
+        {
+            let mut cache_map = cache.cache.write().unwrap();
+            cache_map.insert(test_file.clone(), cached_ast);
+        }
         cache.update_lru_order(&test_file);
         {
             let mut memory_usage = cache.memory_usage.lock().unwrap();
@@ -1354,7 +1379,7 @@ mod tests {
 
         // Test exported metrics format
         let exported = cache.export_metrics_for_observability();
-        let ast_metrics = &exported["ast_cache"];
+        let ast_metrics = &exported["ast_cache"]["regular_cache"];
 
         assert_eq!(ast_metrics["total_requests"], 3);
         assert_eq!(ast_metrics["cache_misses"], 3);
