@@ -1153,7 +1153,8 @@ mod tests {
         let cfg = ControlFlowGraph::new();
         
         let complexity = analyzer.compute_cyclomatic_complexity(&cfg);
-        assert!(complexity >= 0);
+        // Complexity should be valid (no need to check >= 0 for u32)
+        let _complexity_value = complexity;
     }
     
     #[test]

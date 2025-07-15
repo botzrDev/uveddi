@@ -1,17 +1,18 @@
-//! Comprehensive TUI Integration Tests
-//!
-//! This module provides automated testing for the TUI-backend integration,
-//! ensuring that the Terminal User Interface correctly interacts with
-//! backend analysis systems, database operations, and report generation.
-//!
-//! # Test Categories
-//!
-//! - **State Management**: TEA pattern implementation and state transitions
-//! - **Backend Integration**: Analysis orchestrator and CLI command integration
-//! - **Form Processing**: AnalyzeForm to AnalyzeCommand conversion and validation
-//! - **Message Flow**: AppMessage handling and event propagation
-//! - **Error Handling**: Error state management and user feedback
-//! - **Configuration**: Settings persistence and validation
+#[cfg(feature = "tui")]
+// Comprehensive TUI Integration Tests
+//
+// This module provides automated testing for the TUI-backend integration,
+// ensuring that the Terminal User Interface correctly interacts with
+// backend analysis systems, database operations, and report generation.
+//
+// # Test Categories
+//
+// - **State Management**: TEA pattern implementation and state transitions
+// - **Backend Integration**: Analysis orchestrator and CLI command integration
+// - **Form Processing**: AnalyzeForm to AnalyzeCommand conversion and validation
+// - **Message Flow**: AppMessage handling and event propagation
+// - **Error Handling**: Error state management and user feedback
+// - **Configuration**: Settings persistence and validation
 
 use std::path::PathBuf;
 
@@ -20,8 +21,8 @@ use uveddi::application::AnalysisOrchestrator;
 use uveddi::analysis::AnalysisConfig;
 use uveddi::cli::analyze_command::AnalyzeCommand;
 use uveddi::error::UveddiError;
-#[cfg(feature = "tui")]
-use uveddi::tui::{AppState, AppMessage, AppScreen};
+use uveddi::tui::app::{AppState, AppScreen};
+use uveddi::tui::messages::AppMessage;
 
 /// Helper function to create a minimal test project structure
 async fn create_test_project(base_path: &str) -> std::io::Result<PathBuf> {
@@ -314,6 +315,9 @@ async fn test_error_handling_invalid_path() {
         large_classes_max_lcom: None,
         large_classes_ignore_patterns: None,
         large_classes_min_severity: None,
+        enable_memory_optimization: false,
+        memory_limit_gb: None,
+        memory_profile: None,
     };
 
     // This should fail gracefully with a proper error
@@ -359,6 +363,9 @@ async fn test_tui_to_cli_command_pipeline() {
         large_classes_max_lcom: Some(0.8),
         large_classes_ignore_patterns: Some(vec!["generated".to_string()]),
         large_classes_min_severity: Some(25),
+        enable_memory_optimization: false,
+        memory_limit_gb: None,
+        memory_profile: None,
     };
 
     // Verify the command can be executed (integration with backend)
@@ -464,6 +471,9 @@ async fn test_configuration_validation() {
         large_classes_max_lcom: Some(2.0),  // Invalid: > 1.0
         large_classes_ignore_patterns: None,
         large_classes_min_severity: Some(101), // Invalid: > 100
+        enable_memory_optimization: false,
+        memory_limit_gb: None,
+        memory_profile: None,
     };
 
     // The backend should handle these validation errors gracefully

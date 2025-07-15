@@ -1217,7 +1217,8 @@ mod tests {
         assert!(metrics.total_requests > 0);
 
         // Should not have crashed or deadlocked
-        assert!(cache.size() >= 0);
+        // Cache size should be valid (no need to check >= 0 for usize)
+        let _cache_size = cache.size();
     }
 
     #[test]

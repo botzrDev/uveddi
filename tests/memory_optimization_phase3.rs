@@ -15,7 +15,7 @@ fn test_phase3_arena_allocation_initialization() {
     
     // Test status export includes arena information
     let status = get_optimization_status();
-    assert_eq!(status["phase"].as_str().unwrap(), "Phase 3 - Arena Allocation");
+    assert_eq!(status["phase"].as_str().unwrap(), "Phase 4 - Zero-Copy AST Caching");
     assert!(status["arenas"].is_object());
 }
 
@@ -275,7 +275,7 @@ fn test_full_memory_optimization_with_arenas() {
     
     // Test status export includes arena information
     let status = get_optimization_status();
-    assert_eq!(status["phase"].as_str().unwrap(), "Phase 3 - Arena Allocation");
+    assert_eq!(status["phase"].as_str().unwrap(), "Phase 4 - Zero-Copy AST Caching");
     assert!(status["arenas"].is_object());
     assert!(status["pools"].is_object()); // Should still have pools from Phase 2
     assert!(status["metrics"].is_object()); // Should still have basic metrics

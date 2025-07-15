@@ -8,7 +8,6 @@ use tokio::sync::Mutex;
 use uveddi::resilience::health::{Alert, HealthMonitor, HealthStatus};
 
 /// Placeholder documentation for public items
-
 /// Shared state for HTTP handlers
 #[derive(Clone)]
 pub struct AppState {

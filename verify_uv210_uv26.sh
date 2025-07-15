@@ -61,7 +61,7 @@ run_test() {
     local test_name="$1"
     echo "  🔄 Running $test_name..."
     
-    if cargo test "$test_name" --quiet > "$REPORT_DIR/${test_name}_output.txt" 2>&1; then
+    if cargo test --test "$test_name" --quiet > "$REPORT_DIR/${test_name}_output.txt" 2>&1; then
         echo "  ✅ $test_name PASSED"
         return 0
     else
@@ -96,7 +96,7 @@ else
 fi
 
 echo "  🔄 Checking clippy compliance..."
-if cargo clippy --features memory-optimization -- -D warnings --quiet > "$REPORT_DIR/clippy_output.txt" 2>&1; then
+if cargo clippy --lib --tests --features memory-optimization -- -D warnings > "$REPORT_DIR/clippy_output.txt" 2>&1; then
     echo "  ✅ Clippy compliance PASSED"
 else
     echo "  ❌ Clippy compliance FAILED"

@@ -1,8 +1,9 @@
-//! TUI Form Validation and Data Conversion Tests
-//!
-//! This module tests the form validation logic and data conversion
-//! between TUI form inputs and backend command structures.
-//! Focuses on ensuring data integrity and proper error handling.
+#[cfg(feature = "tui")]
+// TUI Form Validation and Data Conversion Tests
+//
+// This module tests the form validation logic and data conversion
+// between TUI form inputs and backend command structures.
+// Focuses on ensuring data integrity and proper error handling.
 
 use std::path::PathBuf;
 
@@ -256,6 +257,9 @@ impl MockAnalyzeFormData {
             large_classes_max_lcom,
             large_classes_ignore_patterns,
             large_classes_min_severity,
+            enable_memory_optimization: false,
+            memory_limit_gb: None,
+            memory_profile: None,
         })
     }
 }

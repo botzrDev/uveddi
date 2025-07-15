@@ -1,0 +1,66 @@
+warning: struct `AppState` is never constructed
+  --> src/server/mod.rs:14:12
+   |
+14 | pub struct AppState {
+   |            ^^^^^^^^
+   |
+   = note: `AppState` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+   = note: `#[warn(dead_code)]` on by default
+
+warning: function `run_server` is never used
+  --> src/server/mod.rs:19:14
+   |
+19 | pub async fn run_server(
+   |              ^^^^^^^^^^
+
+warning: function `health_handler` is never used
+  --> src/server/mod.rs:38:10
+   |
+38 | async fn health_handler(State(state): State<AppState>) -> (StatusCode, &'static str) {
+   |          ^^^^^^^^^^^^^^
+
+warning: function `detailed_health_handler` is never used
+  --> src/server/mod.rs:47:10
+   |
+47 | async fn detailed_health_handler(State(state): State<AppState>) -> Json<HealthStatus> {
+   |          ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `alerts_handler` is never used
+  --> src/server/mod.rs:53:10
+   |
+53 | async fn alerts_handler(State(state): State<AppState>) -> Json<Vec<Alert>> {
+   |          ^^^^^^^^^^^^^^
+
+warning: `uveddi` (bin "uveddi") generated 5 warnings
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.16s
+     Running `target/debug/uveddi analyze src/lib.rs --output-format json --enable-memory-optimization`
+{
+  "issues": [
+    {
+      "aiExplanation": "Reduce coupling by: 1) Using dependency injection, 2) Applying interfaces/traits, 3) Reducing direct dependencies. Current metrics: Fan-out=20, Fan-in=0, CBO=20, RFC=23",
+      "codeSnippet": "module",
+      "description": "Fan-out 20 exceeds critical threshold 12",
+      "filePath": "src/lib.rs",
+      "severity": "Critical"
+    },
+    {
+      "aiExplanation": "Reduce coupling by: 1) Using dependency injection, 2) Applying interfaces/traits, 3) Reducing direct dependencies. Current metrics: Fan-out=20, Fan-in=0, CBO=20, RFC=23",
+      "codeSnippet": "module",
+      "description": "CBO 20 exceeds critical threshold 10",
+      "filePath": "src/lib.rs",
+      "severity": "Critical"
+    },
+    {
+      "aiExplanation": "Reduce coupling by: 1) Using dependency injection, 2) Applying interfaces/traits, 3) Reducing direct dependencies. Current metrics: Fan-out=20, Fan-in=0, CBO=20, RFC=23",
+      "codeSnippet": "module",
+      "description": "RFC 23 exceeds warning threshold 15",
+      "filePath": "src/lib.rs",
+      "severity": "Warning"
+    }
+  ],
+  "metadata": {
+    "codebasePath": "Unknown",
+    "durationSeconds": 0.0,
+    "timestamp": "2025-07-15T13:00:29.024085084-05:00"
+  }
+}

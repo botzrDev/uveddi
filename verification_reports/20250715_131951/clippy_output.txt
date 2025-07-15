@@ -1,0 +1,691 @@
+    Checking uveddi v0.1.0 (/home/austingreen/Documents/botzr/projects/uveddi)
+error: this comparison involving the minimum or maximum element for this type contains a case that is always true or always false
+    --> src/analysis/cache/ast.rs:1220:17
+     |
+1220 |         assert!(cache.size() >= 0);
+     |                 ^^^^^^^^^^^^^^^^^
+     |
+     = help: because `0` is the minimum value for this type, this comparison is always true
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#absurd_extreme_comparisons
+     = note: `#[deny(clippy::absurd_extreme_comparisons)]` on by default
+
+error: this comparison involving the minimum or maximum element for this type contains a case that is always true or always false
+    --> src/analysis/semantic/mod.rs:1156:17
+     |
+1156 |         assert!(complexity >= 0);
+     |                 ^^^^^^^^^^^^^^^
+     |
+     = help: because `0` is the minimum value for this type, this comparison is always true
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#absurd_extreme_comparisons
+
+error: unused import: `std::path::PathBuf`
+  --> tests/tui_performance.rs:10:5
+   |
+10 | use std::path::PathBuf;
+   |     ^^^^^^^^^^^^^^^^^^
+   |
+   = note: `-D unused-imports` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(unused_imports)]`
+
+error: unused import: `Instant`
+  --> tests/tui_performance.rs:11:27
+   |
+11 | use std::time::{Duration, Instant};
+   |                           ^^^^^^^
+
+error: unused import: `uveddi::cli::analyze_command::AnalyzeCommand`
+  --> tests/tui_performance.rs:13:5
+   |
+13 | use uveddi::cli::analyze_command::AnalyzeCommand;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: constant `RAPID_UPDATES_COUNT` is never used
+  --> tests/tui_performance.rs:18:7
+   |
+18 | const RAPID_UPDATES_COUNT: usize = 10_000;
+   |       ^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `-D dead-code` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(dead_code)]`
+
+error: constant `STRESS_TEST_DURATION` is never used
+  --> tests/tui_performance.rs:19:7
+   |
+19 | const STRESS_TEST_DURATION: Duration = Duration::from_secs(5);
+   |       ^^^^^^^^^^^^^^^^^^^^
+
+error: constant `PERFORMANCE_THRESHOLD_MS` is never used
+  --> tests/tui_performance.rs:20:7
+   |
+20 | const PERFORMANCE_THRESHOLD_MS: u128 = 100;
+   |       ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: could not compile `uveddi` (test "tui_performance") due to 6 previous errors
+warning: build failed, waiting for other jobs to finish...
+error: this import is redundant
+ --> tests/plugin_system_comprehensive.rs:6:5
+  |
+6 |     use futures;
+  |     ^^^^^^^^^^^^ help: remove it entirely
+  |
+  = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#single_component_path_imports
+  = note: `-D clippy::single-component-path-imports` implied by `-D warnings`
+  = help: to override `-D warnings` add `#[allow(clippy::single_component_path_imports)]`
+
+error: field assignment outside of initializer for an instance created with Default::default()
+   --> tests/memory_optimization_phase4.rs:339:5
+    |
+339 |     cache_config.enable_zero_copy = true;
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+note: consider initializing the variable with `uveddi::analysis::cache::ast::CacheConfig { enable_zero_copy: true, zero_copy_cache_dir: temp_dir.path().join("zero_copy"), zero_copy_threshold_bytes: 100, ..Default::default() }` and removing relevant reassignments
+   --> tests/memory_optimization_phase4.rs:338:5
+    |
+338 |     let mut cache_config = CacheConfig::default();
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#field_reassign_with_default
+    = note: `-D clippy::field-reassign-with-default` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::field_reassign_with_default)]`
+
+error: manual `RangeInclusive::contains` implementation
+   --> tests/memory_optimization_phase4.rs:414:13
+    |
+414 |     assert!(score >= 0.0 && score <= 1.0);
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: use: `(0.0..=1.0).contains(&score)`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#manual_range_contains
+    = note: `-D clippy::manual-range-contains` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::manual_range_contains)]`
+
+error: manual `RangeInclusive::contains` implementation
+   --> tests/memory_optimization_phase4.rs:425:13
+    |
+425 |     assert!(small_score >= 0.0 && small_score <= 1.0);
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: use: `(0.0..=1.0).contains(&small_score)`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#manual_range_contains
+
+error: variables can be used directly in the `format!` string
+   --> tests/memory_optimization_phase4.rs:484:28
+    |
+484 |                 file_path: format!("test_{}.rs", i),
+    |                            ^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+    = note: `-D clippy::uninlined-format-args` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::uninlined_format_args)]`
+help: change this to
+    |
+484 -                 file_path: format!("test_{}.rs", i),
+484 +                 file_path: format!("test_{i}.rs"),
+    |
+
+error: variables can be used directly in the `format!` string
+   --> tests/memory_optimization_phase4.rs:507:35
+    |
+507 |                 source_text: Some(format!("fn test_{}() {{}}", i)),
+    |                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+507 -                 source_text: Some(format!("fn test_{}() {{}}", i)),
+507 +                 source_text: Some(format!("fn test_{i}() {{}}")),
+    |
+
+error: variables can be used directly in the `format!` string
+   --> tests/memory_optimization_phase4.rs:510:50
+    |
+510 |             let file_path = temp_dir.path().join(format!("test_{}.rs", i));
+    |                                                  ^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+510 -             let file_path = temp_dir.path().join(format!("test_{}.rs", i));
+510 +             let file_path = temp_dir.path().join(format!("test_{i}.rs"));
+    |
+
+error: variables can be used directly in the `format!` string
+   --> tests/memory_optimization_phase4.rs:641:28
+    |
+641 |                 node_type: format!("function_{}", i),
+    |                            ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+641 -                 node_type: format!("function_{}", i),
+641 +                 node_type: format!("function_{i}"),
+    |
+
+error: variables can be used directly in the `format!` string
+   --> tests/memory_optimization_phase4.rs:654:28
+    |
+654 |                 text: Some(format!("fn function_{}() {{}}", i)),
+    |                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+654 -                 text: Some(format!("fn function_{}() {{}}", i)),
+654 +                 text: Some(format!("fn function_{i}() {{}}")),
+    |
+
+error: could not compile `uveddi` (test "memory_optimization_phase4") due to 8 previous errors
+error: variables can be used directly in the `format!` string
+  --> tests/plugin_system_comprehensive.rs:91:26
+   |
+91 |               let source = format!(
+   |  __________________________^
+92 | |                 "// File {}
+93 | | fn function_{}() {{\n    let x = {};\n    println!(\"Value: {{}}\", x);\n}}",
+94 | |                 i, i, i
+95 | |             );
+   | |_____________^
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+   = note: `-D clippy::uninlined-format-args` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(clippy::uninlined_format_args)]`
+
+error: variables can be used directly in the `format!` string
+  --> tests/plugin_system_comprehensive.rs:97:51
+   |
+97 |                 file_path: Arc::new(PathBuf::from(format!("/test/file_{}.rs", i))),
+   |                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+   |
+97 -                 file_path: Arc::new(PathBuf::from(format!("/test/file_{}.rs", i))),
+97 +                 file_path: Arc::new(PathBuf::from(format!("/test/file_{i}.rs"))),
+   |
+
+error: variables can be used directly in the `format!` string
+   --> tests/plugin_system_comprehensive.rs:149:17
+    |
+149 |                 println!("Plugin loading failed as expected: {:?}", e);
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+149 -                 println!("Plugin loading failed as expected: {:?}", e);
+149 +                 println!("Plugin loading failed as expected: {e:?}");
+    |
+
+error: `assert!(true)` will be optimized out by the compiler
+   --> tests/plugin_system_comprehensive.rs:150:17
+    |
+150 | /                 assert!(
+151 | |                     true,
+152 | |                     "Plugin loading failure is expected in current implementation"
+153 | |                 );
+    | |_________________^
+    |
+    = help: remove it
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#assertions_on_constants
+    = note: `-D clippy::assertions-on-constants` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::assertions_on_constants)]`
+
+error: variables can be used directly in the `format!` string
+   --> tests/plugin_system_comprehensive.rs:248:13
+    |
+248 |             println!("Testing security policy: {}", policy_name);
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+248 -             println!("Testing security policy: {}", policy_name);
+248 +             println!("Testing security policy: {policy_name}");
+    |
+
+error: variables can be used directly in the `format!` string
+   --> tests/plugin_system_comprehensive.rs:302:13
+    |
+302 |             println!("Testing resource limits for policy: {}", policy_name);
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+302 -             println!("Testing resource limits for policy: {}", policy_name);
+302 +             println!("Testing resource limits for policy: {policy_name}");
+    |
+
+error: variables can be used directly in the `format!` string
+   --> tests/plugin_system_comprehensive.rs:479:9
+    |
+479 |         println!("Plugin loading took: {:?}", load_duration);
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+479 -         println!("Plugin loading took: {:?}", load_duration);
+479 +         println!("Plugin loading took: {load_duration:?}");
+    |
+
+error: variables can be used directly in the `format!` string
+   --> tests/plugin_system_comprehensive.rs:492:60
+    |
+492 |                 let cycle_plugin_id = PluginId::from_name(&format!("cycle-plugin-{}", i));
+    |                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+492 -                 let cycle_plugin_id = PluginId::from_name(&format!("cycle-plugin-{}", i));
+492 +                 let cycle_plugin_id = PluginId::from_name(&format!("cycle-plugin-{i}"));
+    |
+
+error: variables can be used directly in the `format!` string
+   --> tests/plugin_system_comprehensive.rs:511:13
+    |
+511 |             println!("5 load/unload cycles took: {:?}", cycle_duration);
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+511 -             println!("5 load/unload cycles took: {:?}", cycle_duration);
+511 +             println!("5 load/unload cycles took: {cycle_duration:?}");
+    |
+
+error: variables can be used directly in the `format!` string
+   --> tests/plugin_system_comprehensive.rs:621:50
+    |
+621 |             let plugin_id = PluginId::from_name(&format!("concurrent-plugin-{}", i));
+    |                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+621 -             let plugin_id = PluginId::from_name(&format!("concurrent-plugin-{}", i));
+621 +             let plugin_id = PluginId::from_name(&format!("concurrent-plugin-{i}"));
+    |
+
+error: variables can be used directly in the `format!` string
+   --> tests/plugin_system_comprehensive.rs:625:29
+    |
+625 |             manifest.name = format!("concurrent-plugin-{}", i);
+    |                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+625 -             manifest.name = format!("concurrent-plugin-{}", i);
+625 +             manifest.name = format!("concurrent-plugin-{i}");
+    |
+
+error: variables can be used directly in the `format!` string
+   --> tests/plugin_system_comprehensive.rs:655:25
+    |
+655 |                         println!("Plugin {} loaded successfully", i);
+    |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+655 -                         println!("Plugin {} loaded successfully", i);
+655 +                         println!("Plugin {i} loaded successfully");
+    |
+
+error: variables can be used directly in the `format!` string
+   --> tests/plugin_system_comprehensive.rs:658:25
+    |
+658 |                         println!("Plugin {} failed to load: {:?}", i, e);
+    |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+658 -                         println!("Plugin {} failed to load: {:?}", i, e);
+658 +                         println!("Plugin {i} failed to load: {e:?}");
+    |
+
+error: variables can be used directly in the `format!` string
+   --> tests/plugin_system_comprehensive.rs:662:21
+    |
+662 |                     println!("Task {} panicked: {:?}", i, e);
+    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+662 -                     println!("Task {} panicked: {:?}", i, e);
+662 +                     println!("Task {i} panicked: {e:?}");
+    |
+
+error: variables can be used directly in the `format!` string
+   --> tests/plugin_system_comprehensive.rs:689:25
+    |
+689 | /                         assert!(
+690 | |                             monitor_result.is_ok(),
+691 | |                             "Monitoring task {} should succeed",
+692 | |                             i
+693 | |                         );
+    | |_________________________^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+
+error: variables can be used directly in the `format!` string
+   --> tests/plugin_system_comprehensive.rs:696:25
+    |
+696 |                         panic!("Monitoring task {} panicked: {:?}", i, e);
+    |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+696 -                         panic!("Monitoring task {} panicked: {:?}", i, e);
+696 +                         panic!("Monitoring task {i} panicked: {e:?}");
+    |
+
+error: `assert!(true)` will be optimized out by the compiler
+   --> tests/plugin_system_comprehensive.rs:704:9
+    |
+704 |         assert!(true, "Concurrent plugin test completed");
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: remove it
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#assertions_on_constants
+
+error: `assert!(true)` will be optimized out by the compiler
+   --> tests/plugin_system_comprehensive.rs:884:9
+    |
+884 |         assert!(true, "Large data transfer test completed");
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: remove it
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#assertions_on_constants
+
+error: you seem to use `.enumerate()` and immediately discard the index
+   --> tests/plugin_system_comprehensive.rs:915:39
+    |
+915 |             for (_i, _parsed_file) in test_files.iter().take(10).enumerate() {
+    |                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#unused_enumerate_index
+    = note: `-D clippy::unused-enumerate-index` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::unused_enumerate_index)]`
+help: remove the `.enumerate()` call
+    |
+915 -             for (_i, _parsed_file) in test_files.iter().take(10).enumerate() {
+915 +             for _parsed_file in test_files.iter().take(10) {
+    |
+
+error: variables can be used directly in the `format!` string
+   --> tests/plugin_system_comprehensive.rs:942:13
+    |
+942 | /             println!(
+943 | |                 "Pipeline processed {} files in {:?}",
+944 | |                 processed_files, pipeline_duration
+945 | |             );
+    | |_____________^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+
+error: variables can be used directly in the `format!` string
+   --> tests/plugin_system_comprehensive.rs:955:17
+    |
+955 |                 println!("Average processing time per file: {}ms", avg_time_per_file);
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+955 -                 println!("Average processing time per file: {}ms", avg_time_per_file);
+955 +                 println!("Average processing time per file: {avg_time_per_file}ms");
+    |
+
+error: variables can be used directly in the `format!` string
+   --> tests/plugin_system_comprehensive.rs:994:13
+    |
+994 |             println!("Data pipeline processed {} files", processed_count);
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+994 -             println!("Data pipeline processed {} files", processed_count);
+994 +             println!("Data pipeline processed {processed_count} files");
+    |
+
+error: `assert!(true)` will be optimized out by the compiler
+   --> tests/plugin_system_comprehensive.rs:997:9
+    |
+997 |         assert!(true, "Full analysis pipeline test completed");
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: remove it
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#assertions_on_constants
+
+error: could not compile `uveddi` (lib test) due to 2 previous errors
+error: variables can be used directly in the `format!` string
+    --> tests/plugin_system_comprehensive.rs:1064:17
+     |
+1064 | /                 println!(
+1065 | |                     "Valid plugin load failed (expected in current implementation): {:?}",
+1066 | |                     e
+1067 | |                 );
+     | |_________________^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+
+error: `assert!(true)` will be optimized out by the compiler
+    --> tests/plugin_system_comprehensive.rs:1069:17
+     |
+1069 |                 assert!(true, "Error handling works correctly");
+     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+     = help: remove it
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#assertions_on_constants
+
+error: `assert!(true)` will be optimized out by the compiler
+    --> tests/plugin_system_comprehensive.rs:1094:9
+     |
+1094 |         assert!(true, "Error recovery test completed successfully");
+     |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+     = help: remove it
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#assertions_on_constants
+
+error: variables can be used directly in the `format!` string
+    --> tests/plugin_system_comprehensive.rs:1116:13
+     |
+1116 |             println!("Testing malformed plugin: {}", test_name);
+     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+     |
+1116 -             println!("Testing malformed plugin: {}", test_name);
+1116 +             println!("Testing malformed plugin: {test_name}");
+     |
+
+error: variables can be used directly in the `format!` string
+    --> tests/plugin_system_comprehensive.rs:1118:50
+     |
+1118 |             let plugin_id = PluginId::from_name(&format!("malformed-{}", test_name));
+     |                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+     |
+1118 -             let plugin_id = PluginId::from_name(&format!("malformed-{}", test_name));
+1118 +             let plugin_id = PluginId::from_name(&format!("malformed-{test_name}"));
+     |
+
+error: variables can be used directly in the `format!` string
+    --> tests/plugin_system_comprehensive.rs:1132:13
+     |
+1132 | /             assert!(
+1133 | |                 load_result.is_err(),
+1134 | |                 "Malformed plugin '{}' should fail to load",
+1135 | |                 test_name
+1136 | |             );
+     | |_____________^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+
+error: variables can be used directly in the `format!` string
+    --> tests/plugin_system_comprehensive.rs:1152:13
+     |
+1152 |             println!("✓ Malformed plugin '{}' correctly rejected", test_name);
+     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+     |
+1152 -             println!("✓ Malformed plugin '{}' correctly rejected", test_name);
+1152 +             println!("✓ Malformed plugin '{test_name}' correctly rejected");
+     |
+
+error: `assert!(true)` will be optimized out by the compiler
+    --> tests/plugin_system_comprehensive.rs:1176:9
+     |
+1176 |         assert!(true, "Malformed plugin handling test completed");
+     |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+     = help: remove it
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#assertions_on_constants
+
+error: variables can be used directly in the `format!` string
+    --> tests/plugin_system_comprehensive.rs:1263:60
+     |
+1263 |                 let rapid_plugin_id = PluginId::from_name(&format!("rapid-test-{}", i));
+     |                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+     |
+1263 -                 let rapid_plugin_id = PluginId::from_name(&format!("rapid-test-{}", i));
+1263 +                 let rapid_plugin_id = PluginId::from_name(&format!("rapid-test-{i}"));
+     |
+
+error: `assert!(true)` will be optimized out by the compiler
+    --> tests/plugin_system_comprehensive.rs:1276:9
+     |
+1276 |         assert!(true, "Plugin crash recovery test completed");
+     |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+     = help: remove it
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#assertions_on_constants
+
+error: variables can be used directly in the `format!` string
+    --> tests/plugin_system_comprehensive.rs:1306:27
+     |
+1306 |                 Err(e) => println!("✓ Plugin load failed quickly: {:?}", e),
+     |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+     |
+1306 -                 Err(e) => println!("✓ Plugin load failed quickly: {:?}", e),
+1306 +                 Err(e) => println!("✓ Plugin load failed quickly: {e:?}"),
+     |
+
+error: variables can be used directly in the `format!` string
+    --> tests/plugin_system_comprehensive.rs:1348:9
+     |
+1348 |         println!("Multiple list operations took: {:?}", multi_op_duration);
+     |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+     |
+1348 -         println!("Multiple list operations took: {:?}", multi_op_duration);
+1348 +         println!("Multiple list operations took: {multi_op_duration:?}");
+     |
+
+error: variables can be used directly in the `format!` string
+    --> tests/plugin_system_comprehensive.rs:1356:13
+     |
+1356 | /             assert!(
+1357 | |                 !result.is_empty() || result.is_empty(),
+1358 | |                 "Operation {} should complete",
+1359 | |                 i
+1360 | |             );
+     | |_____________^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+
+error: variables can be used directly in the `format!` string
+    --> tests/plugin_system_comprehensive.rs:1368:13
+     |
+1368 | /             assert!(
+1369 | |                 execution_timeout > 0,
+1370 | |                 "Execution timeout should be positive for {}",
+1371 | |                 policy_name
+1372 | |             );
+     | |_____________^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+
+error: variables can be used directly in the `format!` string
+    --> tests/plugin_system_comprehensive.rs:1373:13
+     |
+1373 | /             assert!(
+1374 | |                 execution_timeout <= 300_000,
+1375 | |                 "Execution timeout should be reasonable for {}",
+1376 | |                 policy_name
+1377 | |             );
+     | |_____________^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+
+error: variables can be used directly in the `format!` string
+    --> tests/plugin_system_comprehensive.rs:1379:13
+     |
+1379 | /             println!(
+1380 | |                 "✓ Policy '{}' has execution timeout: {}ms",
+1381 | |                 policy_name, execution_timeout
+1382 | |             );
+     | |_____________^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+
+error: `assert!(true)` will be optimized out by the compiler
+    --> tests/plugin_system_comprehensive.rs:1385:9
+     |
+1385 |         assert!(true, "Timeout scenarios test completed");
+     |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+     = help: remove it
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#assertions_on_constants
+
+error: useless use of `vec!`
+   --> tests/plugin_system_comprehensive.rs:963:31
+    |
+963 |               let mock_issues = vec![ArchitecturalIssue {
+    |  _______________________________^
+964 | |                 issue_id: None,
+965 | |                 analysis_run_id: 1,
+966 | |                 anti_pattern_type_id: 1,
+...   |
+973 | |                 ai_explanation: Some("This is a test suggestion".to_string()),
+974 | |             }];
+    | |______________^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#useless_vec
+    = note: `-D clippy::useless-vec` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::useless_vec)]`
+help: you can use an array directly
+    |
+963 ~             let mock_issues = [ArchitecturalIssue {
+964 +                 issue_id: None,
+965 +                 analysis_run_id: 1,
+966 +                 anti_pattern_type_id: 1,
+967 +                 file_path: "/test/example.rs".to_string(),
+968 +                 start_line: Some(42),
+969 +                 end_line: Some(42),
+970 +                 severity: "medium".to_string(),
+971 +                 description: "Mock issue found by plugin".to_string(),
+972 +                 code_snippet: None,
+973 +                 ai_explanation: Some("This is a test suggestion".to_string()),
+974 ~             }];
+    |
+
+error: could not compile `uveddi` (test "plugin_system_comprehensive") due to 42 previous errors

@@ -216,7 +216,7 @@ fn test_memory_optimization_with_pools() {
     
     // Test status export includes pool information
     let status = get_optimization_status();
-    assert_eq!(status["phase"].as_str().unwrap(), "Phase 3 - Arena Allocation");
+    assert_eq!(status["phase"].as_str().unwrap(), "Phase 4 - Zero-Copy AST Caching");
     assert!(status["pools"].is_object());
     assert!(status["pools"]["dead_code_configs"].is_object());
     assert!(status["arenas"].is_object()); // Should also have arena information

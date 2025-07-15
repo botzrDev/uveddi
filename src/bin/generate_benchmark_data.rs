@@ -36,7 +36,7 @@ fn generate_simple_dataset(
     println!("Generating {} files in {}", num_files, dir.display());
 
     for i in 0..num_files {
-        let file_path = dir.join(format!("file_{}.txt", i));
+        let file_path = dir.join(format!("file_{i}.txt"));
         let mut file = fs::File::create(&file_path)?;
 
         // Create content with some variability

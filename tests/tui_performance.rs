@@ -1,22 +1,18 @@
-//! TUI Performance and Load Testing
-//!
-//! This module tests the performance characteristics of the TUI system
-//! under various load conditions, ensuring responsive user interactions
-//! and efficient resource utilization.
+#[cfg(feature = "tui")]
+// TUI Performance and Load Testing
+//
+// This module tests the performance characteristics of the TUI system
+// under various load conditions, ensuring responsive user interactions
+// and efficient resource utilization.
 
 #[cfg(feature = "tui")]
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use std::path::PathBuf;
-use std::time::{Duration, Instant};
-
-use uveddi::cli::analyze_command::AnalyzeCommand;
+use std::time::Duration;
 #[cfg(feature = "tui")]
 use uveddi::tui::{AppMessage, AppScreen, AppState};
 
 /// Performance test configuration
-const RAPID_UPDATES_COUNT: usize = 10_000;
 const STRESS_TEST_DURATION: Duration = Duration::from_secs(5);
-const PERFORMANCE_THRESHOLD_MS: u128 = 100;
 
 /// Create a large test project for performance testing
 #[cfg(feature = "tui")]

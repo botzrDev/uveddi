@@ -1,0 +1,916 @@
+warning: struct `AppState` is never constructed
+  --> src/server/mod.rs:14:12
+   |
+14 | pub struct AppState {
+   |            ^^^^^^^^
+   |
+   = note: `AppState` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+   = note: `#[warn(dead_code)]` on by default
+
+warning: function `run_server` is never used
+  --> src/server/mod.rs:19:14
+   |
+19 | pub async fn run_server(
+   |              ^^^^^^^^^^
+
+warning: function `health_handler` is never used
+  --> src/server/mod.rs:38:10
+   |
+38 | async fn health_handler(State(state): State<AppState>) -> (StatusCode, &'static str) {
+   |          ^^^^^^^^^^^^^^
+
+warning: function `detailed_health_handler` is never used
+  --> src/server/mod.rs:47:10
+   |
+47 | async fn detailed_health_handler(State(state): State<AppState>) -> Json<HealthStatus> {
+   |          ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `alerts_handler` is never used
+  --> src/server/mod.rs:53:10
+   |
+53 | async fn alerts_handler(State(state): State<AppState>) -> Json<Vec<Alert>> {
+   |          ^^^^^^^^^^^^^^
+
+warning: unused import: `uveddi::analysis::memory::AllocationStrategy`
+   --> tests/uv210_uv26_comprehensive_verification.rs:126:9
+    |
+126 |     use uveddi::analysis::memory::AllocationStrategy;
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(unused_imports)]` on by default
+
+warning: unused variable: `handle`
+  --> tests/uv210_uv26_comprehensive_verification.rs:89:9
+   |
+89 |     let handle = arena_manager.get_arena();
+   |         ^^^^^^ help: if this is intentional, prefix it with an underscore: `_handle`
+   |
+   = note: `#[warn(unused_variables)]` on by default
+
+warning: comparison is useless due to type limits
+  --> tests/uv210_uv26_comprehensive_verification.rs:85:13
+   |
+85 |     assert!(stats.total_arenas_created >= 0);
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_comparisons)]` on by default
+
+warning: comparison is useless due to type limits
+   --> tests/uv210_uv26_comprehensive_verification.rs:432:13
+    |
+432 |     assert!(arena_manager.get_stats().total_arenas_created >= 0);
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: comparison is useless due to type limits
+   --> tests/memory_optimization_phase3.rs:199:17
+    |
+199 |         assert!(result.performance_metrics.analysis_duration_ms >= 0);
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(unused_comparisons)]` on by default
+
+warning: comparison is useless due to type limits
+   --> tests/memory_optimization_phase3.rs:216:13
+    |
+216 |     assert!(result.performance_metrics.analysis_duration_ms >= 0);
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::path::PathBuf`
+ --> tests/memory_optimization_phase4.rs:4:5
+  |
+4 | use std::path::PathBuf;
+  |     ^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `std::fs`
+ --> tests/memory_optimization_phase4.rs:5:5
+  |
+5 | use std::fs;
+  |     ^^^^^^^
+
+warning: unused import: `serde_json::Value`
+ --> tests/memory_optimization_phase4.rs:7:5
+  |
+7 | use serde_json::Value;
+  |     ^^^^^^^^^^^^^^^^^
+
+warning: unused import: `ZeroCopyCacheStats`
+  --> tests/memory_optimization_phase4.rs:11:52
+   |
+11 |     zero_copy::{ZeroCopyAstCache, SerializableAst, ZeroCopyCacheStats},
+   |                                                    ^^^^^^^^^^^^^^^^^^
+
+error[E0753]: expected outer doc comment
+ --> tests/tui_performance.rs:2:1
+  |
+2 | //! TUI Performance and Load Testing
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: inner doc comments like this (starting with `//!` or `/*!`) can only appear before items
+help: you might have meant to write a regular comment
+  |
+2 - //! TUI Performance and Load Testing
+2 + // TUI Performance and Load Testing
+  |
+
+error[E0753]: expected outer doc comment
+ --> tests/tui_performance.rs:3:1
+  |
+3 | //!
+  | ^^^
+  |
+  = note: inner doc comments like this (starting with `//!` or `/*!`) can only appear before items
+help: you might have meant to write a regular comment
+  |
+3 - //!
+3 + //
+  |
+
+error[E0753]: expected outer doc comment
+ --> tests/tui_performance.rs:4:1
+  |
+4 | //! This module tests the performance characteristics of the TUI system
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: inner doc comments like this (starting with `//!` or `/*!`) can only appear before items
+help: you might have meant to write a regular comment
+  |
+4 - //! This module tests the performance characteristics of the TUI system
+4 + // This module tests the performance characteristics of the TUI system
+  |
+
+error[E0753]: expected outer doc comment
+ --> tests/tui_performance.rs:5:1
+  |
+5 | //! under various load conditions, ensuring responsive user interactions
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: inner doc comments like this (starting with `//!` or `/*!`) can only appear before items
+help: you might have meant to write a regular comment
+  |
+5 - //! under various load conditions, ensuring responsive user interactions
+5 + // under various load conditions, ensuring responsive user interactions
+  |
+
+error[E0753]: expected outer doc comment
+ --> tests/tui_performance.rs:6:1
+  |
+6 | //! and efficient resource utilization.
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+9 | use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+  | -------------------------------------------------------- the inner doc comment doesn't annotate this `use` import
+  |
+help: to annotate the `use` import, change the doc comment from inner to outer style
+  |
+6 - //! and efficient resource utilization.
+6 + /// and efficient resource utilization.
+  |
+
+error[E0753]: expected outer doc comment
+ --> tests/tui_e2e.rs:2:1
+  |
+2 | //! End-to-End TUI Testing
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: inner doc comments like this (starting with `//!` or `/*!`) can only appear before items
+help: you might have meant to write a regular comment
+  |
+2 - //! End-to-End TUI Testing
+2 + // End-to-End TUI Testing
+  |
+
+error[E0753]: expected outer doc comment
+ --> tests/tui_e2e.rs:3:1
+  |
+3 | //!
+  | ^^^
+  |
+  = note: inner doc comments like this (starting with `//!` or `/*!`) can only appear before items
+help: you might have meant to write a regular comment
+  |
+3 - //!
+3 + //
+  |
+
+error[E0753]: expected outer doc comment
+ --> tests/tui_e2e.rs:4:1
+  |
+4 | //! This module provides comprehensive end-to-end testing for the TUI system,
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: inner doc comments like this (starting with `//!` or `/*!`) can only appear before items
+help: you might have meant to write a regular comment
+  |
+4 - //! This module provides comprehensive end-to-end testing for the TUI system,
+4 + // This module provides comprehensive end-to-end testing for the TUI system,
+  |
+
+error[E0753]: expected outer doc comment
+ --> tests/tui_form_validation.rs:2:1
+  |
+2 | //! TUI Form Validation and Data Conversion Tests
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: inner doc comments like this (starting with `//!` or `/*!`) can only appear before items
+help: you might have meant to write a regular comment
+  |
+2 - //! TUI Form Validation and Data Conversion Tests
+2 + // TUI Form Validation and Data Conversion Tests
+  |
+
+error[E0753]: expected outer doc comment
+ --> tests/tui_e2e.rs:5:1
+  |
+5 | //! simulating complete user workflows from form interaction to analysis completion.
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: inner doc comments like this (starting with `//!` or `/*!`) can only appear before items
+help: you might have meant to write a regular comment
+  |
+5 - //! simulating complete user workflows from form interaction to analysis completion.
+5 + // simulating complete user workflows from form interaction to analysis completion.
+  |
+
+error[E0753]: expected outer doc comment
+ --> tests/tui_e2e.rs:6:1
+  |
+6 | //! Tests the full pipeline integration including event handling, state management,
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: inner doc comments like this (starting with `//!` or `/*!`) can only appear before items
+help: you might have meant to write a regular comment
+  |
+6 - //! Tests the full pipeline integration including event handling, state management,
+6 + // Tests the full pipeline integration including event handling, state management,
+  |
+
+error[E0753]: expected outer doc comment
+ --> tests/tui_form_validation.rs:3:1
+  |
+3 | //!
+  | ^^^
+  |
+  = note: inner doc comments like this (starting with `//!` or `/*!`) can only appear before items
+help: you might have meant to write a regular comment
+  |
+3 - //!
+3 + //
+  |
+
+error[E0753]: expected outer doc comment
+ --> tests/tui_e2e.rs:7:1
+  |
+7 | //! backend processing, and result presentation.
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+8 |
+9 | use std::path::PathBuf;
+  | ----------------------- the inner doc comment doesn't annotate this `use` import
+  |
+help: to annotate the `use` import, change the doc comment from inner to outer style
+  |
+7 - //! backend processing, and result presentation.
+7 + /// backend processing, and result presentation.
+  |
+
+error[E0753]: expected outer doc comment
+ --> tests/tui_form_validation.rs:4:1
+  |
+4 | //! This module tests the form validation logic and data conversion
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: inner doc comments like this (starting with `//!` or `/*!`) can only appear before items
+help: you might have meant to write a regular comment
+  |
+4 - //! This module tests the form validation logic and data conversion
+4 + // This module tests the form validation logic and data conversion
+  |
+
+error[E0753]: expected outer doc comment
+ --> tests/tui_form_validation.rs:5:1
+  |
+5 | //! between TUI form inputs and backend command structures.
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: inner doc comments like this (starting with `//!` or `/*!`) can only appear before items
+help: you might have meant to write a regular comment
+  |
+5 - //! between TUI form inputs and backend command structures.
+5 + // between TUI form inputs and backend command structures.
+  |
+
+error[E0753]: expected outer doc comment
+ --> tests/tui_form_validation.rs:6:1
+  |
+6 | //! Focuses on ensuring data integrity and proper error handling.
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7 |
+8 | use std::path::PathBuf;
+  | ----------------------- the inner doc comment doesn't annotate this `use` import
+  |
+help: to annotate the `use` import, change the doc comment from inner to outer style
+  |
+6 - //! Focuses on ensuring data integrity and proper error handling.
+6 + /// Focuses on ensuring data integrity and proper error handling.
+  |
+
+error[E0753]: expected outer doc comment
+ --> tests/tui_integration.rs:2:1
+  |
+2 | //! Comprehensive TUI Integration Tests
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: inner doc comments like this (starting with `//!` or `/*!`) can only appear before items
+help: you might have meant to write a regular comment
+  |
+2 - //! Comprehensive TUI Integration Tests
+2 + // Comprehensive TUI Integration Tests
+  |
+
+error[E0753]: expected outer doc comment
+ --> tests/tui_integration.rs:3:1
+  |
+3 | //!
+  | ^^^
+  |
+  = note: inner doc comments like this (starting with `//!` or `/*!`) can only appear before items
+help: you might have meant to write a regular comment
+  |
+3 - //!
+3 + //
+  |
+
+error[E0753]: expected outer doc comment
+ --> tests/tui_integration.rs:4:1
+  |
+4 | //! This module provides automated testing for the TUI-backend integration,
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: inner doc comments like this (starting with `//!` or `/*!`) can only appear before items
+help: you might have meant to write a regular comment
+  |
+4 - //! This module provides automated testing for the TUI-backend integration,
+4 + // This module provides automated testing for the TUI-backend integration,
+  |
+
+error[E0753]: expected outer doc comment
+ --> tests/tui_integration.rs:5:1
+  |
+5 | //! ensuring that the Terminal User Interface correctly interacts with
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: inner doc comments like this (starting with `//!` or `/*!`) can only appear before items
+help: you might have meant to write a regular comment
+  |
+5 - //! ensuring that the Terminal User Interface correctly interacts with
+5 + // ensuring that the Terminal User Interface correctly interacts with
+  |
+
+error[E0753]: expected outer doc comment
+ --> tests/tui_integration.rs:6:1
+  |
+6 | //! backend analysis systems, database operations, and report generation.
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: inner doc comments like this (starting with `//!` or `/*!`) can only appear before items
+help: you might have meant to write a regular comment
+  |
+6 - //! backend analysis systems, database operations, and report generation.
+6 + // backend analysis systems, database operations, and report generation.
+  |
+
+error[E0753]: expected outer doc comment
+ --> tests/tui_integration.rs:7:1
+  |
+7 | //!
+  | ^^^
+  |
+  = note: inner doc comments like this (starting with `//!` or `/*!`) can only appear before items
+help: you might have meant to write a regular comment
+  |
+7 - //!
+7 + //
+  |
+
+error[E0753]: expected outer doc comment
+ --> tests/tui_integration.rs:8:1
+  |
+8 | //! # Test Categories
+  | ^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: inner doc comments like this (starting with `//!` or `/*!`) can only appear before items
+help: you might have meant to write a regular comment
+  |
+8 - //! # Test Categories
+8 + // # Test Categories
+  |
+
+error[E0753]: expected outer doc comment
+ --> tests/tui_integration.rs:9:1
+  |
+9 | //!
+  | ^^^
+  |
+  = note: inner doc comments like this (starting with `//!` or `/*!`) can only appear before items
+help: you might have meant to write a regular comment
+  |
+9 - //!
+9 + //
+  |
+
+error[E0753]: expected outer doc comment
+  --> tests/tui_integration.rs:10:1
+   |
+10 | //! - **State Management**: TEA pattern implementation and state transitions
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: inner doc comments like this (starting with `//!` or `/*!`) can only appear before items
+help: you might have meant to write a regular comment
+   |
+10 - //! - **State Management**: TEA pattern implementation and state transitions
+10 + // - **State Management**: TEA pattern implementation and state transitions
+   |
+
+error[E0753]: expected outer doc comment
+  --> tests/tui_integration.rs:11:1
+   |
+11 | //! - **Backend Integration**: Analysis orchestrator and CLI command integration
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: inner doc comments like this (starting with `//!` or `/*!`) can only appear before items
+help: you might have meant to write a regular comment
+   |
+11 - //! - **Backend Integration**: Analysis orchestrator and CLI command integration
+11 + // - **Backend Integration**: Analysis orchestrator and CLI command integration
+   |
+
+error[E0753]: expected outer doc comment
+  --> tests/tui_integration.rs:12:1
+   |
+12 | //! - **Form Processing**: AnalyzeForm to AnalyzeCommand conversion and validation
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: inner doc comments like this (starting with `//!` or `/*!`) can only appear before items
+help: you might have meant to write a regular comment
+   |
+12 - //! - **Form Processing**: AnalyzeForm to AnalyzeCommand conversion and validation
+12 + // - **Form Processing**: AnalyzeForm to AnalyzeCommand conversion and validation
+   |
+
+error[E0753]: expected outer doc comment
+  --> tests/tui_integration.rs:13:1
+   |
+13 | //! - **Message Flow**: AppMessage handling and event propagation
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: inner doc comments like this (starting with `//!` or `/*!`) can only appear before items
+help: you might have meant to write a regular comment
+   |
+13 - //! - **Message Flow**: AppMessage handling and event propagation
+13 + // - **Message Flow**: AppMessage handling and event propagation
+   |
+
+error[E0753]: expected outer doc comment
+  --> tests/tui_integration.rs:14:1
+   |
+14 | //! - **Error Handling**: Error state management and user feedback
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: inner doc comments like this (starting with `//!` or `/*!`) can only appear before items
+help: you might have meant to write a regular comment
+   |
+14 - //! - **Error Handling**: Error state management and user feedback
+14 + // - **Error Handling**: Error state management and user feedback
+   |
+
+error[E0753]: expected outer doc comment
+  --> tests/tui_integration.rs:15:1
+   |
+15 | //! - **Configuration**: Settings persistence and validation
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+16 |
+17 | use std::path::PathBuf;
+   | ----------------------- the inner doc comment doesn't annotate this `use` import
+   |
+help: to annotate the `use` import, change the doc comment from inner to outer style
+   |
+15 - //! - **Configuration**: Settings persistence and validation
+15 + /// - **Configuration**: Settings persistence and validation
+   |
+
+warning: unused import: `std::path::PathBuf`
+  --> tests/tui_performance.rs:10:5
+   |
+10 | use std::path::PathBuf;
+   |     ^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `Instant`
+  --> tests/tui_performance.rs:11:27
+   |
+11 | use std::time::{Duration, Instant};
+   |                           ^^^^^^^
+
+warning: unused import: `uveddi::cli::analyze_command::AnalyzeCommand`
+  --> tests/tui_performance.rs:13:5
+   |
+13 | use uveddi::cli::analyze_command::AnalyzeCommand;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0433]: failed to resolve: could not find `tui` in `uveddi`
+   --> tests/tui_integration.rs:24:13
+    |
+24  | use uveddi::tui::app::{AppState, AppScreen};
+    |             ^^^ could not find `tui` in `uveddi`
+    |
+note: found an item that was configured out
+   --> /home/austingreen/Documents/botzr/projects/uveddi/src/lib.rs:264:9
+    |
+264 | pub mod tui;
+    |         ^^^
+note: the item is gated behind the `tui` feature
+   --> /home/austingreen/Documents/botzr/projects/uveddi/src/lib.rs:263:7
+    |
+263 | #[cfg(feature = "tui")]
+    |       ^^^^^^^^^^^^^^^
+
+error[E0433]: failed to resolve: could not find `tui` in `uveddi`
+   --> tests/tui_integration.rs:25:13
+    |
+25  | use uveddi::tui::messages::AppMessage;
+    |             ^^^ could not find `tui` in `uveddi`
+    |
+note: found an item that was configured out
+   --> /home/austingreen/Documents/botzr/projects/uveddi/src/lib.rs:264:9
+    |
+264 | pub mod tui;
+    |         ^^^
+note: the item is gated behind the `tui` feature
+   --> /home/austingreen/Documents/botzr/projects/uveddi/src/lib.rs:263:7
+    |
+263 | #[cfg(feature = "tui")]
+    |       ^^^^^^^^^^^^^^^
+
+For more information about this error, try `rustc --explain E0753`.
+error: could not compile `uveddi` (test "tui_performance") due to 5 previous errors; 3 warnings emitted
+error[E0062]: field `enable_memory_optimization` specified more than once
+  --> tests/cli_analyze.rs:41:9
+   |
+38 |                 enable_memory_optimization: false,
+   |                 --------------------------------- first use of `enable_memory_optimization`
+...
+41 |         enable_memory_optimization: false,
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^ used more than once
+
+error[E0062]: field `memory_limit_gb` specified more than once
+  --> tests/cli_analyze.rs:42:9
+   |
+39 |                 memory_limit_gb: None,
+   |                 --------------------- first use of `memory_limit_gb`
+...
+42 |         memory_limit_gb: None,
+   |         ^^^^^^^^^^^^^^^ used more than once
+
+error[E0062]: field `memory_profile` specified more than once
+  --> tests/cli_analyze.rs:43:9
+   |
+40 |                 memory_profile: None,
+   |                 -------------------- first use of `memory_profile`
+...
+43 |         memory_profile: None,
+   |         ^^^^^^^^^^^^^^ used more than once
+
+error[E0062]: field `enable_memory_optimization` specified more than once
+  --> tests/cli_analyze.rs:80:9
+   |
+77 |                 enable_memory_optimization: false,
+   |                 --------------------------------- first use of `enable_memory_optimization`
+...
+80 |         enable_memory_optimization: false,
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^ used more than once
+
+error[E0062]: field `memory_limit_gb` specified more than once
+  --> tests/cli_analyze.rs:81:9
+   |
+78 |                 memory_limit_gb: None,
+   |                 --------------------- first use of `memory_limit_gb`
+...
+81 |         memory_limit_gb: None,
+   |         ^^^^^^^^^^^^^^^ used more than once
+
+error[E0062]: field `memory_profile` specified more than once
+  --> tests/cli_analyze.rs:82:9
+   |
+79 |                 memory_profile: None,
+   |                 -------------------- first use of `memory_profile`
+...
+82 |         memory_profile: None,
+   |         ^^^^^^^^^^^^^^ used more than once
+
+error[E0062]: field `enable_memory_optimization` specified more than once
+   --> tests/cli_analyze.rs:122:9
+    |
+119 |                 enable_memory_optimization: false,
+    |                 --------------------------------- first use of `enable_memory_optimization`
+...
+122 |         enable_memory_optimization: false,
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^ used more than once
+
+error[E0062]: field `memory_limit_gb` specified more than once
+   --> tests/cli_analyze.rs:123:9
+    |
+120 |                 memory_limit_gb: None,
+    |                 --------------------- first use of `memory_limit_gb`
+...
+123 |         memory_limit_gb: None,
+    |         ^^^^^^^^^^^^^^^ used more than once
+
+error[E0062]: field `memory_profile` specified more than once
+   --> tests/cli_analyze.rs:124:9
+    |
+121 |                 memory_profile: None,
+    |                 -------------------- first use of `memory_profile`
+...
+124 |         memory_profile: None,
+    |         ^^^^^^^^^^^^^^ used more than once
+
+error[E0062]: field `enable_memory_optimization` specified more than once
+   --> tests/cli_analyze.rs:173:9
+    |
+170 |                 enable_memory_optimization: false,
+    |                 --------------------------------- first use of `enable_memory_optimization`
+...
+173 |         enable_memory_optimization: false,
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^ used more than once
+
+error[E0062]: field `memory_limit_gb` specified more than once
+   --> tests/cli_analyze.rs:174:9
+    |
+171 |                 memory_limit_gb: None,
+    |                 --------------------- first use of `memory_limit_gb`
+...
+174 |         memory_limit_gb: None,
+    |         ^^^^^^^^^^^^^^^ used more than once
+
+error[E0062]: field `memory_profile` specified more than once
+   --> tests/cli_analyze.rs:175:9
+    |
+172 |                 memory_profile: None,
+    |                 -------------------- first use of `memory_profile`
+...
+175 |         memory_profile: None,
+    |         ^^^^^^^^^^^^^^ used more than once
+
+error[E0062]: field `enable_memory_optimization` specified more than once
+   --> tests/cli_analyze.rs:213:9
+    |
+210 |                 enable_memory_optimization: false,
+    |                 --------------------------------- first use of `enable_memory_optimization`
+...
+213 |         enable_memory_optimization: false,
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^ used more than once
+
+error[E0062]: field `memory_limit_gb` specified more than once
+   --> tests/cli_analyze.rs:214:9
+    |
+211 |                 memory_limit_gb: None,
+    |                 --------------------- first use of `memory_limit_gb`
+...
+214 |         memory_limit_gb: None,
+    |         ^^^^^^^^^^^^^^^ used more than once
+
+error[E0062]: field `memory_profile` specified more than once
+   --> tests/cli_analyze.rs:215:9
+    |
+212 |                 memory_profile: None,
+    |                 -------------------- first use of `memory_profile`
+...
+215 |         memory_profile: None,
+    |         ^^^^^^^^^^^^^^ used more than once
+
+error[E0062]: field `enable_memory_optimization` specified more than once
+   --> tests/cli_analyze.rs:254:9
+    |
+251 |                 enable_memory_optimization: false,
+    |                 --------------------------------- first use of `enable_memory_optimization`
+...
+254 |         enable_memory_optimization: false,
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^ used more than once
+
+error[E0062]: field `memory_limit_gb` specified more than once
+   --> tests/cli_analyze.rs:255:9
+    |
+252 |                 memory_limit_gb: None,
+    |                 --------------------- first use of `memory_limit_gb`
+...
+255 |         memory_limit_gb: None,
+    |         ^^^^^^^^^^^^^^^ used more than once
+
+error[E0062]: field `memory_profile` specified more than once
+   --> tests/cli_analyze.rs:256:9
+    |
+253 |                 memory_profile: None,
+    |                 -------------------- first use of `memory_profile`
+...
+256 |         memory_profile: None,
+    |         ^^^^^^^^^^^^^^ used more than once
+
+error[E0062]: field `enable_memory_optimization` specified more than once
+   --> tests/cli_analyze.rs:291:9
+    |
+288 |                 enable_memory_optimization: false,
+    |                 --------------------------------- first use of `enable_memory_optimization`
+...
+291 |         enable_memory_optimization: false,
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^ used more than once
+
+error[E0062]: field `memory_limit_gb` specified more than once
+   --> tests/cli_analyze.rs:292:9
+    |
+289 |                 memory_limit_gb: None,
+    |                 --------------------- first use of `memory_limit_gb`
+...
+292 |         memory_limit_gb: None,
+    |         ^^^^^^^^^^^^^^^ used more than once
+
+error[E0062]: field `memory_profile` specified more than once
+   --> tests/cli_analyze.rs:293:9
+    |
+290 |                 memory_profile: None,
+    |                 -------------------- first use of `memory_profile`
+...
+293 |         memory_profile: None,
+    |         ^^^^^^^^^^^^^^ used more than once
+
+For more information about this error, try `rustc --explain E0062`.
+error: could not compile `uveddi` (test "cli_analyze") due to 21 previous errors
+error[E0412]: cannot find type `PathBuf` in this scope
+   --> tests/tui_e2e.rs:235:38
+    |
+235 | async fn cleanup_test_project(path: &PathBuf) -> std::io::Result<()> {
+    |                                      ^^^^^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+10  + use std::path::PathBuf;
+    |
+
+warning: unused import: `std::time::Duration`
+  --> tests/tui_e2e.rs:10:5
+   |
+10 | use std::time::Duration;
+   |     ^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` on by default
+
+error[E0433]: failed to resolve: use of undeclared type `PathBuf`
+  --> tests/tui_form_validation.rs:65:20
+   |
+65 |         let path = PathBuf::from(&self.path);
+   |                    ^^^^^^^ use of undeclared type `PathBuf`
+   |
+help: consider importing this struct
+   |
+10 + use std::path::PathBuf;
+   |
+
+error[E0433]: failed to resolve: use of undeclared type `PathBuf`
+   --> tests/tui_form_validation.rs:245:51
+    |
+245 |             output: self.output_file.as_ref().map(PathBuf::from),
+    |                                                   ^^^^^^^ use of undeclared type `PathBuf`
+    |
+help: consider importing this struct
+    |
+10  + use std::path::PathBuf;
+    |
+
+error[E0412]: cannot find type `PathBuf` in this scope
+   --> tests/tui_form_validation.rs:265:48
+    |
+265 | async fn create_test_file() -> std::io::Result<PathBuf> {
+    |                                                ^^^^^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+10  + use std::path::PathBuf;
+    |
+
+error[E0433]: failed to resolve: use of undeclared type `PathBuf`
+   --> tests/tui_form_validation.rs:266:20
+    |
+266 |     let test_dir = PathBuf::from("./tmp/form_validation_test");
+    |                    ^^^^^^^ use of undeclared type `PathBuf`
+    |
+help: consider importing this struct
+    |
+10  + use std::path::PathBuf;
+    |
+
+error[E0433]: failed to resolve: use of undeclared type `PathBuf`
+   --> tests/tui_form_validation.rs:521:37
+    |
+521 |     assert_eq!(command.output, Some(PathBuf::from("output.json")));
+    |                                     ^^^^^^^ use of undeclared type `PathBuf`
+    |
+help: consider importing this struct
+    |
+10  + use std::path::PathBuf;
+    |
+
+error[E0412]: cannot find type `PathBuf` in this scope
+  --> tests/tui_integration.rs:28:66
+   |
+28 | async fn create_test_project(base_path: &str) -> std::io::Result<PathBuf> {
+   |                                                                  ^^^^^^^ not found in this scope
+   |
+help: consider importing this struct
+   |
+21 + use std::path::PathBuf;
+   |
+
+error[E0433]: failed to resolve: use of undeclared type `PathBuf`
+  --> tests/tui_integration.rs:29:20
+   |
+29 |     let test_dir = PathBuf::from(format!("./tmp/test_projects/{}", base_path));
+   |                    ^^^^^^^ use of undeclared type `PathBuf`
+   |
+help: consider importing this struct
+   |
+21 + use std::path::PathBuf;
+   |
+
+error[E0412]: cannot find type `PathBuf` in this scope
+  --> tests/tui_integration.rs:69:38
+   |
+69 | async fn cleanup_test_project(path: &PathBuf) -> std::io::Result<()> {
+   |                                      ^^^^^^^ not found in this scope
+   |
+help: consider importing this struct
+   |
+21 + use std::path::PathBuf;
+   |
+
+error[E0433]: failed to resolve: use of undeclared type `PathBuf`
+   --> tests/tui_integration.rs:298:24
+    |
+298 |     let invalid_path = PathBuf::from("/nonexistent/path/that/does/not/exist");
+    |                        ^^^^^^^ use of undeclared type `PathBuf`
+    |
+help: consider importing this struct
+    |
+21  + use std::path::PathBuf;
+    |
+
+error[E0412]: cannot find type `PathBuf` in this scope
+   --> tests/tui_integration.rs:589:27
+    |
+589 |         pub test_project: PathBuf,
+    |                           ^^^^^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+572 +     use std::path::PathBuf;
+    |
+
+warning: unused import: `uveddi::analysis::AnalysisConfig`
+  --> tests/tui_integration.rs:21:5
+   |
+21 | use uveddi::analysis::AnalysisConfig;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` on by default
+
+Some errors have detailed explanations: E0412, E0753.
+For more information about an error, try `rustc --explain E0412`.
+error: could not compile `uveddi` (test "tui_e2e") due to 7 previous errors; 1 warning emitted
+error[E0063]: missing fields `enable_memory_optimization`, `memory_limit_gb` and `memory_profile` in initializer of `AnalyzeCommand`
+   --> tests/tui_integration.rs:300:27
+    |
+300 |     let analyze_command = AnalyzeCommand {
+    |                           ^^^^^^^^^^^^^^ missing `enable_memory_optimization`, `memory_limit_gb` and `memory_profile`
+
+error[E0063]: missing fields `enable_memory_optimization`, `memory_limit_gb` and `memory_profile` in initializer of `AnalyzeCommand`
+   --> tests/tui_integration.rs:345:21
+    |
+345 |     let form_data = AnalyzeCommand {
+    |                     ^^^^^^^^^^^^^^ missing `enable_memory_optimization`, `memory_limit_gb` and `memory_profile`
+
+error[E0063]: missing fields `enable_memory_optimization`, `memory_limit_gb` and `memory_profile` in initializer of `AnalyzeCommand`
+   --> tests/tui_integration.rs:450:27
+    |
+450 |     let invalid_command = AnalyzeCommand {
+    |                           ^^^^^^^^^^^^^^ missing `enable_memory_optimization`, `memory_limit_gb` and `memory_profile`
+
+Some errors have detailed explanations: E0063, E0412, E0433, E0753.
+For more information about an error, try `rustc --explain E0063`.
+error: could not compile `uveddi` (test "tui_integration") due to 24 previous errors; 1 warning emitted
+error[E0063]: missing fields `enable_memory_optimization`, `memory_limit_gb` and `memory_profile` in initializer of `AnalyzeCommand`
+   --> tests/tui_form_validation.rs:242:12
+    |
+242 |         Ok(AnalyzeCommand {
+    |            ^^^^^^^^^^^^^^ missing `enable_memory_optimization`, `memory_limit_gb` and `memory_profile`
+
+error: could not compile `uveddi` (test "tui_form_validation") due to 11 previous errors

@@ -1,9 +1,10 @@
-//! End-to-End TUI Testing
-//!
-//! This module provides comprehensive end-to-end testing for the TUI system,
-//! simulating complete user workflows from form interaction to analysis completion.
-//! Tests the full pipeline integration including event handling, state management,
-//! backend processing, and result presentation.
+#[cfg(feature = "tui")]
+// End-to-End TUI Testing
+//
+// This module provides comprehensive end-to-end testing for the TUI system,
+// simulating complete user workflows from form interaction to analysis completion.
+// Tests the full pipeline integration including event handling, state management,
+// backend processing, and result presentation.
 
 use std::path::PathBuf;
 use std::time::Duration;
@@ -454,6 +455,9 @@ async fn test_error_handling_workflow() {
         large_classes_max_lcom: None,
         large_classes_ignore_patterns: None,
         large_classes_min_severity: None,
+                enable_memory_optimization: false,
+                memory_limit_gb: None,
+                memory_profile: None,
     };
 
     // This should fail gracefully

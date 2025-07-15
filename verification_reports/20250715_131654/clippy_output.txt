@@ -1,0 +1,158 @@
+    Checking uveddi v0.1.0 (/home/austingreen/Documents/botzr/projects/uveddi)
+error: variables can be used directly in the `format!` string
+  --> src/bin/generate_benchmark_data.rs:39:34
+   |
+39 |         let file_path = dir.join(format!("file_{}.txt", i));
+   |                                  ^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+   = note: `-D clippy::uninlined-format-args` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(clippy::uninlined_format_args)]`
+help: change this to
+   |
+39 -         let file_path = dir.join(format!("file_{}.txt", i));
+39 +         let file_path = dir.join(format!("file_{i}.txt"));
+   |
+
+error: could not compile `uveddi` (bin "generate_benchmark_data") due to 1 previous error
+warning: build failed, waiting for other jobs to finish...
+error: empty line after doc comment
+  --> src/server/mod.rs:10:1
+   |
+10 | / /// Placeholder documentation for public items
+11 | |
+   | |_^
+...
+14 |   pub struct AppState {
+   |   ------------------- the comment documents this struct
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#empty_line_after_doc_comments
+   = note: `-D clippy::empty-line-after-doc-comments` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(clippy::empty_line_after_doc_comments)]`
+   = help: if the empty line is unintentional, remove it
+help: if the documentation should include the empty line include it in the comment
+   |
+11 | ///
+   |
+
+error: struct `AppState` is never constructed
+  --> src/server/mod.rs:14:12
+   |
+14 | pub struct AppState {
+   |            ^^^^^^^^
+   |
+   = note: `AppState` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+   = note: `-D dead-code` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(dead_code)]`
+
+error: function `run_server` is never used
+  --> src/server/mod.rs:19:14
+   |
+19 | pub async fn run_server(
+   |              ^^^^^^^^^^
+
+error: function `health_handler` is never used
+  --> src/server/mod.rs:38:10
+   |
+38 | async fn health_handler(State(state): State<AppState>) -> (StatusCode, &'static str) {
+   |          ^^^^^^^^^^^^^^
+
+error: function `detailed_health_handler` is never used
+  --> src/server/mod.rs:47:10
+   |
+47 | async fn detailed_health_handler(State(state): State<AppState>) -> Json<HealthStatus> {
+   |          ^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `alerts_handler` is never used
+  --> src/server/mod.rs:53:10
+   |
+53 | async fn alerts_handler(State(state): State<AppState>) -> Json<Vec<Alert>> {
+   |          ^^^^^^^^^^^^^^
+
+error: method `from_str` can be confused for the standard trait method `std::str::FromStr::from_str`
+  --> src/bin/community_demo.rs:25:5
+   |
+25 | /     pub fn from_str(s: &str) -> Self {
+26 | |         match s.to_lowercase().as_str() {
+27 | |             "admin" => MemberRole::Admin,
+28 | |             "developer" => MemberRole::Developer,
+...  |
+31 | |     }
+   | |_____^
+   |
+   = help: consider implementing the trait `std::str::FromStr` or choosing a less ambiguous method name
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#should_implement_trait
+   = note: `-D clippy::should-implement-trait` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(clippy::should_implement_trait)]`
+
+error: this loop never actually loops
+   --> src/bin/community_demo.rs:207:9
+    |
+207 | /         for member in member_iter {
+208 | |             return Ok(Some(member?));
+209 | |         }
+    | |_________^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#never_loop
+    = note: `#[deny(clippy::never_loop)]` on by default
+help: if you need the first element of the iterator, try writing
+    |
+207 -         for member in member_iter {
+207 +         if let Some(member) = member_iter.next() {
+    |
+
+error: variables can be used directly in the `format!` string
+   --> src/bin/community_demo.rs:524:13
+    |
+524 |             println!("     {}: {} members", company, count);
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+    = note: `-D clippy::uninlined-format-args` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::uninlined_format_args)]`
+help: change this to
+    |
+524 -             println!("     {}: {} members", company, count);
+524 +             println!("     {company}: {count} members");
+    |
+
+error: variables can be used directly in the `format!` string
+   --> src/bin/community_demo.rs:531:13
+    |
+531 |             println!("     {}: {} members", language, count);
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
+help: change this to
+    |
+531 -             println!("     {}: {} members", language, count);
+531 +             println!("     {language}: {count} members");
+    |
+
+error: large size difference between variants
+  --> src/main.rs:77:1
+   |
+77 | / enum Commands {
+78 | |     /// Analyze a codebase for quality issues and architectural problems
+79 | |     ///
+80 | |     /// Performs comprehensive static analysis on the specified path, detecting
+...  |
+83 | |     Analyze(AnalyzeCommand),
+   | |     ----------------------- the largest variant contains at least 312 bytes
+...  |
+89 | |     Config(ConfigCommand),
+   | |     --------------------- the second-largest variant contains at least 72 bytes
+90 | | }
+   | |_^ the entire enum is at least 312 bytes
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#large_enum_variant
+   = note: `-D clippy::large-enum-variant` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(clippy::large_enum_variant)]`
+help: consider boxing the large fields to reduce the total size of the enum
+   |
+83 -     Analyze(AnalyzeCommand),
+83 +     Analyze(Box<AnalyzeCommand>),
+   |
+
+error: could not compile `uveddi` (bin "community_demo") due to 4 previous errors
+error: could not compile `uveddi` (bin "uveddi") due to 7 previous errors

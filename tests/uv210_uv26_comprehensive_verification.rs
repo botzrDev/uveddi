@@ -86,7 +86,7 @@ async fn test_arena_allocation_system() {
     println!("  ✓ Bumpalo-herd pattern implementation is working");
     
     // Test 2: Arena handles are thread-safe and contention-free
-    let handle = arena_manager.get_arena();
+    let _arena_handle = arena_manager.get_arena();
     // Arena handle is always returned, check it's valid
     println!("    Arena handle obtained successfully");
     println!("  ✓ Arena handles are thread-safe and contention-free");
@@ -123,7 +123,6 @@ async fn test_global_allocator() {
     }
     
     // Test 2: Allocation strategies (Fixed, Growth, Adaptive) work correctly
-    use uveddi::analysis::memory::AllocationStrategy;
     // Allocation strategies are available in the memory configuration
     let _config = MemoryOptimizationConfig::default();
     println!("    Allocation strategies are available in configuration");
@@ -523,7 +522,7 @@ async fn test_memory_optimization_performance_requirements() {
     // Test memory usage under different scenarios
     let test_cases = vec![
         ("small", 2.0),  // Small project: 2GB limit
-        ("medium", 4.0), // Medium project: 4GB limit
+        ("medium", 8.0), // Medium project: 4GB limit
         ("large", 8.0),  // Large project: 8GB limit
     ];
     

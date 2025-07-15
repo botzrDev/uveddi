@@ -1,14 +1,11 @@
 //! Integration tests for Phase 4: Zero-copy AST caching with rkyv and memory mapping
 //! Tests the complete zero-copy AST serialization and caching system
 
-use std::path::PathBuf;
-use std::fs;
 use tempfile::TempDir;
-use serde_json::Value;
 
 use uveddi::analysis::memory::{
     MemoryOptimizationConfig,
-    zero_copy::{ZeroCopyAstCache, SerializableAst, ZeroCopyCacheStats},
+    zero_copy::{ZeroCopyAstCache, SerializableAst},
     initialize_memory_optimization,
     get_optimization_status,
 };
@@ -338,10 +335,12 @@ fn test_ast_cache_zero_copy_integration() {
     let temp_dir = TempDir::new().unwrap();
     
     // Create cache config with zero-copy enabled
-    let mut cache_config = CacheConfig::default();
-    cache_config.enable_zero_copy = true;
-    cache_config.zero_copy_cache_dir = temp_dir.path().join("zero_copy");
-    cache_config.zero_copy_threshold_bytes = 100; // Low threshold for testing
+    let cache_config = CacheConfig {
+        enable_zero_copy: true,
+        zero_copy_cache_dir: temp_dir.path().join("zero_copy"),
+        zero_copy_threshold_bytes: 100, // Low threshold for testing
+        ..Default::default()
+    };
     
     let ast_cache = AstCache::new(cache_config).unwrap();
     
@@ -414,7 +413,7 @@ fn test_serializable_ast_efficiency_score() {
     };
 
     let score = test_ast.cache_efficiency_score();
-    assert!(score >= 0.0 && score <= 1.0);
+    assert!((0.0..=1.0).contains(&score));
     
     // Test with small file
     let small_ast = SerializableAst {
@@ -425,7 +424,7 @@ fn test_serializable_ast_efficiency_score() {
     };
     
     let small_score = small_ast.cache_efficiency_score();
-    assert!(small_score >= 0.0 && small_score <= 1.0);
+    assert!((0.0..=1.0).contains(&small_score));
     assert!(small_score < score); // Smaller files should have lower efficiency scores
 }
 
@@ -484,7 +483,7 @@ fn test_concurrent_zero_copy_access() {
     let test_files: Vec<_> = (0..10)
         .map(|i| {
             let ast = SerializableAst {
-                file_path: format!("test_{}.rs", i),
+                file_path: format!("test_{i}.rs"),
                 source_hash: 12345 + i as u64,
                 language: "rust".to_string(),
                 file_size_bytes: 1024,
@@ -507,10 +506,10 @@ fn test_concurrent_zero_copy_access() {
                 },
                 total_nodes: 1,
                 max_depth: 1,
-                source_text: Some(format!("fn test_{}() {{}}", i)),
+                source_text: Some(format!("fn test_{i}() {{}}")),
             };
             
-            let file_path = temp_dir.path().join(format!("test_{}.rs", i));
+            let file_path = temp_dir.path().join(format!("test_{i}.rs"));
             (file_path, ast)
         })
         .collect();
@@ -641,7 +640,7 @@ fn test_large_ast_zero_copy_performance() {
     for i in 0..100 {
         large_ast.root_node.children.push(
             uveddi::analysis::memory::zero_copy::SerializableNode {
-                node_type: format!("function_{}", i),
+                node_type: format!("function_{i}"),
                 kind_id: 2,
                 start_byte: i * 1024,
                 end_byte: (i + 1) * 1024,
@@ -654,7 +653,7 @@ fn test_large_ast_zero_copy_performance() {
                 is_named: true,
                 is_missing: false,
                 is_extra: false,
-                text: Some(format!("fn function_{}() {{}}", i)),
+                text: Some(format!("fn function_{i}() {{}}")),
             }
         );
     }

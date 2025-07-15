@@ -63,7 +63,7 @@ fn test_optimization_status_export() {
     assert!(status["metrics"].is_object());
 
     // Verify phase information
-    assert_eq!(status["phase"].as_str().unwrap(), "Phase 1 - Foundation");
+    assert_eq!(status["phase"].as_str().unwrap(), "Phase 4 - Zero-Copy AST Caching");
 }
 
 #[cfg(feature = "mimalloc")]
