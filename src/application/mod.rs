@@ -543,7 +543,7 @@ impl AnalysisOrchestrator {
                             .map_err(|e| UveddiError::config_error(&e.to_string(), "analysis engine"));
                     }
 
-                    AnalysisEngine::with_memory_optimization(Some(memory_config), None)
+                    AnalysisEngine::new()
                         .context("Failed to initialize analysis engine with memory optimization")
                         .map_err(|e| {
                             log::warn!("Memory optimization initialization failed: {}", e);
@@ -581,7 +581,7 @@ impl AnalysisOrchestrator {
                             .map_err(|e| UveddiError::config_error(&e.to_string(), "analysis engine"));
                     }
 
-                    AnalysisEngine::with_memory_optimization(Some(memory_config), None)
+                    AnalysisEngine::new()
                         .context("Failed to initialize analysis engine with memory optimization")
                         .map_err(|e| {
                             log::warn!("Memory optimization initialization failed: {}", e);

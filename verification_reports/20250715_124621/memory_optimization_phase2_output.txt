@@ -1,0 +1,118 @@
+warning: unused import: `std::sync::Arc`
+  --> src/main.rs:48:5
+   |
+48 | use std::sync::Arc;
+   |     ^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `tokio::sync::Mutex`
+  --> src/main.rs:49:5
+   |
+49 | use tokio::sync::Mutex;
+   |     ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `uveddi::resilience::health::HealthMonitor`
+  --> src/main.rs:52:5
+   |
+52 | use uveddi::resilience::health::HealthMonitor;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `AppState` is never constructed
+  --> src/server/mod.rs:14:12
+   |
+14 | pub struct AppState {
+   |            ^^^^^^^^
+   |
+   = note: `AppState` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+   = note: `#[warn(dead_code)]` on by default
+
+warning: function `run_server` is never used
+  --> src/server/mod.rs:19:14
+   |
+19 | pub async fn run_server(
+   |              ^^^^^^^^^^
+
+warning: function `health_handler` is never used
+  --> src/server/mod.rs:38:10
+   |
+38 | async fn health_handler(State(state): State<AppState>) -> (StatusCode, &'static str) {
+   |          ^^^^^^^^^^^^^^
+
+warning: function `detailed_health_handler` is never used
+  --> src/server/mod.rs:47:10
+   |
+47 | async fn detailed_health_handler(State(state): State<AppState>) -> Json<HealthStatus> {
+   |          ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `alerts_handler` is never used
+  --> src/server/mod.rs:53:10
+   |
+53 | async fn alerts_handler(State(state): State<AppState>) -> Json<Vec<Alert>> {
+   |          ^^^^^^^^^^^^^^
+
+warning: comparison is useless due to type limits
+   --> tests/memory_optimization_phase3.rs:199:17
+    |
+199 |         assert!(result.performance_metrics.analysis_duration_ms >= 0);
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(unused_comparisons)]` on by default
+
+warning: comparison is useless due to type limits
+   --> tests/memory_optimization_phase3.rs:216:13
+    |
+216 |     assert!(result.performance_metrics.analysis_duration_ms >= 0);
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0063]: missing fields `enable_memory_optimization`, `memory_limit_gb` and `memory_profile` in initializer of `AnalyzeCommand`
+  --> tests/cli_analyze.rs:20:19
+   |
+20 |     let command = AnalyzeCommand {
+   |                   ^^^^^^^^^^^^^^ missing `enable_memory_optimization`, `memory_limit_gb` and `memory_profile`
+
+error[E0063]: missing fields `enable_memory_optimization`, `memory_limit_gb` and `memory_profile` in initializer of `AnalyzeCommand`
+  --> tests/cli_analyze.rs:53:19
+   |
+53 |     let command = AnalyzeCommand {
+   |                   ^^^^^^^^^^^^^^ missing `enable_memory_optimization`, `memory_limit_gb` and `memory_profile`
+
+error[E0063]: missing fields `enable_memory_optimization`, `memory_limit_gb` and `memory_profile` in initializer of `AnalyzeCommand`
+  --> tests/cli_analyze.rs:89:19
+   |
+89 |     let command = AnalyzeCommand {
+   |                   ^^^^^^^^^^^^^^ missing `enable_memory_optimization`, `memory_limit_gb` and `memory_profile`
+
+error[E0063]: missing fields `enable_memory_optimization`, `memory_limit_gb` and `memory_profile` in initializer of `AnalyzeCommand`
+   --> tests/cli_analyze.rs:134:19
+    |
+134 |     let command = AnalyzeCommand {
+    |                   ^^^^^^^^^^^^^^ missing `enable_memory_optimization`, `memory_limit_gb` and `memory_profile`
+
+error[E0063]: missing fields `enable_memory_optimization`, `memory_limit_gb` and `memory_profile` in initializer of `AnalyzeCommand`
+   --> tests/cli_analyze.rs:168:19
+    |
+168 |     let command = AnalyzeCommand {
+    |                   ^^^^^^^^^^^^^^ missing `enable_memory_optimization`, `memory_limit_gb` and `memory_profile`
+
+error[E0063]: missing fields `enable_memory_optimization`, `memory_limit_gb` and `memory_profile` in initializer of `AnalyzeCommand`
+   --> tests/cli_analyze.rs:203:19
+    |
+203 |     let command = AnalyzeCommand {
+    |                   ^^^^^^^^^^^^^^ missing `enable_memory_optimization`, `memory_limit_gb` and `memory_profile`
+
+error[E0063]: missing fields `enable_memory_optimization`, `memory_limit_gb` and `memory_profile` in initializer of `AnalyzeCommand`
+   --> tests/cli_analyze.rs:234:19
+    |
+234 |     let command = AnalyzeCommand {
+    |                   ^^^^^^^^^^^^^^ missing `enable_memory_optimization`, `memory_limit_gb` and `memory_profile`
+
+For more information about this error, try `rustc --explain E0063`.
+error: could not compile `uveddi` (test "cli_analyze") due to 7 previous errors
+error[E0063]: missing fields `enable_memory_optimization`, `memory_limit_gb` and `memory_profile` in initializer of `AnalyzeCommand`
+   --> tests/tui_form_validation.rs:241:12
+    |
+241 |         Ok(AnalyzeCommand {
+    |            ^^^^^^^^^^^^^^ missing `enable_memory_optimization`, `memory_limit_gb` and `memory_profile`
+
+error: could not compile `uveddi` (test "tui_form_validation") due to 1 previous error

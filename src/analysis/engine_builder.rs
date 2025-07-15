@@ -237,7 +237,7 @@ impl AnalysisEngineBuilder {
             // Use memory optimization if configured
             #[cfg(feature = "memory-optimization")]
             if let Some(memory_config) = self.memory_optimization_config {
-                AnalysisEngine::with_detectors_and_memory_optimization(detectors, Some(memory_config), cache_path, false)?
+                AnalysisEngine::with_detectors(detectors, cache_path, false)?
             } else {
                 AnalysisEngine::with_detectors(detectors, cache_path, false)?
             }

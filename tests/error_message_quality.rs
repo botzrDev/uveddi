@@ -1,4 +1,3 @@
-use std::path::Path;
 use uveddi::error::{ErrorCategory, ErrorSeverity, UveddiError};
 
 /// Tests that verify error message quality and actionability

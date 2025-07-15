@@ -1,0 +1,402 @@
+warning: unused import: `std::sync::Arc`
+  --> src/main.rs:48:5
+   |
+48 | use std::sync::Arc;
+   |     ^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `tokio::sync::Mutex`
+  --> src/main.rs:49:5
+   |
+49 | use tokio::sync::Mutex;
+   |     ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `uveddi::resilience::health::HealthMonitor`
+  --> src/main.rs:52:5
+   |
+52 | use uveddi::resilience::health::HealthMonitor;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `AppState` is never constructed
+  --> src/server/mod.rs:14:12
+   |
+14 | pub struct AppState {
+   |            ^^^^^^^^
+   |
+   = note: `AppState` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+   = note: `#[warn(dead_code)]` on by default
+
+warning: function `run_server` is never used
+  --> src/server/mod.rs:19:14
+   |
+19 | pub async fn run_server(
+   |              ^^^^^^^^^^
+
+warning: function `health_handler` is never used
+  --> src/server/mod.rs:38:10
+   |
+38 | async fn health_handler(State(state): State<AppState>) -> (StatusCode, &'static str) {
+   |          ^^^^^^^^^^^^^^
+
+warning: function `detailed_health_handler` is never used
+  --> src/server/mod.rs:47:10
+   |
+47 | async fn detailed_health_handler(State(state): State<AppState>) -> Json<HealthStatus> {
+   |          ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `alerts_handler` is never used
+  --> src/server/mod.rs:53:10
+   |
+53 | async fn alerts_handler(State(state): State<AppState>) -> Json<Vec<Alert>> {
+   |          ^^^^^^^^^^^^^^
+
+warning: unused import: `std::path::PathBuf`
+ --> tests/tui_performance.rs:9:5
+  |
+9 | use std::path::PathBuf;
+  |     ^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `Instant`
+  --> tests/tui_performance.rs:10:27
+   |
+10 | use std::time::{Duration, Instant};
+   |                           ^^^^^^^
+
+warning: unused import: `uveddi::cli::analyze_command::AnalyzeCommand`
+  --> tests/tui_performance.rs:12:5
+   |
+12 | use uveddi::cli::analyze_command::AnalyzeCommand;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: constant `RAPID_UPDATES_COUNT` is never used
+  --> tests/tui_performance.rs:17:7
+   |
+17 | const RAPID_UPDATES_COUNT: usize = 10_000;
+   |       ^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` on by default
+
+warning: constant `STRESS_TEST_DURATION` is never used
+  --> tests/tui_performance.rs:18:7
+   |
+18 | const STRESS_TEST_DURATION: Duration = Duration::from_secs(5);
+   |       ^^^^^^^^^^^^^^^^^^^^
+
+warning: constant `PERFORMANCE_THRESHOLD_MS` is never used
+  --> tests/tui_performance.rs:19:7
+   |
+19 | const PERFORMANCE_THRESHOLD_MS: u128 = 100;
+   |       ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::path::PathBuf`
+ --> tests/memory_optimization_phase4.rs:4:5
+  |
+4 | use std::path::PathBuf;
+  |     ^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `std::fs`
+ --> tests/memory_optimization_phase4.rs:5:5
+  |
+5 | use std::fs;
+  |     ^^^^^^^
+
+warning: unused import: `serde_json::Value`
+ --> tests/memory_optimization_phase4.rs:7:5
+  |
+7 | use serde_json::Value;
+  |     ^^^^^^^^^^^^^^^^^
+
+warning: unused import: `ZeroCopyCacheStats`
+  --> tests/memory_optimization_phase4.rs:11:52
+   |
+11 |     zero_copy::{ZeroCopyAstCache, SerializableAst, ZeroCopyCacheStats},
+   |                                                    ^^^^^^^^^^^^^^^^^^
+
+warning: comparison is useless due to type limits
+   --> tests/memory_optimization_phase3.rs:199:17
+    |
+199 |         assert!(result.performance_metrics.analysis_duration_ms >= 0);
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(unused_comparisons)]` on by default
+
+warning: comparison is useless due to type limits
+   --> tests/memory_optimization_phase3.rs:216:13
+    |
+216 |     assert!(result.performance_metrics.analysis_duration_ms >= 0);
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::time::Duration`
+ --> tests/tui_e2e.rs:9:5
+  |
+9 | use std::time::Duration;
+  |     ^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: function `cleanup_test_project` is never used
+   --> tests/tui_e2e.rs:234:10
+    |
+234 | async fn cleanup_test_project(path: &PathBuf) -> std::io::Result<()> {
+    |          ^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` on by default
+
+warning: unused import: `tokio::time::timeout`
+ --> tests/tmp_resilience_final_verification.rs:6:5
+  |
+6 | use tokio::time::timeout;
+  |     ^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+error[E0063]: missing field `ast_cache_size` in initializer of `RobustParserConfig`
+  --> tests/tmp_resilience_final_verification.rs:15:18
+   |
+15 |     let config = RobustParserConfig {
+   |                  ^^^^^^^^^^^^^^^^^^ missing `ast_cache_size`
+
+error[E0063]: missing fields `enable_memory_optimization`, `memory_limit_gb` and `memory_profile` in initializer of `AnalyzeCommand`
+  --> tests/cli_analyze.rs:20:19
+   |
+20 |     let command = AnalyzeCommand {
+   |                   ^^^^^^^^^^^^^^ missing `enable_memory_optimization`, `memory_limit_gb` and `memory_profile`
+
+warning: unused import: `std::path::Path`
+ --> tests/error_message_quality.rs:1:5
+  |
+1 | use std::path::Path;
+  |     ^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+error[E0063]: missing fields `enable_memory_optimization`, `memory_limit_gb` and `memory_profile` in initializer of `AnalyzeCommand`
+  --> tests/cli_analyze.rs:53:19
+   |
+53 |     let command = AnalyzeCommand {
+   |                   ^^^^^^^^^^^^^^ missing `enable_memory_optimization`, `memory_limit_gb` and `memory_profile`
+
+error[E0063]: missing fields `enable_memory_optimization`, `memory_limit_gb` and `memory_profile` in initializer of `AnalyzeCommand`
+  --> tests/cli_analyze.rs:89:19
+   |
+89 |     let command = AnalyzeCommand {
+   |                   ^^^^^^^^^^^^^^ missing `enable_memory_optimization`, `memory_limit_gb` and `memory_profile`
+
+error[E0063]: missing fields `enable_memory_optimization`, `memory_limit_gb` and `memory_profile` in initializer of `AnalyzeCommand`
+   --> tests/cli_analyze.rs:134:19
+    |
+134 |     let command = AnalyzeCommand {
+    |                   ^^^^^^^^^^^^^^ missing `enable_memory_optimization`, `memory_limit_gb` and `memory_profile`
+
+error[E0063]: missing fields `enable_memory_optimization`, `memory_limit_gb` and `memory_profile` in initializer of `AnalyzeCommand`
+   --> tests/cli_analyze.rs:168:19
+    |
+168 |     let command = AnalyzeCommand {
+    |                   ^^^^^^^^^^^^^^ missing `enable_memory_optimization`, `memory_limit_gb` and `memory_profile`
+
+error[E0063]: missing fields `enable_memory_optimization`, `memory_limit_gb` and `memory_profile` in initializer of `AnalyzeCommand`
+   --> tests/cli_analyze.rs:203:19
+    |
+203 |     let command = AnalyzeCommand {
+    |                   ^^^^^^^^^^^^^^ missing `enable_memory_optimization`, `memory_limit_gb` and `memory_profile`
+
+error[E0063]: missing fields `enable_memory_optimization`, `memory_limit_gb` and `memory_profile` in initializer of `AnalyzeCommand`
+   --> tests/cli_analyze.rs:234:19
+    |
+234 |     let command = AnalyzeCommand {
+    |                   ^^^^^^^^^^^^^^ missing `enable_memory_optimization`, `memory_limit_gb` and `memory_profile`
+
+For more information about this error, try `rustc --explain E0063`.
+error[E0063]: missing field `ast_cache_size` in initializer of `RobustParserConfig`
+  --> tests/tmp_resilience_final_verification.rs:60:26
+   |
+60 |     let timeout_config = RobustParserConfig {
+   |                          ^^^^^^^^^^^^^^^^^^ missing `ast_cache_size`
+
+error: could not compile `uveddi` (test "cli_analyze") due to 7 previous errors
+error[E0063]: missing field `ast_cache_size` in initializer of `RobustParserConfig`
+   --> tests/tmp_resilience_final_verification.rs:117:18
+    |
+117 |     let config = RobustParserConfig {
+    |                  ^^^^^^^^^^^^^^^^^^ missing `ast_cache_size`
+
+error: could not compile `uveddi` (test "tmp_resilience_final_verification") due to 3 previous errors; 1 warning emitted
+error[E0063]: missing fields `enable_memory_optimization`, `memory_limit_gb` and `memory_profile` in initializer of `AnalyzeCommand`
+   --> tests/tui_form_validation.rs:241:12
+    |
+241 |         Ok(AnalyzeCommand {
+    |            ^^^^^^^^^^^^^^ missing `enable_memory_optimization`, `memory_limit_gb` and `memory_profile`
+
+error: could not compile `uveddi` (test "tui_form_validation") due to 1 previous error
+warning: unused import: `uveddi::analysis::AnalysisConfig`
+  --> tests/tui_integration.rs:20:5
+   |
+20 | use uveddi::analysis::AnalysisConfig;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` on by default
+
+error[E0063]: missing fields `enable_memory_optimization`, `memory_limit_gb` and `memory_profile` in initializer of `AnalyzeCommand`
+   --> tests/tui_integration.rs:299:27
+    |
+299 |     let analyze_command = AnalyzeCommand {
+    |                           ^^^^^^^^^^^^^^ missing `enable_memory_optimization`, `memory_limit_gb` and `memory_profile`
+
+error[E0433]: failed to resolve: use of undeclared type `AppState`
+   --> tests/tui_integration.rs:337:25
+    |
+337 |     let mut app_state = AppState::new();
+    |                         ^^^^^^^^ use of undeclared type `AppState`
+
+error[E0433]: failed to resolve: use of undeclared type `AppMessage`
+   --> tests/tui_integration.rs:340:22
+    |
+340 |     app_state.update(AppMessage::NavigateToAnalyze);
+    |                      ^^^^^^^^^^ use of undeclared type `AppMessage`
+
+error[E0433]: failed to resolve: use of undeclared type `AppScreen`
+   --> tests/tui_integration.rs:341:42
+    |
+341 |     assert_eq!(app_state.current_screen, AppScreen::AnalyzeForm);
+    |                                          ^^^^^^^^^ use of undeclared type `AppScreen`
+
+error[E0063]: missing fields `enable_memory_optimization`, `memory_limit_gb` and `memory_profile` in initializer of `AnalyzeCommand`
+   --> tests/tui_integration.rs:344:21
+    |
+344 |     let form_data = AnalyzeCommand {
+    |                     ^^^^^^^^^^^^^^ missing `enable_memory_optimization`, `memory_limit_gb` and `memory_profile`
+
+error[E0063]: missing fields `enable_memory_optimization`, `memory_limit_gb` and `memory_profile` in initializer of `AnalyzeCommand`
+   --> tests/tui_integration.rs:449:27
+    |
+449 |     let invalid_command = AnalyzeCommand {
+    |                           ^^^^^^^^^^^^^^ missing `enable_memory_optimization`, `memory_limit_gb` and `memory_profile`
+
+error[E0433]: failed to resolve: use of undeclared type `AppState`
+   --> tests/tui_integration.rs:483:25
+    |
+483 |     let mut app_state = AppState::new();
+    |                         ^^^^^^^^ use of undeclared type `AppState`
+
+error[E0433]: failed to resolve: use of undeclared type `AppMessage`
+   --> tests/tui_integration.rs:487:10
+    |
+487 |         (AppMessage::NavigateToAnalyze, AppScreen::AnalyzeForm),
+    |          ^^^^^^^^^^ use of undeclared type `AppMessage`
+
+error[E0433]: failed to resolve: use of undeclared type `AppScreen`
+   --> tests/tui_integration.rs:487:41
+    |
+487 |         (AppMessage::NavigateToAnalyze, AppScreen::AnalyzeForm),
+    |                                         ^^^^^^^^^ use of undeclared type `AppScreen`
+
+error[E0433]: failed to resolve: use of undeclared type `AppMessage`
+   --> tests/tui_integration.rs:488:10
+    |
+488 |         (AppMessage::NavigateToConfig, AppScreen::ConfigEditor),
+    |          ^^^^^^^^^^ use of undeclared type `AppMessage`
+
+error[E0433]: failed to resolve: use of undeclared type `AppScreen`
+   --> tests/tui_integration.rs:488:40
+    |
+488 |         (AppMessage::NavigateToConfig, AppScreen::ConfigEditor),
+    |                                        ^^^^^^^^^ use of undeclared type `AppScreen`
+
+error[E0433]: failed to resolve: use of undeclared type `AppMessage`
+   --> tests/tui_integration.rs:489:10
+    |
+489 |         (AppMessage::NavigateToReports, AppScreen::ReportViewer),
+    |          ^^^^^^^^^^ use of undeclared type `AppMessage`
+
+error[E0433]: failed to resolve: use of undeclared type `AppScreen`
+   --> tests/tui_integration.rs:489:41
+    |
+489 |         (AppMessage::NavigateToReports, AppScreen::ReportViewer),
+    |                                         ^^^^^^^^^ use of undeclared type `AppScreen`
+
+error[E0433]: failed to resolve: use of undeclared type `AppMessage`
+   --> tests/tui_integration.rs:490:10
+    |
+490 |         (AppMessage::NavigateToPlugins, AppScreen::PluginManager),
+    |          ^^^^^^^^^^ use of undeclared type `AppMessage`
+
+error[E0433]: failed to resolve: use of undeclared type `AppScreen`
+   --> tests/tui_integration.rs:490:41
+    |
+490 |         (AppMessage::NavigateToPlugins, AppScreen::PluginManager),
+    |                                         ^^^^^^^^^ use of undeclared type `AppScreen`
+
+error[E0433]: failed to resolve: use of undeclared type `AppMessage`
+   --> tests/tui_integration.rs:491:10
+    |
+491 |         (AppMessage::NavigateToMainMenu, AppScreen::MainMenu),
+    |          ^^^^^^^^^^ use of undeclared type `AppMessage`
+
+error[E0433]: failed to resolve: use of undeclared type `AppScreen`
+   --> tests/tui_integration.rs:491:42
+    |
+491 |         (AppMessage::NavigateToMainMenu, AppScreen::MainMenu),
+    |                                          ^^^^^^^^^ use of undeclared type `AppScreen`
+
+error[E0433]: failed to resolve: use of undeclared type `AppState`
+   --> tests/tui_integration.rs:517:25
+    |
+517 |     let mut app_state = AppState::new();
+    |                         ^^^^^^^^ use of undeclared type `AppState`
+
+error[E0433]: failed to resolve: use of undeclared type `AppMessage`
+   --> tests/tui_integration.rs:523:22
+    |
+523 |     app_state.update(AppMessage::NavigateToAnalyze);
+    |                      ^^^^^^^^^^ use of undeclared type `AppMessage`
+
+error[E0433]: failed to resolve: use of undeclared type `AppMessage`
+   --> tests/tui_integration.rs:531:22
+    |
+531 |     app_state.update(AppMessage::NavigateToMainMenu);
+    |                      ^^^^^^^^^^ use of undeclared type `AppMessage`
+
+error[E0433]: failed to resolve: use of undeclared type `AppState`
+   --> tests/tui_integration.rs:541:25
+    |
+541 |     let mut app_state = AppState::new();
+    |                         ^^^^^^^^ use of undeclared type `AppState`
+
+error[E0433]: failed to resolve: use of undeclared type `AppMessage`
+   --> tests/tui_integration.rs:547:18
+    |
+547 |             0 => AppMessage::NavigateToAnalyze,
+    |                  ^^^^^^^^^^ use of undeclared type `AppMessage`
+
+error[E0433]: failed to resolve: use of undeclared type `AppMessage`
+   --> tests/tui_integration.rs:548:18
+    |
+548 |             1 => AppMessage::NavigateToConfig,
+    |                  ^^^^^^^^^^ use of undeclared type `AppMessage`
+
+error[E0433]: failed to resolve: use of undeclared type `AppMessage`
+   --> tests/tui_integration.rs:549:18
+    |
+549 |             2 => AppMessage::NavigateToReports,
+    |                  ^^^^^^^^^^ use of undeclared type `AppMessage`
+
+error[E0433]: failed to resolve: use of undeclared type `AppMessage`
+   --> tests/tui_integration.rs:550:18
+    |
+550 |             _ => AppMessage::NavigateToMainMenu,
+    |                  ^^^^^^^^^^ use of undeclared type `AppMessage`
+
+error[E0433]: failed to resolve: use of undeclared type `AppScreen`
+   --> tests/tui_integration.rs:565:42
+    |
+565 |     assert_eq!(app_state.current_screen, AppScreen::MainMenu);
+    |                                          ^^^^^^^^^ use of undeclared type `AppScreen`
+
+Some errors have detailed explanations: E0063, E0433.
+For more information about an error, try `rustc --explain E0063`.
+error: could not compile `uveddi` (test "tui_integration") due to 26 previous errors; 1 warning emitted

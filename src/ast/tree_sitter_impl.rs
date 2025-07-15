@@ -1,20 +1,16 @@
-// Real tree-sitter implementation - compiled when feature "tree-sitter" is enabled
-
-use crate::security;
-use bincode;
-use lru::LruCache;
-use serde::{Deserialize, Serialize};
-use std::borrow::Cow;
-use std::collections::hash_map::DefaultHasher;
-use std::collections::HashMap;
-use std::fs;
-use std::hash::{Hash, Hasher};
-use std::io::{Read, Write};
-use std::num::NonZeroUsize;
-use std::path::{Path, PathBuf};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, MutexGuard};
 use tracing::{info, warn};
 use tree_sitter::{Parser, Tree};
+use std::collections::HashMap;
+use std::num::NonZeroUsize;
+use std::path::{Path, PathBuf};
+use std::fs;
+use std::io::{Read, Write};
+use std::hash::{Hash, Hasher, DefaultHasher};
+use std::borrow::Cow;
+use lru::LruCache;
+use serde::{Serialize, Deserialize};
+use crate::security;
 
 // Re-export tree-sitter types for public API
 
@@ -78,38 +74,42 @@ impl AstParser {
         self.parsers.insert(lang, parser);
     }
 
-    /// Get cache statistics for monitoring (UV-152)
-    pub fn get_cache_stats(&self) -> CacheStats {
-        let cache = self.cache.lock().unwrap();
-        let hits = match self.cache_hits.lock() {
-            Ok(guard) => *guard,
-            Err(_) => {
-                tracing::warn!("Cache hits lock poisoned, returning 0");
-                0
-            }
-        };
-        let misses = match self.cache_misses.lock() {
-            Ok(guard) => *guard,
-            Err(_) => {
-                tracing::warn!("Cache misses lock poisoned, returning 0");
-                0
-            }
-        };
-        let total_requests = hits + misses;
+    /// Internal function to get cache statistics using an existing lock guard.
+    /// This avoids the deadlock issue of trying to lock the same mutex twice.
+    fn get_cache_stats_with_lock(
+        &self,
+        cache_guard: &MutexGuard<LruCache<String, ParsedFile>>,
+    ) -> CacheStats {
+        let hits = self.cache_hits.lock().unwrap_or_else(|e| {
+            warn!("Cache hits lock poisoned, returning 0. Error: {}", e);
+            e.into_inner()
+        });
+        let misses = self.cache_misses.lock().unwrap_or_else(|e| {
+            warn!("Cache misses lock poisoned, returning 0. Error: {}", e);
+            e.into_inner()
+        });
+
+        let total_requests = *hits + *misses;
         let hit_rate = if total_requests > 0 {
-            hits as f64 / total_requests as f64
+            *hits as f64 / total_requests as f64
         } else {
             0.0
         };
 
         CacheStats {
-            current_size: cache.len(),
+            current_size: cache_guard.len(),
             max_size: self.max_cache_size.get(),
-            hits,
-            misses,
+            hits: *hits,
+            misses: *misses,
             hit_rate,
             total_requests,
         }
+    }
+
+    /// Get cache statistics for monitoring (UV-152). Public-facing method.
+    pub fn get_cache_stats(&self) -> CacheStats {
+        let cache_guard = self.cache.lock().unwrap();
+        self.get_cache_stats_with_lock(&cache_guard)
     }
 
     /// Clear cache statistics
@@ -143,9 +143,9 @@ impl AstParser {
                             if let Some(name_node) = child.child_by_field_name("name") {
                                 let name = name_node
                                     .utf8_text(source.as_bytes())
-                                    .map_err(|_| {
+                                    .map_err(|_|
                                         AstError::Other("Failed to get node text".to_string())
-                                    })?
+                                    )?
                                     .to_string();
                                 struct_names.push(name.clone());
                                 structs.insert(name, Vec::new());
@@ -155,9 +155,9 @@ impl AstParser {
                             if let Some(type_node) = child.child_by_field_name("type") {
                                 let type_name = type_node
                                     .utf8_text(source.as_bytes())
-                                    .map_err(|_| {
+                                    .map_err(|_|
                                         AstError::Other("Failed to get node text".to_string())
-                                    })?
+                                    )?
                                     .to_string();
                                 let mut methods = Vec::new();
                                 if let Some(body_node) = child.child_by_field_name("body") {
@@ -168,11 +168,11 @@ impl AstParser {
                                             {
                                                 let method_name = name_node
                                                     .utf8_text(source.as_bytes())
-                                                    .map_err(|_| {
+                                                    .map_err(|_|
                                                         AstError::Other(
                                                             "Failed to get node text".to_string(),
                                                         )
-                                                    })?
+                                                    )?
                                                     .to_string();
                                                 methods.push(method_name);
                                             }
@@ -203,9 +203,9 @@ impl AstParser {
                             if let Some(name_node) = child.child_by_field_name("name") {
                                 let name = name_node
                                     .utf8_text(source.as_bytes())
-                                    .map_err(|_| {
+                                    .map_err(|_|
                                         AstError::Other("Failed to get node text".to_string())
-                                    })?
+                                    )?
                                     .to_string();
                                 items.push(CustomAst::Struct {
                                     name,
@@ -217,9 +217,9 @@ impl AstParser {
                             if let Some(name_node) = child.child_by_field_name("name") {
                                 let name = name_node
                                     .utf8_text(source.as_bytes())
-                                    .map_err(|_| {
+                                    .map_err(|_|
                                         AstError::Other("Failed to get node text".to_string())
-                                    })?
+                                    )?
                                     .to_string();
                                 items.push(CustomAst::Function {
                                     name,
@@ -239,9 +239,9 @@ impl AstParser {
                             if let Some(name_node) = child.child_by_field_name("name") {
                                 let name = name_node
                                     .utf8_text(source.as_bytes())
-                                    .map_err(|_| {
+                                    .map_err(|_|
                                         AstError::Other("Failed to get node text".to_string())
-                                    })?
+                                    )?
                                     .to_string();
                                 items.push(CustomAst::Function {
                                     name,
@@ -253,9 +253,9 @@ impl AstParser {
                             if let Some(name_node) = child.child_by_field_name("name") {
                                 let name = name_node
                                     .utf8_text(source.as_bytes())
-                                    .map_err(|_| {
+                                    .map_err(|_|
                                         AstError::Other("Failed to get node text".to_string())
-                                    })?
+                                    )?
                                     .to_string();
                                 items.push(CustomAst::Struct {
                                     name,
@@ -285,7 +285,7 @@ impl AstParser {
         let modified_time = fs::metadata(file_path)?.modified()?;
 
         // Check LRU cache first
-        {
+        let cache_result = {
             let mut cache = self
                 .cache
                 .lock()
@@ -293,15 +293,24 @@ impl AstParser {
 
             if let Some(cached) = cache.get(&path_str) {
                 if cached.modified_at == modified_time {
-                    // Cache hit - increment counter and return
-                    *self.cache_hits.lock().unwrap() += 1;
+                    // Cache hit - return cached result
                     info!("AST cache HIT for: {}", file_path.display());
-                    return Ok(cached.clone());
+                    Some(cached.clone())
                 } else {
                     // File was modified, remove stale entry
                     cache.pop(&path_str);
+                    None
                 }
+            } else {
+                None
             }
+        };
+
+        // Handle cache hit outside of cache lock to avoid deadlock
+        if let Some(cached) = cache_result {
+            // Increment counter after releasing cache lock
+            *self.cache_hits.lock().unwrap() += 1;
+            return Ok(cached);
         }
 
         // Cache miss - increment counter
@@ -375,7 +384,7 @@ impl AstParser {
                 warn!("AST cache evicted entry for: {}", evicted.0);
             }
 
-            let stats = self.get_cache_stats();
+            let stats = self.get_cache_stats_with_lock(&cache);
             if stats.current_size % 100 == 0 {
                 info!(
                     "AST cache utilization: {:.1}% ({}/{})",

@@ -35,6 +35,9 @@ fn test_analyze_command_creation() {
         large_classes_max_lcom: None,
         large_classes_ignore_patterns: None,
         large_classes_min_severity: None,
+        enable_memory_optimization: false,
+        memory_limit_gb: None,
+        memory_profile: None,
     };
 
     assert_eq!(command.path, PathBuf::from("test_path"));
@@ -68,6 +71,9 @@ fn test_analyze_command_with_all_options() {
         large_classes_max_lcom: None,
         large_classes_ignore_patterns: None,
         large_classes_min_severity: None,
+        enable_memory_optimization: false,
+        memory_limit_gb: None,
+        memory_profile: None,
     };
 
     assert_eq!(command.path, PathBuf::from("src/"));
@@ -104,6 +110,9 @@ async fn test_execute_with_empty_directory() {
         large_classes_max_lcom: None,
         large_classes_ignore_patterns: None,
         large_classes_min_severity: None,
+        enable_memory_optimization: false,
+        memory_limit_gb: None,
+        memory_profile: None,
     };
 
     let result = command.execute().await;
@@ -149,6 +158,9 @@ fn main() {
         large_classes_max_lcom: None,
         large_classes_ignore_patterns: None,
         large_classes_min_severity: None,
+        enable_memory_optimization: false,
+        memory_limit_gb: None,
+        memory_profile: None,
     };
 
     let result = command.execute().await;
@@ -183,6 +195,9 @@ async fn test_execute_with_output_file() {
         large_classes_max_lcom: None,
         large_classes_ignore_patterns: None,
         large_classes_min_severity: None,
+        enable_memory_optimization: false,
+        memory_limit_gb: None,
+        memory_profile: None,
     };
 
     let result = command.execute().await;
@@ -218,6 +233,9 @@ async fn test_execute_with_json_format() {
         large_classes_max_lcom: None,
         large_classes_ignore_patterns: None,
         large_classes_min_severity: None,
+        enable_memory_optimization: false,
+        memory_limit_gb: None,
+        memory_profile: None,
     };
 
     let result = command.execute().await;
@@ -249,6 +267,9 @@ async fn test_execute_nonexistent_path() {
         large_classes_max_lcom: None,
         large_classes_ignore_patterns: None,
         large_classes_min_severity: None,
+        enable_memory_optimization: false,
+        memory_limit_gb: None,
+        memory_profile: None,
     };
 
     let result = command.execute().await;
