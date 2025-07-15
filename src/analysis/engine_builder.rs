@@ -2,6 +2,9 @@ use crate::analysis::{AnalysisConfig, AnalysisDetector, AnalysisEngine};
 use crate::error::UveddiError;
 use std::path::{Path, PathBuf};
 
+#[cfg(feature = "memory-optimization")]
+use crate::analysis::memory::MemoryOptimizationConfig;
+
 /// Builder pattern for configuring AnalysisEngine with dependency injection
 ///
 /// The `AnalysisEngineBuilder` provides a fluent interface for constructing
@@ -31,6 +34,8 @@ pub struct AnalysisEngineBuilder {
     cache_path: Option<PathBuf>,
     enable_plugins: bool,
     use_memory_cache: bool,
+    #[cfg(feature = "memory-optimization")]
+    memory_optimization_config: Option<MemoryOptimizationConfig>,
 }
 
 impl AnalysisEngineBuilder {
@@ -84,6 +89,35 @@ impl AnalysisEngineBuilder {
     /// to avoid filesystem interactions and ensure test isolation.
     pub fn with_memory_cache(mut self) -> Self {
         self.use_memory_cache = true;
+        self
+    }
+
+    /// Configure memory optimization settings
+    ///
+    /// Enables memory optimization features with custom configuration.
+    /// This includes object pooling, arena allocation, and zero-copy AST caching.
+    ///
+    /// # Arguments
+    ///
+    /// * `config` - Memory optimization configuration
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use uveddi::analysis::{AnalysisEngineBuilder, memory::MemoryOptimizationConfig};
+    ///
+    /// # async fn example() -> Result<(), uveddi::error::UveddiError> {
+    /// let config = MemoryOptimizationConfig::large_codebase();
+    /// let engine = AnalysisEngineBuilder::new()
+    ///     .with_memory_optimization(config)
+    ///     .build()
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    #[cfg(feature = "memory-optimization")]
+    pub fn with_memory_optimization(mut self, config: MemoryOptimizationConfig) -> Self {
+        self.memory_optimization_config = Some(config);
         self
     }
 
@@ -193,12 +227,22 @@ impl AnalysisEngineBuilder {
         };
 
         let mut engine = if self.enable_plugins {
+            // TODO: Add plugin support with memory optimization
             if let Some(path) = cache_path {
                 AnalysisEngine::with_detectors_and_plugins(detectors, Some(path)).await?
             } else {
                 AnalysisEngine::with_detectors_and_plugins(detectors, None).await?
             }
         } else {
+            // Use memory optimization if configured
+            #[cfg(feature = "memory-optimization")]
+            if let Some(memory_config) = self.memory_optimization_config {
+                AnalysisEngine::with_detectors_and_memory_optimization(detectors, Some(memory_config), cache_path, false)?
+            } else {
+                AnalysisEngine::with_detectors(detectors, cache_path, false)?
+            }
+            
+            #[cfg(not(feature = "memory-optimization"))]
             AnalysisEngine::with_detectors(detectors, cache_path, false)?
         };
 

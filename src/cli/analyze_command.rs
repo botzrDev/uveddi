@@ -169,6 +169,29 @@ pub struct AnalyzeCommand {
     /// 0-25: Info, 26-50: Low, 51-75: Medium, 76-90: High, 91-100: Critical
     #[arg(long, value_name = "SCORE", default_value = "25")]
     pub large_classes_min_severity: Option<u32>,
+
+    /// Enable memory optimization features
+    ///
+    /// Enables object pooling, arena allocation, and zero-copy AST caching
+    /// for improved performance on large codebases.
+    #[arg(long)]
+    pub enable_memory_optimization: bool,
+
+    /// Memory limit in gigabytes for analysis
+    ///
+    /// Sets a soft limit on memory usage. The analysis will attempt to
+    /// stay within this limit by using more aggressive memory management.
+    #[arg(long, value_name = "GB")]
+    pub memory_limit_gb: Option<f64>,
+
+    /// Memory profile for optimization settings
+    ///
+    /// Selects pre-configured memory optimization settings:
+    /// - `small`: Optimized for small projects (< 1000 files)
+    /// - `default`: Balanced settings for most projects
+    /// - `large`: Optimized for large codebases (> 10000 files)
+    #[arg(long, value_name = "PROFILE")]
+    pub memory_profile: Option<String>,
 }
 
 impl AnalyzeCommand {
@@ -240,6 +263,13 @@ impl AnalyzeCommand {
             large_classes_max_lcom: self.large_classes_max_lcom,
             large_classes_ignore_patterns: self.large_classes_ignore_patterns.clone(),
             large_classes_min_severity: self.large_classes_min_severity,
+            
+            // Memory optimization fields
+            #[cfg(feature = "memory-optimization")]
+            memory_optimization: None, // Will be created based on profile/limits
+            enable_memory_optimization: self.enable_memory_optimization,
+            memory_limit_gb: self.memory_limit_gb,
+            memory_profile: self.memory_profile.clone(),
         };
 
         // Execute analysis through application layer

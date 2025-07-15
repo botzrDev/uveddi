@@ -34,6 +34,11 @@ fn test_analysis_config_creation() {
         large_classes_max_lcom: None,
         large_classes_ignore_patterns: None,
         large_classes_min_severity: None,
+        #[cfg(feature = "memory-optimization")]
+        memory_optimization: None,
+        enable_memory_optimization: false,
+        memory_limit_gb: None,
+        memory_profile: None,
     };
 
     assert_eq!(config.target_path, PathBuf::from("/tmp"));
@@ -66,6 +71,11 @@ async fn test_execute_analysis_nonexistent_path() {
         large_classes_max_lcom: None,
         large_classes_ignore_patterns: None,
         large_classes_min_severity: None,
+        #[cfg(feature = "memory-optimization")]
+        memory_optimization: None,
+        enable_memory_optimization: false,
+        memory_limit_gb: None,
+        memory_profile: None,
     };
 
     let result = orchestrator.execute_analysis(config).await;
@@ -97,6 +107,11 @@ async fn test_execute_analysis_empty_directory() {
         large_classes_max_lcom: None,
         large_classes_ignore_patterns: None,
         large_classes_min_severity: None,
+        #[cfg(feature = "memory-optimization")]
+        memory_optimization: None,
+        enable_memory_optimization: false,
+        memory_limit_gb: None,
+        memory_profile: None,
     };
 
     let result = orchestrator.execute_analysis(config).await;

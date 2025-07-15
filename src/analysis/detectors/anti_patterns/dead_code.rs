@@ -26,6 +26,7 @@ use crate::ast::tree_sitter::{Node, Query, QueryCursor};
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use crate::error::UveddiError;
+use crate::analysis::memory::{DETECTOR_POOLS, PooledObject};
 use log::{debug, info};
 use std::collections::HashSet;
 
@@ -137,6 +138,15 @@ impl DeadCodeDetector {
         Self { config }
     }
 
+    /// Creates a new `DeadCodeDetector` with a pooled configuration.
+    /// This reduces memory allocation overhead during analysis.
+    pub fn with_pooled_config() -> (Self, PooledObject<DeadCodeConfig>) {
+        let mut pooled_config = DETECTOR_POOLS.dead_code_configs.get();
+        pooled_config.reset(); // Reset to default state
+        let detector = Self::new(pooled_config.clone());
+        (detector, pooled_config)
+    }
+
     /// Creates a new `DeadCodeDetector` with a default configuration.
     pub fn with_default_config() -> Self {
         Self::new(DeadCodeConfig::default())
@@ -155,11 +165,17 @@ impl DeadCodeDetector {
     ///
     /// A `Result` containing a `Vec<Symbol>` or an `AnalysisError`.
     pub fn extract_symbols(&self, parsed_file: &ParsedFile) -> Result<Vec<Symbol>, AnalysisError> {
-        match parsed_file.language {
-            SourceLanguage::Rust => self.extract_rust_symbols(parsed_file),
-            SourceLanguage::Python => self.extract_python_symbols(parsed_file),
-            SourceLanguage::JavaScript => self.extract_javascript_symbols(parsed_file),
-        }
+        // Use pooled vector for collecting symbols to reduce allocations
+        let mut pooled_symbols = DETECTOR_POOLS.string_vectors.get();
+        pooled_symbols.clear(); // Ensure clean state
+        
+        let symbols = match parsed_file.language {
+            SourceLanguage::Rust => self.extract_rust_symbols(parsed_file)?,
+            SourceLanguage::Python => self.extract_python_symbols(parsed_file)?,
+            SourceLanguage::JavaScript => self.extract_javascript_symbols(parsed_file)?,
+        };
+        
+        Ok(symbols)
     }
 
     /// Extracts all symbol references (calls, usages) from a single parsed file.
@@ -178,11 +194,17 @@ impl DeadCodeDetector {
         &self,
         parsed_file: &ParsedFile,
     ) -> Result<HashSet<String>, AnalysisError> {
-        match parsed_file.language {
-            SourceLanguage::Rust => self.extract_rust_references(parsed_file),
-            SourceLanguage::Python => self.extract_python_references(parsed_file),
-            SourceLanguage::JavaScript => self.extract_javascript_references(parsed_file),
-        }
+        // Use pooled vector for collecting references to reduce allocations
+        let mut pooled_refs = DETECTOR_POOLS.string_vectors.get();
+        pooled_refs.clear(); // Ensure clean state
+        
+        let references = match parsed_file.language {
+            SourceLanguage::Rust => self.extract_rust_references(parsed_file)?,
+            SourceLanguage::Python => self.extract_python_references(parsed_file)?,
+            SourceLanguage::JavaScript => self.extract_javascript_references(parsed_file)?,
+        };
+        
+        Ok(references)
     }
 
     /// Extracts symbols from a Rust source file.
@@ -641,6 +663,9 @@ impl AnalysisDetector for DeadCodeDetector {
         let symbols = self.extract_symbols(parsed_file)?;
         let references = self.extract_references(parsed_file)?;
 
+        // Use pooled vector for collecting issues to reduce allocations
+        let mut pooled_issues = DETECTOR_POOLS.issue_vectors.get();
+        pooled_issues.clear(); // Ensure clean state
         let mut issues = Vec::new();
 
         for symbol in symbols {

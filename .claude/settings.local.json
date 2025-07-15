@@ -52,7 +52,15 @@
       "Bash(timeout 30s cargo test test_form_validation_invalid_confidence --test tui_form_validation --features tui -- --nocapture)",
       "Bash(RUST_BACKTRACE=1 cargo run --bin tui_test --features tui)",
       "Bash(tty)",
-      "Bash(RUST_LOG=debug cargo test --lib test_long_method_detection_rust -- --nocapture)"
+      "Bash(RUST_LOG=debug cargo test --lib test_long_method_detection_rust -- --nocapture)",
+      "Bash(RUST_LOG=debug cargo run --bin uveddi --features memory-optimization -- analyze src/lib.rs --output-format json)",
+      "Bash(RUST_LOG=info cargo run --bin test_analysis_simple --features memory-optimization)",
+      "Bash(RUST_LOG=info cargo run --features memory-optimization --bin test_analysis_simple)",
+      "Bash(RUST_LOG=debug timeout 30s cargo test --features memory-optimization test_analyze_simple_rust_file)",
+      "Bash(RUST_LOG=info timeout 20s cargo test --features memory-optimization test_analyze_simple_rust_file)",
+      "Bash(RUST_LOG=info timeout 10s cargo test --features memory-optimization test_new_engine_creation)",
+      "Bash(RUST_LOG=debug timeout 30s rustc --edition=2018 debug_hang.rs -L target/debug/deps --extern uveddi=target/debug/libuvendi.rlib --extern tokio=target/debug/deps/libtokio.rlib --extern tempfile=target/debug/deps/libtempfile.rlib --extern env_logger=target/debug/deps/libenv_logger.rlib)",
+      "Bash(RUST_LOG=debug timeout 45s cargo run --bin uveddi --features memory-optimization -- analyze src/lib.rs --output-format json)"
     ],
     "deny": []
   }

@@ -18,6 +18,11 @@ use std::sync::{Arc, Mutex, RwLock};
 use std::time::{Instant, SystemTime};
 use tracing::{debug, error, info, warn};
 
+#[cfg(feature = "memory-optimization")]
+use crate::analysis::memory::zero_copy::{ZeroCopyAstCache, SerializableAst, ZeroCopyError};
+#[cfg(feature = "memory-optimization")]
+use crate::ast::tree_sitter::ParsedFile;
+
 #[cfg(feature = "tree-sitter")]
 use tree_sitter::Tree;
 
@@ -38,6 +43,18 @@ pub struct CacheConfig {
     pub lru_eviction_enabled: bool,
     /// Whether to collect performance metrics
     pub cache_metrics_enabled: bool,
+    
+    /// Whether zero-copy caching is enabled
+    #[cfg(feature = "memory-optimization")]
+    pub enable_zero_copy: bool,
+    
+    /// Directory for zero-copy cache files
+    #[cfg(feature = "memory-optimization")]
+    pub zero_copy_cache_dir: PathBuf,
+    
+    /// Threshold for using zero-copy cache (file size in bytes)
+    #[cfg(feature = "memory-optimization")]
+    pub zero_copy_threshold_bytes: usize,
 }
 
 impl Default for CacheConfig {
@@ -50,6 +67,13 @@ impl Default for CacheConfig {
             enable_memory_mapping: true,
             lru_eviction_enabled: true,
             cache_metrics_enabled: true,
+            
+            #[cfg(feature = "memory-optimization")]
+            enable_zero_copy: true,
+            #[cfg(feature = "memory-optimization")]
+            zero_copy_cache_dir: PathBuf::from("./cache/zero_copy"),
+            #[cfg(feature = "memory-optimization")]
+            zero_copy_threshold_bytes: 10 * 1024, // 10KB threshold
         }
     }
 }
@@ -131,6 +155,9 @@ pub struct AstCache {
     metrics: Arc<Mutex<CacheMetrics>>,
     /// Current memory usage with atomic tracking
     memory_usage: Arc<Mutex<usize>>,
+    /// Zero-copy AST cache for large files
+    #[cfg(feature = "memory-optimization")]
+    zero_copy_cache: Option<ZeroCopyAstCache>,
 }
 
 impl AstCache {
@@ -145,22 +172,46 @@ impl AstCache {
             config.max_memory_entries, config.max_memory_size_mb, config.enable_disk_cache
         );
 
+        #[cfg(feature = "memory-optimization")]
+        let zero_copy_cache = if config.enable_zero_copy {
+            match ZeroCopyAstCache::new(config.zero_copy_cache_dir.clone()) {
+                Ok(cache) => {
+                    info!("Zero-copy AST cache enabled");
+                    Some(cache)
+                }
+                Err(e) => {
+                    warn!("Failed to initialize zero-copy cache: {}", e);
+                    None
+                }
+            }
+        } else {
+            None
+        };
+
         Ok(Self {
             cache: Arc::new(RwLock::new(HashMap::new())),
             lru_order: Arc::new(Mutex::new(Vec::new())),
             config,
             metrics: Arc::new(Mutex::new(CacheMetrics::new())),
             memory_usage: Arc::new(Mutex::new(0)),
+            #[cfg(feature = "memory-optimization")]
+            zero_copy_cache,
         })
     }
 
     /// Creates a new AST cache with default configuration for backward compatibility
     pub fn with_capacity(capacity: usize, cache_dir: PathBuf) -> Result<Self, std::io::Error> {
-        let config = CacheConfig {
+        let mut config = CacheConfig {
             max_memory_entries: capacity,
-            disk_cache_path: cache_dir,
+            disk_cache_path: cache_dir.clone(),
             ..Default::default()
         };
+        
+        #[cfg(feature = "memory-optimization")]
+        {
+            config.zero_copy_cache_dir = cache_dir.join("zero_copy");
+        }
+        
         Self::new(config)
     }
 
@@ -364,6 +415,20 @@ impl AstCache {
             *memory_usage += memory_size;
         }
 
+        // Store in zero-copy cache for larger files if enabled
+        #[cfg(feature = "memory-optimization")]
+        if let Some(ref zero_copy_cache) = self.zero_copy_cache {
+            // We need the source content to determine if we should use zero-copy cache
+            // For now, we'll use file size as a proxy
+            if let Ok(metadata) = std::fs::metadata(path) {
+                if metadata.len() as usize >= self.config.zero_copy_threshold_bytes {
+                    // We would need ParsedFile to create SerializableAst
+                    // This is a placeholder for future integration
+                    debug!("File {} is large enough for zero-copy caching but ParsedFile not available", path.display());
+                }
+            }
+        }
+
         info!("Stored AST in cache for: {:?}", path);
         Ok(())
     }
@@ -409,6 +474,67 @@ impl AstCache {
         {
             let mut memory_usage = self.memory_usage.lock().unwrap();
             *memory_usage += memory_size;
+        }
+
+        info!("Stored AST in cache for: {:?}", path);
+        Ok(())
+    }
+
+    /// Enhanced store method with zero-copy cache integration for ParsedFile
+    #[cfg(all(feature = "tree-sitter", feature = "memory-optimization"))]
+    pub fn store_with_parsed_file(&self, path: &Path, tree: Tree, parsed_file: &ParsedFile) -> Result<(), Box<dyn std::error::Error>> {
+        let file_hash = self.calculate_file_hash(path)?;
+        let file_modified = fs::metadata(path)?.modified()?;
+        let language = self.detect_language(path);
+
+        // Estimate memory size (simplified approximation)
+        let memory_size = std::mem::size_of::<Tree>() + 1024; // Base estimate
+
+        let cached_ast = CachedAST {
+            ast: Some(Arc::new(tree)),
+            file_hash,
+            last_modified: file_modified,
+            access_count: 1,
+            last_accessed: Instant::now(),
+            memory_size_bytes: memory_size,
+            language,
+            is_memory_mapped: false,
+        };
+
+        // Check if we need to evict entries
+        self.ensure_cache_capacity(memory_size)?;
+
+        // Store in cache
+        {
+            let mut cache = self.cache.write().unwrap();
+            cache.insert(path.to_path_buf(), cached_ast);
+        }
+
+        // Update LRU order
+        self.update_lru_order(path);
+
+        // Update memory usage
+        {
+            let mut memory_usage = self.memory_usage.lock().unwrap();
+            *memory_usage += memory_size;
+        }
+
+        // Store in zero-copy cache for larger files
+        if let Some(ref zero_copy_cache) = self.zero_copy_cache {
+            if parsed_file.source.len() >= self.config.zero_copy_threshold_bytes {
+                match SerializableAst::from_parsed_file(parsed_file) {
+                    Ok(serializable_ast) => {
+                        if let Err(e) = zero_copy_cache.store(path, &serializable_ast) {
+                            warn!("Failed to store in zero-copy cache: {}", e);
+                        } else {
+                            debug!("Stored in zero-copy cache: {}", path.display());
+                        }
+                    }
+                    Err(e) => {
+                        warn!("Failed to create serializable AST: {}", e);
+                    }
+                }
+            }
         }
 
         info!("Stored AST in cache for: {:?}", path);
@@ -550,6 +676,14 @@ impl AstCache {
             let mut memory_usage = self.memory_usage.lock().unwrap();
             *memory_usage = 0;
         }
+        
+        #[cfg(feature = "memory-optimization")]
+        if let Some(ref zero_copy_cache) = self.zero_copy_cache {
+            if let Err(e) = zero_copy_cache.clear() {
+                warn!("Failed to clear zero-copy cache: {}", e);
+            }
+        }
+        
         info!("Cache cleared");
     }
 
@@ -566,17 +700,39 @@ impl AstCache {
     /// Exports metrics for observability integration
     pub fn export_metrics_for_observability(&self) -> serde_json::Value {
         let metrics = self.get_metrics();
+        
+        #[cfg(feature = "memory-optimization")]
+        let zero_copy_metrics = if let Some(ref zero_copy_cache) = self.zero_copy_cache {
+            zero_copy_cache.export_metrics()
+        } else {
+            serde_json::json!({
+                "zero_copy_ast_cache": {
+                    "enabled": false
+                }
+            })
+        };
+        
+        #[cfg(not(feature = "memory-optimization"))]
+        let zero_copy_metrics = serde_json::json!({
+            "zero_copy_ast_cache": {
+                "enabled": false
+            }
+        });
+        
         serde_json::json!({
             "ast_cache": {
-                "total_requests": metrics.total_requests,
-                "cache_hits": metrics.cache_hits,
-                "cache_misses": metrics.cache_misses,
-                "hit_rate_percent": metrics.hit_rate,
-                "evictions": metrics.evictions,
-                "memory_usage_mb": metrics.memory_usage_bytes as f64 / (1024.0 * 1024.0),
-                "average_lookup_time_ms": metrics.average_lookup_time_ms,
-                "memory_mapped_entries": metrics.memory_mapped_entries,
-                "cache_size": self.size(),
+                "regular_cache": {
+                    "total_requests": metrics.total_requests,
+                    "cache_hits": metrics.cache_hits,
+                    "cache_misses": metrics.cache_misses,
+                    "hit_rate_percent": metrics.hit_rate,
+                    "evictions": metrics.evictions,
+                    "memory_usage_mb": metrics.memory_usage_bytes as f64 / (1024.0 * 1024.0),
+                    "average_lookup_time_ms": metrics.average_lookup_time_ms,
+                    "memory_mapped_entries": metrics.memory_mapped_entries,
+                    "cache_size": self.size(),
+                },
+                "zero_copy_cache": zero_copy_metrics["zero_copy_ast_cache"]
             }
         })
     }
@@ -591,6 +747,8 @@ impl Clone for AstCache {
             config: self.config.clone(),
             metrics: Arc::clone(&self.metrics),
             memory_usage: Arc::clone(&self.memory_usage),
+            #[cfg(feature = "memory-optimization")]
+            zero_copy_cache: self.zero_copy_cache.clone(),
         }
     }
 }
@@ -611,6 +769,12 @@ mod tests {
             enable_memory_mapping: false,
             lru_eviction_enabled: true,
             cache_metrics_enabled: true,
+            #[cfg(feature = "memory-optimization")]
+            enable_zero_copy: false,
+            #[cfg(feature = "memory-optimization")]
+            zero_copy_cache_dir: temp_dir.path().join("zero_copy"),
+            #[cfg(feature = "memory-optimization")]
+            zero_copy_threshold_bytes: 1024,
         };
         let cache = AstCache::new(config).unwrap();
         (cache, temp_dir)
@@ -895,6 +1059,12 @@ mod tests {
             enable_memory_mapping: false,
             lru_eviction_enabled: true,
             cache_metrics_enabled: true,
+            #[cfg(feature = "memory-optimization")]
+            enable_zero_copy: false,
+            #[cfg(feature = "memory-optimization")]
+            zero_copy_cache_dir: temp_dir.path().join("zero_copy"),
+            #[cfg(feature = "memory-optimization")]
+            zero_copy_threshold_bytes: 1024,
         };
         let cache = AstCache::new(config).unwrap();
 
@@ -975,6 +1145,12 @@ mod tests {
             enable_memory_mapping: false,
             lru_eviction_enabled: true,
             cache_metrics_enabled: true,
+            #[cfg(feature = "memory-optimization")]
+            enable_zero_copy: false,
+            #[cfg(feature = "memory-optimization")]
+            zero_copy_cache_dir: temp_dir.path().join("zero_copy"),
+            #[cfg(feature = "memory-optimization")]
+            zero_copy_threshold_bytes: 1024,
         };
         let cache = AstCache::new(config).unwrap();
 
@@ -1057,6 +1233,12 @@ mod tests {
             enable_memory_mapping: false,
             lru_eviction_enabled: false, // Disabled
             cache_metrics_enabled: true,
+            #[cfg(feature = "memory-optimization")]
+            enable_zero_copy: false,
+            #[cfg(feature = "memory-optimization")]
+            zero_copy_cache_dir: temp_dir.path().join("zero_copy"),
+            #[cfg(feature = "memory-optimization")]
+            zero_copy_threshold_bytes: 1024,
         };
         let cache = AstCache::new(config_no_eviction).unwrap();
 
@@ -1072,6 +1254,12 @@ mod tests {
             enable_memory_mapping: false,
             lru_eviction_enabled: true,
             cache_metrics_enabled: false,
+            #[cfg(feature = "memory-optimization")]
+            enable_zero_copy: false,
+            #[cfg(feature = "memory-optimization")]
+            zero_copy_cache_dir: temp_dir.path().join("zero_copy"),
+            #[cfg(feature = "memory-optimization")]
+            zero_copy_threshold_bytes: 1024,
         };
         let cache = AstCache::new(config_no_metrics).unwrap();
 

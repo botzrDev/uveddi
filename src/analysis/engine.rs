@@ -18,8 +18,11 @@ use crate::monitoring::performance_metrics_collector::PerformanceMetricsCollecto
 use crate::plugins::WasmPluginEngine;
 use log::{info, warn};
 
+#[cfg(feature = "memory-optimization")]
+use crate::analysis::memory::MemoryOptimizationConfig;
+
 use std::path::{Path, PathBuf};
-use std::time::Instant;
+use std::time::{Duration, Instant};
 use tokio_stream::StreamExt;
 use chrono::Utc;
 
@@ -123,8 +126,8 @@ impl AnalysisEngine {
             ResultCache::new_in_memory()?
         };
 
-        // Initialize AST cache with default configuration
-        let ast_cache_config = CacheConfig::default();
+        // Initialize AST cache with memory optimization configuration
+        let ast_cache_config = Self::create_ast_cache_config(None);
         let ast_cache = AstCache::new(ast_cache_config)?;
 
         Ok(Self {
@@ -188,8 +191,8 @@ impl AnalysisEngine {
             }
         };
 
-        // Initialize AST cache with default configuration
-        let ast_cache_config = CacheConfig::default();
+        // Initialize AST cache with memory optimization configuration
+        let ast_cache_config = Self::create_ast_cache_config(None);
         let ast_cache = AstCache::new(ast_cache_config)?;
 
         Ok(Self {
@@ -258,6 +261,102 @@ impl AnalysisEngine {
         Self::with_detectors(default_detectors, None, false)
     }
 
+    /// Creates AST cache configuration with memory optimization support
+    #[cfg(feature = "memory-optimization")]
+    fn create_ast_cache_config(memory_config: Option<&MemoryOptimizationConfig>) -> CacheConfig {
+        if let Some(config) = memory_config {
+            CacheConfig {
+                max_memory_entries: config.ast_cache_optimization.max_cached_asts,
+                max_memory_size_mb: config.ast_cache_optimization.max_ast_cache_memory_mb,
+                enable_disk_cache: true,
+                disk_cache_path: PathBuf::from("./cache/ast"),
+                enable_memory_mapping: config.ast_cache_optimization.memory_mapping_enabled,
+                lru_eviction_enabled: config.ast_cache_optimization.enable_lru_eviction,
+                cache_metrics_enabled: config.ast_cache_optimization.enable_ast_cache_metrics,
+                enable_zero_copy: config.ast_cache_optimization.zero_copy_enabled,
+                zero_copy_cache_dir: config.ast_cache_optimization.zero_copy_cache_directory.clone().into(),
+                zero_copy_threshold_bytes: config.ast_cache_optimization.zero_copy_threshold_bytes,
+            }
+        } else {
+            CacheConfig::default()
+        }
+    }
+
+    /// Creates AST cache configuration with memory optimization support (fallback)
+    #[cfg(not(feature = "memory-optimization"))]
+    fn create_ast_cache_config(_memory_config: Option<&()>) -> CacheConfig {
+        CacheConfig::default()
+    }
+
+    /// Creates a new analysis engine with memory optimization configuration
+    #[cfg(feature = "memory-optimization")]
+    pub fn with_memory_optimization(
+        memory_config: Option<MemoryOptimizationConfig>,
+        cache_path: Option<&Path>,
+    ) -> crate::error::Result<Self> {
+        let default_detectors =
+            crate::analysis::detector_factory::DetectorFactory::create_default_detectors();
+        Self::with_detectors_and_memory_optimization(default_detectors, memory_config, cache_path, false)
+    }
+
+    /// Creates a new analysis engine with memory optimization configuration (fallback)
+    #[cfg(not(feature = "memory-optimization"))]
+    pub fn with_memory_optimization(
+        _memory_config: Option<()>,
+        cache_path: Option<&Path>,
+    ) -> crate::error::Result<Self> {
+        let default_detectors =
+            crate::analysis::detector_factory::DetectorFactory::create_default_detectors();
+        Self::with_detectors(default_detectors, cache_path, false)
+    }
+
+    /// Create engine with detectors and memory optimization configuration
+    #[cfg(feature = "memory-optimization")]
+    pub fn with_detectors_and_memory_optimization(
+        detectors: Vec<Box<dyn AnalysisDetector + Send + Sync>>,
+        memory_config: Option<MemoryOptimizationConfig>,
+        cache_path: Option<&Path>,
+        enable_plugins: bool,
+    ) -> crate::error::Result<Self> {
+        let cache = if let Some(path) = cache_path {
+            ResultCache::new(path)?
+        } else {
+            ResultCache::new_in_memory()?
+        };
+
+        // Initialize AST cache with memory optimization configuration
+        let ast_cache_config = Self::create_ast_cache_config(memory_config.as_ref());
+        let ast_cache = AstCache::new(ast_cache_config)?;
+
+        Ok(Self {
+            ast_parser: AstParser::new()?,
+            dependency_extractor: DependencyExtractor::new()?,
+            symbol_extractor: SymbolExtractor::new(),
+            detectors,
+            cycle_detector: CycleDetector::new(),
+            files_analyzed: 0,
+            cache,
+            symbol_table: GlobalSymbolTable::new(),
+            plugin_engine: if enable_plugins {
+                None
+            } else {
+                None
+            },
+            ast_cache,
+        })
+    }
+
+    /// Create engine with detectors and memory optimization configuration (fallback)
+    #[cfg(not(feature = "memory-optimization"))]
+    pub fn with_detectors_and_memory_optimization(
+        detectors: Vec<Box<dyn AnalysisDetector + Send + Sync>>,
+        _memory_config: Option<()>,
+        cache_path: Option<&Path>,
+        enable_plugins: bool,
+    ) -> crate::error::Result<Self> {
+        Self::with_detectors(detectors, cache_path, enable_plugins)
+    }
+
     /// Performs comprehensive analysis on a directory or file
     ///
     /// This is the main entry point for analysis. It:
@@ -287,11 +386,18 @@ impl AnalysisEngine {
         &mut self,
         path: &Path,
     ) -> crate::error::Result<(Vec<ArchitecturalIssue>, LocalDependencyGraph)> {
+        log::debug!("🔍 AnalysisEngine::analyze starting for path: {}", path.display());
+        
         // UV-2: Initialize metrics collector
+        log::debug!("📊 Initializing performance metrics collector");
         let metrics_config = PerformanceMetricsConfig::default();
         let mut metrics_collector = PerformanceMetricsCollector::new(metrics_config, self.files_analyzed as usize);
+        log::debug!("✅ Performance metrics collector initialized");
+        
+        log::debug!("🔍 Starting file analysis and dependency collection");
         let (mut file_issues, all_dependencies) =
             self.analyze_files_and_collect_dependencies(path).await?;
+        log::debug!("✅ File analysis completed - found {} issues, {} dependencies", file_issues.len(), all_dependencies.len());
 
         info!("Building dependency graph...");
         let mut dependency_graph = LocalDependencyGraph::new();
@@ -358,16 +464,21 @@ impl AnalysisEngine {
         &mut self,
         path: &Path,
     ) -> crate::error::Result<(Vec<ArchitecturalIssue>, Vec<Dependency>)> {
+        log::debug!("🚶 Starting file walk for path: {}", path.display());
         let mut all_issues = Vec::new();
         let mut all_dependencies = Vec::new();
         self.files_analyzed = 0;
         let walker = AsyncWalker::for_source_code();
+        log::debug!("🔍 Creating file stream with AsyncWalker");
         let mut file_stream = walker.walk(path);
         let mut component_index = 0;
         let mut metrics_collector = PerformanceMetricsCollector::new(PerformanceMetricsConfig::default(), 0);
+        log::debug!("🔄 Starting file processing loop");
         while let Some(file_result) = file_stream.next().await {
+            log::debug!("📁 Processing file result");
             match file_result {
                 Ok(file_path) => {
+                    log::debug!("📄 Processing file: {}", file_path.display());
                     if let Some(cached_result) =
                         self.cache.get::<_, CachedAnalysisResult>(&file_path)?
                     {
@@ -375,6 +486,7 @@ impl AnalysisEngine {
                             "CACHE HIT: Using cached analysis for {}",
                             file_path.display()
                         );
+                        log::debug!("✅ Cache hit - using cached result");
                         // UV-220: Use move semantics for cached result aggregation
                         all_issues.extend(cached_result.issues);
                         all_dependencies.extend(cached_result.dependencies);
@@ -383,6 +495,7 @@ impl AnalysisEngine {
                     }
 
                     info!("CACHE MISS: Analyzing file: {}", file_path.display());
+                    log::debug!("🔍 Cache miss - starting fresh analysis");
 
                     match self.parse_file_with_cache(&file_path).await {
                         Ok(parsed_file) => {
@@ -508,11 +621,14 @@ impl AnalysisEngine {
         &mut self,
         path: &Path,
     ) -> crate::error::Result<crate::ast::ParsedFile> {
+        log::debug!("🔍 parse_file_with_cache starting for: {}", path.display());
         #[cfg(feature = "tree-sitter")]
         {
             // Try to get from AST cache first
+            log::debug!("🔍 Checking AST cache for: {}", path.display());
             if let Some(cached_tree) = self.ast_cache.get(path) {
                 info!("AST CACHE HIT: Using cached AST for {}", path.display());
+                log::debug!("✅ AST cache hit - creating ParsedFile from cached tree");
                 // Create ParsedFile from cached tree
                 // We need to read the file source and create a ParsedFile manually
                 if let Ok(source_content) = std::fs::read_to_string(path) {
@@ -524,13 +640,55 @@ impl AnalysisEngine {
                         custom_ast: std::sync::Arc::new(None),
                         modified_at: std::fs::metadata(path)?.modified()?,
                     };
+                    log::debug!("✅ ParsedFile created from cache");
                     return Ok(parsed_file);
                 }
             }
 
             info!("AST CACHE MISS: Parsing file {}", path.display());
-            // Parse the file normally
-            let parsed_file = self.ast_parser.parse_file(path)?;
+            log::debug!("🔍 AST cache miss - parsing file with AST parser");
+            
+            // Parse the file normally with timeout to prevent hanging
+            let parse_timeout = Duration::from_secs(30);
+            let path_clone = path.to_path_buf();
+            let path_for_error = path_clone.clone(); // Clone for error handling outside the closure
+            let parsed_file = match tokio::time::timeout(parse_timeout, async move {
+                // Use spawn_blocking to run the synchronous parse_file in a blocking task
+                tokio::task::spawn_blocking(move || -> Result<_, crate::error::UveddiError> {
+                    // Create a temporary parser for this operation
+                    let mut temp_parser = crate::ast::tree_sitter_impl::AstParser::new()
+                        .map_err(|e| crate::error::UveddiError::analysis_error(
+                            path_clone.to_string_lossy().as_ref(),
+                            0,
+                            &format!("Failed to create temporary parser: {}", e),
+                            "parse_file_with_timeout"
+                        ))?;
+                    temp_parser.parse_file(&path_clone)
+                        .map_err(|e| crate::error::UveddiError::analysis_error(
+                            path_clone.to_string_lossy().as_ref(),
+                            0,
+                            &format!("AST parsing error: {}", e),
+                            "parse_file_with_timeout"
+                        ))
+                }).await.map_err(|e| crate::error::UveddiError::analysis_error(
+                    path_for_error.to_string_lossy().as_ref(),
+                    0,
+                    &format!("Join error: {}", e),
+                    "parse_file_with_timeout"
+                ))?
+            }).await {
+                Ok(result) => result?,
+                Err(_) => {
+                    log::error!("⏰ AST parsing timed out for file: {}", path.display());
+                    return Err(crate::error::UveddiError::analysis_error(
+                        path.to_string_lossy().as_ref(),
+                        0,
+                        "AST parsing timed out after 30 seconds",
+                        "parse_file_with_timeout"
+                    ));
+                }
+            };
+            log::debug!("✅ File parsed successfully");
 
             // Try to cache the AST if available
             if let Some(ref tree) = parsed_file.tree {

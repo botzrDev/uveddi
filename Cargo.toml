@@ -15,7 +15,7 @@ readme = "README.md"
 
 # Feature flags for modular compilation
 [features]
-default = ["local-ai", "image-rendering", "tree-sitter"]
+default = ["local-ai", "image-rendering", "tree-sitter", "memory-optimization"]
 # Tree-sitter parsing functionality (enabled by default)
 tree-sitter = [
     "dep:tree-sitter",
@@ -36,6 +36,8 @@ image-rendering = ["reqwest", "base64"]
 wasm-plugins = ["wasmtime", "wasmtime-wasi", "wit-bindgen"]
 # Terminal User Interface
 tui = ["ratatui", "crossterm", "tui-input"]
+# Memory optimization features (UV-210, UV-26)
+memory-optimization = ["mimalloc", "bumpalo", "bumpalo-herd", "memmap2", "rkyv"]
 
 [dependencies]
 rusqlite = { version = "0.31.0", features = ["bundled"] }
@@ -98,6 +100,20 @@ tokio-tungstenite = "0.20"
 questdb = "0.1"
 criterion = { version = "0.5", features = ["html_reports"] }
 sysinfo = "0.30"
+# Memory optimization dependencies (UV-210)
+# High-performance allocator for memory optimization
+mimalloc = { version = "0.1", optional = true }
+# Arena allocation for temporary objects
+bumpalo = { version = "3.19", features = ["collections", "boxed"], optional = true }
+bumpalo-herd = { version = "0.1", optional = true }
+# Memory mapping for large data structures
+memmap2 = { version = "0.9", optional = true }
+# Zero-copy serialization for AST cache optimization
+rkyv = { version = "0.7", optional = true }
+# CPU count for pool sharding
+num_cpus = "1.16"
+# Lazy static for global instances
+lazy_static = "1.4"
 
 # TUI Core Dependencies (optional via tui feature)
 ratatui = { version = "0.29", optional = true }
