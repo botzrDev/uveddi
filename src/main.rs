@@ -97,7 +97,7 @@ fn main() -> Result<()> {
 
     // TEMPORARILY DISABLED: Health monitoring server to debug hanging issue
     // TODO: Re-enable after fixing hanging issue
-    
+
     // Create health monitor instance
     // let health_monitor = Arc::new(Mutex::new(HealthMonitor::new()));
 
@@ -106,13 +106,13 @@ fn main() -> Result<()> {
     // std::thread::spawn(move || {
     //     let rt = tokio::runtime::Runtime::new()
     //         .expect("FATAL [UV-150]: Failed to initialize async runtime. This indicates a critical system resource issue. See error handling policy.");
-    //     
+    //
     //     // Start the server asynchronously - this will block the thread but not the main process
     //     if let Err(e) = rt.block_on(server::run_server(health_monitor_clone)) {
     //         eprintln!("Health monitoring server error: {}", e);
     //     }
     // });
-    // 
+    //
     // // Give the server a moment to start
     // std::thread::sleep(std::time::Duration::from_millis(100));
 

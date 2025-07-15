@@ -3,13 +3,12 @@
 
 use tempfile::TempDir;
 
-use uveddi::analysis::memory::{
-    MemoryOptimizationConfig,
-    zero_copy::{ZeroCopyAstCache, SerializableAst},
-    initialize_memory_optimization,
-    get_optimization_status,
-};
 use uveddi::analysis::cache::ast::{AstCache, CacheConfig};
+use uveddi::analysis::memory::{
+    get_optimization_status, initialize_memory_optimization,
+    zero_copy::{SerializableAst, ZeroCopyAstCache},
+    MemoryOptimizationConfig,
+};
 
 #[test]
 fn test_zero_copy_ast_serialization() {
@@ -49,7 +48,7 @@ fn test_zero_copy_ast_serialization() {
     // Test store and load
     cache.store(&file_path, &test_ast).unwrap();
     let loaded_ast = cache.load(&file_path).unwrap();
-    
+
     assert!(loaded_ast.is_some());
     let loaded_ast = loaded_ast.unwrap();
     assert_eq!(loaded_ast.file_path, "test.rs");
@@ -311,7 +310,7 @@ fn test_zero_copy_metrics_export() {
 
     let metrics = cache.export_metrics();
     assert!(metrics["zero_copy_ast_cache"].is_object());
-    
+
     let cache_metrics = &metrics["zero_copy_ast_cache"];
     assert!(cache_metrics["cache_hits"].is_number());
     assert!(cache_metrics["cache_misses"].is_number());
@@ -321,7 +320,7 @@ fn test_zero_copy_metrics_export() {
     assert!(cache_metrics["average_entry_size_kb"].is_number());
     assert!(cache_metrics["active_memory_maps"].is_number());
     assert!(cache_metrics["cache_directory"].is_string());
-    
+
     // Check actual values
     assert_eq!(cache_metrics["cache_hits"], 1);
     assert_eq!(cache_metrics["cache_misses"], 0);
@@ -333,7 +332,7 @@ fn test_zero_copy_metrics_export() {
 #[test]
 fn test_ast_cache_zero_copy_integration() {
     let temp_dir = TempDir::new().unwrap();
-    
+
     // Create cache config with zero-copy enabled
     let cache_config = CacheConfig {
         enable_zero_copy: true,
@@ -341,18 +340,18 @@ fn test_ast_cache_zero_copy_integration() {
         zero_copy_threshold_bytes: 100, // Low threshold for testing
         ..Default::default()
     };
-    
+
     let ast_cache = AstCache::new(cache_config).unwrap();
-    
+
     // Test that the cache was created successfully
     assert!(ast_cache.size() == 0);
-    
+
     // Test metrics export includes zero-copy information
     let metrics = ast_cache.export_metrics_for_observability();
     assert!(metrics["ast_cache"]["zero_copy_cache"].is_object());
-    
+
     let zero_copy_metrics = &metrics["ast_cache"]["zero_copy_cache"];
-    
+
     // Zero-copy cache metrics are exported directly as an object
     assert!(zero_copy_metrics["cache_hits"].is_number());
     assert!(zero_copy_metrics["cache_misses"].is_number());
@@ -367,19 +366,22 @@ fn test_ast_cache_zero_copy_integration() {
 #[test]
 fn test_ast_cache_config_serialization() {
     let config = CacheConfig::default();
-    
+
     // Test that config can be serialized and deserialized
     let serialized = serde_json::to_string(&config).unwrap();
     let deserialized: CacheConfig = serde_json::from_str(&serialized).unwrap();
-    
+
     assert_eq!(config.max_memory_entries, deserialized.max_memory_entries);
     assert_eq!(config.max_memory_size_mb, deserialized.max_memory_size_mb);
-    
+
     #[cfg(feature = "memory-optimization")]
     {
         assert_eq!(config.enable_zero_copy, deserialized.enable_zero_copy);
         assert_eq!(config.zero_copy_cache_dir, deserialized.zero_copy_cache_dir);
-        assert_eq!(config.zero_copy_threshold_bytes, deserialized.zero_copy_threshold_bytes);
+        assert_eq!(
+            config.zero_copy_threshold_bytes,
+            deserialized.zero_copy_threshold_bytes
+        );
     }
 }
 
@@ -414,7 +416,7 @@ fn test_serializable_ast_efficiency_score() {
 
     let score = test_ast.cache_efficiency_score();
     assert!((0.0..=1.0).contains(&score));
-    
+
     // Test with small file
     let small_ast = SerializableAst {
         file_size_bytes: 100,
@@ -422,7 +424,7 @@ fn test_serializable_ast_efficiency_score() {
         max_depth: 3,
         ..test_ast
     };
-    
+
     let small_score = small_ast.cache_efficiency_score();
     assert!((0.0..=1.0).contains(&small_score));
     assert!(small_score < score); // Smaller files should have lower efficiency scores
@@ -433,14 +435,14 @@ fn test_source_hash_consistency() {
     let source1 = "fn main() { println!(\"Hello, world!\"); }";
     let source2 = "fn main() { println!(\"Hello, world!\"); }";
     let source3 = "fn main() { println!(\"Hello, Rust!\"); }";
-    
+
     let hash1 = SerializableAst::calculate_source_hash(source1);
     let hash2 = SerializableAst::calculate_source_hash(source2);
     let hash3 = SerializableAst::calculate_source_hash(source3);
-    
+
     assert_eq!(hash1, hash2); // Same source should have same hash
     assert_ne!(hash1, hash3); // Different source should have different hash
-    
+
     // Test with serializable AST
     let ast1 = SerializableAst {
         file_path: "test.rs".to_string(),
@@ -468,7 +470,7 @@ fn test_source_hash_consistency() {
         max_depth: 1,
         source_text: Some(source1.to_string()),
     };
-    
+
     assert!(ast1.is_valid_for_source(source1));
     assert!(ast1.is_valid_for_source(source2));
     assert!(!ast1.is_valid_for_source(source3));
@@ -478,7 +480,7 @@ fn test_source_hash_consistency() {
 fn test_concurrent_zero_copy_access() {
     let temp_dir = TempDir::new().unwrap();
     let cache = std::sync::Arc::new(ZeroCopyAstCache::new(temp_dir.path().to_path_buf()).unwrap());
-    
+
     // Create multiple test ASTs
     let test_files: Vec<_> = (0..10)
         .map(|i| {
@@ -508,44 +510,50 @@ fn test_concurrent_zero_copy_access() {
                 max_depth: 1,
                 source_text: Some(format!("fn test_{i}() {{}}")),
             };
-            
+
             let file_path = temp_dir.path().join(format!("test_{i}.rs"));
             (file_path, ast)
         })
         .collect();
-    
+
     // Store all ASTs concurrently
-    let handles: Vec<_> = test_files.iter().map(|(path, ast)| {
-        let cache_clone = std::sync::Arc::clone(&cache);
-        let path_clone = path.clone();
-        let ast_clone = ast.clone();
-        
-        std::thread::spawn(move || {
-            cache_clone.store(&path_clone, &ast_clone).unwrap();
+    let handles: Vec<_> = test_files
+        .iter()
+        .map(|(path, ast)| {
+            let cache_clone = std::sync::Arc::clone(&cache);
+            let path_clone = path.clone();
+            let ast_clone = ast.clone();
+
+            std::thread::spawn(move || {
+                cache_clone.store(&path_clone, &ast_clone).unwrap();
+            })
         })
-    }).collect();
-    
+        .collect();
+
     // Wait for all stores to complete
     for handle in handles {
         handle.join().unwrap();
     }
-    
+
     // Load all ASTs concurrently
-    let handles: Vec<_> = test_files.iter().map(|(path, _)| {
-        let cache_clone = std::sync::Arc::clone(&cache);
-        let path_clone = path.clone();
-        
-        std::thread::spawn(move || {
-            let result = cache_clone.load(&path_clone).unwrap();
-            assert!(result.is_some());
+    let handles: Vec<_> = test_files
+        .iter()
+        .map(|(path, _)| {
+            let cache_clone = std::sync::Arc::clone(&cache);
+            let path_clone = path.clone();
+
+            std::thread::spawn(move || {
+                let result = cache_clone.load(&path_clone).unwrap();
+                assert!(result.is_some());
+            })
         })
-    }).collect();
-    
+        .collect();
+
     // Wait for all loads to complete
     for handle in handles {
         handle.join().unwrap();
     }
-    
+
     // Verify stats
     let stats = cache.get_stats();
     assert_eq!(stats.total_stores, 10);
@@ -572,13 +580,19 @@ fn test_phase4_memory_optimization_initialization() {
         },
         ..Default::default()
     };
-    
+
     let result = initialize_memory_optimization(config);
-    assert!(result.is_ok(), "Memory optimization with zero-copy should initialize successfully");
-    
+    assert!(
+        result.is_ok(),
+        "Memory optimization with zero-copy should initialize successfully"
+    );
+
     // Test status export includes AST cache optimization information
     let status = get_optimization_status();
-    assert_eq!(status["phase"].as_str().unwrap(), "Phase 4 - Zero-Copy AST Caching");
+    assert_eq!(
+        status["phase"].as_str().unwrap(),
+        "Phase 4 - Zero-Copy AST Caching"
+    );
     assert!(status["pools"].is_object());
     assert!(status["arenas"].is_object());
 }
@@ -586,16 +600,16 @@ fn test_phase4_memory_optimization_initialization() {
 #[test]
 fn test_memory_optimization_config_validation() {
     let config = MemoryOptimizationConfig::default();
-    
+
     // Should validate successfully
     assert!(config.validate().is_ok());
-    
+
     // Test with invalid config
     let mut invalid_config = config.clone();
     invalid_config.target_max_memory_bytes = 0;
-    
+
     assert!(invalid_config.validate().is_err());
-    
+
     // Test AST cache config
     assert!(config.ast_cache_optimization.zero_copy_enabled);
     assert!(config.ast_cache_optimization.max_cached_asts > 0);
@@ -607,7 +621,7 @@ fn test_memory_optimization_config_validation() {
 fn test_large_ast_zero_copy_performance() {
     let temp_dir = TempDir::new().unwrap();
     let cache = ZeroCopyAstCache::new(temp_dir.path().to_path_buf()).unwrap();
-    
+
     // Create a large AST with many nodes
     let mut large_ast = SerializableAst {
         file_path: "large_test.rs".to_string(),
@@ -635,11 +649,13 @@ fn test_large_ast_zero_copy_performance() {
         max_depth: 50,
         source_text: None, // Too large for inline storage
     };
-    
+
     // Add many child nodes
     for i in 0..100 {
-        large_ast.root_node.children.push(
-            uveddi::analysis::memory::zero_copy::SerializableNode {
+        large_ast
+            .root_node
+            .children
+            .push(uveddi::analysis::memory::zero_copy::SerializableNode {
                 node_type: format!("function_{i}"),
                 kind_id: 2,
                 start_byte: i * 1024,
@@ -654,35 +670,40 @@ fn test_large_ast_zero_copy_performance() {
                 is_missing: false,
                 is_extra: false,
                 text: Some(format!("fn function_{i}() {{}}")),
-            }
-        );
+            });
     }
-    
+
     let file_path = temp_dir.path().join("large_test.rs");
-    
+
     // Measure store time
     let start = std::time::Instant::now();
     cache.store(&file_path, &large_ast).unwrap();
     let store_time = start.elapsed();
-    
+
     // Measure load time
     let start = std::time::Instant::now();
     let loaded_ast = cache.load(&file_path).unwrap();
     let load_time = start.elapsed();
-    
+
     assert!(loaded_ast.is_some());
     let loaded_ast = loaded_ast.unwrap();
-    
+
     // Verify the loaded AST matches
     assert_eq!(loaded_ast.file_path, "large_test.rs");
     assert_eq!(loaded_ast.source_hash, 99999);
     assert_eq!(loaded_ast.total_nodes, 10000);
     assert_eq!(loaded_ast.max_depth, 50);
-    
+
     // Performance should be reasonable (less than 1 second each)
-    assert!(store_time.as_secs() < 1, "Store time should be less than 1 second");
-    assert!(load_time.as_millis() < 100, "Load time should be less than 100ms (zero-copy)");
-    
+    assert!(
+        store_time.as_secs() < 1,
+        "Store time should be less than 1 second"
+    );
+    assert!(
+        load_time.as_millis() < 100,
+        "Load time should be less than 100ms (zero-copy)"
+    );
+
     // Verify cache efficiency score
     let efficiency_score = SerializableAst {
         file_path: loaded_ast.file_path.clone(),
@@ -709,7 +730,11 @@ fn test_large_ast_zero_copy_performance() {
         total_nodes: loaded_ast.total_nodes,
         max_depth: loaded_ast.max_depth,
         source_text: None,
-    }.cache_efficiency_score();
-    
-    assert!(efficiency_score > 0.5, "Large AST should have high efficiency score");
+    }
+    .cache_efficiency_score();
+
+    assert!(
+        efficiency_score > 0.5,
+        "Large AST should have high efficiency score"
+    );
 }

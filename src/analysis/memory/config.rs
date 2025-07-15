@@ -1,8 +1,8 @@
 //! Memory optimization configuration for UV-210/UV-26
 //! Provides centralized configuration for all memory optimization features
 
-use serde::{Deserialize, Serialize};
 use crate::analysis::memory::allocator::AllocationStrategy;
+use serde::{Deserialize, Serialize};
 
 /// Comprehensive memory optimization configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -218,7 +218,7 @@ impl Default for AiMemoryConfig {
         Self {
             enabled: true,
             max_context_size_bytes: 512 * 1024 * 1024, // 512MB max context
-            analysis_chunk_size: 50, // Process 50 issues at a time
+            analysis_chunk_size: 50,                   // Process 50 issues at a time
             streaming_context: true,
         }
     }
@@ -253,7 +253,7 @@ impl MemoryOptimizationConfig {
             },
             ai_memory_optimization: AiMemoryConfig {
                 max_context_size_bytes: 256 * 1024 * 1024, // Smaller context for large codebases
-                analysis_chunk_size: 25, // Smaller chunks
+                analysis_chunk_size: 25,                   // Smaller chunks
                 ..Default::default()
             },
             ..Default::default()
@@ -273,7 +273,7 @@ impl MemoryOptimizationConfig {
             },
             arena_allocation: ArenaConfig {
                 default_arena_size_mb: 16, // 16MB for small projects
-                max_concurrent_arenas: 4,   // Fewer concurrent arenas
+                max_concurrent_arenas: 4,  // Fewer concurrent arenas
                 ..Default::default()
             },
             ..Default::default()
@@ -298,7 +298,9 @@ impl MemoryOptimizationConfig {
             return Err("Maximum concurrent arenas must be greater than 0".to_string());
         }
 
-        if self.arena_allocation.size_warning_threshold < 50.0 || self.arena_allocation.size_warning_threshold > 100.0 {
+        if self.arena_allocation.size_warning_threshold < 50.0
+            || self.arena_allocation.size_warning_threshold > 100.0
+        {
             return Err("Arena size warning threshold must be between 50% and 100%".to_string());
         }
 

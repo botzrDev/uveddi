@@ -325,13 +325,13 @@ mod tests {
     async fn test_adapter_factory() {
         // Test factory creation without requiring a working plugin engine
         // This tests the factory structure itself rather than plugin functionality
-        
+
         // Try to create a plugin engine, but handle failure gracefully
         match WasmPluginEngine::new().await {
             Ok(engine) => {
                 let engine = Arc::new(RwLock::new(engine));
                 let factory = WasmPluginAdapterFactory::new(engine);
-                
+
                 // Factory should be created successfully
                 assert!(true); // Factory creation succeeded
             }
@@ -339,8 +339,10 @@ mod tests {
                 // Plugin engine creation failed (likely due to missing WASM features or dependencies)
                 // This is acceptable in test environments - just verify the factory can be created
                 // with a mock engine structure
-                println!("Plugin engine creation failed - this is expected in some test environments");
-                
+                println!(
+                    "Plugin engine creation failed - this is expected in some test environments"
+                );
+
                 // We can't easily create a mock WasmPluginEngine without significant refactoring,
                 // so we'll just verify that the test doesn't panic and mark it as passed
                 assert!(true, "Test passed - factory creation logic is sound");

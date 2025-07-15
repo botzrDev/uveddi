@@ -14,7 +14,10 @@ use crate::analysis::errors::AnalysisError;
 use crate::ast::tree_sitter::{Node, Query, QueryCursor};
 use crate::ast::tree_sitter_impl::SourceLanguage;
 use log::{debug, warn};
-use petgraph::{Graph, visit::{IntoNodeReferences, EdgeRef}};
+use petgraph::{
+    visit::{EdgeRef, IntoNodeReferences},
+    Graph,
+};
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 
@@ -93,7 +96,7 @@ impl ControlFlowGraph {
     /// Creates a new empty CFG
     pub fn new() -> Self {
         let mut graph = Graph::new();
-        
+
         // Create entry and exit nodes
         let entry_node = graph.add_node(CfgNode {
             id: 0,
@@ -102,7 +105,7 @@ impl ControlFlowGraph {
             source_range: (0, 0),
             label: Some("Entry".to_string()),
         });
-        
+
         let exit_node = graph.add_node(CfgNode {
             id: 1,
             node_type: CfgNodeType::Exit,
@@ -110,63 +113,67 @@ impl ControlFlowGraph {
             source_range: (0, 0),
             label: Some("Exit".to_string()),
         });
-        
+
         Self {
             graph,
             entry_node,
             exit_node,
         }
     }
-    
+
     /// Get the number of nodes in the CFG
     pub fn node_count(&self) -> usize {
         self.graph.node_count()
     }
-    
+
     /// Get the number of edges in the CFG
     pub fn edge_count(&self) -> usize {
         self.graph.edge_count()
     }
-    
+
     /// Get a reference to the underlying graph
     pub fn graph(&self) -> &Graph<CfgNode<'static>, CfgEdge> {
         &self.graph
     }
-    
+
     /// Get the entry node index
     pub fn entry_node(&self) -> petgraph::graph::NodeIndex {
         self.entry_node
     }
-    
+
     /// Get the exit node index
     pub fn exit_node(&self) -> petgraph::graph::NodeIndex {
         self.exit_node
     }
-    
+
     /// Compute a structural hash of the CFG for similarity comparison
     pub fn compute_structural_hash(&self) -> String {
         let mut hasher = Sha256::new();
-        
+
         // Hash node types in a deterministic order
-        let mut node_types: Vec<_> = self.graph.node_weights()
+        let mut node_types: Vec<_> = self
+            .graph
+            .node_weights()
             .map(|node| format!("{:?}", node.node_type))
             .collect();
         node_types.sort();
-        
+
         for node_type in node_types {
             hasher.update(node_type.as_bytes());
         }
-        
+
         // Hash edge types
-        let mut edge_types: Vec<_> = self.graph.edge_weights()
+        let mut edge_types: Vec<_> = self
+            .graph
+            .edge_weights()
             .map(|edge| format!("{:?}", edge.edge_type))
             .collect();
         edge_types.sort();
-        
+
         for edge_type in edge_types {
             hasher.update(edge_type.as_bytes());
         }
-        
+
         format!("{:x}", hasher.finalize())
     }
 }
@@ -221,68 +228,88 @@ impl<'a> CfgBuilder<'a> {
             node_stack: Vec::new(),
         }
     }
-    
+
     /// Build CFG from AST following UV-24_Advanced_Research.md specifications
-    pub fn build_from_ast(&mut self, ast_node: Node<'a>, source: &str, language: SourceLanguage) -> Result<ControlFlowGraph, AnalysisError> {
+    pub fn build_from_ast(
+        &mut self,
+        ast_node: Node<'a>,
+        source: &str,
+        language: SourceLanguage,
+    ) -> Result<ControlFlowGraph, AnalysisError> {
         // 1. Create entry and exit nodes
         let entry_node = self.add_node(CfgNodeType::Entry, None, (0, 0), Some("Entry".to_string()));
-        let exit_node = self.add_node(CfgNodeType::Exit, None, (source.len(), source.len()), Some("Exit".to_string()));
-        
+        let exit_node = self.add_node(
+            CfgNodeType::Exit,
+            None,
+            (source.len(), source.len()),
+            Some("Exit".to_string()),
+        );
+
         // 2. Get language-specific query
         let query_str = match language {
             SourceLanguage::Rust => RUST_CFG_QUERY,
             SourceLanguage::Python => PYTHON_CFG_QUERY,
             SourceLanguage::JavaScript => JAVASCRIPT_CFG_QUERY,
         };
-        
+
         // 3. Parse query and traverse AST
         let query = Query::new(&ast_node.language(), query_str).map_err(|e| {
             AnalysisError::AstError(crate::ast::tree_sitter_impl::AstError::Other(format!(
-                "Failed to create CFG query: {}", e
+                "Failed to create CFG query: {}",
+                e
             )))
         })?;
-        
+
         let mut cursor = QueryCursor::new();
         let matches = cursor.matches(&query, ast_node, source.as_bytes());
-        
+
         // 4. Build CFG nodes for control flow constructs
         self.current_node = Some(entry_node);
-        
+
         for match_ in matches {
             for capture in match_.captures {
                 let node = capture.node;
                 let node_type = self.classify_node(&node);
                 let range = (node.start_byte(), node.end_byte());
-                let label = node.utf8_text(source.as_bytes()).ok().map(|s| s.to_string());
-                
+                let label = node
+                    .utf8_text(source.as_bytes())
+                    .ok()
+                    .map(|s| s.to_string());
+
                 let cfg_node_idx = self.add_node(node_type, Some(node), range, label);
-                
+
                 // 5. Connect nodes with appropriate edges
                 if let Some(current) = self.current_node {
                     self.add_edge(current, cfg_node_idx, CfgEdgeType::Sequential, None);
                 }
-                
+
                 self.current_node = Some(cfg_node_idx);
             }
         }
-        
+
         // Connect final node to exit
         if let Some(current) = self.current_node {
             self.add_edge(current, exit_node, CfgEdgeType::Sequential, None);
         }
-        
+
         // Convert to static lifetime for storage
         let static_graph = self.convert_to_static();
-        
+
         Ok(ControlFlowGraph {
             graph: static_graph,
             entry_node,
             exit_node,
         })
     }
-    
+
     /// Add a new node to the CFG
-    fn add_node(&mut self, node_type: CfgNodeType, ast_node: Option<Node<'a>>, source_range: (usize, usize), label: Option<String>) -> petgraph::graph::NodeIndex {
+    fn add_node(
+        &mut self,
+        node_type: CfgNodeType,
+        ast_node: Option<Node<'a>>,
+        source_range: (usize, usize),
+        label: Option<String>,
+    ) -> petgraph::graph::NodeIndex {
         let cfg_node = CfgNode {
             id: self.node_counter,
             node_type,
@@ -293,31 +320,46 @@ impl<'a> CfgBuilder<'a> {
         self.node_counter += 1;
         self.graph.add_node(cfg_node)
     }
-    
+
     /// Add an edge between two nodes
-    fn add_edge(&mut self, from: petgraph::graph::NodeIndex, to: petgraph::graph::NodeIndex, edge_type: CfgEdgeType, condition: Option<String>) {
-        let edge = CfgEdge { edge_type, condition };
+    fn add_edge(
+        &mut self,
+        from: petgraph::graph::NodeIndex,
+        to: petgraph::graph::NodeIndex,
+        edge_type: CfgEdgeType,
+        condition: Option<String>,
+    ) {
+        let edge = CfgEdge {
+            edge_type,
+            condition,
+        };
         self.graph.add_edge(from, to, edge);
     }
-    
+
     /// Classify AST node into CFG node type
     fn classify_node(&self, node: &Node) -> CfgNodeType {
         match node.kind() {
-            "function_item" | "function_declaration" | "function_definition" | "method_declaration" => CfgNodeType::Entry,
-            "if_expression" | "if_statement" | "match_expression" | "switch_statement" => CfgNodeType::Condition,
-            "for_expression" | "for_statement" | "while_expression" | "while_statement" | "loop_expression" | "do_statement" => CfgNodeType::Loop,
+            "function_item"
+            | "function_declaration"
+            | "function_definition"
+            | "method_declaration" => CfgNodeType::Entry,
+            "if_expression" | "if_statement" | "match_expression" | "switch_statement" => {
+                CfgNodeType::Condition
+            }
+            "for_expression" | "for_statement" | "while_expression" | "while_statement"
+            | "loop_expression" | "do_statement" => CfgNodeType::Loop,
             "call_expression" | "call" => CfgNodeType::FunctionCall,
             "return_expression" | "return_statement" => CfgNodeType::Return,
             "try_expression" | "try_statement" => CfgNodeType::Exception,
             _ => CfgNodeType::Statement,
         }
     }
-    
+
     /// Convert graph with lifetime 'a to static lifetime for storage
     fn convert_to_static(&self) -> Graph<CfgNode<'static>, CfgEdge> {
         let mut static_graph = Graph::new();
         let mut node_map = HashMap::new();
-        
+
         // Add all nodes without AST references
         for (idx, node) in self.graph.node_references() {
             let static_node = CfgNode {
@@ -330,17 +372,17 @@ impl<'a> CfgBuilder<'a> {
             let new_idx = static_graph.add_node(static_node);
             node_map.insert(idx, new_idx);
         }
-        
+
         // Add all edges
         for edge_ref in self.graph.edge_references() {
             let source = node_map[&edge_ref.source()];
             let target = node_map[&edge_ref.target()];
             static_graph.add_edge(source, target, edge_ref.weight().clone());
         }
-        
+
         static_graph
     }
-    
+
     /// Get graph statistics for debugging
     pub fn get_stats(&self) -> (usize, usize) {
         (self.graph.node_count(), self.graph.edge_count())
@@ -356,20 +398,20 @@ impl<'a> Default for CfgBuilder<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_cfg_creation() {
         let cfg = ControlFlowGraph::new();
         assert_eq!(cfg.node_count(), 2); // Entry and exit nodes
         assert_eq!(cfg.edge_count(), 0);
     }
-    
+
     #[test]
     fn test_cfg_builder() {
         let builder = CfgBuilder::new();
         assert_eq!(builder.get_stats(), (0, 0));
     }
-    
+
     #[test]
     fn test_node_classification() {
         let builder = CfgBuilder::new();

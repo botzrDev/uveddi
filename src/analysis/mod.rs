@@ -136,12 +136,11 @@ pub use engine::AnalysisEngine;
 pub use engine_builder::AnalysisEngineBuilder;
 pub use errors::AnalysisError;
 pub use graph::{ComponentNode, LocalDependencyGraph, LocalDependencyType};
-pub use memory::{MemoryOptimizationConfig, get_optimization_status};
+pub use memory::{get_optimization_status, MemoryOptimizationConfig};
 pub use plugin_adapter::{WasmPluginAdapterFactory, WasmPluginDetectorAdapter};
 
 use crate::ast::ParsedFile;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
-
 
 /// Core analysis trait for all detectors
 ///

@@ -1,12 +1,12 @@
 //! Arena allocation for transient analysis objects
 //! Based on UV-210 research: "Arena for Computation, Owned for Results" pattern with bumpalo-herd
 
-use bumpalo::Bump;
-use bumpalo_herd::Herd;
-use std::sync::Arc;
 use crate::analysis::memory::metrics::BASIC_MEMORY_METRICS;
 use crate::database::models::ArchitecturalIssue;
-use serde::{Serialize, Deserialize};
+use bumpalo::Bump;
+use bumpalo_herd::Herd;
+use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 
 /// High-level arena manager for concurrent file analysis
 /// Uses the bumpalo-herd pattern for optimal performance and thread safety
@@ -39,8 +39,9 @@ impl AnalysisArenaManager {
     /// This is thread-safe and contention-free
     pub fn get_arena(&self) -> ArenaHandle<'_> {
         let arena = self.herd.get();
-        self.total_arenas_created.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-        
+        self.total_arenas_created
+            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+
         ArenaHandle {
             arena,
             manager: Arc::clone(&self.herd),
@@ -51,7 +52,9 @@ impl AnalysisArenaManager {
     /// Get statistics about arena usage
     pub fn get_stats(&self) -> ArenaManagerStats {
         ArenaManagerStats {
-            total_arenas_created: self.total_arenas_created.load(std::sync::atomic::Ordering::Relaxed),
+            total_arenas_created: self
+                .total_arenas_created
+                .load(std::sync::atomic::Ordering::Relaxed),
             active_arenas: 0, // bumpalo-herd doesn't expose len(), set to 0 for now
             default_capacity_mb: self.default_arena_capacity / (1024 * 1024),
         }
@@ -60,7 +63,7 @@ impl AnalysisArenaManager {
     /// Export metrics for observability
     pub fn export_metrics(&self) -> serde_json::Value {
         let stats = self.get_stats();
-        
+
         serde_json::json!({
             "arena_manager": {
                 "pattern": "bumpalo-herd",
@@ -145,13 +148,13 @@ pub struct ArenaManagerStats {
 pub struct ArenaAnalysisResult {
     /// File that was analyzed
     pub file_path: String,
-    
+
     /// Owned issues found during analysis (converted from arena-allocated temporary structures)
     pub issues: Vec<ArchitecturalIssue>,
-    
+
     /// Owned metadata about the analysis
     pub analysis_metadata: AnalysisMetadata,
-    
+
     /// Performance metrics for this analysis
     pub performance_metrics: AnalysisPerformanceMetrics,
 }
@@ -173,11 +176,13 @@ pub struct AnalysisPerformanceMetrics {
 /// Helper functions for converting arena-allocated data to owned data
 pub mod conversion {
     use super::*;
-    use bumpalo::collections::{Vec as ArenaVec, String as ArenaString};
+    use bumpalo::collections::{String as ArenaString, Vec as ArenaVec};
 
     /// Convert arena-allocated vector of issues to owned vector
     /// This is the critical "Communication Phase" that converts temporary data to Send-able results
-    pub fn arena_issues_to_owned(arena_issues: ArenaVec<ArchitecturalIssue>) -> Vec<ArchitecturalIssue> {
+    pub fn arena_issues_to_owned(
+        arena_issues: ArenaVec<ArchitecturalIssue>,
+    ) -> Vec<ArchitecturalIssue> {
         arena_issues.into_iter().collect()
     }
 
@@ -218,7 +223,7 @@ pub mod rayon_integration {
         file_paths: Vec<String>,
         arena_manager: &AnalysisArenaManager,
         analyzer: F,
-    ) -> Vec<ArenaAnalysisResult> 
+    ) -> Vec<ArenaAnalysisResult>
     where
         F: Fn(&mut ArenaHandle, &str) -> ArenaAnalysisResult + Sync + Send,
     {
@@ -230,15 +235,18 @@ pub mod rayon_integration {
                     // Each parallel task gets its own arena from the herd
                     // This is contention-free and provides optimal performance
                     analyzer(arena_handle, file_path)
-                }
+                },
             )
             .collect()
     }
 
     /// Example analysis function that follows the recommended pattern
-    pub fn example_file_analyzer(arena_handle: &mut ArenaHandle, file_path: &str) -> ArenaAnalysisResult {
+    pub fn example_file_analyzer(
+        arena_handle: &mut ArenaHandle,
+        file_path: &str,
+    ) -> ArenaAnalysisResult {
         let start_time = std::time::Instant::now();
-        
+
         // Phase 1: Computation using arena (temporary allocations)
         // Simulate some arena allocations to demonstrate the pattern
         for i in 0..10 {
@@ -246,7 +254,7 @@ pub mod rayon_integration {
             let _temp_data = arena_handle.alloc([0u8; 64]);
             let _temp_string = arena_handle.alloc_str("temporary analysis data");
         }
-        
+
         // Create issues using standard allocations (the arena was used for temporary computation above)
         let mut temp_issues = arena_handle.create_vec();
         for i in 0..10 {
@@ -263,11 +271,11 @@ pub mod rayon_integration {
                 ai_explanation: None,
             });
         }
-        
+
         // Phase 2: Convert to owned result (communication phase)
         let analysis_duration = start_time.elapsed();
         let bytes_used = arena_handle.bytes_allocated();
-        
+
         conversion::build_analysis_result(
             file_path.to_string(),
             temp_issues,
@@ -280,7 +288,7 @@ pub mod rayon_integration {
                 arena_bytes_used: bytes_used,
                 analysis_duration_ms: analysis_duration.as_millis() as u64,
                 memory_efficiency: 0.85,
-            }
+            },
         )
     }
 }
@@ -298,7 +306,7 @@ mod tests {
     fn test_arena_manager_creation() {
         let manager = AnalysisArenaManager::new();
         let stats = manager.get_stats();
-        
+
         assert_eq!(stats.total_arenas_created, 0);
         assert_eq!(stats.active_arenas, 0);
         assert_eq!(stats.default_capacity_mb, 32);
@@ -308,21 +316,21 @@ mod tests {
     fn test_arena_handle_allocation() {
         let manager = AnalysisArenaManager::new();
         let mut handle = manager.get_arena();
-        
+
         // Test basic allocation
         let value = handle.alloc(42i32);
         assert_eq!(*value, 42);
-        
+
         // Test string allocation
         let text = handle.alloc_str("test string");
         assert_eq!(text, "test string");
-        
+
         // Test vector creation
         let mut vec = handle.create_vec();
         vec.push("item1".to_string());
         vec.push("item2".to_string());
         assert_eq!(vec.len(), 2);
-        
+
         // Check bytes allocated
         assert!(handle.bytes_allocated() > 0);
     }
@@ -331,7 +339,7 @@ mod tests {
     fn test_arena_conversion_helpers() {
         let manager = AnalysisArenaManager::new();
         let handle = manager.get_arena();
-        
+
         // Create arena-allocated data
         let mut arena_issues = handle.create_vec();
         arena_issues.push(ArchitecturalIssue {
@@ -346,7 +354,7 @@ mod tests {
             code_snippet: Some("test code".to_string()),
             ai_explanation: None,
         });
-        
+
         // Convert to owned
         let owned_issues = conversion::arena_issues_to_owned(arena_issues);
         assert_eq!(owned_issues.len(), 1);
@@ -369,11 +377,11 @@ mod tests {
                 memory_efficiency: 0.9,
             },
         };
-        
+
         // Verify it's Send (can be passed between threads)
         fn assert_send<T: Send>(_: &T) {}
         assert_send(&result);
-        
+
         // Verify it can be serialized
         let _json = serde_json::to_string(&result).unwrap();
     }
@@ -381,10 +389,10 @@ mod tests {
     #[test]
     fn test_concurrent_arena_access() {
         use rayon::prelude::*;
-        
+
         let manager = AnalysisArenaManager::new();
         let files = vec!["file1.rs", "file2.rs", "file3.rs", "file4.rs"];
-        
+
         // This demonstrates the recommended concurrent pattern
         let results: Vec<ArenaAnalysisResult> = files
             .par_iter()
@@ -392,10 +400,10 @@ mod tests {
                 || manager.get_arena(),
                 |arena_handle, file_path| {
                     rayon_integration::example_file_analyzer(arena_handle, file_path)
-                }
+                },
             )
             .collect();
-        
+
         assert_eq!(results.len(), 4);
         for (i, result) in results.iter().enumerate() {
             assert!(result.file_path.contains(&format!("file{}", i + 1)));
@@ -407,14 +415,14 @@ mod tests {
     #[test]
     fn test_arena_manager_stats() {
         let manager = AnalysisArenaManager::new();
-        
+
         // Get some arenas
         let _handle1 = manager.get_arena();
         let _handle2 = manager.get_arena();
-        
+
         let stats = manager.get_stats();
         assert_eq!(stats.total_arenas_created, 2);
-        
+
         // Export metrics
         let metrics = manager.export_metrics();
         assert_eq!(metrics["arena_manager"]["total_arenas_created"], 2);
@@ -427,7 +435,7 @@ mod tests {
     fn test_global_arena_manager() {
         let stats = GLOBAL_ARENA_MANAGER.get_stats();
         assert_eq!(stats.default_capacity_mb, 32);
-        
+
         let _handle = GLOBAL_ARENA_MANAGER.get_arena();
         let updated_stats = GLOBAL_ARENA_MANAGER.get_stats();
         assert!(updated_stats.total_arenas_created > stats.total_arenas_created);

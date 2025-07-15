@@ -6,6 +6,8 @@
 use crate::analysis::{AnalysisDetector, AnalysisError};
 use crate::ast::tree_sitter::{Node, Query, QueryCursor, Tree};
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
+use crate::constants::detector_thresholds;
+use crate::constants::severity_weights;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use log::debug;
 
@@ -42,37 +44,37 @@ pub struct LanguageThresholds {
 impl LanguageThresholds {
     pub fn rust() -> Self {
         Self {
-            max_logical_loc: 400,
-            max_methods: 20,
-            max_fields: 15,
-            max_cyclomatic_complexity: 50,
-            max_cognitive_complexity: 40,
-            max_lcom_score: 0.8,
-            max_coupling: 12,
+            max_logical_loc: detector_thresholds::rust::MAX_LOGICAL_LOC,
+            max_methods: detector_thresholds::rust::MAX_METHODS,
+            max_fields: detector_thresholds::rust::MAX_FIELDS,
+            max_cyclomatic_complexity: detector_thresholds::rust::MAX_CYCLOMATIC_COMPLEXITY,
+            max_cognitive_complexity: detector_thresholds::rust::MAX_COGNITIVE_COMPLEXITY,
+            max_lcom_score: detector_thresholds::rust::MAX_LCOM_SCORE,
+            max_coupling: detector_thresholds::rust::MAX_COUPLING,
         }
     }
 
     pub fn python() -> Self {
         Self {
-            max_logical_loc: 500,
-            max_methods: 25,
-            max_fields: 20,
-            max_cyclomatic_complexity: 60,
-            max_cognitive_complexity: 50,
-            max_lcom_score: 0.8,
-            max_coupling: 15,
+            max_logical_loc: detector_thresholds::python::MAX_LOGICAL_LOC,
+            max_methods: detector_thresholds::python::MAX_METHODS,
+            max_fields: detector_thresholds::python::MAX_FIELDS,
+            max_cyclomatic_complexity: detector_thresholds::python::MAX_CYCLOMATIC_COMPLEXITY,
+            max_cognitive_complexity: detector_thresholds::python::MAX_COGNITIVE_COMPLEXITY,
+            max_lcom_score: detector_thresholds::python::MAX_LCOM_SCORE,
+            max_coupling: detector_thresholds::python::MAX_COUPLING,
         }
     }
 
     pub fn javascript() -> Self {
         Self {
-            max_logical_loc: 600,
-            max_methods: 30,
-            max_fields: 25,
-            max_cyclomatic_complexity: 70,
-            max_cognitive_complexity: 60,
-            max_lcom_score: 0.8,
-            max_coupling: 18,
+            max_logical_loc: detector_thresholds::javascript::MAX_LOGICAL_LOC,
+            max_methods: detector_thresholds::javascript::MAX_METHODS,
+            max_fields: detector_thresholds::javascript::MAX_FIELDS,
+            max_cyclomatic_complexity: detector_thresholds::javascript::MAX_CYCLOMATIC_COMPLEXITY,
+            max_cognitive_complexity: detector_thresholds::javascript::MAX_COGNITIVE_COMPLEXITY,
+            max_lcom_score: detector_thresholds::javascript::MAX_LCOM_SCORE,
+            max_coupling: detector_thresholds::javascript::MAX_COUPLING,
         }
     }
 }
@@ -98,9 +100,9 @@ pub struct SeverityWeights {
 impl Default for SeverityWeights {
     fn default() -> Self {
         Self {
-            size_weight: 0.4,
-            complexity_weight: 0.35,
-            structural_weight: 0.25,
+            size_weight: severity_weights::SIZE_WEIGHT,
+            complexity_weight: severity_weights::COMPLEXITY_WEIGHT,
+            structural_weight: severity_weights::STRUCTURAL_WEIGHT,
         }
     }
 }

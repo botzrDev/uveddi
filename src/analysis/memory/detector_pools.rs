@@ -36,24 +36,25 @@ impl DetectorPools {
         Self {
             // Detector configuration pools
             dead_code_configs: Arc::new(MemoryPool::new(
-                capacity, strategy.clone(), "dead_code_configs"
+                capacity,
+                strategy.clone(),
+                "dead_code_configs",
             )),
 
             // Temporary object pools
             string_vectors: Arc::new(MemoryPool::new(
-                capacity * 2, strategy.clone(), "string_vectors"
+                capacity * 2,
+                strategy.clone(),
+                "string_vectors",
             )),
-            issue_vectors: Arc::new(MemoryPool::new(
-                capacity, strategy.clone(), "issue_vectors"
-            )),
+            issue_vectors: Arc::new(MemoryPool::new(capacity, strategy.clone(), "issue_vectors")),
         }
     }
 
     /// Pre-populate all pools with initial objects
     pub fn pre_populate(&self, percentage: f64) {
-        let populate_count = |capacity: usize| -> usize {
-            ((capacity as f64) * (percentage / 100.0)) as usize
-        };
+        let populate_count =
+            |capacity: usize| -> usize { ((capacity as f64) * (percentage / 100.0)) as usize };
 
         // Pre-populate detector config pools
         self.dead_code_configs.pre_populate(populate_count(100));
@@ -136,9 +137,7 @@ impl DetectorPoolStats {
             &self.issue_vectors,
         ];
 
-        let total_utilization: f64 = pools.iter()
-            .map(|pool| pool.utilization_percentage)
-            .sum();
+        let total_utilization: f64 = pools.iter().map(|pool| pool.utilization_percentage).sum();
 
         total_utilization / pools.len() as f64
     }
@@ -151,7 +150,8 @@ impl DetectorPoolStats {
             &self.issue_vectors,
         ];
 
-        pools.iter()
+        pools
+            .iter()
             .filter(|pool| pool.is_efficiently_utilized())
             .count()
     }
@@ -212,9 +212,9 @@ mod tests {
         let stats = pools.get_all_stats();
 
         // At least some pools should have objects
-        let total_objects: usize = stats.dead_code_configs.total_objects_available +
-                                  stats.string_vectors.total_objects_available +
-                                  stats.issue_vectors.total_objects_available;
+        let total_objects: usize = stats.dead_code_configs.total_objects_available
+            + stats.string_vectors.total_objects_available
+            + stats.issue_vectors.total_objects_available;
 
         assert!(total_objects > 0, "Pre-population should create objects");
     }
@@ -290,10 +290,13 @@ mod tests {
         let stats = pools.get_all_stats();
 
         // Should have some pre-populated objects
-        let total_objects: usize = stats.dead_code_configs.total_objects_available +
-                                  stats.string_vectors.total_objects_available +
-                                  stats.issue_vectors.total_objects_available;
+        let total_objects: usize = stats.dead_code_configs.total_objects_available
+            + stats.string_vectors.total_objects_available
+            + stats.issue_vectors.total_objects_available;
 
-        assert!(total_objects > 0, "Initialization should pre-populate pools");
+        assert!(
+            total_objects > 0,
+            "Initialization should pre-populate pools"
+        );
     }
 }

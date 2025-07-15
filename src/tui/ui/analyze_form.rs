@@ -3,6 +3,7 @@
 //! Provides a user-friendly interface that replaces complex CLI arguments
 //! with guided form inputs, validation, and real-time feedback.
 
+use crate::constants::tui_constants;
 use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::{
     layout::{Constraint, Direction, Layout, Margin},
@@ -228,9 +229,9 @@ impl AnalyzeFormInputs {
 
             // Dead Code Detection
             dead_code_confidence_input: NumericInput::new("Dead Code Confidence")
-                .with_min_value(0.0)
-                .with_max_value(1.0)
-                .with_decimal_places(2),
+                .with_min_value(tui_constants::form_constraints::MIN_CONFIDENCE)
+                .with_max_value(tui_constants::form_constraints::MAX_CONFIDENCE)
+                .with_decimal_places(tui_constants::form_constraints::CONFIDENCE_DECIMAL_PLACES),
             dead_code_library_mode_toggle: Toggle::new("Library Mode", false),
             dead_code_ignore_patterns_input: TextInput::new("Ignore Patterns")
                 .with_placeholder("test,spec,mock"),
@@ -238,20 +239,23 @@ impl AnalyzeFormInputs {
                 .with_placeholder("main,init,setup"),
 
             // Large Classes Detection
-            large_classes_max_loc_input: NumericInput::new("Max Lines of Code").with_min_value(1.0),
-            large_classes_max_methods_input: NumericInput::new("Max Methods").with_min_value(1.0),
-            large_classes_max_fields_input: NumericInput::new("Max Fields").with_min_value(1.0),
+            large_classes_max_loc_input: NumericInput::new("Max Lines of Code")
+                .with_min_value(tui_constants::form_constraints::MIN_COUNT_VALUE),
+            large_classes_max_methods_input: NumericInput::new("Max Methods")
+                .with_min_value(tui_constants::form_constraints::MIN_COUNT_VALUE),
+            large_classes_max_fields_input: NumericInput::new("Max Fields")
+                .with_min_value(tui_constants::form_constraints::MIN_COUNT_VALUE),
             large_classes_max_complexity_input: NumericInput::new("Max Complexity")
-                .with_min_value(1.0),
+                .with_min_value(tui_constants::form_constraints::MIN_COUNT_VALUE),
             large_classes_max_lcom_input: NumericInput::new("Max LCOM Score")
-                .with_min_value(0.0)
-                .with_max_value(1.0)
-                .with_decimal_places(2),
+                .with_min_value(tui_constants::form_constraints::MIN_CONFIDENCE)
+                .with_max_value(tui_constants::form_constraints::MAX_CONFIDENCE)
+                .with_decimal_places(tui_constants::form_constraints::CONFIDENCE_DECIMAL_PLACES),
             large_classes_ignore_patterns_input: TextInput::new("Ignore Patterns")
                 .with_placeholder("test,spec,fixture"),
             large_classes_min_severity_input: NumericInput::new("Min Severity")
-                .with_min_value(0.0)
-                .with_max_value(100.0),
+                .with_min_value(tui_constants::form_constraints::MIN_SEVERITY)
+                .with_max_value(tui_constants::form_constraints::MAX_SEVERITY),
         }
     }
 
@@ -261,15 +265,22 @@ impl AnalyzeFormInputs {
         self.path_picker.set_value("./src");
 
         // Set confidence threshold default
-        self.dead_code_confidence_input.set_value("0.8");
+        self.dead_code_confidence_input
+            .set_value(tui_constants::form_defaults::DEAD_CODE_CONFIDENCE);
 
         // Set default thresholds for large classes
-        self.large_classes_max_loc_input.set_value("400");
-        self.large_classes_max_methods_input.set_value("20");
-        self.large_classes_max_fields_input.set_value("15");
-        self.large_classes_max_complexity_input.set_value("50");
-        self.large_classes_max_lcom_input.set_value("0.8");
-        self.large_classes_min_severity_input.set_value("25");
+        self.large_classes_max_loc_input
+            .set_value(tui_constants::form_defaults::LARGE_CLASSES_MAX_LOC);
+        self.large_classes_max_methods_input
+            .set_value(tui_constants::form_defaults::LARGE_CLASSES_MAX_METHODS);
+        self.large_classes_max_fields_input
+            .set_value(tui_constants::form_defaults::LARGE_CLASSES_MAX_FIELDS);
+        self.large_classes_max_complexity_input
+            .set_value(tui_constants::form_defaults::LARGE_CLASSES_MAX_COMPLEXITY);
+        self.large_classes_max_lcom_input
+            .set_value(tui_constants::form_defaults::LARGE_CLASSES_MAX_LCOM);
+        self.large_classes_min_severity_input
+            .set_value(tui_constants::form_defaults::LARGE_CLASSES_MIN_SEVERITY);
 
         // Set Ollama defaults from environment if available
         if let Ok(url) = std::env::var("OLLAMA_API_URL") {
@@ -718,7 +729,7 @@ impl AnalyzeForm {
                 .large_classes_min_severity_input
                 .value()
                 .map(|v| v as u32),
-            
+
             // Memory optimization fields (with defaults)
             enable_memory_optimization: false,
             memory_limit_gb: None,

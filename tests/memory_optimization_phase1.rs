@@ -7,7 +7,10 @@ fn test_phase1_foundation_setup() {
     // Test that memory optimization can be initialized
     let config = MemoryOptimizationConfig::default();
     let result = initialize_memory_optimization(config);
-    assert!(result.is_ok(), "Memory optimization initialization should succeed");
+    assert!(
+        result.is_ok(),
+        "Memory optimization initialization should succeed"
+    );
 }
 
 #[test]
@@ -36,7 +39,12 @@ fn test_basic_metrics_collection() {
     assert!(metrics.is_within_target()); // Should be within 8GB default target
 
     let json = BASIC_MEMORY_METRICS.export_json();
-    assert!(json["memory_optimization_phase1"]["current_memory_gb"].as_f64().unwrap() > 0.0);
+    assert!(
+        json["memory_optimization_phase1"]["current_memory_gb"]
+            .as_f64()
+            .unwrap()
+            > 0.0
+    );
 }
 
 #[test]
@@ -63,7 +71,10 @@ fn test_optimization_status_export() {
     assert!(status["metrics"].is_object());
 
     // Verify phase information
-    assert_eq!(status["phase"].as_str().unwrap(), "Phase 4 - Zero-Copy AST Caching");
+    assert_eq!(
+        status["phase"].as_str().unwrap(),
+        "Phase 4 - Zero-Copy AST Caching"
+    );
 }
 
 #[cfg(feature = "mimalloc")]

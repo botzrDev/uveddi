@@ -389,7 +389,10 @@ mod tests {
                 println!("Service error - rendering service not available, skipping test");
             }
             Err(e) => {
-                println!("Rendering service error (expected in test environment): {}", e);
+                println!(
+                    "Rendering service error (expected in test environment): {}",
+                    e
+                );
                 // Don't panic - external service dependency is acceptable to fail in tests
             }
         }
@@ -423,7 +426,10 @@ graph TD
                 println!("Service error - rendering service not available, skipping test");
             }
             Err(e) => {
-                println!("Rendering service error (expected in test environment): {}", e);
+                println!(
+                    "Rendering service error (expected in test environment): {}",
+                    e
+                );
                 // Don't panic - external service dependency is acceptable to fail in tests
             }
         }

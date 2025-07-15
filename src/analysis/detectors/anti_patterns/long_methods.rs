@@ -219,7 +219,6 @@ impl LongMethodsDetector {
                 )
             })?;
             let language = tree.language();
-            
 
             let function_query = Query::new(&language, RUST_FUNCTION_QUERY).map_err(|e| {
                 crate::analysis::errors::AnalysisError::AntiPatternDetectionError(format!(
@@ -229,8 +228,10 @@ impl LongMethodsDetector {
             })?;
 
             let mut cursor = QueryCursor::new();
-            let matches: Vec<_> = cursor.matches(&function_query, tree.root_node(), source).collect();
-            
+            let matches: Vec<_> = cursor
+                .matches(&function_query, tree.root_node(), source)
+                .collect();
+
             for mat in matches {
                 if let (Some(name_capture), Some(body_capture)) =
                     (mat.captures.get(1), mat.captures.get(2))
@@ -1018,7 +1019,6 @@ fn very_long_function() {
             .detect_issues(&parsed_file)
             .expect("Analysis failed");
 
-
         assert!(!issues.is_empty(), "Should detect long method");
         assert_eq!(issues[0].anti_pattern_type_id, 4); // LongMethod ID is 4
         assert!(issues[0].description.contains("very_long_function"));
@@ -1087,7 +1087,6 @@ def very_long_function():
         let issues = detector
             .detect_issues(&parsed_file)
             .expect("Analysis failed");
-
 
         assert!(!issues.is_empty(), "Should detect long method");
         assert_eq!(issues[0].anti_pattern_type_id, 4); // LongMethod ID is 4

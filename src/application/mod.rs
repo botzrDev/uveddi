@@ -73,17 +73,17 @@ pub struct AnalysisConfig {
     pub large_classes_ignore_patterns: Option<Vec<String>>,
     /// Minimum severity score for large classes reporting.
     pub large_classes_min_severity: Option<u32>,
-    
+
     /// Memory optimization configuration
     #[cfg(feature = "memory-optimization")]
     pub memory_optimization: Option<crate::analysis::memory::MemoryOptimizationConfig>,
-    
+
     /// Enable memory optimization features
     pub enable_memory_optimization: bool,
-    
+
     /// Memory limit in gigabytes
     pub memory_limit_gb: Option<f64>,
-    
+
     /// Memory profile selection (small/default/large)
     pub memory_profile: Option<String>,
 }
@@ -120,7 +120,7 @@ impl AnalysisOrchestrator {
     pub fn with_db_path(db_path: &std::path::Path) -> Result<Self, UveddiError> {
         let database =
             Database::new(Some(db_path)).context("Failed to initialize database with path")?;
-        
+
         // Initialize memory optimization with default configuration
         #[cfg(feature = "memory-optimization")]
         {
@@ -131,7 +131,7 @@ impl AnalysisOrchestrator {
                 log::info!("Memory optimization initialized successfully");
             }
         }
-        
+
         let analysis_engine =
             AnalysisEngine::new().context("Failed to initialize analysis engine")?;
 
@@ -145,7 +145,7 @@ impl AnalysisOrchestrator {
     /// Ideal for testing or environments where file system access is restricted.
     pub fn new() -> Result<Self, UveddiError> {
         let database = Database::new(None).context("Failed to initialize in-memory database")?;
-        
+
         // Initialize memory optimization with default configuration
         #[cfg(feature = "memory-optimization")]
         {
@@ -156,7 +156,7 @@ impl AnalysisOrchestrator {
                 log::info!("Memory optimization initialized successfully");
             }
         }
-        
+
         let analysis_engine =
             AnalysisEngine::new().context("Failed to initialize analysis engine")?;
 
@@ -172,7 +172,7 @@ impl AnalysisOrchestrator {
         memory_config: Option<crate::analysis::memory::MemoryOptimizationConfig>,
     ) -> Result<Self, UveddiError> {
         let database = Database::new(db_path).context("Failed to initialize database")?;
-        
+
         // Initialize memory optimization with custom configuration
         #[cfg(feature = "memory-optimization")]
         if let Some(config) = memory_config {
@@ -182,7 +182,7 @@ impl AnalysisOrchestrator {
                 log::info!("Memory optimization initialized with custom configuration");
             }
         }
-        
+
         let analysis_engine =
             AnalysisEngine::new().context("Failed to initialize analysis engine")?;
 
@@ -214,8 +214,11 @@ impl AnalysisOrchestrator {
         &mut self,
         config: AnalysisConfig,
     ) -> Result<AnalysisReport, UveddiError> {
-        log::debug!("🚀 Starting execute_analysis for path: {}", config.target_path.display());
-        
+        log::debug!(
+            "🚀 Starting execute_analysis for path: {}",
+            config.target_path.display()
+        );
+
         // Recreate analysis engine with memory optimization if enabled
         if config.enable_memory_optimization {
             log::debug!("🔧 Memory optimization enabled, creating optimized analysis engine");
@@ -234,7 +237,7 @@ impl AnalysisOrchestrator {
                 reason: "Path does not exist".to_string(),
                 suggestion: "Verify the path exists and is accessible".to_string(),
             })
-                .context("Input path validation failed")?;
+            .context("Input path validation failed")?;
         }
         log::debug!("✅ Input path validated successfully");
 
@@ -261,7 +264,10 @@ impl AnalysisOrchestrator {
             .database
             .create_analysis_run(&config.target_path)
             .context("Failed to create analysis run")?;
-        log::debug!("✅ Analysis run record created with ID: {:?}", analysis_run.run_id);
+        log::debug!(
+            "✅ Analysis run record created with ID: {:?}",
+            analysis_run.run_id
+        );
 
         // Execute core analysis
         log::debug!("🔍 Starting core analysis execution");
@@ -368,7 +374,7 @@ impl AnalysisOrchestrator {
                         crate::error::UveddiError::from(
                             crate::report::errors::ReportGenerationError::DataExtractionError(
                                 e.to_string(),
-                            )
+                            ),
                         )
                     })?;
                 Ok(report.to_string())
@@ -379,11 +385,14 @@ impl AnalysisOrchestrator {
                     crate::error::UveddiError::from(
                         crate::report::errors::ReportGenerationError::DataExtractionError(
                             e.to_string(),
-                        )
+                        ),
                     )
                 }),
             _ => Err(UveddiError::config_error(
-                &format!("Unsupported output format specified: {}", config.output_format),
+                &format!(
+                    "Unsupported output format specified: {}",
+                    config.output_format
+                ),
                 "output format",
             ))
             .context("Unsupported output format specified")?,
@@ -528,19 +537,29 @@ impl AnalysisOrchestrator {
             {
                 // Validate memory optimization configuration
                 if let Err(validation_error) = Self::validate_memory_optimization_config(config) {
-                    log::warn!("Memory optimization configuration validation failed: {}", validation_error);
+                    log::warn!(
+                        "Memory optimization configuration validation failed: {}",
+                        validation_error
+                    );
                     log::warn!("Falling back to standard analysis mode");
-                    return AnalysisEngine::new().context("Failed to initialize analysis engine")
+                    return AnalysisEngine::new()
+                        .context("Failed to initialize analysis engine")
                         .map_err(|e| UveddiError::config_error(&e.to_string(), "analysis engine"));
                 }
 
                 if let Some(memory_config) = config.memory_optimization.clone() {
                     // Validate provided memory config
                     if let Err(validation_error) = memory_config.validate() {
-                        log::warn!("Invalid memory optimization configuration: {}", validation_error);
+                        log::warn!(
+                            "Invalid memory optimization configuration: {}",
+                            validation_error
+                        );
                         log::warn!("Falling back to standard analysis mode");
-                        return AnalysisEngine::new().context("Failed to initialize analysis engine")
-                            .map_err(|e| UveddiError::config_error(&e.to_string(), "analysis engine"));
+                        return AnalysisEngine::new()
+                            .context("Failed to initialize analysis engine")
+                            .map_err(|e| {
+                                UveddiError::config_error(&e.to_string(), "analysis engine")
+                            });
                     }
 
                     AnalysisEngine::new()
@@ -549,12 +568,18 @@ impl AnalysisOrchestrator {
                             log::warn!("Memory optimization initialization failed: {}", e);
                             log::warn!("Falling back to standard analysis mode");
                             // Graceful fallback to standard mode
-                            AnalysisEngine::new().context("Failed to initialize analysis engine")
-                                .map_err(|e| UveddiError::config_error(&e.to_string(), "analysis engine"))
+                            AnalysisEngine::new()
+                                .context("Failed to initialize analysis engine")
+                                .map_err(|e| {
+                                    UveddiError::config_error(&e.to_string(), "analysis engine")
+                                })
                         })
                         .or_else(|_| {
-                            AnalysisEngine::new().context("Failed to initialize analysis engine")
-                                .map_err(|e| UveddiError::config_error(&e.to_string(), "analysis engine"))
+                            AnalysisEngine::new()
+                                .context("Failed to initialize analysis engine")
+                                .map_err(|e| {
+                                    UveddiError::config_error(&e.to_string(), "analysis engine")
+                                })
                         })
                 } else {
                     // Create memory optimization config based on profile and limits
@@ -563,22 +588,32 @@ impl AnalysisOrchestrator {
                         Some("large") => MemoryOptimizationConfig::large_codebase(),
                         _ => MemoryOptimizationConfig::default(),
                     };
-                    
+
                     // Apply memory limit if specified
                     if let Some(limit_gb) = config.memory_limit_gb {
                         if limit_gb <= 0.0 {
-                            log::warn!("Invalid memory limit: {}GB. Using default configuration.", limit_gb);
+                            log::warn!(
+                                "Invalid memory limit: {}GB. Using default configuration.",
+                                limit_gb
+                            );
                         } else {
-                            memory_config.target_max_memory_bytes = (limit_gb * 1024.0 * 1024.0 * 1024.0) as usize;
+                            memory_config.target_max_memory_bytes =
+                                (limit_gb * 1024.0 * 1024.0 * 1024.0) as usize;
                         }
                     }
-                    
+
                     // Validate the created config
                     if let Err(validation_error) = memory_config.validate() {
-                        log::warn!("Generated memory optimization configuration is invalid: {}", validation_error);
+                        log::warn!(
+                            "Generated memory optimization configuration is invalid: {}",
+                            validation_error
+                        );
                         log::warn!("Falling back to standard analysis mode");
-                        return AnalysisEngine::new().context("Failed to initialize analysis engine")
-                            .map_err(|e| UveddiError::config_error(&e.to_string(), "analysis engine"));
+                        return AnalysisEngine::new()
+                            .context("Failed to initialize analysis engine")
+                            .map_err(|e| {
+                                UveddiError::config_error(&e.to_string(), "analysis engine")
+                            });
                     }
 
                     AnalysisEngine::new()
@@ -587,12 +622,18 @@ impl AnalysisOrchestrator {
                             log::warn!("Memory optimization initialization failed: {}", e);
                             log::warn!("Falling back to standard analysis mode");
                             // Graceful fallback to standard mode
-                            AnalysisEngine::new().context("Failed to initialize analysis engine")
-                                .map_err(|e| UveddiError::config_error(&e.to_string(), "analysis engine"))
+                            AnalysisEngine::new()
+                                .context("Failed to initialize analysis engine")
+                                .map_err(|e| {
+                                    UveddiError::config_error(&e.to_string(), "analysis engine")
+                                })
                         })
                         .or_else(|_| {
-                            AnalysisEngine::new().context("Failed to initialize analysis engine")
-                                .map_err(|e| UveddiError::config_error(&e.to_string(), "analysis engine"))
+                            AnalysisEngine::new()
+                                .context("Failed to initialize analysis engine")
+                                .map_err(|e| {
+                                    UveddiError::config_error(&e.to_string(), "analysis engine")
+                                })
                         })
                 }
             }
@@ -600,11 +641,13 @@ impl AnalysisOrchestrator {
             {
                 log::warn!("Memory optimization requested but feature not enabled");
                 log::warn!("Falling back to standard analysis mode");
-                AnalysisEngine::new().context("Failed to initialize analysis engine")
+                AnalysisEngine::new()
+                    .context("Failed to initialize analysis engine")
                     .map_err(|e| UveddiError::config_error(&e.to_string(), "analysis engine"))
             }
         } else {
-            AnalysisEngine::new().context("Failed to initialize analysis engine")
+            AnalysisEngine::new()
+                .context("Failed to initialize analysis engine")
                 .map_err(|e| UveddiError::config_error(&e.to_string(), "analysis engine"))
         }
     }
@@ -614,16 +657,25 @@ impl AnalysisOrchestrator {
     fn validate_memory_optimization_config(config: &AnalysisConfig) -> Result<(), String> {
         if let Some(limit_gb) = config.memory_limit_gb {
             if limit_gb <= 0.0 {
-                return Err(format!("Memory limit must be positive, got: {}GB", limit_gb));
+                return Err(format!(
+                    "Memory limit must be positive, got: {}GB",
+                    limit_gb
+                ));
             }
             if limit_gb > 1000.0 {
-                return Err(format!("Memory limit too high ({}GB), maximum is 1000GB", limit_gb));
+                return Err(format!(
+                    "Memory limit too high ({}GB), maximum is 1000GB",
+                    limit_gb
+                ));
             }
         }
 
         if let Some(profile) = config.memory_profile.as_deref() {
             if !matches!(profile, "small" | "default" | "large") {
-                return Err(format!("Invalid memory profile '{}', must be one of: small, default, large", profile));
+                return Err(format!(
+                    "Invalid memory profile '{}', must be one of: small, default, large",
+                    profile
+                ));
             }
         }
 
@@ -683,7 +735,7 @@ pub fn run_app() -> Result<(), UveddiError> {
             info!("Executing config command...");
             command
                 .execute()
-.map_err(|e| UveddiError::config_error(&e.to_string(), "config validation"))
+                .map_err(|e| UveddiError::config_error(&e.to_string(), "config validation"))
         }
     };
     if let Err(e) = result {

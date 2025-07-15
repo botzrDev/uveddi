@@ -4,7 +4,6 @@
 // This module tests the form validation logic and data conversion
 // between TUI form inputs and backend command structures.
 // Focuses on ensuring data integrity and proper error handling.
-
 use std::path::PathBuf;
 
 use uveddi::cli::analyze_command::AnalyzeCommand;
@@ -62,7 +61,7 @@ impl MockAnalyzeFormData {
             return Err("Path is required".to_string());
         }
 
-        let path = PathBuf::from(&self.path);
+        let path = std::path::PathBuf::from(&self.path);
         if !path.exists() {
             return Err("The specified path does not exist".to_string());
         }
@@ -242,7 +241,7 @@ impl MockAnalyzeFormData {
         Ok(AnalyzeCommand {
             path,
             output_format: self.output_format.clone(),
-            output: self.output_file.as_ref().map(PathBuf::from),
+            output: self.output_file.as_ref().map(std::path::PathBuf::from),
             enable_ai: self.enable_ai,
             ollama_api_url: self.ollama_api_url.clone(),
             ollama_model: self.ollama_model.clone(),
@@ -266,7 +265,7 @@ impl MockAnalyzeFormData {
 
 /// Helper function to create a test file for validation
 async fn create_test_file() -> std::io::Result<PathBuf> {
-    let test_dir = PathBuf::from("./tmp/form_validation_test");
+    let test_dir = std::path::PathBuf::from("./tmp/form_validation_test");
     tokio::fs::create_dir_all(&test_dir).await?;
 
     let test_file = test_dir.join("test.rs");
@@ -521,7 +520,10 @@ async fn test_form_validation_complete_valid_form() {
     // Verify all fields were parsed correctly
     assert_eq!(command.path, test_file);
     assert_eq!(command.output_format, "json");
-    assert_eq!(command.output, Some(PathBuf::from("output.json")));
+    assert_eq!(
+        command.output,
+        Some(std::path::PathBuf::from("output.json"))
+    );
     assert!(command.enable_ai);
     assert_eq!(
         command.ollama_api_url,

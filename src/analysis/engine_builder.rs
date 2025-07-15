@@ -241,7 +241,7 @@ impl AnalysisEngineBuilder {
             } else {
                 AnalysisEngine::with_detectors(detectors, cache_path, false)?
             }
-            
+
             #[cfg(not(feature = "memory-optimization"))]
             AnalysisEngine::with_detectors(detectors, cache_path, false)?
         };

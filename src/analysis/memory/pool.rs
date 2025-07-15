@@ -1,13 +1,13 @@
 //! High-performance concurrent object pools for frequently reused analysis objects
 //! Based on UV-210 research: sharded pools for multi-threaded scenarios
 
-use std::sync::{Arc, Mutex};
-use std::collections::VecDeque;
-use std::marker::PhantomData;
-use std::hash::{Hash, Hasher};
-use std::collections::hash_map::DefaultHasher;
 use crate::analysis::memory::allocator::AllocationStrategy;
 use crate::analysis::memory::metrics::BASIC_MEMORY_METRICS;
+use std::collections::hash_map::DefaultHasher;
+use std::collections::VecDeque;
+use std::hash::{Hash, Hasher};
+use std::marker::PhantomData;
+use std::sync::{Arc, Mutex};
 
 /// Thread-safe object pool with configurable allocation strategy and sharding
 pub struct MemoryPool<T> {
@@ -25,15 +25,23 @@ where
 {
     /// Create a new memory pool with specified capacity and strategy
     pub fn new(total_capacity: usize, allocation_strategy: AllocationStrategy, name: &str) -> Self {
-        let shard_count = if num_cpus::get() < 4 { 4 } else { num_cpus::get() };
+        let shard_count = if num_cpus::get() < 4 {
+            4
+        } else {
+            num_cpus::get()
+        };
         let capacity_per_shard = (total_capacity + shard_count - 1) / shard_count; // Ceiling division
 
         let pools = (0..shard_count)
             .map(|_| Arc::new(Mutex::new(VecDeque::with_capacity(capacity_per_shard))))
             .collect();
 
-        log::debug!("Created memory pool '{}' with {} shards, {} capacity per shard",
-                   name, shard_count, capacity_per_shard);
+        log::debug!(
+            "Created memory pool '{}' with {} shards, {} capacity per shard",
+            name,
+            shard_count,
+            capacity_per_shard
+        );
 
         Self {
             pools,
@@ -111,7 +119,11 @@ where
             }
         }
 
-        log::debug!("Pre-populated pool '{}' with {} objects", self.pool_name, count);
+        log::debug!(
+            "Pre-populated pool '{}' with {} objects",
+            self.pool_name,
+            count
+        );
     }
 
     fn get_shard_id(&self) -> usize {
@@ -207,14 +219,20 @@ impl PoolStats {
     /// Get efficiency recommendation
     pub fn get_efficiency_recommendation(&self) -> String {
         if self.utilization_percentage < 20.0 {
-            format!("Pool '{}' is under-utilized ({}%). Consider reducing capacity.",
-                   self.pool_name, self.utilization_percentage)
+            format!(
+                "Pool '{}' is under-utilized ({}%). Consider reducing capacity.",
+                self.pool_name, self.utilization_percentage
+            )
         } else if self.utilization_percentage > 80.0 {
-            format!("Pool '{}' is over-utilized ({}%). Consider increasing capacity.",
-                   self.pool_name, self.utilization_percentage)
+            format!(
+                "Pool '{}' is over-utilized ({}%). Consider increasing capacity.",
+                self.pool_name, self.utilization_percentage
+            )
         } else {
-            format!("Pool '{}' is efficiently utilized ({}%).",
-                   self.pool_name, self.utilization_percentage)
+            format!(
+                "Pool '{}' is efficiently utilized ({}%).",
+                self.pool_name, self.utilization_percentage
+            )
         }
     }
 }
@@ -231,11 +249,8 @@ mod tests {
 
     #[test]
     fn test_pool_creation() {
-        let pool = MemoryPool::<TestObject>::new(
-            100,
-            AllocationStrategy::FixedSize(100),
-            "test_pool"
-        );
+        let pool =
+            MemoryPool::<TestObject>::new(100, AllocationStrategy::FixedSize(100), "test_pool");
 
         let stats = pool.get_stats();
         assert_eq!(stats.total_capacity, 100);
@@ -245,11 +260,8 @@ mod tests {
 
     #[test]
     fn test_pool_get_and_return() {
-        let pool = MemoryPool::<TestObject>::new(
-            10,
-            AllocationStrategy::FixedSize(10),
-            "test_pool"
-        );
+        let pool =
+            MemoryPool::<TestObject>::new(10, AllocationStrategy::FixedSize(10), "test_pool");
 
         // Pre-populate with one object
         pool.pre_populate(1);
@@ -275,11 +287,8 @@ mod tests {
 
     #[test]
     fn test_pool_reset_functionality() {
-        let pool = MemoryPool::<TestObject>::new(
-            10,
-            AllocationStrategy::FixedSize(10),
-            "test_pool"
-        );
+        let pool =
+            MemoryPool::<TestObject>::new(10, AllocationStrategy::FixedSize(10), "test_pool");
 
         let mut obj = pool.get();
         obj.value = 42;
@@ -292,11 +301,8 @@ mod tests {
 
     #[test]
     fn test_pool_stats() {
-        let pool = MemoryPool::<TestObject>::new(
-            20,
-            AllocationStrategy::FixedSize(20),
-            "stats_test"
-        );
+        let pool =
+            MemoryPool::<TestObject>::new(20, AllocationStrategy::FixedSize(20), "stats_test");
 
         pool.pre_populate(10);
         let stats = pool.get_stats();
@@ -316,7 +322,7 @@ mod tests {
         let pool = Arc::new(MemoryPool::<TestObject>::new(
             100,
             AllocationStrategy::FixedSize(100),
-            "concurrent_test"
+            "concurrent_test",
         ));
 
         pool.pre_populate(50);
@@ -351,7 +357,7 @@ mod tests {
         let pool = MemoryPool::<TestObject>::new(
             100,
             AllocationStrategy::FixedSize(100),
-            "efficiency_test"
+            "efficiency_test",
         );
 
         // Test under-utilized

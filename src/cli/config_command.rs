@@ -82,13 +82,23 @@ impl ConfigCommand {
                         ))
                     }
                 }
-                let toml = toml::to_string_pretty(&config)
-                    .map_err(|e| crate::error::UveddiError::config_error(&e.to_string(), "config serialization"))?;
-                let mut file_handle =
-                    fs::File::create(file).map_err(|e| crate::error::UveddiError::io_error("creating config file", &file.display().to_string(), e))?;
-                file_handle
-                    .write_all(toml.as_bytes())
-                    .map_err(|e| crate::error::UveddiError::io_error("writing config file", &file.display().to_string(), e))?;
+                let toml = toml::to_string_pretty(&config).map_err(|e| {
+                    crate::error::UveddiError::config_error(&e.to_string(), "config serialization")
+                })?;
+                let mut file_handle = fs::File::create(file).map_err(|e| {
+                    crate::error::UveddiError::io_error(
+                        "creating config file",
+                        &file.display().to_string(),
+                        e,
+                    )
+                })?;
+                file_handle.write_all(toml.as_bytes()).map_err(|e| {
+                    crate::error::UveddiError::io_error(
+                        "writing config file",
+                        &file.display().to_string(),
+                        e,
+                    )
+                })?;
                 println!("Config updated in {}", file.display());
             }
             ConfigSubcommand::Validate { file } => {

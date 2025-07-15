@@ -3,14 +3,14 @@
 //! Collects execution time, memory usage, and other metrics per component.
 //! Supports adaptive sampling, async storage, and configuration.
 
-use std::sync::{Arc, Mutex};
-use chrono::{DateTime, Utc};
 use crate::database::models::{ComponentPerformanceMetrics, PerformanceMetricsConfig};
 use crate::monitoring::memory_monitor::MemoryMonitor;
-use tokio::time::{sleep, Duration};
+use chrono::{DateTime, Utc};
 use rusqlite::Connection;
-use std::sync::atomic::{AtomicBool, Ordering};
 use serde_json;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex};
+use tokio::time::{sleep, Duration};
 
 pub struct PerformanceMetricsCollector {
     config: PerformanceMetricsConfig,
@@ -54,7 +54,10 @@ impl PerformanceMetricsCollector {
 
     /// Capture current memory usage
     pub fn capture_memory_snapshot(&self) -> u64 {
-        self.memory_monitor.lock().unwrap().get_current_memory_usage()
+        self.memory_monitor
+            .lock()
+            .unwrap()
+            .get_current_memory_usage()
     }
 
     /// Record metrics for a component (buffered for async storage)
@@ -68,7 +71,11 @@ impl PerformanceMetricsCollector {
     pub fn record_analysis_metrics(&self, issues_found: usize, files_analyzed: usize) {
         // This can be used for overall analysis tracking
         // For now, we'll just log the metrics
-        log::info!("Analysis completed: {} issues found in {} files", issues_found, files_analyzed);
+        log::info!(
+            "Analysis completed: {} issues found in {} files",
+            issues_found,
+            files_analyzed
+        );
     }
 
     /// Emit/export current metrics (returns Result for error handling)
@@ -138,7 +145,12 @@ pub struct AsyncMetricsStorage {
 }
 
 impl AsyncMetricsStorage {
-    pub fn new(db_path: &str, buffer: Arc<Mutex<Vec<ComponentPerformanceMetrics>>>, flush_interval_seconds: u64, buffer_size: usize) -> Self {
+    pub fn new(
+        db_path: &str,
+        buffer: Arc<Mutex<Vec<ComponentPerformanceMetrics>>>,
+        flush_interval_seconds: u64,
+        buffer_size: usize,
+    ) -> Self {
         let conn = Connection::open(db_path).expect("Failed to open metrics DB");
         Self {
             buffer,

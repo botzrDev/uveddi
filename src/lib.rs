@@ -249,6 +249,7 @@ pub mod cache;
 pub mod cli;
 pub mod community;
 pub mod config;
+pub mod constants;
 pub mod database;
 pub mod error;
 pub mod ingestion;

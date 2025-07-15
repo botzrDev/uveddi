@@ -4,11 +4,11 @@
 //! AST parsing operations in async Rust applications without blocking the Tokio runtime.
 
 use crate::ast::tree_sitter_impl::AstParser;
+use log::{debug, error, info, warn};
 use std::sync::Arc;
 use std::time::Duration;
-use tokio::sync::{Mutex, OwnedSemaphorePermit, Semaphore};
 use thiserror::Error;
-use log::{info, debug, warn, error};
+use tokio::sync::{Mutex, OwnedSemaphorePermit, Semaphore};
 
 /// Comprehensive error enum representing all possible failure modes
 /// when parsing files in a robust, async context.
@@ -17,11 +17,11 @@ pub enum ParseFileError {
     /// The underlying parsing operation failed with a specific error
     #[error("Parse error: {0}")]
     Parse(#[from] crate::ast::AstError),
-    
+
     /// The parsing operation exceeded the specified timeout duration
     #[error("Parse operation timed out after {0:?}")]
     Timeout(Duration),
-    
+
     /// The parsing task panicked on the blocking thread pool
     #[error("Parse operation panicked: {0}")]
     Panic(String),
@@ -65,43 +65,43 @@ impl RobustParser {
     pub fn new(config: RobustParserConfig) -> Self {
         let ast_parser = AstParser::with_cache_size(config.ast_cache_size)
             .expect("Failed to create AstParser with valid cache size");
-        
+
         Self {
             parser: Arc::new(Mutex::new(ast_parser)),
             concurrency_limiter: Arc::new(Semaphore::new(config.max_concurrent_operations)),
             config,
         }
     }
-    
+
     /// Creates a new RobustParser with default configuration.
     pub fn with_default_config() -> Self {
         Self::new(RobustParserConfig::default())
     }
-    
+
     /// Gets the current configuration
     pub fn config(&self) -> &RobustParserConfig {
         &self.config
     }
-    
+
     /// Gets the number of available permits in the semaphore
     pub fn available_permits(&self) -> usize {
         self.concurrency_limiter.available_permits()
     }
-    
+
     /// Parses a file asynchronously with full resilience guarantees.
-    /// 
+    ///
     /// This method demonstrates the complete pattern for safely integrating
     /// synchronous, CPU-bound work into a Tokio application:
-    /// 
+    ///
     /// 1. **Acquire Semaphore Permit**: Limits concurrent operations using RAII pattern
     /// 2. **Offload to Blocking Pool**: Uses spawn_blocking to isolate CPU-bound work
     /// 3. **Enforce Timeout**: Wraps operation in timeout to prevent indefinite hangs
     /// 4. **Handle All Error Cases**: Maps complex nested Results to clean error types
-    /// 
+    ///
     /// # Arguments
     /// * `file_path` - Path to the file to parse
     /// * `timeout_duration` - Maximum time allowed for the parsing operation (optional, uses default if None)
-    /// 
+    ///
     /// # Returns
     /// * `Ok(ParsedFile)` - Successfully parsed file
     /// * `Err(ParseFileError)` - One of: Parse error, Timeout, or Panic
@@ -111,24 +111,30 @@ impl RobustParser {
         timeout_duration: Option<Duration>,
     ) -> Result<crate::ast::ParsedFile, ParseFileError> {
         let timeout = timeout_duration.unwrap_or(self.config.default_timeout);
-        
+
         // Clone file_path for logging since it will be moved into the async block
         let file_path_for_logging = file_path.clone();
-        
+
         // Step 1: Acquire semaphore permit to limit concurrency
         // Using acquire_owned() ensures the permit is moved into the spawn_blocking task
         // and automatically released when the task completes (RAII pattern).
         // This prevents resource exhaustion from too many concurrent CPU-bound operations.
-        debug!("Acquiring semaphore permit for parsing file: {}", file_path_for_logging.display());
+        debug!(
+            "Acquiring semaphore permit for parsing file: {}",
+            file_path_for_logging.display()
+        );
         let _permit: OwnedSemaphorePermit = self
             .concurrency_limiter
             .clone()
             .acquire_owned()
             .await
             .expect("Semaphore should not be closed");
-        
-        info!("Permit acquired - offloading parsing task to blocking pool for file: {}", file_path_for_logging.display());
-        
+
+        info!(
+            "Permit acquired - offloading parsing task to blocking pool for file: {}",
+            file_path_for_logging.display()
+        );
+
         // Clone the Arc to the parser to move it into the blocking task
         let parser = self.parser.clone();
 
@@ -144,7 +150,7 @@ impl RobustParser {
             tokio::task::spawn_blocking(move || {
                 // The _permit is moved into this closure and will be automatically
                 // dropped when the closure completes, releasing the semaphore permit.
-                
+
                 // Lock the mutex to get exclusive access to the parser for this thread
                 let mut parser_guard = parser.blocking_lock();
                 parser_guard.parse_file(&file_path)
@@ -152,30 +158,41 @@ impl RobustParser {
             .await
         })
         .await;
-        
+
         // Step 4: Handle the complex nested Result from timeout + spawn_blocking + parsing
         // This demonstrates the complete error mapping pattern for robust async operations
         match parse_result {
             // Timeout occurred - the entire operation took too long
             Err(_timeout_elapsed) => {
-                error!("Parsing operation timed out after {:?} for file: {}", timeout, file_path_for_logging.display());
+                error!(
+                    "Parsing operation timed out after {:?} for file: {}",
+                    timeout,
+                    file_path_for_logging.display()
+                );
                 Err(ParseFileError::Timeout(timeout))
-            },
-            
+            }
+
             // Operation completed within timeout, now handle spawn_blocking result
             Ok(join_result) => match join_result {
                 // spawn_blocking task completed successfully, handle parsing result
                 Ok(parsing_result) => match parsing_result {
                     Ok(parsed_file) => {
-                        info!("Successfully parsed file: {}", file_path_for_logging.display());
+                        info!(
+                            "Successfully parsed file: {}",
+                            file_path_for_logging.display()
+                        );
                         Ok(parsed_file)
-                    },
+                    }
                     Err(parse_error) => {
-                        warn!("Parse error for file {}: {}", file_path_for_logging.display(), parse_error);
+                        warn!(
+                            "Parse error for file {}: {}",
+                            file_path_for_logging.display(),
+                            parse_error
+                        );
                         Err(ParseFileError::Parse(parse_error))
-                    },
+                    }
                 },
-                
+
                 // spawn_blocking task panicked
                 // Note: The panic is contained within the blocking thread pool and
                 // does not affect the main async runtime. The panicked thread is
@@ -199,8 +216,12 @@ impl RobustParser {
                     } else {
                         "Task was cancelled".to_string()
                     };
-                    
-                    error!("Parsing task panicked for file {}: {}", file_path_for_logging.display(), panic_message);
+
+                    error!(
+                        "Parsing task panicked for file {}: {}",
+                        file_path_for_logging.display(),
+                        panic_message
+                    );
                     Err(ParseFileError::Panic(panic_message))
                 }
             },
@@ -224,7 +245,10 @@ mod tests {
             Self { should_panic }
         }
 
-        fn parse_file(&mut self, _path: &PathBuf) -> Result<crate::ast::ParsedFile, crate::ast::AstError> {
+        fn parse_file(
+            &mut self,
+            _path: &PathBuf,
+        ) -> Result<crate::ast::ParsedFile, crate::ast::AstError> {
             if self.should_panic {
                 panic!("Simulated parser panic for test");
             }
@@ -240,7 +264,7 @@ mod tests {
             default_timeout: Duration::from_secs(10),
             ast_cache_size: 100,
         };
-        
+
         let parser = RobustParser::new(config.clone());
         assert_eq!(parser.config().max_concurrent_operations, 4);
         assert_eq!(parser.config().default_timeout, Duration::from_secs(10));
@@ -259,7 +283,7 @@ mod tests {
         // Test that our error types can be created and formatted
         let timeout_error = ParseFileError::Timeout(Duration::from_secs(5));
         assert!(timeout_error.to_string().contains("timed out"));
-        
+
         let panic_error = ParseFileError::Panic("test panic".to_string());
         assert!(panic_error.to_string().contains("panicked"));
     }
@@ -272,7 +296,11 @@ mod tests {
         let test_file = temp_dir.path().join("test.rs");
         std::fs::write(&test_file, "fn main() { println!(\"Hello, world!\"); }").unwrap();
         let timeout = Duration::from_secs(5);
-        let result = tokio::time::timeout(Duration::from_secs(10), parser.parse_file_robust(test_file, Some(timeout))).await;
+        let result = tokio::time::timeout(
+            Duration::from_secs(10),
+            parser.parse_file_robust(test_file, Some(timeout)),
+        )
+        .await;
         match result {
             Ok(inner) => {
                 assert!(inner.is_ok(), "Parsing should succeed: {:?}", inner);
@@ -298,10 +326,16 @@ mod tests {
         // Create a file that might take a moment to parse, ensuring timeout is triggered
         let long_content: String = (0..1000).map(|_| "fn func() {} \n").collect();
         std::fs::write(&test_file, long_content).unwrap();
-        let result = tokio::time::timeout(Duration::from_secs(10), parser.parse_file_robust(test_file, None)).await;
+        let result = tokio::time::timeout(
+            Duration::from_secs(10),
+            parser.parse_file_robust(test_file, None),
+        )
+        .await;
         match result {
             Ok(inner) => match inner {
-                Err(ParseFileError::Timeout(_)) => debug!("test_timeout_behavior completed: timeout as expected"),
+                Err(ParseFileError::Timeout(_)) => {
+                    debug!("test_timeout_behavior completed: timeout as expected")
+                }
                 Ok(_) => println!("Parsing completed faster than expected timeout"),
                 Err(e) => panic!("Unexpected error type: {:?}", e),
             },
@@ -319,15 +353,17 @@ mod tests {
         };
         let parser = RobustParser::new(config);
         let temp_dir = tempfile::tempdir().unwrap();
-        
-        let files: Vec<_> = (0..4).map(|i| {
-            let path = temp_dir.path().join(format!("test{}.rs", i));
-            std::fs::write(&path, format!("fn test{}() {{}}", i)).unwrap();
-            path
-        }).collect();
+
+        let files: Vec<_> = (0..4)
+            .map(|i| {
+                let path = temp_dir.path().join(format!("test{}.rs", i));
+                std::fs::write(&path, format!("fn test{}() {{}}", i)).unwrap();
+                path
+            })
+            .collect();
 
         let start = std::time::Instant::now();
-        
+
         let mut handles = Vec::new();
         for file in files {
             let parser = parser.clone();
@@ -343,16 +379,25 @@ mod tests {
 
         // Verification
         assert_eq!(results.len(), 4);
-        let success_count = results.into_iter().filter(|r| r.is_ok() && r.as_ref().unwrap().is_ok()).count();
-        assert_eq!(success_count, 4, "All 4 files should have been parsed successfully");
-        
+        let success_count = results
+            .into_iter()
+            .filter(|r| r.is_ok() && r.as_ref().unwrap().is_ok())
+            .count();
+        assert_eq!(
+            success_count, 4,
+            "All 4 files should have been parsed successfully"
+        );
+
         // Check that caching worked. All files are unique so should be cache misses.
         let stats = {
             let parser_guard = parser.parser.lock().await;
             parser_guard.get_cache_stats()
         };
-        assert!(stats.misses >= 4, "Should have at least 4 cache misses as files are unique");
-        
+        assert!(
+            stats.misses >= 4,
+            "Should have at least 4 cache misses as files are unique"
+        );
+
         debug!("test_concurrency_limiting completed successfully");
     }
 
@@ -366,8 +411,10 @@ mod tests {
         };
         let parser = RobustParser::new(config);
         let temp_dir = tempfile::tempdir().unwrap();
-        let mut handles: Vec<tokio::task::JoinHandle<Result<crate::ast::ParsedFile, ParseFileError>>> = vec![];
-        
+        let mut handles: Vec<
+            tokio::task::JoinHandle<Result<crate::ast::ParsedFile, ParseFileError>>,
+        > = vec![];
+
         for i in 0..100 {
             let file_path = temp_dir.path().join(format!("stress_test_{}.rs", i));
             std::fs::write(&file_path, format!("fn main() {{ println!(\"{}\"); }}", i)).unwrap();
@@ -376,15 +423,23 @@ mod tests {
                 parser.parse_file_robust(file_path, None).await
             }));
         }
-        
+
         let result = tokio::time::timeout(Duration::from_secs(60), async {
             futures::future::join_all(handles).await
-        }).await;
-        
+        })
+        .await;
+
         match result {
             Ok(results) => {
-                let success_count = results.iter().filter(|r| r.as_ref().unwrap().is_ok()).count();
-                assert_eq!(success_count, 100, "All 100 parses should succeed, got {}", success_count);
+                let success_count = results
+                    .iter()
+                    .filter(|r| r.as_ref().unwrap().is_ok())
+                    .count();
+                assert_eq!(
+                    success_count, 100,
+                    "All 100 parses should succeed, got {}",
+                    success_count
+                );
                 debug!("test_high_load_stress completed successfully");
             }
             Err(_) => panic!("test_high_load_stress timed out"),
@@ -400,10 +455,14 @@ mod tests {
             if should_panic {
                 panic!("Simulated parser panic for test");
             }
-        }).await;
+        })
+        .await;
 
         // Assert that the panic was caught by the JoinHandle
-        assert!(result.is_err(), "Expected spawn_blocking to catch the panic");
+        assert!(
+            result.is_err(),
+            "Expected spawn_blocking to catch the panic"
+        );
         let join_error = result.unwrap_err();
         assert!(join_error.is_panic(), "The join error should be a panic");
 
@@ -420,6 +479,8 @@ mod tests {
         };
 
         assert!(matches!(app_error, ParseFileError::Panic(_)));
-        assert!(app_error.to_string().contains("Simulated parser panic for test"));
+        assert!(app_error
+            .to_string()
+            .contains("Simulated parser panic for test"));
     }
 }

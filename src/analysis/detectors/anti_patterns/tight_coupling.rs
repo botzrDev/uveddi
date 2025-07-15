@@ -652,11 +652,8 @@ impl RustAnalyzer {
         source: &str,
     ) -> Result<Vec<Dependency>, AnalysisError> {
         let mut dependencies = Vec::new();
-        let query = Query::new(&tree_sitter_rust::language(), Self::USE_QUERY).map_err(|e| {
-            AnalysisError::QueryError(
-                format!("Failed to create use query: {}", e),
-            )
-        })?;
+        let query = Query::new(&tree_sitter_rust::language(), Self::USE_QUERY)
+            .map_err(|e| AnalysisError::QueryError(format!("Failed to create use query: {}", e)))?;
 
         let mut cursor = QueryCursor::new();
         let matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
@@ -664,10 +661,7 @@ impl RustAnalyzer {
         for m in matches {
             for capture in m.captures {
                 let node_text = capture.node.utf8_text(source.as_bytes()).map_err(|e| {
-                    AnalysisError::QueryError(format!(
-                        "Failed to get node text: {}",
-                        e
-                    ))
+                    AnalysisError::QueryError(format!("Failed to get node text: {}", e))
                 })?;
 
                 let from_component = ComponentNode::Module {
@@ -699,9 +693,7 @@ impl RustAnalyzer {
     ) -> Result<Vec<Dependency>, AnalysisError> {
         let mut dependencies = Vec::new();
         let query = Query::new(&tree_sitter_rust::language(), Self::CALL_QUERY).map_err(|e| {
-            AnalysisError::QueryError(
-                format!("Failed to create call query: {}", e),
-            )
+            AnalysisError::QueryError(format!("Failed to create call query: {}", e))
         })?;
 
         let mut cursor = QueryCursor::new();
@@ -710,10 +702,7 @@ impl RustAnalyzer {
         for m in matches {
             if let Some(capture) = m.captures.first() {
                 let node_text = capture.node.utf8_text(source.as_bytes()).map_err(|e| {
-                    AnalysisError::QueryError(format!(
-                        "Failed to get node text: {}",
-                        e
-                    ))
+                    AnalysisError::QueryError(format!("Failed to get node text: {}", e))
                 })?;
 
                 let from_component = ComponentNode::Function {
@@ -747,9 +736,7 @@ impl RustAnalyzer {
     ) -> Result<Vec<Dependency>, AnalysisError> {
         let mut dependencies = Vec::new();
         let query = Query::new(&tree_sitter_rust::language(), Self::STRUCT_QUERY).map_err(|e| {
-            AnalysisError::QueryError(
-                format!("Failed to create struct query: {}", e),
-            )
+            AnalysisError::QueryError(format!("Failed to create struct query: {}", e))
         })?;
 
         let mut cursor = QueryCursor::new();
@@ -758,10 +745,7 @@ impl RustAnalyzer {
         for m in matches {
             if let Some(capture) = m.captures.first() {
                 let node_text = capture.node.utf8_text(source.as_bytes()).map_err(|e| {
-                    AnalysisError::QueryError(format!(
-                        "Failed to get node text: {}",
-                        e
-                    ))
+                    AnalysisError::QueryError(format!("Failed to get node text: {}", e))
                 })?;
 
                 let from_component = ComponentNode::Function {

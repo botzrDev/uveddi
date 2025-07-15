@@ -1,8 +1,8 @@
 //! Memory metrics collection for Phase 2 with object pool metrics
 //! Includes basic memory metrics and object pool performance data
 
+use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
-use serde::{Serialize, Deserialize};
 
 /// Basic memory metrics for Phase 1 foundation
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -78,7 +78,8 @@ impl BasicMemoryMetrics {
         let total_operations = self.total_pool_hits + self.total_pool_misses;
         if total_operations > 0 {
             self.pool_hit_rate = (self.total_pool_hits as f64) / (total_operations as f64) * 100.0;
-            self.pool_miss_rate = (self.total_pool_misses as f64) / (total_operations as f64) * 100.0;
+            self.pool_miss_rate =
+                (self.total_pool_misses as f64) / (total_operations as f64) * 100.0;
         }
     }
 
@@ -203,6 +204,11 @@ mod tests {
 
         let json = collector.export_json();
         assert!(json["memory_optimization_phase1"]["optimization_enabled"].is_boolean());
-        assert!(json["memory_optimization_phase1"]["target_memory_gb"].as_f64().unwrap() > 0.0);
+        assert!(
+            json["memory_optimization_phase1"]["target_memory_gb"]
+                .as_f64()
+                .unwrap()
+                > 0.0
+        );
     }
 }

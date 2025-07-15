@@ -121,6 +121,7 @@ use crate::analysis::{AnalysisDetector, AnalysisError};
 use crate::ast::tree_sitter::{Node, Query, QueryCursor};
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
+use crate::error::ErrorHelpers;
 use log::{debug, info, warn};
 use std::collections::{HashMap, HashSet};
 
@@ -486,11 +487,10 @@ impl GodObjectDetector {
     fn analyze_imports(&self, parsed_file: &ParsedFile) -> Result<HashSet<String>, AnalysisError> {
         let mut detected_frameworks = HashSet::new();
         let source = parsed_file.source.as_bytes();
-        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-            AnalysisError::AntiPatternDetectionError(
-                "AST tree missing".to_string(),
-            )
-        })?;
+        let tree = parsed_file
+            .tree
+            .as_ref()
+            .ok_or_else(|| ErrorHelpers::ast_error("import analysis"))?;
         let language = tree.language();
 
         let query_str = match parsed_file.language {
@@ -499,9 +499,8 @@ impl GodObjectDetector {
             SourceLanguage::JavaScript => JAVASCRIPT_IMPORT_QUERY,
         };
 
-        let query = Query::new(&language, query_str).map_err(|e| {
-            AnalysisError::QueryError(e.to_string())
-        })?;
+        let query = Query::new(&language, query_str)
+            .map_err(|e| ErrorHelpers::query_error(&e.to_string()))?;
 
         let mut cursor = QueryCursor::new();
         for mat in cursor.matches(&query, tree.root_node(), source) {
@@ -641,11 +640,10 @@ impl GodObjectDetector {
     ) -> Result<u32, AnalysisError> {
         // This is a simplified implementation - in practice, you'd want a more sophisticated analysis
         let source = parsed_file.source.as_bytes();
-        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-            AnalysisError::AntiPatternDetectionError(
-                "AST tree missing".to_string(),
-            )
-        })?;
+        let tree = parsed_file
+            .tree
+            .as_ref()
+            .ok_or_else(|| ErrorHelpers::ast_error("cohesion analysis"))?;
         let language = tree.language();
 
         let method_query_str = match parsed_file.language {
@@ -654,9 +652,8 @@ impl GodObjectDetector {
             SourceLanguage::JavaScript => JAVASCRIPT_FUNCTION_COUNT_QUERY,
         };
 
-        let query = Query::new(&language, method_query_str).map_err(|e| {
-            AnalysisError::QueryError(e.to_string())
-        })?;
+        let query = Query::new(&language, method_query_str)
+            .map_err(|e| ErrorHelpers::query_error(&e.to_string()))?;
 
         let mut cursor = QueryCursor::new();
         let method_count = cursor.matches(&query, class_node, source).count();
@@ -679,11 +676,10 @@ impl GodObjectDetector {
         // This is a simplified behavioral analysis
         // In practice, you'd calculate Cyclomatic Complexity for each method
         let source = parsed_file.source.as_bytes();
-        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-            AnalysisError::AntiPatternDetectionError(
-                "AST tree missing".to_string(),
-            )
-        })?;
+        let tree = parsed_file
+            .tree
+            .as_ref()
+            .ok_or_else(|| ErrorHelpers::ast_error("behavioral analysis"))?;
         let language = tree.language();
 
         let method_query_str = match parsed_file.language {
@@ -692,9 +688,8 @@ impl GodObjectDetector {
             SourceLanguage::JavaScript => JAVASCRIPT_FUNCTION_COUNT_QUERY,
         };
 
-        let query = Query::new(&language, method_query_str).map_err(|e| {
-            AnalysisError::QueryError(e.to_string())
-        })?;
+        let query = Query::new(&language, method_query_str)
+            .map_err(|e| ErrorHelpers::query_error(&e.to_string()))?;
 
         let mut cursor = QueryCursor::new();
         let total_methods = cursor.matches(&query, class_node, source).count();
@@ -827,16 +822,15 @@ impl GodObjectDetector {
                     "God Object detected: '{}' has {} methods and {} fields. (Thresholds: methods>{}, fields>{})",
                     name, method_count, field_count, method_threshold, field_threshold
                 );
-                
+
                 // Add enhanced analysis information
                 if let Some(lcom4) = lcom4_score {
                     description.push_str(&format!(" LCOM4 score: {} (>1 indicates low cohesion)", lcom4));
                 }
-                
+
                 if let Some((trivial, complex)) = behavioral_analysis {
                     description.push_str(&format!(" Methods: {} trivial, {} complex", trivial, complex));
                 }
-                
                 ArchitecturalIssue {
                     issue_id: None,
                     analysis_run_id: 0, // Will be set by the engine
@@ -878,9 +872,7 @@ impl GodObjectDetector {
         let mut issues = Vec::new();
         let source = parsed_file.source.as_bytes();
         let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-            AnalysisError::AntiPatternDetectionError(
-                "AST tree missing".to_string(),
-            )
+            AnalysisError::AntiPatternDetectionError("AST tree missing".to_string())
         })?;
         let language = tree.language();
 
@@ -897,15 +889,12 @@ impl GodObjectDetector {
         let detected_frameworks = self.analyze_imports(parsed_file)?;
         debug!("Detected frameworks: {:?}", detected_frameworks);
 
-        let container_query = Query::new(&language, container_query_str).map_err(|e| {
-            AnalysisError::QueryError(e.to_string())
-        })?;
-        let method_query = Query::new(&language, method_query_str).map_err(|e| {
-            AnalysisError::QueryError(e.to_string())
-        })?;
-        let field_query = Query::new(&language, field_query_str).map_err(|e| {
-            AnalysisError::QueryError(e.to_string())
-        })?;
+        let container_query = Query::new(&language, container_query_str)
+            .map_err(|e| AnalysisError::QueryError(e.to_string()))?;
+        let method_query = Query::new(&language, method_query_str)
+            .map_err(|e| ErrorHelpers::query_error(&e.to_string()))?;
+        let field_query = Query::new(&language, field_query_str)
+            .map_err(|e| AnalysisError::QueryError(e.to_string()))?;
 
         let mut cursor = QueryCursor::new();
         for mat in cursor.matches(&container_query, tree.root_node(), source) {
@@ -1040,9 +1029,7 @@ impl GodObjectDetector {
         let mut issues = Vec::new();
         let source = parsed_file.source.as_bytes();
         let tree = parsed_file.tree.as_ref().ok_or_else(|| {
-            AnalysisError::AntiPatternDetectionError(
-                "AST tree missing".to_string(),
-            )
+            AnalysisError::AntiPatternDetectionError("AST tree missing".to_string())
         })?;
         let language = tree.language();
         let root_node = tree.root_node();
@@ -1064,9 +1051,8 @@ impl GodObjectDetector {
         debug!("Detected Rust frameworks: {:?}", detected_frameworks);
 
         // Detect derive macros for DTO patterns
-        let derive_query = Query::new(&language, RUST_DERIVE_QUERY).map_err(|e| {
-            AnalysisError::QueryError(e.to_string())
-        })?;
+        let derive_query = Query::new(&language, RUST_DERIVE_QUERY)
+            .map_err(|e| AnalysisError::QueryError(e.to_string()))?;
         let mut derive_attributes: HashMap<String, Vec<String>> = HashMap::new();
 
         let mut cursor = QueryCursor::new();
@@ -1095,12 +1081,10 @@ impl GodObjectDetector {
 
         // 1. Find all impl blocks and count their methods
         let mut impl_method_counts: HashMap<String, usize> = HashMap::new();
-        let impl_query = Query::new(&language, RUST_IMPL_QUERY).map_err(|e| {
-            AnalysisError::QueryError(e.to_string())
-        })?;
-        let function_query = Query::new(&language, RUST_FUNCTION_COUNT_QUERY).map_err(|e| {
-            AnalysisError::QueryError(e.to_string())
-        })?;
+        let impl_query = Query::new(&language, RUST_IMPL_QUERY)
+            .map_err(|e| AnalysisError::QueryError(e.to_string()))?;
+        let function_query = Query::new(&language, RUST_FUNCTION_COUNT_QUERY)
+            .map_err(|e| AnalysisError::QueryError(e.to_string()))?;
 
         let mut cursor = QueryCursor::new();
         for mat in cursor.matches(&impl_query, root_node, source) {
@@ -1120,12 +1104,10 @@ impl GodObjectDetector {
         }
 
         // 2. Find all structs, count their fields, and apply enhanced analysis
-        let struct_query = Query::new(&language, RUST_STRUCT_QUERY).map_err(|e| {
-            AnalysisError::QueryError(e.to_string())
-        })?;
-        let field_query = Query::new(&language, RUST_FIELD_COUNT_QUERY).map_err(|e| {
-            AnalysisError::QueryError(e.to_string())
-        })?;
+        let struct_query = Query::new(&language, RUST_STRUCT_QUERY)
+            .map_err(|e| AnalysisError::QueryError(e.to_string()))?;
+        let field_query = Query::new(&language, RUST_FIELD_COUNT_QUERY)
+            .map_err(|e| AnalysisError::QueryError(e.to_string()))?;
 
         let mut struct_cursor = QueryCursor::new();
         for mat in struct_cursor.matches(&struct_query, root_node, source) {

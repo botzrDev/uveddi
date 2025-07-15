@@ -115,11 +115,12 @@ impl AnalysisConfig {
             )
         })?;
 
-        toml::from_str(&content)
-            .map_err(|e| UveddiError::config_error(
+        toml::from_str(&content).map_err(|e| {
+            UveddiError::config_error(
                 &format!("Failed to parse TOML config: {}", e),
                 &path.display().to_string(),
-            ))
+            )
+        })
     }
 
     /// Save configuration to TOML file
@@ -390,7 +391,7 @@ mod tests {
         let engine = config.create_engine().await;
         assert!(engine.is_ok());
 
-        let engine = engine.unwrap();
+        let engine = engine.expect("Engine creation should succeed in test");
         assert!(engine.get_anti_pattern_types().len() >= 5);
     }
 
@@ -400,7 +401,7 @@ mod tests {
         let engine = config.create_engine_sync();
         assert!(engine.is_ok());
 
-        let engine = engine.unwrap();
+        let engine = engine.expect("Engine creation should succeed in test");
         assert!(engine.get_anti_pattern_types().len() >= 5);
     }
 
@@ -410,7 +411,9 @@ mod tests {
         let toml_string = toml::to_string(&config);
         assert!(toml_string.is_ok());
 
-        let parsed_config: AnalysisConfig = toml::from_str(&toml_string.unwrap()).unwrap();
+        let toml_string = toml_string.expect("TOML serialization should succeed in test");
+        let parsed_config: AnalysisConfig =
+            toml::from_str(&toml_string).expect("TOML parsing should succeed in test");
         assert_eq!(parsed_config.detectors.len(), config.detectors.len());
         assert_eq!(parsed_config.cache_size, config.cache_size);
     }
@@ -420,7 +423,7 @@ mod tests {
         let config = AnalysisConfig::default();
 
         // Test saving to file
-        let mut temp_file = NamedTempFile::new().unwrap();
+        let mut temp_file = NamedTempFile::new().expect("Failed to create temporary file for test");
         let save_result = config.save_to_file(temp_file.path());
         assert!(save_result.is_ok());
 
@@ -428,7 +431,7 @@ mod tests {
         let loaded_config = AnalysisConfig::from_file(temp_file.path());
         assert!(loaded_config.is_ok());
 
-        let loaded_config = loaded_config.unwrap();
+        let loaded_config = loaded_config.expect("Config loading should succeed in test");
         assert_eq!(loaded_config.detectors.len(), config.detectors.len());
         assert_eq!(loaded_config.cache_size, config.cache_size);
     }
@@ -447,14 +450,18 @@ threshold_fields = 15
 [detectors.code_duplication]
 "#;
 
-        let config: AnalysisConfig = toml::from_str(toml_content).unwrap();
+        let config: AnalysisConfig =
+            toml::from_str(toml_content).expect("TOML parsing should succeed in test");
 
         assert_eq!(config.cache_size, Some(500));
         assert!(config.enable_plugins);
         assert_eq!(config.cache_path, Some("custom_cache.db".to_string()));
         assert_eq!(config.detectors.len(), 2);
 
-        let god_object_config = config.detectors.get("god_object").unwrap();
+        let god_object_config = config
+            .detectors
+            .get("god_object")
+            .expect("god_object config should exist in test");
         assert_eq!(god_object_config.get("threshold_methods"), Some(10));
         assert_eq!(god_object_config.get("threshold_fields"), Some(15));
     }
@@ -472,7 +479,7 @@ threshold_fields = 15
         assert!(engine.is_ok());
 
         // Should have default detectors despite empty config
-        let engine = engine.unwrap();
+        let engine = engine.expect("Engine creation should succeed in test");
         assert!(engine.get_anti_pattern_types().len() >= 5);
     }
 }

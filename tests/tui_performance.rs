@@ -4,7 +4,6 @@
 // This module tests the performance characteristics of the TUI system
 // under various load conditions, ensuring responsive user interactions
 // and efficient resource utilization.
-
 #[cfg(feature = "tui")]
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use std::path::PathBuf;

@@ -14,7 +14,7 @@ pub mod performance_metrics_collector;
 
 // Temporarily commented out exports with external dependencies
 // pub use dashboard::MonitoringDashboard;
-pub use metrics::{TestMetrics, TestExecution, TestResult};
+pub use metrics::{TestExecution, TestMetrics, TestResult};
 // pub use websocket::WebSocketManager;
 // pub use database::MonitoringDatabase;
 // pub use classification::FailureClassifier;

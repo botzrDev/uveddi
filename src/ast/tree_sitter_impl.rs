@@ -1,16 +1,16 @@
+use crate::security;
+use lru::LruCache;
+use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
+use std::collections::HashMap;
+use std::fs;
+use std::hash::{DefaultHasher, Hash, Hasher};
+use std::io::{Read, Write};
+use std::num::NonZeroUsize;
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, MutexGuard};
 use tracing::{info, warn};
 use tree_sitter::{Parser, Tree};
-use std::collections::HashMap;
-use std::num::NonZeroUsize;
-use std::path::{Path, PathBuf};
-use std::fs;
-use std::io::{Read, Write};
-use std::hash::{Hash, Hasher, DefaultHasher};
-use std::borrow::Cow;
-use lru::LruCache;
-use serde::{Serialize, Deserialize};
-use crate::security;
 
 // Re-export tree-sitter types for public API
 
@@ -143,9 +143,9 @@ impl AstParser {
                             if let Some(name_node) = child.child_by_field_name("name") {
                                 let name = name_node
                                     .utf8_text(source.as_bytes())
-                                    .map_err(|_|
+                                    .map_err(|_| {
                                         AstError::Other("Failed to get node text".to_string())
-                                    )?
+                                    })?
                                     .to_string();
                                 struct_names.push(name.clone());
                                 structs.insert(name, Vec::new());
@@ -155,9 +155,9 @@ impl AstParser {
                             if let Some(type_node) = child.child_by_field_name("type") {
                                 let type_name = type_node
                                     .utf8_text(source.as_bytes())
-                                    .map_err(|_|
+                                    .map_err(|_| {
                                         AstError::Other("Failed to get node text".to_string())
-                                    )?
+                                    })?
                                     .to_string();
                                 let mut methods = Vec::new();
                                 if let Some(body_node) = child.child_by_field_name("body") {
@@ -168,11 +168,11 @@ impl AstParser {
                                             {
                                                 let method_name = name_node
                                                     .utf8_text(source.as_bytes())
-                                                    .map_err(|_|
+                                                    .map_err(|_| {
                                                         AstError::Other(
                                                             "Failed to get node text".to_string(),
                                                         )
-                                                    )?
+                                                    })?
                                                     .to_string();
                                                 methods.push(method_name);
                                             }
@@ -203,9 +203,9 @@ impl AstParser {
                             if let Some(name_node) = child.child_by_field_name("name") {
                                 let name = name_node
                                     .utf8_text(source.as_bytes())
-                                    .map_err(|_|
+                                    .map_err(|_| {
                                         AstError::Other("Failed to get node text".to_string())
-                                    )?
+                                    })?
                                     .to_string();
                                 items.push(CustomAst::Struct {
                                     name,
@@ -217,9 +217,9 @@ impl AstParser {
                             if let Some(name_node) = child.child_by_field_name("name") {
                                 let name = name_node
                                     .utf8_text(source.as_bytes())
-                                    .map_err(|_|
+                                    .map_err(|_| {
                                         AstError::Other("Failed to get node text".to_string())
-                                    )?
+                                    })?
                                     .to_string();
                                 items.push(CustomAst::Function {
                                     name,
@@ -239,9 +239,9 @@ impl AstParser {
                             if let Some(name_node) = child.child_by_field_name("name") {
                                 let name = name_node
                                     .utf8_text(source.as_bytes())
-                                    .map_err(|_|
+                                    .map_err(|_| {
                                         AstError::Other("Failed to get node text".to_string())
-                                    )?
+                                    })?
                                     .to_string();
                                 items.push(CustomAst::Function {
                                     name,
@@ -253,9 +253,9 @@ impl AstParser {
                             if let Some(name_node) = child.child_by_field_name("name") {
                                 let name = name_node
                                     .utf8_text(source.as_bytes())
-                                    .map_err(|_|
+                                    .map_err(|_| {
                                         AstError::Other("Failed to get node text".to_string())
-                                    )?
+                                    })?
                                     .to_string();
                                 items.push(CustomAst::Struct {
                                     name,

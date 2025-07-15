@@ -1,13 +1,13 @@
 //! Zero-copy AST serialization using rkyv and memory mapping
 //! Based on UV-210 research: instant cache access with no deserialization overhead
 
+use crate::analysis::memory::metrics::BASIC_MEMORY_METRICS;
+use crate::ast::tree_sitter::ParsedFile;
 use memmap2::{Mmap, MmapOptions};
+use std::collections::HashMap;
 use std::fs::{File, OpenOptions};
 use std::path::{Path, PathBuf};
-use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
-use crate::ast::tree_sitter::ParsedFile;
-use crate::analysis::memory::metrics::BASIC_MEMORY_METRICS;
 
 /// Serializable AST representation optimized for zero-copy access
 #[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
@@ -60,7 +60,14 @@ impl SerializableAst {
     /// Create from ParsedFile
     pub fn from_parsed_file(parsed_file: &ParsedFile) -> Result<Self, ZeroCopyError> {
         let source_hash = Self::calculate_source_hash(&parsed_file.source);
-        let root_node = Self::convert_node(&parsed_file.tree.as_ref().ok_or_else(|| ZeroCopyError::NodeConversion("No tree available".to_string()))?.root_node(), &parsed_file.source)?;
+        let root_node = Self::convert_node(
+            &parsed_file
+                .tree
+                .as_ref()
+                .ok_or_else(|| ZeroCopyError::NodeConversion("No tree available".to_string()))?
+                .root_node(),
+            &parsed_file.source,
+        )?;
         let (total_nodes, max_depth) = Self::calculate_tree_stats(&root_node);
 
         Ok(Self {
@@ -84,12 +91,17 @@ impl SerializableAst {
     }
 
     /// Convert tree-sitter node to serializable format
-    fn convert_node(node: &tree_sitter::Node, source: &str) -> Result<SerializableNode, ZeroCopyError> {
+    fn convert_node(
+        node: &tree_sitter::Node,
+        source: &str,
+    ) -> Result<SerializableNode, ZeroCopyError> {
         let text = if node.child_count() == 0 {
             // Leaf node - capture text
-            Some(node.utf8_text(source.as_bytes())
-                .map_err(|e| ZeroCopyError::NodeConversion(e.to_string()))?
-                .to_string())
+            Some(
+                node.utf8_text(source.as_bytes())
+                    .map_err(|e| ZeroCopyError::NodeConversion(e.to_string()))?
+                    .to_string(),
+            )
         } else {
             None
         };
@@ -175,7 +187,10 @@ impl ZeroCopyAstCache {
         std::fs::create_dir_all(&cache_dir)
             .map_err(|e| ZeroCopyError::CacheInitialization(e.to_string()))?;
 
-        log::info!("Initialized zero-copy AST cache at: {}", cache_dir.display());
+        log::info!(
+            "Initialized zero-copy AST cache at: {}",
+            cache_dir.display()
+        );
 
         Ok(Self {
             cache_dir,
@@ -189,8 +204,8 @@ impl ZeroCopyAstCache {
         let cache_file = self.get_cache_path(file_path);
 
         // Serialize using bincode for now (will switch to rkyv once recursive issue is resolved)
-        let serialized = bincode::serialize(ast)
-            .map_err(|e| ZeroCopyError::Serialization(e.to_string()))?;
+        let serialized =
+            bincode::serialize(ast).map_err(|e| ZeroCopyError::Serialization(e.to_string()))?;
 
         // Write to file
         std::fs::write(&cache_file, &serialized)
@@ -201,8 +216,11 @@ impl ZeroCopyAstCache {
             stats.record_store(serialized.len());
         }
 
-        log::debug!("Stored zero-copy AST cache for: {} ({} bytes)",
-                   file_path.display(), serialized.len());
+        log::debug!(
+            "Stored zero-copy AST cache for: {} ({} bytes)",
+            file_path.display(),
+            serialized.len()
+        );
 
         Ok(())
     }
@@ -235,8 +253,7 @@ impl ZeroCopyAstCache {
         }
 
         // Create new memory mapping
-        let file = File::open(&cache_file)
-            .map_err(|e| ZeroCopyError::FileRead(e.to_string()))?;
+        let file = File::open(&cache_file).map_err(|e| ZeroCopyError::FileRead(e.to_string()))?;
 
         let mmap = unsafe {
             MmapOptions::new()

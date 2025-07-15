@@ -70,10 +70,12 @@ impl GlobalSymbolTable {
     ///
     /// # Returns
     /// * `Result<Self, Box<dyn std::error::Error>>` - Symbol table instance or error
-    pub fn new_with_persistence(db_path: &std::path::Path) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn new_with_persistence(
+        db_path: &std::path::Path,
+    ) -> Result<Self, Box<dyn std::error::Error>> {
         // UV-2: Follow ResultCache pattern for SQLite persistence
         // Use rusqlite for SQLite integration
-        use rusqlite::{Connection, params};
+        use rusqlite::{params, Connection};
         let conn = Connection::open(db_path)?;
         // Create symbols table if not exists
         conn.execute(
@@ -88,7 +90,8 @@ impl GlobalSymbolTable {
             [],
         )?;
         // Load symbols from DB
-        let mut stmt = conn.prepare("SELECT id, name, kind, file_path, start_byte, end_byte FROM symbols")?;
+        let mut stmt =
+            conn.prepare("SELECT id, name, kind, file_path, start_byte, end_byte FROM symbols")?;
         let symbol_iter = stmt.query_map([], |row| {
             Ok(CanonicalSymbol {
                 id: row.get(0)?,
@@ -132,8 +135,12 @@ impl GlobalSymbolTable {
     }
 
     /// Persists a symbol to SQLite (UV-2)
-    pub fn persist_symbol(&self, db_path: &std::path::Path, symbol: &CanonicalSymbol) -> Result<(), Box<dyn std::error::Error>> {
-        use rusqlite::{Connection, params};
+    pub fn persist_symbol(
+        &self,
+        db_path: &std::path::Path,
+        symbol: &CanonicalSymbol,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        use rusqlite::{params, Connection};
         let conn = Connection::open(db_path)?;
         conn.execute(
             "INSERT OR REPLACE INTO symbols (id, name, kind, file_path, start_byte, end_byte) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",

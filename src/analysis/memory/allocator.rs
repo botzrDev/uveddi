@@ -16,20 +16,15 @@ pub enum AllocationStrategy {
     /// Fixed-size pools for predictable allocation patterns
     FixedSize(usize),
     /// Growth-based allocation with configurable factor
-    GrowthBased {
-        initial: usize,
-        growth_factor: f64
-    },
+    GrowthBased { initial: usize, growth_factor: f64 },
     /// Adaptive allocation based on target memory usage
-    AdaptiveBased {
-        target_memory: usize
-    },
+    AdaptiveBased { target_memory: usize },
 }
 
 impl Default for AllocationStrategy {
     fn default() -> Self {
         Self::AdaptiveBased {
-            target_memory: 8 * 1024 * 1024 * 1024 // 8GB target from UV-210/UV-26
+            target_memory: 8 * 1024 * 1024 * 1024, // 8GB target from UV-210/UV-26
         }
     }
 }
@@ -51,9 +46,7 @@ impl AllocationStrategy {
     pub fn next_capacity(&self, current: usize) -> usize {
         match self {
             Self::FixedSize(size) => *size, // No growth for fixed size
-            Self::GrowthBased { growth_factor, .. } => {
-                ((current as f64) * growth_factor) as usize
-            }
+            Self::GrowthBased { growth_factor, .. } => ((current as f64) * growth_factor) as usize,
             Self::AdaptiveBased { target_memory } => {
                 // Grow by 50% but don't exceed target
                 let next = current + (current / 2);
@@ -100,13 +93,13 @@ mod tests {
 
         let growth = AllocationStrategy::GrowthBased {
             initial: 100,
-            growth_factor: 2.0
+            growth_factor: 2.0,
         };
         assert_eq!(growth.initial_capacity(), 100);
         assert_eq!(growth.next_capacity(100), 200);
 
         let adaptive = AllocationStrategy::AdaptiveBased {
-            target_memory: 1024 * 1024
+            target_memory: 1024 * 1024,
         };
         assert_eq!(adaptive.initial_capacity(), 10485); // 1% of target (1048576/100)
     }

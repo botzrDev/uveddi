@@ -16,9 +16,11 @@
 //! }
 //! ```
 
+pub mod helpers;
 pub mod main;
 pub mod rendering;
 
+pub use helpers::ErrorHelpers;
 pub use main::{ErrorCategory, ErrorHandler, ErrorSeverity, ExtractionError, UveddiError};
 pub use rendering::RenderingServiceError;
 

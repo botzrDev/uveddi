@@ -263,7 +263,7 @@ impl AnalyzeCommand {
             large_classes_max_lcom: self.large_classes_max_lcom,
             large_classes_ignore_patterns: self.large_classes_ignore_patterns.clone(),
             large_classes_min_severity: self.large_classes_min_severity,
-            
+
             // Memory optimization fields
             #[cfg(feature = "memory-optimization")]
             memory_optimization: None, // Will be created based on profile/limits

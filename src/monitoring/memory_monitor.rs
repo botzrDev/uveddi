@@ -2,7 +2,7 @@
 //!
 //! Uses sysinfo to sample memory usage before/after component analysis.
 
-use sysinfo::{System, Pid};
+use sysinfo::{Pid, System};
 
 pub struct MemoryMonitor {
     system: System,

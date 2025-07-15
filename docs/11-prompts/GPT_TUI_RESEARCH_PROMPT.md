@@ -10,8 +10,7 @@ My goal is to create an "amazingly awesome" TUI that is intuitive, interactive, 
     *   Strategies for real-time input validation and providing helpful user hints.
     *   How to manage and persist user-defined argument profiles.
 
-2.  **Complex Data Visualization in TUI:**
-    *   Effective techniques for rendering rich text, especially Markdown, within a TUI (headings, lists, code blocks).
+2.  **Complex Data Visualization in TUI:**TUI (headings, lists, code blocks).
     *   Approaches to displaying structured data like JSON in an interactive, collapsible tree view.
     *   **Crucially, innovative methods for rendering or representing Mermaid diagrams (flowcharts, sequence diagrams, etc.) directly within a terminal environment.** What are the most effective ways to visualize graph-like structures using ASCII art, block characters, or other TUI-compatible methods?
 

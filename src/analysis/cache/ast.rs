@@ -19,7 +19,7 @@ use std::time::{Instant, SystemTime};
 use tracing::{debug, error, info, warn};
 
 #[cfg(feature = "memory-optimization")]
-use crate::analysis::memory::zero_copy::{ZeroCopyAstCache, SerializableAst, ZeroCopyError};
+use crate::analysis::memory::zero_copy::{SerializableAst, ZeroCopyAstCache, ZeroCopyError};
 #[cfg(feature = "memory-optimization")]
 use crate::ast::tree_sitter::ParsedFile;
 
@@ -43,15 +43,15 @@ pub struct CacheConfig {
     pub lru_eviction_enabled: bool,
     /// Whether to collect performance metrics
     pub cache_metrics_enabled: bool,
-    
+
     /// Whether zero-copy caching is enabled
     #[cfg(feature = "memory-optimization")]
     pub enable_zero_copy: bool,
-    
+
     /// Directory for zero-copy cache files
     #[cfg(feature = "memory-optimization")]
     pub zero_copy_cache_dir: PathBuf,
-    
+
     /// Threshold for using zero-copy cache (file size in bytes)
     #[cfg(feature = "memory-optimization")]
     pub zero_copy_threshold_bytes: usize,
@@ -67,7 +67,7 @@ impl Default for CacheConfig {
             enable_memory_mapping: true,
             lru_eviction_enabled: true,
             cache_metrics_enabled: true,
-            
+
             #[cfg(feature = "memory-optimization")]
             enable_zero_copy: true,
             #[cfg(feature = "memory-optimization")]
@@ -206,12 +206,12 @@ impl AstCache {
             disk_cache_path: cache_dir.clone(),
             ..Default::default()
         };
-        
+
         #[cfg(feature = "memory-optimization")]
         {
             config.zero_copy_cache_dir = cache_dir.join("zero_copy");
         }
-        
+
         Self::new(config)
     }
 
@@ -488,7 +488,12 @@ impl AstCache {
 
     /// Enhanced store method with zero-copy cache integration for ParsedFile
     #[cfg(all(feature = "tree-sitter", feature = "memory-optimization"))]
-    pub fn store_with_parsed_file(&self, path: &Path, tree: Tree, parsed_file: &ParsedFile) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn store_with_parsed_file(
+        &self,
+        path: &Path,
+        tree: Tree,
+        parsed_file: &ParsedFile,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let file_hash = self.calculate_file_hash(path)?;
         let file_modified = fs::metadata(path)?.modified()?;
         let language = self.detect_language(path);
@@ -682,14 +687,14 @@ impl AstCache {
             let mut memory_usage = self.memory_usage.lock().unwrap();
             *memory_usage = 0;
         }
-        
+
         #[cfg(feature = "memory-optimization")]
         if let Some(ref zero_copy_cache) = self.zero_copy_cache {
             if let Err(e) = zero_copy_cache.clear() {
                 warn!("Failed to clear zero-copy cache: {}", e);
             }
         }
-        
+
         info!("Cache cleared");
     }
 
@@ -706,7 +711,7 @@ impl AstCache {
     /// Exports metrics for observability integration
     pub fn export_metrics_for_observability(&self) -> serde_json::Value {
         let metrics = self.get_metrics();
-        
+
         #[cfg(feature = "memory-optimization")]
         let zero_copy_metrics = if let Some(ref zero_copy_cache) = self.zero_copy_cache {
             zero_copy_cache.export_metrics()
@@ -717,14 +722,14 @@ impl AstCache {
                 }
             })
         };
-        
+
         #[cfg(not(feature = "memory-optimization"))]
         let zero_copy_metrics = serde_json::json!({
             "zero_copy_ast_cache": {
                 "enabled": false
             }
         });
-        
+
         serde_json::json!({
             "ast_cache": {
                 "regular_cache": {
