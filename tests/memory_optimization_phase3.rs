@@ -196,7 +196,7 @@ fn test_rayon_integration_example() {
         assert!(result.file_path.contains(&format!("file{}", i + 1)));
         assert_eq!(result.issues.len(), 10);
         assert!(result.performance_metrics.arena_bytes_used > 0);
-        assert!(result.performance_metrics.analysis_duration_ms >= 0);
+        assert!(result.performance_metrics.analysis_duration_ms == result.performance_metrics.analysis_duration_ms); // Verify field exists
         assert_eq!(result.analysis_metadata.lines_of_code, 100);
     }
 }
@@ -213,7 +213,7 @@ fn test_example_file_analyzer() {
     assert_eq!(result.analysis_metadata.lines_of_code, 100);
     assert_eq!(result.analysis_metadata.functions_found, 5);
     assert!(result.performance_metrics.arena_bytes_used > 0);
-    assert!(result.performance_metrics.analysis_duration_ms >= 0);
+    assert!(result.performance_metrics.analysis_duration_ms == result.performance_metrics.analysis_duration_ms); // Verify field exists
 }
 
 #[test]

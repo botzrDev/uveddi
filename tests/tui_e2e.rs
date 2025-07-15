@@ -7,7 +7,6 @@
 // backend processing, and result presentation.
 
 use std::path::PathBuf;
-use std::time::Duration;
 // TUI tests require the 'tui' feature to be enabled
 #[cfg(feature = "tui")]
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};

@@ -120,16 +120,20 @@ impl PluginCommand {
             // Read binary file
             let binary = tokio::fs::read(&binary_path)
                 .await
-                .map_err(|e| crate::error::UveddiError::IoError(e))?;
+                .map_err(|e| crate::error::UveddiError::io_error("read file", binary_path.to_string_lossy().as_ref(), e))?;
 
             // Read and parse manifest
             let manifest_content = tokio::fs::read_to_string(&manifest_path)
                 .await
-                .map_err(|e| crate::error::UveddiError::IoError(e))?;
+                .map_err(|e| crate::error::UveddiError::io_error("read file", manifest_path.to_string_lossy().as_ref(), e))?;
             let manifest: PluginManifest = toml::from_str(&manifest_content).map_err(|e| {
-                crate::error::UveddiError::PluginError(
-                    crate::plugins::errors::PluginError::Configuration(e.to_string()),
-                )
+                crate::error::UveddiError::PluginError {
+                    plugin: "unknown".to_string(),
+                    plugin_type: "WASM".to_string(),
+                    message: e.to_string(),
+                    suggestion: "Check TOML syntax and plugin manifest format".to_string(),
+                    source: Some(crate::plugins::errors::PluginError::Configuration(e.to_string())),
+                }
             })?;
 
             // Install plugin
@@ -316,16 +320,20 @@ impl PluginCommand {
             // Read binary file
             let binary = tokio::fs::read(&binary_path)
                 .await
-                .map_err(|e| crate::error::UveddiError::IoError(e))?;
+                .map_err(|e| crate::error::UveddiError::io_error("read file", binary_path.to_string_lossy().as_ref(), e))?;
 
             // Read and parse manifest
             let manifest_content = tokio::fs::read_to_string(&manifest_path)
                 .await
-                .map_err(|e| crate::error::UveddiError::IoError(e))?;
+                .map_err(|e| crate::error::UveddiError::io_error("read file", manifest_path.to_string_lossy().as_ref(), e))?;
             let manifest: PluginManifest = toml::from_str(&manifest_content).map_err(|e| {
-                crate::error::UveddiError::PluginError(
-                    crate::plugins::errors::PluginError::Configuration(e.to_string()),
-                )
+                crate::error::UveddiError::PluginError {
+                    plugin: "unknown".to_string(),
+                    plugin_type: "WASM".to_string(),
+                    message: e.to_string(),
+                    suggestion: "Check TOML syntax and plugin manifest format".to_string(),
+                    source: Some(crate::plugins::errors::PluginError::Configuration(e.to_string())),
+                }
             })?;
 
             // Verify plugin
@@ -389,9 +397,13 @@ impl PluginCommand {
                 }
                 Err(e) => {
                     println!("Verification failed: {}", e);
-                    return Err(crate::error::UveddiError::PluginError(
-                        crate::plugins::errors::PluginError::Configuration(e.to_string()),
-                    ));
+                    return Err(crate::error::UveddiError::PluginError {
+                        plugin: "unknown".to_string(),
+                        plugin_type: "WASM".to_string(),
+                        message: e.to_string(),
+                        suggestion: "Check plugin security and capabilities".to_string(),
+                        source: Some(crate::plugins::errors::PluginError::Configuration(e.to_string())),
+                    });
                 }
             }
         }

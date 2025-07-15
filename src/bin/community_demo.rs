@@ -22,7 +22,7 @@ impl MemberRole {
         }
     }
 
-    pub fn from_str(s: &str) -> Self {
+    pub fn from_string(s: &str) -> Self {
         match s.to_lowercase().as_str() {
             "admin" => MemberRole::Admin,
             "developer" => MemberRole::Developer,
@@ -182,7 +182,7 @@ impl CommunityDatabase {
                 id: row.get(0)?,
                 email: row.get(1)?,
                 name: row.get(2)?,
-                role: MemberRole::from_str(&row.get::<_, String>(3)?),
+                role: MemberRole::from_string(&row.get::<_, String>(3)?),
                 created_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(4)?)
                     .unwrap()
                     .with_timezone(&Utc),
@@ -237,7 +237,7 @@ impl CommunityDatabase {
                 id: row.get(0)?,
                 email: row.get(1)?,
                 name: row.get(2)?,
-                role: MemberRole::from_str(&row.get::<_, String>(3)?),
+                role: MemberRole::from_string(&row.get::<_, String>(3)?),
                 created_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(4)?)
                     .unwrap()
                     .with_timezone(&Utc),
@@ -334,7 +334,7 @@ impl CommunityDatabase {
                 id: row.get(0)?,
                 email: row.get(1)?,
                 name: row.get(2)?,
-                role: MemberRole::from_str(&row.get::<_, String>(3)?),
+                role: MemberRole::from_string(&row.get::<_, String>(3)?),
                 created_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(4)?)
                     .unwrap()
                     .with_timezone(&Utc),

@@ -1,0 +1,147 @@
+   Compiling uveddi v0.1.0 (/home/austingreen/Documents/botzr/projects/uveddi)
+warning: struct `AppState` is never constructed
+  --> src/server/mod.rs:13:12
+   |
+13 | pub struct AppState {
+   |            ^^^^^^^^
+   |
+   = note: `AppState` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+   = note: `#[warn(dead_code)]` on by default
+
+warning: function `run_server` is never used
+  --> src/server/mod.rs:18:14
+   |
+18 | pub async fn run_server(
+   |              ^^^^^^^^^^
+
+warning: function `health_handler` is never used
+  --> src/server/mod.rs:37:10
+   |
+37 | async fn health_handler(State(state): State<AppState>) -> (StatusCode, &'static str) {
+   |          ^^^^^^^^^^^^^^
+
+warning: function `detailed_health_handler` is never used
+  --> src/server/mod.rs:46:10
+   |
+46 | async fn detailed_health_handler(State(state): State<AppState>) -> Json<HealthStatus> {
+   |          ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `alerts_handler` is never used
+  --> src/server/mod.rs:52:10
+   |
+52 | async fn alerts_handler(State(state): State<AppState>) -> Json<Vec<Alert>> {
+   |          ^^^^^^^^^^^^^^
+
+warning: `uveddi` (bin "uveddi") generated 5 warnings
+warning: constant `STRESS_TEST_DURATION` is never used
+  --> tests/tui_performance.rs:15:7
+   |
+15 | const STRESS_TEST_DURATION: Duration = Duration::from_secs(5);
+   |       ^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` on by default
+
+warning: `uveddi` (test "tui_performance") generated 1 warning
+error[E0433]: failed to resolve: could not find `tui` in `uveddi`
+   --> tests/tui_integration.rs:24:13
+    |
+24  | use uveddi::tui::app::{AppState, AppScreen};
+    |             ^^^ could not find `tui` in `uveddi`
+    |
+note: found an item that was configured out
+   --> /home/austingreen/Documents/botzr/projects/uveddi/src/lib.rs:264:9
+    |
+264 | pub mod tui;
+    |         ^^^
+note: the item is gated behind the `tui` feature
+   --> /home/austingreen/Documents/botzr/projects/uveddi/src/lib.rs:263:7
+    |
+263 | #[cfg(feature = "tui")]
+    |       ^^^^^^^^^^^^^^^
+
+error[E0433]: failed to resolve: could not find `tui` in `uveddi`
+   --> tests/tui_integration.rs:25:13
+    |
+25  | use uveddi::tui::messages::AppMessage;
+    |             ^^^ could not find `tui` in `uveddi`
+    |
+note: found an item that was configured out
+   --> /home/austingreen/Documents/botzr/projects/uveddi/src/lib.rs:264:9
+    |
+264 | pub mod tui;
+    |         ^^^
+note: the item is gated behind the `tui` feature
+   --> /home/austingreen/Documents/botzr/projects/uveddi/src/lib.rs:263:7
+    |
+263 | #[cfg(feature = "tui")]
+    |       ^^^^^^^^^^^^^^^
+
+error[E0412]: cannot find type `PathBuf` in this scope
+  --> tests/tui_integration.rs:28:66
+   |
+28 | async fn create_test_project(base_path: &str) -> std::io::Result<PathBuf> {
+   |                                                                  ^^^^^^^ not found in this scope
+   |
+help: consider importing this struct
+   |
+21 + use std::path::PathBuf;
+   |
+
+error[E0433]: failed to resolve: use of undeclared type `PathBuf`
+  --> tests/tui_integration.rs:29:20
+   |
+29 |     let test_dir = PathBuf::from(format!("./tmp/test_projects/{}", base_path));
+   |                    ^^^^^^^ use of undeclared type `PathBuf`
+   |
+help: consider importing this struct
+   |
+21 + use std::path::PathBuf;
+   |
+
+error[E0412]: cannot find type `PathBuf` in this scope
+  --> tests/tui_integration.rs:69:38
+   |
+69 | async fn cleanup_test_project(path: &PathBuf) -> std::io::Result<()> {
+   |                                      ^^^^^^^ not found in this scope
+   |
+help: consider importing this struct
+   |
+21 + use std::path::PathBuf;
+   |
+
+error[E0433]: failed to resolve: use of undeclared type `PathBuf`
+   --> tests/tui_integration.rs:298:24
+    |
+298 |     let invalid_path = PathBuf::from("/nonexistent/path/that/does/not/exist");
+    |                        ^^^^^^^ use of undeclared type `PathBuf`
+    |
+help: consider importing this struct
+    |
+21  + use std::path::PathBuf;
+    |
+
+error[E0412]: cannot find type `PathBuf` in this scope
+   --> tests/tui_integration.rs:598:27
+    |
+598 |         pub test_project: PathBuf,
+    |                           ^^^^^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+581 +     use std::path::PathBuf;
+    |
+
+warning: unused import: `uveddi::analysis::AnalysisConfig`
+  --> tests/tui_integration.rs:21:5
+   |
+21 | use uveddi::analysis::AnalysisConfig;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` on by default
+
+Some errors have detailed explanations: E0412, E0433.
+For more information about an error, try `rustc --explain E0412`.
+warning: `uveddi` (test "tui_integration") generated 1 warning
+error: could not compile `uveddi` (test "tui_integration") due to 7 previous errors; 1 warning emitted
+warning: build failed, waiting for other jobs to finish...
+warning: `uveddi` (bin "uveddi" test) generated 5 warnings (5 duplicates)

@@ -198,7 +198,7 @@ fn test_efficiency_reporting() {
     
     let stats = pools.get_all_stats();
     let overall_efficiency = stats.overall_efficiency();
-    assert!(overall_efficiency >= 0.0 && overall_efficiency <= 100.0);
+    assert!((0.0..=100.0).contains(&overall_efficiency));
     
     let efficient_count = stats.efficiently_utilized_count();
     assert!(efficient_count <= 3);

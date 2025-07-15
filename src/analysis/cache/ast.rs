@@ -1434,11 +1434,16 @@ mod tests {
         let cloned_cache = cache.clone();
 
         // Both should share the same state (Arc references)
-        {
+        // Check lengths separately to avoid potential deadlock from holding two locks
+        let original_len = {
             let original_lru = cache.lru_order.lock().unwrap();
+            original_lru.len()
+        };
+        let cloned_len = {
             let cloned_lru = cloned_cache.lru_order.lock().unwrap();
-            assert_eq!(original_lru.len(), cloned_lru.len());
-        }
+            cloned_lru.len()
+        };
+        assert_eq!(original_len, cloned_len);
 
         // Operations on clone should affect original
         let test_file2 = temp_dir.path().join("clone_test2.rs");

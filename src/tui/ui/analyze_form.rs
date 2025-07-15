@@ -718,6 +718,11 @@ impl AnalyzeForm {
                 .large_classes_min_severity_input
                 .value()
                 .map(|v| v as u32),
+            
+            // Memory optimization fields (with defaults)
+            enable_memory_optimization: false,
+            memory_limit_gb: None,
+            memory_profile: None,
         })
     }
 

@@ -1,0 +1,320 @@
+   Compiling uveddi v0.1.0 (/home/austingreen/Documents/botzr/projects/uveddi)
+warning: struct `AppState` is never constructed
+  --> src/server/mod.rs:13:12
+   |
+13 | pub struct AppState {
+   |            ^^^^^^^^
+   |
+   = note: `AppState` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+   = note: `#[warn(dead_code)]` on by default
+
+warning: function `run_server` is never used
+  --> src/server/mod.rs:18:14
+   |
+18 | pub async fn run_server(
+   |              ^^^^^^^^^^
+
+warning: function `health_handler` is never used
+  --> src/server/mod.rs:37:10
+   |
+37 | async fn health_handler(State(state): State<AppState>) -> (StatusCode, &'static str) {
+   |          ^^^^^^^^^^^^^^
+
+warning: function `detailed_health_handler` is never used
+  --> src/server/mod.rs:46:10
+   |
+46 | async fn detailed_health_handler(State(state): State<AppState>) -> Json<HealthStatus> {
+   |          ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `alerts_handler` is never used
+  --> src/server/mod.rs:52:10
+   |
+52 | async fn alerts_handler(State(state): State<AppState>) -> Json<Vec<Alert>> {
+   |          ^^^^^^^^^^^^^^
+
+warning: `uveddi` (bin "uveddi" test) generated 5 warnings
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.63s
+     Running unittests src/lib.rs (target/debug/deps/uveddi-e68ec1a236907b35)
+
+running 208 tests
+test ai::prompts::smart_prompting::tests::test_smart_prompt_builder_basic ... ok
+test analysis::buffer::tests::test_unicode_support ... ok
+test analysis::buffer::tests::test_fixed_string_basic_operations ... ok
+test analysis::buffer::tests::test_fixed_buffer_basic_operations ... ok
+test analysis::cache::ast::tests::test_cache_config_default ... ok
+test ai::prompts::smart_prompting::tests::test_add_hallucination_mitigation_appends_instruction ... ok
+test analysis::cache::ast::tests::test_cache_creation ... ok
+test analysis::cache::ast::tests::test_cache_capacity_management ... ok
+test analysis::cache::ast::tests::test_cache_metrics_initialization ... ok
+test analysis::cache::ast::tests::test_cache_clear ... ok
+test analysis::cache::ast::tests::test_cache_miss_metrics ... ok
+test analysis::cache::ast::tests::test_cache_clone_behavior ... ok
+test analysis::cache::ast::tests::test_config_edge_cases ... ok
+test analysis::cache::ast::tests::test_cache_size_tracking ... ok
+test analysis::cache::ast::tests::test_language_detection ... ok
+test analysis::cache::ast::tests::test_lru_eviction_behavior ... ok
+test analysis::cache::ast::tests::test_file_hash_calculation ... ok
+test analysis::cache::ast::tests::test_memory_limit_enforcement ... ok
+test analysis::cache::ast::tests::test_lru_order_updates ... ok
+test analysis::cache::ast::tests::test_memory_usage_tracking ... ok
+test analysis::cache::ast::tests::test_multiple_language_detection ... ok
+test analysis::cache::ast::tests::test_cache_invalidation_scenarios ... FAILED
+test analysis::cache::ast::tests::test_error_handling_resilience ... FAILED
+test analysis::cfg::tests::test_cfg_builder ... ok
+test analysis::cfg::tests::test_node_classification ... ok
+test analysis::cfg::tests::test_cfg_creation ... ok
+test analysis::cache::ast::tests::test_thread_safety ... ok
+test analysis::component_extractor::tests::test_architectural_variable_detection ... ok
+test analysis::component_extractor::tests::test_component_type_inference ... ok
+test analysis::cache::ast::tests::test_cache_hit_miss_with_real_trees ... ok
+test analysis::cache::ast::tests::test_metrics_export ... FAILED
+test analysis::config::tests::test_default_config ... ok
+test analysis::config::tests::test_detector_management ... ok
+test analysis::cache::ast::tests::test_metrics_accuracy ... FAILED
+test analysis::component_extractor::tests::test_component_extraction ... ok
+test analysis::cache::ast::tests::test_file_modification_invalidation ... ok
+test analysis::config::tests::test_validate_config ... ok
+test analysis::detector_factory::tests::test_create_default_detectors ... ok
+test analysis::cache::ast::tests::test_concurrent_stress_test ... ok
+test analysis::config::tests::test_file_operations ... ok
+test analysis::config::tests::test_from_toml_string ... ok
+test analysis::config::tests::test_toml_serialization ... ok
+test analysis::detector_factory::tests::test_create_detector_by_name ... ok
+test analysis::detector_factory::tests::test_create_detector_unknown_name ... ok
+test analysis::detector_factory::tests::test_create_detectors_from_config ... ok
+test analysis::detector_factory::tests::test_detector_config ... ok
+test analysis::detector_registry::tests::test_clear ... ok
+test analysis::detector_registry::tests::test_default_registry ... ok
+test analysis::detector_registry::tests::test_get_all_detectors ... ok
+test analysis::detector_registry::tests::test_new_registry ... ok
+test analysis::detector_registry::tests::test_load_from_config_invalid_detector ... ok
+test analysis::detector_registry::tests::test_load_defaults ... ok
+test analysis::detector_registry::tests::test_register_detector ... ok
+test analysis::detector_registry::tests::test_load_from_config ... ok
+test analysis::detector_registry::tests::test_remove_detector ... ok
+test analysis::detectors::anti_patterns::tight_coupling::tests::test_anti_pattern_types ... ok
+test analysis::detectors::anti_patterns::tight_coupling::tests::test_coupling_metrics_calculation ... ok
+test analysis::detectors::anti_patterns::tight_coupling::tests::test_default_configuration ... ok
+test analysis::detectors::anti_patterns::tight_coupling::tests::test_dependency_strength_classification ... ok
+test analysis::detectors::anti_patterns::tight_coupling::tests::test_detector_name ... ok
+test analysis::detectors::anti_patterns::tight_coupling::tests::test_language_analyzer_selection ... ok
+test analysis::engine_builder::tests::test_builder_fluent_interface ... ok
+test analysis::config::tests::test_create_engine_sync ... ok
+test analysis::config::tests::test_empty_detectors_uses_defaults ... ok
+test analysis::engine_builder::tests::test_builder_from_config ... ok
+test analysis::engine_builder::tests::test_builder_config_overrides ... ok
+test analysis::engine_builder::tests::test_builder_with_config_file ... ok
+test analysis::memory::allocator::tests::test_allocation_strategy_capacities ... ok
+test analysis::memory::allocator::tests::test_allocation_strategy_default ... ok
+test analysis::memory::allocator::tests::test_allocator_info ... ok
+test analysis::memory::arena::tests::test_analysis_result_structure ... ok
+test analysis::config::tests::test_create_engine ... ok
+test analysis::memory::arena::tests::test_arena_conversion_helpers ... ok
+test analysis::memory::arena::tests::test_arena_manager_creation ... ok
+test analysis::memory::arena::tests::test_arena_manager_stats ... ok
+test analysis::memory::arena::tests::test_global_arena_manager ... ok
+test analysis::engine_builder::tests::test_builder_with_default_detectors ... ok
+test analysis::engine_builder::tests::test_builder_with_custom_detectors ... ok
+test analysis::memory::config::tests::test_config_validation ... ok
+test analysis::memory::arena::tests::test_concurrent_arena_access ... ok
+test analysis::memory::config::tests::test_large_codebase_config ... ok
+test analysis::memory::arena::tests::test_arena_handle_allocation ... ok
+test analysis::memory::config::tests::test_default_config ... ok
+test analysis::memory::config::tests::test_small_project_config ... ok
+test analysis::memory::detector_pools::tests::test_detector_pools_with_config ... ok
+test analysis::memory::detector_pools::tests::test_detector_pools_creation ... ok
+test analysis::memory::detector_pools::tests::test_efficiency_reporting ... ok
+test analysis::memory::detector_pools::tests::test_metrics_export ... ok
+test analysis::memory::detector_pools::tests::test_overall_efficiency_calculation ... ok
+test analysis::memory::metrics::tests::test_basic_memory_metrics ... ok
+test analysis::memory::detector_pools::tests::test_pool_usage ... ok
+test analysis::memory::detector_pools::tests::test_pre_population ... ok
+test analysis::memory::metrics::tests::test_metrics_collector ... ok
+test analysis::memory::pool::tests::test_efficiency_recommendations ... ok
+test analysis::memory::detector_pools::tests::test_initialization_function ... ok
+test analysis::memory::pool::tests::test_pool_creation ... ok
+test analysis::memory::pool::tests::test_pool_get_and_return ... ok
+test analysis::memory::tests::test_invalid_config_initialization ... ok
+test analysis::memory::pool::tests::test_pool_reset_functionality ... ok
+test analysis::memory::tests::test_memory_optimization_initialization ... ok
+test analysis::memory::pool::tests::test_concurrent_access ... ok
+test analysis::memory::zero_copy::tests::test_cache_stats ... ok
+test analysis::memory::pool::tests::test_pool_stats ... ok
+test analysis::memory::zero_copy::tests::test_cache_store_and_load ... ok
+test analysis::memory::zero_copy::tests::test_metrics_export ... ok
+test analysis::memory::zero_copy::tests::test_cache_clear ... ok
+test analysis::memory::zero_copy::tests::test_cache_validity ... ok
+test analysis::memory::zero_copy::tests::test_serializable_ast_creation ... ok
+test analysis::memory::tests::test_optimization_status ... ok
+test analysis::mermaid_generator::tests::test_clean_generated_diagram ... ok
+test analysis::memory::zero_copy::tests::test_source_hash_calculation ... ok
+test analysis::plugin_adapter::tests::test_convert_manifest_patterns ... ok
+test analysis::memory::zero_copy::tests::test_zero_copy_cache_creation ... ok
+test analysis::detectors::anti_patterns::long_methods::tests::test_short_method_no_detection ... ok
+test analysis::plugin_adapter::tests::test_adapter_factory ... FAILED
+test analysis::robust_parser::tests::test_error_types ... ok
+test analysis::robust_parser::tests::test_default_config ... ok
+test analysis::detectors::anti_patterns::long_methods::tests::test_long_method_detection_rust ... ok
+test analysis::detectors::anti_patterns::long_methods::tests::test_python_long_method_detection ... ok
+test analysis::semantic::tests::test_control_flow_complexity ... ok
+test analysis::semantic::tests::test_cyclomatic_complexity ... ok
+test analysis::robust_parser::tests::test_panic_resilience ... ok
+test analysis::robust_parser::tests::test_robust_parser_creation ... ok
+test analysis::semantic::tests::test_data_flow_pattern_detection ... ok
+test analysis::semantic::tests::test_feature_vector_normalization ... ok
+test analysis::semantic::tests::test_hybrid_scorer_with_custom_weights ... ok
+test analysis::semantic::tests::test_hybrid_scorer_creation ... ok
+test analysis::robust_parser::tests::test_timeout_behavior ... ok
+test analysis::semantic::tests::test_normalize_difference ... ok
+test analysis::robust_parser::tests::test_successful_parsing ... ok
+test analysis::semantic::tests::test_semantic_analyzer_creation ... ok
+test analysis::semantic::tests::test_wl_kernel_creation ... ok
+test analysis::semantic::tests::test_wl_kernel_empty_graphs ... ok
+test analysis::robust_parser::tests::test_concurrency_limiting ... FAILED
+test ast::tree_sitter_impl::tests::test_efficient_clone ... ok
+test ast::tree_sitter_impl::tests::test_cache_size_configuration ... ok
+test ast::tree_sitter_impl::tests::test_cache_stats_reset ... ok
+test ast::tree_sitter_impl::tests::test_cache_utilization ... ok
+test ast::tree_sitter_impl::tests::test_lru_cache_basic_functionality ... FAILED
+test error::rendering::tests::test_circuit_breaker_triggers ... ok
+test error::rendering::tests::test_error_categories ... ok
+test error::rendering::tests::test_error_retryability ... ok
+test error::rendering::tests::test_error_severity ... ok
+test error::rendering::tests::test_fallback_triggers ... ok
+test error::rendering::tests::test_helper_constructors ... ok
+test error::rendering::tests::test_user_messages ... ok
+test models::antipattern_type::tests::test_antipatterntype_serialization ... ok
+test models::tests::test_organization_serialization ... ok
+test models::tests::test_user_serialization ... ok
+test plugins::data_plane::tests::test_ast_handle_manager ... ok
+test plugins::engine::tests::test_plugin_adapter ... ok
+test plugins::engine::tests::test_plugin_engine_creation ... ok
+test ingestion::async_walker::tests::test_async_walker ... ok
+test plugins::lifecycle::tests::test_lifecycle_manager ... ok
+test plugins::lifecycle::tests::test_resource_monitor ... ok
+test plugins::lifecycle::tests::test_resource_report ... ok
+test plugins::registry::tests::test_plugin_manifest ... ok
+test plugins::registry::tests::test_plugin_discovery ... ok
+test plugins::security::tests::test_permission_allows ... ok
+test plugins::security::tests::test_security_monitor ... ok
+test analysis::mermaid_generator::tests::test_mermaid_generator_creation ... ok
+test plugins::security::tests::test_security_policy ... ok
+test plugins::security::tests::test_wasm_validation ... ok
+test plugins::types::tests::test_plugin_id_conversions ... ok
+test plugins::types::tests::test_plugin_id_generation ... ok
+test plugins::types::tests::test_plugin_status_serialization ... ok
+test plugins::verification::tests::test_manifest_validator ... ok
+test plugins::verification::tests::test_semver_validation ... ok
+test plugins::registry::tests::test_plugin_registry ... ok
+test report::diagrams::tests::test_generate_mermaid_diagram ... ok
+test plugins::verification::tests::test_static_analyzer ... ok
+test resilience::availability::tests::test_core_functionality ... ok
+test resilience::circuit_breaker::tests::should_not_open_circuit_on_non_critical_errors ... ok
+test resilience::circuit_breaker::tests::should_open_circuit_on_critical_errors ... ok
+test resilience::circuit_breaker::tests::should_reset_after_success ... ok
+test resilience::degradation::tests::test_core_functionality ... ok
+test analysis::robust_parser::tests::test_high_load_stress ... ok
+test report::image_renderer::tests::test_health_check ... FAILED
+test resilience::fallback::tests::test_should_trigger_fallback ... ok
+test resilience::fallback::tests::test_trigger_fallback ... ok
+test resilience::graceful_handler::tests::test_circuit_breaker_integration ... ok
+test resilience::graceful_handler::tests::test_configuration_customization ... ok
+test resilience::fallback::tests::test_no_recovery_when_disabled ... ok
+test resilience::graceful_handler::tests::test_failure_handling ... ok
+test resilience::fallback::tests::test_attempt_recovery ... ok
+test resilience::graceful_handler::tests::test_normal_response ... ok
+test resilience::graceful_handler::tests::test_recovery_detection ... ok
+test resilience::graceful_handler::tests::test_user_message_generation ... ok
+test community::database::tests::test_register_and_get_member ... ok
+test community::database::tests::test_update_member_role ... ok
+test community::database::tests::test_activity_logging ... ok
+test resilience::metrics::tests::test_error_recording ... ok
+test resilience::metrics::tests::test_metrics_export_json ... ok
+test resilience::metrics::tests::test_metrics_export_prometheus ... ok
+test resilience::metrics::tests::test_thread_safety ... ok
+test resilience::metrics::tests::test_trend_analysis ... ok
+test resilience::recovery::tests::test_core_functionality ... ok
+test resilience::retry::tests::test_error_category_filtering ... ok
+test community::database::tests::test_list_members_with_filters ... ok
+test resilience::retry::tests::test_retry_exhaustion ... ok
+test resilience::retry::tests::test_retry_success_first_attempt ... ok
+test resilience::graceful_handler::tests::test_failure_rate_calculation ... ok
+test resilience::metrics::tests::test_error_rate_calculation ... ok
+test resilience::metrics::tests::test_cleanup_old_events ... ok
+test resilience::metrics::tests::test_memory_efficiency ... ok
+test resilience::graceful_handler::tests::test_degradation_escalation ... ok
+test report::image_renderer::tests::test_render_simple_diagram ... FAILED
+test resilience::retry::tests::test_rate_limit_respect ... ok
+
+failures:
+
+---- analysis::cache::ast::tests::test_cache_invalidation_scenarios stdout ----
+
+thread 'analysis::cache::ast::tests::test_cache_invalidation_scenarios' panicked at src/analysis/cache/ast.rs:1323:9:
+assertion `left == right` failed
+  left: 2048
+ right: 0
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- analysis::cache::ast::tests::test_error_handling_resilience stdout ----
+
+thread 'analysis::cache::ast::tests::test_error_handling_resilience' panicked at src/analysis/cache/ast.rs:1282:9:
+assertion `left == right` failed
+  left: 0
+ right: 1
+
+---- analysis::cache::ast::tests::test_metrics_export stdout ----
+
+thread 'analysis::cache::ast::tests::test_metrics_export' panicked at src/analysis/cache/ast.rs:947:9:
+assertion failed: ast_cache_metrics.get("total_requests").is_some()
+
+---- analysis::cache::ast::tests::test_metrics_accuracy stdout ----
+
+thread 'analysis::cache::ast::tests::test_metrics_accuracy' panicked at src/analysis/cache/ast.rs:1359:9:
+assertion `left == right` failed
+  left: Null
+ right: 3
+
+---- analysis::plugin_adapter::tests::test_adapter_factory stdout ----
+
+thread 'analysis::plugin_adapter::tests::test_adapter_factory' panicked at src/analysis/plugin_adapter.rs:332:17:
+Plugin engine creation failed in test
+
+---- analysis::robust_parser::tests::test_concurrency_limiting stdout ----
+4 parses with concurrency 2 took: 7.900504ms
+
+thread 'analysis::robust_parser::tests::test_concurrency_limiting' panicked at src/analysis/robust_parser.rs:350:35:
+Cannot block the current thread from within a runtime. This happens because a function attempted to block the current thread while the thread is being used to drive asynchronous tasks.
+
+---- ast::tree_sitter_impl::tests::test_lru_cache_basic_functionality stdout ----
+
+thread 'ast::tree_sitter_impl::tests::test_lru_cache_basic_functionality' panicked at src/ast/tree_sitter_impl.rs:664:9:
+assertion `left == right` failed
+  left: 0
+ right: 1
+
+---- report::image_renderer::tests::test_health_check stdout ----
+
+thread 'report::image_renderer::tests::test_health_check' panicked at src/report/image_renderer.rs:385:23:
+Unexpected error: HTTP request failed: error decoding response body
+
+---- report::image_renderer::tests::test_render_simple_diagram stdout ----
+
+thread 'report::image_renderer::tests::test_render_simple_diagram' panicked at src/report/image_renderer.rs:410:23:
+Unexpected error: Rendering service returned error: HTTP 500 Internal Server Error
+
+
+failures:
+    analysis::cache::ast::tests::test_cache_invalidation_scenarios
+    analysis::cache::ast::tests::test_error_handling_resilience
+    analysis::cache::ast::tests::test_metrics_accuracy
+    analysis::cache::ast::tests::test_metrics_export
+    analysis::plugin_adapter::tests::test_adapter_factory
+    analysis::robust_parser::tests::test_concurrency_limiting
+    ast::tree_sitter_impl::tests::test_lru_cache_basic_functionality
+    report::image_renderer::tests::test_health_check
+    report::image_renderer::tests::test_render_simple_diagram
+
+test result: FAILED. 199 passed; 9 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.28s
+
+error: test failed, to rerun pass `--lib`

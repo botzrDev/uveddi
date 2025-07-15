@@ -7,12 +7,16 @@
 
 #[cfg(feature = "tui")]
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use std::time::Duration;
+use std::path::PathBuf;
+use std::time::{Duration, Instant};
+use uveddi::cli::analyze_command::AnalyzeCommand;
 #[cfg(feature = "tui")]
 use uveddi::tui::{AppMessage, AppScreen, AppState};
 
 /// Performance test configuration
 const STRESS_TEST_DURATION: Duration = Duration::from_secs(5);
+const RAPID_UPDATES_COUNT: usize = 1000;
+const PERFORMANCE_THRESHOLD_MS: u128 = 100;
 
 /// Create a large test project for performance testing
 #[cfg(feature = "tui")]
