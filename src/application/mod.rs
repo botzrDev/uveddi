@@ -699,10 +699,10 @@ impl Default for AnalysisOrchestrator {
 /// appropriate commands.
 ///
 /// This function initializes the command-line interface, parses the user's input,
-/// and dispatches to the relevant handlers (e.g., `analyze`, `config`). It also
-/// sets up the Tokio runtime for asynchronous operations and handles top-level
-/// error reporting.
-pub fn run_app() -> Result<(), UveddiError> {
+/// and dispatches to the relevant handlers (e.g., `analyze`, `config`). It leverages
+/// the existing async runtime context from #[tokio::main] for proper async operation
+/// handling, following UV-294 async standardization guidelines.
+pub async fn run_app() -> Result<(), UveddiError> {
     use crate::cli::{analyze_command::AnalyzeCommand, config_command::ConfigCommand};
     use clap::Parser;
     use log::{error, info};
@@ -725,8 +725,8 @@ pub fn run_app() -> Result<(), UveddiError> {
     let result = match cli.command {
         Commands::Analyze(command) => {
             info!("Executing analyze command...");
-            tokio::runtime::Runtime::new()?
-                .block_on(command.execute())
+            command.execute()
+                .await
                 .map_err(|e| {
                     UveddiError::analysis_error("unknown", 0, &e.to_string(), "analyze command")
                 })

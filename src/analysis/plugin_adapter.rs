@@ -1,5 +1,6 @@
 use crate::analysis::{AnalysisDetector, AnalysisError};
 use crate::ast::tree_sitter_impl::ParsedFile;
+use async_trait::async_trait;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use crate::plugins::{PluginId, PluginManifest, WasmPluginEngine};
 use std::sync::Arc;
@@ -191,23 +192,14 @@ impl WasmPluginDetectorAdapter {
     }
 }
 
+#[async_trait]
 impl AnalysisDetector for WasmPluginDetectorAdapter {
-    fn detect_issues(&self, file: &ParsedFile) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
-        // Since WASM operations are async but this trait requires sync,
-        // we need to create a runtime to bridge the gap
-        let rt = tokio::runtime::Handle::try_current().or_else(|_| {
-            // If no current runtime, create a new one
-            tokio::runtime::Runtime::new()
-                .map(|rt| rt.handle().clone())
-                .map_err(|e| {
-                    AnalysisError::PluginError(crate::plugins::errors::PluginError::Execution(
-                        format!("Failed to create runtime: {}", e),
-                    ))
-                })
-        })?;
-
-        // Execute the async operation
-        rt.block_on(async { self.detect_issues_async(file).await })
+    async fn detect_issues(
+        &self,
+        file: &ParsedFile,
+    ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
+        // The trait is now async, so we can directly await the async implementation.
+        self.detect_issues_async(file).await
     }
 
     fn get_anti_pattern_types(&self) -> Vec<AntiPatternType> {

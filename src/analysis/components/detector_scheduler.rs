@@ -82,7 +82,7 @@ impl DetectorScheduler {
                 continue;
             }
             
-            match detector.detect_issues(&parsed_file) {
+            match detector.detect_issues(&parsed_file).await {
                 Ok(mut issues) => {
                     info!("Detector {} found {} issues in {}", 
                           detector_name, issues.len(), file_path.display());

@@ -7,13 +7,25 @@ use color_eyre::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyModifiers};
 use ratatui::prelude::*;
 use std::time::{Duration, Instant};
+use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 
-use crate::tui::{
-    app::{AppScreen, AppState},
-    messages::AppMessage,
-    terminal::TerminalManager,
-    ui,
+use crate::{
+    cli::analyze_command::AnalyzeCommand,
+    tui::{
+        app::{AppScreen, AppState},
+        messages::AppMessage,
+        terminal::TerminalManager,
+        ui,
+    },
 };
+
+/// Actions that can be dispatched from the TUI to the async runtime.
+#[derive(Debug)]
+pub enum Action {
+    /// Run a code analysis.
+    Analyze(AnalyzeCommand),
+    // Future actions like 'CancelAnalysis' can be added here.
+}
 
 /// Event handler for the TUI application
 pub struct EventHandler {
@@ -45,7 +57,11 @@ impl EventHandler {
     }
 
     /// Run the main event loop
-    pub fn run(&mut self, mut app_state: AppState) -> Result<()> {
+    pub async fn run(
+        &mut self,
+        mut app_state: AppState,
+        mut ui_rx: UnboundedReceiver<AppMessage>,
+    ) -> Result<()> {
         // Initialize terminal
         let mut terminal_manager = TerminalManager::new()?;
 
@@ -59,17 +75,28 @@ impl EventHandler {
         let mut should_render = true;
 
         loop {
-            // Handle events
-            let messages = self.handle_events(&mut app_state)?;
-
-            // Process any generated messages
-            for message in messages {
-                let new_messages = app_state.update(message);
-                // Process follow-up messages
-                for new_message in new_messages {
-                    app_state.update(new_message);
+            tokio::select! {
+                // Handle messages from the async action handler
+                Some(message) = ui_rx.recv() => {
+                    let new_messages = app_state.update(message);
+                    for new_message in new_messages {
+                        app_state.update(new_message);
+                    }
+                    should_render = true;
                 }
-                should_render = true;
+
+                // Handle terminal events
+                Ok(Some(event)) = self.poll_event() => {
+                    if let Some(messages) = self.handle_crossterm_event(event, &mut app_state) {
+                        for message in messages {
+                            let new_messages = app_state.update(message);
+                            for new_message in new_messages {
+                                app_state.update(new_message);
+                            }
+                            should_render = true;
+                        }
+                    }
+                }
             }
 
             // Handle periodic ticks
@@ -80,9 +107,9 @@ impl EventHandler {
 
             // Render if needed and enough time has passed
             if should_render && self.should_render() {
-                terminal_manager.terminal_mut().draw(|frame| {
-                    ui::render(frame, &app_state);
-                })?;
+                terminal_manager
+                    .terminal_mut()
+                    .draw(|frame| ui::render(frame, &app_state))?;
                 should_render = false;
                 self.last_frame = Instant::now();
             }
@@ -91,41 +118,39 @@ impl EventHandler {
             if app_state.should_quit {
                 break;
             }
-
-            // Small sleep to prevent 100% CPU usage
-            std::thread::sleep(Duration::from_millis(1));
         }
 
         // Terminal cleanup happens automatically when TerminalManager drops
         Ok(())
     }
 
-    /// Handle terminal events and return generated messages
-    fn handle_events(&mut self, app_state: &mut AppState) -> Result<Vec<AppMessage>> {
-        let mut messages = Vec::new();
-
-        // Check for events with a short timeout to keep the loop responsive
+    /// Poll for a single crossterm event.
+    async fn poll_event(&self) -> Result<Option<Event>> {
         if event::poll(Duration::from_millis(1))? {
-            match event::read()? {
-                Event::Key(key_event) => {
-                    messages.extend(self.handle_key_event(key_event, app_state));
-                }
-                Event::Resize(width, height) => {
-                    messages.push(AppMessage::TerminalResized(width, height));
-                }
-                Event::Mouse(mouse_event) => {
-                    // Mouse events can be added later
-                    messages.extend(self.handle_mouse_event(mouse_event, app_state));
-                }
-                _ => {} // Ignore other events for now
-            }
+            Ok(Some(event::read()?))
+        } else {
+            Ok(None)
         }
-
-        Ok(messages)
     }
 
+    /// Handle a single crossterm event and return generated messages.
+    fn handle_crossterm_event(
+        &mut self,
+        event: Event,
+        app_state: &mut AppState,
+    ) -> Option<Vec<AppMessage>> {
+        match event {
+            Event::Key(key_event) => Some(self.handle_key_event(key_event, app_state)),
+            Event::Resize(width, height) => Some(vec![AppMessage::TerminalResized(width, height)]),
+            Event::Mouse(mouse_event) => Some(self.handle_mouse_event(mouse_event, app_state)),
+            _ => None, // Ignore other events
+        }
+    }
+
+>>>>>>>
+
     /// Handle keyboard events
-    fn handle_key_event(&self, key_event: KeyEvent, app_state: &AppState) -> Vec<AppMessage> {
+    fn handle_key_event(&self, key_event: KeyEvent, app_state: &mut AppState) -> Vec<AppMessage> {
         // Global key handlers that work on any screen
         match key_event.code {
             // Global quit shortcuts
@@ -147,6 +172,8 @@ impl EventHandler {
                 if app_state.current_screen != AppScreen::MainMenu {
                     return vec![AppMessage::NavigateToMainMenu];
                 }
+                // If we are on the main menu, Esc does nothing.
+                return vec![];
             }
 
             _ => {} // Continue to screen-specific handling
@@ -161,15 +188,19 @@ impl EventHandler {
             AppScreen::PluginManager => self.handle_plugin_manager_keys(key_event, app_state),
         }
     }
+>>>>>>>
 
     /// Handle keys for main menu screen
-    fn handle_main_menu_keys(&self, key_event: KeyEvent, app_state: &AppState) -> Vec<AppMessage> {
+    fn handle_main_menu_keys(
+        &self,
+        key_event: KeyEvent,
+        app_state: &mut AppState,
+    ) -> Vec<AppMessage> {
         use crate::tui::ui::main_menu::MainMenu;
 
         // Delegate to MainMenu component for keyboard handling
         let main_menu = MainMenu::new();
-        let mut app_state_copy = app_state.clone();
-        main_menu.handle_key_input(key_event.code, &mut app_state_copy)
+        main_menu.handle_key_input(key_event.code, app_state)
     }
 
     /// Handle keys for analyze form screen
@@ -337,14 +368,57 @@ pub struct EventLoopStats {
     pub tick_rate: u32,
 }
 
-/// Convenience function to run the TUI application
-pub fn run_tui() -> Result<()> {
-    // Initialize the application state
-    let app_state = AppState::new();
+/// Spawns a dedicated task to handle long-running, asynchronous actions.
+///
+/// This function creates a bridge between the synchronous TUI and the asynchronous
+/// application backend. It listens for `Action` messages from the TUI, executes
+/// the corresponding async operations, and sends `AppMessage` results back to the UI.
+/// This pattern is crucial for preventing the UI from blocking during intensive
+/// tasks like code analysis.
+fn spawn_action_handler(
+    mut action_rx: UnboundedReceiver<Action>,
+    ui_tx: UnboundedSender<AppMessage>,
+) {
+    tokio::spawn(async move {
+        while let Some(action) = action_rx.recv().await {
+            match action {
+                Action::Analyze(mut command) => {
+                    let msg = match command.execute().await {
+                        Ok(report) => AppMessage::AnalysisCompleted(report.content),
+                        Err(e) => AppMessage::AnalysisError(e.to_string()),
+                    };
+                    if ui_tx.send(msg).is_err() {
+                        // UI thread has likely panicked or closed.
+                        log::error!("Failed to send analysis result to UI. Channel closed.");
+                        break;
+                    }
+                }
+            }
+        }
+    });
+}
 
-    // Create and run the event handler
+/// Convenience function to run the TUI application
+///
+/// This sets up the async infrastructure (channels, tasks) and starts the
+/// main event loop.
+pub async fn run_tui() -> Result<()> {
+    // Create channels for communication between the TUI and async tasks.
+    // action_tx/rx: TUI -> async tasks
+    // ui_tx/rx: async tasks -> TUI
+    let (action_tx, action_rx) = mpsc::unbounded_channel::<Action>();
+    let (ui_tx, ui_rx) = mpsc::unbounded_channel::<AppMessage>();
+
+    // Spawn the background task that will handle long-running actions.
+    spawn_action_handler(action_rx, ui_tx);
+
+    // Initialize the application state, providing it with the sender
+    // to dispatch actions.
+    let app_state = AppState::new(Some(action_tx));
+
+    // Create and run the event handler.
     let mut event_handler = EventHandler::new();
-    event_handler.run(app_state)?;
+    event_handler.run(app_state, ui_rx).await?;
 
     Ok(())
 }
@@ -352,6 +426,7 @@ pub fn run_tui() -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crossterm::event::{KeyCode, KeyModifiers};
 
     #[test]
     fn test_event_handler_creation() {
@@ -368,24 +443,24 @@ mod tests {
         assert!(handler.frame_duration.as_millis() <= 17);
     }
 
-    #[test]
-    fn test_global_key_handling() {
+    #[tokio::test]
+    async fn test_global_key_handling() {
         let handler = EventHandler::new();
-        let app_state = AppState::new();
+        let mut app_state = AppState::default();
 
         // Test quit key
         let quit_key = KeyEvent::new(KeyCode::Char('q'), KeyModifiers::NONE);
-        let messages = handler.handle_key_event(quit_key, &app_state);
+        let messages = handler.handle_key_event(quit_key, &mut app_state);
         assert!(matches!(messages.first(), Some(AppMessage::Quit)));
 
         // Test Ctrl+C
         let ctrl_c = KeyEvent::new(KeyCode::Char('c'), KeyModifiers::CONTROL);
-        let messages = handler.handle_key_event(ctrl_c, &app_state);
+        let messages = handler.handle_key_event(ctrl_c, &mut app_state);
         assert!(matches!(messages.first(), Some(AppMessage::Quit)));
 
         // Test help key
         let help_key = KeyEvent::new(KeyCode::F(1), KeyModifiers::NONE);
-        let messages = handler.handle_key_event(help_key, &app_state);
+        let messages = handler.handle_key_event(help_key, &mut app_state);
         assert!(matches!(messages.first(), Some(AppMessage::ShowHelp)));
     }
 

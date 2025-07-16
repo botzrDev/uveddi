@@ -1,7 +1,9 @@
 //! Main WASM plugin engine that orchestrates the plugin system
 
-use crate::ast::tree_sitter::ParsedFile;
-use crate::models::ArchitecturalIssue;
+use crate::analysis::{AnalysisDetector, AnalysisError};
+use crate::ast::tree_sitter_impl::ParsedFile;
+use crate::database::models::AntiPatternType;
+use crate::database::models::ArchitecturalIssue;
 use crate::plugins::{
     data_plane::*,
     errors::*,
@@ -290,43 +292,85 @@ impl WasmPluginAdapter {
     }
 }
 
-// TODO: Re-enable when Sync issues are resolved
-/*
+#[async_trait::async_trait]
 impl AnalysisDetector for WasmPluginAdapter {
-    fn detect_issues(&self, file: &ParsedFile) -> Result<Vec<ArchitecturalIssue>, crate::analysis::AnalysisError> {
+    async fn detect_issues(
+        &self,
+        file: &ParsedFile,
+    ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         #[cfg(not(feature = "wasm-plugins"))]
         {
-            return Err(crate::analysis::AnalysisError::PluginError(
-                "WASM plugins not enabled".to_string()
+            return Err(AnalysisError::Other(
+                "WASM plugins not enabled".to_string(),
             ));
         }
 
         #[cfg(feature = "wasm-plugins")]
         {
-            // This would be implemented as an async function in a real implementation
-            // For now, we'll return a placeholder
-            let rt = tokio::runtime::Runtime::new()
-                .map_err(|e| crate::analysis::AnalysisError::PluginError(e.to_string()))?;
-
-            rt.block_on(async {
-                self.detect_issues_async(file).await
-            }).map_err(|e| crate::analysis::AnalysisError::PluginError(e.to_string()))
+            self.detect_issues_async(file)
+                .await
+                .map_err(|e| AnalysisError::PluginError(e))
         }
     }
 
     fn get_anti_pattern_types(&self) -> Vec<AntiPatternType> {
-        self.manifest.anti_pattern_types.iter()
+        self.manifest
+            .anti_pattern_types
+            .iter()
             .filter_map(|pattern_str| {
-                // Map string patterns to AntiPatternType enum
+                // This is a simplified mapping. A more robust implementation
+                // would involve a central registry of anti-pattern types.
                 match pattern_str.as_str() {
-                    "god-object" => Some(AntiPatternType::GodObject),
-                    "large-classes" => Some(AntiPatternType::LargeClasses),
-                    "dead-code" => Some(AntiPatternType::DeadCode),
-                    "code-duplication" => Some(AntiPatternType::CodeDuplication),
-                    "tight-coupling" => Some(AntiPatternType::TightCoupling),
-                    "cyclic-dependencies" => Some(AntiPatternType::CyclicDependencies),
-                    "long-methods" => Some(AntiPatternType::LongMethods),
-                    "magic-values" => Some(AntiPatternType::MagicValues),
+                    "god-object" => Some(AntiPatternType {
+                        anti_pattern_type_id: None,
+                        name: "God Object".to_string(),
+                        description: "A class that centralizes too many responsibilities."
+                            .to_string(),
+                        category: "Abstraction-Based".to_string(),
+                    }),
+                    "large-classes" => Some(AntiPatternType {
+                        anti_pattern_type_id: None,
+                        name: "Large Classes".to_string(),
+                        description: "Classes that are too large and complex.".to_string(),
+                        category: "Size-Based".to_string(),
+                    }),
+                    "dead-code" => Some(AntiPatternType {
+                        anti_pattern_type_id: None,
+                        name: "Dead Code".to_string(),
+                        description: "Unused code that should be removed.".to_string(),
+                        category: "Structural".to_string(),
+                    }),
+                    "code-duplication" => Some(AntiPatternType {
+                        anti_pattern_type_id: None,
+                        name: "Code Duplication".to_string(),
+                        description: "Duplicated code blocks that should be refactored."
+                            .to_string(),
+                        category: "Structural".to_string(),
+                    }),
+                    "tight-coupling" => Some(AntiPatternType {
+                        anti_pattern_type_id: None,
+                        name: "Tight Coupling".to_string(),
+                        description: "Excessive dependencies between modules.".to_string(),
+                        category: "Coupling-Based".to_string(),
+                    }),
+                    "cyclic-dependencies" => Some(AntiPatternType {
+                        anti_pattern_type_id: None,
+                        name: "Cyclic Dependencies".to_string(),
+                        description: "Circular dependencies between modules.".to_string(),
+                        category: "Structural".to_string(),
+                    }),
+                    "long-methods" => Some(AntiPatternType {
+                        anti_pattern_type_id: None,
+                        name: "Long Methods".to_string(),
+                        description: "Methods that are too long and complex.".to_string(),
+                        category: "Size-Based".to_string(),
+                    }),
+                    "magic-values" => Some(AntiPatternType {
+                        anti_pattern_type_id: None,
+                        name: "Magic Values".to_string(),
+                        description: "Hard-coded values that should be constants.".to_string(),
+                        category: "Clarity-Based".to_string(),
+                    }),
                     _ => None, // Unknown pattern type
                 }
             })
@@ -334,12 +378,11 @@ impl AnalysisDetector for WasmPluginAdapter {
     }
 
     fn get_detector_name(&self) -> &'static str {
-        // We need to return a static string, so we'll use a generic name
-        // In a real implementation, this might be handled differently
+        // This is a placeholder. A better approach would be to use the
+        // plugin's name, but that would require a different lifetime.
         "wasm-plugin-detector"
     }
 }
-*/
 
 impl WasmPluginAdapter {
     /// Async version of detect_issues

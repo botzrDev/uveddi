@@ -5,8 +5,10 @@
 //! - Message-driven state updates via AppMessage
 //! - Predictable state transitions through update function
 
+use crate::tui::events::Action;
 use crate::tui::messages::AppMessage;
 use crate::tui::ui::analyze_form::AnalyzeForm;
+use tokio::sync::mpsc::UnboundedSender;
 
 /// Represents the different screens/views in the TUI application
 #[derive(Debug, Clone, PartialEq)]
@@ -49,11 +51,16 @@ pub struct AppState {
 
     /// Analyze form state (persists between key presses)
     pub analyze_form: AnalyzeForm,
+
+    /// Sender for dispatching actions to the async runtime.
+    /// This is the bridge from the sync TUI to the async backend.
+    #[allow(dead_code)] // Temporarily allow dead code during refactoring
+    action_tx: Option<UnboundedSender<Action>>,
 }
 
 impl AppState {
     /// Create a new application state with default values
-    pub fn new() -> Self {
+    pub fn new(action_tx: Option<UnboundedSender<Action>>) -> Self {
         Self {
             current_screen: AppScreen::MainMenu,
             should_quit: false,
@@ -62,6 +69,7 @@ impl AppState {
             status_message: Some("Welcome to Uveddi TUI! Press '?' for help".to_string()),
             version: env!("CARGO_PKG_VERSION").to_string(),
             analyze_form: AnalyzeForm::new(),
+            action_tx,
         }
     }
 
@@ -275,32 +283,28 @@ impl AppState {
     }
 
     /// Handle start analysis command
+    ///
+    /// This function now dispatches an `Action::Analyze` to the async backend
+    /// via the `action_tx` channel, instead of manually spawning a thread and
+    /// creating a Tokio runtime. This adheres to the proper async/sync boundary
+    /// separation required by UV-294.
     fn handle_start_analysis(
         &mut self,
         command: crate::cli::analyze_command::AnalyzeCommand,
     ) -> Vec<AppMessage> {
         self.status_message = Some(format!("Starting analysis of: {}", command.path.display()));
 
-        // Spawn the analysis task in a background thread
-        let command_clone = command.clone();
-        std::thread::spawn(move || {
-            // Create a tokio runtime for the async analysis
-            let rt = tokio::runtime::Runtime::new().unwrap();
-            let result = rt.block_on(async { command_clone.execute().await });
-
-            match result {
-                Ok(_) => {
-                    // Analysis completed successfully
-                    // In a real implementation, we'd send a message back to the UI
-                    // For now, we just log the success
-                    println!("Analysis completed successfully!");
-                }
-                Err(e) => {
-                    // Analysis failed
-                    eprintln!("Analysis failed: {}", e);
-                }
+        if let Some(tx) = &self.action_tx {
+            if let Err(e) = tx.send(Action::Analyze(command)) {
+                let error_msg = format!("Failed to start analysis: {}", e);
+                log::error!("{}", error_msg);
+                self.error_message = Some(error_msg);
             }
-        });
+        } else {
+            let error_msg = "Action dispatcher is not available.".to_string();
+            log::error!("{}", error_msg);
+            self.error_message = Some(error_msg);
+        }
 
         vec![AppMessage::AnalysisStarted]
     }
@@ -402,7 +406,7 @@ impl AppState {
 
 impl Default for AppState {
     fn default() -> Self {
-        Self::new()
+        Self::new(None)
     }
 }
 
@@ -413,15 +417,16 @@ mod tests {
 
     #[test]
     fn test_app_state_creation() {
-        let app = AppState::new();
+        let app = AppState::default();
         assert_eq!(app.current_screen, AppScreen::MainMenu);
         assert!(!app.should_quit);
         assert_eq!(app.selected_menu_item, 0);
+        assert!(app.action_tx.is_none());
     }
 
     #[test]
     fn test_navigation_messages() {
-        let mut app = AppState::new();
+        let mut app = AppState::default();
 
         // Test navigation to analyze screen
         app.update(AppMessage::NavigateToAnalyze);
@@ -434,14 +439,14 @@ mod tests {
 
     #[test]
     fn test_quit_handling() {
-        let mut app = AppState::new();
+        let mut app = AppState::default();
         app.update(AppMessage::Quit);
         assert!(app.should_quit);
     }
 
     #[test]
     fn test_menu_navigation() {
-        let mut app = AppState::new();
+        let mut app = AppState::default();
         assert_eq!(app.selected_menu_item, 0);
 
         // Test down movement
@@ -455,7 +460,7 @@ mod tests {
 
     #[test]
     fn test_key_input_handling() {
-        let mut app = AppState::new();
+        let mut app = AppState::default();
 
         // Test quit key
         let quit_key = KeyEvent::new(KeyCode::Char('q'), KeyModifiers::NONE);
@@ -465,7 +470,7 @@ mod tests {
 
     #[test]
     fn test_menu_selection() {
-        let mut app = AppState::new();
+        let mut app = AppState::default();
 
         // Test selecting first menu item (Analyze)
         let messages = app.update(AppMessage::MenuItemSelected(0));
@@ -478,7 +483,7 @@ mod tests {
 
     #[test]
     fn test_help_functionality() {
-        let mut app = AppState::new();
+        let mut app = AppState::default();
 
         // Test show help
         app.update(AppMessage::ShowHelp);
@@ -493,7 +498,7 @@ mod tests {
 
     #[test]
     fn test_validation_handling() {
-        let mut app = AppState::new();
+        let mut app = AppState::default();
 
         // Test validation error
         let error_msg = "Test error".to_string();
@@ -507,7 +512,7 @@ mod tests {
 
     #[test]
     fn test_analysis_workflow() {
-        let mut app = AppState::new();
+        let mut app = AppState::default();
 
         // Test analysis started
         app.update(AppMessage::AnalysisStarted);
@@ -530,7 +535,7 @@ mod tests {
 
     #[test]
     fn test_plugin_management() {
-        let mut app = AppState::new();
+        let mut app = AppState::default();
 
         // Test plugin loaded
         let plugin_name = "test-plugin".to_string();
@@ -545,7 +550,7 @@ mod tests {
 
     #[test]
     fn test_terminal_resize() {
-        let mut app = AppState::new();
+        let mut app = AppState::default();
 
         // Test normal size
         app.update(AppMessage::TerminalResized(100, 30));
@@ -561,18 +566,18 @@ mod tests {
 
     #[test]
     fn test_screen_titles() {
-        let app = AppState::new();
+        let app = AppState::default();
 
         assert_eq!(app.current_screen_title(), "Uveddi - Main Menu");
 
-        let mut app = AppState::new();
+        let mut app = AppState::default();
         app.current_screen = AppScreen::AnalyzeForm;
         assert_eq!(app.current_screen_title(), "Uveddi - Code Analysis");
     }
 
     #[test]
     fn test_navigation_back() {
-        let mut app = AppState::new();
+        let mut app = AppState::default();
 
         // Main menu should not have back navigation
         assert!(!app.can_navigate_back());

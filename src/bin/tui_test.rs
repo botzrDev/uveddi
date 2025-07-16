@@ -5,7 +5,8 @@
 use color_eyre::Result;
 use uveddi::tui::events::run_tui;
 
-fn main() -> Result<()> {
+#[tokio::main]
+async fn main() -> Result<()> {
     // Initialize color_eyre for better error reporting
     color_eyre::install()?;
 
@@ -13,7 +14,7 @@ fn main() -> Result<()> {
     env_logger::init();
 
     // Run the TUI
-    run_tui()?;
+    run_tui().await?;
 
     println!("Thanks for using Uveddi TUI!");
     Ok(())

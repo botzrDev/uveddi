@@ -7,6 +7,7 @@ use crate::analysis::{AnalysisDetector, AnalysisError};
 use crate::ast::tree_sitter::{Node, Query, QueryCursor, Tree};
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
 use crate::constants::detector_thresholds;
+use async_trait::async_trait;
 use crate::constants::severity_weights;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use log::debug;
@@ -369,8 +370,12 @@ impl LargeClassDetector {
     }
 }
 
+#[async_trait]
 impl AnalysisDetector for LargeClassDetector {
-    fn detect_issues(&self, file: &ParsedFile) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
+    async fn detect_issues(
+        &self,
+        file: &ParsedFile,
+    ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         let metrics = match file.language {
             SourceLanguage::Rust => self.extract_rust_metrics(file)?,
             SourceLanguage::Python => self.extract_python_metrics(file)?,

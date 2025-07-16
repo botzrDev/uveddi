@@ -90,7 +90,11 @@ enum Commands {
 }
 
 /// Main entry point for Uveddi. All errors are handled and logged consistently.
-fn main() -> Result<()> {
+/// 
+/// Uses #[tokio::main] pattern for proper async runtime management, eliminating
+/// manual runtime creation and async/sync boundary violations per UV-294 guidelines.
+#[tokio::main]
+async fn main() -> Result<()> {
     // Set up color_eyre for better error reporting
     color_eyre::install()?;
     env_logger::init();
@@ -127,5 +131,5 @@ fn main() -> Result<()> {
     // });
 
     // Run main application
-    uveddi::application::run_app().map_err(|e| color_eyre::eyre::eyre!(e))
+    uveddi::application::run_app().await.map_err(|e| color_eyre::eyre::eyre!(e))
 }

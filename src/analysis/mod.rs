@@ -153,6 +153,7 @@ pub use adapters::{AstParserAdapter, DependencyExtractorAdapter, ResultCacheAdap
 
 use crate::ast::ParsedFile;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
+use async_trait::async_trait;
 
 /// Core analysis trait for all detectors
 ///
@@ -263,8 +264,9 @@ use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 /// # Ok(())
 /// # }
 /// ```
+#[async_trait]
 pub trait AnalysisDetector: Send + Sync {
-    fn detect_issues(&self, file: &ParsedFile) -> Result<Vec<ArchitecturalIssue>, AnalysisError>;
+    async fn detect_issues(&self, file: &ParsedFile) -> Result<Vec<ArchitecturalIssue>, AnalysisError>;
     fn detect_graph_issues(
         &self,
         _graph: &LocalDependencyGraph,
