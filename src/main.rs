@@ -47,6 +47,7 @@ use clap::{Parser, Subcommand};
 use color_eyre::eyre::Result;
 use uveddi::cli::analyze_command::AnalyzeCommand;
 use uveddi::cli::config_command::ConfigCommand;
+use uveddi::analysis::AnalysisEngine; // Import AnalysisEngine
 // TODO: Re-enable when monitoring dependencies are properly configured
 // use uveddi::monitoring::dashboard::MonitoringDashboard;
 // use uveddi::config::monitoring::MonitoringConfig;
@@ -131,5 +132,14 @@ async fn main() -> Result<()> {
     // });
 
     // Run main application
-    uveddi::application::run_app().await.map_err(|e| color_eyre::eyre::eyre!(e))
+    uveddi::application::run_app().await.map_err(|e| color_eyre::eyre::eyre!(e))?;
+
+    // Example of using the new builder pattern for AnalysisEngine
+    // This is for demonstration and can be removed if not needed in main.rs
+    // let _engine = AnalysisEngine::builder()
+    //     .enable_plugins(true)
+    //     .build_async()
+    //     .await?;
+
+    Ok(())
 }

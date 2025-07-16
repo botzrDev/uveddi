@@ -25,7 +25,7 @@ tree-sitter = [
     "dep:tree-sitter-typescript"
 ]
 # Core analysis features (without tree-sitter by default)
-analysis = []
+analysis = [] # No specific dependencies needed here, just a logical grouping
 # AI feature for all AI-related functionality
 ai = ["reqwest", "async-trait"]
 # Local AI only (Ollama)

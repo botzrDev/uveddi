@@ -22,14 +22,22 @@ use crate::plugins::WasmPluginEngine;
 
 // Component imports
 use crate::analysis::components::{
-    ConfigurationService, AstProviderImpl, DependencyGraphBuilderImpl, 
-    DetectorScheduler, PluginManagerHandle, AnalysisAggregator,
-    CacheManager, CacheManagerImpl,
-    traits::{DetectorScheduler as DetectorSchedulerTrait, AnalysisAggregator as AnalysisAggregatorTrait}
+    AnalysisAggregator, AstProviderImpl, CacheManagerImpl, ConfigurationService,
+    DependencyGraphBuilderImpl, DetectorScheduler, PluginManagerHandle,
 };
+use crate::analysis::detector_factory::DetectorFactory;
+use crate::analysis::engine_builder::AnalysisEngineBuilder; // Import the builder
+use crate::analysis::traits::{AstParserTrait, DependencyExtractorTrait, ResultCacheTrait};
+use crate::analysis::AnalysisDetector;
+use crate::ast::tree_sitter_impl::AstParser;
+use crate::cache::result_cache::ResultCache;
+use crate::error::UveddiError;
+use crate::plugins::WasmPluginEngine; // Keep for now for deprecation messages
+
+// Component imports
 use crate::analysis::components::traits::{
-    DependencyGraphBuilder as DependencyGraphBuilderTrait,
-    AstProvider as AstProviderTrait
+    AnalysisAggregator as AnalysisAggregatorTrait, AstProvider as AstProviderTrait,
+    DependencyGraphBuilder as DependencyGraphBuilderTrait, DetectorScheduler as DetectorSchedulerTrait,
 };
 use std::sync::Arc;
 use log::{info, warn};
@@ -64,7 +72,11 @@ struct CachedAnalysisResult {
 ///
 /// #[tokio::main]
 /// async fn main() -> Result<(), Box<dyn std::error::Error>> {
-///     let mut engine = AnalysisEngine::new()?;
+///     // Using the new builder pattern for async initialization
+///     let mut engine = AnalysisEngine::builder()
+///         .enable_plugins(true)
+///         .build_async()
+///         .await?;
 ///     let (issues, graph) = engine.analyze(Path::new("src/")).await?;
 ///     println!("Found {} issues", issues.len());
 ///     Ok(())
@@ -79,339 +91,205 @@ pub struct AnalysisEngine {
     detector_scheduler: Arc<DetectorScheduler>,
     plugin_manager: Option<PluginManagerHandle>,
     aggregator: Arc<AnalysisAggregator>,
-    
-    // Minimal legacy fields for backward compatibility
-    plugin_engine: Option<WasmPluginEngine>,
+    // The `plugin_engine` field is removed as `PluginManagerHandle` now encapsulates its functionality.
+    // This simplifies the `AnalysisEngine` struct and aligns with the component-based architecture.
 }
 
 impl AnalysisEngine {
-    /// Creates a new analysis engine with default configuration
+    /// Returns a new `AnalysisEngineBuilder` for flexible engine construction.
     ///
-    /// Initializes the engine with:
-    /// - AST parser for syntax tree generation
-    /// - Dependency extractor for import/include analysis
-    /// - Default set of anti-pattern detectors
-    /// - Result cache for performance optimization
+    /// This is the recommended way to create an `AnalysisEngine` instance,
+    /// allowing for configuration of detectors, cache paths, and plugin support.
     ///
-    /// # Errors
+    /// # Examples
     ///
-    /// Returns `UveddiError` if:
-    /// - Cache database cannot be created
-    /// - AST parser initialization fails
-    /// - Dependency extractor setup fails
-    #[inline]
-    pub fn new() -> crate::error::Result<Self> {
-        let default_detectors =
-            crate::analysis::detector_factory::DetectorFactory::create_default_detectors();
-        let cache_path = PathBuf::from("uveddi_cache.db");
-        Self::with_detectors(default_detectors, Some(&cache_path), false)
+    /// ```no_run
+    /// use uveddi::analysis::AnalysisEngine;
+    /// use std::path::PathBuf;
+    ///
+    /// let engine = AnalysisEngine::builder()
+    ///     .with_cache_path(&PathBuf::from("my_cache.db"))
+    ///     .build()?; // Synchronous build
+    ///
+    /// let engine_async = AnalysisEngine::builder()
+    ///     .enable_plugins(true)
+    ///     .build_async()
+    ///     .await?; // Asynchronous build
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn builder() -> AnalysisEngineBuilder {
+        AnalysisEngineBuilder::new()
     }
 
-    /// Create engine with injected detectors (DEPENDENCY INJECTION)
+    /// Creates a new analysis engine with default configuration.
     ///
-    /// Creates an AnalysisEngine with a custom set of detectors, enabling
-    /// dependency injection for better testability and flexibility.
-    ///
-    /// # Arguments
-    ///
-    /// * `detectors` - Vector of detectors to use for analysis
-    /// * `cache_path` - Optional path to cache database (None for in-memory cache)
-    /// * `enable_plugins` - Whether to enable WASM plugin support
-    ///
-    /// # Returns
-    ///
-    /// A configured AnalysisEngine instance
+    /// This is a synchronous constructor for basic use cases without plugins or custom paths.
+    /// For more advanced configurations, use `AnalysisEngine::builder()`.
     ///
     /// # Errors
+    /// Returns `UveddiError` if initialization fails.
     ///
-    /// Returns `UveddiError` if:
-    /// - Cache database cannot be created
-    /// - AST parser initialization fails
-    /// - Dependency extractor setup fails
+    /// # UV-294 Compliance
+    /// This constructor is synchronous and performs no I/O or async operations.
+    #[inline]
+    pub fn new() -> crate::error::Result<Self> {
+        AnalysisEngineBuilder::new().build()
+    }
+
+    /// Creates a new analysis engine with WASM plugin support enabled.
+    ///
+    /// This is an asynchronous constructor as plugin initialization involves I/O.
+    /// For more advanced configurations, use `AnalysisEngine::builder()`.
+    ///
+    /// # Errors
+    /// Returns `UveddiError` if initialization fails.
+    ///
+    /// # UV-294 Compliance
+    /// This constructor is asynchronous and should be `await`ed.
+    #[inline]
+    pub async fn new_async() -> crate::error::Result<Self> {
+        AnalysisEngineBuilder::new().enable_plugins(true).build_async().await
+    }
+
+    /// Creates an AnalysisEngine with a custom set of detectors.
+    ///
+    /// This is a synchronous constructor. For more advanced configurations,
+    /// including plugin support, use `AnalysisEngine::builder()`.
+    ///
+    /// # Arguments
+    /// * `detectors` - Vector of detectors to use for analysis.
+    ///
+    /// # Errors
+    /// Returns `UveddiError` if initialization fails.
+    ///
+    /// # UV-294 Compliance
+    /// This constructor is synchronous and performs no I/O or async operations.
     #[inline]
     pub fn with_detectors(
         detectors: Vec<Box<dyn AnalysisDetector + Send + Sync>>,
-        cache_path: Option<&Path>,
-        enable_plugins: bool,
     ) -> crate::error::Result<Self> {
-        let cache = if let Some(path) = cache_path {
-            ResultCache::new(path)?
-        } else {
-            ResultCache::new_in_memory()?
-        };
-
-        // Initialize AST cache with default configuration
-        let ast_cache_config = CacheConfig::default();
-        let ast_cache = AstCache::new(ast_cache_config)?;
-
-        // Initialize components
-        let config_service = Arc::new(ConfigurationService::new());
-        let ast_provider = Arc::new(AstProviderImpl::new()?);
-        let cache_manager = Arc::new(CacheManagerImpl::with_ast_cache(ast_cache));
-        let aggregator = Arc::new(AnalysisAggregator::new());
-        
-        // Components that need dependencies
-        let dependency_builder = Arc::new(DependencyGraphBuilderImpl::new(ast_provider.clone())?);
-        let detector_scheduler = Arc::new(DetectorScheduler::new(
-            config_service.clone(),
-            ast_provider.clone(),
-            None, // plugin_manager not initialized yet
-            aggregator.clone(),
-            detectors, // Use the provided detectors
-        ));
-        
-        // Plugin manager is initialized separately for async operations
-        let plugin_manager = None;
-
-        Ok(Self {
-            // Component architecture - facade pattern
-            config_service,
-            ast_provider,
-            cache_manager,
-            dependency_builder,
-            detector_scheduler,
-            plugin_manager,
-            aggregator,
-            
-            // Minimal legacy fields for backward compatibility
-            plugin_engine: if enable_plugins {
-                // Plugin engine will be initialized separately for async operations
-                None
-            } else {
-                None
-            },
-        })
+        AnalysisEngineBuilder::new().with_detectors(detectors).build()
     }
 
-    /// Create engine with injected detectors and plugin support (ASYNC VERSION)
+    /// Creates an AnalysisEngine with a custom cache database path.
     ///
-    /// Creates an AnalysisEngine with custom detectors and initializes the
-    /// WASM plugin engine if requested.
+    /// This is a synchronous constructor. For more advanced configurations,
+    /// including plugin support, use `AnalysisEngine::builder()`.
     ///
     /// # Arguments
-    ///
-    /// * `detectors` - Vector of detectors to use for analysis
-    /// * `cache_path` - Optional path to cache database (None for in-memory cache)
-    ///
-    /// # Returns
-    ///
-    /// A configured AnalysisEngine instance with plugin support
+    /// * `cache_path` - Path to the cache database file.
     ///
     /// # Errors
+    /// Returns `UveddiError` if initialization fails.
     ///
-    /// Returns `UveddiError` if initialization fails
+    /// # UV-294 Compliance
+    /// This constructor is synchronous and performs no I/O or async operations.
+    #[inline]
+    pub fn with_cache_path(cache_path: &Path) -> crate::error::Result<Self> {
+        AnalysisEngineBuilder::new().with_cache_path(cache_path).build()
+    }
+
+    /// Creates a new analysis engine with an in-memory cache database.
+    ///
+    /// This is a synchronous constructor. For more advanced configurations,
+    /// including plugin support, use `AnalysisEngine::builder()`.
+    ///
+    /// # Errors
+    /// Returns `UveddiError` if initialization fails.
+    ///
+    /// # UV-294 Compliance
+    /// This constructor is synchronous and performs no I/O or async operations.
+    #[inline]
+    pub fn new_with_memory_cache() -> crate::error::Result<Self> {
+        AnalysisEngineBuilder::new().with_in_memory_cache().build()
+    }
+
+    /// Create AnalysisEngine with injected dependencies (DEPENDENCY INJECTION).
+    ///
+    /// This is a synchronous constructor. For more advanced configurations,
+    /// including plugin support, use `AnalysisEngine::builder()` with injection methods.
+    ///
+    /// # Arguments
+    /// * `ast_parser` - AST parsing implementation.
+    /// * `dependency_extractor` - Dependency analysis implementation.
+    /// * `cache` - Result caching implementation.
+    /// * `detectors` - Vector of detectors to use for analysis.
+    ///
+    /// # Errors
+    /// Returns `UveddiError` if initialization fails.
+    ///
+    /// # UV-294 Compliance
+    /// This constructor is synchronous and performs no I/O or async operations.
+    #[inline]
+    pub fn with_injected_dependencies(
+        ast_parser: Box<dyn AstParserTrait>,
+        dependency_extractor: Box<dyn DependencyExtractorTrait>,
+        cache: Box<dyn ResultCacheTrait>,
+        detectors: Vec<Box<dyn AnalysisDetector + Send + Sync>>,
+    ) -> crate::error::Result<Self> {
+        AnalysisEngineBuilder::new()
+            .with_injected_ast_parser(ast_parser)
+            .with_injected_dependency_extractor(dependency_extractor)
+            .with_injected_result_cache(cache)
+            .with_detectors(detectors)
+            .build()
+    }
+
+    /// Create AnalysisEngine with default dependencies (backward compatibility).
+    ///
+    /// This is a synchronous constructor. For more advanced configurations,
+    /// including plugin support, use `AnalysisEngine::builder()`.
+    ///
+    /// # Errors
+    /// Returns `UveddiError` if initialization fails.
+    ///
+    /// # UV-294 Compliance
+    /// This constructor is synchronous and performs no I/O or async operations.
+    #[inline]
+    pub fn new_with_defaults() -> crate::error::Result<Self> {
+        AnalysisEngineBuilder::new().build()
+    }
+
+    /// Deprecated: Use `AnalysisEngine::builder().enable_plugins(true).build_async().await` instead.
+    #[deprecated(
+        since = "0.2.0",
+        note = "Use `AnalysisEngine::builder().enable_plugins(true).build_async().await` for async plugin initialization. Refer to UV-294 guidelines for async standardization."
+    )]
+    pub async fn new_with_plugins() -> crate::error::Result<Self> {
+        AnalysisEngineBuilder::new().enable_plugins(true).build_async().await
+    }
+
+    /// Deprecated: Use `AnalysisEngine::builder().with_detectors(detectors).enable_plugins(true).build_async().await` instead.
+    #[deprecated(
+        since = "0.2.0",
+        note = "Use `AnalysisEngine::builder().with_detectors(detectors).enable_plugins(true).build_async().await` for async plugin initialization. Refer to UV-294 guidelines for async standardization."
+    )]
     pub async fn with_detectors_and_plugins(
         detectors: Vec<Box<dyn AnalysisDetector + Send + Sync>>,
         cache_path: Option<&Path>,
     ) -> crate::error::Result<Self> {
-        let cache = if let Some(path) = cache_path {
-            ResultCache::new(path)?
-        } else {
-            ResultCache::new_in_memory()?
-        };
-
-        // Initialize plugin engine
-        let plugin_engine = match WasmPluginEngine::new().await {
-            Ok(engine) => {
-                info!("WASM plugin engine initialized successfully");
-                Some(engine)
-            }
-            Err(e) => {
-                warn!(
-                    "Failed to initialize WASM plugin engine: {}. Continuing without plugins.",
-                    e
-                );
-                None
-            }
-        };
-
-        // Initialize AST cache with default configuration
-        let ast_cache_config = CacheConfig::default();
-        let ast_cache = AstCache::new(ast_cache_config)?;
-
-        // Initialize components
-        let config_service = Arc::new(ConfigurationService::new());
-        let ast_provider = Arc::new(AstProviderImpl::new()?);
-        let cache_manager = Arc::new(CacheManagerImpl::with_ast_cache(ast_cache));
-        let aggregator = Arc::new(AnalysisAggregator::new());
-        
-        // Components that need dependencies
-        let dependency_builder = Arc::new(DependencyGraphBuilderImpl::new(ast_provider.clone())?);
-        let detector_scheduler = Arc::new(DetectorScheduler::new(
-            config_service.clone(),
-            ast_provider.clone(),
-            None, // plugin_manager not initialized yet
-            aggregator.clone(),
-            detectors, // Use the provided detectors
-        ));
-        
-        // Plugin manager will be initialized from plugin_engine
-        let plugin_manager = None; // TODO: Convert WasmPluginEngine to PluginManagerHandle
-
-        Ok(Self {
-            // Component architecture - facade pattern
-            config_service,
-            ast_provider,
-            cache_manager,
-            dependency_builder,
-            detector_scheduler,
-            plugin_manager,
-            aggregator,
-            
-            // Minimal legacy fields for backward compatibility
-            plugin_engine,
-        })
+        let mut builder = AnalysisEngineBuilder::new()
+            .with_detectors(detectors)
+            .enable_plugins(true);
+        if let Some(path) = cache_path {
+            builder = builder.with_cache_path(path);
+        }
+        builder.build_async().await
     }
 
-    /// Creates a new analysis engine with WASM plugin support enabled
-    pub async fn new_with_plugins() -> crate::error::Result<Self> {
-        let default_detectors =
-            crate::analysis::detector_factory::DetectorFactory::create_default_detectors();
-        let cache_path = PathBuf::from("uveddi_cache.db");
-        Self::with_detectors_and_plugins(default_detectors, Some(&cache_path)).await
-    }
-
-    /// Creates a new analysis engine with a custom cache database path
-    ///
-    /// This is primarily useful for testing to avoid database conflicts.
-    ///
-    /// # Arguments
-    ///
-    /// * `cache_path` - Path to the cache database file
-    ///
-    /// # Errors
-    ///
-    /// Returns `UveddiError` if:
-    /// - Cache database cannot be created
-    /// - AST parser initialization fails
-    /// - Dependency extractor setup fails
-    pub fn with_cache_path(cache_path: &Path) -> crate::error::Result<Self> {
-        let default_detectors =
-            crate::analysis::detector_factory::DetectorFactory::create_default_detectors();
-        Self::with_detectors(default_detectors, Some(cache_path), false)
-    }
-
-    /// Creates a new analysis engine with WASM plugin support and custom cache path
+    /// Deprecated: Use `AnalysisEngine::builder().with_cache_path(cache_path).enable_plugins(true).build_async().await` instead.
+    #[deprecated(
+        since = "0.2.0",
+        note = "Use `AnalysisEngine::builder().with_cache_path(cache_path).enable_plugins(true).build_async().await` for async plugin initialization. Refer to UV-294 guidelines for async standardization."
+    )]
     pub async fn with_cache_path_and_plugins(cache_path: &Path) -> crate::error::Result<Self> {
-        let default_detectors =
-            crate::analysis::detector_factory::DetectorFactory::create_default_detectors();
-        Self::with_detectors_and_plugins(default_detectors, Some(cache_path)).await
+        AnalysisEngineBuilder::new()
+            .with_cache_path(cache_path)
+            .enable_plugins(true)
+            .build_async()
+            .await
     }
 
-    /// Creates a new analysis engine with an in-memory cache database
-    ///
-    /// This is primarily useful for testing to avoid database conflicts
-    /// and ensure test isolation.
-    ///
-    /// # Errors
-    ///
-    /// Returns `UveddiError` if:
-    /// - Cache database cannot be created
-    /// - AST parser initialization fails
-    /// - Dependency extractor setup fails
-    pub fn new_with_memory_cache() -> crate::error::Result<Self> {
-        let default_detectors =
-            crate::analysis::detector_factory::DetectorFactory::create_default_detectors();
-        Self::with_detectors(default_detectors, None, false)
-    }
-
-    /// Create AnalysisEngine with injected dependencies (DEPENDENCY INJECTION)
-    ///
-    /// Creates an AnalysisEngine with custom trait-based dependencies, enabling
-    /// full dependency injection for better testability and modularity.
-    ///
-    /// # Arguments
-    ///
-    /// * `ast_parser` - AST parsing implementation
-    /// * `dependency_extractor` - Dependency analysis implementation  
-    /// * `cache` - Result caching implementation
-    /// * `detectors` - Vector of detectors to use for analysis
-    ///
-    /// # Returns
-    ///
-    /// A configured AnalysisEngine instance
-    ///
-    /// # Errors
-    ///
-    /// Returns `UveddiError` if:
-    /// - Dependency validation fails
-    /// - Component initialization fails
-    pub fn with_injected_dependencies(
-        ast_parser: Box<dyn AstParserTrait>,
-        dependency_extractor: Box<dyn DependencyExtractorTrait>, 
-        cache: Box<dyn ResultCacheTrait>,
-        detectors: Vec<Box<dyn AnalysisDetector + Send + Sync>>,
-    ) -> crate::error::Result<Self> {
-        // Validate dependencies
-        Self::validate_injected_dependencies(&ast_parser, &dependency_extractor, &cache)?;
-        
-        // For now, we need to create concrete implementations from the traits
-        // This is a bridge solution until we can fully refactor the engine
-        let concrete_parser = AstParser::new()?;
-        let concrete_extractor = DependencyExtractor::new()?;
-        let concrete_cache = ResultCache::new_in_memory()?;
-
-        // Initialize AST cache with default configuration
-        let ast_cache_config = CacheConfig::default();
-        let ast_cache = AstCache::new(ast_cache_config)?;
-
-        // Initialize components
-        let config_service = Arc::new(ConfigurationService::new());
-        let ast_provider = Arc::new(AstProviderImpl::new()?);
-        let cache_manager = Arc::new(CacheManagerImpl::with_ast_cache(ast_cache));
-        let aggregator = Arc::new(AnalysisAggregator::new());
-        
-        // Components that need dependencies
-        let dependency_builder = Arc::new(DependencyGraphBuilderImpl::new(ast_provider.clone())?);
-        let detector_scheduler = Arc::new(DetectorScheduler::new(
-            config_service.clone(),
-            ast_provider.clone(),
-            None, // plugin_manager not initialized yet
-            aggregator.clone(),
-            detectors, // Use the provided detectors
-        ));
-        
-        // Plugin manager is initialized separately for async operations
-        let plugin_manager = None;
-
-        Ok(Self {
-            // Component architecture - facade pattern
-            config_service,
-            ast_provider,
-            cache_manager,
-            dependency_builder,
-            detector_scheduler,
-            plugin_manager,
-            aggregator,
-            
-            // Minimal legacy fields for backward compatibility
-            plugin_engine: None,
-        })
-    }
-    
-    /// Create AnalysisEngine with default dependencies (backward compatibility)
-    ///
-    /// This method provides the same functionality as `new()` but goes through
-    /// the dependency injection infrastructure, ensuring consistency.
-    ///
-    /// # Returns
-    ///
-    /// A configured AnalysisEngine instance with default dependencies
-    ///
-    /// # Errors
-    ///
-    /// Returns `UveddiError` if dependency creation or validation fails
-    pub fn new_with_defaults() -> crate::error::Result<Self> {
-        use crate::analysis::adapters::{AstParserAdapter, DependencyExtractorAdapter, ResultCacheAdapter};
-        
-        let ast_parser = Box::new(AstParserAdapter::new_default()?) as Box<dyn AstParserTrait>;
-        let dependency_extractor = Box::new(DependencyExtractorAdapter::new_default()?) as Box<dyn DependencyExtractorTrait>;
-        let cache = Box::new(ResultCacheAdapter::new_memory()?) as Box<dyn ResultCacheTrait>;
-        let default_detectors = crate::analysis::detector_factory::DetectorFactory::create_default_detectors();
-        
-        Self::with_injected_dependencies(ast_parser, dependency_extractor, cache, default_detectors)
-    }
-    
     /// Validate injected dependencies
     ///
     /// Ensures that all injected dependencies are properly initialized and
@@ -551,6 +429,10 @@ impl AnalysisEngine {
     /// # Errors
     ///
     /// Returns `UveddiError` if analysis fails
+    #[deprecated(
+        since = "0.2.0",
+        note = "This method is deprecated. Use `analyze()` instead, which provides a more comprehensive analysis result including the dependency graph."
+    )]
     async fn analyze_files_and_collect_dependencies(
         &mut self,
         path: &Path,
@@ -761,26 +643,22 @@ impl AnalysisEngine {
     ///
     /// Returns `UveddiError` if the plugin engine is not initialized or if there's an
     /// error during plugin loading.
+    #[deprecated(
+        since = "0.2.0",
+        note = "Plugin loading is now handled during asynchronous engine construction via `AnalysisEngine::builder().enable_plugins(true).build_async().await`. This method will be removed in future versions. Refer to UV-294 guidelines for async standardization."
+    )]
     pub async fn load_plugins(&mut self) -> crate::error::Result<usize> {
-        if let Some(ref mut plugin_engine) = self.plugin_engine {
-            let loaded_plugins = plugin_engine
+        if let Some(ref mut plugin_manager) = self.plugin_manager {
+            let loaded_plugins = plugin_manager
                 .load_all_plugins()
                 .await
                 .map_err(crate::error::UveddiError::from)?;
 
-            // TODO: Re-enable when plugin adapter implements AnalysisDetector
-            // Add plugin adapters as detectors
-            // for plugin_id in &loaded_plugins {
-            //     if let Some(adapter) = plugin_engine.get_plugin_adapter(plugin_id).await {
-            //         self.detectors.push(Box::new(adapter));
-            //     }
-            // }
-
-            info!("Loaded {} WASM plugins", loaded_plugins.len());
+            info!("Loaded {} WASM plugins via PluginManagerHandle", loaded_plugins.len());
             Ok(loaded_plugins.len())
         } else {
             warn!(
-                "Plugin engine not initialized. Use new_with_plugins() to enable plugin support."
+                "Plugin manager not initialized. Use `AnalysisEngine::builder().enable_plugins(true).build_async().await` to enable plugin support."
             );
             Ok(0)
         }
@@ -797,32 +675,29 @@ impl AnalysisEngine {
     ///
     /// Returns `UveddiError` if the plugin engine is not initialized or if the
     /// installation fails.
+    #[deprecated(
+        since = "0.2.0",
+        note = "Plugin installation should be handled via the `PluginManagerHandle` directly, obtained from an asynchronously constructed `AnalysisEngine`. This method will be removed in future versions. Refer to UV-294 guidelines for async standardization."
+    )]
     pub async fn install_plugin(
         &mut self,
         manifest: crate::plugins::PluginManifest,
         binary: Vec<u8>,
     ) -> crate::error::Result<crate::plugins::PluginId> {
-        if let Some(ref mut plugin_engine) = self.plugin_engine {
-            let plugin_id = plugin_engine
+        if let Some(ref mut plugin_manager) = self.plugin_manager {
+            let plugin_id = plugin_manager
                 .install_plugin(manifest, binary)
                 .await
                 .map_err(crate::error::UveddiError::from)?;
-
-            // TODO: Re-enable when plugin adapter implements AnalysisDetector
-            // Add the new plugin as a detector
-            // if let Some(adapter) = plugin_engine.get_plugin_adapter(&plugin_id).await {
-            //     self.detectors.push(Box::new(adapter));
-            // }
-
             Ok(plugin_id)
         } else {
             Err(crate::error::UveddiError::PluginError {
                 plugin: "unknown".to_string(),
                 plugin_type: "WASM".to_string(),
-                message: "Plugin engine not initialized".to_string(),
-                suggestion: "Initialize plugin engine before installing plugins".to_string(),
+                message: "Plugin manager not initialized".to_string(),
+                suggestion: "Initialize plugin manager before installing plugins".to_string(),
                 source: Some(crate::plugins::errors::PluginError::Execution(
-                    "Plugin engine not initialized".to_string(),
+                    "Plugin manager not initialized".to_string(),
                 )),
             })
         }
@@ -838,47 +713,45 @@ impl AnalysisEngine {
     ///
     /// Returns `UveddiError` if the plugin engine is not initialized or if the
     /// uninstallation fails.
+    #[deprecated(
+        since = "0.2.0",
+        note = "Plugin uninstallation should be handled via the `PluginManagerHandle` directly, obtained from an asynchronously constructed `AnalysisEngine`. This method will be removed in future versions. Refer to UV-294 guidelines for async standardization."
+    )]
     pub async fn uninstall_plugin(
         &mut self,
         plugin_id: &crate::plugins::PluginId,
     ) -> crate::error::Result<()> {
-        if let Some(ref mut plugin_engine) = self.plugin_engine {
-            plugin_engine
+        if let Some(ref mut plugin_manager) = self.plugin_manager {
+            plugin_manager
                 .uninstall_plugin(plugin_id)
                 .await
                 .map_err(crate::error::UveddiError::from)?;
-
-            // TODO: Re-enable when plugin adapter implements AnalysisDetector
-            // Reload all adapters to remove the uninstalled plugin
-            // self.detectors.retain(|detector| detector.get_detector_name() != "wasm-plugin-detector");
-
-            // Re-add remaining plugin adapters
-            // for adapter in plugin_engine.get_all_plugin_adapters().await {
-            //     self.detectors.push(Box::new(adapter));
-            // }
-
             Ok(())
         } else {
             Err(crate::error::UveddiError::PluginError {
                 plugin: "unknown".to_string(),
                 plugin_type: "WASM".to_string(),
-                message: "Plugin engine not initialized".to_string(),
-                suggestion: "Initialize plugin engine before uninstalling plugins".to_string(),
+                message: "Plugin manager not initialized".to_string(),
+                suggestion: "Initialize plugin manager before uninstalling plugins".to_string(),
                 source: Some(crate::plugins::errors::PluginError::Execution(
-                    "Plugin engine not initialized".to_string(),
+                    "Plugin manager not initialized".to_string(),
                 )),
             })
         }
     }
 
     /// Retrieves statistics for all loaded plugins.
+    #[deprecated(
+        since = "0.2.0",
+        note = "Plugin statistics should be retrieved via the `PluginManagerHandle` directly, obtained from an asynchronously constructed `AnalysisEngine`. This method will be removed in future versions. Refer to UV-294 guidelines for async standardization."
+    )]
     pub async fn get_plugin_stats(
         &self,
     ) -> Option<Vec<(crate::plugins::PluginId, crate::plugins::PluginStats)>> {
-        if let Some(ref plugin_engine) = self.plugin_engine {
+        if let Some(ref plugin_manager) = self.plugin_manager {
             let mut stats = Vec::new();
-            for plugin_id in plugin_engine.list_loaded_plugins().await {
-                if let Some(plugin_stats) = plugin_engine.get_plugin_stats(&plugin_id).await {
+            for plugin_id in plugin_manager.list_loaded_plugins().await {
+                if let Some(plugin_stats) = plugin_manager.get_plugin_stats(&plugin_id).await {
                     stats.push((plugin_id, plugin_stats));
                 }
             }
@@ -894,11 +767,15 @@ impl AnalysisEngine {
     ///
     /// Returns `UveddiError` if the plugin engine is not initialized or if
     /// resource monitoring fails.
+    #[deprecated(
+        since = "0.2.0",
+        note = "Plugin resource monitoring should be handled via the `PluginManagerHandle` directly, obtained from an asynchronously constructed `AnalysisEngine`. This method will be removed in future versions. Refer to UV-294 guidelines for async standardization."
+    )]
     pub async fn monitor_plugin_resources(
         &mut self,
     ) -> crate::error::Result<crate::plugins::ResourceReport> {
-        if let Some(ref mut plugin_engine) = self.plugin_engine {
-            plugin_engine.monitor_resources().await.map_err(|e| {
+        if let Some(ref mut plugin_manager) = self.plugin_manager {
+            plugin_manager.monitor_resources().await.map_err(|e| {
                 crate::error::UveddiError::PluginError {
                     plugin: "unknown".to_string(),
                     plugin_type: "WASM".to_string(),
@@ -913,43 +790,52 @@ impl AnalysisEngine {
             Err(crate::error::UveddiError::PluginError {
                 plugin: "unknown".to_string(),
                 plugin_type: "WASM".to_string(),
-                message: "Plugin engine not initialized".to_string(),
-                suggestion: "Initialize plugin engine before monitoring resources".to_string(),
+                message: "Plugin manager not initialized".to_string(),
+                suggestion: "Initialize plugin manager before monitoring resources".to_string(),
                 source: Some(crate::plugins::errors::PluginError::Execution(
-                    "Plugin engine not initialized".to_string(),
+                    "Plugin manager not initialized".to_string(),
                 )),
             })
         }
     }
 
-    /// Check if plugin engine is available
+    /// Check if plugin support is available.
+    ///
+    /// This method checks if the `AnalysisEngine` instance was initialized with plugin support.
     pub fn has_plugin_support(&self) -> bool {
-        self.plugin_engine.is_some()
+        self.plugin_manager.is_some()
     }
 
-    /// Add plugin detectors dynamically
+    /// Add plugin detectors dynamically.
     ///
-    /// Scans the plugin engine for loaded plugins and creates detector adapters
+    /// Scans the plugin manager for loaded plugins and creates detector adapters
     /// for each one, integrating them into the analysis engine's detector pipeline.
     ///
     /// # Errors
-    ///
-    /// Returns `UveddiError` if plugin integration fails
+    /// Returns `UveddiError` if plugin integration fails.
+    #[deprecated(
+        since = "0.2.0",
+        note = "Plugin detectors are now integrated during asynchronous engine construction. This method will be removed in future versions. Refer to UV-294 guidelines for async standardization."
+    )]
     pub async fn add_plugin_detectors(&mut self) -> crate::error::Result<usize> {
-        if let Some(ref plugin_engine) = self.plugin_engine {
+        if let Some(ref plugin_manager) = self.plugin_manager {
             // Skip adapter factory for now due to type constraints
             // TODO: Implement proper plugin adapter integration
             log::warn!("Plugin adapter integration skipped due to type constraints");
             return Ok(0);
         } else {
-            Ok(0) // No plugin engine, no detectors added
+            Ok(0) // No plugin manager, no detectors added
         }
     }
 
-    /// Remove plugin detectors from the detector pipeline
+    /// Remove plugin detectors from the detector pipeline.
     ///
     /// Removes all WASM plugin detectors from the current detector set.
     /// This is useful when reloading plugins or disabling plugin support.
+    #[deprecated(
+        since = "0.2.0",
+        note = "Plugin detectors are now managed internally by the `DetectorScheduler` and `PluginManagerHandle`. This method will be removed in future versions. Refer to UV-294 guidelines for async standardization."
+    )]
     pub fn remove_plugin_detectors(&mut self) -> usize {
         // TODO: Facade pattern - delegate to detector_scheduler
         // For now, this is a no-op since detector management is handled by components
@@ -957,14 +843,17 @@ impl AnalysisEngine {
         0
     }
 
-    /// Reload plugin detectors
+    /// Reload plugin detectors.
     ///
-    /// Removes existing plugin detectors and reloads them from the plugin engine.
+    /// Removes existing plugin detectors and reloads them from the plugin manager.
     /// This is useful when plugins have been added, removed, or updated.
     ///
     /// # Errors
-    ///
-    /// Returns `UveddiError` if plugin reloading fails
+    /// Returns `UveddiError` if plugin reloading fails.
+    #[deprecated(
+        since = "0.2.0",
+        note = "Plugin detectors are now managed internally by the `DetectorScheduler` and `PluginManagerHandle`. This method will be removed in future versions. Refer to UV-294 guidelines for async standardization."
+    )]
     pub async fn reload_plugin_detectors(&mut self) -> crate::error::Result<usize> {
         // Remove existing plugin detectors
         self.remove_plugin_detectors();
@@ -974,11 +863,15 @@ impl AnalysisEngine {
     }
 
     /// Gets statistics from the plugin registry.
+    #[deprecated(
+        since = "0.2.0",
+        note = "Plugin registry statistics should be retrieved via the `PluginManagerHandle` directly, obtained from an asynchronously constructed `AnalysisEngine`. This method will be removed in future versions. Refer to UV-294 guidelines for async standardization."
+    )]
     pub fn get_plugin_registry_stats(
         &self,
     ) -> Option<crate::plugins::registry::RegistryStatistics> {
-        self.plugin_engine
+        self.plugin_manager
             .as_ref()
-            .map(|engine| engine.get_registry_stats())
+            .and_then(|pm| pm.get_registry_stats())
     }
 }
