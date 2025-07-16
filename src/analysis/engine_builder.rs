@@ -1,4 +1,6 @@
 use crate::analysis::{AnalysisConfig, AnalysisDetector, AnalysisEngine};
+use crate::analysis::traits::{AstParserTrait, DependencyExtractorTrait, ResultCacheTrait};
+use crate::analysis::adapters::{AstParserAdapter, DependencyExtractorAdapter, ResultCacheAdapter};
 use crate::error::UveddiError;
 use std::path::{Path, PathBuf};
 
@@ -28,14 +30,35 @@ use crate::analysis::memory::MemoryOptimizationConfig;
 /// # Ok(())
 /// # }
 /// ```
-#[derive(Default)]
 pub struct AnalysisEngineBuilder {
     detectors: Vec<Box<dyn AnalysisDetector + Send + Sync>>,
     cache_path: Option<PathBuf>,
     enable_plugins: bool,
     use_memory_cache: bool,
+    // Dependency injection fields
+    ast_parser: Option<Box<dyn AstParserTrait>>,
+    dependency_extractor: Option<Box<dyn DependencyExtractorTrait>>,
+    cache: Option<Box<dyn ResultCacheTrait>>,
+    config: Option<AnalysisConfig>,
     #[cfg(feature = "memory-optimization")]
     memory_optimization_config: Option<MemoryOptimizationConfig>,
+}
+
+impl Default for AnalysisEngineBuilder {
+    fn default() -> Self {
+        Self {
+            detectors: Vec::new(),
+            cache_path: None,
+            enable_plugins: false,
+            use_memory_cache: false,
+            ast_parser: None,
+            dependency_extractor: None,
+            cache: None,
+            config: None,
+            #[cfg(feature = "memory-optimization")]
+            memory_optimization_config: None,
+        }
+    }
 }
 
 impl AnalysisEngineBuilder {
@@ -90,6 +113,145 @@ impl AnalysisEngineBuilder {
     pub fn with_memory_cache(mut self) -> Self {
         self.use_memory_cache = true;
         self
+    }
+
+    /// Inject custom AST parser (DEPENDENCY INJECTION)
+    ///
+    /// Allows injection of a custom AST parser implementation for
+    /// better testability and modularity.
+    ///
+    /// # Arguments
+    ///
+    /// * `parser` - AST parser implementation
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use uveddi::analysis::{AnalysisEngineBuilder, adapters::AstParserAdapter};
+    ///
+    /// # async fn example() -> Result<(), uveddi::error::UveddiError> {
+    /// let custom_parser = Box::new(AstParserAdapter::new_default()?);
+    /// let engine = AnalysisEngineBuilder::new()
+    ///     .with_ast_parser(custom_parser)
+    ///     .build()
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn with_ast_parser(mut self, parser: Box<dyn AstParserTrait>) -> Self {
+        self.ast_parser = Some(parser);
+        self
+    }
+
+    /// Inject custom dependency extractor (DEPENDENCY INJECTION)
+    ///
+    /// Allows injection of a custom dependency extractor implementation for
+    /// better testability and modularity.
+    ///
+    /// # Arguments
+    ///
+    /// * `extractor` - Dependency extractor implementation
+    pub fn with_dependency_extractor(mut self, extractor: Box<dyn DependencyExtractorTrait>) -> Self {
+        self.dependency_extractor = Some(extractor);
+        self
+    }
+
+    /// Inject custom result cache (DEPENDENCY INJECTION)
+    ///
+    /// Allows injection of a custom cache implementation for
+    /// better testability and modularity.
+    ///
+    /// # Arguments
+    ///
+    /// * `cache` - Cache implementation
+    pub fn with_cache(mut self, cache: Box<dyn ResultCacheTrait>) -> Self {
+        self.cache = Some(cache);
+        self
+    }
+
+    /// Configure from TOML configuration file (DEPENDENCY INJECTION)
+    ///
+    /// Loads configuration from a TOML file and sets up detectors and
+    /// dependencies accordingly.
+    ///
+    /// # Arguments
+    ///
+    /// * `config_path` - Path to TOML configuration file
+    ///
+    /// # Returns
+    ///
+    /// Builder configured from file
+    ///
+    /// # Errors
+    ///
+    /// Returns UveddiError if file cannot be read or parsed
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use uveddi::analysis::AnalysisEngineBuilder;
+    /// use std::path::Path;
+    ///
+    /// # async fn example() -> Result<(), uveddi::error::UveddiError> {
+    /// let engine = AnalysisEngineBuilder::new()
+    ///     .from_config_file(Path::new("config.toml"))?
+    ///     .build()
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn from_config_file_di(mut self, config_path: &Path) -> Result<Self, UveddiError> {
+        let config_content = std::fs::read_to_string(config_path)
+            .map_err(|e| UveddiError::config_error(
+                &format!("Failed to read config file {}: {}", config_path.display(), e),
+                "configuration loading",
+            ))?;
+        
+        let config: AnalysisConfig = toml::from_str(&config_content)
+            .map_err(|e| UveddiError::config_error(
+                &format!("Failed to parse config file {}: {}", config_path.display(), e),
+                "TOML parsing",
+            ))?;
+        
+        self.config = Some(config);
+        Ok(self)
+    }
+
+    /// Add detector to the analysis pipeline (DEPENDENCY INJECTION)
+    ///
+    /// # Arguments
+    ///
+    /// * `detector` - Detector implementation
+    pub fn with_detector(mut self, detector: Box<dyn AnalysisDetector + Send + Sync>) -> Self {
+        self.detectors.push(detector);
+        self
+    }
+
+    /// Add multiple detectors from configuration (DEPENDENCY INJECTION)
+    ///
+    /// Creates detectors based on the current configuration and adds them
+    /// to the analysis pipeline.
+    ///
+    /// # Returns
+    ///
+    /// Builder with detectors configured from current config
+    ///
+    /// # Errors
+    ///
+    /// Returns UveddiError if detector creation fails
+    pub fn with_detectors_from_config(mut self) -> Result<Self, UveddiError> {
+        if let Some(ref config) = self.config {
+            use crate::analysis::detector_factory::DetectorFactory;
+            
+            for (detector_name, detector_config) in &config.detectors {
+                if detector_config.get("enabled").unwrap_or(1) == 1 {
+                    let detector = DetectorFactory::create_detector(detector_name, detector_config)?;
+                    self.detectors.push(detector);
+                }
+            }
+        }
+        
+        Ok(self)
     }
 
     /// Configure memory optimization settings
@@ -196,11 +358,11 @@ impl AnalysisEngineBuilder {
         Ok(self)
     }
 
-    /// Build the AnalysisEngine with configured options
+    /// Build the AnalysisEngine with configured options (DEPENDENCY INJECTION)
     ///
     /// Creates an `AnalysisEngine` instance using the builder's configuration.
-    /// If no detectors were added, the default detector set will be used.
-    /// If plugins are enabled, plugin detectors will be automatically loaded.
+    /// Uses dependency injection if custom dependencies were provided,
+    /// otherwise falls back to the original build approach.
     ///
     /// # Returns
     ///
@@ -209,10 +371,61 @@ impl AnalysisEngineBuilder {
     /// # Errors
     ///
     /// Returns `UveddiError` if:
+    /// - Dependency validation fails
     /// - Cache initialization fails
     /// - Plugin engine initialization fails (when plugins are enabled)
     /// - AST parser or dependency extractor initialization fails
     pub async fn build(self) -> Result<AnalysisEngine, UveddiError> {
+        // Check if we have dependency injection configured
+        if self.ast_parser.is_some() || self.dependency_extractor.is_some() || self.cache.is_some() {
+            // Use dependency injection approach
+            self.build_with_dependency_injection().await
+        } else {
+            // Use original approach for backward compatibility
+            self.build_traditional().await
+        }
+    }
+
+    /// Build using dependency injection approach
+    async fn build_with_dependency_injection(self) -> Result<AnalysisEngine, UveddiError> {
+        // Use provided dependencies or create defaults
+        let ast_parser = self.ast_parser
+            .unwrap_or_else(|| Box::new(AstParserAdapter::new_default().expect("Failed to create default AST parser")));
+        
+        let dependency_extractor = self.dependency_extractor
+            .unwrap_or_else(|| Box::new(DependencyExtractorAdapter::new_default().expect("Failed to create default dependency extractor")));
+        
+        let cache = self.cache
+            .unwrap_or_else(|| {
+                if self.use_memory_cache {
+                    Box::new(ResultCacheAdapter::new_memory().expect("Failed to create memory cache"))
+                } else if let Some(ref path) = self.cache_path {
+                    Box::new(ResultCacheAdapter::new_with_path(path).expect("Failed to create file cache"))
+                } else {
+                    Box::new(ResultCacheAdapter::new_memory().expect("Failed to create default memory cache"))
+                }
+            });
+
+        // Use provided detectors or create defaults
+        let detectors = if self.detectors.is_empty() {
+            crate::analysis::detector_factory::DetectorFactory::create_default_detectors()
+        } else {
+            self.detectors
+        };
+
+        // Create engine with injected dependencies
+        let engine = AnalysisEngine::with_injected_dependencies(
+            ast_parser,
+            dependency_extractor,
+            cache,
+            detectors,
+        )?;
+
+        Ok(engine)
+    }
+
+    /// Build using traditional approach (backward compatibility)
+    async fn build_traditional(self) -> Result<AnalysisEngine, UveddiError> {
         // If no detectors were provided, use the default set
         let detectors = if self.detectors.is_empty() {
             crate::analysis::detector_factory::DetectorFactory::create_default_detectors()
@@ -236,7 +449,7 @@ impl AnalysisEngineBuilder {
         } else {
             // Use memory optimization if configured
             #[cfg(feature = "memory-optimization")]
-            if let Some(memory_config) = self.memory_optimization_config {
+            if let Some(_memory_config) = self.memory_optimization_config {
                 AnalysisEngine::with_detectors(detectors, cache_path, false)?
             } else {
                 AnalysisEngine::with_detectors(detectors, cache_path, false)?

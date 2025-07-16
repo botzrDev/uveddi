@@ -34,11 +34,19 @@ impl DetectorFactory {
         ]
     }
 
-    /// Create detector by name with configuration
+    /// Create a new factory instance with registry support
+    ///
+    /// Creates a factory instance that can be used to create detectors
+    /// with enhanced configuration support.
+    pub fn new() -> Self {
+        Self
+    }
+
+    /// Create detector by name with configuration (ENHANCED)
     ///
     /// Creates a specific detector instance based on the provided name and
     /// configuration parameters. This enables dynamic detector creation
-    /// from configuration files.
+    /// from configuration files with enhanced parameter support.
     ///
     /// # Arguments
     ///
@@ -70,6 +78,64 @@ impl DetectorFactory {
                 "detector factory",
             )),
         }
+    }
+
+    /// Create detector by name with enhanced configuration (DEPENDENCY INJECTION)
+    ///
+    /// Creates a detector instance with enhanced configuration support including
+    /// severity levels, thresholds, and other advanced settings.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The detector type name
+    /// * `config` - Enhanced configuration with support for severity, thresholds, etc.
+    ///
+    /// # Returns
+    ///
+    /// A configured detector instance
+    ///
+    /// # Errors
+    ///
+    /// Returns UveddiError if detector creation fails
+    pub fn create_detector_enhanced(
+        &self,
+        name: &str,
+        config: &EnhancedDetectorConfig,
+    ) -> Result<Box<dyn AnalysisDetector + Send + Sync>, UveddiError> {
+        match name {
+            "god_object" => {
+                let detector = GodObjectDetector::new(
+                    config.thresholds.max_methods.unwrap_or(20) as usize,
+                    config.thresholds.max_fields.unwrap_or(15) as usize,
+                );
+                Ok(Box::new(detector))
+            }
+            "code_duplication" => Ok(Box::new(CodeDuplicationDetector::new())),
+            "dead_code" => Ok(Box::new(DeadCodeDetector::with_default_config())),
+            "large_classes" => Ok(Box::new(LargeClassDetector::with_default_config())),
+            "tight_coupling" => Ok(Box::new(TightCouplingDetector::default())),
+            _ => Err(UveddiError::config_error(
+                &format!("Unknown detector: {}", name),
+                "detector factory",
+            )),
+        }
+    }
+
+    /// Get list of available detector names
+    ///
+    /// Returns all detector types that can be created by this factory.
+    ///
+    /// # Returns
+    ///
+    /// Vector of detector names
+    pub fn available_detectors(&self) -> Vec<String> {
+        vec![
+            "god_object".to_string(),
+            "code_duplication".to_string(),
+            "dead_code".to_string(),
+            "large_classes".to_string(),
+            "tight_coupling".to_string(),
+        ]
     }
 
     /// Create detectors from a configuration map
@@ -168,6 +234,98 @@ impl DetectorConfig {
     /// Get all parameters for serialization
     pub fn params(&self) -> &HashMap<String, i32> {
         &self.params
+    }
+}
+
+/// Enhanced detector configuration for dependency injection
+///
+/// Provides more sophisticated configuration options including severity levels,
+/// threshold configurations, and feature flags.
+#[derive(Debug, Clone)]
+pub struct EnhancedDetectorConfig {
+    pub enabled: bool,
+    pub severity: IssueSeverity,
+    pub thresholds: DetectorThresholds,
+}
+
+/// Issue severity levels for detector configuration
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum IssueSeverity {
+    Low,
+    Medium,
+    High,
+    Critical,
+}
+
+impl Default for IssueSeverity {
+    fn default() -> Self {
+        Self::Medium
+    }
+}
+
+/// Detector threshold configuration
+///
+/// Centralized configuration for various detector thresholds and limits.
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
+pub struct DetectorThresholds {
+    pub max_methods: Option<u32>,
+    pub max_fields: Option<u32>,
+    pub max_lines: Option<u32>,
+    pub min_similarity: Option<f64>,
+    pub complexity_threshold: Option<u32>,
+    pub coupling_threshold: Option<u32>,
+}
+
+impl EnhancedDetectorConfig {
+    /// Create a new enhanced configuration with defaults
+    pub fn new() -> Self {
+        Self {
+            enabled: true,
+            severity: IssueSeverity::Medium,
+            thresholds: DetectorThresholds::default(),
+        }
+    }
+
+    /// Set enabled status
+    pub fn with_enabled(mut self, enabled: bool) -> Self {
+        self.enabled = enabled;
+        self
+    }
+
+    /// Set severity level
+    pub fn with_severity(mut self, severity: IssueSeverity) -> Self {
+        self.severity = severity;
+        self
+    }
+
+    /// Set maximum methods threshold
+    pub fn with_max_methods(mut self, max_methods: u32) -> Self {
+        self.thresholds.max_methods = Some(max_methods);
+        self
+    }
+
+    /// Set maximum fields threshold
+    pub fn with_max_fields(mut self, max_fields: u32) -> Self {
+        self.thresholds.max_fields = Some(max_fields);
+        self
+    }
+
+    /// Set maximum lines threshold
+    pub fn with_max_lines(mut self, max_lines: u32) -> Self {
+        self.thresholds.max_lines = Some(max_lines);
+        self
+    }
+
+    /// Set minimum similarity threshold
+    pub fn with_min_similarity(mut self, min_similarity: f64) -> Self {
+        self.thresholds.min_similarity = Some(min_similarity);
+        self
+    }
+}
+
+impl Default for EnhancedDetectorConfig {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

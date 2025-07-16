@@ -100,6 +100,7 @@
 /// # Ok(())
 /// # }
 /// ```
+pub mod adapters;
 pub mod buffer;
 pub mod cache;
 pub mod cfg;
@@ -119,6 +120,7 @@ pub mod plugin_adapter;
 pub mod robust_parser;
 pub mod semantic;
 pub mod symbols;
+pub mod traits;
 pub mod types;
 
 #[cfg(test)]
@@ -127,8 +129,8 @@ pub mod tests;
 /// Placeholder documentation for public items
 // Re-exports for convenience
 pub use cache::AstCache;
-pub use config::AnalysisConfig;
-pub use detector_factory::{DetectorConfig, DetectorFactory};
+pub use config::{AnalysisConfig, CacheConfig, PerformanceConfig};
+pub use detector_factory::{DetectorConfig, DetectorFactory, EnhancedDetectorConfig, IssueSeverity, DetectorThresholds};
 pub use detector_registry::DetectorRegistry;
 pub use detectors::anti_patterns::GodObjectDetector;
 pub use detectors::{CycleDetector, Dependency, DependencyExtractor};
@@ -138,6 +140,8 @@ pub use errors::AnalysisError;
 pub use graph::{ComponentNode, LocalDependencyGraph, LocalDependencyType};
 pub use memory::{get_optimization_status, MemoryOptimizationConfig};
 pub use plugin_adapter::{WasmPluginAdapterFactory, WasmPluginDetectorAdapter};
+pub use traits::{AstParserTrait, DependencyExtractorTrait, ResultCacheTrait, CacheStats};
+pub use adapters::{AstParserAdapter, DependencyExtractorAdapter, ResultCacheAdapter};
 
 use crate::ast::ParsedFile;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};

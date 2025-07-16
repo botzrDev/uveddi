@@ -1,4 +1,4 @@
-use crate::analysis::{AnalysisEngine, DetectorConfig, DetectorRegistry};
+use crate::analysis::{AnalysisEngine, DetectorConfig, DetectorRegistry, EnhancedDetectorConfig, IssueSeverity, DetectorThresholds};
 use crate::error::UveddiError;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -67,14 +67,66 @@ use std::path::Path;
 /// ```
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct AnalysisConfig {
-    /// Configuration for individual detectors
+    /// Configuration for individual detectors (legacy format)
+    #[serde(default)]
     pub detectors: HashMap<String, DetectorConfig>,
+    /// Enhanced configuration for individual detectors (new format)
+    #[serde(default)]
+    pub enhanced_detectors: HashMap<String, EnhancedDetectorConfig>,
     /// Maximum cache size (number of entries)
     pub cache_size: Option<usize>,
     /// Whether to enable WASM plugin support
     pub enable_plugins: bool,
     /// Path to the cache database file
     pub cache_path: Option<String>,
+    /// Cache configuration settings
+    #[serde(default)]
+    pub cache_settings: CacheConfig,
+    /// Performance optimization settings
+    #[serde(default)]
+    pub performance_settings: PerformanceConfig,
+}
+
+/// Cache configuration for dependency injection
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CacheConfig {
+    /// Cache type (memory, disk, hybrid)
+    pub cache_type: String,
+    /// Maximum cache size in bytes
+    pub max_size: String,
+    /// Cache eviction policy
+    pub eviction_policy: String,
+}
+
+impl Default for CacheConfig {
+    fn default() -> Self {
+        Self {
+            cache_type: "memory".to_string(),
+            max_size: "100MB".to_string(),
+            eviction_policy: "lru".to_string(),
+        }
+    }
+}
+
+/// Performance configuration for dependency injection
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PerformanceConfig {
+    /// Maximum number of files to process concurrently
+    pub max_concurrent_files: usize,
+    /// Analysis timeout in seconds
+    pub timeout_seconds: u64,
+    /// Enable parallel processing
+    pub parallel_processing: bool,
+}
+
+impl Default for PerformanceConfig {
+    fn default() -> Self {
+        Self {
+            max_concurrent_files: 10,
+            timeout_seconds: 30,
+            parallel_processing: true,
+        }
+    }
 }
 
 impl AnalysisConfig {
@@ -150,11 +202,11 @@ impl AnalysisConfig {
         })
     }
 
-    /// Create engine from this configuration
+    /// Create engine from this configuration (ENHANCED)
     ///
     /// Creates an `AnalysisEngine` instance using the settings in this configuration.
-    /// Detectors are loaded according to the configuration, and cache and plugin
-    /// settings are applied.
+    /// Supports both legacy detector configuration and enhanced detector configuration
+    /// with dependency injection.
     ///
     /// # Returns
     ///
@@ -185,12 +237,16 @@ impl AnalysisConfig {
     pub async fn create_engine(&self) -> Result<AnalysisEngine, UveddiError> {
         let mut registry = DetectorRegistry::new();
 
-        if self.detectors.is_empty() {
+        // Prioritize enhanced detectors over legacy detectors
+        if !self.enhanced_detectors.is_empty() {
+            // Load enhanced detectors
+            self.load_enhanced_detectors(&mut registry)?;
+        } else if !self.detectors.is_empty() {
+            // Load legacy detectors
+            registry.load_from_config(&self.detectors)?;
+        } else {
             // If no detectors configured, use defaults
             registry.load_defaults();
-        } else {
-            // Load configured detectors
-            registry.load_from_config(&self.detectors)?;
         }
 
         let detectors = registry.get_all_detectors();
@@ -201,6 +257,32 @@ impl AnalysisConfig {
         } else {
             AnalysisEngine::with_detectors(detectors, cache_path, false)
         }
+    }
+
+    /// Load enhanced detectors into the registry (DEPENDENCY INJECTION)
+    ///
+    /// Creates detectors from enhanced configuration and registers them.
+    ///
+    /// # Arguments
+    ///
+    /// * `registry` - The detector registry to load detectors into
+    ///
+    /// # Errors
+    ///
+    /// Returns UveddiError if detector creation fails
+    fn load_enhanced_detectors(&self, registry: &mut DetectorRegistry) -> Result<(), UveddiError> {
+        use crate::analysis::detector_factory::DetectorFactory;
+        
+        let factory = DetectorFactory::new();
+        
+        for (detector_name, enhanced_config) in &self.enhanced_detectors {
+            if enhanced_config.enabled {
+                let detector = factory.create_detector_enhanced(detector_name, enhanced_config)?;
+                registry.register(detector_name.clone(), detector);
+            }
+        }
+        
+        Ok(())
     }
 
     /// Create engine from this configuration (synchronous version)
@@ -285,31 +367,130 @@ impl Default for AnalysisConfig {
     /// Create a default configuration
     ///
     /// The default configuration includes:
-    /// - All standard detectors with default settings
+    /// - All standard detectors with default settings (using enhanced format)
     /// - Cache size of 1000 entries
     /// - Plugins disabled
     /// - Default cache path
+    /// - Default cache and performance settings
     fn default() -> Self {
-        let mut detectors = HashMap::new();
+        let mut enhanced_detectors = HashMap::new();
 
-        // Add default detector configurations
-        detectors.insert(
+        // Add default enhanced detector configurations
+        enhanced_detectors.insert(
             "god_object".to_string(),
-            DetectorConfig::new()
-                .with_param("threshold_methods", 5)
-                .with_param("threshold_fields", 8),
+            EnhancedDetectorConfig::new()
+                .with_enabled(true)
+                .with_severity(IssueSeverity::High)
+                .with_max_methods(20)
+                .with_max_fields(15),
         );
-        detectors.insert("code_duplication".to_string(), DetectorConfig::new());
-        detectors.insert("dead_code".to_string(), DetectorConfig::new());
-        detectors.insert("large_classes".to_string(), DetectorConfig::new());
-        detectors.insert("tight_coupling".to_string(), DetectorConfig::new());
+        enhanced_detectors.insert(
+            "code_duplication".to_string(),
+            EnhancedDetectorConfig::new()
+                .with_enabled(true)
+                .with_severity(IssueSeverity::Medium)
+                .with_min_similarity(0.8),
+        );
+        enhanced_detectors.insert(
+            "dead_code".to_string(),
+            EnhancedDetectorConfig::new()
+                .with_enabled(true)
+                .with_severity(IssueSeverity::Medium),
+        );
+        enhanced_detectors.insert(
+            "large_classes".to_string(),
+            EnhancedDetectorConfig::new()
+                .with_enabled(true)
+                .with_severity(IssueSeverity::High)
+                .with_max_lines(500),
+        );
+        enhanced_detectors.insert(
+            "tight_coupling".to_string(),
+            EnhancedDetectorConfig::new()
+                .with_enabled(true)
+                .with_severity(IssueSeverity::Medium),
+        );
 
         Self {
-            detectors,
+            detectors: HashMap::new(), // Legacy format, empty by default
+            enhanced_detectors,
             cache_size: Some(1000),
             enable_plugins: false,
             cache_path: Some("uveddi_cache.db".to_string()),
+            cache_settings: CacheConfig::default(),
+            performance_settings: PerformanceConfig::default(),
         }
+    }
+}
+
+// Make enhanced types serializable for TOML support
+impl Serialize for IssueSeverity {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        match self {
+            IssueSeverity::Low => serializer.serialize_str("Low"),
+            IssueSeverity::Medium => serializer.serialize_str("Medium"),
+            IssueSeverity::High => serializer.serialize_str("High"),
+            IssueSeverity::Critical => serializer.serialize_str("Critical"),
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for IssueSeverity {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        match s.as_str() {
+            "Low" => Ok(IssueSeverity::Low),
+            "Medium" => Ok(IssueSeverity::Medium),
+            "High" => Ok(IssueSeverity::High),
+            "Critical" => Ok(IssueSeverity::Critical),
+            _ => Err(serde::de::Error::custom(format!("Unknown severity level: {}", s))),
+        }
+    }
+}
+
+impl Serialize for EnhancedDetectorConfig {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use serde::ser::SerializeStruct;
+        let mut state = serializer.serialize_struct("EnhancedDetectorConfig", 3)?;
+        state.serialize_field("enabled", &self.enabled)?;
+        state.serialize_field("severity", &self.severity)?;
+        state.serialize_field("thresholds", &self.thresholds)?;
+        state.end()
+    }
+}
+
+impl<'de> Deserialize<'de> for EnhancedDetectorConfig {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        struct Helper {
+            #[serde(default = "default_true")]
+            enabled: bool,
+            #[serde(default)]
+            severity: IssueSeverity,
+            #[serde(default)]
+            thresholds: DetectorThresholds,
+        }
+        
+        fn default_true() -> bool { true }
+        
+        let helper = Helper::deserialize(deserializer)?;
+        Ok(EnhancedDetectorConfig {
+            enabled: helper.enabled,
+            severity: helper.severity,
+            thresholds: helper.thresholds,
+        })
     }
 }
 
@@ -347,9 +528,10 @@ mod tests {
     fn test_default_config() {
         let config = AnalysisConfig::default();
 
-        assert_eq!(config.detectors.len(), 5);
-        assert!(config.has_detector("god_object"));
-        assert!(config.has_detector("code_duplication"));
+        // Enhanced detectors should be configured by default now
+        assert_eq!(config.enhanced_detectors.len(), 5);
+        assert!(config.enhanced_detectors.contains_key("god_object"));
+        assert!(config.enhanced_detectors.contains_key("code_duplication"));
         assert_eq!(config.cache_size, Some(1000));
         assert!(!config.enable_plugins);
         assert_eq!(config.cache_path, Some("uveddi_cache.db".to_string()));
@@ -414,7 +596,7 @@ mod tests {
         let toml_string = toml_string.expect("TOML serialization should succeed in test");
         let parsed_config: AnalysisConfig =
             toml::from_str(&toml_string).expect("TOML parsing should succeed in test");
-        assert_eq!(parsed_config.detectors.len(), config.detectors.len());
+        assert_eq!(parsed_config.enhanced_detectors.len(), config.enhanced_detectors.len());
         assert_eq!(parsed_config.cache_size, config.cache_size);
     }
 
@@ -432,7 +614,7 @@ mod tests {
         assert!(loaded_config.is_ok());
 
         let loaded_config = loaded_config.expect("Config loading should succeed in test");
-        assert_eq!(loaded_config.detectors.len(), config.detectors.len());
+        assert_eq!(loaded_config.enhanced_detectors.len(), config.enhanced_detectors.len());
         assert_eq!(loaded_config.cache_size, config.cache_size);
     }
 
@@ -470,9 +652,12 @@ threshold_fields = 15
     fn test_empty_detectors_uses_defaults() {
         let config = AnalysisConfig {
             detectors: HashMap::new(),
+            enhanced_detectors: HashMap::new(),
             cache_size: Some(100),
             enable_plugins: false,
             cache_path: None,
+            cache_settings: CacheConfig::default(),
+            performance_settings: PerformanceConfig::default(),
         };
 
         let engine = config.create_engine_sync();
