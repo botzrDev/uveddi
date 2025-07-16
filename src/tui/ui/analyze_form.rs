@@ -20,6 +20,7 @@ use crate::{
         app::AppState,
         messages::AppMessage,
         ui::components::{Dropdown, NumericInput, PathPicker, TextInput, Toggle, ValidationResult},
+        ui::components::FocusManager,
     },
 };
 
@@ -307,6 +308,9 @@ pub struct AnalyzeForm {
     is_submitting: bool,
     /// Form-wide error message
     form_error: Option<String>,
+
+    /// Focus manager for all input components
+    focus_manager: FocusManager,
 }
 
 impl AnalyzeForm {
@@ -315,6 +319,26 @@ impl AnalyzeForm {
         let mut inputs = AnalyzeFormInputs::new();
         inputs.set_defaults();
 
+        // Initialize FocusManager and add all inputs
+        let mut focus_manager = FocusManager::new();
+        focus_manager.add_input(Box::new(inputs.path_picker.clone()));
+        focus_manager.add_input(Box::new(inputs.output_format_dropdown.clone()));
+        focus_manager.add_input(Box::new(inputs.output_file_picker.clone()));
+        focus_manager.add_input(Box::new(inputs.enable_ai_toggle.clone()));
+        focus_manager.add_input(Box::new(inputs.ollama_api_url_input.clone()));
+        focus_manager.add_input(Box::new(inputs.ollama_model_input.clone()));
+        focus_manager.add_input(Box::new(inputs.dead_code_confidence_input.clone()));
+        focus_manager.add_input(Box::new(inputs.dead_code_library_mode_toggle.clone()));
+        focus_manager.add_input(Box::new(inputs.dead_code_ignore_patterns_input.clone()));
+        focus_manager.add_input(Box::new(inputs.dead_code_keep_alive_input.clone()));
+        focus_manager.add_input(Box::new(inputs.large_classes_max_loc_input.clone()));
+        focus_manager.add_input(Box::new(inputs.large_classes_max_methods_input.clone()));
+        focus_manager.add_input(Box::new(inputs.large_classes_max_fields_input.clone()));
+        focus_manager.add_input(Box::new(inputs.large_classes_max_complexity_input.clone()));
+        focus_manager.add_input(Box::new(inputs.large_classes_max_lcom_input.clone()));
+        focus_manager.add_input(Box::new(inputs.large_classes_ignore_patterns_input.clone()));
+        focus_manager.add_input(Box::new(inputs.large_classes_min_severity_input.clone()));
+
         let mut form = Self {
             current_section: FormSection::BasicSettings,
             current_field: Some(FormField::Path),
@@ -322,6 +346,7 @@ impl AnalyzeForm {
             validation_errors: std::collections::HashMap::new(),
             is_submitting: false,
             form_error: None,
+            focus_manager,
         };
 
         form.update_focus();
@@ -503,37 +528,8 @@ impl AnalyzeForm {
 
     /// Update focus states for all inputs
     fn update_focus(&mut self) {
-        // Clear all focus states
-        self.inputs.path_picker.set_focused(false);
-        self.inputs.output_format_dropdown.set_focused(false);
-        self.inputs.output_file_picker.set_focused(false);
-        self.inputs.enable_ai_toggle.set_focused(false);
-        self.inputs.ollama_api_url_input.set_focused(false);
-        self.inputs.ollama_model_input.set_focused(false);
-        self.inputs.dead_code_confidence_input.set_focused(false);
-        self.inputs.dead_code_library_mode_toggle.set_focused(false);
-        self.inputs
-            .dead_code_ignore_patterns_input
-            .set_focused(false);
-        self.inputs.dead_code_keep_alive_input.set_focused(false);
-        self.inputs.large_classes_max_loc_input.set_focused(false);
-        self.inputs
-            .large_classes_max_methods_input
-            .set_focused(false);
-        self.inputs
-            .large_classes_max_fields_input
-            .set_focused(false);
-        self.inputs
-            .large_classes_max_complexity_input
-            .set_focused(false);
-        self.inputs.large_classes_max_lcom_input.set_focused(false);
-        self.inputs
-            .large_classes_ignore_patterns_input
-            .set_focused(false);
-        self.inputs
-            .large_classes_min_severity_input
-            .set_focused(false);
-
+        // Clear all focus states using FocusManager
+        self.focus_manager.clear_all_focus();
         // Set focus on current field
         if let Some(field) = self.current_field {
             match field {
@@ -559,17 +555,15 @@ impl AnalyzeForm {
                 FormField::LargeClassesMaxLoc => {
                     self.inputs.large_classes_max_loc_input.set_focused(true)
                 }
-                FormField::LargeClassesMaxMethods => self
-                    .inputs
-                    .large_classes_max_methods_input
-                    .set_focused(true),
+                FormField::LargeClassesMaxMethods => {
+                    self.inputs.large_classes_max_methods_input.set_focused(true)
+                }
                 FormField::LargeClassesMaxFields => {
                     self.inputs.large_classes_max_fields_input.set_focused(true)
                 }
-                FormField::LargeClassesMaxComplexity => self
-                    .inputs
-                    .large_classes_max_complexity_input
-                    .set_focused(true),
+                FormField::LargeClassesMaxComplexity => {
+                    self.inputs.large_classes_max_complexity_input.set_focused(true)
+                }
                 FormField::LargeClassesMaxLcom => {
                     self.inputs.large_classes_max_lcom_input.set_focused(true)
                 }
@@ -577,10 +571,9 @@ impl AnalyzeForm {
                     .inputs
                     .large_classes_ignore_patterns_input
                     .set_focused(true),
-                FormField::LargeClassesMinSeverity => self
-                    .inputs
-                    .large_classes_min_severity_input
-                    .set_focused(true),
+                FormField::LargeClassesMinSeverity => {
+                    self.inputs.large_classes_min_severity_input.set_focused(true)
+                }
             }
         }
     }

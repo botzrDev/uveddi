@@ -903,29 +903,22 @@ impl LongMethodsDetector {
     }
 }
 
+#[async_trait]
 impl AnalysisDetector for LongMethodsDetector {
-    fn detect_issues(&self, file: &ParsedFile) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
+    async fn detect_issues(&self, file: &ParsedFile) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         let mut issues = Vec::new();
-
         debug!("Analyzing file: {}", file.file_path.display());
-
         let method_metrics = self.extract_method_metrics(file)?;
         let thresholds = self.thresholds.get(&file.language).ok_or_else(|| {
-            crate::analysis::errors::AnalysisError::UnsupportedLanguage(format!(
-                "{:?}",
-                file.language
-            ))
+            crate::analysis::errors::AnalysisError::UnsupportedLanguage(format!("{:?}", file.language))
         })?;
-
         for metrics in method_metrics {
             let severity_score = self.calculate_severity_score(&metrics, thresholds);
-
             if severity_score > 25 {
-                // Only report issues above Info level
                 let issue = ArchitecturalIssue {
                     issue_id: None,
                     analysis_run_id: 0,
-                    anti_pattern_type_id: 4, // Long Method ID
+                    anti_pattern_type_id: 4,
                     file_path: metrics.file_path.clone(),
                     start_line: Some(metrics.start_line as i32),
                     end_line: Some(metrics.end_line as i32),
@@ -944,11 +937,9 @@ impl AnalysisDetector for LongMethodsDetector {
                 issues.push(issue);
             }
         }
-
         info!("Long Methods detector found {} issues", issues.len());
         Ok(issues)
     }
-
     fn get_anti_pattern_types(&self) -> Vec<AntiPatternType> {
         vec![
             AntiPatternType {
@@ -959,7 +950,6 @@ impl AnalysisDetector for LongMethodsDetector {
             }
         ]
     }
-
     fn get_detector_name(&self) -> &'static str {
         "long_methods"
     }

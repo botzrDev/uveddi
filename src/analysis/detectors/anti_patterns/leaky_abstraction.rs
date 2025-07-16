@@ -854,75 +854,9 @@ impl LeakyAbstractionDetector {
     }
 }
 
+#[async_trait]
 impl AnalysisDetector for LeakyAbstractionDetector {
-    /// Returns the unique name of this detector.
-    fn get_detector_name(&self) -> &'static str {
-        "LeakyAbstractionDetector"
-    }
-
-    /// Returns a list of all anti-pattern types this detector can identify.
-    fn get_anti_pattern_types(&self) -> Vec<AntiPatternType> {
-        vec![
-            AntiPatternType {
-                anti_pattern_type_id: Some(1),
-                name: "Visibility Violation".to_string(),
-                description:
-                    "Accessing private or internal implementation details across module boundaries"
-                        .to_string(),
-                category: "structural".to_string(),
-            },
-            AntiPatternType {
-                anti_pattern_type_id: Some(2),
-                name: "Layer Violation".to_string(),
-                description: "Dependencies flowing in wrong direction between architectural layers"
-                    .to_string(),
-                category: "structural".to_string(),
-            },
-            AntiPatternType {
-                anti_pattern_type_id: Some(3),
-                name: "Implementation Exposure".to_string(),
-                description: "Internal implementation details exposed through public interfaces"
-                    .to_string(),
-                category: "structural".to_string(),
-            },
-            AntiPatternType {
-                anti_pattern_type_id: Some(4),
-                name: "Framework Coupling".to_string(),
-                description: "Framework-specific types or objects used in business logic"
-                    .to_string(),
-                category: "structural".to_string(),
-            },
-            AntiPatternType {
-                anti_pattern_type_id: Some(5),
-                name: "Error Propagation".to_string(),
-                description: "Low-level error types propagating through abstraction boundaries"
-                    .to_string(),
-                category: "behavioral".to_string(),
-            },
-            AntiPatternType {
-                anti_pattern_type_id: Some(6),
-                name: "Performance Leak".to_string(),
-                description: "Abstraction causing unexpected performance degradation".to_string(),
-                category: "behavioral".to_string(),
-            },
-        ]
-    }
-
-    /// Detects leaky abstraction issues in a single parsed file.
-    ///
-    /// This is the main entry point for the detector. It initializes the language-specific
-    /// queries and dispatches the analysis to the appropriate `analyze_*_file` method
-    /// based on the source language.
-    ///
-    /// # Arguments
-    ///
-    /// * `parsed_file` - The file to analyze, containing the AST and source code.
-    ///
-    /// # Returns
-    ///
-    /// A `Result` containing a vector of `ArchitecturalIssue`s found in the file,
-    /// or an `AnalysisError` if the analysis fails.
-    fn detect_issues(
+    async fn detect_issues(
         &self,
         parsed_file: &ParsedFile,
     ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
@@ -931,7 +865,6 @@ impl AnalysisDetector for LeakyAbstractionDetector {
             log::debug!("Tree-sitter feature not enabled, skipping leaky abstraction detection");
             return Ok(Vec::new());
         }
-
         #[cfg(feature = "tree-sitter")]
         {
             let detector = self.clone();
@@ -952,5 +885,18 @@ impl AnalysisDetector for LeakyAbstractionDetector {
                 _ => Ok(vec![]),
             }
         }
+    }
+    fn get_detector_name(&self) -> &'static str {
+        "LeakyAbstractionDetector"
+    }
+    fn get_anti_pattern_types(&self) -> Vec<AntiPatternType> {
+        vec![
+            AntiPatternType {
+                anti_pattern_type_id: Some(6),
+                name: "Performance Leak".to_string(),
+                description: "Abstraction causing unexpected performance degradation".to_string(),
+                category: "behavioral".to_string(),
+            },
+        ]
     }
 }

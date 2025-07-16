@@ -599,21 +599,9 @@ impl DeadCodeDetector {
     }
 }
 
+#[async_trait]
 impl AnalysisDetector for DeadCodeDetector {
-    fn get_detector_name(&self) -> &'static str {
-        "DeadCodeDetector"
-    }
-
-    fn get_anti_pattern_types(&self) -> Vec<AntiPatternType> {
-        vec![AntiPatternType {
-            anti_pattern_type_id: Some(2),
-            name: "Dead Code".to_string(),
-            description: "Code that is defined but never used, including unused functions, variables, classes, and modules.".to_string(),
-            category: "Maintainability".to_string(),
-        }]
-    }
-
-    fn detect_issues(
+    async fn detect_issues(
         &self,
         parsed_file: &ParsedFile,
     ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
@@ -621,20 +609,12 @@ impl AnalysisDetector for DeadCodeDetector {
             "Running Dead Code detection on: {}",
             parsed_file.file_path.display()
         );
-
-        // For single-file analysis, we can only detect obvious cases
-        // Full dead code detection requires cross-file analysis
         let symbols = self.extract_symbols(parsed_file)?;
         let references = self.extract_references(parsed_file)?;
-
-        // Use pooled vector for collecting issues to reduce allocations
         let mut pooled_issues = DETECTOR_POOLS.issue_vectors.get();
-        pooled_issues.clear(); // Ensure clean state
+        pooled_issues.clear();
         let mut issues = Vec::new();
-
         for symbol in symbols {
-            // Simple heuristic: if a symbol is not referenced in the same file
-            // and it's not exported, it might be dead
             let is_referenced = references.contains(&symbol.name);
             let should_keep = self.should_keep_alive(&symbol);
 
@@ -697,6 +677,17 @@ impl AnalysisDetector for DeadCodeDetector {
         }
 
         Ok(issues)
+    }
+    fn get_detector_name(&self) -> &'static str {
+        "DeadCodeDetector"
+    }
+    fn get_anti_pattern_types(&self) -> Vec<AntiPatternType> {
+        vec![AntiPatternType {
+            anti_pattern_type_id: Some(2),
+            name: "Dead Code".to_string(),
+            description: "Code that is defined but never used, including unused functions, variables, classes, and modules.".to_string(),
+            category: "Maintainability".to_string(),
+        }]
     }
 }
 

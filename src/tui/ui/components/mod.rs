@@ -8,9 +8,13 @@
 
 pub mod form_inputs;
 pub mod logo;
+pub mod focusable;
+pub mod focus_manager;
 
 pub use form_inputs::{Dropdown, NumericInput, PathPicker, TextInput, Toggle, ValidationResult};
 pub use logo::UveddiLogo;
+pub use focusable::FocusableInput;
+pub use focus_manager::FocusManager;
 
 // TODO: Add more reusable UI components as needed
 // - Progress bars and gauges

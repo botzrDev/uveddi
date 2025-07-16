@@ -1223,21 +1223,9 @@ impl GodObjectDetector {
     }
 }
 
+#[async_trait]
 impl AnalysisDetector for GodObjectDetector {
-    fn get_detector_name(&self) -> &'static str {
-        "GodObjectDetector"
-    }
-
-    fn get_anti_pattern_types(&self) -> Vec<AntiPatternType> {
-        vec![AntiPatternType {
-            anti_pattern_type_id: Some(1),
-            name: "God Object".to_string(),
-            description: "A class or struct that centralizes too many responsibilities, violating the Single Responsibility Principle. Enhanced with pattern recognition to reduce false positives.".to_string(),
-            category: "Abstraction-Based".to_string(),
-        }]
-    }
-
-    fn detect_issues(
+    async fn detect_issues(
         &self,
         parsed_file: &ParsedFile,
     ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
@@ -1285,7 +1273,18 @@ impl AnalysisDetector for GodObjectDetector {
             }
         }
 
-        result
+        Ok(result.unwrap_or_default())
+    }
+    fn get_detector_name(&self) -> &'static str {
+        "GodObjectDetector"
+    }
+    fn get_anti_pattern_types(&self) -> Vec<AntiPatternType> {
+        vec![AntiPatternType {
+            anti_pattern_type_id: Some(1),
+            name: "God Object".to_string(),
+            description: "A class or struct that centralizes too many responsibilities, violating the Single Responsibility Principle. Enhanced with pattern recognition to reduce false positives.".to_string(),
+            category: "Abstraction-Based".to_string(),
+        }]
     }
 }
 

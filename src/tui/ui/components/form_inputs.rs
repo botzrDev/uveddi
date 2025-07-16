@@ -6,6 +6,7 @@
 //! - Integration with the TEA message system
 //! - Consistent styling and behavior
 
+use crate::tui::ui::components::FocusableInput;
 use ratatui::crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
     prelude::*,
@@ -55,6 +56,16 @@ pub struct TextInput {
     pub max_length: Option<usize>,
 }
 
+impl FocusableInput for TextInput {
+    fn set_focused(&mut self, focused: bool) {
+        self.is_focused = focused;
+    }
+
+    fn is_focused(&self) -> bool {
+        self.is_focused
+    }
+}
+
 impl TextInput {
     /// Create a new text input
     pub fn new(label: &str) -> Self {
@@ -90,7 +101,7 @@ impl TextInput {
         self.input = Input::new(value.to_string());
     }
 
-    /// Set focus state
+    /// Set focus state (deprecated - use FocusableInput trait)
     pub fn set_focused(&mut self, focused: bool) {
         self.is_focused = focused;
     }
@@ -242,6 +253,16 @@ pub struct Toggle {
     pub is_focused: bool,
 }
 
+impl FocusableInput for Toggle {
+    fn set_focused(&mut self, focused: bool) {
+        self.is_focused = focused;
+    }
+
+    fn is_focused(&self) -> bool {
+        self.is_focused
+    }
+}
+
 impl Toggle {
     /// Create a new toggle
     pub fn new(label: &str, initial_value: bool) -> Self {
@@ -252,7 +273,7 @@ impl Toggle {
         }
     }
 
-    /// Set focus state
+    /// Set focus state (deprecated - use FocusableInput trait)
     pub fn set_focused(&mut self, focused: bool) {
         self.is_focused = focused;
     }
@@ -334,6 +355,19 @@ pub struct Dropdown {
     pub is_open: bool,
 }
 
+impl FocusableInput for Dropdown {
+    fn set_focused(&mut self, focused: bool) {
+        self.is_focused = focused;
+        if !focused {
+            self.is_open = false;
+        }
+    }
+
+    fn is_focused(&self) -> bool {
+        self.is_focused
+    }
+}
+
 impl Dropdown {
     /// Create a new dropdown
     pub fn new(label: &str, options: Vec<String>) -> Self {
@@ -351,7 +385,7 @@ impl Dropdown {
         self.options.get(self.selected_index)
     }
 
-    /// Set focus state
+    /// Set focus state (deprecated - use FocusableInput trait)
     pub fn set_focused(&mut self, focused: bool) {
         self.is_focused = focused;
         if !focused {
@@ -483,6 +517,16 @@ pub struct NumericInput {
     pub decimal_places: Option<u8>,
 }
 
+impl FocusableInput for NumericInput {
+    fn set_focused(&mut self, focused: bool) {
+        self.text_input.set_focused(focused);
+    }
+
+    fn is_focused(&self) -> bool {
+        self.text_input.is_focused
+    }
+}
+
 impl NumericInput {
     /// Create a new numeric input
     pub fn new(label: &str) -> Self {
@@ -522,7 +566,7 @@ impl NumericInput {
         self.text_input.set_value(value);
     }
 
-    /// Set focus state
+    /// Set focus state (deprecated - use FocusableInput trait)
     pub fn set_focused(&mut self, focused: bool) {
         self.text_input.set_focused(focused);
     }
@@ -607,6 +651,16 @@ pub struct PathPicker {
     pub start_directory: Option<String>,
 }
 
+impl FocusableInput for PathPicker {
+    fn set_focused(&mut self, focused: bool) {
+        self.text_input.set_focused(focused);
+    }
+
+    fn is_focused(&self) -> bool {
+        self.text_input.is_focused
+    }
+}
+
 impl PathPicker {
     /// Create a new path picker
     pub fn new(label: &str) -> Self {
@@ -646,7 +700,7 @@ impl PathPicker {
         self.text_input.set_value(path);
     }
 
-    /// Set focus state
+    /// Set focus state (deprecated - use FocusableInput trait)
     pub fn set_focused(&mut self, focused: bool) {
         self.text_input.set_focused(focused);
     }
