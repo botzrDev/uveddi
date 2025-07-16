@@ -105,6 +105,7 @@ pub mod buffer;
 pub mod cache;
 pub mod cfg;
 pub mod component_extractor;
+pub mod components;
 pub mod config;
 pub mod detector_factory;
 pub mod detector_registry;

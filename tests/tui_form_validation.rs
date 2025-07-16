@@ -264,7 +264,7 @@ impl MockAnalyzeFormData {
 }
 
 /// Helper function to create a test file for validation
-async fn create_test_file() -> std::io::Result<PathBuf> {
+async fn create_test_file() -> std::io::Result<std::path::PathBuf> {
     let test_dir = std::path::PathBuf::from("./tmp/form_validation_test");
     tokio::fs::create_dir_all(&test_dir).await?;
 
