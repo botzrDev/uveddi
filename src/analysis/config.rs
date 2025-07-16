@@ -1,4 +1,4 @@
-use crate::analysis::{AnalysisEngine, DetectorConfig, DetectorRegistry, EnhancedDetectorConfig, IssueSeverity, DetectorThresholds};
+use crate::analysis::{AnalysisEngine, DetectorConfig, DetectorRegistry, EnhancedDetectorConfig, IssueSeverity, DetectorThresholds, StandardDetectorConfig};
 use crate::error::UveddiError;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -27,16 +27,21 @@ use std::path::Path;
 /// cache_path = "uveddi_cache.db"
 /// enable_plugins = true
 ///
-/// # Detector configurations
+/// # Detector configurations (legacy format)
 /// [detectors.god_object]
 /// threshold_methods = 5
 /// threshold_fields = 8
 ///
-/// [detectors.code_duplication]
-/// # Uses default settings
+/// # Standardized detector configurations (new format)
+/// [standard_detectors.god_object]
+/// enabled = true
+/// severity = "High"
+/// thresholds = { max_methods = 20, max_fields = 15 }
 ///
-/// [detectors.large_classes]
-/// max_lines = 300
+/// [standard_detectors.code_duplication]
+/// enabled = true
+/// severity = "Medium"
+/// thresholds = { min_tokens = 50, similarity_threshold = 0.8 }
 /// ```
 ///
 /// # Examples
@@ -73,6 +78,9 @@ pub struct AnalysisConfig {
     /// Enhanced configuration for individual detectors (new format)
     #[serde(default)]
     pub enhanced_detectors: HashMap<String, EnhancedDetectorConfig>,
+    /// Standardized configuration for individual detectors (newest format)
+    #[serde(default)]
+    pub standard_detectors: HashMap<String, StandardDetectorConfig>,
     /// Maximum cache size (number of entries)
     pub cache_size: Option<usize>,
     /// Whether to enable WASM plugin support
@@ -361,6 +369,115 @@ impl AnalysisConfig {
     pub fn remove_detector(&mut self, name: &str) -> Option<DetectorConfig> {
         self.detectors.remove(name)
     }
+    /// Migrate legacy detector configurations to standardized format
+    ///
+    /// This method converts old detector configurations to the new standardized
+    /// format while preserving all settings. It's useful for upgrading existing
+    /// configuration files.
+    ///
+    /// # Returns
+    ///
+    /// A new `AnalysisConfig` with standardized detector configurations
+    pub fn migrate_to_standardized(&self) -> Result<AnalysisConfig, UveddiError> {
+        let mut new_config = self.clone();
+        
+        // Clear existing standard detectors to avoid conflicts
+        new_config.standard_detectors.clear();
+        
+        // Migrate enhanced detectors to standardized format
+        for (detector_name, enhanced_config) in &self.enhanced_detectors {
+            if enhanced_config.enabled {
+                let standard_config = StandardDetectorConfig::default_for_detector(detector_name);
+                new_config.standard_detectors.insert(detector_name.clone(), standard_config);
+            }
+        }
+        
+        // If no enhanced detectors, create defaults for all known detectors
+        if new_config.standard_detectors.is_empty() {
+            let detector_names = ["god_object", "code_duplication", "large_classes", "dead_code", "tight_coupling"];
+            for detector_name in &detector_names {
+                let standard_config = StandardDetectorConfig::default_for_detector(detector_name);
+                new_config.standard_detectors.insert(detector_name.to_string(), standard_config);
+            }
+        }
+        
+        Ok(new_config)
+    }
+    
+    /// Get effective detector configuration (prioritizes standardized over legacy)
+    ///
+    /// This method returns the effective configuration for a detector, checking
+    /// standardized configurations first, then enhanced, then legacy formats.
+    ///
+    /// # Arguments
+    ///
+    /// * `detector_name` - Name of the detector to get configuration for
+    ///
+    /// # Returns
+    ///
+    /// The effective `StandardDetectorConfig` for the detector, or default if none found
+    pub fn get_effective_detector_config(&self, detector_name: &str) -> StandardDetectorConfig {
+        // Priority: standardized > enhanced > legacy > default
+        if let Some(standard_config) = self.standard_detectors.get(detector_name) {
+            return standard_config.clone();
+        }
+        
+        if let Some(enhanced_config) = self.enhanced_detectors.get(detector_name) {
+            // Convert enhanced to standardized format
+            let mut standard_config = StandardDetectorConfig::default_for_detector(detector_name);
+            standard_config.enabled = enhanced_config.enabled;
+            standard_config.severity = enhanced_config.severity.clone();
+            return standard_config;
+        }
+        
+        if let Some(_legacy_config) = self.detectors.get(detector_name) {
+            // Convert legacy to standardized format (basic conversion)
+            return StandardDetectorConfig::default_for_detector(detector_name);
+        }
+        
+        // Return default configuration
+        StandardDetectorConfig::default_for_detector(detector_name)
+    }
+    
+    /// Add or update a standardized detector configuration
+    ///
+    /// # Arguments
+    ///
+    /// * `detector_name` - Name of the detector
+    /// * `config` - Standardized configuration to set
+    pub fn set_standard_detector_config(&mut self, detector_name: &str, config: StandardDetectorConfig) {
+        self.standard_detectors.insert(detector_name.to_string(), config);
+    }
+    
+    /// Get all enabled detector names across all configuration formats
+    ///
+    /// # Returns
+    ///
+    /// A vector of detector names that are enabled in any configuration format
+    pub fn get_enabled_detectors(&self) -> Vec<String> {
+        let mut enabled = std::collections::HashSet::new();
+        
+        // Check standardized configurations
+        for (name, config) in &self.standard_detectors {
+            if config.enabled {
+                enabled.insert(name.clone());
+            }
+        }
+        
+        // Check enhanced configurations
+        for (name, config) in &self.enhanced_detectors {
+            if config.enabled {
+                enabled.insert(name.clone());
+            }
+        }
+        
+        // Legacy configurations are assumed enabled if present
+        for name in self.detectors.keys() {
+            enabled.insert(name.clone());
+        }
+        
+        enabled.into_iter().collect()
+    }
 }
 
 impl Default for AnalysisConfig {
@@ -411,9 +528,33 @@ impl Default for AnalysisConfig {
                 .with_severity(IssueSeverity::Medium),
         );
 
+        // Create standardized detector configurations
+        let mut standard_detectors = HashMap::new();
+        standard_detectors.insert(
+            "god_object".to_string(),
+            StandardDetectorConfig::default_for_detector("god_object"),
+        );
+        standard_detectors.insert(
+            "code_duplication".to_string(),
+            StandardDetectorConfig::default_for_detector("code_duplication"),
+        );
+        standard_detectors.insert(
+            "large_classes".to_string(),
+            StandardDetectorConfig::default_for_detector("large_classes"),
+        );
+        standard_detectors.insert(
+            "dead_code".to_string(),
+            StandardDetectorConfig::default_for_detector("dead_code"),
+        );
+        standard_detectors.insert(
+            "tight_coupling".to_string(),
+            StandardDetectorConfig::default_for_detector("tight_coupling"),
+        );
+
         Self {
             detectors: HashMap::new(), // Legacy format, empty by default
             enhanced_detectors,
+            standard_detectors,
             cache_size: Some(1000),
             enable_plugins: false,
             cache_path: Some("uveddi_cache.db".to_string()),
@@ -653,6 +794,7 @@ threshold_fields = 15
         let config = AnalysisConfig {
             detectors: HashMap::new(),
             enhanced_detectors: HashMap::new(),
+            standard_detectors: HashMap::new(),
             cache_size: Some(100),
             enable_plugins: false,
             cache_path: None,

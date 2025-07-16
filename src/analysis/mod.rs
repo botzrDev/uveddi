@@ -107,6 +107,7 @@ pub mod cfg;
 pub mod component_extractor;
 pub mod components;
 pub mod config;
+pub mod config_migration;
 pub mod detector_factory;
 pub mod detector_registry;
 pub mod detectors;
@@ -120,6 +121,7 @@ pub mod mermaid_generator;
 pub mod plugin_adapter;
 pub mod robust_parser;
 pub mod semantic;
+pub mod standardized_config;
 pub mod symbols;
 pub mod traits;
 pub mod types;
@@ -141,6 +143,11 @@ pub use errors::AnalysisError;
 pub use graph::{ComponentNode, LocalDependencyGraph, LocalDependencyType};
 pub use memory::{get_optimization_status, MemoryOptimizationConfig};
 pub use plugin_adapter::{WasmPluginAdapterFactory, WasmPluginDetectorAdapter};
+pub use standardized_config::{
+    StandardDetectorConfig, StandardConfigBuilder, ConfigValue, 
+    ExclusionConfig, AdvancedConfig, DetectorMetadata, constants
+};
+pub use config_migration::{ConfigMigration, ConfigMigrationUtils};
 pub use traits::{AstParserTrait, DependencyExtractorTrait, ResultCacheTrait, CacheStats};
 pub use adapters::{AstParserAdapter, DependencyExtractorAdapter, ResultCacheAdapter};
 

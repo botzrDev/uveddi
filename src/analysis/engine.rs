@@ -19,6 +19,18 @@ use crate::database::models::{
 use crate::ingestion::AsyncWalker;
 use crate::monitoring::performance_metrics_collector::PerformanceMetricsCollector;
 use crate::plugins::WasmPluginEngine;
+
+// Component imports
+use crate::analysis::components::{
+    ConfigurationService, AstProviderImpl, DependencyGraphBuilderImpl, 
+    DetectorScheduler, PluginManagerHandle, AnalysisAggregator,
+    traits::{DetectorScheduler as DetectorSchedulerTrait, AnalysisAggregator as AnalysisAggregatorTrait}
+};
+use crate::analysis::components::traits::{
+    DependencyGraphBuilder as DependencyGraphBuilderTrait,
+    AstProvider as AstProviderTrait
+};
+use std::sync::Arc;
 use log::{info, warn};
 
 use chrono::Utc;
@@ -58,6 +70,16 @@ struct CachedAnalysisResult {
 /// }
 /// ```
 pub struct AnalysisEngine {
+    // Component references - implementing facade pattern
+    config_service: Arc<ConfigurationService>,
+    ast_provider: Arc<AstProviderImpl>,
+    dependency_builder: Arc<DependencyGraphBuilderImpl>,
+    detector_scheduler: Arc<DetectorScheduler>,
+    plugin_manager: Option<PluginManagerHandle>,
+    aggregator: Arc<AnalysisAggregator>,
+    
+    // Legacy fields maintained for backward compatibility
+    // These will be gradually phased out
     ast_parser: AstParser,
     dependency_extractor: DependencyExtractor,
     symbol_extractor: SymbolExtractor,
@@ -130,7 +152,34 @@ impl AnalysisEngine {
         let ast_cache_config = CacheConfig::default();
         let ast_cache = AstCache::new(ast_cache_config)?;
 
+        // Initialize components
+        let config_service = Arc::new(ConfigurationService::new());
+        let ast_provider = Arc::new(AstProviderImpl::new()?);
+        let aggregator = Arc::new(AnalysisAggregator::new());
+        
+        // Components that need dependencies
+        let dependency_builder = Arc::new(DependencyGraphBuilderImpl::new(ast_provider.clone())?);
+        let detector_scheduler = Arc::new(DetectorScheduler::new(
+            config_service.clone(),
+            ast_provider.clone(),
+            None, // plugin_manager not initialized yet
+            aggregator.clone(),
+            Vec::new(), // Empty detectors for now, will be populated later
+        ));
+        
+        // Plugin manager is initialized separately for async operations
+        let plugin_manager = None;
+
         Ok(Self {
+            // New component architecture
+            config_service,
+            ast_provider,
+            dependency_builder,
+            detector_scheduler,
+            plugin_manager,
+            aggregator,
+            
+            // Legacy fields for backward compatibility
             ast_parser: AstParser::new()?,
             dependency_extractor: DependencyExtractor::new()?,
             symbol_extractor: SymbolExtractor::new(),
@@ -195,7 +244,34 @@ impl AnalysisEngine {
         let ast_cache_config = CacheConfig::default();
         let ast_cache = AstCache::new(ast_cache_config)?;
 
+        // Initialize components
+        let config_service = Arc::new(ConfigurationService::new());
+        let ast_provider = Arc::new(AstProviderImpl::new()?);
+        let aggregator = Arc::new(AnalysisAggregator::new());
+        
+        // Components that need dependencies
+        let dependency_builder = Arc::new(DependencyGraphBuilderImpl::new(ast_provider.clone())?);
+        let detector_scheduler = Arc::new(DetectorScheduler::new(
+            config_service.clone(),
+            ast_provider.clone(),
+            None, // plugin_manager not initialized yet
+            aggregator.clone(),
+            Vec::new(), // Empty detectors for now, will be populated later
+        ));
+        
+        // Plugin manager will be initialized from plugin_engine
+        let plugin_manager = None; // TODO: Convert WasmPluginEngine to PluginManagerHandle
+
         Ok(Self {
+            // New component architecture
+            config_service,
+            ast_provider,
+            dependency_builder,
+            detector_scheduler,
+            plugin_manager,
+            aggregator,
+            
+            // Legacy fields for backward compatibility
             ast_parser: AstParser::new()?,
             dependency_extractor: DependencyExtractor::new()?,
             symbol_extractor: SymbolExtractor::new(),
@@ -301,7 +377,34 @@ impl AnalysisEngine {
         let ast_cache_config = CacheConfig::default();
         let ast_cache = AstCache::new(ast_cache_config)?;
 
+        // Initialize components
+        let config_service = Arc::new(ConfigurationService::new());
+        let ast_provider = Arc::new(AstProviderImpl::new()?);
+        let aggregator = Arc::new(AnalysisAggregator::new());
+        
+        // Components that need dependencies
+        let dependency_builder = Arc::new(DependencyGraphBuilderImpl::new(ast_provider.clone())?);
+        let detector_scheduler = Arc::new(DetectorScheduler::new(
+            config_service.clone(),
+            ast_provider.clone(),
+            None, // plugin_manager not initialized yet
+            aggregator.clone(),
+            Vec::new(), // Empty detectors for now, will be populated later
+        ));
+        
+        // Plugin manager is initialized separately for async operations
+        let plugin_manager = None;
+
         Ok(Self {
+            // New component architecture
+            config_service,
+            ast_provider,
+            dependency_builder,
+            detector_scheduler,
+            plugin_manager,
+            aggregator,
+            
+            // Legacy fields for backward compatibility
             ast_parser: concrete_parser,
             dependency_extractor: concrete_extractor,
             symbol_extractor: SymbolExtractor::new(),
@@ -424,42 +527,36 @@ impl AnalysisEngine {
         &mut self,
         path: &Path,
     ) -> crate::error::Result<(Vec<ArchitecturalIssue>, LocalDependencyGraph)> {
-        // UV-2: Initialize metrics collector
+        // Facade pattern: delegate to components
+        
+        // Phase 1: Use dependency builder to construct the dependency graph
+        info!("Building dependency graph...");
+        let dependency_graph = self.dependency_builder.build_graph(path).await?;
+        info!("Dependency graph built.");
+
+        // Phase 2: Use detector scheduler to run analysis
+        info!("Running detection analysis...");
+        let file_issues = if path.is_file() {
+            self.detector_scheduler.schedule_file(path).await?
+        } else {
+            self.detector_scheduler.schedule_directory(path).await?
+        };
+        info!("Detection analysis completed.");
+
+        // Phase 3: Use aggregator to collect and format results
+        self.aggregator.record_findings(file_issues.clone());
+        let aggregated_stats = self.aggregator.get_stats();
+        
+        // Update files analyzed counter
+        self.files_analyzed += aggregated_stats.files_processed as i32;
+
+        // UV-2: Initialize metrics collector and emit metrics
         let metrics_config = PerformanceMetricsConfig::default();
         let mut metrics_collector =
             PerformanceMetricsCollector::new(metrics_config, self.files_analyzed as usize);
-        let (mut file_issues, all_dependencies) =
-            self.analyze_files_and_collect_dependencies(path).await?;
-
-        info!("Building dependency graph...");
-        let mut dependency_graph = LocalDependencyGraph::new();
-        for dep in all_dependencies {
-            let from_node = ComponentNode::Module {
-                path: dep.from_file.to_string_lossy().into_owned(),
-            };
-            let to_node = ComponentNode::Module {
-                path: dep.to_module, // UV-153: Move instead of clone
-            };
-            dependency_graph.add_dependency(&from_node, &to_node, LocalDependencyType::Import);
-        }
-        info!("Dependency graph built.");
-
-        info!("Detecting cycles...");
-        // Assuming analysis_run_id is 0 for now. This will be managed by a higher-level process.
-        let cycle_issues = self.cycle_detector.detect_cycles(&dependency_graph, 0);
-        info!("Found {} cycles.", cycle_issues.len());
-        file_issues.extend(cycle_issues);
-
-        // Run graph-based anti-pattern detectors
-        for detector in &self.detectors {
-            let issues = detector.detect(&dependency_graph);
-            file_issues.extend(issues);
-        }
-
-        // UV-2: Record metrics for the analysis run
+        
         metrics_collector.record_analysis_metrics(file_issues.len(), self.files_analyzed as usize);
-
-        // UV-2: Emit metrics to the monitoring system
+        
         if let Err(e) = metrics_collector.emit_metrics() {
             warn!("Failed to emit performance metrics: {}", e);
         }
@@ -626,9 +723,13 @@ impl AnalysisEngine {
     /// including a built-in type for cyclic dependencies.
     pub fn get_anti_pattern_types(&self) -> Vec<AntiPatternType> {
         let mut types = Vec::new();
+        
+        // Use legacy detectors for backward compatibility
+        // TODO: Future enhancement - delegate to detector_scheduler
         for detector in &self.detectors {
             types.extend(detector.get_anti_pattern_types());
         }
+        
         // Add cycle dependency type
         types.push(AntiPatternType {
             anti_pattern_type_id: None, // Will be assigned by DB
@@ -642,7 +743,13 @@ impl AnalysisEngine {
 
     /// Gets the number of files analyzed in the last run.
     pub fn get_files_analyzed(&self) -> i32 {
-        self.files_analyzed
+        // Facade pattern: delegate to aggregator component, but fallback to legacy counter
+        let aggregator_stats = self.aggregator.get_stats();
+        if aggregator_stats.files_processed > 0 {
+            aggregator_stats.files_processed as i32
+        } else {
+            self.files_analyzed
+        }
     }
 
     /// Parses a file using the AST cache for performance optimization
@@ -708,12 +815,14 @@ impl AnalysisEngine {
 
     /// Returns AST cache metrics for observability
     pub fn get_ast_cache_metrics(&self) -> serde_json::Value {
-        self.ast_cache.export_metrics_for_observability()
+        // Facade pattern: delegate to AST provider component
+        self.ast_provider.get_cache_metrics()
     }
 
     /// Clears the AST cache
     pub fn clear_ast_cache(&self) {
-        self.ast_cache.clear();
+        // Facade pattern: delegate to AST provider component
+        self.ast_provider.clear_cache();
     }
 
     /// Configures the dead code detector with custom settings.

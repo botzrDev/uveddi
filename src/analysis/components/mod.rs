@@ -25,3 +25,8 @@ pub use plugin_manager::{PluginManager, PluginManagerHandle};
 pub use analysis_aggregator::AnalysisAggregator;
 pub use dependency_graph_builder::DependencyGraphBuilderImpl;
 pub use detector_scheduler::DetectorScheduler;
+
+// Aliases for acceptance criteria naming
+pub use detector_scheduler::DetectorScheduler as DetectorManager;
+pub use ast_provider::AstProviderImpl as CacheManager;
+pub use dependency_graph_builder::DependencyGraphBuilderImpl as DependencyAnalyzer;

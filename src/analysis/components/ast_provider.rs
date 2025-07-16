@@ -67,14 +67,32 @@ impl AstProviderImpl {
         
         // Extract the tree if available
         if let Some(tree) = parsed_file.tree {
-            let tree_arc = Arc::new(tree);
-            
-            // Cache the AST if possible  
-            if let Err(e) = self.ast_cache.store(file_path, (*tree_arc).clone()) {
+            // Store in cache first
+            if let Err(e) = self.ast_cache.store(file_path, tree) {
                 warn!("Failed to cache AST for {:?}: {}", file_path, e);
+                // If caching fails, we can't return the tree since it was moved
+                return Err(UveddiError::AstError {
+                    file: file_path.to_string_lossy().to_string(),
+                    language: "unknown".to_string(),
+                    message: "Failed to cache AST".to_string(),
+                    suggestion: "Check cache configuration".to_string(),
+                    source: None,
+                });
             }
             
-            Ok(tree_arc)
+            // Return the cached version to ensure pointer equality
+            if let Some(cached_tree) = self.ast_cache.get(file_path) {
+                Ok(cached_tree)
+            } else {
+                // This shouldn't happen if store succeeded
+                Err(UveddiError::AstError {
+                    file: file_path.to_string_lossy().to_string(),
+                    language: "unknown".to_string(),
+                    message: "Failed to retrieve cached AST".to_string(),
+                    suggestion: "Check cache implementation".to_string(),
+                    source: None,
+                })
+            }
         } else {
             Err(UveddiError::AstError {
                 file: file_path.to_string_lossy().to_string(),
@@ -140,7 +158,7 @@ mod tests {
         let provider = AstProviderImpl::new().unwrap();
         
         // Create a temporary Rust file
-        let mut temp_file = NamedTempFile::new().unwrap();
+        let mut temp_file = NamedTempFile::with_suffix(".rs").unwrap();
         let rust_code = r#"
             fn main() {
                 println!("Hello, world!");
