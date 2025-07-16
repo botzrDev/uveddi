@@ -74,6 +74,8 @@ lru = "0.12.0"
 tera = "1.19.1"
 # Base64 encoding/decoding for image handling
 base64 = { version = "0.22.0", optional = true }
+# MD5 hashing for input validation
+md5 = "0.7"
 # UUID generation for component IDs
 uuid = { version = "1.8.0", features = ["v4", "v5", "serde"] }
 url = "2.5"

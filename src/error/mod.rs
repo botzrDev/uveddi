@@ -17,10 +17,15 @@
 //! ```
 
 pub mod helpers;
+pub mod large_codebase;
 pub mod main;
 pub mod rendering;
 
 pub use helpers::ErrorHelpers;
+pub use large_codebase::{
+    ErrorAggregator, ErrorContext, LargeCodebaseError, LargeCodebaseErrorHandler,
+    NotificationSystem, ProgressState, ProgressTracker, RecoveryStrategies, RecoveryStrategy,
+};
 pub use main::{ErrorCategory, ErrorHandler, ErrorSeverity, ExtractionError, UveddiError};
 pub use rendering::RenderingServiceError;
 

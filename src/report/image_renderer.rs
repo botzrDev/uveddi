@@ -9,6 +9,7 @@ use std::path::PathBuf;
 use std::time::Duration;
 use thiserror::Error;
 use crate::error::rendering::RenderingServiceError;
+use md5;
 
 /// Configuration for the image rendering service
 #[derive(Debug, Clone)]
@@ -19,6 +20,18 @@ pub struct RenderingServiceConfig {
     pub timeout_seconds: u64,
     /// Maximum retries for failed requests
     pub max_retries: u32,
+
+    // NEW VALIDATION FIELDS:
+    /// Maximum input size in bytes (default: 1MB)
+    pub max_input_size_bytes: usize,
+    /// Maximum diagram complexity score (default: 1000)
+    pub max_complexity_score: u32,
+    /// Maximum image width (default: 4096)
+    pub max_width: u32,
+    /// Maximum image height (default: 4096)
+    pub max_height: u32,
+    /// Maximum number of nodes in diagram (default: 500)
+    pub max_nodes: u32,
 }
 
 impl Default for RenderingServiceConfig {
@@ -27,6 +40,13 @@ impl Default for RenderingServiceConfig {
             base_url: "http://localhost:3001".to_string(),
             timeout_seconds: 30,
             max_retries: 3,
+
+            // NEW DEFAULTS:
+            max_input_size_bytes: 1024 * 1024, // 1MB
+            max_complexity_score: 1000,
+            max_width: 4096,
+            max_height: 4096,
+            max_nodes: 500,
         }
     }
 }
@@ -197,6 +217,9 @@ impl ImageRenderer {
         format: ImageFormat,
         dimensions: Option<(u32, u32)>,
     ) -> Result<RenderedImage, RenderingServiceError> {
+        // ADD VALIDATION BEFORE PROCESSING
+        self.validate_input(mermaid_code, dimensions)?;
+
         let request = RenderRequest {
             mermaid_code: mermaid_code.to_string(),
             format: format.clone(),
@@ -304,6 +327,13 @@ impl ImageRenderer {
         diagrams: Vec<(String, Option<(u32, u32)>)>, // (mermaid_code, dimensions)
         format: ImageFormat,
     ) -> Result<Vec<Result<RenderedImage, String>>, RenderingServiceError> {
+        // ADD VALIDATION FOR EACH DIAGRAM
+        for (mermaid_code, dimensions) in &diagrams {
+            if let Err(e) = self.validate_input(mermaid_code, *dimensions) {
+                return Err(e);
+            }
+        }
+
         let diagram_requests: Vec<DiagramRequest> = diagrams
             .into_iter()
             .map(|(mermaid_code, dimensions)| DiagramRequest {
@@ -413,6 +443,123 @@ impl ImageRenderer {
 
         Ok(())
     }
+
+    /// Validate input size
+    fn validate_input_size(&self, mermaid_code: &str) -> Result<(), RenderingServiceError> {
+        let size_bytes = mermaid_code.len();
+        if size_bytes > self.config.max_input_size_bytes {
+            return Err(RenderingServiceError::InputTooLarge {
+                size_bytes,
+                limit_bytes: self.config.max_input_size_bytes,
+            });
+        }
+        Ok(())
+    }
+
+    /// Validate diagram dimensions
+    fn validate_dimensions(&self, dimensions: Option<(u32, u32)>) -> Result<(), RenderingServiceError> {
+        if let Some((width, height)) = dimensions {
+            if width > self.config.max_width || height > self.config.max_height {
+                return Err(RenderingServiceError::InvalidMermaidSyntax {
+                    line: None,
+                    details: format!(
+                        "Dimensions {}x{} exceed maximum allowed {}x{}",
+                        width, height,
+                        self.config.max_width, self.config.max_height
+                    )
+                });
+            }
+        }
+        Ok(())
+    }
+
+    /// Validate diagram complexity
+    fn validate_complexity(&self, mermaid_code: &str) -> Result<(), RenderingServiceError> {
+        let complexity_score = self.calculate_complexity_score(mermaid_code) as u64;
+
+        if complexity_score > self.config.max_complexity_score as u64 {
+            return Err(RenderingServiceError::DiagramComplexityExceeded {
+                reason: "Diagram too complex".to_string(),
+                limit: self.config.max_complexity_score as u64,
+                actual: complexity_score,
+            });
+        }
+
+        Ok(())
+    }
+
+    /// Calculate diagram complexity score
+    fn calculate_complexity_score(&self, mermaid_code: &str) -> u32 {
+        let mut score = 0;
+
+        // Count nodes (approximate by counting arrows and connections)
+        let node_indicators = [" --> ", " --- ", " -> ", " -- ", "-->", "---"];
+        let mut node_count = 0;
+        for indicator in &node_indicators {
+            node_count += mermaid_code.matches(indicator).count();
+        }
+
+        // Count subgraphs (nested complexity)
+        let subgraph_count = mermaid_code.matches("subgraph").count();
+
+        // Count styling and classes (additional complexity)
+        let style_count = mermaid_code.matches("class ").count() +
+                         mermaid_code.matches("style ").count();
+
+        // Calculate complexity score
+        score += node_count as u32 * 2;      // 2 points per connection
+        score += subgraph_count as u32 * 10; // 10 points per subgraph
+        score += style_count as u32 * 1;     // 1 point per style
+
+        // Check for excessive nodes
+        if node_count > self.config.max_nodes as usize {
+            score += 1000; // Penalty for too many nodes
+        }
+
+        score
+    }
+
+    /// Validate input for security concerns
+    fn validate_security(&self, mermaid_code: &str) -> Result<(), RenderingServiceError> {
+        // Check for potentially malicious patterns
+        let suspicious_patterns = [
+            "javascript:",
+            "<script",
+            "eval(",
+            "document.",
+            "window.",
+            "fetch(",
+            "XMLHttpRequest",
+        ];
+
+        for pattern in &suspicious_patterns {
+            if mermaid_code.to_lowercase().contains(pattern) {
+                return Err(RenderingServiceError::SecurityValidationFailed {
+                    reason: format!("Suspicious pattern detected: {}", pattern)
+                });
+            }
+        }
+
+        // Check for excessively long lines (potential DoS)
+        for line in mermaid_code.lines() {
+            if line.len() > 1000 {
+                return Err(RenderingServiceError::SecurityValidationFailed {
+                    reason: "Line too long (potential DoS)".to_string()
+                });
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Comprehensive input validation
+    fn validate_input(&self, mermaid_code: &str, dimensions: Option<(u32, u32)>) -> Result<(), RenderingServiceError> {
+        self.validate_input_size(mermaid_code)?;
+        self.validate_dimensions(dimensions)?;
+        self.validate_complexity(mermaid_code)?;
+        self.validate_security(mermaid_code)?;
+        Ok(())
+    }
 }
 
 impl Default for ImageRenderer {
@@ -496,5 +643,86 @@ graph TD
                 // Don't panic - external service dependency is acceptable to fail in tests
             }
         }
+    }
+
+    #[test]
+    fn test_input_size_validation() {
+        let renderer = ImageRenderer::new();
+
+        // Test normal input
+        let normal_input = "graph TD\n    A --> B";
+        assert!(renderer.validate_input_size(normal_input).is_ok());
+
+        // Test oversized input
+        let large_input = "A".repeat(2 * 1024 * 1024); // 2MB
+        assert!(matches!(
+            renderer.validate_input_size(&large_input),
+            Err(RenderingServiceError::InputTooLarge { .. })
+        ));
+    }
+
+    #[test]
+    fn test_dimension_validation() {
+        let renderer = ImageRenderer::new();
+
+        // Test normal dimensions
+        assert!(renderer.validate_dimensions(Some((800, 600))).is_ok());
+        assert!(renderer.validate_dimensions(None).is_ok());
+
+        // Test oversized dimensions
+        assert!(matches!(
+            renderer.validate_dimensions(Some((10000, 600))),
+            Err(RenderingServiceError::InvalidMermaidSyntax { .. })
+        ));
+    }
+
+    #[test]
+    fn test_complexity_validation() {
+        let renderer = ImageRenderer::new();
+
+        // Test simple diagram
+        let simple = "graph TD\n    A --> B\n    B --> C";
+        assert!(renderer.validate_complexity(simple).is_ok());
+
+        // Test complex diagram
+        let complex = (0..1000)
+            .map(|i| format!("    A{} --> B{}", i, i))
+            .collect::<Vec<_>>()
+            .join("\n");
+        let complex_diagram = format!("graph TD\n{}", complex);
+
+        assert!(matches!(
+            renderer.validate_complexity(&complex_diagram),
+            Err(RenderingServiceError::DiagramComplexityExceeded { .. })
+        ));
+    }
+
+    #[test]
+    fn test_security_validation() {
+        let renderer = ImageRenderer::new();
+
+        // Test safe input
+        let safe_input = "graph TD\n    A[Safe] --> B[Diagram]";
+        assert!(renderer.validate_security(safe_input).is_ok());
+
+        // Test suspicious input
+        let suspicious_input = "graph TD\n    A[<script>alert('xss')</script>] --> B";
+        assert!(matches!(
+            renderer.validate_security(suspicious_input),
+            Err(RenderingServiceError::SecurityValidationFailed { .. })
+        ));
+    }
+
+    #[test]
+    fn test_comprehensive_validation() {
+        let renderer = ImageRenderer::new();
+
+        // Test valid input
+        let valid_input = "graph TD\n    A --> B";
+        assert!(renderer.validate_input(valid_input, Some((800, 600))).is_ok());
+
+        // Test invalid input (multiple violations)
+        let invalid_input = "A".repeat(2 * 1024 * 1024); // Too large
+        assert!(renderer.validate_input(&invalid_input, Some((10000, 600))).is_err());
     }
 }
