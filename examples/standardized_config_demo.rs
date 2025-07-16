@@ -3,10 +3,9 @@
 //! This example shows how to use the new standardized configuration patterns
 //! that replace the inconsistent detector configurations across the codebase.
 
-use std::collections::HashMap;
 use uveddi::analysis::{
     StandardConfigBuilder, StandardDetectorConfig, AnalysisConfig,
-    IssueSeverity, ConfigValue, ExclusionConfig
+    IssueSeverity
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -90,7 +89,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 5. Export to TOML format
     println!("\n5. Exporting to TOML format...");
     
-    let toml_output = migrated_config.to_standardized_toml()?;
+    let toml_output = toml::to_string_pretty(&migrated_config)?;
     println!("TOML Configuration Preview:");
     println!("{}", &toml_output[..std::cmp::min(500, toml_output.len())]);
     if toml_output.len() > 500 {

@@ -234,25 +234,25 @@ impl ConfigMigration<DeadCodeConfig> for DeadCodeConfig {
         let mut builder = StandardConfigBuilder::new("dead_code")
             .enabled(true)
             .severity(IssueSeverity::Low)
-            .threshold("confidence_threshold", self.confidence_threshold);
+            .threshold("min_confidence", self.min_confidence);
         
         // Convert exclusions
         for pattern in &self.ignore_patterns {
             builder = builder.exclude_pattern(pattern);
         }
         
-        for file in &self.ignore_files {
-            builder = builder.exclude_file(file);
-        }
+        // Note: ignore_files field doesn't exist in DeadCodeConfig, this was likely a mistake
+        // The actual field is ignore_patterns which is handled above
         
         builder.build()
     }
     
     fn from_standard(config: &StandardDetectorConfig) -> Result<DeadCodeConfig, UveddiError> {
         Ok(DeadCodeConfig {
-            confidence_threshold: config.get_threshold_float("confidence_threshold", SourceLanguage::Rust)?,
+            min_confidence: config.get_threshold_float("min_confidence", SourceLanguage::Rust)?,
             ignore_patterns: config.exclusions.patterns.clone(),
-            ignore_files: config.exclusions.files.clone(),
+            // Note: ignore_files field doesn't exist in DeadCodeConfig
+            // The actual field is ignore_patterns which is handled above
             ..Default::default()
         })
     }
@@ -272,8 +272,9 @@ impl ConfigMigrationUtils {
                 if let Some(config) = old_config.downcast_ref::<GodObjectConfig>() {
                     config.to_standard()
                 } else {
-                    Err(UveddiError::Configuration(
-                        "Invalid god_object configuration type".to_string()
+                    Err(UveddiError::config_error(
+                        "Invalid god_object configuration type",
+                        "config_migration::convert_detector_config"
                     ))
                 }
             }
@@ -281,8 +282,9 @@ impl ConfigMigrationUtils {
                 if let Some(config) = old_config.downcast_ref::<DuplicationConfig>() {
                     config.to_standard()
                 } else {
-                    Err(UveddiError::Configuration(
-                        "Invalid code_duplication configuration type".to_string()
+                    Err(UveddiError::config_error(
+                        "Invalid code_duplication configuration type",
+                        "config_migration::convert_detector_config"
                     ))
                 }
             }
@@ -290,8 +292,9 @@ impl ConfigMigrationUtils {
                 if let Some(config) = old_config.downcast_ref::<LargeClassConfig>() {
                     config.to_standard()
                 } else {
-                    Err(UveddiError::Configuration(
-                        "Invalid large_classes configuration type".to_string()
+                    Err(UveddiError::config_error(
+                        "Invalid large_classes configuration type",
+                        "config_migration::convert_detector_config"
                     ))
                 }
             }
@@ -299,14 +302,16 @@ impl ConfigMigrationUtils {
                 if let Some(config) = old_config.downcast_ref::<DeadCodeConfig>() {
                     config.to_standard()
                 } else {
-                    Err(UveddiError::Configuration(
-                        "Invalid dead_code configuration type".to_string()
+                    Err(UveddiError::config_error(
+                        "Invalid dead_code configuration type",
+                        "config_migration::convert_detector_config"
                     ))
                 }
             }
-            _ => Err(UveddiError::Configuration(format!(
-                "Unknown detector type: {}", detector_name
-            ))),
+            _ => Err(UveddiError::config_error(
+                &format!("Unknown detector type: {}", detector_name),
+                "config_migration::convert_detector_config"
+            )),
         }
     }
     
@@ -316,7 +321,10 @@ impl ConfigMigrationUtils {
         toml_str: &str,
     ) -> Result<StandardDetectorConfig, UveddiError> {
         let config: StandardDetectorConfig = toml::from_str(toml_str)
-            .map_err(|e| UveddiError::Configuration(format!("TOML parsing error: {}", e)))?;
+            .map_err(|e| UveddiError::config_error(
+                &format!("TOML parsing error: {}", e),
+                "config_migration::from_toml"
+            ))?;
         
         // Validate the configuration
         StandardConfigBuilder::new(detector_name)
@@ -330,7 +338,10 @@ impl ConfigMigrationUtils {
     /// Convert standardized configuration to TOML
     pub fn to_toml(config: &StandardDetectorConfig) -> Result<String, UveddiError> {
         toml::to_string_pretty(config)
-            .map_err(|e| UveddiError::Configuration(format!("TOML serialization error: {}", e)))
+            .map_err(|e| UveddiError::config_error(
+                &format!("TOML serialization error: {}", e),
+                "config_migration::to_toml"
+            ))
     }
     
     /// Validate that a configuration is compatible with a detector
@@ -342,23 +353,26 @@ impl ConfigMigrationUtils {
             "god_object" => {
                 if !config.thresholds.contains_key("max_methods") && 
                    !config.language_overrides.values().any(|overrides| overrides.contains_key("max_methods")) {
-                    return Err(UveddiError::Configuration(
-                        "god_object detector requires max_methods threshold".to_string()
+                    return Err(UveddiError::config_error(
+                        "god_object detector requires max_methods threshold",
+                        "config_migration::validate_compatibility"
                     ));
                 }
             }
             "code_duplication" => {
                 if !config.thresholds.contains_key("similarity_threshold") {
-                    return Err(UveddiError::Configuration(
-                        "code_duplication detector requires similarity_threshold".to_string()
+                    return Err(UveddiError::config_error(
+                        "code_duplication detector requires similarity_threshold",
+                        "config_migration::validate_compatibility"
                     ));
                 }
             }
             "large_classes" => {
                 if !config.thresholds.contains_key("max_lines") && 
                    !config.language_overrides.values().any(|overrides| overrides.contains_key("max_lines")) {
-                    return Err(UveddiError::Configuration(
-                        "large_classes detector requires max_lines threshold".to_string()
+                    return Err(UveddiError::config_error(
+                        "large_classes detector requires max_lines threshold",
+                        "config_migration::validate_compatibility"
                     ));
                 }
             }

@@ -64,7 +64,10 @@
       "Bash(timeout 30 cargo test --lib ast::tree_sitter_impl::tests::test_cache_stats_reset)",
       "Bash(timeout 60 cargo test --lib ast::tree_sitter_impl::tests)",
       "Bash(./verify_uv210_uv26.sh:*)",
-      "Bash(RUST_BACKTRACE=1 cargo test test_ast_provider_caching --lib -- --nocapture)"
+      "Bash(RUST_BACKTRACE=1 cargo test test_ast_provider_caching --lib -- --nocapture)",
+      "Bash(rustc:*)",
+      "Bash(./facade_test)",
+      "Bash(timeout 30 cargo test --lib cache_manager::tests::test_cache_manager_creation -- --nocapture)"
     ],
     "deny": []
   }
