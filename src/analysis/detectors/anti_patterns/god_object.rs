@@ -116,6 +116,8 @@
 //! - [Brown, W. et al. "AntiPatterns: Refactoring Software, Architectures, and Projects in Crisis"](https://www.amazon.com/AntiPatterns-Refactoring-Software-Architectures-Projects/dp/0471197130)
 //! - [Clean Code: A Handbook of Agile Software Craftsmanship](https://www.amazon.com/Clean-code-Handbook-Software-Craftsmanship/dp/0132350884)
 
+use async_trait::async_trait;
+
 use crate::analysis::errors::AnalysisError as CoreAnalysisError;
 use crate::analysis::{AnalysisDetector, AnalysisError};
 use crate::ast::tree_sitter::{Node, Query, QueryCursor};

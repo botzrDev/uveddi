@@ -69,6 +69,8 @@
 //! - **Space Complexity**: O(k) where k is the number of detected violations
 //! - **Optimization Notes**: Uses efficient pattern matching and caches rule evaluations
 //!
+use async_trait::async_trait;
+
 use crate::analysis::{AnalysisDetector, AnalysisError};
 use crate::ast::tree_sitter::{Node, Query, QueryCursor};
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};

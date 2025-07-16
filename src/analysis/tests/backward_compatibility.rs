@@ -229,14 +229,14 @@ async fn test_ast_cache_methods_compatibility() {
         .expect("Failed to create engine");
     
     // Test AST cache methods
-    let metrics = engine.get_ast_cache_metrics();
+    let metrics = engine.get_ast_cache_metrics().await;
     assert!(metrics.is_object(), "Cache metrics should be a JSON object");
     
     // Clear cache should not panic
     engine.clear_ast_cache();
     
     // Metrics after clear
-    let metrics_after = engine.get_ast_cache_metrics();
+    let metrics_after = engine.get_ast_cache_metrics().await;
     assert!(metrics_after.is_object(), "Cache metrics should still be a JSON object after clear");
 }
 
@@ -257,7 +257,7 @@ async fn test_plugin_system_compatibility() {
                 assert!(load_result.is_ok() || load_result.is_err(), "load_plugins should not panic");
                 
                 // Test plugin stats
-                let stats = engine.get_plugin_stats().await;
+                let stats = engine.get_stats().await;
                 assert!(stats.is_some() || stats.is_none(), "get_plugin_stats should not panic");
                 
                 // Test resource monitoring
@@ -278,10 +278,10 @@ async fn test_builder_pattern_compatibility() {
     
     // Test builder pattern still works
     let engine = AnalysisEngineBuilder::new()
-        .with_memory_cache()
-        .add_detector(Box::new(GodObjectDetector::new(10, 15)))
+        .with_in_memory_cache()
+        .with_detectors(vec![Box::new(GodObjectDetector::new(10, 15))])
         .build()
-        .await;
+;
     
     assert!(engine.is_ok(), "Builder pattern should work");
     

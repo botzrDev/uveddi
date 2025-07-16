@@ -27,6 +27,7 @@ use crate::ast::tree_sitter::{Node, Query, QueryCursor};
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use async_trait::async_trait;
+use futures::TryFutureExt;
 use log::debug;
 use log::info;
 use std::collections::HashMap;
@@ -1047,8 +1048,8 @@ mod tests {
     use crate::error::ErrorHelpers;
     use std::path::PathBuf;
 
-    #[test]
-    fn test_long_method_detection_rust() -> Result<(), Box<dyn std::error::Error>> {
+    #[tokio::test]
+    async fn test_long_method_detection_rust() -> Result<(), Box<dyn std::error::Error>> {
         let detector = LongMethodsDetector::new();
         let mut parser = AstParser::new()
             .map_err(|e| ErrorHelpers::ast_error(&format!("parser creation: {}", e)))?;
@@ -1093,7 +1094,7 @@ fn very_long_function() {
             .map_err(|e| ErrorHelpers::file_processing_error("test.rs", "parsing", &e.to_string()))?;
 
         let issues = detector
-            .detect_issues(&parsed_file)
+            .detect_issues(&parsed_file).await
             .map_err(|e| ErrorHelpers::detector_config_error("long_methods", &e.to_string()))?;
 
         assert!(!issues.is_empty(), "Should detect long method");
@@ -1102,8 +1103,8 @@ fn very_long_function() {
         Ok(())
     }
 
-    #[test]
-    fn test_short_method_no_detection() -> Result<(), Box<dyn std::error::Error>> {
+    #[tokio::test]
+    async fn test_short_method_no_detection() -> Result<(), Box<dyn std::error::Error>> {
         let detector = LongMethodsDetector::new();
         let mut parser = AstParser::new()
             .map_err(|e| ErrorHelpers::ast_error(&format!("parser creation: {}", e)))?;
@@ -1119,15 +1120,15 @@ fn short_function() {
             .map_err(|e| ErrorHelpers::file_processing_error("test.rs", "parsing", &e.to_string()))?;
 
         let issues = detector
-            .detect_issues(&parsed_file)
+            .detect_issues(&parsed_file).await
             .map_err(|e| ErrorHelpers::detector_config_error("long_methods", &e.to_string()))?;
 
         assert!(issues.is_empty(), "Should not detect short method");
         Ok(())
     }
 
-    #[test]
-    fn test_calculate_method_metrics_success() -> Result<(), Box<dyn std::error::Error>> {
+    #[tokio::test]
+    async fn test_calculate_method_metrics_success() -> Result<(), Box<dyn std::error::Error>> {
         let detector = LongMethodsDetector::new();
         let mut parser = tree_sitter::Parser::new();
         parser.set_language(&tree_sitter_rust::language())?;
@@ -1177,8 +1178,8 @@ fn test_function(param1: i32, param2: String) -> i32 {
         Ok(())
     }
 
-    #[test]
-    fn test_calculate_method_metrics_invalid_name() -> Result<(), Box<dyn std::error::Error>> {
+    #[tokio::test]
+    async fn test_calculate_method_metrics_invalid_name() -> Result<(), Box<dyn std::error::Error>> {
         let detector = LongMethodsDetector::new();
         let mut parser = tree_sitter::Parser::new();
         parser.set_language(&tree_sitter_rust::language())?;
@@ -1222,8 +1223,8 @@ fn test_function(param1: i32, param2: String) -> i32 {
         assert!(result.is_ok());
     }
 
-    #[test]
-    fn test_process_function_matches_success() -> Result<(), Box<dyn std::error::Error>> {
+    #[tokio::test]
+    async fn test_process_function_matches_success() -> Result<(), Box<dyn std::error::Error>> {
         let detector = LongMethodsDetector::new();
         let mut parser = tree_sitter::Parser::new();
         parser.set_language(&tree_sitter_rust::language())?;
@@ -1275,8 +1276,8 @@ fn function_two() {
         Ok(())
     }
 
-    #[test]
-    fn test_process_function_matches_empty() -> Result<(), Box<dyn std::error::Error>> {
+    #[tokio::test]
+    async fn test_process_function_matches_empty() -> Result<(), Box<dyn std::error::Error>> {
         let detector = LongMethodsDetector::new();
         let empty_matches = Vec::new();
         let source = b"";
@@ -1291,8 +1292,8 @@ fn function_two() {
         Ok(())
     }
 
-    #[test]
-    fn test_process_function_matches_malformed() -> Result<(), Box<dyn std::error::Error>> {
+    #[tokio::test]
+    async fn test_process_function_matches_malformed() -> Result<(), Box<dyn std::error::Error>> {
         let detector = LongMethodsDetector::new();
         let mut parser = tree_sitter::Parser::new();
         parser.set_language(&tree_sitter_rust::language())?;
@@ -1336,8 +1337,8 @@ fn valid_function() {
         assert!(query.capture_names().len() > 0);
     }
 
-    #[test]
-    fn test_python_long_method_detection() -> Result<(), Box<dyn std::error::Error>> {
+    #[tokio::test]
+    async fn test_python_long_method_detection() -> Result<(), Box<dyn std::error::Error>> {
         let detector = LongMethodsDetector::new();
         let mut parser = AstParser::new()
             .map_err(|e| ErrorHelpers::ast_error(&format!("parser creation: {}", e)))?;
@@ -1376,7 +1377,7 @@ def very_long_function():
             .map_err(|e| ErrorHelpers::file_processing_error("test.py", "parsing", &e.to_string()))?;
 
         let issues = detector
-            .detect_issues(&parsed_file)
+            .detect_issues(&parsed_file).await
             .map_err(|e| ErrorHelpers::detector_config_error("long_methods", &e.to_string()))?;
 
         assert!(!issues.is_empty(), "Should detect long method");

@@ -15,6 +15,7 @@
 //! - Maintains a global index of code blocks across all files
 //! - Provides configurable similarity thresholds
 
+use async_trait::async_trait;
 use crate::analysis::{AnalysisDetector, AnalysisError};
 use crate::ast::tree_sitter::{Query, QueryCursor};
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
@@ -751,6 +752,7 @@ fn safe_lock_analysis_data<'a, T>(
     })
 }
 
+#[async_trait]
 impl AnalysisDetector for CodeDuplicationDetector {
     /// Returns the unique name of this detector.
     fn get_detector_name(&self) -> &'static str {
@@ -786,7 +788,7 @@ impl AnalysisDetector for CodeDuplicationDetector {
     /// # Returns
     ///
     /// A `Result` containing a vector of `ArchitecturalIssue`s or an `AnalysisError`.
-    fn detect_issues(
+    async fn detect_issues(
         &self,
         parsed_file: &ParsedFile,
     ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {

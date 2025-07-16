@@ -178,7 +178,7 @@ async fn test_constructor_injection_with_uninitialized_parser() {
 #[tokio::test]
 async fn test_builder_pattern_with_dependency_injection() {
     let engine = AnalysisEngineBuilder::new()
-        .with_ast_parser(Box::new(MockAstParser::new()))
+        .with_injected_ast_parser(Box::new(MockAstParser::new()))
         .with_dependency_extractor(Box::new(MockDependencyExtractor::new()))
         .with_cache(Box::new(MockResultCache::new()))
         .build()
@@ -199,7 +199,7 @@ async fn test_builder_pattern_with_adapters() {
     assert!(cache_adapter.is_ok(), "Cache adapter should be created successfully");
 
     let engine = AnalysisEngineBuilder::new()
-        .with_ast_parser(Box::new(ast_parser_adapter.unwrap()))
+        .with_injected_ast_parser(Box::new(ast_parser_adapter.unwrap()))
         .with_dependency_extractor(Box::new(dependency_extractor_adapter.unwrap()))
         .with_cache(Box::new(cache_adapter.unwrap()))
         .build()
@@ -276,8 +276,9 @@ async fn test_mock_detector_integration() {
     
     struct MockDetector;
     
+    #[async_trait::async_trait]
     impl AnalysisDetector for MockDetector {
-        fn detect_issues(&self, _file: &ParsedFile) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
+        async fn detect_issues(&self, _file: &ParsedFile) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
             Ok(vec![
                 ArchitecturalIssue {
                     issue_id: None,

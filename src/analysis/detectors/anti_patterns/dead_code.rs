@@ -21,6 +21,8 @@
 //! - **Python**: Functions, classes, variables, imports
 //! - **JavaScript**: Functions, classes, variables, exports
 
+use async_trait::async_trait;
+
 use crate::analysis::memory::{PooledObject, DETECTOR_POOLS};
 use crate::analysis::{AnalysisDetector, AnalysisError};
 use crate::ast::tree_sitter::{Node, Query, QueryCursor};

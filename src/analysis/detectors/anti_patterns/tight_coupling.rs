@@ -11,6 +11,7 @@
 //! - Cross-file dependency analysis
 //! - Context-aware severity assessment
 
+use async_trait::async_trait;
 use crate::analysis::graph::dependency::{
     ComponentNode, DependencyEdge, LocalDependencyGraph, LocalDependencyType,
 };
@@ -416,7 +417,11 @@ impl TightCouplingDetector {
             // Analyze each file independently in parallel
             let issues_result: Result<Vec<Vec<ArchitecturalIssue>>, AnalysisError> = files
                 .par_iter()
-                .map(|(_, parsed_file)| self.detect_issues(parsed_file))
+                .map(|(_, parsed_file)| {
+                    tokio::task::block_in_place(|| {
+                        tokio::runtime::Handle::current().block_on(self.detect_issues(parsed_file))
+                    })
+                })
                 .collect();
 
             let all_issues = issues_result?.into_iter().flatten().collect();
@@ -467,8 +472,9 @@ impl TightCouplingDetector {
     }
 }
 
+#[async_trait]
 impl AnalysisDetector for TightCouplingDetector {
-    fn detect_issues(&self, file: &ParsedFile) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
+    async fn detect_issues(&self, file: &ParsedFile) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         // Single-file analysis for basic coupling detection
         let analyzer = self.get_analyzer_for_language(file.language);
         let dependencies = analyzer.extract_dependencies(file.path(), file)?;

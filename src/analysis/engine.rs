@@ -21,6 +21,7 @@
 // Once these changes are made, the engine.rs file will be aligned with the new architecture and error handling mechanisms.
 
 use crate::analysis::cache::ast::{AstCache, CacheConfig};
+use crate::analysis::components::cache_manager::CacheManager;
 use crate::analysis::detectors::anti_patterns::dead_code::{DeadCodeConfig, DeadCodeDetector};
 use crate::analysis::detectors::anti_patterns::large_classes::{
     LargeClassConfig, LargeClassDetector,
@@ -55,6 +56,7 @@ use crate::error::UveddiError;
 use crate::analysis::components::traits::{
     AnalysisAggregator as AnalysisAggregatorTrait, AstProvider as AstProviderTrait,
     DependencyGraphBuilder as DependencyGraphBuilderTrait, DetectorScheduler as DetectorSchedulerTrait,
+    PluginManagerHandle as PluginManagerHandleTrait,
 };
 use std::sync::Arc;
 use log::{info, warn};
@@ -101,13 +103,13 @@ struct CachedAnalysisResult {
 /// ```
 pub struct AnalysisEngine {
     // Component references - implementing facade pattern
-    config_service: Arc<ConfigurationService>,
-    ast_provider: Arc<AstProviderImpl>,
-    cache_manager: Arc<CacheManagerImpl>,
-    dependency_builder: Arc<DependencyGraphBuilderImpl>,
-    detector_scheduler: Arc<DetectorScheduler>,
-    plugin_manager: Option<PluginManagerHandle>,
-    aggregator: Arc<AnalysisAggregator>,
+    pub config_service: Arc<ConfigurationService>,
+    pub ast_provider: Arc<AstProviderImpl>,
+    pub cache_manager: Arc<CacheManagerImpl>,
+    pub dependency_builder: Arc<DependencyGraphBuilderImpl>,
+    pub detector_scheduler: Arc<DetectorScheduler>,
+    pub plugin_manager: Option<PluginManagerHandle>,
+    pub aggregator: Arc<AnalysisAggregator>,
     // The `plugin_engine` field is removed as `PluginManagerHandle` now encapsulates its functionality.
     // This simplifies the `AnalysisEngine` struct and aligns with the component-based architecture.
 }
@@ -615,9 +617,16 @@ impl AnalysisEngine {
     }
 
     /// Returns AST cache metrics for observability
-    pub fn get_ast_cache_metrics(&self) -> serde_json::Value {
+    pub async fn get_ast_cache_metrics(&self) -> serde_json::Value {
         // Facade pattern: delegate to cache manager component
-        self.cache_manager.get_cache_stats()
+        let stats = self.cache_manager.get_cache_stats().await;
+        serde_json::json!({
+            "ast_cache_size": stats.ast_cache_size,
+            "result_cache_size": stats.result_cache_size,
+            "ast_hit_rate": stats.ast_hit_rate,
+            "result_hit_rate": stats.result_hit_rate,
+            "total_memory_usage": stats.total_memory_usage
+        })
     }
 
     /// Clears the AST cache
@@ -666,13 +675,14 @@ impl AnalysisEngine {
     )]
     pub async fn load_plugins(&mut self) -> crate::error::Result<usize> {
         if let Some(ref mut plugin_manager) = self.plugin_manager {
-            let loaded_plugins = plugin_manager
-                .list_loaded_plugins()
+            let stats = plugin_manager
+                .get_stats()
                 .await
                 .map_err(crate::error::UveddiError::from)?;
+            let loaded_plugins = stats.loaded_plugins;
 
-            info!("Loaded {} WASM plugins via PluginManagerHandle", loaded_plugins.len());
-            Ok(loaded_plugins.len())
+            info!("Loaded {} WASM plugins via PluginManagerHandle", loaded_plugins);
+            Ok(loaded_plugins)
         } else {
             warn!(
                 "Plugin manager not initialized. Use `AnalysisEngine::builder().enable_plugins(true).build_async().await` to enable plugin support."
@@ -702,10 +712,18 @@ impl AnalysisEngine {
         binary: Vec<u8>,
     ) -> crate::error::Result<crate::plugins::PluginId> {
         if let Some(ref mut plugin_manager) = self.plugin_manager {
-            let plugin_id = plugin_manager
-                .load_plugin(manifest, binary)
+            // Since the new API expects a PathBuf, we need to write the binary to a temporary file
+            // This is a workaround for the deprecated method
+            let temp_dir = std::env::temp_dir();
+            let plugin_path = temp_dir.join(format!("{}.wasm", manifest.name));
+            std::fs::write(&plugin_path, binary)?;
+            
+            let plugin_id_string = plugin_manager
+                .load_plugin(plugin_path)
                 .await
                 .map_err(crate::error::UveddiError::from)?;
+            // Convert String to PluginId
+            let plugin_id = crate::plugins::PluginId::from_name(&plugin_id_string);
             Ok(plugin_id)
         } else {
             Err(crate::error::UveddiError::PluginError {
@@ -740,7 +758,7 @@ impl AnalysisEngine {
     ) -> crate::error::Result<()> {
         if let Some(ref mut plugin_manager) = self.plugin_manager {
             plugin_manager
-                .unload_plugin(plugin_id.clone())
+                .unload_plugin(plugin_id.to_string())
                 .await
                 .map_err(crate::error::UveddiError::from)?;
             Ok(())
@@ -766,13 +784,24 @@ impl AnalysisEngine {
         &self,
     ) -> Option<Vec<(crate::plugins::PluginId, crate::plugins::PluginStats)>> {
         if let Some(ref plugin_manager) = self.plugin_manager {
-            let mut stats = Vec::new();
-            for plugin_id in plugin_manager.list_loaded_plugins().await {
-                if let Ok(plugin_stats) = plugin_manager.get_stats(&plugin_id).await {
-                    stats.push((plugin_id, plugin_stats));
-                }
+            // Since individual plugin stats are no longer available via the API,
+            // return overall stats as a single entry
+            if let Ok(overall_stats) = plugin_manager.get_stats().await {
+                // Convert overall stats to the expected format
+                let plugin_stats = crate::plugins::PluginStats {
+                    invocations: overall_stats.total_executions,
+                    total_execution_time_ms: (overall_stats.average_execution_time_ms * overall_stats.total_executions as f64) as u64,
+                    avg_execution_time_ms: overall_stats.average_execution_time_ms,
+                    total_fuel_consumed: 0, // Not available in overall stats
+                    peak_memory_usage: overall_stats.memory_usage_bytes,
+                    error_count: 0, // Not available in overall stats
+                    last_error: None,
+                };
+                let plugin_id = crate::plugins::PluginId::from_name("overall");
+                Some(vec![(plugin_id, plugin_stats)])
+            } else {
+                Some(vec![])
             }
-            Some(stats)
         } else {
             None
         }
@@ -887,7 +916,19 @@ impl AnalysisEngine {
         &self,
     ) -> Option<crate::plugins::PluginStats> {
         if let Some(ref plugin_manager) = self.plugin_manager {
-            plugin_manager.get_stats().await.ok()
+            if let Ok(overall_stats) = plugin_manager.get_stats().await {
+                Some(crate::plugins::PluginStats {
+                    invocations: overall_stats.total_executions,
+                    total_execution_time_ms: (overall_stats.average_execution_time_ms * overall_stats.total_executions as f64) as u64,
+                    avg_execution_time_ms: overall_stats.average_execution_time_ms,
+                    total_fuel_consumed: 0, // Not available in overall stats
+                    peak_memory_usage: overall_stats.memory_usage_bytes,
+                    error_count: 0, // Not available in overall stats
+                    last_error: None,
+                })
+            } else {
+                None
+            }
         } else {
             None
         }
