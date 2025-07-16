@@ -5,8 +5,9 @@ use log::{info, warn};
 use crate::analysis::cache::ast::{AstCache, CacheConfig};
 use crate::analysis::components::{
     AnalysisAggregator, AstProviderImpl, CacheManagerImpl, ConfigurationService,
-    DependencyGraphBuilderImpl, DetectorScheduler, PluginManagerHandle,
+    DependencyGraphBuilderImpl, DetectorScheduler, PluginManagerHandle, PluginManager,
 };
+use crate::analysis::adapters::ResultCacheAdapter;
 use crate::analysis::detector_factory::DetectorFactory;
 use crate::analysis::traits::{AstParserTrait, DependencyExtractorTrait, ResultCacheTrait};
 use crate::analysis::AnalysisDetector;
@@ -148,11 +149,11 @@ impl AnalysisEngineBuilder {
         let cache = if let Some(injected_cache) = self.injected_result_cache {
             injected_cache
         } else if self.in_memory_cache {
-            Box::new(ResultCache::new_in_memory()?) as Box<dyn ResultCacheTrait>
+            Box::new(ResultCacheAdapter::new(ResultCache::new_in_memory()?))
         } else if let Some(path) = self.cache_path {
-            Box::new(ResultCache::new(&path)?) as Box<dyn ResultCacheTrait>
+            Box::new(ResultCacheAdapter::new(ResultCache::new(&path)?))
         } else {
-            Box::new(ResultCache::new(&PathBuf::from("uveddi_cache.db"))?) as Box<dyn ResultCacheTrait>
+            Box::new(ResultCacheAdapter::new(ResultCache::new(&PathBuf::from("uveddi_cache.db"))?))
         };
 
         // Initialize AST cache with default configuration
@@ -211,11 +212,11 @@ impl AnalysisEngineBuilder {
         let cache = if let Some(injected_cache) = self.injected_result_cache {
             injected_cache
         } else if self.in_memory_cache {
-            Box::new(ResultCache::new_in_memory()?) as Box<dyn ResultCacheTrait>
+            Box::new(ResultCacheAdapter::new(ResultCache::new_in_memory()?))
         } else if let Some(path) = self.cache_path {
-            Box::new(ResultCache::new(&path)?) as Box<dyn ResultCacheTrait>
+            Box::new(ResultCacheAdapter::new(ResultCache::new(&path)?))
         } else {
-            Box::new(ResultCache::new(&PathBuf::from("uveddi_cache.db"))?) as Box<dyn ResultCacheTrait>
+            Box::new(ResultCacheAdapter::new(ResultCache::new(&PathBuf::from("uveddi_cache.db"))?))
         };
 
         // Initialize plugin engine if enabled
@@ -253,7 +254,7 @@ impl AnalysisEngineBuilder {
 
         // PluginManagerHandle needs to be created from WasmPluginEngine
         let plugin_manager = if let Some(ref engine) = plugin_engine {
-            Some(PluginManagerHandle::new(engine.clone())) // Assuming PluginManagerHandle can be created from WasmPluginEngine
+            Some(PluginManager::spawn(config_service.clone()))
         } else {
             None
         };

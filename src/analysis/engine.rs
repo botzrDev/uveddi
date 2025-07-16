@@ -27,12 +27,7 @@ use crate::analysis::components::{
 };
 use crate::analysis::detector_factory::DetectorFactory;
 use crate::analysis::engine_builder::AnalysisEngineBuilder; // Import the builder
-use crate::analysis::traits::{AstParserTrait, DependencyExtractorTrait, ResultCacheTrait};
-use crate::analysis::AnalysisDetector;
-use crate::ast::tree_sitter_impl::AstParser;
-use crate::cache::result_cache::ResultCache;
 use crate::error::UveddiError;
-use crate::plugins::WasmPluginEngine; // Keep for now for deprecation messages
 
 // Component imports
 use crate::analysis::components::traits::{

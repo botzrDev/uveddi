@@ -263,7 +263,16 @@ impl AnalysisConfig {
         if self.enable_plugins {
             AnalysisEngine::with_detectors_and_plugins(detectors, cache_path).await
         } else {
-            AnalysisEngine::with_detectors(detectors, cache_path, false)
+            if let Some(path) = cache_path {
+                AnalysisEngine::builder()
+                    .with_detectors(detectors)
+                    .with_cache_path(path)
+                    .build()
+            } else {
+                AnalysisEngine::builder()
+                    .with_detectors(detectors)
+                    .build()
+            }
         }
     }
 
@@ -316,7 +325,10 @@ impl AnalysisConfig {
         let detectors = registry.get_all_detectors();
         let cache_path = self.cache_path.as_ref().map(|p| Path::new(p));
 
-        AnalysisEngine::with_detectors(detectors, cache_path, false)
+        AnalysisEngine::builder()
+            .with_detectors(detectors)
+            .with_cache_path(cache_path.unwrap_or(Path::new("uveddi_cache.db")))
+            .build()
     }
 
     /// Validate the configuration
