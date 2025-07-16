@@ -119,6 +119,20 @@ pub enum RenderingServiceError {
     },
 }
 
+impl From<reqwest::Error> for RenderingServiceError {
+    fn from(e: reqwest::Error) -> Self {
+        if e.is_timeout() {
+            RenderingServiceError::request_timeout(Duration::from_secs(30))
+        } else if e.is_connect() {
+            RenderingServiceError::connection_timeout(Duration::from_secs(10))
+        } else {
+            RenderingServiceError::NetworkError {
+                message: e.to_string()
+            }
+        }
+    }
+}
+
 impl RenderingServiceError {
     /// Determines if this error type should trigger retry logic
     pub fn is_retryable(&self) -> bool {

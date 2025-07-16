@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::time::Duration;
 use thiserror::Error;
+use crate::error::rendering::RenderingServiceError;
 
 /// Configuration for the image rendering service
 #[derive(Debug, Clone)]
@@ -138,30 +139,6 @@ pub struct RenderedImage {
     pub render_time_ms: u64,
 }
 
-/// Errors that can occur during image rendering
-#[derive(Error, Debug)]
-pub enum RenderingError {
-    #[error("HTTP request failed: {0}")]
-    HttpError(#[from] reqwest::Error),
-
-    #[error("Rendering service returned error: {0}")]
-    ServiceError(String),
-
-    #[error("Invalid response format: {0}")]
-    InvalidResponse(String),
-
-    #[error("Base64 decode error: {0}")]
-    Base64Error(#[from] base64::DecodeError),
-
-    #[error("Service unavailable")]
-    ServiceUnavailable,
-
-    #[error("Request timeout")]
-    Timeout,
-
-    #[error("Too many retries")]
-    TooManyRetries,
-}
 
 impl ImageRenderer {
     /// Create a new image renderer with default configuration
@@ -180,13 +157,33 @@ impl ImageRenderer {
     }
 
     /// Check if the rendering service is healthy
-    pub async fn health_check(&self) -> Result<HealthResponse, RenderingError> {
+    pub async fn health_check(&self) -> Result<HealthResponse, RenderingServiceError> {
         let url = format!("{}/health", self.config.base_url);
 
-        let response = self.client.get(&url).send().await?;
+        let response = self.client.get(&url).send().await.map_err(|e| {
+            if e.is_timeout() {
+                RenderingServiceError::request_timeout(Duration::from_secs(self.config.timeout_seconds))
+            } else if e.is_connect() {
+                RenderingServiceError::connection_timeout(Duration::from_secs(10))
+            } else {
+                RenderingServiceError::NetworkError {
+                    message: e.to_string()
+                }
+            }
+        })?;
 
         if !response.status().is_success() {
-            return Err(RenderingError::ServiceUnavailable);
+            return Err(match response.status().as_u16() {
+                503 => RenderingServiceError::ServiceUnavailable,
+                429 => RenderingServiceError::RateLimitExceeded { retry_after_seconds: None },
+                408 | 504 => RenderingServiceError::request_timeout(Duration::from_secs(30)),
+                400 => RenderingServiceError::InvalidResponse {
+                    details: format!("HTTP {}", response.status())
+                },
+                _ => RenderingServiceError::InvalidResponse {
+                    details: format!("HTTP {}", response.status())
+                },
+            });
         }
 
         let health: HealthResponse = response.json().await?;
@@ -199,7 +196,7 @@ impl ImageRenderer {
         mermaid_code: &str,
         format: ImageFormat,
         dimensions: Option<(u32, u32)>,
-    ) -> Result<RenderedImage, RenderingError> {
+    ) -> Result<RenderedImage, RenderingServiceError> {
         let request = RenderRequest {
             mermaid_code: mermaid_code.to_string(),
             format: format.clone(),
@@ -212,9 +209,17 @@ impl ImageRenderer {
         loop {
             match self.try_render_single(&request).await {
                 Ok(image) => return Ok(image),
-                Err(e) if retries < self.config.max_retries => {
+                Err(e) if e.is_retryable() && retries < self.config.max_retries => {
                     retries += 1;
-                    tokio::time::sleep(Duration::from_millis(100 * retries as u64)).await;
+                    // Use exponential backoff based on error severity
+                    let delay = match e.severity() {
+                        crate::error::rendering::ErrorSeverity::High |
+                        crate::error::rendering::ErrorSeverity::Critical => {
+                            Duration::from_millis(1000 * retries as u64)
+                        }
+                        _ => Duration::from_millis(100 * retries as u64)
+                    };
+                    tokio::time::sleep(delay).await;
                     continue;
                 }
                 Err(e) => return Err(e),
@@ -225,34 +230,60 @@ impl ImageRenderer {
     async fn try_render_single(
         &self,
         request: &RenderRequest,
-    ) -> Result<RenderedImage, RenderingError> {
+    ) -> Result<RenderedImage, RenderingServiceError> {
         let url = format!("{}/render", self.config.base_url);
 
-        let response = self.client.post(&url).json(request).send().await?;
+        let response = self.client.post(&url).json(request).send().await.map_err(|e| {
+            if e.is_timeout() {
+                RenderingServiceError::request_timeout(Duration::from_secs(self.config.timeout_seconds))
+            } else if e.is_connect() {
+                RenderingServiceError::connection_timeout(Duration::from_secs(10))
+            } else {
+                RenderingServiceError::NetworkError {
+                    message: e.to_string()
+                }
+            }
+        })?;
 
         if !response.status().is_success() {
-            return Err(RenderingError::ServiceError(format!(
-                "HTTP {}",
-                response.status()
-            )));
+            return Err(match response.status().as_u16() {
+                503 => RenderingServiceError::ServiceUnavailable,
+                429 => RenderingServiceError::RateLimitExceeded { retry_after_seconds: None },
+                408 | 504 => RenderingServiceError::request_timeout(Duration::from_secs(30)),
+                400 => RenderingServiceError::InvalidMermaidSyntax {
+                    line: None,
+                    details: "Invalid request format".to_string()
+                },
+                _ => RenderingServiceError::InvalidResponse {
+                    details: format!("HTTP {}", response.status())
+                },
+            });
         }
 
         let render_response: RenderResponse = response
             .json()
             .await
-            .map_err(|e| RenderingError::InvalidResponse(e.to_string()))?;
+            .map_err(|e| RenderingServiceError::InvalidResponse {
+                details: format!("JSON parse error: {}", e)
+            })?;
 
         if !render_response.success {
-            return Err(RenderingError::ServiceError(
-                "Rendering failed on service side".to_string(),
-            ));
+            return Err(RenderingServiceError::InvalidResponse {
+                details: "Rendering failed on service side".to_string()
+            });
         }
 
         let data = match request.format {
             ImageFormat::Svg => render_response.data.into_bytes(),
             ImageFormat::Png => {
                 use base64::{engine::general_purpose, Engine as _};
-                general_purpose::STANDARD.decode(render_response.data)?
+                general_purpose::STANDARD.decode(render_response.data).map_err(|e| {
+                    RenderingServiceError::ImageConversionError {
+                        from_format: "base64".to_string(),
+                        to_format: "binary".to_string(),
+                        reason: e.to_string(),
+                    }
+                })?
             }
         };
 
@@ -272,7 +303,7 @@ impl ImageRenderer {
         &self,
         diagrams: Vec<(String, Option<(u32, u32)>)>, // (mermaid_code, dimensions)
         format: ImageFormat,
-    ) -> Result<Vec<Result<RenderedImage, String>>, RenderingError> {
+    ) -> Result<Vec<Result<RenderedImage, String>>, RenderingServiceError> {
         let diagram_requests: Vec<DiagramRequest> = diagrams
             .into_iter()
             .map(|(mermaid_code, dimensions)| DiagramRequest {
@@ -289,19 +320,38 @@ impl ImageRenderer {
 
         let url = format!("{}/render/batch", self.config.base_url);
 
-        let response = self.client.post(&url).json(&request).send().await?;
+        let response = self.client.post(&url).json(&request).send().await.map_err(|e| {
+            if e.is_timeout() {
+                RenderingServiceError::request_timeout(Duration::from_secs(self.config.timeout_seconds))
+            } else if e.is_connect() {
+                RenderingServiceError::connection_timeout(Duration::from_secs(10))
+            } else {
+                RenderingServiceError::NetworkError {
+                    message: e.to_string()
+                }
+            }
+        })?;
 
         if !response.status().is_success() {
-            return Err(RenderingError::ServiceError(format!(
-                "HTTP {}",
-                response.status()
-            )));
+            return Err(match response.status().as_u16() {
+                503 => RenderingServiceError::ServiceUnavailable,
+                429 => RenderingServiceError::RateLimitExceeded { retry_after_seconds: None },
+                408 | 504 => RenderingServiceError::request_timeout(Duration::from_secs(30)),
+                400 => RenderingServiceError::InvalidResponse {
+                    details: format!("HTTP {}", response.status())
+                },
+                _ => RenderingServiceError::InvalidResponse {
+                    details: format!("HTTP {}", response.status())
+                },
+            });
         }
 
         let batch_response: BatchRenderResponse = response
             .json()
             .await
-            .map_err(|e| RenderingError::InvalidResponse(e.to_string()))?;
+            .map_err(|e| RenderingServiceError::InvalidResponse {
+                details: format!("JSON parse error: {}", e)
+            })?;
 
         let mut results = Vec::new();
 
@@ -312,13 +362,17 @@ impl ImageRenderer {
                         ImageFormat::Svg => data_str.into_bytes(),
                         ImageFormat::Png => {
                             use base64::{engine::general_purpose, Engine as _};
-                            match general_purpose::STANDARD.decode(data_str) {
-                                Ok(data) => data,
-                                Err(e) => {
-                                    results.push(Err(format!("Base64 decode error: {}", e)));
-                                    continue;
-                                }
-                            }
+            match general_purpose::STANDARD.decode(data_str) {
+                Ok(data) => data,
+                Err(e) => {
+                    results.push(Err(RenderingServiceError::ImageConversionError {
+                        from_format: "base64".to_string(),
+                        to_format: "binary".to_string(),
+                        reason: e.to_string(),
+                    }.user_message()));
+                    continue;
+                }
+            }
                         }
                     };
 
@@ -348,10 +402,14 @@ impl ImageRenderer {
         &self,
         image: &RenderedImage,
         file_path: &PathBuf,
-    ) -> Result<(), RenderingError> {
+    ) -> Result<(), RenderingServiceError> {
         tokio::fs::write(file_path, &image.data)
             .await
-            .map_err(|e| RenderingError::ServiceError(format!("Failed to write file: {}", e)))?;
+            .map_err(|e| RenderingServiceError::ImageConversionError {
+                from_format: "binary".to_string(),
+                to_format: "file".to_string(),
+                reason: format!("Failed to write file: {}", e)
+            })?;
 
         Ok(())
     }
@@ -378,15 +436,17 @@ mod tests {
                 assert_eq!(health.status, "healthy");
                 assert!(health.workers.total_workers > 0);
             }
-            Err(RenderingError::ServiceUnavailable) => {
-                // Service not running, skip test
+            Err(RenderingServiceError::ServiceUnavailable) => {
                 println!("Rendering service not available, skipping test");
             }
-            Err(RenderingError::HttpError(_)) => {
-                println!("HTTP error - rendering service not available, skipping test");
+            Err(RenderingServiceError::NetworkError { .. }) => {
+                println!("Network error - rendering service not available, skipping test");
             }
-            Err(RenderingError::ServiceError(_)) => {
-                println!("Service error - rendering service not available, skipping test");
+            Err(RenderingServiceError::ConnectionTimeout { .. }) => {
+                println!("Connection timeout - rendering service not available, skipping test");
+            }
+            Err(RenderingServiceError::RequestTimeout { .. }) => {
+                println!("Request timeout - rendering service not available, skipping test");
             }
             Err(e) => {
                 println!(
@@ -416,14 +476,17 @@ graph TD
                 assert!(!image.data.is_empty());
                 assert!(matches!(image.format, ImageFormat::Svg));
             }
-            Err(RenderingError::ServiceUnavailable) => {
+            Err(RenderingServiceError::ServiceUnavailable) => {
                 println!("Rendering service not available, skipping test");
             }
-            Err(RenderingError::HttpError(_)) => {
-                println!("HTTP error - rendering service not available, skipping test");
+            Err(RenderingServiceError::NetworkError { .. }) => {
+                println!("Network error - rendering service not available, skipping test");
             }
-            Err(RenderingError::ServiceError(_)) => {
-                println!("Service error - rendering service not available, skipping test");
+            Err(RenderingServiceError::ConnectionTimeout { .. }) => {
+                println!("Connection timeout - rendering service not available, skipping test");
+            }
+            Err(RenderingServiceError::RequestTimeout { .. }) => {
+                println!("Request timeout - rendering service not available, skipping test");
             }
             Err(e) => {
                 println!(

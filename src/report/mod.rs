@@ -106,7 +106,8 @@ pub mod errors;
 #[cfg(feature = "image-rendering")]
 pub mod image_renderer;
 #[cfg(feature = "image-rendering")]
-pub use image_renderer::{ImageFormat, ImageRenderer, RenderedImage, RenderingError};
+pub use image_renderer::{ImageFormat, ImageRenderer, RenderedImage};
+pub use crate::error::rendering::RenderingServiceError;
 
 pub mod diagrams;
 use chrono::{DateTime, Local};
