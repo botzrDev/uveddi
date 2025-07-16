@@ -108,6 +108,22 @@ jobs:
             ${{ runner.os }}-${{ matrix.rust }}-cargo-
             ${{ runner.os }}-cargo-
 
+      - name: Setup Node.js for rendering service
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'rendering-service/package-lock.json'
+
+      - name: Start rendering service for tests
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          echo "Starting rendering service for test environment..."
+          chmod +x scripts/start-rendering-service-for-tests.sh
+          ./scripts/start-rendering-service-for-tests.sh
+          echo "Rendering service started successfully"
+
       - name: Run unit tests
         run: cargo test --lib --bins --all-features --verbose
 
@@ -116,6 +132,16 @@ jobs:
 
       - name: Run doc tests
         run: cargo test --doc --all-features --verbose
+
+      - name: Cleanup rendering service
+        if: matrix.os == 'ubuntu-latest' && always()
+        run: |
+          if [ -f service.pid ]; then
+            echo "Stopping rendering service..."
+            kill $(cat service.pid) 2>/dev/null || true
+            rm -f service.pid service.log
+            echo "Rendering service stopped"
+          fi
 
   # Test with minimal dependencies (no AI features)
   test-minimal:
@@ -204,8 +230,32 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-bench-${{ hashFiles('**/Cargo.lock') }}
 
+      - name: Setup Node.js for rendering service
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'rendering-service/package-lock.json'
+
+      - name: Start rendering service for benchmarks
+        run: |
+          echo "Starting rendering service for benchmark environment..."
+          chmod +x scripts/start-rendering-service-for-tests.sh
+          ./scripts/start-rendering-service-for-tests.sh
+          echo "Rendering service started successfully"
+
       - name: Run benchmarks
         run: cargo bench --all-features
+
+      - name: Cleanup rendering service
+        if: always()
+        run: |
+          if [ -f service.pid ]; then
+            echo "Stopping rendering service..."
+            kill $(cat service.pid) 2>/dev/null || true
+            rm -f service.pid service.log
+            echo "Rendering service stopped"
+          fi
 
       - name: Upload benchmark results
         uses: actions/upload-artifact@v4

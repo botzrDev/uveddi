@@ -67,7 +67,13 @@
       "Bash(RUST_BACKTRACE=1 cargo test test_ast_provider_caching --lib -- --nocapture)",
       "Bash(rustc:*)",
       "Bash(./facade_test)",
-      "Bash(timeout 30 cargo test --lib cache_manager::tests::test_cache_manager_creation -- --nocapture)"
+      "Bash(timeout 30 cargo test --lib cache_manager::tests::test_cache_manager_creation -- --nocapture)",
+      "WebFetch(domain:docs.anthropic.com)",
+      "Bash(claude mcp:*)",
+      "Bash(./scripts/start-rendering-service-for-tests.sh:*)",
+      "Bash(cat:*)",
+      "Bash(ss:*)",
+      "Bash(sudo lsof:*)"
     ],
     "deny": []
   }
