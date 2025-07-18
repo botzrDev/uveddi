@@ -19,10 +19,13 @@ use std::path::PathBuf;
 use uveddi::application::{AnalysisConfig, AnalysisOrchestrator};
 use uveddi::cli::analyze_command::AnalyzeCommand;
 use uveddi::error::UveddiError;
+#[cfg(feature = "tui")]
 use uveddi::tui::app::{AppScreen, AppState};
+#[cfg(feature = "tui")]
 use uveddi::tui::messages::AppMessage;
 
 /// Helper function to create a minimal test project structure
+#[cfg(feature = "tui")]
 async fn create_test_project(base_path: &str) -> std::io::Result<PathBuf> {
     let test_dir = PathBuf::from(format!("./tmp/test_projects/{}", base_path));
     tokio::fs::create_dir_all(&test_dir).await?;
@@ -64,6 +67,7 @@ pub fn main() {
 }
 
 /// Helper function to clean up test projects
+#[cfg(feature = "tui")]
 async fn cleanup_test_project(path: &PathBuf) -> std::io::Result<()> {
     if path.exists() {
         tokio::fs::remove_dir_all(path).await?;
@@ -234,6 +238,7 @@ async fn test_backend_analysis_orchestrator_integration() {
     cleanup_test_project(&test_path).await.unwrap();
 }
 
+#[cfg(feature = "tui")]
 #[tokio::test]
 async fn test_error_handling_invalid_path() {
     let invalid_path = PathBuf::from("/nonexistent/path/that/does/not/exist");
@@ -276,6 +281,7 @@ async fn test_error_handling_invalid_path() {
     }
 }
 
+#[cfg(feature = "tui")]
 #[tokio::test]
 async fn test_tui_to_cli_command_pipeline() {
     let test_path = create_test_project("pipeline_test").await.unwrap();
@@ -397,6 +403,7 @@ async fn test_concurrent_form_submissions() {
     cleanup_test_project(&test_path2).await.unwrap();
 }
 
+#[cfg(feature = "tui")]
 #[tokio::test]
 async fn test_configuration_validation() {
     let test_path = create_test_project("validation_test").await.unwrap();
@@ -437,6 +444,7 @@ async fn test_configuration_validation() {
     cleanup_test_project(&test_path).await.unwrap();
 }
 
+#[cfg(feature = "tui")]
 #[tokio::test]
 async fn test_screen_transitions_and_state_consistency() {
     let mut app_state = AppState::new();
@@ -471,6 +479,7 @@ async fn test_screen_transitions_and_state_consistency() {
     }
 }
 
+#[cfg(feature = "tui")]
 #[tokio::test]
 async fn test_error_state_management() {
     let mut app_state = AppState::new();
@@ -495,6 +504,7 @@ async fn test_error_state_management() {
 }
 
 /// Performance test for rapid state updates
+#[cfg(feature = "tui")]
 #[tokio::test]
 async fn test_rapid_state_updates_performance() {
     let mut app_state = AppState::new();
@@ -526,6 +536,7 @@ async fn test_rapid_state_updates_performance() {
 }
 
 #[cfg(test)]
+#[cfg(feature = "tui")]
 mod integration_helpers {
     use super::*;
 

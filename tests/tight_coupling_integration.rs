@@ -129,13 +129,13 @@ fn test_configuration_defaults() {
     assert!(!config.include_test_files);
 }
 
-#[test]
-fn test_rust_file_analysis() {
+#[tokio::test]
+async fn test_rust_file_analysis() {
     let detector = TightCouplingDetector::default();
     let test_file = create_test_rust_file_with_high_coupling();
 
     // Test single file analysis
-    let result = detector.detect_issues(&test_file);
+    let result = detector.detect_issues(&test_file).await;
     assert!(result.is_ok(), "Analysis should complete without errors");
 
     let issues = result.unwrap();
@@ -156,13 +156,13 @@ fn test_rust_file_analysis() {
     }
 }
 
-#[test]
-fn test_python_file_analysis() {
+#[tokio::test]
+async fn test_python_file_analysis() {
     let detector = TightCouplingDetector::default();
     let test_file = create_test_python_file();
 
     // Test Python file analysis
-    let result = detector.detect_issues(&test_file);
+    let result = detector.detect_issues(&test_file).await;
     assert!(
         result.is_ok(),
         "Python analysis should complete without errors"
@@ -236,8 +236,8 @@ fn test_dependency_graph_analysis() {
     }
 }
 
-#[test]
-fn test_detector_creation_with_custom_config() {
+#[tokio::test]
+async fn test_detector_creation_with_custom_config() {
     // Test creation with custom config
     let mut config = TightCouplingConfig::default();
     config.rust_thresholds.fan_out_warning = 5;
@@ -248,22 +248,22 @@ fn test_detector_creation_with_custom_config() {
 
     // Test that the detector works with custom config
     let test_file = create_test_rust_file_with_high_coupling();
-    let result = detector.detect_issues(&test_file);
+    let result = detector.detect_issues(&test_file).await;
     assert!(result.is_ok(), "Analysis with custom config should work");
 }
 
-#[test]
-fn test_multi_language_support() {
+#[tokio::test]
+async fn test_multi_language_support() {
     let detector = TightCouplingDetector::default();
 
     // Test Rust file
     let rust_file = create_test_rust_file_with_high_coupling();
-    let rust_result = detector.detect_issues(&rust_file);
+    let rust_result = detector.detect_issues(&rust_file).await;
     assert!(rust_result.is_ok(), "Rust analysis should work");
 
     // Test Python file
     let python_file = create_test_python_file();
-    let python_result = detector.detect_issues(&python_file);
+    let python_result = detector.detect_issues(&python_file).await;
     assert!(python_result.is_ok(), "Python analysis should work");
 
     println!("Multi-language support verified: Rust and Python files analyzed successfully");

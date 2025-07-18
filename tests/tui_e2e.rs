@@ -230,6 +230,7 @@ impl UtilityStruct {
 }
 
 /// Clean up test project
+#[cfg(feature = "tui")]
 async fn cleanup_test_project(path: &PathBuf) -> std::io::Result<()> {
     if path.exists() {
         tokio::fs::remove_dir_all(path).await?;

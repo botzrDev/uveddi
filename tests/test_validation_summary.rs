@@ -89,7 +89,7 @@ fn test_dependency_availability() {
     // (This test will compile only if all dependencies are properly configured)
     
     // tokio for async testing
-    let rt = tokio::runtime::Runtime::new().unwrap();
+    let _rt = tokio::runtime::Runtime::new().unwrap();
     println!("✅ tokio: available");
     
     // tempfile for test isolation

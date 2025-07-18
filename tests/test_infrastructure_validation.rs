@@ -158,7 +158,8 @@ mod proptest_integration {
                 
                 let read_content = fs::read_to_string(&file_path).await.unwrap();
                 prop_assert_eq!(read_content, content);
-            });
+                Ok(())
+            })?;
         }
         
         #[test]
@@ -170,7 +171,8 @@ mod proptest_integration {
                 
                 prop_assert!(file_path.exists());
                 prop_assert_eq!(file_path.file_name().unwrap().to_str().unwrap(), filename);
-            });
+                Ok(())
+            })?;
         }
     }
 }
@@ -226,7 +228,7 @@ async fn test_memory_cleanup() {
 
 #[tokio::test]
 async fn test_serial_execution() {
-    use serial_test::serial;
+    // serial_test removed for this test
     
     // Test that serial test execution works
     static mut COUNTER: i32 = 0;

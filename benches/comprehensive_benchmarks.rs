@@ -5,7 +5,7 @@ use std::sync::Arc;
 use tempfile::TempDir;
 use uveddi::analysis::buffer::{FixedBuffer, FixedString, LargeBuffer, MediumBuffer, SmallBuffer};
 use uveddi::analysis::cache::ast::{AstCache, CacheConfig};
-use uveddi::analysis::{detectors::anti_patterns::GodObjectDetector, AnalysisEngine};
+use uveddi::analysis::{detectors::anti_patterns::GodObjectDetector, AnalysisEngine, AnalysisDetector};
 
 /// Creates a temporary directory with test Rust files of varying complexity
 fn create_test_project(temp_dir: &TempDir, file_count: usize) -> Vec<std::path::PathBuf> {
@@ -112,7 +112,8 @@ fn bench_god_object_detection(c: &mut Criterion) {
                         if let Ok(source) = fs::read_to_string(file_path) {
                             // Simulate ParsedFile creation for benchmarking
                             let mock_parsed_file = create_mock_parsed_file(file_path, &source);
-                            black_box(detector.detect_issues(&mock_parsed_file));
+                            let rt = tokio::runtime::Runtime::new().unwrap();
+                            black_box(rt.block_on(detector.detect_issues(&mock_parsed_file)));
                         }
                     }
                 });
@@ -139,18 +140,22 @@ fn create_mock_parsed_file(file_path: &Path, source: &str) -> uveddi::ast::Parse
 
         uveddi::ast::ParsedFile {
             file_path: Arc::new(file_path.to_path_buf()),
-            source: source.to_string(),
+            source: Arc::new(source.to_string()),
             tree,
             language: uveddi::ast::tree_sitter_impl::SourceLanguage::Rust,
+            custom_ast: None,
+            modified_at: None,
         }
     }
     #[cfg(not(feature = "tree-sitter"))]
     {
         uveddi::ast::ParsedFile {
             file_path: Arc::new(file_path.to_path_buf()),
-            source: source.to_string(),
+            source: Arc::new(source.to_string()),
             tree: None,
             language: uveddi::ast::tree_sitter_impl::SourceLanguage::Rust,
+            custom_ast: None,
+            modified_at: None,
         }
     }
 }
@@ -327,7 +332,7 @@ fn bench_ast_cache_configurations(c: &mut Criterion) {
 
     for (name, config) in configs {
         group.bench_function(name, |b| {
-            let cache = AstCache::new(config).unwrap();
+            let cache = AstCache::new(config.clone()).unwrap();
             b.iter(|| {
                 for file in &files {
                     black_box(cache.get(file));
@@ -347,16 +352,17 @@ fn bench_error_handling(c: &mut Criterion) {
         b.iter(|| {
             for i in 0..1000 {
                 let result: Result<i32, uveddi::error::UveddiError> = if i % 10 == 0 {
-                    Err(uveddi::error::UveddiError::ConfigError(format!(
-                        "Error {}",
-                        i
-                    )))
+                    Err(uveddi::error::UveddiError::ConfigError { 
+                        message: format!("Error {}", i),
+                        location: "benchmark".to_string(),
+                        suggestion: None,
+                    })
                 } else {
                     Ok(i)
                 };
 
                 match result {
-                    Ok(value) => black_box(value),
+                    Ok(value) => { black_box(value); },
                     Err(e) => {
                         black_box(e.category());
                         black_box(e.severity());

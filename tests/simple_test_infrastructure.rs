@@ -142,7 +142,8 @@ mod proptest_tests {
                 
                 let read_content = fs::read_to_string(&file_path).await.unwrap();
                 prop_assert_eq!(read_content, content);
-            });
+                Ok(())
+            })?;
         }
     }
 }
@@ -164,7 +165,7 @@ fn test_mockall_basic() {
     // Test basic mockall functionality
     mock! {
         TestStruct {}
-        impl TestStruct {
+        impl TestStruct for TestStruct {
             fn test_method(&self) -> i32;
         }
     }

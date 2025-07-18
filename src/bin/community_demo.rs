@@ -165,7 +165,7 @@ impl CommunityDatabase {
             "#,
         )?;
 
-        let member_iter = stmt.query_map([email], |row| {
+        let mut member_iter = stmt.query_map([email], |row| {
             let languages_json: String = row.get(11)?;
             let custom_fields_json: String = row.get(17)?;
 
@@ -204,7 +204,7 @@ impl CommunityDatabase {
             })
         })?;
 
-        for member in member_iter {
+        if let Some(member) = member_iter.next() {
             return Ok(Some(member?));
         }
         Ok(None)

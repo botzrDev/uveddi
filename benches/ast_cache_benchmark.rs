@@ -14,6 +14,9 @@ fn create_benchmark_cache() -> (AstCache, TempDir) {
         enable_memory_mapping: false,
         lru_eviction_enabled: true,
         cache_metrics_enabled: true,
+        enable_zero_copy: false,
+        zero_copy_cache_dir: temp_dir.path().to_path_buf(),
+        zero_copy_threshold_bytes: 1024,
     };
     let cache = AstCache::new(config).unwrap();
     (cache, temp_dir)
@@ -169,6 +172,9 @@ fn bench_memory_pressure(c: &mut Criterion) {
         enable_memory_mapping: false,
         lru_eviction_enabled: true,
         cache_metrics_enabled: true,
+        enable_zero_copy: false,
+        zero_copy_cache_dir: temp_dir.path().to_path_buf(),
+        zero_copy_threshold_bytes: 1024,
     };
     let cache = AstCache::new(config).unwrap();
     let test_files = setup_test_files(&temp_dir, 100);

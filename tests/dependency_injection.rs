@@ -179,7 +179,7 @@ async fn test_constructor_injection_with_uninitialized_parser() {
 async fn test_builder_pattern_with_dependency_injection() {
     let engine = AnalysisEngineBuilder::new()
         .with_injected_ast_parser(Box::new(MockAstParser::new()))
-        .with_dependency_extractor(Box::new(MockDependencyExtractor::new()))
+        .with_injected_dependency_extractor(Box::new(MockDependencyExtractor::new()))
         .with_cache(Box::new(MockResultCache::new()))
         .build()
         .await;

@@ -9,8 +9,8 @@ mod tests {
     use uveddi::analysis::GodObjectDetector;
     use uveddi::ast::tree_sitter_impl::AstParser;
 
-    #[test]
-    fn detects_god_object_rust() {
+    #[tokio::test]
+    async fn detects_god_object_rust() {
         let dir = tempdir().unwrap();
         let file_path = dir.path().join("god_object.rs");
         let code = r#"
@@ -50,15 +50,15 @@ mod tests {
         let mut parser = AstParser::new().unwrap();
         let parsed = parser.parse_file(&file_path).unwrap();
         let detector = GodObjectDetector::new(20, 10); // Example thresholds
-        let issues = detector.detect_issues(&parsed).unwrap();
+        let issues = detector.detect_issues(&parsed).await.unwrap();
         assert!(!issues.is_empty(), "Should detect at least one God Object");
         let issue = &issues[0];
         assert!(issue.description.contains("God Object"));
         assert_eq!(issue.file_path, file_path.to_string_lossy());
     }
 
-    #[test]
-    fn detects_god_object_python() {
+    #[tokio::test]
+    async fn detects_god_object_python() {
         let dir = tempdir().unwrap();
         let file_path = dir.path().join("god_object.py");
         let code = r#"
@@ -113,15 +113,15 @@ class GodObject:
         let mut parser = AstParser::new().unwrap();
         let parsed = parser.parse_file(&file_path).unwrap();
         let detector = GodObjectDetector::new(20, 10);
-        let issues = detector.detect_issues(&parsed).unwrap();
+        let issues = detector.detect_issues(&parsed).await.unwrap();
         assert!(!issues.is_empty(), "Should detect at least one God Object");
         let issue = &issues[0];
         assert!(issue.description.contains("God Object"));
         assert_eq!(issue.file_path, file_path.to_string_lossy());
     }
 
-    #[test]
-    fn detects_god_object_js() {
+    #[tokio::test]
+    async fn detects_god_object_js() {
         let dir = tempdir().unwrap();
         let file_path = dir.path().join("god_object.js");
         let code = r#"
@@ -178,15 +178,15 @@ class GodObject {
         let mut parser = AstParser::new().unwrap();
         let parsed = parser.parse_file(&file_path).unwrap();
         let detector = GodObjectDetector::new(20, 10);
-        let issues = detector.detect_issues(&parsed).unwrap();
+        let issues = detector.detect_issues(&parsed).await.unwrap();
         assert!(!issues.is_empty(), "Should detect at least one God Object");
         let issue = &issues[0];
         assert!(issue.description.contains("God Object"));
         assert_eq!(issue.file_path, file_path.to_string_lossy());
     }
 
-    #[test]
-    fn god_object_severity_and_snippet() {
+    #[tokio::test]
+    async fn god_object_severity_and_snippet() {
         let dir = tempdir().unwrap();
         let file_path = dir.path().join("god_object.rs");
         let code = r#"
@@ -226,7 +226,7 @@ class GodObject {
         let mut parser = AstParser::new().unwrap();
         let parsed = parser.parse_file(&file_path).unwrap();
         let detector = GodObjectDetector::new(20, 10);
-        let issues = detector.detect_issues(&parsed).unwrap();
+        let issues = detector.detect_issues(&parsed).await.unwrap();
         let issue = &issues[0];
         assert_eq!(issue.severity, "Medium");
         assert!(issue.code_snippet.is_some());

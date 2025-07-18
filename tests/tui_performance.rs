@@ -6,9 +6,7 @@
 // and efficient resource utilization.
 #[cfg(feature = "tui")]
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use std::path::PathBuf;
-use std::time::{Duration, Instant};
-use uveddi::cli::analyze_command::AnalyzeCommand;
+use std::time::Duration;
 #[cfg(feature = "tui")]
 use uveddi::tui::{AppMessage, AppScreen, AppState};
 
