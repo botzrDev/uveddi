@@ -1,104 +1,146 @@
-//! Security and Safety Module for Uveddi
+//! Security and RBAC Module for Uveddi
 //!
-//! This module provides security-related utilities and safety mechanisms for the Uveddi
-//! analysis tool. It handles sensitive data management, input validation, and sandboxing
-//! for potentially unsafe operations.
+//! This module provides comprehensive security features including authentication,
+//! authorization, audit logging, and input validation for the Uveddi analysis platform.
+//! It implements a hybrid RBAC/ABAC system with enterprise-grade security controls.
 //!
 //! # Security Features
 //!
-//! ## Credential Management
-//! - **API Key Storage**: Secure handling of AI provider API keys
-//! - **Environment Variables**: Safe access to sensitive configuration
-//! - **Key Rotation**: Support for credential rotation and updates
+//! ## Authentication
+//! - **OAuth 2.0/OIDC Integration**: Federated authentication with enterprise IdPs
+//! - **API Key Authentication**: Secure service-to-service authentication
+//! - **Session Management**: Secure session handling with expiration
+//! - **JWT Token Validation**: Standards-compliant token verification
+//!
+//! ## Authorization (RBAC/ABAC)
+//! - **Role-Based Access Control**: Hierarchical role system with predefined roles
+//! - **Attribute-Based Access Control**: Fine-grained permission system
+//! - **Permission Scoping**: Resource-level access control (own/team/all)
+//! - **Policy Engine**: Casbin-powered authorization engine
+//!
+//! ## Audit Logging
+//! - **Comprehensive Audit Trail**: Immutable security event logging
+//! - **Tamper Detection**: Cryptographic integrity verification
+//! - **Compliance Support**: SOC 2 and ISO 27001 compliant logging
+//! - **Security Event Classification**: Structured event categorization
+//!
+//! ## Rate Limiting
+//! - **API Rate Limiting**: Prevent abuse and DoS attacks
+//! - **Per-User/IP Limits**: Configurable rate limiting strategies
+//! - **Sliding Window**: Advanced rate limiting algorithms
 //!
 //! ## Input Validation
 //! - **Path Sanitization**: Prevent directory traversal attacks
 //! - **File Type Validation**: Ensure only safe file types are processed
 //! - **Size Limits**: Prevent resource exhaustion from large inputs
+//! - **Input Sanitization**: Comprehensive input validation
 //!
-//! ## Plugin Sandboxing
-//! - **WASM Isolation**: Sandbox custom analysis plugins using WebAssembly
-//! - **Resource Limits**: CPU and memory limits for plugin execution
-//! - **API Restrictions**: Controlled access to system resources
+//! # User Roles
 //!
-//! # Threat Model
+//! The system defines the following standard roles:
+//! - **Admin**: Full system access and configuration
+//! - **Developer**: Test data access for owned projects only
+//! - **QA**: Test execution and failure analysis access
+//! - **Manager**: Read-only access to reports and dashboards
+//! - **Service**: API access for automated integrations
 //!
-//! The security module addresses these potential threats:
-//! - **Malicious Input Files**: Code files designed to exploit parser vulnerabilities
-//! - **Path Traversal**: Attempts to access files outside the analysis scope
-//! - **Resource Exhaustion**: Large or deeply nested files causing DoS
-//! - **Information Disclosure**: Accidental exposure of sensitive data in reports
-//! - **Plugin Vulnerabilities**: Untrusted analysis plugins causing system compromise
+//! # Usage Examples
 //!
-//! # Usage Guidelines
-//!
+//! ## Authentication
 //! ```rust,no_run
-//! use uveddi::security;
+//! use uveddi::security::{AuthenticationService, AuthenticatedUser};
 //!
-//! // Validate input path before analysis
-//! let safe_path = security::validate_analysis_path("./src")?;
+//! // OAuth authentication
+//! let auth_service = AuthenticationService::new(config).await?;
+//! let user = auth_service.authenticate_oidc("google", &auth_code, &nonce).await?;
 //!
-//! // Sanitize API keys before logging
-//! let safe_key = security::sanitize_api_key(&api_key);
-//! log::info!("Using API key: {}", safe_key);
-//!
-//! // Check file size limits
-//! if security::is_file_too_large(&file_path)? {
-//!     return Err("File exceeds maximum size limit".into());
-//! }
+//! // API key authentication
+//! let user = auth_service.authenticate_api_key(&api_key).await?;
 //! # Ok::<(), Box<dyn std::error::Error>>(())
 //! ```
 //!
-//! # Future Enhancements
+//! ## Authorization
+//! ```rust,no_run
+//! use uveddi::security::{AuthorizationEngine, AuthContext};
 //!
-//! - **Cryptographic Verification**: Code signature validation
-//! - **Audit Logging**: Security event logging and monitoring
-//! - **Access Control**: Role-based permissions for analysis features
-//! - **Data Privacy**: Anonymization of sensitive code patterns
+//! let authz_engine = AuthorizationEngine::new().await?;
+//! let context = AuthContext::new(user_id, "projects".to_string(), "read".to_string(), Some("own".to_string()));
+//! let allowed = authz_engine.check_permission(&user_id, "projects", "read", &context).await?;
+//! # Ok::<(), Box<dyn std::error::Error>>(())
+//! ```
+//!
+//! ## Audit Logging
+//! ```rust,no_run
+//! use uveddi::security::{AuditLogger, AuditEvent, AuditEventType, AuditOutcome};
+//!
+//! let audit_logger = AuditLogger::new().await?;
+//! let event = AuditEvent::new(
+//!     AuditEventType::Authentication,
+//!     Some(user_id),
+//!     None,
+//!     "users".to_string(),
+//!     "login".to_string(),
+//!     AuditOutcome::Success,
+//!     Some("127.0.0.1".to_string()),
+//!     None,
+//!     serde_json::json!({"method": "password"}),
+//! );
+//! audit_logger.log_event(event).await?;
+//! # Ok::<(), Box<dyn std::error::Error>>(())
+//! ```
+//!
+//! # Security Considerations
+//!
+//! - All authentication attempts are logged for security monitoring
+//! - Failed authorization attempts trigger security alerts
+//! - Rate limiting prevents brute force attacks
+//! - All secrets are stored securely using external secret management
+//! - Audit logs are tamper-evident and immutable
+//! - Input validation prevents injection attacks
+//!
+//! # Compliance
+//!
+//! This module is designed to meet enterprise security standards including:
+//! - SOC 2 Type II compliance
+//! - ISO 27001 information security management
+//! - GDPR privacy requirements
+//! - Industry-standard authentication protocols
+
+// Core security modules
+pub mod errors;
+pub mod models;
+pub mod authentication;
+pub mod authorization;
+pub mod audit;
+pub mod config;
+pub mod middleware;
+pub mod rate_limiting;
+pub mod secrets;
+
+// Re-export commonly used types
+pub use errors::{SecurityError, SecurityResult, SecurityErrorSeverity};
+pub use models::{
+    User, Role, Permission, UserRole, UserRoleAssignment, Session, ApiKey,
+    AuditEvent, AuditEventType, AuditOutcome, AuthenticatedUser, AuthContext,
+    RateLimitInfo, RateLimitIdentifierType,
+};
+
+// Re-export authentication and authorization config types
+pub use authentication::{AuthenticationConfig, OAuthProviderConfig, OidcProviderConfig};
+pub use authorization::AuthorizationEngine;
+pub use audit::{AuditLogger, AuditStore};
+pub use config::{SecurityConfig, SecurityConfigLoader};
+pub use middleware::SecurityServices;
+pub use rate_limiting::RateLimiter;
+pub use config::RateLimitingConfig;
+pub use secrets::{SecretStore, SecretStoreFactory};
 
 use crate::error::UveddiError;
 use std::path::{Component, Path, PathBuf};
 
-/// Security-related errors for Uveddi
-#[derive(Debug, thiserror::Error)]
-pub enum SecurityError {
-    /// Path traversal attempt detected
-    #[error("Path traversal attempt detected: {0}")]
-    PathTraversal(String),
-    /// Invalid file path
-    #[error("Invalid file path: {0}")]
-    InvalidPath(String),
-    /// File size exceeds limit
-    #[error("File size exceeds limit: {size} bytes > {limit} bytes")]
-    FileSizeExceeded { size: u64, limit: u64 },
-    /// Unsupported file type
-    #[error("Unsupported file type: {0}")]
-    UnsupportedFileType(String),
-    /// Input too long for AI prompt
-    #[error("Input too long: {length} > {max_length}")]
-    InputTooLong { length: usize, max_length: usize },
-    /// Invalid base path for analysis
-    #[error("Invalid base path")]
-    InvalidBasePath,
-    /// Path traversal attempt outside base directory
-    #[error("Path traversal attempt outside base directory")]
-    PathTraversalAttempt,
-    /// Invalid path component detected (e.g., null byte, hidden file)
-    #[error("Invalid path component detected")]
-    InvalidPathComponent,
-    /// Directory depth exceeds maximum allowed
-    #[error("Directory depth exceeds maximum: {depth} > {max_depth}")]
-    DirectoryDepthExceeded { depth: usize, max_depth: usize },
-    /// Too many files in analysis
-    #[error("File count exceeds maximum: {count} > {max_count}")]
-    TooManyFiles { count: usize, max_count: usize },
-    /// Invalid URL format
-    #[error("Invalid URL: {0}")]
-    InvalidUrl(String),
-    /// Invalid model name
-    #[error("Invalid model name: {0}")]
-    InvalidModelName(String),
-}
+// Include integration tests in test builds
+#[cfg(test)]
+mod integration_tests;
 
 /// Maximum number of files allowed per analysis
 pub const MAX_FILES_PER_ANALYSIS: usize = 10000;
@@ -106,13 +148,15 @@ pub const MAX_FILES_PER_ANALYSIS: usize = 10000;
 /// Validate file size for analysis
 pub fn validate_file_size(path: &Path) -> Result<(), SecurityError> {
     let metadata = std::fs::metadata(path)
-        .map_err(|_| SecurityError::InvalidPath(path.display().to_string()))?;
+        .map_err(|_| SecurityError::InvalidInput {
+            field: "file_path".to_string(),
+            reason: "Could not read file metadata".to_string(),
+        })?;
     let size = metadata.len();
     let max_size = 10 * 1024 * 1024; // 10MB
     if size > max_size {
-        return Err(SecurityError::FileSizeExceeded {
-            size,
-            limit: max_size,
+        return Err(SecurityError::ValidationError {
+            errors: vec![format!("File size {} exceeds limit {}", size, max_size)],
         });
     }
     Ok(())
@@ -121,14 +165,17 @@ pub fn validate_file_size(path: &Path) -> Result<(), SecurityError> {
 /// Validate file type for analysis
 pub fn validate_file_type(path: &Path) -> Result<(), SecurityError> {
     let allowed = ["rs", "py", "js", "jsx", "ts", "tsx"];
-    let ext =
-        path.extension()
-            .and_then(|e| e.to_str())
-            .ok_or(SecurityError::UnsupportedFileType(
-                "No extension".to_string(),
-            ))?;
+    let ext = path.extension()
+        .and_then(|e| e.to_str())
+        .ok_or_else(|| SecurityError::InvalidInput {
+            field: "file_extension".to_string(),
+            reason: "No extension found".to_string(),
+        })?;
     if !allowed.contains(&ext) {
-        return Err(SecurityError::UnsupportedFileType(ext.to_string()));
+        return Err(SecurityError::InvalidInput {
+            field: "file_extension".to_string(),
+            reason: format!("Unsupported file type: {}", ext),
+        });
     }
     Ok(())
 }
@@ -142,7 +189,10 @@ pub fn validate_model_name(name: &str) -> Result<(), SecurityError> {
         || name.contains("\0")
         || name.len() > 100
     {
-        return Err(SecurityError::InvalidModelName(name.to_string()));
+        return Err(SecurityError::InvalidInput {
+            field: "model_name".to_string(),
+            reason: "Invalid characters or length".to_string(),
+        });
     }
     Ok(())
 }
@@ -158,7 +208,9 @@ pub fn sanitize_description(desc: &str) -> String {
 pub fn validate_directory_depth(depth: usize) -> Result<(), SecurityError> {
     let max_depth = 100;
     if depth > max_depth {
-        return Err(SecurityError::DirectoryDepthExceeded { depth, max_depth });
+        return Err(SecurityError::ValidationError {
+            errors: vec![format!("Directory depth {} exceeds maximum {}", depth, max_depth)],
+        });
     }
     Ok(())
 }
@@ -166,9 +218,8 @@ pub fn validate_directory_depth(depth: usize) -> Result<(), SecurityError> {
 /// Validate file count for analysis
 pub fn validate_file_count(count: usize) -> Result<(), SecurityError> {
     if count > MAX_FILES_PER_ANALYSIS {
-        return Err(SecurityError::TooManyFiles {
-            count,
-            max_count: MAX_FILES_PER_ANALYSIS,
+        return Err(SecurityError::ValidationError {
+            errors: vec![format!("File count {} exceeds maximum {}", count, MAX_FILES_PER_ANALYSIS)],
         });
     }
     Ok(())

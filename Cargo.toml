@@ -128,6 +128,24 @@ confy = "1.0"
 # State Persistence (for TUI state)
 persisted = "1.0"
 
+# Security and RBAC Dependencies (UV-247)
+# HTTP middleware and services
+tower = "0.4"
+tower-http = { version = "0.5", features = ["cors", "limit", "timeout"] }
+tower_governor = "0.3"
+# Database (using existing rusqlite instead of sqlx to avoid conflicts)
+# Authorization
+casbin = "2.1"
+# Authentication
+oauth2 = "4.4"
+openidconnect = "3.5"
+jsonwebtoken = "9.3"
+# Security
+argon2 = "0.5"
+blake3 = "1.5"
+ring = "0.17"
+# Configuration
+config = "0.14"
 # Security patches to force newer versions
 
 [[bin]]

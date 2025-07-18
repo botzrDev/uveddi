@@ -74,7 +74,8 @@
       "Bash(cat:*)",
       "Bash(ss:*)",
       "Bash(sudo lsof:*)",
-      "Bash(awk:*)"
+      "Bash(awk:*)",
+      "Bash(RUST_BACKTRACE=1 cargo test test_role_permission_check --lib -- --nocapture)"
     ],
     "deny": []
   }
