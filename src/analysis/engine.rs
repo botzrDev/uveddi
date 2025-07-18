@@ -77,21 +77,20 @@ struct CachedAnalysisResult {
 
 /// Represents the core analysis engine that orchestrates code analysis operations.
 ///
-/// The engine is responsible for:
+/// The `AnalysisEngine` is responsible for:
 /// - Initializing language-specific parsers
 /// - Processing source files into AST representations
-/// - Running registered detectors against the codebase
+/// - Running registered detectors (including plugins) against the codebase
 /// - Aggregating and reporting analysis results
 ///
-/// # Examples
-///
+/// # Example
 /// ```no_run
 /// use uveddi::analysis::AnalysisEngine;
 /// use std::path::Path;
 ///
 /// #[tokio::main]
 /// async fn main() -> Result<(), Box<dyn std::error::Error>> {
-///     // Using the new builder pattern for async initialization
+///     // Using the builder pattern for async initialization
 ///     let mut engine = AnalysisEngine::builder()
 ///         .enable_plugins(true)
 ///         .build_async()
@@ -117,11 +116,10 @@ pub struct AnalysisEngine {
 impl AnalysisEngine {
     /// Returns a new `AnalysisEngineBuilder` for flexible engine construction.
     ///
-    /// This is the recommended way to create an `AnalysisEngine` instance,
-    /// allowing for configuration of detectors, cache paths, and plugin support.
+    /// This is the recommended way to create an `AnalysisEngine` instance, allowing for configuration
+    /// of detectors, cache paths, and plugin support.
     ///
-    /// # Examples
-    ///
+    /// # Example
     /// ```no_run
     /// use uveddi::analysis::AnalysisEngine;
     /// use std::path::PathBuf;
@@ -143,13 +141,16 @@ impl AnalysisEngine {
     /// Creates a new analysis engine with default configuration.
     ///
     /// This is a synchronous constructor for basic use cases without plugins or custom paths.
-    /// For more advanced configurations, use `AnalysisEngine::builder()`.
+    /// For more advanced configurations, use [`AnalysisEngine::builder`].
     ///
     /// # Errors
     /// Returns `UveddiError` if initialization fails.
     ///
-    /// # UV-294 Compliance
-    /// This constructor is synchronous and performs no I/O or async operations.
+    /// # Example
+    /// ```rust
+    /// use uveddi::analysis::AnalysisEngine;
+    /// let engine = AnalysisEngine::new().unwrap();
+    /// ```
     #[inline]
     pub fn new() -> crate::error::Result<Self> {
         AnalysisEngineBuilder::new().build()
@@ -158,13 +159,16 @@ impl AnalysisEngine {
     /// Creates a new analysis engine with WASM plugin support enabled.
     ///
     /// This is an asynchronous constructor as plugin initialization involves I/O.
-    /// For more advanced configurations, use `AnalysisEngine::builder()`.
+    /// For more advanced configurations, use [`AnalysisEngine::builder`].
     ///
     /// # Errors
     /// Returns `UveddiError` if initialization fails.
     ///
-    /// # UV-294 Compliance
-    /// This constructor is asynchronous and should be `await`ed.
+    /// # Example
+    /// ```rust,ignore
+    /// use uveddi::analysis::AnalysisEngine;
+    /// let engine = AnalysisEngine::new_async().await.unwrap();
+    /// ```
     #[inline]
     pub async fn new_async() -> crate::error::Result<Self> {
         AnalysisEngineBuilder::new().enable_plugins(true).build_async().await
@@ -714,14 +718,24 @@ impl AnalysisEngine {
         if let Some(ref mut plugin_manager) = self.plugin_manager {
             // Since the new API expects a PathBuf, we need to write the binary to a temporary file
             // This is a workaround for the deprecated method
-            let temp_dir = std::env::temp_dir();
-            let plugin_path = temp_dir.join(format!("{}.wasm", manifest.name));
-            std::fs::write(&plugin_path, binary)?;
+            // Use a secure approach to create a temporary file in the current directory
+            use std::io::Write;
+            let plugin_filename = format!("{}-{}.wasm", manifest.name, 
+                std::process::id()); // Use process ID to make filename unique
+            let plugin_path = std::env::current_dir()?.join(&plugin_filename);
+            
+            // Write the binary to the temporary file
+            std::fs::write(&plugin_path, &binary)?;
             
             let plugin_id_string = plugin_manager
-                .load_plugin(plugin_path)
+                .load_plugin(plugin_path.clone())
                 .await
                 .map_err(crate::error::UveddiError::from)?;
+            
+            // Clean up the temporary file
+            if let Err(e) = std::fs::remove_file(&plugin_path) {
+                warn!("Failed to cleanup temporary plugin file {}: {}", plugin_path.display(), e);
+            }
             // Convert String to PluginId
             let plugin_id = crate::plugins::PluginId::from_name(&plugin_id_string);
             Ok(plugin_id)
@@ -878,11 +892,15 @@ impl AnalysisEngine {
                 match plugin_manager.get_plugin_adapter(&plugin_id).await {
                     Ok(Some(adapter)) => {
                         // Add the adapter to the detector scheduler
-                        // For now, we'll skip adding the detector since we have Arc<DetectorScheduler>
-                        // In a full implementation, we'd need to make detector_scheduler mutable
-                        warn!("Skipping adding plugin detector due to Arc<DetectorScheduler> - needs refactoring");
-                        added_detectors += 1;
-                        info!("Added plugin detector for plugin: {}", plugin_id);
+                        match self.detector_scheduler.add_detector(Box::new(adapter)).await {
+                            Ok(_) => {
+                                added_detectors += 1;
+                                info!("Successfully added plugin detector for plugin: {}", plugin_id);
+                            }
+                            Err(e) => {
+                                warn!("Failed to add plugin detector for {}: {}", plugin_id, e);
+                            }
+                        }
                     }
                     Ok(None) => {
                         warn!("Plugin {} not found or not loaded", plugin_id);

@@ -17,7 +17,18 @@ use std::time::{Duration, Instant};
 use tokio::sync::{mpsc, oneshot};
 use log::{info, warn, error};
 
-/// Actor-based plugin manager for handling WASM plugins
+/// Actor-based plugin manager for handling WASM plugins.
+///
+/// This struct manages the lifecycle of WASM plugins using an actor-based architecture for
+/// isolation and non-blocking operation. It provides methods for loading, unloading, and executing plugins,
+/// as well as tracking plugin execution statistics.
+///
+/// # Example
+/// ```rust,no_run
+/// use uveddi::analysis::components::plugin_manager::PluginManager;
+/// use std::sync::Arc;
+/// let (manager, handle) = PluginManager::new(Arc::new(config_service));
+/// ```
 pub struct PluginManager {
     config_service: Arc<ConfigurationService>,
     plugin_engine: Option<WasmPluginEngine>,
@@ -382,19 +393,69 @@ impl PluginManager {
         }
     }
     
-    /// Gets a plugin adapter for a specific plugin
+    /// Gets a plugin adapter for a specific plugin.
+    ///
+    /// # Arguments
+    /// * `plugin_id` - The ID of the plugin to retrieve an adapter for.
+    ///
+    /// # Returns
+    /// * `Ok(Some(adapter))` if the adapter is created successfully.
+    /// * `Ok(None)` if the plugin is not found or not loaded.
+    /// * `Err(UveddiError)` if the plugin engine is not initialized or adapter creation fails.
+    ///
+    /// # Example
+    /// ```rust,ignore
+    /// let adapter = plugin_manager.get_plugin_adapter("my_plugin").await?;
+    /// ```
     async fn get_plugin_adapter(&self, plugin_id: &str) -> Result<Option<crate::analysis::WasmPluginDetectorAdapter>, UveddiError> {
         if let Some(ref plugin_engine) = self.plugin_engine {
             let plugin_id_typed = crate::plugins::types::PluginId::from_name(plugin_id);
             
             match plugin_engine.get_plugin_adapter(&plugin_id_typed).await {
-                Some(_adapter) => {
-                    // TODO: Implement proper adapter creation
-                    // For now, we'll indicate that the plugin exists but adapter creation isn't ready
-                    warn!("Plugin {} found but adapter creation not fully implemented yet", plugin_id);
+                Some(_wasm_adapter) => {
+                    // Create WasmPluginDetectorAdapter from the WASM adapter
+                    // Since WasmPluginEngine doesn't implement Clone, we need to create a new engine
+                    // or restructure the architecture. For now, let's try creating a new engine.
+                    match crate::plugins::WasmPluginEngine::new().await {
+                        Ok(new_engine) => {
+                            let engine_arc = Arc::new(tokio::sync::RwLock::new(new_engine));
+                            
+                            match crate::analysis::WasmPluginDetectorAdapter::new(
+                                plugin_id_typed.clone(),
+                                engine_arc
+                            ).await {
+                                Ok(detector_adapter) => {
+                                    info!("Successfully created plugin detector adapter for: {}", plugin_id);
+                                    Ok(Some(detector_adapter))
+                                }
+                                Err(e) => {
+                                    error!("Failed to create detector adapter for plugin {}: {}", plugin_id, e);
+                                    Err(UveddiError::PluginError {
+                                        plugin: plugin_id.to_string(),
+                                        plugin_type: "WASM".to_string(),
+                                        message: format!("Failed to create detector adapter: {}", e),
+                                        suggestion: "Check plugin compatibility and ensure plugin is properly loaded".to_string(),
+                                        source: None,
+                                    })
+                                }
+                            }
+                        }
+                        Err(e) => {
+                            error!("Failed to create new plugin engine for adapter: {}", e);
+                            Err(UveddiError::PluginError {
+                                plugin: plugin_id.to_string(),
+                                plugin_type: "WASM".to_string(),
+                                message: format!("Failed to create plugin engine: {}", e),
+                                suggestion: "Check WASM plugin support is enabled".to_string(),
+                                source: None,
+                            })
+                        }
+                    }
+                }
+                None => {
+                    warn!("Plugin {} not found or not loaded", plugin_id);
                     Ok(None)
                 }
-                None => Ok(None),
             }
         } else {
             Err(UveddiError::PluginError {
@@ -415,7 +476,9 @@ pub struct PluginManagerHandle {
 }
 
 impl PluginManagerHandle {
-    /// Checks if the plugin manager is available
+    /// Checks if the plugin manager is available.
+    ///
+    /// Returns `true` if the manager's channel is open and ready to receive commands.
     pub fn is_available(&self) -> bool {
         !self.sender.is_closed()
     }

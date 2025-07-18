@@ -13,6 +13,7 @@ use crate::ingestion::AsyncWalker;
 use async_trait::async_trait;
 use std::path::Path;
 use std::sync::Arc;
+use tokio::sync::RwLock;
 use tokio_stream::StreamExt;
 use log::{info, warn};
 
@@ -22,7 +23,7 @@ pub struct DetectorScheduler {
     ast_provider: Arc<dyn AstProvider>,
     plugin_manager: Option<PluginManagerHandle>,
     aggregator: Arc<dyn AnalysisAggregator>,
-    file_detectors: Vec<Box<dyn AnalysisDetector + Send + Sync>>,
+    file_detectors: Arc<RwLock<Vec<Box<dyn AnalysisDetector + Send + Sync>>>>,
     cycle_detector: CycleDetector,
 }
 
@@ -40,14 +41,15 @@ impl DetectorScheduler {
             ast_provider,
             plugin_manager,
             aggregator,
-            file_detectors,
+            file_detectors: Arc::new(RwLock::new(file_detectors)),
             cycle_detector: CycleDetector::new(),
         }
     }
     
     /// Adds a detector to the scheduler
-    pub async fn add_detector(&mut self, detector: Box<dyn AnalysisDetector + Send + Sync>) -> Result<(), UveddiError> {
-        self.file_detectors.push(detector);
+    pub async fn add_detector(&self, detector: Box<dyn AnalysisDetector + Send + Sync>) -> Result<(), UveddiError> {
+        let mut detectors = self.file_detectors.write().await;
+        detectors.push(detector);
         Ok(())
     }
     
@@ -80,23 +82,26 @@ impl DetectorScheduler {
         let mut all_issues = Vec::new();
         
         // Run file-level detectors
-        for detector in &self.file_detectors {
-            let detector_name = detector.get_detector_name();
-            
-            // Check if detector is enabled
-            if !self.config_service.is_detector_enabled(&detector_name) {
-                continue;
-            }
-            
-            match detector.detect_issues(&parsed_file).await {
-                Ok(mut issues) => {
-                    info!("Detector {} found {} issues in {}", 
-                          detector_name, issues.len(), file_path.display());
-                    all_issues.append(&mut issues);
+        {
+            let detectors = self.file_detectors.read().await;
+            for detector in detectors.iter() {
+                let detector_name = detector.get_detector_name();
+                
+                // Check if detector is enabled
+                if !self.config_service.is_detector_enabled(&detector_name) {
+                    continue;
                 }
-                Err(e) => {
-                    warn!("Error running detector {} on {}: {}", 
-                          detector_name, file_path.display(), e);
+                
+                match detector.detect_issues(&parsed_file).await {
+                    Ok(mut issues) => {
+                        info!("Detector {} found {} issues in {}", 
+                              detector_name, issues.len(), file_path.display());
+                        all_issues.append(&mut issues);
+                    }
+                    Err(e) => {
+                        warn!("Error running detector {} on {}: {}", 
+                              detector_name, file_path.display(), e);
+                    }
                 }
             }
         }
@@ -231,18 +236,21 @@ impl DetectorSchedulerTrait for DetectorScheduler {
         }
         
         // Run other graph-based detectors
-        for detector in &self.file_detectors {
-            let detector_name = detector.get_detector_name();
-            
-            if !self.config_service.is_detector_enabled(&detector_name) {
-                continue;
-            }
-            
-            // Some detectors can also work on graphs
-            let graph_detector_issues = detector.detect(graph);
-            if !graph_detector_issues.is_empty() {
-                info!("Graph detector {} found {} issues", detector_name, graph_detector_issues.len());
-                graph_issues.extend(graph_detector_issues);
+        {
+            let detectors = self.file_detectors.read().await;
+            for detector in detectors.iter() {
+                let detector_name = detector.get_detector_name();
+                
+                if !self.config_service.is_detector_enabled(&detector_name) {
+                    continue;
+                }
+                
+                // Some detectors can also work on graphs
+                let graph_detector_issues = detector.detect(graph);
+                if !graph_detector_issues.is_empty() {
+                    info!("Graph detector {} found {} issues", detector_name, graph_detector_issues.len());
+                    graph_issues.extend(graph_detector_issues);
+                }
             }
         }
         
@@ -288,7 +296,8 @@ mod tests {
         let scheduler = create_test_scheduler().await;
         
         // Scheduler should be created successfully
-        assert_eq!(scheduler.file_detectors.len(), 1);
+        let detectors = scheduler.file_detectors.read().await;
+        assert_eq!(detectors.len(), 1);
     }
     
     #[tokio::test]
