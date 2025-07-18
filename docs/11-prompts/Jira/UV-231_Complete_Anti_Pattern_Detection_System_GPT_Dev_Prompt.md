@@ -23,16 +23,17 @@ You are tasked with completing the implementation of the anti-pattern detection 
 
 ### ❌ **What Still Needs Implementation**
 
-#### 1. **Plugin Integration in Engine** (Critical)
-- **File**: `src/analysis/engine.rs` line 868
-- **Issue**: `// TODO: Implement proper plugin adapter integration`
-- **Impact**: Plugin system cannot be used as detectors in analysis pipeline
+#### 1. **Plugin Adapter Creation** (Critical - 2-3 hours)
+- **File**: `src/analysis/components/plugin_manager.rs` line 391
+- **Issue**: `// TODO: Implement proper adapter creation`
+- **Current**: Returns `Ok(None)` with warning instead of creating adapter
+- **Impact**: Plugin adapters cannot be created for use as detectors
 
-#### 2. **Plugin Manager TODOs** (Critical)
-- **File**: `src/analysis/components/plugin_manager.rs`
-- **Line 146**: `// TODO: Implement actual plugin execution logic`
-- **Line 169**: `// TODO: Implement actual plugin loading logic`
-- **Impact**: Plugin manager is a stub implementation
+#### 2. **Engine Integration Missing** (Critical - 1-2 hours)  
+- **File**: `src/analysis/engine.rs` line 877
+- **Issue**: Plugin adapters retrieved but not added to DetectorScheduler
+- **Current**: `// TODO: Implement proper plugin adapter integration`
+- **Impact**: Plugins not integrated into analysis pipeline
 
 #### 3. **Hardcoded Anti-Pattern Type IDs** (Medium)
 - **tight_coupling.rs**: `anti_pattern_type_id: 1` (lines 343, 500)
@@ -45,50 +46,80 @@ You are tasked with completing the implementation of the anti-pattern detection 
 
 ## 🔧 **Implementation Tasks**
 
-### **Task 1: Complete Plugin Integration in Analysis Engine**
-**Priority**: Critical
-**File**: `src/analysis/engine.rs`
-**Location**: Line 868
-
-```rust
-// Current TODO:
-// TODO: Implement proper plugin adapter integration
-
-// Required Implementation:
-// 1. Enable plugin adapters to be added as detectors
-// 2. Integrate with existing detector pipeline
-// 3. Handle plugin loading/unloading during analysis
-// 4. Ensure proper error handling and resource cleanup
-```
-
-**Implementation Strategy**:
-- Remove the TODO comment and implement plugin adapter integration
-- Use the existing `WasmPluginDetectorAdapter` from `plugin_adapter.rs`
-- Integrate with the component-based architecture using `PluginManagerHandle`
-- Ensure plugins can be dynamically loaded and used as `AnalysisDetector` instances
-
-### **Task 2: Complete Plugin Manager Implementation**
-**Priority**: Critical
+### **Task 1: Complete Plugin Adapter Creation** 
+**Priority**: Critical | **Estimated Time**: 2-3 hours
 **File**: `src/analysis/components/plugin_manager.rs`
-**Locations**: Lines 146, 169
+**Location**: Line 391
 
 ```rust
-// Current TODOs:
-// Line 146: TODO: Implement actual plugin execution logic
-// Line 169: TODO: Implement actual plugin loading logic
+// Current Implementation (BROKEN):
+match plugin_engine.get_plugin_adapter(&plugin_id_typed).await {
+    Some(_adapter) => {
+        // TODO: Implement proper adapter creation
+        warn!("Plugin {} found but adapter creation not fully implemented yet", plugin_id);
+        Ok(None)  // ← This breaks the integration!
+    }
+    None => Ok(None),
+}
 
 // Required Implementation:
-// 1. Connect to WasmPluginEngine for actual plugin operations
-// 2. Implement proper async plugin execution
-// 3. Handle plugin lifecycle management
-// 4. Implement resource monitoring and cleanup
+match plugin_engine.get_plugin_adapter(&plugin_id_typed).await {
+    Some(wasm_adapter) => {
+        // Create WasmPluginDetectorAdapter from the WASM adapter
+        let detector_adapter = WasmPluginDetectorAdapter::new(
+            plugin_id_typed.clone(),
+            Arc::new(RwLock::new(self.plugin_engine.as_ref().unwrap().clone()))
+        ).await?;
+        Ok(Some(detector_adapter))
+    }
+    None => Ok(None),
+}
 ```
 
 **Implementation Strategy**:
-- Replace TODO stubs with actual `WasmPluginEngine` integration
-- Implement proper async plugin execution using the existing engine
-- Add error handling and resource management
-- Ensure thread-safe plugin operations
+- Replace the TODO stub with actual `WasmPluginDetectorAdapter::new()` call
+- Use the existing plugin engine reference from `self.plugin_engine`
+- Handle async adapter creation properly
+- Add proper error handling for adapter creation failures
+
+### **Task 2: Complete Engine Integration**
+**Priority**: Critical | **Estimated Time**: 1-2 hours  
+**File**: `src/analysis/engine.rs`
+**Location**: Line 877
+
+```rust
+// Current Implementation (INCOMPLETE):
+match plugin_manager.get_plugin_adapter(&plugin_id).await {
+    Ok(Some(adapter)) => {
+        // Add the adapter to the detector scheduler
+        // TODO: Implement proper plugin adapter integration  ← Missing integration!
+    }
+    Ok(None) => { /* ... */ }
+    Err(e) => { /* ... */ }
+}
+
+// Required Implementation:
+match plugin_manager.get_plugin_adapter(&plugin_id).await {
+    Ok(Some(adapter)) => {
+        // Add the adapter to the detector scheduler
+        self.detector_scheduler.add_detector(Box::new(adapter)).await?;
+        added_detectors += 1;
+        info!("Added plugin detector: {}", plugin_id);
+    }
+    Ok(None) => {
+        warn!("Plugin {} exists but adapter creation failed", plugin_id);
+    }
+    Err(e) => {
+        warn!("Failed to get adapter for plugin {}: {}", plugin_id, e);
+    }
+}
+```
+
+**Implementation Strategy**:
+- Add the adapter to the detector scheduler using `add_detector()`
+- Implement proper error handling and logging
+- Track the number of successfully added detectors
+- Ensure the integration follows the existing pattern
 
 ### **Task 3: Fix Hardcoded Anti-Pattern Type IDs**
 **Priority**: Medium
