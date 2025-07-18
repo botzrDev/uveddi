@@ -218,6 +218,17 @@ impl AnalysisDetector for WasmPluginDetectorAdapter {
 unsafe impl Send for WasmPluginDetectorAdapter {}
 unsafe impl Sync for WasmPluginDetectorAdapter {}
 
+impl std::fmt::Debug for WasmPluginDetectorAdapter {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("WasmPluginDetectorAdapter")
+            .field("plugin_id", &self.plugin_id)
+            .field("manifest", &self.manifest)
+            .field("plugin_engine", &"<WasmPluginEngine>")
+            .field("anti_pattern_types", &self.anti_pattern_types)
+            .finish()
+    }
+}
+
 /// Factory for creating WASM plugin detector adapters
 ///
 /// This factory provides convenient methods for creating adapters from

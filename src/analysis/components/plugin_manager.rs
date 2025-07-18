@@ -8,6 +8,7 @@ use super::config_service::ConfigurationService;
 use crate::database::models::ArchitecturalIssue;
 use crate::error::UveddiError;
 use crate::plugins::WasmPluginEngine;
+use crate::analysis::AnalysisDetector;
 
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -130,6 +131,18 @@ impl PluginManager {
                     warn!("Failed to send plugin stats response - receiver dropped");
                 }
             }
+            PluginCommand::ListLoadedPlugins { responder } => {
+                let result = self.list_loaded_plugins().await;
+                if let Err(_) = responder.send(result) {
+                    warn!("Failed to send plugin list response - receiver dropped");
+                }
+            }
+            PluginCommand::GetPluginAdapter { plugin_id, responder } => {
+                let result = self.get_plugin_adapter(&plugin_id).await;
+                if let Err(_) = responder.send(result) {
+                    warn!("Failed to send plugin adapter response - receiver dropped");
+                }
+            }
         }
     }
     
@@ -143,15 +156,74 @@ impl PluginManager {
         let start_time = Instant::now();
         
         if let Some(ref mut plugin_engine) = self.plugin_engine {
-            // TODO: Implement actual plugin execution logic
-            // For now, return empty results
-            let execution_time = start_time.elapsed();
-            self.record_execution(&plugin_id, execution_time);
+            // Get the plugin adapter from the engine
+            let plugin_id_typed = crate::plugins::types::PluginId::from_name(&plugin_id);
             
-            info!("Executed plugin {} on file {} in {:?}", 
-                  plugin_id, source_file_path.display(), execution_time);
-            
-            Ok(Vec::new()) // Empty results for now
+            match plugin_engine.get_plugin_adapter(&plugin_id_typed).await {
+                Some(adapter) => {
+                    // Create a ParsedFile from the path and AST
+                    let source_content = match tokio::fs::read_to_string(&source_file_path).await {
+                        Ok(content) => content,
+                        Err(e) => {
+                            return Err(UveddiError::PluginError {
+                                plugin: plugin_id,
+                                plugin_type: "WASM".to_string(),
+                                message: format!("Failed to read source file: {}", e),
+                                suggestion: "Check if file exists and is readable".to_string(),
+                                source: None,
+                            });
+                        }
+                    };
+                    
+                    let parsed_file = crate::ast::ParsedFile {
+                        file_path: std::sync::Arc::new(source_file_path.clone()),
+                        language: self.detect_language_from_path(&source_file_path),
+                        tree: Some((*ast).clone()),
+                        source: std::sync::Arc::new(source_content),
+                        custom_ast: std::sync::Arc::new(None),
+                        modified_at: std::fs::metadata(&source_file_path)
+                            .and_then(|m| m.modified())
+                            .unwrap_or_else(|_| std::time::SystemTime::now()),
+                    };
+                    
+                    // Execute the plugin through the adapter
+                    match adapter.detect_issues(&parsed_file).await {
+                        Ok(issues) => {
+                            let execution_time = start_time.elapsed();
+                            self.record_execution(&plugin_id, execution_time);
+                            
+                            info!("Executed plugin {} on file {} in {:?}, found {} issues", 
+                                  plugin_id, source_file_path.display(), execution_time, issues.len());
+                            
+                            Ok(issues)
+                        }
+                        Err(e) => {
+                            let execution_time = start_time.elapsed();
+                            self.record_execution(&plugin_id, execution_time);
+                            
+                            error!("Plugin {} execution failed on file {}: {}", 
+                                   plugin_id, source_file_path.display(), e);
+                            
+                            Err(UveddiError::PluginError {
+                                plugin: plugin_id,
+                                plugin_type: "WASM".to_string(),
+                                message: format!("Plugin execution failed: {}", e),
+                                suggestion: "Check plugin implementation and file format".to_string(),
+                                source: None,
+                            })
+                        }
+                    }
+                }
+                None => {
+                    Err(UveddiError::PluginError {
+                        plugin: plugin_id,
+                        plugin_type: "WASM".to_string(),
+                        message: "Plugin not found or not loaded".to_string(),
+                        suggestion: "Load the plugin first".to_string(),
+                        source: None,
+                    })
+                }
+            }
         } else {
             Err(UveddiError::PluginError {
                 plugin: plugin_id,
@@ -166,20 +238,63 @@ impl PluginManager {
     /// Loads a plugin from a file path
     async fn load_plugin(&mut self, plugin_path: PathBuf) -> Result<String, UveddiError> {
         if let Some(ref mut plugin_engine) = self.plugin_engine {
-            // TODO: Implement actual plugin loading logic
-            let plugin_id = format!("plugin_{}", self.execution_stats.loaded_plugins.len());
-            
-            self.execution_stats.loaded_plugins.insert(
-                plugin_id.clone(),
-                PluginInfo {
-                    id: plugin_id.clone(),
-                    executions: 0,
-                    total_time: Duration::default(),
+            // Load the plugin binary
+            let plugin_binary = tokio::fs::read(&plugin_path).await.map_err(|e| {
+                UveddiError::PluginError {
+                    plugin: plugin_path.display().to_string(),
+                    plugin_type: "WASM".to_string(),
+                    message: format!("Failed to read plugin file: {}", e),
+                    suggestion: "Check if file exists and is readable".to_string(),
+                    source: None,
                 }
-            );
+            })?;
             
-            info!("Loaded plugin from {:?} with ID {}", plugin_path, plugin_id);
-            Ok(plugin_id)
+            // Create a basic manifest from the plugin path
+            let plugin_name = plugin_path.file_stem()
+                .and_then(|s| s.to_str())
+                .unwrap_or("unknown_plugin")
+                .to_string();
+            
+            let manifest = crate::plugins::registry::PluginManifest {
+                name: plugin_name.clone(),
+                version: "1.0.0".to_string(),
+                author: "Unknown".to_string(),
+                description: format!("Plugin loaded from {}", plugin_path.display()),
+                permissions: vec![],
+                supported_languages: vec!["rust".to_string(), "javascript".to_string(), "python".to_string()],
+                anti_pattern_types: vec!["god-object".to_string(), "dead-code".to_string()],
+                signature: None,
+            };
+            
+            // Install the plugin in the engine
+            match plugin_engine.install_plugin(manifest, plugin_binary).await {
+                Ok(plugin_id) => {
+                    let plugin_id_str = plugin_id.to_string();
+                    
+                    // Record the plugin in our stats
+                    self.execution_stats.loaded_plugins.insert(
+                        plugin_id_str.clone(),
+                        PluginInfo {
+                            id: plugin_id_str.clone(),
+                            executions: 0,
+                            total_time: Duration::default(),
+                        }
+                    );
+                    
+                    info!("Successfully loaded plugin {} from {}", plugin_id_str, plugin_path.display());
+                    Ok(plugin_id_str)
+                }
+                Err(e) => {
+                    error!("Failed to install plugin from {}: {}", plugin_path.display(), e);
+                    Err(UveddiError::PluginError {
+                        plugin: plugin_name,
+                        plugin_type: "WASM".to_string(),
+                        message: format!("Failed to install plugin: {}", e),
+                        suggestion: "Check if the plugin file is valid WASM".to_string(),
+                        source: None,
+                    })
+                }
+            }
         } else {
             Err(UveddiError::PluginError {
                 plugin: "unknown".to_string(),
@@ -242,6 +357,53 @@ impl PluginManager {
             total_executions: self.execution_stats.total_executions,
             average_execution_time_ms,
             memory_usage_bytes: 0, // TODO: Implement memory monitoring
+        }
+    }
+    
+    /// Lists all loaded plugins
+    async fn list_loaded_plugins(&self) -> Result<Vec<String>, UveddiError> {
+        if let Some(ref plugin_engine) = self.plugin_engine {
+            let loaded_plugins = plugin_engine.list_loaded_plugins().await;
+            Ok(loaded_plugins.into_iter().map(|id| id.to_string()).collect())
+        } else {
+            Ok(self.execution_stats.loaded_plugins.keys().cloned().collect())
+        }
+    }
+    
+    /// Detects the source language from a file path
+    fn detect_language_from_path(&self, path: &std::path::Path) -> crate::ast::SourceLanguage {
+        use crate::ast::SourceLanguage;
+        
+        match path.extension().and_then(|ext| ext.to_str()) {
+            Some("rs") => SourceLanguage::Rust,
+            Some("py") => SourceLanguage::Python,
+            Some("js") | Some("ts") | Some("jsx") | Some("tsx") => SourceLanguage::JavaScript,
+            _ => SourceLanguage::JavaScript, // Default fallback
+        }
+    }
+    
+    /// Gets a plugin adapter for a specific plugin
+    async fn get_plugin_adapter(&self, plugin_id: &str) -> Result<Option<crate::analysis::WasmPluginDetectorAdapter>, UveddiError> {
+        if let Some(ref plugin_engine) = self.plugin_engine {
+            let plugin_id_typed = crate::plugins::types::PluginId::from_name(plugin_id);
+            
+            match plugin_engine.get_plugin_adapter(&plugin_id_typed).await {
+                Some(_adapter) => {
+                    // TODO: Implement proper adapter creation
+                    // For now, we'll indicate that the plugin exists but adapter creation isn't ready
+                    warn!("Plugin {} found but adapter creation not fully implemented yet", plugin_id);
+                    Ok(None)
+                }
+                None => Ok(None),
+            }
+        } else {
+            Err(UveddiError::PluginError {
+                plugin: plugin_id.to_string(),
+                plugin_type: "WASM".to_string(),
+                message: "Plugin engine not initialized".to_string(),
+                suggestion: "Enable plugins in configuration".to_string(),
+                source: None,
+            })
         }
     }
 }
@@ -372,6 +534,61 @@ impl PluginManagerHandleTrait for PluginManagerHandle {
         receiver.await.map_err(|_| {
             UveddiError::PluginError {
                 plugin: "unknown".to_string(),
+                plugin_type: "WASM".to_string(),
+                message: "Plugin manager response channel closed".to_string(),
+                suggestion: "Check plugin manager status".to_string(),
+                source: None,
+            }
+        })?
+    }
+    
+    async fn list_loaded_plugins(&self) -> Result<Vec<String>, UveddiError> {
+        let (responder, receiver) = oneshot::channel();
+        
+        let command = PluginCommand::ListLoadedPlugins { responder };
+        
+        self.sender.send(command).await.map_err(|_| {
+            UveddiError::PluginError {
+                plugin: "unknown".to_string(),
+                plugin_type: "WASM".to_string(),
+                message: "Plugin manager actor is not running".to_string(),
+                suggestion: "Restart the plugin manager".to_string(),
+                source: None,
+            }
+        })?;
+        
+        receiver.await.map_err(|_| {
+            UveddiError::PluginError {
+                plugin: "unknown".to_string(),
+                plugin_type: "WASM".to_string(),
+                message: "Plugin manager response channel closed".to_string(),
+                suggestion: "Check plugin manager status".to_string(),
+                source: None,
+            }
+        })?
+    }
+    
+    async fn get_plugin_adapter(&self, plugin_id: &str) -> Result<Option<crate::analysis::WasmPluginDetectorAdapter>, UveddiError> {
+        let (responder, receiver) = oneshot::channel();
+        
+        let command = PluginCommand::GetPluginAdapter { 
+            plugin_id: plugin_id.to_string(),
+            responder 
+        };
+        
+        self.sender.send(command).await.map_err(|_| {
+            UveddiError::PluginError {
+                plugin: plugin_id.to_string(),
+                plugin_type: "WASM".to_string(),
+                message: "Plugin manager actor is not running".to_string(),
+                suggestion: "Restart the plugin manager".to_string(),
+                source: None,
+            }
+        })?;
+        
+        receiver.await.map_err(|_| {
+            UveddiError::PluginError {
+                plugin: plugin_id.to_string(),
                 plugin_type: "WASM".to_string(),
                 message: "Plugin manager response channel closed".to_string(),
                 suggestion: "Check plugin manager status".to_string(),

@@ -45,6 +45,12 @@ impl DetectorScheduler {
         }
     }
     
+    /// Adds a detector to the scheduler
+    pub async fn add_detector(&mut self, detector: Box<dyn AnalysisDetector + Send + Sync>) -> Result<(), UveddiError> {
+        self.file_detectors.push(detector);
+        Ok(())
+    }
+    
     /// Analyzes a single file with all enabled detectors
     async fn analyze_file(&self, file_path: &Path) -> Result<Vec<ArchitecturalIssue>, UveddiError> {
         info!("Analyzing file: {}", file_path.display());

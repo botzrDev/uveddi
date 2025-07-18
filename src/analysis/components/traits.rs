@@ -121,6 +121,15 @@ pub enum PluginCommand {
     GetStats {
         responder: tokio::sync::oneshot::Sender<Result<PluginStats, UveddiError>>,
     },
+    /// List loaded plugins
+    ListLoadedPlugins {
+        responder: tokio::sync::oneshot::Sender<Result<Vec<String>, UveddiError>>,
+    },
+    /// Get plugin adapter
+    GetPluginAdapter {
+        plugin_id: String,
+        responder: tokio::sync::oneshot::Sender<Result<Option<crate::analysis::WasmPluginDetectorAdapter>, UveddiError>>,
+    },
 }
 
 /// Plugin statistics for monitoring
@@ -150,4 +159,10 @@ pub trait PluginManagerHandle: Send + Sync {
     
     /// Get plugin statistics
     async fn get_stats(&self) -> Result<PluginStats, UveddiError>;
+    
+    /// List loaded plugins
+    async fn list_loaded_plugins(&self) -> Result<Vec<String>, UveddiError>;
+    
+    /// Get plugin adapter for a specific plugin
+    async fn get_plugin_adapter(&self, plugin_id: &str) -> Result<Option<crate::analysis::WasmPluginDetectorAdapter>, UveddiError>;
 }
