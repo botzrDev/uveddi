@@ -16,6 +16,12 @@ readme = "README.md"
 # Feature flags for modular compilation
 [features]
 default = ["local-ai", "image-rendering", "tree-sitter", "memory-optimization"]
+# Chaos engineering and load testing
+chaos = ["fail", "statrs", "ndarray-stats"]
+# Performance regression detection
+regression-detection = ["changepoint", "linfa", "influxdb2"]
+# SLA monitoring and validation
+sla-monitoring = ["metrics-exporter-prometheus", "tokio-metrics"]
 # Tree-sitter parsing functionality (enabled by default)
 tree-sitter = [
     "dep:tree-sitter",
@@ -130,6 +136,26 @@ confy = "1.0"
 
 # State Persistence (for TUI state)
 persisted = "1.0"
+
+# Chaos Engineering and Load Testing Dependencies (UV-82)
+# Failpoint injection for chaos engineering
+fail = { version = "0.5", optional = true }
+# Statistical analysis for performance regression detection
+statrs = { version = "0.16", optional = true }
+ndarray-stats = { version = "0.5", optional = true }
+# Change point detection for regression analysis
+changepoint = { version = "0.2", optional = true }
+# Machine learning for anomaly detection
+linfa = { version = "0.7", optional = true }
+# InfluxDB client for time series data
+influxdb2 = { version = "0.5", optional = true }
+# Prometheus metrics exporter
+metrics-exporter-prometheus = { version = "0.15", optional = true }
+# Tokio runtime metrics
+tokio-metrics = { version = "0.3", optional = true }
+# Additional metrics and observability
+metrics = "0.23"
+metrics-tracing-context = "0.16"
 
 # Security and RBAC Dependencies (UV-247)
 # HTTP middleware and services
