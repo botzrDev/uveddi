@@ -680,7 +680,7 @@ impl LongMethodsDetector {
                         *complexity += 1;
                     }
 
-                    traverse_complexity(node, complexity);
+                    traverse_complexity(&child_node, complexity);
 
                     if !cursor.goto_next_sibling() {
                         break;

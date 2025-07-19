@@ -5,7 +5,7 @@ class WorkerPool {
   constructor() {
     this.logger = console;
     this.workers = [];
-    this.maxWorkers = process.env.MAX_WORKERS || 3;
+    this.maxWorkers = process.env.MAX_WORKERS || 8;
     this.currentWorker = 0;
     this.browser = null;
   }
@@ -147,32 +147,43 @@ class WorkerPool {
   }
 
   async getWorker() {
-    // Simple round-robin selection
+    // Optimized worker selection with queueing
     let attempts = 0;
-    while (attempts < this.maxWorkers * 2) {
-      // UV-8: Optionally pre-allocate rendering buffers from pool for hot path
-      const worker = this.workers[this.currentWorker];
-      if (!worker.buffer) {
-        worker.buffer = bufferPool.acquire();
-      }
-      this.currentWorker = (this.currentWorker + 1) % this.maxWorkers;
-      
-      if (!worker.busy) {
-        worker.busy = true;
-        worker.requestCount++;
-        return worker;
+    const maxAttempts = this.maxWorkers * 4; // Increased retry attempts
+    
+    while (attempts < maxAttempts) {
+      // Try to find an available worker
+      for (let i = 0; i < this.maxWorkers; i++) {
+        const workerIndex = (this.currentWorker + i) % this.maxWorkers;
+        const worker = this.workers[workerIndex];
+        
+        if (!worker.busy) {
+          // UV-8: Optionally pre-allocate rendering buffers from pool for hot path
+          if (!worker.buffer) {
+            worker.buffer = bufferPool.acquire();
+          }
+          
+          worker.busy = true;
+          worker.requestCount++;
+          this.currentWorker = (workerIndex + 1) % this.maxWorkers;
+          return worker;
+        }
       }
       
       attempts++;
-      await new Promise(resolve => setTimeout(resolve, 10));
+      // Shorter wait time for better responsiveness
+      await new Promise(resolve => setTimeout(resolve, 5));
     }
     
-    const error = new Error('No available workers');
+    const error = new Error('No available workers after maximum attempts');
     this.logger.error({
       msg: 'Worker pool exhausted',
       error: error.message,
       severity: 'Error',
-      category: 'WorkerPoolExhausted'
+      category: 'WorkerPoolExhausted',
+      attempts: attempts,
+      maxWorkers: this.maxWorkers,
+      busyWorkers: this.workers.filter(w => w.busy).length
     }, 'No available workers');
     throw error;
   }

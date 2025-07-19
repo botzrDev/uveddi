@@ -262,6 +262,7 @@ pub mod report;
 pub mod resilience;
 pub mod security;
 pub mod semantic_search;
+pub mod sla;
 #[cfg(feature = "tui")]
 pub mod tui;
 

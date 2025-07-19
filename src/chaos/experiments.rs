@@ -77,7 +77,7 @@ pub struct ExperimentResult {
 }
 
 /// Manages the execution of chaos experiments
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ExperimentRunner {
     failpoint_manager: Arc<FailpointManager>,
     active_experiments: Arc<RwLock<HashMap<Uuid, ChaosExperiment>>>,
@@ -253,24 +253,88 @@ impl ExperimentRunner {
 
     /// Activate a specific failure mode
     async fn activate_failure_mode(&self, failure_mode: &FailureMode) -> Result<()> {
+        use crate::chaos::failpoints::{FailpointSpec, FailpointType};
+        
         match failure_mode {
             FailureMode::NetworkLatency(delay) => {
-                self.failpoint_manager.activate_network_latency(*delay).await?;
+                let spec = FailpointSpec {
+                    description: "Network latency injection".to_string(),
+                    probability: 1.0,
+                    failure_type: FailpointType::Delay(*delay),
+                    max_triggers: None,
+                    duration: Some(Duration::from_secs(60)),
+                };
+                self.failpoint_manager.configure_failpoint("network_latency", spec)?;
             }
             FailureMode::DatabaseUnavailable => {
-                self.failpoint_manager.activate_database_failure().await?;
+                let spec = FailpointSpec {
+                    description: "Database unavailable injection".to_string(),
+                    probability: 1.0,
+                    failure_type: FailpointType::Return("Database unavailable".to_string()),
+                    max_triggers: None,
+                    duration: Some(Duration::from_secs(60)),
+                };
+                self.failpoint_manager.configure_failpoint("database_failure", spec)?;
             }
-            FailureMode::MemoryPressure(bytes) => {
-                self.failpoint_manager.activate_memory_pressure(*bytes).await?;
+            FailureMode::MemoryPressure(_bytes) => {
+                let spec = FailpointSpec {
+                    description: "Memory pressure injection".to_string(),
+                    probability: 1.0,
+                    failure_type: FailpointType::Custom("memory_pressure".to_string()),
+                    max_triggers: None,
+                    duration: Some(Duration::from_secs(60)),
+                };
+                self.failpoint_manager.configure_failpoint("memory_pressure", spec)?;
             }
             FailureMode::CpuExhaustion => {
-                self.failpoint_manager.activate_cpu_exhaustion().await?;
+                let spec = FailpointSpec {
+                    description: "CPU exhaustion injection".to_string(),
+                    probability: 1.0,
+                    failure_type: FailpointType::Custom("cpu_exhaustion".to_string()),
+                    max_triggers: None,
+                    duration: Some(Duration::from_secs(60)),
+                };
+                self.failpoint_manager.configure_failpoint("cpu_exhaustion", spec)?;
             }
             FailureMode::DiskIoFailure => {
-                self.failpoint_manager.activate_disk_failure().await?;
+                let spec = FailpointSpec {
+                    description: "Disk I/O failure injection".to_string(),
+                    probability: 1.0,
+                    failure_type: FailpointType::Return("Disk I/O failure".to_string()),
+                    max_triggers: None,
+                    duration: Some(Duration::from_secs(60)),
+                };
+                self.failpoint_manager.configure_failpoint("disk_failure", spec)?;
             }
-            FailureMode::ServiceTimeout => {
-                self.failpoint_manager.activate_service_timeout().await?;
+            FailureMode::ServiceTimeout(duration) => {
+                let spec = FailpointSpec {
+                    description: "Service timeout injection".to_string(),
+                    probability: 1.0,
+                    failure_type: FailpointType::Delay(*duration),
+                    max_triggers: None,
+                    duration: Some(Duration::from_secs(60)),
+                };
+                self.failpoint_manager.configure_failpoint("service_timeout", spec)?;
+            }
+            FailureMode::ServiceUnavailable => {
+                let spec = FailpointSpec {
+                    description: "Service unavailable injection".to_string(),
+                    probability: 1.0,
+                    failure_type: FailpointType::Return("Service unavailable".to_string()),
+                    max_triggers: None,
+                    duration: Some(Duration::from_secs(60)),
+                };
+                self.failpoint_manager.configure_failpoint("service_unavailable", spec)?;
+            }
+            FailureMode::Custom(name) => {
+                let spec = FailpointSpec {
+                    description: format!("Custom failure: {}", name),
+                    probability: 1.0,
+                    failure_type: FailpointType::Custom(name.clone()),
+                    max_triggers: None,
+                    duration: Some(Duration::from_secs(60)),
+                };
+                self.failpoint_manager.configure_failpoint(&format!("custom_{}", name), spec)?;
             }
         }
         Ok(())
@@ -280,22 +344,28 @@ impl ExperimentRunner {
     async fn deactivate_failure_mode(&self, failure_mode: &FailureMode) -> Result<()> {
         match failure_mode {
             FailureMode::NetworkLatency(_) => {
-                self.failpoint_manager.deactivate_network_latency().await?;
+                self.failpoint_manager.remove_failpoint("network_latency")?;
             }
             FailureMode::DatabaseUnavailable => {
-                self.failpoint_manager.deactivate_database_failure().await?;
+                self.failpoint_manager.remove_failpoint("database_failure")?;
             }
             FailureMode::MemoryPressure(_) => {
-                self.failpoint_manager.deactivate_memory_pressure().await?;
+                self.failpoint_manager.remove_failpoint("memory_pressure")?;
             }
             FailureMode::CpuExhaustion => {
-                self.failpoint_manager.deactivate_cpu_exhaustion().await?;
+                self.failpoint_manager.remove_failpoint("cpu_exhaustion")?;
             }
             FailureMode::DiskIoFailure => {
-                self.failpoint_manager.deactivate_disk_failure().await?;
+                self.failpoint_manager.remove_failpoint("disk_failure")?;
             }
-            FailureMode::ServiceTimeout => {
-                self.failpoint_manager.deactivate_service_timeout().await?;
+            FailureMode::ServiceTimeout(_duration) => {
+                self.failpoint_manager.remove_failpoint("service_timeout")?;
+            }
+            FailureMode::ServiceUnavailable => {
+                self.failpoint_manager.remove_failpoint("service_unavailable")?;
+            }
+            FailureMode::Custom(name) => {
+                self.failpoint_manager.remove_failpoint(&format!("custom_{}", name))?;
             }
         }
         Ok(())
@@ -374,18 +444,18 @@ impl SafetyMonitor {
     pub async fn validate_experiment(&self, experiment: &ChaosExperiment) -> Result<()> {
         // Check blast radius constraints
         match &experiment.config.blast_radius {
-            BlastRadius::Single => {
+            BlastRadius::SingleService => {
                 // Single service impact is always safe
             }
-            BlastRadius::Service => {
+            BlastRadius::MultiService => {
                 // Service-level impact requires additional validation
-                if experiment.config.duration > Duration::from_minutes(10) {
+                if experiment.config.duration > Duration::from_secs(10 * 60) {
                     return Err(anyhow!("Service-level experiments limited to 10 minutes"));
                 }
             }
-            BlastRadius::System => {
+            BlastRadius::UnitTest => {
                 // System-level impact requires strict controls
-                if experiment.config.duration > Duration::from_minutes(5) {
+                if experiment.config.duration > Duration::from_secs(5 * 60) {
                     return Err(anyhow!("System-level experiments limited to 5 minutes"));
                 }
             }
@@ -416,7 +486,7 @@ mod tests {
         let config = ExperimentConfig {
             name: "test-experiment".to_string(),
             failure_mode: FailureMode::NetworkLatency(Duration::from_millis(100)),
-            blast_radius: BlastRadius::Single,
+            blast_radius: BlastRadius::SingleService,
             duration: Duration::from_secs(60),
             safety_checks: Vec::new(),
         };
@@ -434,7 +504,7 @@ mod tests {
         let config = ExperimentConfig {
             name: "test-experiment".to_string(),
             failure_mode: FailureMode::NetworkLatency(Duration::from_millis(100)),
-            blast_radius: BlastRadius::Single,
+            blast_radius: BlastRadius::SingleService,
             duration: Duration::from_secs(60),
             safety_checks: Vec::new(),
         };
@@ -461,7 +531,7 @@ mod tests {
         let config = ExperimentConfig {
             name: "test-experiment".to_string(),
             failure_mode: FailureMode::NetworkLatency(Duration::from_millis(100)),
-            blast_radius: BlastRadius::Single,
+            blast_radius: BlastRadius::SingleService,
             duration: Duration::from_secs(60),
             safety_checks: Vec::new(),
         };

@@ -80,8 +80,8 @@ async function renderDiagram({ mermaidCode, format = 'svg', width = 1200, height
       throw new Error('Mermaid diagram compilation failed');
     }
     
-    // Wait for rendering to complete (quality-aware timeout)
-    const waitTime = qualityConfig.complexity === 'low' ? 50 : 100;
+    // Wait for rendering to complete (optimized timeout)
+    const waitTime = qualityConfig.complexity === 'low' ? 25 : 50;
     await worker.page.waitForTimeout(waitTime);
     
     let data;

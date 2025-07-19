@@ -77,7 +77,9 @@
       "Bash(awk:*)",
       "Bash(RUST_BACKTRACE=1 cargo test test_role_permission_check --lib -- --nocapture)",
       "Bash(node:*)",
-      "Bash(timeout 30 cargo test observability --lib)"
+      "Bash(timeout 30 cargo test observability --lib)",
+      "Bash(RUST_BACKTRACE=1 cargo test analysis::detectors::anti_patterns::long_methods::tests::test_calculate_method_metrics_invalid_name --lib)",
+      "Bash(npm run:*)"
     ],
     "deny": []
   }

@@ -351,12 +351,18 @@ impl AnalysisConfig {
 
     /// Get a list of configured detector names
     pub fn get_detector_names(&self) -> Vec<String> {
-        self.detectors.keys().cloned().collect()
+        let mut names: std::collections::HashSet<String> = std::collections::HashSet::new();
+        names.extend(self.detectors.keys().cloned());
+        names.extend(self.enhanced_detectors.keys().cloned());
+        names.extend(self.standard_detectors.keys().cloned());
+        names.into_iter().collect()
     }
 
     /// Check if a specific detector is configured
     pub fn has_detector(&self, name: &str) -> bool {
-        self.detectors.contains_key(name)
+        self.detectors.contains_key(name) 
+        || self.enhanced_detectors.contains_key(name) 
+        || self.standard_detectors.contains_key(name)
     }
 
     /// Add a detector configuration

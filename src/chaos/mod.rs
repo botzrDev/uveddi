@@ -11,16 +11,10 @@
 pub mod config;
 pub mod experiments;
 pub mod failpoints;
-pub mod middleware;
-pub mod observability;
-pub mod simulation;
 
 pub use config::{ChaosConfig, ExperimentConfig, BlastRadius, FailureMode};
 pub use experiments::{ChaosExperiment, ExperimentResult, ExperimentRunner};
 pub use failpoints::{FailpointManager, FailpointConfig};
-pub use middleware::ChaosMiddleware;
-pub use observability::{ChaosMetrics, ExperimentObserver};
-pub use simulation::DeterministicSimulation;
 
 use anyhow::Result;
 use std::time::Duration;
@@ -31,20 +25,17 @@ use uuid::Uuid;
 pub struct ChaosEngine {
     config: ChaosConfig,
     experiment_runner: ExperimentRunner,
-    metrics: ChaosMetrics,
     active_experiments: std::sync::Arc<std::sync::RwLock<std::collections::HashMap<Uuid, ChaosExperiment>>>,
 }
 
 impl ChaosEngine {
     /// Create a new chaos engineering engine
     pub fn new(config: ChaosConfig) -> Result<Self> {
-        let metrics = ChaosMetrics::new(&config)?;
-        let experiment_runner = ExperimentRunner::new(config.clone(), metrics.clone())?;
+        let experiment_runner = ExperimentRunner::new(config.clone())?;
         
         Ok(Self {
             config,
             experiment_runner,
-            metrics,
             active_experiments: std::sync::Arc::new(std::sync::RwLock::new(std::collections::HashMap::new())),
         })
     }
@@ -64,16 +55,14 @@ impl ChaosEngine {
         
         // Start the experiment
         let runner = self.experiment_runner.clone();
-        let metrics = self.metrics.clone();
         
         tokio::spawn(async move {
-            if let Err(e) = runner.execute_experiment(experiment).await {
+            if let Err(e) = runner.start_experiment(experiment).await {
                 tracing::error!(
                     experiment_id = %experiment_id,
                     error = %e,
                     "Chaos experiment failed"
                 );
-                metrics.record_experiment_failure(experiment_id, &e.to_string());
             }
         });
         
