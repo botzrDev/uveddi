@@ -3,7 +3,7 @@ use std::fs;
 use std::path::Path;
 use std::sync::Arc;
 use tempfile::TempDir;
-use uveddi::analysis::buffer::{FixedBuffer, FixedString, LargeBuffer, MediumBuffer, SmallBuffer};
+use uveddi::analysis::buffer::{FixedString, LargeBuffer, MediumBuffer, SmallBuffer};
 use uveddi::analysis::cache::ast::{AstCache, CacheConfig};
 use uveddi::analysis::{detectors::anti_patterns::GodObjectDetector, AnalysisEngine, AnalysisDetector};
 
@@ -143,8 +143,8 @@ fn create_mock_parsed_file(file_path: &Path, source: &str) -> uveddi::ast::Parse
             source: Arc::new(source.to_string()),
             tree,
             language: uveddi::ast::tree_sitter_impl::SourceLanguage::Rust,
-            custom_ast: None,
-            modified_at: None,
+            custom_ast: Arc::new(None),
+            modified_at: std::time::SystemTime::now(),
         }
     }
     #[cfg(not(feature = "tree-sitter"))]
@@ -154,8 +154,8 @@ fn create_mock_parsed_file(file_path: &Path, source: &str) -> uveddi::ast::Parse
             source: Arc::new(source.to_string()),
             tree: None,
             language: uveddi::ast::tree_sitter_impl::SourceLanguage::Rust,
-            custom_ast: None,
-            modified_at: None,
+            custom_ast: Arc::new(None),
+            modified_at: std::time::SystemTime::now(),
         }
     }
 }
@@ -355,7 +355,7 @@ fn bench_error_handling(c: &mut Criterion) {
                     Err(uveddi::error::UveddiError::ConfigError { 
                         message: format!("Error {}", i),
                         location: "benchmark".to_string(),
-                        suggestion: None,
+                        suggestion: "Check configuration".to_string(),
                     })
                 } else {
                     Ok(i)

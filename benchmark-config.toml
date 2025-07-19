@@ -1,0 +1,121 @@
+# UV-60: Benchmark Configuration for Uveddi Project
+[general]
+output_format = "json"
+features = ["tree-sitter", "memory-optimization"]
+baseline_branch = "main"
+regression_threshold_percent = 15.0
+
+[rust_benchmarks]
+# Criterion configuration for Rust benchmarks
+enabled = true
+output_dir = "target/criterion"
+html_reports = true
+baseline_comparison = true
+
+# Benchmark groups and their configurations
+[rust_benchmarks.groups]
+god_object_detection = { file_counts = [10, 50, 100, 500], timeout_seconds = 300 }
+analysis_pipeline = { file_counts = [10, 50, 100], timeout_seconds = 600 }
+memory_usage = { iterations = 100, timeout_seconds = 120 }
+const_generic_buffers = { buffer_sizes = [256, 1024, 8192], timeout_seconds = 60 }
+const_generic_strings = { iterations = 100, timeout_seconds = 60 }
+ast_cache_configurations = { cache_sizes = ["small", "medium", "large"], timeout_seconds = 180 }
+error_handling = { iterations = 1000, timeout_seconds = 30 }
+concurrent_operations = { worker_counts = [1, 2, 4, 8], timeout_seconds = 300 }
+performance_regression = { baseline_comparison = true, timeout_seconds = 240 }
+
+[rust_benchmarks.thresholds]
+# Performance regression thresholds for different metrics
+execution_time_ms = 15.0          # 15% slower execution time
+memory_usage_mb = 20.0            # 20% more memory usage
+throughput_ops_per_sec = 10.0     # 10% less throughput
+error_rate_percent = 5.0          # 5% more errors
+cache_hit_rate_percent = 5.0      # 5% lower cache hit rate
+
+[javascript_benchmarks]
+# Rendering service benchmark configuration
+enabled = true
+service_url = "http://localhost:3001"
+baseline_file = "rendering-service/benchmark-baseline.json"
+
+[javascript_benchmarks.test_scenarios]
+# Different rendering complexity tests
+simple = { iterations = 50, concurrent_requests = 10 }
+medium = { iterations = 50, concurrent_requests = 10 }
+complex = { iterations = 50, concurrent_requests = 10 }
+sequence = { iterations = 50, concurrent_requests = 10 }
+
+[javascript_benchmarks.load_scenarios]
+# Load testing scenarios
+light = { concurrent = 5, iterations = 10 }
+normal = { concurrent = 10, iterations = 50 }
+peak = { concurrent = 50, iterations = 200 }
+stress = { concurrent = 200, iterations = 500 }
+
+[javascript_benchmarks.thresholds]
+# UV-78 performance targets
+uv78_target_compliance_percent = 95.0  # <100ms SVG rendering target
+overall_success_rate_percent = 95.0    # Minimum success rate
+cache_speedup_factor = 2.0              # Minimum cache improvement
+mean_response_time_ms = 50.0            # Target mean response time
+p95_response_time_ms = 100.0            # Target P95 response time
+p99_response_time_ms = 200.0            # Target P99 response time
+
+[scalability_testing]
+# Project size testing configuration
+enabled = true
+test_sizes = [1000, 5000, 10000]
+
+[scalability_testing.size_expectations]
+# Expected performance for different project sizes
+"1000" = { max_time_ms = 100, max_memory_mb = 50, max_cpu_percent = 50 }
+"5000" = { max_time_ms = 500, max_memory_mb = 200, max_cpu_percent = 70 }
+"10000" = { max_time_ms = 2000, max_memory_mb = 500, max_cpu_percent = 85 }
+
+[alerts]
+# Alert configuration
+enabled = true
+slack_webhook_env = "SLACK_WEBHOOK_URL"
+email_recipients_env = "ALERT_EMAIL_RECIPIENTS"
+github_issue_creation = false
+
+[alerts.severity_thresholds]
+# When to trigger different alert levels
+low = 10.0      # 10% degradation
+medium = 20.0   # 20% degradation  
+high = 35.0     # 35% degradation
+critical = 50.0 # 50% degradation
+
+[historical_tracking]
+# Performance history and trending
+enabled = true
+max_entries = 100
+trend_window_size = 10
+baseline_update_frequency = "weekly"
+data_retention_days = 90
+
+[dashboard]
+# Performance dashboard configuration
+enabled = true
+update_frequency_minutes = 5
+auto_refresh = true
+show_trends = true
+show_comparisons = true
+
+[dashboard.charts]
+# Dashboard visualization options
+execution_time_trend = true
+memory_usage_trend = true
+throughput_analysis = true
+error_rate_monitoring = true
+cache_performance = true
+scalability_matrix = true
+
+[ci_integration]
+# CI/CD pipeline integration settings
+fail_on_regression = true
+store_baselines_on_main = true
+generate_pr_comments = true
+upload_artifacts = true
+daily_scheduled_runs = true
+daily_run_time = "02:00"  # UTC time

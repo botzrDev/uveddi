@@ -521,14 +521,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if !companies.is_empty() {
         println!("   Top Companies:");
         for (company, count) in &companies {
-            println!("     {}: {} members", company, count);
+            println!("     {company}: {count} members");
         }
     }
 
     if !all_languages.is_empty() {
         println!("   Programming Language Interests:");
         for (language, count) in &all_languages {
-            println!("     {}: {} members", language, count);
+            println!("     {language}: {count} members");
         }
     }
 

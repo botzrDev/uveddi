@@ -10,11 +10,13 @@ use uveddi::resilience::health::{Alert, HealthMonitor, HealthStatus};
 /// Placeholder documentation for public items
 /// Shared state for HTTP handlers
 #[derive(Clone)]
+#[allow(dead_code)]
 pub struct AppState {
     pub health_monitor: Arc<Mutex<HealthMonitor>>,
 }
 
 /// Initialize the HTTP server
+#[allow(dead_code)]
 pub async fn run_server(
     health_monitor: Arc<Mutex<HealthMonitor>>,
 ) -> Result<(), Box<dyn std::error::Error>> {
@@ -34,6 +36,7 @@ pub async fn run_server(
 }
 
 /// Basic health endpoint
+#[allow(dead_code)]
 async fn health_handler(State(state): State<AppState>) -> (StatusCode, &'static str) {
     let monitor = state.health_monitor.lock().await;
     match monitor.get_status().await.score {
@@ -43,12 +46,14 @@ async fn health_handler(State(state): State<AppState>) -> (StatusCode, &'static 
 }
 
 /// Detailed health status endpoint
+#[allow(dead_code)]
 async fn detailed_health_handler(State(state): State<AppState>) -> Json<HealthStatus> {
     let monitor = state.health_monitor.lock().await;
     Json(monitor.get_detailed_status().await)
 }
 
 /// Active alerts endpoint
+#[allow(dead_code)]
 async fn alerts_handler(State(state): State<AppState>) -> Json<Vec<Alert>> {
     let monitor = state.health_monitor.lock().await;
     Json(monitor.get_alerts().await)

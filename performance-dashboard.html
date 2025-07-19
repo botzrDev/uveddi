@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UV-60 Performance Dashboard</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 20px; background-color: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .header { text-align: center; margin-bottom: 30px; }
+        .grade { font-size: 3em; font-weight: bold; margin: 10px 0; }
+        .grade.A { color: #22c55e; }
+        .grade.B { color: #84cc16; }
+        .grade.C { color: #eab308; }
+        .grade.D { color: #f97316; }
+        .grade.F { color: #ef4444; }
+        .section { margin: 20px 0; }
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+        .metric-card { background: #f8fafc; padding: 15px; border-radius: 6px; border-left: 4px solid #3b82f6; }
+        .metric-value { font-size: 2em; font-weight: bold; color: #1e40af; }
+        .metric-label { color: #64748b; font-size: 0.9em; }
+        .status-indicator { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 8px; }
+        .status-success { background-color: #22c55e; }
+        .status-warning { background-color: #eab308; }
+        .status-error { background-color: #ef4444; }
+        .benchmarks-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .benchmarks-table th, .benchmarks-table td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        .benchmarks-table th { background-color: #f1f5f9; font-weight: 600; }
+        .footer { text-align: center; margin-top: 30px; color: #64748b; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 UV-60 Performance Dashboard</h1>
+            <div class="grade F">F</div>
+            <p>Overall Performance Grade</p>
+            <p><em>Generated: 2025-07-18 22:59:35 UTC</em></p>
+        </div>
+        
+        <div class="section">
+            <h2>📊 Performance Overview</h2>
+            <div class="metrics-grid">
+
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>UV-60: Automated Performance Monitoring • <a href="https://github.com/your-org/uveddi">Uveddi Project</a></p>
+        </div>
+    </div>
+</body>
+</html>

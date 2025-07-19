@@ -52,6 +52,7 @@ impl Default for RenderingServiceConfig {
 }
 
 /// HTTP client for the rendering service
+#[derive(Debug)]
 pub struct ImageRenderer {
     client: Client,
     config: RenderingServiceConfig,

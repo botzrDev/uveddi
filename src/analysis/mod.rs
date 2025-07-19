@@ -118,6 +118,7 @@ pub mod extractors;
 pub mod graph;
 pub mod memory;
 pub mod mermaid_generator;
+pub mod performance;
 pub mod plugin_adapter;
 pub mod robust_parser;
 pub mod semantic;

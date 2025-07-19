@@ -1,0 +1,395 @@
+{
+  "rendering_times": [
+    {
+      "secs": 1,
+      "nanos": 815099212
+    },
+    {
+      "secs": 0,
+      "nanos": 4521142
+    },
+    {
+      "secs": 0,
+      "nanos": 5469832
+    },
+    {
+      "secs": 0,
+      "nanos": 3368103
+    },
+    {
+      "secs": 0,
+      "nanos": 3626396
+    },
+    {
+      "secs": 0,
+      "nanos": 3606377
+    },
+    {
+      "secs": 0,
+      "nanos": 4795046
+    },
+    {
+      "secs": 0,
+      "nanos": 3716606
+    },
+    {
+      "secs": 0,
+      "nanos": 6475892
+    },
+    {
+      "secs": 0,
+      "nanos": 3792131
+    },
+    {
+      "secs": 0,
+      "nanos": 3321536
+    },
+    {
+      "secs": 0,
+      "nanos": 4516541
+    },
+    {
+      "secs": 0,
+      "nanos": 3921162
+    },
+    {
+      "secs": 0,
+      "nanos": 3917967
+    },
+    {
+      "secs": 0,
+      "nanos": 3441335
+    },
+    {
+      "secs": 0,
+      "nanos": 3384677
+    },
+    {
+      "secs": 0,
+      "nanos": 4897078
+    },
+    {
+      "secs": 0,
+      "nanos": 5688398
+    },
+    {
+      "secs": 0,
+      "nanos": 4801015
+    },
+    {
+      "secs": 0,
+      "nanos": 6460838
+    },
+    {
+      "secs": 0,
+      "nanos": 491638141
+    },
+    {
+      "secs": 0,
+      "nanos": 3554806
+    },
+    {
+      "secs": 0,
+      "nanos": 3453176
+    },
+    {
+      "secs": 0,
+      "nanos": 5142492
+    },
+    {
+      "secs": 0,
+      "nanos": 3619608
+    },
+    {
+      "secs": 0,
+      "nanos": 3421753
+    },
+    {
+      "secs": 0,
+      "nanos": 3386118
+    },
+    {
+      "secs": 0,
+      "nanos": 3438260
+    },
+    {
+      "secs": 0,
+      "nanos": 4086263
+    },
+    {
+      "secs": 0,
+      "nanos": 3904980
+    },
+    {
+      "secs": 0,
+      "nanos": 4607918
+    },
+    {
+      "secs": 0,
+      "nanos": 3369973
+    },
+    {
+      "secs": 0,
+      "nanos": 3889233
+    },
+    {
+      "secs": 0,
+      "nanos": 3852382
+    },
+    {
+      "secs": 0,
+      "nanos": 3153618
+    },
+    {
+      "secs": 0,
+      "nanos": 3993100
+    },
+    {
+      "secs": 0,
+      "nanos": 3122231
+    },
+    {
+      "secs": 0,
+      "nanos": 5543224
+    },
+    {
+      "secs": 0,
+      "nanos": 3819172
+    },
+    {
+      "secs": 0,
+      "nanos": 3089947
+    },
+    {
+      "secs": 0,
+      "nanos": 614766193
+    },
+    {
+      "secs": 0,
+      "nanos": 5813593
+    },
+    {
+      "secs": 0,
+      "nanos": 3732546
+    },
+    {
+      "secs": 0,
+      "nanos": 5719429
+    },
+    {
+      "secs": 0,
+      "nanos": 5969395
+    },
+    {
+      "secs": 0,
+      "nanos": 3430943
+    },
+    {
+      "secs": 0,
+      "nanos": 3551987
+    },
+    {
+      "secs": 0,
+      "nanos": 3720880
+    },
+    {
+      "secs": 0,
+      "nanos": 3371978
+    },
+    {
+      "secs": 0,
+      "nanos": 3190444
+    },
+    {
+      "secs": 0,
+      "nanos": 3429767
+    },
+    {
+      "secs": 0,
+      "nanos": 3874703
+    },
+    {
+      "secs": 0,
+      "nanos": 3982251
+    },
+    {
+      "secs": 0,
+      "nanos": 3275528
+    },
+    {
+      "secs": 0,
+      "nanos": 5962396
+    },
+    {
+      "secs": 0,
+      "nanos": 3421095
+    },
+    {
+      "secs": 0,
+      "nanos": 3180256
+    },
+    {
+      "secs": 0,
+      "nanos": 3253908
+    },
+    {
+      "secs": 0,
+      "nanos": 5047761
+    },
+    {
+      "secs": 0,
+      "nanos": 5169483
+    },
+    {
+      "secs": 0,
+      "nanos": 186543971
+    },
+    {
+      "secs": 0,
+      "nanos": 3951186
+    },
+    {
+      "secs": 0,
+      "nanos": 4022226
+    },
+    {
+      "secs": 0,
+      "nanos": 3246463
+    },
+    {
+      "secs": 0,
+      "nanos": 3498172
+    },
+    {
+      "secs": 0,
+      "nanos": 3266900
+    },
+    {
+      "secs": 0,
+      "nanos": 6878229
+    },
+    {
+      "secs": 0,
+      "nanos": 3415380
+    },
+    {
+      "secs": 0,
+      "nanos": 3248523
+    },
+    {
+      "secs": 0,
+      "nanos": 3389152
+    },
+    {
+      "secs": 0,
+      "nanos": 3510185
+    },
+    {
+      "secs": 0,
+      "nanos": 3410140
+    },
+    {
+      "secs": 0,
+      "nanos": 3341200
+    },
+    {
+      "secs": 0,
+      "nanos": 7342095
+    },
+    {
+      "secs": 0,
+      "nanos": 3472792
+    },
+    {
+      "secs": 0,
+      "nanos": 3800167
+    },
+    {
+      "secs": 0,
+      "nanos": 3213710
+    },
+    {
+      "secs": 0,
+      "nanos": 3179944
+    },
+    {
+      "secs": 0,
+      "nanos": 3714219
+    },
+    {
+      "secs": 0,
+      "nanos": 3513686
+    }
+  ],
+  "memory_usage": {
+    "peak_usage_bytes": 0,
+    "average_usage_bytes": 0,
+    "allocation_count": 80,
+    "deallocation_count": 80,
+    "memory_leaks_detected": false
+  },
+  "cache_performance": {
+    "hit_rate": 0.8,
+    "miss_rate": 0.19999999999999996,
+    "cache_size_bytes": 0,
+    "average_lookup_time_ms": 2.3,
+    "eviction_count": 0
+  },
+  "bottlenecks": [
+    {
+      "component": "Outlier Performance",
+      "impact_level": "Critical",
+      "description": "Maximum rendering time (1815.00ms) indicates severe outliers",
+      "recommended_fix": "Implement timeouts, circuit breakers, and consistent resource allocation",
+      "measured_impact_ms": 1615.0
+    }
+  ],
+  "diagram_types": {
+    "sequence": {
+      "diagram_type": "sequence",
+      "sample_count": 20,
+      "average_time_ms": 12.55,
+      "p95_time_ms": 7.0,
+      "p99_time_ms": 186.0,
+      "success_rate": 1.0,
+      "complexity_score": 75
+    },
+    "medium": {
+      "diagram_type": "medium",
+      "sample_count": 20,
+      "average_time_ms": 27.7,
+      "p95_time_ms": 5.0,
+      "p99_time_ms": 491.0,
+      "success_rate": 1.0,
+      "complexity_score": 50
+    },
+    "simple": {
+      "diagram_type": "simple",
+      "sample_count": 20,
+      "average_time_ms": 94.35,
+      "p95_time_ms": 6.0,
+      "p99_time_ms": 1815.0,
+      "success_rate": 1.0,
+      "complexity_score": 10
+    },
+    "complex": {
+      "diagram_type": "complex",
+      "sample_count": 20,
+      "average_time_ms": 34.15,
+      "p95_time_ms": 5.0,
+      "p99_time_ms": 614.0,
+      "success_rate": 1.0,
+      "complexity_score": 200
+    }
+  },
+  "percentile_analysis": {
+    "p50_ms": 3.0,
+    "p90_ms": 5.0,
+    "p95_ms": 7.0,
+    "p99_ms": 614.0,
+    "p999_ms": 1815.0,
+    "min_ms": 3.0,
+    "max_ms": 1815.0
+  },
+  "timestamp": "2025-07-18T23:54:59.717197555+00:00"
+}

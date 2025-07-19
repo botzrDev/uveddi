@@ -1,5 +1,3 @@
-use log::debug;
-use rayon::prelude::*;
 use std::fs;
 use std::path::{Path, PathBuf};
 #[cfg(feature = "tree-sitter")]

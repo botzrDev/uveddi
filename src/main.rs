@@ -80,7 +80,7 @@ enum Commands {
     /// Performs comprehensive static analysis on the specified path, detecting
     /// anti-patterns, architectural issues, and code quality problems. Optionally
     /// integrates with AI providers for enhanced explanations and recommendations.
-    Analyze(AnalyzeCommand),
+    Analyze(Box<AnalyzeCommand>),
 
     /// Manage Uveddi configuration settings
     ///
