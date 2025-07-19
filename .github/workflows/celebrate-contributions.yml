@@ -1,0 +1,128 @@
+name: Celebrate Contributions
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  celebrate:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Check contributor history and celebrate
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { context } = require('@actions/github');
+            const author = context.payload.pull_request.user.login;
+            const prNumber = context.payload.pull_request.number;
+            const prTitle = context.payload.pull_request.title;
+            
+            // Get all merged PRs by this author
+            const prs = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'closed',
+              sort: 'created',
+              direction: 'asc'
+            });
+            
+            const authorPRs = prs.data.filter(pr => 
+              pr.user.login === author && pr.merged_at
+            );
+            
+            const contributionCount = authorPRs.length;
+            
+            // Generate appropriate celebration based on milestone
+            let celebrationMessage = '';
+            let labels = [];
+            
+            if (contributionCount === 1) {
+              // First contribution celebration
+              celebrationMessage = `🎉 **Congratulations @${author} on your first contribution to Uveddi!**
+
+Thank you for your excellent work on "${prTitle}"! Your contribution makes Uveddi better for everyone.
+
+**What you accomplished:**
+- Successfully completed your first pull request
+- Followed our contribution guidelines
+- Added value to the project
+
+**Next steps:**
+- 🔍 Check out more [good first issues](https://github.com/${context.repo.owner}/${context.repo.repo}/labels/good-first-issue)
+- 💬 Join our [community discussions](https://github.com/${context.repo.owner}/${context.repo.repo}/discussions)
+- 🤝 Consider helping other new contributors
+- 🌟 Follow our project for updates
+
+Welcome to the Uveddi family! 🚀
+
+*This is an automated celebration message for your awesome first contribution.*`;
+              
+              labels = ['first-contribution'];
+              
+            } else if (contributionCount === 3) {
+              // Regular contributor milestone
+              celebrationMessage = `🌟 **Regular Contributor Achievement Unlocked!**
+
+@${author} has become a valued regular contributor with ${contributionCount} merged contributions!
+
+**New perks unlocked:**
+- 🎯 Priority access to interesting tasks
+- 💬 Invitation to contributor Discord channel
+- 🚀 Early access to beta features
+- 📰 Monthly contributor spotlight eligibility
+
+Keep up the amazing work! 🏆`;
+
+              labels = ['regular-contributor'];
+              
+            } else if (contributionCount === 10) {
+              // Community champion milestone
+              celebrationMessage = `👑 **Community Champion Status Achieved!**
+
+@${author} has demonstrated exceptional commitment with ${contributionCount} contributions!
+
+**Champion Benefits:**
+- 🏛️ Invitation to maintainer meetings
+- 📋 Input on project roadmap
+- 🎁 Champion merchandise package
+- ⭐ Recognition in project README
+
+Thank you for building our community! 🎖️`;
+
+              labels = ['community-champion'];
+            }
+            
+            // Post celebration comment
+            if (celebrationMessage) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: celebrationMessage
+              });
+              
+              // Add milestone labels
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                labels: labels
+              });
+            }
+            
+            // Update contributors file for first contribution
+            if (contributionCount === 1) {
+              // This would trigger another workflow to update CONTRIBUTORS.md
+              await github.rest.repos.createDispatchEvent({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                event_type: 'new-contributor',
+                client_payload: {
+                  username: author,
+                  pr_number: prNumber,
+                  contribution_date: new Date().toISOString()
+                }
+              });
+            }

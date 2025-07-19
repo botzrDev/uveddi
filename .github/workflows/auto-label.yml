@@ -1,0 +1,120 @@
+name: Auto Label Issues and PRs
+
+on:
+  issues:
+    types: [opened, edited]
+  pull_request:
+    types: [opened, edited, synchronize]
+
+jobs:
+  auto-label:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Auto Label Based on Content
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { context } = require('@actions/github');
+            const issue = context.payload.issue || context.payload.pull_request;
+            const isIssue = !!context.payload.issue;
+            
+            if (!issue) return;
+            
+            const title = issue.title.toLowerCase();
+            const body = (issue.body || '').toLowerCase();
+            const content = title + ' ' + body;
+            
+            const labels = [];
+            
+            // Skill-based labeling
+            if (content.includes('documentation') || content.includes('readme') || content.includes('docs') || content.includes('guide')) {
+              labels.push('skill/documentation');
+            }
+            if (content.includes('frontend') || content.includes('ui') || content.includes('react') || content.includes('typescript') || content.includes('css')) {
+              labels.push('skill/frontend');
+            }
+            if (content.includes('backend') || content.includes('rust') || content.includes('engine') || content.includes('analysis') || content.includes('detector')) {
+              labels.push('skill/backend');
+            }
+            if (content.includes('test') || content.includes('testing') || content.includes('spec') || content.includes('coverage')) {
+              labels.push('skill/testing');
+            }
+            if (content.includes('ci') || content.includes('cd') || content.includes('docker') || content.includes('deploy') || content.includes('workflow')) {
+              labels.push('skill/devops');
+            }
+            
+            // Difficulty estimation based on keywords
+            const beginnerKeywords = [
+              'typo', 'fix link', 'update readme', 'add example', 'simple fix',
+              'documentation update', 'improve error message', 'add test',
+              'fix spelling', 'update guide', 'small improvement'
+            ];
+            
+            const intermediateKeywords = [
+              'new feature', 'implement', 'add support', 'enhance', 'improve',
+              'integration', 'cli enhancement', 'report format', 'configuration'
+            ];
+            
+            const advancedKeywords = [
+              'refactor', 'optimize', 'architecture', 'performance', 'core engine',
+              'language support', 'plugin system', 'distributed', 'scalability'
+            ];
+            
+            if (beginnerKeywords.some(keyword => content.includes(keyword))) {
+              labels.push('difficulty/beginner');
+              // Also check for quick wins
+              if (content.includes('typo') || content.includes('fix link') || content.includes('simple')) {
+                labels.push('time/quick-win');
+              }
+            } else if (advancedKeywords.some(keyword => content.includes(keyword))) {
+              labels.push('difficulty/advanced');
+            } else if (intermediateKeywords.some(keyword => content.includes(keyword))) {
+              labels.push('difficulty/intermediate');
+              if (content.includes('weekend') || content.includes('feature')) {
+                labels.push('time/weekend-project');
+              }
+            }
+            
+            // Good first issue detection
+            const goodFirstIssueKeywords = [
+              'good first issue', 'beginner friendly', 'easy fix', 'newcomer',
+              'documentation update', 'add example', 'improve error message',
+              'first contribution', 'starter task', 'simple enhancement'
+            ];
+            
+            if (goodFirstIssueKeywords.some(keyword => content.includes(keyword))) {
+              labels.push('good-first-issue', 'beginner-friendly');
+            }
+            
+            // Time-based labeling for specific patterns
+            if (content.includes('quick') || content.includes('small') || content.includes('minor')) {
+              labels.push('time/quick-win');
+            }
+            if (content.includes('weekend') || content.includes('project') || content.includes('comprehensive')) {
+              labels.push('time/weekend-project');
+            }
+            
+            // Apply labels if any were identified
+            if (labels.length > 0) {
+              try {
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  labels: labels
+                });
+                
+                console.log(`Applied labels: ${labels.join(', ')} to ${isIssue ? 'issue' : 'PR'} #${issue.number}`);
+              } catch (error) {
+                console.error('Error applying labels:', error);
+              }
+            } else {
+              console.log(`No automatic labels applied to ${isIssue ? 'issue' : 'PR'} #${issue.number}`);
+            }

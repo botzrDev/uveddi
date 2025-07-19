@@ -62,6 +62,18 @@ cd docs && mdbook build
 
 We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
+## 🤝 New Contributors Welcome!
+
+Looking to contribute? We have plenty of [good first issues](https://github.com/botzrDev/uveddi/labels/good-first-issue) perfect for getting started!
+
+- 📚 **Documentation**: Improve guides and examples
+- 🧪 **Testing**: Add test coverage and cases  
+- 🎨 **Frontend**: Enhance UI components
+- 🔧 **Backend**: Fix bugs and add features
+- 🚀 **DevOps**: Improve CI/CD and deployment
+
+Check our [Good First Issues Guide](docs/09-community/GOOD_FIRST_ISSUES.md) to find the perfect task for your skill level.
+
 ## License
 
 MIT - See [LICENSE](LICENSE) for details.

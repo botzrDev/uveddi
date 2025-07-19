@@ -43,6 +43,34 @@ We welcome contributions from the community! This guide will help you get starte
    - Reference related issues
    - Ensure all tests pass
 
+## 🚀 Good First Issues
+
+New to Uveddi? Start here! We've curated beginner-friendly tasks to help you get familiar with the codebase.
+
+### Finding Your First Task
+1. Browse issues labeled [`good-first-issue`](https://github.com/botzrDev/uveddi/labels/good-first-issue)
+2. Check our [Good First Issues Guide](docs/09-community/GOOD_FIRST_ISSUES.md)
+3. Review the [Contribution Difficulty Matrix](docs/09-community/CONTRIBUTION_MATRIX.md)
+
+### Difficulty Levels
+- 🟢 **Beginner**: 1-4 hours, minimal context needed
+- 🟡 **Intermediate**: 4-8 hours, some project knowledge required  
+- 🔴 **Advanced**: 8+ hours, deep understanding needed
+
+### Getting Started Checklist
+- [ ] Read this contributing guide completely
+- [ ] Set up your development environment
+- [ ] Run tests to ensure everything works: `cargo test`
+- [ ] Pick a task labeled `good-first-issue`
+- [ ] Comment on the issue to claim it
+- [ ] Ask questions if anything is unclear
+
+### Need Help?
+- **Questions**: Comment on your chosen issue
+- **Community**: Join our GitHub Discussions
+- **Mentorship**: Request a mentor for guidance
+- **Stuck?**: Don't hesitate to ask for help!
+
 ## Code Style
 
 - Follow Rustfmt configuration (see rustfmt.toml)
