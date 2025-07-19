@@ -1,11 +1,11 @@
 # UV-49 Performance Baseline Analysis Report
 
-**Generated:** 2025-07-19T00:16:05.618480354+00:00
+**Generated:** 2025-07-19T13:20:33.217152532+00:00
 
 ## Executive Summary
 
 - **Total Measurements:** 80
-- **Average Rendering Time:** 3.00ms
+- **Average Rendering Time:** 4.00ms
 - **P95 Rendering Time:** 5.00ms
 - **P99 Rendering Time:** 143.00ms
 - **Cache Hit Rate:** 80.0%
@@ -19,43 +19,43 @@
 ## Identified Bottlenecks
 
 ### Outlier Performance (Critical)
-- **Description:** Maximum rendering time (223.00ms) indicates severe outliers
-- **Impact:** 23.00ms
+- **Description:** Maximum rendering time (222.00ms) indicates severe outliers
+- **Impact:** 22.00ms
 - **Recommendation:** Implement timeouts, circuit breakers, and consistent resource allocation
 
 ## Diagram Type Performance
 
+### complex Diagrams
+- **Sample Count:** 20
+- **Average Time:** 14.70ms
+- **P95 Time:** 5.00ms
+- **P99 Time:** 222.00ms
+- **Success Rate:** 100.0%
+- **Complexity Score:** 200
+
+### simple Diagrams
+- **Sample Count:** 20
+- **Average Time:** 9.80ms
+- **P95 Time:** 4.00ms
+- **P99 Time:** 127.00ms
+- **Success Rate:** 100.0%
+- **Complexity Score:** 10
+
 ### medium Diagrams
 - **Sample Count:** 20
 - **Average Time:** 10.00ms
-- **P95 Time:** 5.00ms
-- **P99 Time:** 137.00ms
+- **P95 Time:** 4.00ms
+- **P99 Time:** 132.00ms
 - **Success Rate:** 100.0%
 - **Complexity Score:** 50
 
 ### sequence Diagrams
 - **Sample Count:** 20
-- **Average Time:** 14.35ms
-- **P95 Time:** 4.00ms
-- **P99 Time:** 223.00ms
-- **Success Rate:** 100.0%
-- **Complexity Score:** 75
-
-### simple Diagrams
-- **Sample Count:** 20
-- **Average Time:** 9.10ms
-- **P95 Time:** 4.00ms
-- **P99 Time:** 120.00ms
-- **Success Rate:** 100.0%
-- **Complexity Score:** 10
-
-### complex Diagrams
-- **Sample Count:** 20
-- **Average Time:** 10.50ms
+- **Average Time:** 10.85ms
 - **P95 Time:** 5.00ms
 - **P99 Time:** 143.00ms
 - **Success Rate:** 100.0%
-- **Complexity Score:** 200
+- **Complexity Score:** 75
 
 ## Next Steps for UV-47 Implementation
 

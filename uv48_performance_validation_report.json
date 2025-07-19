@@ -3,18 +3,18 @@
     {
       "test_name": "Single Render Performance",
       "test_type": "SingleRender",
-      "success": true,
-      "duration_ms": 301,
+      "success": false,
+      "duration_ms": 4463,
       "details": {
         "iterations": 9,
         "success_count": 9,
         "failure_count": 0,
-        "average_time_ms": 32.888888888888886,
-        "median_time_ms": 32.0,
-        "p95_time_ms": 38.0,
-        "p99_time_ms": 38.0,
-        "min_time_ms": 29.0,
-        "max_time_ms": 38.0,
+        "average_time_ms": 495.6666666666667,
+        "median_time_ms": 82.0,
+        "p95_time_ms": 2739.0,
+        "p99_time_ms": 2739.0,
+        "min_time_ms": 28.0,
+        "max_time_ms": 2739.0,
         "cache_hit_rate": 0.0,
         "error_messages": []
       }
@@ -23,17 +23,17 @@
       "test_name": "Cache Performance",
       "test_type": "CachePerformance",
       "success": true,
-      "duration_ms": 32,
+      "duration_ms": 283,
       "details": {
         "iterations": 11,
         "success_count": 11,
         "failure_count": 0,
-        "average_time_ms": 2.909090909090909,
+        "average_time_ms": 25.727272727272727,
         "median_time_ms": 0.0,
-        "p95_time_ms": 32.0,
-        "p99_time_ms": 32.0,
+        "p95_time_ms": 283.0,
+        "p99_time_ms": 283.0,
         "min_time_ms": 0.0,
-        "max_time_ms": 32.0,
+        "max_time_ms": 283.0,
         "cache_hit_rate": 0.9090909090909091,
         "error_messages": []
       }
@@ -41,37 +41,44 @@
     {
       "test_name": "Concurrent Load Test",
       "test_type": "ConcurrentLoad",
-      "success": true,
-      "duration_ms": 586,
+      "success": false,
+      "duration_ms": 1495,
       "details": {
         "iterations": 20,
-        "success_count": 20,
-        "failure_count": 0,
-        "average_time_ms": 276.65,
-        "median_time_ms": 319.0,
-        "p95_time_ms": 444.0,
-        "p99_time_ms": 444.0,
-        "min_time_ms": 30.0,
-        "max_time_ms": 444.0,
+        "success_count": 14,
+        "failure_count": 6,
+        "average_time_ms": 723.6428571428571,
+        "median_time_ms": 682.0,
+        "p95_time_ms": 1243.0,
+        "p99_time_ms": 1243.0,
+        "min_time_ms": 319.0,
+        "max_time_ms": 1243.0,
         "cache_hit_rate": 0.0,
-        "error_messages": []
+        "error_messages": [
+          "Request 5: Rendering failed: Invalid response from service: HTTP 500 Internal Server Error",
+          "Request 6: Rendering failed: Invalid response from service: HTTP 500 Internal Server Error",
+          "Request 8: Rendering failed: Invalid response from service: HTTP 500 Internal Server Error",
+          "Request 12: Rendering failed: Invalid response from service: HTTP 500 Internal Server Error",
+          "Request 16: Rendering failed: Invalid response from service: HTTP 500 Internal Server Error",
+          "Request 18: Rendering failed: Invalid response from service: HTTP 500 Internal Server Error"
+        ]
       }
     },
     {
       "test_name": "Consistency Test",
       "test_type": "ConsistencyTest",
       "success": true,
-      "duration_ms": 39,
+      "duration_ms": 511,
       "details": {
         "iterations": 50,
         "success_count": 50,
         "failure_count": 0,
-        "average_time_ms": 0.76,
+        "average_time_ms": 10.14,
         "median_time_ms": 0.0,
         "p95_time_ms": 0.0,
-        "p99_time_ms": 38.0,
+        "p99_time_ms": 507.0,
         "min_time_ms": 0.0,
-        "max_time_ms": 38.0,
+        "max_time_ms": 507.0,
         "cache_hit_rate": 0.0,
         "error_messages": []
       }
@@ -80,30 +87,34 @@
       "test_name": "Stress Test",
       "test_type": "StressTest",
       "success": true,
-      "duration_ms": 756,
+      "duration_ms": 2191,
       "details": {
         "iterations": 12,
-        "success_count": 12,
-        "failure_count": 0,
-        "average_time_ms": 2.5,
+        "success_count": 11,
+        "failure_count": 1,
+        "average_time_ms": 417.45454545454544,
         "median_time_ms": 0.0,
-        "p95_time_ms": 30.0,
-        "p99_time_ms": 30.0,
+        "p95_time_ms": 1581.0,
+        "p99_time_ms": 1581.0,
         "min_time_ms": 0.0,
-        "max_time_ms": 30.0,
+        "max_time_ms": 1581.0,
         "cache_hit_rate": 0.0,
-        "error_messages": []
+        "error_messages": [
+          "Stress test 3: Rendering failed: Invalid response from service: HTTP 500 Internal Server Error"
+        ]
       }
     }
   ],
   "summary": {
     "total_tests": 5,
-    "passed_tests": 5,
-    "failed_tests": 0,
-    "overall_target_compliance": 100.0,
+    "passed_tests": 3,
+    "failed_tests": 2,
+    "overall_target_compliance": 50.0,
     "recommendations": [
-      "All tests passed - system ready for production"
+      "2 test(s) failed - investigate root causes",
+      "Performance target (<50ms) not consistently met - requires optimization",
+      "Concurrent load handling needs improvement - consider connection pooling"
     ]
   },
-  "timestamp": "2025-07-19T00:21:29.506765403+00:00"
+  "timestamp": "2025-07-19T13:19:39.876076962+00:00"
 }

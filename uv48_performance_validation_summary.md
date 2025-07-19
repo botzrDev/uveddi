@@ -1,59 +1,63 @@
 # UV-48 Performance Validation Report
 
-**Generated:** 2025-07-19T00:21:29.506765403+00:00
+**Generated:** 2025-07-19T13:19:39.876076962+00:00
 
 ## Executive Summary
 
 - **Total Tests:** 5
-- **Passed Tests:** 5
-- **Failed Tests:** 0
-- **Success Rate:** 100.0%
-- **Target Compliance:** 100.0%
+- **Passed Tests:** 3
+- **Failed Tests:** 2
+- **Success Rate:** 60.0%
+- **Target Compliance:** 50.0%
 
-**Status:** ✅ VALIDATION PASSED
+**Status:** ❌ VALIDATION FAILED
 
 ## Test Results
 
-### Single Render Performance - ✅ PASS
-- **Duration:** 301ms
+### Single Render Performance - ❌ FAIL
+- **Duration:** 4463ms
 - **Success Rate:** 100.0%
-- **Average Time:** 32.9ms
-- **P95 Time:** 38.0ms
-- **P99 Time:** 38.0ms
+- **Average Time:** 495.7ms
+- **P95 Time:** 2739.0ms
+- **P99 Time:** 2739.0ms
 
 ### Cache Performance - ✅ PASS
-- **Duration:** 32ms
+- **Duration:** 283ms
 - **Success Rate:** 100.0%
-- **Average Time:** 2.9ms
-- **P95 Time:** 32.0ms
-- **P99 Time:** 32.0ms
+- **Average Time:** 25.7ms
+- **P95 Time:** 283.0ms
+- **P99 Time:** 283.0ms
 - **Cache Hit Rate:** 90.9%
 
-### Concurrent Load Test - ✅ PASS
-- **Duration:** 586ms
-- **Success Rate:** 100.0%
-- **Average Time:** 276.6ms
-- **P95 Time:** 444.0ms
-- **P99 Time:** 444.0ms
+### Concurrent Load Test - ❌ FAIL
+- **Duration:** 1495ms
+- **Success Rate:** 70.0%
+- **Average Time:** 723.6ms
+- **P95 Time:** 1243.0ms
+- **P99 Time:** 1243.0ms
 
 ### Consistency Test - ✅ PASS
-- **Duration:** 39ms
+- **Duration:** 511ms
 - **Success Rate:** 100.0%
-- **Average Time:** 0.8ms
+- **Average Time:** 10.1ms
 - **P95 Time:** 0.0ms
-- **P99 Time:** 38.0ms
+- **P99 Time:** 507.0ms
 
 ### Stress Test - ✅ PASS
-- **Duration:** 756ms
-- **Success Rate:** 100.0%
-- **Average Time:** 2.5ms
-- **P95 Time:** 30.0ms
-- **P99 Time:** 30.0ms
+- **Duration:** 2191ms
+- **Success Rate:** 91.7%
+- **Average Time:** 417.5ms
+- **P95 Time:** 1581.0ms
+- **P99 Time:** 1581.0ms
 
 ## Recommendations
 
-1. All tests passed - system ready for production
+1. 2 test(s) failed - investigate root causes
+2. Performance target (<50ms) not consistently met - requires optimization
+3. Concurrent load handling needs improvement - consider connection pooling
 
 ## Next Steps
 
-All validation tests passed. System is ready for UV-12 fine-tuning.
+Address failed test issues before proceeding to UV-12 fine-tuning:
+- Fix Single Render Performance issues
+- Fix Concurrent Load Test issues
