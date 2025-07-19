@@ -67,6 +67,9 @@ reqwest = { version = "0.12.22", features = ["json"], optional = true }  # Make 
 rustls = "0.23.28"  # Force newer rustls to get updated ring
 # Resilience and retry dependencies
 tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "fmt", "registry"] }
+tracing-appender = "0.2"
+prometheus = "0.13"
 rand = "0.8"
 # LRU cache for bounded memory management (UV-152)
 lru = "0.12.0"
@@ -185,3 +188,7 @@ path = "tests/cli_analyze.rs"
 [[test]]
 name = "database_crud"
 path = "tests/database_crud.rs"
+
+[[bench]]
+name = "observability_performance"
+harness = false

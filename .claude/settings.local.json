@@ -76,7 +76,8 @@
       "Bash(sudo lsof:*)",
       "Bash(awk:*)",
       "Bash(RUST_BACKTRACE=1 cargo test test_role_permission_check --lib -- --nocapture)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(timeout 30 cargo test observability --lib)"
     ],
     "deny": []
   }
