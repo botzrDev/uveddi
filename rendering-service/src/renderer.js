@@ -1,5 +1,6 @@
 const workerPool = require('./worker-pool');
 const AdvancedCache = require('./cache');
+const { getQualityMode, getMermaidConfig, getViewportConfig, autoSelectQualityMode } = require('./quality-modes');
 
 // Logger will be passed in from server.js
 let logger = console;
@@ -23,7 +24,7 @@ const cache = new AdvancedCache({
  * @param {number} options.height - Viewport height
  * @returns {Object} Rendered diagram data and metadata
  */
-async function renderDiagram({ mermaidCode, format = 'svg', width = 1200, height = 800 }) {
+async function renderDiagram({ mermaidCode, format = 'svg', width = 1200, height = 800, quality = 'auto' }) {
   const startTime = Date.now();
   
   // Generate content-addressable cache key
@@ -53,11 +54,22 @@ async function renderDiagram({ mermaidCode, format = 'svg', width = 1200, height
   }, `Cache MISS for key: ${cacheKey.substring(0, 8)}... - rendering...`);
   
   // Cache miss - perform actual rendering
+  // Determine quality mode
+  const qualityMode = quality === 'auto' ? autoSelectQualityMode(mermaidCode) : quality;
+  const qualityConfig = getQualityMode(qualityMode);
+  const viewportConfig = getViewportConfig(qualityMode, width, height);
+  
   const worker = await workerPool.getWorker();
   
   try {
-    // Set viewport size
-    await worker.page.setViewportSize({ width, height });
+    // Set viewport size with quality-aware configuration
+    await worker.page.setViewportSize(viewportConfig);
+    
+    // Update Mermaid configuration for this quality mode
+    const mermaidConfig = getMermaidConfig(qualityMode);
+    await worker.page.evaluate((config) => {
+      mermaid.initialize(config);
+    }, mermaidConfig);
     
     // Render the Mermaid diagram
     const success = await worker.page.evaluate(async (code) => {
@@ -68,8 +80,9 @@ async function renderDiagram({ mermaidCode, format = 'svg', width = 1200, height
       throw new Error('Mermaid diagram compilation failed');
     }
     
-    // Wait for rendering to complete
-    await worker.page.waitForTimeout(100);
+    // Wait for rendering to complete (quality-aware timeout)
+    const waitTime = qualityConfig.complexity === 'low' ? 50 : 100;
+    await worker.page.waitForTimeout(waitTime);
     
     let data;
     let actualDimensions;

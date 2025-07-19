@@ -76,7 +76,7 @@ app.delete('/cache', async (req, res) => {
 // Main rendering endpoint
 app.post('/render', async (req, res) => {
   try {
-    const { mermaid_code, format = 'svg', width = 1200, height = 800 } = req.body;
+    const { mermaid_code, format = 'svg', width = 1200, height = 800, quality = 'auto' } = req.body;
     
     if (!mermaid_code) {
       return res.status(400).json({
@@ -96,7 +96,8 @@ app.post('/render', async (req, res) => {
       mermaidCode: mermaid_code,
       format: format.toLowerCase(),
       width: parseInt(width),
-      height: parseInt(height)
+      height: parseInt(height),
+      quality
     });
 
     const renderTime = Date.now() - startTime;

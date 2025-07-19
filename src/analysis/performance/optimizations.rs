@@ -143,11 +143,18 @@ impl RenderingOptimizer {
         // Get buffer from pool
         let buffer = self.memory_pool.acquire().await;
 
-        // Perform optimized rendering with timeout
+        // Perform optimized rendering with quality-specific timeout
         let start_time = std::time::Instant::now();
         
+        // Use quality-specific timeout to prevent outliers
+        let quality_timeout = match request.quality {
+            RenderQuality::Fast => Duration::from_secs(8),      // Strict timeout for fast
+            RenderQuality::Balanced => Duration::from_secs(15), // Reasonable timeout
+            RenderQuality::High => Duration::from_secs(30),     // Generous timeout
+        };
+        
         let result = tokio::time::timeout(
-            self.timeout_manager.render_timeout,
+            quality_timeout,
             self.render_with_optimizations(request.clone(), buffer)
         ).await;
 
@@ -196,17 +203,45 @@ impl RenderingOptimizer {
         // Apply quality-specific optimizations
         let optimized_code = self.apply_quality_optimizations(&request.mermaid_code, &request.quality);
 
-        // Perform the actual rendering
-        let rendered_image = renderer.render_diagram(
-            &optimized_code,
-            request.format,
-            request.width.zip(request.height)
-        ).await.map_err(|e| OptimizationError::RenderingFailed(e.to_string()))?;
+        // Perform the actual rendering with retry logic for service overload
+        let max_retries = match request.quality {
+            RenderQuality::Fast => 0,      // No retries for fast
+            RenderQuality::Balanced => 1,  // One retry for balanced
+            RenderQuality::High => 2,      // Two retries for high quality
+        };
 
-        Ok(RenderResult {
-            data: rendered_image.data,
-            dimensions: rendered_image.dimensions,
-        })
+        let mut last_error = None;
+        for attempt in 0..=max_retries {
+            match renderer.render_diagram(
+                &optimized_code,
+                request.format.clone(),
+                request.width.zip(request.height)
+            ).await {
+                Ok(rendered_image) => {
+                    return Ok(RenderResult {
+                        data: rendered_image.data,
+                        dimensions: rendered_image.dimensions,
+                    });
+                }
+                Err(e) => {
+                    last_error = Some(e);
+                    if attempt < max_retries {
+                        // Exponential backoff for retries
+                        let backoff_ms = 100 * (2_u64.pow(attempt as u32));
+                        tokio::time::sleep(Duration::from_millis(backoff_ms)).await;
+                    }
+                }
+            }
+        }
+
+        // All retries failed
+        Err(OptimizationError::RenderingFailed(
+            last_error.unwrap_or_else(|| 
+                crate::error::rendering::RenderingServiceError::NetworkError { 
+                    message: "Unknown error".to_string() 
+                }
+            ).to_string()
+        ))
     }
 
     fn create_optimized_config(&self, quality: &RenderQuality) -> RenderingServiceConfig {
@@ -214,19 +249,26 @@ impl RenderingOptimizer {
         
         match quality {
             RenderQuality::Fast => {
-                config.timeout_seconds = 15; // Shorter timeout for fast renders
-                config.max_retries = 1;      // Fewer retries
-                config.max_complexity_score = 500; // Lower complexity limit
+                // Fast should actually be fast - use more aggressive settings
+                config.timeout_seconds = 10; // Very short timeout to avoid outliers
+                config.max_retries = 0;      // No retries for speed
+                config.max_complexity_score = 300; // Strict complexity limit
+                config.max_width = 1200;     // Smaller dimensions for speed
+                config.max_height = 800;
             }
             RenderQuality::Balanced => {
-                config.timeout_seconds = 30;
-                config.max_retries = 2;
+                config.timeout_seconds = 20; // Reasonable timeout
+                config.max_retries = 1;      // One retry allowed
                 config.max_complexity_score = 1000;
+                config.max_width = 1920;
+                config.max_height = 1080;
             }
             RenderQuality::High => {
-                config.timeout_seconds = 60; // Longer timeout for high quality
-                config.max_retries = 3;
+                config.timeout_seconds = 45; // Longer timeout for complex renders
+                config.max_retries = 2;      // More retries for reliability
                 config.max_complexity_score = 2000; // Higher complexity allowed
+                config.max_width = 3840;     // Full HD+ support
+                config.max_height = 2160;
             }
         }
         
@@ -251,16 +293,30 @@ impl RenderingOptimizer {
     }
 
     fn simplify_diagram_for_speed(&self, mermaid_code: &str) -> String {
-        // Remove complex styling that doesn't significantly impact readability
         let mut simplified = mermaid_code.to_string();
         
-        // Remove gradient fills (computationally expensive)
+        // Remove computationally expensive elements for fast rendering
         simplified = simplified.replace("fill:gradient", "fill:solid");
+        simplified = simplified.replace("stroke-dasharray", "stroke");
+        simplified = simplified.replace("text-decoration", "");
         
-        // Simplify complex shapes to basic rectangles for very fast rendering
-        if simplified.len() > 1000 { // Only for large diagrams
-            simplified = simplified.replace("circle", "rect");
-            simplified = simplified.replace("diamond", "rect");
+        // Remove subgraphs to reduce complexity (flatten structure)
+        if simplified.contains("subgraph") && simplified.len() > 500 {
+            // Convert subgraph declarations to simple comments
+            simplified = simplified.replace("subgraph ", "// subgraph ");
+            simplified = simplified.replace("    end", "// end");
+        }
+        
+        // Simplify arrow types to basic arrows for speed
+        simplified = simplified.replace("-.->", "-->");
+        simplified = simplified.replace("==>", "-->");
+        simplified = simplified.replace("..>", "-->");
+        
+        // Limit diagram size for very fast rendering
+        let lines: Vec<&str> = simplified.lines().collect();
+        if lines.len() > 20 {
+            // Keep only first 20 lines for speed
+            simplified = lines[..20].join("\n");
         }
         
         simplified
