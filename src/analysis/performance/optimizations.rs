@@ -3,6 +3,7 @@ use tokio::sync::Semaphore;
 use std::sync::Arc;
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "image-rendering")]
 use crate::report::image_renderer::{ImageRenderer, ImageFormat, RenderingServiceConfig};
 
 #[derive(Debug, Clone)]

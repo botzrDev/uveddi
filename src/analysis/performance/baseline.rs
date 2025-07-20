@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use tokio::sync::RwLock;
 use std::sync::Arc;
+#[cfg(feature = "image-rendering")]
 use crate::report::image_renderer::{ImageRenderer, ImageFormat, RenderingServiceConfig};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -75,6 +76,7 @@ pub enum BottleneckSeverity {
 
 #[derive(Debug)]
 pub struct PerformanceAnalyzer {
+    #[cfg(feature = "image-rendering")]
     renderer: ImageRenderer,
     measurements: Arc<RwLock<Vec<RenderingMeasurement>>>,
 }

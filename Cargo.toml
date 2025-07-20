@@ -45,6 +45,14 @@ tui = ["ratatui", "crossterm", "tui-input"]
 # Memory optimization features (UV-210, UV-26)
 memory-optimization = ["mimalloc", "bumpalo", "bumpalo-herd", "memmap2", "rkyv"]
 
+# Add new feature combinations for common use cases
+# Zero-cost option (no external services required)
+zero-cost = ["local-ai", "tree-sitter", "memory-optimization"]
+# Full-featured option (includes image rendering)
+full-featured = ["local-ai", "tree-sitter", "memory-optimization", "image-rendering", "tui"]
+# Enterprise option (all features)
+enterprise = ["local-ai", "tree-sitter", "memory-optimization", "image-rendering", "tui", "wasm-plugins", "chaos", "sla-monitoring"]
+
 [dependencies]
 rusqlite = { version = "0.31.0", features = ["bundled"] }
 tokio = { version = "1.37.0", features = ["full", "time", "macros"] }  # Always needed

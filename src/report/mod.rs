@@ -101,10 +101,41 @@
 use crate::analysis::mermaid_generator::{MermaidGenerationError, MermaidGenerator};
 use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
 use crate::models::visualization::{ArchitecturalComponent, DiagramMetadata, DiagramType};
+use serde::{Deserialize, Serialize};
+use std::time::Duration;
 pub mod errors;
 
 #[cfg(feature = "image-rendering")]
 pub mod image_renderer;
+
+/// Diagram generation mode for hybrid rendering approach
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum DiagramMode {
+    /// Try image rendering, fallback to Mermaid-only if service unavailable (recommended)
+    ImageWithFallback,
+    /// Only generate Mermaid code (no image rendering attempted) - zero hosting costs
+    MermaidOnly,
+    /// Only generate images (fail if service unavailable) - requires hosting
+    ImageOnly,
+}
+
+impl Default for DiagramMode {
+    fn default() -> Self {
+        DiagramMode::MermaidOnly // Default to zero-cost option
+    }
+}
+
+impl DiagramMode {
+    /// Returns true if this mode should attempt image rendering
+    pub fn should_attempt_image_rendering(&self) -> bool {
+        matches!(self, DiagramMode::ImageOnly | DiagramMode::ImageWithFallback)
+    }
+    
+    /// Returns true if this mode allows fallback to Mermaid-only
+    pub fn allows_fallback(&self) -> bool {
+        matches!(self, DiagramMode::ImageWithFallback | DiagramMode::MermaidOnly)
+    }
+}
 #[cfg(feature = "image-rendering")]
 pub use image_renderer::{ImageFormat, ImageRenderer, RenderedImage};
 pub use crate::error::rendering::RenderingServiceError;
@@ -112,7 +143,6 @@ pub use crate::error::rendering::RenderingServiceError;
 pub mod diagrams;
 use chrono::{DateTime, Local};
 use log::{error, info};
-use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::fs;
@@ -147,6 +177,11 @@ pub struct ReportGenerator {
     include_remediation_steps: bool,
     /// Mermaid generator for creating diagrams
     mermaid_generator: Option<MermaidGenerator>,
+    /// Diagram generation mode (hybrid rendering approach)
+    diagram_mode: DiagramMode,
+    /// Image renderer for generating images from Mermaid diagrams
+    #[cfg(feature = "image-rendering")]
+    image_renderer: Option<crate::report::ImageRenderer>,
 }
 
 impl Default for ReportGenerator {
@@ -169,6 +204,9 @@ impl ReportGenerator {
             include_severity_summary: true,
             include_remediation_steps: true,
             mermaid_generator: MermaidGenerator::new().ok(),
+            diagram_mode: DiagramMode::default(), // MermaidOnly by default for zero hosting costs
+            #[cfg(feature = "image-rendering")]
+            image_renderer: None,
         }
     }
 
@@ -240,6 +278,80 @@ impl ReportGenerator {
     pub fn with_remediation_steps(mut self, include: bool) -> Self {
         self.include_remediation_steps = include;
         self
+    }
+
+    /// Set the diagram generation mode
+    pub fn with_diagram_mode(mut self, mode: DiagramMode) -> Self {
+        self.diagram_mode = mode;
+        self
+    }
+
+    /// Enable image rendering with fallback (hybrid approach)
+    pub fn with_image_rendering_fallback(mut self) -> Self {
+        self.diagram_mode = DiagramMode::ImageWithFallback;
+        #[cfg(feature = "image-rendering")]
+        {
+            self.image_renderer = Some(crate::report::ImageRenderer::new());
+        }
+        self
+    }
+
+    /// Force Mermaid-only mode (zero hosting costs)
+    pub fn with_mermaid_only(mut self) -> Self {
+        self.diagram_mode = DiagramMode::MermaidOnly;
+        self
+    }
+
+    /// Get current diagram mode
+    pub fn diagram_mode(&self) -> &DiagramMode {
+        &self.diagram_mode
+    }
+
+    /// Check if rendering service is available (quick check)
+    pub async fn is_rendering_service_available(&self) -> bool {
+        #[cfg(feature = "image-rendering")]
+        {
+            if let Some(ref renderer) = self.image_renderer {
+                match tokio::time::timeout(
+                    Duration::from_secs(2), // Quick 2-second timeout
+                    renderer.health_check()
+                ).await {
+                    Ok(Ok(_)) => {
+                        log::debug!("Rendering service is available");
+                        true
+                    },
+                    Ok(Err(e)) => {
+                        log::debug!("Rendering service health check failed: {}", e);
+                        false
+                    },
+                    Err(_) => {
+                        log::debug!("Rendering service health check timed out");
+                        false
+                    }
+                }
+            } else {
+                log::debug!("No image renderer configured");
+                false
+            }
+        }
+        #[cfg(not(feature = "image-rendering"))]
+        {
+            log::debug!("Image rendering feature not enabled");
+            false
+        }
+    }
+
+    /// Check if image rendering is available (feature + service)
+    pub async fn is_image_rendering_available(&self) -> bool {
+        #[cfg(feature = "image-rendering")]
+        {
+            self.diagram_mode.should_attempt_image_rendering() && 
+            self.is_rendering_service_available().await
+        }
+        #[cfg(not(feature = "image-rendering"))]
+        {
+            false
+        }
     }
 
     /// Generates a Markdown report for the given analysis run and issues.
@@ -549,6 +661,108 @@ impl ReportGenerator {
         }
 
         analysis
+    }
+
+    /// Generate diagram with hybrid fallback logic
+    async fn generate_diagram_with_fallback(&self, mermaid_code: &str, diagram_type: &str) -> Result<String, String> {
+        match self.diagram_mode {
+            DiagramMode::MermaidOnly => {
+                Ok(self.generate_mermaid_only_with_instructions(mermaid_code, diagram_type))
+            },
+            DiagramMode::ImageOnly => {
+                #[cfg(feature = "image-rendering")]
+                {
+                    self.generate_image_only(mermaid_code).await
+                        .map_err(|e| format!("Image rendering failed: {}", e))
+                }
+                #[cfg(not(feature = "image-rendering"))]
+                {
+                    Err("Image rendering feature not enabled. Please rebuild with --features image-rendering".to_string())
+                }
+            },
+            DiagramMode::ImageWithFallback => {
+                #[cfg(feature = "image-rendering")]
+                {
+                    if self.is_rendering_service_available().await {
+                        match self.generate_image_only(mermaid_code).await {
+                            Ok(image_result) => {
+                                log::info!("Successfully generated image for {} diagram", diagram_type);
+                                Ok(image_result)
+                            },
+                            Err(e) => {
+                                log::warn!("Image rendering failed, falling back to Mermaid-only: {}", e);
+                                Ok(self.generate_mermaid_only_with_instructions(mermaid_code, diagram_type))
+                            }
+                        }
+                    } else {
+                        log::info!("Rendering service not available, using Mermaid-only mode for {} diagram", diagram_type);
+                        Ok(self.generate_mermaid_only_with_instructions(mermaid_code, diagram_type))
+                    }
+                }
+                #[cfg(not(feature = "image-rendering"))]
+                {
+                    log::info!("Image rendering feature not enabled, using Mermaid-only mode");
+                    Ok(self.generate_mermaid_only_with_instructions(mermaid_code, diagram_type))
+                }
+            }
+        }
+    }
+
+    #[cfg(feature = "image-rendering")]
+    async fn generate_image_only(&self, mermaid_code: &str) -> Result<String, crate::error::rendering::RenderingServiceError> {
+        if let Some(ref renderer) = self.image_renderer {
+            let request = crate::report::image_renderer::RenderRequest {
+                mermaid_code: mermaid_code.to_string(),
+                format: crate::report::image_renderer::ImageFormat::Png,
+                width: Some(800),
+                height: Some(600),
+            };
+            
+            let result = renderer.render_diagram(request).await?;
+            
+            // Return markdown with embedded image
+            Ok(format!(
+                "## 📊 Architectural Diagram\n\n![Diagram](data:image/png;base64,{})\n\n",
+                result.image_data
+            ))
+        } else {
+            Err(crate::error::rendering::RenderingServiceError::ServiceUnavailable)
+        }
+    }
+
+    /// Generate Mermaid-only output with helpful instructions
+    fn generate_mermaid_only_with_instructions(&self, mermaid_code: &str, diagram_type: &str) -> String {
+        format!(r#"## 📊 {} Diagram
+
+```mermaid
+{}
+```
+
+> **💡 Want to see this as an image?**
+> 
+> **Option 1: Online Rendering (Fastest)**
+> - Copy the Mermaid code above
+> - Visit [mermaid.live](https://mermaid.live)
+> - Paste and generate your image instantly
+> 
+> **Option 2: Local Rendering Service (Full Control)**
+> ```bash
+> # Run this in your project directory
+> docker-compose up rendering-service
+> 
+> # Then re-run analysis with image rendering
+> uveddi analyze --enable-image-rendering
+> ```
+> 
+> **Option 3: VS Code Extension (Developer Friendly)**
+> - Install "Mermaid Markdown Syntax Highlighting"
+> - View diagrams directly in your editor
+> 
+> **Option 4: GitHub/GitLab (Documentation)**
+> - Both platforms render Mermaid diagrams natively
+> - Perfect for README files and documentation
+
+"#, diagram_type, mermaid_code)
     }
 
     /// Generate diagrams section with Mermaid.js syntax

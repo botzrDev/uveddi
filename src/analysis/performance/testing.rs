@@ -1,6 +1,7 @@
 use std::time::{Duration, Instant};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+#[cfg(feature = "image-rendering")]
 use crate::report::image_renderer::{ImageRenderer, ImageFormat, RenderingServiceConfig};
 use crate::analysis::performance::{RenderingOptimizer, OptimizationRequest, RenderQuality};
 
@@ -56,6 +57,7 @@ pub struct TestSummary {
 #[derive(Debug)]
 pub struct PerformanceValidator {
     optimizer: RenderingOptimizer,
+    #[cfg(feature = "image-rendering")]
     baseline_renderer: ImageRenderer,
 }
 

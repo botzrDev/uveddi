@@ -36,6 +36,7 @@ use std::path::PathBuf;
 
 use crate::application::{AnalysisConfig, AnalysisOrchestrator};
 use crate::error::UveddiError;
+use crate::report::DiagramMode;
 
 /// Command-line arguments for the analyze subcommand
 ///
@@ -192,9 +193,148 @@ pub struct AnalyzeCommand {
     /// - `large`: Optimized for large codebases (> 10000 files)
     #[arg(long, value_name = "PROFILE")]
     pub memory_profile: Option<String>,
+
+    // === HYBRID RENDERING OPTIONS ===
+    
+    /// Enable image rendering (requires rendering service)
+    ///
+    /// When enabled, diagrams will be rendered as images using the rendering service.
+    /// Falls back to Mermaid-only mode if service is unavailable (unless --no-fallback is used).
+    #[arg(long)]
+    pub enable_image_rendering: bool,
+
+    /// Force Mermaid-only mode (no image rendering, zero hosting costs)
+    ///
+    /// Generate only Mermaid code with helpful rendering instructions.
+    /// This is the default mode to eliminate hosting costs.
+    #[arg(long)]
+    pub mermaid_only: bool,
+
+    /// Rendering service URL
+    ///
+    /// URL of the rendering service for image generation.
+    /// Only used when --enable-image-rendering is specified.
+    #[arg(long, default_value = "http://localhost:3001")]
+    pub rendering_service_url: String,
+
+    /// Disable fallback to Mermaid-only (fail if image rendering unavailable)
+    ///
+    /// When enabled, analysis will fail if image rendering is requested but unavailable.
+    /// By default, the system gracefully falls back to Mermaid-only mode.
+    #[arg(long)]
+    pub no_fallback: bool,
+
+    /// Check rendering service availability without running analysis
+    ///
+    /// Performs a health check on the rendering service and exits.
+    /// Useful for verifying service configuration before running analysis.
+    #[arg(long)]
+    pub check_rendering_service: bool,
 }
 
 impl AnalyzeCommand {
+    /// Determine the appropriate diagram mode based on CLI flags
+    pub fn get_diagram_mode(&self) -> DiagramMode {
+        if self.mermaid_only {
+            DiagramMode::MermaidOnly
+        } else if self.enable_image_rendering {
+            if self.no_fallback {
+                DiagramMode::ImageOnly
+            } else {
+                DiagramMode::ImageWithFallback
+            }
+        } else {
+            // Default: Mermaid-only for zero hosting costs
+            DiagramMode::MermaidOnly
+        }
+    }
+
+    /// Validate CLI flag combinations
+    pub fn validate(&self) -> Result<(), String> {
+        if self.mermaid_only && self.enable_image_rendering {
+            return Err("Cannot use both --mermaid-only and --enable-image-rendering".to_string());
+        }
+
+        if self.no_fallback && !self.enable_image_rendering {
+            return Err("--no-fallback can only be used with --enable-image-rendering".to_string());
+        }
+
+        Ok(())
+    }
+
+    /// Print diagram mode information
+    pub fn print_diagram_mode_info(&self) {
+        let mode = self.get_diagram_mode();
+        match mode {
+            DiagramMode::MermaidOnly => {
+                println!("📊 Diagram Mode: Mermaid-only (zero hosting costs)");
+                println!("   Diagrams will be generated as Mermaid code with rendering instructions");
+            },
+            DiagramMode::ImageOnly => {
+                println!("📊 Diagram Mode: Image-only (requires rendering service)");
+                println!("   Analysis will fail if rendering service is unavailable");
+            },
+            DiagramMode::ImageWithFallback => {
+                println!("📊 Diagram Mode: Image with fallback (hybrid approach)");
+                println!("   Will attempt image rendering, fallback to Mermaid-only if unavailable");
+            }
+        }
+    }
+
+    /// Check rendering service availability and provide user feedback
+    #[cfg(feature = "image-rendering")]
+    pub async fn check_rendering_service_availability(&self) -> Result<bool, Box<dyn std::error::Error>> {
+        use crate::report::ImageRenderer;
+        
+        println!("🔍 Checking rendering service at {}...", self.rendering_service_url);
+        
+        let renderer = ImageRenderer::new(); // Use default config for now
+        
+        match tokio::time::timeout(
+            std::time::Duration::from_secs(5),
+            renderer.health_check()
+        ).await {
+            Ok(Ok(_)) => {
+                println!("✅ Rendering service is available!");
+                println!("   URL: {}", self.rendering_service_url);
+                Ok(true)
+            },
+            Ok(Err(e)) => {
+                println!("❌ Rendering service is not available:");
+                println!("   Error: {}", e);
+                println!("   URL: {}", self.rendering_service_url);
+                self.print_rendering_service_setup_help();
+                Ok(false)
+            },
+            Err(_) => {
+                println!("⏰ Rendering service check timed out");
+                println!("   URL: {}", self.rendering_service_url);
+                self.print_rendering_service_setup_help();
+                Ok(false)
+            }
+        }
+    }
+
+    /// Check rendering service availability (no-op when feature disabled)
+    #[cfg(not(feature = "image-rendering"))]
+    pub async fn check_rendering_service_availability(&self) -> Result<bool, Box<dyn std::error::Error>> {
+        println!("❌ Image rendering feature not enabled");
+        println!("   To enable image rendering, rebuild with:");
+        println!("   cargo build --features image-rendering");
+        Ok(false)
+    }
+
+    /// Print helpful setup instructions for the rendering service
+    fn print_rendering_service_setup_help(&self) {
+        println!("\n💡 To set up the rendering service:");
+        println!("   1. Local Docker setup:");
+        println!("      docker-compose up rendering-service");
+        println!("   2. Custom URL:");
+        println!("      uveddi analyze --rendering-service-url http://your-service:3001");
+        println!("   3. Zero-cost alternative:");
+        println!("      uveddi analyze --mermaid-only");
+        println!("\n📖 For more help, visit: https://github.com/botzrDev/uveddi#image-rendering");
+    }
     /// Execute the analyze command with the provided arguments
     ///
     /// This method orchestrates the complete analysis workflow:

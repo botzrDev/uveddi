@@ -233,7 +233,7 @@ impl MermaidGenerator {
 
         let component_ids = components.iter().map(|c| c.component_id).collect();
         Ok(crate::models::visualization::DiagramResult::new(
-            DiagramType::Dependency,
+            VizDiagramType::Dependency,
             mermaid_src,
             component_ids,
         ))
@@ -285,7 +285,7 @@ impl MermaidGenerator {
             .map_err(|e| MermaidGenerationError::TemplateRenderError(e.to_string()))?;
 
         Ok(DiagramMetadata {
-            diagram_type: DiagramType::Class,
+            diagram_type: VizDiagramType::Class,
             mermaid_src: Self::clean_generated_diagram(&mermaid_src),
             image_path: None,
             generated_at: chrono::Utc::now(),
@@ -298,7 +298,7 @@ impl MermaidGenerator {
     pub fn generate_diagram(
         &self,
         components: &[ArchitecturalComponent],
-        diagram_type: DiagramType,
+        diagram_type: VizDiagramType,
     ) -> Result<crate::models::visualization::DiagramResult, MermaidGenerationError> {
         let mut context = Context::new();
         context.insert("layout", "TD");
@@ -312,10 +312,10 @@ impl MermaidGenerator {
         );
 
         let template_name = match diagram_type {
-            DiagramType::Component => "component_diagram",
-            DiagramType::Class => "class_diagram",
-            DiagramType::Dependency => "dependency_graph",
-            DiagramType::Sequence => "sequence_diagram",
+            VizDiagramType::Component => "component_diagram",
+            VizDiagramType::Class => "class_diagram",
+            VizDiagramType::Dependency => "dependency_graph",
+            VizDiagramType::Sequence => "sequence_diagram",
             _ => "component_diagram",
         };
 
@@ -372,7 +372,7 @@ impl MermaidGenerator {
 
         let component_ids = components.iter().map(|c| c.component_id).collect();
         Ok(crate::models::visualization::DiagramResult::new(
-            DiagramType::Component,
+            VizDiagramType::Component,
             mermaid_src,
             component_ids,
         ))
@@ -428,7 +428,7 @@ impl MermaidGenerator {
 
         let component_ids = components.iter().map(|c| c.component_id).collect();
         Ok(crate::models::visualization::DiagramResult::new(
-            DiagramType::Class,
+            VizDiagramType::Class,
             mermaid_src,
             component_ids,
         ))
@@ -474,7 +474,7 @@ impl MermaidGenerator {
             .map_err(|e| MermaidGenerationError::TemplateRenderError(e.to_string()))?;
 
         Ok(DiagramMetadata {
-            diagram_type: DiagramType::Graph,
+            diagram_type: VizDiagramType::Graph,
             mermaid_src: Self::clean_generated_diagram(&mermaid_src),
             image_path: None,
             generated_at: chrono::Utc::now(),
@@ -548,11 +548,11 @@ classDef default fill:#e1f5fe,stroke:#01579b,stroke-width:2px;"#,
         let mut specs = HashMap::new();
 
         specs.insert(
-            DiagramType::Component,
+            VizDiagramType::Component,
             DiagramSpec {
                 spec_id: Uuid::new_v4(),
                 anti_pattern_type_id: 1,
-                diagram_type: DiagramType::Component,
+                diagram_type: VizDiagramType::Component,
                 mermaid_template: "graph TD\n{{#each components}}\n    {{id}}[{{name}}]\n{{/each}}"
                     .to_string(),
                 severity_styles: HashMap::new(),
