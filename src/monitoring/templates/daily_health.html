@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Health Summary - {{ report.content.summary.total_tests }} Tests</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+            color: {{ report.content.branding.color_scheme.text | default(value="#212529") }};
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, {{ report.content.branding.color_scheme.primary | default(value="#007bff") }}, {{ report.content.branding.color_scheme.accent | default(value="#28a745") }});
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            font-weight: 300;
+        }
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 30px;
+        }
+        .metric-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            border-left: 4px solid {{ report.content.branding.color_scheme.primary | default(value="#007bff") }};
+        }
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .metric-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .pass-rate { color: #28a745; }
+        .fail-rate { color: #dc3545; }
+        .neutral { color: #007bff; }
+        .warning { color: #ffc107; }
+        .section {
+            padding: 30px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section:last-child {
+            border-bottom: none;
+        }
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: {{ report.content.branding.color_scheme.primary | default(value="#007bff") }};
+        }
+        .issues-list {
+            list-style: none;
+            padding: 0;
+        }
+        .issue-item {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+        .issue-critical {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+        }
+        .recommendations {
+            background: #d1ecf1;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .trend-indicator {
+            display: inline-flex;
+            align-items: center;
+            margin-left: 10px;
+        }
+        .trend-up { color: #28a745; }
+        .trend-down { color: #dc3545; }
+        .trend-stable { color: #6c757d; }
+        .footer {
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        .chart-placeholder {
+            background: #f8f9fa;
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            color: #6c757d;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Daily Health Summary</h1>
+            <p>Test execution report for {{ generated_at }}</p>
+            {% if report.content.branding.organization_name %}
+            <p style="margin-top: 15px; font-size: 1rem;">{{ report.content.branding.organization_name }}</p>
+            {% endif %}
+        </div>
+
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-label">Total Tests</div>
+                <div class="metric-value neutral">{{ report.content.summary.total_tests }}</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Pass Rate</div>
+                <div class="metric-value pass-rate">
+                    {{ report.content.summary.pass_rate | round(precision=1) }}%
+                    <span class="trend-indicator">
+                        {% set trend = report.content.summary.trends.trend_direction %}
+                        {% if trend == "Improving" %}
+                            <span class="trend-up">↗️</span>
+                        {% elif trend == "Degrading" %}
+                            <span class="trend-down">↘️</span>
+                        {% else %}
+                            <span class="trend-stable">→</span>
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Avg Execution Time</div>
+                <div class="metric-value neutral">{{ report.content.summary.avg_execution_time | round(precision=0) }}ms</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Critical Issues</div>
+                <div class="metric-value {% if report.content.summary.critical_issues > 0 %}fail-rate{% else %}pass-rate{% endif %}">
+                    {{ report.content.summary.critical_issues }}
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">🎯 Test Execution Breakdown</h2>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-label">Passed</div>
+                    <div class="metric-value pass-rate">{{ report.content.metrics.execution_metrics.passed }}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Failed</div>
+                    <div class="metric-value fail-rate">{{ report.content.metrics.execution_metrics.failed }}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Skipped</div>
+                    <div class="metric-value warning">{{ report.content.metrics.execution_metrics.skipped }}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Timeout/Error</div>
+                    <div class="metric-value fail-rate">{{ report.content.metrics.execution_metrics.timeout + report.content.metrics.execution_metrics.error }}</div>
+                </div>
+            </div>
+        </div>
+
+        {% if report.content.insights %}
+        <div class="section">
+            <h2 class="section-title">💡 Key Insights</h2>
+            {% for insight in report.content.insights %}
+            <div class="issue-item {% if insight.impact == "Critical" or insight.impact == "High" %}issue-critical{% endif %}">
+                <strong>{{ insight.title }}</strong>
+                <p>{{ insight.description }}</p>
+                {% if insight.supporting_data %}
+                <small>Supporting data: {{ insight.supporting_data | join(", ") }}</small>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if report.content.recommendations %}
+        <div class="section">
+            <h2 class="section-title">🔧 Recommended Actions</h2>
+            <div class="recommendations">
+                {% for rec in report.content.recommendations %}
+                <div style="margin-bottom: 15px;">
+                    <strong>{{ rec.title }}</strong>
+                    {% if rec.priority == "Urgent" or rec.priority == "High" %}
+                    <span style="background: #dc3545; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; margin-left: 10px;">{{ rec.priority }}</span>
+                    {% endif %}
+                    <p style="margin: 5px 0;">{{ rec.description }}</p>
+                    <small style="color: #6c757d;">Expected impact: {{ rec.expected_impact }}</small>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if report.content.metrics.failure_metrics.top_failing_tests %}
+        <div class="section">
+            <h2 class="section-title">⚠️ Top Failing Tests</h2>
+            <ul class="issues-list">
+                {% for test in report.content.metrics.failure_metrics.top_failing_tests | slice(end=5) %}
+                <li class="issue-item issue-critical">
+                    <strong>{{ test.name }}</strong> ({{ test.suite }})
+                    <br>
+                    <small>Failed {{ test.failure_count }} times</small>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <div class="section">
+            <h2 class="section-title">📈 Visual Summary</h2>
+            <div class="chart-placeholder">
+                📊 Test Status Distribution Chart
+                <br><small>Chart visualization would be rendered here</small>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Generated by Uveddi Automated Reporting System v{{ report.metadata.version }} | 
+            Report ID: {{ report.id }} | 
+            Generation time: {{ report.metadata.generation_time_ms }}ms</p>
+            {% if report.content.branding.custom_footer %}
+            <p>{{ report.content.branding.custom_footer }}</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

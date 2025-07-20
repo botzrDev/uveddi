@@ -14,6 +14,10 @@ pub mod performance_metrics_collector;
 pub mod parallel_metrics;
 pub mod enterprise_metrics;
 pub mod baseline_collector;
+pub mod reporting;
+pub mod distribution;
+pub mod scheduler;
+pub mod config;
 
 // Temporarily commented out exports with external dependencies
 // pub use dashboard::MonitoringDashboard;
@@ -25,3 +29,7 @@ pub use memory_monitor::MemoryMonitor;
 pub use performance_metrics_collector::PerformanceMetricsCollector;
 pub use enterprise_metrics::{EnterpriseMetricsCollector, BaselineData, MeasurementSnapshot, RegressionAnalysis};
 pub use baseline_collector::{BaselineCollector, BaselineCollectionConfig, BaselineComparison, StoredBaseline};
+pub use reporting::{ReportingEngine, ReportType, StakeholderRole, ReportConfiguration, GeneratedReport};
+pub use distribution::{DistributionManager, DistributionChannel, SmtpConfig, SlackWebhookConfig};
+pub use scheduler::{ReportScheduler, ScheduleConfig, ScheduleType, ScheduledJob};
+pub use config::{ConfigManager, ReportingSystemConfig, ReportJobConfig, SystemConfig};

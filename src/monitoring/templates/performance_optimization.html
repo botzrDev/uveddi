@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance Optimization Report - Bottleneck Analysis</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+            color: {{ report.content.branding.color_scheme.text | default(value="#212529") }};
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #6f42c1, #563d7c);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.8rem;
+            font-weight: 300;
+        }
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+            font-size: 1.2rem;
+        }
+        .performance-summary {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            padding: 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+        }
+        .perf-metric {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-left: 4px solid #6f42c1;
+        }
+        .perf-value {
+            font-size: 2.2rem;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .perf-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .performance-indicator {
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+        .excellent { color: #28a745; }
+        .good { color: #20c997; }
+        .average { color: #ffc107; }
+        .poor { color: #fd7e14; }
+        .critical { color: #dc3545; }
+        .section {
+            padding: 30px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section:last-child {
+            border-bottom: none;
+        }
+        .section-title {
+            font-size: 1.8rem;
+            margin-bottom: 25px;
+            color: {{ report.content.branding.color_scheme.primary | default(value="#007bff") }};
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 10px;
+        }
+        .bottleneck-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .bottleneck-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            border-left: 4px solid #fd7e14;
+        }
+        .bottleneck-critical { border-left-color: #dc3545; background: linear-gradient(135deg, #f8d7da, #f5c6cb); }
+        .bottleneck-high { border-left-color: #fd7e14; background: linear-gradient(135deg, #fff3cd, #ffeaa7); }
+        .bottleneck-medium { border-left-color: #ffc107; background: linear-gradient(135deg, #fff3e0, #ffe0b2); }
+        .bottleneck-low { border-left-color: #28a745; background: linear-gradient(135deg, #d4edda, #c3e6cb); }
+        .performance-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .performance-table th,
+        .performance-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .performance-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+        }
+        .performance-table tr:hover {
+            background: #f8f9fa;
+        }
+        .optimization-recommendations {
+            background: linear-gradient(135deg, #e8f5e8, #c3e6cb);
+            border-radius: 8px;
+            padding: 25px;
+            margin-top: 20px;
+        }
+        .rec-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .rec-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            border-left: 4px solid #28a745;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .rec-high-impact { border-left-color: #007bff; }
+        .rec-medium-impact { border-left-color: #ffc107; }
+        .rec-low-impact { border-left-color: #6c757d; }
+        .resource-analysis {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .resource-card {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .resource-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #495057;
+        }
+        .resource-meter {
+            background: #e9ecef;
+            border-radius: 10px;
+            height: 20px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .resource-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+        .chart-container {
+            background: #f8f9fa;
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            color: #6c757d;
+            margin: 20px 0;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        .trend-indicators {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .trend-card {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 15px;
+            text-align: center;
+        }
+        .trend-improving { border-left: 4px solid #28a745; }
+        .trend-degrading { border-left: 4px solid #dc3545; }
+        .trend-stable { border-left: 4px solid #6c757d; }
+        .footer {
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-left: 10px;
+        }
+        .badge-critical { background: #dc3545; color: white; }
+        .badge-high { background: #fd7e14; color: white; }
+        .badge-medium { background: #ffc107; color: #212529; }
+        .badge-low { background: #28a745; color: white; }
+        .impact-score {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚡ Performance Optimization Report</h1>
+            <p>Comprehensive bottleneck analysis and optimization recommendations</p>
+            <p style="margin-top: 15px; font-size: 1rem;">{{ generated_at }}</p>
+            {% if report.content.branding.organization_name %}
+            <p style="margin-top: 10px; font-size: 1rem; opacity: 0.8;">{{ report.content.branding.organization_name }}</p>
+            {% endif %}
+        </div>
+
+        <div class="performance-summary">
+            <div class="perf-metric">
+                <div class="perf-label">Average Response Time</div>
+                <div class="perf-value {% if report.content.summary.avg_execution_time < 100 %}excellent{% elif report.content.summary.avg_execution_time < 500 %}good{% elif report.content.summary.avg_execution_time < 1000 %}average{% elif report.content.summary.avg_execution_time < 2000 %}poor{% else %}critical{% endif %}">
+                    {{ report.content.summary.avg_execution_time | round(precision=0) }}ms
+                </div>
+                <div class="performance-indicator">
+                    {% if report.content.summary.avg_execution_time < 100 %}
+                    <span class="excellent">🚀 Excellent</span>
+                    {% elif report.content.summary.avg_execution_time < 500 %}
+                    <span class="good">✅ Good</span>
+                    {% elif report.content.summary.avg_execution_time < 1000 %}
+                    <span class="average">⚠️ Average</span>
+                    {% elif report.content.summary.avg_execution_time < 2000 %}
+                    <span class="poor">🐌 Poor</span>
+                    {% else %}
+                    <span class="critical">🚨 Critical</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="perf-metric">
+                <div class="perf-label">95th Percentile</div>
+                <div class="perf-value">{{ report.content.metrics.performance_metrics.p95_duration_ms | round(precision=0) }}ms</div>
+                <div class="performance-indicator good">📊 Within SLA</div>
+            </div>
+            <div class="perf-metric">
+                <div class="perf-label">99th Percentile</div>
+                <div class="perf-value">{{ report.content.metrics.performance_metrics.p99_duration_ms | round(precision=0) }}ms</div>
+                <div class="performance-indicator average">⏱️ Monitor</div>
+            </div>
+            <div class="perf-metric">
+                <div class="perf-label">Performance Trend</div>
+                <div class="perf-value {% if report.content.summary.trends.performance_change < 0 %}excellent{% elif report.content.summary.trends.performance_change > 10 %}poor{% else %}good{% endif %}">
+                    {% if report.content.summary.trends.performance_change < 0 %}
+                    {{ report.content.summary.trends.performance_change | round(precision=1) }}%
+                    {% elif report.content.summary.trends.performance_change > 0 %}
+                    +{{ report.content.summary.trends.performance_change | round(precision=1) }}%
+                    {% else %}
+                    0%
+                    {% endif %}
+                </div>
+                <div class="performance-indicator {% if report.content.summary.trends.performance_change < 0 %}excellent{% elif report.content.summary.trends.performance_change > 10 %}poor{% else %}good{% endif %}">
+                    {% if report.content.summary.trends.performance_change < 0 %}
+                    📈 Improving
+                    {% elif report.content.summary.trends.performance_change > 10 %}
+                    📉 Degrading
+                    {% else %}
+                    📊 Stable
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">🎯 Performance Metrics Breakdown</h2>
+            <table class="performance-table">
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Current Value</th>
+                        <th>Target</th>
+                        <th>Status</th>
+                        <th>Trend</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Average Duration</strong></td>
+                        <td>{{ report.content.metrics.performance_metrics.avg_duration_ms | round(precision=0) }}ms</td>
+                        <td>&lt; 500ms</td>
+                        <td>
+                            {% if report.content.metrics.performance_metrics.avg_duration_ms < 500 %}
+                            <span class="excellent">✅ Meeting Target</span>
+                            {% else %}
+                            <span class="poor">❌ Above Target</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if report.content.summary.trends.performance_change < 0 %}
+                            <span class="excellent">↗️ Improving</span>
+                            {% elif report.content.summary.trends.performance_change > 0 %}
+                            <span class="poor">↘️ Degrading</span>
+                            {% else %}
+                            <span class="good">→ Stable</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Median Duration</strong></td>
+                        <td>{{ report.content.metrics.performance_metrics.median_duration_ms | round(precision=0) }}ms</td>
+                        <td>&lt; 300ms</td>
+                        <td>
+                            {% if report.content.metrics.performance_metrics.median_duration_ms < 300 %}
+                            <span class="excellent">✅ Meeting Target</span>
+                            {% else %}
+                            <span class="average">⚠️ Above Target</span>
+                            {% endif %}
+                        </td>
+                        <td><span class="good">→ Stable</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>95th Percentile</strong></td>
+                        <td>{{ report.content.metrics.performance_metrics.p95_duration_ms | round(precision=0) }}ms</td>
+                        <td>&lt; 1000ms</td>
+                        <td>
+                            {% if report.content.metrics.performance_metrics.p95_duration_ms < 1000 %}
+                            <span class="excellent">✅ Meeting Target</span>
+                            {% else %}
+                            <span class="poor">❌ Above Target</span>
+                            {% endif %}
+                        </td>
+                        <td><span class="good">→ Stable</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>99th Percentile</strong></td>
+                        <td>{{ report.content.metrics.performance_metrics.p99_duration_ms | round(precision=0) }}ms</td>
+                        <td>&lt; 2000ms</td>
+                        <td>
+                            {% if report.content.metrics.performance_metrics.p99_duration_ms < 2000 %}
+                            <span class="good">✅ Meeting Target</span>
+                            {% else %}
+                            <span class="critical">❌ Above Target</span>
+                            {% endif %}
+                        </td>
+                        <td><span class="average">⚠️ Monitor</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        {% if report.content.metrics.performance_metrics.slowest_tests %}
+        <div class="section">
+            <h2 class="section-title">🐌 Slowest Tests Analysis</h2>
+            <table class="performance-table">
+                <thead>
+                    <tr>
+                        <th>Test Name</th>
+                        <th>Test Suite</th>
+                        <th>Avg Duration</th>
+                        <th>Performance Score</th>
+                        <th>Optimization Priority</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for test in report.content.metrics.performance_metrics.slowest_tests | slice(end=10) %}
+                    <tr>
+                        <td><strong>{{ test.name }}</strong></td>
+                        <td>{{ test.suite }}</td>
+                        <td>{{ test.avg_duration_ms | round(precision=0) }}ms</td>
+                        <td>
+                            {% set score = 100 - (test.avg_duration_ms / 10) %}
+                            {% if score > 80 %}
+                            <span class="excellent">{{ score | round(precision=0) }}/100</span>
+                            {% elif score > 60 %}
+                            <span class="good">{{ score | round(precision=0) }}/100</span>
+                            {% elif score > 40 %}
+                            <span class="average">{{ score | round(precision=0) }}/100</span>
+                            {% elif score > 20 %}
+                            <span class="poor">{{ score | round(precision=0) }}/100</span>
+                            {% else %}
+                            <span class="critical">{{ score | round(precision=0) }}/100</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if test.avg_duration_ms > 2000 %}
+                            <span class="badge badge-critical">Critical</span>
+                            {% elif test.avg_duration_ms > 1000 %}
+                            <span class="badge badge-high">High</span>
+                            {% elif test.avg_duration_ms > 500 %}
+                            <span class="badge badge-medium">Medium</span>
+                            {% else %}
+                            <span class="badge badge-low">Low</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        {% if report.content.metrics.resource_metrics.resource_bottlenecks %}
+        <div class="section">
+            <h2 class="section-title">🔧 Resource Bottleneck Analysis</h2>
+            <div class="bottleneck-grid">
+                {% for bottleneck in report.content.metrics.resource_metrics.resource_bottlenecks %}
+                <div class="bottleneck-card bottleneck-{{ bottleneck.severity | lower }}">
+                    <h4>{{ bottleneck.resource_type }} Bottleneck
+                        <span class="badge badge-{{ bottleneck.severity | lower }}">{{ bottleneck.severity }}</span>
+                    </h4>
+                    <p><strong>Affected Tests:</strong></p>
+                    <ul style="margin: 10px 0; padding-left: 20px;">
+                        {% for test in bottleneck.affected_tests | slice(end=5) %}
+                        <li>{{ test }}</li>
+                        {% endfor %}
+                        {% if bottleneck.affected_tests | length > 5 %}
+                        <li><em>... and {{ bottleneck.affected_tests | length - 5 }} more</em></li>
+                        {% endif %}
+                    </ul>
+                    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(0,0,0,0.1);">
+                        <strong>Optimization Suggestion:</strong>
+                        <p style="margin: 5px 0; color: #495057;">{{ bottleneck.optimization_suggestion }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+        <div class="section">
+            <h2 class="section-title">🔧 Resource Utilization Analysis</h2>
+            <div class="resource-analysis">
+                <div class="resource-card">
+                    <div class="resource-title">CPU Utilization</div>
+                    <div class="resource-meter">
+                        <div class="resource-fill" style="width: {{ report.content.metrics.resource_metrics.avg_cpu_percent }}%; background: {% if report.content.metrics.resource_metrics.avg_cpu_percent < 50 %}#28a745{% elif report.content.metrics.resource_metrics.avg_cpu_percent < 80 %}#ffc107{% else %}#dc3545{% endif %};"></div>
+                    </div>
+                    <p>{{ report.content.metrics.resource_metrics.avg_cpu_percent | round(precision=1) }}% average usage</p>
+                    <small>{% if report.content.metrics.resource_metrics.avg_cpu_percent < 50 %}Optimal{% elif report.content.metrics.resource_metrics.avg_cpu_percent < 80 %}Moderate{% else %}High{% endif %} utilization</small>
+                </div>
+                <div class="resource-card">
+                    <div class="resource-title">Memory Usage</div>
+                    <div class="resource-meter">
+                        <div class="resource-fill" style="width: {{ (report.content.metrics.resource_metrics.avg_memory_mb / 1024 * 100) | round(precision=0) }}%; background: {% if report.content.metrics.resource_metrics.avg_memory_mb < 512 %}#28a745{% elif report.content.metrics.resource_metrics.avg_memory_mb < 1024 %}#ffc107{% else %}#dc3545{% endif %};"></div>
+                    </div>
+                    <p>{{ report.content.metrics.resource_metrics.avg_memory_mb | round(precision=0) }}MB average usage</p>
+                    <small>{% if report.content.metrics.resource_metrics.avg_memory_mb < 512 %}Efficient{% elif report.content.metrics.resource_metrics.avg_memory_mb < 1024 %}Moderate{% else %}High{% endif %} memory consumption</small>
+                </div>
+                <div class="resource-card">
+                    <div class="resource-title">Disk I/O</div>
+                    <div class="resource-meter">
+                        <div class="resource-fill" style="width: {{ (report.content.metrics.resource_metrics.avg_disk_io_mb / 100 * 100) | round(precision=0) }}%; background: {% if report.content.metrics.resource_metrics.avg_disk_io_mb < 50 %}#28a745{% elif report.content.metrics.resource_metrics.avg_disk_io_mb < 100 %}#ffc107{% else %}#dc3545{% endif %};"></div>
+                    </div>
+                    <p>{{ report.content.metrics.resource_metrics.avg_disk_io_mb | round(precision=0) }}MB average I/O</p>
+                    <small>{% if report.content.metrics.resource_metrics.avg_disk_io_mb < 50 %}Low{% elif report.content.metrics.resource_metrics.avg_disk_io_mb < 100 %}Moderate{% else %}High{% endif %} disk activity</small>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if report.content.metrics.performance_metrics.performance_trends %}
+        <div class="section">
+            <h2 class="section-title">📈 Performance Trend Analysis</h2>
+            <div class="trend-indicators">
+                {% for trend in report.content.metrics.performance_metrics.performance_trends | slice(end=8) %}
+                <div class="trend-card trend-{{ trend.trend_direction | lower }}">
+                    <h5>{{ trend.test_name }}</h5>
+                    <p>
+                        {% if trend.trend_direction == "Improving" %}
+                        📈 {{ trend.change_percent | round(precision=1) }}% faster
+                        {% elif trend.trend_direction == "Degrading" %}
+                        📉 {{ trend.change_percent | round(precision=1) }}% slower
+                        {% else %}
+                        📊 {{ trend.change_percent | round(precision=1) }}% change
+                        {% endif %}
+                    </p>
+                    <small>Significance: {{ trend.significance }}</small>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if report.content.recommendations %}
+        <div class="section">
+            <h2 class="section-title">🚀 Optimization Recommendations</h2>
+            <div class="optimization-recommendations">
+                <h3 style="margin-top: 0; color: #155724;">Performance Enhancement Strategies</h3>
+                <div class="rec-grid">
+                    {% for rec in report.content.recommendations %}
+                    <div class="rec-card {% if rec.expected_impact contains "50%" or rec.expected_impact contains "40%" %}rec-high-impact{% elif rec.expected_impact contains "30%" or rec.expected_impact contains "20%" %}rec-medium-impact{% else %}rec-low-impact{% endif %}">
+                        <h4>{{ rec.title }}
+                            {% if rec.priority == "Urgent" or rec.priority == "High" %}
+                            <span class="badge badge-high">{{ rec.priority }}</span>
+                            {% else %}
+                            <span class="badge badge-medium">{{ rec.priority }}</span>
+                            {% endif %}
+                        </h4>
+                        <p>{{ rec.description }}</p>
+                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(0,0,0,0.1);">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 0.9rem;">
+                                <div>
+                                    <strong>Implementation Effort:</strong><br>
+                                    {{ rec.estimated_effort }}
+                                </div>
+                                <div>
+                                    <strong>Expected Performance Gain:</strong><br>
+                                    <span class="impact-score">
+                                        {{ rec.expected_impact }}
+                                        {% if rec.expected_impact contains "50%" or rec.expected_impact contains "40%" %}
+                                        🚀
+                                        {% elif rec.expected_impact contains "30%" or rec.expected_impact contains "20%" %}
+                                        ⚡
+                                        {% else %}
+                                        📈
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                            {% if rec.assigned_role %}
+                            <div style="margin-top: 10px;">
+                                <strong>Assigned to:</strong> {{ rec.assigned_role }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="section">
+            <h2 class="section-title">📊 Performance Visualization</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="chart-container">
+                    <h4>⚡ Response Time Distribution</h4>
+                    <p>Histogram showing test execution time patterns</p>
+                </div>
+                <div class="chart-container">
+                    <h4>📈 Performance Trend Over Time</h4>
+                    <p>14-day performance progression analysis</p>
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
+                <div class="chart-container">
+                    <h4>🎯 Resource Utilization Patterns</h4>
+                    <p>CPU, Memory, and I/O usage correlation</p>
+                </div>
+                <div class="chart-container">
+                    <h4>🔧 Bottleneck Impact Analysis</h4>
+                    <p>Performance impact by resource constraint</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Generated by Uveddi Automated Reporting System v{{ report.metadata.version }} | 
+            Report ID: {{ report.id }} | 
+            Analysis Period: {{ report.data_period.start | date(format="%Y-%m-%d") }} to {{ report.data_period.end | date(format="%Y-%m-%d") }} |
+            Generation time: {{ report.metadata.generation_time_ms }}ms</p>
+            {% if report.content.branding.custom_footer %}
+            <p>{{ report.content.branding.custom_footer }}</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
