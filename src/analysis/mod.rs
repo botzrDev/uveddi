@@ -111,6 +111,7 @@ pub mod config_migration;
 pub mod detector_factory;
 pub mod detector_registry;
 pub mod detectors;
+pub mod diagram_cache;
 pub mod engine;
 pub mod engine_builder;
 pub mod errors;
@@ -146,6 +147,10 @@ pub use graph::{ComponentNode, LocalDependencyGraph, LocalDependencyType};
 pub use incremental::{
     IncrementalAnalysisEngine, IncrementalConfig, IncrementalAnalysisConfig,
     ChangeDetector, DependencyTracker, IncrementalStateManager, ChangeSet, ChangeImpact
+};
+pub use diagram_cache::{
+    DiagramCacheEngine, DiagramType, CachedDiagram,
+    DiagramDependencyTracker, InvalidationManager, CompressionEngine
 };
 pub use memory::{get_optimization_status, MemoryOptimizationConfig};
 pub use plugin_adapter::{WasmPluginAdapterFactory, WasmPluginDetectorAdapter};

@@ -5,13 +5,21 @@
 //! severity-based styling for comprehensive visualization.
 
 use crate::models::visualization::{
-    ArchitecturalComponent, DiagramMetadata, DiagramSpec, DiagramType,
+    ArchitecturalComponent, DiagramMetadata, DiagramSpec, DiagramType as VizDiagramType,
 };
+use crate::analysis::diagram_cache::{
+    DiagramCacheEngine, DiagramType as CacheDiagramType
+};
+use crate::analysis::incremental::ChangeSet;
 use serde_json::{json, Value};
 use std::collections::{HashMap, HashSet};
+use std::path::PathBuf;
+use std::sync::Arc;
 use tera::{Context, Tera};
 use thiserror::Error;
+use tokio::sync::RwLock;
 use uuid::Uuid;
+use log::{debug, info, warn};
 
 /// Errors that can occur during Mermaid diagram generation
 #[derive(Debug, Error)]
@@ -31,7 +39,11 @@ pub struct MermaidGenerator {
     /// Template engine for diagram generation
     template_engine: Tera,
     /// Predefined diagram specifications
-    diagram_specs: HashMap<DiagramType, DiagramSpec>,
+    diagram_specs: HashMap<VizDiagramType, DiagramSpec>,
+    /// Diagram cache engine for performance optimization
+    cache_engine: Option<Arc<RwLock<DiagramCacheEngine>>>,
+    /// Enable caching for diagram generation
+    caching_enabled: bool,
 }
 
 impl MermaidGenerator {
@@ -47,7 +59,95 @@ impl MermaidGenerator {
         Ok(Self {
             template_engine: tera,
             diagram_specs,
+            cache_engine: None,
+            caching_enabled: false,
         })
+    }
+
+    /// Enables caching with the provided cache engine
+    pub fn enable_caching(&mut self, cache_engine: Arc<RwLock<DiagramCacheEngine>>) {
+        self.cache_engine = Some(cache_engine);
+        self.caching_enabled = true;
+        info!("Diagram caching enabled for MermaidGenerator");
+    }
+    
+    /// Disables caching
+    pub fn disable_caching(&mut self) {
+        self.cache_engine = None;
+        self.caching_enabled = false;
+        info!("Diagram caching disabled for MermaidGenerator");
+    }
+    
+    /// Generate a Mermaid diagram with caching support
+    pub async fn generate_diagram_cached(
+        &self,
+        components: &[ArchitecturalComponent],
+        diagram_type: VizDiagramType,
+        dependencies: Vec<PathBuf>,
+    ) -> Result<crate::models::visualization::DiagramResult, MermaidGenerationError> {
+        // Create diagram ID based on components and type
+        let diagram_id = self.create_diagram_id(components, &diagram_type);
+        
+        // Try to get from cache first if caching is enabled
+        if self.caching_enabled {
+            if let Some(cache_engine) = &self.cache_engine {
+                let cache = cache_engine.read().await;
+                let cache_diagram_type = self.convert_to_cache_diagram_type(&diagram_type);
+                
+                if let Ok(Some(cached_content)) = cache.get_diagram(&diagram_id, &cache_diagram_type).await {
+                    debug!("Retrieved diagram from cache: {}", diagram_id);
+                    let mermaid_src = String::from_utf8_lossy(&cached_content).to_string();
+                    return Ok(crate::models::visualization::DiagramResult {
+                        diagram_type: diagram_type.clone(),
+                        mermaid_src: mermaid_src,
+                        components: components.iter().map(|c| c.component_id).collect(),
+                        image_path: None,
+                        generated_at: chrono::Utc::now(),
+                        validation_metrics: None,
+                    });
+                }
+            }
+        }
+        
+        // Generate diagram if not in cache
+        let diagram_result = self.generate_diagram(components, diagram_type.clone())?;
+        
+        // Store in cache if caching is enabled
+        if self.caching_enabled {
+            if let Some(cache_engine) = &self.cache_engine {
+                let cache = cache_engine.read().await;
+                let cache_diagram_type = self.convert_to_cache_diagram_type(&diagram_type);
+                let config_hash = self.create_config_hash(&diagram_result);
+                
+                let mermaid_src = &diagram_result.mermaid_src;
+                if let Err(e) = cache.store_diagram(
+                    diagram_id.clone(),
+                    cache_diagram_type,
+                    mermaid_src.as_bytes().to_vec(),
+                    dependencies,
+                    config_hash,
+                ).await {
+                    warn!("Failed to cache diagram {}: {}", diagram_id, e);
+                } else {
+                    debug!("Stored diagram in cache: {}", diagram_id);
+                }
+            }
+        }
+        
+        Ok(diagram_result)
+    }
+    
+    /// Invalidates cached diagrams based on file changes
+    pub async fn invalidate_cache_from_changeset(&self, changeset: &ChangeSet) -> Result<(), MermaidGenerationError> {
+        if let Some(cache_engine) = &self.cache_engine {
+            let cache = cache_engine.read().await;
+            if let Err(e) = cache.invalidate_from_changeset(changeset).await {
+                warn!("Failed to invalidate diagram cache: {}", e);
+            } else {
+                info!("Successfully invalidated diagram cache based on changeset");
+            }
+        }
+        Ok(())
     }
 
     /// Generate a tight coupling diagram highlighting high coupling issues
@@ -404,8 +504,47 @@ classDef default fill:#e1f5fe,stroke:#01579b,stroke-width:2px;"#,
         Ok(())
     }
 
+    /// Creates a unique diagram ID based on components and type
+    fn create_diagram_id(&self, components: &[ArchitecturalComponent], diagram_type: &VizDiagramType) -> String {
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
+        
+        let mut hasher = DefaultHasher::new();
+        
+        // Hash diagram type
+        format!("{:?}", diagram_type).hash(&mut hasher);
+        
+        // Hash component information
+        for component in components {
+            component.component_id.hash(&mut hasher);
+            component.name.hash(&mut hasher);
+            component.component_type.hash(&mut hasher);
+        }
+        
+        format!("diagram_{}_{:x}", format!("{:?}", diagram_type).to_lowercase(), hasher.finish())
+    }
+    
+    /// Converts visualization diagram type to cache diagram type
+    fn convert_to_cache_diagram_type(&self, _viz_type: &VizDiagramType) -> CacheDiagramType {
+        // All visualization diagram types map to Mermaid for now
+        CacheDiagramType::Mermaid
+    }
+    
+    /// Creates a configuration hash for cache validation
+    fn create_config_hash(&self, result: &crate::models::visualization::DiagramResult) -> String {
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
+        
+        let mut hasher = DefaultHasher::new();
+        format!("{:?}", result.diagram_type).hash(&mut hasher);
+        result.mermaid_src.hash(&mut hasher);
+        result.components.len().hash(&mut hasher);
+        
+        format!("{:x}", hasher.finish())
+    }
+
     /// Create default diagram specifications
-    fn create_default_specs() -> HashMap<DiagramType, DiagramSpec> {
+    fn create_default_specs() -> HashMap<VizDiagramType, DiagramSpec> {
         let mut specs = HashMap::new();
 
         specs.insert(

@@ -15,7 +15,7 @@ readme = "README.md"
 
 # Feature flags for modular compilation
 [features]
-default = ["local-ai", "image-rendering", "tree-sitter", "memory-optimization"]
+default = ["local-ai", "tree-sitter", "memory-optimization"]
 # Chaos engineering and load testing
 chaos = ["fail", "statrs", "ndarray-stats"]
 # Performance regression detection
@@ -139,6 +139,9 @@ persisted = "1.0"
 
 # Pattern matching for file filtering
 glob = "0.3.1"
+
+# Compression for diagram caching
+flate2 = "1.0"
 
 # Chaos Engineering and Load Testing Dependencies (UV-82)
 # Failpoint injection for chaos engineering

@@ -11,6 +11,7 @@ pub mod metrics;
 // pub mod classification;
 pub mod memory_monitor;
 pub mod performance_metrics_collector;
+pub mod parallel_metrics;
 pub mod enterprise_metrics;
 pub mod baseline_collector;
 
