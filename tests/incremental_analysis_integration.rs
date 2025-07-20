@@ -12,7 +12,9 @@ use tokio;
 use uveddi::analysis::{AnalysisEngine, IncrementalConfig, IncrementalAnalysisConfig};
 use uveddi::analysis::incremental::{
     ChangeDetector, DependencyTracker, IncrementalStateManager,
-    ChangeDetectionConfig, DependencyExtractionConfig, StateManagerConfig
+    ChangeDetectionConfig,
+    dependency_tracker::DependencyExtractionConfig,
+    state_manager::StateManagerConfig
 };
 
 /// Test basic incremental analysis functionality

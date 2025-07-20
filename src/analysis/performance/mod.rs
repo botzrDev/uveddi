@@ -2,6 +2,9 @@ pub mod baseline;
 pub mod optimizations;
 pub mod testing;
 
+#[cfg(not(feature = "image-rendering"))]
+pub mod image_stubs;
+
 pub use baseline::{
     PerformanceAnalyzer, 
     PerformanceBaseline, 

@@ -80,7 +80,8 @@
       "Bash(timeout 30 cargo test observability --lib)",
       "Bash(RUST_BACKTRACE=1 cargo test analysis::detectors::anti_patterns::long_methods::tests::test_calculate_method_metrics_invalid_name --lib)",
       "Bash(npm run:*)",
-      "Bash(gh issue list:*)"
+      "Bash(gh issue list:*)",
+      "Bash(python3 scripts/jira_integration.py:*)"
     ],
     "deny": []
   }

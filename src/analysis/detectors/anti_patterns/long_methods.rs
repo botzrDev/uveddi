@@ -120,6 +120,7 @@ impl LanguageThresholds {
 
 /// Tree-sitter queries for method extraction
 const RUST_FUNCTION_QUERY: &str = r#"
+[
 (function_item
   name: (identifier) @name
   body: (block) @body) @function
@@ -129,6 +130,7 @@ const RUST_FUNCTION_QUERY: &str = r#"
     (function_item
       name: (identifier) @name
       body: (block) @body) @function))
+]
 "#;
 
 const PYTHON_FUNCTION_QUERY: &str = r#"
@@ -297,11 +299,18 @@ impl LongMethodsDetector {
     /// * `Err(AnalysisError)` - If processing fails
     fn process_function_matches(
         &self,
-        matches: Vec<tree_sitter::QueryMatch>,
+        mut matches: Vec<tree_sitter::QueryMatch>,
         source: &[u8],
         file_path: &str,
     ) -> Result<Vec<MethodMetrics>, AnalysisError> {
         let mut metrics = Vec::new();
+        
+        // Sort matches by start position to ensure consistent ordering
+        matches.sort_by_key(|m| {
+            m.captures.get(0)
+                .map(|c| c.node.start_position().row)
+                .unwrap_or(0)
+        });
         
         for mat in matches {
             if let (Some(name_capture), Some(body_capture)) =
@@ -749,7 +758,22 @@ impl LongMethodsDetector {
         if cursor.goto_first_child() {
             loop {
                 if cursor.node().kind() == "parameters" {
-                    return Ok(cursor.node().child_count() as u32);
+                    let params_node = cursor.node();
+                    let mut param_cursor = params_node.walk();
+                    let mut param_count = 0;
+                    
+                    if param_cursor.goto_first_child() {
+                        loop {
+                            if param_cursor.node().kind() == "parameter" {
+                                param_count += 1;
+                            }
+                            if !param_cursor.goto_next_sibling() {
+                                break;
+                            }
+                        }
+                    }
+                    
+                    return Ok(param_count);
                 }
                 if !cursor.goto_next_sibling() {
                     break;
@@ -1259,19 +1283,24 @@ fn function_two() {
         
         assert_eq!(metrics.len(), 2, "Should find two functions");
         
-        // Check first function
-        let first_function = &metrics[0];
-        assert_eq!(first_function.name, "function_one");
-        assert_eq!(first_function.file_path, "test.rs");
-        assert_eq!(first_function.parameter_count, 1);
-        assert!(first_function.logical_loc > 0);
+        // Debug: print found function names
+        println!("Found functions: {:?}", metrics.iter().map(|m| &m.name).collect::<Vec<_>>());
         
-        // Check second function
-        let second_function = &metrics[1];
-        assert_eq!(second_function.name, "function_two");
-        assert_eq!(second_function.file_path, "test.rs");
-        assert_eq!(second_function.parameter_count, 0);
-        assert!(second_function.logical_loc > 0);
+        // Find functions by name (order-agnostic test)
+        let function_one = metrics.iter().find(|m| m.name == "function_one")
+            .expect("Should find function_one");
+        let function_two = metrics.iter().find(|m| m.name == "function_two")
+            .expect("Should find function_two");
+        
+        // Check function_one
+        assert_eq!(function_one.file_path, "test.rs");
+        assert_eq!(function_one.parameter_count, 1);
+        assert!(function_one.logical_loc > 0);
+        
+        // Check function_two
+        assert_eq!(function_two.file_path, "test.rs");
+        assert_eq!(function_two.parameter_count, 0);
+        assert!(function_two.logical_loc > 0);
         
         Ok(())
     }

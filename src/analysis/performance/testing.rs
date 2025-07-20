@@ -1,8 +1,13 @@
 use std::time::{Duration, Instant};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
 #[cfg(feature = "image-rendering")]
 use crate::report::image_renderer::{ImageRenderer, ImageFormat, RenderingServiceConfig};
+
+#[cfg(not(feature = "image-rendering"))]
+use super::image_stubs::{ImageRenderer, ImageFormat, RenderingServiceConfig};
+
 use crate::analysis::performance::{RenderingOptimizer, OptimizationRequest, RenderQuality};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -63,9 +68,19 @@ pub struct PerformanceValidator {
 
 impl PerformanceValidator {
     pub fn new() -> Self {
-        Self {
-            optimizer: RenderingOptimizer::new(),
-            baseline_renderer: ImageRenderer::new(),
+        #[cfg(feature = "image-rendering")]
+        {
+            Self {
+                optimizer: RenderingOptimizer::new(),
+                baseline_renderer: ImageRenderer::new(),
+            }
+        }
+        
+        #[cfg(not(feature = "image-rendering"))]
+        {
+            Self {
+                optimizer: RenderingOptimizer::new(),
+            }
         }
     }
 

@@ -3,8 +3,12 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use tokio::sync::RwLock;
 use std::sync::Arc;
+
 #[cfg(feature = "image-rendering")]
 use crate::report::image_renderer::{ImageRenderer, ImageFormat, RenderingServiceConfig};
+
+#[cfg(not(feature = "image-rendering"))]
+use super::image_stubs::{ImageRenderer, ImageFormat, RenderingServiceConfig};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PerformanceBaseline {
@@ -95,12 +99,22 @@ struct RenderingMeasurement {
 
 impl PerformanceAnalyzer {
     pub fn new() -> Self {
-        let config = RenderingServiceConfig::default();
-        let renderer = ImageRenderer::with_config(config);
+        #[cfg(feature = "image-rendering")]
+        {
+            let config = RenderingServiceConfig::default();
+            let renderer = ImageRenderer::with_config(config);
+            
+            Self {
+                renderer,
+                measurements: Arc::new(RwLock::new(Vec::new())),
+            }
+        }
         
-        Self {
-            renderer,
-            measurements: Arc::new(RwLock::new(Vec::new())),
+        #[cfg(not(feature = "image-rendering"))]
+        {
+            Self {
+                measurements: Arc::new(RwLock::new(Vec::new())),
+            }
         }
     }
 
@@ -177,11 +191,15 @@ impl PerformanceAnalyzer {
             let memory_before = self.get_memory_usage();
             let start_time = Instant::now();
             
+            #[cfg(feature = "image-rendering")]
             let result = self.renderer.render_diagram(
                 mermaid_code,
                 ImageFormat::Svg,
                 Some((1200, 800))
             ).await;
+            
+            #[cfg(not(feature = "image-rendering"))]
+            let result: Result<Vec<u8>, Box<dyn std::error::Error + Send + Sync>> = Ok(vec![]);
             
             let render_time = start_time.elapsed();
             let memory_after = self.get_memory_usage();
@@ -325,14 +343,20 @@ graph TD
         // Cold cache test
         let _ = self.clear_cache().await;
         let cold_start = Instant::now();
+        #[cfg(feature = "image-rendering")]
         let _ = self.renderer.render_diagram(test_diagram, ImageFormat::Svg, None).await;
+        #[cfg(not(feature = "image-rendering"))]
+        let _ = Ok::<Vec<u8>, Box<dyn std::error::Error + Send + Sync>>(vec![]);
         let cold_time = cold_start.elapsed();
 
         // Warm cache tests
         let mut warm_times = Vec::new();
         for _ in 0..10 {
             let warm_start = Instant::now();
-            let _ = self.renderer.render_diagram(test_diagram, ImageFormat::Svg, None).await;
+            #[cfg(feature = "image-rendering")]
+        let _ = self.renderer.render_diagram(test_diagram, ImageFormat::Svg, None).await;
+        #[cfg(not(feature = "image-rendering"))]
+        let _ = Ok::<Vec<u8>, Box<dyn std::error::Error + Send + Sync>>(vec![]);
             warm_times.push(warm_start.elapsed());
         }
 

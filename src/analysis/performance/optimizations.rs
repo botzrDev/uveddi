@@ -3,8 +3,12 @@ use tokio::sync::Semaphore;
 use std::sync::Arc;
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
+
 #[cfg(feature = "image-rendering")]
 use crate::report::image_renderer::{ImageRenderer, ImageFormat, RenderingServiceConfig};
+
+#[cfg(not(feature = "image-rendering"))]
+use super::image_stubs::{ImageRenderer, ImageFormat, RenderingServiceConfig, RenderResult};
 
 #[derive(Debug, Clone)]
 pub struct RenderingOptimizer {
@@ -237,11 +241,7 @@ impl RenderingOptimizer {
 
         // All retries failed
         Err(OptimizationError::RenderingFailed(
-            last_error.unwrap_or_else(|| 
-                crate::error::rendering::RenderingServiceError::NetworkError { 
-                    message: "Unknown error".to_string() 
-                }
-            ).to_string()
+            last_error.map(|e| e.to_string()).unwrap_or_else(|| "Unknown error".to_string())
         ))
     }
 
@@ -565,6 +565,7 @@ impl Drop for PooledBuffer {
     }
 }
 
+#[cfg(feature = "image-rendering")]
 #[derive(Debug)]
 pub struct RenderResult {
     pub data: Vec<u8>,

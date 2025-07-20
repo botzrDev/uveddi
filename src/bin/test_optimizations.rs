@@ -1,5 +1,10 @@
 use uveddi::analysis::performance::{RenderingOptimizer, OptimizationRequest, RenderQuality};
+
+#[cfg(feature = "image-rendering")]
 use uveddi::report::image_renderer::ImageFormat;
+
+#[cfg(not(feature = "image-rendering"))]
+use uveddi::analysis::performance::image_stubs::ImageFormat;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
