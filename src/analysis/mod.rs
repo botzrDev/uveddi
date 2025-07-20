@@ -116,6 +116,7 @@ pub mod engine_builder;
 pub mod errors;
 pub mod extractors;
 pub mod graph;
+pub mod incremental;
 pub mod memory;
 pub mod mermaid_generator;
 pub mod performance;
@@ -142,6 +143,10 @@ pub use engine::AnalysisEngine;
 pub use engine_builder::AnalysisEngineBuilder;
 pub use errors::AnalysisError;
 pub use graph::{ComponentNode, LocalDependencyGraph, LocalDependencyType};
+pub use incremental::{
+    IncrementalAnalysisEngine, IncrementalConfig, IncrementalAnalysisConfig,
+    ChangeDetector, DependencyTracker, IncrementalStateManager, ChangeSet, ChangeImpact
+};
 pub use memory::{get_optimization_status, MemoryOptimizationConfig};
 pub use plugin_adapter::{WasmPluginAdapterFactory, WasmPluginDetectorAdapter};
 pub use standardized_config::{

@@ -137,6 +137,9 @@ confy = "1.0"
 # State Persistence (for TUI state)
 persisted = "1.0"
 
+# Pattern matching for file filtering
+glob = "0.3.1"
+
 # Chaos Engineering and Load Testing Dependencies (UV-82)
 # Failpoint injection for chaos engineering
 fail = { version = "0.5", optional = true }

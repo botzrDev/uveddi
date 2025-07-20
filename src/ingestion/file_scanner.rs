@@ -1,5 +1,6 @@
 use log::debug;
 use std::path::{Path, PathBuf};
+use crate::analysis::incremental::{ChangeDetector, ChangeSet};
 
 /// File scanner for recursive directory traversal
 pub struct FileScanner {
@@ -134,6 +135,58 @@ impl FileScanner {
             false
         }
     }
+
+    /// Scans directory for changes using incremental analysis
+    ///
+    /// # Arguments
+    ///
+    /// * `root_path` - The root directory to scan
+    /// * `change_detector` - Change detector for incremental analysis
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(ChangeSet)` - Set of changed files
+    /// * `Err(ScanError)` - If scanning fails
+    pub async fn scan_for_changes(
+        &self,
+        root_path: &Path,
+        change_detector: &mut ChangeDetector,
+    ) -> Result<ChangeSet, ScanError> {
+        change_detector
+            .detect_changes(root_path)
+            .await
+            .map_err(|e| ScanError::IncrementalError(format!("Change detection failed: {}", e)))
+    }
+
+    /// Scans only changed files for incremental analysis
+    ///
+    /// # Arguments
+    ///
+    /// * `changeset` - Set of changes from change detector
+    ///
+    /// # Returns
+    ///
+    /// * `Vec<PathBuf>` - List of changed files that are supported
+    pub fn filter_supported_changes(&self, changeset: &ChangeSet) -> Vec<PathBuf> {
+        let mut supported_files = Vec::new();
+        
+        // Add modified files that are supported
+        for file in &changeset.modified {
+            if self.is_supported_file(file) && !self.should_ignore_path(file) {
+                supported_files.push(file.clone());
+            }
+        }
+        
+        // Add new files that are supported
+        for file in &changeset.added {
+            if self.is_supported_file(file) && !self.should_ignore_path(file) {
+                supported_files.push(file.clone());
+            }
+        }
+        
+        debug!("Filtered {} supported files from changeset", supported_files.len());
+        supported_files
+    }
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -142,4 +195,6 @@ pub enum ScanError {
     IoError(PathBuf, std::io::Error),
     #[error("Permission denied: {0}")]
     PermissionDenied(PathBuf),
+    #[error("Incremental analysis error: {0}")]
+    IncrementalError(String),
 }

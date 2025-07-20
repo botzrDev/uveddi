@@ -56,3 +56,6 @@
 //! used safely across async tasks and concurrent analysis operations.
 
 pub mod result_cache;
+pub mod incremental_cache;
+
+pub use incremental_cache::{IncrementalCache, IncrementalCacheConfig, CacheStatistics as IncrementalCacheStatistics};

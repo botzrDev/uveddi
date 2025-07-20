@@ -7628,6 +7628,7 @@ dependencies = [
  "env_logger",
  "fail",
  "futures",
+ "glob",
  "ignore",
  "influxdb2",
  "jsonwebtoken",
