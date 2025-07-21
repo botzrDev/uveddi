@@ -264,7 +264,7 @@ jobs:
           path: target/criterion/
           retention-days: 30
 
-  # Code coverage analysis
+  # Enhanced code coverage analysis
   coverage:
     name: Code Coverage
     runs-on: ubuntu-latest
@@ -289,25 +289,136 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-coverage-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Install cargo-llvm-cov
-        run: cargo install --locked cargo-llvm-cov
+      - name: Install coverage tools
+        run: |
+          cargo install --locked cargo-llvm-cov
+          cargo install --locked cargo-tarpaulin
 
-      - name: Generate code coverage
-        run: cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info
+      - name: Setup Node.js for rendering service
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'rendering-service/package-lock.json'
+
+      - name: Start rendering service for coverage tests
+        run: |
+          echo "Starting rendering service for coverage analysis..."
+          chmod +x scripts/start-rendering-service-for-tests.sh
+          ./scripts/start-rendering-service-for-tests.sh
+          echo "Rendering service started successfully"
+
+      # Run coverage-specific tests first
+      - name: Run coverage test suite
+        run: |
+          echo "Running comprehensive coverage tests..."
+          cargo test --test comprehensive_coverage --all-features --verbose
+          cargo test --test edge_case_testing --all-features --verbose
+          cargo test --test regression_prevention --all-features --verbose
+
+      - name: Generate comprehensive coverage report
+        run: |
+          echo "Generating comprehensive coverage report..."
+          cargo llvm-cov clean
+          cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info
+          cargo llvm-cov --all-features --workspace --html --output-dir coverage-html
+          cargo llvm-cov --all-features --workspace --json --output-path coverage.json
+
+      # Validate coverage thresholds (UV-245 requirements)
+      - name: Validate coverage thresholds
+        run: |
+          echo "Validating coverage against UV-245 requirements..."
+          
+          # Install jq if not available
+          sudo apt-get update && sudo apt-get install -y jq bc
+          
+          # Extract coverage percentage
+          OVERALL_COVERAGE=$(cat coverage.json | jq -r '.data[0].totals.lines.percent // 0')
+          echo "Overall coverage: ${OVERALL_COVERAGE}%"
+          
+          # UV-245 thresholds
+          OVERALL_THRESHOLD=90.0
+          
+          # Validate threshold
+          if (( $(echo "${OVERALL_COVERAGE} < ${OVERALL_THRESHOLD}" | bc -l) )); then
+            echo "❌ Coverage ${OVERALL_COVERAGE}% below UV-245 threshold ${OVERALL_THRESHOLD}%"
+            echo "COVERAGE_THRESHOLD_MET=false" >> $GITHUB_ENV
+          else
+            echo "✅ Coverage ${OVERALL_COVERAGE}% meets UV-245 threshold ${OVERALL_THRESHOLD}%"
+            echo "COVERAGE_THRESHOLD_MET=true" >> $GITHUB_ENV
+          fi
+          
+          echo "COVERAGE_PERCENTAGE=${OVERALL_COVERAGE}" >> $GITHUB_ENV
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
           files: lcov.info
+          flags: comprehensive
+          name: comprehensive-coverage
           fail_ci_if_error: false
           verbose: true
 
-      - name: Upload coverage artifact
+      - name: Upload coverage artifacts
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
-          path: lcov.info
+          path: |
+            lcov.info
+            coverage-html/
+            coverage.json
           retention-days: 30
+
+      - name: Coverage summary comment (PR only)
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const coverage = process.env.COVERAGE_PERCENTAGE;
+            const thresholdMet = process.env.COVERAGE_THRESHOLD_MET === 'true';
+            const status = thresholdMet ? '✅' : '❌';
+            
+            const comment = `
+            ## 📊 Coverage Report (UV-245)
+            
+            **Overall Coverage**: ${status} ${coverage}%
+            **Threshold**: 90% (UV-245 requirement)
+            
+            ### Test Categories Executed:
+            - ✅ Comprehensive Coverage Tests
+            - ✅ Edge Case Testing  
+            - ✅ Regression Prevention Tests
+            
+            ${thresholdMet ? 
+              '🎉 Coverage meets UV-245 production readiness requirements!' : 
+              '⚠️ Coverage below production readiness threshold. Please add tests.'}
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Cleanup rendering service
+        if: always()
+        run: |
+          if [ -f service.pid ]; then
+            echo "Stopping rendering service..."
+            kill $(cat service.pid) 2>/dev/null || true
+            rm -f service.pid service.log
+            echo "Rendering service stopped"
+          fi
+
+      # Fail the job if coverage threshold not met
+      - name: Enforce coverage threshold
+        run: |
+          if [[ "${{ env.COVERAGE_THRESHOLD_MET }}" != "true" ]]; then
+            echo "❌ Coverage validation failed - below UV-245 production readiness threshold"
+            exit 1
+          fi
+          echo "✅ Coverage validation passed"
 
   # Architecture validation
   architecture:

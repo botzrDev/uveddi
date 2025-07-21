@@ -251,6 +251,7 @@ pub mod community;
 pub mod config;
 pub mod constants;
 pub mod database;
+pub mod deployment;
 pub mod error;
 pub mod ingestion;
 pub mod models;

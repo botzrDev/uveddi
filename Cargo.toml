@@ -208,6 +208,7 @@ rstest = "0.18"
 criterion = { version = "0.5", features = ["html_reports"] }
 serial_test = "3.0"
 proptest = "1.4"
+# Note: Coverage tools (tarpaulin, cargo-llvm-cov) are installed via CI, not as dependencies
 
 [[test]]
 name = "analysis_engine"
@@ -228,6 +229,18 @@ path = "tests/cli_analyze.rs"
 [[test]]
 name = "database_crud"
 path = "tests/database_crud.rs"
+
+[[test]]
+name = "comprehensive_coverage"
+path = "tests/coverage/comprehensive_coverage.rs"
+
+[[test]]
+name = "edge_case_testing"
+path = "tests/coverage/edge_case_testing.rs"
+
+[[test]]
+name = "regression_prevention"
+path = "tests/coverage/regression_prevention.rs"
 
 [[bench]]
 name = "observability_performance"

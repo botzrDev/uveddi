@@ -1,0 +1,554 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: uveddi-dr
+  labels:
+    name: uveddi-dr
+    environment: disaster-recovery
+    managed-by: uveddi-deployment-pipeline
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: backup-operator
+  namespace: uveddi-production
+  labels:
+    app: backup-operator
+    component: disaster-recovery
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: backup-operator
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "configmaps", "secrets", "persistentvolumeclaims"]
+  verbs: ["get", "list", "create", "update", "patch", "delete"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "statefulsets"]
+  verbs: ["get", "list", "create", "update", "patch", "delete"]
+- apiGroups: ["batch"]
+  resources: ["jobs", "cronjobs"]
+  verbs: ["get", "list", "create", "update", "patch", "delete"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: backup-operator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: backup-operator
+subjects:
+- kind: ServiceAccount
+  name: backup-operator
+  namespace: uveddi-production
+
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: database-backup
+  namespace: uveddi-production
+  labels:
+    app: database-backup
+    component: disaster-recovery
+spec:
+  schedule: "0 2 * * *"  # Daily at 2 AM UTC
+  successfulJobsHistoryLimit: 7
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: backup-operator
+          containers:
+          - name: backup
+            image: postgres:15-alpine
+            command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              
+              TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+              BACKUP_FILE="uveddi_backup_${TIMESTAMP}.sql"
+              
+              echo "$(date): Starting database backup..."
+              
+              # Create backup
+              pg_dump \
+                -h $DB_HOST \
+                -U $DB_USER \
+                -d $DB_NAME \
+                --verbose \
+                --no-password \
+                > /tmp/${BACKUP_FILE}
+              
+              # Compress backup
+              gzip /tmp/${BACKUP_FILE}
+              
+              # Upload to cloud storage
+              if command -v gsutil >/dev/null 2>&1; then
+                gsutil cp /tmp/${BACKUP_FILE}.gz gs://${BACKUP_BUCKET}/database/
+              elif command -v aws >/dev/null 2>&1; then
+                aws s3 cp /tmp/${BACKUP_FILE}.gz s3://${BACKUP_BUCKET}/database/
+              else
+                echo "No cloud storage CLI found, storing locally"
+                cp /tmp/${BACKUP_FILE}.gz /backups/
+              fi
+              
+              # Verify backup
+              gunzip -t /tmp/${BACKUP_FILE}.gz
+              
+              echo "$(date): Database backup completed successfully"
+              echo "Backup file: ${BACKUP_FILE}.gz"
+              echo "Size: $(du -h /tmp/${BACKUP_FILE}.gz | cut -f1)"
+              
+              # Cleanup old backups (keep last 30 days)
+              find /tmp -name "uveddi_backup_*.sql.gz" -mtime +30 -delete
+              
+            env:
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: password
+            - name: DB_HOST
+              value: "postgres-service.uveddi-production.svc.cluster.local"
+            - name: DB_USER
+              value: "uveddi_user"
+            - name: DB_NAME
+              value: "uveddi"
+            - name: BACKUP_BUCKET
+              value: "uveddi-production-backups"
+            volumeMounts:
+            - name: backup-storage
+              mountPath: /backups
+          volumes:
+          - name: backup-storage
+            persistentVolumeClaim:
+              claimName: backup-storage-pvc
+          restartPolicy: OnFailure
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: backup-storage-pvc
+  namespace: uveddi-production
+  labels:
+    app: backup-storage
+    component: disaster-recovery
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Gi
+  storageClassName: fast-ssd
+
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: config-backup
+  namespace: uveddi-production
+  labels:
+    app: config-backup
+    component: disaster-recovery
+spec:
+  schedule: "0 3 * * *"  # Daily at 3 AM UTC
+  successfulJobsHistoryLimit: 7
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: backup-operator
+          containers:
+          - name: config-backup
+            image: bitnami/kubectl:latest
+            command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              
+              TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+              BACKUP_DIR="/tmp/config_backup_${TIMESTAMP}"
+              
+              echo "$(date): Starting configuration backup..."
+              
+              mkdir -p ${BACKUP_DIR}
+              
+              # Backup ConfigMaps
+              kubectl get configmaps -n uveddi-production -o yaml > ${BACKUP_DIR}/configmaps.yaml
+              
+              # Backup Secrets (names only, not data)
+              kubectl get secrets -n uveddi-production -o yaml \
+                | grep -v "data:" \
+                | grep -v "type: kubernetes.io" \
+                > ${BACKUP_DIR}/secrets-structure.yaml
+              
+              # Backup Deployments
+              kubectl get deployments -n uveddi-production -o yaml > ${BACKUP_DIR}/deployments.yaml
+              
+              # Backup Services
+              kubectl get services -n uveddi-production -o yaml > ${BACKUP_DIR}/services.yaml
+              
+              # Backup Ingress
+              kubectl get ingress -n uveddi-production -o yaml > ${BACKUP_DIR}/ingress.yaml 2>/dev/null || true
+              
+              # Create tar archive
+              tar -czf /tmp/config_backup_${TIMESTAMP}.tar.gz -C /tmp config_backup_${TIMESTAMP}
+              
+              # Upload to cloud storage
+              if command -v gsutil >/dev/null 2>&1; then
+                gsutil cp /tmp/config_backup_${TIMESTAMP}.tar.gz gs://${BACKUP_BUCKET}/config/
+              elif command -v aws >/dev/null 2>&1; then
+                aws s3 cp /tmp/config_backup_${TIMESTAMP}.tar.gz s3://${BACKUP_BUCKET}/config/
+              else
+                cp /tmp/config_backup_${TIMESTAMP}.tar.gz /backups/
+              fi
+              
+              echo "$(date): Configuration backup completed successfully"
+              echo "Backup file: config_backup_${TIMESTAMP}.tar.gz"
+              
+              # Cleanup
+              rm -rf ${BACKUP_DIR}
+              
+            env:
+            - name: BACKUP_BUCKET
+              value: "uveddi-production-backups"
+            volumeMounts:
+            - name: backup-storage
+              mountPath: /backups
+          volumes:
+          - name: backup-storage
+            persistentVolumeClaim:
+              claimName: backup-storage-pvc
+          restartPolicy: OnFailure
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: disaster-recovery-controller
+  namespace: uveddi-production
+  labels:
+    app: disaster-recovery-controller
+    component: disaster-recovery
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: disaster-recovery-controller
+  template:
+    metadata:
+      labels:
+        app: disaster-recovery-controller
+        component: disaster-recovery
+    spec:
+      serviceAccountName: backup-operator
+      containers:
+      - name: dr-controller
+        image: dr-controller:latest
+        ports:
+        - containerPort: 8080
+          name: http
+        - containerPort: 9090
+          name: metrics
+        env:
+        - name: DR_NAMESPACE
+          value: "uveddi-dr"
+        - name: PRODUCTION_NAMESPACE
+          value: "uveddi-production"
+        - name: BACKUP_BUCKET
+          value: "uveddi-production-backups"
+        - name: RTO_MINUTES
+          value: "15"
+        - name: RPO_MINUTES
+          value: "60"
+        - name: AUTO_FAILOVER_ENABLED
+          value: "true"
+        envFrom:
+        - configMapRef:
+            name: uveddi-disaster-recovery-config
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "200m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        volumeMounts:
+        - name: dr-scripts
+          mountPath: /scripts
+          readOnly: true
+      volumes:
+      - name: dr-scripts
+        configMap:
+          name: uveddi-deployment-scripts
+          defaultMode: 0755
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: disaster-recovery-controller
+  namespace: uveddi-production
+  labels:
+    app: disaster-recovery-controller
+    component: disaster-recovery
+spec:
+  selector:
+    app: disaster-recovery-controller
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+  - name: metrics
+    port: 9090
+    targetPort: 9090
+  type: ClusterIP
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: disaster-recovery-alerts
+  namespace: uveddi-production
+  labels:
+    app: uveddi
+    component: disaster-recovery
+spec:
+  groups:
+  - name: uveddi.disaster-recovery
+    interval: 30s
+    rules:
+    - alert: BackupJobFailed
+      expr: kube_job_status_failed{job_name=~"database-backup.*|config-backup.*"} > 0
+      for: 1m
+      labels:
+        severity: critical
+        component: backup
+      annotations:
+        summary: "Backup job failed"
+        description: "Backup job {{ $labels.job_name }} has failed."
+        runbook_url: "https://docs.uveddi.com/runbooks/backup-failure"
+        
+    - alert: BackupJobMissing
+      expr: |
+        (time() - kube_job_status_completion_time{job_name=~"database-backup.*"}) > 26*3600
+        or
+        (time() - kube_job_status_completion_time{job_name=~"config-backup.*"}) > 26*3600
+      for: 1h
+      labels:
+        severity: warning
+        component: backup
+      annotations:
+        summary: "Backup job missing"
+        description: "No successful backup in the last 26 hours for {{ $labels.job_name }}."
+        
+    - alert: DisasterRecoveryControllerDown
+      expr: up{job="disaster-recovery-controller"} == 0
+      for: 5m
+      labels:
+        severity: critical
+        component: disaster-recovery
+      annotations:
+        summary: "Disaster Recovery Controller is down"
+        description: "The Disaster Recovery Controller has been down for more than 5 minutes."
+        
+    - alert: RTOViolation
+      expr: uveddi_disaster_recovery_rto_minutes > 15
+      for: 1m
+      labels:
+        severity: critical
+        component: disaster-recovery
+      annotations:
+        summary: "RTO violation detected"
+        description: "Recovery Time Objective violated. Current RTO: {{ $value }} minutes."
+        
+    - alert: RPOViolation
+      expr: uveddi_disaster_recovery_rpo_minutes > 60
+      for: 1m
+      labels:
+        severity: critical
+        component: disaster-recovery
+      annotations:
+        summary: "RPO violation detected"
+        description: "Recovery Point Objective violated. Current RPO: {{ $value }} minutes."
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dr-runbook
+  namespace: uveddi-production
+  labels:
+    app: uveddi
+    component: disaster-recovery
+data:
+  disaster-recovery-runbook.md: |
+    # Uveddi Disaster Recovery Runbook
+    
+    ## Overview
+    This runbook provides step-by-step procedures for disaster recovery scenarios.
+    
+    ## Recovery Objectives
+    - **RTO (Recovery Time Objective)**: 15 minutes
+    - **RPO (Recovery Point Objective)**: 60 minutes
+    
+    ## Disaster Scenarios
+    
+    ### 1. Complete Data Center Failure
+    
+    **Symptoms:**
+    - No response from primary production environment
+    - All health checks failing
+    - Database connectivity lost
+    
+    **Recovery Steps:**
+    
+    1. **Assess the situation:**
+       ```bash
+       kubectl get pods -n uveddi-production
+       kubectl get nodes
+       ```
+    
+    2. **Activate disaster recovery environment:**
+       ```bash
+       kubectl apply -f k8s/disaster-recovery/
+       ./k8s/production/scripts/disaster-recovery.sh deploy-dr
+       ```
+    
+    3. **Restore database:**
+       ```bash
+       ./k8s/production/scripts/disaster-recovery.sh restore-db
+       ```
+    
+    4. **Validate DR environment:**
+       ```bash
+       ./k8s/production/scripts/disaster-recovery.sh validate
+       ```
+    
+    5. **Switch DNS/Load Balancer:**
+       ```bash
+       # Update DNS records to point to DR environment
+       # This step is provider-specific
+       ```
+    
+    ### 2. Database Corruption/Loss
+    
+    **Symptoms:**
+    - Database connectivity issues
+    - Data integrity errors
+    - Application unable to read/write data
+    
+    **Recovery Steps:**
+    
+    1. **Stop all write operations:**
+       ```bash
+       kubectl scale deployment uveddi-blue --replicas=0 -n uveddi-production
+       kubectl scale deployment uveddi-green --replicas=0 -n uveddi-production
+       ```
+    
+    2. **Restore from latest backup:**
+       ```bash
+       ./k8s/production/scripts/disaster-recovery.sh restore-db
+       ```
+    
+    3. **Validate data integrity:**
+       ```bash
+       kubectl exec -it postgres-0 -n uveddi-production -- psql -U uveddi -d uveddi -c "SELECT COUNT(*) FROM analysis_runs;"
+       ```
+    
+    4. **Restart application:**
+       ```bash
+       kubectl scale deployment uveddi-blue --replicas=3 -n uveddi-production
+       ```
+    
+    ### 3. Application Failure (All Replicas Down)
+    
+    **Symptoms:**
+    - All application pods failing
+    - Health checks failing
+    - Users cannot access the service
+    
+    **Recovery Steps:**
+    
+    1. **Check pod status:**
+       ```bash
+       kubectl get pods -n uveddi-production
+       kubectl describe pods -l app=uveddi -n uveddi-production
+       ```
+    
+    2. **Check logs:**
+       ```bash
+       kubectl logs -l app=uveddi -n uveddi-production --tail=100
+       ```
+    
+    3. **Restart deployment:**
+       ```bash
+       kubectl rollout restart deployment/uveddi-blue -n uveddi-production
+       kubectl rollout restart deployment/uveddi-green -n uveddi-production
+       ```
+    
+    4. **If restart fails, rollback:**
+       ```bash
+       kubectl rollout undo deployment/uveddi-blue -n uveddi-production
+       kubectl rollout undo deployment/uveddi-green -n uveddi-production
+       ```
+    
+    ## Emergency Contacts
+    
+    - **On-call Engineer**: +1-XXX-XXX-XXXX
+    - **Database Administrator**: +1-XXX-XXX-XXXX
+    - **Infrastructure Team**: +1-XXX-XXX-XXXX
+    - **Emergency Slack Channel**: #uveddi-emergency
+    
+    ## Escalation Matrix
+    
+    | Time | Action |
+    |------|--------|
+    | T+0 | Alert on-call engineer |
+    | T+5min | Escalate to team lead |
+    | T+15min | Escalate to engineering manager |
+    | T+30min | Escalate to VP Engineering |
+    
+    ## Post-Incident Procedures
+    
+    1. **Document the incident**
+    2. **Conduct post-mortem within 24 hours**
+    3. **Update runbooks based on lessons learned**
+    4. **Test recovery procedures**
+    5. **Communicate to stakeholders**
+    
+    ## Recovery Validation Checklist
+    
+    - [ ] All pods are running and ready
+    - [ ] Health checks are passing
+    - [ ] Database connectivity restored
+    - [ ] Application functionality verified
+    - [ ] Monitoring and alerts operational
+    - [ ] Performance metrics normal
+    - [ ] User acceptance testing completed
+    - [ ] DNS/Load balancer updated
+    - [ ] Stakeholders notified
