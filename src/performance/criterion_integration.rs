@@ -281,7 +281,7 @@ impl CriterionIntegrationManager {
     ) -> Result<()> {
         // Only update if the result is acceptable and has high confidence
         let should_update = match &comparison.recommendation {
-            crate::performance::Recommendation::Accept => {
+            crate::performance::BaselineRecommendation::Accept => {
                 comparison.statistical_confidence > 0.8
             },
             _ => false,
@@ -384,7 +384,7 @@ impl CriterionIntegrationManager {
 
         // Check for regression based on baseline comparison
         match &comparison.recommendation {
-            crate::performance::Recommendation::Accept => {
+            crate::performance::BaselineRecommendation::Accept => {
                 // Additional checks for warnings
                 if statistical_analysis.trend_stability < 0.5 {
                     RegressionVerdict::PassWithWarning {

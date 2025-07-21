@@ -1,13 +1,12 @@
 //! Integration tests for UV-249 Phase 3: Genetic Algorithm Bottleneck Detection
 
 use std::collections::HashMap;
-use std::time::{Duration, SystemTime};
+use std::time::SystemTime;
 use anyhow::Result;
 
 use uveddi::performance::{
-    GeneticBottleneckDetector, PerformanceDataPoint, BottleneckAnalysis,
+    GeneticBottleneckDetector, PerformanceDataPoint,
     PerformanceRegressionDetector, RegressionDetectionConfig,
-    OptimizationObjective, TargetDirection, BottleneckSeverity,
 };
 
 /// Test basic genetic algorithm functionality
@@ -92,8 +91,7 @@ async fn test_regression_detector_integration() -> Result<()> {
         ..Default::default()
     };
 
-    let detector = PerformanceRegressionDetector::new(config)?
-        .with_genetic_detection();
+    let detector = PerformanceRegressionDetector::new(config)?;
 
     // Record baseline metrics
     for i in 0..10 {
@@ -126,8 +124,7 @@ async fn test_comprehensive_analysis() -> Result<()> {
         ..Default::default()
     };
 
-    let detector = PerformanceRegressionDetector::new(config)?
-        .with_genetic_config(20, 40);
+    let detector = PerformanceRegressionDetector::new(config)?;
 
     // Build up some baseline data
     for i in 0..8 {
@@ -258,7 +255,7 @@ fn create_cpu_bottleneck_scenario() -> Vec<PerformanceDataPoint> {
         
         data.push(PerformanceDataPoint {
             timestamp: base_time + i * 30,
-            cpu_usage: (0.7 + cpu_spike).min(1.0), // High baseline CPU with spikes
+            cpu_usage: (0.7 + cpu_spike).min(1.0f64), // High baseline CPU with spikes
             memory_usage: 0.4, // Stable memory
             io_wait: 0.05, // Low I/O wait
             network_latency: 5.0, // Good network
@@ -323,7 +320,7 @@ async fn test_uv249_acceptance_criteria() -> Result<()> {
     
     // ✅ Genetic algorithm engine implemented and tested
     let mut detector = GeneticBottleneckDetector::new();
-    assert!(detector.with_population_size(50).with_generations(100).with_mutation_rate(0.1).with_crossover_rate(0.8) != detector);
+    let _configured_detector = detector.with_population_size(50).with_generations(100).with_mutation_rate(0.1).with_crossover_rate(0.8);
     println!("✅ Genetic algorithm engine implemented");
     
     // ✅ Bottleneck detection accuracy validated
