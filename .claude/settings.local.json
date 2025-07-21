@@ -83,7 +83,12 @@
       "Bash(gh issue list:*)",
       "Bash(python3 scripts/jira_integration.py:*)",
       "Bash(touch:*)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "Bash(/home/austingreen/Documents/botzr/projects/uveddi/scripts/validate-uv243-requirements.sh:*)",
+      "Bash(timeout 30s cargo test --no-run --all-features)",
+      "Bash(mdbook build:*)",
+      "Bash(mdbook test:*)",
+      "Bash(true)"
     ],
     "deny": []
   }
