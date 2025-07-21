@@ -16,7 +16,7 @@ use tera::{Tera, Context};
 
 use crate::performance::{
     BenchmarkBaseline, BaselineComparison, StatisticalAnalyzer, TrendDetector,
-    MannKendallResult, ChangePointResult, ChangeCategory, Recommendation
+    MannKendallResult, ChangePointResult, ChangeCategory, BaselineRecommendation
 };
 
 /// Comprehensive performance report
@@ -97,7 +97,7 @@ pub struct BaselineComparisonReport {
     pub change_category: ChangeCategory,
     pub statistical_significance: f64,
     pub effect_size: f64,
-    pub recommendation: Recommendation,
+    pub recommendation: BaselineRecommendation,
     pub confidence_interval: (f64, f64),
 }
 
@@ -387,7 +387,7 @@ impl PerformanceReportGenerator {
             
             let status = match (&comparison.comparison_result.change_category, &comparison.recommendation) {
                 (ChangeCategory::MajorRegression, _) => BenchmarkStatus::Fail,
-                (ChangeCategory::MinorRegression, Recommendation::Reject { .. }) => BenchmarkStatus::Fail,
+                (ChangeCategory::MinorRegression, BaselineRecommendation::Reject { .. }) => BenchmarkStatus::Fail,
                 (ChangeCategory::MinorRegression, _) => BenchmarkStatus::Warning,
                 (ChangeCategory::HighVariance, _) => BenchmarkStatus::Warning,
                 (_, _) if comparison.previous_baseline.is_none() => BenchmarkStatus::NoBaseline,

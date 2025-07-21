@@ -9,6 +9,7 @@ pub mod trend_detection;
 pub mod benchmark_baseline;
 pub mod performance_reports;
 pub mod criterion_integration;
+pub mod genetic_bottleneck;
 
 pub use regression_detection::{
     PerformanceRegressionDetector,
@@ -40,7 +41,7 @@ pub use benchmark_baseline::{
     BaselineComparison,
     ComparisonResult,
     ChangeCategory,
-    Recommendation,
+    Recommendation as BaselineRecommendation,
     BaselineConfig,
 };
 
@@ -58,6 +59,27 @@ pub use criterion_integration::{
     CriterionBenchmarkResult,
     IntegratedBenchmarkResult,
     RegressionVerdict,
+};
+
+pub use genetic_bottleneck::{
+    GeneticBottleneckDetector,
+    BottleneckChromosome,
+    OptimizationTarget,
+    OptimizationObjective,
+    TargetDirection,
+    Bottleneck,
+    ResourceType,
+    BottleneckSeverity,
+    BottleneckLocation,
+    BottleneckMetrics,
+    Recommendation as GeneticRecommendation,
+    RecommendationPriority,
+    ImplementationEffort,
+    RecommendationCategory,
+    BottleneckAnalysis,
+    AnalysisMetadata,
+    FitnessEvaluator,
+    PerformanceDataPoint,
 };
 
 #[cfg(test)]

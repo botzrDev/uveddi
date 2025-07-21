@@ -394,17 +394,17 @@ impl CriterionIntegrationManager {
                     RegressionVerdict::Pass
                 }
             },
-            crate::performance::Recommendation::Investigate { reasons } => {
+            crate::performance::BaselineRecommendation::Investigate { reasons } => {
                 RegressionVerdict::PassWithWarning {
                     warning: reasons.join("; ")
                 }
             },
-            crate::performance::Recommendation::Reject { reasons } => {
+            crate::performance::BaselineRecommendation::Reject { reasons } => {
                 RegressionVerdict::Fail {
                     reason: reasons.join("; ")
                 }
             },
-            crate::performance::Recommendation::RequireManualReview => {
+            crate::performance::BaselineRecommendation::RequireManualReview => {
                 RegressionVerdict::PassWithWarning {
                     warning: "Manual review required due to statistical uncertainty".to_string()
                 }

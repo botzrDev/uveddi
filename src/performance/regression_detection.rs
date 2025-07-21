@@ -16,6 +16,7 @@ use anyhow::{Result, anyhow};
 
 use crate::performance::statistical_analysis::{StatisticalAnalyzer, MannKendallResult};
 use crate::performance::trend_detection::{TrendDetector, ChangePointResult};
+use crate::performance::genetic_bottleneck::{GeneticBottleneckDetector, BottleneckAnalysis, PerformanceDataPoint};
 
 /// Performance regression detector
 #[derive(Debug)]
@@ -26,6 +27,7 @@ pub struct PerformanceRegressionDetector {
     storage: MetricsStorage,
     statistical_analyzer: StatisticalAnalyzer,
     trend_detector: TrendDetector,
+    genetic_detector: Option<GeneticBottleneckDetector>,
     confidence_threshold: f64,  // 0.95 for 95% confidence
 }
 
@@ -158,6 +160,7 @@ impl PerformanceRegressionDetector {
             storage,
             statistical_analyzer: StatisticalAnalyzer::new(),
             trend_detector: TrendDetector::new(),
+            genetic_detector: None,
             confidence_threshold: 0.95,
         })
     }

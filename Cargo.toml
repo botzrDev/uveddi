@@ -18,7 +18,7 @@ readme = "README.md"
 default = ["local-ai", "tree-sitter", "memory-optimization"]
 # Chaos engineering and load testing
 chaos = ["fail", "statrs", "ndarray-stats"]
-# Performance regression detection
+# Performance regression detection with genetic algorithms
 regression-detection = ["changepoint", "linfa", "influxdb2"]
 # SLA monitoring and validation
 sla-monitoring = ["metrics-exporter-prometheus", "tokio-metrics"]
