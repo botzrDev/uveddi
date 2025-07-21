@@ -19,7 +19,7 @@ pub mod disaster_recovery;
 pub mod metrics;
 
 /// Deployment strategy types
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum DeploymentStrategy {
     BlueGreen,
     Rolling,
@@ -27,7 +27,7 @@ pub enum DeploymentStrategy {
 }
 
 /// Deployment environment
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum Environment {
     Development,
     Staging,
@@ -124,7 +124,7 @@ impl DeploymentOrchestrator {
 
     /// Execute a deployment
     #[instrument(skip(self))]
-    pub async fn deploy(&self, config: DeploymentConfig) -> Result<DeploymentMetadata> {
+    pub async fn deploy(&mut self, config: DeploymentConfig) -> Result<DeploymentMetadata> {
         let deployment_id = generate_deployment_id();
         let timestamp = SystemTime::now();
         
@@ -192,7 +192,7 @@ impl DeploymentOrchestrator {
     /// Execute blue-green deployment
     #[instrument(skip(self))]
     async fn execute_blue_green_deployment(
-        &self,
+        &mut self,
         config: &DeploymentConfig,
         metadata: &mut DeploymentMetadata,
     ) -> Result<()> {
@@ -222,7 +222,7 @@ impl DeploymentOrchestrator {
     /// Execute rolling deployment
     #[instrument(skip(self))]
     async fn execute_rolling_deployment(
-        &self,
+        &mut self,
         config: &DeploymentConfig,
         metadata: &mut DeploymentMetadata,
     ) -> Result<()> {
@@ -241,7 +241,7 @@ impl DeploymentOrchestrator {
     /// Execute canary deployment
     #[instrument(skip(self))]
     async fn execute_canary_deployment(
-        &self,
+        &mut self,
         config: &DeploymentConfig,
         metadata: &mut DeploymentMetadata,
     ) -> Result<()> {
@@ -299,7 +299,7 @@ impl DeploymentOrchestrator {
 
     /// Rollback deployment
     #[instrument(skip(self))]
-    async fn rollback_deployment(&self, config: &DeploymentConfig) -> Result<()> {
+    async fn rollback_deployment(&mut self, config: &DeploymentConfig) -> Result<()> {
         warn!("Rolling back deployment");
 
         match config.strategy {

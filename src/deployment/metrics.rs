@@ -43,7 +43,7 @@ pub struct PerformanceThresholds {
 }
 
 /// Comprehensive deployment metrics
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct DeploymentMetrics {
     pub total_deployments: u64,
     pub successful_deployments: u64,
@@ -212,7 +212,7 @@ pub struct TrendAnalysis {
 }
 
 /// Trend direction
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum TrendDirection {
     Improving,
     Declining,
@@ -221,7 +221,7 @@ pub enum TrendDirection {
 }
 
 /// Trend significance
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum TrendSignificance {
     High,
     Medium,
@@ -404,7 +404,7 @@ impl DeploymentMetricsCollector {
 
     /// Get current metrics
     pub async fn get_metrics(&self) -> DeploymentMetrics {
-        self.metrics.read().await.clone()
+        (*self.metrics.read().await).clone()
     }
 
     /// Generate analytics report
