@@ -7,7 +7,6 @@
 //! - Metrics collection and analysis
 
 use std::time::{Duration, SystemTime};
-use std::collections::HashMap;
 use tokio::time::timeout;
 
 use uveddi::deployment::{
@@ -26,7 +25,7 @@ use uveddi::deployment::{
 /// Test blue-green deployment orchestration
 #[tokio::test]
 async fn test_blue_green_deployment_orchestration() {
-    let orchestrator = DeploymentOrchestrator::new();
+    let mut orchestrator = DeploymentOrchestrator::new();
     
     let config = DeploymentConfig {
         strategy: DeploymentStrategy::BlueGreen,
@@ -66,7 +65,7 @@ async fn test_blue_green_deployment_orchestration() {
 /// Test rolling deployment strategy
 #[tokio::test]
 async fn test_rolling_deployment() {
-    let orchestrator = DeploymentOrchestrator::new();
+    let mut orchestrator = DeploymentOrchestrator::new();
     
     let config = DeploymentConfig {
         strategy: DeploymentStrategy::Rolling,
@@ -95,7 +94,7 @@ async fn test_rolling_deployment() {
 /// Test canary deployment with traffic splitting
 #[tokio::test]
 async fn test_canary_deployment() {
-    let orchestrator = DeploymentOrchestrator::new();
+    let mut orchestrator = DeploymentOrchestrator::new();
     
     let config = DeploymentConfig {
         strategy: DeploymentStrategy::Canary,
@@ -444,7 +443,7 @@ async fn test_complete_deployment_pipeline() {
     println!("🚀 Starting complete deployment pipeline integration test");
     
     // 1. Set up orchestrator
-    let orchestrator = DeploymentOrchestrator::new();
+    let mut orchestrator = DeploymentOrchestrator::new();
     
     // 2. Configure deployment
     let config = DeploymentConfig {

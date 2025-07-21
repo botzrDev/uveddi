@@ -163,9 +163,13 @@ fn test_mockall_basic() {
     use mockall::mock;
     
     // Test basic mockall functionality
+    trait TestTrait {
+        fn test_method(&self) -> i32;
+    }
+    
     mock! {
         TestStruct {}
-        impl TestStruct for TestStruct {
+        impl TestTrait for TestStruct {
             fn test_method(&self) -> i32;
         }
     }

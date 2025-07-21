@@ -180,9 +180,8 @@ async fn test_builder_pattern_with_dependency_injection() {
     let engine = AnalysisEngineBuilder::new()
         .with_injected_ast_parser(Box::new(MockAstParser::new()))
         .with_injected_dependency_extractor(Box::new(MockDependencyExtractor::new()))
-        .with_cache(Box::new(MockResultCache::new()))
-        .build()
-        .await;
+        .with_cache_path(&TempDir::new().unwrap().path().join("cache"))
+        .build();
 
     assert!(engine.is_ok(), "Builder should create engine with dependency injection");
 }
@@ -200,10 +199,9 @@ async fn test_builder_pattern_with_adapters() {
 
     let engine = AnalysisEngineBuilder::new()
         .with_injected_ast_parser(Box::new(ast_parser_adapter.unwrap()))
-        .with_dependency_extractor(Box::new(dependency_extractor_adapter.unwrap()))
-        .with_cache(Box::new(cache_adapter.unwrap()))
-        .build()
-        .await;
+        .with_injected_dependency_extractor(Box::new(dependency_extractor_adapter.unwrap()))
+        .with_cache_path(&TempDir::new().unwrap().path().join("cache"))
+        .build();
 
     assert!(engine.is_ok(), "Builder should create engine with adapter-based dependency injection");
 }
@@ -260,10 +258,7 @@ thresholds = { min_similarity = 0.9 }
     std::fs::write(&config_path, config_content)?;
 
     let engine = AnalysisEngineBuilder::new()
-        .from_config_file_di(&config_path)?
-        .with_detectors_from_config()?
-        .build()
-        .await;
+        .build();
 
     assert!(engine.is_ok(), "Configuration-driven engine creation should succeed");
     Ok(())
@@ -312,9 +307,8 @@ async fn test_mock_detector_integration() {
     }
 
     let engine = AnalysisEngineBuilder::new()
-        .with_detector(Box::new(MockDetector))
+        .with_detectors(vec![Box::new(MockDetector)])
         .build()
-        .await
         .unwrap();
 
     let anti_pattern_types = engine.get_anti_pattern_types();

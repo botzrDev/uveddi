@@ -120,21 +120,22 @@ async fn example_manual_reports() -> Result<()> {
     for (report_type, stakeholder) in report_types {
         println!("  Generating {:?} report for {:?}...", report_type, stakeholder);
         
-        // Create configuration using presets
-        let config = match report_type {
+        // Create configuration using presets, always convert to ReportConfiguration
+        let config: uveddi::monitoring::reporting::ReportConfiguration = match report_type {
             ReportType::DailyHealth => {
-                presets::daily_health_report(stakeholder, vec!["dev-email".to_string()])?
+                let job_cfg = presets::daily_health_report(stakeholder.clone(), vec!["dev-email".to_string()])?;
+                ReportConfiguration::from(job_cfg)
             }
             ReportType::WeeklyTrend => {
-                presets::weekly_trend_report(stakeholder, vec!["management-email".to_string()])?
+                let job_cfg = presets::weekly_trend_report(stakeholder.clone(), vec!["management-email".to_string()])?;
+                ReportConfiguration::from(job_cfg)
             }
             ReportType::MonthlyExecutive => {
-                presets::monthly_executive_report(vec!["exec-email".to_string()])?
+                let job_cfg = presets::monthly_executive_report(vec!["exec-email".to_string()])?;
+                ReportConfiguration::from(job_cfg)
             }
             _ => {
-                // Create custom configuration for other types
                 use uveddi::monitoring::reporting::{ReportConfiguration, ScheduleConfig, TemplateCustomization};
-                
                 ReportConfiguration {
                     report_type: report_type.clone(),
                     stakeholder_role: stakeholder.clone(),
@@ -163,8 +164,8 @@ async fn example_manual_reports() -> Result<()> {
         
         // Save to file (optional)
         let filename = format!("example_report_{}_{:?}.html", 
-            report_type.to_string().to_lowercase(), 
-            stakeholder.to_string().to_lowercase());
+            format!("{:?}", report_type).to_lowercase(),
+            format!("{:?}", stakeholder).to_lowercase());
         std::fs::write(&filename, &rendered_html)?;
         println!("    ✓ Saved to: {}", filename);
     }
@@ -193,7 +194,7 @@ async fn example_scheduled_reporting() -> Result<()> {
     
     let job1_id = scheduler.add_job(
         "Daily Developer Health".to_string(),
-        daily_config,
+        ReportConfiguration::from(daily_config),
         daily_schedule,
     )?;
     
@@ -205,14 +206,13 @@ async fn example_scheduled_reporting() -> Result<()> {
     
     let job2_id = scheduler.add_job(
         "Weekly Management Trends".to_string(),
-        weekly_config,
+        ReportConfiguration::from(weekly_config),
         weekly_schedule,
     )?;
     
     // Hourly performance monitoring (demo)
     let perf_config = {
         use uveddi::monitoring::reporting::{ReportConfiguration, ScheduleConfig, TemplateCustomization};
-        
         ReportConfiguration {
             report_type: ReportType::PerformanceOptimization,
             stakeholder_role: StakeholderRole::Developer,
@@ -285,7 +285,7 @@ fn create_example_metrics() -> Vec<TestMetrics> {
             execution_id: format!("example_exec_{}", i),
             test_name: format!("example_test_{}", i),
             test_suite: if i % 3 == 0 { "unit_tests" } else { "integration_tests" }.to_string(),
-            status,
+            status: status.clone(),
             duration_ms: 100 + (i as u64 * 10) % 500,
             resource_usage: ResourceUsage {
                 cpu_percent: 20.0 + (i as f32 * 2.0) % 60.0,

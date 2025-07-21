@@ -82,7 +82,8 @@
       "Bash(npm run:*)",
       "Bash(gh issue list:*)",
       "Bash(python3 scripts/jira_integration.py:*)",
-      "Bash(touch:*)"
+      "Bash(touch:*)",
+      "Bash(sed:*)"
     ],
     "deny": []
   }

@@ -38,6 +38,11 @@ fn test_analyze_command_creation() {
         enable_memory_optimization: false,
         memory_limit_gb: None,
         memory_profile: None,
+        enable_image_rendering: false,
+        mermaid_only: false,
+        rendering_service_url: "http://localhost:3001".to_string(),
+        no_fallback: false,
+        check_rendering_service: false,
     };
 
     assert_eq!(command.path, PathBuf::from("test_path"));
@@ -74,6 +79,11 @@ fn test_analyze_command_with_all_options() {
         enable_memory_optimization: false,
         memory_limit_gb: None,
         memory_profile: None,
+        enable_image_rendering: false,
+        mermaid_only: false,
+        rendering_service_url: "http://localhost:3001".to_string(),
+        no_fallback: false,
+        check_rendering_service: false,
     };
 
     assert_eq!(command.path, PathBuf::from("src/"));
@@ -113,6 +123,11 @@ async fn test_execute_with_empty_directory() {
         enable_memory_optimization: false,
         memory_limit_gb: None,
         memory_profile: None,
+        enable_image_rendering: false,
+        mermaid_only: false,
+        rendering_service_url: "http://localhost:3001".to_string(),
+        no_fallback: false,
+        check_rendering_service: false,
     };
 
     let result = command.execute().await;
@@ -161,6 +176,11 @@ fn main() {
         enable_memory_optimization: false,
         memory_limit_gb: None,
         memory_profile: None,
+        enable_image_rendering: false,
+        mermaid_only: false,
+        rendering_service_url: "http://localhost:3001".to_string(),
+        no_fallback: false,
+        check_rendering_service: false,
     };
 
     let result = command.execute().await;
@@ -198,6 +218,11 @@ async fn test_execute_with_output_file() {
         enable_memory_optimization: false,
         memory_limit_gb: None,
         memory_profile: None,
+        enable_image_rendering: false,
+        mermaid_only: false,
+        rendering_service_url: "http://localhost:3001".to_string(),
+        no_fallback: false,
+        check_rendering_service: false,
     };
 
     let result = command.execute().await;
@@ -236,6 +261,11 @@ async fn test_execute_with_json_format() {
         enable_memory_optimization: false,
         memory_limit_gb: None,
         memory_profile: None,
+        enable_image_rendering: false,
+        mermaid_only: false,
+        rendering_service_url: "http://localhost:3001".to_string(),
+        no_fallback: false,
+        check_rendering_service: false,
     };
 
     let result = command.execute().await;
@@ -270,6 +300,11 @@ async fn test_execute_nonexistent_path() {
         enable_memory_optimization: false,
         memory_limit_gb: None,
         memory_profile: None,
+        enable_image_rendering: false,
+        mermaid_only: false,
+        rendering_service_url: "http://localhost:3001".to_string(),
+        no_fallback: false,
+        check_rendering_service: false,
     };
 
     let result = command.execute().await;

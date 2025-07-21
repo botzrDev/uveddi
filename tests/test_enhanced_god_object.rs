@@ -2,7 +2,6 @@
 
 #[cfg(test)]
 mod integration_test {
-    use std::path::PathBuf;
     
     // This would normally use the crate's modules, but for a quick test:
     #[test]
