@@ -14,6 +14,9 @@ use tokio::sync::RwLock;
 use tracing::{info, warn, error, debug, instrument};
 use anyhow::{Result, anyhow};
 
+use crate::performance::statistical_analysis::{StatisticalAnalyzer, MannKendallResult};
+use crate::performance::trend_detection::{TrendDetector, ChangePointResult};
+
 /// Performance regression detector
 #[derive(Debug)]
 pub struct PerformanceRegressionDetector {
@@ -21,6 +24,9 @@ pub struct PerformanceRegressionDetector {
     baselines: RwLock<HashMap<String, PerformanceBaseline>>,
     alert_manager: AlertManager,
     storage: MetricsStorage,
+    statistical_analyzer: StatisticalAnalyzer,
+    trend_detector: TrendDetector,
+    confidence_threshold: f64,  // 0.95 for 95% confidence
 }
 
 /// Configuration for regression detection
@@ -70,7 +76,7 @@ pub struct RegressionResult {
 }
 
 /// Severity levels for regressions
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum RegressionSeverity {
     Minor,      // 5-15% regression
     Moderate,   // 15-30% regression
@@ -86,6 +92,8 @@ pub struct RegressionAnalysis {
     pub statistical_significance: f64,
     pub potential_causes: Vec<String>,
     pub recommended_actions: Vec<String>,
+    pub mann_kendall_result: Option<MannKendallResult>,
+    pub change_point_analysis: Option<ChangePointResult>,
 }
 
 /// Trend direction analysis
@@ -148,6 +156,9 @@ impl PerformanceRegressionDetector {
             baselines: RwLock::new(HashMap::new()),
             alert_manager,
             storage,
+            statistical_analyzer: StatisticalAnalyzer::new(),
+            trend_detector: TrendDetector::new(),
+            confidence_threshold: 0.95,
         })
     }
 
@@ -263,7 +274,7 @@ impl PerformanceRegressionDetector {
                 current_value = %current_value,
                 baseline_value = %baseline.baseline_value,
                 regression_percentage = %regression_percentage,
-                severity = ?severity,
+                severity = ?result.severity,
                 "Performance regression detected"
             );
         } else {
@@ -361,12 +372,23 @@ impl PerformanceRegressionDetector {
         let potential_causes = self.generate_potential_causes(metric_name, &trend_direction);
         let recommended_actions = self.generate_recommendations(metric_name, &trend_direction);
         
+        // Enhanced statistical analysis
+        let historical_values: Vec<f64> = baseline.historical_values
+            .iter()
+            .map(|dp| dp.value)
+            .collect();
+            
+        let mann_kendall_result = self.statistical_analyzer.mann_kendall_test(&historical_values).ok();
+        let change_point_analysis = self.trend_detector.detect_change_points_pelt(&historical_values).ok();
+        
         Ok(RegressionAnalysis {
             trend_direction,
             change_points,
             statistical_significance,
             potential_causes,
             recommended_actions,
+            mann_kendall_result,
+            change_point_analysis,
         })
     }
 
@@ -525,6 +547,140 @@ impl PerformanceRegressionDetector {
         info!(metric = %metric_name, "Baseline reset");
         Ok(())
     }
+
+    /// Enhanced regression detection with statistical confidence
+    #[instrument(skip(self))]
+    pub async fn detect_regression_with_confidence(
+        &self,
+        metric_name: &str,
+        current_value: f64,
+    ) -> Result<Option<EnhancedRegressionResult>> {
+        let baselines = self.baselines.read().await;
+        
+        let baseline = match baselines.get(metric_name) {
+            Some(baseline) => baseline,
+            None => {
+                debug!(metric = %metric_name, "No baseline available for enhanced regression check");
+                return Ok(None);
+            }
+        };
+
+        // Get historical data for statistical analysis
+        let historical_values: Vec<f64> = baseline.historical_values
+            .iter()
+            .map(|dp| dp.value)
+            .collect();
+
+        // Perform basic regression check first
+        let basic_result = self.check_for_regression(metric_name, current_value).await?;
+        let basic_result = match basic_result {
+            Some(result) => result,
+            None => return Ok(None),
+        };
+
+        // Perform Mann-Kendall trend test
+        let mann_kendall = self.statistical_analyzer.mann_kendall_test(&historical_values)?;
+
+        // Detect change points in the time series
+        let change_points = self.trend_detector.detect_change_points_pelt(&historical_values)?;
+
+        // Calculate confidence interval for baseline
+        let confidence_interval = self.statistical_analyzer
+            .confidence_interval(&historical_values, self.confidence_threshold)?;
+
+        // Calculate effect size comparing baseline to current
+        let baseline_slice = &historical_values;
+        let current_slice = &[current_value];
+        let effect_size = self.statistical_analyzer.effect_size(baseline_slice, current_slice)?;
+
+        // Determine if regression validation passes
+        let statistical_confidence = mann_kendall.confidence.max(change_points.confidence);
+        let validation_passed = statistical_confidence >= self.confidence_threshold
+            && mann_kendall.p_value < (1.0 - self.confidence_threshold);
+
+        let enhanced_result = EnhancedRegressionResult {
+            basic_result,
+            mann_kendall,
+            change_points,
+            confidence_interval,
+            effect_size,
+            statistical_confidence,
+            validation_passed,
+        };
+
+        info!(
+            metric = %metric_name,
+            statistical_confidence = %statistical_confidence,
+            mann_kendall_p_value = %enhanced_result.mann_kendall.p_value,
+            effect_size = %effect_size,
+            validation_passed = %validation_passed,
+            "Enhanced regression detection completed"
+        );
+
+        Ok(Some(enhanced_result))
+    }
+
+    /// Validate regression with multiple statistical tests
+    #[instrument(skip(self))]
+    pub async fn validate_regression(
+        &self,
+        baseline_data: &[f64],
+        current_data: &[f64],
+    ) -> Result<ValidationResult> {
+        if baseline_data.is_empty() || current_data.is_empty() {
+            return Ok(ValidationResult {
+                is_valid: false,
+                confidence_score: 0.0,
+                mann_kendall_result: None,
+                change_point_result: None,
+                effect_size: 0.0,
+                validation_notes: vec!["Insufficient data for validation".to_string()],
+            });
+        }
+
+        // Perform Mann-Kendall test on combined data
+        let mut combined_data = baseline_data.to_vec();
+        combined_data.extend_from_slice(current_data);
+        let mann_kendall_result = self.statistical_analyzer.mann_kendall_test(&combined_data)?;
+
+        // Run change point detection
+        let change_point_result = self.trend_detector.detect_change_points_pelt(&combined_data)?;
+
+        // Calculate effect size
+        let effect_size = self.statistical_analyzer.effect_size(baseline_data, current_data)?;
+
+        // Calculate confidence intervals
+        let baseline_ci = self.statistical_analyzer.confidence_interval(baseline_data, self.confidence_threshold)?;
+        let current_ci = self.statistical_analyzer.confidence_interval(current_data, self.confidence_threshold)?;
+
+        // Determine overall validation
+        let statistical_significance_pass = mann_kendall_result.p_value < (1.0 - self.confidence_threshold);
+        let effect_size_meaningful = effect_size.abs() > 0.2; // Small effect size threshold
+        let confidence_intervals_non_overlapping = baseline_ci.1 < current_ci.0 || current_ci.1 < baseline_ci.0;
+        
+        let is_valid = statistical_significance_pass && effect_size_meaningful && confidence_intervals_non_overlapping;
+        let confidence_score = mann_kendall_result.confidence.min(change_point_result.confidence);
+
+        let mut validation_notes = Vec::new();
+        if !statistical_significance_pass {
+            validation_notes.push(format!("Statistical significance not achieved: p={:.4}", mann_kendall_result.p_value));
+        }
+        if !effect_size_meaningful {
+            validation_notes.push(format!("Effect size too small: {:.4}", effect_size));
+        }
+        if !confidence_intervals_non_overlapping {
+            validation_notes.push("Confidence intervals overlap, regression may not be significant".to_string());
+        }
+
+        Ok(ValidationResult {
+            is_valid,
+            confidence_score,
+            mann_kendall_result: Some(mann_kendall_result),
+            change_point_result: Some(change_point_result),
+            effect_size,
+            validation_notes,
+        })
+    }
 }
 
 impl AlertManager {
@@ -537,7 +693,7 @@ impl AlertManager {
 
     async fn send_regression_alert(&self, result: &RegressionResult) -> Result<()> {
         if !self.config.enabled {
-            return Ok();
+            return Ok(());
         }
         
         // Check cooldown
@@ -555,7 +711,7 @@ impl AlertManager {
         };
         
         if !should_alert {
-            return Ok();
+            return Ok(());
         }
         
         // Send notifications
@@ -706,6 +862,29 @@ fn determine_regression_severity(regression_percentage: f64) -> RegressionSeveri
         x if x >= 15.0 => RegressionSeverity::Moderate,
         _ => RegressionSeverity::Minor,
     }
+}
+
+/// Enhanced regression result with statistical confidence
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EnhancedRegressionResult {
+    pub basic_result: RegressionResult,
+    pub mann_kendall: MannKendallResult,
+    pub change_points: ChangePointResult,
+    pub confidence_interval: (f64, f64),
+    pub effect_size: f64,
+    pub statistical_confidence: f64,
+    pub validation_passed: bool,
+}
+
+/// Validation result for regression analysis
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ValidationResult {
+    pub is_valid: bool,
+    pub confidence_score: f64,
+    pub mann_kendall_result: Option<MannKendallResult>,
+    pub change_point_result: Option<ChangePointResult>,
+    pub effect_size: f64,
+    pub validation_notes: Vec<String>,
 }
 
 // Default implementations

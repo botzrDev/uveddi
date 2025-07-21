@@ -4,6 +4,11 @@
 //! and optimization capabilities for the Uveddi system.
 
 pub mod regression_detection;
+pub mod statistical_analysis;
+pub mod trend_detection;
+pub mod benchmark_baseline;
+pub mod performance_reports;
+pub mod criterion_integration;
 
 pub use regression_detection::{
     PerformanceRegressionDetector,
@@ -12,4 +17,51 @@ pub use regression_detection::{
     RegressionResult,
     RegressionSeverity,
     MetricDataPoint,
+    EnhancedRegressionResult,
+    ValidationResult,
 };
+
+pub use statistical_analysis::{
+    StatisticalAnalyzer,
+    MannKendallResult,
+    TrendType,
+};
+
+pub use trend_detection::{
+    TrendDetector,
+    ChangePointResult,
+    Segment,
+};
+
+pub use benchmark_baseline::{
+    BenchmarkBaselineManager,
+    BenchmarkBaseline,
+    BaselineType,
+    BaselineComparison,
+    ComparisonResult,
+    ChangeCategory,
+    Recommendation,
+    BaselineConfig,
+};
+
+pub use performance_reports::{
+    PerformanceReportGenerator,
+    PerformanceReport,
+    ExecutiveSummary,
+    BenchmarkReport,
+    PerformanceStatus,
+};
+
+pub use criterion_integration::{
+    CriterionIntegrationManager,
+    CriterionIntegrationConfig,
+    CriterionBenchmarkResult,
+    IntegratedBenchmarkResult,
+    RegressionVerdict,
+};
+
+#[cfg(test)]
+mod test_validation;
+
+#[cfg(test)]
+mod overhead_test;
