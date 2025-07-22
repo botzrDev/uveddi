@@ -98,8 +98,13 @@ mod security_tests {
     /// Test authentication mechanisms and security
     #[tokio::test]
     async fn test_authentication_mechanisms() {
+        // Use secret store for JWT secret instead of hardcoded value
+        let secret_store = crate::security::secrets::MockSecretStore::new();
+        let jwt_secret = secret_store.get_secret("jwt_secret").await
+            .unwrap_or_else(|_| "test_secret_key_for_testing_only_fallback".to_string());
+        
         let auth_config = AuthenticationConfig {
-            jwt_secret: "test_secret_key_for_testing_only".to_string(),
+            jwt_secret,
             jwt_expiry: Duration::from_secs(3600),
             password_min_length: 12,
             require_special_chars: true,

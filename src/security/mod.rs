@@ -116,6 +116,7 @@ pub mod middleware;
 pub mod models;
 pub mod rate_limiting;
 pub mod secrets;
+pub mod secure_config_loader;
 
 // Re-export commonly used types
 pub use errors::{SecurityError, SecurityErrorSeverity, SecurityResult};
@@ -132,7 +133,8 @@ pub use config::RateLimitingConfig;
 pub use config::{SecurityConfig, SecurityConfigLoader};
 pub use middleware::SecurityServices;
 pub use rate_limiting::RateLimiter;
-pub use secrets::{SecretStore, SecretStoreFactory};
+pub use secrets::{SecretStore, SecretStoreFactory, SecretRotationManager, RotationPolicy};
+pub use secure_config_loader::{SecureConfigLoader, SecretStoreHealthStatus};
 
 use crate::error::UveddiError;
 use std::path::{Component, Path, PathBuf};
