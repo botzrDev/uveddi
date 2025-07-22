@@ -88,7 +88,8 @@
       "Bash(timeout 30s cargo test --no-run --all-features)",
       "Bash(mdbook build:*)",
       "Bash(mdbook test:*)",
-      "Bash(true)"
+      "Bash(true)",
+      "Bash(timeout 30 cargo test --lib cache::incremental_cache::tests::test_cache_creation --no-run)"
     ],
     "deny": []
   }

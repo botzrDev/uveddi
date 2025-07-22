@@ -303,7 +303,10 @@ mod tests {
             ComponentNode::Module { path: node_path } => {
                 assert_eq!(node_path, "src/main.rs");
             }
-            _ => panic!("Expected Module node"),
+            node => {
+                eprintln!("Expected Module node but got: {:?}", node);
+                assert!(false, "Expected ComponentNode::Module");
+            }
         }
     }
 

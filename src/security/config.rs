@@ -338,7 +338,11 @@ impl SecurityConfig {
     /// Load security configuration from a specific file
     pub fn load_from_file<P: AsRef<Path>>(path: P) -> SecurityResult<Self> {
         let loader = SecurityConfigLoader::new();
-        let loader = loader.add_file(path.as_ref().to_str().unwrap(), false)?;
+        let path_str = path.as_ref().to_str()
+            .ok_or_else(|| SecurityError::ConfigurationError {
+                message: format!("Invalid path: path contains non-UTF8 characters: {:?}", path.as_ref()),
+            })?;
+        let loader = loader.add_file(path_str, false)?;
         loader.build()
     }
 

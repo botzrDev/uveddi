@@ -138,19 +138,25 @@ pub struct IncrementalCache {
 
 impl IncrementalCache {
     /// Creates a new incremental cache with the given configuration
-    pub fn new(config: IncrementalCacheConfig) -> Self {
-        let analysis_cache = Arc::new(RwLock::new(LruCache::new(
-            std::num::NonZero::new(config.max_analysis_results.try_into().unwrap_or(1000)).unwrap(),
-        )));
+    pub fn new(config: IncrementalCacheConfig) -> crate::error::Result<Self> {
+        let capacity = config.max_analysis_results.try_into().unwrap_or(1000);
+        let non_zero_capacity = std::num::NonZero::new(capacity).ok_or_else(|| {
+            crate::error::UveddiError::config_error(
+                "Cache capacity must be greater than zero",
+                "IncrementalCacheConfig.max_analysis_results"
+            )
+        })?;
+        
+        let analysis_cache = Arc::new(RwLock::new(LruCache::new(non_zero_capacity)));
 
-        Self {
+        Ok(Self {
             config,
             analysis_cache,
             dependency_cache: Arc::new(RwLock::new(HashMap::new())),
             mtime_cache: Arc::new(RwLock::new(HashMap::new())),
             stats: Arc::new(RwLock::new(CacheStatistics::default())),
             created_at: Instant::now(),
-        }
+        })
     }
 
     /// Gets cached analysis result for a file
@@ -624,7 +630,7 @@ mod tests {
     #[tokio::test]
     async fn test_cache_creation() {
         let config = IncrementalCacheConfig::default();
-        let cache = IncrementalCache::new(config);
+        let cache = IncrementalCache::new(config).expect("Failed to create cache");
 
         let stats = cache.get_statistics().await;
         assert_eq!(stats.entry_count, 0);
@@ -635,7 +641,7 @@ mod tests {
     #[tokio::test]
     async fn test_cache_store_and_retrieve() {
         let config = IncrementalCacheConfig::default();
-        let cache = IncrementalCache::new(config);
+        let cache = IncrementalCache::new(config).expect("Failed to create cache");
 
         let file_path = PathBuf::from("test.rs");
         let issues = vec![];
@@ -653,12 +659,12 @@ mod tests {
         cache
             .store_analysis_result(file_path.clone(), issues.clone(), file_state, 100)
             .await
-            .unwrap();
+            .expect("Failed to store analysis result");
 
         // Retrieve result
-        let cached_result = cache.get_analysis_result(&file_path).await.unwrap();
+        let cached_result = cache.get_analysis_result(&file_path).await.expect("Failed to get analysis result");
         assert!(cached_result.is_some());
-        assert_eq!(cached_result.unwrap().len(), 0);
+        assert_eq!(cached_result.expect("Expected cached result").len(), 0);
 
         // Check statistics
         let stats = cache.get_statistics().await;
@@ -669,10 +675,10 @@ mod tests {
     #[tokio::test]
     async fn test_cache_miss() {
         let config = IncrementalCacheConfig::default();
-        let cache = IncrementalCache::new(config);
+        let cache = IncrementalCache::new(config).expect("Failed to create cache");
 
         let file_path = PathBuf::from("nonexistent.rs");
-        let result = cache.get_analysis_result(&file_path).await.unwrap();
+        let result = cache.get_analysis_result(&file_path).await.expect("Failed to get analysis result");
 
         assert!(result.is_none());
 
@@ -684,7 +690,7 @@ mod tests {
     #[tokio::test]
     async fn test_cache_invalidation() {
         let config = IncrementalCacheConfig::default();
-        let cache = IncrementalCache::new(config);
+        let cache = IncrementalCache::new(config).expect("Failed to create cache");
 
         let file_path = PathBuf::from("test.rs");
         let issues = vec![];
@@ -702,15 +708,15 @@ mod tests {
         cache
             .store_analysis_result(file_path.clone(), issues, file_state, 100)
             .await
-            .unwrap();
+            .expect("Failed to store analysis result");
 
         // Invalidate
         let mut changed_files = HashSet::new();
         changed_files.insert(file_path.clone());
-        cache.invalidate_files(&changed_files).await.unwrap();
+        cache.invalidate_files(&changed_files).await.expect("Failed to invalidate files");
 
         // Try to retrieve
-        let result = cache.get_analysis_result(&file_path).await.unwrap();
+        let result = cache.get_analysis_result(&file_path).await.expect("Failed to get analysis result");
         assert!(result.is_none());
 
         let stats = cache.get_statistics().await;

@@ -75,6 +75,10 @@ frontend/cypress/.cache/
 *.dll
 *.dylib
 
+# LLVM bitcode files
+*.bc
+*.lock
+
 # Uncomment if config/ or plugins/ contain only generated or environment-specific files.
 # /config/
 # /plugins/

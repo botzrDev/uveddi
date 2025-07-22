@@ -226,8 +226,15 @@ impl AstCache {
 
         // Update metrics
         {
-            let mut metrics = self.metrics.lock().unwrap();
-            metrics.total_requests += 1;
+            match self.metrics.lock() {
+                Ok(mut metrics) => {
+                    metrics.total_requests += 1;
+                }
+                Err(_) => {
+                    error!("Metrics mutex poisoned, unable to update total_requests");
+                    return None;
+                }
+            }
         }
 
         // Check if file has been modified
@@ -237,9 +244,15 @@ impl AstCache {
                 debug!("Failed to get file metadata for: {:?}", path);
                 // Still count as cache miss even for non-existent files
                 {
-                    let mut metrics = self.metrics.lock().unwrap();
-                    metrics.cache_misses += 1;
-                    metrics.update_hit_rate();
+                    match self.metrics.lock() {
+                        Ok(mut metrics) => {
+                            metrics.cache_misses += 1;
+                            metrics.update_hit_rate();
+                        }
+                        Err(_) => {
+                            error!("Metrics mutex poisoned, unable to update cache miss count");
+                        }
+                    }
                 }
                 return None;
             }

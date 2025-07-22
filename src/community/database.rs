@@ -549,9 +549,12 @@ impl CommunityDatabase {
             email: row.get(1)?,
             name: row.get(2)?,
             role: MemberRole::from_str(&row.get::<_, String>(3)?),
-            created_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(4)?)
-                .unwrap()
-                .with_timezone(&Utc),
+            created_at: {
+                let timestamp_str = row.get::<_, String>(4)?;
+                DateTime::parse_from_rfc3339(&timestamp_str)
+                    .map_err(|e| rusqlite::Error::InvalidColumnType(4, timestamp_str.clone(), rusqlite::types::Type::Text))?
+                    .with_timezone(&Utc)
+            },
             last_active,
             is_active: row.get(6)?,
             email_verified: row.get(7)?,
@@ -580,9 +583,12 @@ impl CommunityDatabase {
             id: Some(row.get(0)?),
             member_id: row.get(1)?,
             activity_type: ActivityType::from_str(&row.get::<_, String>(2)?),
-            timestamp: DateTime::parse_from_rfc3339(&row.get::<_, String>(3)?)
-                .unwrap()
-                .with_timezone(&Utc),
+            timestamp: {
+                let timestamp_str = row.get::<_, String>(3)?;
+                DateTime::parse_from_rfc3339(&timestamp_str)
+                    .map_err(|e| rusqlite::Error::InvalidColumnType(3, timestamp_str.clone(), rusqlite::types::Type::Text))?
+                    .with_timezone(&Utc)
+            },
             description: row.get(4)?,
             ip_address: row.get(5)?,
             user_agent: row.get(6)?,
