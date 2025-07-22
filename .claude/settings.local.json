@@ -89,7 +89,8 @@
       "Bash(mdbook build:*)",
       "Bash(mdbook test:*)",
       "Bash(true)",
-      "Bash(timeout 30 cargo test --lib cache::incremental_cache::tests::test_cache_creation --no-run)"
+      "Bash(timeout 30 cargo test --lib cache::incremental_cache::tests::test_cache_creation --no-run)",
+      "Bash(scripts/validate-uv243-requirements.sh:*)"
     ],
     "deny": []
   }
