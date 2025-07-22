@@ -175,16 +175,26 @@ impl SecurityPolicy {
             }
         }
 
-        // Configure file system access
+        // Configure file system access using new v34 API with cap-std
         for permission in &self.permissions {
             match permission {
                 Permission::FileRead(path) => {
-                    // Use the modern WASI API for directory preopen
-                    builder.preopened_dir(path, wasmtime_wasi::DirPerms::READ)
+                    // Use cap-std for secure directory opening as per v34 migration guide
+                    let dir_handle = cap_std::fs::Dir::open_ambient_dir(
+                        path,
+                        cap_std::ambient_authority()
+                    ).map_err(|e| PluginError::SecurityViolation(e.to_string()))?;
+                    
+                    builder.preopened_dir(dir_handle, path.to_str().unwrap_or("/sandbox"))
                         .map_err(|e| PluginError::SecurityViolation(e.to_string()))?;
                 }
                 Permission::FileWrite(path) => {
-                    builder.preopened_dir(path, wasmtime_wasi::DirPerms::all())
+                    let dir_handle = cap_std::fs::Dir::open_ambient_dir(
+                        path,
+                        cap_std::ambient_authority()
+                    ).map_err(|e| PluginError::SecurityViolation(e.to_string()))?;
+                    
+                    builder.preopened_dir(dir_handle, path.to_str().unwrap_or("/sandbox"))
                         .map_err(|e| PluginError::SecurityViolation(e.to_string()))?;
                 }
                 _ => {}

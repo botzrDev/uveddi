@@ -15,7 +15,9 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 #[cfg(feature = "wasm-plugins")]
-use wasmtime_wasi::{WasiCtx, WasiCtxBuilder, WasiView, add_to_linker_sync};
+use wasmtime_wasi::{WasiCtxBuilder};
+#[cfg(feature = "wasm-plugins")]
+use wasmtime_wasi::preview1::{self, WasiP1Ctx, WasiView, add_to_linker_sync};
 
 /// Plugin lifecycle manager
 #[derive(Clone)]
@@ -83,16 +85,16 @@ impl PluginLifecycleManager {
             };
 
             // Configure WASI
-            let wasi_ctx = security_policy.configure_wasi_context()?.build();
+            let wasi_ctx = security_policy.configure_wasi_context()?.build_p1();
 
             // NOTE: UV-108 - Add basic WASI support (filesystem traits temporarily disabled)
-            add_to_linker_sync(&mut linker)?;
+            preview1::add_to_linker(&mut linker, |host: &mut HostContext| host)?;
 
             // Add our custom host functions
             self.add_host_functions(&mut linker)?;
 
             // Create store with fuel and memory limits
-            let resource_table = wasmtime_wasi::ResourceTable::new();
+            let resource_table = wasmtime::component::ResourceTable::new();
             let host_context = HostContext {
                 host_state,
                 wasi_ctx,
