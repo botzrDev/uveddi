@@ -4,7 +4,7 @@
 use std::{collections::HashMap, io::Cursor, sync::Arc};
 
 use crate::{
-    ast::tree_sitter::ParsedFile,
+    ast::tree_sitter_impl::ParsedFile,
     plugins::{errors::*, types::AstHandle},
 };
 use serde::{Deserialize, Serialize};

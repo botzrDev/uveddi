@@ -1,9 +1,9 @@
 //! Tight Coupling Anti-Pattern Detector
-//!
+//! 
 //! This module detects tight coupling between components, which makes code
 //! difficult to maintain, test, and modify. Tight coupling occurs when
 //! components are overly dependent on each other's internal implementation details.
-//!
+//! 
 //! Features:
 //! - Multi-language Tree-sitter analysis for Rust, Python, JavaScript
 //! - Configurable thresholds for different languages and contexts
@@ -24,6 +24,7 @@ use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::Path;
+use streaming_iterator::StreamingIterator;
 use std::sync::Arc;
 use tracing::{debug, info, warn};
 
@@ -661,7 +662,7 @@ impl RustAnalyzer {
         source: &str,
     ) -> Result<Vec<Dependency>, AnalysisError> {
         let mut dependencies = Vec::new();
-        let query = Query::new(&tree_sitter_rust::language(), Self::USE_QUERY)
+        let query = Query::new(&tree_sitter_rust::LANGUAGE.into(), Self::USE_QUERY)
             .map_err(|e| AnalysisError::QueryError(format!("Failed to create use query: {}", e)))?;
 
         let mut cursor = QueryCursor::new();
@@ -701,7 +702,7 @@ impl RustAnalyzer {
         source: &str,
     ) -> Result<Vec<Dependency>, AnalysisError> {
         let mut dependencies = Vec::new();
-        let query = Query::new(&tree_sitter_rust::language(), Self::CALL_QUERY).map_err(|e| {
+        let query = Query::new(&tree_sitter_rust::LANGUAGE.into(), Self::CALL_QUERY).map_err(|e| {
             AnalysisError::QueryError(format!("Failed to create call query: {}", e))
         })?;
 
@@ -744,7 +745,7 @@ impl RustAnalyzer {
         source: &str,
     ) -> Result<Vec<Dependency>, AnalysisError> {
         let mut dependencies = Vec::new();
-        let query = Query::new(&tree_sitter_rust::language(), Self::STRUCT_QUERY).map_err(|e| {
+        let query = Query::new(&tree_sitter_rust::LANGUAGE.into(), Self::STRUCT_QUERY).map_err(|e| {
             AnalysisError::QueryError(format!("Failed to create struct query: {}", e))
         })?;
 
@@ -795,7 +796,7 @@ impl RustAnalyzer {
               type: (type_identifier) @type_name) @impl_block
         "#;
 
-        if let Ok(query) = Query::new(&tree_sitter_rust::language(), impl_query) {
+        if let Ok(query) = Query::new(&tree_sitter_rust::LANGUAGE.into(), impl_query) {
             let mut cursor = QueryCursor::new();
             let matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
 
@@ -882,7 +883,7 @@ impl PythonAnalyzer {
     ) -> Result<Vec<Dependency>, AnalysisError> {
         let mut dependencies = Vec::new();
 
-        if let Ok(query) = Query::new(&tree_sitter_python::language(), Self::IMPORT_QUERY) {
+        if let Ok(query) = Query::new(&tree_sitter_python::LANGUAGE.into(), Self::IMPORT_QUERY) {
             let mut cursor = QueryCursor::new();
             let matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
 
@@ -919,7 +920,7 @@ impl PythonAnalyzer {
     ) -> Result<Vec<Dependency>, AnalysisError> {
         let mut dependencies = Vec::new();
 
-        if let Ok(query) = Query::new(&tree_sitter_python::language(), Self::CALL_QUERY) {
+        if let Ok(query) = Query::new(&tree_sitter_python::LANGUAGE.into(), Self::CALL_QUERY) {
             let mut cursor = QueryCursor::new();
             let matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
 
@@ -965,7 +966,7 @@ impl PythonAnalyzer {
                 (identifier) @parent_class)) @class_def
         "#;
 
-        if let Ok(query) = Query::new(&tree_sitter_python::language(), inheritance_query) {
+        if let Ok(query) = Query::new(&tree_sitter_python::LANGUAGE.into(), inheritance_query) {
             let mut cursor = QueryCursor::new();
             let matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
 
@@ -1059,7 +1060,7 @@ impl JavaScriptAnalyzer {
     ) -> Result<Vec<Dependency>, AnalysisError> {
         let mut dependencies = Vec::new();
 
-        if let Ok(query) = Query::new(&tree_sitter_javascript::language(), Self::IMPORT_QUERY) {
+        if let Ok(query) = Query::new(&tree_sitter_javascript::LANGUAGE.into(), Self::IMPORT_QUERY) {
             let mut cursor = QueryCursor::new();
             let matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
 
@@ -1106,7 +1107,7 @@ impl JavaScriptAnalyzer {
               arguments: (arguments (string) @module)) @require_call
         "#;
 
-        if let Ok(query) = Query::new(&tree_sitter_javascript::language(), require_query) {
+        if let Ok(query) = Query::new(&tree_sitter_javascript::LANGUAGE.into(), require_query) {
             let mut cursor = QueryCursor::new();
             let matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
 
@@ -1157,7 +1158,7 @@ impl JavaScriptAnalyzer {
               function: (identifier) @function) @function_call
         "#;
 
-        if let Ok(query) = Query::new(&tree_sitter_javascript::language(), call_query) {
+        if let Ok(query) = Query::new(&tree_sitter_javascript::LANGUAGE.into(), call_query) {
             let mut cursor = QueryCursor::new();
             let matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
 

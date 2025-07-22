@@ -105,21 +105,21 @@ impl AstParser {
         // Initialize Rust parser
         let mut rust_parser = tree_sitter::Parser::new();
         rust_parser
-            .set_language(&tree_sitter_rust::language())
+            .set_language(&tree_sitter_rust::LANGUAGE.into())
             .map_err(AstError::TreeSitterLanguage)?;
         parsers.insert(SourceLanguage::Rust, rust_parser);
 
         // Initialize Python parser
         let mut python_parser = tree_sitter::Parser::new();
         python_parser
-            .set_language(&tree_sitter_python::language())
+            .set_language(&tree_sitter_python::LANGUAGE.into())
             .map_err(AstError::TreeSitterLanguage)?;
         parsers.insert(SourceLanguage::Python, python_parser);
 
         // Initialize JavaScript parser
         let mut javascript_parser = tree_sitter::Parser::new();
         javascript_parser
-            .set_language(&tree_sitter_javascript::language())
+            .set_language(&tree_sitter_javascript::LANGUAGE.into())
             .map_err(AstError::TreeSitterLanguage)?;
         parsers.insert(SourceLanguage::JavaScript, javascript_parser);
 

@@ -748,12 +748,16 @@ impl ReportGenerator {
                 height: Some(600),
             };
 
-            let result = renderer.render_diagram(request).await?;
+            let result = renderer.render_diagram(
+                &request.mermaid_code, 
+                request.format, 
+                request.width.zip(request.height)
+            ).await?;
 
             // Return markdown with embedded image
             Ok(format!(
                 "## 📊 Architectural Diagram\n\n![Diagram](data:image/png;base64,{})\n\n",
-                result.image_data
+                base64::encode(&result.data)
             ))
         } else {
             Err(crate::error::rendering::RenderingServiceError::ServiceUnavailable)

@@ -14,6 +14,8 @@ use crate::plugins::types::HostContext;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
+#[cfg(feature = "wasm-plugins")]
+use wasmtime_wasi::p2::{WasiCtx, WasiCtxBuilder, WasiView, add_to_linker_sync};
 
 /// Plugin lifecycle manager
 #[derive(Clone)]
@@ -84,16 +86,7 @@ impl PluginLifecycleManager {
             let wasi_ctx = security_policy.configure_wasi_context()?.build();
 
             // NOTE: UV-108 - Add basic WASI support (filesystem traits temporarily disabled)
-            wasmtime_wasi::bindings::cli::environment::add_to_linker(
-                &mut linker,
-                |ctx: &mut HostContext| ctx,
-            )?;
-            wasmtime_wasi::bindings::cli::exit::add_to_linker(
-                &mut linker,
-                |ctx: &mut HostContext| ctx,
-            )?;
-            // NOTE: Filesystem support temporarily disabled due to complex trait requirements
-            // wasmtime_wasi::bindings::filesystem::types::add_to_linker(&mut linker, |ctx: &mut HostContext| ctx)?;
+            add_to_linker_sync(&mut linker)?;
 
             // Add our custom host functions
             self.add_host_functions(&mut linker)?;
@@ -103,7 +96,7 @@ impl PluginLifecycleManager {
             let host_context = HostContext {
                 host_state,
                 wasi_ctx,
-                resource_table,
+                table: resource_table,
             };
             let mut store = wasmtime::Store::new(&engine, host_context);
             store.set_fuel(security_policy.resource_limits.max_fuel)?;
@@ -401,9 +394,9 @@ impl wasmtime::ResourceLimiter for MemoryLimiter {
 
     fn table_growing(
         &mut self,
-        current: u32,
-        desired: u32,
-        maximum: Option<u32>,
+        current: usize,
+        desired: usize,
+        maximum: Option<usize>,
     ) -> Result<bool, anyhow::Error> {
         // Allow table growth for now
         Ok(true)

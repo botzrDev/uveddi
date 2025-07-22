@@ -47,15 +47,15 @@ impl AstParser {
 
         let mut parsers = HashMap::new();
         let mut rust_parser = Parser::new();
-        rust_parser.set_language(&tree_sitter_rust::language())?;
+        rust_parser.set_language(&tree_sitter_rust::LANGUAGE.into())?;
         parsers.insert(SourceLanguage::Rust, rust_parser);
 
         let mut python_parser = Parser::new();
-        python_parser.set_language(&tree_sitter_python::language())?;
+        python_parser.set_language(&tree_sitter_python::LANGUAGE.into())?;
         parsers.insert(SourceLanguage::Python, python_parser);
 
         let mut javascript_parser = Parser::new();
-        javascript_parser.set_language(&tree_sitter_javascript::language())?;
+        javascript_parser.set_language(&tree_sitter_javascript::LANGUAGE.into())?;
         parsers.insert(SourceLanguage::JavaScript, javascript_parser);
 
         info!("Initialized AST parser with LRU cache size: {}", cache_size);
@@ -143,9 +143,9 @@ impl AstParser {
                             if let Some(name_node) = child.child_by_field_name("name") {
                                 let name = name_node
                                     .utf8_text(source.as_bytes())
-                                    .map_err(|_| {
+                                    .map_err(|_|
                                         AstError::Other("Failed to get node text".to_string())
-                                    })?
+                                    )?
                                     .to_string();
                                 struct_names.push(name.clone());
                                 structs.insert(name, Vec::new());
@@ -155,9 +155,9 @@ impl AstParser {
                             if let Some(type_node) = child.child_by_field_name("type") {
                                 let type_name = type_node
                                     .utf8_text(source.as_bytes())
-                                    .map_err(|_| {
+                                    .map_err(|_|
                                         AstError::Other("Failed to get node text".to_string())
-                                    })?
+                                    )?
                                     .to_string();
                                 let mut methods = Vec::new();
                                 if let Some(body_node) = child.child_by_field_name("body") {
@@ -168,11 +168,11 @@ impl AstParser {
                                             {
                                                 let method_name = name_node
                                                     .utf8_text(source.as_bytes())
-                                                    .map_err(|_| {
+                                                    .map_err(|_|
                                                         AstError::Other(
                                                             "Failed to get node text".to_string(),
                                                         )
-                                                    })?
+                                                    )?
                                                     .to_string();
                                                 methods.push(method_name);
                                             }
@@ -203,9 +203,9 @@ impl AstParser {
                             if let Some(name_node) = child.child_by_field_name("name") {
                                 let name = name_node
                                     .utf8_text(source.as_bytes())
-                                    .map_err(|_| {
+                                    .map_err(|_|
                                         AstError::Other("Failed to get node text".to_string())
-                                    })?
+                                    )?
                                     .to_string();
                                 items.push(CustomAst::Struct {
                                     name,
@@ -217,9 +217,9 @@ impl AstParser {
                             if let Some(name_node) = child.child_by_field_name("name") {
                                 let name = name_node
                                     .utf8_text(source.as_bytes())
-                                    .map_err(|_| {
+                                    .map_err(|_|
                                         AstError::Other("Failed to get node text".to_string())
-                                    })?
+                                    )?
                                     .to_string();
                                 items.push(CustomAst::Function {
                                     name,
@@ -239,9 +239,9 @@ impl AstParser {
                             if let Some(name_node) = child.child_by_field_name("name") {
                                 let name = name_node
                                     .utf8_text(source.as_bytes())
-                                    .map_err(|_| {
+                                    .map_err(|_|
                                         AstError::Other("Failed to get node text".to_string())
-                                    })?
+                                    )?
                                     .to_string();
                                 items.push(CustomAst::Function {
                                     name,
@@ -253,9 +253,9 @@ impl AstParser {
                             if let Some(name_node) = child.child_by_field_name("name") {
                                 let name = name_node
                                     .utf8_text(source.as_bytes())
-                                    .map_err(|_| {
+                                    .map_err(|_|
                                         AstError::Other("Failed to get node text".to_string())
-                                    })?
+                                    )?
                                     .to_string();
                                 items.push(CustomAst::Struct {
                                     name,
@@ -301,7 +301,10 @@ impl AstParser {
                     cache.pop(&path_str);
                     None
                 }
-            } else {
+            }
+
+
+            else {
                 None
             }
         };

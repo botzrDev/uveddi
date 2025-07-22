@@ -13,6 +13,7 @@
 use crate::analysis::errors::AnalysisError;
 use crate::ast::tree_sitter::{Node, Query, QueryCursor};
 use crate::ast::tree_sitter_impl::SourceLanguage;
+use streaming_iterator::StreamingIterator;
 use log::{debug, warn};
 use petgraph::{
     visit::{EdgeRef, IntoNodeReferences},
@@ -261,12 +262,12 @@ impl<'a> CfgBuilder<'a> {
         })?;
 
         let mut cursor = QueryCursor::new();
-        let matches = cursor.matches(&query, ast_node, source.as_bytes());
+        let mut matches = cursor.matches(&query, ast_node, source.as_bytes());
 
         // 4. Build CFG nodes for control flow constructs
         self.current_node = Some(entry_node);
 
-        for match_ in matches {
+        while let Some(match_) = matches.next() {
             for capture in match_.captures {
                 let node = capture.node;
                 let node_type = self.classify_node(&node);

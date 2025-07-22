@@ -1,27 +1,23 @@
 [build]
-# Optimize for build speed and memory usage
 jobs = 2  # Limit parallel jobs to prevent memory exhaustion
 rustflags = [
-    "-C", "opt-level=1",     # Faster compilation than opt-level=2
-    "-C", "debuginfo=0",     # Reduce debug info to save space/time
+    "-C", "opt-level=1",     # Faster compilation
+    "-C", "debuginfo=0",     # Reduce debug info
     "-C", "incremental=true" # Enable incremental compilation
 ]
 
 [profile.dev]
-# Development profile optimized for build speed
 opt-level = 0
 debug = false        # Disable debug info for faster builds
 incremental = true
 codegen-units = 256  # More codegen units = faster parallel compilation
 
 [profile.test]
-# Test profile optimized for build speed
 opt-level = 0
 debug = false
 incremental = true
 
 [profile.coverage]
-# Custom profile for coverage builds
 inherits = "test"
 opt-level = 0
 debug = false

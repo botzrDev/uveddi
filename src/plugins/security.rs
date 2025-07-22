@@ -7,6 +7,8 @@ use crate::plugins::{
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::path::PathBuf;
+#[cfg(feature = "wasm-plugins")]
+use wasmtime_wasi::p2::WasiCtxBuilder;
 
 /// Security policy for plugin execution
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -151,8 +153,8 @@ impl SecurityPolicy {
 
     /// Configure WASI context based on this policy
     #[cfg(feature = "wasm-plugins")]
-    pub fn configure_wasi_context(&self) -> Result<wasmtime_wasi::WasiCtxBuilder, PluginError> {
-        let mut builder = wasmtime_wasi::WasiCtxBuilder::new();
+    pub fn configure_wasi_context(&self) -> Result<WasiCtxBuilder, PluginError> {
+        let mut builder = WasiCtxBuilder::new();
 
         // Configure standard I/O based on permissions
         if self.has_permission(&Permission::Logging) {
@@ -178,20 +180,12 @@ impl SecurityPolicy {
             match permission {
                 Permission::FileRead(path) => {
                     // Use the modern WASI API for directory preopen
-                    builder.preopened_dir(
-                        path,
-                        path.to_string_lossy(),
-                        wasmtime_wasi::DirPerms::READ,
-                        wasmtime_wasi::FilePerms::READ,
-                    )?;
+                    builder.preopened_dir(path, wasmtime_wasi::DirPerms::READ)
+                        .map_err(|e| PluginError::SecurityViolation(e.to_string()))?;
                 }
                 Permission::FileWrite(path) => {
-                    builder.preopened_dir(
-                        path,
-                        path.to_string_lossy(),
-                        wasmtime_wasi::DirPerms::all(),
-                        wasmtime_wasi::FilePerms::all(),
-                    )?;
+                    builder.preopened_dir(path, wasmtime_wasi::DirPerms::all())
+                        .map_err(|e| PluginError::SecurityViolation(e.to_string()))?;
                 }
                 _ => {}
             }
