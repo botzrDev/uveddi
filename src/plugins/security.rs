@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::path::PathBuf;
 #[cfg(feature = "wasm-plugins")]
-use wasmtime_wasi::WasiCtxBuilder;
+use wasmtime_wasi::p2::WasiCtxBuilder;
 
 /// Security policy for plugin execution
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -175,27 +175,24 @@ impl SecurityPolicy {
             }
         }
 
-        // Configure file system access using new v34 API with cap-std
+        // Configure file system access using new v34 API 
         for permission in &self.permissions {
             match permission {
                 Permission::FileRead(path) => {
-                    // Use cap-std for secure directory opening as per v34 migration guide
-                    let dir_handle = cap_std::fs::Dir::open_ambient_dir(
-                        path,
-                        cap_std::ambient_authority()
+                    builder.preopened_dir(
+                        path, 
+                        path.to_str().unwrap_or("/sandbox"),
+                        wasmtime_wasi::DirPerms::READ,
+                        wasmtime_wasi::FilePerms::READ
                     ).map_err(|e| PluginError::SecurityViolation(e.to_string()))?;
-                    
-                    builder.preopened_dir(dir_handle, path.to_str().unwrap_or("/sandbox"))
-                        .map_err(|e| PluginError::SecurityViolation(e.to_string()))?;
                 }
                 Permission::FileWrite(path) => {
-                    let dir_handle = cap_std::fs::Dir::open_ambient_dir(
+                    builder.preopened_dir(
                         path,
-                        cap_std::ambient_authority()
+                        path.to_str().unwrap_or("/sandbox"),
+                        wasmtime_wasi::DirPerms::all(),
+                        wasmtime_wasi::FilePerms::all()
                     ).map_err(|e| PluginError::SecurityViolation(e.to_string()))?;
-                    
-                    builder.preopened_dir(dir_handle, path.to_str().unwrap_or("/sandbox"))
-                        .map_err(|e| PluginError::SecurityViolation(e.to_string()))?;
                 }
                 _ => {}
             }

@@ -15,9 +15,11 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 #[cfg(feature = "wasm-plugins")]
-use wasmtime_wasi::{WasiCtxBuilder};
+use wasmtime::{Engine, Linker, Module, Store};
 #[cfg(feature = "wasm-plugins")]
-use wasmtime_wasi::preview1::{self, WasiP1Ctx, WasiView, add_to_linker_sync};
+use wasmtime_wasi::p2::{WasiCtxBuilder, WasiView};
+#[cfg(feature = "wasm-plugins")]
+use wasmtime_wasi::preview1::{self, WasiP1Ctx};
 
 /// Plugin lifecycle manager
 #[derive(Clone)]
@@ -73,8 +75,8 @@ impl PluginLifecycleManager {
         #[cfg(feature = "wasm-plugins")]
         {
             let engine = wasmtime::Engine::new(&security_policy.configure_engine()?)?;
-            let component = wasmtime::component::Component::new(&engine, &binary)?;
-            let mut linker = wasmtime::component::Linker::<HostContext>::new(&engine);
+            let module = wasmtime::Module::new(&engine, &binary)?;
+            let mut linker = wasmtime::Linker::<HostContext>::new(&engine);
 
             // Configure host state
             let host_state = HostState {
@@ -88,7 +90,7 @@ impl PluginLifecycleManager {
             let wasi_ctx = security_policy.configure_wasi_context()?.build_p1();
 
             // NOTE: UV-108 - Add basic WASI support (filesystem traits temporarily disabled)
-            preview1::add_to_linker(&mut linker, |host: &mut HostContext| host)?;
+            wasmtime_wasi::preview1::add_to_linker_sync(&mut linker, |host: &mut HostContext| &mut host.wasi_ctx)?;
 
             // Add our custom host functions
             self.add_host_functions(&mut linker)?;
@@ -105,14 +107,14 @@ impl PluginLifecycleManager {
             // Note: Resource limiting would be configured here in a real implementation
 
             // Instantiate the component
-            let instance = linker.instantiate(&mut store, &component)?;
+            let instance = linker.instantiate(&mut store, &module)?;
 
             // Create active plugin wrapper
             let active_plugin = ActivePlugin::new(
                 plugin_id.clone(),
                 manifest,
                 engine,
-                component,
+                module,
                 store,
                 instance,
                 AstHandleManager::new(),
@@ -196,7 +198,7 @@ impl PluginLifecycleManager {
     #[cfg(feature = "wasm-plugins")]
     fn add_host_functions(
         &self,
-        _linker: &mut wasmtime::component::Linker<HostContext>,
+        _linker: &mut wasmtime::Linker<HostContext>,
     ) -> crate::error::Result<()> {
         // NOTE: UV-108 - Component model host functions require WIT interface definitions
         // This would be implemented using proper WIT files and generated bindings
@@ -224,11 +226,11 @@ pub struct ActivePlugin {
     #[cfg(feature = "wasm-plugins")]
     engine: wasmtime::Engine,
     #[cfg(feature = "wasm-plugins")]
-    component: wasmtime::component::Component,
+    module: wasmtime::Module,
     #[cfg(feature = "wasm-plugins")]
     store: std::sync::Arc<std::sync::Mutex<wasmtime::Store<HostContext>>>,
     #[cfg(feature = "wasm-plugins")]
-    instance: wasmtime::component::Instance,
+    instance: wasmtime::Instance,
     ast_handles: AstHandleManager,
 }
 
@@ -238,9 +240,9 @@ impl ActivePlugin {
         id: PluginId,
         manifest: PluginManifest,
         engine: wasmtime::Engine,
-        component: wasmtime::component::Component,
+        module: wasmtime::Module,
         store: wasmtime::Store<HostContext>,
-        instance: wasmtime::component::Instance,
+        instance: wasmtime::Instance,
         ast_handles: AstHandleManager,
     ) -> Self {
         Self {
@@ -249,7 +251,7 @@ impl ActivePlugin {
             stats: PluginStats::default(),
             status: PluginStatus::Ready,
             engine,
-            component,
+            module,
             store: Arc::new(std::sync::Mutex::new(store)),
             instance,
             ast_handles,

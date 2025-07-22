@@ -7,7 +7,9 @@ use uuid::Uuid;
 #[cfg(feature = "wasm-plugins")]
 use wasmtime::component::ResourceTable;
 #[cfg(feature = "wasm-plugins")]
-use wasmtime_wasi::preview1::{WasiP1Ctx, WasiView};
+use wasmtime_wasi::preview1::WasiP1Ctx;
+#[cfg(feature = "wasm-plugins")]
+use wasmtime_wasi::p2::{WasiView, IoView};
 
 /// Unique identifier for a plugin instance
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -82,13 +84,16 @@ pub struct HostContext {
 }
 
 #[cfg(feature = "wasm-plugins")]
-impl WasiView for HostContext {
-    fn ctx(&mut self) -> &mut WasiP1Ctx {
-        &mut self.wasi_ctx
-    }
-
+impl IoView for HostContext {
     fn table(&mut self) -> &mut ResourceTable {
         &mut self.table
+    }
+}
+
+#[cfg(feature = "wasm-plugins")]
+impl WasiView for HostContext {
+    fn ctx(&mut self) -> &mut wasmtime_wasi::p2::WasiCtx {
+        self.wasi_ctx.ctx()
     }
 }
 

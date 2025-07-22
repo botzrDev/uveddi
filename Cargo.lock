@@ -7513,6 +7513,7 @@ dependencies = [
  "blake3",
  "bumpalo",
  "bumpalo-herd",
+ "cap-std",
  "casbin",
  "changepoint",
  "chrono",

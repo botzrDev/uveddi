@@ -39,7 +39,7 @@ local-ai = ["ai"]
 # Image rendering service integration
 image-rendering = ["reqwest"]
 # WASM plugin system
-wasm-plugins = ["wasmtime", "wasmtime-wasi", "wit-bindgen"]
+wasm-plugins = ["wasmtime", "wasmtime-wasi", "cap-std", "wit-bindgen"]
 # Terminal User Interface
 tui = ["ratatui", "crossterm", "tui-input"]
 # Memory optimization features (UV-210, UV-26)
@@ -109,6 +109,7 @@ strum_macros = "0.26"
 # WASM plugin system dependencies (optional via features)
 wasmtime = { version = "34.0.2", features = ["component-model"], optional = true }
 wasmtime-wasi = { version = "34.0.2", optional = true }
+cap-std = { version = "3.0", optional = true }
 arrow = { version = "52.0.0", optional = true }
 arrow-ipc = { version = "52.0.0", optional = true }
 arrow-schema = { version = "52.0.0", optional = true }
