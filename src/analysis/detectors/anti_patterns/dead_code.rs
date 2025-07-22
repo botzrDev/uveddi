@@ -225,7 +225,8 @@ impl DeadCodeDetector {
             .map_err(|e| crate::analysis::errors::AnalysisError::DetectionError(e.to_string()))?;
 
         let mut cursor = QueryCursor::new();
-        for mat in cursor.matches(&function_query, tree.root_node(), source) {
+        let mut matches = cursor.matches(&function_query, tree.root_node(), source);
+        while let Some(mat) = matches.next() {
             if let Some(name_capture) = mat.captures.first() {
                 let name_node = name_capture.node;
                 if let Ok(name) = name_node.utf8_text(source) {
@@ -251,7 +252,8 @@ impl DeadCodeDetector {
             .map_err(|e| crate::analysis::errors::AnalysisError::DetectionError(e.to_string()))?;
 
         let mut cursor = QueryCursor::new();
-        for mat in cursor.matches(&struct_query, tree.root_node(), source) {
+        let mut matches = cursor.matches(&struct_query, tree.root_node(), source);
+        while let Some(mat) = matches.next() {
             if let Some(name_capture) = mat.captures.first() {
                 let name_node = name_capture.node;
                 if let Ok(name) = name_node.utf8_text(source) {
@@ -295,7 +297,8 @@ impl DeadCodeDetector {
             .map_err(|e| crate::analysis::errors::AnalysisError::DetectionError(e.to_string()))?;
 
         let mut cursor = QueryCursor::new();
-        for mat in cursor.matches(&function_query, tree.root_node(), source) {
+        let mut matches = cursor.matches(&function_query, tree.root_node(), source);
+        while let Some(mat) = matches.next() {
             if let Some(name_capture) = mat.captures.first() {
                 let name_node = name_capture.node;
                 if let Ok(name) = name_node.utf8_text(source) {
@@ -323,7 +326,8 @@ impl DeadCodeDetector {
             .map_err(|e| crate::analysis::errors::AnalysisError::DetectionError(e.to_string()))?;
 
         let mut cursor = QueryCursor::new();
-        for mat in cursor.matches(&class_query, tree.root_node(), source) {
+        let mut matches = cursor.matches(&class_query, tree.root_node(), source);
+        while let Some(mat) = matches.next() {
             if let Some(name_capture) = mat.captures.first() {
                 let name_node = name_capture.node;
                 if let Ok(name) = name_node.utf8_text(source) {
@@ -369,7 +373,8 @@ impl DeadCodeDetector {
             .map_err(|e| crate::analysis::errors::AnalysisError::DetectionError(e.to_string()))?;
 
         let mut cursor = QueryCursor::new();
-        for mat in cursor.matches(&function_query, tree.root_node(), source) {
+        let mut matches = cursor.matches(&function_query, tree.root_node(), source);
+        while let Some(mat) = matches.next() {
             if let Some(name_capture) = mat.captures.first() {
                 let name_node = name_capture.node;
                 if let Ok(name) = name_node.utf8_text(source) {
@@ -415,7 +420,8 @@ impl DeadCodeDetector {
             .map_err(|e| crate::analysis::errors::AnalysisError::DetectionError(e.to_string()))?;
 
         let mut cursor = QueryCursor::new();
-        for mat in cursor.matches(&call_query, tree.root_node(), source) {
+        let mut matches = cursor.matches(&call_query, tree.root_node(), source);
+        while let Some(mat) = matches.next() {
             if let Some(name_capture) = mat.captures.first() {
                 let name_node = name_capture.node;
                 if let Ok(name) = name_node.utf8_text(source) {
@@ -445,7 +451,8 @@ impl DeadCodeDetector {
             .map_err(|e| crate::analysis::errors::AnalysisError::DetectionError(e.to_string()))?;
 
         let mut cursor = QueryCursor::new();
-        for mat in cursor.matches(&call_query, tree.root_node(), source) {
+        let mut matches = cursor.matches(&call_query, tree.root_node(), source);
+        while let Some(mat) = matches.next() {
             if let Some(name_capture) = mat.captures.first() {
                 let name_node = name_capture.node;
                 if let Ok(name) = name_node.utf8_text(source) {
@@ -475,7 +482,8 @@ impl DeadCodeDetector {
             .map_err(|e| crate::analysis::errors::AnalysisError::DetectionError(e.to_string()))?;
 
         let mut cursor = QueryCursor::new();
-        for mat in cursor.matches(&call_query, tree.root_node(), source) {
+        let mut matches = cursor.matches(&call_query, tree.root_node(), source);
+        while let Some(mat) = matches.next() {
             if let Some(name_capture) = mat.captures.first() {
                 let name_node = name_capture.node;
                 if let Ok(name) = name_node.utf8_text(source) {

@@ -505,7 +505,8 @@ impl GodObjectDetector {
             .map_err(|e| ErrorHelpers::query_error(&e.to_string()))?;
 
         let mut cursor = QueryCursor::new();
-        for mat in cursor.matches(&query, tree.root_node(), source) {
+        let mut matches = cursor.matches(&query, tree.root_node(), source);
+        while let Some(mat) = matches.next() {
             for capture in mat.captures {
                 if let Ok(import_text) = capture.node.utf8_text(source) {
                     // Extract module name from import path
@@ -568,7 +569,8 @@ impl GodObjectDetector {
         let mut builder_methods = Vec::new();
         let mut build_method = None;
 
-        for mat in cursor.matches(&query, class_node, source) {
+        let mut matches = cursor.matches(&query, class_node, source);
+        while let Some(mat) = matches.next() {
             for capture in mat.captures {
                 if let Ok(method_name) = capture.node.utf8_text(source) {
                     if ["build", "create", "new", "get"].contains(&method_name) {
@@ -658,7 +660,14 @@ impl GodObjectDetector {
             .map_err(|e| ErrorHelpers::query_error(&e.to_string()))?;
 
         let mut cursor = QueryCursor::new();
-        let method_count = cursor.matches(&query, class_node, source).count();
+        let method_count = {
+            let mut matches = cursor.matches(&query, class_node, source);
+            let mut count = 0;
+            while matches.next().is_some() {
+                count += 1;
+            }
+            count
+        };
 
         // Simplified heuristic: assume low cohesion if many methods (>10) without deep analysis
         // A proper implementation would analyze shared fields and method calls
@@ -694,7 +703,14 @@ impl GodObjectDetector {
             .map_err(|e| ErrorHelpers::query_error(&e.to_string()))?;
 
         let mut cursor = QueryCursor::new();
-        let total_methods = cursor.matches(&query, class_node, source).count();
+        let total_methods = {
+            let mut matches = cursor.matches(&query, class_node, source);
+            let mut count = 0;
+            while matches.next().is_some() {
+                count += 1;
+            }
+            count
+        };
 
         // Simplified heuristic: assume 70% are trivial methods (getters, setters)
         let trivial_methods = (total_methods as f64 * 0.7) as usize;
@@ -899,7 +915,8 @@ impl GodObjectDetector {
             .map_err(|e| AnalysisError::QueryError(e.to_string()))?;
 
         let mut cursor = QueryCursor::new();
-        for mat in cursor.matches(&container_query, tree.root_node(), source) {
+        let mut matches = cursor.matches(&container_query, tree.root_node(), source);
+        while let Some(mat) = matches.next() {
             let name_node = mat.captures[0].node;
             let body_node = mat.captures[1].node;
             let container_node = name_node.parent().unwrap_or(name_node);
@@ -907,14 +924,24 @@ impl GodObjectDetector {
             let name = name_node.utf8_text(source).unwrap_or("Unnamed");
 
             let mut method_cursor = QueryCursor::new();
-            let method_count = method_cursor
-                .matches(&method_query, body_node, source)
-                .count();
+            let method_count = {
+                let mut matches = method_cursor.matches(&method_query, body_node, source);
+                let mut count = 0;
+                while matches.next().is_some() {
+                    count += 1;
+                }
+                count
+            };
 
             let mut field_cursor = QueryCursor::new();
-            let field_count = field_cursor
-                .matches(&field_query, body_node, source)
-                .count();
+            let field_count = {
+                let mut matches = field_cursor.matches(&field_query, body_node, source);
+                let mut count = 0;
+                while matches.next().is_some() {
+                    count += 1;
+                }
+                count
+            };
 
             let language = parsed_file.language;
             let method_threshold = self
@@ -1058,7 +1085,8 @@ impl GodObjectDetector {
         let mut derive_attributes: HashMap<String, Vec<String>> = HashMap::new();
 
         let mut cursor = QueryCursor::new();
-        for mat in cursor.matches(&derive_query, root_node, source) {
+        let mut matches = cursor.matches(&derive_query, root_node, source);
+        while let Some(mat) = matches.next() {
             for capture in mat.captures {
                 if let Ok(attr_text) = capture.node.utf8_text(source) {
                     if attr_text.contains("Serialize") || attr_text.contains("Deserialize") {
@@ -1089,7 +1117,8 @@ impl GodObjectDetector {
             .map_err(|e| AnalysisError::QueryError(e.to_string()))?;
 
         let mut cursor = QueryCursor::new();
-        for mat in cursor.matches(&impl_query, root_node, source) {
+        let mut matches = cursor.matches(&impl_query, root_node, source);
+        while let Some(mat) = matches.next() {
             if let (Some(name_capture), Some(body_capture)) =
                 (mat.captures.first(), mat.captures.get(1))
             {
@@ -1097,9 +1126,14 @@ impl GodObjectDetector {
                 let body_node = body_capture.node;
                 if let Ok(name) = name_node.utf8_text(source) {
                     let mut method_cursor = QueryCursor::new();
-                    let method_count = method_cursor
-                        .matches(&function_query, body_node, source)
-                        .count();
+                    let method_count = {
+                        let mut matches = method_cursor.matches(&function_query, body_node, source);
+                        let mut count = 0;
+                        while matches.next().is_some() {
+                            count += 1;
+                        }
+                        count
+                    };
                     impl_method_counts.insert(name.to_string(), method_count);
                 }
             }
@@ -1112,7 +1146,8 @@ impl GodObjectDetector {
             .map_err(|e| AnalysisError::QueryError(e.to_string()))?;
 
         let mut struct_cursor = QueryCursor::new();
-        for mat in struct_cursor.matches(&struct_query, root_node, source) {
+        let mut matches = struct_cursor.matches(&struct_query, root_node, source);
+        while let Some(mat) = matches.next() {
             if let (Some(name_capture), Some(body_capture)) =
                 (mat.captures.first(), mat.captures.get(1))
             {
@@ -1124,9 +1159,14 @@ impl GodObjectDetector {
                     let method_count = impl_method_counts.get(name).cloned().unwrap_or(0);
 
                     let mut field_cursor = QueryCursor::new();
-                    let field_count = field_cursor
-                        .matches(&field_query, body_node, source)
-                        .count();
+                    let field_count = {
+                        let mut matches = field_cursor.matches(&field_query, body_node, source);
+                        let mut count = 0;
+                        while matches.next().is_some() {
+                            count += 1;
+                        }
+                        count
+                    };
 
                     let language = parsed_file.language;
                     let method_threshold = self

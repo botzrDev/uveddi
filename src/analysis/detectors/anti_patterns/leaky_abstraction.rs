@@ -477,9 +477,9 @@ impl LeakyAbstractionDetector {
         })?;
 
         let mut cursor = QueryCursor::new();
-        let captures = cursor.captures(&query, tree.root_node(), source_bytes);
+        let mut captures = cursor.captures(&query, tree.root_node(), source_bytes);
 
-        for (match_, _) in captures {
+        while let Some((match_, _)) = captures.next() {
             for capture in match_.captures {
                 let node = capture.node;
                 let capture_name = query.capture_names()[capture.index as usize];
@@ -641,9 +641,9 @@ impl LeakyAbstractionDetector {
                 })?;
 
                 let mut cursor = QueryCursor::new();
-                let matches = cursor.matches(&query, tree.root_node(), source_bytes);
+                let mut matches = cursor.matches(&query, tree.root_node(), source_bytes);
 
-                for query_match in matches {
+                while let Some(query_match) = matches.next() {
                     for capture in query_match.captures {
                         let capture_text = capture.node.utf8_text(source_bytes).unwrap_or("");
 
@@ -740,9 +740,9 @@ impl LeakyAbstractionDetector {
         })?;
 
         let mut cursor = QueryCursor::new();
-        let captures = cursor.captures(&query, tree.root_node(), source_bytes);
+        let mut captures = cursor.captures(&query, tree.root_node(), source_bytes);
 
-        for (match_, _) in captures {
+        while let Some((match_, _)) = captures.next() {
             for capture in match_.captures {
                 let node = capture.node;
                 let capture_name = query.capture_names()[capture.index as usize];

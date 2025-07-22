@@ -157,7 +157,8 @@ impl LargeClassDetector {
         })?;
 
         let mut cursor = QueryCursor::new();
-        for mat in cursor.matches(&struct_query, tree.root_node(), source) {
+        let mut matches = cursor.matches(&struct_query, tree.root_node(), source);
+        while let Some(mat) = matches.next() {
             if let Some(name_capture) = mat.captures.first() {
                 let name_node = name_capture.node;
                 let struct_node = name_node.parent().unwrap_or(name_node);

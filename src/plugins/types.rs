@@ -5,8 +5,9 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use uuid::Uuid;
 #[cfg(feature = "wasm-plugins")]
-use wasmtime_wasi::{ResourceTable};
-use wasmtime_wasi::p2::{WasiCtx, WasiView};
+use wasmtime_wasi::{ResourceTable, WasiCtx, WasiView};
+#[cfg(feature = "wasm-plugins")]
+use wasmtime::component::ResourceTableView;
 
 /// Unique identifier for a plugin instance
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -81,13 +82,14 @@ pub struct HostContext {
 }
 
 #[cfg(feature = "wasm-plugins")]
-impl wasmtime_wasi::WasiView for HostContext {
+impl WasiView for HostContext {
     fn ctx(&mut self) -> &mut WasiCtx {
         &mut self.wasi_ctx
     }
 }
 
-impl wasmtime_wasi::ResourceTableView for HostContext {
+#[cfg(feature = "wasm-plugins")]
+impl ResourceTableView for HostContext {
     fn table(&mut self) -> &mut ResourceTable {
         &mut self.table
     }

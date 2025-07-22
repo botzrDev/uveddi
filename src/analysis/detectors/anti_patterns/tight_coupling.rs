@@ -666,9 +666,9 @@ impl RustAnalyzer {
             .map_err(|e| AnalysisError::QueryError(format!("Failed to create use query: {}", e)))?;
 
         let mut cursor = QueryCursor::new();
-        let matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
+        let mut matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
 
-        for m in matches {
+        while let Some(m) = matches.next() {
             for capture in m.captures {
                 let node_text = capture.node.utf8_text(source.as_bytes()).map_err(|e| {
                     AnalysisError::QueryError(format!("Failed to get node text: {}", e))
@@ -707,9 +707,9 @@ impl RustAnalyzer {
         })?;
 
         let mut cursor = QueryCursor::new();
-        let matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
+        let mut matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
 
-        for m in matches {
+        while let Some(m) = matches.next() {
             if let Some(capture) = m.captures.first() {
                 let node_text = capture.node.utf8_text(source.as_bytes()).map_err(|e| {
                     AnalysisError::QueryError(format!("Failed to get node text: {}", e))
@@ -750,9 +750,9 @@ impl RustAnalyzer {
         })?;
 
         let mut cursor = QueryCursor::new();
-        let matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
+        let mut matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
 
-        for m in matches {
+        while let Some(m) = matches.next() {
             if let Some(capture) = m.captures.first() {
                 let node_text = capture.node.utf8_text(source.as_bytes()).map_err(|e| {
                     AnalysisError::QueryError(format!("Failed to get node text: {}", e))
@@ -798,9 +798,9 @@ impl RustAnalyzer {
 
         if let Ok(query) = Query::new(&tree_sitter_rust::LANGUAGE.into(), impl_query) {
             let mut cursor = QueryCursor::new();
-            let matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
+            let mut matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
 
-            for m in matches {
+            while let Some(m) = matches.next() {
                 if let Some(capture) = m.captures.first() {
                     let trait_name = capture
                         .node
@@ -885,9 +885,9 @@ impl PythonAnalyzer {
 
         if let Ok(query) = Query::new(&tree_sitter_python::LANGUAGE.into(), Self::IMPORT_QUERY) {
             let mut cursor = QueryCursor::new();
-            let matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
+            let mut matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
 
-            for m in matches {
+            while let Some(m) = matches.next() {
                 for capture in m.captures {
                     let module_name = capture
                         .node
@@ -922,9 +922,9 @@ impl PythonAnalyzer {
 
         if let Ok(query) = Query::new(&tree_sitter_python::LANGUAGE.into(), Self::CALL_QUERY) {
             let mut cursor = QueryCursor::new();
-            let matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
+            let mut matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
 
-            for m in matches {
+            while let Some(m) = matches.next() {
                 if let Some(capture) = m.captures.first() {
                     let function_name = capture
                         .node
@@ -968,9 +968,9 @@ impl PythonAnalyzer {
 
         if let Ok(query) = Query::new(&tree_sitter_python::LANGUAGE.into(), inheritance_query) {
             let mut cursor = QueryCursor::new();
-            let matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
+            let mut matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
 
-            for m in matches {
+            while let Some(m) = matches.next() {
                 if m.captures.len() >= 2 {
                     let class_name = m.captures[0]
                         .node
@@ -1062,9 +1062,9 @@ impl JavaScriptAnalyzer {
 
         if let Ok(query) = Query::new(&tree_sitter_javascript::LANGUAGE.into(), Self::IMPORT_QUERY) {
             let mut cursor = QueryCursor::new();
-            let matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
+            let mut matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
 
-            for m in matches {
+            while let Some(m) = matches.next() {
                 for capture in m.captures {
                     if capture.index == query.capture_index_for_name("module").unwrap_or(u32::MAX) {
                         let module_name = capture
@@ -1109,9 +1109,9 @@ impl JavaScriptAnalyzer {
 
         if let Ok(query) = Query::new(&tree_sitter_javascript::LANGUAGE.into(), require_query) {
             let mut cursor = QueryCursor::new();
-            let matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
+            let mut matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
 
-            for m in matches {
+            while let Some(m) = matches.next() {
                 for capture in m.captures {
                     if capture.index == query.capture_index_for_name("module").unwrap_or(u32::MAX) {
                         let module_name = capture
@@ -1160,9 +1160,9 @@ impl JavaScriptAnalyzer {
 
         if let Ok(query) = Query::new(&tree_sitter_javascript::LANGUAGE.into(), call_query) {
             let mut cursor = QueryCursor::new();
-            let matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
+            let mut matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
 
-            for m in matches {
+            while let Some(m) = matches.next() {
                 if let Some(capture) = m.captures.first() {
                     let function_name = capture
                         .node

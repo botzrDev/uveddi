@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::path::PathBuf;
 #[cfg(feature = "wasm-plugins")]
-use wasmtime_wasi::p2::WasiCtxBuilder;
+use wasmtime_wasi::WasiCtxBuilder;
 
 /// Security policy for plugin execution
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -15,7 +15,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 #[cfg(feature = "wasm-plugins")]
-use wasmtime_wasi::p2::{WasiCtx, WasiCtxBuilder, WasiView, add_to_linker_sync};
+use wasmtime_wasi::{WasiCtx, WasiCtxBuilder, WasiView, add_to_linker_sync};
 
 /// Plugin lifecycle manager
 #[derive(Clone)]

@@ -409,7 +409,8 @@ impl LongMethodsDetector {
             })?;
 
             let mut cursor = QueryCursor::new();
-            for mat in cursor.matches(&function_query, tree.root_node(), source) {
+            let mut matches = cursor.matches(&function_query, tree.root_node(), source);
+            while let Some(mat) = matches.next() {
                 if let (Some(name_capture), Some(body_capture)) =
                     (mat.captures.get(1), mat.captures.get(2))
                 {
@@ -487,7 +488,8 @@ impl LongMethodsDetector {
             })?;
 
             let mut cursor = QueryCursor::new();
-            for mat in cursor.matches(&function_query, tree.root_node(), source) {
+            let mut matches = cursor.matches(&function_query, tree.root_node(), source);
+            while let Some(mat) = matches.next() {
                 if let Some(body_capture) = mat.captures.get(1) {
                     let body_node = body_capture.node;
                     let function_node = mat.captures.get(2).map(|c| c.node).unwrap_or(body_node);

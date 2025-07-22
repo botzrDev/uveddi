@@ -302,11 +302,11 @@ impl CodeDuplicationDetector {
         })?;
 
         let mut cursor = QueryCursor::new();
-        let matches = cursor.matches(&query, tree.root_node(), parsed_file.source.as_bytes());
+        let mut matches = cursor.matches(&query, tree.root_node(), parsed_file.source.as_bytes());
 
         let mut blocks = Vec::new();
 
-        for match_ in matches {
+        while let Some(match_) = matches.next() {
             if let Some(function_capture) = match_.captures.iter().find(|c| c.index == 0) {
                 let function_node = function_capture.node;
                 let start_line = function_node.start_position().row as u32 + 1;
@@ -1235,7 +1235,8 @@ impl CodeDuplicationDetector {
 
         let mut cursor = QueryCursor::new();
 
-        for mat in cursor.matches(&query, tree.root_node(), source) {
+        let mut matches = cursor.matches(&query, tree.root_node(), source);
+        while let Some(mat) = matches.next() {
             if mat.captures.len() >= 3 {
                 let function_node = mat.captures[0].node; // @function
                 let start_line = function_node.start_position().row + 1;
