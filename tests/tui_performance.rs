@@ -163,7 +163,7 @@ async fn cleanup_performance_test_project(path: &PathBuf) -> std::io::Result<()>
 #[cfg(feature = "tui")]
 #[tokio::test]
 async fn test_rapid_state_updates_performance() {
-    let mut app_state = AppState::new();
+    let mut app_state = AppState::new(None);
     let start_time = Instant::now();
 
     // Perform many rapid state updates
@@ -210,7 +210,7 @@ async fn test_rapid_state_updates_performance() {
 #[cfg(feature = "tui")]
 #[tokio::test]
 async fn test_menu_navigation_performance() {
-    let mut app_state = AppState::new();
+    let mut app_state = AppState::new(None);
     let start_time = Instant::now();
 
     let key_events = vec![
@@ -247,7 +247,7 @@ async fn test_menu_navigation_performance() {
 #[cfg(feature = "tui")]
 #[tokio::test]
 async fn test_memory_usage_stability() {
-    let mut app_state = AppState::new();
+    let mut app_state = AppState::new(None);
 
     // Initial memory baseline (simple approximation)
     let initial_size = std::mem::size_of_val(&app_state);
@@ -382,7 +382,7 @@ async fn test_concurrent_state_operations() {
     use std::sync::{Arc, Mutex};
     use std::thread;
 
-    let app_state = Arc::new(Mutex::new(AppState::new()));
+    let app_state = Arc::new(Mutex::new(AppState::new(None)));
     let start_time = Instant::now();
 
     // Spawn multiple threads to simulate concurrent access
@@ -497,7 +497,7 @@ async fn test_large_project_simulation() {
 #[cfg(feature = "tui")]
 #[tokio::test]
 async fn test_stress_operations() {
-    let mut app_state = AppState::new();
+    let mut app_state = AppState::new(None);
     let start_time = Instant::now();
     let mut operation_count = 0;
 
@@ -545,7 +545,7 @@ async fn test_stress_operations() {
 #[cfg(feature = "tui")]
 #[tokio::test]
 async fn test_complex_message_performance() {
-    let mut app_state = AppState::new();
+    let mut app_state = AppState::new(None);
     let start_time = Instant::now();
 
     // Test with complex keyboard events
@@ -567,7 +567,7 @@ async fn test_complex_message_performance() {
 
     // Reset state for each test to avoid quit condition
     for _ in 0..1000 {
-        app_state = AppState::new(); // Reset to avoid accumulated quit states
+        app_state = AppState::new(None); // Reset to avoid accumulated quit states
 
         for &event in &complex_events {
             app_state.update(AppMessage::KeyPressed(event));

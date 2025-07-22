@@ -245,7 +245,7 @@ async fn test_complete_user_workflow() {
     let test_project = create_comprehensive_test_project().await.unwrap();
 
     // Step 1: Initialize TUI application
-    let mut app_state = AppState::new();
+    let mut app_state = AppState::new(None);
     assert_eq!(app_state.current_screen, AppScreen::MainMenu);
 
     // Step 2: Navigate to analyze form
@@ -308,7 +308,7 @@ async fn test_complete_user_workflow() {
 #[cfg(feature = "tui")]
 #[tokio::test]
 async fn test_keyboard_event_workflow() {
-    let mut app_state = AppState::new();
+    let mut app_state = AppState::new(None);
 
     // Test global quit shortcut
     let quit_key = KeyEvent::new(KeyCode::Char('q'), KeyModifiers::NONE);
@@ -317,7 +317,7 @@ async fn test_keyboard_event_workflow() {
     assert!(app_state.should_quit);
 
     // Reset state
-    app_state = AppState::new();
+    app_state = AppState::new(None);
 
     // Test Ctrl+C quit
     let ctrl_c = KeyEvent::new(KeyCode::Char('c'), KeyModifiers::CONTROL);
@@ -326,7 +326,7 @@ async fn test_keyboard_event_workflow() {
     assert!(app_state.should_quit);
 
     // Reset state
-    app_state = AppState::new();
+    app_state = AppState::new(None);
 
     // Test Escape to main menu
     app_state.update(AppMessage::NavigateToAnalyze);
@@ -347,7 +347,7 @@ async fn test_keyboard_event_workflow() {
 #[cfg(feature = "tui")]
 #[tokio::test]
 async fn test_menu_keyboard_navigation() {
-    let mut app_state = AppState::new();
+    let mut app_state = AppState::new(None);
     assert_eq!(app_state.current_screen, AppScreen::MainMenu);
     assert_eq!(app_state.selected_menu_item, 0);
 
@@ -389,7 +389,7 @@ async fn test_menu_keyboard_navigation() {
 #[cfg(feature = "tui")]
 #[tokio::test]
 async fn test_direct_navigation_shortcuts() {
-    let mut app_state = AppState::new();
+    let mut app_state = AppState::new(None);
 
     // Test direct navigation with number keys
     let one_key = KeyEvent::new(KeyCode::Char('1'), KeyModifiers::NONE);
@@ -419,7 +419,7 @@ async fn test_direct_navigation_shortcuts() {
 #[tokio::test]
 #[cfg(feature = "tui")]
 async fn test_error_handling_workflow() {
-    let mut app_state = AppState::new();
+    let mut app_state = AppState::new(None);
 
     // Test invalid menu selection
     let messages = app_state.update(AppMessage::MenuItemSelected(999));
@@ -477,7 +477,7 @@ async fn test_error_handling_workflow() {
 #[cfg(feature = "tui")]
 #[tokio::test]
 async fn test_rapid_state_transitions() {
-    let mut app_state = AppState::new();
+    let mut app_state = AppState::new(None);
 
     // Perform rapid state transitions
     for i in 0..100 {
@@ -589,7 +589,7 @@ async fn test_application_lifecycle() {
     let test_project = create_comprehensive_test_project().await.unwrap();
 
     // Application startup
-    let mut app_state = AppState::new();
+    let mut app_state = AppState::new(None);
     assert_eq!(app_state.current_screen, AppScreen::MainMenu);
     assert!(!app_state.should_quit);
     assert!(app_state.status_message.is_some());

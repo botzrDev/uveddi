@@ -34,18 +34,18 @@ impl User {
             updated_at: now,
         }
     }
-    
+
     /// Check if user is active
     pub fn is_active(&self) -> bool {
         self.is_active
     }
-    
+
     /// Deactivate user
     pub fn deactivate(&mut self) {
         self.is_active = false;
         self.updated_at = Utc::now();
     }
-    
+
     /// Activate user
     pub fn activate(&mut self) {
         self.is_active = true;
@@ -74,7 +74,7 @@ impl Role {
             created_at: Utc::now(),
         }
     }
-    
+
     /// Check if this is a system role
     pub fn is_system_role(&self) -> bool {
         self.is_system_role
@@ -102,7 +102,7 @@ impl UserRole {
             UserRole::Service => "Service",
         }
     }
-    
+
     /// Get role description
     pub fn description(&self) -> &'static str {
         match self {
@@ -113,17 +113,17 @@ impl UserRole {
             UserRole::Service => "API access for automated integrations",
         }
     }
-    
+
     /// Check if this role has administrative privileges
     pub fn is_admin(&self) -> bool {
         matches!(self, UserRole::Admin)
     }
-    
+
     /// Check if this role can manage users
     pub fn can_manage_users(&self) -> bool {
         matches!(self, UserRole::Admin)
     }
-    
+
     /// Check if this role can configure system settings
     pub fn can_configure_system(&self) -> bool {
         matches!(self, UserRole::Admin)
@@ -138,7 +138,7 @@ impl std::fmt::Display for UserRole {
 
 impl std::str::FromStr for UserRole {
     type Err = String;
-    
+
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "Admin" => Ok(UserRole::Admin),
@@ -172,7 +172,7 @@ impl Permission {
             created_at: Utc::now(),
         }
     }
-    
+
     /// Create a permission key for matching
     pub fn key(&self) -> String {
         match &self.scope {
@@ -180,7 +180,7 @@ impl Permission {
             None => format!("{}:{}", self.resource, self.action),
         }
     }
-    
+
     /// Check if this permission matches the given resource and action
     pub fn matches(&self, resource: &str, action: &str, scope: Option<&str>) -> bool {
         self.resource == resource && self.action == action && self.scope.as_deref() == scope
@@ -208,7 +208,7 @@ impl UserRoleAssignment {
             expires_at: None,
         }
     }
-    
+
     /// Create a new user role assignment with expiration
     pub fn new_with_expiration(
         user_id: Uuid,
@@ -224,12 +224,13 @@ impl UserRoleAssignment {
             expires_at: Some(expires_at),
         }
     }
-    
+
     /// Check if this assignment has expired
     pub fn is_expired(&self) -> bool {
-        self.expires_at.map_or(false, |expires| expires < Utc::now())
+        self.expires_at
+            .map_or(false, |expires| expires < Utc::now())
     }
-    
+
     /// Check if this assignment is valid (not expired)
     pub fn is_valid(&self) -> bool {
         !self.is_expired()
@@ -272,22 +273,22 @@ impl Session {
             last_accessed: now,
         }
     }
-    
+
     /// Check if session is expired
     pub fn is_expired(&self) -> bool {
         Utc::now() > self.expires_at
     }
-    
+
     /// Check if session is valid (active and not expired)
     pub fn is_valid(&self) -> bool {
         self.is_active && !self.is_expired()
     }
-    
+
     /// Update last accessed time
     pub fn update_last_accessed(&mut self) {
         self.last_accessed = Utc::now();
     }
-    
+
     /// Deactivate session
     pub fn deactivate(&mut self) {
         self.is_active = false;
@@ -334,22 +335,23 @@ impl ApiKey {
             created_by,
         }
     }
-    
+
     /// Check if API key is expired
     pub fn is_expired(&self) -> bool {
-        self.expires_at.map_or(false, |expires| expires < Utc::now())
+        self.expires_at
+            .map_or(false, |expires| expires < Utc::now())
     }
-    
+
     /// Check if API key is valid (active and not expired)
     pub fn is_valid(&self) -> bool {
         self.is_active && !self.is_expired()
     }
-    
+
     /// Update last used time
     pub fn update_last_used(&mut self) {
         self.last_used = Some(Utc::now());
     }
-    
+
     /// Deactivate API key
     pub fn deactivate(&mut self) {
         self.is_active = false;
@@ -382,7 +384,7 @@ impl std::fmt::Display for AuditEventType {
 
 impl std::str::FromStr for AuditEventType {
     type Err = String;
-    
+
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "Authentication" => Ok(AuditEventType::Authentication),
@@ -416,7 +418,7 @@ impl std::fmt::Display for AuditOutcome {
 
 impl std::str::FromStr for AuditOutcome {
     type Err = String;
-    
+
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "Success" => Ok(AuditOutcome::Success),
@@ -472,7 +474,7 @@ impl AuditEvent {
             integrity_hash: String::new(), // Will be calculated later
         }
     }
-    
+
     /// Calculate integrity hash for tamper detection
     pub fn calculate_integrity_hash(&self) -> String {
         let data = format!(
@@ -485,16 +487,16 @@ impl AuditEvent {
             self.outcome,
             self.additional_data
         );
-        
+
         let hash = blake3::hash(data.as_bytes());
         hash.to_hex().to_string()
     }
-    
+
     /// Set the integrity hash
     pub fn set_integrity_hash(&mut self) {
         self.integrity_hash = self.calculate_integrity_hash();
     }
-    
+
     /// Verify integrity hash
     pub fn verify_integrity(&self) -> bool {
         let calculated_hash = self.calculate_integrity_hash();
@@ -534,22 +536,24 @@ impl AuthenticatedUser {
             authenticated_at: Utc::now(),
         }
     }
-    
+
     /// Check if user has a specific role
     pub fn has_role(&self, role: &UserRole) -> bool {
         self.roles.contains(role)
     }
-    
+
     /// Check if user has admin privileges
     pub fn is_admin(&self) -> bool {
         self.has_role(&UserRole::Admin)
     }
-    
+
     /// Check if user has a specific permission
     pub fn has_permission(&self, resource: &str, action: &str, scope: Option<&str>) -> bool {
-        self.permissions.iter().any(|p| p.matches(resource, action, scope))
+        self.permissions
+            .iter()
+            .any(|p| p.matches(resource, action, scope))
     }
-    
+
     /// Get user's role names as strings
     pub fn role_names(&self) -> Vec<String> {
         self.roles.iter().map(|r| r.as_str().to_string()).collect()
@@ -571,12 +575,7 @@ pub struct AuthContext {
 
 impl AuthContext {
     /// Create a new authorization context
-    pub fn new(
-        user_id: Uuid,
-        resource: String,
-        action: String,
-        scope: Option<String>,
-    ) -> Self {
+    pub fn new(user_id: Uuid, resource: String, action: String, scope: Option<String>) -> Self {
         Self {
             user_id,
             resource,
@@ -588,25 +587,25 @@ impl AuthContext {
             additional_context: HashMap::new(),
         }
     }
-    
+
     /// Set IP address
     pub fn with_ip_address(mut self, ip_address: String) -> Self {
         self.ip_address = Some(ip_address);
         self
     }
-    
+
     /// Set user agent
     pub fn with_user_agent(mut self, user_agent: String) -> Self {
         self.user_agent = Some(user_agent);
         self
     }
-    
+
     /// Set session ID
     pub fn with_session_id(mut self, session_id: Uuid) -> Self {
         self.session_id = Some(session_id);
         self
     }
-    
+
     /// Add additional context
     pub fn with_context(mut self, key: String, value: serde_json::Value) -> Self {
         self.additional_context.insert(key, value);
@@ -631,14 +630,14 @@ impl RateLimitInfo {
     pub fn is_exceeded(&self) -> bool {
         self.request_count > self.limit
     }
-    
+
     /// Check if the current window is still valid
     pub fn is_window_valid(&self) -> bool {
         let now = Utc::now();
         let window_end = self.window_start + chrono::Duration::seconds(self.window_size as i64);
         now < window_end
     }
-    
+
     /// Get remaining requests in current window
     pub fn remaining_requests(&self) -> u32 {
         if self.request_count >= self.limit {
@@ -671,7 +670,7 @@ impl std::fmt::Display for RateLimitIdentifierType {
 mod tests {
     use super::*;
     use serde_json::json;
-    
+
     #[test]
     fn test_user_creation() {
         let user = User::new(
@@ -679,23 +678,23 @@ mod tests {
             "user@example.com".to_string(),
             "John Doe".to_string(),
         );
-        
+
         assert!(user.is_active());
         assert_eq!(user.external_id, "external123");
         assert_eq!(user.email, "user@example.com");
         assert_eq!(user.display_name, "John Doe");
     }
-    
+
     #[test]
     fn test_user_role_string_conversion() {
         let admin = UserRole::Admin;
         assert_eq!(admin.as_str(), "Admin");
         assert_eq!(admin.to_string(), "Admin");
-        
+
         let parsed: UserRole = "Admin".parse().unwrap();
         assert_eq!(parsed, UserRole::Admin);
     }
-    
+
     #[test]
     fn test_permission_matching() {
         let permission = Permission::new(
@@ -703,12 +702,12 @@ mod tests {
             "read".to_string(),
             Some("own".to_string()),
         );
-        
+
         assert!(permission.matches("projects", "read", Some("own")));
         assert!(!permission.matches("projects", "write", Some("own")));
         assert!(!permission.matches("projects", "read", Some("all")));
     }
-    
+
     #[test]
     fn test_session_validity() {
         let future_time = Utc::now() + chrono::Duration::hours(1);
@@ -719,14 +718,14 @@ mod tests {
             Some("127.0.0.1".to_string()),
             Some("Mozilla/5.0".to_string()),
         );
-        
+
         assert!(session.is_valid());
         assert!(!session.is_expired());
-        
+
         session.deactivate();
         assert!(!session.is_valid());
     }
-    
+
     #[test]
     fn test_api_key_validity() {
         let mut api_key = ApiKey::new(
@@ -737,14 +736,14 @@ mod tests {
             None,
             None,
         );
-        
+
         assert!(api_key.is_valid());
         assert!(!api_key.is_expired());
-        
+
         api_key.deactivate();
         assert!(!api_key.is_valid());
     }
-    
+
     #[test]
     fn test_audit_event_integrity() {
         let mut event = AuditEvent::new(
@@ -758,15 +757,15 @@ mod tests {
             Some("Mozilla/5.0".to_string()),
             json!({"method": "password"}),
         );
-        
+
         event.set_integrity_hash();
         assert!(event.verify_integrity());
-        
+
         // Modify event to break integrity
         event.outcome = AuditOutcome::Failure;
         assert!(!event.verify_integrity());
     }
-    
+
     #[test]
     fn test_authenticated_user_permissions() {
         let user = User::new(
@@ -774,28 +773,31 @@ mod tests {
             "user@example.com".to_string(),
             "John Doe".to_string(),
         );
-        
+
         let permissions = vec![
-            Permission::new("projects".to_string(), "read".to_string(), Some("own".to_string())),
-            Permission::new("projects".to_string(), "write".to_string(), Some("own".to_string())),
+            Permission::new(
+                "projects".to_string(),
+                "read".to_string(),
+                Some("own".to_string()),
+            ),
+            Permission::new(
+                "projects".to_string(),
+                "write".to_string(),
+                Some("own".to_string()),
+            ),
         ];
-        
-        let auth_user = AuthenticatedUser::new(
-            user,
-            vec![UserRole::Developer],
-            permissions,
-            None,
-        );
-        
+
+        let auth_user = AuthenticatedUser::new(user, vec![UserRole::Developer], permissions, None);
+
         assert!(auth_user.has_role(&UserRole::Developer));
         assert!(!auth_user.has_role(&UserRole::Admin));
         assert!(!auth_user.is_admin());
-        
+
         assert!(auth_user.has_permission("projects", "read", Some("own")));
         assert!(auth_user.has_permission("projects", "write", Some("own")));
         assert!(!auth_user.has_permission("projects", "delete", Some("own")));
     }
-    
+
     #[test]
     fn test_rate_limit_info() {
         let rate_limit = RateLimitInfo {
@@ -807,7 +809,7 @@ mod tests {
             window_size: 3600,
             limit: 100,
         };
-        
+
         assert!(!rate_limit.is_exceeded());
         assert!(rate_limit.is_window_valid());
         assert_eq!(rate_limit.remaining_requests(), 95);

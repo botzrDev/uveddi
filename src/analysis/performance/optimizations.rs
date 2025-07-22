@@ -1,14 +1,14 @@
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::Semaphore;
-use std::sync::Arc;
-use std::collections::HashMap;
-use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "image-rendering")]
-use crate::report::image_renderer::{ImageRenderer, ImageFormat, RenderingServiceConfig};
+use crate::report::image_renderer::{ImageFormat, ImageRenderer, RenderingServiceConfig};
 
 #[cfg(not(feature = "image-rendering"))]
-use super::image_stubs::{ImageRenderer, ImageFormat, RenderingServiceConfig, RenderResult};
+use super::image_stubs::{ImageFormat, ImageRenderer, RenderResult, RenderingServiceConfig};
 
 #[derive(Debug, Clone)]
 pub struct RenderingOptimizer {
@@ -95,9 +95,9 @@ pub struct OptimizationRequest {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum RenderQuality {
-    Fast,      // Optimized for speed, lower quality
-    Balanced,  // Default quality/speed tradeoff
-    High,      // High quality, slower rendering
+    Fast,     // Optimized for speed, lower quality
+    Balanced, // Default quality/speed tradeoff
+    High,     // High quality, slower rendering
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -121,14 +121,23 @@ impl RenderingOptimizer {
         }
     }
 
-    pub async fn optimize_rendering(&self, request: OptimizationRequest) -> Result<OptimizationResult, OptimizationError> {
+    pub async fn optimize_rendering(
+        &self,
+        request: OptimizationRequest,
+    ) -> Result<OptimizationResult, OptimizationError> {
         // Check circuit breaker first
         self.circuit_breaker.check_state().await?;
 
         // Generate cache key if not provided
-        let cache_key = request.cache_key.clone().unwrap_or_else(|| 
-            self.generate_cache_key(&request.mermaid_code, &request.format, request.width, request.height, &request.quality)
-        );
+        let cache_key = request.cache_key.clone().unwrap_or_else(|| {
+            self.generate_cache_key(
+                &request.mermaid_code,
+                &request.format,
+                request.width,
+                request.height,
+                &request.quality,
+            )
+        });
 
         // Check cache first (content-addressable)
         if let Some(cached) = self.cache.get(&cache_key).await? {
@@ -143,25 +152,30 @@ impl RenderingOptimizer {
         }
 
         // Acquire semaphore to limit concurrency (prevents resource exhaustion)
-        let _permit = self.semaphore.acquire().await.map_err(|_| OptimizationError::ResourceExhaustion)?;
+        let _permit = self
+            .semaphore
+            .acquire()
+            .await
+            .map_err(|_| OptimizationError::ResourceExhaustion)?;
 
         // Get buffer from pool
         let buffer = self.memory_pool.acquire().await;
 
         // Perform optimized rendering with quality-specific timeout
         let start_time = std::time::Instant::now();
-        
+
         // Use quality-specific timeout to prevent outliers
         let quality_timeout = match request.quality {
-            RenderQuality::Fast => Duration::from_secs(8),      // Strict timeout for fast
+            RenderQuality::Fast => Duration::from_secs(8), // Strict timeout for fast
             RenderQuality::Balanced => Duration::from_secs(15), // Reasonable timeout
-            RenderQuality::High => Duration::from_secs(30),     // Generous timeout
+            RenderQuality::High => Duration::from_secs(30), // Generous timeout
         };
-        
+
         let result = tokio::time::timeout(
             quality_timeout,
-            self.render_with_optimizations(request.clone(), buffer)
-        ).await;
+            self.render_with_optimizations(request.clone(), buffer),
+        )
+        .await;
 
         let render_result = match result {
             Ok(Ok(result)) => {
@@ -184,7 +198,9 @@ impl RenderingOptimizer {
         let render_time = start_time.elapsed().as_millis() as u64;
 
         // Store in cache
-        self.cache.store(&cache_key, &render_result.data, vec!["diagram".to_string()]).await?;
+        self.cache
+            .store(&cache_key, &render_result.data, vec!["diagram".to_string()])
+            .await?;
 
         Ok(OptimizationResult {
             data: render_result.data,
@@ -197,31 +213,35 @@ impl RenderingOptimizer {
     }
 
     async fn render_with_optimizations(
-        &self, 
-        request: OptimizationRequest, 
-        _buffer: PooledBuffer
+        &self,
+        request: OptimizationRequest,
+        _buffer: PooledBuffer,
     ) -> Result<RenderResult, OptimizationError> {
         // Create optimized renderer configuration based on quality setting
         let config = self.create_optimized_config(&request.quality);
         let renderer = ImageRenderer::with_config(config);
 
         // Apply quality-specific optimizations
-        let optimized_code = self.apply_quality_optimizations(&request.mermaid_code, &request.quality);
+        let optimized_code =
+            self.apply_quality_optimizations(&request.mermaid_code, &request.quality);
 
         // Perform the actual rendering with retry logic for service overload
         let max_retries = match request.quality {
-            RenderQuality::Fast => 0,      // No retries for fast
-            RenderQuality::Balanced => 1,  // One retry for balanced
-            RenderQuality::High => 2,      // Two retries for high quality
+            RenderQuality::Fast => 0,     // No retries for fast
+            RenderQuality::Balanced => 1, // One retry for balanced
+            RenderQuality::High => 2,     // Two retries for high quality
         };
 
         let mut last_error = None;
         for attempt in 0..=max_retries {
-            match renderer.render_diagram(
-                &optimized_code,
-                request.format.clone(),
-                request.width.zip(request.height)
-            ).await {
+            match renderer
+                .render_diagram(
+                    &optimized_code,
+                    request.format.clone(),
+                    request.width.zip(request.height),
+                )
+                .await
+            {
                 Ok(rendered_image) => {
                     return Ok(RenderResult {
                         data: rendered_image.data,
@@ -241,38 +261,40 @@ impl RenderingOptimizer {
 
         // All retries failed
         Err(OptimizationError::RenderingFailed(
-            last_error.map(|e| e.to_string()).unwrap_or_else(|| "Unknown error".to_string())
+            last_error
+                .map(|e| e.to_string())
+                .unwrap_or_else(|| "Unknown error".to_string()),
         ))
     }
 
     fn create_optimized_config(&self, quality: &RenderQuality) -> RenderingServiceConfig {
         let mut config = RenderingServiceConfig::default();
-        
+
         match quality {
             RenderQuality::Fast => {
                 // Fast should actually be fast - use more aggressive settings
                 config.timeout_seconds = 10; // Very short timeout to avoid outliers
-                config.max_retries = 0;      // No retries for speed
+                config.max_retries = 0; // No retries for speed
                 config.max_complexity_score = 300; // Strict complexity limit
-                config.max_width = 1200;     // Smaller dimensions for speed
+                config.max_width = 1200; // Smaller dimensions for speed
                 config.max_height = 800;
             }
             RenderQuality::Balanced => {
                 config.timeout_seconds = 20; // Reasonable timeout
-                config.max_retries = 1;      // One retry allowed
+                config.max_retries = 1; // One retry allowed
                 config.max_complexity_score = 1000;
                 config.max_width = 1920;
                 config.max_height = 1080;
             }
             RenderQuality::High => {
                 config.timeout_seconds = 45; // Longer timeout for complex renders
-                config.max_retries = 2;      // More retries for reliability
+                config.max_retries = 2; // More retries for reliability
                 config.max_complexity_score = 2000; // Higher complexity allowed
-                config.max_width = 3840;     // Full HD+ support
+                config.max_width = 3840; // Full HD+ support
                 config.max_height = 2160;
             }
         }
-        
+
         config
     }
 
@@ -295,31 +317,31 @@ impl RenderingOptimizer {
 
     fn simplify_diagram_for_speed(&self, mermaid_code: &str) -> String {
         let mut simplified = mermaid_code.to_string();
-        
+
         // Remove computationally expensive elements for fast rendering
         simplified = simplified.replace("fill:gradient", "fill:solid");
         simplified = simplified.replace("stroke-dasharray", "stroke");
         simplified = simplified.replace("text-decoration", "");
-        
+
         // Remove subgraphs to reduce complexity (flatten structure)
         if simplified.contains("subgraph") && simplified.len() > 500 {
             // Convert subgraph declarations to simple comments
             simplified = simplified.replace("subgraph ", "// subgraph ");
             simplified = simplified.replace("    end", "// end");
         }
-        
+
         // Simplify arrow types to basic arrows for speed
         simplified = simplified.replace("-.->", "-->");
         simplified = simplified.replace("==>", "-->");
         simplified = simplified.replace("..>", "-->");
-        
+
         // Limit diagram size for very fast rendering
         let lines: Vec<&str> = simplified.lines().collect();
         if lines.len() > 20 {
             // Keep only first 20 lines for speed
             simplified = lines[..20].join("\n");
         }
-        
+
         simplified
     }
 
@@ -330,23 +352,30 @@ impl RenderingOptimizer {
         mermaid_code.to_string()
     }
 
-    fn generate_cache_key(&self, mermaid_code: &str, format: &ImageFormat, width: Option<u32>, height: Option<u32>, quality: &RenderQuality) -> String {
-        use sha2::{Sha256, Digest};
-        
+    fn generate_cache_key(
+        &self,
+        mermaid_code: &str,
+        format: &ImageFormat,
+        width: Option<u32>,
+        height: Option<u32>,
+        quality: &RenderQuality,
+    ) -> String {
+        use sha2::{Digest, Sha256};
+
         let mut hasher = Sha256::new();
         hasher.update(mermaid_code.as_bytes());
         hasher.update(format!("{:?}", format).as_bytes());
         hasher.update(format!("{:?}", width).as_bytes());
         hasher.update(format!("{:?}", height).as_bytes());
         hasher.update(format!("{:?}", quality).as_bytes());
-        
+
         format!("{:x}", hasher.finalize())
     }
 
     pub async fn get_performance_stats(&self) -> PerformanceStats {
         let cache_stats = self.cache.get_stats().await;
         let circuit_breaker_stats = self.circuit_breaker.get_stats().await;
-        
+
         PerformanceStats {
             cache_hit_rate: if cache_stats.total_requests > 0 {
                 cache_stats.hits as f64 / cache_stats.total_requests as f64
@@ -376,10 +405,10 @@ impl AdvancedCache {
         let cache = self.cache.read().await;
         if let Some(entry) = cache.get(key) {
             stats.hits += 1;
-            
+
             // Update access pattern
             self.update_access_pattern(key).await;
-            
+
             Ok(Some(entry.clone()))
         } else {
             stats.misses += 1;
@@ -390,41 +419,44 @@ impl AdvancedCache {
     pub async fn store(&self, key: &str, data: &[u8], tags: Vec<String>) -> Result<(), CacheError> {
         let mut cache = self.cache.write().await;
         let mut stats = self.stats.write().await;
-        
+
         let entry = CacheEntry {
             result: data.to_vec(),
             timestamp: chrono::Utc::now(),
             access_count: 1,
             tags,
         };
-        
+
         cache.insert(key.to_string(), entry);
         stats.stores += 1;
-        
+
         // Implement simple LRU eviction if cache gets too large
         if cache.len() > 1000 {
             let oldest_key = cache
                 .iter()
                 .min_by_key(|(_, entry)| entry.timestamp)
                 .map(|(k, _)| k.clone());
-            
+
             if let Some(oldest) = oldest_key {
                 cache.remove(&oldest);
                 stats.evictions += 1;
             }
         }
-        
+
         Ok(())
     }
 
     async fn update_access_pattern(&self, key: &str) {
         let mut patterns = self.access_patterns.write().await;
-        let pattern = patterns.patterns.entry(key.to_string()).or_insert_with(|| AccessPattern {
-            frequency: 0.0,
-            last_access: chrono::Utc::now(),
-            prediction_weight: 1.0,
-        });
-        
+        let pattern = patterns
+            .patterns
+            .entry(key.to_string())
+            .or_insert_with(|| AccessPattern {
+                frequency: 0.0,
+                last_access: chrono::Utc::now(),
+                prediction_weight: 1.0,
+            });
+
         pattern.frequency += 1.0;
         pattern.last_access = chrono::Utc::now();
         pattern.prediction_weight *= 1.1; // Increase prediction weight for frequently accessed items
@@ -459,7 +491,7 @@ impl CircuitBreaker {
     pub async fn check_state(&self) -> Result<(), OptimizationError> {
         let failure_count = *self.failure_count.read().await;
         let last_failure = *self.last_failure_time.read().await;
-        
+
         if failure_count >= self.failure_threshold {
             if let Some(last_failure_time) = last_failure {
                 let elapsed = chrono::Utc::now() - last_failure_time;
@@ -468,14 +500,14 @@ impl CircuitBreaker {
                 }
             }
         }
-        
+
         Ok(())
     }
 
     pub async fn record_success(&self) {
         let mut failure_count = self.failure_count.write().await;
         *failure_count = 0;
-        
+
         let mut last_failure = self.last_failure_time.write().await;
         *last_failure = None;
     }
@@ -483,7 +515,7 @@ impl CircuitBreaker {
     pub async fn record_failure(&self) {
         let mut failure_count = self.failure_count.write().await;
         *failure_count += 1;
-        
+
         let mut last_failure = self.last_failure_time.write().await;
         *last_failure = Some(chrono::Utc::now());
     }
@@ -491,7 +523,7 @@ impl CircuitBreaker {
     pub async fn get_stats(&self) -> CircuitBreakerStats {
         let failure_count = *self.failure_count.read().await;
         let last_failure = *self.last_failure_time.read().await;
-        
+
         let state = if failure_count >= self.failure_threshold {
             if let Some(last_failure_time) = last_failure {
                 let elapsed = chrono::Utc::now() - last_failure_time;
@@ -506,7 +538,7 @@ impl CircuitBreaker {
         } else {
             CircuitBreakerState::Closed
         };
-        
+
         CircuitBreakerStats {
             failure_count,
             state,
@@ -554,7 +586,7 @@ impl Drop for PooledBuffer {
     fn drop(&mut self) {
         if let Some(mut buffer) = self.buffer.take() {
             buffer.reset();
-            
+
             // Return to pool (non-blocking)
             let pool = self.pool.clone();
             tokio::spawn(async move {

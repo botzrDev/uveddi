@@ -1,17 +1,17 @@
 //! Deployment metrics collection and analysis
-//! 
+//!
 //! Provides functionality for collecting and analyzing deployment metrics including:
 //! - Deployment success/failure rates
 //! - Performance impact tracking
 //! - MTTR/MTBF calculations
 //! - Deployment frequency analytics
 
-use std::time::{Duration, SystemTime};
-use std::collections::HashMap;
-use serde::{Deserialize, Serialize};
-use tokio::sync::RwLock;
-use tracing::{info, debug, instrument};
 use anyhow::Result;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::time::{Duration, SystemTime};
+use tokio::sync::RwLock;
+use tracing::{debug, info, instrument};
 
 use super::{DeploymentMetadata, DeploymentStatus, DeploymentStrategy, Environment};
 
@@ -90,22 +90,22 @@ pub struct EnvironmentMetrics {
 /// Performance metrics
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct PerformanceMetrics {
-    pub mttr: Duration,           // Mean Time To Recovery
-    pub mtbf: Duration,           // Mean Time Between Failures
-    pub mttd: Duration,           // Mean Time To Deployment
-    pub lead_time: Duration,      // Deployment lead time
-    pub cycle_time: Duration,     // Cycle time
+    pub mttr: Duration,            // Mean Time To Recovery
+    pub mtbf: Duration,            // Mean Time Between Failures
+    pub mttd: Duration,            // Mean Time To Deployment
+    pub lead_time: Duration,       // Deployment lead time
+    pub cycle_time: Duration,      // Cycle time
     pub deployment_frequency: f64, // Deployments per day
-    pub change_failure_rate: f64, // Percentage of deployments causing failures
+    pub change_failure_rate: f64,  // Percentage of deployments causing failures
 }
 
 /// Frequency metrics
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct FrequencyMetrics {
-    pub daily_deployments: HashMap<String, u64>,   // Date -> count
-    pub weekly_deployments: HashMap<String, u64>,  // Week -> count
+    pub daily_deployments: HashMap<String, u64>, // Date -> count
+    pub weekly_deployments: HashMap<String, u64>, // Week -> count
     pub monthly_deployments: HashMap<String, u64>, // Month -> count
-    pub peak_deployment_hours: HashMap<u8, u64>,   // Hour -> count
+    pub peak_deployment_hours: HashMap<u8, u64>, // Hour -> count
     pub deployment_trends: Vec<TrendPoint>,
 }
 
@@ -122,10 +122,10 @@ pub struct ReliabilityMetrics {
 /// Performance impact of deployment
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PerformanceImpact {
-    pub response_time_change: f64,     // Percentage change
-    pub error_rate_change: f64,        // Percentage change
-    pub throughput_change: f64,        // Percentage change
-    pub resource_usage_change: f64,    // Percentage change
+    pub response_time_change: f64,  // Percentage change
+    pub error_rate_change: f64,     // Percentage change
+    pub throughput_change: f64,     // Percentage change
+    pub resource_usage_change: f64, // Percentage change
     pub downtime: Duration,
 }
 
@@ -311,7 +311,8 @@ impl DeploymentMetricsCollector {
         metrics.deployment_history.push(deployment_record);
 
         // Update frequency metrics
-        self.update_frequency_metrics(&mut metrics, metadata.timestamp).await;
+        self.update_frequency_metrics(&mut metrics, metadata.timestamp)
+            .await;
 
         Ok(())
     }
@@ -329,16 +330,31 @@ impl DeploymentMetricsCollector {
         metrics.successful_deployments += 1;
 
         // Update deployment record
-        if let Some(record) = metrics.deployment_history.iter_mut()
-            .find(|r| r.metadata.id == metadata.id) {
+        if let Some(record) = metrics
+            .deployment_history
+            .iter_mut()
+            .find(|r| r.metadata.id == metadata.id)
+        {
             record.duration = metadata.timestamp.elapsed().unwrap_or_default();
         }
 
         // Update strategy metrics
-        self.update_strategy_metrics(&mut metrics, &metadata.config.strategy, true, metadata.timestamp.elapsed().unwrap_or_default()).await;
+        self.update_strategy_metrics(
+            &mut metrics,
+            &metadata.config.strategy,
+            true,
+            metadata.timestamp.elapsed().unwrap_or_default(),
+        )
+        .await;
 
         // Update environment metrics
-        self.update_environment_metrics(&mut metrics, &metadata.config.environment, true, metadata.timestamp.elapsed().unwrap_or_default()).await;
+        self.update_environment_metrics(
+            &mut metrics,
+            &metadata.config.environment,
+            true,
+            metadata.timestamp.elapsed().unwrap_or_default(),
+        )
+        .await;
 
         // Update performance metrics
         self.update_performance_metrics(&mut metrics).await;
@@ -348,7 +364,11 @@ impl DeploymentMetricsCollector {
 
     /// Record deployment failure
     #[instrument(skip(self))]
-    pub async fn record_deployment_failure(&self, metadata: &DeploymentMetadata, failure_reason: String) -> Result<()> {
+    pub async fn record_deployment_failure(
+        &self,
+        metadata: &DeploymentMetadata,
+        failure_reason: String,
+    ) -> Result<()> {
         info!(
             deployment_id = %metadata.id,
             failure_reason = %failure_reason,
@@ -359,8 +379,11 @@ impl DeploymentMetricsCollector {
         metrics.failed_deployments += 1;
 
         // Update deployment record
-        if let Some(record) = metrics.deployment_history.iter_mut()
-            .find(|r| r.metadata.id == metadata.id) {
+        if let Some(record) = metrics
+            .deployment_history
+            .iter_mut()
+            .find(|r| r.metadata.id == metadata.id)
+        {
             record.duration = metadata.timestamp.elapsed().unwrap_or_default();
             record.issues.push(DeploymentIssue {
                 issue_type: IssueType::ConfigurationError, // Default type
@@ -372,17 +395,33 @@ impl DeploymentMetricsCollector {
         }
 
         // Update strategy metrics
-        self.update_strategy_metrics(&mut metrics, &metadata.config.strategy, false, metadata.timestamp.elapsed().unwrap_or_default()).await;
+        self.update_strategy_metrics(
+            &mut metrics,
+            &metadata.config.strategy,
+            false,
+            metadata.timestamp.elapsed().unwrap_or_default(),
+        )
+        .await;
 
         // Update environment metrics
-        self.update_environment_metrics(&mut metrics, &metadata.config.environment, false, metadata.timestamp.elapsed().unwrap_or_default()).await;
+        self.update_environment_metrics(
+            &mut metrics,
+            &metadata.config.environment,
+            false,
+            metadata.timestamp.elapsed().unwrap_or_default(),
+        )
+        .await;
 
         Ok(())
     }
 
     /// Record rollback
     #[instrument(skip(self))]
-    pub async fn record_rollback(&self, deployment_id: &str, rollback_info: RollbackInfo) -> Result<()> {
+    pub async fn record_rollback(
+        &self,
+        deployment_id: &str,
+        rollback_info: RollbackInfo,
+    ) -> Result<()> {
         info!(
             deployment_id = %deployment_id,
             trigger_reason = %rollback_info.trigger_reason,
@@ -394,8 +433,11 @@ impl DeploymentMetricsCollector {
         metrics.rollbacks += 1;
 
         // Update deployment record
-        if let Some(record) = metrics.deployment_history.iter_mut()
-            .find(|r| r.metadata.id == deployment_id) {
+        if let Some(record) = metrics
+            .deployment_history
+            .iter_mut()
+            .find(|r| r.metadata.id == deployment_id)
+        {
             record.rollback_info = Some(rollback_info);
         }
 
@@ -411,21 +453,23 @@ impl DeploymentMetricsCollector {
     #[instrument(skip(self))]
     pub async fn generate_analytics(&self, period: DateRange) -> Result<DeploymentAnalytics> {
         let metrics = self.metrics.read().await;
-        
+
         // Filter deployments within the period
-        let period_deployments: Vec<&DeploymentRecord> = metrics.deployment_history.iter()
+        let period_deployments: Vec<&DeploymentRecord> = metrics
+            .deployment_history
+            .iter()
             .filter(|record| {
-                record.metadata.timestamp >= period.start && 
-                record.metadata.timestamp <= period.end
+                record.metadata.timestamp >= period.start && record.metadata.timestamp <= period.end
             })
             .collect();
 
         // Calculate summary
         let total_deployments = period_deployments.len() as u64;
-        let successful_deployments = period_deployments.iter()
+        let successful_deployments = period_deployments
+            .iter()
             .filter(|record| record.metadata.status == DeploymentStatus::Verified)
             .count() as u64;
-        
+
         let success_rate = if total_deployments > 0 {
             (successful_deployments as f64 / total_deployments as f64) * 100.0
         } else {
@@ -433,7 +477,8 @@ impl DeploymentMetricsCollector {
         };
 
         let average_duration = if !period_deployments.is_empty() {
-            let total_duration: Duration = period_deployments.iter()
+            let total_duration: Duration = period_deployments
+                .iter()
                 .map(|record| record.duration)
                 .sum();
             total_duration / period_deployments.len() as u32
@@ -441,8 +486,12 @@ impl DeploymentMetricsCollector {
             Duration::from_secs(0)
         };
 
-        let period_days = period.end.duration_since(period.start)
-            .unwrap_or_default().as_secs() as f64 / (24.0 * 3600.0);
+        let period_days = period
+            .end
+            .duration_since(period.start)
+            .unwrap_or_default()
+            .as_secs() as f64
+            / (24.0 * 3600.0);
         let deployment_frequency = if period_days > 0.0 {
             total_deployments as f64 / period_days
         } else {
@@ -450,7 +499,8 @@ impl DeploymentMetricsCollector {
         };
 
         let change_failure_rate = if total_deployments > 0 {
-            let failures = period_deployments.iter()
+            let failures = period_deployments
+                .iter()
                 .filter(|record| !record.issues.is_empty() || record.rollback_info.is_some())
                 .count() as u64;
             (failures as f64 / total_deployments as f64) * 100.0
@@ -466,7 +516,9 @@ impl DeploymentMetricsCollector {
             deployment_frequency,
             change_failure_rate,
             mttr: metrics.performance_metrics.mttr,
-            key_insights: self.generate_key_insights(&period_deployments, &metrics).await,
+            key_insights: self
+                .generate_key_insights(&period_deployments, &metrics)
+                .await,
         };
 
         // Generate trend analysis
@@ -491,73 +543,136 @@ impl DeploymentMetricsCollector {
     }
 
     /// Update frequency metrics
-    async fn update_frequency_metrics(&self, metrics: &mut DeploymentMetrics, timestamp: SystemTime) {
-        let date_key = format!("{}", timestamp.duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs() / (24 * 3600));
-        *metrics.frequency_metrics.daily_deployments.entry(date_key).or_insert(0) += 1;
+    async fn update_frequency_metrics(
+        &self,
+        metrics: &mut DeploymentMetrics,
+        timestamp: SystemTime,
+    ) {
+        let date_key = format!(
+            "{}",
+            timestamp
+                .duration_since(SystemTime::UNIX_EPOCH)
+                .unwrap()
+                .as_secs()
+                / (24 * 3600)
+        );
+        *metrics
+            .frequency_metrics
+            .daily_deployments
+            .entry(date_key)
+            .or_insert(0) += 1;
 
         // Update hourly distribution
-        let hour = (timestamp.duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs() / 3600) % 24;
-        *metrics.frequency_metrics.peak_deployment_hours.entry(hour as u8).or_insert(0) += 1;
+        let hour = (timestamp
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_secs()
+            / 3600)
+            % 24;
+        *metrics
+            .frequency_metrics
+            .peak_deployment_hours
+            .entry(hour as u8)
+            .or_insert(0) += 1;
     }
 
     /// Update strategy metrics
-    async fn update_strategy_metrics(&self, metrics: &mut DeploymentMetrics, strategy: &DeploymentStrategy, success: bool, duration: Duration) {
-        let strategy_metrics = metrics.strategy_metrics.entry(strategy.clone()).or_default();
-        
+    async fn update_strategy_metrics(
+        &self,
+        metrics: &mut DeploymentMetrics,
+        strategy: &DeploymentStrategy,
+        success: bool,
+        duration: Duration,
+    ) {
+        let strategy_metrics = metrics
+            .strategy_metrics
+            .entry(strategy.clone())
+            .or_default();
+
         strategy_metrics.total_deployments += 1;
-        
+
         if success {
-            strategy_metrics.success_rate = (strategy_metrics.success_rate * (strategy_metrics.total_deployments - 1) as f64 + 100.0) / strategy_metrics.total_deployments as f64;
+            strategy_metrics.success_rate = (strategy_metrics.success_rate
+                * (strategy_metrics.total_deployments - 1) as f64
+                + 100.0)
+                / strategy_metrics.total_deployments as f64;
         } else {
-            strategy_metrics.success_rate = (strategy_metrics.success_rate * (strategy_metrics.total_deployments - 1) as f64) / strategy_metrics.total_deployments as f64;
+            strategy_metrics.success_rate = (strategy_metrics.success_rate
+                * (strategy_metrics.total_deployments - 1) as f64)
+                / strategy_metrics.total_deployments as f64;
         }
 
         // Update average duration
-        let total_duration = strategy_metrics.average_duration * (strategy_metrics.total_deployments - 1) as u32 + duration;
-        strategy_metrics.average_duration = total_duration / strategy_metrics.total_deployments as u32;
+        let total_duration = strategy_metrics.average_duration
+            * (strategy_metrics.total_deployments - 1) as u32
+            + duration;
+        strategy_metrics.average_duration =
+            total_duration / strategy_metrics.total_deployments as u32;
     }
 
     /// Update environment metrics
-    async fn update_environment_metrics(&self, metrics: &mut DeploymentMetrics, environment: &Environment, success: bool, duration: Duration) {
-        let env_metrics = metrics.environment_metrics.entry(environment.clone()).or_default();
-        
+    async fn update_environment_metrics(
+        &self,
+        metrics: &mut DeploymentMetrics,
+        environment: &Environment,
+        success: bool,
+        duration: Duration,
+    ) {
+        let env_metrics = metrics
+            .environment_metrics
+            .entry(environment.clone())
+            .or_default();
+
         env_metrics.total_deployments += 1;
         env_metrics.last_deployment = Some(SystemTime::now());
-        
+
         if success {
-            env_metrics.success_rate = (env_metrics.success_rate * (env_metrics.total_deployments - 1) as f64 + 100.0) / env_metrics.total_deployments as f64;
+            env_metrics.success_rate =
+                (env_metrics.success_rate * (env_metrics.total_deployments - 1) as f64 + 100.0)
+                    / env_metrics.total_deployments as f64;
         } else {
-            env_metrics.success_rate = (env_metrics.success_rate * (env_metrics.total_deployments - 1) as f64) / env_metrics.total_deployments as f64;
+            env_metrics.success_rate = (env_metrics.success_rate
+                * (env_metrics.total_deployments - 1) as f64)
+                / env_metrics.total_deployments as f64;
         }
 
         // Update average duration
-        let total_duration = env_metrics.average_duration * (env_metrics.total_deployments - 1) as u32 + duration;
+        let total_duration =
+            env_metrics.average_duration * (env_metrics.total_deployments - 1) as u32 + duration;
         env_metrics.average_duration = total_duration / env_metrics.total_deployments as u32;
     }
 
     /// Update performance metrics
     async fn update_performance_metrics(&self, metrics: &mut DeploymentMetrics) {
         // Calculate MTTR (Mean Time To Recovery)
-        let total_recovery_time: Duration = metrics.deployment_history.iter()
+        let total_recovery_time: Duration = metrics
+            .deployment_history
+            .iter()
             .filter_map(|record| record.rollback_info.as_ref().map(|r| r.rollback_duration))
             .sum();
-        
+
         let rollback_count = metrics.rollbacks.max(1); // Avoid division by zero
         metrics.performance_metrics.mttr = total_recovery_time / rollback_count as u32;
 
         // Calculate deployment frequency
-        let days_since_first_deployment = if let Some(first_deployment) = metrics.deployment_history.first() {
-            SystemTime::now().duration_since(first_deployment.metadata.timestamp)
-                .unwrap_or_default().as_secs() as f64 / (24.0 * 3600.0)
-        } else {
-            1.0
-        };
+        let days_since_first_deployment =
+            if let Some(first_deployment) = metrics.deployment_history.first() {
+                SystemTime::now()
+                    .duration_since(first_deployment.metadata.timestamp)
+                    .unwrap_or_default()
+                    .as_secs() as f64
+                    / (24.0 * 3600.0)
+            } else {
+                1.0
+            };
 
-        metrics.performance_metrics.deployment_frequency = 
+        metrics.performance_metrics.deployment_frequency =
             metrics.total_deployments as f64 / days_since_first_deployment.max(1.0);
 
         // Calculate change failure rate
-        let failures = metrics.deployment_history.iter()
+        let failures = metrics
+            .deployment_history
+            .iter()
             .filter(|record| !record.issues.is_empty() || record.rollback_info.is_some())
             .count() as u64;
 
@@ -569,11 +684,16 @@ impl DeploymentMetricsCollector {
     }
 
     /// Generate key insights
-    async fn generate_key_insights(&self, deployments: &[&DeploymentRecord], metrics: &DeploymentMetrics) -> Vec<String> {
+    async fn generate_key_insights(
+        &self,
+        deployments: &[&DeploymentRecord],
+        metrics: &DeploymentMetrics,
+    ) -> Vec<String> {
         let mut insights = Vec::new();
 
         // Success rate insight
-        let successful = deployments.iter()
+        let successful = deployments
+            .iter()
             .filter(|record| record.metadata.status == DeploymentStatus::Verified)
             .count();
         let success_rate = if !deployments.is_empty() {
@@ -632,68 +752,92 @@ impl DeploymentMetricsCollector {
     }
 
     /// Generate recommendations
-    async fn generate_recommendations(&self, summary: &AnalyticsSummary, trends: &[TrendAnalysis]) -> Vec<String> {
+    async fn generate_recommendations(
+        &self,
+        summary: &AnalyticsSummary,
+        trends: &[TrendAnalysis],
+    ) -> Vec<String> {
         let mut recommendations = Vec::new();
 
         if summary.success_rate < 95.0 {
-            recommendations.push("Improve deployment success rate by enhancing testing and validation".to_string());
+            recommendations.push(
+                "Improve deployment success rate by enhancing testing and validation".to_string(),
+            );
         }
 
         if summary.change_failure_rate > 15.0 {
-            recommendations.push("Reduce change failure rate by implementing better quality gates".to_string());
+            recommendations.push(
+                "Reduce change failure rate by implementing better quality gates".to_string(),
+            );
         }
 
         if summary.deployment_frequency < 0.5 {
-            recommendations.push("Increase deployment frequency to improve delivery speed".to_string());
+            recommendations
+                .push("Increase deployment frequency to improve delivery speed".to_string());
         }
 
         for trend in trends {
-            if trend.trend_direction == TrendDirection::Declining && trend.significance != TrendSignificance::Insignificant {
+            if trend.trend_direction == TrendDirection::Declining
+                && trend.significance != TrendSignificance::Insignificant
+            {
                 recommendations.push(format!("Address declining trend in {}", trend.metric_name));
             }
         }
 
-        if summary.mttr > Duration::from_secs(1800) { // 30 minutes
-            recommendations.push("Improve mean time to recovery by automating rollback procedures".to_string());
+        if summary.mttr > Duration::from_secs(1800) {
+            // 30 minutes
+            recommendations.push(
+                "Improve mean time to recovery by automating rollback procedures".to_string(),
+            );
         }
 
         recommendations
     }
 
     /// Generate benchmark comparison
-    async fn generate_benchmark_comparison(&self, summary: &AnalyticsSummary) -> BenchmarkComparison {
+    async fn generate_benchmark_comparison(
+        &self,
+        summary: &AnalyticsSummary,
+    ) -> BenchmarkComparison {
         // Industry benchmarks (these would come from real industry data)
         let mut compared_metrics = HashMap::new();
 
-        compared_metrics.insert("deployment_frequency".to_string(), BenchmarkMetric {
-            current_value: summary.deployment_frequency,
-            industry_median: 0.5,
-            industry_p90: 2.0,
-            industry_p95: 5.0,
-            performance_rating: if summary.deployment_frequency >= 2.0 {
-                PerformanceRating::High
-            } else if summary.deployment_frequency >= 0.5 {
-                PerformanceRating::Medium
-            } else {
-                PerformanceRating::Low
+        compared_metrics.insert(
+            "deployment_frequency".to_string(),
+            BenchmarkMetric {
+                current_value: summary.deployment_frequency,
+                industry_median: 0.5,
+                industry_p90: 2.0,
+                industry_p95: 5.0,
+                performance_rating: if summary.deployment_frequency >= 2.0 {
+                    PerformanceRating::High
+                } else if summary.deployment_frequency >= 0.5 {
+                    PerformanceRating::Medium
+                } else {
+                    PerformanceRating::Low
+                },
             },
-        });
+        );
 
-        compared_metrics.insert("success_rate".to_string(), BenchmarkMetric {
-            current_value: summary.success_rate,
-            industry_median: 85.0,
-            industry_p90: 95.0,
-            industry_p95: 98.0,
-            performance_rating: if summary.success_rate >= 95.0 {
-                PerformanceRating::High
-            } else if summary.success_rate >= 85.0 {
-                PerformanceRating::Medium
-            } else {
-                PerformanceRating::Low
+        compared_metrics.insert(
+            "success_rate".to_string(),
+            BenchmarkMetric {
+                current_value: summary.success_rate,
+                industry_median: 85.0,
+                industry_p90: 95.0,
+                industry_p95: 98.0,
+                performance_rating: if summary.success_rate >= 95.0 {
+                    PerformanceRating::High
+                } else if summary.success_rate >= 85.0 {
+                    PerformanceRating::Medium
+                } else {
+                    PerformanceRating::Low
+                },
             },
-        });
+        );
 
-        let industry_percentile = (summary.success_rate + summary.deployment_frequency * 10.0) / 2.0;
+        let industry_percentile =
+            (summary.success_rate + summary.deployment_frequency * 10.0) / 2.0;
 
         BenchmarkComparison {
             industry_percentile,
@@ -709,14 +853,12 @@ impl DeploymentMetricsCollector {
     async fn generate_forecasts(&self, _deployments: &[&DeploymentRecord]) -> Vec<ForecastPoint> {
         // In a real implementation, this would use time series analysis
         // to predict future metrics based on historical data
-        vec![
-            ForecastPoint {
-                timestamp: SystemTime::now() + Duration::from_secs(30 * 24 * 3600), // 30 days
-                metric_name: "deployment_frequency".to_string(),
-                predicted_value: 1.2,
-                confidence_interval: (0.8, 1.6),
-            },
-        ]
+        vec![ForecastPoint {
+            timestamp: SystemTime::now() + Duration::from_secs(30 * 24 * 3600), // 30 days
+            metric_name: "deployment_frequency".to_string(),
+            predicted_value: 1.2,
+            confidence_interval: (0.8, 1.6),
+        }]
     }
 }
 
@@ -731,8 +873,8 @@ impl Default for MetricsConfig {
         Self {
             retention_days: 90,
             aggregation_intervals: vec![
-                Duration::from_secs(3600),      // 1 hour
-                Duration::from_secs(24 * 3600), // 1 day
+                Duration::from_secs(3600),          // 1 hour
+                Duration::from_secs(24 * 3600),     // 1 day
                 Duration::from_secs(7 * 24 * 3600), // 1 week
             ],
             performance_thresholds: PerformanceThresholds::default(),
@@ -744,7 +886,7 @@ impl Default for MetricsConfig {
 impl Default for PerformanceThresholds {
     fn default() -> Self {
         Self {
-            deployment_duration_warning: Duration::from_secs(900),  // 15 minutes
+            deployment_duration_warning: Duration::from_secs(900), // 15 minutes
             deployment_duration_critical: Duration::from_secs(1800), // 30 minutes
             success_rate_warning: 90.0,
             success_rate_critical: 80.0,
@@ -780,7 +922,7 @@ mod tests {
     #[tokio::test]
     async fn test_record_deployment_success() {
         let collector = DeploymentMetricsCollector::new();
-        
+
         let metadata = DeploymentMetadata {
             id: "test-deployment".to_string(),
             version: "v1.0.0".to_string(),
@@ -801,7 +943,10 @@ mod tests {
         };
 
         collector.record_deployment_start(&metadata).await.unwrap();
-        collector.record_deployment_success(&metadata).await.unwrap();
+        collector
+            .record_deployment_success(&metadata)
+            .await
+            .unwrap();
 
         let metrics = collector.get_metrics().await;
         assert_eq!(metrics.total_deployments, 1);

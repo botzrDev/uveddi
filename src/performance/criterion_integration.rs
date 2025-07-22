@@ -1,22 +1,22 @@
 //! Integration layer between Criterion.rs and statistical regression detection
-//! 
+//!
 //! This module provides:
 //! - Seamless integration of Criterion benchmarks with statistical analysis
 //! - Automatic baseline management for Criterion results
 //! - Enhanced regression detection with statistical confidence
 //! - Performance report generation combining both systems
 
+use anyhow::{anyhow, Result};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
-use std::time::{SystemTime, Duration};
-use serde::{Deserialize, Serialize};
-use anyhow::{Result, anyhow};
-use tracing::{info, warn, error, debug};
+use std::time::{Duration, SystemTime};
+use tracing::{debug, error, info, warn};
 
 use crate::performance::{
-    BenchmarkBaselineManager, BaselineConfig, BaselineType, StatisticalAnalyzer, 
-    TrendDetector, PerformanceRegressionDetector, RegressionDetectionConfig,
-    performance_reports::{PerformanceReportGenerator, PerformanceReport}
+    performance_reports::{PerformanceReport, PerformanceReportGenerator},
+    BaselineConfig, BaselineType, BenchmarkBaselineManager, PerformanceRegressionDetector,
+    RegressionDetectionConfig, StatisticalAnalyzer, TrendDetector,
 };
 
 /// Criterion.rs integration configuration
@@ -127,10 +127,8 @@ impl CriterionIntegrationManager {
             enable_automatic_baseline_updates: config.enable_automatic_baseline_updates,
         };
 
-        let baseline_manager = BenchmarkBaselineManager::new(
-            &config.baseline_storage_path,
-            baseline_config,
-        ).await?;
+        let baseline_manager =
+            BenchmarkBaselineManager::new(&config.baseline_storage_path, baseline_config).await?;
 
         // Create regression detector if needed
         let regression_detector = if std::env::var("ENABLE_REGRESSION_DETECTION").is_ok() {
@@ -155,7 +153,10 @@ impl CriterionIntegrationManager {
         &mut self,
         benchmark_result: CriterionBenchmarkResult,
     ) -> Result<IntegratedBenchmarkResult> {
-        info!("Processing Criterion benchmark: {}", benchmark_result.benchmark_name);
+        info!(
+            "Processing Criterion benchmark: {}",
+            benchmark_result.benchmark_name
+        );
 
         // Perform statistical analysis
         let statistical_analysis = self.analyze_benchmark_statistics(&benchmark_result).await?;
@@ -200,20 +201,25 @@ impl CriterionIntegrationManager {
 
         // Perform Mann-Kendall trend test if sufficient data
         let mann_kendall_result = if measurements.len() >= 10 {
-            self.statistical_analyzer.mann_kendall_test(measurements).ok()
+            self.statistical_analyzer
+                .mann_kendall_test(measurements)
+                .ok()
         } else {
             None
         };
 
         // Perform change point detection if sufficient data
         let change_point_analysis = if measurements.len() >= 20 {
-            self.trend_detector.detect_change_points_pelt(measurements).ok()
+            self.trend_detector
+                .detect_change_points_pelt(measurements)
+                .ok()
         } else {
             None
         };
 
         // Calculate confidence interval
-        let confidence_interval_95 = self.statistical_analyzer
+        let confidence_interval_95 = self
+            .statistical_analyzer
             .confidence_interval(measurements, 0.95)
             .unwrap_or((benchmark_result.mean_ns, benchmark_result.mean_ns));
 
@@ -248,26 +254,34 @@ impl CriterionIntegrationManager {
             median_ns: benchmark_result.median_ns,
         };
 
-        match self.baseline_manager.compare_against_baseline(
-            &benchmark_result.benchmark_name,
-            &benchmark_result.measurements,
-            baseline_type,
-        ).await {
+        match self
+            .baseline_manager
+            .compare_against_baseline(
+                &benchmark_result.benchmark_name,
+                &benchmark_result.measurements,
+                baseline_type,
+            )
+            .await
+        {
             Ok(comparison) => {
                 // Update baseline if configured to do so
                 if self.config.enable_automatic_baseline_updates {
-                    self.maybe_update_baseline(benchmark_result, &comparison).await?;
+                    self.maybe_update_baseline(benchmark_result, &comparison)
+                        .await?;
                 }
                 Ok(Some(comparison))
-            },
+            }
             Err(e) => {
-                debug!("No baseline available for {}: {}", benchmark_result.benchmark_name, e);
-                
+                debug!(
+                    "No baseline available for {}: {}",
+                    benchmark_result.benchmark_name, e
+                );
+
                 // Create initial baseline if we have enough data
                 if benchmark_result.measurements.len() >= self.config.min_samples_for_analysis {
                     self.create_initial_baseline(benchmark_result).await?;
                 }
-                
+
                 Ok(None)
             }
         }
@@ -283,7 +297,7 @@ impl CriterionIntegrationManager {
         let should_update = match &comparison.recommendation {
             crate::performance::BaselineRecommendation::Accept => {
                 comparison.statistical_confidence > 0.8
-            },
+            }
             _ => false,
         };
 
@@ -294,11 +308,13 @@ impl CriterionIntegrationManager {
                 median_ns: benchmark_result.median_ns,
             };
 
-            self.baseline_manager.update_baseline(
-                &benchmark_result.benchmark_name,
-                benchmark_result.measurements.clone(),
-                baseline_type,
-            ).await?;
+            self.baseline_manager
+                .update_baseline(
+                    &benchmark_result.benchmark_name,
+                    benchmark_result.measurements.clone(),
+                    baseline_type,
+                )
+                .await?;
 
             info!("Updated baseline for {}", benchmark_result.benchmark_name);
         }
@@ -317,13 +333,18 @@ impl CriterionIntegrationManager {
             median_ns: benchmark_result.median_ns,
         };
 
-        self.baseline_manager.create_baseline(
-            &benchmark_result.benchmark_name,
-            benchmark_result.measurements.clone(),
-            baseline_type,
-        ).await?;
+        self.baseline_manager
+            .create_baseline(
+                &benchmark_result.benchmark_name,
+                benchmark_result.measurements.clone(),
+                baseline_type,
+            )
+            .await?;
 
-        info!("Created initial baseline for {}", benchmark_result.benchmark_name);
+        info!(
+            "Created initial baseline for {}",
+            benchmark_result.benchmark_name
+        );
         Ok(())
     }
 
@@ -339,7 +360,7 @@ impl CriterionIntegrationManager {
             let index = p * (sorted.len() - 1) as f64;
             let lower = index.floor() as usize;
             let upper = index.ceil() as usize;
-            
+
             if lower == upper {
                 sorted[lower]
             } else {
@@ -378,7 +399,10 @@ impl CriterionIntegrationManager {
         // Check statistical confidence
         if comparison.statistical_confidence < self.config.statistical_confidence_threshold {
             return RegressionVerdict::PassWithWarning {
-                warning: format!("Low statistical confidence ({:.2})", comparison.statistical_confidence)
+                warning: format!(
+                    "Low statistical confidence ({:.2})",
+                    comparison.statistical_confidence
+                ),
             };
         }
 
@@ -388,25 +412,25 @@ impl CriterionIntegrationManager {
                 // Additional checks for warnings
                 if statistical_analysis.trend_stability < 0.5 {
                     RegressionVerdict::PassWithWarning {
-                        warning: "High performance variability detected".to_string()
+                        warning: "High performance variability detected".to_string(),
                     }
                 } else {
                     RegressionVerdict::Pass
                 }
-            },
+            }
             crate::performance::BaselineRecommendation::Investigate { reasons } => {
                 RegressionVerdict::PassWithWarning {
-                    warning: reasons.join("; ")
+                    warning: reasons.join("; "),
                 }
-            },
+            }
             crate::performance::BaselineRecommendation::Reject { reasons } => {
                 RegressionVerdict::Fail {
-                    reason: reasons.join("; ")
+                    reason: reasons.join("; "),
                 }
-            },
+            }
             crate::performance::BaselineRecommendation::RequireManualReview => {
                 RegressionVerdict::PassWithWarning {
-                    warning: "Manual review required due to statistical uncertainty".to_string()
+                    warning: "Manual review required due to statistical uncertainty".to_string(),
                 }
             }
         }
@@ -423,7 +447,8 @@ impl CriterionIntegrationManager {
 
         // Sample size recommendations
         if benchmark_result.measurements.len() < 50 {
-            recommendations.push("Consider increasing sample size for more reliable results".to_string());
+            recommendations
+                .push("Consider increasing sample size for more reliable results".to_string());
         }
 
         // Variability recommendations
@@ -441,7 +466,11 @@ impl CriterionIntegrationManager {
                 recommendations.push("Low statistical confidence. Consider collecting more data or improving test environment stability".to_string());
             }
 
-            if let Some(mk) = &comparison.current_baseline.statistical_summary.mann_kendall_result {
+            if let Some(mk) = &comparison
+                .current_baseline
+                .statistical_summary
+                .mann_kendall_result
+            {
                 if mk.p_value < 0.01 {
                     recommendations.push(format!(
                         "Strong statistical evidence of {} trend detected",
@@ -455,14 +484,15 @@ impl CriterionIntegrationManager {
         match regression_verdict {
             RegressionVerdict::Fail { reason } => {
                 recommendations.push(format!("Action required: {}", reason));
-                recommendations.push("Review recent code changes and system configuration".to_string());
-            },
+                recommendations
+                    .push("Review recent code changes and system configuration".to_string());
+            }
             RegressionVerdict::PassWithWarning { warning } => {
                 recommendations.push(format!("Monitor closely: {}", warning));
-            },
+            }
             RegressionVerdict::InsufficientData => {
                 recommendations.push("Increase sample size or measurement duration".to_string());
-            },
+            }
             _ => {}
         }
 
@@ -472,17 +502,20 @@ impl CriterionIntegrationManager {
     /// Log result summary
     fn log_result_summary(&self, result: &IntegratedBenchmarkResult) {
         let benchmark_name = &result.criterion_result.benchmark_name;
-        
+
         match &result.regression_verdict {
             RegressionVerdict::Pass => {
                 info!("✅ {} passed performance validation", benchmark_name);
-            },
+            }
             RegressionVerdict::PassWithWarning { warning } => {
                 warn!("⚠️  {} passed with warning: {}", benchmark_name, warning);
-            },
+            }
             RegressionVerdict::Fail { reason } => {
-                error!("❌ {} failed performance validation: {}", benchmark_name, reason);
-            },
+                error!(
+                    "❌ {} failed performance validation: {}",
+                    benchmark_name, reason
+                );
+            }
             RegressionVerdict::InsufficientData => {
                 warn!("📊 {} has insufficient data for validation", benchmark_name);
             }
@@ -504,7 +537,10 @@ impl CriterionIntegrationManager {
         &mut self,
         benchmark_results: Vec<CriterionBenchmarkResult>,
     ) -> Result<(Vec<IntegratedBenchmarkResult>, Option<PerformanceReport>)> {
-        info!("Processing benchmark suite with {} benchmarks", benchmark_results.len());
+        info!(
+            "Processing benchmark suite with {} benchmarks",
+            benchmark_results.len()
+        );
 
         let mut integrated_results = Vec::new();
         let mut baseline_comparisons = Vec::new();
@@ -512,49 +548,65 @@ impl CriterionIntegrationManager {
         // Process each benchmark
         for benchmark_result in benchmark_results {
             let integrated_result = self.process_benchmark_result(benchmark_result).await?;
-            
+
             if let Some(ref comparison) = integrated_result.baseline_comparison {
                 baseline_comparisons.push(comparison.clone());
             }
-            
+
             integrated_results.push(integrated_result);
         }
 
         // Generate comprehensive report if enabled
-        let performance_report = if self.config.generate_html_reports || self.config.generate_json_reports {
-            let report = self.report_generator.generate_report(
-                baseline_comparisons,
-                None, // Historical data would be loaded here
-            ).await?;
+        let performance_report =
+            if self.config.generate_html_reports || self.config.generate_json_reports {
+                let report = self
+                    .report_generator
+                    .generate_report(
+                        baseline_comparisons,
+                        None, // Historical data would be loaded here
+                    )
+                    .await?;
 
-            // Export reports
-            if self.config.generate_html_reports {
-                let html_path = self.config.report_output_directory.join("performance_report.html");
-                self.report_generator.export_html(&report, &html_path).await?;
-                info!("Generated HTML report: {}", html_path.display());
-            }
+                // Export reports
+                if self.config.generate_html_reports {
+                    let html_path = self
+                        .config
+                        .report_output_directory
+                        .join("performance_report.html");
+                    self.report_generator
+                        .export_html(&report, &html_path)
+                        .await?;
+                    info!("Generated HTML report: {}", html_path.display());
+                }
 
-            if self.config.generate_json_reports {
-                let json_path = self.config.report_output_directory.join("performance_report.json");
-                self.report_generator.export_json(&report, &json_path).await?;
-                info!("Generated JSON report: {}", json_path.display());
-            }
+                if self.config.generate_json_reports {
+                    let json_path = self
+                        .config
+                        .report_output_directory
+                        .join("performance_report.json");
+                    self.report_generator
+                        .export_json(&report, &json_path)
+                        .await?;
+                    info!("Generated JSON report: {}", json_path.display());
+                }
 
-            Some(report)
-        } else {
-            None
-        };
+                Some(report)
+            } else {
+                None
+            };
 
         // Summary logging
-        let (pass_count, warning_count, fail_count) = integrated_results.iter().fold(
-            (0, 0, 0),
-            |(pass, warn, fail), result| match result.regression_verdict {
-                RegressionVerdict::Pass => (pass + 1, warn, fail),
-                RegressionVerdict::PassWithWarning { .. } => (pass, warn + 1, fail),
-                RegressionVerdict::Fail { .. } => (pass, warn, fail + 1),
-                RegressionVerdict::InsufficientData => (pass, warn, fail),
-            }
-        );
+        let (pass_count, warning_count, fail_count) =
+            integrated_results
+                .iter()
+                .fold((0, 0, 0), |(pass, warn, fail), result| {
+                    match result.regression_verdict {
+                        RegressionVerdict::Pass => (pass + 1, warn, fail),
+                        RegressionVerdict::PassWithWarning { .. } => (pass, warn + 1, fail),
+                        RegressionVerdict::Fail { .. } => (pass, warn, fail + 1),
+                        RegressionVerdict::InsufficientData => (pass, warn, fail),
+                    }
+                });
 
         info!(
             "Benchmark suite completed: {} passed, {} warnings, {} failures",
@@ -572,10 +624,12 @@ impl CriterionIntegrationManager {
         throughput: Option<CriterionThroughput>,
     ) -> CriterionBenchmarkResult {
         let mean_ns = measurements.iter().sum::<f64>() / measurements.len() as f64;
-        
-        let variance = measurements.iter()
+
+        let variance = measurements
+            .iter()
             .map(|x| (x - mean_ns).powi(2))
-            .sum::<f64>() / measurements.len() as f64;
+            .sum::<f64>()
+            / measurements.len() as f64;
         let std_dev_ns = variance.sqrt();
 
         let mut sorted = measurements.clone();
@@ -587,13 +641,13 @@ impl CriterionIntegrationManager {
         };
 
         // Calculate MAD (Median Absolute Deviation)
-        let deviations: Vec<f64> = measurements.iter()
-            .map(|x| (x - median_ns).abs())
-            .collect();
+        let deviations: Vec<f64> = measurements.iter().map(|x| (x - median_ns).abs()).collect();
         let mut sorted_deviations = deviations;
         sorted_deviations.sort_by(|a, b| a.partial_cmp(b).unwrap());
         let mad_ns = if sorted_deviations.len() % 2 == 0 {
-            (sorted_deviations[sorted_deviations.len() / 2 - 1] + sorted_deviations[sorted_deviations.len() / 2]) / 2.0
+            (sorted_deviations[sorted_deviations.len() / 2 - 1]
+                + sorted_deviations[sorted_deviations.len() / 2])
+                / 2.0
         } else {
             sorted_deviations[sorted_deviations.len() / 2]
         };
@@ -629,7 +683,9 @@ mod tests {
         let mut manager = CriterionIntegrationManager::new(config).await.unwrap();
 
         // Simulate Criterion benchmark result
-        let measurements = (0..100).map(|i| 1000.0 + i as f64 * 0.1).collect::<Vec<_>>();
+        let measurements = (0..100)
+            .map(|i| 1000.0 + i as f64 * 0.1)
+            .collect::<Vec<_>>();
         let benchmark_result = CriterionIntegrationManager::extract_criterion_result(
             "test_benchmark",
             measurements,
@@ -637,20 +693,28 @@ mod tests {
         );
 
         // Process first result (should create baseline)
-        let result1 = manager.process_benchmark_result(benchmark_result.clone()).await.unwrap();
+        let result1 = manager
+            .process_benchmark_result(benchmark_result.clone())
+            .await
+            .unwrap();
         assert!(result1.baseline_comparison.is_none()); // No baseline exists yet
 
         // Process second result (should compare against baseline)
-        let mut measurements2 = (0..100).map(|i| 1010.0 + i as f64 * 0.1).collect::<Vec<_>>();
+        let mut measurements2 = (0..100)
+            .map(|i| 1010.0 + i as f64 * 0.1)
+            .collect::<Vec<_>>();
         measurements2[50] = 2000.0; // Add some variance
-        
+
         let benchmark_result2 = CriterionIntegrationManager::extract_criterion_result(
             "test_benchmark",
             measurements2,
             None,
         );
 
-        let result2 = manager.process_benchmark_result(benchmark_result2).await.unwrap();
+        let result2 = manager
+            .process_benchmark_result(benchmark_result2)
+            .await
+            .unwrap();
         assert!(result2.baseline_comparison.is_some()); // Should have baseline comparison
     }
 }

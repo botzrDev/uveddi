@@ -1,4 +1,4 @@
-use uveddi::analysis::performance::{RenderingOptimizer, OptimizationRequest, RenderQuality};
+use uveddi::analysis::performance::{OptimizationRequest, RenderQuality, RenderingOptimizer};
 
 #[cfg(feature = "image-rendering")]
 use uveddi::report::image_renderer::ImageFormat;
@@ -9,9 +9,9 @@ use uveddi::analysis::performance::image_stubs::ImageFormat;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("🚀 Testing UV-47 Performance Optimizations");
-    
+
     let optimizer = RenderingOptimizer::new();
-    
+
     // Test different quality levels
     let test_diagram = r#"
 graph TD
@@ -31,7 +31,7 @@ graph TD
 
     for quality in qualities {
         println!("\n📊 Testing {:?} quality rendering...", quality);
-        
+
         let request = OptimizationRequest {
             mermaid_code: test_diagram.to_string(),
             format: ImageFormat::Svg,
@@ -46,8 +46,10 @@ graph TD
         match optimizer.optimize_rendering(request.clone()).await {
             Ok(result) => {
                 let total_time = start_time.elapsed().as_millis();
-                println!("  ✅ First render: {}ms (cache hit: {}, render time: {}ms)", 
-                    total_time, result.cache_hit, result.render_time_ms);
+                println!(
+                    "  ✅ First render: {}ms (cache hit: {}, render time: {}ms)",
+                    total_time, result.cache_hit, result.render_time_ms
+                );
             }
             Err(e) => {
                 println!("  ❌ First render failed: {}", e);
@@ -60,8 +62,10 @@ graph TD
         match optimizer.optimize_rendering(request).await {
             Ok(result) => {
                 let total_time = start_time.elapsed().as_millis();
-                println!("  ✅ Second render: {}ms (cache hit: {}, render time: {}ms)", 
-                    total_time, result.cache_hit, result.render_time_ms);
+                println!(
+                    "  ✅ Second render: {}ms (cache hit: {}, render time: {}ms)",
+                    total_time, result.cache_hit, result.render_time_ms
+                );
             }
             Err(e) => {
                 println!("  ❌ Second render failed: {}", e);
@@ -76,11 +80,14 @@ graph TD
 
     for i in 0..concurrent_requests {
         let optimizer = optimizer.clone();
-        let diagram = format!(r#"
+        let diagram = format!(
+            r#"
 graph TD
     A{} --> B{}
     B{} --> C{}
-"#, i, i, i, i);
+"#,
+            i, i, i, i
+        );
 
         let handle = tokio::spawn(async move {
             let request = OptimizationRequest {
@@ -98,7 +105,7 @@ graph TD
                     let total_time = start_time.elapsed().as_millis();
                     (i, total_time, result.render_time_ms, true)
                 }
-                Err(_) => (i, 0, 0, false)
+                Err(_) => (i, 0, 0, false),
             }
         });
 
@@ -116,7 +123,10 @@ graph TD
                 successful += 1;
                 total_time += total;
                 render_times.push(render_time);
-                println!("  Request {}: {}ms total, {}ms render", i, total, render_time);
+                println!(
+                    "  Request {}: {}ms total, {}ms render",
+                    i, total, render_time
+                );
             }
         }
     }
@@ -125,10 +135,15 @@ graph TD
         let avg_total = total_time / successful as u128;
         let avg_render = render_times.iter().sum::<u64>() / render_times.len() as u64;
         render_times.sort();
-        let p95_render = render_times.get((render_times.len() as f64 * 0.95) as usize).unwrap_or(&0);
-        
+        let p95_render = render_times
+            .get((render_times.len() as f64 * 0.95) as usize)
+            .unwrap_or(&0);
+
         println!("\n📈 Concurrent rendering results:");
-        println!("  ✅ Successful requests: {}/{}", successful, concurrent_requests);
+        println!(
+            "  ✅ Successful requests: {}/{}",
+            successful, concurrent_requests
+        );
         println!("  📊 Average total time: {}ms", avg_total);
         println!("  📊 Average render time: {}ms", avg_render);
         println!("  📊 P95 render time: {}ms", p95_render);
@@ -139,13 +154,15 @@ graph TD
     println!("\n📊 Final Performance Stats:");
     println!("  Cache hit rate: {:.1}%", stats.cache_hit_rate * 100.0);
     println!("  Total requests: {}", stats.total_requests);
-    println!("  Circuit breaker failures: {}", stats.circuit_breaker_failures);
+    println!(
+        "  Circuit breaker failures: {}",
+        stats.circuit_breaker_failures
+    );
     println!("  Circuit breaker state: {:?}", stats.circuit_breaker_state);
 
     // Check if we're meeting targets
-    let target_met = successful == concurrent_requests && 
-                     render_times.iter().all(|&t| t < 50);
-    
+    let target_met = successful == concurrent_requests && render_times.iter().all(|&t| t < 50);
+
     if target_met {
         println!("\n✅ UV-47 Performance Optimizations: SUCCESS");
         println!("   All renders completed under 50ms target");

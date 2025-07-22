@@ -3,19 +3,19 @@
 //! Provides instrumented versions of circuit breakers, retry mechanisms, and
 //! graceful degradation that automatically emit metrics and telemetry events.
 
+use crate::error::{Result, UveddiError};
 use crate::observability::{
-    metrics::{UveddiMetrics, CircuitBreakerState, MetricsTimer},
-    telemetry::{TelemetrySender, TelemetryLevel, TelemetryValue},
+    metrics::{CircuitBreakerState, MetricsTimer, UveddiMetrics},
+    telemetry::{TelemetryLevel, TelemetrySender, TelemetryValue},
     tracing_utils::TraceId,
 };
-use crate::resilience::{CircuitBreaker as BaseCircuitBreaker, circuit_breaker::State};
-use crate::error::{UveddiError, Result};
+use crate::resilience::{circuit_breaker::State, CircuitBreaker as BaseCircuitBreaker};
 use anyhow::Context;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::time::sleep;
-use tracing::{instrument, warn, info, error};
+use tracing::{error, info, instrument, warn};
 
 /// Instrumented circuit breaker that emits observability data
 pub struct InstrumentedCircuitBreaker {
@@ -76,8 +76,12 @@ impl InstrumentedCircuitBreaker {
 
             return Err(UveddiError::GenericError {
                 message: "Circuit breaker is open".to_string(),
-                context: format!("Circuit breaker '{}' is protecting downstream service", self.name),
-                suggestion: "Wait for circuit breaker to reset or check downstream service health".to_string(),
+                context: format!(
+                    "Circuit breaker '{}' is protecting downstream service",
+                    self.name
+                ),
+                suggestion: "Wait for circuit breaker to reset or check downstream service health"
+                    .to_string(),
                 source: None,
             });
         }
@@ -88,8 +92,9 @@ impl InstrumentedCircuitBreaker {
         } else {
             CircuitBreakerState::HalfOpen // Assume half-open if allowing requests but not closed
         };
-        
-        self.metrics.update_circuit_breaker_state(&self.name, "default", state);
+
+        self.metrics
+            .update_circuit_breaker_state(&self.name, "default", state);
 
         // Execute the operation
         let result = operation.await;
@@ -99,7 +104,7 @@ impl InstrumentedCircuitBreaker {
             Ok(value) => {
                 // Record success
                 self.inner.record_success();
-                
+
                 self.metrics.record_circuit_breaker_transition(
                     &self.name,
                     CircuitBreakerState::Closed,
@@ -117,7 +122,7 @@ impl InstrumentedCircuitBreaker {
             }
             Err(error) => {
                 let error = error.into();
-                
+
                 // Record failure (this may change circuit state)
                 let old_state = self.get_metrics_state();
                 // Note: Simplified failure recording - in production you'd want
@@ -131,8 +136,9 @@ impl InstrumentedCircuitBreaker {
                 let new_state = self.get_metrics_state();
 
                 if old_state != new_state {
-                    self.metrics.record_circuit_breaker_transition(&self.name, old_state, new_state);
-                    
+                    self.metrics
+                        .record_circuit_breaker_transition(&self.name, old_state, new_state);
+
                     if let Some(ref telemetry) = self.telemetry {
                         let _ = telemetry.circuit_breaker(
                             trace_id,
@@ -166,7 +172,6 @@ impl InstrumentedCircuitBreaker {
             CircuitBreakerState::Open
         }
     }
-
 }
 
 /// Instrumented retry mechanism with exponential backoff and observability
@@ -234,10 +239,15 @@ impl InstrumentedRetry {
             match operation().await {
                 Ok(result) => {
                     let duration = timer.elapsed();
-                    
+
                     // Record successful retry
-                    let final_outcome = if attempt == 1 { "success_first_try" } else { "success_after_retry" };
-                    self.metrics.record_retry_attempt(service, operation_name, final_outcome);
+                    let final_outcome = if attempt == 1 {
+                        "success_first_try"
+                    } else {
+                        "success_after_retry"
+                    };
+                    self.metrics
+                        .record_retry_attempt(service, operation_name, final_outcome);
 
                     info!(
                         trace_id = %trace_id,
@@ -253,7 +263,7 @@ impl InstrumentedRetry {
                 Err(error) => {
                     let error: UveddiError = error.into();
                     let duration = timer.elapsed();
-                    
+
                     warn!(
                         trace_id = %trace_id,
                         service = service,
@@ -287,8 +297,9 @@ impl InstrumentedRetry {
 
                         // Calculate next delay with exponential backoff
                         delay = Duration::from_millis(
-                            ((delay.as_millis() as f64) * self.backoff_multiplier) as u64
-                        ).min(self.max_delay);
+                            ((delay.as_millis() as f64) * self.backoff_multiplier) as u64,
+                        )
+                        .min(self.max_delay);
                     }
                 }
             }
@@ -296,14 +307,24 @@ impl InstrumentedRetry {
 
         // All attempts failed
         let final_error = last_error.unwrap();
-        
-        self.metrics.record_retry_attempt(service, operation_name, "failure_all_attempts");
+
+        self.metrics
+            .record_retry_attempt(service, operation_name, "failure_all_attempts");
 
         if let Some(ref telemetry) = self.telemetry {
             let mut fields = HashMap::new();
-            fields.insert("attempts".to_string(), TelemetryValue::Integer(self.max_attempts as i64));
-            fields.insert("service".to_string(), TelemetryValue::String(service.to_string()));
-            fields.insert("operation".to_string(), TelemetryValue::String(operation_name.to_string()));
+            fields.insert(
+                "attempts".to_string(),
+                TelemetryValue::Integer(self.max_attempts as i64),
+            );
+            fields.insert(
+                "service".to_string(),
+                TelemetryValue::String(service.to_string()),
+            );
+            fields.insert(
+                "operation".to_string(),
+                TelemetryValue::String(operation_name.to_string()),
+            );
 
             let _ = telemetry.send(crate::observability::telemetry::TelemetryEvent {
                 trace_id,
@@ -311,7 +332,10 @@ impl InstrumentedRetry {
                 event_type: crate::observability::telemetry::TelemetryEventType::Error,
                 severity: TelemetryLevel::Error,
                 component: service.to_string(),
-                message: format!("All {} retry attempts failed for {}", self.max_attempts, operation_name),
+                message: format!(
+                    "All {} retry attempts failed for {}",
+                    self.max_attempts, operation_name
+                ),
                 fields,
                 error: Some(crate::observability::telemetry::TelemetryError {
                     error_type: format!("{:?}", final_error.category()),
@@ -392,7 +416,7 @@ impl InstrumentedFallback {
         match primary().await {
             Ok(result) => {
                 let duration = timer.elapsed();
-                
+
                 info!(
                     trace_id = %trace_id,
                     service = %self.service,
@@ -428,11 +452,20 @@ impl InstrumentedFallback {
                         event_type: crate::observability::telemetry::TelemetryEventType::Fallback,
                         severity: TelemetryLevel::Warn,
                         component: self.service.clone(),
-                        message: format!("Fallback activated: {} due to primary failure", fallback_type),
+                        message: format!(
+                            "Fallback activated: {} due to primary failure",
+                            fallback_type
+                        ),
                         fields: {
                             let mut fields = HashMap::new();
-                            fields.insert("fallback_type".to_string(), TelemetryValue::String(fallback_type.to_string()));
-                            fields.insert("primary_error".to_string(), TelemetryValue::String(primary_error.to_string()));
+                            fields.insert(
+                                "fallback_type".to_string(),
+                                TelemetryValue::String(fallback_type.to_string()),
+                            );
+                            fields.insert(
+                                "primary_error".to_string(),
+                                TelemetryValue::String(primary_error.to_string()),
+                            );
                             fields
                         },
                         error: None,
@@ -441,11 +474,11 @@ impl InstrumentedFallback {
 
                 // Try fallback
                 let fallback_timer = MetricsTimer::start_with_trace_id(trace_id);
-                
+
                 match fallback().await {
                     Ok(result) => {
                         let fallback_duration = fallback_timer.elapsed();
-                        
+
                         info!(
                             trace_id = %trace_id,
                             service = %self.service,
@@ -500,11 +533,8 @@ mod tests {
         let trace_id = TraceId::new();
         let call_count = Arc::new(std::sync::atomic::AtomicUsize::new(0));
 
-        let result = retry.call(
-            trace_id,
-            "test_service",
-            "test_operation",
-            {
+        let result = retry
+            .call(trace_id, "test_service", "test_operation", {
                 let call_count = call_count.clone();
                 move || {
                     let count = call_count.fetch_add(1, std::sync::atomic::Ordering::SeqCst) + 1;
@@ -521,8 +551,8 @@ mod tests {
                         }
                     }
                 }
-            },
-        ).await;
+            })
+            .await;
 
         assert!(result.is_ok());
         assert_eq!(call_count.load(std::sync::atomic::Ordering::SeqCst), 3);

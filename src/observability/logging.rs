@@ -6,7 +6,9 @@
 //! - Asynchronous logging for performance
 //! - Correlation via trace_id
 
-use crate::observability::config::{LoggingConfig, LogFormat, PiiRedactionConfig, RedactionStrategy};
+use crate::observability::config::{
+    LogFormat, LoggingConfig, PiiRedactionConfig, RedactionStrategy,
+};
 use crate::observability::tracing_utils::TraceId;
 use anyhow::{Context, Result};
 use regex::Regex;
@@ -31,24 +33,24 @@ static INIT: Once = Once::new();
 /// Initialize the structured logging system according to UV-86 specifications
 pub fn init_structured_logging(config: &LoggingConfig) -> Result<()> {
     let mut init_error: Option<anyhow::Error> = None;
-    
+
     INIT.call_once(|| {
         // In test mode, use test-safe initialization
         #[cfg(test)]
         {
             match init_test_subscriber() {
-                Ok(_) => {},
+                Ok(_) => {}
                 Err(e) => {
                     init_error = Some(e);
                 }
             }
         }
-        
+
         // In production mode, use full initialization
         #[cfg(not(test))]
         {
             match try_init_tracing(config) {
-                Ok(_) => {},
+                Ok(_) => {}
                 Err(e) => {
                     init_error = Some(e);
                 }
@@ -80,15 +82,10 @@ fn try_init_tracing(config: &LoggingConfig) -> Result<()> {
 
     // Simplified approach for now - will use basic JSON formatting
     use tracing_subscriber::fmt;
-    
+
     let subscriber = Registry::default()
         .with(env_filter)
-        .with(
-            fmt::layer()
-                .json()
-                .with_target(true)
-                .with_thread_ids(true)
-        );
+        .with(fmt::layer().json().with_target(true).with_thread_ids(true));
 
     subscriber
         .try_init()
@@ -100,17 +97,16 @@ fn try_init_tracing(config: &LoggingConfig) -> Result<()> {
 /// Test-specific subscriber initialization
 #[cfg(test)]
 fn init_test_subscriber() -> Result<()> {
-    let subscriber = tracing_subscriber::registry()
-        .with(
-            tracing_subscriber::fmt::layer()
-                .with_test_writer()
-                .with_target(true)
-                .with_thread_ids(true)
-        );
+    let subscriber = tracing_subscriber::registry().with(
+        tracing_subscriber::fmt::layer()
+            .with_test_writer()
+            .with_target(true)
+            .with_thread_ids(true),
+    );
     subscriber
         .try_init()
         .context("Failed to initialize test tracing subscriber")?;
-    
+
     Ok(())
 }
 
@@ -119,25 +115,22 @@ fn init_test_subscriber() -> Result<()> {
 pub fn init_test_logging() -> Result<()> {
     use std::sync::Once;
     static TEST_INIT: Once = Once::new();
-    
+
     TEST_INIT.call_once(|| {
-        let subscriber = tracing_subscriber::registry()
-            .with(
-                tracing_subscriber::fmt::layer()
-                    .with_test_writer()
-                    .with_target(true)
-                    .with_thread_ids(true)
-            );
+        let subscriber = tracing_subscriber::registry().with(
+            tracing_subscriber::fmt::layer()
+                .with_test_writer()
+                .with_target(true)
+                .with_thread_ids(true),
+        );
         let _ = tracing::subscriber::set_global_default(subscriber);
     });
-    
+
     Ok(())
 }
 
 /// Create the appropriate formatting layer based on configuration
-fn create_format_layer(
-    config: &LoggingConfig,
-) -> Result<Box<dyn Layer<Registry> + Send + Sync>> {
+fn create_format_layer(config: &LoggingConfig) -> Result<Box<dyn Layer<Registry> + Send + Sync>> {
     match &config.format {
         LogFormat::Json => {
             if config.async_logging {
@@ -238,7 +231,9 @@ impl PiiRedactionLayer {
 
     /// Check if a field name matches any PII patterns
     fn is_pii_field(&self, field_name: &str) -> bool {
-        self.patterns.iter().any(|pattern| pattern.is_match(field_name))
+        self.patterns
+            .iter()
+            .any(|pattern| pattern.is_match(field_name))
     }
 
     /// Apply redaction strategy to a value
@@ -294,7 +289,8 @@ impl<'a> Visit for PiiRedactionVisitor<'a> {
         let field_name = field.name();
         if self.layer.is_pii_field(field_name) {
             let redacted = self.layer.redact_value(&format!("{:?}", value));
-            self.redacted_fields.insert(field_name.to_string(), redacted);
+            self.redacted_fields
+                .insert(field_name.to_string(), redacted);
         }
     }
 
@@ -302,7 +298,8 @@ impl<'a> Visit for PiiRedactionVisitor<'a> {
         let field_name = field.name();
         if self.layer.is_pii_field(field_name) {
             let redacted = self.layer.redact_value(value);
-            self.redacted_fields.insert(field_name.to_string(), redacted);
+            self.redacted_fields
+                .insert(field_name.to_string(), redacted);
         }
     }
 
@@ -310,7 +307,8 @@ impl<'a> Visit for PiiRedactionVisitor<'a> {
         let field_name = field.name();
         if self.layer.is_pii_field(field_name) {
             let redacted = self.layer.redact_value(&value.to_string());
-            self.redacted_fields.insert(field_name.to_string(), redacted);
+            self.redacted_fields
+                .insert(field_name.to_string(), redacted);
         }
     }
 
@@ -318,7 +316,8 @@ impl<'a> Visit for PiiRedactionVisitor<'a> {
         let field_name = field.name();
         if self.layer.is_pii_field(field_name) {
             let redacted = self.layer.redact_value(&value.to_string());
-            self.redacted_fields.insert(field_name.to_string(), redacted);
+            self.redacted_fields
+                .insert(field_name.to_string(), redacted);
         }
     }
 
@@ -326,7 +325,8 @@ impl<'a> Visit for PiiRedactionVisitor<'a> {
         let field_name = field.name();
         if self.layer.is_pii_field(field_name) {
             let redacted = self.layer.redact_value(&value.to_string());
-            self.redacted_fields.insert(field_name.to_string(), redacted);
+            self.redacted_fields
+                .insert(field_name.to_string(), redacted);
         }
     }
 }

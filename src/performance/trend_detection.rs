@@ -5,19 +5,19 @@
 // #[cfg(feature = "regression-detection")]
 // use changepoint::{Pelt, BinarySegmentation, ChangePointDetector};
 
-use std::collections::VecDeque;
-use serde::{Deserialize, Serialize};
 use anyhow::Result;
+use serde::{Deserialize, Serialize};
+use std::collections::VecDeque;
 
 use crate::performance::statistical_analysis::TrendType;
 
 /// Change point detection result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChangePointResult {
-    pub change_points: Vec<usize>,    // Indices of detected change points
-    pub segments: Vec<Segment>,       // Performance segments
-    pub confidence: f64,              // Detection confidence
-    pub algorithm_used: String,       // PELT, BinSeg, etc.
+    pub change_points: Vec<usize>, // Indices of detected change points
+    pub segments: Vec<Segment>,    // Performance segments
+    pub confidence: f64,           // Detection confidence
+    pub algorithm_used: String,    // PELT, BinSeg, etc.
 }
 
 /// Performance segment between change points
@@ -53,7 +53,7 @@ impl TrendDetector {
         {
             self.pelt_implementation(values)
         }
-        
+
         #[cfg(not(feature = "regression-detection"))]
         {
             // Fallback to simple change point detection
@@ -67,7 +67,7 @@ impl TrendDetector {
         {
             self.binary_segmentation_implementation(values)
         }
-        
+
         #[cfg(not(feature = "regression-detection"))]
         {
             // Fallback to simple change point detection
@@ -88,9 +88,13 @@ impl TrendDetector {
     }
 
     /// Simple change point detection fallback when changepoint crate is not available
-    fn simple_change_point_detection(&self, values: &[f64], algorithm_name: &str) -> Result<ChangePointResult> {
+    fn simple_change_point_detection(
+        &self,
+        values: &[f64],
+        algorithm_name: &str,
+    ) -> Result<ChangePointResult> {
         let mut change_points = Vec::new();
-        
+
         if values.len() < self.min_segment_length * 2 {
             return Ok(ChangePointResult {
                 change_points,
@@ -107,18 +111,18 @@ impl TrendDetector {
         for i in window_size..(values.len() - window_size) {
             let before_window = &values[i.saturating_sub(window_size)..i];
             let after_window = &values[i..i + window_size];
-            
+
             let before_mean = self.calculate_mean(before_window);
             let after_mean = self.calculate_mean(after_window);
-            
+
             // Calculate combined standard deviation for both windows
             let before_variance = self.calculate_variance(before_window, before_mean);
             let after_variance = self.calculate_variance(after_window, after_mean);
             let combined_std = ((before_variance + after_variance) / 2.0).sqrt();
-            
+
             // Check if there's a significant change
             let change_magnitude = (after_mean - before_mean).abs();
-            
+
             if change_magnitude > threshold && change_magnitude > combined_std * 2.0 {
                 // Avoid duplicate change points too close together
                 if change_points.is_empty() || i - change_points.last().unwrap() > window_size {
@@ -132,7 +136,7 @@ impl TrendDetector {
 
         // Analyze segments
         let segments = self.analyze_segments(values, &change_points);
-        
+
         // Calculate confidence based on segment stability
         let confidence = self.calculate_confidence(&segments, values);
 
@@ -184,7 +188,7 @@ impl TrendDetector {
         let segment_data = &values[start..end];
         let mean_value = self.calculate_mean(segment_data);
         let variance = self.calculate_variance(segment_data, mean_value);
-        
+
         // Determine trend direction within segment
         let trend = self.determine_segment_trend(segment_data);
 
@@ -232,13 +236,15 @@ impl TrendDetector {
 
         // Calculate confidence based on segment variance stability
         let avg_variance = segments.iter().map(|s| s.variance).sum::<f64>() / segments.len() as f64;
-        let variance_stability = segments.iter()
+        let variance_stability = segments
+            .iter()
             .map(|s| (s.variance - avg_variance).abs())
-            .sum::<f64>() / segments.len() as f64;
+            .sum::<f64>()
+            / segments.len() as f64;
 
         // Lower variance instability means higher confidence
         let normalized_stability = 1.0 / (1.0 + variance_stability);
-        
+
         // Penalize too many segments (likely overfitting)
         let segment_penalty = if segments.len() > 5 {
             0.9_f64.powi((segments.len() - 5) as i32)
@@ -253,7 +259,7 @@ impl TrendDetector {
     fn calculate_threshold(&self, values: &[f64]) -> f64 {
         let mean = self.calculate_mean(values);
         let std_dev = self.calculate_variance(values, mean).sqrt();
-        
+
         // Use penalty factor to adjust sensitivity
         std_dev * self.penalty_factor
     }
@@ -271,10 +277,12 @@ impl TrendDetector {
         if values.len() <= 1 {
             return 0.0;
         }
-        
-        values.iter()
+
+        values
+            .iter()
             .map(|value| (value - mean).powi(2))
-            .sum::<f64>() / (values.len() - 1) as f64
+            .sum::<f64>()
+            / (values.len() - 1) as f64
     }
 
     /// Configure minimum segment length
@@ -311,25 +319,30 @@ mod tests {
         // Create data with known change point at index 50
         let mut values = vec![5.0; 50];
         values.extend(vec![10.0; 50]);
-        
+
         let detector = TrendDetector::new();
         let result = detector.detect_change_points_pelt(&values).unwrap();
-        
+
         assert!(!result.change_points.is_empty());
-        
+
         // Check that detected change point is near the actual change point (index 50)
-        let has_change_near_50 = result.change_points.iter()
+        let has_change_near_50 = result
+            .change_points
+            .iter()
             .any(|&cp| (cp as i32 - 50).abs() < 10);
-        assert!(has_change_near_50, "Should detect change point near index 50");
+        assert!(
+            has_change_near_50,
+            "Should detect change point near index 50"
+        );
     }
 
     #[test]
     fn test_no_change_points_stable_data() {
         let values = vec![5.0; 100]; // Completely stable data
-        
+
         let detector = TrendDetector::new();
         let result = detector.detect_change_points_pelt(&values).unwrap();
-        
+
         // Should detect very few or no change points in stable data
         assert!(result.change_points.len() <= 1);
         assert_eq!(result.segments.len(), result.change_points.len() + 1);
@@ -342,14 +355,14 @@ mod tests {
         values.extend(vec![5.0; 25]);
         values.extend(vec![2.0; 25]);
         values.extend(vec![8.0; 25]);
-        
+
         let detector = TrendDetector::new();
         let result = detector.detect_change_points_pelt(&values).unwrap();
-        
+
         // Should detect 2-3 change points
         assert!(result.change_points.len() >= 2);
         assert!(result.change_points.len() <= 4);
-        
+
         // Segments should be properly ordered
         for segment in &result.segments {
             assert!(segment.start_index < segment.end_index);
@@ -359,15 +372,19 @@ mod tests {
     #[test]
     fn test_segment_trend_analysis() {
         let increasing_data = vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0];
-        
+
         let detector = TrendDetector::new();
-        let result = detector.detect_change_points_pelt(&increasing_data).unwrap();
-        
+        let result = detector
+            .detect_change_points_pelt(&increasing_data)
+            .unwrap();
+
         // Should have at least one segment
         assert!(!result.segments.is_empty());
-        
+
         // At least one segment should show increasing trend
-        let has_increasing_trend = result.segments.iter()
+        let has_increasing_trend = result
+            .segments
+            .iter()
             .any(|s| matches!(s.trend, TrendType::Increasing));
         assert!(has_increasing_trend);
     }
@@ -375,10 +392,10 @@ mod tests {
     #[test]
     fn test_insufficient_data() {
         let values = vec![1.0, 2.0, 3.0]; // Very small dataset
-        
+
         let detector = TrendDetector::new();
         let result = detector.detect_change_points_pelt(&values).unwrap();
-        
+
         // Should handle small datasets gracefully
         assert_eq!(result.change_points.len(), 0);
         assert_eq!(result.segments.len(), 1);
@@ -389,10 +406,10 @@ mod tests {
     fn test_binary_segmentation() {
         let mut values = vec![5.0; 30];
         values.extend(vec![10.0; 30]);
-        
+
         let detector = TrendDetector::new();
         let result = detector.detect_change_points_binary(&values).unwrap();
-        
+
         assert!(result.algorithm_used.contains("Binary Segmentation"));
         // Should detect the change point
         assert!(!result.change_points.is_empty());
@@ -401,10 +418,10 @@ mod tests {
     #[test]
     fn test_confidence_calculation() {
         let values = vec![5.0; 50]; // Very stable data
-        
+
         let detector = TrendDetector::new();
         let result = detector.detect_change_points_pelt(&values).unwrap();
-        
+
         // Confidence should be high for stable data
         assert!(result.confidence > 0.5);
         assert!(result.confidence <= 1.0);
@@ -413,14 +430,14 @@ mod tests {
     #[test]
     fn test_custom_parameters() {
         let values = vec![1.0; 100];
-        
+
         let detector = TrendDetector::new()
             .with_min_segment_length(10)
             .with_penalty_factor(3.0)
             .with_max_change_points(5);
-        
+
         let result = detector.detect_change_points_pelt(&values).unwrap();
-        
+
         // Should handle custom parameters without errors
         assert!(result.change_points.len() <= 5);
     }

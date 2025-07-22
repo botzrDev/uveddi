@@ -62,7 +62,7 @@ pub mod tracing_utils;
 
 pub use config::ObservabilityConfig;
 pub use dlq::{DeadLetterQueue, DlqRecord, DlqStatistics};
-pub use resilience::{InstrumentedCircuitBreaker, InstrumentedRetry, InstrumentedFallback};
+pub use resilience::{InstrumentedCircuitBreaker, InstrumentedFallback, InstrumentedRetry};
 pub use service::ObservabilityService;
 pub use telemetry::{TelemetryCollector, TelemetryEvent};
-pub use tracing_utils::{TraceId, generate_trace_id, with_trace_id};
+pub use tracing_utils::{generate_trace_id, with_trace_id, TraceId};

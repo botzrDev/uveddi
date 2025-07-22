@@ -4,12 +4,12 @@
 //! decomposed AnalysisEngine architecture.
 
 use async_trait::async_trait;
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use std::collections::HashMap;
 
-use crate::analysis::graph::dependency::LocalDependencyGraph;
 use crate::analysis::detectors::dependency::Dependency;
+use crate::analysis::graph::dependency::LocalDependencyGraph;
 use crate::database::models::ArchitecturalIssue;
 use crate::error::UveddiError;
 
@@ -19,10 +19,10 @@ pub trait AstProvider: Send + Sync {
     /// Retrieves the AST for a given file path.
     /// If the AST is not in the cache, it parses the file and caches the result.
     async fn get_ast(&self, file_path: &Path) -> Result<Arc<tree_sitter::Tree>, UveddiError>;
-    
+
     /// Clears the AST cache
     fn clear_cache(&self);
-    
+
     /// Returns cache statistics for observability
     fn get_cache_metrics(&self) -> serde_json::Value;
 }
@@ -32,7 +32,7 @@ pub trait AstProvider: Send + Sync {
 pub trait DependencyGraphBuilder: Send + Sync {
     /// Builds or updates the full dependency graph for the project, starting from a root path.
     async fn build_graph(&self, root_path: &Path) -> Result<LocalDependencyGraph, UveddiError>;
-    
+
     /// Builds a dependency graph from a collection of dependencies
     fn build_from_dependencies(&self, dependencies: Vec<Dependency>) -> LocalDependencyGraph;
 }
@@ -41,16 +41,16 @@ pub trait DependencyGraphBuilder: Send + Sync {
 pub trait ConfigurationService: Send + Sync {
     /// Retrieves a configuration value by key
     fn get_config_value(&self, key: &str) -> Option<String>;
-    
+
     /// Checks if a detector is enabled
     fn is_detector_enabled(&self, detector_name: &str) -> bool;
-    
+
     /// Gets plugin configuration
     fn get_plugin_config(&self) -> HashMap<String, serde_json::Value>;
-    
+
     /// Gets cache configuration
     fn get_cache_path(&self) -> Option<PathBuf>;
-    
+
     /// Checks if plugins are enabled globally
     fn are_plugins_enabled(&self) -> bool;
 }
@@ -59,32 +59,39 @@ pub trait ConfigurationService: Send + Sync {
 #[async_trait]
 pub trait DetectorScheduler: Send + Sync {
     /// Schedules analysis on a single file
-    async fn schedule_file(&self, file_path: &Path) -> Result<Vec<ArchitecturalIssue>, UveddiError>;
-    
+    async fn schedule_file(&self, file_path: &Path)
+        -> Result<Vec<ArchitecturalIssue>, UveddiError>;
+
     /// Schedules analysis on a directory tree
-    async fn schedule_directory(&self, dir_path: &Path) -> Result<Vec<ArchitecturalIssue>, UveddiError>;
-    
+    async fn schedule_directory(
+        &self,
+        dir_path: &Path,
+    ) -> Result<Vec<ArchitecturalIssue>, UveddiError>;
+
     /// Schedules graph-level analysis
-    async fn schedule_graph_analysis(&self, graph: &LocalDependencyGraph) -> Result<Vec<ArchitecturalIssue>, UveddiError>;
+    async fn schedule_graph_analysis(
+        &self,
+        graph: &LocalDependencyGraph,
+    ) -> Result<Vec<ArchitecturalIssue>, UveddiError>;
 }
 
 /// Aggregates analysis results from multiple sources.
 pub trait AnalysisAggregator: Send + Sync {
     /// Records a finding from analysis
     fn record_finding(&self, issue: ArchitecturalIssue);
-    
+
     /// Records multiple findings
     fn record_findings(&self, issues: Vec<ArchitecturalIssue>);
-    
+
     /// Retrieves all recorded findings
     fn get_findings(&self) -> Vec<ArchitecturalIssue>;
-    
+
     /// Clears all recorded findings
     fn clear_findings(&self);
-    
+
     /// Records that a file has been processed
     fn record_file_processed(&self);
-    
+
     /// Gets aggregation statistics
     fn get_stats(&self) -> AggregationStats;
 }
@@ -128,7 +135,9 @@ pub enum PluginCommand {
     /// Get plugin adapter
     GetPluginAdapter {
         plugin_id: String,
-        responder: tokio::sync::oneshot::Sender<Result<Option<crate::analysis::WasmPluginDetectorAdapter>, UveddiError>>,
+        responder: tokio::sync::oneshot::Sender<
+            Result<Option<crate::analysis::WasmPluginDetectorAdapter>, UveddiError>,
+        >,
     },
 }
 
@@ -150,19 +159,22 @@ pub trait PluginManagerHandle: Send + Sync {
         source_file_path: PathBuf,
         ast: Arc<tree_sitter::Tree>,
     ) -> Result<Vec<ArchitecturalIssue>, UveddiError>;
-    
+
     /// Load a plugin from a file path
     async fn load_plugin(&self, plugin_path: PathBuf) -> Result<String, UveddiError>;
-    
+
     /// Unload a plugin by ID
     async fn unload_plugin(&self, plugin_id: String) -> Result<(), UveddiError>;
-    
+
     /// Get plugin statistics
     async fn get_stats(&self) -> Result<PluginStats, UveddiError>;
-    
+
     /// List loaded plugins
     async fn list_loaded_plugins(&self) -> Result<Vec<String>, UveddiError>;
-    
+
     /// Get plugin adapter for a specific plugin
-    async fn get_plugin_adapter(&self, plugin_id: &str) -> Result<Option<crate::analysis::WasmPluginDetectorAdapter>, UveddiError>;
+    async fn get_plugin_adapter(
+        &self,
+        plugin_id: &str,
+    ) -> Result<Option<crate::analysis::WasmPluginDetectorAdapter>, UveddiError>;
 }

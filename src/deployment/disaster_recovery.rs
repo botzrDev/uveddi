@@ -1,20 +1,20 @@
 //! Disaster recovery coordination and management
-//! 
+//!
 //! Provides functionality for disaster recovery including:
 //! - Backup verification and restoration
 //! - Failover coordination
 //! - Recovery validation
 //! - RTO/RPO monitoring
 
-use std::time::{Duration, SystemTime};
+use anyhow::{anyhow, Result};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
-use serde::{Deserialize, Serialize};
+use std::time::{Duration, SystemTime};
 use tokio::time::{sleep, timeout, Instant};
-use tracing::{info, warn, error, debug, instrument};
-use anyhow::{Result, anyhow};
+use tracing::{debug, error, info, instrument, warn};
 
-use super::{Environment, HealthStatus, DeploymentStatus};
+use super::{DeploymentStatus, Environment, HealthStatus};
 
 /// Disaster recovery coordinator
 #[derive(Debug)]
@@ -28,8 +28,8 @@ pub struct DisasterRecoveryCoordinator {
 /// Disaster recovery configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DisasterRecoveryConfig {
-    pub rto_minutes: u32,           // Recovery Time Objective
-    pub rpo_minutes: u32,           // Recovery Point Objective
+    pub rto_minutes: u32, // Recovery Time Objective
+    pub rpo_minutes: u32, // Recovery Point Objective
     pub backup_retention_days: u32,
     pub auto_failover_enabled: bool,
     pub failover_threshold: u32,
@@ -163,11 +163,11 @@ pub struct FailoverEvent {
 /// Recovery metrics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RecoveryMetrics {
-    pub mttr: Duration,              // Mean Time To Recovery
-    pub mtbf: Duration,              // Mean Time Between Failures
-    pub availability: f64,           // Availability percentage
-    pub last_rto: Option<Duration>,  // Last Recovery Time Objective
-    pub last_rpo: Option<Duration>,  // Last Recovery Point Objective
+    pub mttr: Duration,             // Mean Time To Recovery
+    pub mtbf: Duration,             // Mean Time Between Failures
+    pub availability: f64,          // Availability percentage
+    pub last_rto: Option<Duration>, // Last Recovery Time Objective
+    pub last_rpo: Option<Duration>, // Last Recovery Point Objective
     pub backup_success_rate: f64,
     pub test_success_rate: f64,
 }
@@ -218,8 +218,14 @@ impl DisasterRecoveryCoordinator {
     /// Create coordinator with custom configuration
     pub fn with_config(config: DisasterRecoveryConfig) -> Self {
         Self {
-            backup_manager: BackupManager::new(&config.backup_storage_bucket, config.backup_retention_days),
-            failover_manager: FailoverManager::new(&config.dr_environment, config.auto_failover_enabled),
+            backup_manager: BackupManager::new(
+                &config.backup_storage_bucket,
+                config.backup_retention_days,
+            ),
+            failover_manager: FailoverManager::new(
+                &config.dr_environment,
+                config.auto_failover_enabled,
+            ),
             state: DisasterRecoveryState::default(),
             config,
         }
@@ -232,9 +238,13 @@ impl DisasterRecoveryCoordinator {
 
     /// Declare a disaster and initiate recovery
     #[instrument(skip(self))]
-    pub async fn declare_disaster(&mut self, incident_type: IncidentType, description: String) -> Result<String> {
+    pub async fn declare_disaster(
+        &mut self,
+        incident_type: IncidentType,
+        description: String,
+    ) -> Result<String> {
         let incident_id = format!("incident-{}", uuid::Uuid::new_v4().simple());
-        
+
         warn!(
             incident_id = %incident_id,
             incident_type = ?incident_type,
@@ -268,7 +278,10 @@ impl DisasterRecoveryCoordinator {
     pub async fn execute_recovery(&mut self, incident_id: &str) -> Result<()> {
         info!(incident_id = %incident_id, "Starting disaster recovery execution");
 
-        let incident = self.state.active_incidents.iter_mut()
+        let incident = self
+            .state
+            .active_incidents
+            .iter_mut()
             .find(|i| i.id == incident_id)
             .ok_or_else(|| anyhow!("Incident not found: {}", incident_id))?;
 
@@ -280,7 +293,7 @@ impl DisasterRecoveryCoordinator {
         // Execute recovery steps
         let mut recovery_failed = false;
         let mut failed_step_id = String::new();
-        
+
         // TODO: Fix borrowing issue - temporarily simplified for compilation
         for step in &incident.recovery_plan.steps {
             // Simulate step execution without borrowing conflicts
@@ -305,7 +318,7 @@ impl DisasterRecoveryCoordinator {
 
         // Release the mutable borrow before validation
         drop(incident);
-        
+
         // Validate recovery
         if !self.validate_recovery().await? {
             error!("Recovery validation failed");
@@ -313,7 +326,10 @@ impl DisasterRecoveryCoordinator {
         }
 
         // Re-acquire the incident for final status update
-        let incident = self.state.active_incidents.iter_mut()
+        let incident = self
+            .state
+            .active_incidents
+            .iter_mut()
             .find(|i| i.id == incident_id)
             .ok_or_else(|| anyhow!("Incident not found: {}", incident_id))?;
 
@@ -323,7 +339,7 @@ impl DisasterRecoveryCoordinator {
 
         // Update metrics
         self.state.recovery_metrics.last_rto = Some(recovery_duration);
-        
+
         info!(
             incident_id = %incident_id,
             duration = ?recovery_duration,
@@ -338,7 +354,7 @@ impl DisasterRecoveryCoordinator {
     pub async fn initiate_failover(&mut self, reason: String) -> Result<FailoverEvent> {
         let failover_id = format!("failover-{}", uuid::Uuid::new_v4().simple());
         let start_time = SystemTime::now();
-        
+
         warn!(
             failover_id = %failover_id,
             reason = %reason,
@@ -361,7 +377,7 @@ impl DisasterRecoveryCoordinator {
             Ok(duration) => {
                 failover_event.duration = Some(duration);
                 failover_event.success = true;
-                
+
                 info!(
                     failover_id = %failover_id,
                     duration = ?duration,
@@ -387,9 +403,9 @@ impl DisasterRecoveryCoordinator {
     #[instrument(skip(self))]
     pub async fn verify_backup(&self, backup_id: &str) -> Result<bool> {
         info!(backup_id = %backup_id, "Verifying backup integrity");
-        
+
         let backup_info = self.backup_manager.get_backup_info(backup_id).await?;
-        
+
         // Verify checksum
         if !self.backup_manager.verify_checksum(&backup_info).await? {
             error!(backup_id = %backup_id, "Backup checksum verification failed");
@@ -427,39 +443,57 @@ impl DisasterRecoveryCoordinator {
         // Test 1: Backup verification
         match self.test_backup_integrity().await {
             Ok(true) => {
-                test_result.tests_performed.push("backup_integrity".to_string());
+                test_result
+                    .tests_performed
+                    .push("backup_integrity".to_string());
             }
             Ok(false) => {
-                test_result.issues_found.push("Backup integrity test failed".to_string());
+                test_result
+                    .issues_found
+                    .push("Backup integrity test failed".to_string());
             }
             Err(e) => {
-                test_result.issues_found.push(format!("Backup test error: {}", e));
+                test_result
+                    .issues_found
+                    .push(format!("Backup test error: {}", e));
             }
         }
 
         // Test 2: DR environment deployment
         match self.test_dr_environment_deployment().await {
             Ok(true) => {
-                test_result.tests_performed.push("dr_environment_deployment".to_string());
+                test_result
+                    .tests_performed
+                    .push("dr_environment_deployment".to_string());
             }
             Ok(false) => {
-                test_result.issues_found.push("DR environment deployment test failed".to_string());
+                test_result
+                    .issues_found
+                    .push("DR environment deployment test failed".to_string());
             }
             Err(e) => {
-                test_result.issues_found.push(format!("DR deployment test error: {}", e));
+                test_result
+                    .issues_found
+                    .push(format!("DR deployment test error: {}", e));
             }
         }
 
         // Test 3: Recovery procedures
         match self.test_recovery_procedures().await {
             Ok(true) => {
-                test_result.tests_performed.push("recovery_procedures".to_string());
+                test_result
+                    .tests_performed
+                    .push("recovery_procedures".to_string());
             }
             Ok(false) => {
-                test_result.issues_found.push("Recovery procedures test failed".to_string());
+                test_result
+                    .issues_found
+                    .push("Recovery procedures test failed".to_string());
             }
             Err(e) => {
-                test_result.issues_found.push(format!("Recovery procedures test error: {}", e));
+                test_result
+                    .issues_found
+                    .push(format!("Recovery procedures test error: {}", e));
             }
         }
 
@@ -468,7 +502,9 @@ impl DisasterRecoveryCoordinator {
 
         // Generate recommendations
         if !test_result.success {
-            test_result.recommendations.push("Review and fix failed tests before next DR test".to_string());
+            test_result
+                .recommendations
+                .push("Review and fix failed tests before next DR test".to_string());
         }
 
         self.state.last_test_time = Some(SystemTime::now());
@@ -486,7 +522,10 @@ impl DisasterRecoveryCoordinator {
 
     /// Calculate RTO/RPO compliance
     pub fn calculate_compliance(&self) -> ComplianceReport {
-        let rto_compliance = self.state.recovery_metrics.last_rto
+        let rto_compliance = self
+            .state
+            .recovery_metrics
+            .last_rto
             .map(|rto| {
                 let target_rto = Duration::from_secs(self.config.rto_minutes as u64 * 60);
                 if rto <= target_rto {
@@ -497,7 +536,10 @@ impl DisasterRecoveryCoordinator {
             })
             .unwrap_or(0.0);
 
-        let rpo_compliance = self.state.recovery_metrics.last_rpo
+        let rpo_compliance = self
+            .state
+            .recovery_metrics
+            .last_rpo
             .map(|rpo| {
                 let target_rpo = Duration::from_secs(self.config.rpo_minutes as u64 * 60);
                 if rpo <= target_rpo {
@@ -515,7 +557,8 @@ impl DisasterRecoveryCoordinator {
             test_success_rate: self.state.recovery_metrics.test_success_rate,
             availability: self.state.recovery_metrics.availability,
             last_test_date: self.state.last_test_time,
-            recommendations: self.generate_compliance_recommendations(rto_compliance, rpo_compliance),
+            recommendations: self
+                .generate_compliance_recommendations(rto_compliance, rpo_compliance),
         }
     }
 
@@ -571,7 +614,9 @@ impl DisasterRecoveryCoordinator {
                     RecoveryStep {
                         id: "stop_writes".to_string(),
                         description: "Stop all write operations to database".to_string(),
-                        command: Some("kubectl scale deployment uveddi-blue --replicas=0".to_string()),
+                        command: Some(
+                            "kubectl scale deployment uveddi-blue --replicas=0".to_string(),
+                        ),
                         estimated_duration: Duration::from_secs(30),
                         dependencies: vec![],
                         status: StepStatus::Pending,
@@ -601,7 +646,9 @@ impl DisasterRecoveryCoordinator {
                     RecoveryStep {
                         id: "restart_application".to_string(),
                         description: "Restart application services".to_string(),
-                        command: Some("kubectl scale deployment uveddi-blue --replicas=3".to_string()),
+                        command: Some(
+                            "kubectl scale deployment uveddi-blue --replicas=3".to_string(),
+                        ),
                         estimated_duration: Duration::from_secs(120),
                         dependencies: vec!["validate_data".to_string()],
                         status: StepStatus::Pending,
@@ -636,7 +683,8 @@ impl DisasterRecoveryCoordinator {
             }
         };
 
-        let total_duration = steps.iter()
+        let total_duration = steps
+            .iter()
             .map(|step| step.estimated_duration)
             .fold(Duration::from_secs(0), |acc, d| acc + d);
 
@@ -663,7 +711,7 @@ impl DisasterRecoveryCoordinator {
         // Execute command if provided
         if let Some(command) = &step.command {
             debug!(command = %command, "Executing command");
-            
+
             // In real implementation, would execute the actual command
             // For simulation, we'll just wait
             sleep(Duration::from_secs(2)).await;
@@ -694,7 +742,7 @@ impl DisasterRecoveryCoordinator {
     /// Validate recovery
     async fn validate_recovery(&self) -> Result<bool> {
         info!("Validating disaster recovery");
-        
+
         // Validate all critical services are healthy
         let health_checks = vec![
             "http://uveddi-dr/health",
@@ -705,7 +753,7 @@ impl DisasterRecoveryCoordinator {
         for endpoint in health_checks {
             // Simulate health check
             sleep(Duration::from_millis(100)).await;
-            
+
             // In real implementation, would make actual HTTP requests
             debug!(endpoint = %endpoint, "Health check passed");
         }
@@ -725,7 +773,7 @@ impl DisasterRecoveryCoordinator {
         // - Email
         // - PagerDuty
         // - SMS
-        
+
         sleep(Duration::from_secs(1)).await; // Simulate notification sending
         Ok(())
     }
@@ -733,10 +781,10 @@ impl DisasterRecoveryCoordinator {
     /// Test backup integrity
     async fn test_backup_integrity(&self) -> Result<bool> {
         info!("Testing backup integrity");
-        
+
         // Get latest backup
         let latest_backup = self.backup_manager.get_latest_backup().await?;
-        
+
         // Verify backup
         self.backup_manager.verify_checksum(&latest_backup).await
     }
@@ -744,30 +792,35 @@ impl DisasterRecoveryCoordinator {
     /// Test DR environment deployment
     async fn test_dr_environment_deployment(&self) -> Result<bool> {
         info!("Testing DR environment deployment");
-        
+
         // Deploy to test namespace
         // In real implementation, would use Kubernetes API
         sleep(Duration::from_secs(5)).await; // Simulate deployment
-        
+
         Ok(true)
     }
 
     /// Test recovery procedures
     async fn test_recovery_procedures(&self) -> Result<bool> {
         info!("Testing recovery procedures");
-        
+
         // Test each recovery procedure in isolation
         sleep(Duration::from_secs(3)).await; // Simulate testing
-        
+
         Ok(true)
     }
 
     /// Generate compliance recommendations
-    fn generate_compliance_recommendations(&self, rto_compliance: f64, rpo_compliance: f64) -> Vec<String> {
+    fn generate_compliance_recommendations(
+        &self,
+        rto_compliance: f64,
+        rpo_compliance: f64,
+    ) -> Vec<String> {
         let mut recommendations = Vec::new();
 
         if rto_compliance < 100.0 {
-            recommendations.push("Consider optimizing recovery procedures to meet RTO targets".to_string());
+            recommendations
+                .push("Consider optimizing recovery procedures to meet RTO targets".to_string());
         }
 
         if rpo_compliance < 100.0 {
@@ -782,8 +835,12 @@ impl DisasterRecoveryCoordinator {
             recommendations.push("Address DR test failures and improve procedures".to_string());
         }
 
-        if self.state.last_test_time.is_none() || 
-           SystemTime::now().duration_since(self.state.last_test_time.unwrap()).unwrap() > Duration::from_secs(90 * 24 * 3600) {
+        if self.state.last_test_time.is_none()
+            || SystemTime::now()
+                .duration_since(self.state.last_test_time.unwrap())
+                .unwrap()
+                > Duration::from_secs(90 * 24 * 3600)
+        {
             recommendations.push("Schedule regular DR tests (quarterly recommended)".to_string());
         }
 
@@ -808,7 +865,10 @@ impl Default for DisasterRecoveryConfig {
             backup_storage_bucket: "uveddi-production-backups".to_string(),
             dr_environment: "uveddi-dr".to_string(),
             runbook_url: "https://docs.uveddi.com/disaster-recovery".to_string(),
-            notification_channels: vec!["slack", "email", "pagerduty"].iter().map(|s| s.to_string()).collect(),
+            notification_channels: vec!["slack", "email", "pagerduty"]
+                .iter()
+                .map(|s| s.to_string())
+                .collect(),
         }
     }
 }
@@ -829,7 +889,7 @@ impl Default for DisasterRecoveryState {
 impl Default for RecoveryMetrics {
     fn default() -> Self {
         Self {
-            mttr: Duration::from_secs(900), // 15 minutes
+            mttr: Duration::from_secs(900),            // 15 minutes
             mtbf: Duration::from_secs(30 * 24 * 3600), // 30 days
             availability: 99.9,
             last_rto: None,
@@ -890,7 +950,7 @@ impl FailoverManager {
 
     async fn execute_failover(&self) -> Result<Duration> {
         let start_time = Instant::now();
-        
+
         info!(
             dr_environment = %self.dr_environment,
             "Executing failover"
@@ -901,7 +961,7 @@ impl FailoverManager {
         // 2. Restore data
         // 3. Switch DNS/load balancer
         // 4. Validate services
-        
+
         sleep(Duration::from_secs(5)).await; // Simulate failover
 
         Ok(start_time.elapsed())
@@ -945,13 +1005,19 @@ mod tests {
     #[tokio::test]
     async fn test_declare_disaster() {
         let mut coordinator = DisasterRecoveryCoordinator::new();
-        let incident_id = coordinator.declare_disaster(
-            IncidentType::DataCenterFailure,
-            "Primary data center is unreachable".to_string(),
-        ).await.unwrap();
+        let incident_id = coordinator
+            .declare_disaster(
+                IncidentType::DataCenterFailure,
+                "Primary data center is unreachable".to_string(),
+            )
+            .await
+            .unwrap();
 
         assert!(!incident_id.is_empty());
-        assert_eq!(coordinator.state.status, DisasterRecoveryStatus::DisasterDeclared);
+        assert_eq!(
+            coordinator.state.status,
+            DisasterRecoveryStatus::DisasterDeclared
+        );
         assert_eq!(coordinator.state.active_incidents.len(), 1);
     }
 
@@ -959,7 +1025,7 @@ mod tests {
     async fn test_dr_test() {
         let mut coordinator = DisasterRecoveryCoordinator::new();
         let test_result = coordinator.run_dr_test().await.unwrap();
-        
+
         assert!(!test_result.test_id.is_empty());
         assert!(!test_result.tests_performed.is_empty());
     }

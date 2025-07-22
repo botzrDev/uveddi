@@ -78,7 +78,7 @@ async fn cleanup_test_project(path: &PathBuf) -> std::io::Result<()> {
 #[cfg(feature = "tui")]
 #[tokio::test]
 async fn test_app_state_initialization() {
-    let app_state = AppState::new();
+    let app_state = AppState::new(None);
 
     assert_eq!(app_state.current_screen, AppScreen::MainMenu);
     assert!(!app_state.should_quit);
@@ -90,7 +90,7 @@ async fn test_app_state_initialization() {
 #[cfg(feature = "tui")]
 #[tokio::test]
 async fn test_basic_message_handling() {
-    let mut app_state = AppState::new();
+    let mut app_state = AppState::new(None);
 
     // Test navigation to analyze form
     let messages = app_state.update(AppMessage::NavigateToAnalyze);
@@ -111,7 +111,7 @@ async fn test_basic_message_handling() {
 #[cfg(feature = "tui")]
 #[tokio::test]
 async fn test_menu_navigation_wrapping() {
-    let mut app_state = AppState::new();
+    let mut app_state = AppState::new(None);
     assert_eq!(app_state.selected_menu_item, 0);
 
     // Move down through menu items
@@ -287,7 +287,7 @@ async fn test_tui_to_cli_command_pipeline() {
     let test_path = create_test_project("pipeline_test").await.unwrap();
 
     // Simulate TUI form submission creating an AnalyzeCommand
-    let mut app_state = AppState::new();
+    let mut app_state = AppState::new(None);
 
     // Navigate to analyze form
     app_state.update(AppMessage::NavigateToAnalyze);
@@ -447,7 +447,7 @@ async fn test_configuration_validation() {
 #[cfg(feature = "tui")]
 #[tokio::test]
 async fn test_screen_transitions_and_state_consistency() {
-    let mut app_state = AppState::new();
+    let mut app_state = AppState::new(None);
 
     // Test all screen transitions maintain state consistency
     let transitions = vec![
@@ -482,7 +482,7 @@ async fn test_screen_transitions_and_state_consistency() {
 #[cfg(feature = "tui")]
 #[tokio::test]
 async fn test_error_state_management() {
-    let mut app_state = AppState::new();
+    let mut app_state = AppState::new(None);
 
     // Simulate an error condition
     app_state.error_message = Some("Test error message".to_string());
@@ -507,7 +507,7 @@ async fn test_error_state_management() {
 #[cfg(feature = "tui")]
 #[tokio::test]
 async fn test_rapid_state_updates_performance() {
-    let mut app_state = AppState::new();
+    let mut app_state = AppState::new(None);
     let start_time = std::time::Instant::now();
 
     // Perform 1000 rapid state updates

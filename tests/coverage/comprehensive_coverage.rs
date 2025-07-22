@@ -1,23 +1,23 @@
 //! Comprehensive Test Coverage Suite
-//! 
+//!
 //! This module implements basic test coverage for critical components
 //! as specified in UV-245 Task 1. Tests are simplified to match
 //! the actual implementation interfaces.
 
+use std::path::PathBuf;
+use std::sync::Arc;
 use uveddi::analysis::AnalysisEngine;
+use uveddi::database::models::PerformanceMetricsConfig;
+use uveddi::monitoring::PerformanceMetricsCollector;
 use uveddi::resilience::CircuitBreaker;
+use uveddi::security::authentication::AuthenticationConfig;
 use uveddi::security::authentication::AuthenticationService;
 use uveddi::security::authorization::AuthorizationEngine;
 use uveddi::security::models::User;
-use uveddi::monitoring::PerformanceMetricsCollector;
-use uveddi::database::models::PerformanceMetricsConfig;
 use uveddi::security::secrets::InMemorySecretStore;
-use uveddi::security::authentication::AuthenticationConfig;
-use std::sync::Arc;
-use std::path::PathBuf;
 
-use tempfile;
 use std::time::Duration;
+use tempfile;
 
 /// Test coverage for Analysis Engine core functionality
 /// Target: 95% coverage for critical analysis paths
@@ -31,7 +31,7 @@ mod analysis_engine_coverage {
         let _engine = AnalysisEngine::builder()
             .build()
             .expect("Failed to build analysis engine");
-        
+
         // The engine should be successfully created
     }
 
@@ -40,12 +40,12 @@ mod analysis_engine_coverage {
         // Test engine with custom cache path
         let temp_dir = tempfile::TempDir::new().expect("Failed to create temp dir");
         let cache_path = temp_dir.path().join("test_cache.db");
-        
+
         let _engine = AnalysisEngine::builder()
             .with_cache_path(&cache_path)
             .build()
             .expect("Failed to build engine with custom cache");
-        
+
         // Engine should be created successfully with custom cache path
     }
 
@@ -54,12 +54,16 @@ mod analysis_engine_coverage {
         // Test file processing capabilities
         let temp_dir = tempfile::TempDir::new().expect("Failed to create temp dir");
         let test_file = temp_dir.path().join("test.rs");
-        
-        std::fs::write(&test_file, r#"
+
+        std::fs::write(
+            &test_file,
+            r#"
             fn main() {
                 println!("Hello, world!");
             }
-        "#).expect("Failed to write test file");
+        "#,
+        )
+        .expect("Failed to write test file");
 
         let mut engine = AnalysisEngine::builder()
             .build()
@@ -110,7 +114,7 @@ mod resilience_patterns_coverage {
     async fn test_circuit_breaker_initialization() {
         // Test circuit breaker creation
         let circuit_breaker = CircuitBreaker::new(5, Duration::from_secs(10));
-        
+
         // Circuit should start closed
         assert!(circuit_breaker.is_closed());
         assert!(!circuit_breaker.is_open());
@@ -120,12 +124,12 @@ mod resilience_patterns_coverage {
     async fn test_circuit_breaker_success_recording() {
         // Test circuit breaker with successful operations
         let mut circuit_breaker = CircuitBreaker::new(3, Duration::from_secs(10));
-        
+
         // Record successful operations
         for _ in 0..5 {
             circuit_breaker.record_success();
         }
-        
+
         assert!(circuit_breaker.is_closed());
     }
 
@@ -133,7 +137,7 @@ mod resilience_patterns_coverage {
     async fn test_circuit_breaker_allow_request() {
         // Test request allowing based on circuit state
         let circuit_breaker = CircuitBreaker::new(3, Duration::from_secs(10));
-        
+
         // Closed circuit should allow requests
         assert!(circuit_breaker.allow_request());
     }
@@ -150,8 +154,10 @@ mod security_framework_coverage {
         // Test authentication service initialization
         let secret_store = Arc::new(InMemorySecretStore::new());
         let auth_config = AuthenticationConfig::default();
-        let _auth_service = AuthenticationService::new(auth_config, secret_store).await.expect("Failed to create auth service");
-        
+        let _auth_service = AuthenticationService::new(auth_config, secret_store)
+            .await
+            .expect("Failed to create auth service");
+
         // Authentication service should be created successfully
     }
 
@@ -159,7 +165,7 @@ mod security_framework_coverage {
     async fn test_authorization_engine_creation() {
         // Test authorization engine initialization
         let _auth_engine = AuthorizationEngine::new();
-        
+
         // Authorization engine should be created successfully
     }
 
@@ -169,9 +175,9 @@ mod security_framework_coverage {
         let user = User::new(
             "external123".to_string(),
             "test@example.com".to_string(),
-            "Test User".to_string()
+            "Test User".to_string(),
         );
-        
+
         // User should be created successfully
         assert_eq!(user.external_id, "external123");
         assert_eq!(user.email, "test@example.com");
@@ -184,9 +190,9 @@ mod security_framework_coverage {
         let user = User::new(
             "user456".to_string(),
             "user@example.org".to_string(),
-            "Another User".to_string()
+            "Another User".to_string(),
         );
-        
+
         assert_eq!(user.external_id, "user456");
         assert_eq!(user.email, "user@example.org");
         assert_eq!(user.display_name, "Another User");
@@ -204,7 +210,7 @@ mod monitoring_system_coverage {
         // Test metrics collector initialization
         let config = PerformanceMetricsConfig::default();
         let _collector = PerformanceMetricsCollector::new(config, 10);
-        
+
         // Metrics collector should be created successfully
     }
 
@@ -212,7 +218,7 @@ mod monitoring_system_coverage {
     async fn test_performance_metrics_config_defaults() {
         // Test default configuration
         let config = PerformanceMetricsConfig::default();
-        
+
         // Config should have reasonable defaults
         assert!(config.enabled); // Assuming enabled is true by default
     }
@@ -227,7 +233,7 @@ mod basic_functionality_coverage {
     async fn test_secret_store_creation() {
         // Test secret store initialization
         let _store = InMemorySecretStore::new();
-        
+
         // Secret store should be created successfully
     }
 
@@ -235,7 +241,7 @@ mod basic_functionality_coverage {
     async fn test_authentication_config_defaults() {
         // Test authentication config defaults
         let _config = AuthenticationConfig::default();
-        
+
         // Config should have reasonable defaults
     }
 
@@ -245,17 +251,17 @@ mod basic_functionality_coverage {
         let temp_dir = tempfile::TempDir::new().expect("Failed to create temp dir");
         let cache_path1 = temp_dir.path().join("cache1.db");
         let cache_path2 = temp_dir.path().join("cache2.db");
-        
+
         let _engine1 = AnalysisEngine::builder()
             .with_cache_path(&cache_path1)
             .build()
             .expect("Failed to build first engine");
-            
+
         let _engine2 = AnalysisEngine::builder()
             .with_cache_path(&cache_path2)
             .build()
             .expect("Failed to build second engine");
-        
+
         // Both engines should be created successfully
     }
 
@@ -265,12 +271,12 @@ mod basic_functionality_coverage {
         let cb1 = CircuitBreaker::new(1, Duration::from_millis(100));
         let cb2 = CircuitBreaker::new(5, Duration::from_secs(1));
         let cb3 = CircuitBreaker::new(10, Duration::from_secs(30));
-        
+
         // All circuit breakers should start closed
         assert!(cb1.is_closed());
         assert!(cb2.is_closed());
         assert!(cb3.is_closed());
-        
+
         // All should allow requests initially
         assert!(cb1.allow_request());
         assert!(cb2.allow_request());

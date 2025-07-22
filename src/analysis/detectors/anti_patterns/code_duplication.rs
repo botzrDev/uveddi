@@ -15,12 +15,12 @@
 //! - Maintains a global index of code blocks across all files
 //! - Provides configurable similarity thresholds
 
-use async_trait::async_trait;
 use crate::analysis::{AnalysisDetector, AnalysisError};
 use crate::ast::tree_sitter::{Query, QueryCursor};
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use crate::error::UveddiError;
+use async_trait::async_trait;
 use log::{debug, info, warn};
 use rayon::prelude::*;
 use sha2::{Digest, Sha256};

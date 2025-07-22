@@ -1,6 +1,6 @@
 //! Historical alert analysis and trend reporting (UV-248)
 
-use crate::resilience::alerting::{AlertType, AlertHistory, EnhancedAlert};
+use crate::resilience::alerting::{AlertHistory, AlertType, EnhancedAlert};
 use crate::resilience::health::AlertSeverity;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque};
@@ -110,8 +110,11 @@ impl AlertAnalytics {
 
         // Add to time series data
         let series_key = format!("{:?}-{}", alert.alert_type, alert.environment);
-        let series = self.time_series_data.entry(series_key).or_insert_with(VecDeque::new);
-        
+        let series = self
+            .time_series_data
+            .entry(series_key)
+            .or_insert_with(VecDeque::new);
+
         let severity_weight = match alert.base_alert.severity {
             AlertSeverity::Critical => 3.0,
             AlertSeverity::Warning => 2.0,
@@ -137,7 +140,8 @@ impl AlertAnalytics {
     /// Generate comprehensive dashboard analytics
     pub fn generate_dashboard(&self) -> AlertDashboard {
         let cutoff_24h = SystemTime::now() - Duration::from_secs(24 * 3600);
-        let recent_alerts: Vec<&AlertHistory> = self.history_buffer
+        let recent_alerts: Vec<&AlertHistory> = self
+            .history_buffer
             .iter()
             .filter(|h| h.timestamp >= cutoff_24h)
             .collect();
@@ -145,30 +149,24 @@ impl AlertAnalytics {
         let total_alerts_24h = recent_alerts.len() as u32;
 
         // Group by severity
-        let alerts_by_severity = recent_alerts
-            .iter()
-            .fold(HashMap::new(), |mut acc, alert| {
-                let key = format!("{:?}", alert.severity);
-                *acc.entry(key).or_insert(0) += alert.count;
-                acc
-            });
+        let alerts_by_severity = recent_alerts.iter().fold(HashMap::new(), |mut acc, alert| {
+            let key = format!("{:?}", alert.severity);
+            *acc.entry(key).or_insert(0) += alert.count;
+            acc
+        });
 
         // Group by type
-        let alerts_by_type = recent_alerts
-            .iter()
-            .fold(HashMap::new(), |mut acc, alert| {
-                let key = format!("{:?}", alert.alert_type);
-                *acc.entry(key).or_insert(0) += alert.count;
-                acc
-            });
+        let alerts_by_type = recent_alerts.iter().fold(HashMap::new(), |mut acc, alert| {
+            let key = format!("{:?}", alert.alert_type);
+            *acc.entry(key).or_insert(0) += alert.count;
+            acc
+        });
 
         // Group by environment
-        let alerts_by_environment = recent_alerts
-            .iter()
-            .fold(HashMap::new(), |mut acc, alert| {
-                *acc.entry(alert.environment.clone()).or_insert(0) += alert.count;
-                acc
-            });
+        let alerts_by_environment = recent_alerts.iter().fold(HashMap::new(), |mut acc, alert| {
+            *acc.entry(alert.environment.clone()).or_insert(0) += alert.count;
+            acc
+        });
 
         // Top alert sources (simplified - would be more sophisticated in real implementation)
         let mut top_sources: Vec<(String, u32)> = alerts_by_type
@@ -182,7 +180,8 @@ impl AlertAnalytics {
         let alert_trends = self.generate_trend_analyses();
 
         // Get recurring patterns
-        let recurring_patterns: Vec<AlertPattern> = self.detected_patterns
+        let recurring_patterns: Vec<AlertPattern> = self
+            .detected_patterns
             .values()
             .filter(|p| p.occurrences >= 3) // Only patterns with 3+ occurrences
             .cloned()
@@ -245,20 +244,16 @@ impl AlertAnalytics {
         environment: String,
     ) -> TrendAnalysis {
         let values: Vec<f64> = data_points.iter().map(|p| p.value).collect();
-        
+
         // Simple linear trend calculation
         let n = values.len() as f64;
         let sum_x: f64 = (0..values.len()).map(|i| i as f64).sum();
         let sum_y: f64 = values.iter().sum();
-        let sum_xy: f64 = values
-            .iter()
-            .enumerate()
-            .map(|(i, &y)| i as f64 * y)
-            .sum();
+        let sum_xy: f64 = values.iter().enumerate().map(|(i, &y)| i as f64 * y).sum();
         let sum_x2: f64 = (0..values.len()).map(|i| (i as f64).powi(2)).sum();
 
         let slope = (n * sum_xy - sum_x * sum_y) / (n * sum_x2 - sum_x.powi(2));
-        
+
         let (trend_direction, trend_strength) = if slope.abs() < 0.01 {
             (TrendDirection::Stable, slope.abs())
         } else if slope > 0.1 {
@@ -279,7 +274,7 @@ impl AlertAnalytics {
         let prediction = if trend_strength > 0.1 {
             let predicted_value = values.last().unwrap_or(&0.0) + slope * 24.0; // 24 hours ahead
             let confidence_range = trend_strength * 0.5; // Simple confidence interval
-            
+
             Some(TrendPrediction {
                 predicted_value,
                 confidence_interval: (
@@ -305,12 +300,13 @@ impl AlertAnalytics {
 
     /// Update pattern detection with new alert
     fn update_pattern_detection(&mut self, alert: &EnhancedAlert) {
-        let pattern_key = format!("{:?}-{}-{}", 
-                                 alert.alert_type, 
-                                 alert.environment,
-                                 alert.base_alert.component);
+        let pattern_key = format!(
+            "{:?}-{}-{}",
+            alert.alert_type, alert.environment, alert.base_alert.component
+        );
 
-        let pattern = self.detected_patterns
+        let pattern = self
+            .detected_patterns
             .entry(pattern_key.clone())
             .or_insert(AlertPattern {
                 pattern_id: pattern_key.clone(),
@@ -328,7 +324,8 @@ impl AlertAnalytics {
 
         // Update frequency calculation
         if pattern.occurrences > 1 {
-            let total_duration = pattern.last_seen
+            let total_duration = pattern
+                .last_seen
                 .duration_since(pattern.first_seen)
                 .unwrap_or(Duration::from_secs(1));
             pattern.frequency = total_duration / (pattern.occurrences - 1);
@@ -336,7 +333,10 @@ impl AlertAnalytics {
 
         // Calculate confidence score based on regularity (need to get pattern again to avoid borrow checker issues)
         let confidence = self.calculate_pattern_confidence_for_key(&pattern_key);
-        self.detected_patterns.get_mut(&pattern_key).unwrap().confidence_score = confidence;
+        self.detected_patterns
+            .get_mut(&pattern_key)
+            .unwrap()
+            .confidence_score = confidence;
     }
 
     /// Calculate confidence score for alert pattern by key
@@ -372,11 +372,8 @@ impl AlertAnalytics {
         }
 
         let mean = values.iter().sum::<f64>() / values.len() as f64;
-        let variance = values
-            .iter()
-            .map(|x| (x - mean).powi(2))
-            .sum::<f64>() / values.len() as f64;
-        
+        let variance = values.iter().map(|x| (x - mean).powi(2)).sum::<f64>() / values.len() as f64;
+
         variance
     }
 
@@ -407,11 +404,7 @@ impl AlertAnalytics {
     }
 
     /// Get alerts for specific time period
-    pub fn get_alerts_in_period(
-        &self,
-        start: SystemTime,
-        end: SystemTime,
-    ) -> Vec<&AlertHistory> {
+    pub fn get_alerts_in_period(&self, start: SystemTime, end: SystemTime) -> Vec<&AlertHistory> {
         self.history_buffer
             .iter()
             .filter(|alert| alert.timestamp >= start && alert.timestamp <= end)
@@ -427,7 +420,7 @@ impl AlertAnalytics {
     ) -> Option<Vec<TimeSeriesPoint>> {
         let series_key = format!("{:?}-{}", alert_type, environment);
         let cutoff = SystemTime::now() - Duration::from_secs(days as u64 * 24 * 3600);
-        
+
         self.time_series_data.get(&series_key).map(|series| {
             series
                 .iter()
@@ -446,7 +439,7 @@ impl AlertAnalytics {
             if alert.timestamp >= cutoff {
                 let date_key = format!("{:?}", alert.timestamp); // Simplified - would use proper date formatting
                 let hour = 12; // Placeholder - would extract actual hour from timestamp
-                
+
                 let day_data = heatmap.entry(date_key).or_insert_with(HashMap::new);
                 *day_data.entry(hour).or_insert(0) += alert.count;
             }
@@ -458,9 +451,8 @@ impl AlertAnalytics {
     /// Export analytics data for external systems
     pub fn export_analytics_data(&self, format: AnalyticsExportFormat) -> String {
         match format {
-            AnalyticsExportFormat::Json => {
-                serde_json::to_string_pretty(&self.generate_dashboard()).unwrap_or_else(|_| "{}".to_string())
-            }
+            AnalyticsExportFormat::Json => serde_json::to_string_pretty(&self.generate_dashboard())
+                .unwrap_or_else(|_| "{}".to_string()),
             AnalyticsExportFormat::Csv => {
                 let mut csv = String::from("timestamp,alert_type,severity,environment,count\n");
                 for alert in &self.history_buffer {
@@ -497,7 +489,11 @@ mod tests {
     use crate::resilience::health::{Alert, AlertSeverity};
     use std::collections::HashMap;
 
-    fn create_test_alert(alert_type: AlertType, severity: AlertSeverity, environment: &str) -> EnhancedAlert {
+    fn create_test_alert(
+        alert_type: AlertType,
+        severity: AlertSeverity,
+        environment: &str,
+    ) -> EnhancedAlert {
         EnhancedAlert {
             base_alert: Alert {
                 id: format!("test-{}", rand::random::<u32>()),
@@ -533,14 +529,14 @@ mod tests {
         let alert = create_test_alert(
             AlertType::CriticalFailureRate,
             AlertSeverity::Critical,
-            "production"
+            "production",
         );
 
         analytics.record_alert(&alert);
 
         assert_eq!(analytics.history_buffer.len(), 1);
         assert_eq!(analytics.time_series_data.len(), 1);
-        
+
         let series_key = "CriticalFailureRate-production";
         assert!(analytics.time_series_data.contains_key(series_key));
     }
@@ -548,13 +544,17 @@ mod tests {
     #[test]
     fn test_generate_dashboard() {
         let mut analytics = AlertAnalytics::new();
-        
+
         // Add some test alerts
         for i in 0..5 {
             let alert = create_test_alert(
                 AlertType::CriticalFailureRate,
-                if i % 2 == 0 { AlertSeverity::Critical } else { AlertSeverity::Warning },
-                "production"
+                if i % 2 == 0 {
+                    AlertSeverity::Critical
+                } else {
+                    AlertSeverity::Warning
+                },
+                "production",
             );
             analytics.record_alert(&alert);
         }
@@ -579,7 +579,7 @@ mod tests {
         }
 
         assert!(!analytics.detected_patterns.is_empty());
-        
+
         let pattern_key = format!("{:?}-{}-test-component", alert_type, environment);
         let pattern = analytics.detected_patterns.get(&pattern_key);
         assert!(pattern.is_some());
@@ -608,7 +608,7 @@ mod tests {
 
         let dashboard = analytics.generate_dashboard();
         assert!(!dashboard.alert_trends.is_empty());
-        
+
         let trend = &dashboard.alert_trends[0];
         assert_eq!(trend.alert_type, alert_type);
         assert_eq!(trend.environment, environment);
@@ -620,7 +620,7 @@ mod tests {
         let alert = create_test_alert(
             AlertType::ResourceUtilization,
             AlertSeverity::Warning,
-            "production"
+            "production",
         );
         analytics.record_alert(&alert);
 
@@ -646,11 +646,11 @@ mod tests {
         let mut analytics = AlertAnalytics::new();
         let now = SystemTime::now();
         let hour_ago = now - Duration::from_secs(3600);
-        
+
         let alert = create_test_alert(
             AlertType::InfrastructureIssues,
             AlertSeverity::Critical,
-            "production"
+            "production",
         );
         analytics.record_alert(&alert);
 

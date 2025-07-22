@@ -4,14 +4,14 @@
 //! decomposed components of the AnalysisEngine, following the principles
 //! outlined in UV-289.
 
-pub mod traits;
-pub mod config_service;
-pub mod ast_provider;
-pub mod plugin_manager;
 pub mod analysis_aggregator;
+pub mod ast_provider;
+pub mod cache_manager;
+pub mod config_service;
 pub mod dependency_graph_builder;
 pub mod detector_scheduler;
-pub mod cache_manager;
+pub mod plugin_manager;
+pub mod traits;
 
 #[cfg(test)]
 pub mod tests;
@@ -20,15 +20,15 @@ pub mod tests;
 pub use traits::*;
 
 // Re-export component implementations
-pub use config_service::ConfigurationService;
-pub use ast_provider::AstProviderImpl;
-pub use plugin_manager::{PluginManager, PluginManagerHandle};
 pub use analysis_aggregator::AnalysisAggregator;
+pub use ast_provider::AstProviderImpl;
+pub use cache_manager::{CacheManager, CacheManagerImpl, CacheStats};
+pub use config_service::ConfigurationService;
 pub use dependency_graph_builder::DependencyGraphBuilderImpl;
 pub use detector_scheduler::DetectorScheduler;
-pub use cache_manager::{CacheManager, CacheManagerImpl, CacheStats};
+pub use plugin_manager::{PluginManager, PluginManagerHandle};
 
 // Aliases for acceptance criteria naming
-pub use detector_scheduler::DetectorScheduler as DetectorManager;
 pub use cache_manager::CacheManagerImpl as CacheManagerComponent;
 pub use dependency_graph_builder::DependencyGraphBuilderImpl as DependencyAnalyzer;
+pub use detector_scheduler::DetectorScheduler as DetectorManager;

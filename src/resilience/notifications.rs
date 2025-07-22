@@ -1,6 +1,6 @@
 //! Notification channel implementations for alert system (UV-248)
 
-use crate::resilience::alerting::{AlertingError, EnhancedAlert, NotificationChannel, ChannelType};
+use crate::resilience::alerting::{AlertingError, ChannelType, EnhancedAlert, NotificationChannel};
 use reqwest::Client;
 use serde_json::Value;
 use std::collections::HashMap;
@@ -39,15 +39,13 @@ impl NotificationClient {
         channel: &NotificationChannel,
         alert: &EnhancedAlert,
     ) -> Result<(), AlertingError> {
-        let webhook_url = channel
-            .config
-            .webhook_url
-            .as_ref()
-            .ok_or_else(|| AlertingError::ConfigurationError("Slack webhook URL not configured".to_string()))?;
+        let webhook_url = channel.config.webhook_url.as_ref().ok_or_else(|| {
+            AlertingError::ConfigurationError("Slack webhook URL not configured".to_string())
+        })?;
 
         let color = match alert.base_alert.severity {
             crate::resilience::health::AlertSeverity::Critical => "#FF0000",
-            crate::resilience::health::AlertSeverity::Warning => "#FFA500", 
+            crate::resilience::health::AlertSeverity::Warning => "#FFA500",
             crate::resilience::health::AlertSeverity::Info => "#00FF00",
         };
 
@@ -67,7 +65,7 @@ impl NotificationClient {
                         "short": true
                     },
                     {
-                        "title": "Component", 
+                        "title": "Component",
                         "value": alert.base_alert.component,
                         "short": true
                     },
@@ -128,18 +126,14 @@ impl NotificationClient {
         channel: &NotificationChannel,
         alert: &EnhancedAlert,
     ) -> Result<(), AlertingError> {
-        let recipients = channel
-            .config
-            .email_recipients
-            .as_ref()
-            .ok_or_else(|| AlertingError::ConfigurationError("Email recipients not configured".to_string()))?;
+        let recipients = channel.config.email_recipients.as_ref().ok_or_else(|| {
+            AlertingError::ConfigurationError("Email recipients not configured".to_string())
+        })?;
 
         // Email subject and body
         let subject = format!(
             "[Uveddi Alert] {:?} - {} ({})",
-            alert.base_alert.severity,
-            alert.alert_type,
-            alert.environment
+            alert.base_alert.severity, alert.alert_type, alert.environment
         );
 
         let body = format!(
@@ -226,17 +220,13 @@ This is an automated alert from the Uveddi monitoring system.
         channel: &NotificationChannel,
         alert: &EnhancedAlert,
     ) -> Result<(), AlertingError> {
-        let repo = channel
-            .config
-            .github_repo
-            .as_ref()
-            .ok_or_else(|| AlertingError::ConfigurationError("GitHub repo not configured".to_string()))?;
+        let repo = channel.config.github_repo.as_ref().ok_or_else(|| {
+            AlertingError::ConfigurationError("GitHub repo not configured".to_string())
+        })?;
 
-        let token = channel
-            .config
-            .github_token
-            .as_ref()
-            .ok_or_else(|| AlertingError::ConfigurationError("GitHub token not configured".to_string()))?;
+        let token = channel.config.github_token.as_ref().ok_or_else(|| {
+            AlertingError::ConfigurationError("GitHub token not configured".to_string())
+        })?;
 
         // GitHub status states: error, failure, pending, success
         let state = match alert.base_alert.severity {
@@ -246,7 +236,7 @@ This is an automated alert from the Uveddi monitoring system.
         };
 
         let description = format!("{}: {}", alert.alert_type, alert.base_alert.message);
-        
+
         // Truncate description if too long (GitHub limit is 140 characters)
         let description = if description.len() > 140 {
             format!("{}...", &description[..137])
@@ -306,7 +296,8 @@ This is an automated alert from the Uveddi monitoring system.
             base_alert: crate::resilience::health::Alert {
                 id: "test-alert".to_string(),
                 component: "alert-system".to_string(),
-                message: "This is a test alert to verify notification channel configuration".to_string(),
+                message: "This is a test alert to verify notification channel configuration"
+                    .to_string(),
                 severity: crate::resilience::health::AlertSeverity::Info,
                 created_at: std::time::SystemTime::now(),
             },
@@ -434,7 +425,7 @@ mod tests {
     async fn test_email_notification_structure() {
         let client = NotificationClient::new();
         let alert = create_test_alert();
-        
+
         let channel = NotificationChannel {
             name: "test-email".to_string(),
             channel_type: ChannelType::Email,
@@ -462,7 +453,7 @@ mod tests {
     #[test]
     fn test_slack_payload_structure() {
         let alert = create_test_alert();
-        
+
         // Test that we can create the expected JSON structure
         let payload = serde_json::json!({
             "username": "Uveddi Alert System",

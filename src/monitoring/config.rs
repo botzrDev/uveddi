@@ -9,9 +9,9 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 
-use super::distribution::{SmtpConfig, SlackWebhookConfig, DistributionChannel};
-use super::scheduler::{ScheduleConfig, RetryConfig};
-use super::reporting::{ReportType, StakeholderRole, BrandingConfig, TemplateCustomization};
+use super::distribution::{DistributionChannel, SlackWebhookConfig, SmtpConfig};
+use super::reporting::{BrandingConfig, ReportType, StakeholderRole, TemplateCustomization};
+use super::scheduler::{RetryConfig, ScheduleConfig};
 
 /// Main configuration structure for the reporting system
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -229,35 +229,37 @@ impl ConfigManager {
     pub fn load_from_file<P: AsRef<Path>>(path: P) -> Result<Self> {
         let config_str = fs::read_to_string(&path)
             .with_context(|| format!("Failed to read config file: {}", path.as_ref().display()))?;
-        
-        let config: ReportingSystemConfig = match path.as_ref().extension().and_then(|s| s.to_str()) {
-            Some("toml") => toml::from_str(&config_str)
-                .context("Failed to parse TOML configuration")?,
-            Some("json") => serde_json::from_str(&config_str)
-                .context("Failed to parse JSON configuration")?,
-            Some("yaml") | Some("yml") => {
-                #[cfg(feature = "yaml")]
-                {
-                    serde_yaml::from_str(&config_str)
-                        .context("Failed to parse YAML configuration")?
+
+        let config: ReportingSystemConfig =
+            match path.as_ref().extension().and_then(|s| s.to_str()) {
+                Some("toml") => {
+                    toml::from_str(&config_str).context("Failed to parse TOML configuration")?
                 }
-                #[cfg(not(feature = "yaml"))]
-                {
-                    anyhow::bail!("YAML support not enabled in build")
+                Some("json") => serde_json::from_str(&config_str)
+                    .context("Failed to parse JSON configuration")?,
+                Some("yaml") | Some("yml") => {
+                    #[cfg(feature = "yaml")]
+                    {
+                        serde_yaml::from_str(&config_str)
+                            .context("Failed to parse YAML configuration")?
+                    }
+                    #[cfg(not(feature = "yaml"))]
+                    {
+                        anyhow::bail!("YAML support not enabled in build")
+                    }
                 }
-            }
-            _ => anyhow::bail!("Unsupported configuration file format"),
-        };
-        
+                _ => anyhow::bail!("Unsupported configuration file format"),
+            };
+
         let manager = Self {
             config,
             config_path: Some(path.as_ref().to_string_lossy().to_string()),
         };
-        
+
         manager.validate()?;
         Ok(manager)
     }
-    
+
     /// Create with default configuration
     pub fn with_defaults() -> Self {
         Self {
@@ -265,53 +267,58 @@ impl ConfigManager {
             config_path: None,
         }
     }
-    
+
     /// Get the full configuration
     pub fn config(&self) -> &ReportingSystemConfig {
         &self.config
     }
-    
+
     /// Get system configuration
     pub fn system_config(&self) -> &SystemConfig {
         &self.config.system
     }
-    
+
     /// Get all report job configurations
     pub fn report_jobs(&self) -> &[ReportJobConfig] {
         &self.config.reports
     }
-    
+
     /// Get distribution configuration
     pub fn distribution_config(&self) -> &DistributionConfig {
         &self.config.distribution
     }
-    
+
     /// Get template configuration
     pub fn template_config(&self) -> &TemplateConfig {
         &self.config.templates
     }
-    
+
     /// Get storage configuration
     pub fn storage_config(&self) -> &StorageConfig {
         &self.config.storage
     }
-    
+
     /// Get monitoring configuration
     pub fn monitoring_config(&self) -> &MonitoringConfig {
         &self.config.monitoring
     }
-    
+
     /// Get enabled report jobs
     pub fn enabled_report_jobs(&self) -> Vec<&ReportJobConfig> {
-        self.config.reports.iter()
+        self.config
+            .reports
+            .iter()
             .filter(|job| job.enabled && self.config.system.enabled)
             .collect()
     }
-    
+
     /// Get distribution channels for a report job
-    pub fn get_distribution_channels(&self, job: &ReportJobConfig) -> Result<Vec<DistributionChannel>> {
+    pub fn get_distribution_channels(
+        &self,
+        job: &ReportJobConfig,
+    ) -> Result<Vec<DistributionChannel>> {
         let mut channels = Vec::new();
-        
+
         for channel_name in &job.distribution_channels {
             if let Some(channel_config) = self.config.distribution.channels.get(channel_name) {
                 if channel_config.enabled {
@@ -319,28 +326,40 @@ impl ConfigManager {
                     channels.push(channel);
                 }
             } else {
-                log::warn!("Distribution channel '{}' not found in configuration", channel_name);
+                log::warn!(
+                    "Distribution channel '{}' not found in configuration",
+                    channel_name
+                );
             }
         }
-        
+
         Ok(channels)
     }
-    
+
     /// Convert channel config to distribution channel
     fn convert_channel_config(&self, config: &ChannelConfig) -> Result<DistributionChannel> {
         match &config.channel_type {
-            ChannelType::Email { address, subject_template } => {
-                Ok(DistributionChannel::Email {
-                    address: address.clone(),
-                    subject_template: subject_template.clone(),
-                })
-            }
-            ChannelType::Slack { webhook_name, channel, username, icon_emoji } => {
-                let webhook_config = self.config.distribution.slack
+            ChannelType::Email {
+                address,
+                subject_template,
+            } => Ok(DistributionChannel::Email {
+                address: address.clone(),
+                subject_template: subject_template.clone(),
+            }),
+            ChannelType::Slack {
+                webhook_name,
+                channel,
+                username,
+                icon_emoji,
+            } => {
+                let webhook_config = self
+                    .config
+                    .distribution
+                    .slack
                     .as_ref()
                     .and_then(|slack| slack.webhooks.get(webhook_name))
                     .context("Slack webhook configuration not found")?;
-                
+
                 Ok(DistributionChannel::Slack {
                     webhook_url: webhook_config.webhook_url.clone(),
                     channel: channel.clone(),
@@ -350,29 +369,32 @@ impl ConfigManager {
             }
         }
     }
-    
+
     /// Validate configuration
     pub fn validate(&self) -> Result<()> {
         // Validate system config
         if self.config.system.max_concurrent_reports == 0 {
             anyhow::bail!("max_concurrent_reports must be greater than 0");
         }
-        
+
         // Validate report jobs
         for job in &self.config.reports {
             if job.name.is_empty() {
                 anyhow::bail!("Report job name cannot be empty");
             }
-            
+
             // Validate distribution channels exist
             for channel_name in &job.distribution_channels {
                 if !self.config.distribution.channels.contains_key(channel_name) {
-                    anyhow::bail!("Distribution channel '{}' referenced in job '{}' does not exist", 
-                        channel_name, job.name);
+                    anyhow::bail!(
+                        "Distribution channel '{}' referenced in job '{}' does not exist",
+                        channel_name,
+                        job.name
+                    );
                 }
             }
         }
-        
+
         // Validate distribution config
         if let Some(email_config) = &self.config.distribution.email {
             if email_config.smtp.server.is_empty() {
@@ -382,24 +404,30 @@ impl ConfigManager {
                 anyhow::bail!("SMTP from_address cannot be empty");
             }
         }
-        
+
         if let Some(slack_config) = &self.config.distribution.slack {
             if slack_config.webhooks.is_empty() {
                 anyhow::bail!("At least one Slack webhook must be configured");
             }
-            if !slack_config.webhooks.contains_key(&slack_config.default_webhook) {
-                anyhow::bail!("Default Slack webhook '{}' does not exist", slack_config.default_webhook);
+            if !slack_config
+                .webhooks
+                .contains_key(&slack_config.default_webhook)
+            {
+                anyhow::bail!(
+                    "Default Slack webhook '{}' does not exist",
+                    slack_config.default_webhook
+                );
             }
         }
-        
+
         // Validate storage config
         if self.config.storage.max_reports_in_memory == 0 {
             anyhow::bail!("max_reports_in_memory must be greater than 0");
         }
-        
+
         Ok(())
     }
-    
+
     /// Save configuration to file
     pub fn save_to_file<P: AsRef<Path>>(&self, path: P) -> Result<()> {
         let content = match path.as_ref().extension().and_then(|s| s.to_str()) {
@@ -420,56 +448,61 @@ impl ConfigManager {
             }
             _ => anyhow::bail!("Unsupported configuration file format"),
         };
-        
+
         fs::write(&path, content)
             .with_context(|| format!("Failed to write config file: {}", path.as_ref().display()))?;
-        
+
         Ok(())
     }
-    
+
     /// Update configuration and validate
     pub fn update_config(&mut self, config: ReportingSystemConfig) -> Result<()> {
         config.validate()?;
         self.config = config;
         Ok(())
     }
-    
+
     /// Add a new report job
     pub fn add_report_job(&mut self, job: ReportJobConfig) -> Result<()> {
         // Check for duplicate names
-        if self.config.reports.iter().any(|existing| existing.name == job.name) {
+        if self
+            .config
+            .reports
+            .iter()
+            .any(|existing| existing.name == job.name)
+        {
             anyhow::bail!("Report job with name '{}' already exists", job.name);
         }
-        
+
         // Validate the job
         for channel_name in &job.distribution_channels {
             if !self.config.distribution.channels.contains_key(channel_name) {
                 anyhow::bail!("Distribution channel '{}' does not exist", channel_name);
             }
         }
-        
+
         self.config.reports.push(job);
         Ok(())
     }
-    
+
     /// Remove a report job by name
     pub fn remove_report_job(&mut self, name: &str) -> Result<()> {
         let initial_len = self.config.reports.len();
         self.config.reports.retain(|job| job.name != name);
-        
+
         if self.config.reports.len() == initial_len {
             anyhow::bail!("Report job with name '{}' not found", name);
         }
-        
+
         Ok(())
     }
-    
+
     /// Add a distribution channel
     pub fn add_distribution_channel(&mut self, name: String, config: ChannelConfig) -> Result<()> {
         if self.config.distribution.channels.contains_key(&name) {
             anyhow::bail!("Distribution channel '{}' already exists", name);
         }
-        
+
         self.config.distribution.channels.insert(name, config);
         Ok(())
     }
@@ -592,43 +625,43 @@ impl ConfigBuilder {
             config: ReportingSystemConfig::default(),
         }
     }
-    
+
     /// Configure system settings
     pub fn with_system_config(mut self, config: SystemConfig) -> Self {
         self.config.system = config;
         self
     }
-    
+
     /// Add a report job
     pub fn with_report_job(mut self, job: ReportJobConfig) -> Self {
         self.config.reports.push(job);
         self
     }
-    
+
     /// Configure distribution
     pub fn with_distribution_config(mut self, config: DistributionConfig) -> Self {
         self.config.distribution = config;
         self
     }
-    
+
     /// Configure templates
     pub fn with_template_config(mut self, config: TemplateConfig) -> Self {
         self.config.templates = config;
         self
     }
-    
+
     /// Configure storage
     pub fn with_storage_config(mut self, config: StorageConfig) -> Self {
         self.config.storage = config;
         self
     }
-    
+
     /// Configure monitoring
     pub fn with_monitoring_config(mut self, config: MonitoringConfig) -> Self {
         self.config.monitoring = config;
         self
     }
-    
+
     /// Build the configuration
     pub fn build(self) -> Result<ReportingSystemConfig> {
         self.config.validate()?;
@@ -659,7 +692,7 @@ impl ConfigValidation for ReportingSystemConfig {
 pub mod presets {
     use super::*;
     use crate::monitoring::scheduler::schedules;
-    
+
     /// Create a basic daily health report configuration
     pub fn daily_health_report(
         stakeholder: StakeholderRole,
@@ -677,7 +710,7 @@ pub mod presets {
             filters: None,
         })
     }
-    
+
     /// Create a weekly trend analysis configuration
     pub fn weekly_trend_report(
         stakeholder: StakeholderRole,
@@ -695,7 +728,7 @@ pub mod presets {
             filters: None,
         })
     }
-    
+
     /// Create a monthly executive summary configuration
     pub fn monthly_executive_report(channels: Vec<String>) -> Result<ReportJobConfig> {
         Ok(ReportJobConfig {

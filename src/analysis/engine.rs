@@ -2,7 +2,7 @@
 //
 // This file requires several refactorings to align with the updated architecture and error handling.
 // The following changes are necessary:
-// 
+//
 // - Replace deprecated plugin manager calls with correct methods
 //   - Example: `plugin_manager.unload_plugin(plugin_id).await`
 //   - Example: `plugin_manager.load_plugin(manifest, binary).await`
@@ -22,9 +22,6 @@
 
 use crate::analysis::cache::ast::{AstCache, CacheConfig};
 use crate::analysis::components::cache_manager::CacheManager;
-use crate::analysis::incremental::{
-    IncrementalAnalysisEngine, IncrementalConfig, IncrementalAnalysisResult
-};
 use crate::analysis::detectors::anti_patterns::dead_code::{DeadCodeConfig, DeadCodeDetector};
 use crate::analysis::detectors::anti_patterns::large_classes::{
     LargeClassConfig, LargeClassDetector,
@@ -34,6 +31,9 @@ use crate::analysis::detectors::dependency::{Dependency, DependencyExtractor};
 use crate::analysis::extractors::SymbolExtractor;
 use crate::analysis::graph::dependency::LocalDependencyGraph;
 use crate::analysis::graph::dependency::{ComponentNode, LocalDependencyType};
+use crate::analysis::incremental::{
+    IncrementalAnalysisEngine, IncrementalAnalysisResult, IncrementalConfig,
+};
 use crate::analysis::symbols::GlobalSymbolTable;
 use crate::analysis::traits::{AstParserTrait, DependencyExtractorTrait, ResultCacheTrait};
 use crate::analysis::AnalysisDetector;
@@ -58,11 +58,11 @@ use crate::error::UveddiError;
 // Component imports
 use crate::analysis::components::traits::{
     AnalysisAggregator as AnalysisAggregatorTrait, AstProvider as AstProviderTrait,
-    DependencyGraphBuilder as DependencyGraphBuilderTrait, DetectorScheduler as DetectorSchedulerTrait,
-    PluginManagerHandle as PluginManagerHandleTrait,
+    DependencyGraphBuilder as DependencyGraphBuilderTrait,
+    DetectorScheduler as DetectorSchedulerTrait, PluginManagerHandle as PluginManagerHandleTrait,
 };
-use std::sync::Arc;
 use log::{info, warn};
+use std::sync::Arc;
 
 use chrono::Utc;
 use std::path::{Path, PathBuf};
@@ -174,7 +174,10 @@ impl AnalysisEngine {
     /// ```
     #[inline]
     pub async fn new_async() -> crate::error::Result<Self> {
-        AnalysisEngineBuilder::new().enable_plugins(true).build_async().await
+        AnalysisEngineBuilder::new()
+            .enable_plugins(true)
+            .build_async()
+            .await
     }
 
     /// Creates an AnalysisEngine with a custom set of detectors.
@@ -194,7 +197,9 @@ impl AnalysisEngine {
     pub fn with_detectors(
         detectors: Vec<Box<dyn AnalysisDetector + Send + Sync>>,
     ) -> crate::error::Result<Self> {
-        AnalysisEngineBuilder::new().with_detectors(detectors).build()
+        AnalysisEngineBuilder::new()
+            .with_detectors(detectors)
+            .build()
     }
 
     /// Creates an AnalysisEngine with a custom cache database path.
@@ -212,7 +217,9 @@ impl AnalysisEngine {
     /// This constructor is synchronous and performs no I/O or async operations.
     #[inline]
     pub fn with_cache_path(cache_path: &Path) -> crate::error::Result<Self> {
-        AnalysisEngineBuilder::new().with_cache_path(cache_path).build()
+        AnalysisEngineBuilder::new()
+            .with_cache_path(cache_path)
+            .build()
     }
 
     /// Creates a new analysis engine with an in-memory cache database.
@@ -282,7 +289,10 @@ impl AnalysisEngine {
         note = "Use `AnalysisEngine::builder().enable_plugins(true).build_async().await` for async plugin initialization. Refer to UV-294 guidelines for async standardization."
     )]
     pub async fn new_with_plugins() -> crate::error::Result<Self> {
-        AnalysisEngineBuilder::new().enable_plugins(true).build_async().await
+        AnalysisEngineBuilder::new()
+            .enable_plugins(true)
+            .build_async()
+            .await
     }
 
     /// Deprecated: Use `AnalysisEngine::builder().with_detectors(detectors).enable_plugins(true).build_async().await` instead.
@@ -346,7 +356,7 @@ impl AnalysisEngine {
                 "dependency validation",
             ));
         }
-        
+
         // Validate language support compatibility
         let parser_languages = ast_parser.supported_languages();
         if parser_languages.is_empty() {
@@ -355,21 +365,22 @@ impl AnalysisEngine {
                 "dependency validation",
             ));
         }
-        
+
         // Ensure dependency extractor supports at least one language that the parser does
-        let has_common_language = parser_languages.iter()
+        let has_common_language = parser_languages
+            .iter()
             .any(|lang| dependency_extractor.supports_language(lang));
-        
+
         if !has_common_language {
             return Err(crate::error::UveddiError::config_error(
                 "AST parser and dependency extractor have no common language support",
                 "dependency validation",
             ));
         }
-        
+
         // Validate cache (basic check - could be expanded)
         let _stats = cache.get_stats(); // This should not panic for a valid cache
-        
+
         Ok(())
     }
 
@@ -403,7 +414,7 @@ impl AnalysisEngine {
         path: &Path,
     ) -> crate::error::Result<(Vec<ArchitecturalIssue>, LocalDependencyGraph)> {
         // Facade pattern: delegate to components
-        
+
         // Phase 1: Use dependency builder to construct the dependency graph
         info!("Building dependency graph...");
         let dependency_graph = self.dependency_builder.build_graph(path).await?;
@@ -421,15 +432,15 @@ impl AnalysisEngine {
         // Phase 3: Use aggregator to collect and format results
         self.aggregator.record_findings(file_issues.clone());
         let aggregated_stats = self.aggregator.get_stats();
-        
+
         // UV-2: Initialize metrics collector and emit metrics
         let metrics_config = PerformanceMetricsConfig::default();
         let files_analyzed = aggregated_stats.files_processed;
         let mut metrics_collector =
             PerformanceMetricsCollector::new(metrics_config, files_analyzed);
-        
+
         metrics_collector.record_analysis_metrics(file_issues.len(), files_analyzed);
-        
+
         if let Err(e) = metrics_collector.emit_metrics() {
             warn!("Failed to emit performance metrics: {}", e);
         }
@@ -468,10 +479,10 @@ impl AnalysisEngine {
     /// let mut engine = AnalysisEngine::new()?;
     /// let config = IncrementalConfig::default();
     /// let (issues, result) = engine.analyze_incremental(Path::new("src/"), config).await?;
-    /// 
+    ///
     /// println!("Found {} issues", issues.len());
     /// if result.was_incremental {
-    ///     println!("Time saved: {}ms ({:.1}% improvement)", 
+    ///     println!("Time saved: {}ms ({:.1}% improvement)",
     ///         result.time_saved_ms,
     ///         (result.time_saved_ms as f64 / (result.time_saved_ms + result.performance_metrics.reanalysis_time_ms) as f64) * 100.0
     ///     );
@@ -490,40 +501,43 @@ impl AnalysisEngine {
         } else {
             path.join(".uveddi")
         };
-        
+
         let state_file_path = state_dir.join("incremental_state.json");
 
         // Create incremental analysis engine
-        let mut incremental_engine = IncrementalAnalysisEngine::new(
-            self.clone_for_incremental()?,
-            config,
-            state_file_path,
-        ).await.map_err(|e| crate::error::UveddiError::AnalysisError { 
-            message: format!("Failed to initialize incremental analysis: {}", e),
-            file: path.to_string_lossy().to_string(),
-            line: 0,
-            context: "incremental analysis initialization".to_string(),
-            suggestion: "Check file permissions and system resources".to_string(),
-            source: None
-        })?;
+        let mut incremental_engine =
+            IncrementalAnalysisEngine::new(self.clone_for_incremental()?, config, state_file_path)
+                .await
+                .map_err(|e| crate::error::UveddiError::AnalysisError {
+                    message: format!("Failed to initialize incremental analysis: {}", e),
+                    file: path.to_string_lossy().to_string(),
+                    line: 0,
+                    context: "incremental analysis initialization".to_string(),
+                    suggestion: "Check file permissions and system resources".to_string(),
+                    source: None,
+                })?;
 
         // Perform incremental analysis
-        let result = incremental_engine.analyze_incremental(path).await
-            .map_err(|e| crate::error::UveddiError::AnalysisError { 
+        let result = incremental_engine
+            .analyze_incremental(path)
+            .await
+            .map_err(|e| crate::error::UveddiError::AnalysisError {
                 message: format!("Incremental analysis failed: {}", e),
                 file: path.to_string_lossy().to_string(),
                 line: 0,
                 context: "incremental analysis execution".to_string(),
                 suggestion: "Check file changes and dependency graph".to_string(),
-                source: None
+                source: None,
             })?;
 
         info!(
             "Incremental analysis completed: {} issues found, {:.1}% time savings",
             result.0.len(),
             if result.1.was_incremental && result.1.time_saved_ms > 0 {
-                (result.1.time_saved_ms as f64 / 
-                 (result.1.time_saved_ms + result.1.performance_metrics.reanalysis_time_ms) as f64) * 100.0
+                (result.1.time_saved_ms as f64
+                    / (result.1.time_saved_ms + result.1.performance_metrics.reanalysis_time_ms)
+                        as f64)
+                    * 100.0
             } else {
                 0.0
             }
@@ -533,7 +547,7 @@ impl AnalysisEngine {
     }
 
     /// Creates a clone of the analysis engine for incremental analysis
-    /// 
+    ///
     /// This method creates a copy of the current engine that can be used
     /// by the incremental analysis system without affecting the original engine.
     fn clone_for_incremental(&self) -> crate::error::Result<AnalysisEngine> {
@@ -575,16 +589,16 @@ impl AnalysisEngine {
         } else {
             self.detector_scheduler.schedule_directory(path).await?
         };
-        
+
         // Build dependency graph and extract dependencies
         let dependency_graph = self.dependency_builder.build_graph(path).await?;
-        
+
         // Extract dependencies from the graph (simplified)
         let dependencies = Vec::new(); // TODO: Extract dependencies from dependency_graph
-        
+
         // Record findings in aggregator
         self.aggregator.record_findings(file_issues.clone());
-        
+
         info!(
             "Analyzed {} files and extracted dependencies.",
             self.aggregator.get_stats().files_processed
@@ -603,19 +617,23 @@ impl AnalysisEngine {
             AntiPatternType {
                 anti_pattern_type_id: None,
                 name: "God Object".to_string(),
-                description: "A class that has too many responsibilities and is difficult to maintain.".to_string(),
+                description:
+                    "A class that has too many responsibilities and is difficult to maintain."
+                        .to_string(),
                 category: "Structural".to_string(),
             },
             AntiPatternType {
                 anti_pattern_type_id: None,
                 name: "Code Duplication".to_string(),
-                description: "Multiple instances of similar code that should be refactored.".to_string(),
+                description: "Multiple instances of similar code that should be refactored."
+                    .to_string(),
                 category: "Structural".to_string(),
             },
             AntiPatternType {
                 anti_pattern_type_id: None,
                 name: "Cyclic Dependency".to_string(),
-                description: "A direct or indirect dependency cycle between modules or components.".to_string(),
+                description: "A direct or indirect dependency cycle between modules or components."
+                    .to_string(),
                 category: "Structural".to_string(),
             },
             AntiPatternType {
@@ -627,7 +645,8 @@ impl AnalysisEngine {
             AntiPatternType {
                 anti_pattern_type_id: None,
                 name: "Large Class".to_string(),
-                description: "A class that has grown too large and should be broken down.".to_string(),
+                description: "A class that has grown too large and should be broken down."
+                    .to_string(),
                 category: "Structural".to_string(),
             },
         ]
@@ -668,7 +687,7 @@ impl AnalysisEngine {
             info!("AST CACHE MISS: Parsing file {}", path.display());
             // Parse the file normally using AST provider
             let cached_tree = self.ast_provider.get_ast(path).await?;
-            
+
             // Create ParsedFile from cached tree
             if let Ok(source_content) = std::fs::read_to_string(path) {
                 let parsed_file = crate::ast::ParsedFile {
@@ -681,12 +700,12 @@ impl AnalysisEngine {
                 };
                 return Ok(parsed_file);
             }
-            
+
             // Fallback error if file can't be read
             Err(crate::error::UveddiError::io_error(
                 "read file content",
                 &path.to_string_lossy(),
-                std::io::Error::new(std::io::ErrorKind::NotFound, "Cannot read file")
+                std::io::Error::new(std::io::ErrorKind::NotFound, "Cannot read file"),
             ))
         }
 
@@ -694,7 +713,7 @@ impl AnalysisEngine {
         {
             // When tree-sitter is disabled, use AST provider
             let cached_tree = self.ast_provider.get_ast(path).await?;
-            
+
             // Create ParsedFile from cached tree
             if let Ok(source_content) = std::fs::read_to_string(path) {
                 let parsed_file = crate::ast::ParsedFile {
@@ -707,12 +726,12 @@ impl AnalysisEngine {
                 };
                 return Ok(parsed_file);
             }
-            
+
             // Fallback error if file can't be read
             Err(crate::error::UveddiError::io_error(
                 "read file content",
                 &path.to_string_lossy(),
-                std::io::Error::new(std::io::ErrorKind::NotFound, "Cannot read file")
+                std::io::Error::new(std::io::ErrorKind::NotFound, "Cannot read file"),
             ))
         }
     }
@@ -794,7 +813,10 @@ impl AnalysisEngine {
                 .map_err(crate::error::UveddiError::from)?;
             let loaded_plugins = stats.loaded_plugins;
 
-            info!("Loaded {} WASM plugins via PluginManagerHandle", loaded_plugins);
+            info!(
+                "Loaded {} WASM plugins via PluginManagerHandle",
+                loaded_plugins
+            );
             Ok(loaded_plugins)
         } else {
             warn!(
@@ -829,21 +851,24 @@ impl AnalysisEngine {
             // This is a workaround for the deprecated method
             // Use a secure approach to create a temporary file in the current directory
             use std::io::Write;
-            let plugin_filename = format!("{}-{}.wasm", manifest.name, 
-                std::process::id()); // Use process ID to make filename unique
+            let plugin_filename = format!("{}-{}.wasm", manifest.name, std::process::id()); // Use process ID to make filename unique
             let plugin_path = std::env::current_dir()?.join(&plugin_filename);
-            
+
             // Write the binary to the temporary file
             std::fs::write(&plugin_path, &binary)?;
-            
+
             let plugin_id_string = plugin_manager
                 .load_plugin(plugin_path.clone())
                 .await
                 .map_err(crate::error::UveddiError::from)?;
-            
+
             // Clean up the temporary file
             if let Err(e) = std::fs::remove_file(&plugin_path) {
-                warn!("Failed to cleanup temporary plugin file {}: {}", plugin_path.display(), e);
+                warn!(
+                    "Failed to cleanup temporary plugin file {}: {}",
+                    plugin_path.display(),
+                    e
+                );
             }
             // Convert String to PluginId
             let plugin_id = crate::plugins::PluginId::from_name(&plugin_id_string);
@@ -913,7 +938,9 @@ impl AnalysisEngine {
                 // Convert overall stats to the expected format
                 let plugin_stats = crate::plugins::PluginStats {
                     invocations: overall_stats.total_executions,
-                    total_execution_time_ms: (overall_stats.average_execution_time_ms * overall_stats.total_executions as f64) as u64,
+                    total_execution_time_ms: (overall_stats.average_execution_time_ms
+                        * overall_stats.total_executions as f64)
+                        as u64,
                     avg_execution_time_ms: overall_stats.average_execution_time_ms,
                     total_fuel_consumed: 0, // Not available in overall stats
                     peak_memory_usage: overall_stats.memory_usage_bytes,
@@ -989,22 +1016,29 @@ impl AnalysisEngine {
         if let Some(ref plugin_manager) = self.plugin_manager {
             // Get the loaded plugins from the plugin manager
             let loaded_plugins = plugin_manager.list_loaded_plugins().await?;
-            
+
             if loaded_plugins.is_empty() {
                 info!("No plugins loaded, skipping plugin detector integration");
                 return Ok(0);
             }
-            
+
             // Create plugin adapters for each loaded plugin
             let mut added_detectors = 0;
             for plugin_id in loaded_plugins {
                 match plugin_manager.get_plugin_adapter(&plugin_id).await {
                     Ok(Some(adapter)) => {
                         // Add the adapter to the detector scheduler
-                        match self.detector_scheduler.add_detector(Box::new(adapter)).await {
+                        match self
+                            .detector_scheduler
+                            .add_detector(Box::new(adapter))
+                            .await
+                        {
                             Ok(_) => {
                                 added_detectors += 1;
-                                info!("Successfully added plugin detector for plugin: {}", plugin_id);
+                                info!(
+                                    "Successfully added plugin detector for plugin: {}",
+                                    plugin_id
+                                );
                             }
                             Err(e) => {
                                 warn!("Failed to add plugin detector for {}: {}", plugin_id, e);
@@ -1019,8 +1053,11 @@ impl AnalysisEngine {
                     }
                 }
             }
-            
-            info!("Successfully integrated {} plugin detectors", added_detectors);
+
+            info!(
+                "Successfully integrated {} plugin detectors",
+                added_detectors
+            );
             Ok(added_detectors)
         } else {
             Ok(0) // No plugin manager, no detectors added
@@ -1066,14 +1103,14 @@ impl AnalysisEngine {
         since = "0.2.0",
         note = "Plugin statistics should be retrieved via the `PluginManagerHandle` directly, obtained from an asynchronously constructed `AnalysisEngine`. This method will be removed in future versions. Refer to UV-294 guidelines for async standardization."
     )]
-    pub async fn get_registry_stats(
-        &self,
-    ) -> Option<crate::plugins::PluginStats> {
+    pub async fn get_registry_stats(&self) -> Option<crate::plugins::PluginStats> {
         if let Some(ref plugin_manager) = self.plugin_manager {
             if let Ok(overall_stats) = plugin_manager.get_stats().await {
                 Some(crate::plugins::PluginStats {
                     invocations: overall_stats.total_executions,
-                    total_execution_time_ms: (overall_stats.average_execution_time_ms * overall_stats.total_executions as f64) as u64,
+                    total_execution_time_ms: (overall_stats.average_execution_time_ms
+                        * overall_stats.total_executions as f64)
+                        as u64,
                     avg_execution_time_ms: overall_stats.average_execution_time_ms,
                     total_fuel_consumed: 0, // Not available in overall stats
                     peak_memory_usage: overall_stats.memory_usage_bytes,

@@ -1,8 +1,8 @@
 //! Integration tests for advanced alert system (UV-248)
-//! 
+//!
 //! These tests validate the complete alert system workflow including:
 //! - Alert generation and processing
-//! - Intelligent alert grouping 
+//! - Intelligent alert grouping
 //! - Multi-channel notifications
 //! - Escalation and acknowledgment workflows
 //! - Historical analysis and trending
@@ -12,16 +12,16 @@ use std::sync::Arc;
 use std::time::{Duration, SystemTime};
 use tokio::time::sleep;
 
-use uveddi::resilience::{
-    AdvancedAlertSystem, AlertAnalytics, AlertType, AlertingConfig, EscalationManager,
-    HealthMonitor, NotificationClient, AcknowledgmentAPI
-};
 use uveddi::resilience::alerting::{
-    AlertThreshold, EscalationLevel, EscalationPolicy, MetricsData, NotificationChannel,
-    ChannelConfig, ChannelType
+    AlertThreshold, ChannelConfig, ChannelType, EscalationLevel, EscalationPolicy, MetricsData,
+    NotificationChannel,
 };
 use uveddi::resilience::escalation::AcknowledgmentSource;
 use uveddi::resilience::health::{Alert, AlertSeverity};
+use uveddi::resilience::{
+    AcknowledgmentAPI, AdvancedAlertSystem, AlertAnalytics, AlertType, AlertingConfig,
+    EscalationManager, HealthMonitor, NotificationClient,
+};
 
 /// Test suite for alert system integration
 mod integration_tests {
@@ -49,23 +49,24 @@ mod integration_tests {
         };
 
         // Process metrics and generate alerts
-        let result = alert_system
-            .process_metrics(&metrics, "production")
-            .await;
-        
+        let result = alert_system.process_metrics(&metrics, "production").await;
+
         assert!(result.is_ok(), "Failed to process metrics: {:?}", result);
 
         // Verify alert was created and grouped
         let groups = alert_system.get_alert_groups().await;
         assert!(!groups.is_empty(), "No alert groups were created");
-        
+
         let group = groups.values().next().unwrap();
         assert_eq!(group.severity, AlertSeverity::Critical);
         assert!(group.count >= 1);
 
         // Verify integration with health monitor
         let health_status = health_monitor.get_status().await;
-        assert!(!health_status.alerts.is_empty(), "Health monitor should contain alerts");
+        assert!(
+            !health_status.alerts.is_empty(),
+            "Health monitor should contain alerts"
+        );
     }
 
     #[tokio::test]
@@ -96,20 +97,31 @@ mod integration_tests {
 
         // Check that alerts were grouped (noise reduction)
         let groups = alert_system.get_alert_groups().await;
-        
+
         // Should have much fewer groups than individual alerts
-        assert!(groups.len() < 10, "Alert grouping should reduce noise. Got {} groups", groups.len());
-        
+        assert!(
+            groups.len() < 10,
+            "Alert grouping should reduce noise. Got {} groups",
+            groups.len()
+        );
+
         // At least one group should have multiple alerts
         let max_group_size = groups.values().map(|g| g.count).max().unwrap_or(0);
-        assert!(max_group_size > 1, "At least one group should contain multiple alerts");
+        assert!(
+            max_group_size > 1,
+            "At least one group should contain multiple alerts"
+        );
 
         // Calculate noise reduction percentage
         let total_individual_alerts: u32 = groups.values().map(|g| g.count).sum();
         let group_count = groups.len();
         let noise_reduction = (1.0 - (group_count as f64 / total_individual_alerts as f64)) * 100.0;
-        
-        assert!(noise_reduction >= 60.0, "Should achieve at least 60% noise reduction, got {:.1}%", noise_reduction);
+
+        assert!(
+            noise_reduction >= 60.0,
+            "Should achieve at least 60% noise reduction, got {:.1}%",
+            noise_reduction
+        );
     }
 
     #[tokio::test]
@@ -123,12 +135,14 @@ mod integration_tests {
         let channels = config.channels;
 
         // Create test alert
-        let alert = alert_system.create_enhanced_alert(
-            AlertType::CriticalFailureRate,
-            "Critical error rate exceeded in production".to_string(),
-            AlertSeverity::Critical,
-            "production".to_string(),
-        ).await;
+        let alert = alert_system
+            .create_enhanced_alert(
+                AlertType::CriticalFailureRate,
+                "Critical error rate exceeded in production".to_string(),
+                AlertSeverity::Critical,
+                "production".to_string(),
+            )
+            .await;
 
         // Start escalation
         escalation_manager
@@ -140,7 +154,7 @@ mod integration_tests {
         let escalation_state = escalation_manager
             .get_escalation_status(&alert.base_alert.id)
             .await;
-        
+
         assert!(escalation_state.is_some());
         let state = escalation_state.unwrap();
         assert_eq!(state.current_level, 1);
@@ -175,7 +189,7 @@ mod integration_tests {
     #[tokio::test]
     async fn test_notification_channels() {
         let notification_client = NotificationClient::new();
-        
+
         // Test Slack channel
         let slack_channel = NotificationChannel {
             name: "test-slack".to_string(),
@@ -219,23 +233,53 @@ mod integration_tests {
         let alert = create_test_enhanced_alert();
 
         // Test all notification channels (these will use mock implementations)
-        let slack_result = notification_client.send_notification(&slack_channel, &alert).await;
-        let email_result = notification_client.send_notification(&email_channel, &alert).await;
-        let github_result = notification_client.send_notification(&github_channel, &alert).await;
+        let slack_result = notification_client
+            .send_notification(&slack_channel, &alert)
+            .await;
+        let email_result = notification_client
+            .send_notification(&email_channel, &alert)
+            .await;
+        let github_result = notification_client
+            .send_notification(&github_channel, &alert)
+            .await;
 
         // All should succeed with mock implementations
-        assert!(slack_result.is_ok(), "Slack notification failed: {:?}", slack_result);
-        assert!(email_result.is_ok(), "Email notification failed: {:?}", email_result);
-        assert!(github_result.is_ok(), "GitHub notification failed: {:?}", github_result);
+        assert!(
+            slack_result.is_ok(),
+            "Slack notification failed: {:?}",
+            slack_result
+        );
+        assert!(
+            email_result.is_ok(),
+            "Email notification failed: {:?}",
+            email_result
+        );
+        assert!(
+            github_result.is_ok(),
+            "GitHub notification failed: {:?}",
+            github_result
+        );
 
         // Test connectivity checks
         let slack_test = notification_client.test_channel(&slack_channel).await;
         let email_test = notification_client.test_channel(&email_channel).await;
         let github_test = notification_client.test_channel(&github_channel).await;
 
-        assert!(slack_test.is_ok(), "Slack channel test failed: {:?}", slack_test);
-        assert!(email_test.is_ok(), "Email channel test failed: {:?}", email_test);
-        assert!(github_test.is_ok(), "GitHub channel test failed: {:?}", github_test);
+        assert!(
+            slack_test.is_ok(),
+            "Slack channel test failed: {:?}",
+            slack_test
+        );
+        assert!(
+            email_test.is_ok(),
+            "Email channel test failed: {:?}",
+            email_test
+        );
+        assert!(
+            github_test.is_ok(),
+            "GitHub channel test failed: {:?}",
+            github_test
+        );
     }
 
     #[tokio::test]
@@ -250,7 +294,11 @@ mod integration_tests {
         ];
 
         let environments = ["production", "staging", "development"];
-        let severities = [AlertSeverity::Info, AlertSeverity::Warning, AlertSeverity::Critical];
+        let severities = [
+            AlertSeverity::Info,
+            AlertSeverity::Warning,
+            AlertSeverity::Critical,
+        ];
 
         // Create alerts with varying patterns
         for i in 0..50 {
@@ -266,28 +314,53 @@ mod integration_tests {
         let dashboard = analytics.generate_dashboard();
 
         // Verify dashboard completeness
-        assert!(dashboard.total_alerts_24h > 0, "Should have alerts in last 24h");
-        assert!(!dashboard.alerts_by_severity.is_empty(), "Should have severity breakdown");
-        assert!(!dashboard.alerts_by_type.is_empty(), "Should have type breakdown");
-        assert!(!dashboard.alerts_by_environment.is_empty(), "Should have environment breakdown");
-        assert!(!dashboard.top_alert_sources.is_empty(), "Should have top sources");
-        
+        assert!(
+            dashboard.total_alerts_24h > 0,
+            "Should have alerts in last 24h"
+        );
+        assert!(
+            !dashboard.alerts_by_severity.is_empty(),
+            "Should have severity breakdown"
+        );
+        assert!(
+            !dashboard.alerts_by_type.is_empty(),
+            "Should have type breakdown"
+        );
+        assert!(
+            !dashboard.alerts_by_environment.is_empty(),
+            "Should have environment breakdown"
+        );
+        assert!(
+            !dashboard.top_alert_sources.is_empty(),
+            "Should have top sources"
+        );
+
         // Verify trend analysis
-        assert!(!dashboard.alert_trends.is_empty(), "Should have trend analysis");
-        
+        assert!(
+            !dashboard.alert_trends.is_empty(),
+            "Should have trend analysis"
+        );
+
         // Verify noise reduction calculation
-        assert!(dashboard.noise_reduction_percentage >= 0.0, "Noise reduction should be non-negative");
+        assert!(
+            dashboard.noise_reduction_percentage >= 0.0,
+            "Noise reduction should be non-negative"
+        );
 
         // Test export functionality
-        let json_export = analytics.export_analytics_data(
-            uveddi::resilience::analytics::AnalyticsExportFormat::Json
+        let json_export = analytics
+            .export_analytics_data(uveddi::resilience::analytics::AnalyticsExportFormat::Json);
+        assert!(
+            json_export.contains("total_alerts_24h"),
+            "JSON export should contain dashboard data"
         );
-        assert!(json_export.contains("total_alerts_24h"), "JSON export should contain dashboard data");
 
-        let csv_export = analytics.export_analytics_data(
-            uveddi::resilience::analytics::AnalyticsExportFormat::Csv
+        let csv_export = analytics
+            .export_analytics_data(uveddi::resilience::analytics::AnalyticsExportFormat::Csv);
+        assert!(
+            csv_export.contains("timestamp,alert_type,severity"),
+            "CSV export should have headers"
         );
-        assert!(csv_export.contains("timestamp,alert_type,severity"), "CSV export should have headers");
     }
 
     #[tokio::test]
@@ -299,12 +372,14 @@ mod integration_tests {
         let alert_system = AdvancedAlertSystem::new(health_monitor);
 
         // Create and process alert
-        let alert = alert_system.create_enhanced_alert(
-            AlertType::InfrastructureIssues,
-            "Database connection timeout".to_string(),
-            AlertSeverity::Critical,
-            "production".to_string(),
-        ).await;
+        let alert = alert_system
+            .create_enhanced_alert(
+                AlertType::InfrastructureIssues,
+                "Database connection timeout".to_string(),
+                AlertSeverity::Critical,
+                "production".to_string(),
+            )
+            .await;
 
         let alert_id = alert.base_alert.id.clone();
 
@@ -323,12 +398,14 @@ mod integration_tests {
         assert!(api_result.is_ok(), "API acknowledgment should succeed");
 
         // Create another alert for testing other acknowledgment methods
-        let alert2 = alert_system.create_enhanced_alert(
-            AlertType::FlakyTestDetection,
-            "Flaky test detected in CI".to_string(),
-            AlertSeverity::Warning,
-            "staging".to_string(),
-        ).await;
+        let alert2 = alert_system
+            .create_enhanced_alert(
+                AlertType::FlakyTestDetection,
+                "Flaky test detected in CI".to_string(),
+                AlertSeverity::Warning,
+                "staging".to_string(),
+            )
+            .await;
 
         let alert2_id = alert2.base_alert.id.clone();
         escalation_manager
@@ -380,7 +457,10 @@ mod integration_tests {
         };
 
         let result = alert_system.process_metrics(&metrics, "test").await;
-        assert!(result.is_ok(), "Processing metrics with valid config should succeed");
+        assert!(
+            result.is_ok(),
+            "Processing metrics with valid config should succeed"
+        );
     }
 
     #[tokio::test]
@@ -394,12 +474,14 @@ mod integration_tests {
 
         // Create multiple alerts with different outcomes
         for i in 0..5 {
-            let alert = alert_system.create_enhanced_alert(
-                AlertType::CriticalFailureRate,
-                format!("Test alert {}", i),
-                AlertSeverity::Warning,
-                "production".to_string(),
-            ).await;
+            let alert = alert_system
+                .create_enhanced_alert(
+                    AlertType::CriticalFailureRate,
+                    format!("Test alert {}", i),
+                    AlertSeverity::Warning,
+                    "production".to_string(),
+                )
+                .await;
 
             escalation_manager
                 .start_escalation(&alert, policy, &config.channels)
@@ -422,11 +504,20 @@ mod integration_tests {
 
         // Get escalation statistics
         let stats = escalation_manager.get_escalation_stats(1).await;
-        
+
         assert_eq!(stats.total_alerts, 5, "Should track all alerts");
-        assert_eq!(stats.acknowledged_alerts, 3, "Should track acknowledged alerts (3 out of 5)");
-        assert!(stats.avg_acknowledgment_time.is_some(), "Should calculate average acknowledgment time");
-        assert!(!stats.escalation_levels.is_empty(), "Should track escalation levels");
+        assert_eq!(
+            stats.acknowledged_alerts, 3,
+            "Should track acknowledged alerts (3 out of 5)"
+        );
+        assert!(
+            stats.avg_acknowledgment_time.is_some(),
+            "Should calculate average acknowledgment time"
+        );
+        assert!(
+            !stats.escalation_levels.is_empty(),
+            "Should track escalation levels"
+        );
         assert_eq!(stats.period_hours, 1, "Should match requested period");
     }
 
@@ -474,26 +565,24 @@ mod integration_tests {
                     enabled: true,
                 },
             ],
-            escalation_policies: vec![
-                EscalationPolicy {
-                    name: "test-policy".to_string(),
-                    levels: vec![
-                        EscalationLevel {
-                            level: 1,
-                            delay_minutes: 0,
-                            channels: vec!["test-slack".to_string()],
-                            roles: vec!["on-call".to_string()],
-                        },
-                        EscalationLevel {
-                            level: 2,
-                            delay_minutes: 5,
-                            channels: vec!["test-email".to_string()],
-                            roles: vec!["team-lead".to_string()],
-                        },
-                    ],
-                    enabled: true,
-                },
-            ],
+            escalation_policies: vec![EscalationPolicy {
+                name: "test-policy".to_string(),
+                levels: vec![
+                    EscalationLevel {
+                        level: 1,
+                        delay_minutes: 0,
+                        channels: vec!["test-slack".to_string()],
+                        roles: vec!["on-call".to_string()],
+                    },
+                    EscalationLevel {
+                        level: 2,
+                        delay_minutes: 5,
+                        channels: vec!["test-email".to_string()],
+                        roles: vec!["team-lead".to_string()],
+                    },
+                ],
+                enabled: true,
+            }],
             grouping_window_minutes: 5,
             max_alerts_per_group: 10,
             history_retention_days: 30,
@@ -504,7 +593,7 @@ mod integration_tests {
         create_enhanced_alert_with_params(
             AlertType::CriticalFailureRate,
             AlertSeverity::Critical,
-            "production"
+            "production",
         )
     }
 
@@ -514,7 +603,7 @@ mod integration_tests {
         environment: &str,
     ) -> uveddi::resilience::alerting::EnhancedAlert {
         use uveddi::resilience::alerting::EnhancedAlert;
-        
+
         EnhancedAlert {
             base_alert: Alert {
                 id: format!("test-{}", rand::random::<u32>()),
@@ -546,7 +635,7 @@ mod performance_tests {
     async fn test_alert_system_performance_under_load() {
         let health_monitor = Arc::new(HealthMonitor::new());
         let alert_system = AdvancedAlertSystem::new(health_monitor);
-        
+
         let config = create_test_config();
         alert_system.update_config(config).await;
 
@@ -581,24 +670,33 @@ mod performance_tests {
         let duration = start_time.elapsed();
         let throughput = num_alerts as f64 / duration.as_secs_f64();
 
-        println!("Processed {} alerts in {:?} ({:.2} alerts/sec)", 
-                 num_alerts, duration, throughput);
+        println!(
+            "Processed {} alerts in {:?} ({:.2} alerts/sec)",
+            num_alerts, duration, throughput
+        );
 
         // Performance assertions
-        assert!(duration < Duration::from_secs(10), 
-                "Should process {} alerts within 10 seconds, took {:?}", 
-                num_alerts, duration);
-        assert!(throughput > 100.0, 
-                "Should achieve >100 alerts/sec throughput, got {:.2}", 
-                throughput);
+        assert!(
+            duration < Duration::from_secs(10),
+            "Should process {} alerts within 10 seconds, took {:?}",
+            num_alerts,
+            duration
+        );
+        assert!(
+            throughput > 100.0,
+            "Should achieve >100 alerts/sec throughput, got {:.2}",
+            throughput
+        );
 
         // Verify alert grouping reduced noise significantly
         let groups = alert_system.get_alert_groups().await;
         let noise_reduction = 1.0 - (groups.len() as f64 / num_alerts as f64);
-        
-        assert!(noise_reduction > 0.8, 
-                "Should achieve >80% noise reduction under load, got {:.2}%", 
-                noise_reduction * 100.0);
+
+        assert!(
+            noise_reduction > 0.8,
+            "Should achieve >80% noise reduction under load, got {:.2}%",
+            noise_reduction * 100.0
+        );
     }
 
     use super::integration_tests::create_test_config;
@@ -637,10 +735,10 @@ mod error_handling_tests {
         assert!(result.is_ok(), "Should handle disabled channels gracefully");
     }
 
-    #[tokio::test] 
+    #[tokio::test]
     async fn test_network_failure_resilience() {
         let notification_client = NotificationClient::new();
-        
+
         // Test with invalid webhook URL
         let invalid_slack_channel = NotificationChannel {
             name: "invalid-slack".to_string(),
@@ -655,11 +753,13 @@ mod error_handling_tests {
         };
 
         let alert = create_test_enhanced_alert();
-        let result = notification_client.send_notification(&invalid_slack_channel, &alert).await;
-        
+        let result = notification_client
+            .send_notification(&invalid_slack_channel, &alert)
+            .await;
+
         // Should handle network failures gracefully
         match result {
-            Ok(_) => {}, // Mock implementation might succeed
+            Ok(_) => {} // Mock implementation might succeed
             Err(e) => println!("Expected network error: {:?}", e),
         }
     }

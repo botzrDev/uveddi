@@ -1,5 +1,5 @@
 //! Comprehensive benchmarking framework integrating Criterion.rs with statistical regression detection
-//! 
+//!
 //! This benchmark suite provides:
 //! - Performance characterization using Criterion.rs
 //! - Statistical correlation with regression detection
@@ -7,15 +7,15 @@
 //! - Performance report generation with insights
 
 use criterion::{
-    black_box, criterion_group, criterion_main, Criterion, BenchmarkId,
-    measurement::WallTime, BatchSize, Throughput
+    black_box, criterion_group, criterion_main, measurement::WallTime, BatchSize, BenchmarkId,
+    Criterion, Throughput,
 };
-use std::time::{Duration, SystemTime};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use serde::{Serialize, Deserialize};
+use std::time::{Duration, SystemTime};
 use uveddi::performance::{
-    StatisticalAnalyzer, TrendDetector, PerformanceRegressionDetector,
-    RegressionDetectionConfig, MetricDataPoint
+    MetricDataPoint, PerformanceRegressionDetector, RegressionDetectionConfig, StatisticalAnalyzer,
+    TrendDetector,
 };
 
 /// Performance benchmark result with statistical correlation
@@ -98,14 +98,14 @@ impl CorrelatedBenchmarker {
         c: &mut Criterion,
         benchmark_name: &str,
         benchmark_fn: F,
-    ) -> CorrelatedBenchmarkResult 
+    ) -> CorrelatedBenchmarkResult
     where
-        F: Fn(&mut criterion::Bencher) + 'static
+        F: Fn(&mut criterion::Bencher) + 'static,
     {
         // Collect timing samples manually for statistical analysis
         let mut samples = Vec::new();
         let sample_count = 100;
-        
+
         // Run benchmark multiple times to collect samples
         for _ in 0..sample_count {
             let start = std::time::Instant::now();
@@ -152,34 +152,39 @@ impl CorrelatedBenchmarker {
     /// Analyze benchmark samples using statistical methods
     fn analyze_samples(&self, samples: &[f64]) -> StatisticalAnalysis {
         // Perform Mann-Kendall trend test
-        let mk_result = self.analyzer.mann_kendall_test(samples).unwrap_or_else(|_| {
-            uveddi::performance::MannKendallResult {
+        let mk_result = self
+            .analyzer
+            .mann_kendall_test(samples)
+            .unwrap_or_else(|_| uveddi::performance::MannKendallResult {
                 tau: 0.0,
                 p_value: 1.0,
                 trend: uveddi::performance::TrendType::NoTrend,
                 confidence: 0.0,
                 effect_size: 0.0,
-            }
-        });
+            });
 
         // Detect change points
-        let cp_result = self.detector.detect_change_points_pelt(samples).unwrap_or_else(|_| {
-            uveddi::performance::ChangePointResult {
+        let cp_result = self
+            .detector
+            .detect_change_points_pelt(samples)
+            .unwrap_or_else(|_| uveddi::performance::ChangePointResult {
                 change_points: Vec::new(),
                 segments: Vec::new(),
                 confidence: 1.0,
                 algorithm_used: "Failed".to_string(),
-            }
-        });
+            });
 
         // Calculate confidence interval
-        let confidence_interval = self.analyzer
+        let confidence_interval = self
+            .analyzer
             .confidence_interval(samples, 0.95)
             .unwrap_or((0.0, 0.0));
 
         // Calculate effect size (compare against historical mean if available)
         let effect_size = if let Some(historical) = self.get_historical_baseline(samples) {
-            self.analyzer.effect_size(&historical, samples).unwrap_or(0.0)
+            self.analyzer
+                .effect_size(&historical, samples)
+                .unwrap_or(0.0)
         } else {
             0.0
         };
@@ -205,27 +210,38 @@ impl CorrelatedBenchmarker {
     }
 
     /// Check for performance regression
-    fn check_regression(&self, benchmark_name: &str, samples: &[f64]) -> Option<RegressionAnalysis> {
+    fn check_regression(
+        &self,
+        benchmark_name: &str,
+        samples: &[f64],
+    ) -> Option<RegressionAnalysis> {
         let historical_baseline = self.get_historical_baseline(samples)?;
-        
+
         let current_mean = samples.iter().sum::<f64>() / samples.len() as f64;
-        let baseline_mean = historical_baseline.iter().sum::<f64>() / historical_baseline.len() as f64;
-        
+        let baseline_mean =
+            historical_baseline.iter().sum::<f64>() / historical_baseline.len() as f64;
+
         let regression_percentage = ((current_mean - baseline_mean) / baseline_mean) * 100.0;
-        
+
         // Consider regression if performance degrades by more than 5%
         let is_regression = regression_percentage > 5.0;
-        
+
         // Calculate statistical significance using effect size
-        let effect_size = self.analyzer.effect_size(&historical_baseline, samples).unwrap_or(0.0);
+        let effect_size = self
+            .analyzer
+            .effect_size(&historical_baseline, samples)
+            .unwrap_or(0.0);
         let statistical_significance = if effect_size.abs() > 0.2 { 0.95 } else { 0.5 };
-        
+
         let recommended_actions = if is_regression {
             vec![
                 "Review recent code changes for performance impact".to_string(),
                 "Check system resource utilization during benchmark".to_string(),
                 "Compare with historical performance baselines".to_string(),
-                format!("Investigate {:.1}% performance degradation", regression_percentage),
+                format!(
+                    "Investigate {:.1}% performance degradation",
+                    regression_percentage
+                ),
             ]
         } else {
             vec!["Performance within acceptable range".to_string()]
@@ -248,9 +264,8 @@ impl CorrelatedBenchmarker {
 
     fn calculate_std_dev(&self, samples: &[f64]) -> f64 {
         let mean = samples.iter().sum::<f64>() / samples.len() as f64;
-        let variance = samples.iter()
-            .map(|x| (x - mean).powi(2))
-            .sum::<f64>() / samples.len() as f64;
+        let variance =
+            samples.iter().map(|x| (x - mean).powi(2)).sum::<f64>() / samples.len() as f64;
         variance.sqrt()
     }
 
@@ -284,14 +299,21 @@ impl CorrelatedBenchmarker {
             report.push_str(&format!("Benchmark: {}\n", result.benchmark_name));
             report.push_str(&format!("Timestamp: {:?}\n", result.timestamp));
             report.push_str(&format!("Mean: {:.2} ns\n", result.criterion_stats.mean_ns));
-            report.push_str(&format!("Std Dev: {:.2} ns\n", result.criterion_stats.std_dev_ns));
-            report.push_str(&format!("Statistical Confidence: {:.3}\n", 
-                result.statistical_analysis.statistical_confidence));
-            
+            report.push_str(&format!(
+                "Std Dev: {:.2} ns\n",
+                result.criterion_stats.std_dev_ns
+            ));
+            report.push_str(&format!(
+                "Statistical Confidence: {:.3}\n",
+                result.statistical_analysis.statistical_confidence
+            ));
+
             if let Some(regression) = &result.regression_analysis {
                 if regression.is_regression {
-                    report.push_str(&format!("⚠️  REGRESSION DETECTED: {:.1}%\n", 
-                        regression.regression_percentage));
+                    report.push_str(&format!(
+                        "⚠️  REGRESSION DETECTED: {:.1}%\n",
+                        regression.regression_percentage
+                    ));
                     for action in &regression.recommended_actions {
                         report.push_str(&format!("  • {}\n", action));
                     }
@@ -299,7 +321,7 @@ impl CorrelatedBenchmarker {
                     report.push_str("✅ No regression detected\n");
                 }
             }
-            
+
             report.push_str("\n");
         }
 
@@ -322,77 +344,92 @@ fn get_benchmarker() -> &'static mut CorrelatedBenchmarker {
 
 fn bench_mann_kendall_with_correlation(c: &mut Criterion) {
     let benchmarker = get_benchmarker();
-    
+
     // Generate test data
-    let test_data = (0..1000).map(|i| i as f64 + (i as f64 * 0.1).sin()).collect::<Vec<_>>();
+    let test_data = (0..1000)
+        .map(|i| i as f64 + (i as f64 * 0.1).sin())
+        .collect::<Vec<_>>();
     let analyzer = StatisticalAnalyzer::new();
-    
+
     let _result = benchmarker.run_correlated_benchmark(c, "mann_kendall_trend_test", |b| {
-        b.iter(|| {
-            black_box(analyzer.mann_kendall_test(black_box(&test_data)).unwrap())
-        })
+        b.iter(|| black_box(analyzer.mann_kendall_test(black_box(&test_data)).unwrap()))
     });
 }
 
 fn bench_change_point_detection_with_correlation(c: &mut Criterion) {
     let benchmarker = get_benchmarker();
-    
+
     // Generate test data with change point
     let mut test_data = vec![100.0; 500];
     test_data.extend(vec![150.0; 500]);
     let detector = TrendDetector::new();
-    
+
     let _result = benchmarker.run_correlated_benchmark(c, "change_point_detection", |b| {
         b.iter(|| {
-            black_box(detector.detect_change_points_pelt(black_box(&test_data)).unwrap())
+            black_box(
+                detector
+                    .detect_change_points_pelt(black_box(&test_data))
+                    .unwrap(),
+            )
         })
     });
 }
 
 fn bench_complete_regression_analysis(c: &mut Criterion) {
     let benchmarker = get_benchmarker();
-    
+
     // Simulate complete regression detection workflow
     let baseline_data = (0..100).map(|i| 100.0 + i as f64 * 0.1).collect::<Vec<_>>();
     let current_data = (0..10).map(|i| 110.0 + i as f64 * 0.15).collect::<Vec<_>>();
-    
+
     let analyzer = StatisticalAnalyzer::new();
     let detector = TrendDetector::new();
-    
+
     let _result = benchmarker.run_correlated_benchmark(c, "complete_regression_analysis", |b| {
         b.iter(|| {
             // Complete statistical analysis pipeline
-            let mann_kendall = analyzer.mann_kendall_test(black_box(&baseline_data)).unwrap();
-            let change_points = detector.detect_change_points_pelt(black_box(&baseline_data)).unwrap();
-            let confidence_interval = analyzer.confidence_interval(black_box(&baseline_data), 0.95).unwrap();
-            let effect_size = analyzer.effect_size(black_box(&baseline_data), black_box(&current_data)).unwrap();
-            
-            black_box((mann_kendall, change_points, confidence_interval, effect_size))
+            let mann_kendall = analyzer
+                .mann_kendall_test(black_box(&baseline_data))
+                .unwrap();
+            let change_points = detector
+                .detect_change_points_pelt(black_box(&baseline_data))
+                .unwrap();
+            let confidence_interval = analyzer
+                .confidence_interval(black_box(&baseline_data), 0.95)
+                .unwrap();
+            let effect_size = analyzer
+                .effect_size(black_box(&baseline_data), black_box(&current_data))
+                .unwrap();
+
+            black_box((
+                mann_kendall,
+                change_points,
+                confidence_interval,
+                effect_size,
+            ))
         })
     });
 }
 
 fn bench_throughput_analysis(c: &mut Criterion) {
     let mut group = c.benchmark_group("throughput_analysis");
-    
+
     // Set throughput measurement for ops/sec calculation
     group.throughput(Throughput::Elements(1000));
-    
+
     let data = (0..1000).map(|i| i as f64).collect::<Vec<_>>();
     let analyzer = StatisticalAnalyzer::new();
-    
+
     group.bench_function("mann_kendall_throughput", |b| {
-        b.iter(|| {
-            black_box(analyzer.mann_kendall_test(black_box(&data)).unwrap())
-        })
+        b.iter(|| black_box(analyzer.mann_kendall_test(black_box(&data)).unwrap()))
     });
-    
+
     group.finish();
 }
 
 fn bench_memory_allocation_patterns(c: &mut Criterion) {
     let mut group = c.benchmark_group("memory_patterns");
-    
+
     // Test different allocation patterns
     group.bench_function("vector_allocation", |b| {
         b.iter_batched(
@@ -401,40 +438,44 @@ fn bench_memory_allocation_patterns(c: &mut Criterion) {
                 let analyzer = StatisticalAnalyzer::new();
                 black_box(analyzer.mann_kendall_test(&data).unwrap())
             },
-            BatchSize::SmallInput
+            BatchSize::SmallInput,
         )
     });
-    
+
     group.bench_function("slice_reuse", |b| {
         let data = (0..1000).map(|i| i as f64).collect::<Vec<_>>();
         let analyzer = StatisticalAnalyzer::new();
-        
-        b.iter(|| {
-            black_box(analyzer.mann_kendall_test(black_box(&data)).unwrap())
-        })
+
+        b.iter(|| black_box(analyzer.mann_kendall_test(black_box(&data)).unwrap()))
     });
-    
+
     group.finish();
 }
 
 fn bench_statistical_confidence_levels(c: &mut Criterion) {
     let mut group = c.benchmark_group("confidence_levels");
-    
-    let data = (0..500).map(|i| 100.0 + (i as f64 * 0.01).sin() * 10.0).collect::<Vec<_>>();
+
+    let data = (0..500)
+        .map(|i| 100.0 + (i as f64 * 0.01).sin() * 10.0)
+        .collect::<Vec<_>>();
     let analyzer = StatisticalAnalyzer::new();
-    
+
     for confidence in [0.90, 0.95, 0.99].iter() {
         group.bench_with_input(
             BenchmarkId::new("confidence_interval", format!("{:.0}%", confidence * 100.0)),
             confidence,
             |b, &conf| {
                 b.iter(|| {
-                    black_box(analyzer.confidence_interval(black_box(&data), conf).unwrap())
+                    black_box(
+                        analyzer
+                            .confidence_interval(black_box(&data), conf)
+                            .unwrap(),
+                    )
                 })
             },
         );
     }
-    
+
     group.finish();
 }
 

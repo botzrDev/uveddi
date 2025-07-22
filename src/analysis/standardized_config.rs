@@ -34,10 +34,10 @@
 //! enabled = true
 //! severity = "High"
 //! thresholds = { max_methods = 20, max_fields = 15 }
-//! 
+//!
 //! [detectors.god_object.language_overrides.rust]
 //! max_methods = 25
-//! 
+//!
 //! [detectors.god_object.exclusions]
 //! patterns = ["*_test.rs", "*_generated.rs"]
 //! ```
@@ -58,25 +58,25 @@ use std::fmt;
 pub struct StandardDetectorConfig {
     /// Whether this detector is enabled
     pub enabled: bool,
-    
+
     /// Issue severity level for findings from this detector
     pub severity: IssueSeverity,
-    
+
     /// Base thresholds that apply to all languages
     pub thresholds: HashMap<String, ConfigValue>,
-    
+
     /// Language-specific threshold overrides
     #[serde(default)]
     pub language_overrides: HashMap<SourceLanguage, HashMap<String, ConfigValue>>,
-    
+
     /// Exclusion configuration
     #[serde(default)]
     pub exclusions: ExclusionConfig,
-    
+
     /// Advanced configuration options
     #[serde(default)]
     pub advanced: AdvancedConfig,
-    
+
     /// Detector-specific metadata
     #[serde(default)]
     pub metadata: DetectorMetadata,
@@ -101,11 +101,11 @@ impl ConfigValue {
             ConfigValue::Float(f) => Ok(*f as i64),
             _ => Err(UveddiError::config_error(
                 &format!("Cannot convert {:?} to integer", self),
-                "StandardizedConfig::as_integer"
+                "StandardizedConfig::as_integer",
             )),
         }
     }
-    
+
     /// Convert to float, returning error if not possible
     pub fn as_float(&self) -> Result<f64, UveddiError> {
         match self {
@@ -113,29 +113,29 @@ impl ConfigValue {
             ConfigValue::Integer(i) => Ok(*i as f64),
             _ => Err(UveddiError::config_error(
                 &format!("Cannot convert {:?} to float", self),
-                "StandardizedConfig::as_float"
+                "StandardizedConfig::as_float",
             )),
         }
     }
-    
+
     /// Convert to string, returning error if not possible
     pub fn as_string(&self) -> Result<String, UveddiError> {
         match self {
             ConfigValue::String(s) => Ok(s.clone()),
             _ => Err(UveddiError::config_error(
                 &format!("Cannot convert {:?} to string", self),
-                "StandardizedConfig::as_string"
+                "StandardizedConfig::as_string",
             )),
         }
     }
-    
+
     /// Convert to boolean, returning error if not possible
     pub fn as_bool(&self) -> Result<bool, UveddiError> {
         match self {
             ConfigValue::Boolean(b) => Ok(*b),
             _ => Err(UveddiError::config_error(
                 &format!("Cannot convert {:?} to boolean", self),
-                "StandardizedConfig::as_boolean"
+                "StandardizedConfig::as_boolean",
             )),
         }
     }
@@ -181,7 +181,9 @@ impl fmt::Display for ConfigValue {
             ConfigValue::Array(arr) => {
                 write!(f, "[")?;
                 for (i, item) in arr.iter().enumerate() {
-                    if i > 0 { write!(f, ", ")?; }
+                    if i > 0 {
+                        write!(f, ", ")?;
+                    }
                     write!(f, "{}", item)?;
                 }
                 write!(f, "]")
@@ -196,15 +198,15 @@ pub struct ExclusionConfig {
     /// File patterns to exclude (glob patterns)
     #[serde(default)]
     pub patterns: Vec<String>,
-    
+
     /// Specific file paths to exclude
     #[serde(default)]
     pub files: Vec<String>,
-    
+
     /// Framework modules to exclude from analysis
     #[serde(default)]
     pub framework_modules: Vec<String>,
-    
+
     /// Generated code patterns to exclude
     #[serde(default)]
     pub generated_patterns: Vec<String>,
@@ -216,11 +218,11 @@ pub struct AdvancedConfig {
     /// Enable experimental features
     #[serde(default)]
     pub experimental_features: bool,
-    
+
     /// Custom analysis modes
     #[serde(default)]
     pub analysis_modes: Vec<String>,
-    
+
     /// Performance tuning options
     #[serde(default)]
     pub performance_tuning: HashMap<String, ConfigValue>,
@@ -232,15 +234,15 @@ pub struct DetectorMetadata {
     /// Configuration version for migration support
     #[serde(default)]
     pub version: String,
-    
+
     /// Human-readable description
     #[serde(default)]
     pub description: String,
-    
+
     /// Configuration author/source
     #[serde(default)]
     pub author: String,
-    
+
     /// Last modified timestamp
     #[serde(default)]
     pub last_modified: String,
@@ -263,31 +265,31 @@ impl StandardConfigBuilder {
             config: StandardDetectorConfig::default_for_detector(detector_name),
         }
     }
-    
+
     /// Set whether the detector is enabled
     pub fn enabled(mut self, enabled: bool) -> Self {
         self.config.enabled = enabled;
         self
     }
-    
+
     /// Set the issue severity level
     pub fn severity(mut self, severity: IssueSeverity) -> Self {
         self.config.severity = severity;
         self
     }
-    
+
     /// Set a threshold value
     pub fn threshold<T: Into<ConfigValue>>(mut self, key: &str, value: T) -> Self {
         self.config.thresholds.insert(key.to_string(), value.into());
         self
     }
-    
+
     /// Set a language-specific threshold override
     pub fn language_threshold<T: Into<ConfigValue>>(
-        mut self, 
-        language: &str, 
-        key: &str, 
-        value: T
+        mut self,
+        language: &str,
+        key: &str,
+        value: T,
     ) -> Self {
         let lang = match language {
             "rust" => SourceLanguage::Rust,
@@ -299,50 +301,54 @@ impl StandardConfigBuilder {
                 SourceLanguage::Rust
             }
         };
-        
-        self.config.language_overrides
+
+        self.config
+            .language_overrides
             .entry(lang)
             .or_insert_with(HashMap::new)
             .insert(key.to_string(), value.into());
         self
     }
-    
+
     /// Add an exclusion pattern
     pub fn exclude_pattern(mut self, pattern: &str) -> Self {
         self.config.exclusions.patterns.push(pattern.to_string());
         self
     }
-    
+
     /// Add an exclusion file
     pub fn exclude_file(mut self, file: &str) -> Self {
         self.config.exclusions.files.push(file.to_string());
         self
     }
-    
+
     /// Add a framework module to exclude
     pub fn exclude_framework(mut self, framework: &str) -> Self {
-        self.config.exclusions.framework_modules.push(framework.to_string());
+        self.config
+            .exclusions
+            .framework_modules
+            .push(framework.to_string());
         self
     }
-    
+
     /// Enable experimental features
     pub fn experimental(mut self, enabled: bool) -> Self {
         self.config.advanced.experimental_features = enabled;
         self
     }
-    
+
     /// Set metadata description
     pub fn description(mut self, description: &str) -> Self {
         self.config.metadata.description = description.to_string();
         self
     }
-    
+
     /// Build the configuration with validation
     pub fn build(self) -> Result<StandardDetectorConfig, UveddiError> {
         self.validate()?;
         Ok(self.config)
     }
-    
+
     /// Validate the configuration
     fn validate(&self) -> Result<(), UveddiError> {
         // Validate detector-specific requirements
@@ -356,16 +362,19 @@ impl StandardConfigBuilder {
                 // Unknown detector - basic validation only
                 if self.config.thresholds.is_empty() {
                     return Err(UveddiError::config_error(
-                        &format!("Detector '{}' has no thresholds configured", self.detector_name),
-                        "StandardizedConfig::validate_detector_config"
+                        &format!(
+                            "Detector '{}' has no thresholds configured",
+                            self.detector_name
+                        ),
+                        "StandardizedConfig::validate_detector_config",
                     ));
                 }
             }
         }
-        
+
         Ok(())
     }
-    
+
     /// Validate god object detector configuration
     fn validate_god_object(&self) -> Result<(), UveddiError> {
         let required_thresholds = ["max_methods", "max_fields"];
@@ -373,39 +382,42 @@ impl StandardConfigBuilder {
             if !self.config.thresholds.contains_key(*threshold) {
                 return Err(UveddiError::config_error(
                     &format!("God object detector requires '{}' threshold", threshold),
-                    "StandardizedConfig::validate_god_object"
+                    "StandardizedConfig::validate_god_object",
                 ));
             }
         }
         Ok(())
     }
-    
+
     /// Validate code duplication detector configuration
     fn validate_code_duplication(&self) -> Result<(), UveddiError> {
         let required_thresholds = ["min_tokens", "similarity_threshold"];
         for threshold in &required_thresholds {
             if !self.config.thresholds.contains_key(*threshold) {
                 return Err(UveddiError::config_error(
-                    &format!("Code duplication detector requires '{}' threshold", threshold),
-                    "StandardizedConfig::validate_code_duplication"
+                    &format!(
+                        "Code duplication detector requires '{}' threshold",
+                        threshold
+                    ),
+                    "StandardizedConfig::validate_code_duplication",
                 ));
             }
         }
-        
+
         // Validate similarity threshold is between 0 and 1
         if let Some(similarity) = self.config.thresholds.get("similarity_threshold") {
             let value = similarity.as_float()?;
             if value < 0.0 || value > 1.0 {
                 return Err(UveddiError::config_error(
                     "similarity_threshold must be between 0.0 and 1.0",
-                    "StandardizedConfig::validate_code_duplication"
+                    "StandardizedConfig::validate_code_duplication",
                 ));
             }
         }
-        
+
         Ok(())
     }
-    
+
     /// Validate large classes detector configuration
     fn validate_large_classes(&self) -> Result<(), UveddiError> {
         let required_thresholds = ["max_lines", "max_methods"];
@@ -413,19 +425,19 @@ impl StandardConfigBuilder {
             if !self.config.thresholds.contains_key(*threshold) {
                 return Err(UveddiError::config_error(
                     &format!("Large classes detector requires '{}' threshold", threshold),
-                    "StandardizedConfig::validate_large_classes"
+                    "StandardizedConfig::validate_large_classes",
                 ));
             }
         }
         Ok(())
     }
-    
+
     /// Validate dead code detector configuration
     fn validate_dead_code(&self) -> Result<(), UveddiError> {
         // Dead code detector has minimal requirements
         Ok(())
     }
-    
+
     /// Validate tight coupling detector configuration
     fn validate_tight_coupling(&self) -> Result<(), UveddiError> {
         let required_thresholds = ["max_dependencies"];
@@ -433,7 +445,7 @@ impl StandardConfigBuilder {
             if !self.config.thresholds.contains_key(*threshold) {
                 return Err(UveddiError::config_error(
                     &format!("Tight coupling detector requires '{}' threshold", threshold),
-                    "StandardizedConfig::validate_tight_coupling"
+                    "StandardizedConfig::validate_tight_coupling",
                 ));
             }
         }
@@ -445,63 +457,91 @@ impl StandardDetectorConfig {
     /// Create default configuration for a specific detector
     pub fn default_for_detector(detector_name: &str) -> Self {
         let mut config = Self::default();
-        
+
         // Set detector-specific defaults
         match detector_name {
             "god_object" => {
-                config.thresholds.insert("max_methods".to_string(), 20.into());
-                config.thresholds.insert("max_fields".to_string(), 15.into());
+                config
+                    .thresholds
+                    .insert("max_methods".to_string(), 20.into());
+                config
+                    .thresholds
+                    .insert("max_fields".to_string(), 15.into());
                 config.severity = IssueSeverity::High;
-                
+
                 // Language-specific overrides
                 let mut rust_overrides = HashMap::new();
                 rust_overrides.insert("max_methods".to_string(), 25.into());
                 rust_overrides.insert("max_fields".to_string(), 20.into());
-                config.language_overrides.insert(SourceLanguage::Rust, rust_overrides);
-                
+                config
+                    .language_overrides
+                    .insert(SourceLanguage::Rust, rust_overrides);
+
                 let mut python_overrides = HashMap::new();
                 python_overrides.insert("max_methods".to_string(), 20.into());
                 python_overrides.insert("max_fields".to_string(), 15.into());
-                config.language_overrides.insert(SourceLanguage::Python, python_overrides);
-                
+                config
+                    .language_overrides
+                    .insert(SourceLanguage::Python, python_overrides);
+
                 let mut js_overrides = HashMap::new();
                 js_overrides.insert("max_methods".to_string(), 18.into());
                 js_overrides.insert("max_fields".to_string(), 12.into());
-                config.language_overrides.insert(SourceLanguage::JavaScript, js_overrides);
+                config
+                    .language_overrides
+                    .insert(SourceLanguage::JavaScript, js_overrides);
             }
-            
+
             "code_duplication" => {
-                config.thresholds.insert("min_tokens".to_string(), 50.into());
+                config
+                    .thresholds
+                    .insert("min_tokens".to_string(), 50.into());
                 config.thresholds.insert("min_lines".to_string(), 5.into());
-                config.thresholds.insert("similarity_threshold".to_string(), 0.8.into());
-                config.thresholds.insert("fingerprint_length".to_string(), 10.into());
+                config
+                    .thresholds
+                    .insert("similarity_threshold".to_string(), 0.8.into());
+                config
+                    .thresholds
+                    .insert("fingerprint_length".to_string(), 10.into());
                 config.severity = IssueSeverity::Medium;
             }
-            
+
             "large_classes" => {
-                config.thresholds.insert("max_lines".to_string(), 300.into());
-                config.thresholds.insert("max_methods".to_string(), 20.into());
-                config.thresholds.insert("max_complexity".to_string(), 50.into());
+                config
+                    .thresholds
+                    .insert("max_lines".to_string(), 300.into());
+                config
+                    .thresholds
+                    .insert("max_methods".to_string(), 20.into());
+                config
+                    .thresholds
+                    .insert("max_complexity".to_string(), 50.into());
                 config.severity = IssueSeverity::Medium;
             }
-            
+
             "dead_code" => {
-                config.thresholds.insert("confidence_threshold".to_string(), 0.7.into());
+                config
+                    .thresholds
+                    .insert("confidence_threshold".to_string(), 0.7.into());
                 config.severity = IssueSeverity::Low;
             }
-            
+
             "tight_coupling" => {
-                config.thresholds.insert("max_dependencies".to_string(), 10.into());
-                config.thresholds.insert("max_coupling_ratio".to_string(), 0.3.into());
+                config
+                    .thresholds
+                    .insert("max_dependencies".to_string(), 10.into());
+                config
+                    .thresholds
+                    .insert("max_coupling_ratio".to_string(), 0.3.into());
                 config.severity = IssueSeverity::Medium;
             }
-            
+
             _ => {
                 // Generic defaults
                 config.severity = IssueSeverity::Medium;
             }
         }
-        
+
         // Common exclusions
         config.exclusions.generated_patterns = vec![
             "*_pb2.py".to_string(),
@@ -510,17 +550,17 @@ impl StandardDetectorConfig {
             "*.generated.*".to_string(),
             "*_generated.*".to_string(),
         ];
-        
+
         config.exclusions.framework_modules = vec![
             "serde".to_string(),
             "tokio".to_string(),
             "django".to_string(),
             "react".to_string(),
         ];
-        
+
         config
     }
-    
+
     /// Get a threshold value for a specific language, falling back to base threshold
     pub fn get_threshold(&self, key: &str, language: SourceLanguage) -> Option<&ConfigValue> {
         // First check language-specific overrides
@@ -529,22 +569,40 @@ impl StandardDetectorConfig {
                 return Some(value);
             }
         }
-        
+
         // Fall back to base threshold
         self.thresholds.get(key)
     }
-    
+
     /// Get threshold as integer with language fallback
-    pub fn get_threshold_int(&self, key: &str, language: SourceLanguage) -> Result<i64, UveddiError> {
+    pub fn get_threshold_int(
+        &self,
+        key: &str,
+        language: SourceLanguage,
+    ) -> Result<i64, UveddiError> {
         self.get_threshold(key, language)
-            .ok_or_else(|| UveddiError::config_error(&format!("Threshold '{}' not found", key), "StandardizedConfig::get_threshold_int"))?
+            .ok_or_else(|| {
+                UveddiError::config_error(
+                    &format!("Threshold '{}' not found", key),
+                    "StandardizedConfig::get_threshold_int",
+                )
+            })?
             .as_int()
     }
-    
+
     /// Get threshold as float with language fallback
-    pub fn get_threshold_float(&self, key: &str, language: SourceLanguage) -> Result<f64, UveddiError> {
+    pub fn get_threshold_float(
+        &self,
+        key: &str,
+        language: SourceLanguage,
+    ) -> Result<f64, UveddiError> {
         self.get_threshold(key, language)
-            .ok_or_else(|| UveddiError::config_error(&format!("Threshold '{}' not found", key), "StandardizedConfig::get_threshold_float"))?
+            .ok_or_else(|| {
+                UveddiError::config_error(
+                    &format!("Threshold '{}' not found", key),
+                    "StandardizedConfig::get_threshold_float",
+                )
+            })?
             .as_float()
     }
 }
@@ -576,7 +634,7 @@ pub mod constants {
         pub const JS_MAX_METHODS: i64 = 18;
         pub const JS_MAX_FIELDS: i64 = 12;
     }
-    
+
     /// Default thresholds for code duplication detection
     pub mod code_duplication {
         pub const DEFAULT_MIN_TOKENS: i64 = 50;
@@ -584,19 +642,19 @@ pub mod constants {
         pub const DEFAULT_SIMILARITY_THRESHOLD: f64 = 0.8;
         pub const DEFAULT_FINGERPRINT_LENGTH: i64 = 10;
     }
-    
+
     /// Default thresholds for large class detection
     pub mod large_classes {
         pub const DEFAULT_MAX_LINES: i64 = 300;
         pub const DEFAULT_MAX_METHODS: i64 = 20;
         pub const DEFAULT_MAX_COMPLEXITY: i64 = 50;
     }
-    
+
     /// Default thresholds for dead code detection
     pub mod dead_code {
         pub const DEFAULT_CONFIDENCE_THRESHOLD: f64 = 0.7;
     }
-    
+
     /// Default thresholds for tight coupling detection
     pub mod tight_coupling {
         pub const DEFAULT_MAX_DEPENDENCIES: i64 = 10;
@@ -607,7 +665,7 @@ pub mod constants {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_standard_config_builder() {
         let config = StandardConfigBuilder::new("god_object")
@@ -619,14 +677,27 @@ mod tests {
             .exclude_pattern("*_test.rs")
             .build()
             .expect("Failed to build config");
-        
+
         assert!(config.enabled);
         assert_eq!(config.severity, IssueSeverity::High);
-        assert_eq!(config.get_threshold_int("max_methods", SourceLanguage::Rust).unwrap(), 30);
-        assert_eq!(config.get_threshold_int("max_methods", SourceLanguage::Python).unwrap(), 20); // Falls back to default god_object config
-        assert!(config.exclusions.patterns.contains(&"*_test.rs".to_string()));
+        assert_eq!(
+            config
+                .get_threshold_int("max_methods", SourceLanguage::Rust)
+                .unwrap(),
+            30
+        );
+        assert_eq!(
+            config
+                .get_threshold_int("max_methods", SourceLanguage::Python)
+                .unwrap(),
+            20
+        ); // Falls back to default god_object config
+        assert!(config
+            .exclusions
+            .patterns
+            .contains(&"*_test.rs".to_string()));
     }
-    
+
     #[test]
     fn test_config_validation() {
         // Valid configuration
@@ -635,7 +706,7 @@ mod tests {
             .threshold("max_fields", 15)
             .build();
         assert!(result.is_ok());
-        
+
         // Invalid configuration (missing required threshold)
         let result = StandardConfigBuilder::new("god_object")
             .threshold("max_methods", 20)
@@ -644,20 +715,20 @@ mod tests {
         // This should actually pass because default_for_detector sets max_fields
         assert!(result.is_ok());
     }
-    
+
     #[test]
     fn test_config_value_conversions() {
         let int_val = ConfigValue::Integer(42);
         assert_eq!(int_val.as_int().unwrap(), 42);
         assert_eq!(int_val.as_float().unwrap(), 42.0);
-        
+
         let float_val = ConfigValue::Float(3.14);
         assert_eq!(float_val.as_float().unwrap(), 3.14);
         assert_eq!(float_val.as_int().unwrap(), 3);
-        
+
         let string_val = ConfigValue::String("test".to_string());
         assert_eq!(string_val.as_string().unwrap(), "test");
-        
+
         let bool_val = ConfigValue::Boolean(true);
         assert_eq!(bool_val.as_bool().unwrap(), true);
     }

@@ -1,6 +1,6 @@
+use crate::analysis::incremental::{ChangeDetector, ChangeSet};
 use log::debug;
 use std::path::{Path, PathBuf};
-use crate::analysis::incremental::{ChangeDetector, ChangeSet};
 
 /// File scanner for recursive directory traversal
 pub struct FileScanner {
@@ -169,22 +169,25 @@ impl FileScanner {
     /// * `Vec<PathBuf>` - List of changed files that are supported
     pub fn filter_supported_changes(&self, changeset: &ChangeSet) -> Vec<PathBuf> {
         let mut supported_files = Vec::new();
-        
+
         // Add modified files that are supported
         for file in &changeset.modified {
             if self.is_supported_file(file) && !self.should_ignore_path(file) {
                 supported_files.push(file.clone());
             }
         }
-        
+
         // Add new files that are supported
         for file in &changeset.added {
             if self.is_supported_file(file) && !self.should_ignore_path(file) {
                 supported_files.push(file.clone());
             }
         }
-        
-        debug!("Filtered {} supported files from changeset", supported_files.len());
+
+        debug!(
+            "Filtered {} supported files from changeset",
+            supported_files.len()
+        );
         supported_files
     }
 }

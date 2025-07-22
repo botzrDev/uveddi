@@ -3,12 +3,12 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::{mpsc, RwLock};
-use tracing::{error, warn, info, debug};
+use tracing::{debug, error, info, warn};
 
-use crate::error::{UveddiError, Result};
+use crate::error::{Result, UveddiError};
 use crate::monitoring::performance_metrics_collector::PerformanceMetricsCollector;
-use crate::resilience::retry::RetryClient;
 use crate::resilience::circuit_breaker::CircuitBreaker;
+use crate::resilience::retry::RetryClient;
 
 #[derive(Debug, Clone)]
 pub enum LargeCodebaseError {
@@ -47,35 +47,36 @@ pub enum LargeCodebaseError {
 impl From<LargeCodebaseError> for UveddiError {
     fn from(err: LargeCodebaseError) -> Self {
         match err {
-            LargeCodebaseError::FileAccessError { path, cause, retry_count } => {
-                UveddiError::io_error(
-                    &format!("file access after {} retries", retry_count),
-                    &path.display().to_string(),
-                    std::io::Error::new(std::io::ErrorKind::Other, cause),
-                )
-            }
-            LargeCodebaseError::MemoryPressure { current, limit, affected_files } => {
-                UveddiError::analysis_error(
-                    "large_codebase_handler",
-                    0,
-                    &format!(
-                        "memory pressure: {:.2}MB current, {:.2}MB limit, {} files affected",
-                        current as f64 / 1024.0 / 1024.0,
-                        limit as f64 / 1024.0 / 1024.0,
-                        affected_files.len()
-                    ),
-                    "memory_pressure_handling"
-                )
-            }
+            LargeCodebaseError::FileAccessError {
+                path,
+                cause,
+                retry_count,
+            } => UveddiError::io_error(
+                &format!("file access after {} retries", retry_count),
+                &path.display().to_string(),
+                std::io::Error::new(std::io::ErrorKind::Other, cause),
+            ),
+            LargeCodebaseError::MemoryPressure {
+                current,
+                limit,
+                affected_files,
+            } => UveddiError::analysis_error(
+                "large_codebase_handler",
+                0,
+                &format!(
+                    "memory pressure: {:.2}MB current, {:.2}MB limit, {} files affected",
+                    current as f64 / 1024.0 / 1024.0,
+                    limit as f64 / 1024.0 / 1024.0,
+                    affected_files.len()
+                ),
+                "memory_pressure_handling",
+            ),
             LargeCodebaseError::ParsingTimeout { file, duration, .. } => {
                 UveddiError::analysis_error(
                     &file.display().to_string(),
                     0,
-                    &format!(
-                        "parsing timeout after {:.2}s",
-                        duration.as_secs_f64()
-                    ),
-                    "timeout_handling"
+                    &format!("parsing timeout after {:.2}s", duration.as_secs_f64()),
+                    "timeout_handling",
                 )
             }
             LargeCodebaseError::DependencyResolution { cycle, depth } => {
@@ -87,31 +88,38 @@ impl From<LargeCodebaseError> for UveddiError {
                         depth,
                         cycle.len()
                     ),
-                    "cycle_detection"
+                    "cycle_detection",
                 )
             }
-            LargeCodebaseError::BatchProcessingFailure { batch_id, success_count, failure_count, .. } => {
-                UveddiError::analysis_error(
-                    &batch_id,
-                    0,
-                    &format!(
-                        "batch failed: {} succeeded, {} failed",
-                        success_count, failure_count
-                    ),
-                    "batch_processing"
-                )
-            }
-            LargeCodebaseError::ResourceExhaustion { resource_type, current_usage, threshold } => {
-                UveddiError::analysis_error(
-                    "resource_monitor",
-                    0,
-                    &format!(
-                        "{} exhaustion: {:.2}% usage (threshold: {:.2}%)",
-                        resource_type, current_usage * 100.0, threshold * 100.0
-                    ),
-                    "resource_exhaustion"
-                )
-            }
+            LargeCodebaseError::BatchProcessingFailure {
+                batch_id,
+                success_count,
+                failure_count,
+                ..
+            } => UveddiError::analysis_error(
+                &batch_id,
+                0,
+                &format!(
+                    "batch failed: {} succeeded, {} failed",
+                    success_count, failure_count
+                ),
+                "batch_processing",
+            ),
+            LargeCodebaseError::ResourceExhaustion {
+                resource_type,
+                current_usage,
+                threshold,
+            } => UveddiError::analysis_error(
+                "resource_monitor",
+                0,
+                &format!(
+                    "{} exhaustion: {:.2}% usage (threshold: {:.2}%)",
+                    resource_type,
+                    current_usage * 100.0,
+                    threshold * 100.0
+                ),
+                "resource_exhaustion",
+            ),
         }
     }
 }
@@ -174,11 +182,18 @@ impl ErrorAggregator {
 #[derive(Debug, Clone)]
 pub enum RecoveryStrategy {
     SkipFile,
-    RetryWithBackoff { max_attempts: u32, base_delay: Duration },
+    RetryWithBackoff {
+        max_attempts: u32,
+        base_delay: Duration,
+    },
     FallbackToBasicParsing,
     ReduceMemoryFootprint,
-    SplitBatch { chunk_size: usize },
-    WaitForResources { timeout: Duration },
+    SplitBatch {
+        chunk_size: usize,
+    },
+    WaitForResources {
+        timeout: Duration,
+    },
 }
 
 pub struct RecoveryStrategies {
@@ -190,19 +205,34 @@ pub struct RecoveryStrategies {
 impl RecoveryStrategies {
     pub fn new(retry_client: Arc<RetryClient>, circuit_breaker: Arc<CircuitBreaker>) -> Self {
         let mut strategies = HashMap::new();
-        
-        strategies.insert("file_access".to_string(), RecoveryStrategy::RetryWithBackoff {
-            max_attempts: 3,
-            base_delay: Duration::from_millis(100),
-        });
-        
-        strategies.insert("memory_pressure".to_string(), RecoveryStrategy::ReduceMemoryFootprint);
-        strategies.insert("parsing_timeout".to_string(), RecoveryStrategy::FallbackToBasicParsing);
+
+        strategies.insert(
+            "file_access".to_string(),
+            RecoveryStrategy::RetryWithBackoff {
+                max_attempts: 3,
+                base_delay: Duration::from_millis(100),
+            },
+        );
+
+        strategies.insert(
+            "memory_pressure".to_string(),
+            RecoveryStrategy::ReduceMemoryFootprint,
+        );
+        strategies.insert(
+            "parsing_timeout".to_string(),
+            RecoveryStrategy::FallbackToBasicParsing,
+        );
         strategies.insert("dependency_cycle".to_string(), RecoveryStrategy::SkipFile);
-        strategies.insert("batch_failure".to_string(), RecoveryStrategy::SplitBatch { chunk_size: 100 });
-        strategies.insert("resource_exhaustion".to_string(), RecoveryStrategy::WaitForResources {
-            timeout: Duration::from_secs(30),
-        });
+        strategies.insert(
+            "batch_failure".to_string(),
+            RecoveryStrategy::SplitBatch { chunk_size: 100 },
+        );
+        strategies.insert(
+            "resource_exhaustion".to_string(),
+            RecoveryStrategy::WaitForResources {
+                timeout: Duration::from_secs(30),
+            },
+        );
 
         Self {
             strategies,
@@ -215,13 +245,20 @@ impl RecoveryStrategies {
         self.strategies.get(error_type)
     }
 
-    pub async fn apply_strategy(&self, strategy: &RecoveryStrategy, error: &LargeCodebaseError) -> Result<bool> {
+    pub async fn apply_strategy(
+        &self,
+        strategy: &RecoveryStrategy,
+        error: &LargeCodebaseError,
+    ) -> Result<bool> {
         match strategy {
             RecoveryStrategy::SkipFile => {
                 info!("Skipping file due to error: {:?}", error);
                 Ok(true)
             }
-            RecoveryStrategy::RetryWithBackoff { max_attempts: _, base_delay } => {
+            RecoveryStrategy::RetryWithBackoff {
+                max_attempts: _,
+                base_delay,
+            } => {
                 tokio::time::sleep(*base_delay).await;
                 Ok(true)
             }
@@ -243,7 +280,9 @@ impl RecoveryStrategies {
                     loop {
                         tokio::time::sleep(Duration::from_millis(500)).await;
                     }
-                }).await.ok();
+                })
+                .await
+                .ok();
                 Ok(true)
             }
         }
@@ -296,9 +335,10 @@ impl ProgressTracker {
         let now = Instant::now();
         if now.duration_since(state.last_checkpoint) >= self.checkpoint_interval {
             state.last_checkpoint = now;
-            
+
             if files_processed > 0 {
-                let processing_rate = files_processed as f64 / now.duration_since(state.last_checkpoint).as_secs_f64();
+                let processing_rate = files_processed as f64
+                    / now.duration_since(state.last_checkpoint).as_secs_f64();
                 let remaining = state.files_total.saturating_sub(files_processed);
                 let eta = Duration::from_secs_f64(remaining as f64 / processing_rate.max(0.1));
                 state.estimated_completion = Some(now + eta);
@@ -340,7 +380,11 @@ pub struct NotificationSystem {
 }
 
 impl NotificationSystem {
-    pub fn new() -> (Self, mpsc::UnboundedReceiver<(LargeCodebaseError, ErrorContext)>, mpsc::UnboundedReceiver<ProgressState>) {
+    pub fn new() -> (
+        Self,
+        mpsc::UnboundedReceiver<(LargeCodebaseError, ErrorContext)>,
+        mpsc::UnboundedReceiver<ProgressState>,
+    ) {
         let (error_sender, error_receiver) = mpsc::unbounded_channel();
         let (progress_sender, progress_receiver) = mpsc::unbounded_channel();
 
@@ -382,14 +426,15 @@ impl LargeCodebaseErrorHandler {
         retry_client: Arc<RetryClient>,
         circuit_breaker: Arc<CircuitBreaker>,
         metrics_collector: Arc<PerformanceMetricsCollector>,
-    ) -> (Self, mpsc::UnboundedReceiver<(LargeCodebaseError, ErrorContext)>, mpsc::UnboundedReceiver<ProgressState>) {
+    ) -> (
+        Self,
+        mpsc::UnboundedReceiver<(LargeCodebaseError, ErrorContext)>,
+        mpsc::UnboundedReceiver<ProgressState>,
+    ) {
         let error_aggregator = ErrorAggregator::new(1000, 0.1);
         let recovery_strategies = RecoveryStrategies::new(retry_client, circuit_breaker);
-        let progress_tracker = ProgressTracker::new(
-            total_files,
-            Duration::from_secs(10),
-            metrics_collector,
-        );
+        let progress_tracker =
+            ProgressTracker::new(total_files, Duration::from_secs(10), metrics_collector);
         let (notification_system, error_receiver, progress_receiver) = NotificationSystem::new();
 
         let handler = Self {
@@ -404,10 +449,18 @@ impl LargeCodebaseErrorHandler {
         (handler, error_receiver, progress_receiver)
     }
 
-    pub async fn handle_error(&self, error: LargeCodebaseError, context: ErrorContext) -> Result<bool> {
-        let should_abort = self.error_aggregator.add_error(error.clone(), context.clone()).await;
-        
-        self.notification_system.notify_error(error.clone(), context);
+    pub async fn handle_error(
+        &self,
+        error: LargeCodebaseError,
+        context: ErrorContext,
+    ) -> Result<bool> {
+        let should_abort = self
+            .error_aggregator
+            .add_error(error.clone(), context.clone())
+            .await;
+
+        self.notification_system
+            .notify_error(error.clone(), context);
 
         if should_abort {
             error!("Error threshold exceeded, aborting operation");
@@ -424,7 +477,11 @@ impl LargeCodebaseErrorHandler {
         };
 
         if let Some(strategy) = self.recovery_strategies.get_strategy(error_type) {
-            match self.recovery_strategies.apply_strategy(strategy, &error).await {
+            match self
+                .recovery_strategies
+                .apply_strategy(strategy, &error)
+                .await
+            {
                 Ok(recovered) => {
                     if recovered {
                         info!("Successfully recovered from error: {:?}", error);
@@ -443,8 +500,10 @@ impl LargeCodebaseErrorHandler {
     }
 
     pub async fn update_progress(&self, files_processed: usize, files_failed: usize) {
-        self.progress_tracker.update_progress(files_processed, files_failed).await;
-        
+        self.progress_tracker
+            .update_progress(files_processed, files_failed)
+            .await;
+
         let progress = self.progress_tracker.get_progress().await;
         self.notification_system.notify_progress(progress);
     }

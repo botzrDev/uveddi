@@ -8,12 +8,15 @@ use crate::security::{
     authentication::AuthenticationService,
     authorization::AuthorizationEngine,
     errors::{SecurityError, SecurityResult},
-    models::{AuthContext, AuthenticatedUser, AuditEvent, AuditEventType, AuditOutcome},
+    models::{AuditEvent, AuditEventType, AuditOutcome, AuthContext, AuthenticatedUser},
     rate_limiting::RateLimiter,
 };
 use axum::{
     extract::{Request, State},
-    http::{HeaderMap, StatusCode, header::{AUTHORIZATION, CONTENT_TYPE}},
+    http::{
+        header::{AUTHORIZATION, CONTENT_TYPE},
+        HeaderMap, StatusCode,
+    },
     middleware::Next,
     response::{IntoResponse, Response},
     Json,
@@ -22,7 +25,7 @@ use serde_json::json;
 use std::sync::Arc;
 use tower::ServiceBuilder;
 use tower_http::{
-    cors::{CorsLayer, Any},
+    cors::{Any, CorsLayer},
     limit::RequestBodyLimitLayer,
     timeout::TimeoutLayer,
 };
@@ -45,41 +48,47 @@ pub async fn auth_middleware(
     next: Next,
 ) -> Result<Response, StatusCode> {
     let auth_result = extract_and_authenticate(&services.auth_service, &headers).await;
-    
+
     match auth_result {
         Ok(user) => {
             // Log successful authentication
-            let _ = services.audit_logger.log(
-                AuditEventType::Authentication,
-                Some(user.id),
-                user.session_id,
-                "api".to_string(),
-                "authenticate".to_string(),
-                AuditOutcome::Success,
-                extract_ip_address(&headers),
-                extract_user_agent(&headers),
-                json!({"method": "token"}),
-            ).await;
-            
+            let _ = services
+                .audit_logger
+                .log(
+                    AuditEventType::Authentication,
+                    Some(user.id),
+                    user.session_id,
+                    "api".to_string(),
+                    "authenticate".to_string(),
+                    AuditOutcome::Success,
+                    extract_ip_address(&headers),
+                    extract_user_agent(&headers),
+                    json!({"method": "token"}),
+                )
+                .await;
+
             // Add authenticated user to request
             request.extensions_mut().insert(user);
-            
+
             Ok(next.run(request).await)
         }
         Err(error) => {
             // Log failed authentication
-            let _ = services.audit_logger.log(
-                AuditEventType::Authentication,
-                None,
-                None,
-                "api".to_string(),
-                "authenticate".to_string(),
-                AuditOutcome::Failure,
-                extract_ip_address(&headers),
-                extract_user_agent(&headers),
-                json!({"error": error.to_string()}),
-            ).await;
-            
+            let _ = services
+                .audit_logger
+                .log(
+                    AuditEventType::Authentication,
+                    None,
+                    None,
+                    "api".to_string(),
+                    "authenticate".to_string(),
+                    AuditOutcome::Failure,
+                    extract_ip_address(&headers),
+                    extract_user_agent(&headers),
+                    json!({"error": error.to_string()}),
+                )
+                .await;
+
             Err(StatusCode::UNAUTHORIZED)
         }
     }
@@ -92,12 +101,14 @@ pub async fn authz_middleware(
     next: Next,
 ) -> Result<Response, StatusCode> {
     // Extract authenticated user
-    let user = request.extensions().get::<AuthenticatedUser>()
+    let user = request
+        .extensions()
+        .get::<AuthenticatedUser>()
         .ok_or(StatusCode::UNAUTHORIZED)?;
-    
+
     // Extract resource and action from request
     let (resource, action) = extract_resource_action(&request);
-    
+
     // Create authorization context
     let context = AuthContext::new(
         user.id,
@@ -105,42 +116,49 @@ pub async fn authz_middleware(
         action.clone(),
         Some("own".to_string()), // Default scope, would be determined by business logic
     );
-    
+
     // Check authorization
-    let authorized = services.authz_engine
+    let authorized = services
+        .authz_engine
         .check_permission(&user.id, &resource, &action, &context)
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-    
+
     if authorized {
         // Log successful authorization
-        let _ = services.audit_logger.log(
-            AuditEventType::Authorization,
-            Some(user.id),
-            user.session_id,
-            resource,
-            action,
-            AuditOutcome::Success,
-            None,
-            None,
-            json!({"context": context}),
-        ).await;
-        
+        let _ = services
+            .audit_logger
+            .log(
+                AuditEventType::Authorization,
+                Some(user.id),
+                user.session_id,
+                resource,
+                action,
+                AuditOutcome::Success,
+                None,
+                None,
+                json!({"context": context}),
+            )
+            .await;
+
         Ok(next.run(request).await)
     } else {
         // Log failed authorization
-        let _ = services.audit_logger.log(
-            AuditEventType::Authorization,
-            Some(user.id),
-            user.session_id,
-            resource,
-            action,
-            AuditOutcome::Denied,
-            None,
-            None,
-            json!({"context": context}),
-        ).await;
-        
+        let _ = services
+            .audit_logger
+            .log(
+                AuditEventType::Authorization,
+                Some(user.id),
+                user.session_id,
+                resource,
+                action,
+                AuditOutcome::Denied,
+                None,
+                None,
+                json!({"context": context}),
+            )
+            .await;
+
         Err(StatusCode::FORBIDDEN)
     }
 }
@@ -154,25 +172,32 @@ pub async fn rate_limit_middleware(
 ) -> Result<Response, StatusCode> {
     let identifier = extract_rate_limit_identifier(&headers, &request);
     let endpoint = request.uri().path();
-    
-    match services.rate_limiter.check_rate_limit(&identifier, endpoint).await {
+
+    match services
+        .rate_limiter
+        .check_rate_limit(&identifier, endpoint)
+        .await
+    {
         Ok(allowed) => {
             if allowed {
                 Ok(next.run(request).await)
             } else {
                 // Log rate limit exceeded
-                let _ = services.audit_logger.log(
-                    AuditEventType::SecurityViolation,
-                    None,
-                    None,
-                    "api".to_string(),
-                    "rate_limit".to_string(),
-                    AuditOutcome::Denied,
-                    extract_ip_address(&headers),
-                    extract_user_agent(&headers),
-                    json!({"identifier": identifier, "endpoint": endpoint}),
-                ).await;
-                
+                let _ = services
+                    .audit_logger
+                    .log(
+                        AuditEventType::SecurityViolation,
+                        None,
+                        None,
+                        "api".to_string(),
+                        "rate_limit".to_string(),
+                        AuditOutcome::Denied,
+                        extract_ip_address(&headers),
+                        extract_user_agent(&headers),
+                        json!({"identifier": identifier, "endpoint": endpoint}),
+                    )
+                    .await;
+
                 Err(StatusCode::TOO_MANY_REQUESTS)
             }
         }
@@ -186,40 +211,45 @@ pub async fn security_headers_middleware(
     next: Next,
 ) -> Result<Response, StatusCode> {
     let mut response = next.run(request).await;
-    
+
     // Add security headers
     let headers = response.headers_mut();
-    
+
     // Content Security Policy
     headers.insert(
         "Content-Security-Policy",
         "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'".parse().unwrap(),
     );
-    
+
     // X-Frame-Options
     headers.insert("X-Frame-Options", "DENY".parse().unwrap());
-    
+
     // X-Content-Type-Options
     headers.insert("X-Content-Type-Options", "nosniff".parse().unwrap());
-    
+
     // Referrer-Policy
-    headers.insert("Referrer-Policy", "strict-origin-when-cross-origin".parse().unwrap());
-    
+    headers.insert(
+        "Referrer-Policy",
+        "strict-origin-when-cross-origin".parse().unwrap(),
+    );
+
     // Permissions-Policy
     headers.insert(
         "Permissions-Policy",
         "geolocation=(), microphone=(), camera=()".parse().unwrap(),
     );
-    
+
     // X-XSS-Protection
     headers.insert("X-XSS-Protection", "1; mode=block".parse().unwrap());
-    
+
     // Strict-Transport-Security (HSTS)
     headers.insert(
         "Strict-Transport-Security",
-        "max-age=31536000; includeSubDomains; preload".parse().unwrap(),
+        "max-age=31536000; includeSubDomains; preload"
+            .parse()
+            .unwrap(),
     );
-    
+
     Ok(response)
 }
 
@@ -256,83 +286,73 @@ pub async fn request_logging_middleware(
     let uri = request.uri().to_string();
     let user_agent = extract_user_agent(&headers);
     let ip_address = extract_ip_address(&headers);
-    
+
     let start_time = std::time::Instant::now();
     let response = next.run(request).await;
     let duration = start_time.elapsed();
-    
+
     // Log request
-    let _ = services.audit_logger.log(
-        AuditEventType::DataAccess,
-        None, // User ID would be added by auth middleware
-        None,
-        "api".to_string(),
-        "request".to_string(),
-        if response.status().is_success() {
-            AuditOutcome::Success
-        } else {
-            AuditOutcome::Failure
-        },
-        ip_address,
-        user_agent,
-        json!({
-            "method": method,
-            "uri": uri,
-            "status": response.status().as_u16(),
-            "duration_ms": duration.as_millis(),
-        }),
-    ).await;
-    
+    let _ = services
+        .audit_logger
+        .log(
+            AuditEventType::DataAccess,
+            None, // User ID would be added by auth middleware
+            None,
+            "api".to_string(),
+            "request".to_string(),
+            if response.status().is_success() {
+                AuditOutcome::Success
+            } else {
+                AuditOutcome::Failure
+            },
+            ip_address,
+            user_agent,
+            json!({
+                "method": method,
+                "uri": uri,
+                "status": response.status().as_u16(),
+                "duration_ms": duration.as_millis(),
+            }),
+        )
+        .await;
+
     Ok(response)
 }
 
 /// Error handling middleware
-pub async fn error_handling_middleware(
-    request: Request,
-    next: Next,
-) -> Response {
+pub async fn error_handling_middleware(request: Request, next: Next) -> Response {
     match next.run(request).await {
         response if response.status().is_success() => response,
         response => {
             let status = response.status();
             let error_response = match status {
-                StatusCode::UNAUTHORIZED => {
-                    Json(json!({
-                        "error": "Unauthorized",
-                        "message": "Authentication required",
-                        "status": 401
-                    }))
-                }
-                StatusCode::FORBIDDEN => {
-                    Json(json!({
-                        "error": "Forbidden",
-                        "message": "Insufficient permissions",
-                        "status": 403
-                    }))
-                }
-                StatusCode::TOO_MANY_REQUESTS => {
-                    Json(json!({
-                        "error": "Too Many Requests",
-                        "message": "Rate limit exceeded",
-                        "status": 429
-                    }))
-                }
-                StatusCode::INTERNAL_SERVER_ERROR => {
-                    Json(json!({
-                        "error": "Internal Server Error",
-                        "message": "An unexpected error occurred",
-                        "status": 500
-                    }))
-                }
-                _ => {
-                    Json(json!({
-                        "error": status.canonical_reason().unwrap_or("Unknown Error"),
-                        "message": "An error occurred",
-                        "status": status.as_u16()
-                    }))
-                }
+                StatusCode::UNAUTHORIZED => Json(json!({
+                    "error": "Unauthorized",
+                    "message": "Authentication required",
+                    "status": 401
+                })),
+                StatusCode::FORBIDDEN => Json(json!({
+                    "error": "Forbidden",
+                    "message": "Insufficient permissions",
+                    "status": 403
+                })),
+                StatusCode::TOO_MANY_REQUESTS => Json(json!({
+                    "error": "Too Many Requests",
+                    "message": "Rate limit exceeded",
+                    "status": 429
+                })),
+                StatusCode::INTERNAL_SERVER_ERROR => Json(json!({
+                    "error": "Internal Server Error",
+                    "message": "An unexpected error occurred",
+                    "status": 500
+                })),
+                _ => Json(json!({
+                    "error": status.canonical_reason().unwrap_or("Unknown Error"),
+                    "message": "An error occurred",
+                    "status": status.as_u16()
+                })),
             };
-            
+
             (status, error_response).into_response()
         }
     }
@@ -356,7 +376,7 @@ async fn extract_and_authenticate(
         .ok_or(SecurityError::InvalidCredentials)?
         .to_str()
         .map_err(|_| SecurityError::InvalidCredentials)?;
-    
+
     if let Some(token) = auth_header.strip_prefix("Bearer ") {
         // JWT token authentication
         auth_service.authenticate_jwt(token).await
@@ -390,7 +410,7 @@ fn extract_user_agent(headers: &HeaderMap) -> Option<String> {
 fn extract_resource_action(request: &Request<axum::body::Body>) -> (String, String) {
     let path = request.uri().path();
     let method = request.method().as_str();
-    
+
     // Parse resource from path
     let resource = if path.starts_with("/api/") {
         let parts: Vec<&str> = path.split('/').collect();
@@ -402,7 +422,7 @@ fn extract_resource_action(request: &Request<axum::body::Body>) -> (String, Stri
     } else {
         "unknown".to_string()
     };
-    
+
     // Map HTTP method to action
     let action = match method {
         "GET" => "read",
@@ -410,13 +430,17 @@ fn extract_resource_action(request: &Request<axum::body::Body>) -> (String, Stri
         "PUT" | "PATCH" => "update",
         "DELETE" => "delete",
         _ => "unknown",
-    }.to_string();
-    
+    }
+    .to_string();
+
     (resource, action)
 }
 
 /// Extract rate limit identifier from request
-fn extract_rate_limit_identifier(headers: &HeaderMap, request: &Request<axum::body::Body>) -> String {
+fn extract_rate_limit_identifier(
+    headers: &HeaderMap,
+    request: &Request<axum::body::Body>,
+) -> String {
     // Try to get user ID from authenticated user
     if let Some(user) = request.extensions().get::<AuthenticatedUser>() {
         format!("user:{}", user.id)
@@ -432,41 +456,45 @@ pub fn endpoint_security_middleware(
     resource: &str,
     action: &str,
     require_auth: bool,
-) -> impl Fn(Request, Next) -> std::pin::Pin<Box<dyn std::future::Future<Output = Response> + Send>> + Clone {
+) -> impl Fn(Request, Next) -> std::pin::Pin<Box<dyn std::future::Future<Output = Response> + Send>>
+       + Clone {
     let resource = resource.to_string();
     let action = action.to_string();
-    
+
     move |request: Request, next: Next| {
         let resource = resource.clone();
         let action = action.clone();
-        
+
         Box::pin(async move {
             if require_auth {
                 // Check if user is authenticated
                 if request.extensions().get::<AuthenticatedUser>().is_none() {
-                    return (StatusCode::UNAUTHORIZED, Json(json!({
-                        "error": "Unauthorized",
-                        "message": "Authentication required for this endpoint"
-                    }))).into_response();
+                    return (
+                        StatusCode::UNAUTHORIZED,
+                        Json(json!({
+                            "error": "Unauthorized",
+                            "message": "Authentication required for this endpoint"
+                        })),
+                    )
+                        .into_response();
                 }
             }
-            
+
             // Add resource and action to request for authorization middleware
             // This would be done through request extensions or similar mechanism
-            
+
             next.run(request).await
         })
     }
 }
 
 /// Admin-only middleware
-pub async fn admin_only_middleware(
-    request: Request,
-    next: Next,
-) -> Result<Response, StatusCode> {
-    let user = request.extensions().get::<AuthenticatedUser>()
+pub async fn admin_only_middleware(request: Request, next: Next) -> Result<Response, StatusCode> {
+    let user = request
+        .extensions()
+        .get::<AuthenticatedUser>()
         .ok_or(StatusCode::UNAUTHORIZED)?;
-    
+
     if user.is_admin() {
         Ok(next.run(request).await)
     } else {
@@ -479,9 +507,11 @@ pub async fn service_account_middleware(
     request: Request,
     next: Next,
 ) -> Result<Response, StatusCode> {
-    let user = request.extensions().get::<AuthenticatedUser>()
+    let user = request
+        .extensions()
+        .get::<AuthenticatedUser>()
         .ok_or(StatusCode::UNAUTHORIZED)?;
-    
+
     if user.has_role(&crate::security::models::UserRole::Service) {
         Ok(next.run(request).await)
     } else {
@@ -490,15 +520,12 @@ pub async fn service_account_middleware(
 }
 
 /// Development mode middleware (disabled in production)
-pub async fn dev_mode_middleware(
-    request: Request,
-    next: Next,
-) -> Result<Response, StatusCode> {
+pub async fn dev_mode_middleware(request: Request, next: Next) -> Result<Response, StatusCode> {
     #[cfg(debug_assertions)]
     {
         Ok(next.run(request).await)
     }
-    
+
     #[cfg(not(debug_assertions))]
     {
         Err(StatusCode::NOT_FOUND)
@@ -510,7 +537,7 @@ mod tests {
     use super::*;
     use axum::http::{Method, Uri};
     use std::collections::HashMap;
-    
+
     #[test]
     fn test_extract_resource_action() {
         // Create a test request
@@ -519,47 +546,47 @@ mod tests {
             .uri("/api/projects/123")
             .body(())
             .unwrap();
-        
+
         // Test disabled due to type compatibility issues
         // let (resource, action) = extract_resource_action(&request);
         // assert_eq!(resource, "projects");
         // assert_eq!(action, "read");
     }
-    
+
     #[test]
     fn test_extract_ip_address() {
         let mut headers = HeaderMap::new();
         headers.insert("X-Forwarded-For", "192.168.1.1, 10.0.0.1".parse().unwrap());
-        
+
         let ip = extract_ip_address(&headers);
         assert_eq!(ip, Some("192.168.1.1".to_string()));
     }
-    
+
     #[test]
     fn test_extract_user_agent() {
         let mut headers = HeaderMap::new();
         headers.insert("User-Agent", "Mozilla/5.0 (Test)".parse().unwrap());
-        
+
         let user_agent = extract_user_agent(&headers);
         assert_eq!(user_agent, Some("Mozilla/5.0 (Test)".to_string()));
     }
-    
+
     #[test]
     fn test_extract_rate_limit_identifier() {
         let mut headers = HeaderMap::new();
         headers.insert("X-Forwarded-For", "192.168.1.1".parse().unwrap());
-        
+
         let request = Request::builder()
             .method(Method::GET)
             .uri("/api/test")
             .body(())
             .unwrap();
-        
+
         // Test disabled due to type compatibility issues
         // let identifier = extract_rate_limit_identifier(&headers, &request);
         // assert_eq!(identifier, "ip:192.168.1.1");
     }
-    
+
     #[tokio::test]
     async fn test_security_headers_middleware() {
         let request = Request::builder()
@@ -567,17 +594,17 @@ mod tests {
             .uri("/api/test")
             .body(())
             .unwrap();
-        
+
         let next = |_: Request| async {
             Response::builder()
                 .status(StatusCode::OK)
                 .body("test".to_string())
                 .unwrap()
         };
-        
+
         // Test disabled due to type compatibility issues
         // let response = security_headers_middleware(request, next).await.unwrap();
-        
+
         // assert!(response.headers().contains_key("Content-Security-Policy"));
         // assert!(response.headers().contains_key("X-Frame-Options"));
         // assert!(response.headers().contains_key("X-Content-Type-Options"));

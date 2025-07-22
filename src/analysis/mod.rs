@@ -132,35 +132,37 @@ pub mod types;
 #[cfg(test)]
 pub mod tests;
 
+pub use adapters::{AstParserAdapter, DependencyExtractorAdapter, ResultCacheAdapter};
 /// Placeholder documentation for public items
 // Re-exports for convenience
 pub use cache::AstCache;
 pub use config::{AnalysisConfig, CacheConfig, PerformanceConfig};
-pub use detector_factory::{DetectorConfig, DetectorFactory, EnhancedDetectorConfig, IssueSeverity, DetectorThresholds};
+pub use config_migration::{ConfigMigration, ConfigMigrationUtils};
+pub use detector_factory::{
+    DetectorConfig, DetectorFactory, DetectorThresholds, EnhancedDetectorConfig, IssueSeverity,
+};
 pub use detector_registry::DetectorRegistry;
 pub use detectors::anti_patterns::GodObjectDetector;
 pub use detectors::{CycleDetector, Dependency, DependencyExtractor};
+pub use diagram_cache::{
+    CachedDiagram, CompressionEngine, DiagramCacheEngine, DiagramDependencyTracker, DiagramType,
+    InvalidationManager,
+};
 pub use engine::AnalysisEngine;
 pub use engine_builder::AnalysisEngineBuilder;
 pub use errors::AnalysisError;
 pub use graph::{ComponentNode, LocalDependencyGraph, LocalDependencyType};
 pub use incremental::{
-    IncrementalAnalysisEngine, IncrementalConfig, IncrementalAnalysisConfig,
-    ChangeDetector, DependencyTracker, IncrementalStateManager, ChangeSet, ChangeImpact
-};
-pub use diagram_cache::{
-    DiagramCacheEngine, DiagramType, CachedDiagram,
-    DiagramDependencyTracker, InvalidationManager, CompressionEngine
+    ChangeDetector, ChangeImpact, ChangeSet, DependencyTracker, IncrementalAnalysisConfig,
+    IncrementalAnalysisEngine, IncrementalConfig, IncrementalStateManager,
 };
 pub use memory::{get_optimization_status, MemoryOptimizationConfig};
 pub use plugin_adapter::{WasmPluginAdapterFactory, WasmPluginDetectorAdapter};
 pub use standardized_config::{
-    StandardDetectorConfig, StandardConfigBuilder, ConfigValue, 
-    ExclusionConfig, AdvancedConfig, DetectorMetadata, constants
+    constants, AdvancedConfig, ConfigValue, DetectorMetadata, ExclusionConfig,
+    StandardConfigBuilder, StandardDetectorConfig,
 };
-pub use config_migration::{ConfigMigration, ConfigMigrationUtils};
-pub use traits::{AstParserTrait, DependencyExtractorTrait, ResultCacheTrait, CacheStats};
-pub use adapters::{AstParserAdapter, DependencyExtractorAdapter, ResultCacheAdapter};
+pub use traits::{AstParserTrait, CacheStats, DependencyExtractorTrait, ResultCacheTrait};
 
 use crate::ast::ParsedFile;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
@@ -277,7 +279,10 @@ use async_trait::async_trait;
 /// ```
 #[async_trait]
 pub trait AnalysisDetector: Send + Sync {
-    async fn detect_issues(&self, file: &ParsedFile) -> Result<Vec<ArchitecturalIssue>, AnalysisError>;
+    async fn detect_issues(
+        &self,
+        file: &ParsedFile,
+    ) -> Result<Vec<ArchitecturalIssue>, AnalysisError>;
     fn detect_graph_issues(
         &self,
         _graph: &LocalDependencyGraph,

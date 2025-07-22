@@ -6,9 +6,9 @@
 use crate::observability::{
     config::ObservabilityConfig,
     logging,
-    metrics::{UveddiMetrics, MetricsServer},
+    metrics::{MetricsServer, UveddiMetrics},
     telemetry::{TelemetryCollector, TelemetryConfig, TelemetrySender},
-    tracing_utils::{TraceId, generate_trace_id},
+    tracing_utils::{generate_trace_id, TraceId},
 };
 use anyhow::{Context, Result};
 use std::sync::Arc;
@@ -40,8 +40,7 @@ impl ObservabilityService {
 
         // Initialize metrics system
         let metrics = Arc::new(
-            UveddiMetrics::new(&config.metrics)
-                .context("Failed to initialize metrics system")?
+            UveddiMetrics::new(&config.metrics).context("Failed to initialize metrics system")?,
         );
 
         tracing::info!(
@@ -86,9 +85,9 @@ impl ObservabilityService {
             let telemetry_collector = TelemetryCollector::new(telemetry_config);
             self.telemetry_sender = Some(telemetry_collector.sender());
 
-            self.telemetry_handle = Some(tokio::spawn(async move {
-                telemetry_collector.start().await
-            }));
+            self.telemetry_handle = Some(tokio::spawn(
+                async move { telemetry_collector.start().await },
+            ));
 
             tracing::info!(
                 trace_id = %trace_id,
@@ -98,14 +97,11 @@ impl ObservabilityService {
 
         // Start metrics server
         if self.config.metrics.enabled {
-            let metrics_server = MetricsServer::new(
-                (*self.metrics).clone(),
-                self.config.metrics.clone(),
-            );
+            let metrics_server =
+                MetricsServer::new((*self.metrics).clone(), self.config.metrics.clone());
 
-            self.metrics_server_handle = Some(tokio::spawn(async move {
-                metrics_server.start().await
-            }));
+            self.metrics_server_handle =
+                Some(tokio::spawn(async move { metrics_server.start().await }));
 
             tracing::info!(
                 trace_id = %trace_id,
@@ -126,7 +122,12 @@ impl ObservabilityService {
         );
 
         // Record startup metrics
-        self.metrics.record_request("INTERNAL", "/start", "success", std::time::Duration::from_millis(0));
+        self.metrics.record_request(
+            "INTERNAL",
+            "/start",
+            "success",
+            std::time::Duration::from_millis(0),
+        );
 
         *started = true;
         Ok(())
@@ -203,7 +204,9 @@ impl ObservabilityService {
 
         // Check metrics server health
         if self.config.metrics.enabled {
-            status.metrics_server = self.metrics_server_handle.as_ref()
+            status.metrics_server = self
+                .metrics_server_handle
+                .as_ref()
                 .map(|h| !h.is_finished())
                 .unwrap_or(false);
         } else {
@@ -211,7 +214,9 @@ impl ObservabilityService {
         }
 
         // Check telemetry collector health
-        status.telemetry_collector = self.telemetry_handle.as_ref()
+        status.telemetry_collector = self
+            .telemetry_handle
+            .as_ref()
             .map(|h| !h.is_finished())
             .unwrap_or(true); // May not be enabled
 
@@ -220,9 +225,15 @@ impl ObservabilityService {
 
         // Record health check metrics
         if status.healthy {
-            self.metrics.record_request("INTERNAL", "/health", "success", std::time::Duration::from_millis(0));
+            self.metrics.record_request(
+                "INTERNAL",
+                "/health",
+                "success",
+                std::time::Duration::from_millis(0),
+            );
         } else {
-            self.metrics.record_error("health_check", "medium", "observability_service");
+            self.metrics
+                .record_error("health_check", "medium", "observability_service");
         }
 
         status
@@ -283,7 +294,7 @@ impl Drop for ObservabilityService {
         if let Some(handle) = self.metrics_server_handle.take() {
             handle.abort();
         }
-        
+
         if let Some(handle) = self.telemetry_handle.take() {
             handle.abort();
         }
@@ -295,7 +306,7 @@ impl Drop for ObservabilityService {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::observability::config::{ObservabilityConfig, LoggingConfig, LogFormat};
+    use crate::observability::config::{LogFormat, LoggingConfig, ObservabilityConfig};
 
     #[tokio::test]
     async fn test_observability_service_creation() {
@@ -315,7 +326,7 @@ mod tests {
         config.metrics.enabled = false; // Disable to avoid port conflicts
 
         let mut service = ObservabilityService::new(config).await.unwrap();
-        
+
         // Test initial state
         assert!(!service.is_running().await);
 
@@ -337,7 +348,7 @@ mod tests {
         config.metrics.enabled = false;
 
         let mut service = ObservabilityService::new(config).await.unwrap();
-        
+
         // Health check before start
         let health = service.health_check().await;
         assert!(!health.healthy);
@@ -359,10 +370,10 @@ mod tests {
         config.metrics.enabled = false;
 
         let service = ObservabilityService::new(config).await.unwrap();
-        
+
         let trace_id1 = service.new_trace_id();
         let trace_id2 = service.new_trace_id();
-        
+
         assert_ne!(trace_id1, trace_id2);
     }
 }

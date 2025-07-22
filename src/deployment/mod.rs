@@ -1,21 +1,21 @@
 //! Production deployment pipeline components
-//! 
+//!
 //! This module provides functionality for production deployments including:
 //! - Blue-green deployment management
 //! - Health monitoring and validation
 //! - Disaster recovery coordination
 //! - Deployment metrics and observability
 
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use std::collections::HashMap;
+use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tokio::time::{sleep, timeout};
-use tracing::{info, warn, error, instrument};
-use anyhow::{Result, anyhow};
+use tracing::{error, info, instrument, warn};
 
 pub mod blue_green;
-pub mod health_monitor;
 pub mod disaster_recovery;
+pub mod health_monitor;
 pub mod metrics;
 
 /// Deployment strategy types
@@ -127,7 +127,7 @@ impl DeploymentOrchestrator {
     pub async fn deploy(&mut self, config: DeploymentConfig) -> Result<DeploymentMetadata> {
         let deployment_id = generate_deployment_id();
         let timestamp = SystemTime::now();
-        
+
         info!(
             deployment_id = %deployment_id,
             strategy = ?config.strategy,
@@ -147,20 +147,25 @@ impl DeploymentOrchestrator {
         };
 
         // Record deployment start
-        self.metrics_collector.record_deployment_start(&metadata).await?;
+        self.metrics_collector
+            .record_deployment_start(&metadata)
+            .await?;
 
         // Update status to in progress
         metadata.status = DeploymentStatus::InProgress;
 
         match config.strategy {
             DeploymentStrategy::BlueGreen => {
-                self.execute_blue_green_deployment(&config, &mut metadata).await?;
+                self.execute_blue_green_deployment(&config, &mut metadata)
+                    .await?;
             }
             DeploymentStrategy::Rolling => {
-                self.execute_rolling_deployment(&config, &mut metadata).await?;
+                self.execute_rolling_deployment(&config, &mut metadata)
+                    .await?;
             }
             DeploymentStrategy::Canary => {
-                self.execute_canary_deployment(&config, &mut metadata).await?;
+                self.execute_canary_deployment(&config, &mut metadata)
+                    .await?;
             }
         }
 
@@ -168,17 +173,19 @@ impl DeploymentOrchestrator {
         if !self.verify_deployment(&config).await? {
             error!("Deployment verification failed, initiating rollback");
             metadata.status = DeploymentStatus::Failed;
-            
+
             if config.rollback_enabled {
                 self.rollback_deployment(&config).await?;
                 metadata.status = DeploymentStatus::RolledBack;
             }
-            
+
             return Err(anyhow!("Deployment verification failed"));
         }
 
         metadata.status = DeploymentStatus::Verified;
-        self.metrics_collector.record_deployment_success(&metadata).await?;
+        self.metrics_collector
+            .record_deployment_success(&metadata)
+            .await?;
 
         info!(
             deployment_id = %deployment_id,
@@ -199,10 +206,9 @@ impl DeploymentOrchestrator {
         info!("Executing blue-green deployment");
 
         // Deploy to inactive environment
-        self.blue_green_manager.deploy_to_inactive(
-            &config.image_tag,
-            config.replicas,
-        ).await?;
+        self.blue_green_manager
+            .deploy_to_inactive(&config.image_tag, config.replicas)
+            .await?;
 
         // Health check inactive environment
         if !self.blue_green_manager.health_check_inactive().await? {
@@ -232,7 +238,8 @@ impl DeploymentOrchestrator {
         self.update_deployment_image(&config.image_tag).await?;
 
         // Monitor rollout progress
-        self.monitor_rollout_progress(config.health_check_timeout).await?;
+        self.monitor_rollout_progress(config.health_check_timeout)
+            .await?;
 
         metadata.status = DeploymentStatus::Deployed;
         Ok(())
@@ -253,7 +260,10 @@ impl DeploymentOrchestrator {
         self.deploy_canary(&config.image_tag, canary_weight).await?;
 
         // Monitor canary metrics
-        if !self.monitor_canary_metrics(Duration::from_minutes(5)).await? {
+        if !self
+            .monitor_canary_metrics(Duration::from_minutes(5))
+            .await?
+        {
             warn!("Canary metrics failed, rolling back");
             self.rollback_canary().await?;
             return Err(anyhow!("Canary deployment failed"));
@@ -275,7 +285,7 @@ impl DeploymentOrchestrator {
         let health_checks = self.get_health_check_configs()?;
         for check_config in health_checks {
             let result = self.health_monitor.check_health(&check_config).await?;
-            
+
             if result.status != HealthStatus::Healthy && check_config.critical {
                 error!(
                     endpoint = %check_config.endpoint,
@@ -464,7 +474,7 @@ fn generate_deployment_id() -> String {
         .duration_since(UNIX_EPOCH)
         .unwrap()
         .as_secs();
-    
+
     format!("deploy-{}-{}", timestamp, uuid::Uuid::new_v4().simple())
 }
 

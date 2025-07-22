@@ -1,22 +1,22 @@
 //! Performance report generation with statistical insights
-//! 
+//!
 //! This module provides:
 //! - Comprehensive performance reports combining Criterion.rs and statistical analysis
 //! - HTML and JSON report formats
 //! - Historical trend analysis
 //! - Executive summary generation
 
+use anyhow::{anyhow, Result};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::Path;
 use std::time::SystemTime;
-use serde::{Deserialize, Serialize};
-use anyhow::{Result, anyhow};
+use tera::{Context, Tera};
 use tokio::fs;
-use tera::{Tera, Context};
 
 use crate::performance::{
-    BenchmarkBaseline, BaselineComparison, StatisticalAnalyzer, TrendDetector,
-    MannKendallResult, ChangePointResult, ChangeCategory, BaselineRecommendation
+    BaselineComparison, BaselineRecommendation, BenchmarkBaseline, ChangeCategory,
+    ChangePointResult, MannKendallResult, StatisticalAnalyzer, TrendDetector,
 };
 
 /// Comprehensive performance report
@@ -273,7 +273,7 @@ pub struct PerformanceReportGenerator {
 impl PerformanceReportGenerator {
     pub fn new() -> Result<Self> {
         let mut templates = Tera::new("templates/performance/*.html")?;
-        
+
         // Add built-in templates if external templates not found
         if templates.get_template_names().count() == 0 {
             templates.add_raw_template("report.html", PERFORMANCE_REPORT_HTML)?;
@@ -294,16 +294,24 @@ impl PerformanceReportGenerator {
         historical_data: Option<Vec<BenchmarkBaseline>>,
     ) -> Result<PerformanceReport> {
         let start_time = SystemTime::now();
-        
+
         let metadata = self.generate_metadata(&benchmark_comparisons).await?;
-        let benchmark_reports = self.generate_benchmark_reports(&benchmark_comparisons).await?;
+        let benchmark_reports = self
+            .generate_benchmark_reports(&benchmark_comparisons)
+            .await?;
         let executive_summary = self.generate_executive_summary(&benchmark_reports);
-        let statistical_analysis = self.generate_statistical_analysis(&benchmark_reports).await?;
-        let trends = self.generate_trend_analysis(&benchmark_reports, &historical_data).await?;
-        let recommendations = self.generate_recommendations(&benchmark_reports, &statistical_analysis, &trends);
+        let statistical_analysis = self
+            .generate_statistical_analysis(&benchmark_reports)
+            .await?;
+        let trends = self
+            .generate_trend_analysis(&benchmark_reports, &historical_data)
+            .await?;
+        let recommendations =
+            self.generate_recommendations(&benchmark_reports, &statistical_analysis, &trends);
         let historical_context = self.generate_historical_context(historical_data).await?;
 
-        let analysis_duration = start_time.elapsed()
+        let analysis_duration = start_time
+            .elapsed()
             .map(|d| d.as_millis() as u64)
             .unwrap_or(0);
 
@@ -322,13 +330,17 @@ impl PerformanceReportGenerator {
     }
 
     /// Generate report metadata
-    async fn generate_metadata(&self, comparisons: &[BaselineComparison]) -> Result<ReportMetadata> {
+    async fn generate_metadata(
+        &self,
+        comparisons: &[BaselineComparison],
+    ) -> Result<ReportMetadata> {
         Ok(ReportMetadata {
             generated_at: SystemTime::now(),
             report_version: "2.0".to_string(),
             git_commit: self.get_git_commit().await,
             git_branch: self.get_git_branch().await,
-            build_config: std::env::var("CARGO_CFG_TARGET_FEATURE").unwrap_or_else(|_| "unknown".to_string()),
+            build_config: std::env::var("CARGO_CFG_TARGET_FEATURE")
+                .unwrap_or_else(|_| "unknown".to_string()),
             environment: self.detect_environment(),
             total_benchmarks: comparisons.len(),
             analysis_duration_ms: 0, // Will be filled later
@@ -378,16 +390,21 @@ impl PerformanceReportGenerator {
     /// Generate individual benchmark reports
     async fn generate_benchmark_reports(
         &self,
-        comparisons: &[BaselineComparison]
+        comparisons: &[BaselineComparison],
     ) -> Result<Vec<BenchmarkReport>> {
         let mut reports = Vec::new();
 
         for comparison in comparisons {
             let current_perf = &comparison.current_baseline.statistical_summary;
-            
-            let status = match (&comparison.comparison_result.change_category, &comparison.recommendation) {
+
+            let status = match (
+                &comparison.comparison_result.change_category,
+                &comparison.recommendation,
+            ) {
                 (ChangeCategory::MajorRegression, _) => BenchmarkStatus::Fail,
-                (ChangeCategory::MinorRegression, BaselineRecommendation::Reject { .. }) => BenchmarkStatus::Fail,
+                (ChangeCategory::MinorRegression, BaselineRecommendation::Reject { .. }) => {
+                    BenchmarkStatus::Fail
+                }
                 (ChangeCategory::MinorRegression, _) => BenchmarkStatus::Warning,
                 (ChangeCategory::HighVariance, _) => BenchmarkStatus::Warning,
                 (_, _) if comparison.previous_baseline.is_none() => BenchmarkStatus::NoBaseline,
@@ -409,7 +426,9 @@ impl PerformanceReportGenerator {
 
             let baseline_comparison = if comparison.previous_baseline.is_some() {
                 Some(BaselineComparisonReport {
-                    performance_change_percent: comparison.comparison_result.performance_change_percent,
+                    performance_change_percent: comparison
+                        .comparison_result
+                        .performance_change_percent,
                     change_category: comparison.comparison_result.change_category.clone(),
                     statistical_significance: comparison.comparison_result.statistical_significance,
                     effect_size: comparison.comparison_result.effect_size,
@@ -439,9 +458,9 @@ impl PerformanceReportGenerator {
 
     fn generate_benchmark_insights(&self, comparison: &BaselineComparison) -> Vec<String> {
         let mut insights = Vec::new();
-        
+
         let current_stats = &comparison.current_baseline.statistical_summary;
-        
+
         // Stability insight
         if current_stats.trend_stability > 0.9 {
             insights.push("Highly stable performance with low variance".to_string());
@@ -452,16 +471,20 @@ impl PerformanceReportGenerator {
         // Statistical significance insight
         if let Some(mk) = &current_stats.mann_kendall_result {
             if mk.p_value < 0.01 {
-                insights.push(format!("Strong statistical evidence of {} trend", 
-                    format!("{:?}", mk.trend).to_lowercase()));
+                insights.push(format!(
+                    "Strong statistical evidence of {} trend",
+                    format!("{:?}", mk.trend).to_lowercase()
+                ));
             }
         }
 
         // Change point insight
         if let Some(cp) = &current_stats.change_point_analysis {
             if !cp.change_points.is_empty() {
-                insights.push(format!("Detected {} change points in performance data", 
-                    cp.change_points.len()));
+                insights.push(format!(
+                    "Detected {} change points in performance data",
+                    cp.change_points.len()
+                ));
             }
         }
 
@@ -470,7 +493,11 @@ impl PerformanceReportGenerator {
             let change = comparison.comparison_result.performance_change_percent;
             if change.abs() > 10.0 {
                 let direction = if change > 0.0 { "degraded" } else { "improved" };
-                insights.push(format!("Performance {} by {:.1}% compared to baseline", direction, change.abs()));
+                insights.push(format!(
+                    "Performance {} by {:.1}% compared to baseline",
+                    direction,
+                    change.abs()
+                ));
             }
         }
 
@@ -481,30 +508,33 @@ impl PerformanceReportGenerator {
         // Generate histogram
         let mut measurements = baseline.measurements.clone();
         measurements.sort_by(|a, b| a.partial_cmp(b).unwrap());
-        
+
         let min = measurements[0];
         let max = measurements[measurements.len() - 1];
         let bucket_count = 20.min(measurements.len());
         let bucket_width = (max - min) / bucket_count as f64;
-        
+
         let mut histogram_buckets = Vec::new();
         let mut histogram_counts = vec![0u32; bucket_count];
-        
+
         for i in 0..bucket_count {
             histogram_buckets.push(min + i as f64 * bucket_width);
         }
-        
+
         for &measurement in &measurements {
             let bucket_index = if bucket_width > 0.0 {
                 ((measurement - min) / bucket_width).floor() as usize
             } else {
                 0
-            }.min(bucket_count - 1);
+            }
+            .min(bucket_count - 1);
             histogram_counts[bucket_index] += 1;
         }
 
         // Generate time series (simplified - would use actual timestamps in real implementation)
-        let time_series: Vec<(SystemTime, f64)> = measurements.iter().enumerate()
+        let time_series: Vec<(SystemTime, f64)> = measurements
+            .iter()
+            .enumerate()
             .map(|(i, &value)| {
                 let time = baseline.created_at + std::time::Duration::from_secs(i as u64);
                 (time, value)
@@ -521,24 +551,38 @@ impl PerformanceReportGenerator {
 
     /// Generate executive summary
     fn generate_executive_summary(&self, reports: &[BenchmarkReport]) -> ExecutiveSummary {
-        let total_regressions = reports.iter()
+        let total_regressions = reports
+            .iter()
             .filter(|r| matches!(r.status, BenchmarkStatus::Fail))
             .count();
 
-        let total_improvements = reports.iter()
-            .filter(|r| r.baseline_comparison.as_ref()
-                .map(|c| matches!(c.change_category, ChangeCategory::MinorImprovement | ChangeCategory::MajorImprovement))
-                .unwrap_or(false))
+        let total_improvements = reports
+            .iter()
+            .filter(|r| {
+                r.baseline_comparison
+                    .as_ref()
+                    .map(|c| {
+                        matches!(
+                            c.change_category,
+                            ChangeCategory::MinorImprovement | ChangeCategory::MajorImprovement
+                        )
+                    })
+                    .unwrap_or(false)
+            })
             .count();
 
-        let critical_issues = reports.iter()
-            .filter(|r| r.baseline_comparison.as_ref()
-                .map(|c| matches!(c.change_category, ChangeCategory::MajorRegression))
-                .unwrap_or(false))
+        let critical_issues = reports
+            .iter()
+            .filter(|r| {
+                r.baseline_comparison
+                    .as_ref()
+                    .map(|c| matches!(c.change_category, ChangeCategory::MajorRegression))
+                    .unwrap_or(false)
+            })
             .count();
 
         let performance_score = self.calculate_performance_score(reports);
-        
+
         let overall_status = match performance_score {
             s if s >= 90.0 => PerformanceStatus::Excellent,
             s if s >= 75.0 => PerformanceStatus::Good,
@@ -576,7 +620,7 @@ impl PerformanceReportGenerator {
                 BenchmarkStatus::Fail => 20.0,
                 BenchmarkStatus::NoBaseline => 80.0, // Neutral score for no baseline
             };
-            
+
             total_score += score * weight;
             weight_sum += weight;
         }
@@ -592,18 +636,26 @@ impl PerformanceReportGenerator {
         let mut findings = Vec::new();
 
         // Major regressions
-        let major_regressions: Vec<_> = reports.iter()
-            .filter(|r| r.baseline_comparison.as_ref()
-                .map(|c| matches!(c.change_category, ChangeCategory::MajorRegression))
-                .unwrap_or(false))
+        let major_regressions: Vec<_> = reports
+            .iter()
+            .filter(|r| {
+                r.baseline_comparison
+                    .as_ref()
+                    .map(|c| matches!(c.change_category, ChangeCategory::MajorRegression))
+                    .unwrap_or(false)
+            })
             .collect();
 
         if !major_regressions.is_empty() {
-            findings.push(format!("{} benchmark(s) show major performance regressions", major_regressions.len()));
+            findings.push(format!(
+                "{} benchmark(s) show major performance regressions",
+                major_regressions.len()
+            ));
         }
 
         // High variability
-        let high_variability: Vec<_> = reports.iter()
+        let high_variability: Vec<_> = reports
+            .iter()
             .filter(|r| r.current_performance.coefficient_of_variation > 0.2)
             .collect();
 
@@ -612,21 +664,31 @@ impl PerformanceReportGenerator {
         }
 
         // Improvements
-        let improvements: Vec<_> = reports.iter()
-            .filter(|r| r.baseline_comparison.as_ref()
-                .map(|c| matches!(c.change_category, ChangeCategory::MajorImprovement))
-                .unwrap_or(false))
+        let improvements: Vec<_> = reports
+            .iter()
+            .filter(|r| {
+                r.baseline_comparison
+                    .as_ref()
+                    .map(|c| matches!(c.change_category, ChangeCategory::MajorImprovement))
+                    .unwrap_or(false)
+            })
             .collect();
 
         if !improvements.is_empty() {
-            findings.push(format!("{} benchmark(s) show significant performance improvements", improvements.len()));
+            findings.push(format!(
+                "{} benchmark(s) show significant performance improvements",
+                improvements.len()
+            ));
         }
 
         findings
     }
 
     /// Generate statistical analysis section
-    async fn generate_statistical_analysis(&self, reports: &[BenchmarkReport]) -> Result<ReportStatisticalAnalysis> {
+    async fn generate_statistical_analysis(
+        &self,
+        reports: &[BenchmarkReport],
+    ) -> Result<ReportStatisticalAnalysis> {
         let overall_trend = self.determine_overall_trend(reports);
         let stability_score = self.calculate_stability_score(reports);
         let variability_analysis = self.analyze_variability(reports);
@@ -643,17 +705,28 @@ impl PerformanceReportGenerator {
     }
 
     fn determine_overall_trend(&self, reports: &[BenchmarkReport]) -> TrendType {
-        let regression_count = reports.iter()
+        let regression_count = reports
+            .iter()
             .filter(|r| matches!(r.status, BenchmarkStatus::Fail | BenchmarkStatus::Warning))
             .count();
-        
-        let improvement_count = reports.iter()
-            .filter(|r| r.baseline_comparison.as_ref()
-                .map(|c| matches!(c.change_category, ChangeCategory::MinorImprovement | ChangeCategory::MajorImprovement))
-                .unwrap_or(false))
+
+        let improvement_count = reports
+            .iter()
+            .filter(|r| {
+                r.baseline_comparison
+                    .as_ref()
+                    .map(|c| {
+                        matches!(
+                            c.change_category,
+                            ChangeCategory::MinorImprovement | ChangeCategory::MajorImprovement
+                        )
+                    })
+                    .unwrap_or(false)
+            })
             .count();
 
-        let total_with_baselines = reports.iter()
+        let total_with_baselines = reports
+            .iter()
             .filter(|r| !matches!(r.status, BenchmarkStatus::NoBaseline))
             .count();
 
@@ -680,9 +753,11 @@ impl PerformanceReportGenerator {
             return 0.0;
         }
 
-        let avg_cv = reports.iter()
+        let avg_cv = reports
+            .iter()
             .map(|r| r.current_performance.coefficient_of_variation)
-            .sum::<f64>() / reports.len() as f64;
+            .sum::<f64>()
+            / reports.len() as f64;
 
         // Convert CV to stability score (lower CV = higher stability)
         1.0 / (1.0 + avg_cv)
@@ -690,21 +765,25 @@ impl PerformanceReportGenerator {
 
     fn analyze_variability(&self, reports: &[BenchmarkReport]) -> VariabilityAnalysis {
         let threshold = 0.1; // 10% CV threshold
-        
-        let high_variability: Vec<String> = reports.iter()
+
+        let high_variability: Vec<String> = reports
+            .iter()
             .filter(|r| r.current_performance.coefficient_of_variation > threshold)
             .map(|r| r.name.clone())
             .collect();
 
-        let low_variability: Vec<String> = reports.iter()
+        let low_variability: Vec<String> = reports
+            .iter()
             .filter(|r| r.current_performance.coefficient_of_variation <= threshold / 2.0)
             .map(|r| r.name.clone())
             .collect();
 
         let average_cv = if !reports.is_empty() {
-            reports.iter()
+            reports
+                .iter()
                 .map(|r| r.current_performance.coefficient_of_variation)
-                .sum::<f64>() / reports.len() as f64
+                .sum::<f64>()
+                / reports.len() as f64
         } else {
             0.0
         };
@@ -725,7 +804,10 @@ impl PerformanceReportGenerator {
         }
     }
 
-    async fn analyze_correlations(&self, _reports: &[BenchmarkReport]) -> Result<CorrelationAnalysis> {
+    async fn analyze_correlations(
+        &self,
+        _reports: &[BenchmarkReport],
+    ) -> Result<CorrelationAnalysis> {
         // Simplified correlation analysis - would implement proper correlation calculation
         Ok(CorrelationAnalysis {
             correlated_benchmarks: Vec::new(),
@@ -739,11 +821,15 @@ impl PerformanceReportGenerator {
         let mut insights = Vec::new();
 
         // Detect performance outliers
-        let performances: Vec<f64> = reports.iter()
+        let performances: Vec<f64> = reports
+            .iter()
             .map(|r| r.current_performance.metric_value)
             .collect();
 
-        if let (Some(q1), Some(q3)) = (self.percentile(&performances, 0.25), self.percentile(&performances, 0.75)) {
+        if let (Some(q1), Some(q3)) = (
+            self.percentile(&performances, 0.25),
+            self.percentile(&performances, 0.75),
+        ) {
             let iqr = q3 - q1;
             let lower_bound = q1 - 1.5 * iqr;
             let upper_bound = q3 + 1.5 * iqr;
@@ -759,7 +845,8 @@ impl PerformanceReportGenerator {
                         } else {
                             (value - upper_bound) / iqr
                         },
-                        likely_cause: "Unusual performance compared to other benchmarks".to_string(),
+                        likely_cause: "Unusual performance compared to other benchmarks"
+                            .to_string(),
                     });
                 }
             }
@@ -782,11 +869,11 @@ impl PerformanceReportGenerator {
 
         let mut sorted = data.to_vec();
         sorted.sort_by(|a, b| a.partial_cmp(b).unwrap());
-        
+
         let index = p * (sorted.len() - 1) as f64;
         let lower = index.floor() as usize;
         let upper = index.ceil() as usize;
-        
+
         if lower == upper {
             Some(sorted[lower])
         } else {
@@ -816,7 +903,8 @@ impl PerformanceReportGenerator {
     }
 
     fn determine_overall_performance_trend(&self, reports: &[BenchmarkReport]) -> TrendDirection {
-        let changes: Vec<f64> = reports.iter()
+        let changes: Vec<f64> = reports
+            .iter()
             .filter_map(|r| r.baseline_comparison.as_ref())
             .map(|c| c.performance_change_percent)
             .collect();
@@ -826,9 +914,7 @@ impl PerformanceReportGenerator {
         }
 
         let avg_change = changes.iter().sum::<f64>() / changes.len() as f64;
-        let significant_changes = changes.iter()
-            .filter(|&&change| change.abs() > 5.0)
-            .count();
+        let significant_changes = changes.iter().filter(|&&change| change.abs() > 5.0).count();
 
         let significant_ratio = significant_changes as f64 / changes.len() as f64;
 
@@ -842,7 +928,8 @@ impl PerformanceReportGenerator {
     }
 
     fn calculate_trend_metrics(&self, reports: &[BenchmarkReport]) -> (f64, f64) {
-        let changes: Vec<f64> = reports.iter()
+        let changes: Vec<f64> = reports
+            .iter()
             .filter_map(|r| r.baseline_comparison.as_ref())
             .map(|c| c.performance_change_percent)
             .collect();
@@ -854,10 +941,8 @@ impl PerformanceReportGenerator {
         let avg_change = changes.iter().sum::<f64>() / changes.len() as f64;
         let trend_strength = avg_change.abs() / 100.0; // Normalize to 0-1 range
 
-        let confidences: Vec<f64> = reports.iter()
-            .map(|r| r.statistical_confidence)
-            .collect();
-        
+        let confidences: Vec<f64> = reports.iter().map(|r| r.statistical_confidence).collect();
+
         let trend_confidence = if !confidences.is_empty() {
             confidences.iter().sum::<f64>() / confidences.len() as f64
         } else {
@@ -875,28 +960,38 @@ impl PerformanceReportGenerator {
         Ok(None)
     }
 
-    fn generate_trend_insights(&self, reports: &[BenchmarkReport], trend: &TrendDirection) -> Vec<String> {
+    fn generate_trend_insights(
+        &self,
+        reports: &[BenchmarkReport],
+        trend: &TrendDirection,
+    ) -> Vec<String> {
         let mut insights = Vec::new();
 
         match trend {
             TrendDirection::StronglyImproving => {
-                insights.push("Performance is showing consistent improvement across benchmarks".to_string());
-            },
+                insights.push(
+                    "Performance is showing consistent improvement across benchmarks".to_string(),
+                );
+            }
             TrendDirection::Improving => {
                 insights.push("Overall performance trend is positive".to_string());
-            },
+            }
             TrendDirection::StronglyDegrading => {
-                insights.push("⚠️ Performance is degrading significantly across multiple benchmarks".to_string());
-            },
+                insights.push(
+                    "⚠️ Performance is degrading significantly across multiple benchmarks"
+                        .to_string(),
+                );
+            }
             TrendDirection::Degrading => {
                 insights.push("Performance trend shows some degradation".to_string());
-            },
+            }
             TrendDirection::Stable => {
                 insights.push("Performance remains stable with no significant trends".to_string());
-            },
+            }
         }
 
-        let high_confidence_count = reports.iter()
+        let high_confidence_count = reports
+            .iter()
             .filter(|r| r.statistical_confidence > 0.9)
             .count();
 
@@ -917,7 +1012,8 @@ impl PerformanceReportGenerator {
         let mut recommendations = Vec::new();
 
         // Critical performance regressions
-        let critical_regressions: Vec<&BenchmarkReport> = reports.iter()
+        let critical_regressions: Vec<&BenchmarkReport> = reports
+            .iter()
             .filter(|r| matches!(r.status, BenchmarkStatus::Fail))
             .collect();
 
@@ -937,7 +1033,11 @@ impl PerformanceReportGenerator {
         }
 
         // High variability issues
-        if !statistical_analysis.variability_analysis.high_variability_benchmarks.is_empty() {
+        if !statistical_analysis
+            .variability_analysis
+            .high_variability_benchmarks
+            .is_empty()
+        {
             recommendations.push(ReportRecommendation {
                 priority: RecommendationPriority::Medium,
                 category: RecommendationCategory::Stability,
@@ -961,7 +1061,7 @@ impl PerformanceReportGenerator {
                     implementation_effort: EffortLevel::High,
                     expected_impact: ImpactLevel::High,
                 });
-            },
+            }
             _ => {}
         }
 
@@ -985,7 +1085,7 @@ impl PerformanceReportGenerator {
     pub async fn export_html(&self, report: &PerformanceReport, output_path: &Path) -> Result<()> {
         let mut context = Context::new();
         context.insert("report", report);
-        
+
         let html = self.templates.render("report.html", &context)?;
         fs::write(output_path, html).await?;
         Ok(())

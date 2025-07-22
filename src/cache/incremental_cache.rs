@@ -9,36 +9,36 @@
 //! - Memory-efficient storage with configurable limits
 //! - High-performance lookup with O(1) average complexity
 
-use crate::analysis::incremental::{FileState, Result, IncrementalAnalysisError};
+use crate::analysis::incremental::{FileState, IncrementalAnalysisError, Result};
 use crate::database::models::ArchitecturalIssue;
+use chrono::{DateTime, Utc};
+use log::{debug, info, warn};
+use lru::LruCache;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet, BTreeSet};
+use std::collections::{BTreeSet, HashMap, HashSet};
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
-use chrono::{DateTime, Utc};
 use tokio::sync::RwLock;
-use log::{debug, info, warn};
-use lru::LruCache;
 
 /// Configuration for the incremental cache
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IncrementalCacheConfig {
     /// Maximum number of analysis results to cache
     pub max_analysis_results: usize,
-    
+
     /// Maximum memory usage for cache (MB)
     pub max_memory_mb: usize,
-    
+
     /// Cache entry TTL (time to live) in hours
     pub ttl_hours: u32,
-    
+
     /// Enable cache compression
     pub enable_compression: bool,
-    
+
     /// Cache eviction policy
     pub eviction_policy: CacheEvictionPolicy,
-    
+
     /// Enable cache statistics
     pub enable_statistics: bool,
 }
@@ -48,13 +48,13 @@ pub struct IncrementalCacheConfig {
 pub enum CacheEvictionPolicy {
     /// Least Recently Used
     LRU,
-    
+
     /// Least Recently Used with size weighting
     LRUSize,
-    
+
     /// Time-based eviction (oldest first)
     TimeBasedFIFO,
-    
+
     /// Frequency-based eviction (least frequently used)
     LFU,
 }
@@ -64,25 +64,25 @@ pub enum CacheEvictionPolicy {
 pub struct CachedAnalysisEntry {
     /// Analysis results for the file
     pub issues: Vec<ArchitecturalIssue>,
-    
+
     /// File state when analysis was performed
     pub file_state: FileState,
-    
+
     /// When this entry was cached
     pub cached_at: DateTime<Utc>,
-    
+
     /// When this entry was last accessed
     pub last_accessed: DateTime<Utc>,
-    
+
     /// Number of times this entry has been accessed
     pub access_count: u64,
-    
+
     /// Analysis duration in milliseconds
     pub analysis_duration_ms: u64,
-    
+
     /// Estimated memory size of this entry
     pub estimated_size_bytes: usize,
-    
+
     /// Whether this entry is still valid
     pub is_valid: bool,
 }
@@ -92,25 +92,25 @@ pub struct CachedAnalysisEntry {
 pub struct CacheStatistics {
     /// Total cache hits
     pub hits: u64,
-    
+
     /// Total cache misses
     pub misses: u64,
-    
+
     /// Total cache invalidations
     pub invalidations: u64,
-    
+
     /// Total entries evicted
     pub evictions: u64,
-    
+
     /// Current number of cached entries
     pub entry_count: usize,
-    
+
     /// Current memory usage in bytes
     pub memory_usage_bytes: usize,
-    
+
     /// Average lookup time in microseconds
     pub average_lookup_time_us: f64,
-    
+
     /// Cache efficiency score (0.0 to 1.0)
     pub efficiency_score: f64,
 }
@@ -119,19 +119,19 @@ pub struct CacheStatistics {
 pub struct IncrementalCache {
     /// Configuration
     config: IncrementalCacheConfig,
-    
+
     /// Analysis result cache (file path -> cached entry)
     analysis_cache: Arc<RwLock<LruCache<PathBuf, CachedAnalysisEntry>>>,
-    
+
     /// Dependency relationship cache
     dependency_cache: Arc<RwLock<HashMap<PathBuf, HashSet<PathBuf>>>>,
-    
+
     /// File modification time cache for quick lookups
     mtime_cache: Arc<RwLock<HashMap<PathBuf, u64>>>,
-    
+
     /// Cache statistics
     stats: Arc<RwLock<CacheStatistics>>,
-    
+
     /// Cache creation time for TTL calculations
     created_at: Instant,
 }
@@ -139,9 +139,9 @@ pub struct IncrementalCache {
 impl IncrementalCache {
     /// Creates a new incremental cache with the given configuration
     pub fn new(config: IncrementalCacheConfig) -> Self {
-        let analysis_cache = Arc::new(RwLock::new(
-            LruCache::new(std::num::NonZero::new(config.max_analysis_results.try_into().unwrap_or(1000)).unwrap())
-        ));
+        let analysis_cache = Arc::new(RwLock::new(LruCache::new(
+            std::num::NonZero::new(config.max_analysis_results.try_into().unwrap_or(1000)).unwrap(),
+        )));
 
         Self {
             config,
@@ -154,33 +154,36 @@ impl IncrementalCache {
     }
 
     /// Gets cached analysis result for a file
-    pub async fn get_analysis_result(&self, file_path: &PathBuf) -> Result<Option<Vec<ArchitecturalIssue>>> {
+    pub async fn get_analysis_result(
+        &self,
+        file_path: &PathBuf,
+    ) -> Result<Option<Vec<ArchitecturalIssue>>> {
         let lookup_start = Instant::now();
-        
+
         let mut cache = self.analysis_cache.write().await;
         let result = if let Some(entry) = cache.get_mut(file_path) {
             // Update access statistics
             entry.last_accessed = Utc::now();
             entry.access_count += 1;
-            
+
             // Check if entry is still valid and within TTL
             if self.is_entry_valid(entry).await {
                 debug!("Cache hit for: {}", file_path.display());
-                
+
                 // Update statistics
                 if self.config.enable_statistics {
                     let mut stats = self.stats.write().await;
                     stats.hits += 1;
                     self.update_lookup_time(&mut stats, lookup_start.elapsed());
                 }
-                
+
                 Some(entry.issues.clone())
             } else {
                 debug!("Cache entry expired for: {}", file_path.display());
-                
+
                 // Remove expired entry
                 cache.pop(file_path);
-                
+
                 // Update statistics
                 if self.config.enable_statistics {
                     let mut stats = self.stats.write().await;
@@ -188,19 +191,19 @@ impl IncrementalCache {
                     stats.invalidations += 1;
                     self.update_lookup_time(&mut stats, lookup_start.elapsed());
                 }
-                
+
                 None
             }
         } else {
             debug!("Cache miss for: {}", file_path.display());
-            
+
             // Update statistics
             if self.config.enable_statistics {
                 let mut stats = self.stats.write().await;
                 stats.misses += 1;
                 self.update_lookup_time(&mut stats, lookup_start.elapsed());
             }
-            
+
             None
         };
 
@@ -305,7 +308,10 @@ impl IncrementalCache {
             stats.entry_count = cache_len;
         }
 
-        info!("Invalidated {} cache entries for changed files", invalidated_count);
+        info!(
+            "Invalidated {} cache entries for changed files",
+            invalidated_count
+        );
         Ok(())
     }
 
@@ -375,7 +381,7 @@ impl IncrementalCache {
         let stats = self.stats.read().await;
         let current_memory_mb = stats.memory_usage_bytes / (1024 * 1024);
         let entry_memory_mb = entry.estimated_size_bytes / (1024 * 1024);
-        
+
         (current_memory_mb + entry_memory_mb) > self.config.max_memory_mb
     }
 
@@ -392,17 +398,18 @@ impl IncrementalCache {
                     let stats = self.stats.read().await;
                     let current_memory_mb = stats.memory_usage_bytes / (1024 * 1024);
                     drop(stats);
-                    
+
                     if current_memory_mb <= target_memory_mb {
                         break;
                     }
-                    
+
                     if let Some((_, entry)) = cache.pop_lru() {
                         evicted_count += 1;
-                        
+
                         // Update memory usage
                         let mut stats = self.stats.write().await;
-                        stats.memory_usage_bytes = stats.memory_usage_bytes
+                        stats.memory_usage_bytes = stats
+                            .memory_usage_bytes
                             .saturating_sub(entry.estimated_size_bytes);
                     } else {
                         break;
@@ -416,24 +423,25 @@ impl IncrementalCache {
                     .iter()
                     .map(|(path, entry)| (path.clone(), entry.cached_at))
                     .collect();
-                
+
                 entries_by_age.sort_by(|a, b| a.1.cmp(&b.1));
-                
+
                 for (path, _) in entries_by_age {
                     let stats = self.stats.read().await;
                     let current_memory_mb = stats.memory_usage_bytes / (1024 * 1024);
                     drop(stats);
-                    
+
                     if current_memory_mb <= target_memory_mb {
                         break;
                     }
-                    
+
                     if let Some(entry) = cache.pop(&path) {
                         evicted_count += 1;
-                        
+
                         // Update memory usage
                         let mut stats = self.stats.write().await;
-                        stats.memory_usage_bytes = stats.memory_usage_bytes
+                        stats.memory_usage_bytes = stats
+                            .memory_usage_bytes
                             .saturating_sub(entry.estimated_size_bytes);
                     }
                 }
@@ -461,13 +469,14 @@ impl IncrementalCache {
     fn update_lookup_time(&self, stats: &mut CacheStatistics, lookup_time: Duration) {
         let lookup_time_us = lookup_time.as_micros() as f64;
         let total_lookups = stats.hits + stats.misses;
-        
+
         if total_lookups == 1 {
             stats.average_lookup_time_us = lookup_time_us;
         } else {
             // Running average
-            stats.average_lookup_time_us = 
-                (stats.average_lookup_time_us * (total_lookups - 1) as f64 + lookup_time_us) / total_lookups as f64;
+            stats.average_lookup_time_us =
+                (stats.average_lookup_time_us * (total_lookups - 1) as f64 + lookup_time_us)
+                    / total_lookups as f64;
         }
 
         // Update efficiency score
@@ -523,7 +532,7 @@ impl IncrementalCache {
     pub async fn get_hit_rate(&self) -> f64 {
         let stats = self.stats.read().await;
         let total_lookups = stats.hits + stats.misses;
-        
+
         if total_lookups > 0 {
             stats.hits as f64 / total_lookups as f64
         } else {
@@ -551,7 +560,7 @@ impl IncrementalCache {
                 cache.pop(&path);
                 repairs_made += 1;
             }
-            
+
             let cache_len = cache.len();
             drop(cache);
 
@@ -560,8 +569,11 @@ impl IncrementalCache {
                 let mut stats = self.stats.write().await;
                 stats.invalidations += repairs_made;
                 stats.entry_count = cache_len;
-                
-                info!("Cache validation completed: {} entries repaired", repairs_made);
+
+                info!(
+                    "Cache validation completed: {} entries repaired",
+                    repairs_made
+                );
             }
         }
 
@@ -613,7 +625,7 @@ mod tests {
     async fn test_cache_creation() {
         let config = IncrementalCacheConfig::default();
         let cache = IncrementalCache::new(config);
-        
+
         let stats = cache.get_statistics().await;
         assert_eq!(stats.entry_count, 0);
         assert_eq!(stats.hits, 0);
@@ -624,7 +636,7 @@ mod tests {
     async fn test_cache_store_and_retrieve() {
         let config = IncrementalCacheConfig::default();
         let cache = IncrementalCache::new(config);
-        
+
         let file_path = PathBuf::from("test.rs");
         let issues = vec![];
         let file_state = FileState {
@@ -638,7 +650,10 @@ mod tests {
         };
 
         // Store result
-        cache.store_analysis_result(file_path.clone(), issues.clone(), file_state, 100).await.unwrap();
+        cache
+            .store_analysis_result(file_path.clone(), issues.clone(), file_state, 100)
+            .await
+            .unwrap();
 
         // Retrieve result
         let cached_result = cache.get_analysis_result(&file_path).await.unwrap();
@@ -655,12 +670,12 @@ mod tests {
     async fn test_cache_miss() {
         let config = IncrementalCacheConfig::default();
         let cache = IncrementalCache::new(config);
-        
+
         let file_path = PathBuf::from("nonexistent.rs");
         let result = cache.get_analysis_result(&file_path).await.unwrap();
-        
+
         assert!(result.is_none());
-        
+
         let stats = cache.get_statistics().await;
         assert_eq!(stats.hits, 0);
         assert_eq!(stats.misses, 1);
@@ -670,7 +685,7 @@ mod tests {
     async fn test_cache_invalidation() {
         let config = IncrementalCacheConfig::default();
         let cache = IncrementalCache::new(config);
-        
+
         let file_path = PathBuf::from("test.rs");
         let issues = vec![];
         let file_state = FileState {
@@ -684,7 +699,10 @@ mod tests {
         };
 
         // Store result
-        cache.store_analysis_result(file_path.clone(), issues, file_state, 100).await.unwrap();
+        cache
+            .store_analysis_result(file_path.clone(), issues, file_state, 100)
+            .await
+            .unwrap();
 
         // Invalidate
         let mut changed_files = HashSet::new();
@@ -704,10 +722,10 @@ mod tests {
         let mut stats = CacheStatistics::default();
         stats.hits = 80;
         stats.misses = 20;
-        
+
         assert_eq!(stats.hit_rate(), 0.8);
         assert_eq!(stats.miss_rate(), 0.2);
-        
+
         stats.memory_usage_bytes = 1024 * 1024; // 1MB
         assert_eq!(stats.memory_utilization_mb(), 1.0);
     }

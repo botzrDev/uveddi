@@ -1,8 +1,8 @@
 use crate::analysis::{AnalysisDetector, AnalysisError};
 use crate::ast::tree_sitter_impl::ParsedFile;
-use async_trait::async_trait;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use crate::plugins::{PluginId, PluginManifest, WasmPluginEngine};
+use async_trait::async_trait;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 

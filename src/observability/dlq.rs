@@ -61,7 +61,7 @@ impl DeadLetterQueue {
     /// Create a new Dead Letter Queue with the given database connection
     pub fn new(connection: Connection, metrics: Arc<UveddiMetrics>) -> Result<Self> {
         let conn = Arc::new(Mutex::new(connection));
-        
+
         // Initialize DLQ table
         {
             let db = conn.lock().unwrap();
@@ -81,18 +81,21 @@ impl DeadLetterQueue {
                 )
                 "#,
                 [],
-            ).context("Failed to create dead_letter_queue table")?;
+            )
+            .context("Failed to create dead_letter_queue table")?;
 
             // Create indexes for better query performance
             db.execute(
                 "CREATE INDEX IF NOT EXISTS idx_dlq_trace_id ON dead_letter_queue(trace_id)",
                 [],
-            ).context("Failed to create trace_id index")?;
+            )
+            .context("Failed to create trace_id index")?;
 
             db.execute(
                 "CREATE INDEX IF NOT EXISTS idx_dlq_timestamp ON dead_letter_queue(timestamp)",
                 [],
-            ).context("Failed to create timestamp index")?;
+            )
+            .context("Failed to create timestamp index")?;
 
             db.execute(
                 "CREATE INDEX IF NOT EXISTS idx_dlq_operation_type ON dead_letter_queue(operation_type)",
@@ -112,7 +115,7 @@ impl DeadLetterQueue {
     #[tracing::instrument(skip(self, record), fields(trace_id = %record.trace_id, operation = %record.operation_type))]
     pub fn enqueue(&self, record: DlqRecord) -> Result<i64> {
         let conn = self.connection.lock().unwrap();
-        
+
         let id = conn.query_row(
             r#"
             INSERT INTO dead_letter_queue 
@@ -135,7 +138,7 @@ impl DeadLetterQueue {
 
         // Update metrics
         self.metrics.dlq_size().inc();
-        
+
         warn!(
             trace_id = %record.trace_id,
             operation = %record.operation_type,
@@ -150,12 +153,12 @@ impl DeadLetterQueue {
     /// Get the current size of the Dead Letter Queue
     pub fn get_queue_size(&self) -> Result<i64> {
         let conn = self.connection.lock().unwrap();
-        
-        let size = conn.query_row(
-            "SELECT COUNT(*) FROM dead_letter_queue",
-            [],
-            |row| row.get::<_, i64>(0),
-        ).context("Failed to get DLQ size")?;
+
+        let size = conn
+            .query_row("SELECT COUNT(*) FROM dead_letter_queue", [], |row| {
+                row.get::<_, i64>(0)
+            })
+            .context("Failed to get DLQ size")?;
 
         Ok(size)
     }
@@ -163,32 +166,55 @@ impl DeadLetterQueue {
     /// Retrieve a record from the Dead Letter Queue by ID
     pub fn get_record(&self, id: i64) -> Result<Option<DlqRecord>> {
         let conn = self.connection.lock().unwrap();
-        
-        let mut stmt = conn.prepare(
-            r#"
+
+        let mut stmt = conn
+            .prepare(
+                r#"
             SELECT id, trace_id, timestamp, operation_type, input_data, 
                    error_details, retry_count, user_id, metadata
             FROM dead_letter_queue 
             WHERE id = ?1
             "#,
-        ).context("Failed to prepare DLQ select statement")?;
+            )
+            .context("Failed to prepare DLQ select statement")?;
 
         let record = stmt.query_row(params![id], |row| {
             Ok(DlqRecord {
                 id: Some(row.get::<_, i64>(0)?),
-                trace_id: TraceId::from_str(&row.get::<_, String>(1)?)
-                    .map_err(|e| rusqlite::Error::InvalidColumnType(1, "trace_id".to_string(), rusqlite::types::Type::Text))?,
+                trace_id: TraceId::from_str(&row.get::<_, String>(1)?).map_err(|e| {
+                    rusqlite::Error::InvalidColumnType(
+                        1,
+                        "trace_id".to_string(),
+                        rusqlite::types::Type::Text,
+                    )
+                })?,
                 timestamp: DateTime::parse_from_rfc3339(&row.get::<_, String>(2)?)
-                    .map_err(|e| rusqlite::Error::InvalidColumnType(2, "timestamp".to_string(), rusqlite::types::Type::Text))?
+                    .map_err(|e| {
+                        rusqlite::Error::InvalidColumnType(
+                            2,
+                            "timestamp".to_string(),
+                            rusqlite::types::Type::Text,
+                        )
+                    })?
                     .with_timezone(&Utc),
                 operation_type: row.get::<_, String>(3)?,
-                input_data: serde_json::from_str(&row.get::<_, String>(4)?)
-                    .map_err(|e| rusqlite::Error::InvalidColumnType(4, "input_data".to_string(), rusqlite::types::Type::Text))?,
+                input_data: serde_json::from_str(&row.get::<_, String>(4)?).map_err(|e| {
+                    rusqlite::Error::InvalidColumnType(
+                        4,
+                        "input_data".to_string(),
+                        rusqlite::types::Type::Text,
+                    )
+                })?,
                 error_details: row.get::<_, String>(5)?,
                 retry_count: row.get::<_, u32>(6)?,
                 user_id: row.get::<_, Option<String>>(7)?,
-                metadata: serde_json::from_str(&row.get::<_, String>(8)?)
-                    .map_err(|e| rusqlite::Error::InvalidColumnType(8, "metadata".to_string(), rusqlite::types::Type::Text))?,
+                metadata: serde_json::from_str(&row.get::<_, String>(8)?).map_err(|e| {
+                    rusqlite::Error::InvalidColumnType(
+                        8,
+                        "metadata".to_string(),
+                        rusqlite::types::Type::Text,
+                    )
+                })?,
             })
         });
 
@@ -202,38 +228,63 @@ impl DeadLetterQueue {
     /// List records from the Dead Letter Queue with pagination
     pub fn list_records(&self, limit: Option<i64>, offset: Option<i64>) -> Result<Vec<DlqRecord>> {
         let conn = self.connection.lock().unwrap();
-        
+
         let limit = limit.unwrap_or(100);
         let offset = offset.unwrap_or(0);
-        
-        let mut stmt = conn.prepare(
-            r#"
+
+        let mut stmt = conn
+            .prepare(
+                r#"
             SELECT id, trace_id, timestamp, operation_type, input_data, 
                    error_details, retry_count, user_id, metadata
             FROM dead_letter_queue 
             ORDER BY timestamp DESC
             LIMIT ?1 OFFSET ?2
             "#,
-        ).context("Failed to prepare DLQ list statement")?;
+            )
+            .context("Failed to prepare DLQ list statement")?;
 
-        let records = stmt.query_map(params![limit, offset], |row| {
-            Ok(DlqRecord {
-                id: Some(row.get::<_, i64>(0)?),
-                trace_id: TraceId::from_str(&row.get::<_, String>(1)?)
-                    .map_err(|e| rusqlite::Error::InvalidColumnType(1, "trace_id".to_string(), rusqlite::types::Type::Text))?,
-                timestamp: DateTime::parse_from_rfc3339(&row.get::<_, String>(2)?)
-                    .map_err(|e| rusqlite::Error::InvalidColumnType(2, "timestamp".to_string(), rusqlite::types::Type::Text))?
-                    .with_timezone(&Utc),
-                operation_type: row.get::<_, String>(3)?,
-                input_data: serde_json::from_str(&row.get::<_, String>(4)?)
-                    .map_err(|e| rusqlite::Error::InvalidColumnType(4, "input_data".to_string(), rusqlite::types::Type::Text))?,
-                error_details: row.get::<_, String>(5)?,
-                retry_count: row.get::<_, u32>(6)?,
-                user_id: row.get::<_, Option<String>>(7)?,
-                metadata: serde_json::from_str(&row.get::<_, String>(8)?)
-                    .map_err(|e| rusqlite::Error::InvalidColumnType(8, "metadata".to_string(), rusqlite::types::Type::Text))?,
+        let records = stmt
+            .query_map(params![limit, offset], |row| {
+                Ok(DlqRecord {
+                    id: Some(row.get::<_, i64>(0)?),
+                    trace_id: TraceId::from_str(&row.get::<_, String>(1)?).map_err(|e| {
+                        rusqlite::Error::InvalidColumnType(
+                            1,
+                            "trace_id".to_string(),
+                            rusqlite::types::Type::Text,
+                        )
+                    })?,
+                    timestamp: DateTime::parse_from_rfc3339(&row.get::<_, String>(2)?)
+                        .map_err(|e| {
+                            rusqlite::Error::InvalidColumnType(
+                                2,
+                                "timestamp".to_string(),
+                                rusqlite::types::Type::Text,
+                            )
+                        })?
+                        .with_timezone(&Utc),
+                    operation_type: row.get::<_, String>(3)?,
+                    input_data: serde_json::from_str(&row.get::<_, String>(4)?).map_err(|e| {
+                        rusqlite::Error::InvalidColumnType(
+                            4,
+                            "input_data".to_string(),
+                            rusqlite::types::Type::Text,
+                        )
+                    })?,
+                    error_details: row.get::<_, String>(5)?,
+                    retry_count: row.get::<_, u32>(6)?,
+                    user_id: row.get::<_, Option<String>>(7)?,
+                    metadata: serde_json::from_str(&row.get::<_, String>(8)?).map_err(|e| {
+                        rusqlite::Error::InvalidColumnType(
+                            8,
+                            "metadata".to_string(),
+                            rusqlite::types::Type::Text,
+                        )
+                    })?,
+                })
             })
-        }).context("Failed to query DLQ records")?;
+            .context("Failed to query DLQ records")?;
 
         let mut result = Vec::new();
         for record in records {
@@ -246,11 +297,10 @@ impl DeadLetterQueue {
     /// Remove a record from the Dead Letter Queue
     pub fn remove_record(&self, id: i64) -> Result<bool> {
         let conn = self.connection.lock().unwrap();
-        
-        let rows_affected = conn.execute(
-            "DELETE FROM dead_letter_queue WHERE id = ?1",
-            params![id],
-        ).context("Failed to delete DLQ record")?;
+
+        let rows_affected = conn
+            .execute("DELETE FROM dead_letter_queue WHERE id = ?1", params![id])
+            .context("Failed to delete DLQ record")?;
 
         if rows_affected > 0 {
             self.metrics.dlq_size().dec();
@@ -264,14 +314,14 @@ impl DeadLetterQueue {
     /// Clear all records from the Dead Letter Queue
     pub fn clear_all(&self) -> Result<u64> {
         let conn = self.connection.lock().unwrap();
-        
+
         // Get count before clearing
-        let count = conn.query_row(
-            "SELECT COUNT(*) FROM dead_letter_queue",
-            [],
-            |row| row.get::<_, i64>(0),
-        ).context("Failed to get DLQ size before clearing")?;
-        
+        let count = conn
+            .query_row("SELECT COUNT(*) FROM dead_letter_queue", [], |row| {
+                row.get::<_, i64>(0)
+            })
+            .context("Failed to get DLQ size before clearing")?;
+
         conn.execute("DELETE FROM dead_letter_queue", [])
             .context("Failed to clear dead letter queue")?;
 
@@ -281,42 +331,67 @@ impl DeadLetterQueue {
         }
 
         warn!(cleared_count = count, "Dead Letter Queue cleared");
-        
+
         Ok(count as u64)
     }
 
     /// Get records by operation type
     pub fn get_records_by_operation(&self, operation_type: &str) -> Result<Vec<DlqRecord>> {
         let conn = self.connection.lock().unwrap();
-        
-        let mut stmt = conn.prepare(
-            r#"
+
+        let mut stmt = conn
+            .prepare(
+                r#"
             SELECT id, trace_id, timestamp, operation_type, input_data, 
                    error_details, retry_count, user_id, metadata
             FROM dead_letter_queue 
             WHERE operation_type = ?1
             ORDER BY timestamp DESC
             "#,
-        ).context("Failed to prepare DLQ operation query")?;
+            )
+            .context("Failed to prepare DLQ operation query")?;
 
-        let records = stmt.query_map(params![operation_type], |row| {
-            Ok(DlqRecord {
-                id: Some(row.get::<_, i64>(0)?),
-                trace_id: TraceId::from_str(&row.get::<_, String>(1)?)
-                    .map_err(|e| rusqlite::Error::InvalidColumnType(1, "trace_id".to_string(), rusqlite::types::Type::Text))?,
-                timestamp: DateTime::parse_from_rfc3339(&row.get::<_, String>(2)?)
-                    .map_err(|e| rusqlite::Error::InvalidColumnType(2, "timestamp".to_string(), rusqlite::types::Type::Text))?
-                    .with_timezone(&Utc),
-                operation_type: row.get::<_, String>(3)?,
-                input_data: serde_json::from_str(&row.get::<_, String>(4)?)
-                    .map_err(|e| rusqlite::Error::InvalidColumnType(4, "input_data".to_string(), rusqlite::types::Type::Text))?,
-                error_details: row.get::<_, String>(5)?,
-                retry_count: row.get::<_, u32>(6)?,
-                user_id: row.get::<_, Option<String>>(7)?,
-                metadata: serde_json::from_str(&row.get::<_, String>(8)?)
-                    .map_err(|e| rusqlite::Error::InvalidColumnType(8, "metadata".to_string(), rusqlite::types::Type::Text))?,
+        let records = stmt
+            .query_map(params![operation_type], |row| {
+                Ok(DlqRecord {
+                    id: Some(row.get::<_, i64>(0)?),
+                    trace_id: TraceId::from_str(&row.get::<_, String>(1)?).map_err(|e| {
+                        rusqlite::Error::InvalidColumnType(
+                            1,
+                            "trace_id".to_string(),
+                            rusqlite::types::Type::Text,
+                        )
+                    })?,
+                    timestamp: DateTime::parse_from_rfc3339(&row.get::<_, String>(2)?)
+                        .map_err(|e| {
+                            rusqlite::Error::InvalidColumnType(
+                                2,
+                                "timestamp".to_string(),
+                                rusqlite::types::Type::Text,
+                            )
+                        })?
+                        .with_timezone(&Utc),
+                    operation_type: row.get::<_, String>(3)?,
+                    input_data: serde_json::from_str(&row.get::<_, String>(4)?).map_err(|e| {
+                        rusqlite::Error::InvalidColumnType(
+                            4,
+                            "input_data".to_string(),
+                            rusqlite::types::Type::Text,
+                        )
+                    })?,
+                    error_details: row.get::<_, String>(5)?,
+                    retry_count: row.get::<_, u32>(6)?,
+                    user_id: row.get::<_, Option<String>>(7)?,
+                    metadata: serde_json::from_str(&row.get::<_, String>(8)?).map_err(|e| {
+                        rusqlite::Error::InvalidColumnType(
+                            8,
+                            "metadata".to_string(),
+                            rusqlite::types::Type::Text,
+                        )
+                    })?,
+                })
             })
-        }).context("Failed to query DLQ records by operation")?;
+            .context("Failed to query DLQ records by operation")?;
 
         let mut result = Vec::new();
         for record in records {
@@ -329,24 +404,24 @@ impl DeadLetterQueue {
     /// Get DLQ statistics
     pub fn get_statistics(&self) -> Result<DlqStatistics> {
         let conn = self.connection.lock().unwrap();
-        
-        let total_count = conn.query_row(
-            "SELECT COUNT(*) FROM dead_letter_queue",
-            [],
-            |row| row.get::<_, i64>(0),
-        )?;
 
-        let operations_count = conn.prepare(
-            "SELECT operation_type, COUNT(*) FROM dead_letter_queue GROUP BY operation_type"
-        )?.query_map([], |row| {
-            Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)?))
-        })?.collect::<Result<Vec<_>, _>>()?;
+        let total_count = conn.query_row("SELECT COUNT(*) FROM dead_letter_queue", [], |row| {
+            row.get::<_, i64>(0)
+        })?;
 
-        let oldest_record = conn.query_row(
-            "SELECT MIN(timestamp) FROM dead_letter_queue",
-            [],
-            |row| row.get::<_, Option<String>>(0),
-        )?;
+        let operations_count = conn
+            .prepare(
+                "SELECT operation_type, COUNT(*) FROM dead_letter_queue GROUP BY operation_type",
+            )?
+            .query_map([], |row| {
+                Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)?))
+            })?
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let oldest_record =
+            conn.query_row("SELECT MIN(timestamp) FROM dead_letter_queue", [], |row| {
+                row.get::<_, Option<String>>(0)
+            })?;
 
         Ok(DlqStatistics {
             total_count,
@@ -375,7 +450,9 @@ mod tests {
 
     fn create_test_dlq() -> Result<DeadLetterQueue> {
         let conn = Connection::open_in_memory()?;
-        let metrics = Arc::new(UveddiMetrics::new(&crate::observability::config::MetricsConfig::default())?);
+        let metrics = Arc::new(UveddiMetrics::new(
+            &crate::observability::config::MetricsConfig::default(),
+        )?);
         DeadLetterQueue::new(conn, metrics)
     }
 
@@ -388,7 +465,7 @@ mod tests {
     #[test]
     fn test_enqueue_and_get_record() -> Result<()> {
         let dlq = create_test_dlq()?;
-        
+
         let record = DlqRecord::new(
             TraceId::new(),
             "test_operation".to_string(),
@@ -404,7 +481,7 @@ mod tests {
 
         let retrieved = dlq.get_record(id)?;
         assert!(retrieved.is_some());
-        
+
         let retrieved = retrieved.unwrap();
         assert_eq!(retrieved.operation_type, record.operation_type);
         assert_eq!(retrieved.error_details, record.error_details);
@@ -416,7 +493,7 @@ mod tests {
     #[test]
     fn test_queue_size() -> Result<()> {
         let dlq = create_test_dlq()?;
-        
+
         assert_eq!(dlq.get_queue_size()?, 0);
 
         let record = DlqRecord::new(
@@ -438,7 +515,7 @@ mod tests {
     #[test]
     fn test_list_records() -> Result<()> {
         let dlq = create_test_dlq()?;
-        
+
         // Add multiple records
         for i in 0..5 {
             let record = DlqRecord::new(
@@ -462,7 +539,7 @@ mod tests {
     #[test]
     fn test_remove_record() -> Result<()> {
         let dlq = create_test_dlq()?;
-        
+
         let record = DlqRecord::new(
             TraceId::new(),
             "test_operation".to_string(),
@@ -486,7 +563,7 @@ mod tests {
     #[test]
     fn test_clear_all() -> Result<()> {
         let dlq = create_test_dlq()?;
-        
+
         // Add multiple records
         for i in 0..3 {
             let record = DlqRecord::new(
@@ -502,7 +579,7 @@ mod tests {
         }
 
         assert_eq!(dlq.get_queue_size()?, 3);
-        
+
         let cleared = dlq.clear_all()?;
         assert_eq!(cleared, 3);
         assert_eq!(dlq.get_queue_size()?, 0);

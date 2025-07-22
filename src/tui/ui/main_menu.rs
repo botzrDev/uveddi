@@ -390,7 +390,7 @@ mod tests {
     #[test]
     fn test_menu_navigation() {
         let menu = MainMenu::new();
-        let mut app_state = AppState::new();
+        let mut app_state = AppState::new(None);
 
         // Test down navigation
         menu.handle_key_input(KeyCode::Down, &mut app_state);
@@ -409,7 +409,7 @@ mod tests {
     #[test]
     fn test_quick_access_shortcuts() {
         let menu = MainMenu::new();
-        let mut app_state = AppState::new();
+        let mut app_state = AppState::new(None);
 
         let messages = menu.handle_key_input(KeyCode::Char('1'), &mut app_state);
         assert!(matches!(
@@ -427,7 +427,7 @@ mod tests {
     #[test]
     fn test_enter_selection() {
         let menu = MainMenu::new();
-        let mut app_state = AppState::new();
+        let mut app_state = AppState::new(None);
         app_state.selected_menu_item = 1; // Config option
 
         let messages = menu.handle_key_input(KeyCode::Enter, &mut app_state);
@@ -440,7 +440,7 @@ mod tests {
     #[test]
     fn test_vim_style_navigation() {
         let menu = MainMenu::new();
-        let mut app_state = AppState::new();
+        let mut app_state = AppState::new(None);
 
         // Test j (down)
         menu.handle_key_input(KeyCode::Char('j'), &mut app_state);

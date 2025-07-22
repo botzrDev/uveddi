@@ -1,18 +1,18 @@
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use std::alloc::{GlobalAlloc, Layout, System};
+use std::collections::{BTreeMap, HashMap};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
-use std::collections::{HashMap, BTreeMap};
 use tempfile::TempDir;
 use tokio::runtime::Runtime;
 
-use uveddi::analysis::{AnalysisEngine, AnalysisDetector};
 use uveddi::analysis::cache::ast::{AstCache, CacheConfig};
+use uveddi::analysis::{AnalysisDetector, AnalysisEngine};
 use uveddi::monitoring::enterprise_metrics::MemoryMetrics;
 
 /// Memory profiling and leak detection benchmarks for UV-91
-/// 
+///
 /// Comprehensive memory usage analysis including:
 /// - Allocation patterns
 /// - Memory leaks detection  
@@ -45,15 +45,18 @@ impl MemoryTracker {
     pub fn allocate(&self, size: usize) {
         self.total_allocated.fetch_add(size, Ordering::Relaxed);
         self.allocation_count.fetch_add(1, Ordering::Relaxed);
-        
+
         let current = self.current_usage.fetch_add(size, Ordering::Relaxed) + size;
-        
+
         // Update peak usage if necessary
         loop {
             let peak = self.peak_usage.load(Ordering::Relaxed);
-            if current <= peak || self.peak_usage.compare_exchange_weak(
-                peak, current, Ordering::Relaxed, Ordering::Relaxed
-            ).is_ok() {
+            if current <= peak
+                || self
+                    .peak_usage
+                    .compare_exchange_weak(peak, current, Ordering::Relaxed, Ordering::Relaxed)
+                    .is_ok()
+            {
                 break;
             }
         }
@@ -150,21 +153,21 @@ impl MemoryProfileMetrics {
 /// Create enterprise test project for memory profiling
 fn create_memory_test_project(temp_dir: &TempDir, file_count: usize) -> Vec<std::path::PathBuf> {
     let mut files = Vec::new();
-    
+
     for i in 0..file_count {
         let complexity = match i % 4 {
             0 => "simple",
             1 => "medium",
-            2 => "complex", 
+            2 => "complex",
             _ => "memory_intensive",
         };
-        
+
         let file_path = temp_dir.path().join(format!("test_file_{}.rs", i));
         let content = generate_memory_test_content(complexity, i, file_count);
         std::fs::write(&file_path, content).unwrap();
         files.push(file_path);
     }
-    
+
     files
 }
 
@@ -179,40 +182,46 @@ fn generate_memory_test_content(complexity: &str, index: usize, total_files: usi
             let mut code = String::new();
             code.push_str(&format!("use std::collections::HashMap;\n\n"));
             code.push_str(&format!("pub struct MediumStruct{} {{\n", index));
-            
+
             // Create medium-sized structures
             for i in 0..20 {
                 code.push_str(&format!("    field_{}: Vec<String>,\n", i));
             }
             code.push_str("}\n\n");
-            
+
             code.push_str(&format!("impl MediumStruct{} {{\n", index));
             code.push_str("    pub fn new() -> Self {\n");
             code.push_str("        Self {\n");
             for i in 0..20 {
-                code.push_str(&format!("            field_{}: Vec::with_capacity(100),\n", i));
+                code.push_str(&format!(
+                    "            field_{}: Vec::with_capacity(100),\n",
+                    i
+                ));
             }
             code.push_str("        }\n");
             code.push_str("    }\n\n");
-            
+
             code.push_str("    pub fn process_data(&mut self) {\n");
             code.push_str("        for i in 0..1000 {\n");
             code.push_str("            let data = format!(\"data_{}\", i);\n");
             for i in 0..20 {
-                code.push_str(&format!("            self.field_{}.push(data.clone());\n", i));
+                code.push_str(&format!(
+                    "            self.field_{}.push(data.clone());\n",
+                    i
+                ));
             }
             code.push_str("        }\n");
             code.push_str("    }\n");
             code.push_str("}\n");
             code
-        },
+        }
         "complex" => {
             let mut code = String::new();
             code.push_str("use std::collections::{HashMap, BTreeMap, HashSet};\n");
             code.push_str("use std::sync::Arc;\n\n");
-            
+
             code.push_str(&format!("pub struct ComplexStruct{} {{\n", index));
-            
+
             // Create complex nested structures
             for i in 0..50 {
                 let field_type = match i % 5 {
@@ -225,22 +234,34 @@ fn generate_memory_test_content(complexity: &str, index: usize, total_files: usi
                 code.push_str(&format!("    field_{}: {},\n", i, field_type));
             }
             code.push_str("}\n\n");
-            
+
             code.push_str(&format!("impl ComplexStruct{} {{\n", index));
             code.push_str("    pub fn new() -> Self {\n");
             code.push_str("        Self {\n");
             for i in 0..50 {
                 match i % 5 {
-                    0 => code.push_str(&format!("            field_{}: HashMap::with_capacity(1000),\n", i)),
+                    0 => code.push_str(&format!(
+                        "            field_{}: HashMap::with_capacity(1000),\n",
+                        i
+                    )),
                     1 => code.push_str(&format!("            field_{}: BTreeMap::new(),\n", i)),
-                    2 => code.push_str(&format!("            field_{}: Arc::new(Vec::with_capacity(500)),\n", i)),
-                    3 => code.push_str(&format!("            field_{}: Vec::with_capacity(200),\n", i)),
-                    _ => code.push_str(&format!("            field_{}: HashMap::with_capacity(100),\n", i)),
+                    2 => code.push_str(&format!(
+                        "            field_{}: Arc::new(Vec::with_capacity(500)),\n",
+                        i
+                    )),
+                    3 => code.push_str(&format!(
+                        "            field_{}: Vec::with_capacity(200),\n",
+                        i
+                    )),
+                    _ => code.push_str(&format!(
+                        "            field_{}: HashMap::with_capacity(100),\n",
+                        i
+                    )),
                 }
             }
             code.push_str("        }\n");
             code.push_str("    }\n\n");
-            
+
             // Memory-intensive methods
             code.push_str("    pub fn allocate_heavy_data(&mut self) {\n");
             code.push_str("        for i in 0..10000 {\n");
@@ -249,7 +270,7 @@ fn generate_memory_test_content(complexity: &str, index: usize, total_files: usi
             code.push_str("            self.field_0.insert(key, value);\n");
             code.push_str("        }\n");
             code.push_str("    }\n\n");
-            
+
             code.push_str("    pub fn process_recursive_data(&mut self, depth: usize) {\n");
             code.push_str("        if depth == 0 { return; }\n");
             code.push_str("        \n");
@@ -262,16 +283,16 @@ fn generate_memory_test_content(complexity: &str, index: usize, total_files: usi
             code.push_str("    }\n");
             code.push_str("}\n");
             code
-        },
+        }
         "memory_intensive" => {
             let mut code = String::new();
             code.push_str("use std::collections::{HashMap, VecDeque};\n");
             code.push_str("use std::sync::{Arc, Mutex};\n");
             code.push_str("use std::rc::Rc;\n\n");
-            
+
             // Create deliberately memory-intensive structures
             code.push_str(&format!("pub struct MemoryIntensiveStruct{} {{\n", index));
-            
+
             // Large arrays and collections
             for i in 0..100 {
                 match i % 6 {
@@ -284,7 +305,7 @@ fn generate_memory_test_content(complexity: &str, index: usize, total_files: usi
                 }
             }
             code.push_str("}\n\n");
-            
+
             code.push_str(&format!("impl MemoryIntensiveStruct{} {{\n", index));
             code.push_str("    pub fn new() -> Self {\n");
             code.push_str("        Self {\n");
@@ -293,23 +314,34 @@ fn generate_memory_test_content(complexity: &str, index: usize, total_files: usi
                     0 => code.push_str(&format!("            big_array_{}: [0u8; 10000],\n", i)),
                     1 => code.push_str(&format!("            big_vec_{}: Vec::new(),\n", i)),
                     2 => code.push_str(&format!("            big_map_{}: HashMap::new(),\n", i)),
-                    3 => code.push_str(&format!("            shared_data_{}: Arc::new(Mutex::new(Vec::new())),\n", i)),
-                    4 => code.push_str(&format!("            circular_ref_{}: Rc::new(VecDeque::new()),\n", i)),
-                    _ => code.push_str(&format!("            nested_structure_{}: Vec::new(),\n", i)),
+                    3 => code.push_str(&format!(
+                        "            shared_data_{}: Arc::new(Mutex::new(Vec::new())),\n",
+                        i
+                    )),
+                    4 => code.push_str(&format!(
+                        "            circular_ref_{}: Rc::new(VecDeque::new()),\n",
+                        i
+                    )),
+                    _ => code.push_str(&format!(
+                        "            nested_structure_{}: Vec::new(),\n",
+                        i
+                    )),
                 }
             }
             code.push_str("        }\n");
             code.push_str("    }\n\n");
-            
+
             // Memory leak simulation methods
             code.push_str("    pub fn simulate_memory_leak(&mut self) {\n");
             code.push_str("        // Intentionally create potential memory leaks\n");
             code.push_str("        for i in 0..1000 {\n");
             code.push_str("            let leaked_data = vec![i as u8; 10000];\n");
-            code.push_str("            std::mem::forget(leaked_data); // Deliberate leak for testing\n");
+            code.push_str(
+                "            std::mem::forget(leaked_data); // Deliberate leak for testing\n",
+            );
             code.push_str("        }\n");
             code.push_str("    }\n\n");
-            
+
             code.push_str("    pub fn create_circular_references(&mut self) {\n");
             code.push_str("        // Create circular references that are hard to detect\n");
             code.push_str("        use std::cell::RefCell;\n");
@@ -322,24 +354,30 @@ fn generate_memory_test_content(complexity: &str, index: usize, total_files: usi
             code.push_str("        std::mem::forget(node1);\n");
             code.push_str("        std::mem::forget(node2);\n");
             code.push_str("    }\n\n");
-            
+
             code.push_str("    pub fn allocate_massive_data(&mut self) {\n");
             code.push_str("        // Allocate large amounts of data\n");
             code.push_str("        for i in 0..10 {\n");
             code.push_str("            let massive_vec = vec![vec![i as u8; 10000]; 100];\n");
-            code.push_str(&format!("            self.big_vec_{}.push(massive_vec);\n", index % 100));
+            code.push_str(&format!(
+                "            self.big_vec_{}.push(massive_vec);\n",
+                index % 100
+            ));
             code.push_str("        }\n");
             code.push_str("        \n");
             code.push_str("        // Fill maps with large data\n");
             code.push_str("        for i in 0..5000 {\n");
             code.push_str("            let key = format!(\"massive_key_{}\", i);\n");
             code.push_str("            let value = [i as u8; 1000];\n");
-            code.push_str(&format!("            self.big_map_{}.insert(key, value);\n", index % 100));
+            code.push_str(&format!(
+                "            self.big_map_{}.insert(key, value);\n",
+                index % 100
+            ));
             code.push_str("        }\n");
             code.push_str("    }\n");
             code.push_str("}\n");
             code
-        },
+        }
         _ => String::new(),
     }
 }
@@ -347,7 +385,7 @@ fn generate_memory_test_content(complexity: &str, index: usize, total_files: usi
 /// 1. Benchmark memory allocation patterns during analysis
 fn bench_memory_allocation_patterns(c: &mut Criterion) {
     let mut group = c.benchmark_group("memory_allocation_patterns");
-    
+
     for &file_count in &[50, 100, 200, 500] {
         group.bench_with_input(
             BenchmarkId::new("allocation_tracking", file_count),
@@ -355,57 +393,57 @@ fn bench_memory_allocation_patterns(c: &mut Criterion) {
             |b, &file_count| {
                 let temp_dir = TempDir::new().unwrap();
                 let _files = create_memory_test_project(&temp_dir, file_count);
-                
+
                 b.iter_custom(|iters| {
                     let mut total_duration = Duration::new(0, 0);
-                    
+
                     for _ in 0..iters {
                         MEMORY_TRACKER.reset();
                         let start_metrics = MEMORY_TRACKER.get_metrics();
-                        
+
                         let start_time = Instant::now();
-                        
+
                         // Run analysis with memory tracking
                         let rt = Runtime::new().unwrap();
                         rt.block_on(async {
                             let mut engine = AnalysisEngine::new().unwrap();
                             let _result = engine.analyze(temp_dir.path()).await;
                         });
-                        
+
                         total_duration += start_time.elapsed();
-                        
+
                         let end_metrics = MEMORY_TRACKER.get_metrics();
-                        
+
                         // Store memory metrics for analysis
                         black_box((start_metrics, end_metrics));
                     }
-                    
+
                     total_duration
                 });
             },
         );
     }
-    
+
     group.finish();
 }
 
 /// 2. Benchmark memory leak detection
 fn bench_memory_leak_detection(c: &mut Criterion) {
     let mut group = c.benchmark_group("memory_leak_detection");
-    
+
     group.bench_function("leak_detection_analysis", |b| {
         let temp_dir = TempDir::new().unwrap();
         let _files = create_memory_test_project(&temp_dir, 100);
-        
+
         b.iter_custom(|iters| {
             let mut total_duration = Duration::new(0, 0);
             let mut leak_reports = Vec::new();
-            
+
             for iteration in 0..iters {
                 MEMORY_TRACKER.reset();
-                
+
                 let start_time = Instant::now();
-                
+
                 // Perform analysis multiple times to detect leaks
                 let rt = Runtime::new().unwrap();
                 for _ in 0..5 {
@@ -414,15 +452,15 @@ fn bench_memory_leak_detection(c: &mut Criterion) {
                         let _result = engine.analyze(temp_dir.path()).await;
                     });
                 }
-                
+
                 total_duration += start_time.elapsed();
-                
+
                 let final_metrics = MEMORY_TRACKER.get_metrics();
-                
+
                 // Detect potential leaks
                 let leaked_bytes = final_metrics.leaked_bytes();
                 let allocation_efficiency = final_metrics.allocation_efficiency();
-                
+
                 leak_reports.push(MemoryLeakReport {
                     iteration: iteration as u32,
                     leaked_bytes,
@@ -432,32 +470,32 @@ fn bench_memory_leak_detection(c: &mut Criterion) {
                     is_leak_suspected: leaked_bytes > 1024 * 1024 || allocation_efficiency < 0.95, // 1MB threshold
                 });
             }
-            
+
             black_box(leak_reports);
             total_duration
         });
     });
-    
+
     group.finish();
 }
 
 /// 3. Benchmark memory fragmentation analysis
 fn bench_memory_fragmentation(c: &mut Criterion) {
     let mut group = c.benchmark_group("memory_fragmentation");
-    
+
     group.bench_function("fragmentation_measurement", |b| {
         b.iter_custom(|iters| {
             let mut total_duration = Duration::new(0, 0);
             let mut fragmentation_data = Vec::new();
-            
+
             for _ in 0..iters {
                 MEMORY_TRACKER.reset();
-                
+
                 let start_time = Instant::now();
-                
+
                 // Simulate fragmentation through various allocation patterns
                 let mut allocations = Vec::new();
-                
+
                 // Phase 1: Large allocations
                 for i in 0..100 {
                     let size = 1024 * (i + 1);
@@ -465,9 +503,9 @@ fn bench_memory_fragmentation(c: &mut Criterion) {
                     MEMORY_TRACKER.allocate(size);
                     allocations.push(allocation);
                 }
-                
+
                 let phase1_metrics = MEMORY_TRACKER.get_metrics();
-                
+
                 // Phase 2: Free every other allocation (create holes)
                 for i in (0..allocations.len()).step_by(2) {
                     let size = allocations[i].len();
@@ -480,9 +518,9 @@ fn bench_memory_fragmentation(c: &mut Criterion) {
                         COUNTER % 2 == 0
                     }
                 });
-                
+
                 let phase2_metrics = MEMORY_TRACKER.get_metrics();
-                
+
                 // Phase 3: Small allocations in the holes
                 for i in 0..50 {
                     let size = 512 + i * 10;
@@ -490,43 +528,48 @@ fn bench_memory_fragmentation(c: &mut Criterion) {
                     MEMORY_TRACKER.allocate(size);
                     allocations.push(allocation);
                 }
-                
+
                 let phase3_metrics = MEMORY_TRACKER.get_metrics();
-                
+
                 total_duration += start_time.elapsed();
-                
+
                 fragmentation_data.push(FragmentationAnalysis {
                     phase1_fragmentation: phase1_metrics.fragmentation_ratio(),
                     phase2_fragmentation: phase2_metrics.fragmentation_ratio(),
                     phase3_fragmentation: phase3_metrics.fragmentation_ratio(),
                     final_efficiency: phase3_metrics.allocation_efficiency(),
                 });
-                
+
                 // Cleanup
                 for allocation in &allocations {
                     MEMORY_TRACKER.deallocate(allocation.len());
                 }
             }
-            
+
             black_box(fragmentation_data);
             total_duration
         });
     });
-    
+
     group.finish();
 }
 
 /// 4. Benchmark peak memory usage monitoring
 fn bench_peak_memory_monitoring(c: &mut Criterion) {
     let mut group = c.benchmark_group("peak_memory_monitoring");
-    
-    for &scenario in &["small_files", "medium_files", "large_files", "mixed_complexity"] {
+
+    for &scenario in &[
+        "small_files",
+        "medium_files",
+        "large_files",
+        "mixed_complexity",
+    ] {
         group.bench_with_input(
             BenchmarkId::new("peak_usage_tracking", scenario),
             &scenario,
             |b, &scenario| {
                 let temp_dir = TempDir::new().unwrap();
-                
+
                 let file_count = match scenario {
                     "small_files" => 200,
                     "medium_files" => 100,
@@ -534,50 +577,49 @@ fn bench_peak_memory_monitoring(c: &mut Criterion) {
                     "mixed_complexity" => 150,
                     _ => 100,
                 };
-                
+
                 let _files = create_memory_test_project(&temp_dir, file_count);
-                
+
                 b.iter_custom(|iters| {
                     let mut total_duration = Duration::new(0, 0);
                     let mut peak_usage_data = Vec::new();
-                    
+
                     for _ in 0..iters {
                         MEMORY_TRACKER.reset();
                         let start_time = Instant::now();
-                        
+
                         // Monitor peak usage during different phases
                         let baseline_peak = MEMORY_TRACKER.get_metrics().peak_usage;
-                        
+
                         // Phase 1: Engine initialization
                         let rt = Runtime::new().unwrap();
-                        let mut engine = rt.block_on(async {
-                            AnalysisEngine::new().unwrap()
-                        });
+                        let mut engine = rt.block_on(async { AnalysisEngine::new().unwrap() });
                         let init_peak = MEMORY_TRACKER.get_metrics().peak_usage;
-                        
+
                         // Phase 2: Analysis execution
                         rt.block_on(async {
                             let _result = engine.analyze(temp_dir.path()).await;
                         });
                         let analysis_peak = MEMORY_TRACKER.get_metrics().peak_usage;
-                        
+
                         // Phase 3: Cache population
                         let cache = AstCache::new(CacheConfig {
                             max_memory_entries: 1000,
                             max_memory_size_mb: 100,
                             ..Default::default()
-                        }).unwrap();
-                        
+                        })
+                        .unwrap();
+
                         // Simulate cache operations
                         for i in 0..100 {
                             let dummy_path = temp_dir.path().join(format!("dummy_{}.rs", i));
                             let _ = cache.get(&dummy_path);
                         }
-                        
+
                         let cache_peak = MEMORY_TRACKER.get_metrics().peak_usage;
-                        
+
                         total_duration += start_time.elapsed();
-                        
+
                         peak_usage_data.push(PeakUsageAnalysis {
                             baseline_peak,
                             init_peak,
@@ -586,40 +628,40 @@ fn bench_peak_memory_monitoring(c: &mut Criterion) {
                             scenario: scenario.to_string(),
                         });
                     }
-                    
+
                     black_box(peak_usage_data);
                     total_duration
                 });
             },
         );
     }
-    
+
     group.finish();
 }
 
 /// 5. Benchmark garbage collection pressure
 fn bench_gc_pressure_analysis(c: &mut Criterion) {
     let mut group = c.benchmark_group("gc_pressure_analysis");
-    
+
     group.bench_function("allocation_rate_measurement", |b| {
         b.iter_custom(|iters| {
             let mut total_duration = Duration::new(0, 0);
             let mut gc_pressure_data = Vec::new();
-            
+
             for _ in 0..iters {
                 MEMORY_TRACKER.reset();
                 let start_time = Instant::now();
                 let measurement_start = Instant::now();
-                
+
                 // Simulate high allocation rate scenarios
                 let mut temporary_allocations = Vec::new();
-                
+
                 // High-frequency small allocations
                 for i in 0..10000 {
                     let allocation = vec![i as u8; 64];
                     MEMORY_TRACKER.allocate(64);
                     temporary_allocations.push(allocation);
-                    
+
                     // Occasionally free some allocations
                     if i % 100 == 0 && !temporary_allocations.is_empty() {
                         let to_free = std::cmp::min(10, temporary_allocations.len());
@@ -630,10 +672,10 @@ fn bench_gc_pressure_analysis(c: &mut Criterion) {
                         }
                     }
                 }
-                
+
                 let high_freq_time = measurement_start.elapsed();
                 let high_freq_metrics = MEMORY_TRACKER.get_metrics();
-                
+
                 // Medium-frequency medium allocations
                 let medium_freq_start = Instant::now();
                 for i in 0..1000 {
@@ -641,10 +683,10 @@ fn bench_gc_pressure_analysis(c: &mut Criterion) {
                     MEMORY_TRACKER.allocate(4096);
                     temporary_allocations.push(allocation);
                 }
-                
+
                 let medium_freq_time = medium_freq_start.elapsed();
                 let medium_freq_metrics = MEMORY_TRACKER.get_metrics();
-                
+
                 // Low-frequency large allocations
                 let low_freq_start = Instant::now();
                 for i in 0..10 {
@@ -652,17 +694,24 @@ fn bench_gc_pressure_analysis(c: &mut Criterion) {
                     MEMORY_TRACKER.allocate(1024 * 1024);
                     temporary_allocations.push(allocation);
                 }
-                
+
                 let low_freq_time = low_freq_start.elapsed();
                 let low_freq_metrics = MEMORY_TRACKER.get_metrics();
-                
+
                 total_duration += start_time.elapsed();
-                
+
                 // Calculate allocation rates
-                let high_freq_rate = high_freq_metrics.allocation_count as f64 / high_freq_time.as_secs_f64();
-                let medium_freq_rate = (medium_freq_metrics.allocation_count - high_freq_metrics.allocation_count) as f64 / medium_freq_time.as_secs_f64();
-                let low_freq_rate = (low_freq_metrics.allocation_count - medium_freq_metrics.allocation_count) as f64 / low_freq_time.as_secs_f64();
-                
+                let high_freq_rate =
+                    high_freq_metrics.allocation_count as f64 / high_freq_time.as_secs_f64();
+                let medium_freq_rate = (medium_freq_metrics.allocation_count
+                    - high_freq_metrics.allocation_count)
+                    as f64
+                    / medium_freq_time.as_secs_f64();
+                let low_freq_rate = (low_freq_metrics.allocation_count
+                    - medium_freq_metrics.allocation_count)
+                    as f64
+                    / low_freq_time.as_secs_f64();
+
                 gc_pressure_data.push(GcPressureAnalysis {
                     high_frequency_allocation_rate: high_freq_rate,
                     medium_frequency_allocation_rate: medium_freq_rate,
@@ -670,34 +719,34 @@ fn bench_gc_pressure_analysis(c: &mut Criterion) {
                     total_allocation_count: low_freq_metrics.allocation_count,
                     peak_memory_pressure: low_freq_metrics.peak_usage,
                 });
-                
+
                 // Cleanup
                 for allocation in &temporary_allocations {
                     MEMORY_TRACKER.deallocate(allocation.len());
                 }
             }
-            
+
             black_box(gc_pressure_data);
             total_duration
         });
     });
-    
+
     group.finish();
 }
 
 /// 6. Benchmark memory-efficient data structures
 fn bench_memory_efficient_structures(c: &mut Criterion) {
     let mut group = c.benchmark_group("memory_efficient_structures");
-    
+
     group.bench_function("arena_vs_standard_allocation", |b| {
         b.iter_custom(|iters| {
             let mut total_duration = Duration::new(0, 0);
             let mut comparison_data = Vec::new();
-            
+
             for iteration in 0..iters {
                 MEMORY_TRACKER.reset();
                 let start_time = Instant::now();
-                
+
                 // Test standard allocations
                 let standard_start = Instant::now();
                 let mut standard_allocations = Vec::new();
@@ -708,17 +757,17 @@ fn bench_memory_efficient_structures(c: &mut Criterion) {
                 }
                 let standard_time = standard_start.elapsed();
                 let standard_metrics = MEMORY_TRACKER.get_metrics();
-                
+
                 // Cleanup standard allocations
                 for allocation in &standard_allocations {
                     MEMORY_TRACKER.deallocate(allocation.len());
                 }
-                
+
                 // Test arena allocations
                 MEMORY_TRACKER.reset();
                 let arena_start = Instant::now();
                 // Simulate arena allocation
-                
+
                 let mut arena_allocations = Vec::new();
                 for i in 0..1000 {
                     // Simulate arena allocation
@@ -728,9 +777,9 @@ fn bench_memory_efficient_structures(c: &mut Criterion) {
                 }
                 let arena_time = arena_start.elapsed();
                 let arena_metrics = MEMORY_TRACKER.get_metrics();
-                
+
                 total_duration += start_time.elapsed();
-                
+
                 comparison_data.push(AllocationComparison {
                     iteration: iteration as u32,
                     standard_time_ns: standard_time.as_nanos() as u64,
@@ -739,15 +788,16 @@ fn bench_memory_efficient_structures(c: &mut Criterion) {
                     arena_peak_usage: arena_metrics.peak_usage,
                     standard_allocation_count: standard_metrics.allocation_count,
                     arena_allocation_count: arena_metrics.allocation_count,
-                    performance_improvement: standard_time.as_nanos() as f64 / arena_time.as_nanos() as f64,
+                    performance_improvement: standard_time.as_nanos() as f64
+                        / arena_time.as_nanos() as f64,
                 });
             }
-            
+
             black_box(comparison_data);
             total_duration
         });
     });
-    
+
     group.finish();
 }
 

@@ -6,26 +6,15 @@ pub mod testing;
 pub mod image_stubs;
 
 pub use baseline::{
-    PerformanceAnalyzer, 
-    PerformanceBaseline, 
-    PerformanceBottleneck, 
-    BottleneckSeverity,
-    AnalysisError
+    AnalysisError, BottleneckSeverity, PerformanceAnalyzer, PerformanceBaseline,
+    PerformanceBottleneck,
 };
 
 pub use optimizations::{
+    OptimizationError, OptimizationRequest, OptimizationResult, PerformanceStats, RenderQuality,
     RenderingOptimizer,
-    OptimizationRequest,
-    OptimizationResult,
-    RenderQuality,
-    PerformanceStats,
-    OptimizationError
 };
 
 pub use testing::{
-    PerformanceValidator,
-    PerformanceTestSuite,
-    TestResult,
-    TestSummary,
-    ValidationError
+    PerformanceTestSuite, PerformanceValidator, TestResult, TestSummary, ValidationError,
 };

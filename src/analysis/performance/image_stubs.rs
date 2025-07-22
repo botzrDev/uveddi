@@ -42,12 +42,17 @@ impl ImageRenderer {
     pub fn with_config(_config: RenderingServiceConfig) -> Self {
         Self
     }
-    
+
     pub fn new() -> Self {
         Self
     }
-    
-    pub async fn render_diagram(&self, _diagram: &str, _format: ImageFormat, options: Option<(u32, u32)>) -> Result<RenderResult, Box<dyn std::error::Error + Send + Sync>> {
+
+    pub async fn render_diagram(
+        &self,
+        _diagram: &str,
+        _format: ImageFormat,
+        options: Option<(u32, u32)>,
+    ) -> Result<RenderResult, Box<dyn std::error::Error + Send + Sync>> {
         let dimensions = options.unwrap_or((1200, 800));
         Ok(RenderResult {
             data: vec![],

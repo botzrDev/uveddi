@@ -1,14 +1,14 @@
 //! Advanced Alert System Integration (UV-248)
-//! 
+//!
 //! This module implements an intelligent alerting system that integrates with
-//! existing HealthMonitor and provides configurable thresholds, multiple 
+//! existing HealthMonitor and provides configurable thresholds, multiple
 //! notification channels, and intelligent alert grouping.
 
 use crate::resilience::health::{Alert, AlertSeverity, HealthMonitor};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet, VecDeque};
-use std::time::{Duration, SystemTime};
 use std::sync::Arc;
+use std::time::{Duration, SystemTime};
 use tokio::sync::RwLock;
 
 /// Alert types supported by the system
@@ -159,39 +159,37 @@ impl Default for AlertingConfig {
                     enabled: true,
                 },
             ],
-            channels: vec![
-                NotificationChannel {
-                    name: "default-slack".to_string(),
-                    channel_type: ChannelType::Slack,
-                    config: ChannelConfig {
-                        webhook_url: Some("https://hooks.slack.com/services/YOUR/WEBHOOK/URL".to_string()),
-                        email_recipients: None,
-                        github_repo: None,
-                        github_token: None,
+            channels: vec![NotificationChannel {
+                name: "default-slack".to_string(),
+                channel_type: ChannelType::Slack,
+                config: ChannelConfig {
+                    webhook_url: Some(
+                        "https://hooks.slack.com/services/YOUR/WEBHOOK/URL".to_string(),
+                    ),
+                    email_recipients: None,
+                    github_repo: None,
+                    github_token: None,
+                },
+                enabled: false, // Disabled by default until configured
+            }],
+            escalation_policies: vec![EscalationPolicy {
+                name: "default".to_string(),
+                levels: vec![
+                    EscalationLevel {
+                        level: 1,
+                        delay_minutes: 0,
+                        channels: vec!["default-slack".to_string()],
+                        roles: vec!["on-call".to_string()],
                     },
-                    enabled: false, // Disabled by default until configured
-                },
-            ],
-            escalation_policies: vec![
-                EscalationPolicy {
-                    name: "default".to_string(),
-                    levels: vec![
-                        EscalationLevel {
-                            level: 1,
-                            delay_minutes: 0,
-                            channels: vec!["default-slack".to_string()],
-                            roles: vec!["on-call".to_string()],
-                        },
-                        EscalationLevel {
-                            level: 2,
-                            delay_minutes: 15,
-                            channels: vec!["default-slack".to_string()],
-                            roles: vec!["team-lead".to_string()],
-                        },
-                    ],
-                    enabled: true,
-                },
-            ],
+                    EscalationLevel {
+                        level: 2,
+                        delay_minutes: 15,
+                        channels: vec!["default-slack".to_string()],
+                        roles: vec!["team-lead".to_string()],
+                    },
+                ],
+                enabled: true,
+            }],
             grouping_window_minutes: 5,
             max_alerts_per_group: 10,
             history_retention_days: 30,
@@ -227,7 +225,11 @@ impl AdvancedAlertSystem {
     }
 
     /// Processes incoming metrics and generates alerts based on thresholds
-    pub async fn process_metrics(&self, metrics: &MetricsData, environment: &str) -> Result<(), AlertingError> {
+    pub async fn process_metrics(
+        &self,
+        metrics: &MetricsData,
+        environment: &str,
+    ) -> Result<(), AlertingError> {
         let config = self.config.read().await;
         let mut alerts_generated = Vec::new();
 
@@ -240,15 +242,15 @@ impl AdvancedAlertSystem {
             let alert_triggered = match threshold.alert_type {
                 AlertType::CriticalFailureRate => {
                     metrics.error_rate >= threshold.critical_threshold as f32
-                },
+                }
                 AlertType::PerformanceRegression => {
                     // Placeholder - would integrate with performance baseline comparison
                     false
-                },
+                }
                 AlertType::ResourceUtilization => {
                     // Placeholder - would check CPU, memory, disk usage
                     false
-                },
+                }
                 _ => false,
             };
 
@@ -259,14 +261,21 @@ impl AdvancedAlertSystem {
                     AlertSeverity::Warning
                 };
 
-                let alert = self.create_enhanced_alert(
-                    threshold.alert_type.clone(),
-                    format!("Threshold exceeded for {}: {}", 
-                           environment, 
-                           self.format_threshold_message(&threshold.alert_type, metrics.error_rate as f64)),
-                    severity,
-                    environment.to_string(),
-                ).await;
+                let alert = self
+                    .create_enhanced_alert(
+                        threshold.alert_type.clone(),
+                        format!(
+                            "Threshold exceeded for {}: {}",
+                            environment,
+                            self.format_threshold_message(
+                                &threshold.alert_type,
+                                metrics.error_rate as f64
+                            )
+                        ),
+                        severity,
+                        environment.to_string(),
+                    )
+                    .await;
 
                 alerts_generated.push(alert);
             }
@@ -288,10 +297,15 @@ impl AdvancedAlertSystem {
         severity: AlertSeverity,
         environment: String,
     ) -> EnhancedAlert {
-        let alert_id = format!("alert-{}-{}", 
-                              SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_secs(), 
-                              rand::random::<u32>());
-        
+        let alert_id = format!(
+            "alert-{}-{}",
+            SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_secs(),
+            rand::random::<u32>()
+        );
+
         let fingerprint = self.generate_fingerprint(&alert_type, &message, &environment);
         let group_key = self.generate_group_key(&alert_type, &environment);
 
@@ -327,11 +341,13 @@ impl AdvancedAlertSystem {
         }
 
         // Add to health monitor for backwards compatibility
-        self.health_monitor.add_alert(
-            &alert.base_alert.component,
-            &alert.base_alert.message,
-            alert.base_alert.severity.clone(),
-        ).await;
+        self.health_monitor
+            .add_alert(
+                &alert.base_alert.component,
+                &alert.base_alert.message,
+                alert.base_alert.severity.clone(),
+            )
+            .await;
 
         // Intelligent grouping
         self.group_alert(&alert).await?;
@@ -349,9 +365,9 @@ impl AdvancedAlertSystem {
     async fn group_alert(&self, alert: &EnhancedAlert) -> Result<(), AlertingError> {
         let mut groups = self.alert_groups.write().await;
         let config = self.config.read().await;
-        
+
         let existing_group = groups.get_mut(&alert.group_key);
-        
+
         if let Some(group) = existing_group {
             // Add to existing group if within time window and under max count
             let time_window = Duration::from_secs(config.grouping_window_minutes * 60);
@@ -363,7 +379,7 @@ impl AdvancedAlertSystem {
                 group.alerts.push(alert.base_alert.id.clone());
                 group.last_seen = SystemTime::now();
                 group.count += 1;
-                
+
                 // Update severity to highest in group
                 if matches!(alert.base_alert.severity, AlertSeverity::Critical) {
                     group.severity = AlertSeverity::Critical;
@@ -398,7 +414,7 @@ impl AdvancedAlertSystem {
     async fn record_alert_history(&self, alert: &EnhancedAlert) {
         let mut history = self.alert_history.write().await;
         let config = self.config.read().await;
-        
+
         let record = AlertHistory {
             timestamp: SystemTime::now(),
             alert_type: alert.alert_type.clone(),
@@ -406,13 +422,14 @@ impl AdvancedAlertSystem {
             count: 1,
             environment: alert.environment.clone(),
         };
-        
+
         history.push_back(record);
-        
+
         // Cleanup old records
-        let retention_duration = Duration::from_secs(config.history_retention_days as u64 * 24 * 60 * 60);
+        let retention_duration =
+            Duration::from_secs(config.history_retention_days as u64 * 24 * 60 * 60);
         let cutoff_time = SystemTime::now() - retention_duration;
-        
+
         while let Some(oldest) = history.front() {
             if oldest.timestamp < cutoff_time {
                 history.pop_front();
@@ -425,9 +442,10 @@ impl AdvancedAlertSystem {
     /// Triggers notifications through configured channels
     async fn trigger_notifications(&self, alert: &EnhancedAlert) -> Result<(), AlertingError> {
         let config = self.config.read().await;
-        
+
         // Find appropriate escalation policy
-        let policy = config.escalation_policies
+        let policy = config
+            .escalation_policies
             .iter()
             .find(|p| p.enabled)
             .ok_or(AlertingError::NoEscalationPolicy)?;
@@ -435,7 +453,11 @@ impl AdvancedAlertSystem {
         // Start with level 1 escalation
         if let Some(level) = policy.levels.first() {
             for channel_name in &level.channels {
-                if let Some(channel) = config.channels.iter().find(|c| c.name == *channel_name && c.enabled) {
+                if let Some(channel) = config
+                    .channels
+                    .iter()
+                    .find(|c| c.name == *channel_name && c.enabled)
+                {
                     self.send_notification(channel, alert).await?;
                 }
             }
@@ -445,21 +467,23 @@ impl AdvancedAlertSystem {
     }
 
     /// Sends notification through specific channel
-    async fn send_notification(&self, channel: &NotificationChannel, alert: &EnhancedAlert) -> Result<(), AlertingError> {
+    async fn send_notification(
+        &self,
+        channel: &NotificationChannel,
+        alert: &EnhancedAlert,
+    ) -> Result<(), AlertingError> {
         match channel.channel_type {
-            ChannelType::Slack => {
-                self.send_slack_notification(channel, alert).await
-            },
-            ChannelType::Email => {
-                self.send_email_notification(channel, alert).await
-            },
-            ChannelType::GitHub => {
-                self.send_github_notification(channel, alert).await
-            },
+            ChannelType::Slack => self.send_slack_notification(channel, alert).await,
+            ChannelType::Email => self.send_email_notification(channel, alert).await,
+            ChannelType::GitHub => self.send_github_notification(channel, alert).await,
         }
     }
 
-    async fn send_slack_notification(&self, channel: &NotificationChannel, alert: &EnhancedAlert) -> Result<(), AlertingError> {
+    async fn send_slack_notification(
+        &self,
+        channel: &NotificationChannel,
+        alert: &EnhancedAlert,
+    ) -> Result<(), AlertingError> {
         if let Some(webhook_url) = &channel.config.webhook_url {
             let payload = serde_json::json!({
                 "text": format!("🚨 Alert: {}", alert.base_alert.message),
@@ -479,29 +503,50 @@ impl AdvancedAlertSystem {
             });
 
             // Placeholder for actual HTTP client implementation
-            println!("Would send Slack notification to {}: {}", webhook_url, payload);
+            println!(
+                "Would send Slack notification to {}: {}",
+                webhook_url, payload
+            );
         }
         Ok(())
     }
 
-    async fn send_email_notification(&self, channel: &NotificationChannel, alert: &EnhancedAlert) -> Result<(), AlertingError> {
+    async fn send_email_notification(
+        &self,
+        channel: &NotificationChannel,
+        alert: &EnhancedAlert,
+    ) -> Result<(), AlertingError> {
         if let Some(recipients) = &channel.config.email_recipients {
-            println!("Would send email notification to {:?} about alert: {}", recipients, alert.base_alert.message);
+            println!(
+                "Would send email notification to {:?} about alert: {}",
+                recipients, alert.base_alert.message
+            );
         }
         Ok(())
     }
 
-    async fn send_github_notification(&self, channel: &NotificationChannel, alert: &EnhancedAlert) -> Result<(), AlertingError> {
+    async fn send_github_notification(
+        &self,
+        channel: &NotificationChannel,
+        alert: &EnhancedAlert,
+    ) -> Result<(), AlertingError> {
         if let Some(repo) = &channel.config.github_repo {
-            println!("Would update GitHub status for repo {} with alert: {}", repo, alert.base_alert.message);
+            println!(
+                "Would update GitHub status for repo {} with alert: {}",
+                repo, alert.base_alert.message
+            );
         }
         Ok(())
     }
 
     /// Acknowledges an alert
-    pub async fn acknowledge_alert(&self, alert_id: &str, acknowledged_by: &str) -> Result<(), AlertingError> {
+    pub async fn acknowledge_alert(
+        &self,
+        alert_id: &str,
+        acknowledged_by: &str,
+    ) -> Result<(), AlertingError> {
         let mut alerts = self.enhanced_alerts.write().await;
-        
+
         if let Some(alert) = alerts.get_mut(alert_id) {
             alert.acknowledged = true;
             alert.acknowledged_at = Some(SystemTime::now());
@@ -521,7 +566,7 @@ impl AdvancedAlertSystem {
     pub async fn get_alert_history(&self, days: u32) -> Vec<AlertHistory> {
         let history = self.alert_history.read().await;
         let cutoff = SystemTime::now() - Duration::from_secs(days as u64 * 24 * 60 * 60);
-        
+
         history
             .iter()
             .filter(|record| record.timestamp >= cutoff)
@@ -530,12 +575,22 @@ impl AdvancedAlertSystem {
     }
 
     // Helper methods
-    fn generate_fingerprint(&self, alert_type: &AlertType, message: &str, environment: &str) -> String {
+    fn generate_fingerprint(
+        &self,
+        alert_type: &AlertType,
+        message: &str,
+        environment: &str,
+    ) -> String {
         use sha2::{Digest, Sha256};
         let mut hasher = Sha256::new();
         hasher.update(message.as_bytes());
         let hash = format!("{:x}", hasher.finalize());
-        format!("{:?}-{}-{}", alert_type, environment, &hash.chars().take(8).collect::<String>())
+        format!(
+            "{:?}-{}-{}",
+            alert_type,
+            environment,
+            &hash.chars().take(8).collect::<String>()
+        )
     }
 
     fn generate_group_key(&self, alert_type: &AlertType, environment: &str) -> String {
@@ -589,12 +644,14 @@ mod tests {
         let health_monitor = Arc::new(HealthMonitor::new());
         let alert_system = AdvancedAlertSystem::new(health_monitor);
 
-        let alert = alert_system.create_enhanced_alert(
-            AlertType::CriticalFailureRate,
-            "Test alert".to_string(),
-            AlertSeverity::Warning,
-            "test".to_string(),
-        ).await;
+        let alert = alert_system
+            .create_enhanced_alert(
+                AlertType::CriticalFailureRate,
+                "Test alert".to_string(),
+                AlertSeverity::Warning,
+                "test".to_string(),
+            )
+            .await;
 
         assert_eq!(alert.alert_type, AlertType::CriticalFailureRate);
         assert_eq!(alert.environment, "test");
@@ -606,26 +663,30 @@ mod tests {
         let health_monitor = Arc::new(HealthMonitor::new());
         let alert_system = AdvancedAlertSystem::new(health_monitor);
 
-        let alert1 = alert_system.create_enhanced_alert(
-            AlertType::CriticalFailureRate,
-            "Test alert 1".to_string(),
-            AlertSeverity::Warning,
-            "production".to_string(),
-        ).await;
+        let alert1 = alert_system
+            .create_enhanced_alert(
+                AlertType::CriticalFailureRate,
+                "Test alert 1".to_string(),
+                AlertSeverity::Warning,
+                "production".to_string(),
+            )
+            .await;
 
-        let alert2 = alert_system.create_enhanced_alert(
-            AlertType::CriticalFailureRate,
-            "Test alert 2".to_string(),
-            AlertSeverity::Critical,
-            "production".to_string(),
-        ).await;
+        let alert2 = alert_system
+            .create_enhanced_alert(
+                AlertType::CriticalFailureRate,
+                "Test alert 2".to_string(),
+                AlertSeverity::Critical,
+                "production".to_string(),
+            )
+            .await;
 
         alert_system.process_alert(alert1).await.unwrap();
         alert_system.process_alert(alert2).await.unwrap();
 
         let groups = alert_system.get_alert_groups().await;
         assert_eq!(groups.len(), 1); // Should be grouped together
-        
+
         let group = groups.values().next().unwrap();
         assert_eq!(group.count, 2);
         assert_eq!(group.severity, AlertSeverity::Critical); // Highest severity
@@ -636,21 +697,29 @@ mod tests {
         let health_monitor = Arc::new(HealthMonitor::new());
         let alert_system = AdvancedAlertSystem::new(health_monitor);
 
-        let alert = alert_system.create_enhanced_alert(
-            AlertType::CriticalFailureRate,
-            "Test alert".to_string(),
-            AlertSeverity::Warning,
-            "test".to_string(),
-        ).await;
+        let alert = alert_system
+            .create_enhanced_alert(
+                AlertType::CriticalFailureRate,
+                "Test alert".to_string(),
+                AlertSeverity::Warning,
+                "test".to_string(),
+            )
+            .await;
 
         let alert_id = alert.base_alert.id.clone();
         alert_system.process_alert(alert).await.unwrap();
 
-        alert_system.acknowledge_alert(&alert_id, "test-user").await.unwrap();
+        alert_system
+            .acknowledge_alert(&alert_id, "test-user")
+            .await
+            .unwrap();
 
         let alerts = alert_system.enhanced_alerts.read().await;
         let acknowledged_alert = alerts.get(&alert_id).unwrap();
         assert!(acknowledged_alert.acknowledged);
-        assert_eq!(acknowledged_alert.acknowledged_by, Some("test-user".to_string()));
+        assert_eq!(
+            acknowledged_alert.acknowledged_by,
+            Some("test-user".to_string())
+        );
     }
 }

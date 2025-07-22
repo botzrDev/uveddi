@@ -1,4 +1,7 @@
-use crate::analysis::{AnalysisEngine, DetectorConfig, DetectorRegistry, EnhancedDetectorConfig, IssueSeverity, DetectorThresholds, StandardDetectorConfig};
+use crate::analysis::{
+    AnalysisEngine, DetectorConfig, DetectorRegistry, DetectorThresholds, EnhancedDetectorConfig,
+    IssueSeverity, StandardDetectorConfig,
+};
 use crate::error::UveddiError;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -269,9 +272,7 @@ impl AnalysisConfig {
                     .with_cache_path(path)
                     .build()
             } else {
-                AnalysisEngine::builder()
-                    .with_detectors(detectors)
-                    .build()
+                AnalysisEngine::builder().with_detectors(detectors).build()
             }
         }
     }
@@ -289,16 +290,16 @@ impl AnalysisConfig {
     /// Returns UveddiError if detector creation fails
     fn load_enhanced_detectors(&self, registry: &mut DetectorRegistry) -> Result<(), UveddiError> {
         use crate::analysis::detector_factory::DetectorFactory;
-        
+
         let factory = DetectorFactory::new();
-        
+
         for (detector_name, enhanced_config) in &self.enhanced_detectors {
             if enhanced_config.enabled {
                 let detector = factory.create_detector_enhanced(detector_name, enhanced_config)?;
                 registry.register(detector_name.clone(), detector);
             }
         }
-        
+
         Ok(())
     }
 
@@ -360,9 +361,9 @@ impl AnalysisConfig {
 
     /// Check if a specific detector is configured
     pub fn has_detector(&self, name: &str) -> bool {
-        self.detectors.contains_key(name) 
-        || self.enhanced_detectors.contains_key(name) 
-        || self.standard_detectors.contains_key(name)
+        self.detectors.contains_key(name)
+            || self.enhanced_detectors.contains_key(name)
+            || self.standard_detectors.contains_key(name)
     }
 
     /// Add a detector configuration
@@ -398,30 +399,40 @@ impl AnalysisConfig {
     /// A new `AnalysisConfig` with standardized detector configurations
     pub fn migrate_to_standardized(&self) -> Result<AnalysisConfig, UveddiError> {
         let mut new_config = self.clone();
-        
+
         // Clear existing standard detectors to avoid conflicts
         new_config.standard_detectors.clear();
-        
+
         // Migrate enhanced detectors to standardized format
         for (detector_name, enhanced_config) in &self.enhanced_detectors {
             if enhanced_config.enabled {
                 let standard_config = StandardDetectorConfig::default_for_detector(detector_name);
-                new_config.standard_detectors.insert(detector_name.clone(), standard_config);
+                new_config
+                    .standard_detectors
+                    .insert(detector_name.clone(), standard_config);
             }
         }
-        
+
         // If no enhanced detectors, create defaults for all known detectors
         if new_config.standard_detectors.is_empty() {
-            let detector_names = ["god_object", "code_duplication", "large_classes", "dead_code", "tight_coupling"];
+            let detector_names = [
+                "god_object",
+                "code_duplication",
+                "large_classes",
+                "dead_code",
+                "tight_coupling",
+            ];
             for detector_name in &detector_names {
                 let standard_config = StandardDetectorConfig::default_for_detector(detector_name);
-                new_config.standard_detectors.insert(detector_name.to_string(), standard_config);
+                new_config
+                    .standard_detectors
+                    .insert(detector_name.to_string(), standard_config);
             }
         }
-        
+
         Ok(new_config)
     }
-    
+
     /// Get effective detector configuration (prioritizes standardized over legacy)
     ///
     /// This method returns the effective configuration for a detector, checking
@@ -439,7 +450,7 @@ impl AnalysisConfig {
         if let Some(standard_config) = self.standard_detectors.get(detector_name) {
             return standard_config.clone();
         }
-        
+
         if let Some(enhanced_config) = self.enhanced_detectors.get(detector_name) {
             // Convert enhanced to standardized format
             let mut standard_config = StandardDetectorConfig::default_for_detector(detector_name);
@@ -447,26 +458,31 @@ impl AnalysisConfig {
             standard_config.severity = enhanced_config.severity.clone();
             return standard_config;
         }
-        
+
         if let Some(_legacy_config) = self.detectors.get(detector_name) {
             // Convert legacy to standardized format (basic conversion)
             return StandardDetectorConfig::default_for_detector(detector_name);
         }
-        
+
         // Return default configuration
         StandardDetectorConfig::default_for_detector(detector_name)
     }
-    
+
     /// Add or update a standardized detector configuration
     ///
     /// # Arguments
     ///
     /// * `detector_name` - Name of the detector
     /// * `config` - Standardized configuration to set
-    pub fn set_standard_detector_config(&mut self, detector_name: &str, config: StandardDetectorConfig) {
-        self.standard_detectors.insert(detector_name.to_string(), config);
+    pub fn set_standard_detector_config(
+        &mut self,
+        detector_name: &str,
+        config: StandardDetectorConfig,
+    ) {
+        self.standard_detectors
+            .insert(detector_name.to_string(), config);
     }
-    
+
     /// Get all enabled detector names across all configuration formats
     ///
     /// # Returns
@@ -474,26 +490,26 @@ impl AnalysisConfig {
     /// A vector of detector names that are enabled in any configuration format
     pub fn get_enabled_detectors(&self) -> Vec<String> {
         let mut enabled = std::collections::HashSet::new();
-        
+
         // Check standardized configurations
         for (name, config) in &self.standard_detectors {
             if config.enabled {
                 enabled.insert(name.clone());
             }
         }
-        
+
         // Check enhanced configurations
         for (name, config) in &self.enhanced_detectors {
             if config.enabled {
                 enabled.insert(name.clone());
             }
         }
-        
+
         // Legacy configurations are assumed enabled if present
         for name in self.detectors.keys() {
             enabled.insert(name.clone());
         }
-        
+
         enabled.into_iter().collect()
     }
 }
@@ -608,7 +624,10 @@ impl<'de> Deserialize<'de> for IssueSeverity {
             "Medium" => Ok(IssueSeverity::Medium),
             "High" => Ok(IssueSeverity::High),
             "Critical" => Ok(IssueSeverity::Critical),
-            _ => Err(serde::de::Error::custom(format!("Unknown severity level: {}", s))),
+            _ => Err(serde::de::Error::custom(format!(
+                "Unknown severity level: {}",
+                s
+            ))),
         }
     }
 }
@@ -641,9 +660,11 @@ impl<'de> Deserialize<'de> for EnhancedDetectorConfig {
             #[serde(default)]
             thresholds: DetectorThresholds,
         }
-        
-        fn default_true() -> bool { true }
-        
+
+        fn default_true() -> bool {
+            true
+        }
+
         let helper = Helper::deserialize(deserializer)?;
         Ok(EnhancedDetectorConfig {
             enabled: helper.enabled,
@@ -755,7 +776,10 @@ mod tests {
         let toml_string = toml_string.expect("TOML serialization should succeed in test");
         let parsed_config: AnalysisConfig =
             toml::from_str(&toml_string).expect("TOML parsing should succeed in test");
-        assert_eq!(parsed_config.enhanced_detectors.len(), config.enhanced_detectors.len());
+        assert_eq!(
+            parsed_config.enhanced_detectors.len(),
+            config.enhanced_detectors.len()
+        );
         assert_eq!(parsed_config.cache_size, config.cache_size);
     }
 
@@ -773,7 +797,10 @@ mod tests {
         assert!(loaded_config.is_ok());
 
         let loaded_config = loaded_config.expect("Config loading should succeed in test");
-        assert_eq!(loaded_config.enhanced_detectors.len(), config.enhanced_detectors.len());
+        assert_eq!(
+            loaded_config.enhanced_detectors.len(),
+            config.enhanced_detectors.len()
+        );
         assert_eq!(loaded_config.cache_size, config.cache_size);
     }
 

@@ -7,9 +7,9 @@ use crate::analysis::{AnalysisDetector, AnalysisError};
 use crate::ast::tree_sitter::{Node, Query, QueryCursor, Tree};
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
 use crate::constants::detector_thresholds;
-use async_trait::async_trait;
 use crate::constants::severity_weights;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
+use async_trait::async_trait;
 use log::debug;
 
 /// Holds the collected metrics for a single class or struct.

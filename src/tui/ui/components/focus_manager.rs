@@ -18,11 +18,21 @@
 use super::FocusableInput;
 
 /// Manages focus state across multiple input components
+#[derive(Debug)]
 pub struct FocusManager {
     /// List of all focusable components
     focusable_inputs: Vec<Box<dyn FocusableInput>>,
     /// Index of currently focused component (None if no focus)
     current_focus_index: Option<usize>,
+}
+
+impl Clone for FocusManager {
+    fn clone(&self) -> Self {
+        Self {
+            focusable_inputs: Vec::new(), // Can't clone trait objects, so start fresh
+            current_focus_index: self.current_focus_index,
+        }
+    }
 }
 
 impl FocusManager {
@@ -80,7 +90,10 @@ mod tests {
 
     impl DummyInput {
         fn new(can_focus: bool) -> Self {
-            Self { focused: false, can_focus }
+            Self {
+                focused: false,
+                can_focus,
+            }
         }
     }
 

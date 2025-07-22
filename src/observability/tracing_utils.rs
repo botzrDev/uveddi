@@ -2,10 +2,10 @@
 //!
 //! Provides utilities for trace ID generation and correlation across the observability system.
 
-use std::fmt::{self, Display};
-use uuid::Uuid;
-use tracing::{field, Span};
 use serde::{Deserialize, Serialize};
+use std::fmt::{self, Display};
+use tracing::{field, Span};
+use uuid::Uuid;
 
 /// A unique trace identifier for correlating logs, metrics, and audit events
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]

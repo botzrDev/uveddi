@@ -8,20 +8,20 @@ use crate::security::{
     models::{ApiKey, AuthenticatedUser, Session, User, UserRole},
     secrets::SecretStore,
 };
-use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
 use argon2::password_hash::{rand_core::OsRng, SaltString};
+use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
 use chrono::{DateTime, Duration, Utc};
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use oauth2::{
-    basic::BasicClient, reqwest::async_http_client, AuthType, AuthUrl, AuthorizationCode,
-    ClientId, ClientSecret, CsrfToken, PkceCodeChallenge, RedirectUrl, Scope, TokenResponse,
-    TokenUrl,
+    basic::BasicClient, reqwest::async_http_client, AuthType, AuthUrl, AuthorizationCode, ClientId,
+    ClientSecret, CsrfToken, PkceCodeChallenge, RedirectUrl, Scope, TokenResponse, TokenUrl,
 };
 use openidconnect::{
     core::{CoreAuthenticationFlow, CoreClient, CoreProviderMetadata, CoreResponseType},
     reqwest::async_http_client as oidc_http_client,
-    AccessTokenHash, AuthenticationFlow, ClientId as OidcClientId, ClientSecret as OidcClientSecret,
-    CsrfToken as OidcCsrfToken, IssuerUrl, Nonce, RedirectUrl as OidcRedirectUrl, TokenResponse as OidcTokenResponse,
+    AccessTokenHash, AuthenticationFlow, ClientId as OidcClientId,
+    ClientSecret as OidcClientSecret, CsrfToken as OidcCsrfToken, IssuerUrl, Nonce,
+    RedirectUrl as OidcRedirectUrl, TokenResponse as OidcTokenResponse,
 };
 use rand::Rng;
 use serde::{Deserialize, Serialize};
@@ -37,10 +37,10 @@ pub struct JwtClaims {
     pub email: String,      // User email
     pub name: String,       // Display name
     pub roles: Vec<String>, // User roles
-    pub iat: i64,          // Issued at
-    pub exp: i64,          // Expiration time
-    pub aud: String,       // Audience
-    pub iss: String,       // Issuer
+    pub iat: i64,           // Issued at
+    pub exp: i64,           // Expiration time
+    pub aud: String,        // Audience
+    pub iss: String,        // Issuer
 }
 
 /// OAuth provider configuration
@@ -80,8 +80,9 @@ pub struct AuthenticationConfig {
 impl Default for AuthenticationConfig {
     fn default() -> Self {
         // Generate a secure default JWT secret (32+ characters)
-        let jwt_secret = "uveddi-default-jwt-secret-32-chars-min-change-in-production-environment".to_string();
-        
+        let jwt_secret =
+            "uveddi-default-jwt-secret-32-chars-min-change-in-production-environment".to_string();
+
         Self {
             jwt_secret,
             jwt_expiry_hours: 24,
@@ -117,43 +118,61 @@ impl AuthenticationService {
             let client = BasicClient::new(
                 ClientId::new(provider.client_id.clone()),
                 Some(ClientSecret::new(provider.client_secret.clone())),
-                AuthUrl::new(provider.auth_url.clone()).map_err(|e| SecurityError::OAuth2Error {
-                    error: format!("Invalid auth URL for {}: {}", provider.provider_name, e),
+                AuthUrl::new(provider.auth_url.clone()).map_err(|e| {
+                    SecurityError::OAuth2Error {
+                        error: format!("Invalid auth URL for {}: {}", provider.provider_name, e),
+                    }
                 })?,
-                Some(TokenUrl::new(provider.token_url.clone()).map_err(|e| SecurityError::OAuth2Error {
-                    error: format!("Invalid token URL for {}: {}", provider.provider_name, e),
+                Some(TokenUrl::new(provider.token_url.clone()).map_err(|e| {
+                    SecurityError::OAuth2Error {
+                        error: format!("Invalid token URL for {}: {}", provider.provider_name, e),
+                    }
                 })?),
             )
-            .set_redirect_uri(RedirectUrl::new(provider.redirect_url.clone()).map_err(|e| SecurityError::OAuth2Error {
-                error: format!("Invalid redirect URL for {}: {}", provider.provider_name, e),
-            })?);
+            .set_redirect_uri(
+                RedirectUrl::new(provider.redirect_url.clone()).map_err(|e| {
+                    SecurityError::OAuth2Error {
+                        error: format!(
+                            "Invalid redirect URL for {}: {}",
+                            provider.provider_name, e
+                        ),
+                    }
+                })?,
+            );
 
             oauth_clients.insert(provider.provider_name.clone(), client);
         }
 
         // Initialize OIDC clients
         for provider in &config.oidc_providers {
-            let issuer_url = IssuerUrl::new(provider.issuer_url.clone()).map_err(|e| SecurityError::OidcProviderError {
-                provider: provider.provider_name.clone(),
-                error: format!("Invalid issuer URL: {}", e),
+            let issuer_url = IssuerUrl::new(provider.issuer_url.clone()).map_err(|e| {
+                SecurityError::OidcProviderError {
+                    provider: provider.provider_name.clone(),
+                    error: format!("Invalid issuer URL: {}", e),
+                }
             })?;
 
-            let provider_metadata = CoreProviderMetadata::discover_async(issuer_url, oidc_http_client)
-                .await
-                .map_err(|e| SecurityError::OidcProviderError {
-                    provider: provider.provider_name.clone(),
-                    error: format!("Failed to discover provider metadata: {}", e),
-                })?;
+            let provider_metadata =
+                CoreProviderMetadata::discover_async(issuer_url, oidc_http_client)
+                    .await
+                    .map_err(|e| SecurityError::OidcProviderError {
+                        provider: provider.provider_name.clone(),
+                        error: format!("Failed to discover provider metadata: {}", e),
+                    })?;
 
             let client = CoreClient::from_provider_metadata(
                 provider_metadata,
                 OidcClientId::new(provider.client_id.clone()),
                 Some(OidcClientSecret::new(provider.client_secret.clone())),
             )
-            .set_redirect_uri(OidcRedirectUrl::new(provider.redirect_url.clone()).map_err(|e| SecurityError::OidcProviderError {
-                provider: provider.provider_name.clone(),
-                error: format!("Invalid redirect URL: {}", e),
-            })?);
+            .set_redirect_uri(
+                OidcRedirectUrl::new(provider.redirect_url.clone()).map_err(|e| {
+                    SecurityError::OidcProviderError {
+                        provider: provider.provider_name.clone(),
+                        error: format!("Invalid redirect URL: {}", e),
+                    }
+                })?,
+            );
 
             oidc_clients.insert(provider.provider_name.clone(), client);
         }
@@ -170,11 +189,17 @@ impl AuthenticationService {
 
     /// Generate OAuth authorization URL
     pub async fn get_oauth_auth_url(&self, provider: &str) -> SecurityResult<(String, String)> {
-        let client = self.oauth_clients.get(provider).ok_or_else(|| SecurityError::OAuth2Error {
-            error: format!("OAuth provider '{}' not found", provider),
-        })?;
+        let client =
+            self.oauth_clients
+                .get(provider)
+                .ok_or_else(|| SecurityError::OAuth2Error {
+                    error: format!("OAuth provider '{}' not found", provider),
+                })?;
 
-        let provider_config = self.config.oauth_providers.iter()
+        let provider_config = self
+            .config
+            .oauth_providers
+            .iter()
             .find(|p| p.provider_name == provider)
             .ok_or_else(|| SecurityError::OAuth2Error {
                 error: format!("OAuth provider config '{}' not found", provider),
@@ -183,14 +208,12 @@ impl AuthenticationService {
         let (pkce_challenge, pkce_verifier) = PkceCodeChallenge::new_random_sha256();
 
         let mut auth_request = client.authorize_url(CsrfToken::new_random);
-        
+
         for scope in &provider_config.scopes {
             auth_request = auth_request.add_scope(Scope::new(scope.clone()));
         }
 
-        let (auth_url, csrf_token) = auth_request
-            .set_pkce_challenge(pkce_challenge)
-            .url();
+        let (auth_url, csrf_token) = auth_request.set_pkce_challenge(pkce_challenge).url();
 
         // Store PKCE verifier for later use (in production, use secure storage)
         // This is a simplified implementation
@@ -198,13 +221,22 @@ impl AuthenticationService {
     }
 
     /// Generate OIDC authorization URL
-    pub async fn get_oidc_auth_url(&self, provider: &str) -> SecurityResult<(String, String, String)> {
-        let client = self.oidc_clients.get(provider).ok_or_else(|| SecurityError::OidcProviderError {
-            provider: provider.to_string(),
-            error: "OIDC provider not found".to_string(),
-        })?;
+    pub async fn get_oidc_auth_url(
+        &self,
+        provider: &str,
+    ) -> SecurityResult<(String, String, String)> {
+        let client =
+            self.oidc_clients
+                .get(provider)
+                .ok_or_else(|| SecurityError::OidcProviderError {
+                    provider: provider.to_string(),
+                    error: "OIDC provider not found".to_string(),
+                })?;
 
-        let provider_config = self.config.oidc_providers.iter()
+        let provider_config = self
+            .config
+            .oidc_providers
+            .iter()
             .find(|p| p.provider_name == provider)
             .ok_or_else(|| SecurityError::OidcProviderError {
                 provider: provider.to_string(),
@@ -237,9 +269,12 @@ impl AuthenticationService {
         auth_code: &str,
         csrf_token: &str,
     ) -> SecurityResult<AuthenticatedUser> {
-        let client = self.oauth_clients.get(provider).ok_or_else(|| SecurityError::OAuth2Error {
-            error: format!("OAuth provider '{}' not found", provider),
-        })?;
+        let client =
+            self.oauth_clients
+                .get(provider)
+                .ok_or_else(|| SecurityError::OAuth2Error {
+                    error: format!("OAuth provider '{}' not found", provider),
+                })?;
 
         // Exchange authorization code for access token
         let token_response = client
@@ -252,7 +287,9 @@ impl AuthenticationService {
             })?;
 
         // Get user info (this would typically call the provider's user info endpoint)
-        let user_info = self.get_oauth_user_info(provider, token_response.access_token().secret()).await?;
+        let user_info = self
+            .get_oauth_user_info(provider, token_response.access_token().secret())
+            .await?;
 
         // Create or update user
         let user = self.create_or_update_user(user_info).await?;
@@ -264,7 +301,7 @@ impl AuthenticationService {
         let auth_user = AuthenticatedUser::new(
             user,
             vec![UserRole::Developer], // Default role, would be determined by business logic
-            vec![], // Permissions would be loaded from database
+            vec![],                    // Permissions would be loaded from database
             Some(session.id),
         );
 
@@ -278,10 +315,13 @@ impl AuthenticationService {
         auth_code: &str,
         nonce: &str,
     ) -> SecurityResult<AuthenticatedUser> {
-        let client = self.oidc_clients.get(provider).ok_or_else(|| SecurityError::OidcProviderError {
-            provider: provider.to_string(),
-            error: "OIDC provider not found".to_string(),
-        })?;
+        let client =
+            self.oidc_clients
+                .get(provider)
+                .ok_or_else(|| SecurityError::OidcProviderError {
+                    provider: provider.to_string(),
+                    error: "OIDC provider not found".to_string(),
+                })?;
 
         // Exchange authorization code for tokens
         let token_response = client
@@ -294,12 +334,15 @@ impl AuthenticationService {
             })?;
 
         // Verify ID token
-        let id_token = OidcTokenResponse::id_token(&token_response).ok_or_else(|| SecurityError::OidcProviderError {
-            provider: provider.to_string(),
-            error: "No ID token received".to_string(),
+        let id_token = OidcTokenResponse::id_token(&token_response).ok_or_else(|| {
+            SecurityError::OidcProviderError {
+                provider: provider.to_string(),
+                error: "No ID token received".to_string(),
+            }
         })?;
 
-        let claims = id_token.claims(&client.id_token_verifier(), &Nonce::new(nonce.to_string()))
+        let claims = id_token
+            .claims(&client.id_token_verifier(), &Nonce::new(nonce.to_string()))
             .map_err(|e| SecurityError::OidcProviderError {
                 provider: provider.to_string(),
                 error: format!("ID token verification failed: {}", e),
@@ -309,7 +352,11 @@ impl AuthenticationService {
         let user_info = UserInfo {
             external_id: claims.subject().to_string(),
             email: claims.email().map(|e| e.to_string()).unwrap_or_default(),
-            name: claims.name().and_then(|n| n.get(None)).map(|n| n.to_string()).unwrap_or_default(),
+            name: claims
+                .name()
+                .and_then(|n| n.get(None))
+                .map(|n| n.to_string())
+                .unwrap_or_default(),
         };
 
         // Create or update user
@@ -322,7 +369,7 @@ impl AuthenticationService {
         let auth_user = AuthenticatedUser::new(
             user,
             vec![UserRole::Developer], // Default role, would be determined by business logic
-            vec![], // Permissions would be loaded from database
+            vec![],                    // Permissions would be loaded from database
             Some(session.id),
         );
 
@@ -337,7 +384,7 @@ impl AuthenticationService {
         }
 
         let key_prefix = &api_key[0..12]; // "uvd_" + 8 chars
-        let key_secret = &api_key[13..];  // 32 chars after "_"
+        let key_secret = &api_key[13..]; // 32 chars after "_"
 
         // Find API key by prefix
         let api_key_record = {
@@ -361,18 +408,23 @@ impl AuthenticationService {
 
         // Verify key hash
         let argon2 = Argon2::default();
-        let parsed_hash = PasswordHash::new(&api_key_record.key_hash).map_err(|e| SecurityError::CryptographicError {
-            operation: "password_hash_parse".to_string(),
-            error: e.to_string(),
+        let parsed_hash = PasswordHash::new(&api_key_record.key_hash).map_err(|e| {
+            SecurityError::CryptographicError {
+                operation: "password_hash_parse".to_string(),
+                error: e.to_string(),
+            }
         })?;
 
-        if argon2.verify_password(key_secret.as_bytes(), &parsed_hash).is_err() {
+        if argon2
+            .verify_password(key_secret.as_bytes(), &parsed_hash)
+            .is_err()
+        {
             return Err(SecurityError::InvalidCredentials);
         }
 
         // Update last used time
         // In production, this would update the database
-        
+
         // Create user from API key
         let user = if let Some(user_id) = api_key_record.user_id {
             // Load user from database
@@ -390,8 +442,8 @@ impl AuthenticationService {
         let auth_user = AuthenticatedUser::new(
             user,
             vec![UserRole::Service], // API keys default to service role
-            vec![], // Permissions would be loaded from database
-            None, // No session for API keys
+            vec![],                  // Permissions would be loaded from database
+            None,                    // No session for API keys
         );
 
         Ok(auth_user)
@@ -399,7 +451,10 @@ impl AuthenticationService {
 
     /// Authenticate user with JWT token
     pub async fn authenticate_jwt(&self, token: &str) -> SecurityResult<AuthenticatedUser> {
-        let jwt_secret = self.secret_store.get_secret("jwt_secret").await
+        let jwt_secret = self
+            .secret_store
+            .get_secret("jwt_secret")
+            .await
             .unwrap_or_else(|_| self.config.jwt_secret.clone());
 
         let decoding_key = DecodingKey::from_secret(jwt_secret.as_ref());
@@ -412,7 +467,9 @@ impl AuthenticationService {
         let user = self.load_user_by_external_id(&claims.sub).await?;
 
         // Parse roles
-        let roles = claims.roles.iter()
+        let roles = claims
+            .roles
+            .iter()
             .filter_map(|r| r.parse::<UserRole>().ok())
             .collect();
 
@@ -421,7 +478,7 @@ impl AuthenticationService {
             user,
             roles,
             vec![], // Permissions would be loaded from database
-            None, // No session for JWT
+            None,   // No session for JWT
         );
 
         Ok(auth_user)
@@ -474,7 +531,10 @@ impl AuthenticationService {
 
     /// Generate JWT token for user
     pub async fn generate_jwt(&self, user: &AuthenticatedUser) -> SecurityResult<String> {
-        let jwt_secret = self.secret_store.get_secret("jwt_secret").await
+        let jwt_secret = self
+            .secret_store
+            .get_secret("jwt_secret")
+            .await
             .unwrap_or_else(|_| self.config.jwt_secret.clone());
 
         let now = Utc::now();
@@ -507,16 +567,21 @@ impl AuthenticationService {
     ) -> SecurityResult<(String, ApiKey)> {
         // Generate random key components
         let mut rng = rand::thread_rng();
-        let key_id: String = (0..8).map(|_| rng.sample(rand::distributions::Alphanumeric) as char).collect();
-        let key_secret: String = (0..32).map(|_| rng.sample(rand::distributions::Alphanumeric) as char).collect();
-        
+        let key_id: String = (0..8)
+            .map(|_| rng.sample(rand::distributions::Alphanumeric) as char)
+            .collect();
+        let key_secret: String = (0..32)
+            .map(|_| rng.sample(rand::distributions::Alphanumeric) as char)
+            .collect();
+
         let key_prefix = format!("uvd_{}", key_id);
         let full_key = format!("{key_prefix}_{key_secret}");
 
         // Hash the secret part
         let argon2 = Argon2::default();
         let salt = SaltString::generate(&mut OsRng);
-        let key_hash = argon2.hash_password(key_secret.as_bytes(), &salt)
+        let key_hash = argon2
+            .hash_password(key_secret.as_bytes(), &salt)
             .map_err(|e| SecurityError::CryptographicError {
                 operation: "password_hash".to_string(),
                 error: e.to_string(),
@@ -571,11 +636,17 @@ impl AuthenticationService {
     /// Generate secure session token
     fn generate_session_token(&self) -> String {
         let mut rng = rand::thread_rng();
-        (0..64).map(|_| rng.sample(rand::distributions::Alphanumeric) as char).collect()
+        (0..64)
+            .map(|_| rng.sample(rand::distributions::Alphanumeric) as char)
+            .collect()
     }
 
     /// Get OAuth user info (simplified implementation)
-    async fn get_oauth_user_info(&self, _provider: &str, _access_token: &str) -> SecurityResult<UserInfo> {
+    async fn get_oauth_user_info(
+        &self,
+        _provider: &str,
+        _access_token: &str,
+    ) -> SecurityResult<UserInfo> {
         // This would call the provider's user info endpoint
         // Simplified implementation
         Ok(UserInfo {
@@ -631,7 +702,7 @@ mod tests {
     async fn test_authentication_service_creation() {
         let config = AuthenticationConfig::default();
         let secret_store = Arc::new(MockSecretStore::new());
-        
+
         let result = AuthenticationService::new(config, secret_store).await;
         assert!(result.is_ok());
     }
@@ -640,7 +711,9 @@ mod tests {
     async fn test_jwt_generation_and_validation() {
         let config = AuthenticationConfig::default();
         let secret_store = Arc::new(MockSecretStore::new());
-        let auth_service = AuthenticationService::new(config, secret_store).await.unwrap();
+        let auth_service = AuthenticationService::new(config, secret_store)
+            .await
+            .unwrap();
 
         // Create a test user
         let user = User::new(
@@ -649,12 +722,7 @@ mod tests {
             "Test User".to_string(),
         );
 
-        let auth_user = AuthenticatedUser::new(
-            user,
-            vec![UserRole::Developer],
-            vec![],
-            None,
-        );
+        let auth_user = AuthenticatedUser::new(user, vec![UserRole::Developer], vec![], None);
 
         // Generate JWT
         let jwt = auth_service.generate_jwt(&auth_user).await.unwrap();
@@ -670,14 +738,15 @@ mod tests {
     async fn test_api_key_generation() {
         let config = AuthenticationConfig::default();
         let secret_store = Arc::new(MockSecretStore::new());
-        let auth_service = AuthenticationService::new(config, secret_store).await.unwrap();
+        let auth_service = AuthenticationService::new(config, secret_store)
+            .await
+            .unwrap();
 
         let user_id = Uuid::new_v4();
-        let (api_key, key_record) = auth_service.generate_api_key(
-            Some(user_id),
-            "Test API Key".to_string(),
-            None,
-        ).await.unwrap();
+        let (api_key, key_record) = auth_service
+            .generate_api_key(Some(user_id), "Test API Key".to_string(), None)
+            .await
+            .unwrap();
 
         // Verify API key format
         assert!(api_key.starts_with("uvd_"));
@@ -690,7 +759,9 @@ mod tests {
     async fn test_session_creation_and_validation() {
         let config = AuthenticationConfig::default();
         let secret_store = Arc::new(MockSecretStore::new());
-        let auth_service = AuthenticationService::new(config, secret_store).await.unwrap();
+        let auth_service = AuthenticationService::new(config, secret_store)
+            .await
+            .unwrap();
 
         let user = User::new(
             "test_user".to_string(),
@@ -703,7 +774,10 @@ mod tests {
         assert!(session.is_valid());
 
         // Validate session
-        let validated_session = auth_service.validate_session(&session.session_token).await.unwrap();
+        let validated_session = auth_service
+            .validate_session(&session.session_token)
+            .await
+            .unwrap();
         assert_eq!(validated_session.id, session.id);
     }
 
@@ -711,7 +785,9 @@ mod tests {
     async fn test_session_revocation() {
         let config = AuthenticationConfig::default();
         let secret_store = Arc::new(MockSecretStore::new());
-        let auth_service = AuthenticationService::new(config, secret_store).await.unwrap();
+        let auth_service = AuthenticationService::new(config, secret_store)
+            .await
+            .unwrap();
 
         let user = User::new(
             "test_user".to_string(),
@@ -735,13 +811,14 @@ mod tests {
     async fn test_api_key_revocation() {
         let config = AuthenticationConfig::default();
         let secret_store = Arc::new(MockSecretStore::new());
-        let auth_service = AuthenticationService::new(config, secret_store).await.unwrap();
+        let auth_service = AuthenticationService::new(config, secret_store)
+            .await
+            .unwrap();
 
-        let (api_key, _) = auth_service.generate_api_key(
-            None,
-            "Test API Key".to_string(),
-            None,
-        ).await.unwrap();
+        let (api_key, _) = auth_service
+            .generate_api_key(None, "Test API Key".to_string(), None)
+            .await
+            .unwrap();
 
         let key_prefix = &api_key[0..12];
 
@@ -770,7 +847,7 @@ mod mock_secret_store {
         pub fn new() -> Self {
             let mut secrets = HashMap::new();
             secrets.insert("jwt_secret".to_string(), "test-secret".to_string());
-            
+
             Self {
                 secrets: RwLock::new(secrets),
             }
@@ -781,9 +858,12 @@ mod mock_secret_store {
     impl SecretStore for MockSecretStore {
         async fn get_secret(&self, key: &str) -> SecurityResult<String> {
             let secrets = self.secrets.read().await;
-            secrets.get(key).cloned().ok_or_else(|| SecurityError::SecretNotFound {
-                key: key.to_string(),
-            })
+            secrets
+                .get(key)
+                .cloned()
+                .ok_or_else(|| SecurityError::SecretNotFound {
+                    key: key.to_string(),
+                })
         }
 
         async fn set_secret(&self, key: &str, value: &str) -> SecurityResult<()> {
@@ -791,18 +871,18 @@ mod mock_secret_store {
             secrets.insert(key.to_string(), value.to_string());
             Ok(())
         }
-        
+
         async fn delete_secret(&self, key: &str) -> SecurityResult<()> {
             let mut secrets = self.secrets.write().await;
             secrets.remove(key);
             Ok(())
         }
-        
+
         async fn list_secret_keys(&self) -> SecurityResult<Vec<String>> {
             let secrets = self.secrets.read().await;
             Ok(secrets.keys().cloned().collect())
         }
-        
+
         async fn secret_exists(&self, key: &str) -> SecurityResult<bool> {
             let secrets = self.secrets.read().await;
             Ok(secrets.contains_key(key))

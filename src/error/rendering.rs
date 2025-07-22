@@ -127,7 +127,7 @@ impl From<reqwest::Error> for RenderingServiceError {
             RenderingServiceError::connection_timeout(Duration::from_secs(10))
         } else {
             RenderingServiceError::NetworkError {
-                message: e.to_string()
+                message: e.to_string(),
             }
         }
     }

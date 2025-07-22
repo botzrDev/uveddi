@@ -92,7 +92,7 @@ impl LocalDependencyGraph {
     pub fn get_node_from_index(&self, index: NodeIndex) -> Option<&ComponentNode> {
         self.graph.node_weight(index)
     }
-    
+
     /// Returns the number of nodes in the graph.
     pub fn node_count(&self) -> usize {
         self.graph.node_count()

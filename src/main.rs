@@ -90,7 +90,7 @@ enum Commands {
 }
 
 /// Main entry point for Uveddi. All errors are handled and logged consistently.
-/// 
+///
 /// Uses #[tokio::main] pattern for proper async runtime management, eliminating
 /// manual runtime creation and async/sync boundary violations per UV-294 guidelines.
 #[tokio::main]
@@ -131,7 +131,9 @@ async fn main() -> Result<()> {
     // });
 
     // Run main application
-    uveddi::application::run_app().await.map_err(|e| color_eyre::eyre::eyre!(e))?;
+    uveddi::application::run_app()
+        .await
+        .map_err(|e| color_eyre::eyre::eyre!(e))?;
 
     // Example of using the new builder pattern for AnalysisEngine
     // This is for demonstration and can be removed if not needed in main.rs

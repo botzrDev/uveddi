@@ -12,8 +12,8 @@ use tera::{Context as TeraContext, Tera};
 use tokio::time::{interval, Instant};
 use uuid::Uuid;
 
+use super::distribution::{DistributionChannel, DistributionManager};
 use crate::monitoring::metrics::{TestMetrics, TestStatus};
-use super::distribution::{DistributionManager, DistributionChannel};
 
 /// Different types of reports supported by the system
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
@@ -356,10 +356,10 @@ impl ReportingEngine {
     /// Create a new reporting engine instance
     pub fn new() -> Result<Self> {
         let mut tera = Tera::new("templates/**/*")?;
-        
+
         // Register built-in templates
         Self::register_builtin_templates(&mut tera)?;
-        
+
         Ok(Self {
             tera,
             configurations: Vec::new(),
@@ -368,44 +368,63 @@ impl ReportingEngine {
             distribution_manager: DistributionManager::new(),
         })
     }
-    
+
     /// Register built-in report templates
     fn register_builtin_templates(tera: &mut Tera) -> Result<()> {
         // Daily health summary template
-        tera.add_raw_template("daily_health.html", include_str!("templates/daily_health.html"))
-            .context("Failed to register daily health template")?;
-        
+        tera.add_raw_template(
+            "daily_health.html",
+            include_str!("templates/daily_health.html"),
+        )
+        .context("Failed to register daily health template")?;
+
         // Weekly trend analysis template
-        tera.add_raw_template("weekly_trend.html", include_str!("templates/weekly_trend.html"))
-            .context("Failed to register weekly trend template")?;
-        
+        tera.add_raw_template(
+            "weekly_trend.html",
+            include_str!("templates/weekly_trend.html"),
+        )
+        .context("Failed to register weekly trend template")?;
+
         // Monthly executive summary template
-        tera.add_raw_template("monthly_executive.html", include_str!("templates/monthly_executive.html"))
-            .context("Failed to register monthly executive template")?;
-        
+        tera.add_raw_template(
+            "monthly_executive.html",
+            include_str!("templates/monthly_executive.html"),
+        )
+        .context("Failed to register monthly executive template")?;
+
         // Failure analysis template
-        tera.add_raw_template("failure_analysis.html", include_str!("templates/failure_analysis.html"))
-            .context("Failed to register failure analysis template")?;
-        
+        tera.add_raw_template(
+            "failure_analysis.html",
+            include_str!("templates/failure_analysis.html"),
+        )
+        .context("Failed to register failure analysis template")?;
+
         // Performance optimization template
-        tera.add_raw_template("performance_optimization.html", include_str!("templates/performance_optimization.html"))
-            .context("Failed to register performance optimization template")?;
-        
+        tera.add_raw_template(
+            "performance_optimization.html",
+            include_str!("templates/performance_optimization.html"),
+        )
+        .context("Failed to register performance optimization template")?;
+
         Ok(())
     }
-    
+
     /// Add a report configuration
     pub fn add_configuration(&mut self, config: ReportConfiguration) {
         self.configurations.push(config);
     }
-    
+
     /// Generate a report based on configuration
-    pub async fn generate_report(&mut self, config: &ReportConfiguration) -> Result<GeneratedReport> {
+    pub async fn generate_report(
+        &mut self,
+        config: &ReportConfiguration,
+    ) -> Result<GeneratedReport> {
         let data_range = self.calculate_data_range(&config.report_type)?;
         let test_metrics = self.data_collector.collect_metrics(&data_range).await?;
-        
-        let content = self.analyze_metrics(&test_metrics, &config.report_type, &config.stakeholder_role)?;
-        
+
+        let content =
+            self.analyze_metrics(&test_metrics, &config.report_type, &config.stakeholder_role)?;
+
         let report = GeneratedReport {
             id: Uuid::new_v4(),
             report_type: config.report_type.clone(),
@@ -421,31 +440,46 @@ impl ReportingEngine {
                 quality_score: 0.95,
             },
         };
-        
+
         // Store the generated report
         self.report_store.store_report(report.clone())?;
-        
+
         Ok(report)
     }
-    
+
     /// Render report using Tera templates
     pub fn render_report(&self, report: &GeneratedReport) -> Result<String> {
         let template_name = self.get_template_name(&report.report_type);
         let mut context = TeraContext::new();
-        
+
         // Add report data to template context
         context.insert("report", report);
-        context.insert("generated_at", &report.generated_at.format("%Y-%m-%d %H:%M:%S UTC").to_string());
-        
-        self.tera.render(&template_name, &context)
+        context.insert(
+            "generated_at",
+            &report
+                .generated_at
+                .format("%Y-%m-%d %H:%M:%S UTC")
+                .to_string(),
+        );
+
+        self.tera
+            .render(&template_name, &context)
             .context("Failed to render report template")
     }
-    
+
     /// Distribute report to configured channels
-    pub async fn distribute_report(&self, report: &GeneratedReport, config: &ReportConfiguration) -> Result<()> {
+    pub async fn distribute_report(
+        &self,
+        report: &GeneratedReport,
+        config: &ReportConfiguration,
+    ) -> Result<()> {
         let rendered_content = self.render_report(report)?;
-        let subject = format!("{:?} Report - {}", report.report_type, report.generated_at.format("%Y-%m-%d"));
-        
+        let subject = format!(
+            "{:?} Report - {}",
+            report.report_type,
+            report.generated_at.format("%Y-%m-%d")
+        );
+
         // Create summary for Slack notifications
         let summary = format!(
             "Pass Rate: {:.1}% | Tests: {} | Issues: {}",
@@ -455,30 +489,44 @@ impl ReportingEngine {
         );
 
         let metrics = vec![
-            ("Pass Rate".to_string(), format!("{:.1}%", report.content.summary.pass_rate)),
-            ("Total Tests".to_string(), report.content.summary.total_tests.to_string()),
-            ("Critical Issues".to_string(), report.content.summary.critical_issues.to_string()),
-            ("Avg Execution Time".to_string(), format!("{:.0}ms", report.content.summary.avg_execution_time)),
+            (
+                "Pass Rate".to_string(),
+                format!("{:.1}%", report.content.summary.pass_rate),
+            ),
+            (
+                "Total Tests".to_string(),
+                report.content.summary.total_tests.to_string(),
+            ),
+            (
+                "Critical Issues".to_string(),
+                report.content.summary.critical_issues.to_string(),
+            ),
+            (
+                "Avg Execution Time".to_string(),
+                format!("{:.0}ms", report.content.summary.avg_execution_time),
+            ),
         ];
 
-        self.distribution_manager.distribute_to_channels(
-            &config.distribution,
-            &subject,
-            &rendered_content,
-            Some(&summary),
-            Some(&metrics),
-        ).await?;
-        
+        self.distribution_manager
+            .distribute_to_channels(
+                &config.distribution,
+                &subject,
+                &rendered_content,
+                Some(&summary),
+                Some(&metrics),
+            )
+            .await?;
+
         Ok(())
     }
-    
+
     /// Start automated report generation
     pub async fn start_scheduler(&mut self) -> Result<()> {
         let mut interval = interval(std::time::Duration::from_secs(60)); // Check every minute
-        
+
         loop {
             interval.tick().await;
-            
+
             for config in &self.configurations.clone() {
                 if config.enabled && self.should_generate_report(config)? {
                     match self.generate_report(config).await {
@@ -495,12 +543,16 @@ impl ReportingEngine {
             }
         }
     }
-    
+
     /// Search historical reports
-    pub fn search_reports(&self, query: &str, filters: Option<SearchFilters>) -> Result<Vec<GeneratedReport>> {
+    pub fn search_reports(
+        &self,
+        query: &str,
+        filters: Option<SearchFilters>,
+    ) -> Result<Vec<GeneratedReport>> {
         self.report_store.search(query, filters)
     }
-    
+
     /// Get template name for report type
     fn get_template_name(&self, report_type: &ReportType) -> String {
         match report_type {
@@ -511,7 +563,7 @@ impl ReportingEngine {
             ReportType::PerformanceOptimization => "performance_optimization.html".to_string(),
         }
     }
-    
+
     /// Calculate data range for report type
     fn calculate_data_range(&self, report_type: &ReportType) -> Result<DateRange> {
         let end = Utc::now();
@@ -522,10 +574,10 @@ impl ReportingEngine {
             ReportType::FailureAnalysis => end - Duration::days(7),
             ReportType::PerformanceOptimization => end - Duration::days(14),
         };
-        
+
         Ok(DateRange { start, end })
     }
-    
+
     /// Analyze metrics to generate report content
     fn analyze_metrics(
         &self,
@@ -537,23 +589,23 @@ impl ReportingEngine {
         let performance_metrics = self.calculate_performance_metrics(metrics);
         let failure_metrics = self.calculate_failure_metrics(metrics);
         let resource_metrics = self.calculate_resource_metrics(metrics);
-        
+
         let summary = ReportSummary {
             total_tests: metrics.len() as u64,
             pass_rate: execution_metrics.pass_rate,
             avg_execution_time: performance_metrics.avg_duration_ms,
             critical_issues: failure_metrics.failure_categories.values().sum(),
             trends: TrendData {
-                pass_rate_change: 0.0, // TODO: Calculate from historical data
+                pass_rate_change: 0.0,   // TODO: Calculate from historical data
                 performance_change: 0.0, // TODO: Calculate from historical data
                 trend_direction: TrendDirection::Stable,
             },
         };
-        
+
         let insights = self.generate_insights(metrics, stakeholder_role);
         let recommendations = self.generate_recommendations(metrics, stakeholder_role);
         let charts = self.generate_chart_data(metrics, report_type);
-        
+
         Ok(ReportContent {
             summary,
             metrics: ReportMetrics {
@@ -567,19 +619,42 @@ impl ReportingEngine {
             charts,
         })
     }
-    
+
     /// Calculate execution metrics from test data
     fn calculate_execution_metrics(&self, metrics: &[TestMetrics]) -> ExecutionMetrics {
         let total = metrics.len() as u64;
-        let passed = metrics.iter().filter(|m| matches!(m.status, TestStatus::Passed)).count() as u64;
-        let failed = metrics.iter().filter(|m| matches!(m.status, TestStatus::Failed)).count() as u64;
-        let skipped = metrics.iter().filter(|m| matches!(m.status, TestStatus::Skipped)).count() as u64;
-        let timeout = metrics.iter().filter(|m| matches!(m.status, TestStatus::Timeout)).count() as u64;
-        let error = metrics.iter().filter(|m| matches!(m.status, TestStatus::Error)).count() as u64;
-        
-        let pass_rate = if total > 0 { passed as f64 / total as f64 * 100.0 } else { 0.0 };
-        let failure_rate = if total > 0 { failed as f64 / total as f64 * 100.0 } else { 0.0 };
-        
+        let passed = metrics
+            .iter()
+            .filter(|m| matches!(m.status, TestStatus::Passed))
+            .count() as u64;
+        let failed = metrics
+            .iter()
+            .filter(|m| matches!(m.status, TestStatus::Failed))
+            .count() as u64;
+        let skipped = metrics
+            .iter()
+            .filter(|m| matches!(m.status, TestStatus::Skipped))
+            .count() as u64;
+        let timeout = metrics
+            .iter()
+            .filter(|m| matches!(m.status, TestStatus::Timeout))
+            .count() as u64;
+        let error = metrics
+            .iter()
+            .filter(|m| matches!(m.status, TestStatus::Error))
+            .count() as u64;
+
+        let pass_rate = if total > 0 {
+            passed as f64 / total as f64 * 100.0
+        } else {
+            0.0
+        };
+        let failure_rate = if total > 0 {
+            failed as f64 / total as f64 * 100.0
+        } else {
+            0.0
+        };
+
         ExecutionMetrics {
             total_executions: total,
             passed,
@@ -591,46 +666,54 @@ impl ReportingEngine {
             failure_rate,
         }
     }
-    
+
     /// Calculate performance metrics from test data
     fn calculate_performance_metrics(&self, metrics: &[TestMetrics]) -> PerformanceMetrics {
         let durations: Vec<f64> = metrics.iter().map(|m| m.duration_ms as f64).collect();
-        
+
         let avg_duration_ms = if !durations.is_empty() {
             durations.iter().sum::<f64>() / durations.len() as f64
         } else {
             0.0
         };
-        
+
         // Calculate percentiles (simplified implementation)
         let mut sorted_durations = durations.clone();
         sorted_durations.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
-        
+
         let median_duration_ms = if !sorted_durations.is_empty() {
             sorted_durations[sorted_durations.len() / 2]
         } else {
             0.0
         };
-        
+
         let p95_duration_ms = if !sorted_durations.is_empty() {
             sorted_durations[(sorted_durations.len() as f64 * 0.95) as usize]
         } else {
             0.0
         };
-        
+
         let p99_duration_ms = if !sorted_durations.is_empty() {
             sorted_durations[(sorted_durations.len() as f64 * 0.99) as usize]
         } else {
             0.0
         };
-        
+
         // Find slowest tests
-        let mut test_durations: Vec<_> = metrics.iter()
-            .map(|m| (m.test_name.clone(), m.test_suite.clone(), m.duration_ms as f64))
+        let mut test_durations: Vec<_> = metrics
+            .iter()
+            .map(|m| {
+                (
+                    m.test_name.clone(),
+                    m.test_suite.clone(),
+                    m.duration_ms as f64,
+                )
+            })
             .collect();
         test_durations.sort_by(|a, b| b.2.partial_cmp(&a.2).unwrap_or(std::cmp::Ordering::Equal));
-        
-        let slowest_tests = test_durations.into_iter()
+
+        let slowest_tests = test_durations
+            .into_iter()
             .take(10)
             .map(|(name, suite, duration)| TestSummary {
                 name,
@@ -640,7 +723,7 @@ impl ReportingEngine {
                 last_failure: None,
             })
             .collect();
-        
+
         PerformanceMetrics {
             avg_duration_ms,
             median_duration_ms,
@@ -650,34 +733,38 @@ impl ReportingEngine {
             performance_trends: vec![], // TODO: Implement trend calculation
         }
     }
-    
+
     /// Calculate failure metrics from test data
     fn calculate_failure_metrics(&self, metrics: &[TestMetrics]) -> FailureMetrics {
         let mut failure_categories = HashMap::new();
         let mut failing_tests = HashMap::new();
-        
-        for metric in metrics.iter().filter(|m| matches!(m.status, TestStatus::Failed)) {
+
+        for metric in metrics
+            .iter()
+            .filter(|m| matches!(m.status, TestStatus::Failed))
+        {
             if let Some(category) = &metric.failure_category {
                 *failure_categories.entry(category.clone()).or_insert(0) += 1;
             }
-            
+
             let key = (&metric.test_name, &metric.test_suite);
             *failing_tests.entry(key).or_insert(0) += 1;
         }
-        
-        let mut top_failing_tests: Vec<_> = failing_tests.into_iter()
+
+        let mut top_failing_tests: Vec<_> = failing_tests
+            .into_iter()
             .map(|((name, suite), count)| TestSummary {
                 name: name.clone(),
                 suite: suite.clone(),
                 failure_count: count,
                 avg_duration_ms: 0.0, // TODO: Calculate average duration for failed tests
-                last_failure: None, // TODO: Find last failure timestamp
+                last_failure: None,   // TODO: Find last failure timestamp
             })
             .collect();
-        
+
         top_failing_tests.sort_by(|a, b| b.failure_count.cmp(&a.failure_count));
         top_failing_tests.truncate(10);
-        
+
         FailureMetrics {
             failure_categories,
             top_failing_tests,
@@ -685,21 +772,27 @@ impl ReportingEngine {
             resolution_recommendations: vec![], // TODO: Generate recommendations
         }
     }
-    
+
     /// Calculate resource metrics from test data
     fn calculate_resource_metrics(&self, metrics: &[TestMetrics]) -> ResourceMetrics {
-        let avg_cpu_percent = metrics.iter()
+        let avg_cpu_percent = metrics
+            .iter()
             .map(|m| m.resource_usage.cpu_percent as f64)
-            .sum::<f64>() / metrics.len().max(1) as f64;
-        
-        let avg_memory_mb = metrics.iter()
+            .sum::<f64>()
+            / metrics.len().max(1) as f64;
+
+        let avg_memory_mb = metrics
+            .iter()
             .map(|m| m.resource_usage.memory_mb as f64)
-            .sum::<f64>() / metrics.len().max(1) as f64;
-        
-        let avg_disk_io_mb = metrics.iter()
+            .sum::<f64>()
+            / metrics.len().max(1) as f64;
+
+        let avg_disk_io_mb = metrics
+            .iter()
             .map(|m| m.resource_usage.disk_io_mb as f64)
-            .sum::<f64>() / metrics.len().max(1) as f64;
-        
+            .sum::<f64>()
+            / metrics.len().max(1) as f64;
+
         ResourceMetrics {
             avg_cpu_percent,
             avg_memory_mb,
@@ -707,97 +800,124 @@ impl ReportingEngine {
             resource_bottlenecks: vec![], // TODO: Implement bottleneck detection
         }
     }
-    
+
     /// Generate insights based on stakeholder role
-    fn generate_insights(&self, _metrics: &[TestMetrics], stakeholder_role: &StakeholderRole) -> Vec<ReportInsight> {
+    fn generate_insights(
+        &self,
+        _metrics: &[TestMetrics],
+        stakeholder_role: &StakeholderRole,
+    ) -> Vec<ReportInsight> {
         match stakeholder_role {
-            StakeholderRole::Developer => vec![
-                ReportInsight {
-                    title: "Code Quality Trend".to_string(),
-                    description: "Recent changes have improved test pass rates".to_string(),
-                    impact: InsightImpact::Medium,
-                    stakeholder_relevance: vec![StakeholderRole::Developer],
-                    supporting_data: vec!["Pass rate increased by 5%".to_string()],
-                }
-            ],
-            StakeholderRole::QaEngineer | StakeholderRole::QaLead => vec![
-                ReportInsight {
-                    title: "Test Coverage Gap".to_string(),
-                    description: "New features lack adequate test coverage".to_string(),
-                    impact: InsightImpact::High,
-                    stakeholder_relevance: vec![StakeholderRole::QaEngineer, StakeholderRole::QaLead],
-                    supporting_data: vec!["15% of new code lacks tests".to_string()],
-                }
-            ],
-            StakeholderRole::Manager | StakeholderRole::Executive => vec![
-                ReportInsight {
-                    title: "Quality Metrics Trending Positive".to_string(),
-                    description: "Overall system quality is improving".to_string(),
-                    impact: InsightImpact::Medium,
-                    stakeholder_relevance: vec![StakeholderRole::Manager, StakeholderRole::Executive],
-                    supporting_data: vec!["10% reduction in critical bugs".to_string()],
-                }
-            ],
+            StakeholderRole::Developer => vec![ReportInsight {
+                title: "Code Quality Trend".to_string(),
+                description: "Recent changes have improved test pass rates".to_string(),
+                impact: InsightImpact::Medium,
+                stakeholder_relevance: vec![StakeholderRole::Developer],
+                supporting_data: vec!["Pass rate increased by 5%".to_string()],
+            }],
+            StakeholderRole::QaEngineer | StakeholderRole::QaLead => vec![ReportInsight {
+                title: "Test Coverage Gap".to_string(),
+                description: "New features lack adequate test coverage".to_string(),
+                impact: InsightImpact::High,
+                stakeholder_relevance: vec![StakeholderRole::QaEngineer, StakeholderRole::QaLead],
+                supporting_data: vec!["15% of new code lacks tests".to_string()],
+            }],
+            StakeholderRole::Manager | StakeholderRole::Executive => vec![ReportInsight {
+                title: "Quality Metrics Trending Positive".to_string(),
+                description: "Overall system quality is improving".to_string(),
+                impact: InsightImpact::Medium,
+                stakeholder_relevance: vec![StakeholderRole::Manager, StakeholderRole::Executive],
+                supporting_data: vec!["10% reduction in critical bugs".to_string()],
+            }],
         }
     }
-    
+
     /// Generate recommendations based on stakeholder role
-    fn generate_recommendations(&self, _metrics: &[TestMetrics], stakeholder_role: &StakeholderRole) -> Vec<Recommendation> {
+    fn generate_recommendations(
+        &self,
+        _metrics: &[TestMetrics],
+        stakeholder_role: &StakeholderRole,
+    ) -> Vec<Recommendation> {
         match stakeholder_role {
-            StakeholderRole::Developer => vec![
-                Recommendation {
-                    title: "Optimize Slow Tests".to_string(),
-                    description: "Focus on improving performance of slowest 10% of tests".to_string(),
-                    priority: RecommendationPriority::Medium,
-                    estimated_effort: "2-3 days".to_string(),
-                    expected_impact: "20% reduction in test execution time".to_string(),
-                    assigned_role: Some(StakeholderRole::Developer),
-                }
-            ],
-            StakeholderRole::QaEngineer | StakeholderRole::QaLead => vec![
-                Recommendation {
-                    title: "Increase Test Coverage".to_string(),
-                    description: "Add integration tests for critical user flows".to_string(),
-                    priority: RecommendationPriority::High,
-                    estimated_effort: "1 week".to_string(),
-                    expected_impact: "Reduce production issues by 30%".to_string(),
-                    assigned_role: Some(StakeholderRole::QaEngineer),
-                }
-            ],
-            StakeholderRole::Manager | StakeholderRole::Executive => vec![
-                Recommendation {
-                    title: "Invest in Test Infrastructure".to_string(),
-                    description: "Upgrade CI/CD pipeline for faster feedback".to_string(),
-                    priority: RecommendationPriority::Medium,
-                    estimated_effort: "2 weeks".to_string(),
-                    expected_impact: "50% faster deployment cycles".to_string(),
-                    assigned_role: Some(StakeholderRole::Manager),
-                }
-            ],
+            StakeholderRole::Developer => vec![Recommendation {
+                title: "Optimize Slow Tests".to_string(),
+                description: "Focus on improving performance of slowest 10% of tests".to_string(),
+                priority: RecommendationPriority::Medium,
+                estimated_effort: "2-3 days".to_string(),
+                expected_impact: "20% reduction in test execution time".to_string(),
+                assigned_role: Some(StakeholderRole::Developer),
+            }],
+            StakeholderRole::QaEngineer | StakeholderRole::QaLead => vec![Recommendation {
+                title: "Increase Test Coverage".to_string(),
+                description: "Add integration tests for critical user flows".to_string(),
+                priority: RecommendationPriority::High,
+                estimated_effort: "1 week".to_string(),
+                expected_impact: "Reduce production issues by 30%".to_string(),
+                assigned_role: Some(StakeholderRole::QaEngineer),
+            }],
+            StakeholderRole::Manager | StakeholderRole::Executive => vec![Recommendation {
+                title: "Invest in Test Infrastructure".to_string(),
+                description: "Upgrade CI/CD pipeline for faster feedback".to_string(),
+                priority: RecommendationPriority::Medium,
+                estimated_effort: "2 weeks".to_string(),
+                expected_impact: "50% faster deployment cycles".to_string(),
+                assigned_role: Some(StakeholderRole::Manager),
+            }],
         }
     }
-    
+
     /// Generate chart data for visualizations
-    fn generate_chart_data(&self, metrics: &[TestMetrics], _report_type: &ReportType) -> Vec<ChartData> {
-        vec![
-            ChartData {
-                chart_type: ChartType::Pie,
-                title: "Test Status Distribution".to_string(),
-                data_points: vec![
-                    DataPoint { x: 0.0, y: metrics.iter().filter(|m| matches!(m.status, TestStatus::Passed)).count() as f64, label: Some("Passed".to_string()) },
-                    DataPoint { x: 1.0, y: metrics.iter().filter(|m| matches!(m.status, TestStatus::Failed)).count() as f64, label: Some("Failed".to_string()) },
-                    DataPoint { x: 2.0, y: metrics.iter().filter(|m| matches!(m.status, TestStatus::Skipped)).count() as f64, label: Some("Skipped".to_string()) },
-                ],
-                labels: vec!["Passed".to_string(), "Failed".to_string(), "Skipped".to_string()],
-                config: ChartConfig {
-                    show_legend: true,
-                    show_grid: false,
-                    color_palette: vec!["#28a745".to_string(), "#dc3545".to_string(), "#ffc107".to_string()],
+    fn generate_chart_data(
+        &self,
+        metrics: &[TestMetrics],
+        _report_type: &ReportType,
+    ) -> Vec<ChartData> {
+        vec![ChartData {
+            chart_type: ChartType::Pie,
+            title: "Test Status Distribution".to_string(),
+            data_points: vec![
+                DataPoint {
+                    x: 0.0,
+                    y: metrics
+                        .iter()
+                        .filter(|m| matches!(m.status, TestStatus::Passed))
+                        .count() as f64,
+                    label: Some("Passed".to_string()),
                 },
-            }
-        ]
+                DataPoint {
+                    x: 1.0,
+                    y: metrics
+                        .iter()
+                        .filter(|m| matches!(m.status, TestStatus::Failed))
+                        .count() as f64,
+                    label: Some("Failed".to_string()),
+                },
+                DataPoint {
+                    x: 2.0,
+                    y: metrics
+                        .iter()
+                        .filter(|m| matches!(m.status, TestStatus::Skipped))
+                        .count() as f64,
+                    label: Some("Skipped".to_string()),
+                },
+            ],
+            labels: vec![
+                "Passed".to_string(),
+                "Failed".to_string(),
+                "Skipped".to_string(),
+            ],
+            config: ChartConfig {
+                show_legend: true,
+                show_grid: false,
+                color_palette: vec![
+                    "#28a745".to_string(),
+                    "#dc3545".to_string(),
+                    "#ffc107".to_string(),
+                ],
+            },
+        }]
     }
-    
+
     /// Check if report should be generated based on schedule
     fn should_generate_report(&self, _config: &ReportConfiguration) -> Result<bool> {
         // TODO: Implement proper cron schedule checking
@@ -821,28 +941,35 @@ impl ReportStore {
             search_index: HashMap::new(),
         }
     }
-    
+
     pub fn store_report(&mut self, report: GeneratedReport) -> Result<()> {
         let id = report.id;
-        
+
         // Update search index
         let search_terms = vec![
             format!("{:?}", report.report_type),
             format!("{:?}", report.stakeholder_role),
             report.generated_at.format("%Y-%m-%d").to_string(),
         ];
-        
+
         for term in search_terms {
-            self.search_index.entry(term).or_insert_with(Vec::new).push(id);
+            self.search_index
+                .entry(term)
+                .or_insert_with(Vec::new)
+                .push(id);
         }
-        
+
         self.reports.insert(id, report);
         Ok(())
     }
-    
-    pub fn search(&self, query: &str, _filters: Option<SearchFilters>) -> Result<Vec<GeneratedReport>> {
+
+    pub fn search(
+        &self,
+        query: &str,
+        _filters: Option<SearchFilters>,
+    ) -> Result<Vec<GeneratedReport>> {
         let mut results = Vec::new();
-        
+
         if let Some(report_ids) = self.search_index.get(query) {
             for id in report_ids {
                 if let Some(report) = self.reports.get(id) {
@@ -850,7 +977,7 @@ impl ReportStore {
                 }
             }
         }
-        
+
         Ok(results)
     }
 }
@@ -861,7 +988,7 @@ impl DataCollector {
             metrics_cache: HashMap::new(),
         }
     }
-    
+
     pub async fn collect_metrics(&self, _data_range: &DateRange) -> Result<Vec<TestMetrics>> {
         // TODO: Implement actual data collection from UV-235 dependencies
         // For now, return mock data

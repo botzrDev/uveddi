@@ -19,8 +19,8 @@ use crate::{
     tui::{
         app::AppState,
         messages::AppMessage,
-        ui::components::{Dropdown, NumericInput, PathPicker, TextInput, Toggle, ValidationResult},
         ui::components::FocusManager,
+        ui::components::{Dropdown, NumericInput, PathPicker, TextInput, Toggle, ValidationResult},
     },
 };
 
@@ -555,15 +555,17 @@ impl AnalyzeForm {
                 FormField::LargeClassesMaxLoc => {
                     self.inputs.large_classes_max_loc_input.set_focused(true)
                 }
-                FormField::LargeClassesMaxMethods => {
-                    self.inputs.large_classes_max_methods_input.set_focused(true)
-                }
+                FormField::LargeClassesMaxMethods => self
+                    .inputs
+                    .large_classes_max_methods_input
+                    .set_focused(true),
                 FormField::LargeClassesMaxFields => {
                     self.inputs.large_classes_max_fields_input.set_focused(true)
                 }
-                FormField::LargeClassesMaxComplexity => {
-                    self.inputs.large_classes_max_complexity_input.set_focused(true)
-                }
+                FormField::LargeClassesMaxComplexity => self
+                    .inputs
+                    .large_classes_max_complexity_input
+                    .set_focused(true),
                 FormField::LargeClassesMaxLcom => {
                     self.inputs.large_classes_max_lcom_input.set_focused(true)
                 }
@@ -571,9 +573,10 @@ impl AnalyzeForm {
                     .inputs
                     .large_classes_ignore_patterns_input
                     .set_focused(true),
-                FormField::LargeClassesMinSeverity => {
-                    self.inputs.large_classes_min_severity_input.set_focused(true)
-                }
+                FormField::LargeClassesMinSeverity => self
+                    .inputs
+                    .large_classes_min_severity_input
+                    .set_focused(true),
             }
         }
     }

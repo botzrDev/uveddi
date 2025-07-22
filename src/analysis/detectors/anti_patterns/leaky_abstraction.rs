@@ -892,13 +892,11 @@ impl AnalysisDetector for LeakyAbstractionDetector {
         "LeakyAbstractionDetector"
     }
     fn get_anti_pattern_types(&self) -> Vec<AntiPatternType> {
-        vec![
-            AntiPatternType {
-                anti_pattern_type_id: Some(6),
-                name: "Performance Leak".to_string(),
-                description: "Abstraction causing unexpected performance degradation".to_string(),
-                category: "behavioral".to_string(),
-            },
-        ]
+        vec![AntiPatternType {
+            anti_pattern_type_id: Some(6),
+            name: "Performance Leak".to_string(),
+            description: "Abstraction causing unexpected performance degradation".to_string(),
+            category: "behavioral".to_string(),
+        }]
     }
 }

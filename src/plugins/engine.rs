@@ -300,9 +300,7 @@ impl AnalysisDetector for WasmPluginAdapter {
     ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         #[cfg(not(feature = "wasm-plugins"))]
         {
-            return Err(AnalysisError::Other(
-                "WASM plugins not enabled".to_string(),
-            ));
+            return Err(AnalysisError::Other("WASM plugins not enabled".to_string()));
         }
 
         #[cfg(feature = "wasm-plugins")]

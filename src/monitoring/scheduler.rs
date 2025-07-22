@@ -3,13 +3,13 @@
 //! Provides cron-like scheduling for automated report generation and distribution
 
 use anyhow::{Context, Result};
-use chrono::{DateTime, Utc, Duration};
+use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use tokio::time::{interval, sleep, Duration as TokioDuration, Instant};
 use uuid::Uuid;
 
-use super::reporting::{ReportingEngine, ReportConfiguration, ReportType, GeneratedReport};
+use super::reporting::{GeneratedReport, ReportConfiguration, ReportType, ReportingEngine};
 
 /// Schedule configuration for automated reports
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -24,9 +24,7 @@ pub struct ScheduleConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ScheduleType {
     /// Run at specified intervals
-    Interval {
-        duration_minutes: u64,
-    },
+    Interval { duration_minutes: u64 },
     /// Run at specific times daily
     Daily {
         times: Vec<String>, // Format: "HH:MM"
@@ -42,9 +40,7 @@ pub enum ScheduleType {
         time: String,  // Format: "HH:MM"
     },
     /// Full cron expression support
-    Cron {
-        expression: String,
-    },
+    Cron { expression: String },
 }
 
 /// Retry configuration for failed report generation
@@ -132,15 +128,18 @@ impl ReportScheduler {
         };
 
         self.jobs.insert(job_id, job);
-        log::info!("Added scheduled job {} with next run at {}", job_id, next_run);
+        log::info!(
+            "Added scheduled job {} with next run at {}",
+            job_id,
+            next_run
+        );
 
         Ok(job_id)
     }
 
     /// Remove a scheduled job
     pub fn remove_job(&mut self, job_id: Uuid) -> Result<()> {
-        self.jobs.remove(&job_id)
-            .context("Job not found")?;
+        self.jobs.remove(&job_id).context("Job not found")?;
         log::info!("Removed scheduled job {}", job_id);
         Ok(())
     }
@@ -149,27 +148,37 @@ impl ReportScheduler {
     pub fn update_job_schedule(&mut self, job_id: Uuid, schedule: ScheduleConfig) -> Result<()> {
         // Calculate next run time first
         let next_run = self.calculate_next_run(&schedule)?;
-        
+
         // Now update the job
-        let job = self.jobs.get_mut(&job_id)
-            .context("Job not found")?;
+        let job = self.jobs.get_mut(&job_id).context("Job not found")?;
 
         job.schedule = schedule;
         job.next_run = next_run;
-        
-        log::info!("Updated schedule for job {} with next run at {}", job_id, job.next_run);
+
+        log::info!(
+            "Updated schedule for job {} with next run at {}",
+            job_id,
+            job.next_run
+        );
         Ok(())
     }
 
     /// Enable or disable a job
     pub fn set_job_enabled(&mut self, job_id: Uuid, enabled: bool) -> Result<()> {
-        let job = self.jobs.get_mut(&job_id)
-            .context("Job not found")?;
+        let job = self.jobs.get_mut(&job_id).context("Job not found")?;
 
         job.schedule.enabled = enabled;
-        job.status = if enabled { JobStatus::Pending } else { JobStatus::Disabled };
+        job.status = if enabled {
+            JobStatus::Pending
+        } else {
+            JobStatus::Disabled
+        };
 
-        log::info!("Job {} is now {}", job_id, if enabled { "enabled" } else { "disabled" });
+        log::info!(
+            "Job {} is now {}",
+            job_id,
+            if enabled { "enabled" } else { "disabled" }
+        );
         Ok(())
     }
 
@@ -192,9 +201,10 @@ impl ReportScheduler {
 
             // Find jobs that are ready to run
             for job in self.jobs.values_mut() {
-                if job.schedule.enabled 
-                    && matches!(job.status, JobStatus::Pending) 
-                    && job.next_run <= now {
+                if job.schedule.enabled
+                    && matches!(job.status, JobStatus::Pending)
+                    && job.next_run <= now
+                {
                     jobs_to_run.push(job.id);
                 }
             }
@@ -203,18 +213,16 @@ impl ReportScheduler {
             for job_id in jobs_to_run {
                 if let Some(job) = self.jobs.get_mut(&job_id) {
                     job.status = JobStatus::Running;
-                    
+
                     // Clone job config for execution
                     let job_config = job.config.clone();
                     let job_name = job.name.clone();
-                    
+
                     log::info!("Executing scheduled job: {} ({})", job_name, job_id);
-                    
-                    let execution_result = self.execute_job(
-                        job_id,
-                        &job_config,
-                        &mut reporting_engine,
-                    ).await;
+
+                    let execution_result = self
+                        .execute_job(job_id, &job_config, &mut reporting_engine)
+                        .await;
 
                     // Update job status based on execution result
                     if let Some(job) = self.jobs.get(&job_id) {
@@ -222,21 +230,26 @@ impl ReportScheduler {
                             JobStatus::Completed => {
                                 let schedule_clone = job.schedule.clone();
                                 let next_run = self.calculate_next_run(&schedule_clone)?;
-                                let log_message = format!("Job {} completed successfully. Next run: {}", job_id, next_run);
+                                let log_message = format!(
+                                    "Job {} completed successfully. Next run: {}",
+                                    job_id, next_run
+                                );
                                 (next_run, log_message)
                             }
                             JobStatus::Failed => {
                                 let retry_config = job.schedule.retry_config.clone();
                                 let failure_count = job.failure_count + 1;
-                                let next_run = self.calculate_retry_time(&retry_config, failure_count);
-                                let log_message = format!("Job {} failed. Next retry: {}", job_id, next_run);
+                                let next_run =
+                                    self.calculate_retry_time(&retry_config, failure_count);
+                                let log_message =
+                                    format!("Job {} failed. Next retry: {}", job_id, next_run);
                                 (next_run, log_message)
                             }
                             _ => {
                                 continue; // Skip status updates for other statuses
                             }
                         };
-                        
+
                         // Now update the job with computed values
                         if let Some(job) = self.jobs.get_mut(&job_id) {
                             match &execution_result.status {
@@ -264,7 +277,8 @@ impl ReportScheduler {
 
             // Clean up old execution history (keep last 1000 entries)
             if self.execution_history.len() > 1000 {
-                self.execution_history.drain(0..self.execution_history.len() - 1000);
+                self.execution_history
+                    .drain(0..self.execution_history.len() - 1000);
             }
         }
 
@@ -297,11 +311,7 @@ impl ReportScheduler {
 
     /// Get recent execution history
     pub fn get_recent_history(&self, limit: usize) -> Vec<&JobExecutionResult> {
-        self.execution_history
-            .iter()
-            .rev()
-            .take(limit)
-            .collect()
+        self.execution_history.iter().rev().take(limit).collect()
     }
 
     /// Execute a single job
@@ -355,7 +365,7 @@ impl ReportScheduler {
     /// Calculate the next run time for a schedule
     fn calculate_next_run(&self, schedule: &ScheduleConfig) -> Result<DateTime<Utc>> {
         let now = Utc::now();
-        
+
         match &schedule.schedule_type {
             ScheduleType::Interval { duration_minutes } => {
                 Ok(now + Duration::minutes(*duration_minutes as i64))
@@ -364,14 +374,16 @@ impl ReportScheduler {
                 // For simplicity, use the first time for now
                 if let Some(time_str) = times.first() {
                     let (hour, minute) = self.parse_time(time_str)?;
-                    let mut next_run = now.date_naive().and_hms_opt(hour, minute, 0)
+                    let mut next_run = now
+                        .date_naive()
+                        .and_hms_opt(hour, minute, 0)
                         .context("Invalid time")?
                         .and_utc();
-                    
+
                     if next_run <= now {
                         next_run = next_run + Duration::days(1);
                     }
-                    
+
                     Ok(next_run)
                 } else {
                     Ok(now + Duration::days(1)) // Default to tomorrow
@@ -385,7 +397,7 @@ impl ReportScheduler {
                     .and_hms_opt(hour, minute, 0)
                     .context("Invalid time")?
                     .and_utc();
-                
+
                 Ok(next_run)
             }
             ScheduleType::Monthly { days: _, time } => {
@@ -396,7 +408,7 @@ impl ReportScheduler {
                     .and_hms_opt(hour, minute, 0)
                     .context("Invalid time")?
                     .and_utc();
-                
+
                 Ok(next_run)
             }
             ScheduleType::Cron { expression: _ } => {
@@ -408,15 +420,21 @@ impl ReportScheduler {
     }
 
     /// Calculate retry time with exponential backoff
-    fn calculate_retry_time(&self, retry_config: &RetryConfig, failure_count: u64) -> DateTime<Utc> {
+    fn calculate_retry_time(
+        &self,
+        retry_config: &RetryConfig,
+        failure_count: u64,
+    ) -> DateTime<Utc> {
         if failure_count > retry_config.max_retries as u64 {
             // If we've exceeded max retries, schedule for next regular run
             return Utc::now() + Duration::hours(24);
         }
 
-        let delay_seconds = (retry_config.initial_delay_seconds as f64 
-            * retry_config.backoff_multiplier.powi((failure_count - 1) as i32))
-            .min(retry_config.max_delay_seconds as f64) as i64;
+        let delay_seconds = (retry_config.initial_delay_seconds as f64
+            * retry_config
+                .backoff_multiplier
+                .powi((failure_count - 1) as i32))
+        .min(retry_config.max_delay_seconds as f64) as i64;
 
         Utc::now() + Duration::seconds(delay_seconds)
     }
@@ -428,10 +446,8 @@ impl ReportScheduler {
             anyhow::bail!("Invalid time format: {}", time_str);
         }
 
-        let hour: u32 = parts[0].parse()
-            .context("Invalid hour")?;
-        let minute: u32 = parts[1].parse()
-            .context("Invalid minute")?;
+        let hour: u32 = parts[0].parse().context("Invalid hour")?;
+        let minute: u32 = parts[1].parse().context("Invalid minute")?;
 
         if hour > 23 || minute > 59 {
             anyhow::bail!("Invalid time values: {}:{}", hour, minute);
@@ -539,7 +555,8 @@ impl ScheduleBuilder {
 
     /// Build the schedule configuration
     pub fn build(self) -> Result<ScheduleConfig> {
-        let schedule_type = self.schedule_type
+        let schedule_type = self
+            .schedule_type
             .context("Schedule type must be specified")?;
 
         Ok(ScheduleConfig {

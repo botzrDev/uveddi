@@ -1,7 +1,7 @@
 //! Escalation and acknowledgment workflows for alert system (UV-248)
 
 use crate::resilience::alerting::{
-    AlertingError, EnhancedAlert, EscalationPolicy, EscalationLevel, NotificationChannel
+    AlertingError, EnhancedAlert, EscalationLevel, EscalationPolicy, NotificationChannel,
 };
 use crate::resilience::notifications::NotificationClient;
 use serde::{Deserialize, Serialize};
@@ -116,23 +116,27 @@ impl EscalationManager {
         channels: &[NotificationChannel],
         level: u8,
     ) -> Result<(), AlertingError> {
-        let escalation_level = policy
-            .levels
-            .iter()
-            .find(|l| l.level == level)
-            .ok_or_else(|| {
-                AlertingError::ConfigurationError(format!(
-                    "Escalation level {} not found in policy {}",
-                    level, policy.name
-                ))
-            })?;
+        let escalation_level =
+            policy
+                .levels
+                .iter()
+                .find(|l| l.level == level)
+                .ok_or_else(|| {
+                    AlertingError::ConfigurationError(format!(
+                        "Escalation level {} not found in policy {}",
+                        level, policy.name
+                    ))
+                })?;
 
         let mut successful_channels = Vec::new();
         let mut error_message = None;
 
         // Send notifications to all channels for this level
         for channel_name in &escalation_level.channels {
-            if let Some(channel) = channels.iter().find(|c| c.name == *channel_name && c.enabled) {
+            if let Some(channel) = channels
+                .iter()
+                .find(|c| c.name == *channel_name && c.enabled)
+            {
                 match self
                     .notification_client
                     .send_notification(channel, alert)
@@ -261,7 +265,10 @@ impl EscalationManager {
             }
         }
 
-        println!("Alert {} acknowledged by {} via {:?}", alert_id, acknowledged_by, acknowledgment_source);
+        println!(
+            "Alert {} acknowledged by {} via {:?}",
+            alert_id, acknowledged_by, acknowledgment_source
+        );
         Ok(())
     }
 
@@ -308,7 +315,8 @@ impl EscalationManager {
         let escalation_levels: HashMap<u8, u32> = states
             .values()
             .filter(|state| {
-                state.escalation_history
+                state
+                    .escalation_history
                     .iter()
                     .any(|event| event.timestamp >= cutoff)
             })
@@ -348,13 +356,9 @@ impl EscalationManager {
     }
 
     /// Force escalation for testing
-    pub async fn force_escalate(
-        &self,
-        alert_id: &str,
-        level: u8,
-    ) -> Result<(), AlertingError> {
+    pub async fn force_escalate(&self, alert_id: &str, level: u8) -> Result<(), AlertingError> {
         let mut states = self.escalation_states.write().await;
-        
+
         if let Some(state) = states.get_mut(alert_id) {
             if state.is_active {
                 state.current_level = level;
@@ -363,7 +367,7 @@ impl EscalationManager {
                 Ok(())
             } else {
                 Err(AlertingError::ConfigurationError(
-                    "Cannot escalate inactive alert".to_string()
+                    "Cannot escalate inactive alert".to_string(),
                 ))
             }
         } else {
@@ -526,7 +530,7 @@ mod tests {
     #[tokio::test]
     async fn test_escalation_manager_creation() {
         let manager = EscalationManager::new();
-        
+
         let states = manager.escalation_states.read().await;
         assert!(states.is_empty());
     }
@@ -543,7 +547,7 @@ mod tests {
 
         let state = manager.get_escalation_status(&alert.base_alert.id).await;
         assert!(state.is_some());
-        
+
         let state = state.unwrap();
         assert_eq!(state.alert_id, alert.base_alert.id);
         assert_eq!(state.current_level, 1);
@@ -559,7 +563,10 @@ mod tests {
         let channels = create_test_channels();
 
         // Start escalation
-        manager.start_escalation(&alert, &policy, &channels).await.unwrap();
+        manager
+            .start_escalation(&alert, &policy, &channels)
+            .await
+            .unwrap();
 
         // Acknowledge alert
         let result = manager
@@ -575,7 +582,7 @@ mod tests {
         // Check acknowledgment record
         let ack = manager.get_acknowledgment(&alert.base_alert.id).await;
         assert!(ack.is_some());
-        
+
         let ack = ack.unwrap();
         assert_eq!(ack.acknowledged_by, "test-user");
         assert_eq!(ack.message, Some("Investigating the issue".to_string()));
@@ -596,11 +603,18 @@ mod tests {
         let channels = create_test_channels();
 
         // Start escalation
-        manager.start_escalation(&alert, &policy, &channels).await.unwrap();
+        manager
+            .start_escalation(&alert, &policy, &channels)
+            .await
+            .unwrap();
 
         // Acknowledge via API
         let result = api
-            .acknowledge_via_api(&alert.base_alert.id, "api-user", Some("Fixed via API".to_string()))
+            .acknowledge_via_api(
+                &alert.base_alert.id,
+                "api-user",
+                Some("Fixed via API".to_string()),
+            )
             .await;
         assert!(result.is_ok());
 
@@ -618,7 +632,10 @@ mod tests {
         let channels = create_test_channels();
 
         // Start escalation
-        manager.start_escalation(&alert, &policy, &channels).await.unwrap();
+        manager
+            .start_escalation(&alert, &policy, &channels)
+            .await
+            .unwrap();
 
         // Acknowledge alert
         manager

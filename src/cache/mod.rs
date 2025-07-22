@@ -55,7 +55,9 @@
 //! All cache implementations are designed to be thread-safe and can be
 //! used safely across async tasks and concurrent analysis operations.
 
-pub mod result_cache;
 pub mod incremental_cache;
+pub mod result_cache;
 
-pub use incremental_cache::{IncrementalCache, IncrementalCacheConfig, CacheStatistics as IncrementalCacheStatistics};
+pub use incremental_cache::{
+    CacheStatistics as IncrementalCacheStatistics, IncrementalCache, IncrementalCacheConfig,
+};

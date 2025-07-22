@@ -93,7 +93,9 @@ pub struct DistributionManager {
 impl EmailClient {
     /// Create a new email client with SMTP configuration
     pub fn new(config: SmtpConfig) -> Self {
-        Self { smtp_config: config }
+        Self {
+            smtp_config: config,
+        }
     }
 
     /// Send an email report
@@ -102,10 +104,10 @@ impl EmailClient {
         // In a real implementation, this would use an SMTP library like lettre
         log::info!("Sending email to {} with subject: {}", to, subject);
         log::debug!("Email content length: {} characters", html_content.len());
-        
+
         // TODO: Implement actual SMTP sending using lettre crate
         // This would require adding lettre to Cargo.toml dependencies
-        
+
         Ok(())
     }
 
@@ -137,8 +139,15 @@ impl SlackClient {
     }
 
     /// Send a simple text message to Slack
-    pub async fn send_message(&self, webhook_name: &str, channel: &str, message: &str) -> Result<()> {
-        let config = self.webhook_configs.get(webhook_name)
+    pub async fn send_message(
+        &self,
+        webhook_name: &str,
+        channel: &str,
+        message: &str,
+    ) -> Result<()> {
+        let config = self
+            .webhook_configs
+            .get(webhook_name)
             .context("Webhook configuration not found")?;
 
         let payload = SlackMessage {
@@ -162,10 +171,13 @@ impl SlackClient {
         metrics: &[(String, String)],
         report_url: Option<&str>,
     ) -> Result<()> {
-        let config = self.webhook_configs.get(webhook_name)
+        let config = self
+            .webhook_configs
+            .get(webhook_name)
             .context("Webhook configuration not found")?;
 
-        let mut fields = metrics.iter()
+        let mut fields = metrics
+            .iter()
             .map(|(key, value)| SlackField {
                 title: key.clone(),
                 value: value.clone(),
@@ -202,7 +214,8 @@ impl SlackClient {
     /// Send payload to Slack webhook
     #[cfg(feature = "reqwest")]
     async fn send_slack_payload(&self, webhook_url: &str, payload: &SlackMessage) -> Result<()> {
-        let response = self.http_client
+        let response = self
+            .http_client
             .post(webhook_url)
             .json(payload)
             .send()
@@ -292,14 +305,16 @@ impl DistributionManager {
     ) -> Result<()> {
         match &self.slack_client {
             Some(client) => {
-                client.send_report_notification(
-                    webhook_name,
-                    channel,
-                    report_title,
-                    summary,
-                    metrics,
-                    report_url,
-                ).await
+                client
+                    .send_report_notification(
+                        webhook_name,
+                        channel,
+                        report_title,
+                        summary,
+                        metrics,
+                        report_url,
+                    )
+                    .await
             }
             None => {
                 log::warn!("Slack client not configured, skipping Slack delivery");
@@ -319,26 +334,36 @@ impl DistributionManager {
     ) -> Result<()> {
         for channel in channels {
             match channel {
-                DistributionChannel::Email { address, subject_template } => {
+                DistributionChannel::Email {
+                    address,
+                    subject_template,
+                } => {
                     let email_subject = subject_template
                         .as_ref()
                         .map(|template| template.replace("{subject}", subject))
                         .unwrap_or_else(|| subject.to_string());
-                    
+
                     self.send_email(address, &email_subject, content).await?;
                 }
-                DistributionChannel::Slack { webhook_url: _, channel, username: _, icon_emoji: _ } => {
+                DistributionChannel::Slack {
+                    webhook_url: _,
+                    channel,
+                    username: _,
+                    icon_emoji: _,
+                } => {
                     if let (Some(summary), Some(metrics)) = (summary, metrics) {
                         self.send_slack_report_notification(
                             "default", // webhook name
-                            channel,
-                            subject,
-                            summary,
-                            metrics,
-                            None, // report URL
-                        ).await?;
+                            channel, subject, summary, metrics, None, // report URL
+                        )
+                        .await?;
                     } else {
-                        self.send_slack_message("default", channel, &format!("{}\n\n{}", subject, content)).await?;
+                        self.send_slack_message(
+                            "default",
+                            channel,
+                            &format!("{}\n\n{}", subject, content),
+                        )
+                        .await?;
                     }
                 }
             }

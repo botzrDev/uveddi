@@ -2,20 +2,20 @@
 //! Implements Mann-Kendall trend tests and advanced statistical methods
 
 #[cfg(all(feature = "regression-detection", feature = "chaos"))]
-use statrs::distribution::{Normal, ContinuousCDF};
+use statrs::distribution::{ContinuousCDF, Normal};
 
-use std::collections::HashMap;
-use serde::{Deserialize, Serialize};
 use anyhow::Result;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 /// Mann-Kendall trend test result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MannKendallResult {
-    pub tau: f64,           // Kendall's tau
-    pub p_value: f64,       // Statistical significance
-    pub trend: TrendType,   // Detected trend direction
-    pub confidence: f64,    // Confidence level (0.0-1.0)
-    pub effect_size: f64,   // Magnitude of trend
+    pub tau: f64,         // Kendall's tau
+    pub p_value: f64,     // Statistical significance
+    pub trend: TrendType, // Detected trend direction
+    pub confidence: f64,  // Confidence level (0.0-1.0)
+    pub effect_size: f64, // Magnitude of trend
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -29,7 +29,7 @@ pub enum TrendType {
 /// Statistical analyzer for performance data
 #[derive(Debug)]
 pub struct StatisticalAnalyzer {
-    significance_threshold: f64,  // Default: 0.05 for 95% confidence
+    significance_threshold: f64, // Default: 0.05 for 95% confidence
     min_samples: usize,          // Minimum samples for reliable analysis
 }
 
@@ -58,8 +58,8 @@ impl StatisticalAnalyzer {
         let mut ties = HashMap::new();
 
         // Calculate S statistic
-        for i in 0..(n-1) {
-            for j in (i+1)..n {
+        for i in 0..(n - 1) {
+            for j in (i + 1)..n {
                 let diff = values[j] - values[i];
                 if diff > 0.0 {
                     s += 1;
@@ -75,7 +75,7 @@ impl StatisticalAnalyzer {
         // Calculate variance with tie correction
         let n_f64 = n as f64;
         let mut var_s = (n_f64 * (n_f64 - 1.0) * (2.0 * n_f64 + 5.0)) / 18.0;
-        
+
         // Apply tie correction
         for &tie_count in ties.values() {
             let t = tie_count as f64;
@@ -97,7 +97,7 @@ impl StatisticalAnalyzer {
             let normal = Normal::new(0.0, 1.0).unwrap();
             2.0 * (1.0 - normal.cdf(z.abs()))
         };
-        
+
         #[cfg(not(all(feature = "regression-detection", feature = "chaos")))]
         let p_value = self.approximate_p_value(z);
 
@@ -132,7 +132,7 @@ impl StatisticalAnalyzer {
     /// Approximate p-value calculation when statrs is not available
     fn approximate_p_value(&self, z: f64) -> f64 {
         let abs_z = z.abs();
-        
+
         // Approximation using complementary error function
         // This is a simplified approximation for demonstration
         if abs_z > 3.0 {
@@ -157,14 +157,14 @@ impl StatisticalAnalyzer {
 
         let mean = self.calculate_mean(values);
         let std_dev = self.calculate_std_dev(values, mean);
-        
+
         // Determine critical value based on confidence level
         let alpha = 1.0 - confidence_level;
         let t_critical = self.get_t_critical(values.len(), alpha / 2.0);
-        
+
         let standard_error = std_dev / (values.len() as f64).sqrt();
         let margin_of_error = t_critical * standard_error;
-        
+
         Ok((mean - margin_of_error, mean + margin_of_error))
     }
 
@@ -176,20 +176,21 @@ impl StatisticalAnalyzer {
 
         let mean_baseline = self.calculate_mean(baseline);
         let mean_current = self.calculate_mean(current);
-        
+
         let var_baseline = self.calculate_variance(baseline, mean_baseline);
         let var_current = self.calculate_variance(current, mean_current);
-        
+
         // Calculate pooled standard deviation
         let n1 = baseline.len() as f64;
         let n2 = current.len() as f64;
-        let pooled_variance = ((n1 - 1.0) * var_baseline + (n2 - 1.0) * var_current) / (n1 + n2 - 2.0);
+        let pooled_variance =
+            ((n1 - 1.0) * var_baseline + (n2 - 1.0) * var_current) / (n1 + n2 - 2.0);
         let pooled_std = pooled_variance.sqrt();
-        
+
         if pooled_std == 0.0 {
             return Ok(0.0);
         }
-        
+
         Ok((mean_current - mean_baseline) / pooled_std)
     }
 
@@ -206,7 +207,7 @@ impl StatisticalAnalyzer {
         if values.len() <= 1 {
             return 0.0;
         }
-        
+
         let variance = self.calculate_variance(values, mean);
         variance.sqrt()
     }
@@ -216,10 +217,12 @@ impl StatisticalAnalyzer {
         if values.len() <= 1 {
             return 0.0;
         }
-        
-        values.iter()
+
+        values
+            .iter()
             .map(|value| (value - mean).powi(2))
-            .sum::<f64>() / (values.len() - 1) as f64
+            .sum::<f64>()
+            / (values.len() - 1) as f64
     }
 
     /// Get t-critical value (approximation)
@@ -229,22 +232,22 @@ impl StatisticalAnalyzer {
         if n >= 30 {
             // Large sample, use normal distribution approximation
             if alpha <= 0.005 {
-                2.576  // 99% confidence
+                2.576 // 99% confidence
             } else if alpha <= 0.01 {
-                2.326  // 98% confidence
+                2.326 // 98% confidence
             } else if alpha <= 0.025 {
-                1.96   // 95% confidence
+                1.96 // 95% confidence
             } else if alpha <= 0.05 {
-                1.645  // 90% confidence
+                1.645 // 90% confidence
             } else {
                 1.0
             }
         } else {
             // Small sample approximations (simplified)
             if alpha <= 0.025 {
-                2.5    // Rough approximation for 95% confidence
+                2.5 // Rough approximation for 95% confidence
             } else if alpha <= 0.05 {
-                2.0    // Rough approximation for 90% confidence
+                2.0 // Rough approximation for 90% confidence
             } else {
                 1.5
             }
@@ -279,7 +282,7 @@ mod tests {
         let values = vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0];
         let analyzer = StatisticalAnalyzer::new();
         let result = analyzer.mann_kendall_test(&values).unwrap();
-        
+
         assert!(matches!(result.trend, TrendType::Increasing));
         assert!(result.p_value < 0.05);
         assert!(result.confidence > 0.95);
@@ -291,7 +294,7 @@ mod tests {
         let values = vec![10.0, 9.0, 8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0, 1.0];
         let analyzer = StatisticalAnalyzer::new();
         let result = analyzer.mann_kendall_test(&values).unwrap();
-        
+
         assert!(matches!(result.trend, TrendType::Decreasing));
         assert!(result.p_value < 0.05);
         assert!(result.confidence > 0.95);
@@ -303,7 +306,7 @@ mod tests {
         let values = vec![5.0, 5.1, 4.9, 5.0, 5.2, 4.8, 5.0, 5.1, 4.9, 5.0];
         let analyzer = StatisticalAnalyzer::new();
         let result = analyzer.mann_kendall_test(&values).unwrap();
-        
+
         assert!(matches!(result.trend, TrendType::NoTrend));
         assert!(result.p_value > 0.05);
         assert!(result.tau.abs() < 0.3); // Weak correlation
@@ -314,7 +317,7 @@ mod tests {
         let values = vec![10.0, 12.0, 11.0, 13.0, 9.0, 14.0, 10.5, 11.5, 12.5, 10.8];
         let analyzer = StatisticalAnalyzer::new();
         let (lower, upper) = analyzer.confidence_interval(&values, 0.95).unwrap();
-        
+
         let mean = analyzer.calculate_mean(&values);
         assert!(lower < mean && mean < upper);
         assert!((upper - lower) > 0.0); // Non-zero interval width
@@ -324,10 +327,10 @@ mod tests {
     fn test_effect_size() {
         let baseline = vec![10.0, 11.0, 9.0, 10.5, 9.5];
         let current = vec![12.0, 13.0, 11.0, 12.5, 11.5]; // 2-point increase
-        
+
         let analyzer = StatisticalAnalyzer::new();
         let effect_size = analyzer.effect_size(&baseline, &current).unwrap();
-        
+
         assert!(effect_size > 1.0); // Large effect size
     }
 
@@ -336,7 +339,7 @@ mod tests {
         let values = vec![1.0, 2.0, 3.0]; // Less than minimum
         let analyzer = StatisticalAnalyzer::new();
         let result = analyzer.mann_kendall_test(&values).unwrap();
-        
+
         assert!(matches!(result.trend, TrendType::Uncertain));
         assert!(result.confidence == 0.0);
     }
@@ -346,7 +349,7 @@ mod tests {
         let values = vec![];
         let analyzer = StatisticalAnalyzer::new();
         let result = analyzer.mann_kendall_test(&values).unwrap();
-        
+
         assert!(matches!(result.trend, TrendType::Uncertain));
         assert!(result.p_value == 1.0);
     }
@@ -356,7 +359,7 @@ mod tests {
         let values = vec![1.0, 1.0, 2.0, 2.0, 3.0, 3.0, 4.0, 4.0, 5.0, 5.0];
         let analyzer = StatisticalAnalyzer::new();
         let result = analyzer.mann_kendall_test(&values).unwrap();
-        
+
         // Should still detect increasing trend despite ties
         assert!(matches!(result.trend, TrendType::Increasing));
         assert!(result.tau > 0.0);

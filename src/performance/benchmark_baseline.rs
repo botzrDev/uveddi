@@ -1,21 +1,21 @@
 //! Benchmark baseline management system
-//! 
+//!
 //! This module provides:
 //! - Persistent storage of benchmark baselines
 //! - Baseline comparison and regression detection
 //! - Integration with both Criterion.rs and iai-callgrind
 //! - Statistical validation of performance changes
 
+use anyhow::{anyhow, Result};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
-use serde::{Deserialize, Serialize};
-use anyhow::{Result, anyhow};
 use tokio::fs;
-use tracing::{info, warn, error, debug};
+use tracing::{debug, error, info, warn};
 
 use crate::performance::{
-    StatisticalAnalyzer, TrendDetector, MannKendallResult, ChangePointResult
+    ChangePointResult, MannKendallResult, StatisticalAnalyzer, TrendDetector,
 };
 
 /// Benchmark baseline data
@@ -60,7 +60,7 @@ pub struct StatisticalSummary {
     pub confidence_interval_95: (f64, f64),
     pub mann_kendall_result: Option<MannKendallResult>,
     pub change_point_analysis: Option<ChangePointResult>,
-    pub trend_stability: f64,  // 0.0 to 1.0, higher is more stable
+    pub trend_stability: f64, // 0.0 to 1.0, higher is more stable
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -155,7 +155,7 @@ impl BenchmarkBaselineManager {
     /// Create a new baseline manager
     pub async fn new(storage_path: impl AsRef<Path>, config: BaselineConfig) -> Result<Self> {
         let storage_path = storage_path.as_ref().to_path_buf();
-        
+
         // Ensure storage directory exists
         if let Some(parent) = storage_path.parent() {
             fs::create_dir_all(parent).await?;
@@ -184,7 +184,7 @@ impl BenchmarkBaselineManager {
 
         let content = fs::read_to_string(&self.storage_path).await?;
         let baselines: HashMap<String, BenchmarkBaseline> = serde_json::from_str(&content)?;
-        
+
         // Filter out stale baselines
         let cutoff = SystemTime::now()
             .duration_since(UNIX_EPOCH)?
@@ -192,7 +192,8 @@ impl BenchmarkBaselineManager {
             .saturating_sub(self.config.max_baseline_age_days * 24 * 3600);
 
         for (name, baseline) in baselines {
-            let baseline_age = baseline.created_at
+            let baseline_age = baseline
+                .created_at
                 .duration_since(UNIX_EPOCH)
                 .map(|d| d.as_secs())
                 .unwrap_or(0);
@@ -204,7 +205,10 @@ impl BenchmarkBaselineManager {
             }
         }
 
-        info!("Loaded {} baselines from storage", self.current_baselines.len());
+        info!(
+            "Loaded {} baselines from storage",
+            self.current_baselines.len()
+        );
         Ok(())
     }
 
@@ -212,7 +216,10 @@ impl BenchmarkBaselineManager {
     async fn save_baselines(&self) -> Result<()> {
         let content = serde_json::to_string_pretty(&self.current_baselines)?;
         fs::write(&self.storage_path, content).await?;
-        debug!("Saved {} baselines to storage", self.current_baselines.len());
+        debug!(
+            "Saved {} baselines to storage",
+            self.current_baselines.len()
+        );
         Ok(())
     }
 
@@ -245,13 +252,13 @@ impl BenchmarkBaselineManager {
             sample_count: measurements.len(),
         };
 
-        self.current_baselines.insert(benchmark_name.to_string(), baseline.clone());
+        self.current_baselines
+            .insert(benchmark_name.to_string(), baseline.clone());
         self.save_baselines().await?;
 
         info!(
             "Created baseline for '{}' with {} measurements",
-            benchmark_name,
-            baseline.sample_count
+            benchmark_name, baseline.sample_count
         );
 
         Ok(baseline)
@@ -264,7 +271,9 @@ impl BenchmarkBaselineManager {
         current_measurements: &[f64],
         current_baseline_type: BaselineType,
     ) -> Result<BaselineComparison> {
-        let current_statistical_summary = self.calculate_statistical_summary(current_measurements).await?;
+        let current_statistical_summary = self
+            .calculate_statistical_summary(current_measurements)
+            .await?;
         let current_metadata = self.collect_metadata().await?;
 
         let current_baseline = BenchmarkBaseline {
@@ -281,7 +290,8 @@ impl BenchmarkBaselineManager {
         let previous_baseline = self.current_baselines.get(benchmark_name).cloned();
 
         let comparison_result = if let Some(ref previous) = previous_baseline {
-            self.calculate_comparison_result(&current_baseline, previous).await?
+            self.calculate_comparison_result(&current_baseline, previous)
+                .await?
         } else {
             ComparisonResult {
                 performance_change_percent: 0.0,
@@ -294,12 +304,14 @@ impl BenchmarkBaselineManager {
         };
 
         let statistical_confidence = if let Some(ref previous) = previous_baseline {
-            self.calculate_statistical_confidence(&current_baseline, previous).await?
+            self.calculate_statistical_confidence(&current_baseline, previous)
+                .await?
         } else {
             1.0
         };
 
-        let recommendation = self.generate_recommendation(&comparison_result, statistical_confidence);
+        let recommendation =
+            self.generate_recommendation(&comparison_result, statistical_confidence);
 
         Ok(BaselineComparison {
             benchmark_name: benchmark_name.to_string(),
@@ -312,13 +324,18 @@ impl BenchmarkBaselineManager {
     }
 
     /// Calculate statistical summary for measurements
-    async fn calculate_statistical_summary(&self, measurements: &[f64]) -> Result<StatisticalSummary> {
+    async fn calculate_statistical_summary(
+        &self,
+        measurements: &[f64],
+    ) -> Result<StatisticalSummary> {
         if measurements.is_empty() {
-            return Err(anyhow!("Cannot calculate statistics for empty measurements"));
+            return Err(anyhow!(
+                "Cannot calculate statistics for empty measurements"
+            ));
         }
 
         let mean = measurements.iter().sum::<f64>() / measurements.len() as f64;
-        
+
         let mut sorted = measurements.to_vec();
         sorted.sort_by(|a, b| a.partial_cmp(b).unwrap());
         let median = if sorted.len() % 2 == 0 {
@@ -327,25 +344,29 @@ impl BenchmarkBaselineManager {
             sorted[sorted.len() / 2]
         };
 
-        let variance = measurements.iter()
-            .map(|x| (x - mean).powi(2))
-            .sum::<f64>() / measurements.len() as f64;
+        let variance = measurements.iter().map(|x| (x - mean).powi(2)).sum::<f64>()
+            / measurements.len() as f64;
         let std_dev = variance.sqrt();
 
         let min = sorted[0];
         let max = sorted[sorted.len() - 1];
 
-        let confidence_interval_95 = self.statistical_analyzer
+        let confidence_interval_95 = self
+            .statistical_analyzer
             .confidence_interval(measurements, 0.95)?;
 
         let mann_kendall_result = if measurements.len() >= 10 {
-            self.statistical_analyzer.mann_kendall_test(measurements).ok()
+            self.statistical_analyzer
+                .mann_kendall_test(measurements)
+                .ok()
         } else {
             None
         };
 
         let change_point_analysis = if measurements.len() >= 20 {
-            self.trend_detector.detect_change_points_pelt(measurements).ok()
+            self.trend_detector
+                .detect_change_points_pelt(measurements)
+                .ok()
         } else {
             None
         };
@@ -386,7 +407,8 @@ impl BenchmarkBaselineManager {
         };
 
         // Calculate effect size (Cohen's d)
-        let effect_size = self.statistical_analyzer
+        let effect_size = self
+            .statistical_analyzer
             .effect_size(&previous.measurements, &current.measurements)?;
 
         let statistical_significance = if effect_size.abs() > 0.2 {
@@ -400,7 +422,8 @@ impl BenchmarkBaselineManager {
         let is_regression = performance_change_percent > self.config.regression_threshold_percent
             && statistical_significance >= self.config.statistical_confidence_threshold;
 
-        let is_improvement = performance_change_percent < -self.config.improvement_threshold_percent
+        let is_improvement = performance_change_percent
+            < -self.config.improvement_threshold_percent
             && statistical_significance >= self.config.statistical_confidence_threshold;
 
         let change_category = self.categorize_change(
@@ -431,7 +454,8 @@ impl BenchmarkBaselineManager {
 
         // Sample size confidence
         let min_samples = current.sample_count.min(previous.sample_count) as f64;
-        let sample_confidence = (min_samples / self.config.min_samples_for_baseline as f64).min(1.0);
+        let sample_confidence =
+            (min_samples / self.config.min_samples_for_baseline as f64).min(1.0);
         confidence_factors.push(sample_confidence);
 
         // Statistical test confidence
@@ -440,12 +464,14 @@ impl BenchmarkBaselineManager {
         }
 
         // Trend stability confidence
-        let stability_confidence = (current.statistical_summary.trend_stability + 
-                                   previous.statistical_summary.trend_stability) / 2.0;
+        let stability_confidence = (current.statistical_summary.trend_stability
+            + previous.statistical_summary.trend_stability)
+            / 2.0;
         confidence_factors.push(stability_confidence);
 
         // Environment consistency confidence
-        let env_confidence = if self.environments_consistent(&current.metadata, &previous.metadata) {
+        let env_confidence = if self.environments_consistent(&current.metadata, &previous.metadata)
+        {
             1.0
         } else {
             0.7
@@ -457,7 +483,11 @@ impl BenchmarkBaselineManager {
     }
 
     /// Check if test environments are consistent between runs
-    fn environments_consistent(&self, current: &BenchmarkMetadata, previous: &BenchmarkMetadata) -> bool {
+    fn environments_consistent(
+        &self,
+        current: &BenchmarkMetadata,
+        previous: &BenchmarkMetadata,
+    ) -> bool {
         current.system_info.architecture == previous.system_info.architecture
             && current.build_config == previous.build_config
             && current.system_info.rust_version == previous.system_info.rust_version
@@ -512,42 +542,45 @@ impl BenchmarkBaselineManager {
         match comparison.change_category {
             ChangeCategory::NoSignificantChange | ChangeCategory::MinorImprovement => {
                 Recommendation::Accept
-            },
-            ChangeCategory::MajorImprovement => {
-                Recommendation::Accept
-            },
+            }
+            ChangeCategory::MajorImprovement => Recommendation::Accept,
             ChangeCategory::MinorRegression => {
                 if comparison.statistical_significance >= confidence_threshold {
                     Recommendation::Investigate {
                         reasons: vec![
-                            format!("Minor performance regression detected: {:.1}%", comparison.performance_change_percent),
+                            format!(
+                                "Minor performance regression detected: {:.1}%",
+                                comparison.performance_change_percent
+                            ),
                             format!("Effect size: {:.3}", comparison.effect_size),
                             "Review recent changes for performance impact".to_string(),
-                        ]
+                        ],
                     }
                 } else {
                     Recommendation::Accept
                 }
-            },
-            ChangeCategory::MajorRegression => {
-                Recommendation::Reject {
-                    reasons: vec![
-                        format!("Major performance regression detected: {:.1}%", comparison.performance_change_percent),
-                        format!("High statistical significance: {:.3}", comparison.statistical_significance),
-                        format!("Large effect size: {:.3}", comparison.effect_size),
-                        "Performance degradation exceeds acceptable thresholds".to_string(),
-                    ]
-                }
-            },
-            ChangeCategory::HighVariance => {
-                Recommendation::Investigate {
-                    reasons: vec![
-                        "High performance variance detected".to_string(),
-                        "Results may be unreliable due to environmental factors".to_string(),
-                        "Consider re-running benchmarks in stable environment".to_string(),
-                    ]
-                }
             }
+            ChangeCategory::MajorRegression => Recommendation::Reject {
+                reasons: vec![
+                    format!(
+                        "Major performance regression detected: {:.1}%",
+                        comparison.performance_change_percent
+                    ),
+                    format!(
+                        "High statistical significance: {:.3}",
+                        comparison.statistical_significance
+                    ),
+                    format!("Large effect size: {:.3}", comparison.effect_size),
+                    "Performance degradation exceeds acceptable thresholds".to_string(),
+                ],
+            },
+            ChangeCategory::HighVariance => Recommendation::Investigate {
+                reasons: vec![
+                    "High performance variance detected".to_string(),
+                    "Results may be unreliable due to environmental factors".to_string(),
+                    "Consider re-running benchmarks in stable environment".to_string(),
+                ],
+            },
         }
     }
 
@@ -556,7 +589,8 @@ impl BenchmarkBaselineManager {
         Ok(BenchmarkMetadata {
             git_commit: self.get_git_commit().await,
             git_branch: self.get_git_branch().await,
-            build_config: std::env::var("CARGO_CFG_TARGET_FEATURE").unwrap_or_else(|_| "unknown".to_string()),
+            build_config: std::env::var("CARGO_CFG_TARGET_FEATURE")
+                .unwrap_or_else(|_| "unknown".to_string()),
             system_info: self.get_system_info(),
             environment_variables: self.get_relevant_env_vars(),
         })
@@ -597,7 +631,7 @@ impl BenchmarkBaselineManager {
             os: std::env::consts::OS.to_string(),
             architecture: std::env::consts::ARCH.to_string(),
             cpu_model: "unknown".to_string(), // Would need system detection crate
-            memory_gb: 0, // Would need system detection crate
+            memory_gb: 0,                     // Would need system detection crate
             rust_version: std::env::var("RUSTC_VERSION").unwrap_or_else(|_| "unknown".to_string()),
         }
     }
@@ -611,9 +645,12 @@ impl BenchmarkBaselineManager {
             "RUSTFLAGS",
         ];
 
-        relevant_vars.iter()
+        relevant_vars
+            .iter()
             .filter_map(|&var| {
-                std::env::var(var).ok().map(|value| (var.to_string(), value))
+                std::env::var(var)
+                    .ok()
+                    .map(|value| (var.to_string(), value))
             })
             .collect()
     }
@@ -629,7 +666,8 @@ impl BenchmarkBaselineManager {
             return Err(anyhow!("Automatic baseline updates are disabled"));
         }
 
-        self.create_baseline(benchmark_name, new_measurements, baseline_type).await
+        self.create_baseline(benchmark_name, new_measurements, baseline_type)
+            .await
     }
 
     /// Get current baseline for a benchmark
@@ -657,26 +695,38 @@ impl BenchmarkBaselineManager {
     pub async fn generate_report(&self) -> String {
         let mut report = String::new();
         report.push_str("=== Benchmark Baseline Report ===\n\n");
-        
+
         if self.current_baselines.is_empty() {
             report.push_str("No baselines available.\n");
             return report;
         }
 
-        report.push_str(&format!("Total baselines: {}\n\n", self.current_baselines.len()));
+        report.push_str(&format!(
+            "Total baselines: {}\n\n",
+            self.current_baselines.len()
+        ));
 
         for baseline in self.current_baselines.values() {
             report.push_str(&format!("Benchmark: {}\n", baseline.benchmark_name));
             report.push_str(&format!("Created: {:?}\n", baseline.created_at));
             report.push_str(&format!("Samples: {}\n", baseline.sample_count));
             report.push_str(&format!("Mean: {:.2}\n", baseline.statistical_summary.mean));
-            report.push_str(&format!("Std Dev: {:.2}\n", baseline.statistical_summary.std_dev));
-            report.push_str(&format!("Trend Stability: {:.3}\n", baseline.statistical_summary.trend_stability));
-            
+            report.push_str(&format!(
+                "Std Dev: {:.2}\n",
+                baseline.statistical_summary.std_dev
+            ));
+            report.push_str(&format!(
+                "Trend Stability: {:.3}\n",
+                baseline.statistical_summary.trend_stability
+            ));
+
             if let Some(ref mk) = baseline.statistical_summary.mann_kendall_result {
-                report.push_str(&format!("Trend: {:?} (confidence: {:.3})\n", mk.trend, mk.confidence));
+                report.push_str(&format!(
+                    "Trend: {:?} (confidence: {:.3})\n",
+                    mk.trend, mk.confidence
+                ));
             }
-            
+
             report.push_str("\n");
         }
 
@@ -694,8 +744,10 @@ mod tests {
         let temp_dir = TempDir::new().unwrap();
         let storage_path = temp_dir.path().join("baselines.json");
         let config = BaselineConfig::default();
-        
-        let mut manager = BenchmarkBaselineManager::new(&storage_path, config).await.unwrap();
+
+        let mut manager = BenchmarkBaselineManager::new(&storage_path, config)
+            .await
+            .unwrap();
 
         // Create baseline
         let measurements = (0..50).map(|i| 100.0 + i as f64 * 0.1).collect::<Vec<_>>();
@@ -704,22 +756,34 @@ mod tests {
             unit: "ns".to_string(),
         };
 
-        let baseline = manager.create_baseline("test_bench", measurements, baseline_type.clone()).await.unwrap();
+        let baseline = manager
+            .create_baseline("test_bench", measurements, baseline_type.clone())
+            .await
+            .unwrap();
         assert_eq!(baseline.benchmark_name, "test_bench");
         assert_eq!(baseline.sample_count, 50);
 
         // Compare against similar measurements (should be no significant change)
         let similar_measurements = (0..50).map(|i| 101.0 + i as f64 * 0.1).collect::<Vec<_>>();
-        let comparison = manager.compare_against_baseline("test_bench", &similar_measurements, baseline_type.clone()).await.unwrap();
-        
+        let comparison = manager
+            .compare_against_baseline("test_bench", &similar_measurements, baseline_type.clone())
+            .await
+            .unwrap();
+
         assert!(!comparison.comparison_result.is_regression);
         assert!(matches!(comparison.recommendation, Recommendation::Accept));
 
         // Compare against significantly different measurements (should detect regression)
         let worse_measurements = (0..50).map(|i| 120.0 + i as f64 * 0.1).collect::<Vec<_>>();
-        let comparison = manager.compare_against_baseline("test_bench", &worse_measurements, baseline_type).await.unwrap();
-        
+        let comparison = manager
+            .compare_against_baseline("test_bench", &worse_measurements, baseline_type)
+            .await
+            .unwrap();
+
         assert!(comparison.comparison_result.is_regression);
-        assert!(matches!(comparison.recommendation, Recommendation::Reject { .. }));
+        assert!(matches!(
+            comparison.recommendation,
+            Recommendation::Reject { .. }
+        ));
     }
 }

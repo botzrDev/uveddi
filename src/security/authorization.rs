@@ -8,7 +8,7 @@ use crate::security::{
     errors::{SecurityError, SecurityResult},
     models::{AuthContext, AuthenticatedUser, Permission, Role, User, UserRole},
 };
-use casbin::{Enforcer, DefaultModel, MemoryAdapter, Result as CasbinResult, CoreApi, MgmtApi};
+use casbin::{CoreApi, DefaultModel, Enforcer, MemoryAdapter, MgmtApi, Result as CasbinResult};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -42,18 +42,18 @@ pub struct AuthorizationEngine {
 impl AuthorizationEngine {
     /// Create a new authorization engine
     pub async fn new() -> SecurityResult<Self> {
-        let model = DefaultModel::from_str(RBAC_MODEL)
-            .await
-            .map_err(|e| SecurityError::AuthorizationEngineError {
+        let model = DefaultModel::from_str(RBAC_MODEL).await.map_err(|e| {
+            SecurityError::AuthorizationEngineError {
                 error: format!("Failed to create Casbin model: {}", e),
-            })?;
+            }
+        })?;
 
         let adapter = MemoryAdapter::default();
-        let enforcer = Enforcer::new(model, adapter)
-            .await
-            .map_err(|e| SecurityError::AuthorizationEngineError {
+        let enforcer = Enforcer::new(model, adapter).await.map_err(|e| {
+            SecurityError::AuthorizationEngineError {
                 error: format!("Failed to create Casbin enforcer: {}", e),
-            })?;
+            }
+        })?;
 
         let mut engine = Self {
             enforcer: Arc::new(RwLock::new(enforcer)),
@@ -96,7 +96,6 @@ impl AuthorizationEngine {
             ("Admin", "*", "roles", "read"),
             ("Admin", "*", "roles", "write"),
             ("Admin", "*", "audit", "read"),
-            
             // Developer - own projects within domain
             ("Developer", "*", "projects:own", "read"),
             ("Developer", "*", "projects:own", "write"),
@@ -104,7 +103,6 @@ impl AuthorizationEngine {
             ("Developer", "*", "analysis_runs:own", "execute"),
             ("Developer", "*", "reports:own", "read"),
             ("Developer", "*", "reports:own", "write"),
-            
             // QA - team level access within domain
             ("QA", "*", "projects:own", "read"),
             ("QA", "*", "projects:own", "write"),
@@ -115,12 +113,10 @@ impl AuthorizationEngine {
             ("QA", "*", "analysis_runs:team", "execute"),
             ("QA", "*", "reports:own", "read"),
             ("QA", "*", "reports:team", "read"),
-            
             // Manager - read-only access within domain
             ("Manager", "*", "projects", "read"),
             ("Manager", "*", "analysis_runs", "read"),
             ("Manager", "*", "reports", "read"),
-            
             // Service - API access within domain
             ("Service", "*", "projects", "read"),
             ("Service", "*", "projects", "write"),
@@ -132,7 +128,12 @@ impl AuthorizationEngine {
         // Add policies to enforcer with domain support
         for (role, domain, resource, action) in default_policies {
             enforcer
-                .add_policy(vec![role.to_string(), domain.to_string(), resource.to_string(), action.to_string()])
+                .add_policy(vec![
+                    role.to_string(),
+                    domain.to_string(),
+                    resource.to_string(),
+                    action.to_string(),
+                ])
                 .await
                 .map_err(|e| SecurityError::AuthorizationEngineError {
                     error: format!("Failed to add policy: {}", e),
@@ -152,15 +153,17 @@ impl AuthorizationEngine {
     ) -> SecurityResult<bool> {
         // Get user roles
         let user_roles = self.get_user_roles(user_id).await?;
-        
+
         // Check each role for permission
         for role in &user_roles {
-            let has_permission = self.check_role_permission(role, resource, action, context).await?;
+            let has_permission = self
+                .check_role_permission(role, resource, action, context)
+                .await?;
             if has_permission {
                 return Ok(true);
             }
         }
-        
+
         Ok(false)
     }
 
@@ -173,13 +176,13 @@ impl AuthorizationEngine {
         context: &AuthContext,
     ) -> SecurityResult<bool> {
         let enforcer = self.enforcer.read().await;
-        
+
         // Construct resource with scope if applicable
         let scoped_resource = self.apply_resource_scope(resource, context).await?;
-        
+
         // Use domain from context or default to "*" for universal access
         let domain = "*".to_string(); // For now, use wildcard domain
-        
+
         // Check permission using Casbin with domain support
         let allowed = enforcer
             .enforce(vec![
@@ -197,7 +200,11 @@ impl AuthorizationEngine {
     }
 
     /// Apply resource scope based on context
-    async fn apply_resource_scope(&self, resource: &str, context: &AuthContext) -> SecurityResult<String> {
+    async fn apply_resource_scope(
+        &self,
+        resource: &str,
+        context: &AuthContext,
+    ) -> SecurityResult<String> {
         match context.scope.as_deref() {
             Some("own") => Ok(format!("{}:own", resource)),
             Some("team") => Ok(format!("{}:team", resource)),
@@ -223,7 +230,11 @@ impl AuthorizationEngine {
     }
 
     /// Cache user roles for performance
-    pub async fn cache_user_roles(&self, user_id: Uuid, roles: Vec<UserRole>) -> SecurityResult<()> {
+    pub async fn cache_user_roles(
+        &self,
+        user_id: Uuid,
+        roles: Vec<UserRole>,
+    ) -> SecurityResult<()> {
         let mut cache = self.role_cache.write().await;
         cache.insert(user_id, roles);
         Ok(())
@@ -237,7 +248,13 @@ impl AuthorizationEngine {
     }
 
     /// Add a new policy to the enforcer
-    pub async fn add_policy(&self, subject: String, domain: String, object: String, action: String) -> SecurityResult<bool> {
+    pub async fn add_policy(
+        &self,
+        subject: String,
+        domain: String,
+        object: String,
+        action: String,
+    ) -> SecurityResult<bool> {
         let mut enforcer = self.enforcer.write().await;
         let result = enforcer
             .add_policy(vec![subject, domain, object, action])
@@ -249,7 +266,13 @@ impl AuthorizationEngine {
     }
 
     /// Remove a policy from the enforcer
-    pub async fn remove_policy(&self, subject: String, domain: String, object: String, action: String) -> SecurityResult<bool> {
+    pub async fn remove_policy(
+        &self,
+        subject: String,
+        domain: String,
+        object: String,
+        action: String,
+    ) -> SecurityResult<bool> {
         let mut enforcer = self.enforcer.write().await;
         let result = enforcer
             .remove_policy(vec![subject, domain, object, action])
@@ -261,7 +284,12 @@ impl AuthorizationEngine {
     }
 
     /// Add a role inheritance relationship with domain support
-    pub async fn add_role_for_user(&self, user: String, role: String, domain: String) -> SecurityResult<bool> {
+    pub async fn add_role_for_user(
+        &self,
+        user: String,
+        role: String,
+        domain: String,
+    ) -> SecurityResult<bool> {
         let mut enforcer = self.enforcer.write().await;
         let result = enforcer
             .add_grouping_policy(vec![user.to_string(), role.to_string(), domain.to_string()])
@@ -273,7 +301,12 @@ impl AuthorizationEngine {
     }
 
     /// Remove a role inheritance relationship with domain support
-    pub async fn delete_role_for_user(&self, user: String, role: String, domain: String) -> SecurityResult<bool> {
+    pub async fn delete_role_for_user(
+        &self,
+        user: String,
+        role: String,
+        domain: String,
+    ) -> SecurityResult<bool> {
         let mut enforcer = self.enforcer.write().await;
         let result = enforcer
             .remove_grouping_policy(vec![user.to_string(), role.to_string(), domain.to_string()])
@@ -299,10 +332,18 @@ impl AuthorizationEngine {
     }
 
     /// Check if a user has a specific role in a domain
-    pub async fn has_role_for_user(&self, user: String, role: String, domain: String) -> SecurityResult<bool> {
+    pub async fn has_role_for_user(
+        &self,
+        user: String,
+        role: String,
+        domain: String,
+    ) -> SecurityResult<bool> {
         let enforcer = self.enforcer.read().await;
-        let has_role = enforcer
-            .has_grouping_policy(vec![user.to_string(), role.to_string(), domain.to_string()]);
+        let has_role = enforcer.has_grouping_policy(vec![
+            user.to_string(),
+            role.to_string(),
+            domain.to_string(),
+        ]);
         Ok(has_role)
     }
 
@@ -322,14 +363,17 @@ impl AuthorizationEngine {
         context: &AuthContext,
     ) -> SecurityResult<bool> {
         // First check basic RBAC permissions
-        let basic_permission = self.check_permission(user_id, resource, action, context).await?;
-        
+        let basic_permission = self
+            .check_permission(user_id, resource, action, context)
+            .await?;
+
         if !basic_permission {
             return Ok(false);
         }
 
         // Apply additional ABAC rules based on context
-        self.apply_abac_rules(user_id, resource, action, context).await
+        self.apply_abac_rules(user_id, resource, action, context)
+            .await
     }
 
     /// Apply attribute-based access control rules
@@ -350,7 +394,10 @@ impl AuthorizationEngine {
         // IP-based access control
         if let Some(ip_restriction) = context.additional_context.get("ip_restriction") {
             if let Some(ip_address) = &context.ip_address {
-                if !self.check_ip_restriction(ip_address, ip_restriction).await? {
+                if !self
+                    .check_ip_restriction(ip_address, ip_restriction)
+                    .await?
+                {
                     return Ok(false);
                 }
             }
@@ -358,7 +405,9 @@ impl AuthorizationEngine {
 
         // Resource ownership check for 'own' scope
         if context.scope.as_deref() == Some("own") {
-            return self.check_resource_ownership(user_id, resource, context).await;
+            return self
+                .check_resource_ownership(user_id, resource, context)
+                .await;
         }
 
         // Team membership check for 'team' scope
@@ -370,25 +419,42 @@ impl AuthorizationEngine {
     }
 
     /// Check time-based access restrictions
-    async fn check_time_restriction(&self, _time_restriction: &serde_json::Value) -> SecurityResult<bool> {
+    async fn check_time_restriction(
+        &self,
+        _time_restriction: &serde_json::Value,
+    ) -> SecurityResult<bool> {
         // Implementation would check current time against allowed time windows
         Ok(true)
     }
 
     /// Check IP-based access restrictions
-    async fn check_ip_restriction(&self, _ip_address: &str, _ip_restriction: &serde_json::Value) -> SecurityResult<bool> {
+    async fn check_ip_restriction(
+        &self,
+        _ip_address: &str,
+        _ip_restriction: &serde_json::Value,
+    ) -> SecurityResult<bool> {
         // Implementation would check IP against allowed ranges
         Ok(true)
     }
 
     /// Check if user owns the resource
-    async fn check_resource_ownership(&self, _user_id: &Uuid, _resource: &str, _context: &AuthContext) -> SecurityResult<bool> {
+    async fn check_resource_ownership(
+        &self,
+        _user_id: &Uuid,
+        _resource: &str,
+        _context: &AuthContext,
+    ) -> SecurityResult<bool> {
         // Implementation would check resource ownership in database
         Ok(true)
     }
 
     /// Check if user is member of the team that owns the resource
-    async fn check_team_membership(&self, _user_id: &Uuid, _resource: &str, _context: &AuthContext) -> SecurityResult<bool> {
+    async fn check_team_membership(
+        &self,
+        _user_id: &Uuid,
+        _resource: &str,
+        _context: &AuthContext,
+    ) -> SecurityResult<bool> {
         // Implementation would check team membership in database
         Ok(true)
     }
@@ -420,7 +486,10 @@ impl AuthorizationEngine {
     }
 
     /// Get authorization summary for a user
-    pub async fn get_user_authorization_summary(&self, user_id: &Uuid) -> SecurityResult<UserAuthorizationSummary> {
+    pub async fn get_user_authorization_summary(
+        &self,
+        user_id: &Uuid,
+    ) -> SecurityResult<UserAuthorizationSummary> {
         let roles = self.get_user_roles(user_id).await?;
         let mut permissions = Vec::new();
 
@@ -456,7 +525,11 @@ impl AuthorizationEngine {
     }
 
     /// Cache role permissions for performance
-    pub async fn cache_role_permissions(&self, role: UserRole, permissions: Vec<Permission>) -> SecurityResult<()> {
+    pub async fn cache_role_permissions(
+        &self,
+        role: UserRole,
+        permissions: Vec<Permission>,
+    ) -> SecurityResult<()> {
         let mut cache = self.permission_cache.write().await;
         cache.insert(role, permissions);
         Ok(())
@@ -466,10 +539,10 @@ impl AuthorizationEngine {
     pub async fn clear_caches(&self) -> SecurityResult<()> {
         let mut role_cache = self.role_cache.write().await;
         let mut permission_cache = self.permission_cache.write().await;
-        
+
         role_cache.clear();
         permission_cache.clear();
-        
+
         Ok(())
     }
 }
@@ -485,7 +558,9 @@ pub struct UserAuthorizationSummary {
 impl UserAuthorizationSummary {
     /// Check if user has a specific permission
     pub fn has_permission(&self, resource: &str, action: &str, scope: Option<&str>) -> bool {
-        self.permissions.iter().any(|p| p.matches(resource, action, scope))
+        self.permissions
+            .iter()
+            .any(|p| p.matches(resource, action, scope))
     }
 
     /// Get all resources the user has access to
@@ -526,21 +601,25 @@ mod tests {
         let engine = AuthorizationEngine::new().await.unwrap();
 
         // Add a policy
-        let result = engine.add_policy(
-            "test_user".to_string(),
-            "*".to_string(),
-            "test_resource".to_string(),
-            "test_action".to_string(),
-        ).await;
+        let result = engine
+            .add_policy(
+                "test_user".to_string(),
+                "*".to_string(),
+                "test_resource".to_string(),
+                "test_action".to_string(),
+            )
+            .await;
         assert!(result.is_ok());
 
         // Remove the policy
-        let result = engine.remove_policy(
-            "test_user".to_string(),
-            "*".to_string(),
-            "test_resource".to_string(),
-            "test_action".to_string(),
-        ).await;
+        let result = engine
+            .remove_policy(
+                "test_user".to_string(),
+                "*".to_string(),
+                "test_resource".to_string(),
+                "test_action".to_string(),
+            )
+            .await;
         assert!(result.is_ok());
     }
 
@@ -549,19 +628,24 @@ mod tests {
         let engine = AuthorizationEngine::new().await.unwrap();
 
         // Add role for user
-        let result = engine.add_role_for_user(
-            "test_user".to_string(),
-            "Developer".to_string(),
-            "*".to_string(),
-        ).await;
+        let result = engine
+            .add_role_for_user(
+                "test_user".to_string(),
+                "Developer".to_string(),
+                "*".to_string(),
+            )
+            .await;
         assert!(result.is_ok());
 
         // Check if user has role
-        let has_role = engine.has_role_for_user(
-            "test_user".to_string(),
-            "Developer".to_string(),
-            "*".to_string(),
-        ).await.unwrap();
+        let has_role = engine
+            .has_role_for_user(
+                "test_user".to_string(),
+                "Developer".to_string(),
+                "*".to_string(),
+            )
+            .await
+            .unwrap();
         assert!(has_role);
 
         // For this test, just verify the role was added correctly
@@ -569,11 +653,13 @@ mod tests {
         assert!(has_role);
 
         // Remove role for user
-        let result = engine.delete_role_for_user(
-            "test_user".to_string(),
-            "Developer".to_string(),
-            "*".to_string(),
-        ).await;
+        let result = engine
+            .delete_role_for_user(
+                "test_user".to_string(),
+                "Developer".to_string(),
+                "*".to_string(),
+            )
+            .await;
         assert!(result.is_ok());
     }
 
@@ -591,21 +677,13 @@ mod tests {
         assert!(engine.validate_context(&valid_context).is_ok());
 
         // Invalid context - empty resource
-        let invalid_context = AuthContext::new(
-            Uuid::new_v4(),
-            "".to_string(),
-            "read".to_string(),
-            None,
-        );
+        let invalid_context =
+            AuthContext::new(Uuid::new_v4(), "".to_string(), "read".to_string(), None);
         assert!(engine.validate_context(&invalid_context).is_err());
 
         // Invalid context - empty action
-        let invalid_context = AuthContext::new(
-            Uuid::new_v4(),
-            "projects".to_string(),
-            "".to_string(),
-            None,
-        );
+        let invalid_context =
+            AuthContext::new(Uuid::new_v4(), "projects".to_string(), "".to_string(), None);
         assert!(engine.validate_context(&invalid_context).is_err());
 
         // Invalid context - invalid scope
@@ -647,16 +725,33 @@ mod tests {
         let user_id = Uuid::new_v4();
         let roles = vec![UserRole::Developer];
         let permissions = vec![
-            Permission::new("projects".to_string(), "read".to_string(), Some("own".to_string())),
-            Permission::new("projects".to_string(), "write".to_string(), Some("own".to_string())),
+            Permission::new(
+                "projects".to_string(),
+                "read".to_string(),
+                Some("own".to_string()),
+            ),
+            Permission::new(
+                "projects".to_string(),
+                "write".to_string(),
+                Some("own".to_string()),
+            ),
         ];
 
         // Cache data
-        engine.cache_user_roles(user_id, roles.clone()).await.unwrap();
-        engine.cache_role_permissions(UserRole::Developer, permissions.clone()).await.unwrap();
+        engine
+            .cache_user_roles(user_id, roles.clone())
+            .await
+            .unwrap();
+        engine
+            .cache_role_permissions(UserRole::Developer, permissions.clone())
+            .await
+            .unwrap();
 
         // Get authorization summary
-        let summary = engine.get_user_authorization_summary(&user_id).await.unwrap();
+        let summary = engine
+            .get_user_authorization_summary(&user_id)
+            .await
+            .unwrap();
         assert_eq!(summary.user_id, user_id);
         assert_eq!(summary.roles, roles);
 
@@ -683,21 +778,17 @@ mod tests {
         );
 
         // Test Admin role (should have access)
-        let has_permission = engine.check_role_permission(
-            &UserRole::Admin,
-            "projects",
-            "read",
-            &context,
-        ).await.unwrap();
+        let has_permission = engine
+            .check_role_permission(&UserRole::Admin, "projects", "read", &context)
+            .await
+            .unwrap();
         assert!(has_permission);
 
         // Test Developer role with own scope (should have access)
-        let has_permission = engine.check_role_permission(
-            &UserRole::Developer,
-            "projects",
-            "read",
-            &context,
-        ).await.unwrap();
+        let has_permission = engine
+            .check_role_permission(&UserRole::Developer, "projects", "read", &context)
+            .await
+            .unwrap();
         // The default policies have "projects:own" not "projects", so this should be true
         assert!(has_permission);
     }

@@ -11,7 +11,6 @@
 //! - Cross-file dependency analysis
 //! - Context-aware severity assessment
 
-use async_trait::async_trait;
 use crate::analysis::graph::dependency::{
     ComponentNode, DependencyEdge, LocalDependencyGraph, LocalDependencyType,
 };
@@ -19,6 +18,7 @@ use crate::analysis::{AnalysisDetector, AnalysisError};
 use crate::ast::tree_sitter::{Node, Query, QueryCursor, Tree};
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
+use async_trait::async_trait;
 use petgraph::graph::{DiGraph, NodeIndex};
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -474,7 +474,10 @@ impl TightCouplingDetector {
 
 #[async_trait]
 impl AnalysisDetector for TightCouplingDetector {
-    async fn detect_issues(&self, file: &ParsedFile) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
+    async fn detect_issues(
+        &self,
+        file: &ParsedFile,
+    ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         // Single-file analysis for basic coupling detection
         let analyzer = self.get_analyzer_for_language(file.language);
         let dependencies = analyzer.extract_dependencies(file.path(), file)?;

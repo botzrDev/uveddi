@@ -92,9 +92,13 @@ impl UveddiMetrics {
             &["type", "severity", "component"],
         )?;
 
-        let cpu_utilization = Gauge::new("uveddi_cpu_utilization_percent", "CPU utilization percentage")?;
+        let cpu_utilization = Gauge::new(
+            "uveddi_cpu_utilization_percent",
+            "CPU utilization percentage",
+        )?;
         let memory_usage = Gauge::new("uveddi_memory_usage_bytes", "Memory usage in bytes")?;
-        let active_connections = Gauge::new("uveddi_active_connections", "Number of active connections")?;
+        let active_connections =
+            Gauge::new("uveddi_active_connections", "Number of active connections")?;
 
         // Analysis-specific metrics
         let analysis_requests_total = CounterVec::new(
@@ -137,7 +141,10 @@ impl UveddiMetrics {
 
         // Rendering service metrics
         let rendering_requests_total = CounterVec::new(
-            Opts::new("uveddi_rendering_calls_total", "Total rendering service calls"),
+            Opts::new(
+                "uveddi_rendering_calls_total",
+                "Total rendering service calls",
+            ),
             &["status", "diagram_type"],
         )?;
 
@@ -152,28 +159,43 @@ impl UveddiMetrics {
 
         // Security metrics
         let security_auth_failures = CounterVec::new(
-            Opts::new("uveddi_security_auth_failures_total", "Authentication failures"),
+            Opts::new(
+                "uveddi_security_auth_failures_total",
+                "Authentication failures",
+            ),
             &["reason", "source"],
         )?;
 
         let security_permission_denials = CounterVec::new(
-            Opts::new("uveddi_security_permission_denials_total", "Permission denials"),
+            Opts::new(
+                "uveddi_security_permission_denials_total",
+                "Permission denials",
+            ),
             &["resource_type", "permission_level"],
         )?;
 
         let security_rate_limit_exceeded = CounterVec::new(
-            Opts::new("uveddi_security_rate_limit_exceeded_total", "Rate limit exceeded events"),
+            Opts::new(
+                "uveddi_security_rate_limit_exceeded_total",
+                "Rate limit exceeded events",
+            ),
             &["endpoint", "user_group"],
         )?;
 
         // Circuit breaker and resilience metrics
         let circuit_breaker_state = GaugeVec::new(
-            Opts::new("uveddi_circuit_breaker_state", "Circuit breaker state (0=closed, 1=open, 2=half-open)"),
+            Opts::new(
+                "uveddi_circuit_breaker_state",
+                "Circuit breaker state (0=closed, 1=open, 2=half-open)",
+            ),
             &["service", "endpoint"],
         )?;
 
         let circuit_breaker_transitions = CounterVec::new(
-            Opts::new("uveddi_circuit_breaker_transitions_total", "Circuit breaker state transitions"),
+            Opts::new(
+                "uveddi_circuit_breaker_transitions_total",
+                "Circuit breaker state transitions",
+            ),
             &["service", "from_state", "to_state"],
         )?;
 
@@ -183,7 +205,10 @@ impl UveddiMetrics {
         )?;
 
         let fallback_activations = CounterVec::new(
-            Opts::new("uveddi_fallback_activations_total", "Fallback mechanism activations"),
+            Opts::new(
+                "uveddi_fallback_activations_total",
+                "Fallback mechanism activations",
+            ),
             &["service", "fallback_type", "reason"],
         )?;
 
@@ -339,12 +364,7 @@ impl UveddiMetrics {
     }
 
     /// Record rendering service call
-    pub fn record_rendering_call(
-        &self,
-        status: &str,
-        diagram_type: &str,
-        duration: Duration,
-    ) {
+    pub fn record_rendering_call(&self, status: &str, diagram_type: &str, duration: Duration) {
         self.rendering_requests_total
             .with_label_values(&[status, diagram_type])
             .inc();
@@ -376,13 +396,18 @@ impl UveddiMetrics {
     }
 
     /// Update circuit breaker state
-    pub fn update_circuit_breaker_state(&self, service: &str, endpoint: &str, state: CircuitBreakerState) {
+    pub fn update_circuit_breaker_state(
+        &self,
+        service: &str,
+        endpoint: &str,
+        state: CircuitBreakerState,
+    ) {
         let state_value = match state {
             CircuitBreakerState::Closed => 0.0,
             CircuitBreakerState::Open => 1.0,
             CircuitBreakerState::HalfOpen => 2.0,
         };
-        
+
         self.circuit_breaker_state
             .with_label_values(&[service, endpoint])
             .set(state_value);
@@ -419,7 +444,12 @@ impl UveddiMetrics {
     }
 
     /// Update SLO metrics
-    pub fn update_slo_metrics(&self, availability: f64, latency_p99: f64, error_budget_remaining: f64) {
+    pub fn update_slo_metrics(
+        &self,
+        availability: f64,
+        latency_p99: f64,
+        error_budget_remaining: f64,
+    ) {
         self.slo_availability.set(availability);
         self.slo_latency_p99.set(latency_p99);
         self.error_budget_remaining.set(error_budget_remaining);
@@ -495,7 +525,7 @@ impl MetricsServer {
         };
 
         let registry = self.metrics.registry();
-        
+
         let app = Router::new()
             .route(&self.config.endpoint_path, get(metrics_handler))
             .with_state(registry);
@@ -521,18 +551,22 @@ impl MetricsServer {
 
 /// Handler for the metrics endpoint
 async fn metrics_handler(
-    axum::extract::State(registry): axum::extract::State<Arc<Registry>>
+    axum::extract::State(registry): axum::extract::State<Arc<Registry>>,
 ) -> axum::response::Response {
     use prometheus::TextEncoder;
-    
+
     let encoder = TextEncoder::new();
     let metric_families = registry.gather();
-    
+
     match encoder.encode_to_string(&metric_families) {
         Ok(output) => (axum::http::StatusCode::OK, output).into_response(),
         Err(e) => {
             tracing::error!(error = %e, "Failed to encode metrics");
-            (axum::http::StatusCode::INTERNAL_SERVER_ERROR, "Failed to encode metrics").into_response()
+            (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to encode metrics",
+            )
+                .into_response()
         }
     }
 }
@@ -546,7 +580,7 @@ mod tests {
     fn test_metrics_creation() {
         let config = MetricsConfig::default();
         let metrics = UveddiMetrics::new(&config).unwrap();
-        
+
         // Test that we can record metrics without panicking
         metrics.record_request("GET", "/api/analyze", "200", Duration::from_millis(100));
         metrics.record_error("analysis_error", "high", "engine");

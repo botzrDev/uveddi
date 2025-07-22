@@ -195,7 +195,6 @@ pub struct AnalyzeCommand {
     pub memory_profile: Option<String>,
 
     // === HYBRID RENDERING OPTIONS ===
-    
     /// Enable image rendering (requires rendering service)
     ///
     /// When enabled, diagrams will be rendered as images using the rendering service.
@@ -268,44 +267,51 @@ impl AnalyzeCommand {
         match mode {
             DiagramMode::MermaidOnly => {
                 println!("📊 Diagram Mode: Mermaid-only (zero hosting costs)");
-                println!("   Diagrams will be generated as Mermaid code with rendering instructions");
-            },
+                println!(
+                    "   Diagrams will be generated as Mermaid code with rendering instructions"
+                );
+            }
             DiagramMode::ImageOnly => {
                 println!("📊 Diagram Mode: Image-only (requires rendering service)");
                 println!("   Analysis will fail if rendering service is unavailable");
-            },
+            }
             DiagramMode::ImageWithFallback => {
                 println!("📊 Diagram Mode: Image with fallback (hybrid approach)");
-                println!("   Will attempt image rendering, fallback to Mermaid-only if unavailable");
+                println!(
+                    "   Will attempt image rendering, fallback to Mermaid-only if unavailable"
+                );
             }
         }
     }
 
     /// Check rendering service availability and provide user feedback
     #[cfg(feature = "image-rendering")]
-    pub async fn check_rendering_service_availability(&self) -> Result<bool, Box<dyn std::error::Error>> {
+    pub async fn check_rendering_service_availability(
+        &self,
+    ) -> Result<bool, Box<dyn std::error::Error>> {
         use crate::report::ImageRenderer;
-        
-        println!("🔍 Checking rendering service at {}...", self.rendering_service_url);
-        
+
+        println!(
+            "🔍 Checking rendering service at {}...",
+            self.rendering_service_url
+        );
+
         let renderer = ImageRenderer::new(); // Use default config for now
-        
-        match tokio::time::timeout(
-            std::time::Duration::from_secs(5),
-            renderer.health_check()
-        ).await {
+
+        match tokio::time::timeout(std::time::Duration::from_secs(5), renderer.health_check()).await
+        {
             Ok(Ok(_)) => {
                 println!("✅ Rendering service is available!");
                 println!("   URL: {}", self.rendering_service_url);
                 Ok(true)
-            },
+            }
             Ok(Err(e)) => {
                 println!("❌ Rendering service is not available:");
                 println!("   Error: {}", e);
                 println!("   URL: {}", self.rendering_service_url);
                 self.print_rendering_service_setup_help();
                 Ok(false)
-            },
+            }
             Err(_) => {
                 println!("⏰ Rendering service check timed out");
                 println!("   URL: {}", self.rendering_service_url);
@@ -317,7 +323,9 @@ impl AnalyzeCommand {
 
     /// Check rendering service availability (no-op when feature disabled)
     #[cfg(not(feature = "image-rendering"))]
-    pub async fn check_rendering_service_availability(&self) -> Result<bool, Box<dyn std::error::Error>> {
+    pub async fn check_rendering_service_availability(
+        &self,
+    ) -> Result<bool, Box<dyn std::error::Error>> {
         println!("❌ Image rendering feature not enabled");
         println!("   To enable image rendering, rebuild with:");
         println!("   cargo build --features image-rendering");

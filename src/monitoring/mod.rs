@@ -9,15 +9,15 @@ pub mod metrics;
 // pub mod websocket;
 // pub mod database;
 // pub mod classification;
-pub mod memory_monitor;
-pub mod performance_metrics_collector;
-pub mod parallel_metrics;
-pub mod enterprise_metrics;
 pub mod baseline_collector;
-pub mod reporting;
-pub mod distribution;
-pub mod scheduler;
 pub mod config;
+pub mod distribution;
+pub mod enterprise_metrics;
+pub mod memory_monitor;
+pub mod parallel_metrics;
+pub mod performance_metrics_collector;
+pub mod reporting;
+pub mod scheduler;
 
 // Temporarily commented out exports with external dependencies
 // pub use dashboard::MonitoringDashboard;
@@ -25,11 +25,17 @@ pub use metrics::{TestExecution, TestMetrics, TestResult};
 // pub use websocket::WebSocketManager;
 // pub use database::MonitoringDatabase;
 // pub use classification::FailureClassifier;
+pub use baseline_collector::{
+    BaselineCollectionConfig, BaselineCollector, BaselineComparison, StoredBaseline,
+};
+pub use config::{ConfigManager, ReportJobConfig, ReportingSystemConfig, SystemConfig};
+pub use distribution::{DistributionChannel, DistributionManager, SlackWebhookConfig, SmtpConfig};
+pub use enterprise_metrics::{
+    BaselineData, EnterpriseMetricsCollector, MeasurementSnapshot, RegressionAnalysis,
+};
 pub use memory_monitor::MemoryMonitor;
 pub use performance_metrics_collector::PerformanceMetricsCollector;
-pub use enterprise_metrics::{EnterpriseMetricsCollector, BaselineData, MeasurementSnapshot, RegressionAnalysis};
-pub use baseline_collector::{BaselineCollector, BaselineCollectionConfig, BaselineComparison, StoredBaseline};
-pub use reporting::{ReportingEngine, ReportType, StakeholderRole, ReportConfiguration, GeneratedReport};
-pub use distribution::{DistributionManager, DistributionChannel, SmtpConfig, SlackWebhookConfig};
+pub use reporting::{
+    GeneratedReport, ReportConfiguration, ReportType, ReportingEngine, StakeholderRole,
+};
 pub use scheduler::{ReportScheduler, ScheduleConfig, ScheduleType, ScheduledJob};
-pub use config::{ConfigManager, ReportingSystemConfig, ReportJobConfig, SystemConfig};

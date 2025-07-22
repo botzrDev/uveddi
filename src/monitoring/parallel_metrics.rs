@@ -30,31 +30,29 @@ impl ParallelMetricsCollector {
             memory_usage: AtomicUsize::new(0),
         }
     }
-    
+
     /// Track when a task starts processing
     pub fn track_task_started(&self) {
         // Implementation will be added in subsequent steps
     }
-    
+
     /// Track when a task completes successfully
     pub fn track_task_completed(&self, latency: Duration) {
         self.tasks_completed.fetch_add(1, Ordering::SeqCst);
-        self.total_latency.fetch_add(
-            latency.as_micros() as u64,
-            Ordering::SeqCst
-        );
+        self.total_latency
+            .fetch_add(latency.as_micros() as u64, Ordering::SeqCst);
     }
-    
+
     /// Track when a task fails
     pub fn track_task_failed(&self) {
         self.tasks_failed.fetch_add(1, Ordering::SeqCst);
     }
-    
+
     /// Track current queue size
     pub fn track_queue_size(&self, size: usize) {
         self.current_queue_size.store(size, Ordering::SeqCst);
     }
-    
+
     /// Track thread usage
     pub fn track_thread_usage(&self, count: usize) {
         let mut max_threads = self.max_threads_used.load(Ordering::SeqCst);
@@ -63,19 +61,19 @@ impl ParallelMetricsCollector {
                 max_threads,
                 count,
                 Ordering::SeqCst,
-                Ordering::Relaxed
+                Ordering::Relaxed,
             ) {
                 Ok(_) => break,
                 Err(x) => max_threads = x,
             }
         }
     }
-    
+
     /// Track memory usage
     pub fn track_memory_usage(&self, usage_kb: usize) {
         self.memory_usage.store(usage_kb, Ordering::SeqCst);
     }
-    
+
     /// Calculate current throughput (diagrams per minute)
     pub fn current_throughput(&self) -> f64 {
         let elapsed = self.start_time.elapsed().as_secs_f64();
@@ -85,7 +83,7 @@ impl ParallelMetricsCollector {
             0.0
         }
     }
-    
+
     /// Calculate average latency per diagram (in milliseconds)
     pub fn average_latency(&self) -> f64 {
         let completed = self.tasks_completed.load(Ordering::SeqCst) as f64;
@@ -95,12 +93,12 @@ impl ParallelMetricsCollector {
             0.0
         }
     }
-    
+
     /// Get peak memory usage (in KB)
     pub fn peak_memory_usage(&self) -> usize {
         self.memory_usage.load(Ordering::SeqCst)
     }
-    
+
     /// Generate a performance report
     pub fn generate_report(&self) -> String {
         format!(

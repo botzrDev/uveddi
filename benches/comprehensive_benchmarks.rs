@@ -5,7 +5,9 @@ use std::sync::Arc;
 use tempfile::TempDir;
 use uveddi::analysis::buffer::{FixedString, LargeBuffer, MediumBuffer, SmallBuffer};
 use uveddi::analysis::cache::ast::{AstCache, CacheConfig};
-use uveddi::analysis::{detectors::anti_patterns::GodObjectDetector, AnalysisEngine, AnalysisDetector};
+use uveddi::analysis::{
+    detectors::anti_patterns::GodObjectDetector, AnalysisDetector, AnalysisEngine,
+};
 
 /// Creates a temporary directory with test Rust files of varying complexity
 fn create_test_project(temp_dir: &TempDir, file_count: usize) -> Vec<std::path::PathBuf> {
@@ -352,7 +354,7 @@ fn bench_error_handling(c: &mut Criterion) {
         b.iter(|| {
             for i in 0..1000 {
                 let result: Result<i32, uveddi::error::UveddiError> = if i % 10 == 0 {
-                    Err(uveddi::error::UveddiError::ConfigError { 
+                    Err(uveddi::error::UveddiError::ConfigError {
                         message: format!("Error {}", i),
                         location: "benchmark".to_string(),
                         suggestion: "Check configuration".to_string(),
@@ -362,7 +364,9 @@ fn bench_error_handling(c: &mut Criterion) {
                 };
 
                 match result {
-                    Ok(value) => { black_box(value); },
+                    Ok(value) => {
+                        black_box(value);
+                    }
                     Err(e) => {
                         black_box(e.category());
                         black_box(e.severity());

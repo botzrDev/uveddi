@@ -3,13 +3,13 @@
 //! This module provides HTTP client functionality to communicate with the
 //! Node.js rendering service for converting Mermaid.js diagrams to images.
 
+use crate::error::rendering::RenderingServiceError;
+use md5;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::time::Duration;
 use thiserror::Error;
-use crate::error::rendering::RenderingServiceError;
-use md5;
 
 /// Configuration for the image rendering service
 #[derive(Debug, Clone)]
@@ -160,7 +160,6 @@ pub struct RenderedImage {
     pub render_time_ms: u64,
 }
 
-
 impl ImageRenderer {
     /// Create a new image renderer with default configuration
     pub fn new() -> Self {
@@ -183,12 +182,14 @@ impl ImageRenderer {
 
         let response = self.client.get(&url).send().await.map_err(|e| {
             if e.is_timeout() {
-                RenderingServiceError::request_timeout(Duration::from_secs(self.config.timeout_seconds))
+                RenderingServiceError::request_timeout(Duration::from_secs(
+                    self.config.timeout_seconds,
+                ))
             } else if e.is_connect() {
                 RenderingServiceError::connection_timeout(Duration::from_secs(10))
             } else {
                 RenderingServiceError::NetworkError {
-                    message: e.to_string()
+                    message: e.to_string(),
                 }
             }
         })?;
@@ -196,13 +197,15 @@ impl ImageRenderer {
         if !response.status().is_success() {
             return Err(match response.status().as_u16() {
                 503 => RenderingServiceError::ServiceUnavailable,
-                429 => RenderingServiceError::RateLimitExceeded { retry_after_seconds: None },
+                429 => RenderingServiceError::RateLimitExceeded {
+                    retry_after_seconds: None,
+                },
                 408 | 504 => RenderingServiceError::request_timeout(Duration::from_secs(30)),
                 400 => RenderingServiceError::InvalidResponse {
-                    details: format!("HTTP {}", response.status())
+                    details: format!("HTTP {}", response.status()),
                 },
                 _ => RenderingServiceError::InvalidResponse {
-                    details: format!("HTTP {}", response.status())
+                    details: format!("HTTP {}", response.status()),
                 },
             });
         }
@@ -237,11 +240,11 @@ impl ImageRenderer {
                     retries += 1;
                     // Use exponential backoff based on error severity
                     let delay = match e.severity() {
-                        crate::error::rendering::ErrorSeverity::High |
-                        crate::error::rendering::ErrorSeverity::Critical => {
+                        crate::error::rendering::ErrorSeverity::High
+                        | crate::error::rendering::ErrorSeverity::Critical => {
                             Duration::from_millis(1000 * retries as u64)
                         }
-                        _ => Duration::from_millis(100 * retries as u64)
+                        _ => Duration::from_millis(100 * retries as u64),
                     };
                     tokio::time::sleep(delay).await;
                     continue;
@@ -257,43 +260,54 @@ impl ImageRenderer {
     ) -> Result<RenderedImage, RenderingServiceError> {
         let url = format!("{}/render", self.config.base_url);
 
-        let response = self.client.post(&url).json(request).send().await.map_err(|e| {
-            if e.is_timeout() {
-                RenderingServiceError::request_timeout(Duration::from_secs(self.config.timeout_seconds))
-            } else if e.is_connect() {
-                RenderingServiceError::connection_timeout(Duration::from_secs(10))
-            } else {
-                RenderingServiceError::NetworkError {
-                    message: e.to_string()
+        let response = self
+            .client
+            .post(&url)
+            .json(request)
+            .send()
+            .await
+            .map_err(|e| {
+                if e.is_timeout() {
+                    RenderingServiceError::request_timeout(Duration::from_secs(
+                        self.config.timeout_seconds,
+                    ))
+                } else if e.is_connect() {
+                    RenderingServiceError::connection_timeout(Duration::from_secs(10))
+                } else {
+                    RenderingServiceError::NetworkError {
+                        message: e.to_string(),
+                    }
                 }
-            }
-        })?;
+            })?;
 
         if !response.status().is_success() {
             return Err(match response.status().as_u16() {
                 503 => RenderingServiceError::ServiceUnavailable,
-                429 => RenderingServiceError::RateLimitExceeded { retry_after_seconds: None },
+                429 => RenderingServiceError::RateLimitExceeded {
+                    retry_after_seconds: None,
+                },
                 408 | 504 => RenderingServiceError::request_timeout(Duration::from_secs(30)),
                 400 => RenderingServiceError::InvalidMermaidSyntax {
                     line: None,
-                    details: "Invalid request format".to_string()
+                    details: "Invalid request format".to_string(),
                 },
                 _ => RenderingServiceError::InvalidResponse {
-                    details: format!("HTTP {}", response.status())
+                    details: format!("HTTP {}", response.status()),
                 },
             });
         }
 
-        let render_response: RenderResponse = response
-            .json()
-            .await
-            .map_err(|e| RenderingServiceError::InvalidResponse {
-                details: format!("JSON parse error: {}", e)
-            })?;
+        let render_response: RenderResponse =
+            response
+                .json()
+                .await
+                .map_err(|e| RenderingServiceError::InvalidResponse {
+                    details: format!("JSON parse error: {}", e),
+                })?;
 
         if !render_response.success {
             return Err(RenderingServiceError::InvalidResponse {
-                details: "Rendering failed on service side".to_string()
+                details: "Rendering failed on service side".to_string(),
             });
         }
 
@@ -301,13 +315,13 @@ impl ImageRenderer {
             ImageFormat::Svg => render_response.data.into_bytes(),
             ImageFormat::Png => {
                 use base64::{engine::general_purpose, Engine as _};
-                general_purpose::STANDARD.decode(render_response.data).map_err(|e| {
-                    RenderingServiceError::ImageConversionError {
+                general_purpose::STANDARD
+                    .decode(render_response.data)
+                    .map_err(|e| RenderingServiceError::ImageConversionError {
                         from_format: "base64".to_string(),
                         to_format: "binary".to_string(),
                         reason: e.to_string(),
-                    }
-                })?
+                    })?
             }
         };
 
@@ -351,38 +365,49 @@ impl ImageRenderer {
 
         let url = format!("{}/render/batch", self.config.base_url);
 
-        let response = self.client.post(&url).json(&request).send().await.map_err(|e| {
-            if e.is_timeout() {
-                RenderingServiceError::request_timeout(Duration::from_secs(self.config.timeout_seconds))
-            } else if e.is_connect() {
-                RenderingServiceError::connection_timeout(Duration::from_secs(10))
-            } else {
-                RenderingServiceError::NetworkError {
-                    message: e.to_string()
+        let response = self
+            .client
+            .post(&url)
+            .json(&request)
+            .send()
+            .await
+            .map_err(|e| {
+                if e.is_timeout() {
+                    RenderingServiceError::request_timeout(Duration::from_secs(
+                        self.config.timeout_seconds,
+                    ))
+                } else if e.is_connect() {
+                    RenderingServiceError::connection_timeout(Duration::from_secs(10))
+                } else {
+                    RenderingServiceError::NetworkError {
+                        message: e.to_string(),
+                    }
                 }
-            }
-        })?;
+            })?;
 
         if !response.status().is_success() {
             return Err(match response.status().as_u16() {
                 503 => RenderingServiceError::ServiceUnavailable,
-                429 => RenderingServiceError::RateLimitExceeded { retry_after_seconds: None },
+                429 => RenderingServiceError::RateLimitExceeded {
+                    retry_after_seconds: None,
+                },
                 408 | 504 => RenderingServiceError::request_timeout(Duration::from_secs(30)),
                 400 => RenderingServiceError::InvalidResponse {
-                    details: format!("HTTP {}", response.status())
+                    details: format!("HTTP {}", response.status()),
                 },
                 _ => RenderingServiceError::InvalidResponse {
-                    details: format!("HTTP {}", response.status())
+                    details: format!("HTTP {}", response.status()),
                 },
             });
         }
 
-        let batch_response: BatchRenderResponse = response
-            .json()
-            .await
-            .map_err(|e| RenderingServiceError::InvalidResponse {
-                details: format!("JSON parse error: {}", e)
-            })?;
+        let batch_response: BatchRenderResponse =
+            response
+                .json()
+                .await
+                .map_err(|e| RenderingServiceError::InvalidResponse {
+                    details: format!("JSON parse error: {}", e),
+                })?;
 
         let mut results = Vec::new();
 
@@ -393,17 +418,20 @@ impl ImageRenderer {
                         ImageFormat::Svg => data_str.into_bytes(),
                         ImageFormat::Png => {
                             use base64::{engine::general_purpose, Engine as _};
-            match general_purpose::STANDARD.decode(data_str) {
-                Ok(data) => data,
-                Err(e) => {
-                    results.push(Err(RenderingServiceError::ImageConversionError {
-                        from_format: "base64".to_string(),
-                        to_format: "binary".to_string(),
-                        reason: e.to_string(),
-                    }.user_message()));
-                    continue;
-                }
-            }
+                            match general_purpose::STANDARD.decode(data_str) {
+                                Ok(data) => data,
+                                Err(e) => {
+                                    results.push(Err(
+                                        RenderingServiceError::ImageConversionError {
+                                            from_format: "base64".to_string(),
+                                            to_format: "binary".to_string(),
+                                            reason: e.to_string(),
+                                        }
+                                        .user_message(),
+                                    ));
+                                    continue;
+                                }
+                            }
                         }
                     };
 
@@ -439,7 +467,7 @@ impl ImageRenderer {
             .map_err(|e| RenderingServiceError::ImageConversionError {
                 from_format: "binary".to_string(),
                 to_format: "file".to_string(),
-                reason: format!("Failed to write file: {}", e)
+                reason: format!("Failed to write file: {}", e),
             })?;
 
         Ok(())
@@ -458,16 +486,18 @@ impl ImageRenderer {
     }
 
     /// Validate diagram dimensions
-    fn validate_dimensions(&self, dimensions: Option<(u32, u32)>) -> Result<(), RenderingServiceError> {
+    fn validate_dimensions(
+        &self,
+        dimensions: Option<(u32, u32)>,
+    ) -> Result<(), RenderingServiceError> {
         if let Some((width, height)) = dimensions {
             if width > self.config.max_width || height > self.config.max_height {
                 return Err(RenderingServiceError::InvalidMermaidSyntax {
                     line: None,
                     details: format!(
                         "Dimensions {}x{} exceed maximum allowed {}x{}",
-                        width, height,
-                        self.config.max_width, self.config.max_height
-                    )
+                        width, height, self.config.max_width, self.config.max_height
+                    ),
                 });
             }
         }
@@ -504,13 +534,13 @@ impl ImageRenderer {
         let subgraph_count = mermaid_code.matches("subgraph").count();
 
         // Count styling and classes (additional complexity)
-        let style_count = mermaid_code.matches("class ").count() +
-                         mermaid_code.matches("style ").count();
+        let style_count =
+            mermaid_code.matches("class ").count() + mermaid_code.matches("style ").count();
 
         // Calculate complexity score
-        score += node_count as u32 * 2;      // 2 points per connection
+        score += node_count as u32 * 2; // 2 points per connection
         score += subgraph_count as u32 * 10; // 10 points per subgraph
-        score += style_count as u32 * 1;     // 1 point per style
+        score += style_count as u32 * 1; // 1 point per style
 
         // Check for excessive nodes
         if node_count > self.config.max_nodes as usize {
@@ -536,7 +566,7 @@ impl ImageRenderer {
         for pattern in &suspicious_patterns {
             if mermaid_code.to_lowercase().contains(pattern) {
                 return Err(RenderingServiceError::SecurityValidationFailed {
-                    reason: format!("Suspicious pattern detected: {}", pattern)
+                    reason: format!("Suspicious pattern detected: {}", pattern),
                 });
             }
         }
@@ -545,7 +575,7 @@ impl ImageRenderer {
         for line in mermaid_code.lines() {
             if line.len() > 1000 {
                 return Err(RenderingServiceError::SecurityValidationFailed {
-                    reason: "Line too long (potential DoS)".to_string()
+                    reason: "Line too long (potential DoS)".to_string(),
                 });
             }
         }
@@ -554,7 +584,11 @@ impl ImageRenderer {
     }
 
     /// Comprehensive input validation
-    fn validate_input(&self, mermaid_code: &str, dimensions: Option<(u32, u32)>) -> Result<(), RenderingServiceError> {
+    fn validate_input(
+        &self,
+        mermaid_code: &str,
+        dimensions: Option<(u32, u32)>,
+    ) -> Result<(), RenderingServiceError> {
         self.validate_input_size(mermaid_code)?;
         self.validate_dimensions(dimensions)?;
         self.validate_complexity(mermaid_code)?;
@@ -720,10 +754,14 @@ graph TD
 
         // Test valid input
         let valid_input = "graph TD\n    A --> B";
-        assert!(renderer.validate_input(valid_input, Some((800, 600))).is_ok());
+        assert!(renderer
+            .validate_input(valid_input, Some((800, 600)))
+            .is_ok());
 
         // Test invalid input (multiple violations)
         let invalid_input = "A".repeat(2 * 1024 * 1024); // Too large
-        assert!(renderer.validate_input(&invalid_input, Some((10000, 600))).is_err());
+        assert!(renderer
+            .validate_input(&invalid_input, Some((10000, 600)))
+            .is_err());
     }
 }

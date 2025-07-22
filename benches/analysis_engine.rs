@@ -3,8 +3,8 @@ use std::fs;
 use std::path::Path;
 use std::sync::Arc;
 use tempfile::TempDir;
-use uveddi::analysis::{AnalysisEngine, AnalysisDetector};
 use uveddi::analysis::detectors::anti_patterns::GodObjectDetector;
+use uveddi::analysis::{AnalysisDetector, AnalysisEngine};
 
 /// Generate test Rust code for benchmarking
 fn create_test_rust_file(file_name: &str, complexity: &str) -> String {
@@ -186,25 +186,25 @@ fn create_test_project(file_count: usize) -> TempDir {
     let temp_dir = TempDir::new().unwrap();
     let src_dir = temp_dir.path().join("src");
     fs::create_dir(&src_dir).unwrap();
-    
+
     // Create lib.rs
     let mut lib_content = String::new();
     for i in 0..file_count {
         lib_content.push_str(&format!("pub mod file_{};\n", i));
     }
     fs::write(src_dir.join("lib.rs"), lib_content).unwrap();
-    
+
     // Create individual files
     for i in 0..file_count {
         let complexity = match i % 3 {
             0 => "simple",
-            1 => "medium", 
+            1 => "medium",
             _ => "complex",
         };
         let content = create_test_rust_file(&format!("file_{}", i), complexity);
         fs::write(src_dir.join(&format!("file_{}.rs", i)), content).unwrap();
     }
-    
+
     // Create Cargo.toml
     let cargo_toml = r#"
 [package]
@@ -215,14 +215,14 @@ edition = "2021"
 [dependencies]
 "#;
     fs::write(temp_dir.path().join("Cargo.toml"), cargo_toml).unwrap();
-    
+
     temp_dir
 }
 
 /// Benchmark the analysis engine with different project sizes
 fn bench_analysis_engine_scalability(c: &mut Criterion) {
     let mut group = c.benchmark_group("analysis_engine_scalability");
-    
+
     for &file_count in &[10, 50, 100, 200] {
         group.throughput(Throughput::Elements(file_count as u64));
         group.bench_with_input(
@@ -230,7 +230,7 @@ fn bench_analysis_engine_scalability(c: &mut Criterion) {
             &file_count,
             |b, &file_count| {
                 let temp_project = create_test_project(file_count);
-                
+
                 b.iter(|| {
                     let rt = tokio::runtime::Runtime::new().unwrap();
                     rt.block_on(async {
@@ -248,7 +248,7 @@ fn bench_analysis_engine_scalability(c: &mut Criterion) {
 /// Benchmark God Object detection specifically
 fn bench_god_object_detection(c: &mut Criterion) {
     let mut group = c.benchmark_group("god_object_detection");
-    
+
     for &file_count in &[10, 25, 50, 100] {
         group.throughput(Throughput::Elements(file_count as u64));
         group.bench_with_input(
@@ -257,13 +257,16 @@ fn bench_god_object_detection(c: &mut Criterion) {
             |b, &file_count| {
                 let temp_project = create_test_project(file_count);
                 let detector = GodObjectDetector::default();
-                
+
                 b.iter(|| {
                     let rt = tokio::runtime::Runtime::new().unwrap();
                     rt.block_on(async {
                         // Simulate processing each file
                         for i in 0..file_count {
-                            let file_path = temp_project.path().join("src").join(&format!("file_{}.rs", i));
+                            let file_path = temp_project
+                                .path()
+                                .join("src")
+                                .join(&format!("file_{}.rs", i));
                             if let Ok(source) = fs::read_to_string(&file_path) {
                                 let parsed_file = create_mock_parsed_file(&file_path, &source);
                                 let result = detector.detect_issues(&parsed_file).await;
@@ -283,16 +286,16 @@ fn create_mock_parsed_file(file_path: &Path, source: &str) -> uveddi::ast::Parse
     #[cfg(feature = "tree-sitter")]
     {
         use tree_sitter::{Language, Parser};
-        
+
         let mut parser = Parser::new();
         extern "C" {
             fn tree_sitter_rust() -> Language;
         }
         let language = unsafe { tree_sitter_rust() };
         parser.set_language(&language).unwrap();
-        
+
         let tree = parser.parse(source, None);
-        
+
         uveddi::ast::ParsedFile {
             file_path: Arc::new(file_path.to_path_buf()),
             source: Arc::new(source.to_string()),
@@ -319,14 +322,14 @@ fn create_mock_parsed_file(file_path: &Path, source: &str) -> uveddi::ast::Parse
 fn bench_analysis_phases(c: &mut Criterion) {
     let mut group = c.benchmark_group("analysis_phases");
     let temp_project = create_test_project(50);
-    
+
     group.bench_function("initialization", |b| {
         b.iter(|| {
             let engine = AnalysisEngine::new().unwrap();
             black_box(engine)
         })
     });
-    
+
     group.bench_function("file_discovery", |b| {
         b.iter(|| {
             let rt = tokio::runtime::Runtime::new().unwrap();
@@ -345,7 +348,7 @@ fn bench_analysis_phases(c: &mut Criterion) {
             })
         })
     });
-    
+
     group.bench_function("parsing_phase", |b| {
         b.iter(|| {
             let rt = tokio::runtime::Runtime::new().unwrap();
@@ -361,18 +364,18 @@ fn bench_analysis_phases(c: &mut Criterion) {
             })
         })
     });
-    
+
     group.finish();
 }
 
 /// Benchmark memory usage patterns
 fn bench_memory_patterns(c: &mut Criterion) {
     let mut group = c.benchmark_group("memory_patterns");
-    
+
     group.bench_function("large_project_memory", |b| {
         b.iter_custom(|iters| {
             let start = std::time::Instant::now();
-            
+
             for _ in 0..iters {
                 let temp_project = create_test_project(100);
                 let rt = tokio::runtime::Runtime::new().unwrap();
@@ -383,18 +386,18 @@ fn bench_memory_patterns(c: &mut Criterion) {
                 });
                 // Project automatically cleaned up when temp_project goes out of scope
             }
-            
+
             start.elapsed()
         })
     });
-    
+
     group.finish();
 }
 
 /// Benchmark concurrent analysis
 fn bench_concurrent_analysis(c: &mut Criterion) {
     let mut group = c.benchmark_group("concurrent_analysis");
-    
+
     for &thread_count in &[1, 2, 4, 8] {
         group.bench_with_input(
             BenchmarkId::new("concurrent_projects", thread_count),
@@ -404,7 +407,7 @@ fn bench_concurrent_analysis(c: &mut Criterion) {
                     let rt = tokio::runtime::Runtime::new().unwrap();
                     rt.block_on(async {
                         let mut handles = Vec::new();
-                        
+
                         for _ in 0..thread_count {
                             let handle = tokio::spawn(async move {
                                 let temp_project = create_test_project(25);
@@ -414,7 +417,7 @@ fn bench_concurrent_analysis(c: &mut Criterion) {
                             });
                             handles.push(handle);
                         }
-                        
+
                         for handle in handles {
                             let _ = handle.await;
                         }
@@ -423,7 +426,7 @@ fn bench_concurrent_analysis(c: &mut Criterion) {
             },
         );
     }
-    
+
     group.finish();
 }
 

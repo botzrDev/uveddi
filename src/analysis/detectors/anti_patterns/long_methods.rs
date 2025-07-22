@@ -217,27 +217,31 @@ impl LongMethodsDetector {
     /// # Errors
     /// Returns `AntiPatternDetectionError` if the query string is malformed or
     /// incompatible with the provided language grammar.
-    fn create_rust_function_query(&self, language: &tree_sitter::Language) -> Result<Query, AnalysisError> {
+    fn create_rust_function_query(
+        &self,
+        language: &tree_sitter::Language,
+    ) -> Result<Query, AnalysisError> {
         Query::new(language, RUST_FUNCTION_QUERY).map_err(|e| {
             AnalysisError::AntiPatternDetectionError(format!(
-                "Failed to create Rust function query: {}", e
+                "Failed to create Rust function query: {}",
+                e
             ))
         })
     }
 
     /// Calculate comprehensive metrics for a single Rust function
-    /// 
+    ///
     /// This method computes all the metrics required for long method detection
     /// including logical lines of code, statement count, parameter count,
     /// nesting depth, cyclomatic complexity, and cognitive complexity.
-    /// 
+    ///
     /// # Arguments
     /// * `name_node` - The tree-sitter node representing the function name
     /// * `body_node` - The tree-sitter node representing the function body
     /// * `function_node` - The tree-sitter node representing the entire function
     /// * `source` - The source code as bytes
     /// * `file_path` - The path to the file being analyzed
-    /// 
+    ///
     /// # Returns
     /// * `Ok(MethodMetrics)` - Complete metrics for the function
     /// * `Err(AnalysisError)` - If metrics calculation fails
@@ -283,17 +287,17 @@ impl LongMethodsDetector {
     }
 
     /// Process tree-sitter query matches into method metrics
-    /// 
+    ///
     /// This method processes the results of tree-sitter queries to extract
     /// method metrics from each matched function. It handles the iteration
     /// over matches and delegates the actual metrics calculation to the
     /// calculate_method_metrics helper method.
-    /// 
+    ///
     /// # Arguments
     /// * `matches` - Vector of query matches from tree-sitter
     /// * `source` - The source code as bytes
     /// * `file_path` - The path to the file being analyzed
-    /// 
+    ///
     /// # Returns
     /// * `Ok(Vec<MethodMetrics>)` - Vector of calculated method metrics
     /// * `Err(AnalysisError)` - If processing fails
@@ -304,14 +308,15 @@ impl LongMethodsDetector {
         file_path: &str,
     ) -> Result<Vec<MethodMetrics>, AnalysisError> {
         let mut metrics = Vec::new();
-        
+
         // Sort matches by start position to ensure consistent ordering
         matches.sort_by_key(|m| {
-            m.captures.get(0)
+            m.captures
+                .get(0)
                 .map(|c| c.node.start_position().row)
                 .unwrap_or(0)
         });
-        
+
         for mat in matches {
             if let (Some(name_capture), Some(body_capture)) =
                 (mat.captures.get(1), mat.captures.get(2))
@@ -332,7 +337,7 @@ impl LongMethodsDetector {
                 }
             }
         }
-        
+
         Ok(metrics)
     }
 
@@ -761,7 +766,7 @@ impl LongMethodsDetector {
                     let params_node = cursor.node();
                     let mut param_cursor = params_node.walk();
                     let mut param_count = 0;
-                    
+
                     if param_cursor.goto_first_child() {
                         loop {
                             if param_cursor.node().kind() == "parameter" {
@@ -772,7 +777,7 @@ impl LongMethodsDetector {
                             }
                         }
                     }
-                    
+
                     return Ok(param_count);
                 }
                 if !cursor.goto_next_sibling() {
@@ -1015,12 +1020,18 @@ impl LongMethodsDetector {
 
 #[async_trait]
 impl AnalysisDetector for LongMethodsDetector {
-    async fn detect_issues(&self, file: &ParsedFile) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
+    async fn detect_issues(
+        &self,
+        file: &ParsedFile,
+    ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         let mut issues = Vec::new();
         debug!("Analyzing file: {}", file.file_path.display());
         let method_metrics = self.extract_method_metrics(file)?;
         let thresholds = self.thresholds.get(&file.language).ok_or_else(|| {
-            crate::analysis::errors::AnalysisError::UnsupportedLanguage(format!("{:?}", file.language))
+            crate::analysis::errors::AnalysisError::UnsupportedLanguage(format!(
+                "{:?}",
+                file.language
+            ))
         })?;
         for metrics in method_metrics {
             let severity_score = self.calculate_severity_score(&metrics, thresholds);
@@ -1115,10 +1126,13 @@ fn very_long_function() {
 
         let parsed_file = parser
             .parse_content(rust_code, &PathBuf::from("test.rs"), SourceLanguage::Rust)
-            .map_err(|e| ErrorHelpers::file_processing_error("test.rs", "parsing", &e.to_string()))?;
+            .map_err(|e| {
+                ErrorHelpers::file_processing_error("test.rs", "parsing", &e.to_string())
+            })?;
 
         let issues = detector
-            .detect_issues(&parsed_file).await
+            .detect_issues(&parsed_file)
+            .await
             .map_err(|e| ErrorHelpers::detector_config_error("long_methods", &e.to_string()))?;
 
         assert!(!issues.is_empty(), "Should detect long method");
@@ -1141,10 +1155,13 @@ fn short_function() {
 
         let parsed_file = parser
             .parse_content(rust_code, &PathBuf::from("test.rs"), SourceLanguage::Rust)
-            .map_err(|e| ErrorHelpers::file_processing_error("test.rs", "parsing", &e.to_string()))?;
+            .map_err(|e| {
+                ErrorHelpers::file_processing_error("test.rs", "parsing", &e.to_string())
+            })?;
 
         let issues = detector
-            .detect_issues(&parsed_file).await
+            .detect_issues(&parsed_file)
+            .await
             .map_err(|e| ErrorHelpers::detector_config_error("long_methods", &e.to_string()))?;
 
         assert!(issues.is_empty(), "Should not detect short method");
@@ -1156,7 +1173,7 @@ fn short_function() {
         let detector = LongMethodsDetector::new();
         let mut parser = tree_sitter::Parser::new();
         parser.set_language(&tree_sitter_rust::language())?;
-        
+
         let rust_code = r#"
 fn test_function(param1: i32, param2: String) -> i32 {
     if param1 > 0 {
@@ -1167,29 +1184,31 @@ fn test_function(param1: i32, param2: String) -> i32 {
     param1 + 1
 }
 "#;
-        
+
         let tree = parser.parse(rust_code, None).unwrap();
         let source = rust_code.as_bytes();
         let language = tree.language();
-        
+
         let function_query = detector.create_rust_function_query(&language)?;
         let mut cursor = tree_sitter::QueryCursor::new();
-        let matches: Vec<_> = cursor.matches(&function_query, tree.root_node(), source).collect();
-        
+        let matches: Vec<_> = cursor
+            .matches(&function_query, tree.root_node(), source)
+            .collect();
+
         assert!(!matches.is_empty(), "Should find function");
         let mat = &matches[0];
         let name_node = mat.captures.get(1).unwrap().node;
         let body_node = mat.captures.get(2).unwrap().node;
         let function_node = mat.captures.get(0).unwrap().node;
-        
+
         let metrics = detector.calculate_method_metrics(
             name_node,
             body_node,
             function_node,
             source,
-            "test.rs"
+            "test.rs",
         )?;
-        
+
         assert_eq!(metrics.name, "test_function");
         assert_eq!(metrics.file_path, "test.rs");
         assert_eq!(metrics.parameter_count, 2);
@@ -1198,44 +1217,47 @@ fn test_function(param1: i32, param2: String) -> i32 {
         assert!(metrics.max_nesting_depth > 0);
         assert!(metrics.cyclomatic_complexity > 0);
         assert!(metrics.cognitive_complexity > 0);
-        
+
         Ok(())
     }
 
     #[tokio::test]
-    async fn test_calculate_method_metrics_invalid_name() -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_calculate_method_metrics_invalid_name() -> Result<(), Box<dyn std::error::Error>>
+    {
         let detector = LongMethodsDetector::new();
         let mut parser = tree_sitter::Parser::new();
         parser.set_language(&tree_sitter_rust::language())?;
-        
+
         // Create a mock node that will fail utf8_text extraction
         let rust_code = "fn test() {}";
         let tree = parser.parse(rust_code, None).unwrap();
         let source = rust_code.as_bytes();
         let language = tree.language();
-        
+
         let function_query = detector.create_rust_function_query(&language)?;
         let mut cursor = tree_sitter::QueryCursor::new();
-        let matches: Vec<_> = cursor.matches(&function_query, tree.root_node(), source).collect();
-        
+        let matches: Vec<_> = cursor
+            .matches(&function_query, tree.root_node(), source)
+            .collect();
+
         if !matches.is_empty() {
             let mat = &matches[0];
             let name_node = mat.captures.get(1).unwrap().node;
             let body_node = mat.captures.get(2).unwrap().node;
             let function_node = mat.captures.get(0).unwrap().node;
-            
+
             // This should work normally, but we can test the error path conceptually
             let result = detector.calculate_method_metrics(
                 name_node,
                 body_node,
                 function_node,
                 source,
-                "test.rs"
+                "test.rs",
             );
-            
+
             assert!(result.is_ok(), "Should succeed with valid function");
         }
-        
+
         Ok(())
     }
 
@@ -1252,7 +1274,7 @@ fn test_function(param1: i32, param2: String) -> i32 {
         let detector = LongMethodsDetector::new();
         let mut parser = tree_sitter::Parser::new();
         parser.set_language(&tree_sitter_rust::language())?;
-        
+
         let rust_code = r#"
 fn function_one(x: i32) -> i32 {
     if x > 0 {
@@ -1266,42 +1288,47 @@ fn function_two() {
     println!("Hello, world!");
 }
 "#;
-        
+
         let tree = parser.parse(rust_code, None).unwrap();
         let source = rust_code.as_bytes();
         let language = tree.language();
-        
+
         let function_query = detector.create_rust_function_query(&language)?;
         let mut cursor = tree_sitter::QueryCursor::new();
-        let matches: Vec<_> = cursor.matches(&function_query, tree.root_node(), source).collect();
-        
-        let metrics = detector.process_function_matches(
-            matches,
-            source,
-            "test.rs"
-        )?;
-        
+        let matches: Vec<_> = cursor
+            .matches(&function_query, tree.root_node(), source)
+            .collect();
+
+        let metrics = detector.process_function_matches(matches, source, "test.rs")?;
+
         assert_eq!(metrics.len(), 2, "Should find two functions");
-        
+
         // Debug: print found function names
-        println!("Found functions: {:?}", metrics.iter().map(|m| &m.name).collect::<Vec<_>>());
-        
+        println!(
+            "Found functions: {:?}",
+            metrics.iter().map(|m| &m.name).collect::<Vec<_>>()
+        );
+
         // Find functions by name (order-agnostic test)
-        let function_one = metrics.iter().find(|m| m.name == "function_one")
+        let function_one = metrics
+            .iter()
+            .find(|m| m.name == "function_one")
             .expect("Should find function_one");
-        let function_two = metrics.iter().find(|m| m.name == "function_two")
+        let function_two = metrics
+            .iter()
+            .find(|m| m.name == "function_two")
             .expect("Should find function_two");
-        
+
         // Check function_one
         assert_eq!(function_one.file_path, "test.rs");
         assert_eq!(function_one.parameter_count, 1);
         assert!(function_one.logical_loc > 0);
-        
+
         // Check function_two
         assert_eq!(function_two.file_path, "test.rs");
         assert_eq!(function_two.parameter_count, 0);
         assert!(function_two.logical_loc > 0);
-        
+
         Ok(())
     }
 
@@ -1310,14 +1337,13 @@ fn function_two() {
         let detector = LongMethodsDetector::new();
         let empty_matches = Vec::new();
         let source = b"";
-        
-        let metrics = detector.process_function_matches(
-            empty_matches,
-            source,
-            "empty.rs"
-        )?;
-        
-        assert!(metrics.is_empty(), "Should return empty metrics for empty matches");
+
+        let metrics = detector.process_function_matches(empty_matches, source, "empty.rs")?;
+
+        assert!(
+            metrics.is_empty(),
+            "Should return empty metrics for empty matches"
+        );
         Ok(())
     }
 
@@ -1326,28 +1352,26 @@ fn function_two() {
         let detector = LongMethodsDetector::new();
         let mut parser = tree_sitter::Parser::new();
         parser.set_language(&tree_sitter_rust::language())?;
-        
+
         let rust_code = r#"
 fn valid_function() {
     println!("This is valid");
 }
 "#;
-        
+
         let tree = parser.parse(rust_code, None).unwrap();
         let source = rust_code.as_bytes();
         let language = tree.language();
-        
+
         let function_query = detector.create_rust_function_query(&language)?;
         let mut cursor = tree_sitter::QueryCursor::new();
-        let matches: Vec<_> = cursor.matches(&function_query, tree.root_node(), source).collect();
-        
+        let matches: Vec<_> = cursor
+            .matches(&function_query, tree.root_node(), source)
+            .collect();
+
         // This should work normally with valid code
-        let metrics = detector.process_function_matches(
-            matches,
-            source,
-            "test.rs"
-        )?;
-        
+        let metrics = detector.process_function_matches(matches, source, "test.rs")?;
+
         assert!(!metrics.is_empty(), "Should process valid function");
         Ok(())
     }
@@ -1360,7 +1384,7 @@ fn valid_function() {
         let language = tree_sitter_rust::language();
         let result = detector.create_rust_function_query(&language);
         assert!(result.is_ok());
-        
+
         // Verify the query can be used
         let query = result.unwrap();
         assert!(query.capture_names().len() > 0);
@@ -1403,10 +1427,13 @@ def very_long_function():
                 &PathBuf::from("test.py"),
                 SourceLanguage::Python,
             )
-            .map_err(|e| ErrorHelpers::file_processing_error("test.py", "parsing", &e.to_string()))?;
+            .map_err(|e| {
+                ErrorHelpers::file_processing_error("test.py", "parsing", &e.to_string())
+            })?;
 
         let issues = detector
-            .detect_issues(&parsed_file).await
+            .detect_issues(&parsed_file)
+            .await
             .map_err(|e| ErrorHelpers::detector_config_error("long_methods", &e.to_string()))?;
 
         assert!(!issues.is_empty(), "Should detect long method");

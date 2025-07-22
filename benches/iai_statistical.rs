@@ -1,7 +1,7 @@
 //! iai-callgrind benchmarks for deterministic CI performance testing
-//! 
+//!
 //! These benchmarks provide:
-//! - Deterministic instruction-level measurements 
+//! - Deterministic instruction-level measurements
 //! - CI-safe performance regression detection
 //! - Memory allocation analysis
 //! - Integration with statistical regression detection
@@ -14,10 +14,12 @@ fn generate_deterministic_data(size: usize, pattern: &str) -> Vec<f64> {
     match pattern {
         "linear_increasing" => (0..size).map(|i| i as f64).collect(),
         "stable" => vec![100.0; size],
-        "sine_wave" => (0..size).map(|i| {
-            let x = i as f64 * std::f64::consts::PI / 50.0;
-            100.0 + 10.0 * x.sin()
-        }).collect(),
+        "sine_wave" => (0..size)
+            .map(|i| {
+                let x = i as f64 * std::f64::consts::PI / 50.0;
+                100.0 + 10.0 * x.sin()
+            })
+            .collect(),
         "step_function" => {
             let mut data = Vec::with_capacity(size);
             for i in 0..size {
@@ -25,7 +27,7 @@ fn generate_deterministic_data(size: usize, pattern: &str) -> Vec<f64> {
                 data.push(step);
             }
             data
-        },
+        }
         _ => vec![0.0; size],
     }
 }
@@ -78,12 +80,12 @@ fn complete_statistical_pipeline() {
     let data = generate_deterministic_data(500, "step_function");
     let analyzer = StatisticalAnalyzer::new();
     let detector = TrendDetector::new();
-    
+
     // Full analysis pipeline
     let _mann_kendall = analyzer.mann_kendall_test(&data);
     let _change_points = detector.detect_change_points_pelt(&data);
     let _confidence_interval = analyzer.confidence_interval(&data, 0.95);
-    
+
     // Effect size calculation (comparing first and second half)
     if data.len() >= 20 {
         let mid = data.len() / 2;
@@ -96,7 +98,7 @@ fn complete_statistical_pipeline() {
 // Define the benchmark groups using correct macro syntax
 library_benchmark_group!(
     name = statistical_benchmarks;
-    benchmarks = mann_kendall_small_stable, mann_kendall_medium_increasing, mann_kendall_large_sine, 
+    benchmarks = mann_kendall_small_stable, mann_kendall_medium_increasing, mann_kendall_large_sine,
                 change_point_detection_small, change_point_detection_medium,
                 confidence_interval_calculation, effect_size_calculation, complete_statistical_pipeline
 );

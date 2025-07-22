@@ -147,8 +147,6 @@ impl EventHandler {
         }
     }
 
->>>>>>>
-
     /// Handle keyboard events
     fn handle_key_event(&self, key_event: KeyEvent, app_state: &mut AppState) -> Vec<AppMessage> {
         // Global key handlers that work on any screen
@@ -188,7 +186,6 @@ impl EventHandler {
             AppScreen::PluginManager => self.handle_plugin_manager_keys(key_event, app_state),
         }
     }
->>>>>>>
 
     /// Handle keys for main menu screen
     fn handle_main_menu_keys(

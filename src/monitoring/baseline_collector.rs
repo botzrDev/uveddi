@@ -3,19 +3,19 @@
 //! Automated system for collecting performance baselines, storing them persistently,
 //! and providing comparison capabilities for regression detection.
 
+use anyhow::{Context, Result};
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
-use serde::{Deserialize, Serialize};
 use tokio::fs;
-use chrono::{DateTime, Utc};
-use anyhow::{Result, Context};
 use uuid::Uuid;
 
 use crate::analysis::AnalysisEngine;
 use crate::monitoring::enterprise_metrics::{
-    EnterpriseMetricsCollector, BaselineData, MeasurementSnapshot, 
-    RegressionAnalysis, EnvironmentInfo
+    BaselineData, EnterpriseMetricsCollector, EnvironmentInfo, MeasurementSnapshot,
+    RegressionAnalysis,
 };
 
 /// Baseline collector for automated performance baseline management
@@ -52,10 +52,10 @@ pub struct CollectionMetadata {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum CollectionMethod {
-    Automated,        // Collected automatically during CI/testing
-    Manual,          // Manually triggered baseline collection
-    Benchmark,       // Collected during benchmark runs
-    Production,      // Collected from production metrics
+    Automated,  // Collected automatically during CI/testing
+    Manual,     // Manually triggered baseline collection
+    Benchmark,  // Collected during benchmark runs
+    Production, // Collected from production metrics
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -157,11 +157,11 @@ pub struct StabilityComparison {
 impl BaselineCollector {
     pub fn new<P: AsRef<Path>>(storage_path: P) -> Result<Self> {
         let storage_path = storage_path.as_ref().to_path_buf();
-        
+
         // Create storage directory if it doesn't exist
         std::fs::create_dir_all(&storage_path)
             .context("Failed to create baseline storage directory")?;
-        
+
         Ok(Self {
             storage_path,
             metrics_collector: EnterpriseMetricsCollector::new(),
@@ -172,9 +172,10 @@ impl BaselineCollector {
 
     /// Load existing baselines from storage
     pub async fn load_baseline_history(&mut self) -> Result<()> {
-        let entries = fs::read_dir(&self.storage_path).await
+        let entries = fs::read_dir(&self.storage_path)
+            .await
             .context("Failed to read baseline storage directory")?;
-        
+
         let mut entries = entries;
         while let Some(entry) = entries.next_entry().await? {
             let path = entry.path();
@@ -187,56 +188,70 @@ impl BaselineCollector {
                 }
             }
         }
-        
+
         // Sort by timestamp
-        self.baseline_history.sort_by(|a, b| a.storage_timestamp.cmp(&b.storage_timestamp));
-        
+        self.baseline_history
+            .sort_by(|a, b| a.storage_timestamp.cmp(&b.storage_timestamp));
+
         // Set the most recent as current baseline
         if let Some(latest) = self.baseline_history.last() {
             self.current_baseline = Some(latest.baseline_data.clone());
         }
-        
-        log::info!("Loaded {} baselines from storage", self.baseline_history.len());
+
+        log::info!(
+            "Loaded {} baselines from storage",
+            self.baseline_history.len()
+        );
         Ok(())
     }
 
     /// Collect a comprehensive performance baseline
-    pub async fn collect_baseline(&mut self, config: BaselineCollectionConfig) -> Result<StoredBaseline> {
-        log::info!("Starting baseline collection with {} test scenarios", config.test_file_counts.len());
-        
+    pub async fn collect_baseline(
+        &mut self,
+        config: BaselineCollectionConfig,
+    ) -> Result<StoredBaseline> {
+        log::info!(
+            "Starting baseline collection with {} test scenarios",
+            config.test_file_counts.len()
+        );
+
         let collection_start = Instant::now();
         let mut all_measurements = Vec::new();
-        
+
         // Collect environment info
         let environment_conditions = self.collect_environment_conditions().await;
-        
+
         // Run baseline tests for each file count scenario
         for &file_count in &config.test_file_counts {
             log::info!("Collecting baseline for {} files", file_count);
-            
-            let measurements = self.run_baseline_scenario(
-                file_count,
-                config.iterations_per_test,
-                config.warmup_iterations
-            ).await?;
-            
+
+            let measurements = self
+                .run_baseline_scenario(
+                    file_count,
+                    config.iterations_per_test,
+                    config.warmup_iterations,
+                )
+                .await?;
+
             all_measurements.extend(measurements);
         }
-        
+
         // Create baseline data from collected measurements
-        let baseline_data = self.create_baseline_from_measurements(&all_measurements).await?;
-        
+        let baseline_data = self
+            .create_baseline_from_measurements(&all_measurements)
+            .await?;
+
         // Validate the baseline
         let validation_results = self.validate_baseline(&all_measurements, &config).await?;
-        
+
         if !validation_results.is_valid {
             return Err(anyhow::anyhow!(
-                "Baseline validation failed: confidence={:.2}, stability={:.2}", 
+                "Baseline validation failed: confidence={:.2}, stability={:.2}",
                 validation_results.confidence_score,
                 validation_results.stability_score
             ));
         }
-        
+
         // Create collection metadata
         let collection_metadata = CollectionMetadata {
             collection_method: CollectionMethod::Automated,
@@ -244,11 +259,13 @@ impl BaselineCollector {
             file_count_tested: all_measurements.len(),
             analysis_iterations: config.iterations_per_test,
             environment_conditions,
-            git_commit: self.get_git_commit().unwrap_or_else(|| "unknown".to_string()),
+            git_commit: self
+                .get_git_commit()
+                .unwrap_or_else(|| "unknown".to_string()),
             rust_version: env!("CARGO_PKG_VERSION").to_string(),
             configuration_hash: self.calculate_config_hash(&config),
         };
-        
+
         // Create stored baseline
         let stored_baseline = StoredBaseline {
             id: self.generate_baseline_id(),
@@ -257,128 +274,147 @@ impl BaselineCollector {
             validation_results,
             storage_timestamp: Utc::now(),
         };
-        
+
         // Store to disk
         self.store_baseline(&stored_baseline).await?;
-        
+
         // Update in-memory state
         self.baseline_history.push(stored_baseline.clone());
         self.current_baseline = Some(stored_baseline.baseline_data.clone());
-        
-        log::info!("Baseline collection completed successfully: ID={}", stored_baseline.id);
+
+        log::info!(
+            "Baseline collection completed successfully: ID={}",
+            stored_baseline.id
+        );
         Ok(stored_baseline)
     }
 
     /// Run a single baseline scenario with specified parameters
-    async fn run_baseline_scenario(&self, file_count: usize, iterations: u32, warmup: u32) -> Result<Vec<MeasurementSnapshot>> {
+    async fn run_baseline_scenario(
+        &self,
+        file_count: usize,
+        iterations: u32,
+        warmup: u32,
+    ) -> Result<Vec<MeasurementSnapshot>> {
         // Create temporary directory using standard library
-        let temp_dir_path = std::env::temp_dir().join(format!("uveddi_baseline_{}", Uuid::new_v4()));
-        tokio::fs::create_dir_all(&temp_dir_path).await
+        let temp_dir_path =
+            std::env::temp_dir().join(format!("uveddi_baseline_{}", Uuid::new_v4()));
+        tokio::fs::create_dir_all(&temp_dir_path)
+            .await
             .context("Failed to create temporary directory")?;
-        
+
         // Generate test project
-        let _test_files = self.generate_test_project(&temp_dir_path, file_count).await?;
-        
+        let _test_files = self
+            .generate_test_project(&temp_dir_path, file_count)
+            .await?;
+
         let mut measurements = Vec::new();
-        
+
         // Warmup iterations
         for _ in 0..warmup {
             let _ = self.run_single_analysis(&temp_dir_path).await;
         }
-        
+
         // Actual measurement iterations
         for i in 0..iterations {
             log::debug!("Running analysis iteration {} of {}", i + 1, iterations);
-            
+
             let measurement_start = Instant::now();
-            
+
             // Run analysis and collect metrics
             let snapshot = self.run_analysis_with_metrics(&temp_dir_path).await?;
-            
+
             let iteration_time = measurement_start.elapsed();
             log::debug!("Iteration {} completed in {:?}", i + 1, iteration_time);
-            
+
             measurements.push(snapshot);
         }
-        
+
         Ok(measurements)
     }
 
     /// Run analysis with comprehensive metrics collection
-    async fn run_analysis_with_metrics(&self, temp_dir_path: &PathBuf) -> Result<MeasurementSnapshot> {
+    async fn run_analysis_with_metrics(
+        &self,
+        temp_dir_path: &PathBuf,
+    ) -> Result<MeasurementSnapshot> {
         // Record pipeline performance
         let pipeline_start = Instant::now();
         let analysis_result = self.run_single_analysis(temp_dir_path).await;
         let pipeline_duration = pipeline_start.elapsed();
-        
+
         // Record the measurement
-        self.metrics_collector.record_pipeline_measurement(
-            pipeline_duration,
-            analysis_result.is_ok()
-        ).await;
-        
+        self.metrics_collector
+            .record_pipeline_measurement(pipeline_duration, analysis_result.is_ok())
+            .await;
+
         // Record memory usage (mock for now)
         let memory_usage = self.get_current_memory_usage();
-        self.metrics_collector.record_memory_measurement(memory_usage, 0).await;
-        
+        self.metrics_collector
+            .record_memory_measurement(memory_usage, 0)
+            .await;
+
         // Record AST parsing metrics (simulated)
-        self.metrics_collector.record_ast_parsing_measurement(
-            "rust",
-            Duration::from_millis(10),
-            1000,
-            true
-        ).await;
-        
+        self.metrics_collector
+            .record_ast_parsing_measurement("rust", Duration::from_millis(10), 1000, true)
+            .await;
+
         // Record diagram generation (simulated)
-        self.metrics_collector.record_diagram_generation_measurement(
-            "dependency_graph",
-            Duration::from_millis(50),
-            100,
-            false,
-            true
-        ).await;
-        
+        self.metrics_collector
+            .record_diagram_generation_measurement(
+                "dependency_graph",
+                Duration::from_millis(50),
+                100,
+                false,
+                true,
+            )
+            .await;
+
         // Record cache performance (simulated)
-        self.metrics_collector.record_cache_measurement(
-            "ast_cache",
-            true,
-            Duration::from_micros(100),
-            1024 * 1024
-        ).await;
-        
+        self.metrics_collector
+            .record_cache_measurement("ast_cache", true, Duration::from_micros(100), 1024 * 1024)
+            .await;
+
         // Record incremental analysis (simulated)
-        self.metrics_collector.record_incremental_analysis_measurement(
-            Duration::from_millis(200),
-            Duration::from_millis(120),
-            10.0,
-            95.0
-        ).await;
-        
+        self.metrics_collector
+            .record_incremental_analysis_measurement(
+                Duration::from_millis(200),
+                Duration::from_millis(120),
+                10.0,
+                95.0,
+            )
+            .await;
+
         // Take snapshot
         Ok(self.metrics_collector.take_snapshot().await)
     }
 
     /// Run a single analysis iteration
     async fn run_single_analysis(&self, temp_dir_path: &PathBuf) -> Result<()> {
-        let mut engine = AnalysisEngine::new()
-            .context("Failed to create analysis engine")?;
-        
-        let _result = engine.analyze(temp_dir_path).await
+        let mut engine = AnalysisEngine::new().context("Failed to create analysis engine")?;
+
+        let _result = engine
+            .analyze(temp_dir_path)
+            .await
             .context("Analysis failed")?;
-        
+
         Ok(())
     }
 
     /// Generate enterprise test project
-    async fn generate_test_project(&self, temp_dir_path: &PathBuf, file_count: usize) -> Result<Vec<PathBuf>> {
+    async fn generate_test_project(
+        &self,
+        temp_dir_path: &PathBuf,
+        file_count: usize,
+    ) -> Result<Vec<PathBuf>> {
         let mut files = Vec::new();
-        
+
         // Create directory structure
         let directories = ["src/core", "src/api", "src/services", "src/utils", "tests"];
         for dir in &directories {
             fs::create_dir_all(temp_dir_path.join(dir)).await?;
         }
-        
+
         // Generate files
         for i in 0..file_count {
             let file_path = temp_dir_path.join(format!("src/file_{}.rs", i));
@@ -386,7 +422,7 @@ impl BaselineCollector {
             fs::write(&file_path, content).await?;
             files.push(file_path);
         }
-        
+
         Ok(files)
     }
 
@@ -394,16 +430,13 @@ impl BaselineCollector {
     fn generate_test_file_content(&self, index: usize, total_files: usize) -> String {
         let complexity = match index % 4 {
             0 => "simple",
-            1 => "medium", 
+            1 => "medium",
             2 => "complex",
             _ => "very_complex",
         };
-        
+
         match complexity {
-            "simple" => format!(
-                "pub fn function_{}() -> usize {{ {} }}\n",
-                index, index
-            ),
+            "simple" => format!("pub fn function_{}() -> usize {{ {} }}\n", index, index),
             "medium" => {
                 let mut content = String::new();
                 content.push_str(&format!("pub struct Struct{} {{\n", index));
@@ -415,7 +448,7 @@ impl BaselineCollector {
                 content.push_str("    pub fn new() -> Self { Self { field_0: 0, field_1: 1, field_2: 2, field_3: 3, field_4: 4 } }\n");
                 content.push_str("}\n");
                 content
-            },
+            }
             "complex" => {
                 let mut content = String::new();
                 content.push_str("use std::collections::HashMap;\n");
@@ -434,7 +467,7 @@ impl BaselineCollector {
                 }
                 content.push_str("}\n");
                 content
-            },
+            }
             "very_complex" => {
                 let mut content = String::new();
                 content.push_str("use std::collections::{HashMap, BTreeMap};\n");
@@ -451,7 +484,7 @@ impl BaselineCollector {
                     content.push_str(&format!("    field_{}: {},\n", i, field_type));
                 }
                 content.push_str("}\n\n");
-                
+
                 content.push_str(&format!("impl VeryComplexStruct{} {{\n", index));
                 for i in 0..12 {
                     content.push_str(&format!(
@@ -464,17 +497,22 @@ impl BaselineCollector {
                 }
                 content.push_str("}\n");
                 content
-            },
+            }
             _ => String::new(),
         }
     }
 
     /// Create baseline data from collected measurements
-    async fn create_baseline_from_measurements(&self, measurements: &[MeasurementSnapshot]) -> Result<BaselineData> {
+    async fn create_baseline_from_measurements(
+        &self,
+        measurements: &[MeasurementSnapshot],
+    ) -> Result<BaselineData> {
         if measurements.is_empty() {
-            return Err(anyhow::anyhow!("No measurements available to create baseline"));
+            return Err(anyhow::anyhow!(
+                "No measurements available to create baseline"
+            ));
         }
-        
+
         // Use the first measurement as template and calculate averages
         let template = &measurements[0];
         let baseline = BaselineData {
@@ -487,13 +525,16 @@ impl BaselineCollector {
             incremental_baseline: template.incremental.clone(),
             environment_info: self.collect_environment_info(),
         };
-        
+
         Ok(baseline)
     }
 
     /// Validate baseline quality and stability
-    async fn validate_baseline(&self, measurements: &[MeasurementSnapshot], 
-                              config: &BaselineCollectionConfig) -> Result<ValidationResults> {
+    async fn validate_baseline(
+        &self,
+        measurements: &[MeasurementSnapshot],
+        config: &BaselineCollectionConfig,
+    ) -> Result<ValidationResults> {
         if measurements.len() < 3 {
             return Ok(ValidationResults {
                 is_valid: false,
@@ -504,33 +545,33 @@ impl BaselineCollector {
                 validation_notes: vec!["Insufficient measurements for validation".to_string()],
             });
         }
-        
+
         // Calculate stability from pipeline latency measurements
         let latencies: Vec<f64> = measurements
             .iter()
             .map(|m| m.pipeline.average_latency_ms)
             .collect();
-        
+
         let mean = latencies.iter().sum::<f64>() / latencies.len() as f64;
-        let variance = latencies.iter()
-            .map(|x| (x - mean).powi(2))
-            .sum::<f64>() / latencies.len() as f64;
+        let variance =
+            latencies.iter().map(|x| (x - mean).powi(2)).sum::<f64>() / latencies.len() as f64;
         let std_dev = variance.sqrt();
         let coefficient_of_variation = std_dev / mean;
-        
+
         // Count outliers (beyond 2 standard deviations)
-        let outlier_count = latencies.iter()
+        let outlier_count = latencies
+            .iter()
             .filter(|&&x| (x - mean).abs() > config.outlier_threshold * std_dev)
             .count() as u32;
-        
+
         // Calculate confidence and stability scores
         let stability_score = (1.0 - coefficient_of_variation.min(1.0)).max(0.0);
         let outlier_ratio = outlier_count as f64 / latencies.len() as f64;
         let confidence_score = (1.0 - outlier_ratio) * stability_score;
-        
-        let is_valid = confidence_score >= config.minimum_confidence 
+
+        let is_valid = confidence_score >= config.minimum_confidence
             && coefficient_of_variation <= config.stability_threshold;
-        
+
         let mut validation_notes = Vec::new();
         if coefficient_of_variation > config.stability_threshold {
             validation_notes.push(format!(
@@ -547,7 +588,7 @@ impl BaselineCollector {
                 confidence_score, config.minimum_confidence
             ));
         }
-        
+
         Ok(ValidationResults {
             is_valid,
             confidence_score,
@@ -559,26 +600,40 @@ impl BaselineCollector {
     }
 
     /// Compare two baselines
-    pub async fn compare_baselines(&self, baseline_id: &str, comparison_id: &str) -> Result<BaselineComparison> {
-        let baseline = self.find_baseline_by_id(baseline_id)
+    pub async fn compare_baselines(
+        &self,
+        baseline_id: &str,
+        comparison_id: &str,
+    ) -> Result<BaselineComparison> {
+        let baseline = self
+            .find_baseline_by_id(baseline_id)
             .ok_or_else(|| anyhow::anyhow!("Baseline not found: {}", baseline_id))?;
-        
-        let comparison = self.find_baseline_by_id(comparison_id)
+
+        let comparison = self
+            .find_baseline_by_id(comparison_id)
             .ok_or_else(|| anyhow::anyhow!("Comparison baseline not found: {}", comparison_id))?;
-        
+
         let mut significant_changes = Vec::new();
-        
+
         // Compare pipeline metrics
-        let pipeline_change = ((comparison.baseline_data.pipeline_baseline.average_latency_ms 
+        let pipeline_change = ((comparison
+            .baseline_data
+            .pipeline_baseline
+            .average_latency_ms
             - baseline.baseline_data.pipeline_baseline.average_latency_ms)
-            / baseline.baseline_data.pipeline_baseline.average_latency_ms) * 100.0;
-        
-        if pipeline_change.abs() > 5.0 { // 5% threshold
+            / baseline.baseline_data.pipeline_baseline.average_latency_ms)
+            * 100.0;
+
+        if pipeline_change.abs() > 5.0 {
+            // 5% threshold
             significant_changes.push(SignificantChange {
                 metric_category: "Pipeline Performance".to_string(),
                 metric_name: "Average Latency".to_string(),
                 baseline_value: baseline.baseline_data.pipeline_baseline.average_latency_ms,
-                comparison_value: comparison.baseline_data.pipeline_baseline.average_latency_ms,
+                comparison_value: comparison
+                    .baseline_data
+                    .pipeline_baseline
+                    .average_latency_ms,
                 change_percentage: pipeline_change,
                 statistical_significance: 0.95, // Placeholder
                 impact_assessment: if pipeline_change.abs() > 20.0 {
@@ -590,13 +645,15 @@ impl BaselineCollector {
                 },
             });
         }
-        
+
         // Compare memory metrics
         let memory_change = ((comparison.baseline_data.memory_baseline.peak_usage_bytes as f64
             - baseline.baseline_data.memory_baseline.peak_usage_bytes as f64)
-            / baseline.baseline_data.memory_baseline.peak_usage_bytes as f64) * 100.0;
-        
-        if memory_change.abs() > 10.0 { // 10% threshold
+            / baseline.baseline_data.memory_baseline.peak_usage_bytes as f64)
+            * 100.0;
+
+        if memory_change.abs() > 10.0 {
+            // 10% threshold
             significant_changes.push(SignificantChange {
                 metric_category: "Memory Usage".to_string(),
                 metric_name: "Peak Usage".to_string(),
@@ -613,27 +670,41 @@ impl BaselineCollector {
                 },
             });
         }
-        
-        let regression_detected = significant_changes.iter()
-            .any(|c| c.change_percentage > 0.0 && 
-                 matches!(c.impact_assessment, ChangeImpact::Major | ChangeImpact::Critical));
-        
-        let improvement_detected = significant_changes.iter()
+
+        let regression_detected = significant_changes.iter().any(|c| {
+            c.change_percentage > 0.0
+                && matches!(
+                    c.impact_assessment,
+                    ChangeImpact::Major | ChangeImpact::Critical
+                )
+        });
+
+        let improvement_detected = significant_changes
+            .iter()
             .any(|c| c.change_percentage < 0.0 && c.change_percentage.abs() > 10.0);
-        
-        let overall_change = significant_changes.iter()
+
+        let overall_change = significant_changes
+            .iter()
             .map(|c| c.change_percentage)
-            .sum::<f64>() / significant_changes.len().max(1) as f64;
-        
+            .sum::<f64>()
+            / significant_changes.len().max(1) as f64;
+
         let stability_comparison = StabilityComparison {
             baseline_stability: baseline.validation_results.stability_score,
             comparison_stability: comparison.validation_results.stability_score,
-            stability_change: comparison.validation_results.stability_score - baseline.validation_results.stability_score,
-            consistency_score: (baseline.validation_results.confidence_score + comparison.validation_results.confidence_score) / 2.0,
+            stability_change: comparison.validation_results.stability_score
+                - baseline.validation_results.stability_score,
+            consistency_score: (baseline.validation_results.confidence_score
+                + comparison.validation_results.confidence_score)
+                / 2.0,
         };
-        
-        let recommendation = self.generate_comparison_recommendation(&significant_changes, regression_detected, improvement_detected);
-        
+
+        let recommendation = self.generate_comparison_recommendation(
+            &significant_changes,
+            regression_detected,
+            improvement_detected,
+        );
+
         Ok(BaselineComparison {
             baseline_id: baseline_id.to_string(),
             comparison_id: comparison_id.to_string(),
@@ -651,25 +722,26 @@ impl BaselineCollector {
     async fn store_baseline(&self, baseline: &StoredBaseline) -> Result<()> {
         let filename = format!("baseline_{}.json", baseline.id);
         let file_path = self.storage_path.join(filename);
-        
-        let json = serde_json::to_string_pretty(baseline)
-            .context("Failed to serialize baseline")?;
-        
-        fs::write(&file_path, json).await
+
+        let json =
+            serde_json::to_string_pretty(baseline).context("Failed to serialize baseline")?;
+
+        fs::write(&file_path, json)
+            .await
             .context("Failed to write baseline to file")?;
-        
+
         log::info!("Stored baseline to {:?}", file_path);
         Ok(())
     }
 
     /// Load baseline from file
     async fn load_baseline_from_file(&self, path: &Path) -> Result<StoredBaseline> {
-        let content = fs::read_to_string(path).await
+        let content = fs::read_to_string(path)
+            .await
             .context("Failed to read baseline file")?;
-        
-        let baseline = serde_json::from_str(&content)
-            .context("Failed to deserialize baseline")?;
-        
+
+        let baseline = serde_json::from_str(&content).context("Failed to deserialize baseline")?;
+
         Ok(baseline)
     }
 
@@ -690,7 +762,11 @@ impl BaselineCollector {
 
     /// Helper functions
     fn generate_baseline_id(&self) -> String {
-        format!("baseline_{}_{}", Utc::now().format("%Y%m%d_%H%M%S"), Uuid::new_v4().simple())
+        format!(
+            "baseline_{}_{}",
+            Utc::now().format("%Y%m%d_%H%M%S"),
+            Uuid::new_v4().simple()
+        )
     }
 
     fn get_git_commit(&self) -> Option<String> {
@@ -721,8 +797,15 @@ impl BaselineCollector {
             total_memory_gb: 16.0, // Placeholder
             rust_version: env!("CARGO_PKG_VERSION").to_string(),
             os_version: std::env::consts::OS.to_string(),
-            build_mode: if cfg!(debug_assertions) { "debug" } else { "release" }.to_string(),
-            git_commit: self.get_git_commit().unwrap_or_else(|| "unknown".to_string()),
+            build_mode: if cfg!(debug_assertions) {
+                "debug"
+            } else {
+                "release"
+            }
+            .to_string(),
+            git_commit: self
+                .get_git_commit()
+                .unwrap_or_else(|| "unknown".to_string()),
         }
     }
 
@@ -731,16 +814,24 @@ impl BaselineCollector {
         1024 * 1024 * 100 // 100MB
     }
 
-    fn generate_comparison_recommendation(&self, changes: &[SignificantChange], 
-                                        regression: bool, improvement: bool) -> String {
+    fn generate_comparison_recommendation(
+        &self,
+        changes: &[SignificantChange],
+        regression: bool,
+        improvement: bool,
+    ) -> String {
         if regression && improvement {
             "Mixed performance changes detected. Investigate specific regression areas while maintaining improvements.".to_string()
         } else if regression {
-            let critical_count = changes.iter().filter(|c| matches!(c.impact_assessment, ChangeImpact::Critical)).count();
+            let critical_count = changes
+                .iter()
+                .filter(|c| matches!(c.impact_assessment, ChangeImpact::Critical))
+                .count();
             if critical_count > 0 {
                 format!("CRITICAL: {} critical performance regressions detected. Immediate action required.", critical_count)
             } else {
-                "Performance regressions detected. Review changes and consider optimization.".to_string()
+                "Performance regressions detected. Review changes and consider optimization."
+                    .to_string()
             }
         } else if improvement {
             "Performance improvements detected. Consider establishing new baseline.".to_string()

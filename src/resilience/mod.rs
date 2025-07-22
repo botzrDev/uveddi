@@ -18,7 +18,7 @@ pub mod notifications;
 pub mod recovery;
 pub mod retry;
 
-pub use alerting::{AdvancedAlertSystem, AlertingConfig, AlertType, EnhancedAlert};
+pub use alerting::{AdvancedAlertSystem, AlertType, AlertingConfig, EnhancedAlert};
 pub use analytics::{AlertAnalytics, AlertDashboard, TrendAnalysis};
 pub use availability::AvailabilityDetector;
 pub use circuit_breaker::CircuitBreaker;

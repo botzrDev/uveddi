@@ -142,7 +142,7 @@ impl TelemetryCollector {
     /// Create a new telemetry collector
     pub fn new(config: TelemetryConfig) -> Self {
         let (event_sender, event_receiver) = mpsc::unbounded_channel();
-        
+
         Self {
             event_receiver,
             event_sender,
@@ -190,7 +190,9 @@ impl TelemetryCollector {
         }
 
         // Send to audit system if enabled
-        if self.config.enable_audit_integration && matches!(event.event_type, TelemetryEventType::SecurityAudit) {
+        if self.config.enable_audit_integration
+            && matches!(event.event_type, TelemetryEventType::SecurityAudit)
+        {
             self.send_to_audit_system(event).await;
         }
     }
@@ -299,7 +301,10 @@ pub struct TelemetrySender {
 
 impl TelemetrySender {
     /// Send a telemetry event
-    pub fn send(&self, event: TelemetryEvent) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub fn send(
+        &self,
+        event: TelemetryEvent,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         self.sender.send(event)?;
         Ok(())
     }
@@ -382,8 +387,14 @@ impl TelemetrySender {
         reason: &str,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let mut fields = HashMap::new();
-        fields.insert("state_change".to_string(), TelemetryValue::String(state_change.to_string()));
-        fields.insert("reason".to_string(), TelemetryValue::String(reason.to_string()));
+        fields.insert(
+            "state_change".to_string(),
+            TelemetryValue::String(state_change.to_string()),
+        );
+        fields.insert(
+            "reason".to_string(),
+            TelemetryValue::String(reason.to_string()),
+        );
 
         let event = TelemetryEvent {
             trace_id,
@@ -415,15 +426,18 @@ impl CorrelationContext {
 
     fn add_event(&mut self, event: TelemetryEvent) {
         let trace_id = event.trace_id;
-        self.events.entry(trace_id).or_insert_with(Vec::new).push(event);
-        
+        self.events
+            .entry(trace_id)
+            .or_insert_with(Vec::new)
+            .push(event);
+
         // Clean up old events
         self.cleanup_old_events();
     }
 
     fn cleanup_old_events(&mut self) {
         let cutoff = Utc::now() - chrono::Duration::from_std(self.ttl).unwrap_or_default();
-        
+
         self.events.retain(|_, events| {
             events.retain(|event| event.timestamp > cutoff);
             !events.is_empty()
@@ -467,7 +481,7 @@ mod tests {
 
         let trace_id = TraceId::new();
         let result = sender.log(trace_id, TelemetryLevel::Info, "test", "test message");
-        
+
         assert!(result.is_ok());
     }
 }

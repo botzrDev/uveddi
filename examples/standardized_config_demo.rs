@@ -4,8 +4,7 @@
 //! that replace the inconsistent detector configurations across the codebase.
 
 use uveddi::analysis::{
-    StandardConfigBuilder, StandardDetectorConfig, AnalysisConfig,
-    IssueSeverity
+    AnalysisConfig, IssueSeverity, StandardConfigBuilder, StandardDetectorConfig,
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -14,7 +13,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // 1. Create standardized configurations using the builder pattern
     println!("1. Creating standardized detector configurations...");
-    
+
     let god_object_config = StandardConfigBuilder::new("god_object")
         .enabled(true)
         .severity(IssueSeverity::High)
@@ -48,13 +47,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // 2. Demonstrate configuration access patterns
     println!("\n2. Demonstrating configuration access patterns...");
-    
+
     // Language-specific threshold access
     use uveddi::ast::tree_sitter_impl::SourceLanguage;
     let rust_methods = god_object_config.get_threshold_int("max_methods", SourceLanguage::Rust)?;
-    let python_methods = god_object_config.get_threshold_int("max_methods", SourceLanguage::Python)?;
-    let default_methods = god_object_config.get_threshold_int("max_methods", SourceLanguage::JavaScript)?;
-    
+    let python_methods =
+        god_object_config.get_threshold_int("max_methods", SourceLanguage::Python)?;
+    let default_methods =
+        god_object_config.get_threshold_int("max_methods", SourceLanguage::JavaScript)?;
+
     println!("God Object max_methods thresholds:");
     println!("  - Rust: {}", rust_methods);
     println!("  - Python: {}", python_methods);
@@ -62,9 +63,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // 3. Create a complete analysis configuration
     println!("\n3. Creating complete analysis configuration...");
-    
+
     let mut analysis_config = AnalysisConfig::default();
-    
+
     // Add standardized detector configurations
     analysis_config.set_standard_detector_config("god_object", god_object_config);
     analysis_config.set_standard_detector_config("code_duplication", duplication_config);
@@ -74,21 +75,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let dead_code_config = StandardDetectorConfig::default_for_detector("dead_code");
     analysis_config.set_standard_detector_config("dead_code", dead_code_config);
 
-    println!("✅ Analysis configuration created with {} detectors", 
-             analysis_config.standard_detectors.len());
+    println!(
+        "✅ Analysis configuration created with {} detectors",
+        analysis_config.standard_detectors.len()
+    );
 
     // 4. Demonstrate configuration migration
     println!("\n4. Demonstrating configuration migration...");
-    
+
     let migrated_config = analysis_config.migrate_to_standardized()?;
     println!("✅ Successfully migrated configuration");
-    
+
     let enabled_detectors = migrated_config.get_enabled_detectors();
     println!("Enabled detectors: {:?}", enabled_detectors);
 
     // 5. Export to TOML format
     println!("\n5. Exporting to TOML format...");
-    
+
     let toml_output = toml::to_string_pretty(&migrated_config)?;
     println!("TOML Configuration Preview:");
     println!("{}", &toml_output[..std::cmp::min(500, toml_output.len())]);
@@ -98,25 +101,46 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // 6. Demonstrate effective configuration resolution
     println!("\n6. Demonstrating effective configuration resolution...");
-    
+
     let effective_god_object = analysis_config.get_effective_detector_config("god_object");
     let effective_unknown = analysis_config.get_effective_detector_config("unknown_detector");
-    
-    println!("Effective god_object config enabled: {}", effective_god_object.enabled);
-    println!("Effective unknown detector config enabled: {}", effective_unknown.enabled);
+
+    println!(
+        "Effective god_object config enabled: {}",
+        effective_god_object.enabled
+    );
+    println!(
+        "Effective unknown detector config enabled: {}",
+        effective_unknown.enabled
+    );
 
     // 7. Show configuration constants
     println!("\n7. Available configuration constants:");
     use uveddi::analysis::constants;
-    
+
     println!("God Object defaults:");
-    println!("  - Default max methods: {}", constants::god_object::DEFAULT_MAX_METHODS);
-    println!("  - Default max fields: {}", constants::god_object::DEFAULT_MAX_FIELDS);
-    println!("  - Rust max methods: {}", constants::god_object::RUST_MAX_METHODS);
-    
+    println!(
+        "  - Default max methods: {}",
+        constants::god_object::DEFAULT_MAX_METHODS
+    );
+    println!(
+        "  - Default max fields: {}",
+        constants::god_object::DEFAULT_MAX_FIELDS
+    );
+    println!(
+        "  - Rust max methods: {}",
+        constants::god_object::RUST_MAX_METHODS
+    );
+
     println!("\nCode Duplication defaults:");
-    println!("  - Default min tokens: {}", constants::code_duplication::DEFAULT_MIN_TOKENS);
-    println!("  - Default similarity: {}", constants::code_duplication::DEFAULT_SIMILARITY_THRESHOLD);
+    println!(
+        "  - Default min tokens: {}",
+        constants::code_duplication::DEFAULT_MIN_TOKENS
+    );
+    println!(
+        "  - Default similarity: {}",
+        constants::code_duplication::DEFAULT_SIMILARITY_THRESHOLD
+    );
 
     println!("\n🎉 Standardized configuration demo completed successfully!");
     println!("\nKey Benefits Demonstrated:");
@@ -158,10 +182,12 @@ mod tests {
             .expect("Config creation should succeed");
 
         use uveddi::ast::tree_sitter_impl::SourceLanguage;
-        
-        let rust_threshold = config.get_threshold_int("max_methods", SourceLanguage::Rust)
+
+        let rust_threshold = config
+            .get_threshold_int("max_methods", SourceLanguage::Rust)
             .expect("Rust threshold should exist");
-        let python_threshold = config.get_threshold_int("max_methods", SourceLanguage::Python)
+        let python_threshold = config
+            .get_threshold_int("max_methods", SourceLanguage::Python)
             .expect("Python threshold should fall back to default");
 
         assert_eq!(rust_threshold, 25);
@@ -188,7 +214,7 @@ mod tests {
     #[test]
     fn test_analysis_config_integration() {
         let mut analysis_config = AnalysisConfig::default();
-        
+
         let detector_config = StandardConfigBuilder::new("god_object")
             .enabled(true)
             .threshold("max_methods", 30)
@@ -200,7 +226,7 @@ mod tests {
 
         let effective_config = analysis_config.get_effective_detector_config("god_object");
         assert!(effective_config.enabled);
-        
+
         let enabled_detectors = analysis_config.get_enabled_detectors();
         assert!(enabled_detectors.contains(&"god_object".to_string()));
     }

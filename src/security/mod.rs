@@ -107,32 +107,31 @@
 //! - Industry-standard authentication protocols
 
 // Core security modules
-pub mod errors;
-pub mod models;
+pub mod audit;
 pub mod authentication;
 pub mod authorization;
-pub mod audit;
 pub mod config;
+pub mod errors;
 pub mod middleware;
+pub mod models;
 pub mod rate_limiting;
 pub mod secrets;
 
 // Re-export commonly used types
-pub use errors::{SecurityError, SecurityResult, SecurityErrorSeverity};
+pub use errors::{SecurityError, SecurityErrorSeverity, SecurityResult};
 pub use models::{
-    User, Role, Permission, UserRole, UserRoleAssignment, Session, ApiKey,
-    AuditEvent, AuditEventType, AuditOutcome, AuthenticatedUser, AuthContext,
-    RateLimitInfo, RateLimitIdentifierType,
+    ApiKey, AuditEvent, AuditEventType, AuditOutcome, AuthContext, AuthenticatedUser, Permission,
+    RateLimitIdentifierType, RateLimitInfo, Role, Session, User, UserRole, UserRoleAssignment,
 };
 
 // Re-export authentication and authorization config types
+pub use audit::{AuditLogger, AuditStore};
 pub use authentication::{AuthenticationConfig, OAuthProviderConfig, OidcProviderConfig};
 pub use authorization::AuthorizationEngine;
-pub use audit::{AuditLogger, AuditStore};
+pub use config::RateLimitingConfig;
 pub use config::{SecurityConfig, SecurityConfigLoader};
 pub use middleware::SecurityServices;
 pub use rate_limiting::RateLimiter;
-pub use config::RateLimitingConfig;
 pub use secrets::{SecretStore, SecretStoreFactory};
 
 use crate::error::UveddiError;
@@ -147,11 +146,10 @@ pub const MAX_FILES_PER_ANALYSIS: usize = 10000;
 
 /// Validate file size for analysis
 pub fn validate_file_size(path: &Path) -> Result<(), SecurityError> {
-    let metadata = std::fs::metadata(path)
-        .map_err(|_| SecurityError::InvalidInput {
-            field: "file_path".to_string(),
-            reason: "Could not read file metadata".to_string(),
-        })?;
+    let metadata = std::fs::metadata(path).map_err(|_| SecurityError::InvalidInput {
+        field: "file_path".to_string(),
+        reason: "Could not read file metadata".to_string(),
+    })?;
     let size = metadata.len();
     let max_size = 10 * 1024 * 1024; // 10MB
     if size > max_size {
@@ -165,12 +163,13 @@ pub fn validate_file_size(path: &Path) -> Result<(), SecurityError> {
 /// Validate file type for analysis
 pub fn validate_file_type(path: &Path) -> Result<(), SecurityError> {
     let allowed = ["rs", "py", "js", "jsx", "ts", "tsx"];
-    let ext = path.extension()
-        .and_then(|e| e.to_str())
-        .ok_or_else(|| SecurityError::InvalidInput {
-            field: "file_extension".to_string(),
-            reason: "No extension found".to_string(),
-        })?;
+    let ext =
+        path.extension()
+            .and_then(|e| e.to_str())
+            .ok_or_else(|| SecurityError::InvalidInput {
+                field: "file_extension".to_string(),
+                reason: "No extension found".to_string(),
+            })?;
     if !allowed.contains(&ext) {
         return Err(SecurityError::InvalidInput {
             field: "file_extension".to_string(),
@@ -209,7 +208,10 @@ pub fn validate_directory_depth(depth: usize) -> Result<(), SecurityError> {
     let max_depth = 100;
     if depth > max_depth {
         return Err(SecurityError::ValidationError {
-            errors: vec![format!("Directory depth {} exceeds maximum {}", depth, max_depth)],
+            errors: vec![format!(
+                "Directory depth {} exceeds maximum {}",
+                depth, max_depth
+            )],
         });
     }
     Ok(())
@@ -219,7 +221,10 @@ pub fn validate_directory_depth(depth: usize) -> Result<(), SecurityError> {
 pub fn validate_file_count(count: usize) -> Result<(), SecurityError> {
     if count > MAX_FILES_PER_ANALYSIS {
         return Err(SecurityError::ValidationError {
-            errors: vec![format!("File count {} exceeds maximum {}", count, MAX_FILES_PER_ANALYSIS)],
+            errors: vec![format!(
+                "File count {} exceeds maximum {}",
+                count, MAX_FILES_PER_ANALYSIS
+            )],
         });
     }
     Ok(())

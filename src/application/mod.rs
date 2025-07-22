@@ -725,11 +725,9 @@ pub async fn run_app() -> Result<(), UveddiError> {
     let result = match cli.command {
         Commands::Analyze(command) => {
             info!("Executing analyze command...");
-            command.execute()
-                .await
-                .map_err(|e| {
-                    UveddiError::analysis_error("unknown", 0, &e.to_string(), "analyze command")
-                })
+            command.execute().await.map_err(|e| {
+                UveddiError::analysis_error("unknown", 0, &e.to_string(), "analyze command")
+            })
         }
         Commands::Config(command) => {
             info!("Executing config command...");

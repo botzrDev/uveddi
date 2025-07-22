@@ -1,8 +1,8 @@
 //! SLA Monitoring and Validation Framework for UV-82
-//! 
+//!
 //! This module implements a comprehensive SLA monitoring system based on
 //! Site Reliability Engineering (SRE) principles, featuring:
-//! 
+//!
 //! - Service Level Indicators (SLIs) and Objectives (SLOs)
 //! - Error Budget tracking and management
 //! - Real-time SLA compliance monitoring
@@ -109,70 +109,76 @@ pub struct GlobalSLAConfig {
 impl Default for SLAFramework {
     fn default() -> Self {
         let mut services = HashMap::new();
-        
+
         // Analysis Service SLA
-        services.insert("analysis-service".to_string(), ServiceDefinition {
-            name: "analysis-service".to_string(),
-            description: "Core static code analysis service".to_string(),
-            slis: vec![
-                SLI {
-                    name: "availability".to_string(),
-                    sli_type: SLIType::Availability,
-                    description: "Percentage of successful requests".to_string(),
-                },
-                SLI {
-                    name: "latency_p95".to_string(),
-                    sli_type: SLIType::Latency,
-                    description: "95th percentile request latency".to_string(),
-                },
-            ],
-            slos: vec![
-                SLO {
-                    name: "analysis_availability".to_string(),
-                    sli_name: "availability".to_string(),
-                    target: SLOTarget::Percentage(99.9),
-                    window: Duration::from_secs(28 * 24 * 60 * 60), // 28 days
-                },
-                SLO {
-                    name: "analysis_latency".to_string(),
-                    sli_name: "latency_p95".to_string(),
-                    target: SLOTarget::Threshold(500.0), // 500ms
-                    window: Duration::from_secs(28 * 24 * 60 * 60), // 28 days
-                },
-            ],
-        });
+        services.insert(
+            "analysis-service".to_string(),
+            ServiceDefinition {
+                name: "analysis-service".to_string(),
+                description: "Core static code analysis service".to_string(),
+                slis: vec![
+                    SLI {
+                        name: "availability".to_string(),
+                        sli_type: SLIType::Availability,
+                        description: "Percentage of successful requests".to_string(),
+                    },
+                    SLI {
+                        name: "latency_p95".to_string(),
+                        sli_type: SLIType::Latency,
+                        description: "95th percentile request latency".to_string(),
+                    },
+                ],
+                slos: vec![
+                    SLO {
+                        name: "analysis_availability".to_string(),
+                        sli_name: "availability".to_string(),
+                        target: SLOTarget::Percentage(99.9),
+                        window: Duration::from_secs(28 * 24 * 60 * 60), // 28 days
+                    },
+                    SLO {
+                        name: "analysis_latency".to_string(),
+                        sli_name: "latency_p95".to_string(),
+                        target: SLOTarget::Threshold(500.0), // 500ms
+                        window: Duration::from_secs(28 * 24 * 60 * 60), // 28 days
+                    },
+                ],
+            },
+        );
 
         // Rendering Service SLA
-        services.insert("rendering-service".to_string(), ServiceDefinition {
-            name: "rendering-service".to_string(),
-            description: "Mermaid diagram rendering service".to_string(),
-            slis: vec![
-                SLI {
-                    name: "availability".to_string(),
-                    sli_type: SLIType::Availability,
-                    description: "Percentage of successful requests".to_string(),
-                },
-                SLI {
-                    name: "latency_p99".to_string(),
-                    sli_type: SLIType::Latency,
-                    description: "99th percentile request latency".to_string(),
-                },
-            ],
-            slos: vec![
-                SLO {
-                    name: "rendering_availability".to_string(),
-                    sli_name: "availability".to_string(),
-                    target: SLOTarget::Percentage(99.95),
-                    window: Duration::from_secs(28 * 24 * 60 * 60), // 28 days
-                },
-                SLO {
-                    name: "rendering_latency".to_string(),
-                    sli_name: "latency_p99".to_string(),
-                    target: SLOTarget::Threshold(100.0), // 100ms P99 target
-                    window: Duration::from_secs(28 * 24 * 60 * 60), // 28 days
-                },
-            ],
-        });
+        services.insert(
+            "rendering-service".to_string(),
+            ServiceDefinition {
+                name: "rendering-service".to_string(),
+                description: "Mermaid diagram rendering service".to_string(),
+                slis: vec![
+                    SLI {
+                        name: "availability".to_string(),
+                        sli_type: SLIType::Availability,
+                        description: "Percentage of successful requests".to_string(),
+                    },
+                    SLI {
+                        name: "latency_p99".to_string(),
+                        sli_type: SLIType::Latency,
+                        description: "99th percentile request latency".to_string(),
+                    },
+                ],
+                slos: vec![
+                    SLO {
+                        name: "rendering_availability".to_string(),
+                        sli_name: "availability".to_string(),
+                        target: SLOTarget::Percentage(99.95),
+                        window: Duration::from_secs(28 * 24 * 60 * 60), // 28 days
+                    },
+                    SLO {
+                        name: "rendering_latency".to_string(),
+                        sli_name: "latency_p99".to_string(),
+                        target: SLOTarget::Threshold(100.0), // 100ms P99 target
+                        window: Duration::from_secs(28 * 24 * 60 * 60), // 28 days
+                    },
+                ],
+            },
+        );
 
         Self {
             services,
@@ -202,11 +208,13 @@ mod tests {
     fn test_rendering_service_sla_target() {
         let framework = SLAFramework::default();
         let rendering_service = framework.services.get("rendering-service").unwrap();
-        
-        let latency_slo = rendering_service.slos.iter()
+
+        let latency_slo = rendering_service
+            .slos
+            .iter()
             .find(|slo| slo.name == "rendering_latency")
             .unwrap();
-            
+
         match &latency_slo.target {
             SLOTarget::Threshold(threshold) => {
                 assert_eq!(*threshold, 100.0); // P99 < 100ms target
@@ -219,9 +227,15 @@ mod tests {
     fn test_sli_types() {
         let framework = SLAFramework::default();
         let analysis_service = framework.services.get("analysis-service").unwrap();
-        
-        assert!(analysis_service.slis.iter().any(|sli| matches!(sli.sli_type, SLIType::Availability)));
-        assert!(analysis_service.slis.iter().any(|sli| matches!(sli.sli_type, SLIType::Latency)));
+
+        assert!(analysis_service
+            .slis
+            .iter()
+            .any(|sli| matches!(sli.sli_type, SLIType::Availability)));
+        assert!(analysis_service
+            .slis
+            .iter()
+            .any(|sli| matches!(sli.sli_type, SLIType::Latency)));
     }
 
     #[test]
@@ -232,7 +246,7 @@ mod tests {
             predicted_sla_breach_probability: 0.15,
             recommendations: vec!["Monitor closely".to_string()],
         };
-        
+
         assert_eq!(risk_assessment.risk_level, RiskLevel::Medium);
         assert_eq!(risk_assessment.confidence, 0.8);
     }
@@ -242,17 +256,17 @@ mod tests {
         let float_value = SLIValue::Float(99.9);
         let int_value = SLIValue::Integer(200);
         let bool_value = SLIValue::Boolean(true);
-        
+
         match float_value {
             SLIValue::Float(f) => assert_eq!(f, 99.9),
             _ => panic!("Expected float value"),
         }
-        
+
         match int_value {
             SLIValue::Integer(i) => assert_eq!(i, 200),
             _ => panic!("Expected integer value"),
         }
-        
+
         match bool_value {
             SLIValue::Boolean(b) => assert!(b),
             _ => panic!("Expected boolean value"),

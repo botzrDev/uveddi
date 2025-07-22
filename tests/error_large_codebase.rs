@@ -3,12 +3,12 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::time::timeout;
 
+use uveddi::database::models::PerformanceMetricsConfig;
 use uveddi::error::large_codebase::{
     ErrorAggregator, ErrorContext, LargeCodebaseError, LargeCodebaseErrorHandler,
     NotificationSystem, ProgressState, ProgressTracker, RecoveryStrategies,
 };
 use uveddi::monitoring::performance_metrics_collector::PerformanceMetricsCollector;
-use uveddi::database::models::PerformanceMetricsConfig;
 use uveddi::resilience::circuit_breaker::CircuitBreaker;
 use uveddi::resilience::retry::{RetryClient, RetryConfig};
 
@@ -34,7 +34,10 @@ async fn test_error_aggregator_basic_functionality() {
     };
 
     let should_abort = aggregator.add_error(error.clone(), context.clone()).await;
-    assert!(!should_abort, "Should not abort with single error below threshold");
+    assert!(
+        !should_abort,
+        "Should not abort with single error below threshold"
+    );
 
     let errors = aggregator.get_error_summary().await;
     assert_eq!(errors.len(), 1, "Should have one error recorded");
@@ -43,7 +46,7 @@ async fn test_error_aggregator_basic_functionality() {
 #[tokio::test]
 async fn test_error_aggregator_threshold_exceeded() {
     let aggregator = ErrorAggregator::new(100, 0.05); // 5% threshold
-    
+
     for i in 0..10 {
         let context = create_test_context(i, 100);
         let error = LargeCodebaseError::FileAccessError {
@@ -53,12 +56,21 @@ async fn test_error_aggregator_threshold_exceeded() {
         };
 
         let should_abort = aggregator.add_error(error, context).await;
-        
-        if i >= 5 { // 6/100 = 6% > 5% threshold
-            assert!(should_abort, "Should abort when threshold exceeded at iteration {}", i);
+
+        if i >= 5 {
+            // 6/100 = 6% > 5% threshold
+            assert!(
+                should_abort,
+                "Should abort when threshold exceeded at iteration {}",
+                i
+            );
             break;
         } else {
-            assert!(!should_abort, "Should not abort below threshold at iteration {}", i);
+            assert!(
+                !should_abort,
+                "Should not abort below threshold at iteration {}",
+                i
+            );
         }
     }
 }
@@ -66,7 +78,7 @@ async fn test_error_aggregator_threshold_exceeded() {
 #[tokio::test]
 async fn test_error_aggregator_max_errors_limit() {
     let aggregator = ErrorAggregator::new(5, 1.0); // High threshold, low max errors
-    
+
     for i in 0..10 {
         let context = create_test_context(i, 1000); // Low error rate
         let error = LargeCodebaseError::MemoryPressure {
@@ -112,7 +124,10 @@ async fn test_recovery_strategy_application() {
     if let Some(strategy) = strategies.get_strategy("parsing_timeout") {
         let result = strategies.apply_strategy(strategy, &error).await;
         assert!(result.is_ok(), "Strategy application should succeed");
-        assert!(result.unwrap(), "Strategy should indicate successful recovery");
+        assert!(
+            result.unwrap(),
+            "Strategy should indicate successful recovery"
+        );
     } else {
         panic!("parsing_timeout strategy should exist");
     }
@@ -120,7 +135,10 @@ async fn test_recovery_strategy_application() {
 
 #[tokio::test]
 async fn test_progress_tracker_basic_operations() {
-    let metrics_collector = Arc::new(PerformanceMetricsCollector::new(PerformanceMetricsConfig::default(), 1000));
+    let metrics_collector = Arc::new(PerformanceMetricsCollector::new(
+        PerformanceMetricsConfig::default(),
+        1000,
+    ));
     let tracker = ProgressTracker::new(1000, Duration::from_millis(100), metrics_collector);
 
     tracker.update_progress(100, 5).await;
@@ -133,10 +151,15 @@ async fn test_progress_tracker_basic_operations() {
 
 #[tokio::test]
 async fn test_progress_tracker_batch_operations() {
-    let metrics_collector = Arc::new(PerformanceMetricsCollector::new(PerformanceMetricsConfig::default(), 1000));
+    let metrics_collector = Arc::new(PerformanceMetricsCollector::new(
+        PerformanceMetricsConfig::default(),
+        1000,
+    ));
     let tracker = ProgressTracker::new(500, Duration::from_millis(50), metrics_collector);
 
-    tracker.set_current_batch(Some("batch_001".to_string())).await;
+    tracker
+        .set_current_batch(Some("batch_001".to_string()))
+        .await;
     let progress = tracker.get_progress().await;
     assert_eq!(progress.current_batch, Some("batch_001".to_string()));
 
@@ -147,7 +170,8 @@ async fn test_progress_tracker_batch_operations() {
 
 #[tokio::test]
 async fn test_notification_system() {
-    let (notification_system, mut error_receiver, mut progress_receiver) = NotificationSystem::new();
+    let (notification_system, mut error_receiver, mut progress_receiver) =
+        NotificationSystem::new();
 
     let error = LargeCodebaseError::DependencyResolution {
         cycle: vec![
@@ -163,7 +187,7 @@ async fn test_notification_system() {
 
     let received = timeout(Duration::from_millis(100), error_receiver.recv()).await;
     assert!(received.is_ok(), "Should receive error notification");
-    
+
     if let Ok(Some((_received_error, received_context))) = received {
         assert_eq!(received_context.file_count_processed, 50);
         assert_eq!(received_context.total_file_count, 100);
@@ -182,7 +206,7 @@ async fn test_notification_system() {
 
     let received = timeout(Duration::from_millis(100), progress_receiver.recv()).await;
     assert!(received.is_ok(), "Should receive progress notification");
-    
+
     if let Ok(Some(received_progress)) = received {
         assert_eq!(received_progress.files_processed, 75);
         assert_eq!(received_progress.files_total, 100);
@@ -194,12 +218,15 @@ async fn test_notification_system() {
 async fn test_large_codebase_error_handler_creation() {
     let retry_client = Arc::new(RetryClient::new(RetryConfig::default()));
     let circuit_breaker = Arc::new(CircuitBreaker::new(3, Duration::from_secs(10)));
-    let metrics_collector = Arc::new(PerformanceMetricsCollector::new(PerformanceMetricsConfig::default(), 1000));
+    let metrics_collector = Arc::new(PerformanceMetricsCollector::new(
+        PerformanceMetricsConfig::default(),
+        1000,
+    ));
 
     let (handler, _error_receiver, _progress_receiver) = LargeCodebaseErrorHandler::new(
-        10000,                          // total_files
-        1024 * 1024 * 512,             // memory_limit (512MB)
-        Duration::from_secs(30),        // timeout_duration
+        10000,                   // total_files
+        1024 * 1024 * 512,       // memory_limit (512MB)
+        Duration::from_secs(30), // timeout_duration
         retry_client,
         circuit_breaker,
         metrics_collector,
@@ -213,7 +240,10 @@ async fn test_large_codebase_error_handler_creation() {
 async fn test_large_codebase_error_handler_error_handling() {
     let retry_client = Arc::new(RetryClient::new(RetryConfig::default()));
     let circuit_breaker = Arc::new(CircuitBreaker::new(3, Duration::from_secs(10)));
-    let metrics_collector = Arc::new(PerformanceMetricsCollector::new(PerformanceMetricsConfig::default(), 1000));
+    let metrics_collector = Arc::new(PerformanceMetricsCollector::new(
+        PerformanceMetricsConfig::default(),
+        1000,
+    ));
 
     let (handler, mut error_receiver, _progress_receiver) = LargeCodebaseErrorHandler::new(
         1000,
@@ -244,7 +274,10 @@ async fn test_large_codebase_error_handler_error_handling() {
 async fn test_large_codebase_error_handler_progress_updates() {
     let retry_client = Arc::new(RetryClient::new(RetryConfig::default()));
     let circuit_breaker = Arc::new(CircuitBreaker::new(3, Duration::from_secs(10)));
-    let metrics_collector = Arc::new(PerformanceMetricsCollector::new(PerformanceMetricsConfig::default(), 1000));
+    let metrics_collector = Arc::new(PerformanceMetricsCollector::new(
+        PerformanceMetricsConfig::default(),
+        1000,
+    ));
 
     let (handler, _error_receiver, mut progress_receiver) = LargeCodebaseErrorHandler::new(
         500,
@@ -260,7 +293,7 @@ async fn test_large_codebase_error_handler_progress_updates() {
     // Verify progress notification was sent
     let received = timeout(Duration::from_millis(100), progress_receiver.recv()).await;
     assert!(received.is_ok(), "Should receive progress notification");
-    
+
     if let Ok(Some(progress)) = received {
         assert_eq!(progress.files_processed, 250);
         assert_eq!(progress.files_failed, 10);
@@ -272,7 +305,10 @@ async fn test_large_codebase_error_handler_progress_updates() {
 async fn test_memory_pressure_detection() {
     let retry_client = Arc::new(RetryClient::new(RetryConfig::default()));
     let circuit_breaker = Arc::new(CircuitBreaker::new(3, Duration::from_secs(10)));
-    let metrics_collector = Arc::new(PerformanceMetricsCollector::new(PerformanceMetricsConfig::default(), 1000));
+    let metrics_collector = Arc::new(PerformanceMetricsCollector::new(
+        PerformanceMetricsConfig::default(),
+        1000,
+    ));
 
     let memory_limit = 1024 * 1024 * 256; // 256MB
     let (handler, _error_receiver, _progress_receiver) = LargeCodebaseErrorHandler::new(
@@ -341,7 +377,10 @@ async fn test_error_conversion_to_uveddi_error() {
         let uveddi_error: UveddiError = error.into();
         // Just verify conversion succeeds without panicking
         let error_string = format!("{:?}", uveddi_error);
-        assert!(!error_string.is_empty(), "Error should convert to non-empty string");
+        assert!(
+            !error_string.is_empty(),
+            "Error should convert to non-empty string"
+        );
     }
 }
 
@@ -349,7 +388,10 @@ async fn test_error_conversion_to_uveddi_error() {
 async fn test_checkpoint_operations() {
     let retry_client = Arc::new(RetryClient::new(RetryConfig::default()));
     let circuit_breaker = Arc::new(CircuitBreaker::new(3, Duration::from_secs(10)));
-    let metrics_collector = Arc::new(PerformanceMetricsCollector::new(PerformanceMetricsConfig::default(), 1000));
+    let metrics_collector = Arc::new(PerformanceMetricsCollector::new(
+        PerformanceMetricsConfig::default(),
+        1000,
+    ));
 
     let (handler, _error_receiver, _progress_receiver) = LargeCodebaseErrorHandler::new(
         2000,
@@ -361,11 +403,13 @@ async fn test_checkpoint_operations() {
     );
 
     handler.update_progress(500, 25).await;
-    
+
     let result = handler.save_progress_checkpoint().await;
     assert!(result.is_ok(), "Checkpoint save should succeed");
 
-    handler.set_current_batch(Some("checkpoint_batch".to_string())).await;
+    handler
+        .set_current_batch(Some("checkpoint_batch".to_string()))
+        .await;
     // No direct way to verify batch was set, but operation should complete without error
 }
 
@@ -373,7 +417,10 @@ async fn test_checkpoint_operations() {
 async fn test_error_summary_retrieval() {
     let retry_client = Arc::new(RetryClient::new(RetryConfig::default()));
     let circuit_breaker = Arc::new(CircuitBreaker::new(3, Duration::from_secs(10)));
-    let metrics_collector = Arc::new(PerformanceMetricsCollector::new(PerformanceMetricsConfig::default(), 1000));
+    let metrics_collector = Arc::new(PerformanceMetricsCollector::new(
+        PerformanceMetricsConfig::default(),
+        1000,
+    ));
 
     let (handler, _error_receiver, _progress_receiver) = LargeCodebaseErrorHandler::new(
         100,
@@ -392,7 +439,7 @@ async fn test_error_summary_retrieval() {
             retry_count: 1,
         };
         let context = create_test_context(i * 10, 100);
-        
+
         handler.handle_error(error, context).await.unwrap();
     }
 

@@ -1,13 +1,13 @@
+use log::{info, warn};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use log::{info, warn};
 
+use crate::analysis::adapters::ResultCacheAdapter;
 use crate::analysis::cache::ast::{AstCache, CacheConfig};
 use crate::analysis::components::{
     AnalysisAggregator, AstProviderImpl, CacheManagerImpl, ConfigurationService,
-    DependencyGraphBuilderImpl, DetectorScheduler, PluginManagerHandle, PluginManager,
+    DependencyGraphBuilderImpl, DetectorScheduler, PluginManager, PluginManagerHandle,
 };
-use crate::analysis::adapters::ResultCacheAdapter;
 use crate::analysis::detector_factory::DetectorFactory;
 use crate::analysis::traits::{AstParserTrait, DependencyExtractorTrait, ResultCacheTrait};
 use crate::analysis::AnalysisDetector;
@@ -153,7 +153,9 @@ impl AnalysisEngineBuilder {
         } else if let Some(path) = self.cache_path {
             Box::new(ResultCacheAdapter::new(ResultCache::new(&path)?))
         } else {
-            Box::new(ResultCacheAdapter::new(ResultCache::new(&PathBuf::from("uveddi_cache.db"))?))
+            Box::new(ResultCacheAdapter::new(ResultCache::new(&PathBuf::from(
+                "uveddi_cache.db",
+            ))?))
         };
 
         // Initialize AST cache with default configuration
@@ -176,7 +178,7 @@ impl AnalysisEngineBuilder {
         } else {
             Arc::new(DependencyGraphBuilderImpl::new(ast_provider.clone())?)
         };
-        
+
         let detector_scheduler = Arc::new(DetectorScheduler::new(
             config_service.clone(),
             ast_provider.clone(),
@@ -216,7 +218,9 @@ impl AnalysisEngineBuilder {
         } else if let Some(path) = self.cache_path {
             Box::new(ResultCacheAdapter::new(ResultCache::new(&path)?))
         } else {
-            Box::new(ResultCacheAdapter::new(ResultCache::new(&PathBuf::from("uveddi_cache.db"))?))
+            Box::new(ResultCacheAdapter::new(ResultCache::new(&PathBuf::from(
+                "uveddi_cache.db",
+            ))?))
         };
 
         // Initialize plugin engine if enabled
@@ -265,7 +269,7 @@ impl AnalysisEngineBuilder {
         } else {
             Arc::new(DependencyGraphBuilderImpl::new(ast_provider.clone())?)
         };
-        
+
         let detector_scheduler = Arc::new(DetectorScheduler::new(
             config_service.clone(),
             ast_provider.clone(),

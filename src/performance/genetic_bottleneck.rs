@@ -1,16 +1,16 @@
 //! Genetic Algorithm Bottleneck Detection for UV-249 Phase 3
-//! 
+//!
 //! Implements multi-objective genetic algorithm optimization for automated
 //! bottleneck identification and performance optimization recommendations.
 
+use anyhow::{anyhow, Result};
+use rand::prelude::*;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
-use serde::{Deserialize, Serialize};
-use anyhow::{Result, anyhow};
-use rand::prelude::*;
 
-use crate::performance::statistical_analysis::StatisticalAnalyzer;
 use crate::monitoring::PerformanceMetricsCollector;
+use crate::performance::statistical_analysis::StatisticalAnalyzer;
 
 /// Genetic algorithm bottleneck detector
 #[derive(Debug)]
@@ -89,11 +89,11 @@ pub enum ResourceType {
 /// Bottleneck severity levels
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum BottleneckSeverity {
-    Critical,   // >80% impact
-    High,       // 60-80% impact
-    Medium,     // 40-60% impact
-    Low,        // 20-40% impact
-    Minimal,    // <20% impact
+    Critical, // >80% impact
+    High,     // 60-80% impact
+    Medium,   // 40-60% impact
+    Low,      // 20-40% impact
+    Minimal,  // <20% impact
 }
 
 /// Location information for bottleneck
@@ -130,20 +130,20 @@ pub struct Recommendation {
 /// Recommendation priority levels
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum RecommendationPriority {
-    Immediate,  // Critical bottlenecks
-    High,       // High impact, low effort
-    Medium,     // Moderate impact/effort
-    Low,        // Low impact or high effort
+    Immediate, // Critical bottlenecks
+    High,      // High impact, low effort
+    Medium,    // Moderate impact/effort
+    Low,       // Low impact or high effort
 }
 
 /// Implementation effort estimation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ImplementationEffort {
-    Minimal,    // <1 day
-    Low,        // 1-3 days
-    Medium,     // 1-2 weeks
-    High,       // 2-4 weeks
-    Extensive,  // >1 month
+    Minimal,   // <1 day
+    Low,       // 1-3 days
+    Medium,    // 1-2 weeks
+    High,      // 2-4 weeks
+    Extensive, // >1 month
 }
 
 /// Recommendation categories
@@ -238,36 +238,34 @@ impl GeneticBottleneckDetector {
         performance_data: &[PerformanceDataPoint],
     ) -> Result<BottleneckAnalysis> {
         let start_time = std::time::Instant::now();
-        
+
         // Initialize population
         let mut population = self.initialize_population()?;
-        
+
         // Evaluate initial fitness
         self.evaluate_population(&mut population, performance_data)?;
-        
+
         let mut best_fitness = 0.0;
         let mut convergence_generation = None;
         let mut generations_without_improvement = 0;
-        
+
         // Evolution loop
         for generation in 0..self.generations {
             // Selection
             let parents = self.selection(&population)?;
-            
+
             // Crossover and mutation
             let mut offspring = self.crossover_and_mutation(&parents)?;
-            
+
             // Evaluate offspring
             self.evaluate_population(&mut offspring, performance_data)?;
-            
+
             // Combine and select next generation
             population = self.survivor_selection(&population, &offspring)?;
-            
+
             // Check for convergence
-            let current_best = population.iter()
-                .map(|c| c.fitness)
-                .fold(0.0, f64::max);
-                
+            let current_best = population.iter().map(|c| c.fitness).fold(0.0, f64::max);
+
             if current_best > best_fitness {
                 best_fitness = current_best;
                 generations_without_improvement = 0;
@@ -277,43 +275,46 @@ impl GeneticBottleneckDetector {
             } else {
                 generations_without_improvement += 1;
             }
-            
+
             // Early termination if converged
             if generations_without_improvement > 20 && current_best > 0.9 {
                 break;
             }
         }
-        
+
         // Extract best solution and generate analysis
-        let best_chromosome = population.iter()
+        let best_chromosome = population
+            .iter()
             .max_by(|a, b| a.fitness.partial_cmp(&b.fitness).unwrap())
             .ok_or_else(|| anyhow!("No valid chromosome found"))?;
-            
-        let analysis = self.generate_bottleneck_analysis(
-            best_chromosome,
-            performance_data,
-            AnalysisMetadata {
-                analysis_duration_ms: start_time.elapsed().as_millis() as u64,
-                population_size: self.population_size,
-                final_generation: self.generations,
-                best_fitness,
-                convergence_generation,
-                metrics_analyzed: performance_data.len(),
-            },
-        ).await?;
-        
+
+        let analysis = self
+            .generate_bottleneck_analysis(
+                best_chromosome,
+                performance_data,
+                AnalysisMetadata {
+                    analysis_duration_ms: start_time.elapsed().as_millis() as u64,
+                    population_size: self.population_size,
+                    final_generation: self.generations,
+                    best_fitness,
+                    convergence_generation,
+                    metrics_analyzed: performance_data.len(),
+                },
+            )
+            .await?;
+
         Ok(analysis)
     }
 
     /// Initialize random population of chromosomes
     fn initialize_population(&mut self) -> Result<Vec<BottleneckChromosome>> {
         let mut population = Vec::with_capacity(self.population_size);
-        
+
         for _ in 0..self.population_size {
             let chromosome = self.create_random_chromosome()?;
             population.push(chromosome);
         }
-        
+
         Ok(population)
     }
 
@@ -328,12 +329,10 @@ impl GeneticBottleneckDetector {
         ];
         let sum: f64 = resource_weights.iter().sum();
         resource_weights.iter_mut().for_each(|w| *w /= sum);
-        
+
         // Threshold values (0.1 to 0.9 for each resource)
-        let threshold_values = (0..4)
-            .map(|_| 0.1 + self.rng.gen::<f64>() * 0.8)
-            .collect();
-        
+        let threshold_values = (0..4).map(|_| 0.1 + self.rng.gen::<f64>() * 0.8).collect();
+
         // Optimization targets
         let optimization_targets = vec![
             OptimizationTarget {
@@ -352,7 +351,7 @@ impl GeneticBottleneckDetector {
                 target_direction: TargetDirection::Maximize,
             },
         ];
-        
+
         Ok(BottleneckChromosome {
             resource_weights,
             threshold_values,
@@ -368,47 +367,56 @@ impl GeneticBottleneckDetector {
         performance_data: &[PerformanceDataPoint],
     ) -> Result<()> {
         for chromosome in population.iter_mut() {
-            chromosome.fitness = self.fitness_evaluator.evaluate_fitness(chromosome, performance_data)?;
+            chromosome.fitness = self
+                .fitness_evaluator
+                .evaluate_fitness(chromosome, performance_data)?;
         }
         Ok(())
     }
 
     /// Tournament selection for parent selection
-    fn selection(&mut self, population: &[BottleneckChromosome]) -> Result<Vec<BottleneckChromosome>> {
+    fn selection(
+        &mut self,
+        population: &[BottleneckChromosome],
+    ) -> Result<Vec<BottleneckChromosome>> {
         let tournament_size = 3;
         let mut parents = Vec::new();
-        
+
         for _ in 0..population.len() {
             let mut tournament = Vec::new();
             for _ in 0..tournament_size {
                 let idx = self.rng.gen_range(0..population.len());
                 tournament.push(&population[idx]);
             }
-            
-            let winner = tournament.iter()
+
+            let winner = tournament
+                .iter()
                 .max_by(|a, b| a.fitness.partial_cmp(&b.fitness).unwrap())
                 .ok_or_else(|| anyhow!("Tournament selection failed"))?;
-                
+
             parents.push((*winner).clone());
         }
-        
+
         Ok(parents)
     }
 
     /// Crossover and mutation operations
-    fn crossover_and_mutation(&mut self, parents: &[BottleneckChromosome]) -> Result<Vec<BottleneckChromosome>> {
+    fn crossover_and_mutation(
+        &mut self,
+        parents: &[BottleneckChromosome],
+    ) -> Result<Vec<BottleneckChromosome>> {
         let mut offspring = Vec::new();
-        
+
         for i in (0..parents.len()).step_by(2) {
             let parent1 = &parents[i];
             let parent2 = &parents[(i + 1) % parents.len()];
-            
+
             let (mut child1, mut child2) = if self.rng.gen::<f64>() < self.crossover_rate {
                 self.crossover(parent1, parent2)?
             } else {
                 (parent1.clone(), parent2.clone())
             };
-            
+
             // Apply mutation
             if self.rng.gen::<f64>() < self.mutation_rate {
                 self.mutate(&mut child1)?;
@@ -416,11 +424,11 @@ impl GeneticBottleneckDetector {
             if self.rng.gen::<f64>() < self.mutation_rate {
                 self.mutate(&mut child2)?;
             }
-            
+
             offspring.push(child1);
             offspring.push(child2);
         }
-        
+
         Ok(offspring)
     }
 
@@ -431,26 +439,26 @@ impl GeneticBottleneckDetector {
         parent2: &BottleneckChromosome,
     ) -> Result<(BottleneckChromosome, BottleneckChromosome)> {
         let crossover_point = self.rng.gen_range(0..parent1.resource_weights.len());
-        
+
         let mut child1 = parent1.clone();
         let mut child2 = parent2.clone();
-        
+
         // Crossover resource weights
         for i in crossover_point..parent1.resource_weights.len() {
             child1.resource_weights[i] = parent2.resource_weights[i];
             child2.resource_weights[i] = parent1.resource_weights[i];
         }
-        
+
         // Normalize weights
         let sum1: f64 = child1.resource_weights.iter().sum();
         let sum2: f64 = child2.resource_weights.iter().sum();
         child1.resource_weights.iter_mut().for_each(|w| *w /= sum1);
         child2.resource_weights.iter_mut().for_each(|w| *w /= sum2);
-        
+
         // Reset fitness
         child1.fitness = 0.0;
         child2.fitness = 0.0;
-        
+
         Ok((child1, child2))
     }
 
@@ -460,19 +468,22 @@ impl GeneticBottleneckDetector {
         let idx = self.rng.gen_range(0..chromosome.resource_weights.len());
         chromosome.resource_weights[idx] += self.rng.gen_range(-0.1..0.1);
         chromosome.resource_weights[idx] = chromosome.resource_weights[idx].clamp(0.01, 1.0);
-        
+
         // Normalize weights
         let sum: f64 = chromosome.resource_weights.iter().sum();
-        chromosome.resource_weights.iter_mut().for_each(|w| *w /= sum);
-        
+        chromosome
+            .resource_weights
+            .iter_mut()
+            .for_each(|w| *w /= sum);
+
         // Mutate threshold values
         let idx = self.rng.gen_range(0..chromosome.threshold_values.len());
         chromosome.threshold_values[idx] += self.rng.gen_range(-0.05..0.05);
         chromosome.threshold_values[idx] = chromosome.threshold_values[idx].clamp(0.1, 0.9);
-        
+
         // Reset fitness
         chromosome.fitness = 0.0;
-        
+
         Ok(())
     }
 
@@ -485,13 +496,13 @@ impl GeneticBottleneckDetector {
         let mut combined = Vec::new();
         combined.extend_from_slice(parents);
         combined.extend_from_slice(offspring);
-        
+
         // Sort by fitness (descending)
         combined.sort_by(|a, b| b.fitness.partial_cmp(&a.fitness).unwrap());
-        
+
         // Select top individuals
         combined.truncate(self.population_size);
-        
+
         Ok(combined)
     }
 
@@ -504,17 +515,16 @@ impl GeneticBottleneckDetector {
     ) -> Result<BottleneckAnalysis> {
         // Identify bottlenecks using the evolved parameters
         let bottlenecks = self.identify_bottlenecks(best_chromosome, performance_data)?;
-        
+
         // Generate optimization recommendations
         let recommendations = self.generate_recommendations(&bottlenecks)?;
-        
+
         // Calculate overall metrics
-        let overall_confidence = bottlenecks.iter()
-            .map(|b| b.confidence)
-            .sum::<f64>() / bottlenecks.len().max(1) as f64;
-            
+        let overall_confidence =
+            bottlenecks.iter().map(|b| b.confidence).sum::<f64>() / bottlenecks.len().max(1) as f64;
+
         let performance_score = self.calculate_performance_score(&bottlenecks);
-        
+
         Ok(BottleneckAnalysis {
             identified_bottlenecks: bottlenecks,
             optimization_recommendations: recommendations,
@@ -533,22 +543,22 @@ impl GeneticBottleneckDetector {
         performance_data: &[PerformanceDataPoint],
     ) -> Result<Vec<Bottleneck>> {
         let mut bottlenecks = Vec::new();
-        
+
         // TODO: Implement bottleneck identification logic
         // This will analyze performance data using the evolved parameters
         // to identify specific bottlenecks in different resource categories
-        
+
         Ok(bottlenecks)
     }
 
     /// Generate optimization recommendations based on identified bottlenecks
     fn generate_recommendations(&self, bottlenecks: &[Bottleneck]) -> Result<Vec<Recommendation>> {
         let mut recommendations = Vec::new();
-        
+
         // TODO: Implement recommendation generation logic
         // This will create specific, actionable recommendations
         // based on the identified bottlenecks
-        
+
         Ok(recommendations)
     }
 
@@ -557,11 +567,9 @@ impl GeneticBottleneckDetector {
         if bottlenecks.is_empty() {
             return 100.0;
         }
-        
-        let total_impact: f64 = bottlenecks.iter()
-            .map(|b| b.impact_score)
-            .sum();
-            
+
+        let total_impact: f64 = bottlenecks.iter().map(|b| b.impact_score).sum();
+
         (100.0 - (total_impact / bottlenecks.len() as f64 * 100.0)).max(0.0)
     }
 }
@@ -593,9 +601,10 @@ impl FitnessEvaluator {
         // TODO: Implement comprehensive fitness evaluation
         // This should evaluate how well the chromosome parameters
         // identify bottlenecks and optimize performance metrics
-        
+
         // Placeholder implementation
-        let base_fitness = chromosome.resource_weights.iter().sum::<f64>() / chromosome.resource_weights.len() as f64;
+        let base_fitness = chromosome.resource_weights.iter().sum::<f64>()
+            / chromosome.resource_weights.len() as f64;
         Ok(base_fitness.clamp(0.0, 1.0))
     }
 }
@@ -662,7 +671,7 @@ mod tests {
             .with_generations(200)
             .with_mutation_rate(0.15)
             .with_crossover_rate(0.9);
-            
+
         assert_eq!(detector.population_size, 100);
         assert_eq!(detector.generations, 200);
         assert_eq!(detector.mutation_rate, 0.15);
@@ -673,16 +682,16 @@ mod tests {
     fn test_chromosome_creation() {
         let mut detector = GeneticBottleneckDetector::new();
         let chromosome = detector.create_random_chromosome().unwrap();
-        
+
         // Check resource weights sum to approximately 1.0
         let sum: f64 = chromosome.resource_weights.iter().sum();
         assert!((sum - 1.0).abs() < 1e-10);
-        
+
         // Check threshold values are in valid range
         for &threshold in &chromosome.threshold_values {
             assert!(threshold >= 0.1 && threshold <= 0.9);
         }
-        
+
         // Check optimization targets exist
         assert!(!chromosome.optimization_targets.is_empty());
     }
@@ -692,21 +701,21 @@ mod tests {
         let evaluator = FitnessEvaluator::new();
         let mut detector = GeneticBottleneckDetector::new();
         let chromosome = detector.create_random_chromosome().unwrap();
-        
-        let performance_data = vec![
-            PerformanceDataPoint {
-                timestamp: 1000,
-                cpu_usage: 0.5,
-                memory_usage: 0.6,
-                io_wait: 0.1,
-                network_latency: 10.0,
-                execution_time: 100.0,
-                throughput: 1000.0,
-                component: "test".to_string(),
-            }
-        ];
-        
-        let fitness = evaluator.evaluate_fitness(&chromosome, &performance_data).unwrap();
+
+        let performance_data = vec![PerformanceDataPoint {
+            timestamp: 1000,
+            cpu_usage: 0.5,
+            memory_usage: 0.6,
+            io_wait: 0.1,
+            network_latency: 10.0,
+            execution_time: 100.0,
+            throughput: 1000.0,
+            component: "test".to_string(),
+        }];
+
+        let fitness = evaluator
+            .evaluate_fitness(&chromosome, &performance_data)
+            .unwrap();
         assert!(fitness >= 0.0 && fitness <= 1.0);
     }
 
@@ -714,9 +723,9 @@ mod tests {
     fn test_population_initialization() {
         let mut detector = GeneticBottleneckDetector::new().with_population_size(10);
         let population = detector.initialize_population().unwrap();
-        
+
         assert_eq!(population.len(), 10);
-        
+
         // Check all chromosomes have valid resource weights
         for chromosome in &population {
             let sum: f64 = chromosome.resource_weights.iter().sum();
@@ -729,9 +738,9 @@ mod tests {
         let mut detector = GeneticBottleneckDetector::new();
         let parent1 = detector.create_random_chromosome().unwrap();
         let parent2 = detector.create_random_chromosome().unwrap();
-        
+
         let (child1, child2) = detector.crossover(&parent1, &parent2).unwrap();
-        
+
         // Check children have valid resource weights
         let sum1: f64 = child1.resource_weights.iter().sum();
         let sum2: f64 = child2.resource_weights.iter().sum();
@@ -744,13 +753,13 @@ mod tests {
         let mut detector = GeneticBottleneckDetector::new();
         let mut chromosome = detector.create_random_chromosome().unwrap();
         let original_weights = chromosome.resource_weights.clone();
-        
+
         detector.mutate(&mut chromosome).unwrap();
-        
+
         // Check weights are still normalized
         let sum: f64 = chromosome.resource_weights.iter().sum();
         assert!((sum - 1.0).abs() < 1e-10);
-        
+
         // Check that mutation occurred (weights should be different)
         let weights_changed = chromosome.resource_weights != original_weights;
         assert!(weights_changed);

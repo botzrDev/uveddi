@@ -1,19 +1,19 @@
 //! Blue-green deployment management
-//! 
+//!
 //! Provides functionality for managing blue-green deployments including:
 //! - Environment detection and switching
 //! - Health checks and validation
 //! - Traffic routing management
 //! - Rollback capabilities
 
-use std::time::Duration;
-use std::collections::HashMap;
+use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::time::Duration;
 use tokio::time::{sleep, timeout, Instant};
-use tracing::{info, warn, error, debug, instrument};
-use anyhow::{Result, anyhow};
+use tracing::{debug, error, info, instrument, warn};
 
-use super::{HealthStatus, HealthCheckResult};
+use super::{HealthCheckResult, HealthStatus};
 
 /// Blue-green environment identifier
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -62,8 +62,14 @@ impl TrafficSplit {
     /// Create a new traffic split with all traffic to one environment
     pub fn all_to(env: Environment) -> Self {
         match env {
-            Environment::Blue => Self { blue_weight: 100, green_weight: 0 },
-            Environment::Green => Self { blue_weight: 0, green_weight: 100 },
+            Environment::Blue => Self {
+                blue_weight: 100,
+                green_weight: 0,
+            },
+            Environment::Green => Self {
+                blue_weight: 0,
+                green_weight: 100,
+            },
         }
     }
 
@@ -71,13 +77,13 @@ impl TrafficSplit {
     pub fn canary(active_env: Environment, canary_weight: u8) -> Self {
         let active_weight = 100 - canary_weight;
         match active_env {
-            Environment::Blue => Self { 
-                blue_weight: active_weight, 
-                green_weight: canary_weight 
+            Environment::Blue => Self {
+                blue_weight: active_weight,
+                green_weight: canary_weight,
             },
-            Environment::Green => Self { 
-                blue_weight: canary_weight, 
-                green_weight: active_weight 
+            Environment::Green => Self {
+                blue_weight: canary_weight,
+                green_weight: active_weight,
             },
         }
     }
@@ -119,7 +125,7 @@ impl BlueGreenManager {
     #[instrument(skip(self))]
     pub async fn deploy_to_inactive(&mut self, image_tag: &str, replicas: u32) -> Result<()> {
         let inactive_env = &self.state.inactive_environment;
-        
+
         info!(
             environment = ?inactive_env,
             image_tag = %image_tag,
@@ -134,7 +140,8 @@ impl BlueGreenManager {
         }
 
         // Execute deployment to Kubernetes
-        self.execute_kubernetes_deployment(inactive_env, image_tag, replicas).await?;
+        self.execute_kubernetes_deployment(inactive_env, image_tag, replicas)
+            .await?;
 
         // Wait for deployment to be ready
         self.wait_for_deployment_ready(inactive_env).await?;
@@ -151,7 +158,7 @@ impl BlueGreenManager {
     #[instrument(skip(self))]
     pub async fn health_check_inactive(&self) -> Result<bool> {
         let inactive_env = &self.state.inactive_environment;
-        
+
         info!(
             environment = ?inactive_env,
             "Performing health check on inactive environment"
@@ -160,7 +167,8 @@ impl BlueGreenManager {
         let health_result = timeout(
             self.health_check_timeout,
             self.comprehensive_health_check(inactive_env),
-        ).await??;
+        )
+        .await??;
 
         match health_result.status {
             HealthStatus::Healthy => {
@@ -196,7 +204,8 @@ impl BlueGreenManager {
         );
 
         // Gradual traffic switch for safety
-        self.gradual_traffic_switch(&old_active, &new_active).await?;
+        self.gradual_traffic_switch(&old_active, &new_active)
+            .await?;
 
         // Update state
         self.state.active_environment = new_active;
@@ -216,7 +225,7 @@ impl BlueGreenManager {
     #[instrument(skip(self))]
     pub async fn verify_active(&self) -> Result<()> {
         let active_env = &self.state.active_environment;
-        
+
         info!(
             environment = ?active_env,
             "Verifying active environment"
@@ -227,7 +236,7 @@ impl BlueGreenManager {
 
         // Perform comprehensive verification
         let health_result = self.comprehensive_health_check(active_env).await?;
-        
+
         if health_result.status != HealthStatus::Healthy {
             return Err(anyhow!(
                 "Active environment verification failed: {:?}",
@@ -321,7 +330,7 @@ impl BlueGreenManager {
         // In a real implementation, this would use the Kubernetes API
         // For now, we'll simulate the deployment
         let deployment_name = format!("uveddi-{}", env.as_str());
-        
+
         info!(
             deployment = %deployment_name,
             "Updating deployment image and replicas"
@@ -338,7 +347,7 @@ impl BlueGreenManager {
     async fn wait_for_deployment_ready(&self, env: &Environment) -> Result<()> {
         let deployment_name = format!("uveddi-{}", env.as_str());
         let start_time = Instant::now();
-        
+
         info!(
             deployment = %deployment_name,
             "Waiting for deployment to be ready"
@@ -375,8 +384,11 @@ impl BlueGreenManager {
     /// Perform comprehensive health check
     #[instrument(skip(self))]
     async fn comprehensive_health_check(&self, env: &Environment) -> Result<HealthCheckResult> {
-        let service_url = format!("http://uveddi-{}.uveddi-production.svc.cluster.local", env.as_str());
-        
+        let service_url = format!(
+            "http://uveddi-{}.uveddi-production.svc.cluster.local",
+            env.as_str()
+        );
+
         debug!(
             environment = ?env,
             service_url = %service_url,
@@ -384,23 +396,23 @@ impl BlueGreenManager {
         );
 
         let start_time = Instant::now();
-        
+
         // Simulate health check calls
         let endpoints = vec![
             "/health",
-            "/health/database", 
+            "/health/database",
             "/health/ai-providers",
             "/metrics",
         ];
 
         let mut metadata = HashMap::new();
-        
+
         for endpoint in endpoints {
             let endpoint_url = format!("{}{}", service_url, endpoint);
-            
+
             // Simulate HTTP call
             sleep(Duration::from_millis(100)).await;
-            
+
             // For simulation, assume all checks pass
             metadata.insert(endpoint.to_string(), "healthy".to_string());
         }
@@ -419,11 +431,7 @@ impl BlueGreenManager {
 
     /// Gradual traffic switch between environments
     #[instrument(skip(self))]
-    async fn gradual_traffic_switch(
-        &mut self,
-        from: &Environment,
-        to: &Environment,
-    ) -> Result<()> {
+    async fn gradual_traffic_switch(&mut self, from: &Environment, to: &Environment) -> Result<()> {
         info!(
             from = ?from,
             to = ?to,
@@ -432,7 +440,7 @@ impl BlueGreenManager {
 
         // Switch in stages: 10% -> 50% -> 100%
         let stages = vec![10, 50, 100];
-        
+
         for &weight in &stages {
             info!(
                 to = ?to,
@@ -443,13 +451,13 @@ impl BlueGreenManager {
 
             // Update traffic split
             self.state.traffic_split = match to {
-                Environment::Blue => TrafficSplit { 
-                    blue_weight: weight, 
-                    green_weight: 100 - weight 
+                Environment::Blue => TrafficSplit {
+                    blue_weight: weight,
+                    green_weight: 100 - weight,
                 },
-                Environment::Green => TrafficSplit { 
-                    blue_weight: 100 - weight, 
-                    green_weight: weight 
+                Environment::Green => TrafficSplit {
+                    blue_weight: 100 - weight,
+                    green_weight: weight,
                 },
             };
 
@@ -458,7 +466,7 @@ impl BlueGreenManager {
 
             // Monitor for issues
             sleep(Duration::from_secs(30)).await;
-            
+
             if !self.monitor_traffic_switch_health(to).await? {
                 warn!("Traffic switch monitoring detected issues, reverting");
                 self.state.traffic_split = TrafficSplit::all_to(from.clone());

@@ -1,21 +1,21 @@
 //! Health monitoring system for production deployments
-//! 
+//!
 //! Provides comprehensive health monitoring including:
 //! - Service health checks
 //! - Performance monitoring
 //! - Alert management
 //! - Auto-healing capabilities
 
-use std::time::{Duration, SystemTime};
+use anyhow::{anyhow, Result};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use serde::{Deserialize, Serialize};
-use tokio::time::{sleep, timeout, Instant};
+use std::time::{Duration, SystemTime};
 use tokio::sync::RwLock;
-use tracing::{info, warn, error, debug, instrument};
-use anyhow::{Result, anyhow};
+use tokio::time::{sleep, timeout, Instant};
+use tracing::{debug, error, info, instrument, warn};
 
-use super::{HealthStatus, HealthCheckConfig, HealthCheckResult};
+use super::{HealthCheckConfig, HealthCheckResult, HealthStatus};
 
 /// Health monitoring service
 #[derive(Debug)]
@@ -62,7 +62,11 @@ pub enum AlertCondition {
     ResponseTimeThreshold(Duration),
     ErrorRateThreshold(f64),
     ConsecutiveFailures(u32),
-    CustomMetric { name: String, operator: String, threshold: f64 },
+    CustomMetric {
+        name: String,
+        operator: String,
+        threshold: f64,
+    },
 }
 
 /// Alert severity levels
@@ -143,10 +147,21 @@ pub struct AlertManager {
 /// Notification channel types
 #[derive(Debug)]
 pub enum NotificationChannel {
-    Slack { webhook_url: String, channel: String },
-    Email { smtp_config: SmtpConfig, recipients: Vec<String> },
-    Webhook { url: String, headers: HashMap<String, String> },
-    PagerDuty { integration_key: String },
+    Slack {
+        webhook_url: String,
+        channel: String,
+    },
+    Email {
+        smtp_config: SmtpConfig,
+        recipients: Vec<String>,
+    },
+    Webhook {
+        url: String,
+        headers: HashMap<String, String>,
+    },
+    PagerDuty {
+        integration_key: String,
+    },
 }
 
 /// SMTP configuration for email notifications
@@ -265,7 +280,7 @@ impl HealthMonitor {
     /// Get current monitoring status
     pub async fn get_status(&self) -> Result<MonitoringStatus> {
         let state = self.state.read().await;
-        
+
         let mut target_statuses = HashMap::new();
         for (name, target_state) in &state.target_states {
             target_statuses.insert(name.clone(), target_state.clone());
@@ -285,13 +300,20 @@ impl HealthMonitor {
     #[instrument(skip(self))]
     pub async fn acknowledge_alert(&self, alert_id: &str, user: &str) -> Result<()> {
         let mut state = self.state.write().await;
-        
+
         if let Some(alert) = state.active_alerts.get_mut(alert_id) {
             alert.acknowledged = true;
-            alert.metadata.insert("acknowledged_by".to_string(), user.to_string());
-            alert.metadata.insert("acknowledged_at".to_string(), 
-                SystemTime::now().duration_since(SystemTime::UNIX_EPOCH)?.as_secs().to_string());
-            
+            alert
+                .metadata
+                .insert("acknowledged_by".to_string(), user.to_string());
+            alert.metadata.insert(
+                "acknowledged_at".to_string(),
+                SystemTime::now()
+                    .duration_since(SystemTime::UNIX_EPOCH)?
+                    .as_secs()
+                    .to_string(),
+            );
+
             info!(
                 alert_id = %alert_id,
                 user = %user,
@@ -311,7 +333,7 @@ impl HealthMonitor {
 
         loop {
             let start_time = Instant::now();
-            
+
             // Perform health checks for all targets
             for target in &self.config.targets {
                 if let Err(e) = self.check_target_health(target).await {
@@ -353,7 +375,7 @@ impl HealthMonitor {
     #[instrument(skip(self))]
     async fn check_target_health(&self, target: &MonitorTarget) -> Result<()> {
         let health_result = self.check_health(&target.health_check).await?;
-        
+
         // Update target state
         {
             let mut state = self.state.write().await;
@@ -378,8 +400,12 @@ impl HealthMonitor {
 
         // Evaluate alert conditions
         for alert_rule in &target.alerts {
-            if self.evaluate_alert_condition(&target.name, alert_rule, &health_result).await? {
-                self.trigger_alert(&target.name, alert_rule.clone(), &health_result).await?;
+            if self
+                .evaluate_alert_condition(&target.name, alert_rule, &health_result)
+                .await?
+            {
+                self.trigger_alert(&target.name, alert_rule.clone(), &health_result)
+                    .await?;
             }
         }
 
@@ -389,11 +415,11 @@ impl HealthMonitor {
     /// Execute a health check HTTP request
     async fn execute_health_check(&self, config: &HealthCheckConfig) -> Result<HealthCheckResult> {
         let start_time = Instant::now();
-        
+
         // In a real implementation, this would make actual HTTP requests
         // For simulation, we'll create mock responses
         sleep(Duration::from_millis(50)).await; // Simulate network delay
-        
+
         let response_time = start_time.elapsed();
         let status = if config.endpoint.contains("unhealthy") {
             HealthStatus::Unhealthy
@@ -419,7 +445,9 @@ impl HealthMonitor {
         health_result: &HealthCheckResult,
     ) -> Result<bool> {
         let state = self.state.read().await;
-        let target_state = state.target_states.get(target_name)
+        let target_state = state
+            .target_states
+            .get(target_name)
             .ok_or_else(|| anyhow!("Target not found: {}", target_name))?;
 
         match &rule.condition {
@@ -436,7 +464,11 @@ impl HealthMonitor {
             AlertCondition::ConsecutiveFailures(threshold) => {
                 Ok(target_state.consecutive_failures >= *threshold)
             }
-            AlertCondition::CustomMetric { name, operator, threshold } => {
+            AlertCondition::CustomMetric {
+                name,
+                operator,
+                threshold,
+            } => {
                 if let Some(value) = target_state.metrics.get(name) {
                     match operator.as_str() {
                         ">" => Ok(*value > *threshold),
@@ -462,14 +494,16 @@ impl HealthMonitor {
         health_result: &HealthCheckResult,
     ) -> Result<()> {
         let alert_id = format!("{}_{}", target_name, uuid::Uuid::new_v4().simple());
-        
+
         // Check cooldown
         let should_alert = {
             let state = self.state.read().await;
             if let Some(target_state) = state.target_states.get(target_name) {
                 if let Some(last_alert_time) = target_state.last_alert_time {
-                    SystemTime::now().duration_since(last_alert_time)
-                        .unwrap_or_default() > rule.cooldown
+                    SystemTime::now()
+                        .duration_since(last_alert_time)
+                        .unwrap_or_default()
+                        > rule.cooldown
                 } else {
                     true
                 }
@@ -497,7 +531,7 @@ impl HealthMonitor {
         {
             let mut state = self.state.write().await;
             state.active_alerts.insert(alert_id.clone(), alert.clone());
-            
+
             if let Some(target_state) = state.target_states.get_mut(target_name) {
                 target_state.last_alert_time = Some(SystemTime::now());
             }
@@ -520,7 +554,7 @@ impl HealthMonitor {
     /// Process and resolve alerts
     async fn process_alerts(&self) -> Result<()> {
         let mut alerts_to_resolve = Vec::new();
-        
+
         {
             let state = self.state.read().await;
             for (alert_id, alert) in &state.active_alerts {
@@ -532,9 +566,7 @@ impl HealthMonitor {
                 if let Some(target_state) = state.target_states.get(&alert.target) {
                     if let Some(health_result) = &target_state.last_health_check {
                         let should_resolve = match &alert.rule.condition {
-                            AlertCondition::HealthStatus(status) => {
-                                health_result.status != *status
-                            }
+                            AlertCondition::HealthStatus(status) => health_result.status != *status,
                             AlertCondition::ConsecutiveFailures(_) => {
                                 target_state.consecutive_failures == 0
                             }
@@ -561,11 +593,11 @@ impl HealthMonitor {
     /// Resolve an alert
     async fn resolve_alert(&self, alert_id: &str) -> Result<()> {
         let mut state = self.state.write().await;
-        
+
         if let Some(alert) = state.active_alerts.get_mut(alert_id) {
             alert.resolved = true;
             alert.resolution_time = Some(SystemTime::now());
-            
+
             info!(
                 alert_id = %alert_id,
                 target = %alert.target,
@@ -581,11 +613,12 @@ impl HealthMonitor {
         let targets_needing_healing = {
             let state = self.state.read().await;
             let mut targets = Vec::new();
-            
+
             for (name, target_state) in &state.target_states {
                 if target_state.consecutive_failures >= self.config.max_consecutive_failures {
-                    if let Some(target_config) = self.config.targets.iter()
-                        .find(|t| t.name == *name) {
+                    if let Some(target_config) =
+                        self.config.targets.iter().find(|t| t.name == *name)
+                    {
                         if let Some(auto_healing) = &target_config.auto_healing {
                             if auto_healing.enabled {
                                 targets.push((name.clone(), auto_healing.clone()));
@@ -594,12 +627,13 @@ impl HealthMonitor {
                     }
                 }
             }
-            
+
             targets
         };
 
         for (target_name, auto_healing_config) in targets_needing_healing {
-            self.execute_auto_healing(&target_name, &auto_healing_config).await?;
+            self.execute_auto_healing(&target_name, &auto_healing_config)
+                .await?;
         }
 
         Ok(())
@@ -620,7 +654,9 @@ impl HealthMonitor {
         // Check if we've exceeded max attempts
         let attempts = {
             let state = self.state.read().await;
-            state.target_states.get(target_name)
+            state
+                .target_states
+                .get(target_name)
                 .map(|s| s.auto_healing_attempts)
                 .unwrap_or(0)
         };

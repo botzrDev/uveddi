@@ -1,14 +1,14 @@
-use std::time::{Duration, Instant};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::time::{Duration, Instant};
 
 #[cfg(feature = "image-rendering")]
-use crate::report::image_renderer::{ImageRenderer, ImageFormat, RenderingServiceConfig};
+use crate::report::image_renderer::{ImageFormat, ImageRenderer, RenderingServiceConfig};
 
 #[cfg(not(feature = "image-rendering"))]
-use super::image_stubs::{ImageRenderer, ImageFormat, RenderingServiceConfig};
+use super::image_stubs::{ImageFormat, ImageRenderer, RenderingServiceConfig};
 
-use crate::analysis::performance::{RenderingOptimizer, OptimizationRequest, RenderQuality};
+use crate::analysis::performance::{OptimizationRequest, RenderQuality, RenderingOptimizer};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PerformanceTestSuite {
@@ -75,7 +75,7 @@ impl PerformanceValidator {
                 baseline_renderer: ImageRenderer::new(),
             }
         }
-        
+
         #[cfg(not(feature = "image-rendering"))]
         {
             Self {
@@ -84,41 +84,43 @@ impl PerformanceValidator {
         }
     }
 
-    pub async fn run_comprehensive_validation(&self) -> Result<PerformanceTestSuite, ValidationError> {
+    pub async fn run_comprehensive_validation(
+        &self,
+    ) -> Result<PerformanceTestSuite, ValidationError> {
         println!("🧪 Starting UV-48 Comprehensive Performance Validation");
-        
+
         let mut test_results = Vec::new();
-        
+
         // Test 1: Single Render Performance
         println!("📊 Test 1: Single Render Performance");
         test_results.push(self.test_single_render_performance().await?);
-        
+
         // Test 2: Cache Performance
         println!("📊 Test 2: Cache Performance");
         test_results.push(self.test_cache_performance().await?);
-        
+
         // Test 3: Concurrent Load Test
         println!("📊 Test 3: Concurrent Load Test");
         test_results.push(self.test_concurrent_load().await?);
-        
+
         // Test 4: Consistency Test
         println!("📊 Test 4: Consistency Test");
         test_results.push(self.test_consistency().await?);
-        
+
         // Test 5: Stress Test
         println!("📊 Test 5: Stress Test");
         test_results.push(self.test_stress_performance().await?);
-        
+
         let summary = self.generate_summary(&test_results);
-        
+
         let test_suite = PerformanceTestSuite {
             test_results,
             summary,
             timestamp: chrono::Utc::now().to_rfc3339(),
         };
-        
+
         self.generate_validation_report(&test_suite).await?;
-        
+
         Ok(test_suite)
     }
 
@@ -133,8 +135,12 @@ impl PerformanceValidator {
 
         for (name, mermaid_code) in &test_diagrams {
             println!("  Testing {} diagram...", name);
-            
-            for quality in &[RenderQuality::Fast, RenderQuality::Balanced, RenderQuality::High] {
+
+            for quality in &[
+                RenderQuality::Fast,
+                RenderQuality::Balanced,
+                RenderQuality::High,
+            ] {
                 let request = OptimizationRequest {
                     mermaid_code: mermaid_code.clone(),
                     format: ImageFormat::Svg,
@@ -150,9 +156,12 @@ impl PerformanceValidator {
                         let render_time = render_start.elapsed().as_millis() as f64;
                         times.push(render_time);
                         successes += 1;
-                        
+
                         if result.render_time_ms > 50 {
-                            println!("    ⚠️  {} {:?}: {}ms (exceeds 50ms target)", name, quality, result.render_time_ms);
+                            println!(
+                                "    ⚠️  {} {:?}: {}ms (exceeds 50ms target)",
+                                name, quality, result.render_time_ms
+                            );
                         } else {
                             println!("    ✅ {} {:?}: {}ms", name, quality, result.render_time_ms);
                         }
@@ -213,10 +222,16 @@ graph TD
                 } else {
                     cache_misses += 1;
                 }
-                println!("  First request: {}ms (cache hit: {})", render_time, result.cache_hit);
+                println!(
+                    "  First request: {}ms (cache hit: {})",
+                    render_time, result.cache_hit
+                );
             }
             Err(e) => {
-                return Err(ValidationError::TestFailed(format!("Cache test failed: {}", e)));
+                return Err(ValidationError::TestFailed(format!(
+                    "Cache test failed: {}",
+                    e
+                )));
             }
         }
 
@@ -232,9 +247,14 @@ graph TD
                     } else {
                         cache_misses += 1;
                     }
-                    
+
                     if i <= 3 {
-                        println!("  Request {}: {}ms (cache hit: {})", i + 1, render_time, result.cache_hit);
+                        println!(
+                            "  Request {}: {}ms (cache hit: {})",
+                            i + 1,
+                            render_time,
+                            result.cache_hit
+                        );
                     }
                 }
                 Err(e) => {
@@ -245,7 +265,13 @@ graph TD
 
         let total_duration = start_time.elapsed().as_millis() as u64;
         let cache_hit_rate = cache_hits as f64 / (cache_hits + cache_misses) as f64;
-        let details = self.calculate_test_details(&times, cache_hits + cache_misses, 0, errors, cache_hit_rate);
+        let details = self.calculate_test_details(
+            &times,
+            cache_hits + cache_misses,
+            0,
+            errors,
+            cache_hit_rate,
+        );
 
         println!("  Cache hit rate: {:.1}%", cache_hit_rate * 100.0);
 
@@ -293,9 +319,16 @@ graph TD
                 match optimizer.optimize_rendering(request).await {
                     Ok(result) => {
                         let total_time = render_start.elapsed().as_millis() as f64;
-                        (i, total_time, result.render_time_ms as f64, true, result.cache_hit, None)
+                        (
+                            i,
+                            total_time,
+                            result.render_time_ms as f64,
+                            true,
+                            result.cache_hit,
+                            None,
+                        )
                     }
-                    Err(e) => (i, 0.0, 0.0, false, false, Some(e.to_string()))
+                    Err(e) => (i, 0.0, 0.0, false, false, Some(e.to_string())),
                 }
             });
 
@@ -318,8 +351,10 @@ graph TD
                         cache_hits += 1;
                     }
                     if i < 3 {
-                        println!("  Request {}: {:.0}ms (render: {:.0}ms, cache: {})", 
-                            i, total_time, render_time, cache_hit);
+                        println!(
+                            "  Request {}: {:.0}ms (render: {:.0}ms, cache: {})",
+                            i, total_time, render_time, cache_hit
+                        );
                     }
                 } else {
                     failures += 1;
@@ -331,10 +366,18 @@ graph TD
         }
 
         let total_duration = start_time.elapsed().as_millis() as u64;
-        let cache_hit_rate = if successes > 0 { cache_hits as f64 / successes as f64 } else { 0.0 };
-        let details = self.calculate_test_details(&times, successes, failures, errors, cache_hit_rate);
+        let cache_hit_rate = if successes > 0 {
+            cache_hits as f64 / successes as f64
+        } else {
+            0.0
+        };
+        let details =
+            self.calculate_test_details(&times, successes, failures, errors, cache_hit_rate);
 
-        println!("  Completed: {}/{} requests", successes, concurrent_requests);
+        println!(
+            "  Completed: {}/{} requests",
+            successes, concurrent_requests
+        );
         println!("  Cache hit rate: {:.1}%", cache_hit_rate * 100.0);
 
         Ok(TestResult {
@@ -379,13 +422,20 @@ graph TD
                     let render_time = render_start.elapsed().as_millis() as f64;
                     times.push(render_time);
                     successes += 1;
-                    
+
                     // Check consistency by hashing result
                     let result_hash = md5::compute(&result.data);
-                    *results_hash.entry(format!("{:x}", result_hash)).or_insert(0) += 1;
-                    
+                    *results_hash
+                        .entry(format!("{:x}", result_hash))
+                        .or_insert(0) += 1;
+
                     if i < 3 {
-                        println!("  Iteration {}: {:.0}ms (cache: {})", i + 1, render_time, result.cache_hit);
+                        println!(
+                            "  Iteration {}: {:.0}ms (cache: {})",
+                            i + 1,
+                            render_time,
+                            result.cache_hit
+                        );
                     }
                 }
                 Err(e) => {
@@ -400,7 +450,10 @@ graph TD
 
         // Check consistency - all results should be identical
         let consistent = results_hash.len() <= 1;
-        println!("  Unique result hashes: {} (should be 1)", results_hash.len());
+        println!(
+            "  Unique result hashes: {} (should be 1)",
+            results_hash.len()
+        );
 
         Ok(TestResult {
             test_name: "Consistency Test".to_string(),
@@ -454,7 +507,7 @@ graph TD
         // Process in smaller batches to avoid overwhelming the service
         for batch in (0..stress_requests).collect::<Vec<_>>().chunks(4) {
             let mut batch_handles = Vec::new();
-            
+
             for &i in batch {
                 let optimizer = self.optimizer.clone();
                 let diagram = complex_diagram.to_string();
@@ -480,17 +533,17 @@ graph TD
                             let total_time = render_start.elapsed().as_millis() as f64;
                             (i, total_time, result.render_time_ms as f64, true, None)
                         }
-                        Err(e) => (i, 0.0, 0.0, false, Some(e.to_string()))
+                        Err(e) => (i, 0.0, 0.0, false, Some(e.to_string())),
                     }
                 });
 
                 batch_handles.push(handle);
             }
-            
+
             // Wait for this batch to complete before starting next
             let batch_results = futures::future::join_all(batch_handles).await;
             all_results.extend(batch_results);
-            
+
             // Brief pause between batches
             if batch.len() == 4 {
                 tokio::time::sleep(Duration::from_millis(100)).await;
@@ -523,7 +576,10 @@ graph TD
         let total_duration = start_time.elapsed().as_millis() as u64;
         let details = self.calculate_test_details(&times, successes, failures, errors, 0.0);
 
-        println!("  Stress test completed: {}/{} requests", successes, stress_requests);
+        println!(
+            "  Stress test completed: {}/{} requests",
+            successes, stress_requests
+        );
 
         Ok(TestResult {
             test_name: "Stress Test".to_string(),
@@ -595,14 +651,17 @@ graph TD
 
         for result in test_results {
             let target_ms = match result.test_type {
-                TestType::SingleRender => 50.0,        // Single renders should be <50ms
-                TestType::CachePerformance => 50.0,    // Cache hits should be fast
-                TestType::ConsistencyTest => 50.0,     // Consistency tests should be fast
-                TestType::ConcurrentLoad => 500.0,     // Concurrent load allows higher latency
-                TestType::StressTest => 200.0,         // Stress tests allow moderate latency
+                TestType::SingleRender => 50.0,     // Single renders should be <50ms
+                TestType::CachePerformance => 50.0, // Cache hits should be fast
+                TestType::ConsistencyTest => 50.0,  // Consistency tests should be fast
+                TestType::ConcurrentLoad => 500.0,  // Concurrent load allows higher latency
+                TestType::StressTest => 200.0,      // Stress tests allow moderate latency
             };
 
-            for time in &[result.details.average_time_ms, result.details.median_time_ms] {
+            for time in &[
+                result.details.average_time_ms,
+                result.details.median_time_ms,
+            ] {
                 total_renders += 1;
                 if *time < target_ms {
                     total_under_target += 1;
@@ -619,11 +678,17 @@ graph TD
         let mut recommendations = Vec::new();
 
         if failed_tests > 0 {
-            recommendations.push(format!("{} test(s) failed - investigate root causes", failed_tests));
+            recommendations.push(format!(
+                "{} test(s) failed - investigate root causes",
+                failed_tests
+            ));
         }
 
         if overall_target_compliance < 95.0 {
-            recommendations.push("Performance target (<50ms) not consistently met - requires optimization".to_string());
+            recommendations.push(
+                "Performance target (<50ms) not consistently met - requires optimization"
+                    .to_string(),
+            );
         }
 
         // Check specific test failures
@@ -637,10 +702,16 @@ graph TD
                         recommendations.push("Service struggles under stress - implement circuit breakers and rate limiting".to_string());
                     }
                     TestType::CachePerformance => {
-                        recommendations.push("Cache performance is suboptimal - review cache key strategy".to_string());
+                        recommendations.push(
+                            "Cache performance is suboptimal - review cache key strategy"
+                                .to_string(),
+                        );
                     }
                     TestType::ConsistencyTest => {
-                        recommendations.push("Inconsistent results detected - investigate rendering determinism".to_string());
+                        recommendations.push(
+                            "Inconsistent results detected - investigate rendering determinism"
+                                .to_string(),
+                        );
                     }
                     _ => {}
                 }
@@ -660,16 +731,21 @@ graph TD
         }
     }
 
-    async fn generate_validation_report(&self, test_suite: &PerformanceTestSuite) -> Result<(), ValidationError> {
+    async fn generate_validation_report(
+        &self,
+        test_suite: &PerformanceTestSuite,
+    ) -> Result<(), ValidationError> {
         let report_json = serde_json::to_string_pretty(test_suite)
             .map_err(|e| ValidationError::ReportGenerationFailed(e.to_string()))?;
-        
-        tokio::fs::write("uv48_performance_validation_report.json", report_json).await
+
+        tokio::fs::write("uv48_performance_validation_report.json", report_json)
+            .await
             .map_err(|e| ValidationError::ReportGenerationFailed(e.to_string()))?;
 
         // Generate human-readable summary
         let summary_report = self.generate_summary_report(test_suite);
-        tokio::fs::write("uv48_performance_validation_summary.md", summary_report).await
+        tokio::fs::write("uv48_performance_validation_summary.md", summary_report)
+            .await
             .map_err(|e| ValidationError::ReportGenerationFailed(e.to_string()))?;
 
         println!("\n📊 Validation reports generated:");
@@ -681,19 +757,35 @@ graph TD
 
     fn generate_summary_report(&self, test_suite: &PerformanceTestSuite) -> String {
         let mut report = String::new();
-        
+
         report.push_str("# UV-48 Performance Validation Report\n\n");
         report.push_str(&format!("**Generated:** {}\n\n", test_suite.timestamp));
-        
-        report.push_str("## Executive Summary\n\n");
-        report.push_str(&format!("- **Total Tests:** {}\n", test_suite.summary.total_tests));
-        report.push_str(&format!("- **Passed Tests:** {}\n", test_suite.summary.passed_tests));
-        report.push_str(&format!("- **Failed Tests:** {}\n", test_suite.summary.failed_tests));
-        report.push_str(&format!("- **Success Rate:** {:.1}%\n", 
-            test_suite.summary.passed_tests as f64 / test_suite.summary.total_tests as f64 * 100.0));
-        report.push_str(&format!("- **Target Compliance:** {:.1}%\n\n", test_suite.summary.overall_target_compliance));
 
-        if test_suite.summary.overall_target_compliance >= 95.0 && test_suite.summary.failed_tests == 0 {
+        report.push_str("## Executive Summary\n\n");
+        report.push_str(&format!(
+            "- **Total Tests:** {}\n",
+            test_suite.summary.total_tests
+        ));
+        report.push_str(&format!(
+            "- **Passed Tests:** {}\n",
+            test_suite.summary.passed_tests
+        ));
+        report.push_str(&format!(
+            "- **Failed Tests:** {}\n",
+            test_suite.summary.failed_tests
+        ));
+        report.push_str(&format!(
+            "- **Success Rate:** {:.1}%\n",
+            test_suite.summary.passed_tests as f64 / test_suite.summary.total_tests as f64 * 100.0
+        ));
+        report.push_str(&format!(
+            "- **Target Compliance:** {:.1}%\n\n",
+            test_suite.summary.overall_target_compliance
+        ));
+
+        if test_suite.summary.overall_target_compliance >= 95.0
+            && test_suite.summary.failed_tests == 0
+        {
             report.push_str("**Status:** ✅ VALIDATION PASSED\n\n");
         } else {
             report.push_str("**Status:** ❌ VALIDATION FAILED\n\n");
@@ -701,16 +793,34 @@ graph TD
 
         report.push_str("## Test Results\n\n");
         for result in &test_suite.test_results {
-            let status = if result.success { "✅ PASS" } else { "❌ FAIL" };
+            let status = if result.success {
+                "✅ PASS"
+            } else {
+                "❌ FAIL"
+            };
             report.push_str(&format!("### {} - {}\n", result.test_name, status));
             report.push_str(&format!("- **Duration:** {}ms\n", result.duration_ms));
-            report.push_str(&format!("- **Success Rate:** {:.1}%\n", 
-                result.details.success_count as f64 / result.details.iterations as f64 * 100.0));
-            report.push_str(&format!("- **Average Time:** {:.1}ms\n", result.details.average_time_ms));
-            report.push_str(&format!("- **P95 Time:** {:.1}ms\n", result.details.p95_time_ms));
-            report.push_str(&format!("- **P99 Time:** {:.1}ms\n", result.details.p99_time_ms));
+            report.push_str(&format!(
+                "- **Success Rate:** {:.1}%\n",
+                result.details.success_count as f64 / result.details.iterations as f64 * 100.0
+            ));
+            report.push_str(&format!(
+                "- **Average Time:** {:.1}ms\n",
+                result.details.average_time_ms
+            ));
+            report.push_str(&format!(
+                "- **P95 Time:** {:.1}ms\n",
+                result.details.p95_time_ms
+            ));
+            report.push_str(&format!(
+                "- **P99 Time:** {:.1}ms\n",
+                result.details.p99_time_ms
+            ));
             if result.details.cache_hit_rate > 0.0 {
-                report.push_str(&format!("- **Cache Hit Rate:** {:.1}%\n", result.details.cache_hit_rate * 100.0));
+                report.push_str(&format!(
+                    "- **Cache Hit Rate:** {:.1}%\n",
+                    result.details.cache_hit_rate * 100.0
+                ));
             }
             report.push_str("\n");
         }
@@ -723,7 +833,8 @@ graph TD
 
         report.push_str("## Next Steps\n\n");
         if test_suite.summary.failed_tests == 0 {
-            report.push_str("All validation tests passed. System is ready for UV-12 fine-tuning.\n");
+            report
+                .push_str("All validation tests passed. System is ready for UV-12 fine-tuning.\n");
         } else {
             report.push_str("Address failed test issues before proceeding to UV-12 fine-tuning:\n");
             for result in &test_suite.test_results {
@@ -738,20 +849,30 @@ graph TD
 
     fn get_test_diagrams(&self) -> Vec<(String, String)> {
         vec![
-            ("simple".to_string(), r#"
+            (
+                "simple".to_string(),
+                r#"
 graph TD
     A[Start] --> B[Process]
     B --> C[End]
-"#.to_string()),
-            ("medium".to_string(), r#"
+"#
+                .to_string(),
+            ),
+            (
+                "medium".to_string(),
+                r#"
 graph TD
     A[User] --> B{Auth}
     B -->|Valid| C[Dashboard]
     B -->|Invalid| D[Login]
     C --> E[Data]
     E --> F[Display]
-"#.to_string()),
-            ("complex".to_string(), r#"
+"#
+                .to_string(),
+            ),
+            (
+                "complex".to_string(),
+                r#"
 graph TD
     subgraph "Web Layer"
         A[Frontend] --> B[API Gateway]
@@ -768,7 +889,9 @@ graph TD
         D --> G[(User DB)]
         E --> H[(Data DB)]
     end
-"#.to_string()),
+"#
+                .to_string(),
+            ),
         ]
     }
 }
