@@ -10,6 +10,7 @@ pub mod metrics;
 // pub mod database;
 // pub mod classification;
 pub mod baseline_collector;
+pub mod carbon_metrics;
 pub mod config;
 pub mod distribution;
 pub mod enterprise_metrics;
@@ -27,6 +28,10 @@ pub use metrics::{TestExecution, TestMetrics, TestResult};
 // pub use classification::FailureClassifier;
 pub use baseline_collector::{
     BaselineCollectionConfig, BaselineCollector, BaselineComparison, StoredBaseline,
+};
+pub use carbon_metrics::{
+    CarbonAwarenessCollector, CarbonAwarenessConfig, CarbonFootprintReport, 
+    EnergyConsumptionMetrics, WorkloadType, WorkloadCarbonSummary,
 };
 pub use config::{ConfigManager, ReportJobConfig, ReportingSystemConfig, SystemConfig};
 pub use distribution::{DistributionChannel, DistributionManager, SlackWebhookConfig, SmtpConfig};
