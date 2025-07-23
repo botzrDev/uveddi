@@ -1,0 +1,611 @@
+# Uveddi GraphQL API Schema
+# Flexible query interface for code analysis results
+
+# Scalar types
+scalar DateTime
+scalar JSON
+
+# Enums
+enum SeverityLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum AnalysisStatus {
+  RUNNING
+  COMPLETED
+  FAILED
+  PENDING
+}
+
+enum DependencyType {
+  USE
+  MOD
+  EXTERNAL
+  IMPORT
+  DATA_FLOW
+  CONTROL_FLOW
+}
+
+enum SourceLanguage {
+  RUST
+  PYTHON
+  JAVASCRIPT
+  TYPESCRIPT
+}
+
+enum AntiPatternCategory {
+  STRUCTURAL
+  BEHAVIORAL
+  CREATIONAL
+  ABSTRACTION_BASED
+}
+
+# Core Analysis Types
+
+type Project {
+  id: ID!
+  name: String!
+  path: String!
+  analysisRuns(
+    first: Int
+    after: String
+    status: AnalysisStatus
+    orderBy: AnalysisRunOrderBy
+  ): AnalysisRunConnection!
+  latestAnalysis: AnalysisRun
+  totalIssues: Int!
+  issuesBySeverity: [SeverityCount!]!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type AnalysisRun {
+  id: ID!
+  projectId: ID!
+  project: Project!
+  startTime: DateTime!
+  endTime: DateTime
+  status: AnalysisStatus!
+  totalFilesAnalyzed: Int
+  totalIssuesFound: Int
+  analysisConfig: JSON!
+  
+  # Issues found in this analysis run
+  issues(
+    first: Int
+    after: String
+    severity: SeverityLevel
+    antiPatternType: String
+    filePath: String
+  ): ArchitecturalIssueConnection!
+  
+  # Performance metrics for this run
+  performanceMetrics: [ComponentPerformanceMetrics!]!
+  
+  # Incremental analysis information
+  incrementalInfo: IncrementalAnalysisInfo
+  
+  # Dependency graph for this analysis
+  dependencyGraph: DependencyGraph!
+}
+
+type ArchitecturalIssue {
+  id: ID!
+  analysisRunId: ID!
+  analysisRun: AnalysisRun!
+  antiPatternType: AntiPatternType!
+  filePath: String!
+  startLine: Int
+  endLine: Int
+  severity: SeverityLevel!
+  description: String!
+  codeSnippet: String
+  aiExplanation: String
+  
+  # Contextual information
+  affectedComponents: [String!]!
+  relatedIssues: [ArchitecturalIssue!]!
+}
+
+type AntiPatternType {
+  id: ID!
+  name: String!
+  description: String!
+  category: AntiPatternCategory!
+  
+  # Issues of this type
+  issues(
+    first: Int
+    after: String
+    severity: SeverityLevel
+  ): ArchitecturalIssueConnection!
+  
+  # Statistics
+  totalOccurrences: Int!
+  averageSeverity: Float!
+}
+
+# AST and Parsing Types
+
+type ParsedFile {
+  filePath: String!
+  language: SourceLanguage!
+  hasAst: Boolean!
+  source: String
+  modifiedAt: DateTime!
+  
+  # File-level metrics
+  linesOfCode: Int!
+  complexity: Float
+  
+  # Issues in this file
+  issues(
+    first: Int
+    after: String
+    severity: SeverityLevel
+  ): ArchitecturalIssueConnection!
+  
+  # Dependencies from this file
+  dependencies: [Dependency!]!
+  
+  # AST node information (optional, can be expensive)
+  astNodes(nodeType: String): [ASTNode!]
+}
+
+type ASTNode {
+  nodeType: String!
+  startLine: Int!
+  endLine: Int!
+  startColumn: Int!
+  endColumn: Int!
+  text: String
+  children: [ASTNode!]!
+  parent: ASTNode
+}
+
+# Dependency and Graph Types
+
+type Dependency {
+  fromFile: String!
+  toModule: String!
+  dependencyType: DependencyType!
+  lineNumber: Int
+  
+  # Graph analysis
+  isCyclic: Boolean!
+  cyclicPath: [String!]
+}
+
+type DependencyGraph {
+  nodes: [DependencyNode!]!
+  edges: [DependencyEdge!]!
+  cycles: [DependencyCycle!]!
+  metrics: DependencyGraphMetrics!
+}
+
+type DependencyNode {
+  id: String!
+  filePath: String!
+  componentType: String
+  inDegree: Int!
+  outDegree: Int!
+  centrality: Float!
+}
+
+type DependencyEdge {
+  from: String!
+  to: String!
+  dependencyType: DependencyType!
+  weight: Int!
+}
+
+type DependencyCycle {
+  nodes: [String!]!
+  severity: SeverityLevel!
+  description: String!
+}
+
+type DependencyGraphMetrics {
+  totalNodes: Int!
+  totalEdges: Int!
+  cycleCount: Int!
+  maxDepth: Int!
+  modularity: Float!
+  coupling: Float!
+  cohesion: Float!
+}
+
+# Performance and Metrics Types
+
+type ComponentPerformanceMetrics {
+  id: ID!
+  componentId: String!
+  analysisRunId: ID!
+  executionTimeMs: Int!
+  memoryUsageBytes: Int!
+  astParseTimeMs: Int
+  symbolResolutionTimeMs: Int
+  dependencyExtractionTimeMs: Int
+  timestamp: DateTime!
+}
+
+type IncrementalAnalysisInfo {
+  wasIncremental: Boolean!
+  filesReanalyzed: Int!
+  totalFiles: Int!
+  timeSavedMs: Int!
+  analysisTime: DateTime!
+  changeSummary: ChangeSummary!
+  performanceMetrics: IncrementalPerformanceMetrics!
+}
+
+type ChangeSummary {
+  changedFiles: [String!]!
+  affectedFiles: [String!]!
+  newFiles: [String!]!
+  deletedFiles: [String!]!
+  changePercentage: Float!
+}
+
+type IncrementalPerformanceMetrics {
+  cacheHitRate: Float!
+  memoryReduction: Float!
+  timeReduction: Float!
+}
+
+# Statistics and Aggregation Types
+
+type SeverityCount {
+  severity: SeverityLevel!
+  count: Int!
+}
+
+type AnalyticsSummary {
+  totalProjects: Int!
+  totalAnalysisRuns: Int!
+  totalIssuesFound: Int!
+  mostCommonAntiPatterns: [AntiPatternTypeCount!]!
+  languageDistribution: [LanguageCount!]!
+  trendData: TrendData!
+}
+
+type AntiPatternTypeCount {
+  antiPatternType: AntiPatternType!
+  count: Int!
+  percentage: Float!
+}
+
+type LanguageCount {
+  language: SourceLanguage!
+  count: Int!
+  percentage: Float!
+}
+
+type TrendData {
+  issuesTrend: [TrendPoint!]!
+  performanceTrend: [TrendPoint!]!
+  qualityScoreTrend: [TrendPoint!]!
+}
+
+type TrendPoint {
+  timestamp: DateTime!
+  value: Float!
+}
+
+# Connection Types for Pagination
+
+type AnalysisRunConnection {
+  edges: [AnalysisRunEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type AnalysisRunEdge {
+  node: AnalysisRun!
+  cursor: String!
+}
+
+type ArchitecturalIssueConnection {
+  edges: [ArchitecturalIssueEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+  severityBreakdown: [SeverityCount!]!
+}
+
+type ArchitecturalIssueEdge {
+  node: ArchitecturalIssue!
+  cursor: String!
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+# Input Types
+
+input AnalysisRunOrderBy {
+  field: AnalysisRunOrderField!
+  direction: OrderDirection!
+}
+
+enum AnalysisRunOrderField {
+  START_TIME
+  END_TIME
+  TOTAL_ISSUES
+  TOTAL_FILES
+}
+
+enum OrderDirection {
+  ASC
+  DESC
+}
+
+input AnalysisConfigInput {
+  enabledDetectors: [String!]
+  enableAI: Boolean
+  aiProvider: String
+  maxFilesPerBatch: Int
+  enableIncremental: Boolean
+  outputFormat: String
+  customRules: JSON
+}
+
+input FileFilter {
+  paths: [String!]
+  languages: [SourceLanguage!]
+  excludePatterns: [String!]
+  includePatterns: [String!]
+}
+
+# Root Query Type
+
+type Query {
+  # Project queries
+  project(id: ID!): Project
+  projects(
+    first: Int
+    after: String
+    name: String
+  ): ProjectConnection!
+  
+  # Analysis queries
+  analysisRun(id: ID!): AnalysisRun
+  analysisRuns(
+    first: Int
+    after: String
+    projectId: ID
+    status: AnalysisStatus
+    orderBy: AnalysisRunOrderBy
+  ): AnalysisRunConnection!
+  
+  # Issue queries
+  issue(id: ID!): ArchitecturalIssue
+  issues(
+    first: Int
+    after: String
+    projectId: ID
+    analysisRunId: ID
+    severity: SeverityLevel
+    antiPatternType: String
+    filePath: String
+  ): ArchitecturalIssueConnection!
+  
+  # Anti-pattern queries
+  antiPatternType(id: ID!): AntiPatternType
+  antiPatternTypes: [AntiPatternType!]!
+  
+  # File and AST queries
+  parsedFile(filePath: String!, analysisRunId: ID!): ParsedFile
+  parsedFiles(
+    analysisRunId: ID!
+    language: SourceLanguage
+    hasIssues: Boolean
+  ): [ParsedFile!]!
+  
+  # Dependency queries
+  dependencyGraph(analysisRunId: ID!): DependencyGraph!
+  fileDependencies(filePath: String!, analysisRunId: ID!): [Dependency!]!
+  
+  # Analytics and aggregation
+  analytics(
+    projectIds: [ID!]
+    timeRange: TimeRangeInput
+  ): AnalyticsSummary!
+  
+  # Search capabilities
+  search(
+    query: String!
+    type: SearchType!
+    projectId: ID
+    first: Int
+    after: String
+  ): SearchResultConnection!
+}
+
+type ProjectConnection {
+  edges: [ProjectEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type ProjectEdge {
+  node: Project!
+  cursor: String!
+}
+
+input TimeRangeInput {
+  start: DateTime!
+  end: DateTime!
+}
+
+enum SearchType {
+  ISSUES
+  FILES
+  ANTI_PATTERNS
+  ALL
+}
+
+type SearchResultConnection {
+  edges: [SearchResultEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type SearchResultEdge {
+  node: SearchResult!
+  cursor: String!
+}
+
+union SearchResult = ArchitecturalIssue | ParsedFile | AntiPatternType
+
+# Root Mutation Type
+
+type Mutation {
+  # Project mutations
+  createProject(input: CreateProjectInput!): CreateProjectPayload!
+  updateProject(id: ID!, input: UpdateProjectInput!): UpdateProjectPayload!
+  deleteProject(id: ID!): DeleteProjectPayload!
+  
+  # Analysis mutations
+  startAnalysis(input: StartAnalysisInput!): StartAnalysisPayload!
+  cancelAnalysis(analysisRunId: ID!): CancelAnalysisPayload!
+  
+  # Issue mutations
+  updateIssue(id: ID!, input: UpdateIssueInput!): UpdateIssuePayload!
+  dismissIssue(id: ID!, reason: String): DismissIssuePayload!
+  
+  # Configuration mutations
+  updateAnalysisConfig(projectId: ID!, config: AnalysisConfigInput!): UpdateAnalysisConfigPayload!
+  
+  # Cache mutations
+  clearCache(projectId: ID): ClearCachePayload!
+  warmupCache(projectId: ID!): WarmupCachePayload!
+}
+
+# Mutation Input Types
+
+input CreateProjectInput {
+  name: String!
+  path: String!
+  description: String
+  analysisConfig: AnalysisConfigInput
+}
+
+input UpdateProjectInput {
+  name: String
+  path: String
+  description: String
+  analysisConfig: AnalysisConfigInput
+}
+
+input StartAnalysisInput {
+  projectId: ID!
+  config: AnalysisConfigInput
+  fileFilter: FileFilter
+  enableIncremental: Boolean
+}
+
+input UpdateIssueInput {
+  description: String
+  severity: SeverityLevel
+  dismissed: Boolean
+  notes: String
+}
+
+# Mutation Payload Types
+
+type CreateProjectPayload {
+  project: Project
+  errors: [UserError!]!
+}
+
+type UpdateProjectPayload {
+  project: Project
+  errors: [UserError!]!
+}
+
+type DeleteProjectPayload {
+  deletedProjectId: ID
+  errors: [UserError!]!
+}
+
+type StartAnalysisPayload {
+  analysisRun: AnalysisRun
+  errors: [UserError!]!
+}
+
+type CancelAnalysisPayload {
+  analysisRun: AnalysisRun
+  errors: [UserError!]!
+}
+
+type UpdateIssuePayload {
+  issue: ArchitecturalIssue
+  errors: [UserError!]!
+}
+
+type DismissIssuePayload {
+  issue: ArchitecturalIssue
+  errors: [UserError!]!
+}
+
+type UpdateAnalysisConfigPayload {
+  project: Project
+  errors: [UserError!]!
+}
+
+type ClearCachePayload {
+  success: Boolean!
+  errors: [UserError!]!
+}
+
+type WarmupCachePayload {
+  success: Boolean!
+  errors: [UserError!]!
+}
+
+type UserError {
+  field: String
+  message: String!
+  code: String
+}
+
+# Subscription Type for Real-time Updates
+
+type Subscription {
+  # Analysis progress updates
+  analysisProgress(analysisRunId: ID!): AnalysisProgressUpdate!
+  
+  # New issues detected
+  newIssues(projectId: ID!): ArchitecturalIssue!
+  
+  # Performance metrics updates
+  performanceMetrics(analysisRunId: ID!): ComponentPerformanceMetrics!
+  
+  # Cache statistics
+  cacheStats: CacheStats!
+}
+
+type AnalysisProgressUpdate {
+  analysisRunId: ID!
+  filesProcessed: Int!
+  totalFiles: Int!
+  currentFile: String
+  issuesFound: Int!
+  estimatedTimeRemaining: Int
+  status: AnalysisStatus!
+}
+
+type CacheStats {
+  currentSize: Int!
+  maxSize: Int!
+  hitRate: Float!
+  totalHits: Int!
+  totalMisses: Int!
+}
