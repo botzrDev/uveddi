@@ -391,7 +391,7 @@ mod tests {
         // Check that caching worked. All files are unique so should be cache misses.
         let stats = {
             let parser_guard = parser.parser.lock().await;
-            parser_guard.get_cache_stats()
+            parser_guard.get_cache_stats().unwrap()
         };
         assert!(
             stats.misses >= 4,

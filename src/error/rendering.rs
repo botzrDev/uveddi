@@ -574,7 +574,7 @@ mod tests {
         let timeout_error = RenderingServiceError::connection_timeout(Duration::from_millis(5000));
         match timeout_error {
             RenderingServiceError::ConnectionTimeout { timeout } => assert_eq!(timeout, 5000),
-            _ => panic!("Expected ConnectionTimeout"),
+            other => panic!("Expected ConnectionTimeout, got: {:?}", other),
         }
 
         let memory_error = RenderingServiceError::memory_exhaustion(1024, 512);
@@ -583,7 +583,7 @@ mod tests {
                 assert_eq!(used_mb, 1024);
                 assert_eq!(limit_mb, 512);
             }
-            _ => panic!("Expected MemoryExhaustion"),
+            other => panic!("Expected MemoryExhaustion, got: {:?}", other),
         }
     }
 }

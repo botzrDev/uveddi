@@ -2,6 +2,7 @@
 
 use crate::config::Config;
 use clap::{Args, Subcommand};
+use log::{error, info, warn};
 use std::fs;
 use std::io::Write;
 use std::path::PathBuf;
@@ -43,9 +44,21 @@ impl ConfigCommand {
         match &self.command {
             ConfigSubcommand::Show { file } => {
                 if let Some(path) = file {
-                    match Config::from_file(path.to_str().unwrap()) {
-                        Ok(cfg) => println!("{cfg:?}"),
+                    let path_str = path.to_str()
+                        .ok_or_else(|| {
+                            error!("Invalid UTF-8 in config file path: {:?}", path);
+                            crate::error::UveddiError::config_error(
+                                "Invalid UTF-8 in file path",
+                                "config file path",
+                            )
+                        })?;
+                    match Config::from_file(path_str) {
+                        Ok(cfg) => {
+                            info!("Successfully loaded config from {}", path_str);
+                            println!("{cfg:?}");
+                        },
                         Err(e) => {
+                            error!("Failed to load config from {}: {}", path_str, e);
                             return Err(crate::error::UveddiError::config_error(
                                 &format!("Failed to load config: {e}"),
                                 "config file",
@@ -54,8 +67,12 @@ impl ConfigCommand {
                     }
                 } else {
                     match Config::from_env() {
-                        Ok(cfg) => println!("{cfg:?}"),
+                        Ok(cfg) => {
+                            info!("Successfully loaded config from environment variables");
+                            println!("{cfg:?}");
+                        },
                         Err(e) => {
+                            error!("Failed to load config from environment variables: {}", e);
                             return Err(crate::error::UveddiError::config_error(
                                 &format!("Failed to load config from env: {e}"),
                                 "environment variables",
@@ -65,7 +82,15 @@ impl ConfigCommand {
                 }
             }
             ConfigSubcommand::Set { key, value, file } => {
-                let mut config = match Config::from_file(file.to_str().unwrap()) {
+                let file_str = file.to_str()
+                    .ok_or_else(|| {
+                        error!("Invalid UTF-8 in config file path: {:?}", file);
+                        crate::error::UveddiError::config_error(
+                            "Invalid UTF-8 in file path",
+                            "config file path",
+                        )
+                    })?;
+                let mut config = match Config::from_file(file_str) {
                     Ok(cfg) => cfg,
                     Err(_) => Config {
                         ollama_model: None,
@@ -99,13 +124,19 @@ impl ConfigCommand {
                         e,
                     )
                 })?;
+                info!("Config successfully updated in {}", file.display());
                 println!("Config updated in {}", file.display());
             }
             ConfigSubcommand::Validate { file } => {
-                let path = file
-                    .as_ref()
-                    .map(|p| p.to_str().unwrap())
-                    .unwrap_or("uveddi.toml");
+                let path = if let Some(file_path) = file.as_ref() {
+                    file_path.to_str()
+                        .ok_or_else(|| crate::error::UveddiError::config_error(
+                            "Invalid UTF-8 in file path",
+                            "config file path",
+                        ))?
+                } else {
+                    "uveddi.toml"
+                };
                 match Config::from_file(path) {
                     Ok(_) => println!("Config is valid."),
                     Err(e) => {

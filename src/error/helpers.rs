@@ -72,7 +72,7 @@ mod tests {
             AnalysisError::DetectionError(msg) => {
                 assert_eq!(msg, "Query error: invalid syntax");
             }
-            _ => panic!("Expected DetectionError"),
+            other => panic!("Expected DetectionError, got: {:?}", other),
         }
     }
 
@@ -83,7 +83,7 @@ mod tests {
             AnalysisError::DetectionError(msg) => {
                 assert_eq!(msg, "AST parsing: tree missing");
             }
-            _ => panic!("Expected DetectionError"),
+            other => panic!("Expected DetectionError, got: {:?}", other),
         }
     }
 
@@ -100,7 +100,7 @@ mod tests {
                 assert!(msg.contains("/path/to/file.rs"));
                 assert!(msg.contains("permission denied"));
             }
-            _ => panic!("Expected DetectionError"),
+            other => panic!("Expected DetectionError, got: {:?}", other),
         }
     }
 
@@ -114,7 +114,7 @@ mod tests {
                     "Detector 'god_object' configuration error: invalid threshold"
                 );
             }
-            _ => panic!("Expected DetectionError"),
+            other => panic!("Expected DetectionError, got: {:?}", other),
         }
     }
 }

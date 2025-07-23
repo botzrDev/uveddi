@@ -107,21 +107,49 @@ impl AstParser {
     }
 
     /// Get cache statistics for monitoring (UV-152). Public-facing method.
-    pub fn get_cache_stats(&self) -> CacheStats {
-        let cache_guard = self.cache.lock().unwrap();
-        self.get_cache_stats_with_lock(&cache_guard)
+    pub fn get_cache_stats(&self) -> Result<CacheStats, AstError> {
+        let cache_guard = self.cache.lock().map_err(|_| AstError::Other("Cache mutex poisoned".to_string()))?;
+        Ok(self.get_cache_stats_with_lock(&cache_guard))
     }
 
     /// Clear cache statistics
-    pub fn reset_cache_stats(&self) {
-        *self.cache_hits.lock().unwrap() = 0;
-        *self.cache_misses.lock().unwrap() = 0;
+    pub fn reset_cache_stats(&self) -> Result<(), AstError> {
+        self.reset_cache_stats_safe()
     }
 
     /// Get current cache utilization as percentage
-    pub fn get_cache_utilization(&self) -> f64 {
-        let cache = self.cache.lock().unwrap();
-        cache.len() as f64 / self.max_cache_size.get() as f64 * 100.0
+    pub fn get_cache_utilization(&self) -> Result<f64, AstError> {
+        let cache = self.cache.lock().map_err(|_| AstError::Other("Cache mutex poisoned".to_string()))?;
+        Ok(cache.len() as f64 / self.max_cache_size.get() as f64 * 100.0)
+    }
+
+    /// Helper method to safely increment cache hits
+    fn increment_cache_hits(&self) -> Result<(), AstError> {
+        let mut hits = self.cache_hits.lock().map_err(|_| {
+            warn!("Cache hits mutex poisoned, AST cache statistics may be inaccurate");
+            AstError::Other("Cache hits mutex poisoned".to_string())
+        })?;
+        *hits += 1;
+        Ok(())
+    }
+
+    /// Helper method to safely increment cache misses
+    fn increment_cache_misses(&self) -> Result<(), AstError> {
+        let mut misses = self.cache_misses.lock().map_err(|_| {
+            warn!("Cache misses mutex poisoned, AST cache statistics may be inaccurate");
+            AstError::Other("Cache misses mutex poisoned".to_string())
+        })?;
+        *misses += 1;
+        Ok(())
+    }
+
+    /// Helper method to safely reset cache stats
+    fn reset_cache_stats_safe(&self) -> Result<(), AstError> {
+        let mut hits = self.cache_hits.lock().map_err(|_| AstError::Other("Cache hits mutex poisoned".to_string()))?;
+        let mut misses = self.cache_misses.lock().map_err(|_| AstError::Other("Cache misses mutex poisoned".to_string()))?;
+        *hits = 0;
+        *misses = 0;
+        Ok(())
     }
 
     /// Transform tree-sitter CST to custom AST (basic implementation for demonstration)
@@ -312,12 +340,12 @@ impl AstParser {
         // Handle cache hit outside of cache lock to avoid deadlock
         if let Some(cached) = cache_result {
             // Increment counter after releasing cache lock
-            *self.cache_hits.lock().unwrap() += 1;
+            self.increment_cache_hits()?;
             return Ok(cached);
         }
 
         // Cache miss - increment counter
-        *self.cache_misses.lock().unwrap() += 1;
+        self.increment_cache_misses()?;
         info!("AST cache MISS for: {}", file_path.display());
 
         // Try disk cache
@@ -642,7 +670,7 @@ mod tests {
         let _parsed1 = parser.parse_file(&file1).unwrap();
         let _parsed2 = parser.parse_file(&file2).unwrap();
 
-        let stats = parser.get_cache_stats();
+        let stats = parser.get_cache_stats().unwrap();
         assert_eq!(stats.current_size, 2);
         assert_eq!(stats.misses, 2);
         assert_eq!(stats.hits, 0);
@@ -650,20 +678,20 @@ mod tests {
         // Parse third file - should evict first file
         let _parsed3 = parser.parse_file(&file3).unwrap();
 
-        let stats = parser.get_cache_stats();
+        let stats = parser.get_cache_stats().unwrap();
         assert_eq!(stats.current_size, 2); // Still 2 (cache size limit)
         assert_eq!(stats.misses, 3);
 
         // Re-parse file1 - should be cache miss (evicted)
         let _parsed1_again = parser.parse_file(&file1).unwrap();
 
-        let stats = parser.get_cache_stats();
+        let stats = parser.get_cache_stats().unwrap();
         assert_eq!(stats.misses, 4); // Cache miss because file1 was evicted
 
         // Re-parse file3 - should be cache hit (most recently used, still in cache)
         let _parsed3_again = parser.parse_file(&file3).unwrap();
 
-        let stats = parser.get_cache_stats();
+        let stats = parser.get_cache_stats().unwrap();
         assert_eq!(stats.hits, 1); // Cache hit
         assert!(stats.hit_rate > 0.0);
     }
@@ -673,12 +701,12 @@ mod tests {
         // Test environment variable configuration
         env::set_var("UVEDDI_AST_CACHE_SIZE", "500");
         let parser = AstParser::new().unwrap();
-        let stats = parser.get_cache_stats();
+        let stats = parser.get_cache_stats().unwrap();
         assert_eq!(stats.max_size, 500);
 
         // Test custom size
         let parser2 = AstParser::with_cache_size(100).unwrap();
-        let stats2 = parser2.get_cache_stats();
+        let stats2 = parser2.get_cache_stats().unwrap();
         assert_eq!(stats2.max_size, 100);
 
         // Clean up
@@ -689,7 +717,7 @@ mod tests {
     fn test_cache_utilization() {
         let mut parser = AstParser::with_cache_size(10).unwrap();
 
-        assert_eq!(parser.get_cache_utilization(), 0.0);
+        assert_eq!(parser.get_cache_utilization().unwrap(), 0.0);
 
         // Create and parse a test file
         let temp_dir = tempdir().unwrap();
@@ -698,7 +726,7 @@ mod tests {
 
         let _parsed = parser.parse_file(&file).unwrap();
 
-        assert_eq!(parser.get_cache_utilization(), 10.0); // 1/10 * 100%
+        assert_eq!(parser.get_cache_utilization().unwrap(), 10.0); // 1/10 * 100%
     }
 
     #[test]
@@ -713,14 +741,14 @@ mod tests {
         let _parsed = parser.parse_file(&file).unwrap();
         let _parsed_again = parser.parse_file(&file).unwrap();
 
-        let stats = parser.get_cache_stats();
+        let stats = parser.get_cache_stats().unwrap();
         assert!(stats.hits > 0);
         assert!(stats.misses > 0);
 
         // Reset stats
         parser.reset_cache_stats();
 
-        let stats_after_reset = parser.get_cache_stats();
+        let stats_after_reset = parser.get_cache_stats().unwrap();
         assert_eq!(stats_after_reset.hits, 0);
         assert_eq!(stats_after_reset.misses, 0);
         assert_eq!(stats_after_reset.hit_rate, 0.0);
@@ -733,11 +761,11 @@ mod tests {
 
         // Both should have same cache size
         assert_eq!(
-            parser1.get_cache_stats().max_size,
-            parser2.get_cache_stats().max_size
+            parser1.get_cache_stats().unwrap().max_size,
+            parser2.get_cache_stats().unwrap().max_size
         );
 
         // But separate cache instances (different stats)
-        assert_eq!(parser2.get_cache_stats().current_size, 0);
+        assert_eq!(parser2.get_cache_stats().unwrap().current_size, 0);
     }
 }

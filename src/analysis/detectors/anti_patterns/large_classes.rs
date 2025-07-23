@@ -405,8 +405,8 @@ impl AnalysisDetector for LargeClassDetector {
                     analysis_run_id: 0,      // TODO: Get proper analysis run ID
                     anti_pattern_type_id: 1, // TODO: Get proper ID for LargeClass from database
                     file_path: class_metrics.file_path.clone(), // UV-222: Now O(1) Arc<PathBuf> clone
-                    start_line: Some(class_metrics.start_line.try_into().unwrap()),
-                    end_line: Some(class_metrics.end_line.try_into().unwrap()),
+                    start_line: class_metrics.start_line.try_into().ok().map(|l: i32| l),
+                    end_line: class_metrics.end_line.try_into().ok().map(|l: i32| l),
                     severity: severity.to_string(),
                     description: format!(
                         "Large class '{}' detected: {} LOC, {} methods, {} fields",

@@ -947,11 +947,13 @@ impl CodeDuplicationDetector {
                         let cfg_hash = cfg.compute_structural_hash();
                         block.cfg = Some(cfg);
                         block.cfg_hash = Some(cfg_hash);
-                        debug!(
-                            "Generated CFG for block at line {} with {} nodes",
-                            block.start_line,
-                            block.cfg.as_ref().unwrap().node_count()
-                        );
+                        if let Some(cfg) = block.cfg.as_ref() {
+                            debug!(
+                                "Generated CFG for block at line {} with {} nodes",
+                                block.start_line,
+                                cfg.node_count()
+                            );
+                        }
                     }
                     Err(e) => {
                         warn!(

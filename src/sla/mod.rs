@@ -219,7 +219,9 @@ mod tests {
             SLOTarget::Threshold(threshold) => {
                 assert_eq!(*threshold, 100.0); // P99 < 100ms target
             }
-            _ => panic!("Expected threshold target for latency SLO"),
+            SLOTarget::Percentage(_) => {
+                panic!("Expected threshold target for latency SLO, but got percentage");
+            }
         }
     }
 
@@ -259,17 +261,20 @@ mod tests {
 
         match float_value {
             SLIValue::Float(f) => assert_eq!(f, 99.9),
-            _ => panic!("Expected float value"),
+            SLIValue::Integer(i) => panic!("Expected float value, got integer: {}", i),
+            SLIValue::Boolean(b) => panic!("Expected float value, got boolean: {}", b),
         }
 
         match int_value {
             SLIValue::Integer(i) => assert_eq!(i, 200),
-            _ => panic!("Expected integer value"),
+            SLIValue::Float(f) => panic!("Expected integer value, got float: {}", f),
+            SLIValue::Boolean(b) => panic!("Expected integer value, got boolean: {}", b),
         }
 
         match bool_value {
             SLIValue::Boolean(b) => assert!(b),
-            _ => panic!("Expected boolean value"),
+            SLIValue::Float(f) => panic!("Expected boolean value, got float: {}", f),
+            SLIValue::Integer(i) => panic!("Expected boolean value, got integer: {}", i),
         }
     }
 }

@@ -346,7 +346,7 @@ mod tests {
         let value = create_value(42.5);
         match value {
             MetricValue::Float(v) => assert_eq!(v, 42.5),
-            _ => panic!("Expected float value"),
+            other => panic!("Expected float value, got: {:?}", other),
         }
     }
 
