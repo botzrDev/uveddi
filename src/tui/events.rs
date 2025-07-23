@@ -381,7 +381,7 @@ fn spawn_action_handler(
             match action {
                 Action::Analyze(mut command) => {
                     let msg = match command.execute().await {
-                        Ok(report) => AppMessage::AnalysisCompleted(report.content),
+                        Ok(()) => AppMessage::AnalysisCompleted("Analysis completed successfully".to_string()),
                         Err(e) => AppMessage::AnalysisError(e.to_string()),
                     };
                     if ui_tx.send(msg).is_err() {

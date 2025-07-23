@@ -285,7 +285,7 @@ mod tests {
         
         let result = generator.generate_interactive_diagram(
             &[component],
-            VizDiagramType::ComponentDiagram,
+            VizDiagramType::Component,
             None,
         ).await;
         

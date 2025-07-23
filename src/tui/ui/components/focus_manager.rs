@@ -18,7 +18,6 @@
 use super::FocusableInput;
 
 /// Manages focus state across multiple input components
-#[derive(Debug)]
 pub struct FocusManager {
     /// List of all focusable components
     focusable_inputs: Vec<Box<dyn FocusableInput>>,
@@ -32,6 +31,15 @@ impl Clone for FocusManager {
             focusable_inputs: Vec::new(), // Can't clone trait objects, so start fresh
             current_focus_index: self.current_focus_index,
         }
+    }
+}
+
+impl std::fmt::Debug for FocusManager {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("FocusManager")
+            .field("input_count", &self.focusable_inputs.len())
+            .field("current_focus_index", &self.current_focus_index)
+            .finish()
     }
 }
 

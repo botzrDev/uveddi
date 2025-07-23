@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 #[cfg(feature = "tree-sitter")]
-use tree_sitter::{Query, QueryCursor};
+use tree_sitter::{Query, QueryCursor, StreamingIterator};
 
 use crate::ast::tree_sitter::queries::{
     JAVASCRIPT_IMPORTS_QUERY, PYTHON_IMPORTS_QUERY, RUST_IMPORTS_QUERY,
@@ -130,7 +130,7 @@ impl DependencyExtractor {
             .map_err(|e| ExtractionError::QueryError(e.to_string()))?;
 
             let mut cursor = QueryCursor::new();
-            let matches = cursor.matches(
+            let mut matches = cursor.matches(
                 &query,
                 parsed_file
                     .tree
@@ -141,7 +141,7 @@ impl DependencyExtractor {
             );
 
             let mut dependencies = Vec::new();
-            for mat in matches {
+            while let Some(mat) = matches.next() {
                 for capture in mat.captures {
                     // Only process captures named "path"
                     let capture_name = query.capture_names()[capture.index as usize];

@@ -4,7 +4,7 @@ use crate::analysis::symbols::{CanonicalSymbol, GlobalSymbolTable, SourceLocatio
 use crate::ast::tree_sitter_impl::ParsedFile;
 use std::sync::atomic::{AtomicU64, Ordering};
 #[cfg(feature = "tree-sitter")]
-use tree_sitter::{Query, QueryCursor};
+use tree_sitter::{Query, QueryCursor, StreamingIterator};
 
 /// A simple counter to generate unique symbol IDs.
 static SYMBOL_ID_COUNTER: AtomicU64 = AtomicU64::new(0);
@@ -63,7 +63,8 @@ impl SymbolExtractor {
         let mut cursor = QueryCursor::new();
         let captures = cursor.captures(&query, tree.root_node(), file.source.as_bytes());
 
-        for (match_, _) in captures {
+        let mut captures_iter = captures;
+        while let Some((match_, _)) = captures_iter.next() {
             if let Some(name_capture) = match_
                 .captures
                 .iter()

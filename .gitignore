@@ -74,6 +74,7 @@ frontend/cypress/.cache/
 *.so
 *.dll
 *.dylib
+*.o
 
 # LLVM bitcode files
 *.bc
