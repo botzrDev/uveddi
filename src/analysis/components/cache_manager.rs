@@ -1,16 +1,21 @@
-//! Centralized Cache Management Component
+//! High-Performance Multi-Layered Cache Management Component
 //!
-//! This module provides a unified cache management system that consolidates
-//! AST caching, result caching, and cache eviction policies into a single
-//! component as required by the facade pattern architecture.
+//! This module provides a unified cache management system that leverages
+//! the new multi-layered caching architecture with memory and disk tiers,
+//! optimized serialization, and intelligent invalidation strategies.
 
-use crate::analysis::cache::ast::{AstCache, CacheConfig};
+use crate::analysis::cache::{
+    engine_cache::{EngineCache, EngineCacheConfig},
+    metrics::CacheMetrics,
+    ast::{AstCache, CacheConfig},
+};
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
 use crate::database::models::ArchitecturalIssue;
 use crate::error::UveddiError;
+use prometheus::Registry;
 use serde_json::Value;
 use std::collections::HashMap;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
@@ -45,22 +50,48 @@ pub struct CacheStats {
     pub total_memory_usage: usize,
 }
 
-/// Centralized cache management implementation
+/// High-performance cache management implementation
 pub struct CacheManagerImpl {
-    ast_cache: Arc<RwLock<AstCache>>,
-    result_cache: Arc<RwLock<ResultCache>>,
+    /// High-performance engine cache
+    engine_cache: Arc<EngineCache>,
+    /// Performance metrics collector
+    metrics: Arc<CacheMetrics>,
+    /// Legacy AST cache for compatibility
+    legacy_ast_cache: Arc<RwLock<AstCache>>,
+    /// Cache statistics
     cache_stats: Arc<RwLock<CacheStats>>,
 }
 
 impl CacheManagerImpl {
-    /// Create a new cache manager with default configuration
-    pub fn new() -> Result<Self, UveddiError> {
-        let ast_cache = AstCache::new(CacheConfig::default())
-            .map_err(|e| UveddiError::config_error(&e.to_string(), "CacheManager::new"))?;
+    /// Create a new high-performance cache manager with multi-layer caching
+    pub async fn new() -> Result<Self, UveddiError> {
+        Self::with_config(EngineCacheConfig::default()).await
+    }
+
+    /// Create cache manager with custom configuration
+    pub async fn with_config(config: EngineCacheConfig) -> Result<Self, UveddiError> {
+        // Initialize metrics
+        let registry = Registry::new();
+        let metrics = Arc::new(
+            CacheMetrics::new(&registry)
+                .map_err(|e| UveddiError::config_error(&e.to_string(), "CacheManager metrics"))?,
+        );
+
+        // Create high-performance engine cache
+        let engine_cache = Arc::new(
+            EngineCache::new_with_config(config, metrics.clone())
+                .await
+                .map_err(|e| UveddiError::config_error(&e.to_string(), "Engine cache creation"))?,
+        );
+
+        // Legacy AST cache for backward compatibility
+        let legacy_ast_cache = AstCache::new(CacheConfig::default())
+            .map_err(|e| UveddiError::config_error(&e.to_string(), "Legacy AST cache"))?;
 
         Ok(Self {
-            ast_cache: Arc::new(RwLock::new(ast_cache)),
-            result_cache: Arc::new(RwLock::new(ResultCache::new())),
+            engine_cache,
+            metrics,
+            legacy_ast_cache: Arc::new(RwLock::new(legacy_ast_cache)),
             cache_stats: Arc::new(RwLock::new(CacheStats {
                 ast_cache_size: 0,
                 result_cache_size: 0,
@@ -71,11 +102,26 @@ impl CacheManagerImpl {
         })
     }
 
-    /// Create a new cache manager with custom AST cache
-    pub fn with_ast_cache(ast_cache: AstCache) -> Self {
-        Self {
-            ast_cache: Arc::new(RwLock::new(ast_cache)),
-            result_cache: Arc::new(RwLock::new(ResultCache::new())),
+    /// Create a new cache manager with custom AST cache (legacy compatibility)
+    pub async fn with_ast_cache(ast_cache: AstCache) -> Result<Self, UveddiError> {
+        // Initialize metrics
+        let registry = Registry::new();
+        let metrics = Arc::new(
+            CacheMetrics::new(&registry)
+                .map_err(|e| UveddiError::config_error(&e.to_string(), "CacheManager metrics"))?,
+        );
+
+        // Create engine cache with default config
+        let engine_cache = Arc::new(
+            EngineCache::new(metrics.clone())
+                .await
+                .map_err(|e| UveddiError::config_error(&e.to_string(), "Engine cache creation"))?,
+        );
+
+        Ok(Self {
+            engine_cache,
+            metrics,
+            legacy_ast_cache: Arc::new(RwLock::new(ast_cache)),
             cache_stats: Arc::new(RwLock::new(CacheStats {
                 ast_cache_size: 0,
                 result_cache_size: 0,
@@ -83,80 +129,92 @@ impl CacheManagerImpl {
                 result_hit_rate: 0.0,
                 total_memory_usage: 0,
             })),
-        }
+        })
     }
 
-    /// Update cache statistics
+    /// Update cache statistics using engine cache stats
     async fn update_stats(&self) {
         let mut stats = self.cache_stats.write().await;
-        let ast_cache = self.ast_cache.read().await;
-        let result_cache = self.result_cache.read().await;
-
-        // Use basic metrics since hit_rate and memory_usage don't exist on AstCache
-        stats.ast_cache_size = 0; // Will be updated when we implement metrics
-        stats.result_cache_size = result_cache.size();
-        stats.ast_hit_rate = 0.0; // Will be updated when we implement metrics
-        stats.result_hit_rate = result_cache.hit_rate();
-        stats.total_memory_usage = result_cache.memory_usage();
+        
+        // Get statistics from engine cache
+        let engine_stats = self.engine_cache.stats().await;
+        
+        // Update combined statistics
+        stats.ast_cache_size = engine_stats.ast_entries;
+        stats.result_cache_size = engine_stats.result_entries;
+        stats.ast_hit_rate = engine_stats.hit_rate;
+        stats.result_hit_rate = engine_stats.hit_rate;
+        stats.total_memory_usage = (engine_stats.ast_entries + engine_stats.result_entries) * 1024; // Estimate
     }
 }
 
 impl CacheManager for CacheManagerImpl {
     async fn get_or_parse_ast(&self, file_path: &Path) -> Result<Arc<ParsedFile>, UveddiError> {
-        // For now, delegate to the AstProvider pattern until we can integrate properly
-        // This is a placeholder implementation
-        use crate::ast::tree_sitter_impl::AstParser;
-        let mut ast_parser = AstParser::new()?;
-        let parsed_file = ast_parser.parse_file(file_path)?;
+        let parser = || -> Result<ParsedFile, Box<dyn std::error::Error + Send + Sync>> {
+            use crate::ast::tree_sitter_impl::AstParser;
+            let mut ast_parser = AstParser::new()
+                .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?;
+            let parsed_file = ast_parser.parse_file(file_path)
+                .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?;
+            Ok(parsed_file)
+        };
 
-        // Update statistics
-        self.update_stats().await;
-
-        Ok(Arc::new(parsed_file))
+        match self.engine_cache.get_or_parse_ast(file_path, parser).await {
+            Ok(parsed_file) => {
+                self.update_stats().await;
+                Ok(parsed_file)
+            }
+            Err(e) => {
+                log::warn!("Cache error for AST {}: {}", file_path.display(), e);
+                Err(UveddiError::AnalysisError {
+                    message: format!("Failed to get or parse AST: {}", e),
+                    file: file_path.to_string_lossy().to_string(),
+                    line: 0,
+                    context: "cache_manager".to_string(),
+                    suggestion: "Check file permissions and syntax".to_string(),
+                    source: Some(e),
+                })
+            }
+        }
     }
 
     async fn get_cached_results(&self, file_path: &Path) -> Option<Vec<ArchitecturalIssue>> {
-        let mut result_cache = self.result_cache.write().await;
-        let result = result_cache.get(file_path);
-
-        // Update statistics
+        let results = self.engine_cache.get_cached_results(file_path).await;
         self.update_stats().await;
-
-        result
+        results
     }
 
     async fn cache_results(&self, file_path: &Path, results: Vec<ArchitecturalIssue>) {
-        let mut result_cache = self.result_cache.write().await;
-        result_cache.insert(file_path.to_path_buf(), results);
-
-        // Update statistics
+        self.engine_cache.cache_results(file_path, results).await;
         self.update_stats().await;
     }
 
     async fn clear_all_caches(&self) {
-        let mut ast_cache = self.ast_cache.write().await;
-        let mut result_cache = self.result_cache.write().await;
+        // Clear engine cache
+        self.engine_cache.clear_all().await;
 
-        ast_cache.clear();
-        result_cache.clear();
+        // Clear legacy cache for compatibility
+        {
+            let mut legacy_ast_cache = self.legacy_ast_cache.write().await;
+            legacy_ast_cache.clear();
+        }
 
         // Update statistics
         self.update_stats().await;
     }
 
     fn get_cache_metrics(&self) -> Value {
-        // Return combined metrics from both caches
-        let ast_cache_metrics = {
-            // We need to handle this synchronously for the trait
-            // In a real implementation, this would be redesigned to be async
-            serde_json::json!({
-                "ast_cache": "metrics_placeholder",
-                "result_cache": "metrics_placeholder",
-                "combined": true
-            })
-        };
-
-        ast_cache_metrics
+        // Get performance summary from metrics collector
+        let summary = self.metrics.performance_summary();
+        
+        serde_json::json!({
+            "overall_hit_rate": summary.overall_hit_rate,
+            "average_latency_ms": summary.average_latency_ms,
+            "total_size_bytes": summary.total_size_bytes,
+            "total_entries": summary.total_entries,
+            "layer_summaries": summary.layer_summaries,
+            "prometheus_metrics": self.metrics.export_metrics()
+        })
     }
 
     async fn get_cache_stats(&self) -> CacheStats {

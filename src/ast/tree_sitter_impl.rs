@@ -474,6 +474,7 @@ impl AstParser {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "memory-optimization", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
 pub struct ParsedFile {
     pub file_path: Arc<PathBuf>, // UV-222: Arc<PathBuf> for O(1) clones instead of expensive PathBuf clones
     pub language: SourceLanguage,

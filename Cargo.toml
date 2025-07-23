@@ -128,7 +128,7 @@ bumpalo-herd = { version = "0.1", optional = true }
 # Memory mapping for large data structures
 memmap2 = { version = "0.9", optional = true }
 # Zero-copy serialization for AST cache optimization
-rkyv = { version = "0.7", optional = true }
+rkyv = { version = "0.7", features = ["validation"], optional = true }
 # CPU count for pool sharding
 num_cpus = "1.16"
 # Lazy static for global instances
@@ -147,6 +147,9 @@ persisted = "1.0"
 
 # Pattern matching for file filtering
 glob = "0.3.1"
+
+# MessagePack serialization for cache optimization
+rmp-serde = "1.1"
 
 # Compression for diagram caching
 flate2 = "1.0"
