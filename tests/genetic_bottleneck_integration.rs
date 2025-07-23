@@ -2,7 +2,6 @@
 
 use anyhow::Result;
 use std::collections::HashMap;
-use std::time::SystemTime;
 
 use uveddi::performance::{
     GeneticBottleneckDetector, PerformanceDataPoint, PerformanceRegressionDetector,
@@ -329,7 +328,7 @@ fn create_cpu_bottleneck_scenario() -> Vec<PerformanceDataPoint> {
 
         data.push(PerformanceDataPoint {
             timestamp: base_time + i * 30,
-            cpu_usage: (0.7 + cpu_spike).min(1.0f64), // High baseline CPU with spikes
+            cpu_usage: (0.7f64 + cpu_spike).min(1.0), // High baseline CPU with spikes
             memory_usage: 0.4,                        // Stable memory
             io_wait: 0.05,                            // Low I/O wait
             network_latency: 5.0,                     // Good network
@@ -393,8 +392,7 @@ async fn test_uv249_acceptance_criteria() -> Result<()> {
     println!("🎯 Testing UV-249 Phase 3 Acceptance Criteria");
 
     // ✅ Genetic algorithm engine implemented and tested
-    let mut detector = GeneticBottleneckDetector::new();
-    let _configured_detector = detector
+    let mut detector = GeneticBottleneckDetector::new()
         .with_population_size(50)
         .with_generations(100)
         .with_mutation_rate(0.1)

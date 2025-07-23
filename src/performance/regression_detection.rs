@@ -776,6 +776,82 @@ impl PerformanceRegressionDetector {
             validation_notes,
         })
     }
+
+    /// Analyze bottlenecks using genetic algorithm
+    #[instrument(skip(self))]
+    pub async fn analyze_bottlenecks_genetic(
+        &self,
+        metric_name: &str,
+        hours_back: u64,
+    ) -> Result<Option<BottleneckAnalysis>> {
+        // Get recent performance data
+        let performance_data = self.get_performance_data_for_genetic_analysis(metric_name, hours_back).await?;
+        
+        if performance_data.is_empty() {
+            debug!(metric = %metric_name, "No performance data available for genetic analysis");
+            return Ok(None);
+        }
+
+        // Initialize genetic detector if not already initialized
+        let mut genetic_detector = GeneticBottleneckDetector::new()
+            .with_population_size(50)
+            .with_generations(100)
+            .with_mutation_rate(0.1)
+            .with_crossover_rate(0.8);
+
+        // Run genetic algorithm analysis
+        let analysis = genetic_detector.evolve_bottleneck_detection(&performance_data).await?;
+        
+        info!(
+            metric = %metric_name,
+            bottlenecks_found = analysis.identified_bottlenecks.len(),
+            recommendations = analysis.optimization_recommendations.len(),
+            performance_score = analysis.performance_score,
+            "Genetic bottleneck analysis completed"
+        );
+
+        Ok(Some(analysis))
+    }
+
+    /// Convert stored metrics to performance data points for genetic analysis
+    async fn get_performance_data_for_genetic_analysis(
+        &self,
+        metric_name: &str,
+        hours_back: u64,
+    ) -> Result<Vec<PerformanceDataPoint>> {
+        let baselines = self.baselines.read().await;
+        let baseline = match baselines.get(metric_name) {
+            Some(baseline) => baseline,
+            None => return Ok(Vec::new()),
+        };
+
+        let cutoff_time = SystemTime::now() - Duration::from_secs(hours_back * 3600);
+        let cutoff_timestamp = cutoff_time.duration_since(UNIX_EPOCH)?.as_secs();
+
+        let mut performance_data = Vec::new();
+        
+        // Convert baseline data to performance data points
+        for data_point in &baseline.historical_values {
+            let timestamp_u64 = data_point.timestamp.duration_since(UNIX_EPOCH)?.as_secs();
+            if timestamp_u64 >= cutoff_timestamp {
+                performance_data.push(PerformanceDataPoint {
+                    timestamp: timestamp_u64,
+                    cpu_usage: 0.5, // Default values - would be enhanced with real profiling data
+                    memory_usage: 0.6,
+                    io_wait: 0.1,
+                    network_latency: 10.0,
+                    execution_time: data_point.value,
+                    throughput: if data_point.value > 0.0 { 1000.0 / data_point.value } else { 1000.0 },
+                    component: metric_name.to_string(),
+                });
+            }
+        }
+
+        // Sort by timestamp
+        performance_data.sort_by_key(|p| p.timestamp);
+        
+        Ok(performance_data)
+    }
 }
 
 impl AlertManager {
