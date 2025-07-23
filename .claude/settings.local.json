@@ -92,7 +92,8 @@
       "Bash(timeout 30 cargo test --lib cache::incremental_cache::tests::test_cache_creation --no-run)",
       "Bash(scripts/validate-uv243-requirements.sh:*)",
       "Bash(find /home/austingreen/Documents/botzr/projects/uveddi/src -name \"*cache*\" -type f)",
-      "Bash(grep -n \"ArchitecturalIssue\" /home/austingreen/Documents/botzr/projects/uveddi/src/database/models.rs)"
+      "Bash(grep -n \"ArchitecturalIssue\" /home/austingreen/Documents/botzr/projects/uveddi/src/database/models.rs)",
+      "Bash(./scripts/run-coverage-tests.sh:*)"
     ],
     "deny": []
   }

@@ -172,7 +172,7 @@ impl CacheManager for CacheManagerImpl {
                     line: 0,
                     context: "cache_manager".to_string(),
                     suggestion: "Check file permissions and syntax".to_string(),
-                    source: Some(e),
+                    source: Some(e.into()),
                 })
             }
         }
@@ -285,7 +285,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_cache_manager_creation() {
-        let cache_manager = CacheManagerImpl::new().unwrap();
+        let cache_manager = CacheManagerImpl::new().await.unwrap();
         let stats = cache_manager.get_cache_stats().await;
 
         assert_eq!(stats.ast_cache_size, 0);
@@ -294,7 +294,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_cache_manager_ast_operations() {
-        let cache_manager = CacheManagerImpl::new().unwrap();
+        let cache_manager = CacheManagerImpl::new().await.unwrap();
 
         // Create a temporary Rust file
         let mut temp_file = NamedTempFile::with_suffix(".rs").unwrap();
@@ -312,7 +312,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_cache_manager_result_operations() {
-        let cache_manager = CacheManagerImpl::new().unwrap();
+        let cache_manager = CacheManagerImpl::new().await.unwrap();
 
         // Create a temporary file path
         let temp_path = std::path::Path::new("/tmp/test_file.rs");
@@ -330,7 +330,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_cache_manager_clear() {
-        let cache_manager = CacheManagerImpl::new().unwrap();
+        let cache_manager = CacheManagerImpl::new().await.unwrap();
 
         // Create a temporary file path
         let temp_path = std::path::Path::new("/tmp/test_file.rs");
@@ -352,7 +352,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_cache_manager_metrics() {
-        let cache_manager = CacheManagerImpl::new().unwrap();
+        let cache_manager = CacheManagerImpl::new().await.unwrap();
 
         // Get metrics
         let metrics = cache_manager.get_cache_metrics();

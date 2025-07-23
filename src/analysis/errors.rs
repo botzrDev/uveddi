@@ -34,3 +34,9 @@ pub enum AnalysisError {
     #[error("Unsupported language: {0}")]
     UnsupportedLanguage(String),
 }
+
+impl From<Box<dyn std::error::Error + Send + Sync>> for AnalysisError {
+    fn from(e: Box<dyn std::error::Error + Send + Sync>) -> Self {
+        AnalysisError::Other(e.to_string())
+    }
+}

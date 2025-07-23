@@ -11,10 +11,12 @@ use crate::analysis::cache::{
     metrics::CacheMetrics,
     serialization::{CacheEntry, CacheSerializer, SerializationFormat},
 };
+use rkyv::de::deserializers::SharedDeserializeMap;
 use lru::LruCache;
 use serde::{de::DeserializeOwned, Serialize};
 use std::collections::HashMap;
 use std::hash::Hash;
+use std::marker::PhantomData;
 use std::num::NonZeroUsize;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -121,6 +123,7 @@ where
     config: CacheConfig,
     /// Serializer
     serializer: CacheSerializer,
+    _marker: PhantomData<(K, V)>,
 }
 
 impl<K, V> MultiLayerCache<K, V>
@@ -128,7 +131,7 @@ where
     K: Clone + Eq + Hash + Send + Sync + ToString + 'static,
     V: Clone + Send + Sync + Serialize + for<'de> DeserializeOwned + 'static,
     V: rkyv::Archive + rkyv::Serialize<rkyv::ser::serializers::AllocSerializer<256>>,
-    V: rkyv::Deserialize<V, rkyv::de::deserializers::AllocDeserializer>,
+    V: rkyv::Deserialize<V::Archived, SharedDeserializeMap>,
     V::Archived: for<'a> rkyv::CheckBytes<rkyv::validation::validators::DefaultValidator<'a>>,
 {
     /// Create a new multi-layer cache
@@ -416,7 +419,7 @@ where
     K: Clone + Eq + Hash + Send + Sync + ToString,
     V: Clone + Send + Sync + Serialize + for<'de> DeserializeOwned,
     V: rkyv::Archive + rkyv::Serialize<rkyv::ser::serializers::AllocSerializer<256>>,
-    V: rkyv::Deserialize<V, rkyv::de::deserializers::AllocDeserializer>,
+    V: rkyv::Deserialize<V::Archived, SharedDeserializeMap>,
     V::Archived: for<'a> rkyv::CheckBytes<rkyv::validation::validators::DefaultValidator<'a>>,
 {
     async fn new(config: CacheConfig) -> Result<Self, CacheError> {
@@ -428,6 +431,7 @@ where
             current_size: 0,
             config,
             serializer,
+            _marker: PhantomData,
         };
 
         // Load existing cache entries
@@ -526,6 +530,7 @@ where
         if ttl.is_none() {
             return Ok(0);
         }
+        let ttl = ttl.unwrap();
 
         let mut removed_count = 0;
         let mut to_remove = Vec::new();
@@ -533,7 +538,7 @@ where
         for (key_hash, file_path) in &self.file_map {
             if let Ok(data) = fs::read(file_path).await {
                 if let Ok(entry) = self.serializer.deserialize::<CacheEntry<V>>(&data) {
-                    if entry.age() > ttl.unwrap() {
+                    if entry.age() > ttl {
                         to_remove.push(key_hash.clone());
                     }
                 }
@@ -604,6 +609,7 @@ mod tests {
 
     #[derive(Debug, Clone, PartialEq, Serialize, serde::Deserialize)]
     #[cfg_attr(feature = "memory-optimization", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+    #[archive(check_bytes)]
     struct TestValue {
         id: u64,
         data: String,
@@ -620,7 +626,7 @@ mod tests {
 
         let registry = Registry::new();
         let metrics = Arc::new(CacheMetrics::new(&registry).unwrap());
-        let cache = MultiLayerCache::new(config, metrics).await.unwrap();
+        let cache: MultiLayerCache<String, TestValue> = MultiLayerCache::new(config, metrics).await.unwrap();
 
         let key = "test_key".to_string();
         let value = TestValue {
@@ -633,7 +639,7 @@ mod tests {
 
         // Test get operation
         let retrieved = cache.get(&key).await.unwrap();
-        assert_eq!(retrieved, Some(value));
+        assert_eq!(retrieved, Some(value.clone()));
 
         // Test remove operation
         let removed = cache.remove(&key).await.unwrap();
@@ -655,7 +661,7 @@ mod tests {
 
         let registry = Registry::new();
         let metrics = Arc::new(CacheMetrics::new(&registry).unwrap());
-        let cache = MultiLayerCache::new(config, metrics).await.unwrap();
+        let cache: MultiLayerCache<String, TestValue> = MultiLayerCache::new(config, metrics).await.unwrap();
 
         // Fill memory cache beyond capacity
         for i in 0..3 {
@@ -682,7 +688,7 @@ mod tests {
 
         let registry = Registry::new();
         let metrics = Arc::new(CacheMetrics::new(&registry).unwrap());
-        let cache = MultiLayerCache::new(config, metrics).await.unwrap();
+        let cache: MultiLayerCache<String, TestValue> = MultiLayerCache::new(config, metrics).await.unwrap();
 
         let value = TestValue {
             id: 1,
@@ -707,7 +713,7 @@ mod tests {
 
         let registry = Registry::new();
         let metrics = Arc::new(CacheMetrics::new(&registry).unwrap());
-        let cache = MultiLayerCache::new(config, metrics).await.unwrap();
+        let cache: MultiLayerCache<String, TestValue> = MultiLayerCache::new(config, metrics).await.unwrap();
 
         let value = TestValue {
             id: 1,

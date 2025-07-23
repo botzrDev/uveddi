@@ -4,6 +4,7 @@
 //! I/O overhead and memory footprint. Supports multiple formats including
 //! rkyv (zero-copy), MessagePack, and Bincode.
 
+use rkyv::de::deserializers::SharedDeserializeMap;
 use serde::{Deserialize, Serialize};
 use std::io::{Read, Write};
 use thiserror::Error;
@@ -84,7 +85,8 @@ impl CacheSerializer {
     /// Deserialize data from bytes using the configured format
     pub fn deserialize<T>(&self, bytes: &[u8]) -> Result<T, SerializationError>
     where
-        T: for<'de> Deserialize<'de> + rkyv::Archive + rkyv::Deserialize<T, rkyv::de::deserializers::AllocDeserializer>,
+        T: for<'de> Deserialize<'de> + rkyv::Archive,
+        T: rkyv::Deserialize<T::Archived, SharedDeserializeMap>,
         T::Archived: for<'a> rkyv::CheckBytes<rkyv::validation::validators::DefaultValidator<'a>>,
     {
         match self.format {
@@ -94,8 +96,8 @@ impl CacheSerializer {
                     use rkyv::validation::validators::DefaultValidator;
                     let archived = rkyv::check_archived_root::<T>(bytes)
                         .map_err(|e| SerializationError::RkyvError(e.to_string()))?;
-                    let mut deserializer = rkyv::de::deserializers::AllocDeserializer;
-                    archived.deserialize(&mut deserializer)
+                    let mut deserializer = SharedDeserializeMap::new();
+                    rkyv::Deserialize::deserialize(archived, &mut deserializer)
                         .map_err(|e| SerializationError::RkyvError(e.to_string()))
                 }
                 #[cfg(not(feature = "memory-optimization"))]
@@ -139,7 +141,8 @@ impl CacheSerializer {
     /// Read and deserialize data directly from a reader (for streaming)
     pub fn deserialize_from_reader<T, R>(&self, reader: R) -> Result<T, SerializationError>
     where
-        T: for<'de> Deserialize<'de> + rkyv::Archive + rkyv::Deserialize<T, rkyv::de::deserializers::AllocDeserializer>,
+        T: for<'de> Deserialize<'de> + rkyv::Archive,
+        T: rkyv::Deserialize<T::Archived, SharedDeserializeMap>,
         T::Archived: for<'a> rkyv::CheckBytes<rkyv::validation::validators::DefaultValidator<'a>>,
         R: Read,
     {
@@ -179,12 +182,16 @@ impl CacheSerializer {
     }
 }
 
+use std::time::SystemTime;
+
 /// Serializable cache entry with metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[cfg_attr(feature = "memory-optimization", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[archive(check_bytes)]
 pub struct CacheEntry<T> {
     pub data: T,
-    pub timestamp: chrono::DateTime<chrono::Utc>,
+    #[with(rkyv::with::UnixTimestamp)]
+    pub timestamp: SystemTime,
     pub access_count: u64,
     pub size_bytes: u64,
     pub content_hash: String,
@@ -194,7 +201,7 @@ impl<T> CacheEntry<T> {
     pub fn new(data: T, content_hash: String, size_bytes: u64) -> Self {
         Self {
             data,
-            timestamp: chrono::Utc::now(),
+            timestamp: SystemTime::now(),
             access_count: 0,
             size_bytes,
             content_hash,
@@ -203,11 +210,11 @@ impl<T> CacheEntry<T> {
 
     pub fn touch(&mut self) {
         self.access_count += 1;
-        self.timestamp = chrono::Utc::now();
+        self.timestamp = SystemTime::now();
     }
 
-    pub fn age(&self) -> chrono::Duration {
-        chrono::Utc::now() - self.timestamp
+    pub fn age(&self) -> std::time::Duration {
+        self.timestamp.elapsed().unwrap_or_default()
     }
 }
 
@@ -218,6 +225,7 @@ mod tests {
 
     #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
     #[cfg_attr(feature = "memory-optimization", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+    #[archive(check_bytes)]
     struct TestData {
         id: u64,
         name: String,
@@ -283,7 +291,7 @@ mod tests {
 
         entry.touch();
         assert_eq!(entry.access_count, 1);
-        assert!(entry.age().num_seconds() >= 0);
+        assert!(entry.age().as_secs() >= 0);
     }
 
     #[test]

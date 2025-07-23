@@ -109,12 +109,13 @@ impl ContentHashInvalidator {
 
         // Hash all dependencies
         let path_buf = path.to_path_buf();
-        if let Some(dependencies) = self.dependency_graph.get(&path_buf) {
+        let dependencies = self.dependency_graph.get(&path_buf).cloned();
+        if let Some(dependencies) = dependencies {
             let mut dep_hashes: Vec<String> = Vec::new();
             
             for dep_path in dependencies {
                 if dep_path.exists() {
-                    let dep_hash = self.get_file_hash_cached(dep_path)?;
+                    let dep_hash = self.get_file_hash_cached(&dep_path)?;
                     dep_hashes.push(dep_hash);
                 }
             }

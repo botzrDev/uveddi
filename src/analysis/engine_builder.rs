@@ -169,7 +169,7 @@ impl AnalysisEngineBuilder {
         } else {
             Arc::new(AstProviderImpl::new()?)
         };
-        let cache_manager = Arc::new(CacheManagerImpl::with_ast_cache(ast_cache));
+        let cache_manager = Arc::new(futures::executor::block_on(CacheManagerImpl::with_ast_cache(ast_cache))?);
         let aggregator = Arc::new(AnalysisAggregator::new());
 
         // Components that need dependencies
@@ -253,7 +253,7 @@ impl AnalysisEngineBuilder {
         } else {
             Arc::new(AstProviderImpl::new()?)
         };
-        let cache_manager = Arc::new(CacheManagerImpl::with_ast_cache(ast_cache));
+        let cache_manager = Arc::new(futures::executor::block_on(CacheManagerImpl::with_ast_cache(ast_cache))?);
         let aggregator = Arc::new(AnalysisAggregator::new());
 
         // PluginManagerHandle needs to be created from WasmPluginEngine

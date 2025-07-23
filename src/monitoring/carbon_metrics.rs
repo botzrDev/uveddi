@@ -88,7 +88,7 @@ pub struct EnergyConsumptionMetrics {
 }
 
 /// Types of AI workloads tracked for carbon awareness
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum WorkloadType {
     /// Genetic algorithm bottleneck detection
     GeneticAlgorithm,
@@ -199,7 +199,7 @@ impl CarbonAwarenessCollector {
         let workload_id = uuid::Uuid::new_v4().to_string();
         let session = EnergyTrackingSession {
             workload_id: workload_id.clone(),
-            workload_type,
+            workload_type: workload_type.clone(),
             start_time: Instant::now(),
             start_time_utc: Utc::now(),
             power_samples: Vec::new(),
@@ -214,7 +214,7 @@ impl CarbonAwarenessCollector {
             self.active_workloads_gauge.set(sessions.len() as f64);
         }
 
-        info!("Started energy tracking for {} workload: {}", workload_type, workload_id);
+        info!("Started energy tracking for {:?} workload: {}", workload_type, workload_id);
         workload_id
     }
 
