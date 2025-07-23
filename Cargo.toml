@@ -2,7 +2,7 @@
 
 [package]
 name = "uveddi"
-version = "0.1.0"
+version = "0.9.0"
 edition = "2021"
 resolver = "2"
 description = "A Rust-based code analysis and exploration tool"
