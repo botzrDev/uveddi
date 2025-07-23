@@ -118,6 +118,7 @@ pub mod errors;
 pub mod extractors;
 pub mod graph;
 pub mod incremental;
+pub mod interactive_diagram_generator;
 pub mod memory;
 pub mod mermaid_generator;
 pub mod performance;
@@ -155,6 +156,10 @@ pub use graph::{ComponentNode, LocalDependencyGraph, LocalDependencyType};
 pub use incremental::{
     ChangeDetector, ChangeImpact, ChangeSet, DependencyTracker, IncrementalAnalysisConfig,
     IncrementalAnalysisEngine, IncrementalConfig, IncrementalStateManager,
+};
+pub use interactive_diagram_generator::{
+    InteractiveDiagramGenerator, InteractiveDiagramResult, InteractiveNodeMetadata,
+    InteractionConfig, NodePosition, ComponentMetrics as InteractiveComponentMetrics,
 };
 pub use memory::{get_optimization_status, MemoryOptimizationConfig};
 pub use plugin_adapter::{WasmPluginAdapterFactory, WasmPluginDetectorAdapter};

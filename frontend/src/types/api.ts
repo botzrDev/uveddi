@@ -126,3 +126,13 @@ export interface PaginatedResponse<T> {
   size: number;
   pages: number;
 }
+
+// Component metrics for diagrams
+export interface ComponentMetrics {
+  lines_of_code?: number;
+  complexity?: number;
+  coupling?: number;
+  cohesion?: number;
+  maintainability_index?: number;
+  test_coverage?: number;
+}
