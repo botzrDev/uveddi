@@ -122,6 +122,7 @@ use crate::analysis::errors::AnalysisError as CoreAnalysisError;
 use crate::analysis::{AnalysisDetector, AnalysisError};
 use crate::ast::tree_sitter::{Node, Query, QueryCursor};
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
+use tree_sitter::StreamingIterator;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use crate::error::ErrorHelpers;
 use log::{debug, info, warn};

@@ -1,4 +1,5 @@
 import React from 'react';
+import { errorMonitoring } from '../../utils/errorMonitoring';
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;
@@ -65,13 +66,10 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    // Log error to monitoring service in production
-    if (process.env.NODE_ENV === 'production') {
-      // TODO: Send to error monitoring service (e.g., Sentry)
-      console.error('Error caught by boundary:', error, errorInfo);
-    } else {
-      console.error('Error caught by boundary:', error, errorInfo);
-    }
+    // Report error to monitoring service
+    errorMonitoring.reportError(error, errorInfo, 'high').catch(reportError => {
+      console.error('Failed to report error to monitoring service:', reportError);
+    });
   }
 
   resetError = () => {

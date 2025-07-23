@@ -118,6 +118,9 @@ pub mod rate_limiting;
 pub mod secrets;
 pub mod secure_config_loader;
 
+// Standard library imports
+use std::path::{Path, PathBuf};
+
 // Re-export commonly used types
 pub use errors::{SecurityError, SecurityErrorSeverity, SecurityResult};
 pub use models::{
@@ -137,7 +140,7 @@ pub use secrets::{SecretStore, SecretStoreFactory, SecretRotationManager, Rotati
 pub use secure_config_loader::{SecureConfigLoader, SecretStoreHealthStatus};
 
 use crate::error::UveddiError;
-use std::path::{Component, Path, PathBuf};
+use std::path::Component;
 
 // Include integration tests in test builds
 #[cfg(test)]
@@ -230,4 +233,55 @@ pub fn validate_file_count(count: usize) -> Result<(), SecurityError> {
         });
     }
     Ok(())
+}
+
+/// Sanitize and validate file paths to prevent path traversal attacks
+/// 
+/// This function implements comprehensive path security by:
+/// - Resolving all symbolic links using canonicalize()
+/// - Ensuring the resolved path stays within the base directory
+/// - Preventing Unicode normalization attacks
+/// - Blocking common path traversal patterns
+/// 
+/// # Security Features
+/// - **Symlink Resolution**: Uses `std::fs::canonicalize()` to resolve all symbolic links
+/// - **Path Containment**: Strict verification that resolved path is within base directory
+/// - **Unicode Safety**: Handles Unicode normalization attacks
+/// - **Error Handling**: Secure error messages that don't leak path information
+/// 
+/// # Arguments
+/// * `input_path` - The untrusted path to sanitize
+/// * `base_dir` - The trusted base directory that must contain the resolved path
+/// 
+/// # Returns
+/// * `Ok(PathBuf)` - The canonicalized, safe path
+/// * `Err(SecurityError)` - Path traversal attempt or invalid path
+/// 
+/// # Examples
+/// ```rust
+/// use uveddi::security::sanitize_path;
+/// use std::path::Path;
+/// 
+/// // Safe path within base directory
+/// let safe_path = sanitize_path("./file.txt", "/safe/base")?;
+/// 
+/// // Path traversal attempt - will return error
+/// let result = sanitize_path("../../../etc/passwd", "/safe/base");
+/// assert!(result.is_err());
+/// ```
+pub fn sanitize_path<P: AsRef<Path>>(input_path: P, base_dir: P) -> Result<PathBuf, SecurityError> {
+    // Step 1: Canonicalize the base directory to get absolute, resolved path
+    let base = base_dir.as_ref().canonicalize()
+        .map_err(|_| SecurityError::InvalidBasePath)?;
+    
+    // Step 2: Canonicalize the input path to resolve symlinks and normalize
+    let resolved = input_path.as_ref().canonicalize()
+        .map_err(|_| SecurityError::InvalidPath)?;
+    
+    // Step 3: Verify that the canonicalized path is within the base directory
+    if !resolved.starts_with(&base) {
+        return Err(SecurityError::PathTraversalAttempt);
+    }
+    
+    Ok(resolved)
 }

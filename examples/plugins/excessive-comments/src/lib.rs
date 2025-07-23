@@ -7,6 +7,7 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::io::Cursor;
+use std::sync::{Mutex, OnceLock};
 
 use arrow_array::{RecordBatch, StringArray, UInt32Array};
 use arrow_ipc::reader::StreamReader;
@@ -18,10 +19,22 @@ wit_bindgen::generate!({
     world: "code-analyzer",
 });
 
+/// AST buffer metadata
+#[derive(Clone)]
+struct AstMetadata {
+    size: u64,
+    language: String,
+}
+
+/// Global metadata storage for AST handles
+static GLOBAL_AST_METADATA: OnceLock<Mutex<HashMap<u32, AstMetadata>>> = OnceLock::new();
+
 /// The main plugin implementation
 struct ExcessiveCommentsPlugin {
     /// Storage for AST data buffers indexed by handle ID
     ast_buffers: RefCell<HashMap<u32, Vec<u8>>>,
+    /// Storage for AST metadata indexed by handle ID
+    ast_metadata: RefCell<HashMap<u32, AstMetadata>>,
     /// Next available handle ID
     next_id: RefCell<u32>,
     /// Configuration for the plugin
@@ -57,6 +70,7 @@ impl ExcessiveCommentsPlugin {
         
         Self {
             ast_buffers: RefCell::new(HashMap::new()),
+            ast_metadata: RefCell::new(HashMap::new()),
             next_id: RefCell::new(0),
             config: RefCell::new(None),
             comment_patterns: RefCell::new(comment_patterns),
@@ -219,6 +233,25 @@ impl ExcessiveCommentsPlugin {
         
         Ok(issues)
     }
+    
+    /// Extract language information from AST buffer
+    fn extract_language_from_buffer(&self, buffer: &[u8]) -> Option<String> {
+        let cursor = Cursor::new(buffer);
+        let mut reader = StreamReader::try_new(cursor, None).ok()?;
+        
+        // Try to read the first batch to extract language info
+        if let Some(Ok(batch)) = reader.next() {
+            if let Some(languages_col) = batch.column_by_name("language") {
+                if let Some(languages) = languages_col.as_any().downcast_ref::<StringArray>() {
+                    if languages.len() > 0 {
+                        return Some(languages.value(0).split('/').next().unwrap_or("unknown").to_string());
+                    }
+                }
+            }
+        }
+        
+        None
+    }
 }
 
 impl Guest for ExcessiveCommentsPlugin {
@@ -272,14 +305,29 @@ impl GuestPluginInterface for ExcessiveCommentsPluginInterface {
     fn load_ast(&mut self, ast_buffer: Vec<u8>) -> Result<Resource<AstHandle>, PluginError> {
         let mut next_id = self.plugin.next_id.borrow_mut();
         let mut ast_buffers = self.plugin.ast_buffers.borrow_mut();
+        let mut ast_metadata = self.plugin.ast_metadata.borrow_mut();
         
         let id = *next_id;
         *next_id += 1;
         
         let size = ast_buffer.len() as u64;
-        ast_buffers.insert(id, ast_buffer);
         
-        logging::log("debug", &format!("Stored AST buffer with handle ID: {} (size: {} bytes)", id, size));
+        // Extract language from AST buffer if possible
+        let language = self.extract_language_from_buffer(&ast_buffer)
+            .unwrap_or_else(|| "unknown".to_string());
+        
+        // Store buffer and metadata
+        ast_buffers.insert(id, ast_buffer);
+        let metadata = AstMetadata { size, language: language.clone() };
+        ast_metadata.insert(id, metadata.clone());
+        
+        // Also store in global metadata for handle access
+        let global_metadata = GLOBAL_AST_METADATA.get_or_init(|| Mutex::new(HashMap::new()));
+        if let Ok(mut global_map) = global_metadata.lock() {
+            global_map.insert(id, metadata);
+        }
+        
+        logging::log("debug", &format!("Stored AST buffer with handle ID: {} (size: {} bytes, language: {})", id, size, language));
         
         // Create the resource handle
         let handle = AstHandle::new(AstHandleRep { id });
@@ -319,8 +367,20 @@ impl GuestPluginInterface for ExcessiveCommentsPluginInterface {
         let id = handle_rep.id;
         
         let mut ast_buffers = self.plugin.ast_buffers.borrow_mut();
-        if ast_buffers.remove(&id).is_some() {
-            logging::log("debug", &format!("Freed AST buffer with handle ID: {}", id));
+        let mut ast_metadata = self.plugin.ast_metadata.borrow_mut();
+        
+        let buffer_removed = ast_buffers.remove(&id).is_some();
+        let metadata_removed = ast_metadata.remove(&id).is_some();
+        
+        // Also remove from global metadata
+        if let Some(global_metadata) = GLOBAL_AST_METADATA.get() {
+            if let Ok(mut global_map) = global_metadata.lock() {
+                global_map.remove(&id);
+            }
+        }
+        
+        if buffer_removed {
+            logging::log("debug", &format!("Freed AST buffer and metadata with handle ID: {}", id));
             Ok(())
         } else {
             let error_msg = format!("Attempted to free invalid ast-handle: {}", id);
@@ -332,9 +392,17 @@ impl GuestPluginInterface for ExcessiveCommentsPluginInterface {
     fn cleanup(&mut self) -> Result<(), PluginError> {
         logging::log("info", "Cleaning up Excessive Comments Plugin");
         
-        // Clear all stored AST buffers
+        // Clear all stored AST buffers and metadata
         self.plugin.ast_buffers.borrow_mut().clear();
+        self.plugin.ast_metadata.borrow_mut().clear();
         *self.plugin.next_id.borrow_mut() = 0;
+        
+        // Also clear global metadata
+        if let Some(global_metadata) = GLOBAL_AST_METADATA.get() {
+            if let Ok(mut global_map) = global_metadata.lock() {
+                global_map.clear();
+            }
+        }
         
         Ok(())
     }
@@ -364,14 +432,30 @@ impl GuestAstHandle for AstHandle {
     }
     
     fn size(&self) -> u64 {
-        // This would need access to the actual buffer size
-        // For now, return a placeholder
+        if let Some(global_metadata) = GLOBAL_AST_METADATA.get() {
+            if let Ok(global_map) = global_metadata.lock() {
+                if let Some(metadata) = global_map.get(&self.rep.id) {
+                    logging::log("debug", &format!("Size retrieved for AST handle ID {}: {} bytes", self.rep.id, metadata.size));
+                    return metadata.size;
+                }
+            }
+        }
+        
+        logging::log("warn", &format!("Size requested for unknown AST handle ID: {}", self.rep.id));
         0
     }
     
     fn language(&self) -> String {
-        // This would need access to the actual language info
-        // For now, return a placeholder
+        if let Some(global_metadata) = GLOBAL_AST_METADATA.get() {
+            if let Ok(global_map) = global_metadata.lock() {
+                if let Some(metadata) = global_map.get(&self.rep.id) {
+                    logging::log("debug", &format!("Language retrieved for AST handle ID {}: {}", self.rep.id, metadata.language));
+                    return metadata.language.clone();
+                }
+            }
+        }
+        
+        logging::log("warn", &format!("Language requested for unknown AST handle ID: {}", self.rep.id));
         "unknown".to_string()
     }
 }

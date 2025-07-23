@@ -140,6 +140,16 @@ pub enum SecurityError {
     #[error("Input validation failed: {errors:?}")]
     ValidationError { errors: Vec<String> },
 
+    // Path Security Errors
+    #[error("Path traversal attempt detected")]
+    PathTraversalAttempt,
+
+    #[error("Invalid path provided")]
+    InvalidPath,
+
+    #[error("Invalid base path provided")]
+    InvalidBasePath,
+
     // Authorization Engine Errors
     #[error("Authorization engine error: {error}")]
     AuthorizationEngineError { error: String },
@@ -268,6 +278,8 @@ impl SecurityError {
                 | SecurityError::AuditIntegrityError
                 | SecurityError::InvalidApiKeyFormat
                 | SecurityError::ValidationError { .. }
+                | SecurityError::PathTraversalAttempt
+                | SecurityError::InvalidPath
         )
     }
 
@@ -278,13 +290,16 @@ impl SecurityError {
             | SecurityError::InvalidCredentials
             | SecurityError::AuthorizationDenied
             | SecurityError::PermissionDenied { .. }
-            | SecurityError::AuditIntegrityError => SecurityErrorSeverity::High,
+            | SecurityError::AuditIntegrityError
+            | SecurityError::PathTraversalAttempt => SecurityErrorSeverity::High,
 
             SecurityError::TokenExpired
             | SecurityError::InvalidToken
             | SecurityError::RateLimitExceeded { .. }
             | SecurityError::SessionExpired { .. }
-            | SecurityError::ApiKeyExpired { .. } => SecurityErrorSeverity::Medium,
+            | SecurityError::ApiKeyExpired { .. }
+            | SecurityError::InvalidPath
+            | SecurityError::InvalidBasePath => SecurityErrorSeverity::Medium,
 
             SecurityError::ConfigurationError { .. }
             | SecurityError::DatabaseError { .. }

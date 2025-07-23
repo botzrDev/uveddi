@@ -31,6 +31,7 @@ use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use crate::error::UveddiError;
 use log::{debug, info};
 use std::collections::HashSet;
+use tree_sitter::StreamingIterator;
 
 /// Represents a symbol (e.g., function, variable, class) identified in the source code.
 ///

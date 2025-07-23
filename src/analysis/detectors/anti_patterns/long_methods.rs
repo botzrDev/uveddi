@@ -25,6 +25,7 @@
 use crate::analysis::{AnalysisDetector, AnalysisError};
 use crate::ast::tree_sitter::{Node, Query, QueryCursor};
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
+use tree_sitter::StreamingIterator;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use async_trait::async_trait;
 use futures::TryFutureExt;
@@ -365,9 +366,11 @@ impl LongMethodsDetector {
             let function_query = self.create_rust_function_query(&language)?;
 
             let mut cursor = QueryCursor::new();
-            let matches: Vec<_> = cursor
-                .matches(&function_query, tree.root_node(), source)
-                .collect();
+            let mut matches = cursor.matches(&function_query, tree.root_node(), source);
+            let mut match_vec = Vec::new();
+            while let Some(m) = matches.next() {
+                match_vec.push(m);
+            }
 
             self.process_function_matches(
                 matches,
