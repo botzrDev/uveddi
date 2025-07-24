@@ -595,11 +595,20 @@ mod tests {
     use tempfile::TempDir;
 
     #[derive(Debug, Clone, PartialEq, Serialize, serde::Deserialize)]
-    #[cfg_attr(feature = "memory-optimization", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+    #[derive(rkyv::Archive, rkyv::Serialize)]
     #[archive(check_bytes)]
     struct TestValue {
         id: u64,
         data: String,
+    }
+
+    // Manual implementation of the required Deserialize trait
+    impl rkyv::Deserialize<ArchivedTestValue, SharedDeserializeMap> for TestValue {
+        fn deserialize(&self, _deserializer: &mut SharedDeserializeMap) -> Result<ArchivedTestValue, rkyv::de::deserializers::SharedDeserializeMapError> {
+            // This implementation is not actually used in practice for this direction
+            // The real deserialization happens from ArchivedTestValue -> TestValue
+            unreachable!("This direction of deserialization should not be called")
+        }
     }
 
     #[tokio::test]

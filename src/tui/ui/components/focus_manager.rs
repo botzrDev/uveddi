@@ -112,6 +112,9 @@ mod tests {
         fn can_receive_focus(&self) -> bool {
             self.can_focus
         }
+        fn is_focused(&self) -> bool {
+            self.focused
+        }
     }
 
     #[test]

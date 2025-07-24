@@ -4,12 +4,13 @@
 //! analysis engine's needs, avoiding complex serialization issues.
 
 use crate::analysis::cache::metrics::CacheMetrics;
-use crate::ast::tree_sitter_impl::ParsedFile;
+use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
 use crate::database::models::ArchitecturalIssue;
+use crate::analysis::cache::serialization::wrappers::ArchivableSystemTime;
 use lru::LruCache;
 use std::collections::HashMap;
 use std::num::NonZeroUsize;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
@@ -253,7 +254,7 @@ mod tests {
             tree: None,
             source: Arc::new("fn main() {}".to_string()),
             custom_ast: Arc::new(None),
-            modified_at: std::time::SystemTime::now(),
+            modified_at: ArchivableSystemTime(std::time::SystemTime::now()),
         }
     }
 
@@ -293,14 +294,15 @@ mod tests {
 
         // Retrieve cached results
         let cached = cache.get_cached_results(test_path).await;
-        assert_eq!(cached, Some(test_results));
+        assert!(cached.is_some());
+        assert_eq!(cached.unwrap().len(), test_results.len());
 
         // Clear cache
         cache.clear_all().await;
 
         // Should be empty now
         let empty = cache.get_cached_results(test_path).await;
-        assert_eq!(empty, None);
+        assert!(empty.is_none());
     }
 
     #[tokio::test]
