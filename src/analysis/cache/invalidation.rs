@@ -6,6 +6,7 @@
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
+use crate::analysis::cache::serialization::wrappers::{ArchivablePathBuf, ArchivableSystemTime};
 use std::time::SystemTime;
 use thiserror::Error;
 
@@ -33,11 +34,8 @@ pub trait InvalidationStrategy: Send + Sync {
 
 /// Content-based invalidation using SHA-256 hashing
 pub struct ContentHashInvalidator {
-    /// Maps file paths to their dependency sets
     dependency_graph: HashMap<PathBuf, Vec<PathBuf>>,
-    /// Cached file hashes to avoid repeated I/O
     hash_cache: HashMap<PathBuf, (String, SystemTime)>,
-    /// Cache TTL for hash entries (in seconds)
     hash_cache_ttl: u64,
 }
 

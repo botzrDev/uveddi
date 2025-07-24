@@ -19,6 +19,7 @@ use std::hash::Hash;
 use std::marker::PhantomData;
 use std::num::NonZeroUsize;
 use std::path::{Path, PathBuf};
+use crate::analysis::cache::serialization::wrappers::ArchivablePathBuf;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use thiserror::Error;
@@ -51,23 +52,14 @@ pub enum CacheLayer {
 /// Configuration for multi-layer cache
 #[derive(Debug, Clone)]
 pub struct CacheConfig {
-    /// Maximum number of entries in memory cache
     pub memory_capacity: usize,
-    /// Maximum size in bytes for memory cache
     pub memory_size_limit: u64,
-    /// Path to disk cache directory
     pub disk_cache_path: PathBuf,
-    /// Maximum size in bytes for disk cache
     pub disk_size_limit: u64,
-    /// Serialization format for disk cache
     pub serialization_format: SerializationFormat,
-    /// Enable automatic cache promotion/demotion
     pub enable_promotion: bool,
-    /// Minimum access count for promotion to memory
     pub promotion_threshold: u64,
-    /// TTL for cache entries (None = no expiration)
     pub entry_ttl: Option<Duration>,
-    /// Enable compression for disk cache
     pub enable_compression: bool,
 }
 
@@ -113,15 +105,10 @@ where
     K: Clone + Eq + Hash + Send + Sync,
     V: Clone + Send + Sync,
 {
-    /// Cache directory path
     cache_dir: PathBuf,
-    /// File mapping: key hash -> file path
     file_map: HashMap<String, PathBuf>,
-    /// Current cache size in bytes
     current_size: u64,
-    /// Configuration
     config: CacheConfig,
-    /// Serializer
     serializer: CacheSerializer,
     _marker: PhantomData<(K, V)>,
 }

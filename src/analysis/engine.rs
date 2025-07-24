@@ -678,7 +678,7 @@ impl AnalysisEngine {
                         tree: Some((*cached_tree).clone()),
                         source: std::sync::Arc::new(source_content),
                         custom_ast: std::sync::Arc::new(None),
-                        modified_at: std::fs::metadata(path)?.modified()?,
+                        modified_at: crate::analysis::cache::serialization::wrappers::ArchivableSystemTime(std::fs::metadata(path)?.modified()?),
                     };
                     return Ok(parsed_file);
                 }
@@ -696,7 +696,7 @@ impl AnalysisEngine {
                     tree: Some((*cached_tree).clone()),
                     source: std::sync::Arc::new(source_content),
                     custom_ast: std::sync::Arc::new(None),
-                    modified_at: std::fs::metadata(path)?.modified()?,
+                    modified_at: crate::analysis::cache::serialization::wrappers::ArchivableSystemTime(std::fs::metadata(path)?.modified()?),
                 };
                 return Ok(parsed_file);
             }
@@ -722,7 +722,7 @@ impl AnalysisEngine {
                     tree: Some((*cached_tree).clone()),
                     source: std::sync::Arc::new(source_content),
                     custom_ast: std::sync::Arc::new(None),
-                    modified_at: std::fs::metadata(path)?.modified()?,
+                    modified_at: crate::analysis::cache::serialization::wrappers::ArchivableSystemTime(std::fs::metadata(path)?.modified()?),
                 };
                 return Ok(parsed_file);
             }

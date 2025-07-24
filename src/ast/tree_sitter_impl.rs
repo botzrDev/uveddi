@@ -8,6 +8,7 @@ use std::hash::{DefaultHasher, Hash, Hasher};
 use std::io::{Read, Write};
 use std::num::NonZeroUsize;
 use std::path::{Path, PathBuf};
+use crate::analysis::cache::serialization::wrappers::{ArchivableSystemTime, ArchivablePathBuf};
 use std::sync::{Arc, Mutex, MutexGuard};
 use tracing::{info, warn};
 use tree_sitter::{Parser, Tree};
@@ -320,7 +321,7 @@ impl AstParser {
                 .map_err(|_| AstError::Other("Cache lock poisoned".to_string()))?;
 
             if let Some(cached) = cache.get(&path_str) {
-                if cached.modified_at == modified_time {
+                if cached.modified_at.0 == modified_time {
                     // Cache hit - return cached result
                     info!("AST cache HIT for: {}", file_path.display());
                     Some(cached.clone())
@@ -354,7 +355,7 @@ impl AstParser {
             let mut buf = Vec::new();
             f.read_to_end(&mut buf).ok();
             if let Ok(mut parsed) = bincode::deserialize::<ParsedFile>(&buf) {
-                if parsed.modified_at == modified_time {
+                if parsed.modified_at.0 == modified_time {
                     // Re-parse the AST since Tree is not serializable
                     let parser = self.parsers.get_mut(&parsed.language).ok_or_else(|| {
                         AstError::UnsupportedLanguage(format!("{:?}", parsed.language))
@@ -395,7 +396,7 @@ impl AstParser {
             tree: Some(tree),
             source: source.clone(),
             custom_ast: Arc::new(Some(custom_ast.as_ref().clone())),
-            modified_at: modified_time,
+            modified_at: crate::analysis::cache::serialization::wrappers::ArchivableSystemTime(modified_time),
         };
         let mut disk_parsed = parsed.clone();
         disk_parsed.tree = None;
@@ -453,7 +454,7 @@ impl AstParser {
             tree: Some(tree),
             source: Arc::new(content.to_string()),
             custom_ast: Arc::new(Some(custom_ast)),
-            modified_at: std::time::SystemTime::now(),
+            modified_at: crate::analysis::cache::serialization::wrappers::ArchivableSystemTime(std::time::SystemTime::now()),
         };
 
         Ok(parsed)
@@ -474,9 +475,8 @@ impl AstParser {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "memory-optimization", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
 pub struct ParsedFile {
-    pub file_path: Arc<PathBuf>, // UV-222: Arc<PathBuf> for O(1) clones instead of expensive PathBuf clones
+    pub file_path: Arc<PathBuf>,
     pub language: SourceLanguage,
     #[serde(skip)]
     pub tree: Option<Tree>,
@@ -484,7 +484,7 @@ pub struct ParsedFile {
     pub source: Arc<String>,
     #[serde(skip)]
     pub custom_ast: Arc<Option<CustomAst>>,
-    pub modified_at: std::time::SystemTime,
+    pub modified_at: crate::analysis::cache::serialization::wrappers::ArchivableSystemTime,
 }
 
 impl ParsedFile {
@@ -601,6 +601,7 @@ pub enum CustomAst {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[cfg_attr(feature = "memory-optimization", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
 pub enum SourceLanguage {
     Rust,
     Python,

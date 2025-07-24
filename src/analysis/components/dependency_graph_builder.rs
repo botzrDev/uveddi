@@ -68,7 +68,7 @@ impl DependencyGraphBuilderImpl {
             tree: Some((*ast).clone()),
             source: Arc::new(file_content),
             custom_ast: Arc::new(None),
-            modified_at: std::fs::metadata(file_path)?.modified()?,
+            modified_at: crate::analysis::cache::serialization::wrappers::ArchivableSystemTime(std::fs::metadata(file_path)?.modified()?),
         };
 
         // Extract dependencies using the dependency extractor
