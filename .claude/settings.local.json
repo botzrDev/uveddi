@@ -94,7 +94,13 @@
       "Bash(find /home/austingreen/Documents/botzr/projects/uveddi/src -name \"*cache*\" -type f)",
       "Bash(grep -n \"ArchitecturalIssue\" /home/austingreen/Documents/botzr/projects/uveddi/src/database/models.rs)",
       "Bash(./scripts/run-coverage-tests.sh:*)",
-      "WebFetch(domain:rustsec.org)"
+      "WebFetch(domain:rustsec.org)",
+      "WebFetch(domain:www.rust-lang.org)",
+      "WebFetch(domain:doc.rust-lang.org)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:tokio.rs)",
+      "WebFetch(domain:serde.rs)",
+      "WebFetch(domain:docs.rs)"
     ],
     "deny": []
   }
