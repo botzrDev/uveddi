@@ -83,7 +83,7 @@ rustls = "0.23.28"  # Force newer rustls to get updated ring
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "fmt", "registry"] }
 tracing-appender = "0.2"
-prometheus = "0.13.4"
+prometheus = "0.14.0"
 rand = "0.8"
 # LRU cache for bounded memory management (UV-152)
 lru = "0.12.0"
@@ -184,7 +184,7 @@ tower_governor = "0.3"
 casbin = "2.1"
 # Authentication
 oauth2 = "4.4"
-openidconnect = "3.5"
+openidconnect = "3.5.0"
 jsonwebtoken = "9.3"
 # Security
 argon2 = "0.5"

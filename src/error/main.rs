@@ -21,6 +21,22 @@ pub enum ExtractionError {
     UnsupportedLanguage(String),
 }
 
+/// JSON deserialization errors with security context
+#[derive(Debug, Error)]
+pub enum DeserializationError {
+    #[error("Invalid JSON format: {0}")]
+    InvalidFormat(String),
+
+    #[error("JSON payload too large: {size} bytes (max: {max_size})")]
+    PayloadTooLarge { size: usize, max_size: usize },
+
+    #[error("Invalid data structure: {0}")]
+    InvalidStructure(String),
+
+    #[error("Security validation failed: {0}")]
+    SecurityValidation(String),
+}
+
 #[derive(Error, Debug)]
 pub enum UveddiError {
     // === Core Analysis Errors ===
@@ -161,6 +177,15 @@ pub enum UveddiError {
         suggestion: String,
         #[source]
         source: Option<serde_json::Error>,
+    },
+
+    #[error("Deserialization security error: {message}\n  → Context: {context}\n  → Suggestion: {suggestion}")]
+    Deserialization {
+        message: String,
+        context: String,
+        suggestion: String,
+        #[source]
+        source: Option<DeserializationError>,
     },
 
     #[error("Invalid path: '{path}'\n  → Reason: {reason}\n  → Suggestion: {suggestion}")]
@@ -417,7 +442,8 @@ impl UveddiError {
             | UveddiError::DependencyExtractionError { .. }
             | UveddiError::DatabaseError { .. }
             | UveddiError::PluginError { .. }
-            | UveddiError::SecurityError { .. } => ErrorSeverity::High,
+            | UveddiError::SecurityError { .. }
+            | UveddiError::Deserialization { .. } => ErrorSeverity::High,
             UveddiError::RenderingServiceError { .. }
             | UveddiError::ReportError { .. }
             | UveddiError::NetworkError { .. } => ErrorSeverity::Medium,
@@ -439,6 +465,7 @@ impl UveddiError {
             UveddiError::CliError { .. } => ErrorCategory::Cli,
             UveddiError::IoError { .. } => ErrorCategory::Io,
             UveddiError::SerializationError { .. } => ErrorCategory::Serialization,
+            UveddiError::Deserialization { .. } => ErrorCategory::Serialization,
             UveddiError::PathError { .. } => ErrorCategory::Path,
             UveddiError::RenderingServiceError { .. } => ErrorCategory::Rendering,
             UveddiError::GenericError { .. } => ErrorCategory::Generic,

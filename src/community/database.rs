@@ -8,7 +8,7 @@ use crate::community::models::{
     CommunityMember, DeveloperBadge, DeveloperProfile, DeveloperType, MemberActivity,
     MemberProfile, MemberRole, RolePermissions,
 };
-use crate::error::{RusqliteError, UveddiError};
+use crate::error::{DeserializationError, RusqliteError, UveddiError};
 use chrono::{DateTime, Utc};
 use rusqlite::{Connection, Result as SqlResult, Row};
 use serde_json;
@@ -260,7 +260,12 @@ impl CommunityDatabase {
             "#,
         )?;
 
-        let mut member_iter = stmt.query_map([email], |row| self.row_to_member(row))?;
+        let mut member_iter = stmt.query_map([email], |row| {
+            self.row_to_member(row).map_err(|e| match e {
+                UveddiError::DatabaseError { source: Some(sql_err), .. } => sql_err,
+                _ => rusqlite::Error::ToSqlConversionFailure(Box::new(e)),
+            })
+        })?;
 
         // Clippy fix UV-151: Replace for loop with if-let for single result
         if let Some(member) = member_iter.next() {
@@ -281,7 +286,12 @@ impl CommunityDatabase {
             "#,
         )?;
 
-        let mut member_iter = stmt.query_map([id], |row| self.row_to_member(row))?;
+        let mut member_iter = stmt.query_map([id], |row| {
+            self.row_to_member(row).map_err(|e| match e {
+                UveddiError::DatabaseError { source: Some(sql_err), .. } => sql_err,
+                _ => rusqlite::Error::ToSqlConversionFailure(Box::new(e)),
+            })
+        })?;
 
         // Clippy fix UV-151: Replace for loop with if-let for single result
         if let Some(member) = member_iter.next() {
@@ -337,7 +347,12 @@ impl CommunityDatabase {
         let mut stmt = self.conn.prepare(&sql)?;
         let param_refs: Vec<&dyn rusqlite::ToSql> = params.iter().map(|p| p.as_ref()).collect();
 
-        let member_iter = stmt.query_map(&param_refs[..], |row| self.row_to_member(row))?;
+        let member_iter = stmt.query_map(&param_refs[..], |row| {
+            self.row_to_member(row).map_err(|e| match e {
+                UveddiError::DatabaseError { source: Some(sql_err), .. } => sql_err,
+                _ => rusqlite::Error::ToSqlConversionFailure(Box::new(e)),
+            })
+        })?;
 
         let mut members = Vec::new();
         for member in member_iter {
@@ -521,7 +536,12 @@ impl CommunityDatabase {
         };
 
         let mut stmt = self.conn.prepare(&sql)?;
-        let activity_iter = stmt.query_map([member_id], |row| self.row_to_activity(row))?;
+        let activity_iter = stmt.query_map([member_id], |row| {
+            self.row_to_activity(row).map_err(|e| match e {
+                UveddiError::DatabaseError { source: Some(sql_err), .. } => sql_err,
+                _ => rusqlite::Error::ToSqlConversionFailure(Box::new(e)),
+            })
+        })?;
 
         let mut activities = Vec::new();
         for activity in activity_iter {
@@ -531,67 +551,139 @@ impl CommunityDatabase {
     }
 
     /// Helper method to convert database row to CommunityMember
-    fn row_to_member(&self, row: &Row) -> SqlResult<CommunityMember> {
-        let languages_json: String = row.get(11)?;
-        let custom_fields_json: String = row.get(17)?;
+    fn row_to_member(&self, row: &Row) -> Result<CommunityMember, UveddiError> {
+        let languages_json: String = row.get(11).map_err(|e| UveddiError::database_error(
+            "get languages_json", "community database", e
+        ))?;
+        let custom_fields_json: String = row.get(17).map_err(|e| UveddiError::database_error(
+            "get custom_fields_json", "community database", e
+        ))?;
 
-        let languages: Vec<String> = serde_json::from_str(&languages_json).unwrap_or_default();
-        let custom_fields: HashMap<String, String> =
-            serde_json::from_str(&custom_fields_json).unwrap_or_default();
+        let languages = self.deserialize_languages(&languages_json)
+            .map_err(|e| {
+                log::warn!("Failed to deserialize languages for member: {}", e);
+                e
+            })?;
 
-        let last_active_str: Option<String> = row.get(5)?;
+        let custom_fields = self.deserialize_custom_fields(&custom_fields_json)
+            .map_err(|e| {
+                log::warn!("Failed to deserialize custom fields for member: {}", e);
+                e
+            })?;
+
+        let last_active_str: Option<String> = row.get(5).map_err(|e| UveddiError::database_error(
+            "get last_active", "community database", e
+        ))?;
         let last_active = last_active_str
             .and_then(|s| DateTime::parse_from_rfc3339(&s).ok())
             .map(|dt| dt.with_timezone(&Utc));
 
         Ok(CommunityMember {
-            id: row.get(0)?,
-            email: row.get(1)?,
-            name: row.get(2)?,
-            role: MemberRole::from_str(&row.get::<_, String>(3)?),
+            id: row.get(0).map_err(|e| UveddiError::database_error(
+                "get id", "community database", e
+            ))?,
+            email: row.get(1).map_err(|e| UveddiError::database_error(
+                "get email", "community database", e
+            ))?,
+            name: row.get(2).map_err(|e| UveddiError::database_error(
+                "get name", "community database", e
+            ))?,
+            role: MemberRole::from_str(&row.get::<_, String>(3).map_err(|e| UveddiError::database_error(
+                "get role", "community database", e
+            ))?),
             created_at: {
-                let timestamp_str = row.get::<_, String>(4)?;
+                let timestamp_str = row.get::<_, String>(4).map_err(|e| UveddiError::database_error(
+                    "get created_at", "community database", e
+                ))?;
                 DateTime::parse_from_rfc3339(&timestamp_str)
-                    .map_err(|e| rusqlite::Error::InvalidColumnType(4, timestamp_str.clone(), rusqlite::types::Type::Text))?
+                    .map_err(|_e| UveddiError::database_error(
+                        "parse created_at timestamp",
+                        "community database", 
+                        rusqlite::Error::InvalidColumnType(4, timestamp_str.clone(), rusqlite::types::Type::Text)
+                    ))?
                     .with_timezone(&Utc)
             },
             last_active,
-            is_active: row.get(6)?,
-            email_verified: row.get(7)?,
-            avatar_url: row.get(8)?,
+            is_active: row.get(6).map_err(|e| UveddiError::database_error(
+                "get is_active", "community database", e
+            ))?,
+            email_verified: row.get(7).map_err(|e| UveddiError::database_error(
+                "get email_verified", "community database", e
+            ))?,
+            avatar_url: row.get(8).map_err(|e| UveddiError::database_error(
+                "get avatar_url", "community database", e
+            ))?,
             profile: MemberProfile {
-                company: row.get(9)?,
-                job_title: row.get(10)?,
+                company: row.get(9).map_err(|e| UveddiError::database_error(
+                    "get company", "community database", e
+                ))?,
+                job_title: row.get(10).map_err(|e| UveddiError::database_error(
+                    "get job_title", "community database", e
+                ))?,
                 languages,
-                experience_level: row.get(12)?,
-                use_case: row.get(13)?,
-                referral_source: row.get(14)?,
-                newsletter_subscribed: row.get(15)?,
-                marketing_consent: row.get(16)?,
+                experience_level: row.get(12).map_err(|e| UveddiError::database_error(
+                    "get experience_level", "community database", e
+                ))?,
+                use_case: row.get(13).map_err(|e| UveddiError::database_error(
+                    "get use_case", "community database", e
+                ))?,
+                referral_source: row.get(14).map_err(|e| UveddiError::database_error(
+                    "get referral_source", "community database", e
+                ))?,
+                newsletter_subscribed: row.get(15).map_err(|e| UveddiError::database_error(
+                    "get newsletter_subscribed", "community database", e
+                ))?,
+                marketing_consent: row.get(16).map_err(|e| UveddiError::database_error(
+                    "get marketing_consent", "community database", e
+                ))?,
                 custom_fields,
             },
         })
     }
 
     /// Helper method to convert database row to MemberActivity
-    fn row_to_activity(&self, row: &Row) -> SqlResult<MemberActivity> {
-        let metadata_json: String = row.get(7)?;
-        let metadata: HashMap<String, String> =
-            serde_json::from_str(&metadata_json).unwrap_or_default();
+    fn row_to_activity(&self, row: &Row) -> Result<MemberActivity, UveddiError> {
+        let metadata_json: String = row.get(7).map_err(|e| UveddiError::database_error(
+            "get metadata_json", "community database", e
+        ))?;
+        
+        let metadata = self.deserialize_metadata(&metadata_json)
+            .map_err(|e| {
+                log::warn!("Failed to deserialize activity metadata: {}", e);
+                e
+            })?;
 
         Ok(MemberActivity {
-            id: Some(row.get(0)?),
-            member_id: row.get(1)?,
-            activity_type: ActivityType::from_str(&row.get::<_, String>(2)?),
+            id: Some(row.get(0).map_err(|e| UveddiError::database_error(
+                "get activity id", "community database", e
+            ))?),
+            member_id: row.get(1).map_err(|e| UveddiError::database_error(
+                "get member_id", "community database", e
+            ))?,
+            activity_type: ActivityType::from_str(&row.get::<_, String>(2).map_err(|e| UveddiError::database_error(
+                "get activity_type", "community database", e
+            ))?),
             timestamp: {
-                let timestamp_str = row.get::<_, String>(3)?;
+                let timestamp_str = row.get::<_, String>(3).map_err(|e| UveddiError::database_error(
+                    "get timestamp", "community database", e
+                ))?;
                 DateTime::parse_from_rfc3339(&timestamp_str)
-                    .map_err(|e| rusqlite::Error::InvalidColumnType(3, timestamp_str.clone(), rusqlite::types::Type::Text))?
+                    .map_err(|_e| UveddiError::database_error(
+                        "parse timestamp",
+                        "community database", 
+                        rusqlite::Error::InvalidColumnType(3, timestamp_str.clone(), rusqlite::types::Type::Text)
+                    ))?
                     .with_timezone(&Utc)
             },
-            description: row.get(4)?,
-            ip_address: row.get(5)?,
-            user_agent: row.get(6)?,
+            description: row.get(4).map_err(|e| UveddiError::database_error(
+                "get description", "community database", e
+            ))?,
+            ip_address: row.get(5).map_err(|e| UveddiError::database_error(
+                "get ip_address", "community database", e
+            ))?,
+            user_agent: row.get(6).map_err(|e| UveddiError::database_error(
+                "get user_agent", "community database", e
+            ))?,
             metadata,
         })
     }
@@ -1066,6 +1158,128 @@ impl CommunityDatabase {
         }
     }
 
+    // ================================
+    // Secure JSON Deserialization Methods
+    // ================================
+
+    /// Maximum JSON payload size (1MB)
+    const MAX_JSON_SIZE: usize = 1024 * 1024;
+
+    /// Maximum array length for security
+    const MAX_ARRAY_LENGTH: usize = 1000;
+
+    /// Securely deserialize languages array with validation
+    pub(crate) fn deserialize_languages(&self, json_str: &str) -> Result<Vec<String>, UveddiError> {
+        // Size validation
+        if json_str.len() > Self::MAX_JSON_SIZE {
+            return Err(UveddiError::Deserialization {
+                message: format!("JSON payload too large: {} bytes", json_str.len()),
+                context: "languages deserialization".to_string(),
+                suggestion: "Reduce payload size or increase limits".to_string(),
+                source: Some(DeserializationError::PayloadTooLarge {
+                    size: json_str.len(),
+                    max_size: Self::MAX_JSON_SIZE,
+                }),
+            });
+        }
+
+        // Parse with proper error handling
+        let languages: Vec<String> = serde_json::from_str(json_str)
+            .map_err(|e| UveddiError::Deserialization {
+                message: format!("Invalid JSON format: {}", e),
+                context: "languages deserialization".to_string(),
+                suggestion: "Check JSON syntax and structure".to_string(),
+                source: Some(DeserializationError::InvalidFormat(e.to_string())),
+            })?;
+
+        // Validate array length
+        if languages.len() > Self::MAX_ARRAY_LENGTH {
+            return Err(UveddiError::Deserialization {
+                message: format!("Languages array too large: {} items", languages.len()),
+                context: "languages deserialization".to_string(),
+                suggestion: "Reduce number of languages or increase limits".to_string(),
+                source: Some(DeserializationError::SecurityValidation(format!(
+                    "Languages array too large: {} items", languages.len()
+                ))),
+            });
+        }
+
+        // Validate each language string
+        for lang in &languages {
+            if lang.len() > 50 || !lang.chars().all(|c| c.is_alphanumeric() || c == '-' || c == '_') {
+                return Err(UveddiError::Deserialization {
+                    message: format!("Invalid language format: {}", lang),
+                    context: "languages deserialization".to_string(),
+                    suggestion: "Use valid language codes (alphanumeric, hyphens, underscores only)".to_string(),
+                    source: Some(DeserializationError::SecurityValidation(format!(
+                        "Invalid language format: {}", lang
+                    ))),
+                });
+            }
+        }
+
+        Ok(languages)
+    }
+
+    /// Securely deserialize custom fields with validation
+    pub(crate) fn deserialize_custom_fields(&self, json_str: &str) -> Result<HashMap<String, String>, UveddiError> {
+        // Size validation
+        if json_str.len() > Self::MAX_JSON_SIZE {
+            return Err(UveddiError::Deserialization {
+                message: format!("JSON payload too large: {} bytes", json_str.len()),
+                context: "custom fields deserialization".to_string(),
+                suggestion: "Reduce payload size or increase limits".to_string(),
+                source: Some(DeserializationError::PayloadTooLarge {
+                    size: json_str.len(),
+                    max_size: Self::MAX_JSON_SIZE,
+                }),
+            });
+        }
+
+        // Parse with proper error handling
+        let custom_fields: HashMap<String, String> = serde_json::from_str(json_str)
+            .map_err(|e| UveddiError::Deserialization {
+                message: format!("Invalid JSON format: {}", e),
+                context: "custom fields deserialization".to_string(),
+                suggestion: "Check JSON syntax and structure".to_string(),
+                source: Some(DeserializationError::InvalidFormat(e.to_string())),
+            })?;
+
+        // Validate field count
+        if custom_fields.len() > 50 {
+            return Err(UveddiError::Deserialization {
+                message: format!("Too many custom fields: {}", custom_fields.len()),
+                context: "custom fields deserialization".to_string(),
+                suggestion: "Reduce number of custom fields".to_string(),
+                source: Some(DeserializationError::SecurityValidation(format!(
+                    "Too many custom fields: {}", custom_fields.len()
+                ))),
+            });
+        }
+
+        // Validate keys and values
+        for (key, value) in &custom_fields {
+            if key.len() > 100 || value.len() > 1000 {
+                return Err(UveddiError::Deserialization {
+                    message: "Custom field key or value too large".to_string(),
+                    context: "custom fields deserialization".to_string(),
+                    suggestion: "Reduce field key/value length (max 100/1000 chars)".to_string(),
+                    source: Some(DeserializationError::SecurityValidation(
+                        "Custom field key or value too large".to_string()
+                    )),
+                });
+            }
+        }
+
+        Ok(custom_fields)
+    }
+
+    /// Securely deserialize metadata with validation
+    pub(crate) fn deserialize_metadata(&self, json_str: &str) -> Result<HashMap<String, String>, UveddiError> {
+        // Reuse custom_fields validation logic
+        self.deserialize_custom_fields(json_str)
+    }
+
     /// Generate community analytics
     pub fn generate_analytics(
         &self,
@@ -1182,5 +1396,100 @@ mod tests {
         // Test with limit
         let limited = db.list_members(None, true, Some(2), None).unwrap();
         assert_eq!(limited.len(), 2);
+    }
+
+    // ================================
+    // Security Tests (UV-275)
+    // ================================
+
+    #[test]
+    fn test_malicious_json_payloads() {
+        let db = CommunityDatabase::new_in_memory().unwrap();
+
+        // Test oversized payload (simulate large JSON)
+        let large_languages: Vec<String> = (0..100000).map(|i| format!("lang{}", i)).collect();
+        let large_json = serde_json::to_string(&large_languages).unwrap();
+        let result = db.deserialize_languages(&large_json);
+        assert!(result.is_err());
+        if let Err(UveddiError::Deserialization { source: Some(DeserializationError::PayloadTooLarge { .. }), .. }) = result {
+            // Expected error type
+        } else {
+            panic!("Expected PayloadTooLarge error for oversized payload");
+        }
+
+        // Test malformed JSON
+        let malformed = "{ invalid json }";
+        let result = db.deserialize_custom_fields(malformed);
+        assert!(result.is_err());
+        if let Err(UveddiError::Deserialization { source: Some(DeserializationError::InvalidFormat(_)), .. }) = result {
+            // Expected error type
+        } else {
+            panic!("Expected InvalidFormat error for malformed JSON");
+        }
+    }
+
+    #[test]
+    fn test_size_limits() {
+        let db = CommunityDatabase::new_in_memory().unwrap();
+
+        // Test array length limits for languages
+        let too_many_languages: Vec<String> = (0..2000).map(|i| format!("lang{}", i)).collect();
+        let json = serde_json::to_string(&too_many_languages).unwrap();
+        let result = db.deserialize_languages(&json);
+        assert!(result.is_err());
+        if let Err(UveddiError::Deserialization { source: Some(DeserializationError::SecurityValidation(_)), .. }) = result {
+            // Expected error type
+        } else {
+            panic!("Expected SecurityValidation error for too many languages");
+        }
+
+        // Test field count limits for custom fields
+        let too_many_fields: HashMap<String, String> = 
+            (0..100).map(|i| (format!("key{}", i), format!("value{}", i))).collect();
+        let json = serde_json::to_string(&too_many_fields).unwrap();
+        let result = db.deserialize_custom_fields(&json);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_valid_data_acceptance() {
+        let db = CommunityDatabase::new_in_memory().unwrap();
+
+        // Test valid languages
+        let valid_languages = r#"["rust", "python", "javascript"]"#;
+        let result = db.deserialize_languages(valid_languages);
+        assert!(result.is_ok());
+        let languages = result.unwrap();
+        assert_eq!(languages.len(), 3);
+        assert!(languages.contains(&"rust".to_string()));
+
+        // Test valid custom fields
+        let valid_fields = r#"{"company": "TechCorp", "role": "developer"}"#;
+        let result = db.deserialize_custom_fields(valid_fields);
+        assert!(result.is_ok());
+        let fields = result.unwrap();
+        assert_eq!(fields.len(), 2);
+        assert_eq!(fields.get("company"), Some(&"TechCorp".to_string()));
+    }
+
+    #[test]
+    fn test_language_validation() {
+        let db = CommunityDatabase::new_in_memory().unwrap();
+
+        // Test valid language codes
+        let valid_languages = r#"["rust", "python3", "c-sharp", "objective_c"]"#;
+        let result = db.deserialize_languages(valid_languages);
+        assert!(result.is_ok());
+
+        // Test invalid language codes with special characters
+        let invalid_languages = r#"["rust", "python/3", "c#"]"#;
+        let result = db.deserialize_languages(invalid_languages);
+        assert!(result.is_err()); // Should fail due to invalid characters
+
+        // Test language codes that are too long
+        let long_language = "x".repeat(100);
+        let long_languages = format!(r#"["rust", "{}"]"#, long_language);
+        let result = db.deserialize_languages(&long_languages);
+        assert!(result.is_err()); // Should fail due to length limit
     }
 }

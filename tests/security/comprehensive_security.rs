@@ -6,6 +6,9 @@
 //! - Data protection and encryption
 //! - Input validation and sanitization
 //! - Security headers and CSRF protection
+//! - JSON deserialization security (UV-275)
+
+mod deserialization_security_tests;
 
 #[cfg(test)]
 mod security_tests {

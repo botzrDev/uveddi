@@ -1,19 +1,110 @@
 # Uveddi Comprehensive Architecture & Development Manual
 
+> **Version 0.9.0** | **Last Updated**: January 2025 | **Rust Edition**: 2021
+
 ## Table of Contents
 
-1. [Project Overview](#project-overview)
-2. [Architecture Deep Dive](#architecture-deep-dive)
-3. [Core Modules & Components](#core-modules--components)
-4. [Dependencies & Technology Stack](#dependencies--technology-stack)
-5. [Development Patterns & Methods](#development-patterns--methods)
-6. [Plugin System](#plugin-system)
-7. [AI Integration](#ai-integration)
-8. [Security & Resilience](#security--resilience)
-9. [Performance & Monitoring](#performance--monitoring)
-10. [Testing Strategy](#testing-strategy)
-11. [Deployment & Operations](#deployment--operations)
-12. [Development Workflow](#development-workflow)
+1. [Quick Start Guide](#quick-start-guide)
+2. [Project Overview](#project-overview)
+3. [Architecture Deep Dive](#architecture-deep-dive)
+4. [Core Modules & Components](#core-modules--components)
+5. [Feature Flags & Compilation Options](#feature-flags--compilation-options)
+6. [Dependencies & Technology Stack](#dependencies--technology-stack)
+7. [Development Patterns & Methods](#development-patterns--methods)
+8. [Plugin System](#plugin-system)
+9. [AI Integration](#ai-integration)
+10. [Security & RBAC](#security--rbac)
+11. [Resilience & Error Handling](#resilience--error-handling)
+12. [Performance & Monitoring](#performance--monitoring)
+13. [Terminal User Interface (TUI)](#terminal-user-interface-tui)
+14. [Chaos Engineering](#chaos-engineering)
+15. [Testing Strategy](#testing-strategy)
+16. [Configuration Management](#configuration-management)
+17. [Deployment & Operations](#deployment--operations)
+18. [Development Workflow](#development-workflow)
+19. [Troubleshooting & Best Practices](#troubleshooting--best-practices)
+20. [API Reference](#api-reference)
+
+---
+
+## Quick Start Guide
+
+### Installation
+
+#### Quick Install (Recommended)
+```bash
+curl -sSL https://uveddi.dev/install.sh | bash
+```
+
+#### From Source
+```bash
+git clone https://github.com/botzrDev/uveddi.git
+cd uveddi
+cargo install --path .
+```
+
+#### Using Cargo
+```bash
+cargo install uveddi
+```
+
+### Basic Usage
+
+#### Analyze a Codebase
+```bash
+# Basic analysis
+uveddi analyze /path/to/code
+
+# With AI-powered insights (requires Ollama)
+uveddi analyze /path/to/code --enable-ai
+
+# Generate detailed report
+uveddi analyze /path/to/code --output report.md --format markdown
+```
+
+#### Interactive Terminal UI
+```bash
+# Launch TUI for interactive analysis
+uveddi tui
+
+# TUI with specific project
+uveddi tui --project /path/to/code
+```
+
+#### Configuration
+```bash
+# Initialize configuration
+uveddi config init
+
+# Edit configuration
+uveddi config edit
+
+# Validate configuration
+uveddi config validate
+```
+
+### First Analysis Example
+
+```bash
+# 1. Analyze your Rust project
+uveddi analyze src/ --output analysis.md
+
+# 2. View results
+cat analysis.md
+
+# 3. Enable AI explanations (optional)
+uveddi analyze src/ --enable-ai --ai-provider ollama
+```
+
+### Common Use Cases
+
+| Use Case | Command | Description |
+|----------|---------|-------------|
+| **Quick Check** | `uveddi analyze src/` | Fast analysis without AI |
+| **Detailed Report** | `uveddi analyze src/ --output report.md` | Generate comprehensive report |
+| **AI Insights** | `uveddi analyze src/ --enable-ai` | Include AI-powered explanations |
+| **Interactive Mode** | `uveddi tui` | Launch terminal interface |
+| **CI/CD Integration** | `uveddi analyze src/ --format json` | Machine-readable output |
 
 ---
 
@@ -21,20 +112,224 @@
 
 **Uveddi** is a sophisticated AI-powered CLI tool for architectural analysis of codebases, designed to identify architectural anti-patterns and prevent architectural drift. It combines static code analysis with AI-powered insights to help developers understand and improve their codebases.
 
+### Core Philosophy
+
+1. **Privacy First**: All analysis happens locally - no data leaves your machine by default
+2. **Developer-Centric**: Built by developers, for developers, with real-world workflows in mind
+3. **Extensible by Design**: Plugin architecture allows custom detectors and integrations
+4. **Performance Focused**: Optimized for large codebases with intelligent caching
+5. **AI-Enhanced**: Optional AI integration provides intelligent insights while preserving privacy
+
 ### Key Features
-- **Multi-language analysis**: Rust, Python, JavaScript, TypeScript
-- **AI-powered insights**: Local (Ollama) and cloud AI integration
-- **Privacy-focused**: All analysis happens locally by default
-- **Extensible architecture**: WASM-based plugin system for custom detectors
-- **Comprehensive reporting**: Markdown, JSON, and interactive outputs
-- **Terminal UI**: Interactive terminal interface for analysis and exploration
-- **Tree-sitter enabled**: Advanced parsing for improved accuracy and performance
+
+#### 🔍 **Multi-Language Analysis**
+- **Rust**: Advanced ownership, lifetime, and memory safety analysis
+- **Python**: OOP patterns, data structure usage, exception handling
+- **JavaScript/TypeScript**: Async patterns, scope issues, type safety
+- **Universal Patterns**: Cross-language architectural anti-patterns
+
+#### 🤖 **AI-Powered Insights**
+- **Local AI (Ollama)**: Privacy-preserving analysis with local models
+- **Cloud AI**: Optional integration with OpenAI, Anthropic, Google Gemini
+- **Smart Prompting**: Context-aware AI prompts for accurate analysis
+- **Self-Correction**: AI response validation and improvement
+
+#### 🏗️ **Architectural Analysis**
+- **Anti-Pattern Detection**: God objects, tight coupling, dead code, etc.
+- **Dependency Analysis**: Circular dependencies, coupling metrics
+- **Code Quality Metrics**: Complexity, maintainability scores
+- **Visualization**: Mermaid diagrams for architectural insights
+
+#### 🔧 **Developer Experience**
+- **Terminal UI**: Interactive analysis and exploration
+- **Multiple Output Formats**: Markdown, JSON, HTML reports
+- **IDE Integration**: VS Code extension support
+- **CI/CD Ready**: Machine-readable outputs for automation
+
+#### 🚀 **Performance & Scalability**
+- **Tree-sitter Parsing**: Fast, accurate syntax analysis
+- **Intelligent Caching**: AST and result caching for speed
+- **Parallel Processing**: Multi-threaded analysis for large codebases
+- **Memory Optimization**: Efficient memory usage with arena allocation
+
+#### 🔒 **Enterprise Features**
+- **Security & RBAC**: Role-based access control and audit logging
+- **Chaos Engineering**: Fault injection and resilience testing
+- **Monitoring**: Real-time metrics and performance tracking
+- **Plugin System**: WASM-based secure plugin architecture
+
+### Supported Environments
+
+| Environment | Support Level | Notes |
+|-------------|---------------|-------|
+| **Linux** | ✅ Full | Primary development platform |
+| **macOS** | ✅ Full | Native Apple Silicon support |
+| **Windows** | ✅ Full | WSL2 recommended for best experience |
+| **Docker** | ✅ Full | Official container images available |
+| **CI/CD** | ✅ Full | GitHub Actions, GitLab CI, Jenkins |
 
 ### Version & Metadata
 - **Version**: 0.9.0
 - **Edition**: Rust 2021
 - **License**: MIT
 - **Repository**: https://github.com/botzrDev/uveddi
+- **Documentation**: https://botzrdev.github.io/uveddi/
+- **Community**: [Discord](https://discord.gg/uveddi) | [Discussions](https://github.com/botzrDev/uveddi/discussions)
+
+---
+
+## Core Modules & Components
+
+### Analysis Engine (`src/analysis/`)
+
+The heart of Uveddi's static code analysis capabilities, implementing a pluggable detector architecture.
+
+#### Key Components:
+- **AnalysisEngine**: Core orchestrator that runs detectors and collects results
+- **DetectorRegistry**: Manages and coordinates all analysis detectors
+- **AST Cache**: High-performance caching layer for parsed syntax trees
+- **Dependency Graph**: Graph-based analysis for architectural patterns
+- **Memory Optimization**: Arena allocation and zero-copy serialization
+
+#### Anti-Pattern Detectors:
+- **God Object Detector**: Identifies classes/modules with excessive responsibilities
+- **Dead Code Detector**: Finds unused code and unreachable functions
+- **Code Duplication Detector**: Detects similar code blocks across the codebase
+- **Tight Coupling Detector**: Analyzes component interdependencies
+- **Large Classes Detector**: Identifies oversized classes and modules
+- **Cyclic Dependencies Detector**: Finds circular dependency chains
+
+#### Language-Specific Analysis:
+- **Rust**: Clone abuse, unwrap abuse, lifetime complexity, memory management
+- **Python**: Data structure misuse, exception handling, OOP violations
+- **JavaScript**: Async anti-patterns, scope issues, type coercion problems
+
+### AI Integration (`src/ai/`)
+
+Provides AI-powered analysis capabilities with multiple provider support and privacy focus.
+
+#### Components:
+- **AI Engine**: Core AI analysis orchestrator with provider abstraction
+- **Ollama Provider**: Local AI integration for privacy-preserving analysis
+- **Context Builder**: Builds structured context for AI analysis
+- **Prompt Templates**: Specialized prompts for different analysis types
+- **Self Correction**: AI response validation and improvement system
+- **Carbon Aware**: Energy-efficient AI usage optimization
+
+#### Features:
+- **Multi-Provider Support**: OpenAI, Anthropic, Google Gemini, Local Ollama
+- **Smart Prompting**: Context-aware prompt generation for accurate results
+- **Response Validation**: Automatic validation and correction of AI responses
+- **Privacy Controls**: Local-first processing with optional cloud integration
+- **Rate Limiting**: Intelligent request throttling and cost management
+
+---
+
+## Feature Flags & Compilation Options
+
+Uveddi uses Cargo feature flags to enable modular compilation and reduce binary size for specific use cases.
+
+### Default Features
+```toml
+default = ["local-ai", "tree-sitter", "memory-optimization"]
+```
+
+### Core Feature Categories
+
+#### **Analysis Features**
+```toml
+# Tree-sitter parsing (enabled by default)
+tree-sitter = [
+    "dep:tree-sitter",
+    "dep:tree-sitter-rust", 
+    "dep:tree-sitter-python",
+    "dep:tree-sitter-javascript",
+    "dep:tree-sitter-typescript"
+]
+
+# Memory optimization features
+memory-optimization = ["mimalloc", "bumpalo", "bumpalo-herd", "memmap2", "rkyv"]
+```
+
+#### **AI Features**
+```toml
+# Base AI functionality
+ai = ["reqwest", "async-trait"]
+
+# Local AI only (Ollama)
+local-ai = ["ai"]
+```
+
+#### **User Interface Features**
+```toml
+# Terminal User Interface
+tui = ["ratatui", "crossterm", "tui-input"]
+
+# Image rendering service integration
+image-rendering = ["reqwest"]
+```
+
+#### **Enterprise Features**
+```toml
+# WASM plugin system
+wasm-plugins = ["wasmtime", "wasmtime-wasi", "cap-std", "wit-bindgen"]
+
+# Chaos engineering and load testing
+chaos = ["fail", "statrs", "ndarray-stats"]
+
+# Performance regression detection
+regression-detection = ["changepoint", "linfa", "influxdb2"]
+
+# SLA monitoring and validation
+sla-monitoring = ["metrics-exporter-prometheus", "tokio-metrics"]
+```
+
+### Predefined Feature Combinations
+
+#### **Zero-Cost Option** (Minimal Dependencies)
+```toml
+zero-cost = ["local-ai", "tree-sitter", "memory-optimization"]
+```
+- Local analysis only
+- No external service dependencies
+- Optimized for individual developers
+
+#### **Full-Featured Option** (Complete Experience)
+```toml
+full-featured = ["local-ai", "tree-sitter", "memory-optimization", "image-rendering", "tui"]
+```
+- All user-facing features
+- Interactive terminal interface
+- Diagram generation support
+
+#### **Enterprise Option** (All Features)
+```toml
+enterprise = [
+    "local-ai", "tree-sitter", "memory-optimization", 
+    "image-rendering", "tui", "wasm-plugins", 
+    "chaos", "sla-monitoring"
+]
+```
+- Complete feature set
+- Plugin system support
+- Chaos engineering capabilities
+- Enterprise monitoring
+
+### Compilation Examples
+
+```bash
+# Minimal build (fastest compilation)
+cargo build --no-default-features --features="tree-sitter"
+
+# Full-featured build
+cargo build --features="full-featured"
+
+# Enterprise build with all features
+cargo build --features="enterprise"
+
+# Custom build
+cargo build --features="local-ai,tui,wasm-plugins"
+```
 
 ---
 
@@ -42,11 +337,12 @@
 
 ### Architectural Principles
 
-1. **Privacy First**: All analysis happens locally - no data leaves the user's machine
-2. **Separation of Concerns**: Each module has a single, well-defined responsibility
-3. **Community Extensibility**: Core functionality can be extended through open source contributions
-4. **Simplicity**: Minimal dependencies and straightforward architecture
-5. **Local AI Integration**: Seamless integration with Ollama for private AI analysis
+1. **Privacy First**: All analysis happens locally - no data leaves the user's machine by default
+2. **Separation of Concerns**: Each module has a single, well-defined responsibility  
+3. **Layered Architecture**: Strict dependency flow with clear boundaries
+4. **Extensibility**: Plugin architecture enables custom detectors and integrations
+5. **Performance Focus**: Optimized for large codebases with intelligent caching
+6. **Type Safety**: Leverages Rust's type system for reliability and performance
 
 ### Layer Architecture
 
@@ -233,117 +529,126 @@ Interactive terminal user interface for analysis and exploration.
 
 ---
 
+
 ## Dependencies & Technology Stack
 
-### Core Dependencies
 
-#### Runtime & Async
-- **tokio** (1.37.0): Async runtime with full features
-- **tokio-stream** (0.1.15): Async stream utilities
-- **futures** (0.3): Future combinators
-- **async-stream** (0.3): Async stream macros
-- **async-trait** (0.1.88): Async traits
+---
 
-#### Serialization & Data
-- **serde** (1.0.203): Serialization framework with derive
-- **serde_json** (1.0.117): JSON serialization
-- **bincode** (1.3.3): Binary serialization
-- **toml** (0.8.0): TOML configuration parsing
-- **chrono** (0.4.39): Date and time handling
+## All Project Dependencies & Their Roles
 
-#### Database & Storage
-- **rusqlite** (0.31.0): SQLite database with bundled features
-- **rmp-serde** (1.1): MessagePack serialization for cache optimization
-- **flate2** (1.0): Compression for diagram caching
+Below is a comprehensive list of all dependencies used in Uveddi, with a brief explanation of their purpose in the context of the project:
 
-#### CLI & User Interface
-- **clap** (4.5.4): Command-line argument parsing with derive
-- **color-eyre** (0.6): Enhanced error reporting
-- **log** (0.4.21): Logging facade
-- **env_logger** (0.11.3): Environment-based logger
+### Core Runtime & Async
+- **tokio**: The async runtime powering all concurrent operations, file IO, and networking.
+- **tokio-stream**: Utilities for working with asynchronous streams, e.g., file and network data.
+- **futures**: Core futures and combinators for async programming.
+- **async-stream**: Macros for easily creating async streams.
+- **async-trait**: Enables async functions in traits, used for extensible async APIs.
 
-#### AST & Language Support
-- **tree-sitter** (0.25.8): Parser generator for syntax trees
-- **tree-sitter-rust** (0.24.0): Rust grammar
-- **tree-sitter-python** (0.23.6): Python grammar
-- **tree-sitter-javascript** (0.23.1): JavaScript grammar
-- **tree-sitter-typescript** (0.23.2): TypeScript grammar
+### Serialization, Data, and Config
+- **serde**: Serialization/deserialization for config, cache, and data interchange.
+- **serde_json**: JSON serialization for reports, config, and AI communication.
+- **bincode**: Compact binary serialization for fast cache storage.
+- **toml**: Parsing and writing TOML config files.
+- **chrono**: Date/time handling for timestamps, logs, and metrics.
 
-#### HTTP & Networking
-- **reqwest** (0.12.22): HTTP client with JSON support
-- **axum** (0.7): Web framework with WebSocket support
-- **tokio-tungstenite** (0.20): WebSocket implementation
+### Database & Storage
+- **rusqlite**: Embedded SQLite database for caching, state, and results.
+- **rmp-serde**: MessagePack serialization for efficient cache storage.
+- **flate2**: Compression for diagram/image cache and storage.
 
-#### Performance & Concurrency
-- **rayon** (1.8.0): Data parallelism
-- **lru** (0.12.0): LRU cache for bounded memory management
-- **num_cpus** (1.16): CPU count detection
-- **lazy_static** (1.4): Lazy static initialization
+### CLI & User Interface
+- **clap**: Command-line argument parsing and CLI interface.
+- **color-eyre**: Enhanced error reporting for CLI and TUI.
+- **log**: Logging facade for all log output.
+- **env_logger**: Environment-based logger initialization.
 
-#### Monitoring & Observability
-- **prometheus** (0.13.4): Metrics collection
-- **tracing** (0.1): Structured logging and tracing
-- **tracing-subscriber** (0.3): Tracing subscriber implementations
-- **metrics** (0.23): Metrics collection framework
+### AST & Language Support
+- **tree-sitter**: Core parser for building ASTs from source code.
+- **tree-sitter-rust/python/javascript/typescript**: Language grammars for multi-language analysis.
 
-#### Security & Cryptography
-- **ring** (0.17.12): Cryptographic operations
-- **rustls** (0.23.28): TLS implementation
-- **sha2** (0.10.0): SHA-2 hash functions
-- **md5** (0.7): MD5 hashing
-- **argon2** (0.5): Password hashing
-- **blake3** (1.5): BLAKE3 hash function
+### HTTP, Networking, and Web
+- **reqwest**: HTTP client for AI, image rendering, and remote services.
+- **axum**: Web server for API endpoints and TUI backend.
+- **tokio-tungstenite**: WebSocket support for real-time communication.
 
-#### Template & Rendering
-- **tera** (1.19.1): Template engine for diagram generation
-- **base64** (0.22.0): Base64 encoding/decoding
+### Performance, Concurrency, and Caching
+- **rayon**: Data parallelism for fast analysis and graph traversal.
+- **lru**: In-memory LRU cache for frequently accessed data.
+- **num_cpus**: Detects CPU count for optimal parallelism.
+- **lazy_static**: Global static initialization for caches and config.
 
-#### Utilities
-- **uuid** (1.8.0): UUID generation with v4, v5, and serde
-- **url** (2.5): URL parsing
-- **walkdir** (2.5.0): Directory traversal
-- **ignore** (0.4.22): Gitignore-style file filtering
-- **regex** (1.10): Regular expressions
-- **glob** (0.3.1): Pattern matching for file filtering
+### Monitoring, Observability, and Metrics
+- **prometheus**: Metrics collection and export for monitoring.
+- **tracing**: Structured, async-aware logging and diagnostics.
+- **tracing-subscriber/appender**: Log formatting, filtering, and output.
+- **metrics**: Metrics collection framework for custom and system metrics.
+- **metrics-exporter-prometheus**: Exports metrics to Prometheus (feature).
+- **tokio-metrics**: Tokio runtime metrics (feature).
+- **influxdb2**: InfluxDB client for time series data (feature).
 
-### Optional Feature Dependencies
+### Security, Authentication, and Cryptography
+- **ring**: Cryptographic primitives for secure operations.
+- **rustls**: TLS for secure HTTP and WebSocket connections.
+- **sha2**: SHA-2 hashing for integrity and security.
+- **md5**: MD5 hashing for legacy/compatibility.
+- **argon2**: Password hashing for authentication.
+- **blake3**: Fast, secure hashing for IDs and cache keys.
+- **casbin**: RBAC/authorization for API and TUI.
+- **oauth2/openidconnect/jsonwebtoken**: Authentication and token management.
+- **vaultrs**: HashiCorp Vault integration for secret management.
 
-#### WASM Plugin System
-- **wasmtime** (34.0.2): WASM runtime with component model
-- **wasmtime-wasi** (34.0.2): WASI support
-- **cap-std** (3.0): Capability-based standard library
-- **wit-bindgen** (0.30.0): WebAssembly Interface Types
+### Template, Rendering, and Visualization
+- **tera**: Template engine for generating diagrams and reports.
+- **base64**: Encoding/decoding images and binary data.
 
-#### Terminal UI
-- **ratatui** (0.29): Terminal UI framework
-- **crossterm** (0.29): Cross-platform terminal manipulation
-- **tui-input** (0.14): Terminal input handling
+### Utilities and Miscellaneous
+- **uuid**: Unique IDs for components, runs, and cache keys.
+- **url**: URL parsing and manipulation.
+- **walkdir**: Recursive directory traversal for file discovery.
+- **ignore**: Gitignore-style file filtering for analysis.
+- **regex**: Regular expressions for pattern matching.
+- **glob**: File pattern matching for filtering and config.
+- **petgraph**: Graph data structures for dependency analysis.
+- **color-eyre**: User-friendly error reporting.
+- **ndarray/ndarray-stats**: N-dimensional arrays and statistics for performance/chaos features.
+- **strum/strum_macros**: Enum utilities and macro derivations.
+- **arrow/arrow-ipc/arrow-schema/arrow-array**: Columnar data and serialization for advanced reporting.
+- **sysinfo**: System information for monitoring and reporting.
+- **confy**: Persistent configuration for TUI and CLI.
+- **persisted**: State persistence for TUI.
+- **streaming-iterator**: Efficient streaming over collections.
 
-#### Memory Optimization
-- **mimalloc** (0.1): High-performance allocator
-- **bumpalo** (3.19): Arena allocation with collections
-- **bumpalo-herd** (0.1): Herd allocation
-- **memmap2** (0.9): Memory mapping
-- **rkyv** (0.7): Zero-copy serialization
+### WASM Plugin System (Feature)
+- **wasmtime/wasmtime-wasi**: WASM runtime and WASI support for plugins.
+- **cap-std**: Capability-based stdlib for secure plugin execution.
+- **wit-bindgen**: WebAssembly Interface Types for plugin API.
 
-#### Chaos Engineering & Testing
-- **fail** (0.5): Failpoint injection
-- **statrs** (0.16.1): Statistical analysis
-- **ndarray-stats** (0.5): N-dimensional array statistics
-- **changepoint** (0.14.2): Change point detection
-- **criterion** (0.5): Benchmarking framework
+### Terminal UI (Feature)
+- **ratatui**: Terminal UI framework for interactive analysis.
+- **crossterm**: Terminal manipulation and input.
+- **tui-input**: Input handling for TUI.
 
-#### Security & Enterprise
-- **casbin** (2.1): Authorization library
-- **oauth2** (4.4): OAuth2 client
-- **openidconnect** (3.5): OpenID Connect
-- **jsonwebtoken** (9.3): JWT handling
-- **vaultrs** (0.7): HashiCorp Vault client
+### Memory Optimization (Feature)
+- **mimalloc**: High-performance memory allocator.
+- **bumpalo/bumpalo-herd**: Arena allocation for temporary objects.
+- **memmap2**: Memory mapping for large data.
+- **rkyv**: Zero-copy serialization for fast cache.
 
-#### Monitoring & Metrics
-- **metrics-exporter-prometheus** (0.15): Prometheus exporter
-- **tokio-metrics** (0.3): Tokio runtime metrics
-- **influxdb2** (0.5): InfluxDB client for time series
+### Chaos Engineering & Testing (Feature)
+- **fail**: Failpoint injection for chaos testing.
+- **statrs**: Statistical analysis for regression detection.
+- **changepoint**: Change point detection for performance.
+- **linfa**: Machine learning for anomaly detection.
+
+### Dev & Test Utilities
+- **tempfile**: Temporary file creation for tests.
+- **tokio-test**: Async test utilities.
+- **mockall/mockito**: Mocking for unit/integration tests.
+- **assert_cmd/predicates**: CLI testing and assertions.
+- **rstest/proptest/serial_test**: Advanced test frameworks.
+- **criterion/iai-callgrind**: Benchmarking and profiling.
 
 ---
 
@@ -585,6 +890,123 @@ pub struct VaultSecretManager {
 
 ---
 
+## Security & RBAC
+
+Comprehensive security framework implementing enterprise-grade authentication, authorization, and audit capabilities.
+
+### Security Architecture (`src/security/`)
+
+#### Authentication Systems
+- **OAuth 2.0/OIDC Integration**: Federated authentication with enterprise IdPs
+- **API Key Authentication**: Secure service-to-service authentication  
+- **Session Management**: Secure session handling with expiration
+- **JWT Token Validation**: Standards-compliant token verification
+
+#### Authorization (RBAC/ABAC)
+- **Role-Based Access Control**: Hierarchical role system with predefined roles
+- **Attribute-Based Access Control**: Fine-grained permission system
+- **Permission Scoping**: Resource-level access control (own/team/all)
+- **Policy Engine**: Casbin-powered authorization engine
+
+#### Security Features
+- **Audit Logging**: Comprehensive, immutable security event logging
+- **Input Validation**: Path traversal prevention and input sanitization
+- **Rate Limiting**: DDoS protection and resource abuse prevention
+- **Secret Management**: HashiCorp Vault integration for secure credential storage
+- **Compliance**: SOC2, GDPR, and enterprise compliance support
+
+#### Configuration Example
+```toml
+[security]
+enabled = true
+audit_logging = true
+rate_limiting = true
+
+[security.authentication]
+provider = "oidc"
+issuer_url = "https://auth.company.com"
+client_id = "uveddi-client"
+
+[security.authorization]
+policy_file = "policies/rbac.conf"
+default_role = "viewer"
+
+[security.rate_limiting]
+requests_per_minute = 100
+burst_size = 10
+```
+
+#### Predefined Roles
+- **Admin**: Full system access and user management
+- **Analyst**: Analysis execution and report generation
+- **Viewer**: Read-only access to reports and results
+- **Developer**: Code analysis and plugin management
+
+---
+
+## Resilience & Error Handling
+
+Advanced resilience patterns for handling transient failures and maintaining system stability.
+
+### Resilience Framework (`src/resilience/`)
+
+#### Core Patterns
+- **Circuit Breaker**: Prevents cascade failures with automatic recovery
+- **Retry Logic**: Exponential backoff with jitter for transient failures
+- **Fallback Strategies**: Graceful degradation when services are unavailable
+- **Health Monitoring**: Continuous health checks and status reporting
+- **Graceful Shutdown**: Clean resource cleanup and state preservation
+
+#### Advanced Features
+- **Alert System**: Multi-channel alerting with escalation policies
+- **Analytics Dashboard**: Real-time resilience metrics and trends
+- **Recovery Management**: Automated recovery procedures and manual overrides
+- **Availability Detection**: Service availability monitoring and reporting
+
+#### Error Handling Strategy
+```rust
+#[derive(thiserror::Error, Debug)]
+pub enum UveddiError {
+    #[error("Analysis failed: {0}")]
+    Analysis(String),
+    
+    #[error("AI provider error: {provider} - {message}")]
+    AiProvider { provider: String, message: String },
+    
+    #[error("Security violation: {0}")]
+    Security(#[from] SecurityError),
+    
+    #[error("Configuration error: {0}")]
+    Config(String),
+}
+```
+
+#### Resilience Configuration
+```toml
+[resilience.retry]
+max_attempts = 3
+initial_delay = "1s"
+max_delay = "30s"
+backoff_multiplier = 2.0
+
+[resilience.circuit_breaker]
+failure_threshold = 5
+timeout = "60s"
+half_open_max_calls = 3
+
+[resilience.fallback]
+enable_cache_fallback = true
+enable_offline_mode = true
+```
+
+#### Monitoring Integration
+- **Prometheus Metrics**: Comprehensive metrics collection
+- **Health Endpoints**: HTTP health check endpoints
+- **Alert Integration**: Slack, PagerDuty, email notifications
+- **Dashboard**: Real-time resilience status visualization
+
+---
+
 ## Performance & Monitoring
 
 ### Metrics Collection
@@ -750,4 +1172,306 @@ The system's extensibility through WASM plugins, privacy-focused AI integration,
 
 ---
 
-*This manual serves as a comprehensive guide for understanding, developing, and operating Uveddi. For specific implementation details, refer to the source code and inline documentation.*
+## Terminal User Interface (TUI)
+
+Interactive terminal interface implementing The Elm Architecture (TEA) pattern for predictable state management.
+
+### TUI Architecture (`src/tui/`)
+
+#### Core Components
+- **App State**: Centralized application state management
+- **Event Handler**: Keyboard and mouse input processing
+- **UI Components**: Reusable terminal widgets and layouts
+- **Terminal Manager**: Terminal initialization and cleanup
+- **Themes**: Customizable color schemes and styling
+
+#### Features
+- **Interactive Analysis Form**: Replace CLI arguments with guided forms
+- **Real-time Progress**: Live analysis progress and status updates
+- **Report Viewer**: Multi-format report display with syntax highlighting
+- **Configuration Editor**: Visual configuration management
+- **Plugin Manager**: Interactive plugin installation and management
+
+#### Key Screens
+- **Main Menu**: Navigation hub with project selection
+- **Analysis Form**: Interactive analysis configuration
+- **Progress View**: Real-time analysis monitoring
+- **Report Browser**: Results exploration and export
+- **Settings**: Configuration and preferences
+
+#### Usage Examples
+```bash
+# Launch TUI
+uveddi tui
+
+# TUI with specific project
+uveddi tui --project /path/to/code
+
+# TUI with custom theme
+uveddi tui --theme dark
+```
+
+#### Configuration
+```toml
+[tui]
+theme = "dark"
+auto_save = true
+show_help = true
+
+[tui.keybindings]
+quit = "q"
+help = "?"
+analyze = "a"
+```
+
+---
+
+## Chaos Engineering
+
+Comprehensive chaos engineering framework for testing system resilience and fault tolerance.
+
+### Chaos Framework (`src/chaos/`)
+
+#### Core Capabilities
+- **Multi-tier Fault Injection**: Unit, service, and system level failures
+- **Safe Failure Scenarios**: Automatic rollback and safety constraints
+- **Comprehensive Observability**: Detailed measurement and reporting
+- **CI/CD Integration**: Automated chaos testing in pipelines
+
+#### Experiment Types
+- **Network Failures**: Latency injection, packet loss, connection drops
+- **Resource Exhaustion**: Memory pressure, CPU saturation, disk full
+- **Service Failures**: Process crashes, dependency unavailability
+- **Data Corruption**: File system errors, database inconsistencies
+
+#### Safety Features
+- **Blast Radius Control**: Limit experiment scope and impact
+- **Emergency Stop**: Immediate experiment termination
+- **Health Monitoring**: Continuous system health validation
+- **Rollback Procedures**: Automatic recovery from failed experiments
+
+#### Configuration Example
+```toml
+[chaos]
+enabled = true
+max_concurrent_experiments = 3
+safety_checks_enabled = true
+
+[chaos.experiments.network_latency]
+enabled = true
+target_services = ["analysis-engine"]
+latency_ms = 100
+duration = "30s"
+blast_radius = "single_service"
+
+[chaos.experiments.memory_pressure]
+enabled = false
+memory_percentage = 80
+duration = "60s"
+blast_radius = "unit_test"
+```
+
+#### Experiment Lifecycle
+1. **Planning**: Define experiment parameters and safety constraints
+2. **Validation**: Verify system health and readiness
+3. **Execution**: Inject failures and monitor system behavior
+4. **Observation**: Collect metrics and analyze system response
+5. **Recovery**: Restore normal operation and validate recovery
+6. **Analysis**: Generate reports and identify improvements
+
+#### Integration with CI/CD
+```yaml
+# .github/workflows/chaos-testing.yml
+- name: Run Chaos Experiments
+  run: |
+    uveddi chaos run --experiment network_latency
+    uveddi chaos run --experiment memory_pressure
+    uveddi chaos report --format json
+```
+
+---
+
+## Configuration Management
+
+Comprehensive configuration system supporting multiple formats and environments.
+
+### Configuration Architecture
+
+#### Configuration Sources (Priority Order)
+1. **Command Line Arguments**: Highest priority, overrides all other sources
+2. **Environment Variables**: `UVEDDI_*` prefixed variables
+3. **Configuration Files**: TOML, JSON, YAML support
+4. **Default Values**: Built-in sensible defaults
+
+#### Configuration File Example
+```toml
+# ~/.uveddi/config.toml
+
+[analysis]
+max_file_size = "2MB"
+parallel_jobs = 4
+timeout = 300
+enable_cache = true
+
+[ai]
+default_provider = "ollama"
+enable_explanations = true
+
+[ai.providers.ollama]
+url = "http://localhost:11434"
+model = "deepseek-coder:6.7b"
+temperature = 0.7
+
+[ai.providers.openai]
+model = "gpt-4"
+api_key = "${OPENAI_API_KEY}"
+max_tokens = 2000
+
+[detectors.god_object]
+enabled = true
+max_methods = 20
+max_fields = 15
+
+[security]
+enabled = false
+audit_logging = true
+
+[tui]
+theme = "dark"
+auto_save = true
+```
+
+#### Environment Variables
+```bash
+# Core settings
+export UVEDDI_ANALYSIS_PARALLEL_JOBS=8
+export UVEDDI_AI_PROVIDER=ollama
+export UVEDDI_CACHE_SIZE=2000
+
+# AI provider settings
+export UVEDDI_OPENAI_API_KEY="your-key-here"
+export UVEDDI_OLLAMA_URL="http://localhost:11434"
+
+# Security settings
+export UVEDDI_SECURITY_ENABLED=true
+export UVEDDI_VAULT_URL="https://vault.company.com"
+```
+
+---
+
+## Troubleshooting & Best Practices
+
+### Common Issues and Solutions
+
+#### Performance Issues
+**Problem**: Slow analysis on large codebases
+**Solutions**:
+- Enable parallel processing: `--parallel-jobs 8`
+- Increase cache size: `--cache-size 5000`
+- Use memory optimization features
+- Exclude unnecessary files with `.uveddiignore`
+
+#### Memory Issues
+**Problem**: High memory usage during analysis
+**Solutions**:
+- Enable memory optimization feature flag
+- Reduce parallel job count
+- Use incremental analysis for large projects
+- Configure memory limits in analysis config
+
+#### AI Integration Issues
+**Problem**: AI provider timeouts or errors
+**Solutions**:
+- Check provider availability and API keys
+- Implement retry logic with exponential backoff
+- Use fallback providers
+- Enable offline mode for local-only analysis
+
+### Best Practices
+
+#### For Individual Developers
+- Use local AI (Ollama) for privacy
+- Enable caching for faster repeated analysis
+- Configure IDE integration for real-time feedback
+- Use TUI for interactive exploration
+
+#### For Teams
+- Standardize configuration across team members
+- Use CI/CD integration for automated analysis
+- Implement security and RBAC for sensitive codebases
+- Share custom detectors via plugin system
+
+#### For Enterprises
+- Deploy with full security features enabled
+- Use chaos engineering for resilience testing
+- Implement comprehensive monitoring and alerting
+- Integrate with existing observability stack
+
+---
+
+## API Reference
+
+### Command Line Interface
+
+#### Core Commands
+```bash
+# Analysis commands
+uveddi analyze <path> [OPTIONS]
+uveddi tui [OPTIONS]
+
+# Configuration commands
+uveddi config init
+uveddi config edit
+uveddi config validate
+
+# Plugin commands
+uveddi plugin list
+uveddi plugin install <plugin>
+uveddi plugin remove <plugin>
+
+# Chaos engineering commands
+uveddi chaos run <experiment>
+uveddi chaos stop <experiment-id>
+uveddi chaos list
+```
+
+#### Global Options
+- `--config <file>`: Specify configuration file
+- `--verbose`: Enable verbose logging
+- `--quiet`: Suppress non-error output
+- `--help`: Show help information
+
+### Rust API
+
+#### Core Types
+```rust
+// Analysis engine
+pub struct AnalysisEngine { /* ... */ }
+pub trait AnalysisDetector { /* ... */ }
+
+// Configuration
+pub struct AnalysisConfig { /* ... */ }
+pub struct SecurityConfig { /* ... */ }
+
+// Results
+pub struct AnalysisResult { /* ... */ }
+pub struct ArchitecturalIssue { /* ... */ }
+```
+
+#### Usage Examples
+```rust
+use uveddi::analysis::AnalysisEngine;
+use std::path::Path;
+
+// Basic analysis
+let engine = AnalysisEngine::new()?;
+let (issues, graph) = engine.analyze(Path::new("src/")).await?;
+
+// With custom configuration
+let config = AnalysisConfig::from_file(Path::new("config.toml"))?;
+let engine = config.create_engine().await?;
+```
+
+---
+
+*This comprehensive manual serves as the definitive guide for understanding, developing, and operating Uveddi. For specific implementation details, refer to the source code and inline documentation. For community support, join our [Discord](https://discord.gg/uveddi) or visit our [GitHub Discussions](https://github.com/botzrDev/uveddi/discussions).*
