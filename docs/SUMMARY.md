@@ -1,6 +1,7 @@
 # Summary
 
-[Introduction](./README.md)
+[🏠 Introduction](./README.md)
+[🎮 Interactive Examples](./assets/interactive-examples.md)
 
 # Getting Started
 - [Installation](./01-getting-started/installation.md)
@@ -16,6 +17,9 @@
 - [Title Standardization Guide](./02-user-guide/title-standardization-guide.md)
 - [Dashboard Guide](./02-user-guide/dashboard-guide.md)
 - [Dependency Injection Guide](./02-user-guide/dependency-injection-guide.md)
+
+## TUI User Guide
+- [Terminal User Interface (TUI)](./02-user-guide/tui-interface.md)
 
 # API Reference
 - [OpenAPI Specification](./api/openapi.yaml)
