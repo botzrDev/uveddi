@@ -4,6 +4,7 @@ authors = ["Uveddi Contributors"]
 description = "Comprehensive guide to using Uveddi for architectural analysis"
 language = "en"
 multilingual = false
+src = "."
 
 [output.html]
 default-theme = "light"
