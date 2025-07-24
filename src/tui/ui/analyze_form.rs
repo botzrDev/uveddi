@@ -16,6 +16,7 @@ use std::path::PathBuf;
 
 use crate::{
     cli::analyze_command::AnalyzeCommand,
+    security::{validate_input, validate_url, validate_model_name, validate_numeric_range, SecurityError},
     tui::{
         app::AppState,
         messages::AppMessage,
@@ -588,24 +589,218 @@ impl AnalyzeForm {
                 let path = self.inputs.path_picker.value();
                 if path.is_empty() {
                     ValidationResult::invalid("Path is required")
+                } else if let Err(e) = validate_input(&path, "path") {
+                    ValidationResult::invalid(&format!("Invalid path: {}", e))
                 } else if !std::path::Path::new(&path).exists() {
                     ValidationResult::invalid("Path does not exist")
                 } else {
                     ValidationResult::valid()
                 }
             }
+            
+            FormField::OutputFormat => {
+                let format = self.inputs.output_format_dropdown.value();
+                match validate_input(&format, "output_format") {
+                    Ok(_) => {
+                        let allowed_formats = ["text", "json", "markdown"];
+                        if allowed_formats.contains(&format.as_str()) {
+                            ValidationResult::valid()
+                        } else {
+                            ValidationResult::invalid(&format!("Must be one of: {}", allowed_formats.join(", ")))
+                        }
+                    }
+                    Err(e) => ValidationResult::invalid(&format!("Invalid format: {}", e)),
+                }
+            }
+            
+            FormField::OutputFile => {
+                if let Some(output_path) = self.inputs.output_file_picker.value() {
+                    if !output_path.is_empty() {
+                        match validate_input(&output_path, "output_file") {
+                            Ok(_) => ValidationResult::valid(),
+                            Err(e) => ValidationResult::invalid(&format!("Invalid output file: {}", e)),
+                        }
+                    } else {
+                        ValidationResult::valid() // Optional field
+                    }
+                } else {
+                    ValidationResult::valid()
+                }
+            }
+            
+            FormField::OllamaApiUrl => {
+                if let Some(url) = self.inputs.ollama_api_url_input.value() {
+                    if !url.is_empty() {
+                        match validate_url(&url) {
+                            Ok(_) => ValidationResult::valid(),
+                            Err(e) => ValidationResult::invalid(&format!("Invalid URL: {}", e)),
+                        }
+                    } else {
+                        ValidationResult::valid() // Optional field
+                    }
+                } else {
+                    ValidationResult::valid()
+                }
+            }
+            
+            FormField::OllamaModel => {
+                if let Some(model) = self.inputs.ollama_model_input.value() {
+                    if !model.is_empty() {
+                        match validate_model_name(&model) {
+                            Ok(_) => ValidationResult::valid(),
+                            Err(e) => ValidationResult::invalid(&format!("Invalid model name: {}", e)),
+                        }
+                    } else {
+                        ValidationResult::valid() // Optional field
+                    }
+                } else {
+                    ValidationResult::valid()
+                }
+            }
+            
             FormField::DeadCodeConfidence => {
                 if let Some(value) = self.inputs.dead_code_confidence_input.value() {
-                    if value < 0.0 || value > 1.0 {
-                        ValidationResult::invalid("Confidence must be between 0.0 and 1.0")
-                    } else {
-                        ValidationResult::valid()
+                    let confidence_int = (value * 100.0) as i32;
+                    match validate_numeric_range(confidence_int, 0, 100, "dead_code_confidence") {
+                        Ok(_) => ValidationResult::valid(),
+                        Err(e) => ValidationResult::invalid(&format!("Invalid confidence: {}", e)),
                     }
                 } else {
                     ValidationResult::valid() // Optional field
                 }
             }
-            _ => ValidationResult::valid(), // Other fields use component validation
+            
+            FormField::DeadCodeIgnorePatterns => {
+                if let Some(patterns) = self.inputs.dead_code_ignore_patterns_input.value() {
+                    if !patterns.is_empty() {
+                        // Split patterns by comma and validate each
+                        for pattern in patterns.split(',') {
+                            let trimmed = pattern.trim();
+                            if !trimmed.is_empty() {
+                                if let Err(e) = validate_input(trimmed, "ignore_pattern") {
+                                    return ValidationResult::invalid(&format!("Invalid pattern '{}': {}", trimmed, e));
+                                }
+                            }
+                        }
+                        ValidationResult::valid()
+                    } else {
+                        ValidationResult::valid() // Optional field
+                    }
+                } else {
+                    ValidationResult::valid()
+                }
+            }
+            
+            FormField::DeadCodeKeepAlive => {
+                if let Some(patterns) = self.inputs.dead_code_keep_alive_input.value() {
+                    if !patterns.is_empty() {
+                        // Split patterns by comma and validate each
+                        for pattern in patterns.split(',') {
+                            let trimmed = pattern.trim();
+                            if !trimmed.is_empty() {
+                                if let Err(e) = validate_input(trimmed, "keep_alive_pattern") {
+                                    return ValidationResult::invalid(&format!("Invalid pattern '{}': {}", trimmed, e));
+                                }
+                            }
+                        }
+                        ValidationResult::valid()
+                    } else {
+                        ValidationResult::valid() // Optional field
+                    }
+                } else {
+                    ValidationResult::valid()
+                }
+            }
+            
+            FormField::LargeClassesMaxLoc => {
+                if let Some(value) = self.inputs.large_classes_max_loc_input.value() {
+                    match validate_numeric_range(value as i32, 1, 100_000, "max_loc") {
+                        Ok(_) => ValidationResult::valid(),
+                        Err(e) => ValidationResult::invalid(&format!("Invalid max LOC: {}", e)),
+                    }
+                } else {
+                    ValidationResult::valid() // Optional field
+                }
+            }
+            
+            FormField::LargeClassesMaxMethods => {
+                if let Some(value) = self.inputs.large_classes_max_methods_input.value() {
+                    match validate_numeric_range(value as i32, 1, 10_000, "max_methods") {
+                        Ok(_) => ValidationResult::valid(),
+                        Err(e) => ValidationResult::invalid(&format!("Invalid max methods: {}", e)),
+                    }
+                } else {
+                    ValidationResult::valid() // Optional field
+                }
+            }
+            
+            FormField::LargeClassesMaxFields => {
+                if let Some(value) = self.inputs.large_classes_max_fields_input.value() {
+                    match validate_numeric_range(value as i32, 1, 10_000, "max_fields") {
+                        Ok(_) => ValidationResult::valid(),
+                        Err(e) => ValidationResult::invalid(&format!("Invalid max fields: {}", e)),
+                    }
+                } else {
+                    ValidationResult::valid() // Optional field
+                }
+            }
+            
+            FormField::LargeClassesMaxComplexity => {
+                if let Some(value) = self.inputs.large_classes_max_complexity_input.value() {
+                    match validate_numeric_range(value as i32, 1, 10_000, "max_complexity") {
+                        Ok(_) => ValidationResult::valid(),
+                        Err(e) => ValidationResult::invalid(&format!("Invalid max complexity: {}", e)),
+                    }
+                } else {
+                    ValidationResult::valid() // Optional field
+                }
+            }
+            
+            FormField::LargeClassesMaxLcom => {
+                if let Some(value) = self.inputs.large_classes_max_lcom_input.value() {
+                    let lcom_int = (value * 100.0) as i32;
+                    match validate_numeric_range(lcom_int, 0, 100, "max_lcom") {
+                        Ok(_) => ValidationResult::valid(),
+                        Err(e) => ValidationResult::invalid(&format!("Invalid max LCOM: {}", e)),
+                    }
+                } else {
+                    ValidationResult::valid() // Optional field
+                }
+            }
+            
+            FormField::LargeClassesIgnorePatterns => {
+                if let Some(patterns) = self.inputs.large_classes_ignore_patterns_input.value() {
+                    if !patterns.is_empty() {
+                        // Split patterns by comma and validate each
+                        for pattern in patterns.split(',') {
+                            let trimmed = pattern.trim();
+                            if !trimmed.is_empty() {
+                                if let Err(e) = validate_input(trimmed, "ignore_pattern") {
+                                    return ValidationResult::invalid(&format!("Invalid pattern '{}': {}", trimmed, e));
+                                }
+                            }
+                        }
+                        ValidationResult::valid()
+                    } else {
+                        ValidationResult::valid() // Optional field
+                    }
+                } else {
+                    ValidationResult::valid()
+                }
+            }
+            
+            FormField::LargeClassesMinSeverity => {
+                if let Some(value) = self.inputs.large_classes_min_severity_input.value() {
+                    match validate_numeric_range(value as i32, 0, 100, "min_severity") {
+                        Ok(_) => ValidationResult::valid(),
+                        Err(e) => ValidationResult::invalid(&format!("Invalid min severity: {}", e)),
+                    }
+                } else {
+                    ValidationResult::valid() // Optional field
+                }
+            }
+            
+            _ => ValidationResult::valid(), // Default for other fields
         };
 
         if result.is_valid {

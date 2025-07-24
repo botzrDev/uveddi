@@ -198,6 +198,7 @@ impl Default for AlertingConfig {
 }
 
 /// Advanced alerting system
+#[derive(Clone)]
 pub struct AdvancedAlertSystem {
     config: Arc<RwLock<AlertingConfig>>,
     health_monitor: Arc<HealthMonitor>,
@@ -290,7 +291,7 @@ impl AdvancedAlertSystem {
     }
 
     /// Creates an enhanced alert with metadata
-    async fn create_enhanced_alert(
+    pub async fn create_enhanced_alert(
         &self,
         alert_type: AlertType,
         message: String,

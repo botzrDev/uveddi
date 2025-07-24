@@ -523,7 +523,7 @@ mod integration_tests {
 
     // Helper functions for creating test data
 
-    fn create_test_config() -> AlertingConfig {
+    pub fn create_test_config() -> AlertingConfig {
         AlertingConfig {
             thresholds: vec![
                 AlertThreshold {
@@ -589,7 +589,7 @@ mod integration_tests {
         }
     }
 
-    fn create_test_enhanced_alert() -> uveddi::resilience::alerting::EnhancedAlert {
+    pub fn create_test_enhanced_alert() -> uveddi::resilience::alerting::EnhancedAlert {
         create_enhanced_alert_with_params(
             AlertType::CriticalFailureRate,
             AlertSeverity::Critical,
@@ -612,7 +612,7 @@ mod integration_tests {
                 severity,
                 created_at: SystemTime::now(),
             },
-            alert_type,
+            alert_type: alert_type.clone(),
             fingerprint: format!("test-fingerprint-{}", rand::random::<u32>()),
             group_key: format!("{:?}-{}", alert_type, environment),
             environment: environment.to_string(),

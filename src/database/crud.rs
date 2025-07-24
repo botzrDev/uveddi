@@ -165,9 +165,18 @@ impl Database {
     /// * `Ok(())` - If the operation succeeds.
     /// * `Err(UveddiError)` - If the insert or query fails.
     pub fn store_anti_pattern_type(&self, anti_pattern_type: &mut AntiPatternType) -> Result<()> {
-        // Validate and sanitize description
+        // Comprehensive input validation
+        security::validate_input(&anti_pattern_type.name, "name")
+            .map_err(crate::error::UveddiError::from)?;
+        security::validate_input(&anti_pattern_type.description, "description")
+            .map_err(crate::error::UveddiError::from)?;
+        security::validate_input(&anti_pattern_type.category, "category")
+            .map_err(crate::error::UveddiError::from)?;
+        
+        // Validate and sanitize description after validation
         anti_pattern_type.description =
             security::sanitize_description(&anti_pattern_type.description);
+        
         self.conn.execute(
             "INSERT OR IGNORE INTO anti_pattern_types (name, description, category) VALUES (?, ?, ?)",
             rusqlite::params![
@@ -199,14 +208,44 @@ impl Database {
     pub fn store_issues(&mut self, issues: &[ArchitecturalIssue]) -> Result<()> {
         let tx = self.conn.transaction()?;
         for issue in issues {
-            // Validate and sanitize description
+            // Comprehensive input validation
+            security::validate_input(&issue.description, "description")
+                .map_err(crate::error::UveddiError::from)?;
+            security::validate_input(&issue.file_path, "file_path")
+                .map_err(crate::error::UveddiError::from)?;
+            security::validate_input(&issue.severity, "severity")
+                .map_err(crate::error::UveddiError::from)?;
+            
+            // Validate line numbers
+            if let Some(start_line) = issue.start_line {
+                security::validate_numeric_range(start_line, 1, 1_000_000, "start_line")
+                    .map_err(crate::error::UveddiError::from)?;
+            }
+            if let Some(end_line) = issue.end_line {
+                security::validate_numeric_range(end_line, 1, 1_000_000, "end_line")
+                    .map_err(crate::error::UveddiError::from)?;
+            }
+            
+            // Validate code snippet if present
+            if let Some(ref snippet) = issue.code_snippet {
+                security::validate_input(snippet, "code_snippet")
+                    .map_err(crate::error::UveddiError::from)?;
+            }
+            
+            // Validate AI explanation if present
+            if let Some(ref explanation) = issue.ai_explanation {
+                security::validate_input(explanation, "ai_explanation")
+                    .map_err(crate::error::UveddiError::from)?;
+            }
+            
+            // Sanitize description and AI explanation after validation
             let sanitized_description = security::sanitize_description(&issue.description);
-            // Validate and sanitize AI explanation if present
             let sanitized_ai_explanation = if let Some(ref explanation) = issue.ai_explanation {
                 Some(security::sanitize_description(explanation))
             } else {
                 None
             };
+            
             tx.execute(
                 "INSERT INTO architectural_issues (analysis_run_id, anti_pattern_type_id, file_path, start_line, end_line, severity, description, code_snippet, ai_explanation) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 rusqlite::params![

@@ -149,6 +149,15 @@ mod integration_tests;
 /// Maximum number of files allowed per analysis
 pub const MAX_FILES_PER_ANALYSIS: usize = 10000;
 
+/// Maximum input length for general text fields
+pub const MAX_INPUT_LENGTH: usize = 10000;
+
+/// Maximum length for file paths
+pub const MAX_PATH_LENGTH: usize = 4096;
+
+/// Maximum length for model names
+pub const MAX_MODEL_NAME_LENGTH: usize = 100;
+
 /// Validate file size for analysis
 pub fn validate_file_size(path: &Path) -> Result<(), SecurityError> {
     let metadata = std::fs::metadata(path).map_err(|_| SecurityError::InvalidInput {
@@ -231,6 +240,141 @@ pub fn validate_file_count(count: usize) -> Result<(), SecurityError> {
                 count, MAX_FILES_PER_ANALYSIS
             )],
         });
+    }
+    Ok(())
+}
+
+/// Comprehensive input validation function
+/// 
+/// Validates input for SQL injection patterns, length constraints, and other security concerns.
+/// This is the primary validation function for general text inputs.
+/// 
+/// # Arguments
+/// * `input` - The input string to validate
+/// * `field_name` - The name of the field being validated (for error reporting)
+/// 
+/// # Returns
+/// * `Ok(())` - Input is valid
+/// * `Err(SecurityError)` - Input contains dangerous patterns or exceeds limits
+pub fn validate_input(input: &str, field_name: &str) -> Result<(), SecurityError> {
+    // Check for SQL injection patterns
+    if contains_sql_injection_patterns(input) {
+        return Err(SecurityError::InvalidInput {
+            field: field_name.to_string(),
+            reason: "Contains potentially dangerous SQL patterns".to_string(),
+        });
+    }
+    
+    // Check length constraints
+    if input.len() > MAX_INPUT_LENGTH {
+        return Err(SecurityError::InvalidInput {
+            field: field_name.to_string(),
+            reason: format!("Input length {} exceeds maximum {}", input.len(), MAX_INPUT_LENGTH),
+        });
+    }
+    
+    Ok(())
+}
+
+/// Check for SQL injection patterns
+/// 
+/// Detects common SQL injection attack patterns in input strings.
+/// Uses a comprehensive list of dangerous SQL keywords and patterns.
+fn contains_sql_injection_patterns(input: &str) -> bool {
+    let dangerous_patterns = [
+        ";", "--", "/*", "*/", "xp_", "sp_", 
+        "union", "select", "insert", "update", "delete", "drop",
+        "exec", "execute", "script", "javascript:",
+        "alter", "create", "truncate", "grant", "revoke",
+    ];
+    
+    let input_lower = input.to_lowercase();
+    dangerous_patterns.iter().any(|pattern| input_lower.contains(pattern))
+}
+
+/// Validate URL format for API endpoints
+/// 
+/// Validates that URLs are properly formatted and don't contain dangerous characters.
+/// Only allows HTTP and HTTPS protocols for security.
+/// 
+/// # Arguments
+/// * `url` - The URL string to validate
+/// 
+/// # Returns
+/// * `Ok(())` - URL is valid
+/// * `Err(SecurityError)` - URL is invalid or contains dangerous patterns
+pub fn validate_url(url: &str) -> Result<(), SecurityError> {
+    if url.is_empty() {
+        return Err(SecurityError::InvalidInput {
+            field: "url".to_string(),
+            reason: "URL cannot be empty".to_string(),
+        });
+    }
+    
+    // Basic URL validation
+    if !url.starts_with("http://") && !url.starts_with("https://") {
+        return Err(SecurityError::InvalidInput {
+            field: "url".to_string(),
+            reason: "URL must start with http:// or https://".to_string(),
+        });
+    }
+    
+    // Check for dangerous characters
+    if url.contains("..") || url.contains("\\") || url.contains("\0") {
+        return Err(SecurityError::InvalidInput {
+            field: "url".to_string(),
+            reason: "URL contains invalid characters".to_string(),
+        });
+    }
+    
+    Ok(())
+}
+
+/// Validate numeric input ranges
+/// 
+/// Ensures numeric values fall within acceptable ranges to prevent overflow
+/// and other numeric-based attacks.
+/// 
+/// # Arguments
+/// * `value` - The numeric value to validate
+/// * `min` - Minimum allowed value (inclusive)
+/// * `max` - Maximum allowed value (inclusive)
+/// * `field_name` - The name of the field being validated
+/// 
+/// # Returns
+/// * `Ok(())` - Value is within range
+/// * `Err(SecurityError)` - Value is outside acceptable range
+pub fn validate_numeric_range(value: i32, min: i32, max: i32, field_name: &str) -> Result<(), SecurityError> {
+    if value < min || value > max {
+        return Err(SecurityError::InvalidInput {
+            field: field_name.to_string(),
+            reason: format!("Value {} must be between {} and {}", value, min, max),
+        });
+    }
+    Ok(())
+}
+
+/// Validate character set for specific fields
+/// 
+/// Restricts input to only allowed characters to prevent injection attacks
+/// and ensure data integrity.
+/// 
+/// # Arguments
+/// * `input` - The input string to validate
+/// * `field_name` - The name of the field being validated
+/// * `allowed_chars` - String containing all allowed characters
+/// 
+/// # Returns
+/// * `Ok(())` - All characters are allowed
+/// * `Err(SecurityError)` - Input contains disallowed characters
+pub fn validate_character_set(input: &str, field_name: &str, allowed_chars: &str) -> Result<(), SecurityError> {
+    for ch in input.chars() {
+        if !allowed_chars.contains(ch) {
+            return Err(SecurityError::InvalidInput {
+                field: field_name.to_string(),
+                reason: format!("Character '{}' is not allowed", ch),
+            });
+        }
     }
     Ok(())
 }

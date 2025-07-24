@@ -1,6 +1,6 @@
 # Uveddi Comprehensive Architecture & Development Manual
 
-> **Version 0.9.0** | **Last Updated**: January 2025 | **Rust Edition**: 2021
+> **Version 0.9.0** | **Last Updated**: July 2025 | **Rust Edition**: 2021
 
 ## Table of Contents
 

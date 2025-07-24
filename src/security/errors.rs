@@ -140,6 +140,12 @@ pub enum SecurityError {
     #[error("Input validation failed: {errors:?}")]
     ValidationError { errors: Vec<String> },
 
+    #[error("Input length exceeds maximum allowed")]
+    InputTooLong,
+
+    #[error("SQL injection attempt detected")]
+    SqlInjectionAttempt,
+
     // Path Security Errors
     #[error("Path traversal attempt detected")]
     PathTraversalAttempt,

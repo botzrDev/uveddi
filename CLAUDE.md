@@ -1,53 +1,76 @@
+
 # Uveddi - AI-Powered Code Analysis Tool
 
 ## Project Overview
-Uveddi is a Rust-based AI-powered CLI tool for architectural analysis of codebases. It identifies architectural anti-patterns, prevents architectural drift, and provides AI-powered insights with privacy-focused local analysis.
+Uveddi is a Rust-based, AI-powered CLI tool for architectural analysis of codebases. It identifies architectural anti-patterns, prevents architectural drift, and provides AI-powered insights with privacy-focused local analysis. Uveddi is designed for developers and teams who want deep, actionable insights into their codebases while keeping all data private by default.
+
+## Core Philosophy
+1. **Privacy First**: All analysis happens locally—no data leaves your machine by default.
+2. **Developer-Centric**: Built by developers, for developers, with real-world workflows in mind.
+3. **Extensible by Design**: Plugin architecture allows custom detectors and integrations.
+4. **Performance Focused**: Optimized for large codebases with intelligent caching and parallelism.
+5. **AI-Enhanced**: Optional AI integration provides intelligent insights while preserving privacy.
+
+## Supported Environments
+| Environment | Support Level | Notes |
+|-------------|---------------|-------|
+| **Linux**   | ✅ Full        | Primary development platform |
+| **macOS**   | ✅ Full        | Native Apple Silicon support |
+| **Windows** | ✅ Full        | WSL2 recommended for best experience |
+| **Docker**  | ✅ Full        | Official container images available |
+| **CI/CD**   | ✅ Full        | GitHub Actions, GitLab CI, Jenkins |
 
 ## Key Features
-- **Multi-language analysis**: Rust, Python, JavaScript, TypeScript
-- **AI-powered insights**: Local AI (Ollama) integration with optional cloud providers
-- **Privacy-focused**: All analysis happens locally by default
-- **Extensible architecture**: Plugin system for custom detectors
-- **Terminal User Interface**: Interactive TUI for analysis and configuration
-- **Comprehensive reporting**: Markdown, JSON, and interactive outputs
+- **Multi-language analysis**: Rust, Python, JavaScript, TypeScript, and universal anti-patterns
+- **AI-powered insights**: Local AI (Ollama) integration with optional cloud providers (OpenAI, Anthropic, Gemini)
+- **Privacy-focused**: All analysis happens locally by default; cloud AI is opt-in
+- **Extensible architecture**: WASM-based plugin system for custom detectors
+- **Terminal User Interface (TUI)**: Interactive TUI for analysis and configuration
+- **Comprehensive reporting**: Markdown, JSON, HTML, and interactive outputs
 - **Tree-sitter enabled**: Advanced parsing for accurate code analysis
+- **Performance & scalability**: Parallel processing, intelligent caching, memory optimization
+- **Security & RBAC**: Role-based access control, audit logging, rate limiting, and compliance validation
+- **Chaos engineering**: Fault injection and resilience testing (optional)
+- **Monitoring & observability**: Prometheus metrics, structured logging, and performance tracking
 
-## Project Structure
+## Architecture & Main Modules
+Uveddi follows a layered, extensible architecture:
 
-### Core Source Code (`src/`)
-- **`analysis/`** - Core analysis engine with anti-pattern detection
-  - `detectors/anti_patterns/` - Detection implementations (god objects, tight coupling, etc.)
-  - `engine.rs` - Main analysis orchestration
-  - `memory/` - Memory optimization features (UV-210, UV-26)
-  - `parallel/` - Parallel processing capabilities
-- **`ai/`** - AI integration and prompt engineering
-  - `ollama_provider.rs` - Local AI provider implementation
-  - `prompts/` - Template system for AI interactions
-- **`cli/`** - Command-line interface
-- **`tui/`** - Terminal user interface implementation
-- **`security/`** - Security and RBAC framework
-- **`monitoring/`** - Observability and metrics collection
-- **`plugins/`** - Plugin system for extensibility
+```
+┌───────────────────────────────┐
+│        CLI Layer              │
+└───────────────────────────────┘
+            │
+┌───────────────────────────────┐
+│   Application Layer           │
+└───────────────────────────────┘
+            │
+┌───────────────────────────────┐
+│    Analysis Layer             │
+└───────────────────────────────┘
+            │
+┌───────────────────────────────┐
+│ Infrastructure Layer          │
+└───────────────────────────────┘
+```
 
-### Configuration
-- **`Cargo.toml`** - Main package configuration with extensive feature flags
-- **`config/`** - Configuration files for benchmarks and security
+### Core Modules
+- **Analysis Engine (`src/analysis/`)**: Orchestrates static code analysis, runs detectors, manages AST cache, and builds dependency graphs.
+- **AI Engine (`src/ai/`)**: Provides AI-powered analysis with local and cloud provider support, context building, and prompt templates.
+- **Plugin System (`src/plugins/`)**: WASM-based plugin architecture for extensibility and secure custom detectors.
+- **TUI (`src/tui/`)**: Interactive terminal UI for analysis and exploration.
+- **Security (`src/security/`)**: RBAC, authentication, rate limiting, and audit logging.
+- **Monitoring (`src/monitoring/`)**: Metrics collection, performance tracking, and reporting.
 
-### Testing (`tests/`)
-- **`coverage/`** - Comprehensive test coverage framework
-- **`analysis/`** - Analysis engine tests
-- **`security/`** - Security and compliance testing
-- **`performance/`** - Performance and load testing
+### Detector Categories
+- **Universal Anti-patterns**: God Object, Cyclic Dependencies, Magic Values, Global State, Tight Coupling, Resource Leaks, Silent Failures, Code Duplication, Leaky Abstraction
+- **Rust-specific**: Clone Abuse, Unwrap Abuse, Lifetime Complexity, Memory Management
+- **Python-specific**: Data Structure Misuse, Exception Handling, OOP Issues, Performance Issues
+- **JavaScript/TypeScript-specific**: Async Anti-patterns, Scope Issues, Type Coercion, DOM Issues
 
-## Key Dependencies
-- **Tree-sitter** - Multi-language parsing (enabled by default)
-- **Tokio** - Async runtime
-- **Reqwest** - HTTP client for AI services
-- **Ratatui + Crossterm** - Terminal UI (optional via `tui` feature)
-- **Rusqlite** - Local database storage
-- **Memory optimization**: mimalloc, bumpalo, rkyv for zero-copy serialization
+## Feature Flags & Compilation Options
+Uveddi uses Cargo feature flags for modular builds:
 
-## Feature Flags
 - `default = ["local-ai", "tree-sitter", "memory-optimization"]`
 - `tui` - Terminal user interface
 - `wasm-plugins` - WebAssembly plugin system
@@ -55,104 +78,59 @@ Uveddi is a Rust-based AI-powered CLI tool for architectural analysis of codebas
 - `sla-monitoring` - SLA monitoring and validation
 - `enterprise` - All features enabled
 
-## Common Commands
+**Build Examples:**
+```bash
+# Minimal build
+cargo build --no-default-features --features="tree-sitter"
+# Full-featured build
+cargo build --features="full-featured"
+# Enterprise build
+cargo build --features="enterprise"
+```
 
-### Build and Test
+## Key Dependencies & Their Roles
+- **tokio**: Async runtime for concurrency, file IO, and networking
+- **serde, serde_json, bincode, toml**: Serialization and config
+- **rusqlite**: Embedded SQLite database for caching and results
+- **tree-sitter**: Core parser for building ASTs
+- **reqwest**: HTTP client for AI and remote services
+- **rayon**: Data parallelism for fast analysis
+- **clap**: Command-line argument parsing
+- **ratatui, crossterm**: Terminal UI (TUI feature)
+- **prometheus, tracing**: Metrics and structured logging
+- **ring, rustls, argon2**: Security and cryptography
+- ...and more (see `Cargo.toml` and manual for full list)
+
+## Common Commands
 ```bash
 # Build with default features
 cargo build --release
-
 # Run tests with coverage
 ./scripts/run-coverage-tests.sh
-
 # Run specific test suites
 cargo test --test comprehensive_coverage
 cargo test --test analysis_engine
-
 # Performance benchmarks
 cargo bench
-
-# Clippy linting
+# Lint and format
 cargo clippy --all-features --all-targets
-
-# Format code
 cargo fmt
 ```
 
-### Development Scripts
-- **`./scripts/setup-dev-environment.sh`** - Development environment setup
-- **`./scripts/run-coverage-tests.sh`** - Comprehensive test coverage validation
-- **`./scripts/pre_release_test.sh`** - Pre-release validation
-- **`./scripts/run_tui_tests.sh`** - TUI-specific testing
-
-### Analysis Usage
-```bash
-# Basic analysis
-cargo run -- analyze /path/to/code
-
-# AI-powered analysis
-cargo run -- analyze /path/to/code --enable-ai
-
-# Generate report
-cargo run -- analyze /path/to/code --output report.md
-
-# TUI mode (requires 'tui' feature)
-cargo run --features tui -- tui
-```
-
-### Plugin Development
-Example plugin structure in `examples/plugins/excessive-comments/`:
-- `Cargo.toml` - Plugin manifest
-- `plugin.toml` - Plugin configuration
-- `src/lib.rs` - Plugin implementation
-
-## Architecture Notes
-
-### Memory Optimization
-- Uses custom allocators (mimalloc) for performance
-- Arena allocation for temporary objects
-- Zero-copy serialization with rkyv for AST caching
-- Memory-mapped files for large data structures
-
-### AI Integration
-- Primarily supports local AI via Ollama for privacy
-- Extensible provider system for other AI services
-- Structured prompting with context building
-- AI explanations for detected anti-patterns
-
-### Security Features
-- RBAC (Role-Based Access Control) framework
-- OAuth2 and JWT authentication support
-- Rate limiting and security middleware
-- Compliance validation and audit trails
-
-### Performance
-- Parallel processing with Rayon
-- Incremental analysis to avoid full re-processing
-- Statistical performance regression detection
-- Comprehensive benchmarking suite
-
-## CI/CD
-- **GitHub Actions** workflows for Rust CI, frontend E2E, performance testing
-- **Coverage validation** with 90%+ target thresholds
-- **Production deployment** pipeline with blue-green deployment
-- **Dependency updates** automated via Dependabot
-
-## Documentation
-- Full documentation available at `docs/` directory
-- Built with mdbook: `cd docs && mdbook build`
-- API documentation: `cargo doc --open`
+## Documentation & Community
+- Full documentation: `docs/` directory and [online docs](https://botzrdev.github.io/uveddi/)
+- API docs: `cargo doc --open`
+- Community: [Discord](https://discord.gg/uveddi) | [GitHub Discussions](https://github.com/botzrDev/uveddi/discussions)
+- For detailed architecture, development, and usage, see `docs/02-user-guide/UVEDDI_COMPREHENSIVE_MANUAL.md`
 
 ## Contributing
-- See `CONTRIBUTING.md` for contribution guidelines
-- Good first issues marked in GitHub issues
-- Community guidelines in `docs/09-community/`
-- Development guide in `docs/05-development/`
+- See `CONTRIBUTING.md` for guidelines
+- Good first issues marked in GitHub
+- Community and development guides in `docs/`
 
 ## Recent Development Focus
-Based on git history, recent work has focused on:
 - Enhanced test coverage framework (UV-245)
-- Memory optimization implementation (UV-210, UV-26) 
+- Memory optimization (UV-210, UV-26)
 - Security and compliance testing
 - Performance validation and benchmarking
 - Production deployment pipeline
@@ -166,12 +144,13 @@ Based on git history, recent work has focused on:
 - **Coverage gates** enforcing 90%+ coverage thresholds
 - **Regression prevention** with automated monitoring
 
-## Key Directories to Know
+## Key Directories
 - `src/analysis/detectors/anti_patterns/` - Core detection logic
-- `tests/analysis/` - Analysis test suites  
+- `tests/analysis/` - Analysis test suites
 - `docs/` - Complete documentation
 - `scripts/` - Development and deployment scripts
 - `frontend/` - Web UI components (React/TypeScript)
 - `rendering-service/` - Node.js service for diagram generation
 
-This project follows enterprise-grade development practices with comprehensive testing, security measures, and scalable architecture patterns.
+---
+Uveddi follows enterprise-grade development practices with comprehensive testing, security, and scalable architecture. For full details, see the [comprehensive manual](docs/02-user-guide/UVEDDI_COMPREHENSIVE_MANUAL.md).
