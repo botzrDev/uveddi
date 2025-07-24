@@ -10,7 +10,9 @@ mod tests {
     use std::io::Write;
     use tempfile::tempdir;
     use uveddi::analysis::DependencyExtractor;
+    use uveddi::analysis::errors::AnalysisError;
     use uveddi::ast::tree_sitter_impl::{AstError, AstParser};
+    use std::sync::{Arc, Mutex};
 
     fn create_temp_file(dir: &tempfile::TempDir, name: &str, content: &str) -> std::path::PathBuf {
         let file_path = dir.path().join(name);
@@ -51,5 +53,68 @@ mod tests {
         let extractor = DependencyExtractor::new();
         assert!(extractor.is_ok());
         // If you add config checks in the future, add more assertions here
+    }
+
+    // UV-276: Unwrap replacement tests
+    
+    #[test]
+    fn test_parse_error_creation() {
+        let error = AnalysisError::parse_error("Failed to parse invalid syntax");
+        assert!(matches!(error, AnalysisError::ParseError { .. }));
+        assert_eq!(error.to_string(), "Parse operation failed: Failed to parse invalid syntax");
+    }
+
+    #[test]
+    fn test_query_error_creation() {
+        let error = AnalysisError::query_error("Missing capture group");
+        assert!(matches!(error, AnalysisError::QueryError(_)));
+        assert_eq!(error.to_string(), "Tree-sitter query error: Missing capture group");
+    }
+
+    #[test]
+    fn test_collection_access_error_creation() {
+        let error = AnalysisError::collection_access_error("Index out of bounds");
+        assert!(matches!(error, AnalysisError::CollectionAccessError { .. }));
+        assert_eq!(error.to_string(), "Collection access failed: Index out of bounds");
+    }
+
+    #[test]
+    fn test_lock_error_creation() {
+        let error = AnalysisError::lock_error("Mutex poisoned");
+        assert!(matches!(error, AnalysisError::LockError { .. }));
+        assert_eq!(error.to_string(), "Mutex lock failed: Mutex poisoned");
+    }
+
+    #[test]
+    fn test_safe_collection_access_patterns() {
+        let empty_vec: Vec<String> = vec![];
+        
+        // Test safe indexing pattern
+        let result = empty_vec.get(0)
+            .ok_or_else(|| AnalysisError::collection_access_error("Empty collection"));
+        
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), AnalysisError::CollectionAccessError { .. }));
+    }
+
+    #[test]
+    fn test_poisoned_mutex_error_handling() {
+        // Create a mutex that we'll poison
+        let mutex = Arc::new(Mutex::new(42));
+        let mutex_clone = Arc::clone(&mutex);
+        
+        // Simulate poison by panicking while holding the lock
+        let handle = std::thread::spawn(move || {
+            let _guard = mutex_clone.lock().unwrap();
+            panic!("Simulated panic to poison mutex");
+        });
+        
+        // Wait for thread to panic
+        let _ = handle.join();
+        
+        // Now the mutex should be poisoned
+        let result = mutex.lock().map_err(|_| AnalysisError::lock_error("Mutex poisoned"));
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), AnalysisError::LockError { .. }));
     }
 }

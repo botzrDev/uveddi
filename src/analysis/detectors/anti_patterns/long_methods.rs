@@ -1207,7 +1207,8 @@ fn test_function(param1: i32, param2: String) -> i32 {
 }
 "#;
 
-        let tree = parser.parse(rust_code, None).unwrap();
+        let tree = parser.parse(rust_code, None)
+            .ok_or_else(|| AnalysisError::parse_error("Failed to parse Rust test code"))?;
         let source = rust_code.as_bytes();
         let language = tree.language();
 
@@ -1223,15 +1224,19 @@ fn test_function(param1: i32, param2: String) -> i32 {
         
         if let Some(query_match) = matches.next() {
             found_match = true;
-            function_node = Some(query_match.captures.get(0).unwrap().node);
-            name_node = Some(query_match.captures.get(1).unwrap().node);
-            body_node = Some(query_match.captures.get(2).unwrap().node);
+            let captures = &query_match.captures;
+            function_node = Some(captures.get(0)
+                .ok_or_else(|| AnalysisError::query_error("Missing function capture"))?.node);
+            name_node = Some(captures.get(1)
+                .ok_or_else(|| AnalysisError::query_error("Missing name capture"))?.node);
+            body_node = Some(captures.get(2)
+                .ok_or_else(|| AnalysisError::query_error("Missing body capture"))?.node);
         }
         
         assert!(found_match, "Should find function");
-        let name_node = name_node.unwrap();
-        let body_node = body_node.unwrap();
-        let function_node = function_node.unwrap();
+        let name_node = name_node.ok_or_else(|| AnalysisError::data_not_found_error("Name node not found"))?;
+        let body_node = body_node.ok_or_else(|| AnalysisError::data_not_found_error("Body node not found"))?;
+        let function_node = function_node.ok_or_else(|| AnalysisError::data_not_found_error("Function node not found"))?;
 
         let metrics = detector.calculate_method_metrics(
             name_node,
@@ -1262,7 +1267,8 @@ fn test_function(param1: i32, param2: String) -> i32 {
 
         // Create a mock node that will fail utf8_text extraction
         let rust_code = "fn test() {}";
-        let tree = parser.parse(rust_code, None).unwrap();
+        let tree = parser.parse(rust_code, None)
+            .ok_or_else(|| AnalysisError::parse_error("Failed to parse Rust test code"))?;
         let source = rust_code.as_bytes();
         let language = tree.language();
 
@@ -1272,9 +1278,13 @@ fn test_function(param1: i32, param2: String) -> i32 {
         
         if let Some(query_match) = matches.next() {
             let mat = query_match;
-            let name_node = mat.captures.get(1).unwrap().node;
-            let body_node = mat.captures.get(2).unwrap().node;
-            let function_node = mat.captures.get(0).unwrap().node;
+            let captures = &mat.captures;
+            let name_node = captures.get(1)
+                .ok_or_else(|| AnalysisError::query_error("Missing name capture"))?.node;
+            let body_node = captures.get(2)
+                .ok_or_else(|| AnalysisError::query_error("Missing body capture"))?.node;
+            let function_node = captures.get(0)
+                .ok_or_else(|| AnalysisError::query_error("Missing function capture"))?.node;
 
             // This should work normally, but we can test the error path conceptually
             let result = detector.calculate_method_metrics(
@@ -1320,7 +1330,8 @@ fn function_two() {
 }
 "#;
 
-        let tree = parser.parse(rust_code, None).unwrap();
+        let tree = parser.parse(rust_code, None)
+            .ok_or_else(|| AnalysisError::parse_error("Failed to parse Rust test code"))?;
         let source = rust_code.as_bytes();
         let language = tree.language();
 
@@ -1408,7 +1419,8 @@ fn valid_function() {
 }
 "#;
 
-        let tree = parser.parse(rust_code, None).unwrap();
+        let tree = parser.parse(rust_code, None)
+            .ok_or_else(|| AnalysisError::parse_error("Failed to parse Rust test code"))?;
         let source = rust_code.as_bytes();
         let language = tree.language();
 
@@ -1453,7 +1465,7 @@ fn valid_function() {
         assert!(result.is_ok());
 
         // Verify the query can be used
-        let query = result.unwrap();
+        let query = result.expect("Query creation should succeed in test");
         assert!(query.capture_names().len() > 0);
     }
 

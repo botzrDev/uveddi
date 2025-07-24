@@ -33,6 +33,52 @@ pub enum AnalysisError {
     Other(String),
     #[error("Unsupported language: {0}")]
     UnsupportedLanguage(String),
+    
+    // New error types for unwrap replacements (UV-276)
+    #[error("Parse operation failed: {message}")]
+    ParseError { message: String },
+    #[error("Collection access failed: {message}")]
+    CollectionAccessError { message: String },
+    #[error("Type conversion failed: {message}")]
+    ConversionError { message: String },
+    #[error("Expected data not found: {message}")]
+    DataNotFoundError { message: String },
+    #[error("Line number overflow: value {value} exceeds maximum")]
+    LineNumberOverflow { value: u64 },
+    #[error("Mutex lock failed: {message}")]
+    LockError { message: String },
+}
+
+impl AnalysisError {
+    /// Create parse error with context
+    pub fn parse_error(message: impl Into<String>) -> Self {
+        Self::ParseError { message: message.into() }
+    }
+
+    /// Create query error with context
+    pub fn query_error(message: impl Into<String>) -> Self {
+        Self::QueryError(message.into())
+    }
+
+    /// Create collection access error
+    pub fn collection_access_error(message: impl Into<String>) -> Self {
+        Self::CollectionAccessError { message: message.into() }
+    }
+
+    /// Create conversion error
+    pub fn conversion_error(message: impl Into<String>) -> Self {
+        Self::ConversionError { message: message.into() }
+    }
+
+    /// Create data not found error
+    pub fn data_not_found_error(message: impl Into<String>) -> Self {
+        Self::DataNotFoundError { message: message.into() }
+    }
+
+    /// Create lock error
+    pub fn lock_error(message: impl Into<String>) -> Self {
+        Self::LockError { message: message.into() }
+    }
 }
 
 impl From<Box<dyn std::error::Error + Send + Sync>> for AnalysisError {

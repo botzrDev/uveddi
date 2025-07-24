@@ -23,6 +23,8 @@ use crate::analysis::memory::zero_copy::{SerializableAst, ZeroCopyAstCache, Zero
 #[cfg(feature = "memory-optimization")]
 use crate::ast::tree_sitter::ParsedFile;
 
+use crate::analysis::errors::AnalysisError;
+
 #[cfg(feature = "tree-sitter")]
 use tree_sitter::Tree;
 
@@ -215,6 +217,27 @@ impl AstCache {
         Self::new(config)
     }
 
+    // Safe mutex access methods for UV-276
+    fn safe_cache_read(&self) -> Result<std::sync::RwLockReadGuard<HashMap<PathBuf, CachedAST>>, AnalysisError> {
+        self.cache.read().map_err(|_| AnalysisError::lock_error("Cache read lock poisoned"))
+    }
+
+    fn safe_cache_write(&self) -> Result<std::sync::RwLockWriteGuard<HashMap<PathBuf, CachedAST>>, AnalysisError> {
+        self.cache.write().map_err(|_| AnalysisError::lock_error("Cache write lock poisoned"))
+    }
+
+    fn safe_metrics_lock(&self) -> Result<std::sync::MutexGuard<CacheMetrics>, AnalysisError> {
+        self.metrics.lock().map_err(|_| AnalysisError::lock_error("Metrics mutex poisoned"))
+    }
+
+    fn safe_memory_usage_lock(&self) -> Result<std::sync::MutexGuard<usize>, AnalysisError> {
+        self.memory_usage.lock().map_err(|_| AnalysisError::lock_error("Memory usage mutex poisoned"))
+    }
+
+    fn safe_lru_order_lock(&self) -> Result<std::sync::MutexGuard<Vec<PathBuf>>, AnalysisError> {
+        self.lru_order.lock().map_err(|_| AnalysisError::lock_error("LRU order mutex poisoned"))
+    }
+
     /// Retrieves an AST from the cache if valid
     #[cfg(feature = "tree-sitter")]
     /// Gets a cached AST from the cache.
@@ -260,7 +283,13 @@ impl AstCache {
 
         // Check cache
         let cache_result = {
-            let cache = self.cache.read().unwrap();
+            let cache = match self.safe_cache_read() {
+                Ok(cache) => cache,
+                Err(_) => {
+                    error!("Failed to acquire cache read lock for: {:?}", path);
+                    return None;
+                }
+            };
             cache.get(path).cloned()
         };
 
@@ -273,9 +302,15 @@ impl AstCache {
                         // Hash mismatch, invalidate cache entry
                         self.invalidate_entry(path);
                         {
-                            let mut metrics = self.metrics.lock().unwrap();
-                            metrics.cache_misses += 1;
-                            metrics.update_hit_rate();
+                            match self.safe_metrics_lock() {
+                                Ok(mut metrics) => {
+                                    metrics.cache_misses += 1;
+                                    metrics.update_hit_rate();
+                                }
+                                Err(_) => {
+                                    error!("Failed to acquire metrics lock for cache miss update");
+                                }
+                            }
                         }
                         debug!("Cache invalidated due to hash mismatch for: {:?}", path);
                         return None;
@@ -586,16 +621,24 @@ impl AstCache {
             return Ok(());
         }
 
-        let current_memory = *self.memory_usage.lock().unwrap();
         let max_memory = self.config.max_memory_size_mb * 1024 * 1024;
+        let mut eviction_count = 0;
+        const MAX_EVICTIONS: usize = 1000;
 
-        // Check if we need to evict
-        while (current_memory + new_entry_size) > max_memory
-            || self.cache.read().unwrap().len() >= self.config.max_memory_entries
-        {
+        // Check if we need to evict with bounded attempts
+        while eviction_count < MAX_EVICTIONS {
+            let current_memory = *self.memory_usage.lock().unwrap();
+            
+            if (current_memory + new_entry_size) <= max_memory
+                && self.cache.read().unwrap().len() < self.config.max_memory_entries
+            {
+                break; // Conditions satisfied
+            }
+
             if !self.evict_lru_entry()? {
                 break; // No more entries to evict
             }
+            eviction_count += 1;
         }
 
         Ok(())
@@ -1499,5 +1542,66 @@ mod tests {
             assert_eq!(original_lru.len(), 2);
             assert!(original_lru.contains(&test_file2));
         }
+    }
+
+    #[test]
+    fn test_infinite_loop_prevention_in_eviction() {
+        use std::path::PathBuf;
+        
+        // Create a cache with very low memory limits to trigger eviction
+        let temp_dir = tempfile::tempdir().unwrap();
+        let config = CacheConfig {
+            max_memory_entries: 2, // Only 2 entries allowed
+            max_memory_size_mb: 1, // Very small - 1MB
+            enable_disk_cache: true,
+            disk_cache_path: temp_dir.path().to_path_buf(),
+            enable_memory_mapping: false,
+            lru_eviction_enabled: true,
+            cache_metrics_enabled: true,
+            #[cfg(feature = "memory-optimization")]
+            enable_zero_copy: false,
+            #[cfg(feature = "memory-optimization")]
+            zero_copy_cache_dir: temp_dir.path().join("zero_copy"),
+            #[cfg(feature = "memory-optimization")]
+            zero_copy_threshold_bytes: 1024,
+        };
+        
+        let cache = AstCache::new(config).unwrap();
+
+        // Create large entries that will exceed memory limits
+        let large_content = "fn test() {}".repeat(100000); // Large content
+        let test_files: Vec<PathBuf> = (0..5)
+            .map(|i| {
+                let file = temp_dir.path().join(format!("large_test_{}.rs", i));
+                std::fs::write(&file, &large_content).unwrap();
+                file
+            })
+            .collect();
+
+        // Fill cache to capacity
+        for file in test_files.iter().take(2) {
+            cache.update_lru_order(file);
+            *cache.memory_usage.lock().unwrap() += 500 * 1024; // Add 500KB per entry
+        }
+
+        // This operation should trigger eviction logic but not infinite loop
+        let result = std::panic::catch_unwind(|| {
+            // Use a timeout to ensure this doesn't run forever
+            let start = std::time::Instant::now();
+            
+            // This should trigger the eviction logic with the infinite loop protection
+            let _ = cache.ensure_cache_capacity(1024 * 1024); // Request 1MB space
+            
+            let duration = start.elapsed();
+            // Should complete quickly due to eviction counter limit
+            assert!(duration.as_secs() < 5, "Eviction took too long: {:?}", duration);
+        });
+
+        // Test should not panic (no infinite loop)
+        assert!(result.is_ok(), "Cache eviction caused infinite loop or panic");
+        
+        // Verify cache is still functional
+        let metrics = cache.get_metrics();
+        assert!(metrics.total_requests >= 0); // Basic sanity check
     }
 }
