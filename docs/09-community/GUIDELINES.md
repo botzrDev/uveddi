@@ -1,6 +1,8 @@
 # Community Guidelines
 
-This directory contains guidelines for contributing, reporting issues, and collaborating on Uveddi.
+- Be respectful and inclusive.
+- Use clear, concise language in issues and pull requests.
+- Help others and share knowledge.
+- Report bugs and suggest improvements.
 
-- See CONTRIBUTING.md (to be created)
-- See TODO.md
+For more, see the [Code of Conduct](./CODE_OF_CONDUCT.md).

@@ -1,1 +1,0 @@
-# Tree-sitter Query Optimization

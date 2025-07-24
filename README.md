@@ -12,7 +12,6 @@ Uveddi is an AI-powered CLI tool for architectural analysis of codebases, design
 - **Multi-language analysis**: Rust, Python, JavaScript
 - **AI-powered insights**: Local and cloud AI integration
 - **Privacy-focused**: All analysis happens locally
-- **Extensible architecture**: Plugin system for custom detectors
 - **Comprehensive reporting**: Markdown, JSON, and interactive outputs
 - **Tree-sitter enabled by default**: Advanced parsing for supported languages is now always on for improved accuracy and performance. No manual configuration required.
 
@@ -44,19 +43,12 @@ uveddi analyze /path/to/code --output report.md
 
 ## Documentation
 
-Full documentation is available in our [documentation website](https://botzrdev.github.io/uveddi/) or locally:
+Full documentation is available in the `docs/` directory. Key documents include:
 
-- [Getting Started](docs/getting-started/installation.md) - Installation and setup
-- [Configuration Guide](docs/getting-started/configuration.md) - Customizing Uveddi
-- [First Steps](docs/getting-started/first-steps.md) - Running your first analysis
-- [User Guide](docs/user-guide/common-use-cases.md) - Common workflows
-- [API Reference](docs/api/overview.md) - Integration options
-- [Development Guide](docs/development/architecture.md) - Contributing to Uveddi
-
-Build the documentation locally:
-```bash
-cd docs && mdbook build
-```
+- [Getting Started](./docs/01-getting-started/installation.md)
+- [User Guide](./docs/02-user-guide/basic-concepts.md)
+- [Developer Guide](./docs/05-development/DEVELOPER_GUIDE.md)
+- [Community Guidelines](./docs/09-community/GUIDELINES.md)
 
 ## Contributing
 

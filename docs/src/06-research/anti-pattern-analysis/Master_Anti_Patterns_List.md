@@ -1,1 +1,0 @@
-# Master Anti-Patterns List

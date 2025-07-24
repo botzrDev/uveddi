@@ -23,16 +23,6 @@ For general questions and discussions:
 | Discord | Within hours | Quick help |
 | Stack Overflow | Varies | Public Q&A |
 
-## Premium Support
-
-For enterprise customers:
-- Email: support@uveddi.com
-- SLA: 1-hour response during business hours
-- Includes:
-  - Priority bug fixes
-  - Architecture reviews
-  - Custom rule development
-
 ## Self-Help Resources
 
 1. Check the [FAQ](faq.md)
@@ -45,3 +35,13 @@ For enterprise customers:
 Report vulnerabilities privately:
 - Email: security@uveddi.com
 - Use our [security advisory](https://github.com/botzrDev/uveddi/security/advisories)
+
+# Community Support
+
+For help with UVEDDI Community Edition:
+
+- Check the [FAQ](./faq.md)
+- Open a GitHub issue for bugs or feature requests
+- Join the community discussions
+
+Premium support is not available for the community edition.
