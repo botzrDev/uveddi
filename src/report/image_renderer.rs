@@ -4,8 +4,8 @@
 //! Node.js rendering service for converting Mermaid.js diagrams to images.
 
 use crate::error::rendering::RenderingServiceError;
+use crate::security::{SecureHttpClient, HttpSecurityConfig};
 use md5;
-use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::time::Duration;
@@ -54,7 +54,7 @@ impl Default for RenderingServiceConfig {
 /// HTTP client for the rendering service
 #[derive(Debug)]
 pub struct ImageRenderer {
-    client: Client,
+    client: SecureHttpClient,
     config: RenderingServiceConfig,
 }
 
@@ -162,35 +162,41 @@ pub struct RenderedImage {
 
 impl ImageRenderer {
     /// Create a new image renderer with default configuration
-    pub fn new() -> Self {
+    pub fn new() -> Result<Self, RenderingServiceError> {
         Self::with_config(RenderingServiceConfig::default())
     }
 
     /// Create a new image renderer with custom configuration
-    pub fn with_config(config: RenderingServiceConfig) -> Self {
-        let client = Client::builder()
-            .timeout(Duration::from_secs(config.timeout_seconds))
-            .build()
-            .expect("Failed to create HTTP client");
+    pub fn with_config(config: RenderingServiceConfig) -> Result<Self, RenderingServiceError> {
+        // Create secure HTTP client with appropriate configuration for rendering service
+        let mut http_config = HttpSecurityConfig::default();
+        
+        // Configure for local development (rendering service typically runs on localhost)
+        #[cfg(debug_assertions)]
+        {
+            http_config.enforce_https = false; // Allow HTTP for local development
+        }
+        
+        // Set timeouts based on rendering service config
+        http_config.timeout_seconds = config.timeout_seconds;
+        http_config.connect_timeout_seconds = 10;
+        http_config.read_timeout_seconds = config.timeout_seconds;
+        
+        let client = SecureHttpClient::new(http_config)
+            .map_err(|e| RenderingServiceError::NetworkError {
+                message: format!("Failed to create secure HTTP client: {}", e),
+            })?;
 
-        Self { client, config }
+        Ok(Self { client, config })
     }
 
     /// Check if the rendering service is healthy
     pub async fn health_check(&self) -> Result<HealthResponse, RenderingServiceError> {
         let url = format!("{}/health", self.config.base_url);
 
-        let response = self.client.get(&url).send().await.map_err(|e| {
-            if e.is_timeout() {
-                RenderingServiceError::request_timeout(Duration::from_secs(
-                    self.config.timeout_seconds,
-                ))
-            } else if e.is_connect() {
-                RenderingServiceError::connection_timeout(Duration::from_secs(10))
-            } else {
-                RenderingServiceError::NetworkError {
-                    message: e.to_string(),
-                }
+        let response = self.client.get(&url).await.map_err(|e| {
+            RenderingServiceError::NetworkError {
+                message: format!("Health check request failed: {}", e),
             }
         })?;
 
@@ -260,25 +266,17 @@ impl ImageRenderer {
     ) -> Result<RenderedImage, RenderingServiceError> {
         let url = format!("{}/render", self.config.base_url);
 
-        let response = self
-            .client
-            .post(&url)
-            .json(request)
-            .send()
-            .await
-            .map_err(|e| {
-                if e.is_timeout() {
-                    RenderingServiceError::request_timeout(Duration::from_secs(
-                        self.config.timeout_seconds,
-                    ))
-                } else if e.is_connect() {
-                    RenderingServiceError::connection_timeout(Duration::from_secs(10))
-                } else {
-                    RenderingServiceError::NetworkError {
-                        message: e.to_string(),
-                    }
-                }
+        // Serialize the request to JSON
+        let json_body = serde_json::to_string(request)
+            .map_err(|e| RenderingServiceError::NetworkError {
+                message: format!("Failed to serialize request: {}", e),
             })?;
+
+        let response = self.client.post(&url, json_body).await.map_err(|e| {
+            RenderingServiceError::NetworkError {
+                message: format!("Render request failed: {}", e),
+            }
+        })?;
 
         if !response.status().is_success() {
             return Err(match response.status().as_u16() {
@@ -365,25 +363,17 @@ impl ImageRenderer {
 
         let url = format!("{}/render/batch", self.config.base_url);
 
-        let response = self
-            .client
-            .post(&url)
-            .json(&request)
-            .send()
-            .await
-            .map_err(|e| {
-                if e.is_timeout() {
-                    RenderingServiceError::request_timeout(Duration::from_secs(
-                        self.config.timeout_seconds,
-                    ))
-                } else if e.is_connect() {
-                    RenderingServiceError::connection_timeout(Duration::from_secs(10))
-                } else {
-                    RenderingServiceError::NetworkError {
-                        message: e.to_string(),
-                    }
-                }
+        // Serialize the request to JSON
+        let json_body = serde_json::to_string(&request)
+            .map_err(|e| RenderingServiceError::NetworkError {
+                message: format!("Failed to serialize batch request: {}", e),
             })?;
+
+        let response = self.client.post(&url, json_body).await.map_err(|e| {
+            RenderingServiceError::NetworkError {
+                message: format!("Batch render request failed: {}", e),
+            }
+        })?;
 
         if !response.status().is_success() {
             return Err(match response.status().as_u16() {
@@ -609,7 +599,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_health_check() {
-        let renderer = ImageRenderer::new();
+        let renderer = ImageRenderer::new().expect("Failed to create renderer");
 
         // This test requires the rendering service to be running
         // In CI/CD, this would be handled by docker-compose
@@ -642,7 +632,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_render_simple_diagram() {
-        let renderer = ImageRenderer::new();
+        let renderer = ImageRenderer::new().expect("Failed to create renderer");
 
         let mermaid_code = r#"
 graph TD
@@ -682,7 +672,7 @@ graph TD
 
     #[test]
     fn test_input_size_validation() {
-        let renderer = ImageRenderer::new();
+        let renderer = ImageRenderer::new().expect("Failed to create renderer");
 
         // Test normal input
         let normal_input = "graph TD\n    A --> B";
@@ -698,7 +688,7 @@ graph TD
 
     #[test]
     fn test_dimension_validation() {
-        let renderer = ImageRenderer::new();
+        let renderer = ImageRenderer::new().expect("Failed to create renderer");
 
         // Test normal dimensions
         assert!(renderer.validate_dimensions(Some((800, 600))).is_ok());
@@ -713,7 +703,7 @@ graph TD
 
     #[test]
     fn test_complexity_validation() {
-        let renderer = ImageRenderer::new();
+        let renderer = ImageRenderer::new().expect("Failed to create renderer");
 
         // Test simple diagram
         let simple = "graph TD\n    A --> B\n    B --> C";
@@ -734,7 +724,7 @@ graph TD
 
     #[test]
     fn test_security_validation() {
-        let renderer = ImageRenderer::new();
+        let renderer = ImageRenderer::new().expect("Failed to create renderer");
 
         // Test safe input
         let safe_input = "graph TD\n    A[Safe] --> B[Diagram]";
@@ -750,7 +740,7 @@ graph TD
 
     #[test]
     fn test_comprehensive_validation() {
-        let renderer = ImageRenderer::new();
+        let renderer = ImageRenderer::new().expect("Failed to create renderer");
 
         // Test valid input
         let valid_input = "graph TD\n    A --> B";

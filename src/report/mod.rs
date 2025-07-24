@@ -297,7 +297,14 @@ impl ReportGenerator {
         self.diagram_mode = DiagramMode::ImageWithFallback;
         #[cfg(feature = "image-rendering")]
         {
-            self.image_renderer = Some(crate::report::ImageRenderer::new());
+            match crate::report::ImageRenderer::new() {
+                Ok(renderer) => self.image_renderer = Some(renderer),
+                Err(e) => {
+                    log::warn!("Failed to create image renderer: {}", e);
+                    // Fall back to text-only mode
+                    self.diagram_mode = DiagramMode::TextOnly;
+                }
+            }
         }
         self
     }

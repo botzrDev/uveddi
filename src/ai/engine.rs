@@ -27,8 +27,13 @@ impl AiAnalysisEngine {
                 ..Default::default()
             };
 
-            let ollama_provider = OllamaProvider::new(config);
-            Some(Box::new(ollama_provider) as Box<dyn LlmProvider + Send + Sync>)
+            match OllamaProvider::new(config) {
+                Ok(ollama_provider) => Some(Box::new(ollama_provider) as Box<dyn LlmProvider + Send + Sync>),
+                Err(e) => {
+                    warn!("Failed to create Ollama provider: {}", e);
+                    None
+                }
+            }
         } else {
             None
         };

@@ -112,6 +112,7 @@ pub mod authentication;
 pub mod authorization;
 pub mod config;
 pub mod errors;
+pub mod http_client;
 pub mod middleware;
 pub mod models;
 pub mod rate_limiting;
@@ -134,6 +135,7 @@ pub use authentication::{AuthenticationConfig, OAuthProviderConfig, OidcProvider
 pub use authorization::AuthorizationEngine;
 pub use config::RateLimitingConfig;
 pub use config::{SecurityConfig, SecurityConfigLoader};
+pub use http_client::{SecureHttpClient, HttpSecurityConfig};
 pub use middleware::SecurityServices;
 pub use rate_limiting::RateLimiter;
 pub use secrets::{SecretStore, SecretStoreFactory, SecretRotationManager, RotationPolicy};

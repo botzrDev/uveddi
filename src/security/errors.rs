@@ -176,6 +176,19 @@ pub enum SecurityError {
     #[error("HTTP request failed: {status} - {error}")]
     HttpError { status: u16, error: String },
 
+    // HTTP Client Security Errors
+    #[error("HTTPS required for URL: {url}")]
+    HttpsRequired { url: String },
+
+    #[error("HTTP client configuration error: {message}")]
+    HttpClientError { message: String },
+
+    #[error("HTTP request error: {message}")]
+    HttpRequestError { message: String },
+
+    #[error("HTTP response validation failed: {message}")]
+    HttpResponseError { message: String },
+
     // System Errors
     #[error("System resource unavailable: {resource}")]
     SystemResourceUnavailable { resource: String },
@@ -286,6 +299,8 @@ impl SecurityError {
                 | SecurityError::ValidationError { .. }
                 | SecurityError::PathTraversalAttempt
                 | SecurityError::InvalidPath
+                | SecurityError::HttpsRequired { .. }
+                | SecurityError::HttpClientError { .. }
         )
     }
 
@@ -297,7 +312,8 @@ impl SecurityError {
             | SecurityError::AuthorizationDenied
             | SecurityError::PermissionDenied { .. }
             | SecurityError::AuditIntegrityError
-            | SecurityError::PathTraversalAttempt => SecurityErrorSeverity::High,
+            | SecurityError::PathTraversalAttempt
+            | SecurityError::HttpsRequired { .. } => SecurityErrorSeverity::High,
 
             SecurityError::TokenExpired
             | SecurityError::InvalidToken
@@ -305,11 +321,14 @@ impl SecurityError {
             | SecurityError::SessionExpired { .. }
             | SecurityError::ApiKeyExpired { .. }
             | SecurityError::InvalidPath
-            | SecurityError::InvalidBasePath => SecurityErrorSeverity::Medium,
+            | SecurityError::InvalidBasePath
+            | SecurityError::HttpClientError { .. }
+            | SecurityError::HttpRequestError { .. } => SecurityErrorSeverity::Medium,
 
             SecurityError::ConfigurationError { .. }
             | SecurityError::DatabaseError { .. }
-            | SecurityError::NetworkError { .. } => SecurityErrorSeverity::Low,
+            | SecurityError::NetworkError { .. }
+            | SecurityError::HttpResponseError { .. } => SecurityErrorSeverity::Low,
 
             _ => SecurityErrorSeverity::Low,
         }

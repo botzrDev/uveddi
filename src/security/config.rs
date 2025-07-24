@@ -6,6 +6,7 @@
 use crate::security::{
     authentication::{AuthenticationConfig, OAuthProviderConfig, OidcProviderConfig},
     errors::{SecurityError, SecurityResult},
+    http_client::HttpSecurityConfig,
     secrets::{SecretStore, SecretStoreConfig},
 };
 use config::{Config, ConfigError, Environment, File, FileFormat, Source};
@@ -28,6 +29,8 @@ pub struct SecurityConfig {
     pub rate_limiting: RateLimitingConfig,
     /// Secret management configuration
     pub secrets: SecretManagementConfig,
+    /// HTTP client security configuration
+    pub http_client: HttpSecurityConfig,
 }
 
 impl Default for SecurityConfig {
@@ -39,6 +42,7 @@ impl Default for SecurityConfig {
             api_security: ApiSecurityConfig::default(),
             rate_limiting: RateLimitingConfig::default(),
             secrets: SecretManagementConfig::default(),
+            http_client: HttpSecurityConfig::default(),
         }
     }
 }
@@ -374,6 +378,9 @@ impl SecurityConfig {
         // Validate secret management configuration
         self.validate_secret_management()?;
 
+        // Validate HTTP client configuration
+        self.validate_http_client()?;
+
         Ok(())
     }
 
@@ -663,6 +670,11 @@ impl SecurityConfig {
         }
 
         Ok(())
+    }
+
+    /// Validate HTTP client configuration
+    fn validate_http_client(&self) -> SecurityResult<()> {
+        self.http_client.validate()
     }
 
     /// Get configuration as JSON string
