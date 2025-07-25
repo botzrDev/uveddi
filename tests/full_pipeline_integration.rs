@@ -206,11 +206,15 @@ impl Manager {
         let provider = OllamaProvider::new(config);
 
         // Check if Ollama is available
-        let ollama_available =
-            match timeout(Duration::from_secs(5), provider.check_availability()).await {
-                Ok(result) => result.unwrap_or(false),
-                Err(_) => false,
-            };
+        let ollama_available = match provider {
+            Ok(provider) => {
+                match timeout(Duration::from_secs(5), provider.check_availability()).await {
+                    Ok(result) => result.unwrap_or(false),
+                    Err(_) => false,
+                }
+            }
+            Err(_) => false,
+        };
 
         if ollama_available {
             println!("Ollama is available, testing AI analysis");

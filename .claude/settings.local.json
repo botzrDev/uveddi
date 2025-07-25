@@ -101,7 +101,8 @@
       "WebFetch(domain:tokio.rs)",
       "WebFetch(domain:serde.rs)",
       "WebFetch(domain:docs.rs)",
-      "Bash(./scripts/run-automated-tests.sh:*)"
+      "Bash(./scripts/run-automated-tests.sh:*)",
+      "Bash(./target/release/uveddi:*)"
     ],
     "deny": []
   }

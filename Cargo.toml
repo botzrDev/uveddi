@@ -33,11 +33,11 @@ tree-sitter = [
 # Core analysis features (without tree-sitter by default)
 analysis = [] # No specific dependencies needed here, just a logical grouping
 # AI feature for all AI-related functionality
-ai = ["reqwest", "async-trait"]
+ai = []
 # Local AI only (Ollama)
 local-ai = ["ai"]
 # Image rendering service integration
-image-rendering = ["reqwest"]
+image-rendering = []
 # WASM plugin system
 wasm-plugins = ["wasmtime", "wasmtime-wasi", "cap-std", "wit-bindgen"]
 # Terminal User Interface
@@ -79,7 +79,7 @@ tree-sitter-python = { version = "0.23.6", optional = true }
 tree-sitter-javascript = { version = "0.23.1", optional = true }
 tree-sitter-typescript = { version = "0.23.2", optional = true }
 # HTTP client for local AI (Ollama) and image rendering service
-reqwest = { version = "0.12.22", features = ["json"], optional = true }  # Make optional
+reqwest = { version = "0.12.22", features = ["json"] }
 rustls = "0.23.28"  # Force newer rustls to get updated ring
 # Resilience and retry dependencies
 tracing = "0.1"
@@ -102,7 +102,7 @@ walkdir = "2.5.0"
 ignore = "0.4.22"
 toml = "0.8.0"
 sha2 = "0.10.0"
-async-trait = { version = "0.1.88", optional = true }  # Make optional
+async-trait = "0.1.88"
 petgraph = "0.8.2"
 color-eyre = "0.6"
 ndarray = "0.16.1"

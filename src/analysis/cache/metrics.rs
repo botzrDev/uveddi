@@ -27,6 +27,9 @@ pub struct CacheMetrics {
     
     // Internal metrics
     internal_metrics: Arc<Mutex<InternalMetrics>>,
+    
+    // Registry for exporting metrics
+    registry: Arc<Registry>,
 }
 
 #[derive(Debug, Default)]
@@ -69,6 +72,7 @@ enum OperationType {
 impl CacheMetrics {
     /// Create new cache metrics with custom registry
     pub fn new(registry: &Registry) -> Result<Self, prometheus::Error> {
+        let registry = Arc::new(registry.clone());
         let cache_hits = IntCounter::new("cache_hits_total", "Total cache hits")?;
         registry.register(Box::new(cache_hits.clone()))?;
 
@@ -126,6 +130,7 @@ impl CacheMetrics {
             disk_read_duration,
             disk_write_duration,
             internal_metrics: Arc::new(Mutex::new(InternalMetrics::default())),
+            registry,
         })
     }
 
@@ -324,7 +329,7 @@ impl CacheMetrics {
     pub fn export_metrics(&self) -> String {
         use prometheus::Encoder;
         let encoder = prometheus::TextEncoder::new();
-        let metric_families = prometheus::default_registry().gather();
+        let metric_families = self.registry.gather();
         encoder.encode_to_string(&metric_families).unwrap_or_default()
     }
 }

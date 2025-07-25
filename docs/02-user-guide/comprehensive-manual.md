@@ -31,9 +31,9 @@
 
 ### Installation
 
-#### Quick Install (Recommended)
+#### Quick Install (Not Available Yet)
 ```bash
-curl -sSL https://uveddi.dev/install.sh | bash
+# Installation script not yet available - use source build
 ```
 
 #### From Source
@@ -43,9 +43,9 @@ cd uveddi
 cargo install --path .
 ```
 
-#### Using Cargo
+#### Using Cargo (Not Available Yet)
 ```bash
-cargo install uveddi
+# Package not published to crates.io yet - use source build
 ```
 
 ### Basic Usage
@@ -62,22 +62,21 @@ uveddi analyze /path/to/code --enable-ai
 uveddi analyze /path/to/code --output report.md --format markdown
 ```
 
-#### Interactive Terminal UI
+#### Interactive Terminal UI (Development)
 ```bash
-# Launch TUI for interactive analysis
-uveddi tui
+# TUI is in development - use test binary
+cargo run --bin tui_test --features="tui"
 
-# TUI with specific project
-uveddi tui --project /path/to/code
+# Note: TUI commands not yet integrated into main CLI
 ```
 
 #### Configuration
 ```bash
-# Initialize configuration
-uveddi config init
+# Show current configuration
+uveddi config show
 
-# Edit configuration
-uveddi config edit
+# Set configuration value
+uveddi config set key value
 
 # Validate configuration
 uveddi config validate
@@ -87,13 +86,13 @@ uveddi config validate
 
 ```bash
 # 1. Analyze your Rust project
-uveddi analyze src/ --output analysis.md
+uveddi analyze src/ --output-format markdown --output analysis.md
 
-# 2. View results
+# 2. View results  
 cat analysis.md
 
 # 3. Enable AI explanations (optional)
-uveddi analyze src/ --enable-ai --ai-provider ollama
+uveddi analyze src/ --enable-ai --ollama-model deepseek-coder:6.7b-instruct-q4_0
 ```
 
 ### Common Use Cases
@@ -103,7 +102,7 @@ uveddi analyze src/ --enable-ai --ai-provider ollama
 | **Quick Check** | `uveddi analyze src/` | Fast analysis without AI |
 | **Detailed Report** | `uveddi analyze src/ --output report.md` | Generate comprehensive report |
 | **AI Insights** | `uveddi analyze src/ --enable-ai` | Include AI-powered explanations |
-| **Interactive Mode** | `uveddi tui` | Launch terminal interface |
+| **Interactive Mode** | `cargo run --bin tui_test --features="tui"` | Launch terminal interface (dev) |
 | **CI/CD Integration** | `uveddi analyze src/ --format json` | Machine-readable output |
 
 ---
@@ -1201,14 +1200,11 @@ Interactive terminal interface implementing The Elm Architecture (TEA) pattern f
 
 #### Usage Examples
 ```bash
-# Launch TUI
-uveddi tui
+# Launch TUI (development)
+cargo run --bin tui_test --features="tui"
 
-# TUI with specific project
-uveddi tui --project /path/to/code
-
-# TUI with custom theme
-uveddi tui --theme dark
+# Note: TUI project and theme options not yet implemented
+# Use configuration files for customization
 ```
 
 #### Configuration
@@ -1417,20 +1413,18 @@ export UVEDDI_VAULT_URL="https://vault.company.com"
 ```bash
 # Analysis commands
 uveddi analyze <path> [OPTIONS]
-uveddi tui [OPTIONS]
 
-# Configuration commands
-uveddi config init
-uveddi config edit
+# Configuration commands  
+uveddi config show
+uveddi config set <key> <value>
 uveddi config validate
 
-# Plugin commands
-uveddi plugin list
-uveddi plugin install <plugin>
+# Plugin commands (not yet implemented)
+# Plugin system in development
 uveddi plugin remove <plugin>
 
-# Chaos engineering commands
-uveddi chaos run <experiment>
+# Chaos engineering commands (not yet implemented)
+# Chaos features available via feature flags only
 uveddi chaos stop <experiment-id>
 uveddi chaos list
 ```

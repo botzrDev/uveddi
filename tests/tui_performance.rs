@@ -6,9 +6,12 @@
 // and efficient resource utilization.
 #[cfg(feature = "tui")]
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use std::time::Duration;
+use std::path::PathBuf;
+use std::time::{Duration, Instant};
 #[cfg(feature = "tui")]
 use uveddi::tui::{AppMessage, AppScreen, AppState};
+#[cfg(feature = "tui")]
+use uveddi::cli::analyze_command::AnalyzeCommand;
 
 /// Performance test configuration
 const STRESS_TEST_DURATION: Duration = Duration::from_secs(5);
@@ -115,7 +118,7 @@ pub fn public_function_{}() -> TestStruct{} {{
     TestStruct{}::new()
 }}
 "#,
-            i, i, i, i, i, i, i, i, i, i
+            i, i, i, i, i, i, i, i
         );
 
         tokio::fs::write(&file_path, content).await?;

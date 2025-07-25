@@ -28,9 +28,9 @@ cd uveddi
 cargo build --release --features="alpha"
 ```
 
-### Quick Install (Coming Soon)
+### Quick Install (Not Available Yet)
 ```bash
-curl -sSL https://uveddi.dev/install.sh | bash
+# Install script not yet available - use source build below
 ```
 
 ### From Source (Development)
@@ -57,9 +57,10 @@ cargo install --path . --features="alpha"
 ./target/release/uveddi analyze /path/to/code --dead-code-confidence=0.8 --output-format=json
 ```
 
-### Interactive TUI Mode (Alpha)
+### Interactive TUI Mode (Development)
 ```bash
-./target/release/tui_test  # When available
+# TUI is in development - use separate binary for testing
+cargo run --bin tui_test --features="tui"
 ```
 
 ## Documentation

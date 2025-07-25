@@ -379,8 +379,8 @@ mod tests {
         // Should not invalidate immediately
         assert!(!invalidator.should_invalidate(&key, &hash1).unwrap());
 
-        // Wait a bit and modify file
-        std::thread::sleep(std::time::Duration::from_millis(10));
+        // Wait at least 1 second to ensure timestamp changes (file timestamps have second precision)
+        std::thread::sleep(std::time::Duration::from_secs(1));
         std::fs::write(&file_path, "Hello, universe!").unwrap();
 
         // Should invalidate after modification

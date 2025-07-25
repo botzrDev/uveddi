@@ -107,8 +107,8 @@ cargo build --features="enterprise"
 
 ## Common Commands
 ```bash
-# Build with default features
-cargo build --release
+# Build with alpha features (recommended)
+cargo build --release --features="alpha"
 # Run tests with coverage
 ./scripts/run-coverage-tests.sh
 # Run specific test suites
@@ -119,6 +119,8 @@ cargo bench
 # Lint and format
 cargo clippy --all-features --all-targets
 cargo fmt
+# Run TUI for testing
+cargo run --bin tui_test --features="tui"
 ```
 
 ## Documentation & Community

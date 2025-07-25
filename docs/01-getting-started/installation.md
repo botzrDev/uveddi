@@ -19,23 +19,25 @@
 
 2. Build the project:
    ```bash
-   cargo build --release
+   cargo build --release --features="alpha"
    ```
 
 3. Install the CLI:
    ```bash
-   cargo install --path .
+   cargo install --path . --features="alpha"
    ```
 
-### Using Cargo
+### Using Cargo (Not Available Yet)
 
 ```bash
-cargo install uveddi
+# Package not published to crates.io yet
+# Use source installation above instead
 ```
 
-### Docker
+### Docker (May Not Be Available)
 
 ```bash
+# Check if image exists before pulling
 docker pull ghcr.io/botzrdev/uveddi:latest
 docker run -it ghcr.io/botzrdev/uveddi:latest
 ```
@@ -44,7 +46,7 @@ docker run -it ghcr.io/botzrdev/uveddi:latest
 
 1. Verify installation:
    ```bash
-   uveddi --version
+   uveddi --help  # --version flag may not be implemented
    ```
 
 2. Configure your environment:
