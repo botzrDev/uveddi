@@ -8,10 +8,46 @@
 use std::path::PathBuf;
 // TUI tests require the 'tui' feature to be enabled
 #[cfg(feature = "tui")]
-use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 #[cfg(feature = "tui")]
 use uveddi::tui::{AppMessage, AppScreen, AppState};
+#[cfg(feature = "tui")]
+use uveddi::cli::analyze_command::AnalyzeCommand;
+#[cfg(feature = "tui")]
+use std::time::Duration;
+
+/// Helper function to create a test AnalyzeCommand with default values
+#[cfg(feature = "tui")]
+fn create_test_analyze_command(path: PathBuf) -> AnalyzeCommand {
+    AnalyzeCommand {
+        path,
+        output_format: "markdown".to_string(),
+        output: None,
+        enable_ai: false,
+        ollama_api_url: None,
+        ollama_model: None,
+        dead_code_confidence: Some(0.8),
+        dead_code_library_mode: false,
+        dead_code_ignore_patterns: None,
+        dead_code_keep_alive: Some(vec!["main".to_string()]),
+        large_classes_max_loc: Some(100),
+        large_classes_max_methods: Some(5),
+        large_classes_max_fields: Some(5),
+        large_classes_max_complexity: Some(10),
+        large_classes_max_lcom: Some(0.5),
+        large_classes_ignore_patterns: None,
+        large_classes_min_severity: Some(0),
+        enable_memory_optimization: false,
+        memory_limit_gb: None,
+        memory_profile: None,
+        enable_image_rendering: false,
+        mermaid_only: true,
+        rendering_service_url: "http://localhost:3001".to_string(),
+        no_fallback: false,
+        check_rendering_service: false,
+    }
+}
 
 /// Create a comprehensive test project with various code patterns
 #[cfg(feature = "tui")]
@@ -254,25 +290,7 @@ async fn test_complete_user_workflow() {
     assert!(messages.is_empty());
 
     // Step 3: Simulate form submission (convert to AnalyzeCommand)
-    let analyze_command = AnalyzeCommand {
-        path: test_project.clone(),
-        output_format: "markdown".to_string(),
-        output: None,
-        enable_ai: false, // Disable AI for faster testing
-        ollama_api_url: None,
-        ollama_model: None,
-        dead_code_confidence: Some(0.8),
-        dead_code_library_mode: false,
-        dead_code_ignore_patterns: None,
-        dead_code_keep_alive: Some(vec!["main".to_string()]),
-        large_classes_max_loc: Some(100), // Low threshold to trigger detection
-        large_classes_max_methods: Some(5), // Low threshold to trigger detection
-        large_classes_max_fields: Some(5), // Low threshold to trigger detection
-        large_classes_max_complexity: Some(10), // Low threshold to trigger detection
-        large_classes_max_lcom: Some(0.5),
-        large_classes_ignore_patterns: None,
-        large_classes_min_severity: Some(0), // Show all issues
-    };
+    let analyze_command = create_test_analyze_command(test_project.clone());
 
     // Step 4: Execute analysis (backend integration)
     let result = analyze_command.execute().await;
@@ -436,28 +454,8 @@ async fn test_error_handling_workflow() {
     assert!(app_state.error_message.is_none());
 
     // Simulate analysis error
-    let invalid_command = AnalyzeCommand {
-        path: PathBuf::from("/definitely/does/not/exist"),
-        output_format: "markdown".to_string(),
-        output: None,
-        enable_ai: false,
-        ollama_api_url: None,
-        ollama_model: None,
-        dead_code_confidence: None,
-        dead_code_library_mode: false,
-        dead_code_ignore_patterns: None,
-        dead_code_keep_alive: None,
-        large_classes_max_loc: None,
-        large_classes_max_methods: None,
-        large_classes_max_fields: None,
-        large_classes_max_complexity: None,
-        large_classes_max_lcom: None,
-        large_classes_ignore_patterns: None,
-        large_classes_min_severity: None,
-        enable_memory_optimization: false,
-        memory_limit_gb: None,
-        memory_profile: None,
-    };
+    let mut invalid_command = create_test_analyze_command(PathBuf::from("/definitely/does/not/exist"));
+    invalid_command.dead_code_confidence = None;
 
     // This should fail gracefully
     let result = tokio::time::timeout(Duration::from_secs(5), invalid_command.execute()).await;

@@ -100,7 +100,8 @@
       "WebFetch(domain:github.com)",
       "WebFetch(domain:tokio.rs)",
       "WebFetch(domain:serde.rs)",
-      "WebFetch(domain:docs.rs)"
+      "WebFetch(domain:docs.rs)",
+      "Bash(./scripts/run-automated-tests.sh:*)"
     ],
     "deny": []
   }

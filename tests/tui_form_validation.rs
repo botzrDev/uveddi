@@ -259,7 +259,6 @@ impl MockAnalyzeFormData {
             enable_memory_optimization: false,
             memory_limit_gb: None,
             memory_profile: None,
-            // Rendering-related fields (use sensible defaults for tests)
             enable_image_rendering: false,
             mermaid_only: true,
             rendering_service_url: "http://localhost:3001".to_string(),

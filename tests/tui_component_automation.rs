@@ -4,7 +4,7 @@
 //! focusing on form validation, keyboard handling, state management, and rendering.
 
 #[cfg(feature = "tui")]
-use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 #[cfg(feature = "tui")]
 use uveddi::tui::ui::components::form_inputs::{
     TextInput, Toggle, Dropdown, NumericInput, PathPicker, ValidationResult

@@ -4,7 +4,7 @@
 //! to test complete TUI workflows without requiring real terminal interaction.
 
 #[cfg(feature = "tui")]
-use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 #[cfg(feature = "tui")]
 use ratatui::{
     backend::TestBackend,
