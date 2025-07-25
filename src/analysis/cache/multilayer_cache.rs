@@ -6,6 +6,8 @@
 //! - Automatic promotion/demotion between layers
 //! - Content-based invalidation and monitoring
 
+#![cfg(feature = "memory-optimization")]
+
 use crate::analysis::cache::{
     invalidation::{InvalidationStrategy, ContentHashInvalidator},
     metrics::CacheMetrics,
@@ -19,7 +21,7 @@ use std::hash::Hash;
 use std::marker::PhantomData;
 use std::num::NonZeroUsize;
 use std::path::{Path, PathBuf};
-use crate::analysis::cache::serialization::wrappers::ArchivablePathBuf;
+use crate::analysis::cache::wrappers::ArchivablePathBuf;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use thiserror::Error;

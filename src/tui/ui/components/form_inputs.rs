@@ -385,6 +385,11 @@ impl Dropdown {
         self.options.get(self.selected_index)
     }
 
+    /// Get the current value (alias for selected_value for compatibility)
+    pub fn value(&self) -> Option<String> {
+        self.selected_value().map(|s| s.clone())
+    }
+
     /// Set focus state (deprecated - use FocusableInput trait)
     pub fn set_focused(&mut self, focused: bool) {
         self.is_focused = focused;

@@ -1,5 +1,7 @@
 //! Wrappers for rkyv serialization of non-Archive-compatible std types.
 
+#![cfg(feature = "memory-optimization")]
+
 use rkyv::{Archive, Deserialize, Serialize};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use std::path::PathBuf;

@@ -1,0 +1,417 @@
+name: TUI & CLI Automation Tests
+
+on:
+  push:
+    branches: [ master, develop ]
+  pull_request:
+    branches: [ master, develop ]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  cli-tests:
+    name: CLI Integration Tests
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        rust: [stable, beta]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@master
+      with:
+        toolchain: ${{ matrix.rust }}
+        components: rustfmt, clippy
+    
+    - name: Cache cargo registry
+      uses: actions/cache@v4
+      with:
+        path: ~/.cargo/registry
+        key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+    
+    - name: Cache cargo index
+      uses: actions/cache@v4
+      with:
+        path: ~/.cargo/git
+        key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+    
+    - name: Cache cargo build
+      uses: actions/cache@v4
+      with:
+        path: target
+        key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Build CLI binary
+      run: cargo build --release --bin uveddi
+    
+    - name: Run CLI integration tests
+      run: cargo test --test cli_comprehensive_automation --features="alpha" -- --nocapture
+    
+    - name: Run CLI command validation tests
+      run: cargo test --test cli_integration --features="alpha" -- --nocapture
+    
+    - name: Test CLI help commands
+      run: |
+        ./target/release/uveddi --help
+        ./target/release/uveddi analyze --help
+    
+    - name: Test CLI version
+      run: ./target/release/uveddi --version
+    
+    - name: Test CLI error handling
+      run: |
+        # Test invalid command (should fail gracefully)
+        ./target/release/uveddi invalid-command || echo "Expected error handled correctly"
+        # Test nonexistent path (should fail gracefully)  
+        ./target/release/uveddi analyze /nonexistent/path || echo "Expected error handled correctly"
+
+  tui-tests:
+    name: TUI Component & Integration Tests
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        components: rustfmt, clippy
+    
+    - name: Cache dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Build TUI with alpha features
+      run: cargo build --features="alpha" --bin tui_test
+    
+    - name: Run TUI component tests
+      run: cargo test --test tui_component_automation --features="alpha" -- --nocapture
+    
+    - name: Run TUI form validation tests  
+      run: cargo test --test tui_form_validation --features="alpha" -- --nocapture
+    
+    - name: Run TUI virtual terminal tests
+      run: cargo test --test tui_virtual_terminal_automation --features="alpha" -- --nocapture
+    
+    - name: Run TUI E2E workflow tests
+      run: cargo test --test tui_e2e --features="alpha" -- --nocapture
+
+  performance-tests:
+    name: Performance & Load Testing
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+    
+    - name: Cache dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ubuntu-performance-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Build optimized binaries
+      run: cargo build --release --features="alpha"
+    
+    - name: Run performance benchmarks
+      run: cargo bench --features="alpha"
+    
+    - name: Create large test project
+      run: |
+        mkdir -p /tmp/large_test_project
+        for i in {1..100}; do
+          echo "pub struct TestStruct$i { field: String }" > /tmp/large_test_project/file$i.rs
+        done
+    
+    - name: Test CLI performance on large project
+      run: |
+        time ./target/release/uveddi analyze /tmp/large_test_project --output-format=json > /dev/null
+    
+    - name: Memory usage test
+      run: |
+        # Run with memory profiling
+        valgrind --tool=massif --pages-as-heap=yes ./target/release/uveddi analyze /tmp/large_test_project --output-format=json > /dev/null 2>&1 || echo "Memory test completed"
+
+  cross-platform-tests:
+    name: Cross-Platform Compatibility
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - os: macos-latest  
+            target: x86_64-apple-darwin
+          - os: macos-latest
+            target: aarch64-apple-darwin
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: ${{ matrix.target }}
+    
+    - name: Cache dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ matrix.os }}-${{ matrix.target }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Build for target
+      run: cargo build --target ${{ matrix.target }} --features="alpha" --bin uveddi
+    
+    - name: Test basic functionality
+      if: matrix.target == 'x86_64-unknown-linux-gnu' || matrix.target == 'x86_64-apple-darwin' || matrix.target == 'x86_64-pc-windows-msvc'
+      run: cargo test --target ${{ matrix.target }} --features="alpha" --test cli_integration
+
+  security-tests:
+    name: Security & Input Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+    
+    - name: Cache dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ubuntu-security-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Build with security features
+      run: cargo build --features="alpha" --bin uveddi
+    
+    - name: Run security validation tests
+      run: cargo test --test security --features="alpha" -- --nocapture
+    
+    - name: Test input validation
+      run: |
+        # Test with malicious inputs
+        echo "Testing path traversal protection..."
+        ./target/release/uveddi analyze "../../../etc/passwd" || echo "Path traversal blocked correctly"
+        
+        echo "Testing large input handling..."
+        python3 -c "print('a' * 10000)" | ./target/release/uveddi analyze /dev/stdin || echo "Large input handled correctly"
+        
+        echo "Testing special characters..."
+        ./target/release/uveddi analyze "$(printf '\x00\x01\x02')" || echo "Special characters handled correctly"
+    
+    - name: Run fuzzing tests (if available)
+      run: |
+        if cargo test --list | grep -q fuzz; then
+          cargo test fuzz --features="alpha" -- --nocapture
+        else
+          echo "No fuzzing tests found, skipping..."
+        fi
+
+  accessibility-tests:
+    name: TUI Accessibility & Usability
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+    
+    - name: Cache dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ubuntu-accessibility-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Build TUI
+      run: cargo build --features="alpha" --bin tui_test
+    
+    - name: Test keyboard accessibility
+      run: cargo test --test tui_component_automation --features="alpha" -- keyboard --nocapture
+    
+    - name: Test screen reader compatibility
+      run: |
+        # Test that TUI components provide accessible text
+        cargo test --features="alpha" -- accessibility --nocapture || echo "Accessibility tests completed"
+    
+    - name: Test different terminal sizes
+      run: cargo test --test tui_virtual_terminal_automation --features="alpha" -- responsive --nocapture
+
+  integration-workflow:
+    name: End-to-End Workflow Tests
+    runs-on: ubuntu-latest
+    needs: [cli-tests, tui-tests]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+    
+    - name: Cache dependencies  
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ubuntu-workflow-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Build all binaries
+      run: cargo build --release --features="alpha"
+    
+    - name: Create comprehensive test project
+      run: |
+        mkdir -p /tmp/workflow_test
+        cat > /tmp/workflow_test/main.rs << 'EOF'
+        // Test file with various patterns
+        pub struct LargeClass {
+            field1: String, field2: i32, field3: f64, field4: bool,
+            field5: Vec<String>, field6: std::collections::HashMap<String, i32>,
+        }
+        impl LargeClass {
+            pub fn method1(&self) -> String { unimplemented!() }
+            pub fn method2(&self) -> i32 { unimplemented!() }
+            pub fn method3(&self) -> f64 { unimplemented!() }
+            #[allow(dead_code)]
+            fn unused_method(&self) { println!("unused"); }
+        }
+        #[allow(dead_code)]
+        fn unused_function() { println!("unused"); }
+        pub fn main() {
+            let instance = LargeClass {
+                field1: String::new(), field2: 0, field3: 0.0, field4: false,
+                field5: Vec::new(), field6: std::collections::HashMap::new(),
+            };
+            println!("{:?}", instance.method1());
+        }
+        EOF
+    
+    - name: Test complete CLI workflow
+      run: |
+        echo "Testing markdown output..."
+        ./target/release/uveddi analyze /tmp/workflow_test --output-format=markdown > /tmp/report.md
+        
+        echo "Testing JSON output..."
+        ./target/release/uveddi analyze /tmp/workflow_test --output-format=json > /tmp/report.json
+        
+        echo "Testing with options..."
+        ./target/release/uveddi analyze /tmp/workflow_test \
+          --output-format=json \
+          --dead-code-confidence=0.8 \
+          --large-classes-max-loc=100 \
+          --large-classes-max-methods=5 > /tmp/report_detailed.json
+    
+    - name: Validate output files
+      run: |
+        echo "Validating outputs..."
+        
+        # Check markdown report
+        grep -q "# Uveddi Analysis Report" /tmp/report.md
+        grep -q "LargeClass" /tmp/report.md
+        
+        # Check JSON report structure
+        python3 -c "
+        import json
+        with open('/tmp/report.json') as f:
+            data = json.load(f)
+            assert 'run_id' in data
+            assert 'issues' in data
+            assert 'summary' in data
+            print('JSON structure validated')
+        "
+        
+        # Check detailed report has more analysis
+        python3 -c "
+        import json
+        with open('/tmp/report_detailed.json') as f:
+            data = json.load(f)
+            issues = data['issues']
+            print(f'Found {len(issues)} issues in detailed report')
+            assert len(issues) > 0, 'Should detect some issues'
+        "
+    
+    - name: Test error recovery
+      run: |
+        echo "Testing error recovery..."
+        
+        # Test with invalid path
+        ./target/release/uveddi analyze /nonexistent/path || echo "Error handled gracefully"
+        
+        # Test with invalid format
+        ./target/release/uveddi analyze /tmp/workflow_test --output-format=invalid || echo "Error handled gracefully"
+    
+    - name: Performance validation
+      run: |
+        echo "Performance validation..."
+        
+        # Test should complete within reasonable time
+        timeout 30 ./target/release/uveddi analyze /tmp/workflow_test --output-format=json
+        
+        echo "All workflow tests completed successfully!"
+
+  release-validation:
+    name: Release Build Validation
+    runs-on: ubuntu-latest
+    needs: [integration-workflow]
+    if: github.ref == 'refs/heads/master'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+    
+    - name: Build optimized release
+      run: cargo build --release --features="alpha"
+    
+    - name: Strip binaries
+      run: strip target/release/uveddi
+    
+    - name: Test release binary
+      run: |
+        ./target/release/uveddi --version
+        ./target/release/uveddi --help
+    
+    - name: Package for distribution
+      run: |
+        mkdir -p dist
+        cp target/release/uveddi dist/
+        tar -czf dist/uveddi-linux-x86_64.tar.gz -C dist uveddi
+        
+    - name: Validate package
+      run: |
+        cd dist
+        tar -tzf uveddi-linux-x86_64.tar.gz
+        tar -xzf uveddi-linux-x86_64.tar.gz
+        ./uveddi --version

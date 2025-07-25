@@ -6,7 +6,7 @@
 use crate::analysis::cache::metrics::CacheMetrics;
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
 use crate::database::models::ArchitecturalIssue;
-use crate::analysis::cache::serialization::wrappers::ArchivableSystemTime;
+use crate::analysis::cache::wrappers::ArchivableSystemTime;
 use lru::LruCache;
 use std::collections::HashMap;
 use std::num::NonZeroUsize;

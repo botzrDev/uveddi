@@ -583,7 +583,7 @@ impl AnalyzeForm {
     }
 
     /// Validate a specific field
-    fn validate_field(&mut self, field: FormField) {
+    fn validate_field(&mut self, field: FormField) -> ValidationResult {
         let result = match field {
             FormField::Path => {
                 let path = self.inputs.path_picker.value();
@@ -599,62 +599,56 @@ impl AnalyzeForm {
             }
             
             FormField::OutputFormat => {
-                let format = self.inputs.output_format_dropdown.value();
-                match validate_input(&format, "output_format") {
-                    Ok(_) => {
-                        let allowed_formats = ["text", "json", "markdown"];
-                        if allowed_formats.contains(&format.as_str()) {
-                            ValidationResult::valid()
-                        } else {
-                            ValidationResult::invalid(&format!("Must be one of: {}", allowed_formats.join(", ")))
+                if let Some(format) = self.inputs.output_format_dropdown.value() {
+                    match validate_input(&format, "output_format") {
+                        Ok(_) => {
+                            let allowed_formats = ["text", "json", "markdown"];
+                            if allowed_formats.contains(&format.as_str()) {
+                                ValidationResult::valid()
+                            } else {
+                                ValidationResult::invalid(&format!("Must be one of: {}", allowed_formats.join(", ")))
+                            }
                         }
+                        Err(e) => ValidationResult::invalid(&format!("Invalid format: {}", e)),
                     }
-                    Err(e) => ValidationResult::invalid(&format!("Invalid format: {}", e)),
+                } else {
+                    ValidationResult::invalid("Output format is required")
                 }
             }
             
             FormField::OutputFile => {
-                if let Some(output_path) = self.inputs.output_file_picker.value() {
-                    if !output_path.is_empty() {
-                        match validate_input(&output_path, "output_file") {
-                            Ok(_) => ValidationResult::valid(),
-                            Err(e) => ValidationResult::invalid(&format!("Invalid output file: {}", e)),
-                        }
-                    } else {
-                        ValidationResult::valid() // Optional field
+                let output_path = self.inputs.output_file_picker.value();
+                if !output_path.is_empty() {
+                    match validate_input(&output_path, "output_file") {
+                        Ok(_) => ValidationResult::valid(),
+                        Err(e) => ValidationResult::invalid(&format!("Invalid output file: {}", e)),
                     }
                 } else {
-                    ValidationResult::valid()
+                    ValidationResult::valid() // Optional field
                 }
             }
             
             FormField::OllamaApiUrl => {
-                if let Some(url) = self.inputs.ollama_api_url_input.value() {
-                    if !url.is_empty() {
-                        match validate_url(&url) {
-                            Ok(_) => ValidationResult::valid(),
-                            Err(e) => ValidationResult::invalid(&format!("Invalid URL: {}", e)),
-                        }
-                    } else {
-                        ValidationResult::valid() // Optional field
+                let url = self.inputs.ollama_api_url_input.value();
+                if !url.is_empty() {
+                    match validate_url(&url) {
+                        Ok(_) => ValidationResult::valid(),
+                        Err(e) => ValidationResult::invalid(&format!("Invalid URL: {}", e)),
                     }
                 } else {
-                    ValidationResult::valid()
+                    ValidationResult::valid() // Optional field
                 }
             }
             
             FormField::OllamaModel => {
-                if let Some(model) = self.inputs.ollama_model_input.value() {
-                    if !model.is_empty() {
-                        match validate_model_name(&model) {
-                            Ok(_) => ValidationResult::valid(),
-                            Err(e) => ValidationResult::invalid(&format!("Invalid model name: {}", e)),
-                        }
-                    } else {
-                        ValidationResult::valid() // Optional field
+                let model = self.inputs.ollama_model_input.value();
+                if !model.is_empty() {
+                    match validate_model_name(&model) {
+                        Ok(_) => ValidationResult::valid(),
+                        Err(e) => ValidationResult::invalid(&format!("Invalid model name: {}", e)),
                     }
                 } else {
-                    ValidationResult::valid()
+                    ValidationResult::valid() // Optional field
                 }
             }
             
@@ -671,44 +665,38 @@ impl AnalyzeForm {
             }
             
             FormField::DeadCodeIgnorePatterns => {
-                if let Some(patterns) = self.inputs.dead_code_ignore_patterns_input.value() {
-                    if !patterns.is_empty() {
-                        // Split patterns by comma and validate each
-                        for pattern in patterns.split(',') {
-                            let trimmed = pattern.trim();
-                            if !trimmed.is_empty() {
-                                if let Err(e) = validate_input(trimmed, "ignore_pattern") {
-                                    return ValidationResult::invalid(&format!("Invalid pattern '{}': {}", trimmed, e));
-                                }
+                let patterns = self.inputs.dead_code_ignore_patterns_input.value();
+                if !patterns.is_empty() {
+                    // Split patterns by comma and validate each
+                    for pattern in patterns.split(',') {
+                        let trimmed = pattern.trim();
+                        if !trimmed.is_empty() {
+                            if let Err(e) = validate_input(trimmed, "ignore_pattern") {
+                                return ValidationResult::invalid(&format!("Invalid pattern '{}': {}", trimmed, e));
                             }
                         }
-                        ValidationResult::valid()
-                    } else {
-                        ValidationResult::valid() // Optional field
                     }
-                } else {
                     ValidationResult::valid()
+                } else {
+                    ValidationResult::valid() // Optional field
                 }
             }
             
             FormField::DeadCodeKeepAlive => {
-                if let Some(patterns) = self.inputs.dead_code_keep_alive_input.value() {
-                    if !patterns.is_empty() {
-                        // Split patterns by comma and validate each
-                        for pattern in patterns.split(',') {
-                            let trimmed = pattern.trim();
-                            if !trimmed.is_empty() {
-                                if let Err(e) = validate_input(trimmed, "keep_alive_pattern") {
-                                    return ValidationResult::invalid(&format!("Invalid pattern '{}': {}", trimmed, e));
-                                }
+                let patterns = self.inputs.dead_code_keep_alive_input.value();
+                if !patterns.is_empty() {
+                    // Split patterns by comma and validate each
+                    for pattern in patterns.split(',') {
+                        let trimmed = pattern.trim();
+                        if !trimmed.is_empty() {
+                            if let Err(e) = validate_input(trimmed, "keep_alive_pattern") {
+                                return ValidationResult::invalid(&format!("Invalid pattern '{}': {}", trimmed, e));
                             }
                         }
-                        ValidationResult::valid()
-                    } else {
-                        ValidationResult::valid() // Optional field
                     }
-                } else {
                     ValidationResult::valid()
+                } else {
+                    ValidationResult::valid() // Optional field
                 }
             }
             
@@ -769,23 +757,20 @@ impl AnalyzeForm {
             }
             
             FormField::LargeClassesIgnorePatterns => {
-                if let Some(patterns) = self.inputs.large_classes_ignore_patterns_input.value() {
-                    if !patterns.is_empty() {
-                        // Split patterns by comma and validate each
-                        for pattern in patterns.split(',') {
-                            let trimmed = pattern.trim();
-                            if !trimmed.is_empty() {
-                                if let Err(e) = validate_input(trimmed, "ignore_pattern") {
-                                    return ValidationResult::invalid(&format!("Invalid pattern '{}': {}", trimmed, e));
-                                }
+                let patterns = self.inputs.large_classes_ignore_patterns_input.value();
+                if !patterns.is_empty() {
+                    // Split patterns by comma and validate each
+                    for pattern in patterns.split(',') {
+                        let trimmed = pattern.trim();
+                        if !trimmed.is_empty() {
+                            if let Err(e) = validate_input(trimmed, "ignore_pattern") {
+                                return ValidationResult::invalid(&format!("Invalid pattern '{}': {}", trimmed, e));
                             }
                         }
-                        ValidationResult::valid()
-                    } else {
-                        ValidationResult::valid() // Optional field
                     }
-                } else {
                     ValidationResult::valid()
+                } else {
+                    ValidationResult::valid() // Optional field
                 }
             }
             
@@ -805,9 +790,11 @@ impl AnalyzeForm {
 
         if result.is_valid {
             self.validation_errors.remove(&field);
-        } else if let Some(error) = result.error_message {
-            self.validation_errors.insert(field, error);
+        } else if let Some(ref error) = result.error_message {
+            self.validation_errors.insert(field, error.clone());
         }
+        
+        result
     }
 
     /// Validate entire form

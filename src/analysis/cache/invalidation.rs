@@ -6,7 +6,7 @@
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use crate::analysis::cache::serialization::wrappers::{ArchivablePathBuf, ArchivableSystemTime};
+use crate::analysis::cache::wrappers::{ArchivablePathBuf, ArchivableSystemTime};
 use std::time::SystemTime;
 use thiserror::Error;
 

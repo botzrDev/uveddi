@@ -15,7 +15,7 @@ readme = "README.md"
 
 # Feature flags for modular compilation
 [features]
-default = ["local-ai", "tree-sitter", "memory-optimization"]
+default = ["tree-sitter"]
 # Chaos engineering and load testing
 chaos = ["fail", "statrs", "ndarray-stats"]
 # Performance regression detection with genetic algorithms
@@ -52,6 +52,8 @@ zero-cost = ["local-ai", "tree-sitter", "memory-optimization"]
 full-featured = ["local-ai", "tree-sitter", "memory-optimization", "image-rendering", "tui"]
 # Enterprise option (all features)
 enterprise = ["local-ai", "tree-sitter", "memory-optimization", "image-rendering", "tui", "wasm-plugins", "chaos", "sla-monitoring"]
+# Alpha build with TUI and essential features
+alpha = ["tui", "tree-sitter", "local-ai"]
 
 [dependencies]
 rusqlite = { version = "0.31.0", features = ["bundled"] }

@@ -1,6 +1,8 @@
 //! Arena allocation for transient analysis objects
 //! Based on UV-210 research: "Arena for Computation, Owned for Results" pattern with bumpalo-herd
 
+#![cfg(feature = "memory-optimization")]
+
 use crate::analysis::memory::metrics::BASIC_MEMORY_METRICS;
 use crate::database::models::ArchitecturalIssue;
 use bumpalo::Bump;

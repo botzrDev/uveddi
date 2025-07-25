@@ -4,6 +4,9 @@
 //! This module provides optimized binary serialization formats to minimize
 //! I/O overhead and memory footprint. Supports multiple formats including
 //! rkyv (zero-copy), MessagePack, and Bincode.
+
+#![cfg(feature = "memory-optimization")]
+
 pub mod wrappers;
 
 use rkyv::de::deserializers::SharedDeserializeMap;
@@ -176,7 +179,7 @@ use std::time::SystemTime;
 #[cfg_attr(feature = "memory-optimization", archive(check_bytes))]
 pub struct CacheEntry<T> {
     pub data: T,
-    pub timestamp: crate::analysis::cache::serialization::wrappers::ArchivableSystemTime,
+    pub timestamp: crate::analysis::cache::wrappers::ArchivableSystemTime,
     pub access_count: u64,
     pub size_bytes: u64,
     pub content_hash: String,
@@ -186,7 +189,7 @@ impl<T> CacheEntry<T> {
     pub fn new(data: T, content_hash: String, size_bytes: u64) -> Self {
         Self {
             data,
-            timestamp: crate::analysis::cache::serialization::wrappers::ArchivableSystemTime(std::time::SystemTime::now()),
+            timestamp: crate::analysis::cache::wrappers::ArchivableSystemTime(std::time::SystemTime::now()),
             access_count: 0,
             size_bytes,
             content_hash,
@@ -195,7 +198,7 @@ impl<T> CacheEntry<T> {
 
     pub fn touch(&mut self) {
         self.access_count += 1;
-        self.timestamp = crate::analysis::cache::serialization::wrappers::ArchivableSystemTime(std::time::SystemTime::now());
+        self.timestamp = crate::analysis::cache::wrappers::ArchivableSystemTime(std::time::SystemTime::now());
     }
 
     pub fn age(&self) -> std::time::Duration {

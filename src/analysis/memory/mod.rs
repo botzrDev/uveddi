@@ -2,11 +2,13 @@
 //! Phase 4: Zero-copy AST caching with rkyv and memory mapping
 
 pub mod allocator;
-pub mod arena;
 pub mod config;
 pub mod detector_pools;
 pub mod metrics;
 pub mod pool;
+
+#[cfg(feature = "memory-optimization")]
+pub mod arena;
 // pub mod file_arena; // Not needed with bumpalo-herd pattern
 
 #[cfg(feature = "memory-optimization")]
@@ -14,6 +16,8 @@ pub mod zero_copy;
 
 // Re-export key types for easy access
 pub use allocator::{get_allocator_info, is_optimized_allocator, AllocationStrategy};
+
+#[cfg(feature = "memory-optimization")]
 pub use arena::{
     conversion, rayon_integration, AnalysisArenaManager, AnalysisMetadata,
     AnalysisPerformanceMetrics, ArenaAnalysisResult, ArenaHandle, ArenaManagerStats,
@@ -84,7 +88,11 @@ pub fn initialize_memory_optimization(config: MemoryOptimizationConfig) -> Resul
 pub fn get_optimization_status() -> serde_json::Value {
     let metrics = BASIC_MEMORY_METRICS.export_json();
     let pool_metrics = DETECTOR_POOLS.export_metrics();
+    
+    #[cfg(feature = "memory-optimization")]
     let arena_metrics = GLOBAL_ARENA_MANAGER.export_metrics();
+    #[cfg(not(feature = "memory-optimization"))]
+    let arena_metrics = serde_json::json!({"disabled": "memory-optimization feature not enabled"});
 
     serde_json::json!({
         "phase": "Phase 4 - Zero-Copy AST Caching",

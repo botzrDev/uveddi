@@ -8,7 +8,7 @@ use std::hash::{DefaultHasher, Hash, Hasher};
 use std::io::{Read, Write};
 use std::num::NonZeroUsize;
 use std::path::{Path, PathBuf};
-use crate::analysis::cache::serialization::wrappers::{ArchivableSystemTime, ArchivablePathBuf};
+use crate::analysis::cache::wrappers::{ArchivableSystemTime, ArchivablePathBuf};
 use std::sync::{Arc, Mutex, MutexGuard};
 use tracing::{info, warn};
 use tree_sitter::{Parser, Tree};
@@ -396,7 +396,7 @@ impl AstParser {
             tree: Some(tree),
             source: source.clone(),
             custom_ast: Arc::new(Some(custom_ast.as_ref().clone())),
-            modified_at: crate::analysis::cache::serialization::wrappers::ArchivableSystemTime(modified_time),
+            modified_at: crate::analysis::cache::wrappers::ArchivableSystemTime(modified_time),
         };
         let mut disk_parsed = parsed.clone();
         disk_parsed.tree = None;
@@ -454,7 +454,7 @@ impl AstParser {
             tree: Some(tree),
             source: Arc::new(content.to_string()),
             custom_ast: Arc::new(Some(custom_ast)),
-            modified_at: crate::analysis::cache::serialization::wrappers::ArchivableSystemTime(std::time::SystemTime::now()),
+            modified_at: crate::analysis::cache::wrappers::ArchivableSystemTime(std::time::SystemTime::now()),
         };
 
         Ok(parsed)
@@ -484,7 +484,7 @@ pub struct ParsedFile {
     pub source: Arc<String>,
     #[serde(skip)]
     pub custom_ast: Arc<Option<CustomAst>>,
-    pub modified_at: crate::analysis::cache::serialization::wrappers::ArchivableSystemTime,
+    pub modified_at: crate::analysis::cache::wrappers::ArchivableSystemTime,
 }
 
 impl ParsedFile {
