@@ -9,36 +9,57 @@ Uveddi is an AI-powered CLI tool for architectural analysis of codebases, design
 
 ## Features
 
-- **Multi-language analysis**: Rust, Python, JavaScript
-- **AI-powered insights**: Local and cloud AI integration
-- **Privacy-focused**: All analysis happens locally
+- **Multi-language analysis**: Rust, Python, JavaScript, TypeScript
+- **AI-powered insights**: Local (Ollama) and cloud AI integration
+- **Privacy-focused**: All analysis happens locally by default
+- **Terminal User Interface (TUI)**: Interactive analysis and configuration
 - **Comprehensive reporting**: Markdown, JSON, and interactive outputs
-- **Tree-sitter enabled by default**: Advanced parsing for supported languages is now always on for improved accuracy and performance. No manual configuration required.
+- **Advanced detection**: Dead code, large classes, tight coupling, cyclic dependencies
+- **Tree-sitter enabled**: Advanced parsing for accurate code analysis
+- **Memory optimization**: High-performance analysis for large codebases
+- **Automated testing**: Comprehensive test suite with CI/CD integration
 
 ## Installation
 
-### Quick Install
+### Alpha Release (Current)
+```bash
+git clone https://github.com/botzrDev/uveddi.git
+cd uveddi
+cargo build --release --features="alpha"
+```
+
+### Quick Install (Coming Soon)
 ```bash
 curl -sSL https://uveddi.dev/install.sh | bash
 ```
 
-### From Source
+### From Source (Development)
 ```bash
 git clone https://github.com/botzrDev/uveddi.git
 cd uveddi
-cargo install --path .
+cargo install --path . --features="alpha"
 ```
 
 ## Quick Start
 
-Analyze a codebase with AI-powered insights:
+### Basic Analysis
 ```bash
-uveddi analyze /path/to/code --enable-ai
+./target/release/uveddi analyze /path/to/code --output-format=markdown
 ```
 
-Generate a detailed architectural report:
+### JSON Output
 ```bash
-uveddi analyze /path/to/code --output report.md
+./target/release/uveddi analyze /path/to/code --output-format=json --output=report.json
+```
+
+### With Dead Code Detection
+```bash
+./target/release/uveddi analyze /path/to/code --dead-code-confidence=0.8 --output-format=json
+```
+
+### Interactive TUI Mode (Alpha)
+```bash
+./target/release/tui_test  # When available
 ```
 
 ## Documentation

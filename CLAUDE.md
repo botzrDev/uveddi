@@ -71,15 +71,19 @@ Uveddi follows a layered, extensible architecture:
 ## Feature Flags & Compilation Options
 Uveddi uses Cargo feature flags for modular builds:
 
-- `default = ["local-ai", "tree-sitter", "memory-optimization"]`
-- `tui` - Terminal user interface
+- `default = ["tree-sitter"]` - Minimal stable build
+- `alpha = ["tui", "tree-sitter", "local-ai"]` - **Alpha release build (RECOMMENDED)**
+- `tui` - Terminal user interface with comprehensive testing
+- `local-ai` - Ollama integration for AI-powered analysis
+- `memory-optimization` - Advanced memory management features
 - `wasm-plugins` - WebAssembly plugin system
 - `chaos` - Chaos engineering features
-- `sla-monitoring` - SLA monitoring and validation
 - `enterprise` - All features enabled
 
 **Build Examples:**
 ```bash
+# Alpha release build (recommended for testing)
+cargo build --release --features="alpha"
 # Minimal build
 cargo build --no-default-features --features="tree-sitter"
 # Full-featured build
