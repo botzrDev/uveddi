@@ -1,6 +1,7 @@
 //! Stub implementations for image rendering types when the image-rendering feature is not enabled
 
 use serde::{Deserialize, Serialize};
+use crate::error::rendering::RenderingServiceError;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ImageFormat {
@@ -39,12 +40,12 @@ impl Default for RenderingServiceConfig {
 }
 
 impl ImageRenderer {
-    pub fn with_config(_config: RenderingServiceConfig) -> Self {
-        Self
+    pub fn with_config(_config: RenderingServiceConfig) -> Result<Self, RenderingServiceError> {
+        Ok(Self)
     }
 
-    pub fn new() -> Self {
-        Self
+    pub fn new() -> Result<Self, RenderingServiceError> {
+        Ok(Self)
     }
 
     pub async fn render_diagram(

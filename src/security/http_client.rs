@@ -73,6 +73,7 @@ impl Default for HttpSecurityConfig {
 }
 
 /// Secure HTTP Client with enforced security policies
+#[derive(Debug)]
 pub struct SecureHttpClient {
     client: Client,
     config: HttpSecurityConfig,

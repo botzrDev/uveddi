@@ -67,20 +67,20 @@ pub struct PerformanceValidator {
 }
 
 impl PerformanceValidator {
-    pub fn new() -> Self {
+    pub fn new() -> Result<Self, crate::error::rendering::RenderingServiceError> {
         #[cfg(feature = "image-rendering")]
         {
-            Self {
+            Ok(Self {
                 optimizer: RenderingOptimizer::new(),
-                baseline_renderer: ImageRenderer::new(),
-            }
+                baseline_renderer: ImageRenderer::new()?,
+            })
         }
 
         #[cfg(not(feature = "image-rendering"))]
         {
-            Self {
+            Ok(Self {
                 optimizer: RenderingOptimizer::new(),
-            }
+            })
         }
     }
 

@@ -400,7 +400,7 @@ impl AnalyzeCommand {
             self.rendering_service_url
         );
 
-        let renderer = ImageRenderer::new(); // Use default config for now
+        let renderer = ImageRenderer::new()?; // Use default config for now
 
         match tokio::time::timeout(std::time::Duration::from_secs(5), renderer.health_check()).await
         {

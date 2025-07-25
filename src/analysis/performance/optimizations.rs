@@ -219,7 +219,7 @@ impl RenderingOptimizer {
     ) -> Result<RenderResult, OptimizationError> {
         // Create optimized renderer configuration based on quality setting
         let config = self.create_optimized_config(&request.quality);
-        let renderer = ImageRenderer::with_config(config);
+        let renderer = ImageRenderer::with_config(config)?;
 
         // Apply quality-specific optimizations
         let optimized_code =
@@ -650,5 +650,11 @@ pub enum CacheError {
 impl From<CacheError> for OptimizationError {
     fn from(err: CacheError) -> Self {
         OptimizationError::CacheError(err.to_string())
+    }
+}
+
+impl From<crate::error::rendering::RenderingServiceError> for OptimizationError {
+    fn from(err: crate::error::rendering::RenderingServiceError) -> Self {
+        OptimizationError::RenderingFailed(err.to_string())
     }
 }

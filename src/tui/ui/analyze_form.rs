@@ -16,12 +16,13 @@ use std::path::PathBuf;
 
 use crate::{
     cli::analyze_command::AnalyzeCommand,
-    security::{validate_input, validate_url, validate_model_name, validate_numeric_range, SecurityError},
     tui::{
         app::AppState,
         messages::AppMessage,
-        ui::components::FocusManager,
-        ui::components::{Dropdown, NumericInput, PathPicker, TextInput, Toggle, ValidationResult},
+        ui::components::{
+            Dropdown, FocusManager, FocusableInput, NumericInput, PathPicker, TextInput, Toggle,
+            ValidationResult,
+        },
     },
 };
 
@@ -52,16 +53,6 @@ impl FormSection {
             Self::AIConfiguration => "AI Configuration",
             Self::DeadCodeDetection => "Dead Code Detection",
             Self::LargeClassesDetection => "Large Classes Detection",
-        }
-    }
-
-    /// Get section description
-    pub fn description(&self) -> &'static str {
-        match self {
-            Self::BasicSettings => "Essential analysis configuration",
-            Self::AIConfiguration => "AI-powered analysis settings",
-            Self::DeadCodeDetection => "Configure dead code detection parameters",
-            Self::LargeClassesDetection => "Set thresholds for large class detection",
         }
     }
 }
@@ -150,208 +141,146 @@ impl FormField {
         ]
     }
 
-    /// Get field label for display
-    pub fn label(&self) -> &'static str {
-        match self {
-            Self::Path => "Analysis Path",
-            Self::OutputFormat => "Output Format",
-            Self::OutputFile => "Output File (optional)",
-            Self::EnableAI => "Enable AI Analysis",
-            Self::OllamaApiUrl => "Ollama API URL",
-            Self::OllamaModel => "Ollama Model",
-            Self::DeadCodeConfidence => "Dead Code Confidence (0.0-1.0)",
-            Self::DeadCodeLibraryMode => "Library Mode",
-            Self::DeadCodeIgnorePatterns => "Ignore Patterns",
-            Self::DeadCodeKeepAlive => "Keep Alive Patterns",
-            Self::LargeClassesMaxLoc => "Max Lines of Code",
-            Self::LargeClassesMaxMethods => "Max Methods",
-            Self::LargeClassesMaxFields => "Max Fields",
-            Self::LargeClassesMaxComplexity => "Max Complexity",
-            Self::LargeClassesMaxLcom => "Max LCOM Score",
-            Self::LargeClassesIgnorePatterns => "Ignore Patterns",
-            Self::LargeClassesMinSeverity => "Min Severity (0-100)",
-        }
-    }
-}
-
-/// All form input components organized by type
-#[derive(Debug, Clone)]
-struct AnalyzeFormInputs {
-    // Basic Settings
-    path_picker: PathPicker,
-    output_format_dropdown: Dropdown,
-    output_file_picker: PathPicker,
-
-    // AI Configuration
-    enable_ai_toggle: Toggle,
-    ollama_api_url_input: TextInput,
-    ollama_model_input: TextInput,
-
-    // Dead Code Detection
-    dead_code_confidence_input: NumericInput,
-    dead_code_library_mode_toggle: Toggle,
-    dead_code_ignore_patterns_input: TextInput,
-    dead_code_keep_alive_input: TextInput,
-
-    // Large Classes Detection
-    large_classes_max_loc_input: NumericInput,
-    large_classes_max_methods_input: NumericInput,
-    large_classes_max_fields_input: NumericInput,
-    large_classes_max_complexity_input: NumericInput,
-    large_classes_max_lcom_input: NumericInput,
-    large_classes_ignore_patterns_input: TextInput,
-    large_classes_min_severity_input: NumericInput,
-}
-
-impl AnalyzeFormInputs {
-    /// Create new form inputs with default values
-    fn new() -> Self {
-        Self {
-            // Basic Settings
-            path_picker: PathPicker::new("Analysis Path")
-                .pick_directories()
-                .with_start_directory("./src"),
-            output_format_dropdown: Dropdown::new(
-                "Output Format",
-                vec![
-                    "markdown".to_string(),
-                    "json".to_string(),
-                    "text".to_string(),
-                ],
-            ),
-            output_file_picker: PathPicker::new("Output File (optional)")
-                .with_extension_filter("md"),
-
-            // AI Configuration
-            enable_ai_toggle: Toggle::new("Enable AI Analysis", false),
-            ollama_api_url_input: TextInput::new("Ollama API URL")
-                .with_placeholder("http://localhost:11434"),
-            ollama_model_input: TextInput::new("Ollama Model")
-                .with_placeholder("deepseek-coder:6.7b-instruct"),
-
-            // Dead Code Detection
-            dead_code_confidence_input: NumericInput::new("Dead Code Confidence")
-                .with_min_value(tui_constants::form_constraints::MIN_CONFIDENCE)
-                .with_max_value(tui_constants::form_constraints::MAX_CONFIDENCE)
-                .with_decimal_places(tui_constants::form_constraints::CONFIDENCE_DECIMAL_PLACES),
-            dead_code_library_mode_toggle: Toggle::new("Library Mode", false),
-            dead_code_ignore_patterns_input: TextInput::new("Ignore Patterns")
-                .with_placeholder("test,spec,mock"),
-            dead_code_keep_alive_input: TextInput::new("Keep Alive Patterns")
-                .with_placeholder("main,init,setup"),
-
-            // Large Classes Detection
-            large_classes_max_loc_input: NumericInput::new("Max Lines of Code")
-                .with_min_value(tui_constants::form_constraints::MIN_COUNT_VALUE),
-            large_classes_max_methods_input: NumericInput::new("Max Methods")
-                .with_min_value(tui_constants::form_constraints::MIN_COUNT_VALUE),
-            large_classes_max_fields_input: NumericInput::new("Max Fields")
-                .with_min_value(tui_constants::form_constraints::MIN_COUNT_VALUE),
-            large_classes_max_complexity_input: NumericInput::new("Max Complexity")
-                .with_min_value(tui_constants::form_constraints::MIN_COUNT_VALUE),
-            large_classes_max_lcom_input: NumericInput::new("Max LCOM Score")
-                .with_min_value(tui_constants::form_constraints::MIN_CONFIDENCE)
-                .with_max_value(tui_constants::form_constraints::MAX_CONFIDENCE)
-                .with_decimal_places(tui_constants::form_constraints::CONFIDENCE_DECIMAL_PLACES),
-            large_classes_ignore_patterns_input: TextInput::new("Ignore Patterns")
-                .with_placeholder("test,spec,fixture"),
-            large_classes_min_severity_input: NumericInput::new("Min Severity")
-                .with_min_value(tui_constants::form_constraints::MIN_SEVERITY)
-                .with_max_value(tui_constants::form_constraints::MAX_SEVERITY),
-        }
+    /// Get the index of a field in the global `all()` list
+    pub fn to_index(&self) -> usize {
+        Self::all().iter().position(|&f| f == *self).unwrap_or(0)
     }
 
-    /// Set default values from environment or config
-    fn set_defaults(&mut self) {
-        // Set path to current directory by default
-        self.path_picker.set_value("./src");
-
-        // Set confidence threshold default
-        self.dead_code_confidence_input
-            .set_value(tui_constants::form_defaults::DEAD_CODE_CONFIDENCE);
-
-        // Set default thresholds for large classes
-        self.large_classes_max_loc_input
-            .set_value(tui_constants::form_defaults::LARGE_CLASSES_MAX_LOC);
-        self.large_classes_max_methods_input
-            .set_value(tui_constants::form_defaults::LARGE_CLASSES_MAX_METHODS);
-        self.large_classes_max_fields_input
-            .set_value(tui_constants::form_defaults::LARGE_CLASSES_MAX_FIELDS);
-        self.large_classes_max_complexity_input
-            .set_value(tui_constants::form_defaults::LARGE_CLASSES_MAX_COMPLEXITY);
-        self.large_classes_max_lcom_input
-            .set_value(tui_constants::form_defaults::LARGE_CLASSES_MAX_LCOM);
-        self.large_classes_min_severity_input
-            .set_value(tui_constants::form_defaults::LARGE_CLASSES_MIN_SEVERITY);
-
-        // Set Ollama defaults from environment if available
-        if let Ok(url) = std::env::var("OLLAMA_API_URL") {
-            self.ollama_api_url_input.set_value(&url);
-        }
-        if let Ok(model) = std::env::var("OLLAMA_MODEL") {
-            self.ollama_model_input.set_value(&model);
-        }
+    /// Get a field from its global index
+    pub fn from_index(index: usize) -> Option<Self> {
+        Self::all().get(index).copied()
     }
 }
 
 /// Analysis form state and input management
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct AnalyzeForm {
     /// Current active section
     current_section: FormSection,
-    /// Current focused field
-    current_field: Option<FormField>,
-    /// Form input components
-    inputs: AnalyzeFormInputs,
-    /// Validation errors for each field
-    validation_errors: std::collections::HashMap<FormField, String>,
-    /// Whether the form is in submit mode
-    is_submitting: bool,
     /// Form-wide error message
     form_error: Option<String>,
-
     /// Focus manager for all input components
     focus_manager: FocusManager,
 }
 
 impl AnalyzeForm {
+    /// Get the current focus index from the focus manager
+    pub fn current_focus(&self) -> Option<usize> {
+        self.focus_manager.current_focus()
+    }
+
+    /// Set focus by index (for testing)
+    pub fn set_focus_by_index(&mut self, index: usize) -> bool {
+        self.focus_manager.set_focus_by_index(index)
+    }
+
     /// Create a new analysis form
     pub fn new() -> Self {
-        let mut inputs = AnalyzeFormInputs::new();
-        inputs.set_defaults();
-
-        // Initialize FocusManager and add all inputs
         let mut focus_manager = FocusManager::new();
-        focus_manager.add_input(Box::new(inputs.path_picker.clone()));
-        focus_manager.add_input(Box::new(inputs.output_format_dropdown.clone()));
-        focus_manager.add_input(Box::new(inputs.output_file_picker.clone()));
-        focus_manager.add_input(Box::new(inputs.enable_ai_toggle.clone()));
-        focus_manager.add_input(Box::new(inputs.ollama_api_url_input.clone()));
-        focus_manager.add_input(Box::new(inputs.ollama_model_input.clone()));
-        focus_manager.add_input(Box::new(inputs.dead_code_confidence_input.clone()));
-        focus_manager.add_input(Box::new(inputs.dead_code_library_mode_toggle.clone()));
-        focus_manager.add_input(Box::new(inputs.dead_code_ignore_patterns_input.clone()));
-        focus_manager.add_input(Box::new(inputs.dead_code_keep_alive_input.clone()));
-        focus_manager.add_input(Box::new(inputs.large_classes_max_loc_input.clone()));
-        focus_manager.add_input(Box::new(inputs.large_classes_max_methods_input.clone()));
-        focus_manager.add_input(Box::new(inputs.large_classes_max_fields_input.clone()));
-        focus_manager.add_input(Box::new(inputs.large_classes_max_complexity_input.clone()));
-        focus_manager.add_input(Box::new(inputs.large_classes_max_lcom_input.clone()));
-        focus_manager.add_input(Box::new(inputs.large_classes_ignore_patterns_input.clone()));
-        focus_manager.add_input(Box::new(inputs.large_classes_min_severity_input.clone()));
+
+        // Basic Settings
+        focus_manager.add_input(Box::new(
+            PathPicker::new("Analysis Path", FormField::Path)
+                .pick_directories()
+                .with_start_directory("./src"),
+        ));
+        focus_manager.add_input(Box::new(Dropdown::new(
+            "Output Format",
+            vec!["markdown".to_string(), "json".to_string(), "text".to_string()],
+            FormField::OutputFormat,
+        )));
+        focus_manager.add_input(Box::new(
+            PathPicker::new("Output File (optional)", FormField::OutputFile)
+                .with_extension_filter("md"),
+        ));
+
+        // AI Configuration
+        focus_manager.add_input(Box::new(Toggle::new(
+            "Enable AI Analysis",
+            false,
+            FormField::EnableAI,
+        )));
+        focus_manager.add_input(Box::new(
+            TextInput::new("Ollama API URL", FormField::OllamaApiUrl)
+                .with_placeholder("http://localhost:11434"),
+        ));
+        focus_manager.add_input(Box::new(
+            TextInput::new("Ollama Model", FormField::OllamaModel)
+                .with_placeholder("deepseek-coder:6.7b-instruct"),
+        ));
+
+        // Dead Code Detection
+        focus_manager.add_input(Box::new(
+            NumericInput::new("Dead Code Confidence", FormField::DeadCodeConfidence)
+                .with_min_value(tui_constants::form_constraints::MIN_CONFIDENCE)
+                .with_max_value(tui_constants::form_constraints::MAX_CONFIDENCE)
+                .with_decimal_places(tui_constants::form_constraints::CONFIDENCE_DECIMAL_PLACES),
+        ));
+        focus_manager.add_input(Box::new(Toggle::new(
+            "Library Mode",
+            false,
+            FormField::DeadCodeLibraryMode,
+        )));
+        focus_manager.add_input(Box::new(
+            TextInput::new("Ignore Patterns", FormField::DeadCodeIgnorePatterns)
+                .with_placeholder("test,spec,mock"),
+        ));
+        focus_manager.add_input(Box::new(
+            TextInput::new("Keep Alive Patterns", FormField::DeadCodeKeepAlive)
+                .with_placeholder("main,init,setup"),
+        ));
+
+        // Large Classes Detection
+        focus_manager.add_input(Box::new(
+            NumericInput::new("Max Lines of Code", FormField::LargeClassesMaxLoc)
+                .with_min_value(tui_constants::form_constraints::MIN_COUNT_VALUE as f64),
+        ));
+        focus_manager.add_input(Box::new(
+            NumericInput::new("Max Methods", FormField::LargeClassesMaxMethods)
+                .with_min_value(tui_constants::form_constraints::MIN_COUNT_VALUE as f64),
+        ));
+        focus_manager.add_input(Box::new(
+            NumericInput::new("Max Fields", FormField::LargeClassesMaxFields)
+                .with_min_value(tui_constants::form_constraints::MIN_COUNT_VALUE as f64),
+        ));
+        focus_manager.add_input(Box::new(
+            NumericInput::new("Max Complexity", FormField::LargeClassesMaxComplexity)
+                .with_min_value(tui_constants::form_constraints::MIN_COUNT_VALUE as f64),
+        ));
+        focus_manager.add_input(Box::new(
+            NumericInput::new("Max LCOM Score", FormField::LargeClassesMaxLcom)
+                .with_min_value(tui_constants::form_constraints::MIN_CONFIDENCE)
+                .with_max_value(tui_constants::form_constraints::MAX_CONFIDENCE)
+                .with_decimal_places(tui_constants::form_constraints::CONFIDENCE_DECIMAL_PLACES),
+        ));
+        focus_manager.add_input(Box::new(
+            TextInput::new("Ignore Patterns", FormField::LargeClassesIgnorePatterns)
+                .with_placeholder("test,spec,fixture"),
+        ));
+        focus_manager.add_input(Box::new(
+            NumericInput::new("Min Severity", FormField::LargeClassesMinSeverity)
+                .with_min_value(tui_constants::form_constraints::MIN_SEVERITY as f64)
+                .with_max_value(tui_constants::form_constraints::MAX_SEVERITY as f64),
+        ));
 
         let mut form = Self {
             current_section: FormSection::BasicSettings,
-            current_field: Some(FormField::Path),
-            inputs,
-            validation_errors: std::collections::HashMap::new(),
-            is_submitting: false,
             form_error: None,
             focus_manager,
         };
 
-        form.update_focus();
+        form.set_initial_focus();
         form
+    }
+
+    /// Set the initial focus to the first field of the first section.
+    fn set_initial_focus(&mut self) {
+        let first_field = FormField::fields_for_section(self.current_section)
+            .first()
+            .copied();
+        if let Some(field) = first_field {
+            self.focus_manager.set_focus_by_index(field.to_index());
+        }
     }
 
     /// Handle key input for the form
@@ -376,94 +305,34 @@ impl AnalyzeForm {
             }
 
             // Navigation between fields
-            KeyCode::Tab => {
+            KeyCode::Tab | KeyCode::Down => {
                 self.next_field();
                 vec![]
             }
-            KeyCode::BackTab => {
-                self.previous_field();
-                vec![]
-            }
-            KeyCode::Down => {
-                self.next_field();
-                vec![]
-            }
-            KeyCode::Up => {
+            KeyCode::BackTab | KeyCode::Up => {
                 self.previous_field();
                 vec![]
             }
 
             // Form submission
-            KeyCode::Enter if key.modifiers.contains(KeyModifiers::CONTROL) => self.submit_form(),
+            KeyCode::Enter if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                // This will now be handled by AppState, which has the form data.
+                // For now, we can just signal an intent to submit.
+                vec![AppMessage::StartAnalysis]
+            }
 
             // Cancel/back
             KeyCode::Esc => {
                 vec![AppMessage::NavigateToMainMenu]
             }
 
-            // Pass key to current input (but not navigation keys)
+            // Pass key to current input
             _ => {
-                if let Some(field) = self.current_field {
-                    self.handle_field_input(field, key);
+                if let Some(msg) = self.focus_manager.handle_key(key) {
+                    return vec![msg];
                 }
                 vec![]
             }
-        }
-    }
-
-    /// Handle input for a specific field
-    fn handle_field_input(&mut self, field: FormField, key: KeyEvent) {
-        let handled = match field {
-            // Path pickers
-            FormField::Path => self.inputs.path_picker.handle_key(key),
-            FormField::OutputFile => self.inputs.output_file_picker.handle_key(key),
-
-            // Text inputs
-            FormField::OllamaApiUrl => self.inputs.ollama_api_url_input.handle_key(key),
-            FormField::OllamaModel => self.inputs.ollama_model_input.handle_key(key),
-            FormField::DeadCodeIgnorePatterns => {
-                self.inputs.dead_code_ignore_patterns_input.handle_key(key)
-            }
-            FormField::DeadCodeKeepAlive => self.inputs.dead_code_keep_alive_input.handle_key(key),
-            FormField::LargeClassesIgnorePatterns => self
-                .inputs
-                .large_classes_ignore_patterns_input
-                .handle_key(key),
-
-            // Dropdown inputs
-            FormField::OutputFormat => self.inputs.output_format_dropdown.handle_key(key),
-
-            // Toggle inputs
-            FormField::EnableAI => self.inputs.enable_ai_toggle.handle_key(key),
-            FormField::DeadCodeLibraryMode => {
-                self.inputs.dead_code_library_mode_toggle.handle_key(key)
-            }
-
-            // Numeric inputs
-            FormField::DeadCodeConfidence => self.inputs.dead_code_confidence_input.handle_key(key),
-            FormField::LargeClassesMaxLoc => {
-                self.inputs.large_classes_max_loc_input.handle_key(key)
-            }
-            FormField::LargeClassesMaxMethods => {
-                self.inputs.large_classes_max_methods_input.handle_key(key)
-            }
-            FormField::LargeClassesMaxFields => {
-                self.inputs.large_classes_max_fields_input.handle_key(key)
-            }
-            FormField::LargeClassesMaxComplexity => self
-                .inputs
-                .large_classes_max_complexity_input
-                .handle_key(key),
-            FormField::LargeClassesMaxLcom => {
-                self.inputs.large_classes_max_lcom_input.handle_key(key)
-            }
-            FormField::LargeClassesMinSeverity => {
-                self.inputs.large_classes_min_severity_input.handle_key(key)
-            }
-        };
-
-        if handled {
-            self.validate_field(field);
         }
     }
 
@@ -476,10 +345,11 @@ impl AnalyzeForm {
             .unwrap_or(0);
         let next_index = (current_index + 1) % sections.len();
         self.current_section = sections[next_index];
-        self.current_field = FormField::fields_for_section(self.current_section)
+        let first_field_in_section = FormField::fields_for_section(self.current_section)
             .first()
-            .copied();
-        self.update_focus();
+            .map(|f| f.to_index())
+            .unwrap_or(0);
+        self.focus_manager.set_focus_by_index(first_field_in_section);
     }
 
     /// Move to previous section
@@ -495,431 +365,41 @@ impl AnalyzeForm {
             current_index - 1
         };
         self.current_section = sections[prev_index];
-        self.current_field = FormField::fields_for_section(self.current_section)
+        let first_field_in_section = FormField::fields_for_section(self.current_section)
             .first()
-            .copied();
-        self.update_focus();
+            .map(|f| f.to_index())
+            .unwrap_or(0);
+        self.focus_manager.set_focus_by_index(first_field_in_section);
     }
 
     /// Move to next field in current section
     fn next_field(&mut self) {
         let fields = FormField::fields_for_section(self.current_section);
-        if let Some(current_field) = self.current_field {
-            let current_index = fields.iter().position(|&f| f == current_field).unwrap_or(0);
-            let next_index = (current_index + 1) % fields.len();
-            self.current_field = Some(fields[next_index]);
-            self.update_focus();
-        }
+        let current_focus_index = self.focus_manager.current_focus().unwrap_or(0);
+        let current_field = FormField::from_index(current_focus_index).unwrap();
+
+        let current_pos_in_section = fields.iter().position(|&f| f == current_field).unwrap_or(0);
+        let next_pos_in_section = (current_pos_in_section + 1) % fields.len();
+        let next_field = fields[next_pos_in_section];
+
+        self.focus_manager.set_focus_by_index(next_field.to_index());
     }
 
     /// Move to previous field in current section
     fn previous_field(&mut self) {
         let fields = FormField::fields_for_section(self.current_section);
-        if let Some(current_field) = self.current_field {
-            let current_index = fields.iter().position(|&f| f == current_field).unwrap_or(0);
-            let prev_index = if current_index == 0 {
-                fields.len() - 1
-            } else {
-                current_index - 1
-            };
-            self.current_field = Some(fields[prev_index]);
-            self.update_focus();
-        }
-    }
+        let current_focus_index = self.focus_manager.current_focus().unwrap_or(0);
+        let current_field = FormField::from_index(current_focus_index).unwrap();
 
-    /// Update focus states for all inputs
-    fn update_focus(&mut self) {
-        // Clear all focus states using FocusManager
-        self.focus_manager.clear_all_focus();
-        // Set focus on current field
-        if let Some(field) = self.current_field {
-            match field {
-                FormField::Path => self.inputs.path_picker.set_focused(true),
-                FormField::OutputFormat => self.inputs.output_format_dropdown.set_focused(true),
-                FormField::OutputFile => self.inputs.output_file_picker.set_focused(true),
-                FormField::EnableAI => self.inputs.enable_ai_toggle.set_focused(true),
-                FormField::OllamaApiUrl => self.inputs.ollama_api_url_input.set_focused(true),
-                FormField::OllamaModel => self.inputs.ollama_model_input.set_focused(true),
-                FormField::DeadCodeConfidence => {
-                    self.inputs.dead_code_confidence_input.set_focused(true)
-                }
-                FormField::DeadCodeLibraryMode => {
-                    self.inputs.dead_code_library_mode_toggle.set_focused(true)
-                }
-                FormField::DeadCodeIgnorePatterns => self
-                    .inputs
-                    .dead_code_ignore_patterns_input
-                    .set_focused(true),
-                FormField::DeadCodeKeepAlive => {
-                    self.inputs.dead_code_keep_alive_input.set_focused(true)
-                }
-                FormField::LargeClassesMaxLoc => {
-                    self.inputs.large_classes_max_loc_input.set_focused(true)
-                }
-                FormField::LargeClassesMaxMethods => self
-                    .inputs
-                    .large_classes_max_methods_input
-                    .set_focused(true),
-                FormField::LargeClassesMaxFields => {
-                    self.inputs.large_classes_max_fields_input.set_focused(true)
-                }
-                FormField::LargeClassesMaxComplexity => self
-                    .inputs
-                    .large_classes_max_complexity_input
-                    .set_focused(true),
-                FormField::LargeClassesMaxLcom => {
-                    self.inputs.large_classes_max_lcom_input.set_focused(true)
-                }
-                FormField::LargeClassesIgnorePatterns => self
-                    .inputs
-                    .large_classes_ignore_patterns_input
-                    .set_focused(true),
-                FormField::LargeClassesMinSeverity => self
-                    .inputs
-                    .large_classes_min_severity_input
-                    .set_focused(true),
-            }
-        }
-    }
-
-    /// Validate a specific field
-    fn validate_field(&mut self, field: FormField) -> ValidationResult {
-        let result = match field {
-            FormField::Path => {
-                let path = self.inputs.path_picker.value();
-                if path.is_empty() {
-                    ValidationResult::invalid("Path is required")
-                } else if let Err(e) = validate_input(&path, "path") {
-                    ValidationResult::invalid(&format!("Invalid path: {}", e))
-                } else if !std::path::Path::new(&path).exists() {
-                    ValidationResult::invalid("Path does not exist")
-                } else {
-                    ValidationResult::valid()
-                }
-            }
-            
-            FormField::OutputFormat => {
-                if let Some(format) = self.inputs.output_format_dropdown.value() {
-                    match validate_input(&format, "output_format") {
-                        Ok(_) => {
-                            let allowed_formats = ["text", "json", "markdown"];
-                            if allowed_formats.contains(&format.as_str()) {
-                                ValidationResult::valid()
-                            } else {
-                                ValidationResult::invalid(&format!("Must be one of: {}", allowed_formats.join(", ")))
-                            }
-                        }
-                        Err(e) => ValidationResult::invalid(&format!("Invalid format: {}", e)),
-                    }
-                } else {
-                    ValidationResult::invalid("Output format is required")
-                }
-            }
-            
-            FormField::OutputFile => {
-                let output_path = self.inputs.output_file_picker.value();
-                if !output_path.is_empty() {
-                    match validate_input(&output_path, "output_file") {
-                        Ok(_) => ValidationResult::valid(),
-                        Err(e) => ValidationResult::invalid(&format!("Invalid output file: {}", e)),
-                    }
-                } else {
-                    ValidationResult::valid() // Optional field
-                }
-            }
-            
-            FormField::OllamaApiUrl => {
-                let url = self.inputs.ollama_api_url_input.value();
-                if !url.is_empty() {
-                    match validate_url(&url) {
-                        Ok(_) => ValidationResult::valid(),
-                        Err(e) => ValidationResult::invalid(&format!("Invalid URL: {}", e)),
-                    }
-                } else {
-                    ValidationResult::valid() // Optional field
-                }
-            }
-            
-            FormField::OllamaModel => {
-                let model = self.inputs.ollama_model_input.value();
-                if !model.is_empty() {
-                    match validate_model_name(&model) {
-                        Ok(_) => ValidationResult::valid(),
-                        Err(e) => ValidationResult::invalid(&format!("Invalid model name: {}", e)),
-                    }
-                } else {
-                    ValidationResult::valid() // Optional field
-                }
-            }
-            
-            FormField::DeadCodeConfidence => {
-                if let Some(value) = self.inputs.dead_code_confidence_input.value() {
-                    let confidence_int = (value * 100.0) as i32;
-                    match validate_numeric_range(confidence_int, 0, 100, "dead_code_confidence") {
-                        Ok(_) => ValidationResult::valid(),
-                        Err(e) => ValidationResult::invalid(&format!("Invalid confidence: {}", e)),
-                    }
-                } else {
-                    ValidationResult::valid() // Optional field
-                }
-            }
-            
-            FormField::DeadCodeIgnorePatterns => {
-                let patterns = self.inputs.dead_code_ignore_patterns_input.value();
-                if !patterns.is_empty() {
-                    // Split patterns by comma and validate each
-                    for pattern in patterns.split(',') {
-                        let trimmed = pattern.trim();
-                        if !trimmed.is_empty() {
-                            if let Err(e) = validate_input(trimmed, "ignore_pattern") {
-                                return ValidationResult::invalid(&format!("Invalid pattern '{}': {}", trimmed, e));
-                            }
-                        }
-                    }
-                    ValidationResult::valid()
-                } else {
-                    ValidationResult::valid() // Optional field
-                }
-            }
-            
-            FormField::DeadCodeKeepAlive => {
-                let patterns = self.inputs.dead_code_keep_alive_input.value();
-                if !patterns.is_empty() {
-                    // Split patterns by comma and validate each
-                    for pattern in patterns.split(',') {
-                        let trimmed = pattern.trim();
-                        if !trimmed.is_empty() {
-                            if let Err(e) = validate_input(trimmed, "keep_alive_pattern") {
-                                return ValidationResult::invalid(&format!("Invalid pattern '{}': {}", trimmed, e));
-                            }
-                        }
-                    }
-                    ValidationResult::valid()
-                } else {
-                    ValidationResult::valid() // Optional field
-                }
-            }
-            
-            FormField::LargeClassesMaxLoc => {
-                if let Some(value) = self.inputs.large_classes_max_loc_input.value() {
-                    match validate_numeric_range(value as i32, 1, 100_000, "max_loc") {
-                        Ok(_) => ValidationResult::valid(),
-                        Err(e) => ValidationResult::invalid(&format!("Invalid max LOC: {}", e)),
-                    }
-                } else {
-                    ValidationResult::valid() // Optional field
-                }
-            }
-            
-            FormField::LargeClassesMaxMethods => {
-                if let Some(value) = self.inputs.large_classes_max_methods_input.value() {
-                    match validate_numeric_range(value as i32, 1, 10_000, "max_methods") {
-                        Ok(_) => ValidationResult::valid(),
-                        Err(e) => ValidationResult::invalid(&format!("Invalid max methods: {}", e)),
-                    }
-                } else {
-                    ValidationResult::valid() // Optional field
-                }
-            }
-            
-            FormField::LargeClassesMaxFields => {
-                if let Some(value) = self.inputs.large_classes_max_fields_input.value() {
-                    match validate_numeric_range(value as i32, 1, 10_000, "max_fields") {
-                        Ok(_) => ValidationResult::valid(),
-                        Err(e) => ValidationResult::invalid(&format!("Invalid max fields: {}", e)),
-                    }
-                } else {
-                    ValidationResult::valid() // Optional field
-                }
-            }
-            
-            FormField::LargeClassesMaxComplexity => {
-                if let Some(value) = self.inputs.large_classes_max_complexity_input.value() {
-                    match validate_numeric_range(value as i32, 1, 10_000, "max_complexity") {
-                        Ok(_) => ValidationResult::valid(),
-                        Err(e) => ValidationResult::invalid(&format!("Invalid max complexity: {}", e)),
-                    }
-                } else {
-                    ValidationResult::valid() // Optional field
-                }
-            }
-            
-            FormField::LargeClassesMaxLcom => {
-                if let Some(value) = self.inputs.large_classes_max_lcom_input.value() {
-                    let lcom_int = (value * 100.0) as i32;
-                    match validate_numeric_range(lcom_int, 0, 100, "max_lcom") {
-                        Ok(_) => ValidationResult::valid(),
-                        Err(e) => ValidationResult::invalid(&format!("Invalid max LCOM: {}", e)),
-                    }
-                } else {
-                    ValidationResult::valid() // Optional field
-                }
-            }
-            
-            FormField::LargeClassesIgnorePatterns => {
-                let patterns = self.inputs.large_classes_ignore_patterns_input.value();
-                if !patterns.is_empty() {
-                    // Split patterns by comma and validate each
-                    for pattern in patterns.split(',') {
-                        let trimmed = pattern.trim();
-                        if !trimmed.is_empty() {
-                            if let Err(e) = validate_input(trimmed, "ignore_pattern") {
-                                return ValidationResult::invalid(&format!("Invalid pattern '{}': {}", trimmed, e));
-                            }
-                        }
-                    }
-                    ValidationResult::valid()
-                } else {
-                    ValidationResult::valid() // Optional field
-                }
-            }
-            
-            FormField::LargeClassesMinSeverity => {
-                if let Some(value) = self.inputs.large_classes_min_severity_input.value() {
-                    match validate_numeric_range(value as i32, 0, 100, "min_severity") {
-                        Ok(_) => ValidationResult::valid(),
-                        Err(e) => ValidationResult::invalid(&format!("Invalid min severity: {}", e)),
-                    }
-                } else {
-                    ValidationResult::valid() // Optional field
-                }
-            }
-            
-            _ => ValidationResult::valid(), // Default for other fields
+        let current_pos_in_section = fields.iter().position(|&f| f == current_field).unwrap_or(0);
+        let prev_pos_in_section = if current_pos_in_section == 0 {
+            fields.len() - 1
+        } else {
+            current_pos_in_section - 1
         };
+        let prev_field = fields[prev_pos_in_section];
 
-        if result.is_valid {
-            self.validation_errors.remove(&field);
-        } else if let Some(ref error) = result.error_message {
-            self.validation_errors.insert(field, error.clone());
-        }
-        
-        result
-    }
-
-    /// Validate entire form
-    fn validate_form(&mut self) -> bool {
-        self.validation_errors.clear();
-
-        for field in FormField::all() {
-            self.validate_field(field);
-        }
-
-        self.validation_errors.is_empty()
-    }
-
-    /// Submit the form
-    fn submit_form(&mut self) -> Vec<AppMessage> {
-        if !self.validate_form() {
-            self.form_error = Some("Please fix validation errors before submitting".to_string());
-            return vec![];
-        }
-
-        match self.to_analyze_command() {
-            Ok(command) => {
-                vec![AppMessage::StartAnalysis(command)]
-            }
-            Err(error) => {
-                self.form_error = Some(format!("Failed to create analysis command: {}", error));
-                vec![]
-            }
-        }
-    }
-
-    /// Convert form data to AnalyzeCommand
-    fn to_analyze_command(&self) -> Result<AnalyzeCommand, String> {
-        let path = PathBuf::from(self.inputs.path_picker.value());
-        if path.as_os_str().is_empty() {
-            return Err("Path is required".to_string());
-        }
-
-        // Helper function to parse comma-separated strings into Vec<String>
-        let parse_patterns = |input: &str| -> Option<Vec<String>> {
-            if input.trim().is_empty() {
-                None
-            } else {
-                Some(input.split(',').map(|s| s.trim().to_string()).collect())
-            }
-        };
-
-        Ok(AnalyzeCommand {
-            path,
-            output_format: self
-                .inputs
-                .output_format_dropdown
-                .selected_value()
-                .cloned()
-                .unwrap_or_else(|| "markdown".to_string()),
-            output: if self.inputs.output_file_picker.value().is_empty() {
-                None
-            } else {
-                Some(PathBuf::from(self.inputs.output_file_picker.value()))
-            },
-            enable_ai: self.inputs.enable_ai_toggle.value,
-
-            // AI Configuration
-            ollama_api_url: if self.inputs.ollama_api_url_input.value().is_empty() {
-                None
-            } else {
-                Some(self.inputs.ollama_api_url_input.value())
-            },
-            ollama_model: if self.inputs.ollama_model_input.value().is_empty() {
-                None
-            } else {
-                Some(self.inputs.ollama_model_input.value())
-            },
-
-            // Dead Code Detection
-            dead_code_confidence: self.inputs.dead_code_confidence_input.value(),
-            dead_code_library_mode: self.inputs.dead_code_library_mode_toggle.value,
-            dead_code_ignore_patterns: parse_patterns(
-                &self.inputs.dead_code_ignore_patterns_input.value(),
-            ),
-            dead_code_keep_alive: parse_patterns(&self.inputs.dead_code_keep_alive_input.value()),
-
-            // Large Classes Detection
-            large_classes_max_loc: self
-                .inputs
-                .large_classes_max_loc_input
-                .value()
-                .map(|v| v as u32),
-            large_classes_max_methods: self
-                .inputs
-                .large_classes_max_methods_input
-                .value()
-                .map(|v| v as u32),
-            large_classes_max_fields: self
-                .inputs
-                .large_classes_max_fields_input
-                .value()
-                .map(|v| v as u32),
-            large_classes_max_complexity: self
-                .inputs
-                .large_classes_max_complexity_input
-                .value()
-                .map(|v| v as u32),
-            large_classes_max_lcom: self.inputs.large_classes_max_lcom_input.value(),
-            large_classes_ignore_patterns: parse_patterns(
-                &self.inputs.large_classes_ignore_patterns_input.value(),
-            ),
-            large_classes_min_severity: self
-                .inputs
-                .large_classes_min_severity_input
-                .value()
-                .map(|v| v as u32),
-
-            // Memory optimization fields (with defaults)
-            enable_memory_optimization: false,
-            memory_limit_gb: None,
-            memory_profile: None,
-            
-            // Hybrid rendering options (with defaults)
-            enable_image_rendering: false,
-            mermaid_only: true,
-            rendering_service_url: "http://localhost:3001".to_string(),
-            no_fallback: false,
-            check_rendering_service: false,
-        })
+        self.focus_manager.set_focus_by_index(prev_field.to_index());
     }
 
     /// Render the form
@@ -985,21 +465,27 @@ impl AnalyzeForm {
         }
     }
 
+    fn render_field(&self, frame: &mut Frame, area: Rect, field: FormField) {
+        if let Some(input) = self.focus_manager.get(field.to_index()) {
+            input.render(frame, area);
+        }
+    }
+
     /// Render basic settings section
     fn render_basic_settings(&self, frame: &mut Frame, area: Rect) {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
-                Constraint::Length(5), // Path input (20% bigger: 4 -> 5)
-                Constraint::Length(5), // Output format (20% bigger: 4 -> 5)
-                Constraint::Length(5), // Output file (20% bigger: 4 -> 5)
-                Constraint::Min(0),    // Remaining space
+                Constraint::Length(5), // Path
+                Constraint::Length(5), // Output format
+                Constraint::Length(5), // Output file
+                Constraint::Min(0),
             ])
             .split(area);
 
-        self.inputs.path_picker.render(frame, chunks[0]);
-        self.inputs.output_format_dropdown.render(frame, chunks[1]);
-        self.inputs.output_file_picker.render(frame, chunks[2]);
+        self.render_field(frame, chunks[0], FormField::Path);
+        self.render_field(frame, chunks[1], FormField::OutputFormat);
+        self.render_field(frame, chunks[2], FormField::OutputFile);
     }
 
     /// Render AI configuration section
@@ -1007,16 +493,16 @@ impl AnalyzeForm {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
-                Constraint::Length(3), // Enable AI toggle (20% bigger: 2 -> 3)
-                Constraint::Length(5), // Ollama API URL (20% bigger: 4 -> 5)
-                Constraint::Length(5), // Ollama Model (20% bigger: 4 -> 5)
-                Constraint::Min(0),    // Remaining space
+                Constraint::Length(3), // Enable AI
+                Constraint::Length(5), // API URL
+                Constraint::Length(5), // Model
+                Constraint::Min(0),
             ])
             .split(area);
 
-        self.inputs.enable_ai_toggle.render(frame, chunks[0]);
-        self.inputs.ollama_api_url_input.render(frame, chunks[1]);
-        self.inputs.ollama_model_input.render(frame, chunks[2]);
+        self.render_field(frame, chunks[0], FormField::EnableAI);
+        self.render_field(frame, chunks[1], FormField::OllamaApiUrl);
+        self.render_field(frame, chunks[2], FormField::OllamaModel);
     }
 
     /// Render dead code detection settings
@@ -1024,26 +510,18 @@ impl AnalyzeForm {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
-                Constraint::Length(5), // Confidence (20% bigger: 4 -> 5)
-                Constraint::Length(3), // Library mode toggle (20% bigger: 2 -> 3)
-                Constraint::Length(5), // Ignore patterns (20% bigger: 4 -> 5)
-                Constraint::Length(5), // Keep alive patterns (20% bigger: 4 -> 5)
-                Constraint::Min(0),    // Remaining space
+                Constraint::Length(5), // Confidence
+                Constraint::Length(3), // Library mode
+                Constraint::Length(5), // Ignore patterns
+                Constraint::Length(5), // Keep alive
+                Constraint::Min(0),
             ])
             .split(area);
 
-        self.inputs
-            .dead_code_confidence_input
-            .render(frame, chunks[0]);
-        self.inputs
-            .dead_code_library_mode_toggle
-            .render(frame, chunks[1]);
-        self.inputs
-            .dead_code_ignore_patterns_input
-            .render(frame, chunks[2]);
-        self.inputs
-            .dead_code_keep_alive_input
-            .render(frame, chunks[3]);
+        self.render_field(frame, chunks[0], FormField::DeadCodeConfidence);
+        self.render_field(frame, chunks[1], FormField::DeadCodeLibraryMode);
+        self.render_field(frame, chunks[2], FormField::DeadCodeIgnorePatterns);
+        self.render_field(frame, chunks[3], FormField::DeadCodeKeepAlive);
     }
 
     /// Render large classes detection settings
@@ -1051,38 +529,24 @@ impl AnalyzeForm {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
-                Constraint::Length(5), // Max LOC (20% bigger: 4 -> 5)
-                Constraint::Length(5), // Max Methods (20% bigger: 4 -> 5)
-                Constraint::Length(5), // Max Fields (20% bigger: 4 -> 5)
-                Constraint::Length(5), // Max Complexity (20% bigger: 4 -> 5)
-                Constraint::Length(5), // Max LCOM (20% bigger: 4 -> 5)
-                Constraint::Length(5), // Ignore patterns (20% bigger: 4 -> 5)
-                Constraint::Length(5), // Min Severity (20% bigger: 4 -> 5)
-                Constraint::Min(0),    // Remaining space
+                Constraint::Length(5),
+                Constraint::Length(5),
+                Constraint::Length(5),
+                Constraint::Length(5),
+                Constraint::Length(5),
+                Constraint::Length(5),
+                Constraint::Length(5),
+                Constraint::Min(0),
             ])
             .split(area);
 
-        self.inputs
-            .large_classes_max_loc_input
-            .render(frame, chunks[0]);
-        self.inputs
-            .large_classes_max_methods_input
-            .render(frame, chunks[1]);
-        self.inputs
-            .large_classes_max_fields_input
-            .render(frame, chunks[2]);
-        self.inputs
-            .large_classes_max_complexity_input
-            .render(frame, chunks[3]);
-        self.inputs
-            .large_classes_max_lcom_input
-            .render(frame, chunks[4]);
-        self.inputs
-            .large_classes_ignore_patterns_input
-            .render(frame, chunks[5]);
-        self.inputs
-            .large_classes_min_severity_input
-            .render(frame, chunks[6]);
+        self.render_field(frame, chunks[0], FormField::LargeClassesMaxLoc);
+        self.render_field(frame, chunks[1], FormField::LargeClassesMaxMethods);
+        self.render_field(frame, chunks[2], FormField::LargeClassesMaxFields);
+        self.render_field(frame, chunks[3], FormField::LargeClassesMaxComplexity);
+        self.render_field(frame, chunks[4], FormField::LargeClassesMaxLcom);
+        self.render_field(frame, chunks[5], FormField::LargeClassesIgnorePatterns);
+        self.render_field(frame, chunks[6], FormField::LargeClassesMinSeverity);
     }
 
     /// Render footer with help and status
@@ -1139,7 +603,7 @@ mod tests {
     fn test_form_creation() {
         let form = AnalyzeForm::new();
         assert_eq!(form.current_section, FormSection::BasicSettings);
-        assert_eq!(form.current_field, Some(FormField::Path));
+        assert_eq!(form.focus_manager.current_focus(), Some(FormField::Path.to_index()));
     }
 
     #[test]
@@ -1148,32 +612,11 @@ mod tests {
 
         form.next_section();
         assert_eq!(form.current_section, FormSection::AIConfiguration);
+        assert_eq!(form.focus_manager.current_focus(), Some(FormField::EnableAI.to_index()));
 
         form.previous_section();
         assert_eq!(form.current_section, FormSection::BasicSettings);
-    }
-
-    #[test]
-    fn test_field_validation() {
-        let mut form = AnalyzeForm::new();
-
-        // Test empty path validation
-        form.inputs.path_picker.set_value("");
-        form.validate_field(FormField::Path);
-        assert!(form.validation_errors.contains_key(&FormField::Path));
-    }
-
-    #[test]
-    fn test_to_analyze_command() {
-        let mut form = AnalyzeForm::new();
-        form.inputs.path_picker.set_value("./test");
-
-        let result = form.to_analyze_command();
-        assert!(result.is_ok());
-
-        let command = result.unwrap();
-        assert_eq!(command.path, PathBuf::from("./test"));
-        assert_eq!(command.output_format, "markdown");
+        assert_eq!(form.focus_manager.current_focus(), Some(FormField::Path.to_index()));
     }
 
     #[test]

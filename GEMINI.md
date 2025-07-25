@@ -1,5 +1,7 @@
 # Gemini Agent Project Guide: uveddi
 
+!!! IF YOU EVER GET STUCK ON ANYTHING JUST ASK OUR PROJECT ARCHITECT !!!
+
 ## About This File
 
 This document provides guidance for the Gemini AI agent to effectively understand and interact with the `uveddi` project. It outlines the project's architecture, tech stack, key commands, and development workflows.

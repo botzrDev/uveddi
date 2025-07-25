@@ -56,8 +56,9 @@ impl AntiPatternType {
 #[cfg(test)]
 mod tests {
     use super::*;
+    /// Tests serialization and deserialization of AntiPatternType.
     #[test]
-    fn test_antipatterntype_serialization() {
+    fn serialization_roundtrip_preserves_antipattern_type() {
         let ap = AntiPatternType::new(
             1,
             "God Object",

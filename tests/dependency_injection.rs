@@ -60,7 +60,7 @@ impl AstParserTrait for MockAstParser {
             tree: None,
             source: Arc::new("// Mock file content".to_string()),
             custom_ast: Arc::new(None),
-            modified_at: std::time::SystemTime::now(),
+            modified_at: uveddi::analysis::cache::compat::ArchivableSystemTime(std::time::SystemTime::now()),
         })
     }
 

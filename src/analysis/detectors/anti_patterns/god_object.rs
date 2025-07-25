@@ -1319,7 +1319,7 @@ impl AnalysisDetector for GodObjectDetector {
         Ok(result.unwrap_or_default())
     }
     fn get_detector_name(&self) -> &'static str {
-        "god_object"
+        "GodObjectDetector"
     }
     fn get_anti_pattern_types(&self) -> Vec<AntiPatternType> {
         vec![AntiPatternType {

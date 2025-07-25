@@ -4,7 +4,7 @@ use uveddi::analysis::performance::PerformanceAnalyzer;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("🚀 Starting UV-49 Performance Baseline Analysis");
 
-    let analyzer = PerformanceAnalyzer::new();
+    let analyzer = PerformanceAnalyzer::new()?;
 
     match analyzer.analyze_rendering_performance().await {
         Ok(baseline) => {

@@ -8,7 +8,7 @@
 //! use crate::tui::ui::components::{FocusManager, FocusableInput};
 //! // Assume MyInput implements FocusableInput
 //! let mut manager = FocusManager::new();
-//! manager.add_input(Box::new(MyInput::default()));
+//! // manager.add_input(Box::new(MyInput::default()));
 //! manager.set_focus_by_index(0);
 //! assert_eq!(manager.current_focus(), Some(0));
 //! manager.clear_all_focus();
@@ -16,6 +16,7 @@
 //! ```
 
 use super::FocusableInput;
+use std::any::Any;
 
 /// Manages focus state across multiple input components
 pub struct FocusManager {
@@ -25,14 +26,16 @@ pub struct FocusManager {
     current_focus_index: Option<usize>,
 }
 
-impl Clone for FocusManager {
-    fn clone(&self) -> Self {
-        Self {
-            focusable_inputs: Vec::new(), // Can't clone trait objects, so start fresh
-            current_focus_index: self.current_focus_index,
-        }
-    }
-}
+// This is problematic because FocusableInput is not clonable.
+// We will remove clone from AnalyzeForm instead.
+// impl Clone for FocusManager {
+//     fn clone(&self) -> Self {
+//         Self {
+//             focusable_inputs: self.focusable_inputs.clone(), // This requires inputs to be cloneable
+//             current_focus_index: self.current_focus_index,
+//         }
+//     }
+// }
 
 impl std::fmt::Debug for FocusManager {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -85,12 +88,34 @@ impl FocusManager {
     pub fn current_focus(&self) -> Option<usize> {
         self.current_focus_index
     }
+
+    /// Get a mutable reference to the currently focused input
+    pub fn get(&self, index: usize) -> Option<&dyn FocusableInput> {
+        self.focusable_inputs.get(index).map(|b| b.as_ref())
+    }
+
+    pub fn handle_key(&mut self, key: ratatui::crossterm::event::KeyEvent) -> Option<crate::tui::messages::AppMessage> {
+        if let Some(index) = self.current_focus_index {
+            if let Some(input) = self.focusable_inputs.get_mut(index) {
+                return input.handle_key(key);
+            }
+        }
+        None
+    }
+
+    /// Get the total number of inputs
+    pub fn len(&self) -> usize {
+        self.focusable_inputs.len()
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::tui::messages::AppMessage;
+    use ratatui::crossterm::event::KeyEvent;
 
+    #[derive(Debug)]
     struct DummyInput {
         focused: bool,
         can_focus: bool,
@@ -106,6 +131,12 @@ mod tests {
     }
 
     impl FocusableInput for DummyInput {
+        fn as_any(&self) -> &dyn Any {
+            self
+        }
+        fn as_any_mut(&mut self) -> &mut dyn Any {
+            self
+        }
         fn set_focused(&mut self, focused: bool) {
             self.focused = focused;
         }
@@ -115,6 +146,10 @@ mod tests {
         fn is_focused(&self) -> bool {
             self.focused
         }
+        fn handle_key(&mut self, _key: KeyEvent) -> Option<AppMessage> {
+            None
+        }
+        fn render(&self, _frame: &mut ratatui::Frame, _area: ratatui::prelude::Rect) {}
     }
 
     #[test]

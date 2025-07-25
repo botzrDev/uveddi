@@ -5,7 +5,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("🧪 Starting UV-48 Performance Validation Suite");
     println!("===============================================");
 
-    let validator = PerformanceValidator::new();
+    let validator = PerformanceValidator::new()?;
 
     match validator.run_comprehensive_validation().await {
         Ok(test_suite) => {

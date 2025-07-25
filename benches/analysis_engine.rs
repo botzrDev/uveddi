@@ -1,3 +1,7 @@
+//! Benchmarks for Uveddi Analysis Engine
+//!
+//! This file contains Criterion benchmarks for scalability, memory usage, and concurrency of the analysis engine.
+//! It generates synthetic Rust projects and measures performance of key analysis phases and detectors.
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use std::fs;
 use std::path::Path;
@@ -219,7 +223,7 @@ edition = "2021"
     temp_dir
 }
 
-/// Benchmark the analysis engine with different project sizes
+/// Benchmark scalability of the analysis engine with varying project sizes.
 fn bench_analysis_engine_scalability(c: &mut Criterion) {
     let mut group = c.benchmark_group("analysis_engine_scalability");
 
@@ -245,7 +249,7 @@ fn bench_analysis_engine_scalability(c: &mut Criterion) {
     group.finish();
 }
 
-/// Benchmark God Object detection specifically
+/// Benchmark God Object anti-pattern detection across multiple files.
 fn bench_god_object_detection(c: &mut Criterion) {
     let mut group = c.benchmark_group("god_object_detection");
 
@@ -318,7 +322,7 @@ fn create_mock_parsed_file(file_path: &Path, source: &str) -> uveddi::ast::Parse
     }
 }
 
-/// Benchmark different analysis phases
+/// Benchmark initialization, file discovery, and parsing phases of analysis.
 fn bench_analysis_phases(c: &mut Criterion) {
     let mut group = c.benchmark_group("analysis_phases");
     let temp_project = create_test_project(50);
@@ -368,7 +372,7 @@ fn bench_analysis_phases(c: &mut Criterion) {
     group.finish();
 }
 
-/// Benchmark memory usage patterns
+/// Benchmark memory usage for large synthetic projects.
 fn bench_memory_patterns(c: &mut Criterion) {
     let mut group = c.benchmark_group("memory_patterns");
 
@@ -394,7 +398,7 @@ fn bench_memory_patterns(c: &mut Criterion) {
     group.finish();
 }
 
-/// Benchmark concurrent analysis
+/// Benchmark concurrent analysis with multiple threads.
 fn bench_concurrent_analysis(c: &mut Criterion) {
     let mut group = c.benchmark_group("concurrent_analysis");
 

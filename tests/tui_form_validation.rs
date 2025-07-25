@@ -4,8 +4,6 @@
 // This module tests the form validation logic and data conversion
 // between TUI form inputs and backend command structures.
 // Focuses on ensuring data integrity and proper error handling.
-use std::path::PathBuf;
-
 use uveddi::cli::analyze_command::AnalyzeCommand;
 
 /// Mock form data structure that simulates TUI form inputs
@@ -268,15 +266,19 @@ impl MockAnalyzeFormData {
     }
 }
 
-/// Helper function to create a test file for validation
-async fn create_test_file() -> std::io::Result<std::path::PathBuf> {
-    let test_dir = std::path::PathBuf::from("./tmp/form_validation_test");
+/// Helper function to create a unique test file for validation with UUID-based isolation
+async fn create_unique_test_file() -> std::io::Result<(std::path::PathBuf, std::path::PathBuf)> {
+    use std::sync::atomic::{AtomicU64, Ordering};
+    static COUNTER: AtomicU64 = AtomicU64::new(0);
+    
+    let unique_id = COUNTER.fetch_add(1, Ordering::SeqCst);
+    let test_dir = std::path::PathBuf::from(format!("./tmp/form_validation_test_{}", unique_id));
     tokio::fs::create_dir_all(&test_dir).await?;
 
     let test_file = test_dir.join("test.rs");
     tokio::fs::write(&test_file, "fn main() { println!(\"test\"); }").await?;
 
-    Ok(test_file)
+    Ok((test_file, test_dir))
 }
 
 #[tokio::test]
@@ -301,7 +303,7 @@ async fn test_form_validation_nonexistent_path() {
 
 #[tokio::test]
 async fn test_form_validation_valid_path() {
-    let test_file = create_test_file().await.unwrap();
+    let (test_file, test_dir) = create_unique_test_file().await.unwrap();
     let mut form = MockAnalyzeFormData::new();
     form.path = test_file.to_string_lossy().to_string();
 
@@ -312,14 +314,14 @@ async fn test_form_validation_valid_path() {
     assert_eq!(command.path, test_file);
 
     // Cleanup
-    tokio::fs::remove_dir_all("./tmp/form_validation_test")
+    tokio::fs::remove_dir_all(&test_dir)
         .await
         .ok();
 }
 
 #[tokio::test]
 async fn test_form_validation_invalid_confidence() {
-    let test_file = create_test_file().await.unwrap();
+    let (test_file, test_dir) = create_unique_test_file().await.unwrap();
     let mut form = MockAnalyzeFormData::new();
     form.path = test_file.to_string_lossy().to_string();
     form.dead_code_confidence = Some("1.5".to_string()); // Invalid: > 1.0
@@ -333,14 +335,14 @@ async fn test_form_validation_invalid_confidence() {
     );
 
     // Cleanup
-    tokio::fs::remove_dir_all("./tmp/form_validation_test")
+    tokio::fs::remove_dir_all(&test_dir)
         .await
         .ok();
 }
 
 #[tokio::test]
 async fn test_form_validation_invalid_confidence_format() {
-    let test_file = create_test_file().await.unwrap();
+    let (test_file, test_dir) = create_unique_test_file().await.unwrap();
     let mut form = MockAnalyzeFormData::new();
     form.path = test_file.to_string_lossy().to_string();
     form.dead_code_confidence = Some("not_a_number".to_string());
@@ -354,14 +356,14 @@ async fn test_form_validation_invalid_confidence_format() {
     );
 
     // Cleanup
-    tokio::fs::remove_dir_all("./tmp/form_validation_test")
+    tokio::fs::remove_dir_all(&test_dir)
         .await
         .ok();
 }
 
 #[tokio::test]
 async fn test_form_validation_valid_confidence() {
-    let test_file = create_test_file().await.unwrap();
+    let (test_file, test_dir) = create_unique_test_file().await.unwrap();
     let mut form = MockAnalyzeFormData::new();
     form.path = test_file.to_string_lossy().to_string();
     form.dead_code_confidence = Some("0.8".to_string());
@@ -373,14 +375,14 @@ async fn test_form_validation_valid_confidence() {
     assert_eq!(command.dead_code_confidence, Some(0.8));
 
     // Cleanup
-    tokio::fs::remove_dir_all("./tmp/form_validation_test")
+    tokio::fs::remove_dir_all(&test_dir)
         .await
         .ok();
 }
 
 #[tokio::test]
 async fn test_form_validation_invalid_output_format() {
-    let test_file = create_test_file().await.unwrap();
+    let (test_file, test_dir) = create_unique_test_file().await.unwrap();
     let mut form = MockAnalyzeFormData::new();
     form.path = test_file.to_string_lossy().to_string();
     form.output_format = "invalid_format".to_string();
@@ -391,14 +393,14 @@ async fn test_form_validation_invalid_output_format() {
     assert!(result.unwrap_err().contains("Invalid output format"));
 
     // Cleanup
-    tokio::fs::remove_dir_all("./tmp/form_validation_test")
+    tokio::fs::remove_dir_all(&test_dir)
         .await
         .ok();
 }
 
 #[tokio::test]
 async fn test_form_validation_zero_numeric_fields() {
-    let test_file = create_test_file().await.unwrap();
+    let (test_file, test_dir) = create_unique_test_file().await.unwrap();
     let mut form = MockAnalyzeFormData::new();
     form.path = test_file.to_string_lossy().to_string();
     form.large_classes_max_loc = Some("0".to_string());
@@ -409,14 +411,14 @@ async fn test_form_validation_zero_numeric_fields() {
     assert_eq!(result.unwrap_err(), "Maximum LOC must be greater than 0");
 
     // Cleanup
-    tokio::fs::remove_dir_all("./tmp/form_validation_test")
+    tokio::fs::remove_dir_all(&test_dir)
         .await
         .ok();
 }
 
 #[tokio::test]
 async fn test_form_validation_pattern_parsing() {
-    let test_file = create_test_file().await.unwrap();
+    let (test_file, test_dir) = create_unique_test_file().await.unwrap();
     let mut form = MockAnalyzeFormData::new();
     form.path = test_file.to_string_lossy().to_string();
     form.dead_code_ignore_patterns = Some("test, spec,mock,  generated  ".to_string());
@@ -429,14 +431,14 @@ async fn test_form_validation_pattern_parsing() {
     assert_eq!(patterns, vec!["test", "spec", "mock", "generated"]);
 
     // Cleanup
-    tokio::fs::remove_dir_all("./tmp/form_validation_test")
+    tokio::fs::remove_dir_all(&test_dir)
         .await
         .ok();
 }
 
 #[tokio::test]
 async fn test_form_validation_empty_patterns() {
-    let test_file = create_test_file().await.unwrap();
+    let (test_file, test_dir) = create_unique_test_file().await.unwrap();
     let mut form = MockAnalyzeFormData::new();
     form.path = test_file.to_string_lossy().to_string();
     form.dead_code_ignore_patterns = Some("   ".to_string()); // Only whitespace
@@ -448,14 +450,14 @@ async fn test_form_validation_empty_patterns() {
     assert!(command.dead_code_ignore_patterns.is_none());
 
     // Cleanup
-    tokio::fs::remove_dir_all("./tmp/form_validation_test")
+    tokio::fs::remove_dir_all(&test_dir)
         .await
         .ok();
 }
 
 #[tokio::test]
 async fn test_form_validation_severity_range() {
-    let test_file = create_test_file().await.unwrap();
+    let (test_file, test_dir) = create_unique_test_file().await.unwrap();
     let mut form = MockAnalyzeFormData::new();
     form.path = test_file.to_string_lossy().to_string();
     form.large_classes_min_severity = Some("101".to_string()); // Invalid: > 100
@@ -469,14 +471,14 @@ async fn test_form_validation_severity_range() {
     );
 
     // Cleanup
-    tokio::fs::remove_dir_all("./tmp/form_validation_test")
+    tokio::fs::remove_dir_all(&test_dir)
         .await
         .ok();
 }
 
 #[tokio::test]
 async fn test_form_validation_lcom_range() {
-    let test_file = create_test_file().await.unwrap();
+    let (test_file, test_dir) = create_unique_test_file().await.unwrap();
     let mut form = MockAnalyzeFormData::new();
     form.path = test_file.to_string_lossy().to_string();
     form.large_classes_max_lcom = Some("1.5".to_string()); // Invalid: > 1.0
@@ -490,14 +492,14 @@ async fn test_form_validation_lcom_range() {
     );
 
     // Cleanup
-    tokio::fs::remove_dir_all("./tmp/form_validation_test")
+    tokio::fs::remove_dir_all(&test_dir)
         .await
         .ok();
 }
 
 #[tokio::test]
 async fn test_form_validation_complete_valid_form() {
-    let test_file = create_test_file().await.unwrap();
+    let (test_file, test_dir) = create_unique_test_file().await.unwrap();
     let mut form = MockAnalyzeFormData::new();
     form.path = test_file.to_string_lossy().to_string();
     form.output_format = "json".to_string();
@@ -560,14 +562,14 @@ async fn test_form_validation_complete_valid_form() {
     assert_eq!(command.large_classes_min_severity, Some(30));
 
     // Cleanup
-    tokio::fs::remove_dir_all("./tmp/form_validation_test")
+    tokio::fs::remove_dir_all(&test_dir)
         .await
         .ok();
 }
 
 #[tokio::test]
 async fn test_form_validation_optional_fields_empty() {
-    let test_file = create_test_file().await.unwrap();
+    let (test_file, test_dir) = create_unique_test_file().await.unwrap();
     let mut form = MockAnalyzeFormData::new();
     form.path = test_file.to_string_lossy().to_string();
     // Leave all optional fields as None or empty
@@ -590,7 +592,7 @@ async fn test_form_validation_optional_fields_empty() {
     assert_eq!(command.large_classes_min_severity, None);
 
     // Cleanup
-    tokio::fs::remove_dir_all("./tmp/form_validation_test")
+    tokio::fs::remove_dir_all(&test_dir)
         .await
         .ok();
 }
@@ -598,7 +600,7 @@ async fn test_form_validation_optional_fields_empty() {
 /// Test boundary values for numeric inputs
 #[tokio::test]
 async fn test_form_validation_boundary_values() {
-    let test_file = create_test_file().await.unwrap();
+    let (test_file, test_dir) = create_unique_test_file().await.unwrap();
 
     // Test minimum valid confidence
     let mut form = MockAnalyzeFormData::new();
@@ -632,7 +634,7 @@ async fn test_form_validation_boundary_values() {
     assert!(form.to_analyze_command().is_err());
 
     // Cleanup
-    tokio::fs::remove_dir_all("./tmp/form_validation_test")
+    tokio::fs::remove_dir_all(&test_dir)
         .await
         .ok();
 }

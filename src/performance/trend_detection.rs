@@ -42,7 +42,7 @@ impl TrendDetector {
     pub fn new() -> Self {
         Self {
             min_segment_length: 5,
-            penalty_factor: 2.0,
+            penalty_factor: 1.5, // More sensitive to changes
             max_change_points: 10,
         }
     }
@@ -107,6 +107,7 @@ impl TrendDetector {
         let window_size = self.min_segment_length;
         let threshold = self.calculate_threshold(values);
 
+
         // Sliding window approach to detect change points
         for i in window_size..(values.len() - window_size) {
             let before_window = &values[i.saturating_sub(window_size)..i];
@@ -123,7 +124,12 @@ impl TrendDetector {
             // Check if there's a significant change
             let change_magnitude = (after_mean - before_mean).abs();
 
-            if change_magnitude > threshold && change_magnitude > combined_std * 2.0 {
+
+            // Use adaptive threshold - either global threshold or local standard deviation threshold
+            let local_threshold = combined_std * 1.5; // Reduced multiplier for local changes
+            let effective_threshold = threshold.min(local_threshold).max(0.1); // Minimum threshold to avoid noise
+            
+            if change_magnitude > effective_threshold {
                 // Avoid duplicate change points too close together
                 if change_points.is_empty() || i - change_points.last().unwrap() > window_size {
                     change_points.push(i);
@@ -260,8 +266,14 @@ impl TrendDetector {
         let mean = self.calculate_mean(values);
         let std_dev = self.calculate_variance(values, mean).sqrt();
 
-        // Use penalty factor to adjust sensitivity
-        std_dev * self.penalty_factor
+        // Use penalty factor to adjust sensitivity, but ensure minimum threshold
+        let threshold = std_dev * self.penalty_factor;
+        
+        // Ensure a minimum threshold relative to data range
+        let data_range = values.iter().fold(0.0f64, |acc, &x| acc.max((x - mean).abs()));
+        let min_threshold = data_range * 0.1; // 10% of data range from mean
+        
+        threshold.max(min_threshold)
     }
 
     /// Calculate mean of values
@@ -322,6 +334,7 @@ mod tests {
 
         let detector = TrendDetector::new();
         let result = detector.detect_change_points_pelt(&values).unwrap();
+
 
         assert!(!result.change_points.is_empty());
 

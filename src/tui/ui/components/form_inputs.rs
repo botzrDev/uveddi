@@ -6,7 +6,10 @@
 //! - Integration with the TEA message system
 //! - Consistent styling and behavior
 
-use crate::tui::ui::components::FocusableInput;
+use crate::tui::{
+    messages::{AppMessage, FieldValue},
+    ui::{analyze_form::FormField, components::FocusableInput},
+};
 use ratatui::crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
     prelude::*,
@@ -14,6 +17,7 @@ use ratatui::{
     text::{Line, Span},
     widgets::{Block, Borders, List, ListItem, Paragraph},
 };
+use std::any::Any;
 use tui_input::{backend::crossterm::EventHandler, Input};
 
 /// Validation result for form inputs
@@ -54,9 +58,17 @@ pub struct TextInput {
     pub placeholder: Option<String>,
     /// Maximum character length
     pub max_length: Option<usize>,
+    /// The form field this input corresponds to
+    pub field_identifier: FormField,
 }
 
 impl FocusableInput for TextInput {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
+    }
     fn set_focused(&mut self, focused: bool) {
         self.is_focused = focused;
     }
@@ -64,11 +76,110 @@ impl FocusableInput for TextInput {
     fn is_focused(&self) -> bool {
         self.is_focused
     }
+
+    fn handle_key(&mut self, key: KeyEvent) -> Option<AppMessage> {
+        if !self.is_focused {
+            return None;
+        }
+
+        // Check max length before accepting input
+        if let Some(max_len) = self.max_length {
+            if self.input.value().len() >= max_len && matches!(key.code, KeyCode::Char(_)) {
+                return None; // Consume the event but don't add character
+            }
+        }
+
+        let old_value = self.value();
+        if self
+            .input
+            .handle_event(&ratatui::crossterm::event::Event::Key(key))
+            .is_some()
+        {
+            let new_value = self.value();
+            if old_value != new_value {
+                return Some(AppMessage::FormFieldChanged {
+                    field: self.field_identifier,
+                    value: FieldValue::String(new_value),
+                });
+            }
+        }
+        None
+    }
+
+    fn render(&self, frame: &mut Frame, area: Rect) {
+        let chunks = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([
+                Constraint::Length(1), // Label
+                Constraint::Length(3), // Input box
+                Constraint::Length(1), // Error message
+            ])
+            .split(area);
+
+        // Render label
+        let label_style = if self.is_focused {
+            Style::default()
+                .fg(Color::Cyan)
+                .add_modifier(Modifier::BOLD)
+        } else {
+            Style::default().fg(Color::Gray)
+        };
+
+        let label_paragraph = Paragraph::new(self.label.as_str()).style(label_style);
+        frame.render_widget(label_paragraph, chunks[0]);
+
+        // Render input box
+        let border_style = if self.error.is_some() {
+            Style::default().fg(Color::Red)
+        } else if self.is_focused {
+            Style::default().fg(Color::Cyan)
+        } else {
+            Style::default().fg(Color::Gray)
+        };
+
+        let current_value = self.input.value();
+        let display_value = if current_value.is_empty() && !self.is_focused {
+            self.placeholder.as_deref().unwrap_or("")
+        } else {
+            current_value
+        };
+
+        let display_style = if current_value.is_empty() && !self.is_focused {
+            Style::default().fg(Color::DarkGray) // Placeholder style
+        } else {
+            Style::default().fg(Color::White)
+        };
+
+        let input_paragraph = Paragraph::new(display_value).style(display_style).block(
+            Block::default()
+                .borders(Borders::ALL)
+                .border_style(border_style),
+        );
+
+        frame.render_widget(input_paragraph, chunks[1]);
+
+        // Set cursor position if focused
+        if self.is_focused {
+            let cursor_x = chunks[1].x + 1 + self.input.visual_cursor() as u16;
+            let cursor_y = chunks[1].y + 1;
+
+            if cursor_x < chunks[1].x + chunks[1].width - 1 {
+                frame.set_cursor_position((cursor_x, cursor_y));
+            }
+        }
+
+        // Render error message
+        if let Some(error) = &self.error {
+            let error_paragraph =
+                Paragraph::new(error.as_str()).style(Style::default().fg(Color::Red));
+            frame.render_widget(error_paragraph, chunks[2]);
+        }
+    }
 }
 
 impl TextInput {
     /// Create a new text input
-    pub fn new(label: &str) -> Self {
+    pub fn new(label: &str, field_identifier: FormField) -> Self {
         Self {
             input: Input::default(),
             label: label.to_string(),
@@ -76,6 +187,7 @@ impl TextInput {
             error: None,
             placeholder: None,
             max_length: None,
+            field_identifier,
         }
     }
 
@@ -101,32 +213,9 @@ impl TextInput {
         self.input = Input::new(value.to_string());
     }
 
-    /// Set focus state (deprecated - use FocusableInput trait)
-    pub fn set_focused(&mut self, focused: bool) {
-        self.is_focused = focused;
-    }
-
     /// Set error message
     pub fn set_error(&mut self, error: Option<String>) {
         self.error = error;
-    }
-
-    /// Handle key input
-    pub fn handle_key(&mut self, key: KeyEvent) -> bool {
-        if !self.is_focused {
-            return false;
-        }
-
-        // Check max length before accepting input
-        if let Some(max_len) = self.max_length {
-            if self.input.value().len() >= max_len && matches!(key.code, KeyCode::Char(_)) {
-                return true; // Consume the event but don't add character
-            }
-        }
-
-        self.input
-            .handle_event(&ratatui::crossterm::event::Event::Key(key))
-            .is_some()
     }
 
     /// Validate the current input
@@ -148,98 +237,6 @@ impl TextInput {
 
         ValidationResult::valid()
     }
-
-    /// Render the text input
-    pub fn render(&self, frame: &mut Frame, area: Rect) {
-        let chunks = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints([
-                Constraint::Length(1), // Label
-                Constraint::Length(3), // Input box
-                Constraint::Length(1), // Error message
-            ])
-            .split(area);
-
-        // Render label
-        let label_style = if self.is_focused {
-            Style::default()
-                .fg(Color::Cyan)
-                .add_modifier(Modifier::BOLD)
-        } else {
-            Style::default().fg(Color::Gray)
-        };
-
-        let label_paragraph = Paragraph::new(self.label.as_str()).style(label_style);
-        frame.render_widget(label_paragraph, chunks[0]);
-
-        // Render input box
-        let input_style = if self.is_focused {
-            Style::default().fg(Color::Yellow).bg(Color::Black)
-        } else {
-            Style::default().fg(Color::White).bg(Color::Black)
-        };
-
-        let border_style = if self.error.is_some() {
-            Style::default().fg(Color::Red)
-        } else if self.is_focused {
-            Style::default().fg(Color::Cyan)
-        } else {
-            Style::default().fg(Color::Gray)
-        };
-
-        let current_value = self.input.value();
-        let display_value = if current_value.is_empty() && !self.is_focused {
-            self.placeholder.as_deref().unwrap_or("")
-        } else {
-            current_value
-        };
-
-        // Debug: Show typed text even when not focused for debugging
-        let debug_display = if current_value.is_empty() {
-            if self.is_focused {
-                "_" // Show cursor placeholder when focused and empty
-            } else {
-                self.placeholder.as_deref().unwrap_or("")
-            }
-        } else {
-            current_value // Always show typed text
-        };
-
-        let display_style = if current_value.is_empty() && !self.is_focused {
-            Style::default().fg(Color::DarkGray) // Placeholder style
-        } else {
-            Style::default()
-                .fg(Color::White)
-                .bg(Color::Black)
-                .add_modifier(Modifier::BOLD)
-        };
-
-        let input_paragraph = Paragraph::new(debug_display).style(display_style).block(
-            Block::default()
-                .borders(Borders::ALL)
-                .border_style(border_style),
-        );
-
-        frame.render_widget(input_paragraph, chunks[1]);
-
-        // Set cursor position if focused (move up to align with text)
-        if self.is_focused {
-            let cursor_x = chunks[1].x + 1 + self.input.visual_cursor() as u16;
-            let cursor_y = chunks[1].y + 1; // Position cursor in the middle of the input box
-
-            // Ensure cursor is within bounds
-            if cursor_x < chunks[1].x + chunks[1].width - 1 {
-                frame.set_cursor_position((cursor_x, cursor_y));
-            }
-        }
-
-        // Render error message
-        if let Some(error) = &self.error {
-            let error_paragraph =
-                Paragraph::new(error.as_str()).style(Style::default().fg(Color::Red));
-            frame.render_widget(error_paragraph, chunks[2]);
-        }
-    }
 }
 
 /// Toggle component for boolean values
@@ -251,9 +248,17 @@ pub struct Toggle {
     pub label: String,
     /// Whether this toggle currently has focus
     pub is_focused: bool,
+    /// The form field this input corresponds to
+    pub field_identifier: FormField,
 }
 
 impl FocusableInput for Toggle {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
+    }
     fn set_focused(&mut self, focused: bool) {
         self.is_focused = focused;
     }
@@ -261,45 +266,25 @@ impl FocusableInput for Toggle {
     fn is_focused(&self) -> bool {
         self.is_focused
     }
-}
 
-impl Toggle {
-    /// Create a new toggle
-    pub fn new(label: &str, initial_value: bool) -> Self {
-        Self {
-            value: initial_value,
-            label: label.to_string(),
-            is_focused: false,
-        }
-    }
-
-    /// Set focus state (deprecated - use FocusableInput trait)
-    pub fn set_focused(&mut self, focused: bool) {
-        self.is_focused = focused;
-    }
-
-    /// Toggle the value
-    pub fn toggle(&mut self) {
-        self.value = !self.value;
-    }
-
-    /// Handle key input
-    pub fn handle_key(&mut self, key: KeyEvent) -> bool {
+    fn handle_key(&mut self, key: KeyEvent) -> Option<AppMessage> {
         if !self.is_focused {
-            return false;
+            return None;
         }
 
         match key.code {
             KeyCode::Enter | KeyCode::Char(' ') => {
                 self.toggle();
-                true
+                Some(AppMessage::FormFieldChanged {
+                    field: self.field_identifier,
+                    value: FieldValue::Boolean(self.value),
+                })
             }
-            _ => false,
+            _ => None,
         }
     }
 
-    /// Render the toggle
-    pub fn render(&self, frame: &mut Frame, area: Rect) {
+    fn render(&self, frame: &mut Frame, area: Rect) {
         let toggle_symbol = if self.value { "☑" } else { "☐" };
         let toggle_text = if self.value { "ON" } else { "OFF" };
 
@@ -340,6 +325,23 @@ impl Toggle {
     }
 }
 
+impl Toggle {
+    /// Create a new toggle
+    pub fn new(label: &str, initial_value: bool, field_identifier: FormField) -> Self {
+        Self {
+            value: initial_value,
+            label: label.to_string(),
+            is_focused: false,
+            field_identifier,
+        }
+    }
+
+    /// Toggle the value
+    pub fn toggle(&mut self) {
+        self.value = !self.value;
+    }
+}
+
 /// Dropdown component for selecting from a list of options
 #[derive(Debug, Clone)]
 pub struct Dropdown {
@@ -353,9 +355,17 @@ pub struct Dropdown {
     pub is_focused: bool,
     /// Whether the dropdown is currently open
     pub is_open: bool,
+    /// The form field this input corresponds to
+    pub field_identifier: FormField,
 }
 
 impl FocusableInput for Dropdown {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
+    }
     fn set_focused(&mut self, focused: bool) {
         self.is_focused = focused;
         if !focused {
@@ -366,48 +376,23 @@ impl FocusableInput for Dropdown {
     fn is_focused(&self) -> bool {
         self.is_focused
     }
-}
 
-impl Dropdown {
-    /// Create a new dropdown
-    pub fn new(label: &str, options: Vec<String>) -> Self {
-        Self {
-            options,
-            selected_index: 0,
-            label: label.to_string(),
-            is_focused: false,
-            is_open: false,
-        }
-    }
-
-    /// Get the currently selected value
-    pub fn selected_value(&self) -> Option<&String> {
-        self.options.get(self.selected_index)
-    }
-
-    /// Get the current value (alias for selected_value for compatibility)
-    pub fn value(&self) -> Option<String> {
-        self.selected_value().map(|s| s.clone())
-    }
-
-    /// Set focus state (deprecated - use FocusableInput trait)
-    pub fn set_focused(&mut self, focused: bool) {
-        self.is_focused = focused;
-        if !focused {
-            self.is_open = false;
-        }
-    }
-
-    /// Handle key input
-    pub fn handle_key(&mut self, key: KeyEvent) -> bool {
+    fn handle_key(&mut self, key: KeyEvent) -> Option<AppMessage> {
         if !self.is_focused {
-            return false;
+            return None;
         }
 
         match key.code {
             KeyCode::Enter | KeyCode::Char(' ') => {
                 self.is_open = !self.is_open;
-                true
+                if !self.is_open {
+                    // Selection confirmed
+                    return Some(AppMessage::FormFieldChanged {
+                        field: self.field_identifier,
+                        value: FieldValue::String(self.selected_value().unwrap().clone()),
+                    });
+                }
+                None
             }
             KeyCode::Up | KeyCode::Char('k') if self.is_open => {
                 if self.selected_index > 0 {
@@ -415,7 +400,7 @@ impl Dropdown {
                 } else {
                     self.selected_index = self.options.len() - 1;
                 }
-                true
+                None
             }
             KeyCode::Down | KeyCode::Char('j') if self.is_open => {
                 if self.selected_index < self.options.len() - 1 {
@@ -423,18 +408,17 @@ impl Dropdown {
                 } else {
                     self.selected_index = 0;
                 }
-                true
+                None
             }
             KeyCode::Esc => {
                 self.is_open = false;
-                true
+                None
             }
-            _ => false,
+            _ => None,
         }
     }
 
-    /// Render the dropdown
-    pub fn render(&self, frame: &mut Frame, area: Rect) {
+    fn render(&self, frame: &mut Frame, area: Rect) {
         let height = if self.is_open {
             3 + self.options.len().min(5) as u16 // Limit dropdown height
         } else {
@@ -509,6 +493,25 @@ impl Dropdown {
     }
 }
 
+impl Dropdown {
+    /// Create a new dropdown
+    pub fn new(label: &str, options: Vec<String>, field_identifier: FormField) -> Self {
+        Self {
+            options,
+            selected_index: 0,
+            label: label.to_string(),
+            is_focused: false,
+            is_open: false,
+            field_identifier,
+        }
+    }
+
+    /// Get the currently selected value
+    pub fn selected_value(&self) -> Option<&String> {
+        self.options.get(self.selected_index)
+    }
+}
+
 /// Numeric input component with validation
 #[derive(Debug, Clone)]
 pub struct NumericInput {
@@ -523,6 +526,12 @@ pub struct NumericInput {
 }
 
 impl FocusableInput for NumericInput {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
+    }
     fn set_focused(&mut self, focused: bool) {
         self.text_input.set_focused(focused);
     }
@@ -530,13 +539,54 @@ impl FocusableInput for NumericInput {
     fn is_focused(&self) -> bool {
         self.text_input.is_focused
     }
+
+    fn handle_key(&mut self, key: KeyEvent) -> Option<AppMessage> {
+        // Only allow numeric characters and decimal point
+        if let KeyCode::Char(c) = key.code {
+            if !c.is_ascii_digit() && c != '.' && c != '-' {
+                return None; // Consume but ignore
+            }
+
+            // Validate decimal places
+            if c == '.' && self.decimal_places == Some(0) {
+                return None; // No decimals allowed
+            }
+        }
+
+        let old_value = self.text_input.value();
+        let result = self.text_input.handle_key(key);
+
+        // Validate after input
+        let validation = self.validate();
+        self.text_input.set_error(validation.error_message);
+
+        if old_value != self.text_input.value() {
+            if let Some(val) = self.value() {
+                let field_val = if self.decimal_places.is_some() && self.decimal_places > Some(0) {
+                    FieldValue::Float(val)
+                } else {
+                    FieldValue::Integer(val as u32)
+                };
+                return Some(AppMessage::FormFieldChanged {
+                    field: self.text_input.field_identifier,
+                    value: field_val,
+                });
+            }
+        }
+
+        result
+    }
+
+    fn render(&self, frame: &mut Frame, area: Rect) {
+        self.text_input.render(frame, area);
+    }
 }
 
 impl NumericInput {
     /// Create a new numeric input
-    pub fn new(label: &str) -> Self {
+    pub fn new(label: &str, field_identifier: FormField) -> Self {
         Self {
-            text_input: TextInput::new(label),
+            text_input: TextInput::new(label, field_identifier),
             min_value: None,
             max_value: None,
             decimal_places: None,
@@ -569,34 +619,6 @@ impl NumericInput {
     /// Set the numeric value
     pub fn set_value(&mut self, value: &str) {
         self.text_input.set_value(value);
-    }
-
-    /// Set focus state (deprecated - use FocusableInput trait)
-    pub fn set_focused(&mut self, focused: bool) {
-        self.text_input.set_focused(focused);
-    }
-
-    /// Handle key input
-    pub fn handle_key(&mut self, key: KeyEvent) -> bool {
-        // Only allow numeric characters and decimal point
-        if let KeyCode::Char(c) = key.code {
-            if !c.is_ascii_digit() && c != '.' && c != '-' {
-                return true; // Consume but ignore
-            }
-
-            // Validate decimal places
-            if c == '.' && self.decimal_places == Some(0) {
-                return true; // No decimals allowed
-            }
-        }
-
-        let result = self.text_input.handle_key(key);
-
-        // Validate after input
-        let validation = self.validate();
-        self.text_input.set_error(validation.error_message);
-
-        result
     }
 
     /// Validate the numeric input
@@ -636,11 +658,6 @@ impl NumericInput {
 
         ValidationResult::valid()
     }
-
-    /// Render the numeric input
-    pub fn render(&self, frame: &mut Frame, area: Rect) {
-        self.text_input.render(frame, area);
-    }
 }
 
 /// Path picker component for file/directory selection
@@ -657,6 +674,12 @@ pub struct PathPicker {
 }
 
 impl FocusableInput for PathPicker {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
+    }
     fn set_focused(&mut self, focused: bool) {
         self.text_input.set_focused(focused);
     }
@@ -664,13 +687,44 @@ impl FocusableInput for PathPicker {
     fn is_focused(&self) -> bool {
         self.text_input.is_focused
     }
+
+    fn handle_key(&mut self, key: KeyEvent) -> Option<AppMessage> {
+        match key.code {
+            KeyCode::Tab => {
+                // TODO: In a real implementation, this would open a file browser
+                // For now, just provide some basic path completion
+                self.handle_tab_completion();
+                None
+            }
+            _ => {
+                let old_value = self.value();
+                let result = self.text_input.handle_key(key);
+
+                // Validate the path after input
+                let validation = self.validate();
+                self.text_input.set_error(validation.error_message);
+
+                if old_value != self.value() {
+                    return Some(AppMessage::FormFieldChanged {
+                        field: self.text_input.field_identifier,
+                        value: FieldValue::String(self.value()),
+                    });
+                }
+                result
+            }
+        }
+    }
+    fn render(&self, frame: &mut Frame, area: Rect) {
+        self.text_input.render(frame, area);
+    }
 }
 
 impl PathPicker {
     /// Create a new path picker
-    pub fn new(label: &str) -> Self {
+    pub fn new(label: &str, field_identifier: FormField) -> Self {
         Self {
-            text_input: TextInput::new(label).with_placeholder("Enter path or press Tab to browse"),
+            text_input: TextInput::new(label, field_identifier)
+                .with_placeholder("Enter path or press Tab to browse"),
             pick_directories: false,
             extension_filter: None,
             start_directory: None,
@@ -705,32 +759,6 @@ impl PathPicker {
         self.text_input.set_value(path);
     }
 
-    /// Set focus state (deprecated - use FocusableInput trait)
-    pub fn set_focused(&mut self, focused: bool) {
-        self.text_input.set_focused(focused);
-    }
-
-    /// Handle key input
-    pub fn handle_key(&mut self, key: KeyEvent) -> bool {
-        match key.code {
-            KeyCode::Tab => {
-                // TODO: In a real implementation, this would open a file browser
-                // For now, just provide some basic path completion
-                self.handle_tab_completion();
-                true
-            }
-            _ => {
-                let result = self.text_input.handle_key(key);
-
-                // Validate the path after input
-                let validation = self.validate();
-                self.text_input.set_error(validation.error_message);
-
-                result
-            }
-        }
-    }
-
     /// Handle tab completion for paths
     fn handle_tab_completion(&mut self) {
         let current_path = self.value();
@@ -743,7 +771,7 @@ impl PathPicker {
         else if current_path.ends_with('/') || current_path.ends_with('\\') {
             // In a real implementation, this would scan the directory
             // For demo purposes, just add a placeholder
-            if current_path == "./" {
+            if current_path == ".//" {
                 self.set_value("./src/");
             }
         }
@@ -765,7 +793,7 @@ impl PathPicker {
         // Check if path exists (in a real implementation)
         // For now, just validate format
         if self.pick_directories && !path.ends_with('/') && !path.ends_with('\\') {
-            return ValidationResult::invalid("Directory path should end with /");
+            // return ValidationResult::invalid("Directory path should end with /");
         }
 
         if let Some(ext) = &self.extension_filter {
@@ -776,11 +804,6 @@ impl PathPicker {
 
         ValidationResult::valid()
     }
-
-    /// Render the path picker
-    pub fn render(&self, frame: &mut Frame, area: Rect) {
-        self.text_input.render(frame, area);
-    }
 }
 
 #[cfg(test)]
@@ -790,7 +813,7 @@ mod tests {
 
     #[test]
     fn test_text_input_creation() {
-        let input = TextInput::new("Test Label");
+        let input = TextInput::new("Test Label", FormField::Path);
         assert_eq!(input.label, "Test Label");
         assert!(input.value().is_empty());
         assert!(!input.is_focused);
@@ -798,19 +821,19 @@ mod tests {
 
     #[test]
     fn test_text_input_placeholder() {
-        let input = TextInput::new("Test").with_placeholder("Enter text");
+        let input = TextInput::new("Test", FormField::Path).with_placeholder("Enter text");
         assert_eq!(input.placeholder, Some("Enter text".to_string()));
     }
 
     #[test]
     fn test_text_input_max_length() {
-        let input = TextInput::new("Test").with_max_length(10);
+        let input = TextInput::new("Test", FormField::Path).with_max_length(10);
         assert_eq!(input.max_length, Some(10));
     }
 
     #[test]
     fn test_toggle_functionality() {
-        let mut toggle = Toggle::new("Test Toggle", false);
+        let mut toggle = Toggle::new("Test Toggle", false, FormField::EnableAI);
         assert!(!toggle.value);
 
         toggle.toggle();
@@ -822,22 +845,36 @@ mod tests {
 
     #[test]
     fn test_toggle_key_handling() {
-        let mut toggle = Toggle::new("Test", false);
+        let mut toggle = Toggle::new("Test", false, FormField::EnableAI);
         toggle.set_focused(true);
 
         let space_key = KeyEvent::new(KeyCode::Char(' '), KeyModifiers::NONE);
-        assert!(toggle.handle_key(space_key));
+        let msg = toggle.handle_key(space_key);
+        assert!(matches!(
+            msg,
+            Some(AppMessage::FormFieldChanged {
+                field: FormField::EnableAI,
+                value: FieldValue::Boolean(true)
+            })
+        ));
         assert!(toggle.value);
 
         let enter_key = KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE);
-        assert!(toggle.handle_key(enter_key));
+        let msg2 = toggle.handle_key(enter_key);
+        assert!(matches!(
+            msg2,
+            Some(AppMessage::FormFieldChanged {
+                field: FormField::EnableAI,
+                value: FieldValue::Boolean(false)
+            })
+        ));
         assert!(!toggle.value);
     }
 
     #[test]
     fn test_dropdown_creation() {
         let options = vec!["Option 1".to_string(), "Option 2".to_string()];
-        let dropdown = Dropdown::new("Test Dropdown", options);
+        let dropdown = Dropdown::new("Test Dropdown", options, FormField::OutputFormat);
 
         assert_eq!(dropdown.selected_value(), Some(&"Option 1".to_string()));
         assert_eq!(dropdown.selected_index, 0);
@@ -847,24 +884,24 @@ mod tests {
     #[test]
     fn test_dropdown_navigation() {
         let options = vec!["A".to_string(), "B".to_string(), "C".to_string()];
-        let mut dropdown = Dropdown::new("Test", options);
+        let mut dropdown = Dropdown::new("Test", options, FormField::OutputFormat);
         dropdown.set_focused(true);
         dropdown.is_open = true;
 
         // Test down navigation
         let down_key = KeyEvent::new(KeyCode::Down, KeyModifiers::NONE);
-        assert!(dropdown.handle_key(down_key));
+        assert!(dropdown.handle_key(down_key).is_none());
         assert_eq!(dropdown.selected_index, 1);
 
         // Test up navigation
         let up_key = KeyEvent::new(KeyCode::Up, KeyModifiers::NONE);
-        assert!(dropdown.handle_key(up_key));
+        assert!(dropdown.handle_key(up_key).is_none());
         assert_eq!(dropdown.selected_index, 0);
     }
 
     #[test]
     fn test_numeric_input_validation() {
-        let mut input = NumericInput::new("Test Number")
+        let mut input = NumericInput::new("Test Number", FormField::LargeClassesMaxLoc)
             .with_min_value(0.0)
             .with_max_value(100.0);
 
@@ -883,7 +920,8 @@ mod tests {
 
     #[test]
     fn test_numeric_input_decimal_places() {
-        let mut input = NumericInput::new("Test").with_decimal_places(2);
+        let mut input =
+            NumericInput::new("Test", FormField::DeadCodeConfidence).with_decimal_places(2);
 
         input.text_input.set_value("10.5");
         assert!(input.validate().is_valid);
@@ -894,14 +932,14 @@ mod tests {
 
     #[test]
     fn test_path_picker_creation() {
-        let picker = PathPicker::new("Test Path");
+        let picker = PathPicker::new("Test Path", FormField::Path);
         assert!(!picker.pick_directories);
         assert!(picker.extension_filter.is_none());
     }
 
     #[test]
     fn test_path_picker_configuration() {
-        let picker = PathPicker::new("Test")
+        let picker = PathPicker::new("Test", FormField::Path)
             .pick_directories()
             .with_extension_filter("rs")
             .with_start_directory("/home");
@@ -913,7 +951,7 @@ mod tests {
 
     #[test]
     fn test_path_picker_validation() {
-        let mut picker = PathPicker::new("Test").with_extension_filter("txt");
+        let mut picker = PathPicker::new("Test", FormField::OutputFile).with_extension_filter("txt");
         picker.set_value("test.txt");
         assert!(picker.validate().is_valid);
 

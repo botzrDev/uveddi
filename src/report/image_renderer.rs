@@ -587,11 +587,6 @@ impl ImageRenderer {
     }
 }
 
-impl Default for ImageRenderer {
-    fn default() -> Self {
-        Self::new()
-    }
-}
 
 #[cfg(test)]
 mod tests {

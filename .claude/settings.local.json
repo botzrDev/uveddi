@@ -102,7 +102,8 @@
       "WebFetch(domain:serde.rs)",
       "WebFetch(domain:docs.rs)",
       "Bash(./scripts/run-automated-tests.sh:*)",
-      "Bash(./target/release/uveddi:*)"
+      "Bash(./target/release/uveddi:*)",
+      "Bash(RUST_BACKTRACE=1 cargo test analysis::detector_factory::tests::test_create_default_detectors --lib --features=\"alpha\" -- --nocapture)"
     ],
     "deny": []
   }

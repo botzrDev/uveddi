@@ -1,6 +1,8 @@
 
 # Uveddi - AI-Powered Code Analysis Tool
 
+!!! IF YOU EVER GET STUCK ON ANYTHING JUST ASK OUR PROJECT ARCHITECT !!!
+
 ## Project Overview
 Uveddi is a Rust-based, AI-powered CLI tool for architectural analysis of codebases. It identifies architectural anti-patterns, prevents architectural drift, and provides AI-powered insights with privacy-focused local analysis. Uveddi is designed for developers and teams who want deep, actionable insights into their codebases while keeping all data private by default.
 

@@ -289,26 +289,18 @@ impl BenchmarkBaselineManager {
 
         let previous_baseline = self.current_baselines.get(benchmark_name).cloned();
 
-        let comparison_result = if let Some(ref previous) = previous_baseline {
-            self.calculate_comparison_result(&current_baseline, previous)
-                .await?
-        } else {
-            ComparisonResult {
-                performance_change_percent: 0.0,
-                is_regression: false,
-                is_improvement: false,
-                statistical_significance: 0.0,
-                effect_size: 0.0,
-                change_category: ChangeCategory::NoSignificantChange,
+        let previous_baseline = match previous_baseline {
+            Some(baseline) => baseline,
+            None => {
+                return Err(anyhow!("No baseline exists for benchmark: {}", benchmark_name));
             }
         };
 
-        let statistical_confidence = if let Some(ref previous) = previous_baseline {
-            self.calculate_statistical_confidence(&current_baseline, previous)
-                .await?
-        } else {
-            1.0
-        };
+        let comparison_result = self.calculate_comparison_result(&current_baseline, &previous_baseline)
+            .await?;
+
+        let statistical_confidence = self.calculate_statistical_confidence(&current_baseline, &previous_baseline)
+            .await?;
 
         let recommendation =
             self.generate_recommendation(&comparison_result, statistical_confidence);
@@ -316,7 +308,7 @@ impl BenchmarkBaselineManager {
         Ok(BaselineComparison {
             benchmark_name: benchmark_name.to_string(),
             current_baseline,
-            previous_baseline,
+            previous_baseline: Some(previous_baseline),
             comparison_result,
             statistical_confidence,
             recommendation,
@@ -508,7 +500,7 @@ impl BenchmarkBaselineManager {
             return ChangeCategory::HighVariance;
         }
 
-        if abs_change < self.config.regression_threshold_percent / 2.0 && abs_effect < 0.2 {
+        if abs_change < self.config.regression_threshold_percent / 2.0 && abs_effect < 0.8 {
             ChangeCategory::NoSignificantChange
         } else if percent_change < 0.0 {
             // Improvement (negative change means better performance)

@@ -1,3 +1,8 @@
+//! Dependency graph model for representing code dependencies.
+//!
+//! This module provides a simple dependency graph structure for tracking relationships between code entities.
+//!
+//! Used for analysis, visualization, and cycle detection in Uveddi.
 use petgraph::Directed;
 use petgraph::Graph;
 use serde::{Deserialize, Serialize};
@@ -5,7 +10,9 @@ use serde::{Deserialize, Serialize};
 /// Represents a dependency graph with nodes and edges.
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct DependencyGraph {
+    /// List of node names (e.g., files, modules, components).
     pub nodes: Vec<String>,
+    /// List of directed edges as (from, to) pairs.
     pub edges: Vec<(String, String)>,
 }
 

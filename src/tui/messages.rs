@@ -4,9 +4,19 @@
 //! This ensures consistency across all components and prevents
 //! message definition duplication.
 
-use crate::cli::analyze_command::AnalyzeCommand;
+use crate::{cli::analyze_command::AnalyzeCommand, tui::ui::analyze_form::FormField};
 use crossterm::event::KeyEvent;
 use ratatui::crossterm::event::KeyEvent as RatatuiKeyEvent;
+
+/// Represents the value of a form field, accommodating different types.
+#[derive(Debug, Clone, PartialEq)]
+pub enum FieldValue {
+    String(String),
+    Boolean(bool),
+    Float(f64),
+    Integer(u32),
+    OptionString(Option<String>),
+}
 
 /// All possible messages that can trigger state changes in the TUI
 #[derive(Debug, Clone, PartialEq)]
@@ -30,7 +40,10 @@ pub enum AppMessage {
 
     /// UI interaction messages
     MenuItemSelected(usize),
-    FormFieldChanged(String),
+    FormFieldChanged {
+        field: FormField,
+        value: FieldValue,
+    },
 
     /// Help and information
     ShowHelp,
@@ -48,7 +61,7 @@ pub enum AppMessage {
     ValidationCleared,
 
     /// Analysis workflow
-    StartAnalysis(AnalyzeCommand),
+    StartAnalysis,
     AnalysisStarted,
     AnalysisCompleted(String),
     AnalysisError(String),

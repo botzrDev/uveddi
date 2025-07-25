@@ -98,23 +98,23 @@ struct RenderingMeasurement {
 }
 
 impl PerformanceAnalyzer {
-    pub fn new() -> Self {
+    pub fn new() -> Result<Self, crate::error::rendering::RenderingServiceError> {
         #[cfg(feature = "image-rendering")]
         {
             let config = RenderingServiceConfig::default();
-            let renderer = ImageRenderer::with_config(config);
+            let renderer = ImageRenderer::with_config(config)?;
 
-            Self {
+            Ok(Self {
                 renderer,
                 measurements: Arc::new(RwLock::new(Vec::new())),
-            }
+            })
         }
 
         #[cfg(not(feature = "image-rendering"))]
         {
-            Self {
+            Ok(Self {
                 measurements: Arc::new(RwLock::new(Vec::new())),
-            }
+            })
         }
     }
 

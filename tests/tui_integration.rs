@@ -155,6 +155,11 @@ async fn test_analyze_command_creation() {
         enable_memory_optimization: false,
         memory_limit_gb: None,
         memory_profile: None,
+        enable_image_rendering: false,
+        mermaid_only: true,
+        rendering_service_url: "http://localhost:3001".to_string(),
+        no_fallback: false,
+        check_rendering_service: false,
     };
 
     // Verify command fields are set correctly
@@ -204,7 +209,7 @@ async fn test_backend_analysis_orchestrator_integration() {
         enable_memory_optimization: false,
         memory_limit_gb: None,
         memory_profile: None,
-        memory_optimization: None,
+        // memory_optimization: None, // Removed - not a field in AnalysisConfig
     };
 
     // Execute analysis and verify it completes successfully
@@ -264,6 +269,11 @@ async fn test_error_handling_invalid_path() {
         enable_memory_optimization: false,
         memory_limit_gb: None,
         memory_profile: None,
+        enable_image_rendering: false,
+        mermaid_only: true,
+        rendering_service_url: "http://localhost:3001".to_string(),
+        no_fallback: false,
+        check_rendering_service: false,
     };
 
     // This should fail gracefully with a proper error
@@ -315,6 +325,11 @@ async fn test_tui_to_cli_command_pipeline() {
         enable_memory_optimization: false,
         memory_limit_gb: None,
         memory_profile: None,
+        enable_image_rendering: false,
+        mermaid_only: true,
+        rendering_service_url: "http://localhost:3001".to_string(),
+        no_fallback: false,
+        check_rendering_service: false,
     };
 
     // Verify the command can be executed (integration with backend)
@@ -363,6 +378,11 @@ async fn test_concurrent_form_submissions() {
         enable_memory_optimization: false,
         memory_limit_gb: None,
         memory_profile: None,
+        enable_image_rendering: false,
+        mermaid_only: true,
+        rendering_service_url: "http://localhost:3001".to_string(),
+        no_fallback: false,
+        check_rendering_service: false,
     };
 
     let command2 = AnalyzeCommand {
@@ -386,6 +406,11 @@ async fn test_concurrent_form_submissions() {
         enable_memory_optimization: false,
         memory_limit_gb: None,
         memory_profile: None,
+        enable_image_rendering: false,
+        mermaid_only: true,
+        rendering_service_url: "http://localhost:3001".to_string(),
+        no_fallback: false,
+        check_rendering_service: false,
     };
 
     // Execute both commands concurrently
@@ -430,6 +455,11 @@ async fn test_configuration_validation() {
         enable_memory_optimization: false,
         memory_limit_gb: None,
         memory_profile: None,
+        enable_image_rendering: false,
+        mermaid_only: true,
+        rendering_service_url: "http://localhost:3001".to_string(),
+        no_fallback: false,
+        check_rendering_service: false,
     };
 
     // The backend should handle these validation errors gracefully

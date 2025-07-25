@@ -302,7 +302,7 @@ impl ReportGenerator {
                 Err(e) => {
                     log::warn!("Failed to create image renderer: {}", e);
                     // Fall back to text-only mode
-                    self.diagram_mode = DiagramMode::TextOnly;
+                    self.diagram_mode = DiagramMode::MermaidOnly;
                 }
             }
         }
