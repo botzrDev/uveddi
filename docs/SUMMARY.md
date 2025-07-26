@@ -1,7 +1,6 @@
 # Summary
 
 [Introduction](./README.md)
-[Interactive Examples](./assets/interactive-examples.md)
 
 # Getting Started
 - [Installation](./01-getting-started/installation.md)
@@ -12,74 +11,10 @@
 - [Basic Concepts](./02-user-guide/basic-concepts.md)
 - [Common Use Cases](./02-user-guide/common-use-cases.md)
 - [Troubleshooting](./02-user-guide/troubleshooting.md)
-- [Comprehensive Manual](./02-user-guide/comprehensive-manual.md)
-- [Feature Flags](./02-user-guide/feature-flags.md)
-- [Title Standardization Guide](./02-user-guide/title-standardization-guide.md)
-- [Dashboard Guide](./02-user-guide/dashboard-guide.md)
-- [Dependency Injection Guide](./02-user-guide/dependency-injection-guide.md)
 
-## TUI User Guide
-- [Terminal User Interface (TUI)](./02-user-guide/tui-interface.md)
-
-# API Reference
-- [OpenAPI Specification](./api/openapi.yaml)
-- [Rust Documentation](./api/rust-documentation.md)
-# Development
-- [Developer Guide](./05-development/DEVELOPER_GUIDE.md)
-- [Contributing](./05-development/contributing.md)
-- [Detector Development](./05-development/detector_development_guide.md)
-# Architecture
-- [Overview](./04-architecture/overview.md)
-- [Design Principles](./04-architecture/design-principles.md)
-- [Component Model](./04-architecture/component-model.md)
-- [Data Flow](./04-architecture/data-flow.md)
-- [Extensibility](./04-architecture/extensibility.md)
-- [Performance](./04-architecture/performance.md)
-- [Security Model](./04-architecture/security-model.md)
-- [Docker Local AI Integration](./04-architecture/docker_local_ai_integration.md)
-- [Analysis Engine](./04-architecture/analysis-engine.md)
-- [Entity Relationship Diagram](./04-architecture/EntRelDiag.md)
-- [C4 Architecture](./04-architecture/C4_ARCHITECTURE.md)
-- [Database Guide](./04-architecture/database-guide.md)
-# Operations
-- [Deployment Guide](./operations/deployment-guide.md)
-# Security
-- [Security Hardening Guide](./security/SECURITY_HARDENING_GUIDE.md)
-- [Threat Model](./security/threat-model.md)
-- [Vulnerability Disclosure](./security/vulnerability-disclosure.md)
-- [Incident Response Runbooks](./security/INCIDENT_RESPONSE_RUNBOOKS.md)
-- [Security Compliance Checklist](./security/SECURITY_COMPLIANCE_CHECKLIST.md)
-# Community
-- [Guidelines](./09-community/GUIDELINES.md)
-- [Contributors](./09-community/CONTRIBUTORS.md)
-- [Support](./09-community/support.md)
-- [FAQ](./09-community/faq.md)
-- [Changelog](./09-community/CHANGELOG.md)
-- [Task Complexity Scoring](./09-community/TASK_COMPLEXITY_SCORING.md)
-- [Good First Issues](./09-community/GOOD_FIRST_ISSUES.md)
-- [Technical and Value Proposition](./09-community/Technical_and_Value_Proposition.md)
-- [Mentorship System](./09-community/MENTORSHIP_SYSTEM.md)
-- [Contributing (Community)](./09-community/CONTRIBUTING.md)
-- [Glossary](./09-community/glossary.md)
-- [Security (Community)](./09-community/SECURITY.md)
-- [Celebration System](./09-community/CELEBRATION_SYSTEM.md)
-- [Resources](./09-community/resources.md)
-- [Code of Conduct](./09-community/CODE_OF_CONDUCT.md)
-- [Issue Preparation Template](./09-community/ISSUE_PREPARATION_TEMPLATE.md)
-- [PRD](./09-community/PRD.md)
-- [Contribution Matrix](./09-community/CONTRIBUTION_MATRIX.md)
-- [Teamwork](./09-community/teamwork.md)
-- [Issue Audit Results](./09-community/ISSUE_AUDIT_RESULTS.md)
 # Examples
 - [Basic Example](./08-examples/basic-example.md)
-- [Advanced Example](./08-examples/advanced-example.md)
-- [Performance Optimization](./08-examples/performance-optimization.md)
-- [Integration Example](./08-examples/integration-example.md)
-# Reference
-- [Error Codes](./10-reference/error-codes.md)
-- [SAM](./10-reference/SAM.md)
-- [Dead Code Detection](./10-reference/dead_code_detection.md)
-- [Rust Error Strategy](./10-reference/Rust_Error_Stratiegy.md)
-- [Security API Reference](./10-reference/security-api-reference.md)
-- [Testing Strategy](./10-reference/testing_strategy.md)
-- [CI/CD Guide](./10-reference/ci/cd_guide.md)
+
+# Community
+- [Support](./09-community/support.md)
+- [FAQ](./09-community/faq.md)
