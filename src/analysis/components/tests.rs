@@ -14,8 +14,11 @@ mod config_service_tests {
 
         assert!(!service.are_plugins_enabled());
         assert!(service.get_cache_path().is_some());
-        assert!(service.is_detector_enabled("god_object"));
-        assert!(service.is_detector_enabled("dead_code"));
+        assert!(service.is_detector_enabled("GodObjectDetector"));
+        assert!(service.is_detector_enabled("DeadCodeDetector"));
+        assert!(service.is_detector_enabled("CodeDuplicationDetector"));
+        assert!(service.is_detector_enabled("LargeClassDetector"));
+        assert!(service.is_detector_enabled("TightCouplingDetector"));
         assert!(!service.is_detector_enabled("non_existent_detector"));
     }
 

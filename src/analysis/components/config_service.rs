@@ -59,15 +59,14 @@ impl ConfigurationService {
 
     /// Sets default detector configuration
     fn set_default_detector_config(&mut self) {
-        // Enable all default detectors
+        // Enable only implemented detectors based on DetectorFactory::create_default_detectors()
+        // Use exact detector names as returned by get_detector_name()
         let default_detectors = vec![
-            "god_object",
-            "large_class",
-            "dead_code",
-            "cyclic_dependency",
-            "tight_coupling",
-            "long_method",
-            "magic_values",
+            "GodObjectDetector",
+            "CodeDuplicationDetector",
+            "DeadCodeDetector",
+            "LargeClassDetector",
+            "TightCouplingDetector",
         ];
 
         for detector in default_detectors {
@@ -141,8 +140,11 @@ mod tests {
         let config_service = ConfigurationService::new();
 
         // Test default detector settings
-        assert!(config_service.is_detector_enabled("god_object"));
-        assert!(config_service.is_detector_enabled("dead_code"));
+        assert!(config_service.is_detector_enabled("GodObjectDetector"));
+        assert!(config_service.is_detector_enabled("DeadCodeDetector"));
+        assert!(config_service.is_detector_enabled("CodeDuplicationDetector"));
+        assert!(config_service.is_detector_enabled("LargeClassDetector"));
+        assert!(config_service.is_detector_enabled("TightCouplingDetector"));
         assert!(!config_service.are_plugins_enabled());
         assert!(config_service.get_cache_path().is_some());
     }
