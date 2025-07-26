@@ -15,6 +15,7 @@ site-url = "https://docs.uveddi.dev/"
 favicon = "assets/brand/favicons/favicon.png"
 additional-css = ["assets/brand/colors/palette.css", "assets/custom-styles.css"]
 additional-js = ["assets/custom-scripts.js"]
+smart-punctuation = true
 
 [output.html.search]
 enable = true

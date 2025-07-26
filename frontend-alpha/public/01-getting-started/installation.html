@@ -185,7 +185,7 @@
                     <main>
                         <h1 id="uveddi-alpha-installation-guide"><a class="header" href="#uveddi-alpha-installation-guide">Uveddi Alpha Installation Guide</a></h1>
 <h2 id="alpha-release-notice"><a class="header" href="#alpha-release-notice">Alpha Release Notice</a></h2>
-<p><strong>⚠️ This is an alpha release</strong> - The CLI interface is fully functional, but the analysis engine is in development. See <a href="../../ALPHA_TESTING_GUIDE.html">Alpha Testing Guide</a> for complete instructions.</p>
+<p><strong>Warning: This is an alpha release</strong> - The CLI interface is fully functional, but the analysis engine is in development. See <a href="../../ALPHA_TESTING_GUIDE.html">Alpha Testing Guide</a> for complete instructions.</p>
 <h2 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h2>
 <h3 id="required"><a class="header" href="#required">Required</a></h3>
 <ul>
@@ -269,16 +269,16 @@ uveddi --help
 ./target/release/uveddi analyze /path/to/project --output-format=json
 </code></pre>
 <h2 id="expected-alpha-behavior"><a class="header" href="#expected-alpha-behavior">Expected Alpha Behavior</a></h2>
-<h3 id="-working-features"><a class="header" href="#-working-features">✅ Working Features</a></h3>
+<h3 id="working-features"><a class="header" href="#working-features">Working Features</a></h3>
 <ul>
 <li>All CLI commands and help system</li>
 <li>Argument parsing and validation</li>
 <li>Configuration management</li>
 <li>Error handling and messages</li>
 </ul>
-<h3 id="-expected-issues"><a class="header" href="#-expected-issues">⚠️ Expected Issues</a></h3>
+<h3 id="expected-issues"><a class="header" href="#expected-issues">Expected Issues</a></h3>
 <ul>
-<li><strong>Analysis commands will fail</strong> with "Analysis execution failed" - this is expected</li>
+<li><strong>Analysis commands will fail</strong> with “Analysis execution failed” - this is expected</li>
 <li><strong>TUI requires separate binary</strong>: <code>cargo run --bin tui_test --features="tui"</code></li>
 </ul>
 <h2 id="troubleshooting"><a class="header" href="#troubleshooting">Troubleshooting</a></h2>

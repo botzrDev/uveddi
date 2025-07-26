@@ -345,7 +345,7 @@ uveddi analyze src/ --enable-ai --ollama-model deepseek-coder:6.7b-instruct-q4_0
 <hr />
 <h2 id="core-modules--components"><a class="header" href="#core-modules--components">Core Modules &amp; Components</a></h2>
 <h3 id="analysis-engine-srcanalysis"><a class="header" href="#analysis-engine-srcanalysis">Analysis Engine (<code>src/analysis/</code>)</a></h3>
-<p>The heart of Uveddi's static code analysis capabilities, implementing a pluggable detector architecture.</p>
+<p>The heart of Uveddi’s static code analysis capabilities, implementing a pluggable detector architecture.</p>
 <h4 id="key-components"><a class="header" href="#key-components">Key Components:</a></h4>
 <ul>
 <li><strong>AnalysisEngine</strong>: Core orchestrator that runs detectors and collects results</li>
@@ -482,12 +482,12 @@ cargo build --features="local-ai,tui,wasm-plugins"
 <h2 id="architecture-deep-dive"><a class="header" href="#architecture-deep-dive">Architecture Deep Dive</a></h2>
 <h3 id="architectural-principles"><a class="header" href="#architectural-principles">Architectural Principles</a></h3>
 <ol>
-<li><strong>Privacy First</strong>: All analysis happens locally - no data leaves the user's machine by default</li>
+<li><strong>Privacy First</strong>: All analysis happens locally - no data leaves the user’s machine by default</li>
 <li><strong>Separation of Concerns</strong>: Each module has a single, well-defined responsibility</li>
 <li><strong>Layered Architecture</strong>: Strict dependency flow with clear boundaries</li>
 <li><strong>Extensibility</strong>: Plugin architecture enables custom detectors and integrations</li>
 <li><strong>Performance Focus</strong>: Optimized for large codebases with intelligent caching</li>
-<li><strong>Type Safety</strong>: Leverages Rust's type system for reliability and performance</li>
+<li><strong>Type Safety</strong>: Leverages Rust’s type system for reliability and performance</li>
 </ol>
 <h3 id="layer-architecture"><a class="header" href="#layer-architecture">Layer Architecture</a></h3>
 <pre><code>┌─────────────────────────────────────────────────────────────┐
@@ -541,7 +541,7 @@ cargo build --features="local-ai,tui,wasm-plugins"
 <hr />
 <h2 id="core-modules--components-1"><a class="header" href="#core-modules--components-1">Core Modules &amp; Components</a></h2>
 <h3 id="analysis-module-srcanalysis"><a class="header" href="#analysis-module-srcanalysis">Analysis Module (<code>src/analysis/</code>)</a></h3>
-<p>The heart of Uveddi's functionality, providing comprehensive framework for detecting anti-patterns and architectural issues.</p>
+<p>The heart of Uveddi’s functionality, providing comprehensive framework for detecting anti-patterns and architectural issues.</p>
 <h4 id="key-components-1"><a class="header" href="#key-components-1">Key Components:</a></h4>
 <ul>
 <li><strong>AnalysisEngine</strong>: Core orchestrator that runs detectors and collects results</li>
@@ -1247,7 +1247,7 @@ cargo install --path .
 <hr />
 <h2 id="conclusion"><a class="header" href="#conclusion">Conclusion</a></h2>
 <p>Uveddi represents a sophisticated approach to static code analysis, combining modern Rust development practices with AI-powered insights and enterprise-grade observability. Its modular architecture, comprehensive testing strategy, and focus on performance and security make it suitable for both individual developers and large-scale enterprise deployments.</p>
-<p>The system's extensibility through WASM plugins, privacy-focused AI integration, and comprehensive monitoring capabilities position it as a powerful tool for maintaining code quality and preventing architectural drift in modern software development.</p>
+<p>The system’s extensibility through WASM plugins, privacy-focused AI integration, and comprehensive monitoring capabilities position it as a powerful tool for maintaining code quality and preventing architectural drift in modern software development.</p>
 <hr />
 <h2 id="terminal-user-interface-tui"><a class="header" href="#terminal-user-interface-tui">Terminal User Interface (TUI)</a></h2>
 <p>Interactive terminal interface implementing The Elm Architecture (TEA) pattern for predictable state management.</p>

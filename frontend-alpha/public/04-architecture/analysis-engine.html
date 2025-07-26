@@ -340,13 +340,13 @@ struct CachedAnalysisResult {
 </ul>
 <h2 id="-god-object-detector---deep-dive"><a class="header" href="#-god-object-detector---deep-dive">🎯 <strong>God Object Detector - Deep Dive</strong></a></h2>
 <p><strong>Location</strong>: <code>src/analysis/detectors/anti_patterns/god_object.rs</code></p>
-<p>The God Object detector demonstrates the system's sophisticated capabilities:</p>
+<p>The God Object detector demonstrates the system’s sophisticated capabilities:</p>
 <h3 id="multi-language-support"><a class="header" href="#multi-language-support"><strong>Multi-language Support</strong></a></h3>
 <h4 id="rust-analysis"><a class="header" href="#rust-analysis"><strong>Rust Analysis</strong>:</a></h4>
 <ul>
 <li>Correlates <code>struct</code> definitions with <code>impl</code> blocks</li>
 <li>Uses separate queries for structure and implementation</li>
-<li>Handles Rust's unique ownership model</li>
+<li>Handles Rust’s unique ownership model</li>
 </ul>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -459,7 +459,7 @@ pub enum LocalDependencyType {
 <span class="boring">}</span></code></pre></pre>
 <h2 id="-cycle-detection"><a class="header" href="#-cycle-detection">🔄 <strong>Cycle Detection</strong></a></h2>
 <p><strong>Location</strong>: <code>src/analysis/detectors/cycle.rs</code></p>
-<p>Uses Tarjan's algorithm for efficient cycle detection:</p>
+<p>Uses Tarjan’s algorithm for efficient cycle detection:</p>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub struct CycleDetector;
@@ -480,7 +480,7 @@ impl CycleDetector {
 <span class="boring">}</span></code></pre></pre>
 <p><strong>Features</strong>:</p>
 <ul>
-<li>Efficient O(V + E) complexity using Tarjan's algorithm</li>
+<li>Efficient O(V + E) complexity using Tarjan’s algorithm</li>
 <li>Detects all cycles in the dependency graph</li>
 <li>Provides detailed cycle information in issues</li>
 </ul>

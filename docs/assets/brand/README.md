@@ -179,7 +179,7 @@ Before publishing any branded material:
 For questions about brand usage:
 - **Documentation**: This README and linked files
 - **Issues**: [GitHub Issues](https://github.com/botzrDev/uveddi/issues) with "branding" label
-- **Email**: [brand@uveddi.dev](mailto:brand@uveddi.dev) for sensitive inquiries
+- **Discord**: [Join our Discord server](https://discord.gg/uveddi) for brand guidelines and sensitive inquiries
 
 ## 📄 License
 

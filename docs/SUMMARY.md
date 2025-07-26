@@ -1,7 +1,7 @@
 # Summary
 
-[🏠 Introduction](./README.md)
-[🎮 Interactive Examples](./assets/interactive-examples.md)
+[Introduction](./README.md)
+[Interactive Examples](./assets/interactive-examples.md)
 
 # Getting Started
 - [Installation](./01-getting-started/installation.md)

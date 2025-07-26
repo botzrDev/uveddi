@@ -55,37 +55,37 @@ The dashboard supports multiple authentication methods:
 
 The dashboard is organized into several key sections:
 
-#### 🏠 Home Dashboard
+#### Home Dashboard
 - **Analysis Overview**: High-level metrics and health indicators
 - **Recent Activity**: Latest analysis runs and results
 - **Quick Actions**: Start new analysis, view reports, configure settings
 - **System Status**: Real-time system health and performance
 
-#### 🔍 Analysis Center
+#### Analysis Center
 - **New Analysis**: Configure and launch code analysis
 - **Analysis History**: Browse past analysis results
 - **Batch Operations**: Manage multiple analysis jobs
 - **Scheduled Analysis**: Set up recurring analysis tasks
 
-#### 📊 Monitoring Hub
+#### Monitoring Hub
 - **Real-Time Metrics**: Live system performance data
 - **Performance Trends**: Historical performance analysis
 - **Alert Management**: Configure and view system alerts
 - **Resource Usage**: CPU, memory, and storage monitoring
 
-#### 🤖 AI Insights
+#### AI Insights
 - **Analysis Explanations**: AI-powered issue explanations
 - **Refactoring Suggestions**: Intelligent code improvement recommendations  
 - **Pattern Recognition**: Detected architectural patterns
 - **Best Practices**: AI-generated best practice recommendations
 
-#### 📈 Reports & Visualization
+#### Reports & Visualization
 - **Interactive Reports**: Explore analysis results with rich visualizations
 - **Dependency Graphs**: Visual representation of code dependencies
 - **Trend Analysis**: Track code quality metrics over time
 - **Export Options**: Download reports in multiple formats
 
-#### ⚙️ Configuration
+#### Configuration
 - **Analysis Settings**: Configure detectors and analysis parameters
 - **System Configuration**: Manage system-wide settings
 - **User Management**: Manage users and permissions (admin only)

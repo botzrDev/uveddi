@@ -2,7 +2,7 @@
 
 ## Alpha Release Notice
 
-**⚠️ This is an alpha release** - The CLI interface is fully functional, but the analysis engine is in development. See [Alpha Testing Guide](../../ALPHA_TESTING_GUIDE.md) for complete instructions.
+**Warning: This is an alpha release** - The CLI interface is fully functional, but the analysis engine is in development. See [Alpha Testing Guide](../../ALPHA_TESTING_GUIDE.md) for complete instructions.
 
 ## Prerequisites
 
@@ -100,13 +100,13 @@ uveddi --help
 
 ## Expected Alpha Behavior
 
-### ✅ Working Features
+### Working Features
 - All CLI commands and help system
 - Argument parsing and validation
 - Configuration management
 - Error handling and messages
 
-### ⚠️ Expected Issues
+### Expected Issues
 - **Analysis commands will fail** with "Analysis execution failed" - this is expected
 - **TUI requires separate binary**: `cargo run --bin tui_test --features="tui"`
 

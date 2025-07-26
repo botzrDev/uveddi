@@ -228,38 +228,38 @@ required: true
 content:
 application/json:
 schema:
-$ref: '#/components/schemas/AnalysisRequest'
+$ref: ‘#/components/schemas/AnalysisRequest’
 examples:
 basic_analysis:
 summary: Basic code analysis
 value:
-project_path: "/path/to/project"
-languages: ["rust", "python"]
-detectors: ["god_object", "dead_code", "tight_coupling"]
-output_format: "json"
+project_path: “/path/to/project”
+languages: [“rust”, “python”]
+detectors: [“god_object”, “dead_code”, “tight_coupling”]
+output_format: “json”
 ai_enhanced:
 summary: AI-enhanced analysis
 value:
-project_path: "/path/to/project"
-languages: ["rust", "javascript", "typescript"]
-detectors: ["all"]
+project_path: “/path/to/project”
+languages: [“rust”, “javascript”, “typescript”]
+detectors: [“all”]
 enable_ai: true
-ai_provider: "ollama"
-output_format: "markdown"
+ai_provider: “ollama”
+output_format: “markdown”
 include_suggestions: true
 responses:
-'200':
+‘200’:
 description: Analysis completed successfully
 content:
 application/json:
 schema:
-$ref: '#/components/schemas/AnalysisResult'
+$ref: ‘#/components/schemas/AnalysisResult’
 examples:
 successful_analysis:
 summary: Successful analysis result
 value:
-analysis_id: "analysis_001"
-status: "completed"
+analysis_id: “analysis_001”
+status: “completed”
 duration_ms: 15000
 summary:
 total_files: 125
@@ -267,26 +267,26 @@ issues_found: 23
 critical_issues: 3
 warnings: 20
 anti_patterns:
-- type: "god_object"
-severity: "critical"
-file_path: "src/large_service.rs"
+- type: “god_object”
+severity: “critical”
+file_path: “src/large_service.rs”
 line_number: 45
-description: "Class exceeds recommended size limits"
-ai_explanation: "This class has grown too large and handles multiple responsibilities..."
-'400':
+description: “Class exceeds recommended size limits”
+ai_explanation: “This class has grown too large and handles multiple responsibilities…”
+‘400’:
 description: Invalid request parameters
 content:
 application/json:
 schema:
-$ref: '#/components/schemas/Error'
-'401':
+$ref: ‘#/components/schemas/Error’
+‘401’:
 description: Authentication required
-'500':
+‘500’:
 description: Internal server error
 content:
 application/json:
 schema:
-$ref: '#/components/schemas/Error'</p>
+$ref: ‘#/components/schemas/Error’</p>
 <p>/api/v1/analysis/{id}:
 get:
 summary: Get analysis result by ID
@@ -303,18 +303,18 @@ schema:
 type: string
 description: Unique analysis identifier
 responses:
-'200':
+‘200’:
 description: Analysis result retrieved successfully
 content:
 application/json:
 schema:
-$ref: '#/components/schemas/AnalysisResult'
-'404':
+$ref: ‘#/components/schemas/AnalysisResult’
+‘404’:
 description: Analysis not found
 content:
 application/json:
 schema:
-$ref: '#/components/schemas/Error'</p>
+$ref: ‘#/components/schemas/Error’</p>
 <p>/api/v1/analysis/{id}/status:
 get:
 summary: Get analysis execution status
@@ -331,12 +331,12 @@ schema:
 type: string
 description: Unique analysis identifier
 responses:
-'200':
+‘200’:
 description: Analysis status retrieved successfully
 content:
 application/json:
 schema:
-$ref: '#/components/schemas/AnalysisStatus'</p>
+$ref: ‘#/components/schemas/AnalysisStatus’</p>
 <p>/api/v1/metrics:
 get:
 summary: Get real-time performance metrics
@@ -364,12 +364,12 @@ type: boolean
 default: false
 description: Include historical trend data
 responses:
-'200':
+‘200’:
 description: Metrics retrieved successfully
 content:
 application/json:
 schema:
-$ref: '#/components/schemas/MetricsResponse'</p>
+$ref: ‘#/components/schemas/MetricsResponse’</p>
 <p>/api/v1/health:
 get:
 summary: System health check
@@ -377,18 +377,18 @@ description: Get comprehensive system health status including all service depend
 tags:
 - Monitoring
 responses:
-'200':
+‘200’:
 description: System is healthy
 content:
 application/json:
 schema:
-$ref: '#/components/schemas/HealthStatus'
-'503':
+$ref: ‘#/components/schemas/HealthStatus’
+‘503’:
 description: System is unhealthy
 content:
 application/json:
 schema:
-$ref: '#/components/schemas/HealthStatus'</p>
+$ref: ‘#/components/schemas/HealthStatus’</p>
 <p>/api/v1/config:
 get:
 summary: Get current configuration
@@ -398,12 +398,12 @@ tags:
 security:
 - BearerAuth: []
 responses:
-'200':
+‘200’:
 description: Configuration retrieved successfully
 content:
 application/json:
 schema:
-$ref: '#/components/schemas/Configuration'</p>
+$ref: ‘#/components/schemas/Configuration’</p>
 <pre><code>put:
   summary: Update system configuration
   description: Update system configuration settings (requires admin privileges)
@@ -448,12 +448,12 @@ type: integer
 minimum: 0
 default: 0
 responses:
-'200':
+‘200’:
 description: Reports list retrieved successfully
 content:
 application/json:
 schema:
-$ref: '#/components/schemas/ReportsListResponse'</p>
+$ref: ‘#/components/schemas/ReportsListResponse’</p>
 <p>/api/v1/reports/{id}:
 get:
 summary: Get report by ID
@@ -475,12 +475,12 @@ type: string
 enum: [json, markdown, html, pdf]
 default: json
 responses:
-'200':
+‘200’:
 description: Report retrieved successfully
 content:
 application/json:
 schema:
-$ref: '#/components/schemas/Report'
+$ref: ‘#/components/schemas/Report’
 text/markdown:
 schema:
 type: string
@@ -530,22 +530,22 @@ properties:
 project_path:
 type: string
 description: Path to the project root directory
-example: "/path/to/project"
+example: “/path/to/project”
 languages:
 type: array
 items:
 type: string
 enum: [rust, python, javascript, typescript, java, cpp]
 description: Programming languages to analyze
-default: ["rust"]
+default: [“rust”]
 detectors:
 type: array
 items:
 type: string
 description: |
-Anti-pattern detectors to enable. Use "all" for all detectors.
+Anti-pattern detectors to enable. Use “all” for all detectors.
 Available: god_object, dead_code, tight_coupling, large_classes, cyclic_dependencies, magic_values
-default: ["all"]
+default: [“all”]
 enable_ai:
 type: boolean
 description: Enable AI-powered explanations and suggestions
@@ -554,12 +554,12 @@ ai_provider:
 type: string
 enum: [ollama, openai]
 description: AI provider for enhanced analysis
-default: "ollama"
+default: “ollama”
 output_format:
 type: string
 enum: [json, markdown, html]
 description: Output format for analysis results
-default: "json"
+default: “json”
 include_suggestions:
 type: boolean
 description: Include AI-powered refactoring suggestions

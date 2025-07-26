@@ -17,8 +17,9 @@
         addSmoothScrolling();
         addProgressIndicator();
         enhanceNavigation();
-        addKeyboardShortcuts();
+        // addKeyboardShortcuts(); // Disabled to remove dead link
         initializeMermaidTheme();
+        hideKeyboardShortcutsLink();
     }
 
     // Add copy buttons to code blocks
@@ -260,6 +261,29 @@
         if (firstParagraph) {
             firstParagraph.parentNode.insertBefore(toc, firstParagraph.nextSibling);
         }
+    }
+
+    // Hide keyboard shortcuts link (dead link)
+    function hideKeyboardShortcutsLink() {
+        // Wait for mdbook to load completely
+        setTimeout(function() {
+            const keyboardLinks = document.querySelectorAll('a[href*="keyboard"], a[title*="keyboard"], a[title*="Keyboard"]');
+            keyboardLinks.forEach(function(link) {
+                if (link.textContent.toLowerCase().includes('keyboard') || 
+                    link.title.toLowerCase().includes('keyboard')) {
+                    link.style.display = 'none';
+                }
+            });
+            
+            // Also check for any menu items or buttons
+            const menuItems = document.querySelectorAll('.menu-bar button, .menu-bar a, .sidebar a');
+            menuItems.forEach(function(item) {
+                if (item.textContent.toLowerCase().includes('keyboard shortcuts') ||
+                    item.title.toLowerCase().includes('keyboard shortcuts')) {
+                    item.style.display = 'none';
+                }
+            });
+        }, 1000);
     }
 
     // Initialize additional features after a short delay

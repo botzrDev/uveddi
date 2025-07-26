@@ -184,13 +184,13 @@
                 <div id="content" class="content">
                     <main>
                         <p>Uveddi offers a distinct value proposition that clearly differentiates it from GitHub Copilot, focusing on different stages and aspects of the software development lifecycle.</p>
-<p>Here's how Uveddi stands apart:</p>
+<p>Here’s how Uveddi stands apart:</p>
 <ul>
 <li>
 <p><strong>Singular Focus on Architecture vs. Code Generation:</strong></p>
 <ul>
 <li>
-<p><strong>Uveddi:</strong> Our primary differentiator is a singular focus on <strong>high-level architectural analysis</strong>. We evaluate the foundational blueprint of the software, addressing strategic questions like "Is this system structurally sound?" or "Are we introducing dangerous coupling?". This elevates Uveddi from a simple linter to a strategic partner in managing technical debt and ensuring long-term maintainability.</p>
+<p><strong>Uveddi:</strong> Our primary differentiator is a singular focus on <strong>high-level architectural analysis</strong>. We evaluate the foundational blueprint of the software, addressing strategic questions like “Is this system structurally sound?” or “Are we introducing dangerous coupling?”. This elevates Uveddi from a simple linter to a strategic partner in managing technical debt and ensuring long-term maintainability.</p>
 </li>
 <li>
 <p><strong>GitHub Copilot:</strong> Its fundamental purpose is <strong>code generation</strong>. It excels at suggesting and completing code in real-time within the IDE. While it accelerates code writing, Copilot has a limited understanding of the overall project architecture and can even produce code that is locally correct but architecturally unsound, potentially accelerating the introduction of architectural debt.</p>
@@ -226,7 +226,7 @@
 <p><strong>Uveddi:</strong> We offer a unique <strong>dual AI model</strong>:</p>
 <ul>
 <li>
-<p><strong>Local Model (Free Tier):</strong> Utilizes high-performance, open-source LLMs for <strong>privacy-focused, offline analysis</strong>, ensuring proprietary code never leaves the user's machine.</p>
+<p><strong>Local Model (Free Tier):</strong> Utilizes high-performance, open-source LLMs for <strong>privacy-focused, offline analysis</strong>, ensuring proprietary code never leaves the user’s machine.</p>
 </li>
 <li>
 <p><strong>API-based Model (Paid Tier):</strong> Integrates with state-of-the-art commercial LLM APIs for enhanced accuracy, complex analysis, and <strong>seamless CI/CD integration</strong>.</p>
@@ -240,8 +240,8 @@
 </li>
 </ul>
 <p>In summary, while GitHub Copilot acts as an AI pair programmer accelerating code generation, Uveddi functions as an <strong>AI Architect</strong>, providing essential architectural intelligence and guardrails to ensure the long-term health and structural integrity of a codebase, especially crucial as code is increasingly written by both humans and AI.</p>
-<p>Here's a breakdown of how we plan to technically achieve our proposition, directly addressing the core differentiators:</p>
-<h3 id="1-achieving-singular-focus-on-architecture-and-deep-architectural-intelligence"><a class="header" href="#1-achieving-singular-focus-on-architecture-and-deep-architectural-intelligence">1. Achieving "Singular Focus on Architecture" and "Deep Architectural Intelligence"</a></h3>
+<p>Here’s a breakdown of how we plan to technically achieve our proposition, directly addressing the core differentiators:</p>
+<h3 id="1-achieving-singular-focus-on-architecture-and-deep-architectural-intelligence"><a class="header" href="#1-achieving-singular-focus-on-architecture-and-deep-architectural-intelligence">1. Achieving “Singular Focus on Architecture” and “Deep Architectural Intelligence”</a></h3>
 <ul>
 <li>
 <p><strong>Abstract Syntax Tree (AST) Analysis:</strong> The core of our deep understanding of code structure is the programmatic parsing of source code into an Abstract Syntax Tree (AST). This is crucial because simple text-based scanning is inadequate for reliably detecting complex architectural patterns.</p>
@@ -269,7 +269,7 @@
 </ul>
 </li>
 </ul>
-<h3 id="2-delivering-on-hybrid-ai-model-for-flexibility-and-privacy"><a class="header" href="#2-delivering-on-hybrid-ai-model-for-flexibility-and-privacy">2. Delivering on "Hybrid AI Model for Flexibility and Privacy"</a></h3>
+<h3 id="2-delivering-on-hybrid-ai-model-for-flexibility-and-privacy"><a class="header" href="#2-delivering-on-hybrid-ai-model-for-flexibility-and-privacy">2. Delivering on “Hybrid AI Model for Flexibility and Privacy”</a></h3>
 <ul>
 <li>
 <p><strong>Dual AI Engine Approach:</strong> This is central to our technical architecture, balancing local privacy with cloud-based power.</p>
@@ -289,17 +289,17 @@
 <p><strong>API-based Models (Paid Tier):</strong></p>
 <ul>
 <li>
-<p><strong>Plan:</strong> We will implement clients for state-of-the-art commercial LLM APIs, specifically OpenAI's GPT-4, Anthropic's Claude 3 family (especially Opus), and Google's Gemini series. API keys will be configurable via environment variables or a secure file.</p>
+<p><strong>Plan:</strong> We will implement clients for state-of-the-art commercial LLM APIs, specifically OpenAI’s GPT-4, Anthropic’s Claude 3 family (especially Opus), and Google’s Gemini series. API keys will be configurable via environment variables or a secure file.</p>
 </li>
 <li>
-<p><strong>Cost Mitigation (Crucial):</strong> Our technical plan emphasizes a "smart-prompting" strategy. The deterministic AST analysis will pre-process the code to identify specific areas of concern, allowing us to send <strong>only the relevant, targeted code snippets and structural context</strong> to the API. This dramatically reduces token consumption and API costs, making the business model viable.</p>
+<p><strong>Cost Mitigation (Crucial):</strong> Our technical plan emphasizes a “smart-prompting” strategy. The deterministic AST analysis will pre-process the code to identify specific areas of concern, allowing us to send <strong>only the relevant, targeted code snippets and structural context</strong> to the API. This dramatically reduces token consumption and API costs, making the business model viable.</p>
 </li>
 </ul>
 </li>
 </ul>
 </li>
 </ul>
-<h3 id="3-producing-actionable-persistent-reporting"><a class="header" href="#3-producing-actionable-persistent-reporting">3. Producing "Actionable, Persistent Reporting"</a></h3>
+<h3 id="3-producing-actionable-persistent-reporting"><a class="header" href="#3-producing-actionable-persistent-reporting">3. Producing “Actionable, Persistent Reporting”</a></h3>
 <ul>
 <li>
 <p><strong>Markdown Reports with Diagrams:</strong></p>
@@ -322,16 +322,16 @@
 <p><strong>Plan:</strong> Our multi-layered defense strategy includes:</p>
 <ul>
 <li>
-<p><strong>Retrieval-Augmented Generation (RAG):</strong> The system first uses deterministic AST analysis to retrieve specific, factual context from the codebase, which is then injected into the prompt to "ground" the LLM and reduce hallucination.</p>
+<p><strong>Retrieval-Augmented Generation (RAG):</strong> The system first uses deterministic AST analysis to retrieve specific, factual context from the codebase, which is then injected into the prompt to “ground” the LLM and reduce hallucination.</p>
 </li>
 <li>
-<p><strong>Structured Prompt Engineering:</strong> Prompts will be carefully designed to constrain the AI's output, guide its reasoning, and specify uncertainty handling (e.g., "state if unsure").</p>
+<p><strong>Structured Prompt Engineering:</strong> Prompts will be carefully designed to constrain the AI’s output, guide its reasoning, and specify uncertainty handling (e.g., “state if unsure”).</p>
 </li>
 <li>
-<p><strong>Self-Correction/Validation:</strong> For critical suggestions, a multi-step verification process can be employed where one LLM output is reviewed by another "critic" LLM.</p>
+<p><strong>Self-Correction/Validation:</strong> For critical suggestions, a multi-step verification process can be employed where one LLM output is reviewed by another “critic” LLM.</p>
 </li>
 <li>
-<p><strong>Human-in-the-Loop:</strong> The tool will only provide suggestions, and the developer remains the ultimate authority, reviewing and accepting/rejecting the AI's advice.</p>
+<p><strong>Human-in-the-Loop:</strong> The tool will only provide suggestions, and the developer remains the ultimate authority, reviewing and accepting/rejecting the AI’s advice.</p>
 </li>
 </ul>
 </li>
@@ -340,7 +340,7 @@
 <li>
 <p><strong>Performance and Scalability:</strong></p>
 <ul>
-<li><strong>Plan:</strong> We've chosen <strong>Rust</strong> as the core language for its performance, memory safety, and efficient binary distribution. We will implement parallel processing for file parsing using Rust's concurrency features (e.g., <code>tokio</code>) and intelligent caching of ASTs and analysis results. User scoping of analysis will also allow for faster, targeted scans.</li>
+<li><strong>Plan:</strong> We’ve chosen <strong>Rust</strong> as the core language for its performance, memory safety, and efficient binary distribution. We will implement parallel processing for file parsing using Rust’s concurrency features (e.g., <code>tokio</code>) and intelligent caching of ASTs and analysis results. User scoping of analysis will also allow for faster, targeted scans.</li>
 </ul>
 </li>
 <li>

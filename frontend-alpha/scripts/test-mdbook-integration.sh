@@ -36,7 +36,7 @@ print_status "mdbook is installed"
 
 # Build the documentation
 echo "📚 Building documentation..."
-cd docs
+cd ../docs
 mdbook build
 if [ $? -eq 0 ]; then
     print_status "Documentation built successfully"
