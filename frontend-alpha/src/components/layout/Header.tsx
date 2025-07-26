@@ -19,8 +19,9 @@ const Header: React.FC<HeaderProps> = ({ variant = 'default', className = '' }) 
     navigate('/login');
   };
 
-  // Check if we're on the landing page
+  // Check if we're on the landing page or dashboard
   const isOnLandingPage = location.pathname === '/';
+  const isOnDashboard = location.pathname === '/dashboard';
 
   // Custom navigation handler for landing page sections
   const handleSectionNavigation = (sectionId: string) => {
@@ -66,6 +67,11 @@ const Header: React.FC<HeaderProps> = ({ variant = 'default', className = '' }) 
               <img src="/logo(blue).png" alt="Uveddi Logo" className="w-10 h-10 rounded-lg mr-0" />
               <h1 className="font-mono text-2xl font-bold bg-gradient-to-r from-white to-primary-200 bg-clip-text text-transparent tracking-wider">veddi</h1>
             </a>
+          ) : isOnDashboard ? (
+            <div className="flex items-center mb-0" style={{ gap: '2px' }}>
+              <img src="/logo(blue).png" alt="Uveddi Logo" className="w-10 h-10 rounded-lg mr-0" />
+              <h1 className="font-mono text-2xl font-bold bg-gradient-to-r from-gray-900 to-blue-600 dark:from-white dark:to-blue-400 bg-clip-text text-transparent tracking-wider">veddi</h1>
+            </div>
           ) : (
             <Link to="/" className="flex items-center mb-0" style={{ gap: '2px' }}>
               <img src={variant === 'landing' ? "/logo(dark).png" : "/logo.png"} alt="Uveddi Logo" className={variant === 'landing' ? "w-10 h-10 rounded-lg mr-0" : "h-10 w-auto mr-0"} />
@@ -120,8 +126,11 @@ const Header: React.FC<HeaderProps> = ({ variant = 'default', className = '' }) 
                   FAQ
                 </button>
               </>
+            ) : isOnDashboard ? (
+              // Dashboard navigation - no links, just the logo
+              <></>
             ) : isAuthenticated ? (
-              // Authenticated app navigation
+              // Authenticated app navigation (for other pages)
               <>
                 <Link 
                   to="/dashboard" 

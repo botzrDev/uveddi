@@ -1,0 +1,735 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Analysis Engine - Uveddi Documentation</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="AI-Powered Code Analysis That Stays Private - Comprehensive guide to using Uveddi for architectural analysis">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../assets/brand/colors/palette.css">
+        <link rel="stylesheet" href="../assets/custom-styles.css">
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Uveddi Documentation</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/botzrDev/uveddi" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://github.com/botzrDev/uveddi/edit/main/docs/./04-architecture/analysis-engine.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="uveddi-analysis-engine---deep-dive"><a class="header" href="#uveddi-analysis-engine---deep-dive">Uveddi Analysis Engine - Deep Dive</a></h1>
+<h2 id="-overview"><a class="header" href="#-overview">🔍 <strong>Overview</strong></a></h2>
+<p>The Uveddi Analysis Engine is the core component responsible for detecting architectural anti-patterns and code quality issues across multiple programming languages. This document provides a comprehensive technical overview of its architecture, components, and capabilities.</p>
+<h2 id="-architecture-overview"><a class="header" href="#-architecture-overview">🏗️ <strong>Architecture Overview</strong></a></h2>
+<p>The analysis engine follows a sophisticated <strong>trait-based, pluggable architecture</strong> that enables extensible detection of architectural anti-patterns:</p>
+<pre><code>┌─────────────────────────────────────────────────────────────┐
+│                    AnalysisEngine                           │
+│  ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐│
+│  │   AstParser     │ │ DependencyGraph │ │ ResultCache     ││
+│  └─────────────────┘ └─────────────────┘ └─────────────────┘│
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                 AnalysisDetector Trait                     │
+│  ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐│
+│  │ GodObjectDetector│ │  CycleDetector  │ │ MagicValues...  ││
+│  └─────────────────┘ └─────────────────┘ └─────────────────┘│
+└─────────────────────────────────────────────────────────────┘
+</code></pre>
+<h2 id="-core-components"><a class="header" href="#-core-components">🎯 <strong>Core Components</strong></a></h2>
+<h3 id="1-analysisengine-the-orchestrator"><a class="header" href="#1-analysisengine-the-orchestrator">1. <strong>AnalysisEngine</strong> (The Orchestrator)</a></h3>
+<p><strong>Location</strong>: <code>src/analysis/engine.rs</code></p>
+<p><strong>Purpose</strong>: Main entry point that coordinates all analysis phases</p>
+<p><strong>Key Features</strong>:</p>
+<ul>
+<li>Multi-detector support with pluggable architecture</li>
+<li>Async file processing for performance</li>
+<li>Intelligent caching (SQLite-based)</li>
+<li>Error recovery (continues even if individual files fail)</li>
+<li>Dependency graph construction</li>
+</ul>
+<p><strong>Key Methods</strong>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl AnalysisEngine {
+    pub fn new() -&gt; Result&lt;Self, UveddiError&gt;
+    pub async fn analyze(&amp;mut self, path: &amp;Path) -&gt; Result&lt;(Vec&lt;ArchitecturalIssue&gt;, LocalDependencyGraph), UveddiError&gt;
+    pub fn get_anti_pattern_types(&amp;self) -&gt; Vec&lt;AntiPatternType&gt;
+    pub fn get_files_analyzed(&amp;self) -&gt; i32
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="2-analysisdetector-trait-the-interface"><a class="header" href="#2-analysisdetector-trait-the-interface">2. <strong>AnalysisDetector Trait</strong> (The Interface)</a></h3>
+<p><strong>Location</strong>: <code>src/analysis/mod.rs</code></p>
+<p>The core trait that all detectors must implement:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub trait AnalysisDetector {
+    fn detect_issues(&amp;self, file: &amp;ParsedFile) -&gt; Result&lt;Vec&lt;ArchitecturalIssue&gt;, AnalysisError&gt;;
+    fn detect_graph_issues(&amp;self, graph: &amp;LocalDependencyGraph, run_id: i64) -&gt; Vec&lt;ArchitecturalIssue&gt;;
+    fn get_anti_pattern_types(&amp;self) -&gt; Vec&lt;AntiPatternType&gt;;
+    fn get_detector_name(&amp;self) -&gt; &amp;'static str;
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>Design Principles</strong>:</p>
+<ul>
+<li><strong>Performance</strong>: Detectors should be efficient as they run on every file</li>
+<li><strong>Language Support</strong>: Use <code>ParsedFile.language</code> to provide language-specific logic</li>
+<li><strong>Error Handling</strong>: Return <code>AnalysisError</code> for serious issues, empty Vec for no findings</li>
+<li><strong>Caching</strong>: Leverage the AST cache for expensive parsing operations</li>
+</ul>
+<h3 id="3-detection-types"><a class="header" href="#3-detection-types">3. <strong>Detection Types</strong></a></h3>
+<h4 id="file-level-analysis"><a class="header" href="#file-level-analysis"><strong>File-level Analysis</strong></a></h4>
+<ul>
+<li>Operates on individual <code>ParsedFile</code> instances</li>
+<li>Uses AST parsing for deep structural understanding</li>
+<li>Language-specific pattern matching</li>
+</ul>
+<h4 id="graph-level-analysis"><a class="header" href="#graph-level-analysis"><strong>Graph-level Analysis</strong></a></h4>
+<ul>
+<li>Analyzes the entire dependency graph</li>
+<li>Detects architectural patterns across modules</li>
+<li>Identifies system-wide issues like cycles</li>
+</ul>
+<h2 id="-detection-categories"><a class="header" href="#-detection-categories">🔍 <strong>Detection Categories</strong></a></h2>
+<h3 id="universal-anti-patterns-multi-language"><a class="header" href="#universal-anti-patterns-multi-language"><strong>Universal Anti-patterns</strong> (Multi-language)</a></h3>
+<p><strong>Location</strong>: <code>src/analysis/detectors/anti_patterns/</code></p>
+<ul>
+<li><strong>God Object</strong>: Classes/structs with too many responsibilities</li>
+<li><strong>Cyclic Dependencies</strong>: Circular dependencies between modules</li>
+<li><strong>Magic Values</strong>: Hardcoded constants without explanation</li>
+<li><strong>Global State</strong>: Excessive use of global variables</li>
+<li><strong>Tight Coupling</strong>: High interdependence between components</li>
+<li><strong>Resource Leaks</strong>: Improper resource management</li>
+<li><strong>Silent Failures</strong>: Errors that fail without notification</li>
+<li><strong>Code Duplication</strong>: Repeated code patterns</li>
+<li><strong>Leaky Abstraction</strong>: Implementation details exposed through interfaces</li>
+</ul>
+<h3 id="language-specific-detectors"><a class="header" href="#language-specific-detectors"><strong>Language-Specific Detectors</strong></a></h3>
+<h4 id="rust-srcanalysisdetectorsanti_patternsrust"><a class="header" href="#rust-srcanalysisdetectorsanti_patternsrust"><strong>Rust</strong> (<code>src/analysis/detectors/anti_patterns/rust/</code>)</a></h4>
+<ul>
+<li><strong>Clone Abuse</strong>: Excessive use of <code>.clone()</code></li>
+<li><strong>Unwrap Abuse</strong>: Overuse of <code>.unwrap()</code> without error handling</li>
+<li><strong>Lifetime Complexity</strong>: Overly complex lifetime annotations</li>
+<li><strong>Memory Management</strong>: Improper memory handling patterns</li>
+</ul>
+<h4 id="python-srcanalysisdetectorsanti_patternspython"><a class="header" href="#python-srcanalysisdetectorsanti_patternspython"><strong>Python</strong> (<code>src/analysis/detectors/anti_patterns/python/</code>)</a></h4>
+<ul>
+<li><strong>Data Structure Misuse</strong>: Inefficient data structure usage</li>
+<li><strong>Exception Handling</strong>: Poor exception handling patterns</li>
+<li><strong>OOP Issues</strong>: Object-oriented programming violations</li>
+<li><strong>Performance Issues</strong>: Performance anti-patterns</li>
+</ul>
+<h4 id="javascript-srcanalysisdetectorsanti_patternsjavascript"><a class="header" href="#javascript-srcanalysisdetectorsanti_patternsjavascript"><strong>JavaScript</strong> (<code>src/analysis/detectors/anti_patterns/javascript/</code>)</a></h4>
+<ul>
+<li><strong>Async Anti-patterns</strong>: Improper async/await usage</li>
+<li><strong>Scope Issues</strong>: Variable scoping problems</li>
+<li><strong>Type Coercion</strong>: Problematic type conversion patterns</li>
+<li><strong>DOM Issues</strong>: DOM manipulation anti-patterns</li>
+<li><strong>Module Dependency</strong>: Module loading issues</li>
+</ul>
+<h4 id="java-srcanalysisdetectorsanti_patternsjava"><a class="header" href="#java-srcanalysisdetectorsanti_patternsjava"><strong>Java</strong> (<code>src/analysis/detectors/anti_patterns/java/</code>)</a></h4>
+<ul>
+<li><strong>Concurrency Issues</strong>: Thread safety problems</li>
+<li><strong>OOP Issues</strong>: Object-oriented violations</li>
+<li><strong>Resource Management</strong>: Resource handling problems</li>
+<li><strong>Type System</strong>: Type system misuse</li>
+</ul>
+<h2 id="-analysis-pipeline"><a class="header" href="#-analysis-pipeline">🚀 <strong>Analysis Pipeline</strong></a></h2>
+<pre><code class="language-mermaid">graph TD
+    A[File Discovery] --&gt; B[AST Parsing]
+    B --&gt; C[File-level Detection]
+    C --&gt; D[Dependency Extraction]
+    D --&gt; E[Graph Construction]
+    E --&gt; F[Graph-level Detection]
+    F --&gt; G[Result Aggregation]
+    G --&gt; H[Caching &amp; Reporting]
+</code></pre>
+<h3 id="step-by-step-process"><a class="header" href="#step-by-step-process"><strong>Step-by-Step Process</strong>:</a></h3>
+<ol>
+<li><strong>File Discovery</strong>: <code>AsyncWalker</code> finds source files recursively</li>
+<li><strong>AST Parsing</strong>: <code>AstParser</code> creates syntax trees using Tree-sitter</li>
+<li><strong>File-level Detection</strong>: Each registered detector analyzes individual files</li>
+<li><strong>Dependency Extraction</strong>: <code>DependencyExtractor</code> builds import/use relationships</li>
+<li><strong>Graph Construction</strong>: <code>LocalDependencyGraph</code> models architectural dependencies</li>
+<li><strong>Graph-level Detection</strong>: Detectors analyze the entire dependency structure</li>
+<li><strong>Result Aggregation</strong>: All issues are collected and categorized</li>
+<li><strong>Caching</strong>: Results cached for performance on subsequent runs</li>
+</ol>
+<h3 id="caching-strategy"><a class="header" href="#caching-strategy"><strong>Caching Strategy</strong></a></h3>
+<p>The engine implements intelligent caching to improve performance:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[derive(serde::Serialize, serde::Deserialize, Debug)]
+struct CachedAnalysisResult {
+    issues: Vec&lt;ArchitecturalIssue&gt;,
+    dependencies: Vec&lt;Dependency&gt;,
+}
+<span class="boring">}</span></code></pre></pre>
+<ul>
+<li><strong>Cache Key</strong>: File path and modification time</li>
+<li><strong>Cache Storage</strong>: SQLite database (<code>uveddi_cache.db</code>)</li>
+<li><strong>Cache Hit</strong>: Reuses previous analysis results</li>
+<li><strong>Cache Miss</strong>: Performs fresh analysis and stores results</li>
+</ul>
+<h2 id="-god-object-detector---deep-dive"><a class="header" href="#-god-object-detector---deep-dive">🎯 <strong>God Object Detector - Deep Dive</strong></a></h2>
+<p><strong>Location</strong>: <code>src/analysis/detectors/anti_patterns/god_object.rs</code></p>
+<p>The God Object detector demonstrates the system's sophisticated capabilities:</p>
+<h3 id="multi-language-support"><a class="header" href="#multi-language-support"><strong>Multi-language Support</strong></a></h3>
+<h4 id="rust-analysis"><a class="header" href="#rust-analysis"><strong>Rust Analysis</strong>:</a></h4>
+<ul>
+<li>Correlates <code>struct</code> definitions with <code>impl</code> blocks</li>
+<li>Uses separate queries for structure and implementation</li>
+<li>Handles Rust's unique ownership model</li>
+</ul>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>const RUST_STRUCT_QUERY: &amp;str = r#"
+(struct_item
+  name: (type_identifier) @name
+  body: (field_declaration_list) @body
+)
+"#;
+
+const RUST_IMPL_QUERY: &amp;str = r#"
+(impl_item
+  type: (type_identifier) @name
+  body: (declaration_list) @body
+)
+"#;
+<span class="boring">}</span></code></pre></pre>
+<h4 id="pythonjavascript-analysis"><a class="header" href="#pythonjavascript-analysis"><strong>Python/JavaScript Analysis</strong>:</a></h4>
+<ul>
+<li>Analyzes class definitions directly</li>
+<li>Single-pass analysis for simpler object models</li>
+</ul>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>const PYTHON_CLASS_QUERY: &amp;str = r#"
+(class_definition
+  name: (identifier) @name
+  body: (block) @body
+)
+"#;
+<span class="boring">}</span></code></pre></pre>
+<h3 id="intelligent-scoring"><a class="header" href="#intelligent-scoring"><strong>Intelligent Scoring</strong></a></h3>
+<p>The detector uses a sophisticated scoring algorithm:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn score_severity(&amp;self, method_count: usize, field_count: usize) -&gt; Option&lt;String&gt; {
+    let method_excess = method_count.saturating_sub(self.method_threshold);
+    let field_excess = field_count.saturating_sub(self.field_threshold);
+    
+    // Only consider it an issue if at least one threshold is exceeded
+    if method_excess == 0 &amp;&amp; field_excess == 0 {
+        return None;
+    }
+
+    let total_excess = method_excess + field_excess;
+    let severity = match total_excess {
+        0..=4 =&gt; "Medium",
+        5..=10 =&gt; "High", 
+        _ =&gt; "Critical",
+    };
+    Some(severity.to_string())
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>Default Thresholds</strong>:</p>
+<ul>
+<li>Methods: &gt; 5</li>
+<li>Fields: &gt; 8</li>
+</ul>
+<h3 id="rich-context-extraction"><a class="header" href="#rich-context-extraction"><strong>Rich Context Extraction</strong></a></h3>
+<p>Each detected issue includes:</p>
+<ul>
+<li>Precise line numbers (start and end)</li>
+<li>Complete code snippet of the problematic class/struct</li>
+<li>Detailed description with metrics</li>
+<li>Severity classification</li>
+</ul>
+<h2 id="-dependency-analysis"><a class="header" href="#-dependency-analysis">🔧 <strong>Dependency Analysis</strong></a></h2>
+<p><strong>Location</strong>: <code>src/analysis/detectors/dependency.rs</code></p>
+<h3 id="dependencyextractor"><a class="header" href="#dependencyextractor"><strong>DependencyExtractor</strong></a></h3>
+<p>Extracts import/use relationships using AST parsing:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct DependencyExtractor {
+    parser: AstParser,
+}
+
+impl DependencyExtractor {
+    pub fn extract_from_file(&amp;self, file_path: &amp;Path) -&gt; Result&lt;Vec&lt;Dependency&gt;, ExtractionError&gt;
+    pub fn extract_from_ast(&amp;self, parsed_file: &amp;ParsedFile) -&gt; Result&lt;Vec&lt;Dependency&gt;, ExtractionError&gt;
+    pub fn extract_from_files_parallel(&amp;mut self, file_paths: &amp;[&amp;Path]) -&gt; Vec&lt;Result&lt;Vec&lt;Dependency&gt;, ExtractionError&gt;&gt;
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="language-specific-queries"><a class="header" href="#language-specific-queries"><strong>Language-Specific Queries</strong></a></h3>
+<ul>
+<li><strong>Rust</strong>: <code>use</code> statements and <code>mod</code> declarations</li>
+<li><strong>Python</strong>: <code>import</code> and <code>from ... import</code> statements</li>
+<li><strong>JavaScript</strong>: <code>import</code> and <code>require()</code> statements</li>
+</ul>
+<h3 id="dependency-graph-construction"><a class="header" href="#dependency-graph-construction"><strong>Dependency Graph Construction</strong></a></h3>
+<p><strong>Location</strong>: <code>src/analysis/graph/dependency.rs</code></p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct LocalDependencyGraph {
+    graph: DiGraph&lt;ComponentNode, DependencyEdge&gt;,
+    node_map: HashMap&lt;ComponentNode, NodeIndex&gt;,
+}
+
+pub enum ComponentNode {
+    Module { path: String },
+    Class { name: String, file_path: String },
+    Function { name: String, file_path: String },
+}
+
+pub enum LocalDependencyType {
+    Call,           // Direct function/method call
+    Import,         // Import/use statement
+    Inheritance,    // Class inheritance
+    Implementation, // Interface implementation
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="-cycle-detection"><a class="header" href="#-cycle-detection">🔄 <strong>Cycle Detection</strong></a></h2>
+<p><strong>Location</strong>: <code>src/analysis/detectors/cycle.rs</code></p>
+<p>Uses Tarjan's algorithm for efficient cycle detection:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct CycleDetector;
+
+impl CycleDetector {
+    pub fn detect_cycles(&amp;self, graph: &amp;LocalDependencyGraph, analysis_run_id: i64) -&gt; Vec&lt;ArchitecturalIssue&gt; {
+        let petgraph = graph.get_petgraph();
+        let sccs = tarjan_scc(&amp;petgraph);  // Strongly Connected Components
+        
+        // Any SCC with more than one node represents a cycle
+        for scc in sccs {
+            if scc.len() &gt; 1 {
+                // Create architectural issue for the cycle
+            }
+        }
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>Features</strong>:</p>
+<ul>
+<li>Efficient O(V + E) complexity using Tarjan's algorithm</li>
+<li>Detects all cycles in the dependency graph</li>
+<li>Provides detailed cycle information in issues</li>
+</ul>
+<h2 id="-analysis-results"><a class="header" href="#-analysis-results">🎨 <strong>Analysis Results</strong></a></h2>
+<h3 id="architecturalissue-structure"><a class="header" href="#architecturalissue-structure"><strong>ArchitecturalIssue Structure</strong></a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct ArchitecturalIssue {
+    pub issue_id: Option&lt;i64&gt;,
+    pub analysis_run_id: i64,
+    pub anti_pattern_type_id: i64,
+    pub file_path: String,
+    pub start_line: Option&lt;i32&gt;,
+    pub end_line: Option&lt;i32&gt;, 
+    pub severity: String,        // Critical/High/Medium/Low
+    pub description: String,     // Human-readable explanation
+    pub code_snippet: Option&lt;String&gt;, // Relevant code context
+    pub ai_explanation: Option&lt;String&gt;, // AI-generated insights
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="anti-pattern-types"><a class="header" href="#anti-pattern-types"><strong>Anti-Pattern Types</strong></a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct AntiPatternType {
+    pub anti_pattern_type_id: Option&lt;i64&gt;,
+    pub name: String,
+    pub description: String,
+    pub category: String,  // e.g., "Abstraction-Based", "Structural"
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="-performance-optimizations"><a class="header" href="#-performance-optimizations">🚀 <strong>Performance Optimizations</strong></a></h2>
+<h3 id="async-processing"><a class="header" href="#async-processing"><strong>Async Processing</strong></a></h3>
+<ul>
+<li>Non-blocking file analysis using <code>tokio</code></li>
+<li>Concurrent processing of multiple files</li>
+<li>Stream-based file discovery with <code>AsyncWalker</code></li>
+</ul>
+<h3 id="parallel-extraction"><a class="header" href="#parallel-extraction"><strong>Parallel Extraction</strong></a></h3>
+<ul>
+<li>Rayon-based parallel dependency extraction</li>
+<li>CPU-bound tasks distributed across cores</li>
+<li>Efficient memory usage</li>
+</ul>
+<h3 id="smart-caching"><a class="header" href="#smart-caching"><strong>Smart Caching</strong></a></h3>
+<ul>
+<li>SQLite-based result caching</li>
+<li>File modification time tracking</li>
+<li>Incremental analysis support</li>
+</ul>
+<h3 id="lazy-loading"><a class="header" href="#lazy-loading"><strong>Lazy Loading</strong></a></h3>
+<ul>
+<li>AST trees only parsed when needed</li>
+<li>Memory-efficient processing of large codebases</li>
+<li>Streaming file processing</li>
+</ul>
+<h2 id="-error-handling"><a class="header" href="#-error-handling">🛡️ <strong>Error Handling</strong></a></h2>
+<h3 id="graceful-degradation"><a class="header" href="#graceful-degradation"><strong>Graceful Degradation</strong></a></h3>
+<ul>
+<li>Analysis continues even if individual detectors fail</li>
+<li>Partial results returned when possible</li>
+<li>Non-critical errors logged as warnings</li>
+</ul>
+<h3 id="error-types"><a class="header" href="#error-types"><strong>Error Types</strong></a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub enum AnalysisError {
+    AntiPatternDetection(String),
+    QueryError(String),
+    AstError(AstError),
+    // ... other error types
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="recovery-strategies"><a class="header" href="#recovery-strategies"><strong>Recovery Strategies</strong></a></h3>
+<ul>
+<li>Skip problematic files and continue analysis</li>
+<li>Fallback to simpler detection methods when possible</li>
+<li>Detailed error logging for debugging</li>
+</ul>
+<h2 id="-extensibility"><a class="header" href="#-extensibility">🔌 <strong>Extensibility</strong></a></h2>
+<h3 id="adding-new-detectors"><a class="header" href="#adding-new-detectors"><strong>Adding New Detectors</strong></a></h3>
+<ol>
+<li><strong>Implement the AnalysisDetector trait</strong>:</li>
+</ol>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct MyCustomDetector;
+
+impl AnalysisDetector for MyCustomDetector {
+    fn get_detector_name(&amp;self) -&gt; &amp;'static str {
+        "MyCustomDetector"
+    }
+    
+    fn get_anti_pattern_types(&amp;self) -&gt; Vec&lt;AntiPatternType&gt; {
+        vec![/* your anti-pattern types */]
+    }
+    
+    fn detect_issues(&amp;self, parsed_file: &amp;ParsedFile) -&gt; Result&lt;Vec&lt;ArchitecturalIssue&gt;, AnalysisError&gt; {
+        // Your detection logic here
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<ol start="2">
+<li><strong>Register with the engine</strong>:</li>
+</ol>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let mut engine = AnalysisEngine::new()?;
+engine.add_detector(Box::new(MyCustomDetector::new()));
+<span class="boring">}</span></code></pre></pre>
+<h3 id="language-support"><a class="header" href="#language-support"><strong>Language Support</strong></a></h3>
+<p>Adding support for new languages:</p>
+<ol>
+<li><strong>Add language to SourceLanguage enum</strong></li>
+<li><strong>Create Tree-sitter queries for the language</strong></li>
+<li><strong>Implement language-specific detection logic</strong></li>
+<li><strong>Add dependency extraction patterns</strong></li>
+</ol>
+<h3 id="custom-queries"><a class="header" href="#custom-queries"><strong>Custom Queries</strong></a></h3>
+<p>Tree-sitter queries enable precise pattern matching:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>const CUSTOM_PATTERN_QUERY: &amp;str = r#"
+(function_definition
+  name: (identifier) @name
+  parameters: (parameters) @params
+  body: (block) @body
+)
+"#;
+<span class="boring">}</span></code></pre></pre>
+<h2 id="-what-makes-this-special"><a class="header" href="#-what-makes-this-special">🌟 <strong>What Makes This Special</strong></a></h2>
+<ol>
+<li><strong>Architectural Focus</strong>: Goes beyond syntax to analyze design patterns</li>
+<li><strong>Multi-language Intelligence</strong>: Understands language-specific idioms</li>
+<li><strong>Graph-based Analysis</strong>: Considers system-wide relationships</li>
+<li><strong>AI Integration</strong>: Enhances detection with intelligent explanations</li>
+<li><strong>Production Ready</strong>: Robust error handling and performance optimization</li>
+<li><strong>Extensible Design</strong>: Easy to add new detectors and languages</li>
+<li><strong>Performance Optimized</strong>: Async, parallel, and cached processing</li>
+</ol>
+<h2 id="-usage-examples"><a class="header" href="#-usage-examples">📊 <strong>Usage Examples</strong></a></h2>
+<h3 id="basic-analysis"><a class="header" href="#basic-analysis"><strong>Basic Analysis</strong></a></h3>
+<pre><pre class="playground"><code class="language-rust">use uveddi::analysis::AnalysisEngine;
+use std::path::Path;
+
+#[tokio::main]
+async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+    let mut engine = AnalysisEngine::new()?;
+    let (issues, graph) = engine.analyze(Path::new("src/")).await?;
+    
+    println!("Found {} issues", issues.len());
+    for issue in issues {
+        println!("  {}: {} ({})", issue.severity, issue.description, issue.file_path);
+    }
+    
+    Ok(())
+}</code></pre></pre>
+<h3 id="custom-detector-registration"><a class="header" href="#custom-detector-registration"><strong>Custom Detector Registration</strong></a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let mut engine = AnalysisEngine::new()?;
+
+// Add custom detectors
+engine.add_detector(Box::new(GodObjectDetector::new(10, 15))); // Custom thresholds
+engine.add_detector(Box::new(MyCustomDetector::new()));
+
+let (issues, graph) = engine.analyze(Path::new("src/")).await?;
+<span class="boring">}</span></code></pre></pre>
+<h2 id="-future-enhancements"><a class="header" href="#-future-enhancements">🔮 <strong>Future Enhancements</strong></a></h2>
+<h3 id="planned-features"><a class="header" href="#planned-features"><strong>Planned Features</strong></a></h3>
+<ul>
+<li>Machine learning-based pattern detection</li>
+<li>Custom rule definition language</li>
+<li>Real-time analysis integration</li>
+<li>IDE plugin support</li>
+<li>Advanced visualization tools</li>
+</ul>
+<h3 id="extensibility-roadmap"><a class="header" href="#extensibility-roadmap"><strong>Extensibility Roadmap</strong></a></h3>
+<ul>
+<li>Plugin marketplace</li>
+<li>Community detector contributions</li>
+<li>Language pack system</li>
+<li>Custom metric definitions</li>
+</ul>
+<hr />
+<h2 id="-related-documentation"><a class="header" href="#-related-documentation">📚 <strong>Related Documentation</strong></a></h2>
+<ul>
+<li><a href="./ARCHITECTURE.html">Architecture Overview</a></li>
+<li><a href="../plugins/DEVELOPER_GUIDE.html">Plugin Development Guide</a></li>
+<li><a href="../tests/README.html">Testing Strategy</a></li>
+<li><a href="./AI_INTEGRATION.html">AI Integration Guide</a></li>
+</ul>
+<hr />
+<p><em>This document provides a comprehensive technical overview of the Uveddi Analysis Engine. For implementation details, refer to the source code in <code>src/analysis/</code>.</em></p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../04-architecture/docker_local_ai_integration.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../04-architecture/EntRelDiag.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../04-architecture/docker_local_ai_integration.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../04-architecture/EntRelDiag.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../assets/custom-scripts.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

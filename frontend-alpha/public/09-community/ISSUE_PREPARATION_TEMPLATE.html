@@ -1,0 +1,479 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Issue Preparation Template - Uveddi Documentation</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="AI-Powered Code Analysis That Stays Private - Comprehensive guide to using Uveddi for architectural analysis">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../assets/brand/colors/palette.css">
+        <link rel="stylesheet" href="../assets/custom-styles.css">
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Uveddi Documentation</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/botzrDev/uveddi" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://github.com/botzrDev/uveddi/edit/main/docs/./09-community/ISSUE_PREPARATION_TEMPLATE.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="issue-preparation-template-for-beginner-friendly-tasks"><a class="header" href="#issue-preparation-template-for-beginner-friendly-tasks">Issue Preparation Template for Beginner-Friendly Tasks</a></h1>
+<p>Use this template to prepare existing issues for new contributors. This ensures consistent quality and reduces barriers to entry.</p>
+<h2 id="issue-enhancement-checklist"><a class="header" href="#issue-enhancement-checklist">Issue Enhancement Checklist</a></h2>
+<h3 id="-basic-information"><a class="header" href="#-basic-information">📋 Basic Information</a></h3>
+<ul>
+<li><input disabled="" type="checkbox"/>
+<strong>Clear Title</strong>: Descriptive and action-oriented (use <code>[Good First Issue]</code> prefix)</li>
+<li><input disabled="" type="checkbox"/>
+<strong>Detailed Description</strong>: What needs to be done and why it matters</li>
+<li><input disabled="" type="checkbox"/>
+<strong>Acceptance Criteria</strong>: Specific, measurable outcomes with checkboxes</li>
+<li><input disabled="" type="checkbox"/>
+<strong>Files to Modify</strong>: Exact file paths and line numbers where possible</li>
+</ul>
+<h3 id="-beginner-friendly-enhancements"><a class="header" href="#-beginner-friendly-enhancements">🎯 Beginner-Friendly Enhancements</a></h3>
+<ul>
+<li><input disabled="" type="checkbox"/>
+<strong>Background Context</strong>: Why this task is important for the project</li>
+<li><input disabled="" type="checkbox"/>
+<strong>Step-by-Step Guide</strong>: Detailed implementation steps with code examples</li>
+<li><input disabled="" type="checkbox"/>
+<strong>Expected Challenges</strong>: Common pitfalls and how to avoid them</li>
+<li><input disabled="" type="checkbox"/>
+<strong>Learning Resources</strong>: Links to relevant documentation and tutorials</li>
+</ul>
+<h3 id="-technical-details"><a class="header" href="#-technical-details">🛠 Technical Details</a></h3>
+<ul>
+<li><input disabled="" type="checkbox"/>
+<strong>Prerequisites</strong>: Required tools, knowledge, and setup steps</li>
+<li><input disabled="" type="checkbox"/>
+<strong>Environment Setup</strong>: Specific development environment requirements</li>
+<li><input disabled="" type="checkbox"/>
+<strong>Testing Instructions</strong>: How to verify the solution works correctly</li>
+<li><input disabled="" type="checkbox"/>
+<strong>Code Examples</strong>: Sample code patterns or similar implementations</li>
+</ul>
+<h3 id="-support-structure"><a class="header" href="#-support-structure">🤝 Support Structure</a></h3>
+<ul>
+<li><input disabled="" type="checkbox"/>
+<strong>Mentor Assignment</strong>: Designated helper for questions and guidance</li>
+<li><input disabled="" type="checkbox"/>
+<strong>Related Issues</strong>: Links to similar completed tasks for reference</li>
+<li><input disabled="" type="checkbox"/>
+<strong>Community Resources</strong>: Where to get help (Discord, GitHub Discussions)</li>
+<li><input disabled="" type="checkbox"/>
+<strong>Review Process</strong>: What to expect during code review and merge</li>
+</ul>
+<h2 id="template-application-example"><a class="header" href="#template-application-example">Template Application Example</a></h2>
+<h3 id="before-typical-issue"><a class="header" href="#before-typical-issue">Before (Typical Issue)</a></h3>
+<pre><code class="language-markdown">Title: Add CSV output
+Description: We need CSV output for reports.
+</code></pre>
+<h3 id="after-beginner-ready-issue"><a class="header" href="#after-beginner-ready-issue">After (Beginner-Ready Issue)</a></h3>
+<pre><code class="language-markdown">Title: [Good First Issue] Add CSV output format for analysis reports
+
+Description:
+## 📋 What You'll Build
+Add CSV export functionality to allow users to open analysis results in Excel/Google Sheets.
+
+## 🎯 Acceptance Criteria
+- [ ] Add `--format csv` option to CLI command
+- [ ] Generate CSV with columns: file, issue_type, severity, line_number, description
+- [ ] Include header row with column names
+- [ ] Add unit tests for CSV generation
+- [ ] Update help text to mention CSV option
+- [ ] Update documentation with CSV examples
+
+## 🛠 Implementation Guide
+
+### Step 1: Add CLI Option
+**File**: `src/cli/analyze_command.rs` (around line 45)
+```rust
+#[arg(long, value_enum, default_value_t = OutputFormat::Json)]
+pub format: OutputFormat,
+</code></pre>
+<p>Add <code>Csv</code> variant to the <code>OutputFormat</code> enum.</p>
+<h3 id="step-2-create-csv-formatter"><a class="header" href="#step-2-create-csv-formatter">Step 2: Create CSV Formatter</a></h3>
+<p><strong>New File</strong>: <code>src/report/csv_formatter.rs</code></p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use csv::Writer;
+use crate::analysis::AnalysisResult;
+
+pub fn format_csv(results: &amp;AnalysisResult) -&gt; Result&lt;String, Box&lt;dyn Error&gt;&gt; {
+    let mut wtr = Writer::from_writer(vec![]);
+    
+    // Write header
+    wtr.write_record(&amp;["file", "issue_type", "severity", "line_number", "description"])?;
+    
+    // Write data rows
+    for issue in &amp;results.issues {
+        wtr.write_record(&amp;[
+            &amp;issue.file_path,
+            &amp;issue.issue_type.to_string(),
+            &amp;issue.severity.to_string(),
+            &amp;issue.line_number.to_string(),
+            &amp;issue.description,
+        ])?;
+    }
+    
+    Ok(String::from_utf8(wtr.into_inner()?)?)
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="step-3-integrate-formatter"><a class="header" href="#step-3-integrate-formatter">Step 3: Integrate Formatter</a></h3>
+<p><strong>File</strong>: <code>src/report/mod.rs</code>
+Add the CSV formatter to the main report generation logic.</p>
+<h3 id="step-4-add-tests"><a class="header" href="#step-4-add-tests">Step 4: Add Tests</a></h3>
+<p><strong>New File</strong>: <code>tests/report/csv_tests.rs</code>
+Test the CSV output format with sample data.</p>
+<h2 id="-resources"><a class="header" href="#-resources">📚 Resources</a></h2>
+<ul>
+<li><a href="https://docs.rs/csv/">CSV crate documentation</a></li>
+<li><a href="src/report/json_formatter.rs">Similar JSON implementation</a></li>
+<li><a href="src/cli/analyze_command.rs">CLI argument examples</a></li>
+<li><a href="https://doc.rust-lang.org/book/ch06-01-defining-an-enum.html">Rust enums guide</a></li>
+</ul>
+<h2 id="-getting-help"><a class="header" href="#-getting-help">🤝 Getting Help</a></h2>
+<p><strong>Mentor</strong>: @username - Available for questions (responds within 24 hours)
+<strong>Estimated Time</strong>: 2-3 hours
+<strong>Skills</strong>: Basic Rust, CSV format understanding
+<strong>Complexity Score</strong>: 2.0/5 (Beginner-friendly)</p>
+<h2 id="-expected-challenges"><a class="header" href="#-expected-challenges">💡 Expected Challenges</a></h2>
+<ol>
+<li><strong>CSV Library Usage</strong>: The <code>csv</code> crate has specific patterns for writing data
+<ul>
+<li><strong>Solution</strong>: Follow the examples in the documentation and existing JSON formatter</li>
+</ul>
+</li>
+<li><strong>Error Handling</strong>: Proper error propagation from CSV operations
+<ul>
+<li><strong>Solution</strong>: Use <code>?</code> operator and <code>Box&lt;dyn Error&gt;</code> for simple error handling</li>
+</ul>
+</li>
+<li><strong>Testing</strong>: Creating appropriate test cases for CSV output
+<ul>
+<li><strong>Solution</strong>: Look at existing JSON tests for patterns</li>
+</ul>
+</li>
+</ol>
+<h2 id="-related-work"><a class="header" href="#-related-work">🔗 Related Work</a></h2>
+<ul>
+<li>See #123: JSON output implementation (similar pattern)</li>
+<li>See #456: XML output discussion (future enhancement)</li>
+<li>See docs/08-examples/basic-example.md for output format examples</li>
+</ul>
+<h2 id="-definition-of-done"><a class="header" href="#-definition-of-done">✅ Definition of Done</a></h2>
+<ul>
+<li><input disabled="" type="checkbox"/>
+Code compiles without warnings</li>
+<li><input disabled="" type="checkbox"/>
+All tests pass (including new CSV tests)</li>
+<li><input disabled="" type="checkbox"/>
+Documentation updated with CSV examples</li>
+<li><input disabled="" type="checkbox"/>
+CLI help text includes CSV option</li>
+<li><input disabled="" type="checkbox"/>
+Mentor approval on implementation approach</li>
+<li><input disabled="" type="checkbox"/>
+Code review completed and approved</li>
+</ul>
+<pre><code>
+## Quick Application Workflow
+
+### For Documentation Tasks
+1. **Add context** about why the documentation matters
+2. **Provide examples** of good documentation from similar projects
+3. **Specify formatting standards** (Markdown, style guides)
+4. **Include review checklist** for grammar, clarity, and completeness
+
+### For Testing Tasks
+1. **Explain testing philosophy** and why tests matter
+2. **Provide test examples** and patterns from existing codebase
+3. **Specify coverage expectations** and edge cases to consider
+4. **Include debugging tips** for when tests fail
+
+### For Frontend Tasks
+1. **Provide design mockups** or describe expected behavior
+2. **Specify accessibility requirements** (WCAG guidelines)
+3. **Include cross-browser testing** requirements
+4. **Link to component library** and design system documentation
+
+### For Backend Tasks
+1. **Explain business logic** and system impact
+2. **Provide API specifications** or interface requirements
+3. **Include performance considerations** and constraints
+4. **Specify error handling** and edge case requirements
+
+### For DevOps Tasks
+1. **Explain infrastructure context** and deployment pipeline
+2. **Provide security requirements** and best practices
+3. **Include monitoring and logging** considerations
+4. **Specify rollback procedures** and safety measures
+
+## Quality Gates
+
+Before marking an issue as ready for new contributors:
+
+### Technical Completeness
+- [ ] **Implementation path is clear** with specific files and functions identified
+- [ ] **All dependencies are documented** (libraries, tools, configurations)
+- [ ] **Testing strategy is defined** with clear pass/fail criteria
+- [ ] **Review criteria are specified** to set clear expectations
+
+### Support Infrastructure
+- [ ] **Mentor is assigned** with confirmed availability
+- [ ] **Resources are validated** (all links work, documentation is current)
+- [ ] **Communication channels are clear** (where to ask questions)
+- [ ] **Success metrics are defined** (what constitutes completion)
+
+### Community Readiness
+- [ ] **Issue is properly labeled** with difficulty, skills, and time estimates
+- [ ] **Prerequisites are minimal** or clearly documented
+- [ ] **Onboarding is streamlined** with minimal setup friction
+- [ ] **Celebration is planned** for successful completion
+
+## Continuous Improvement
+
+### Gather Feedback
+- **Post-completion surveys** to understand contributor experience
+- **Mentor feedback** on common questions and blockers
+- **Community discussions** about improving the process
+
+### Iterate on Templates
+- **Update based on learnings** from completed tasks
+- **Add new sections** as patterns emerge
+- **Remove friction** where contributors get stuck
+
+### Scale Successfully
+- **Create specialized templates** for different task types
+- **Automate template application** where possible
+- **Train mentors** on effective issue preparation
+
+---
+
+*Use this template to transform any task into a beginner-friendly contribution opportunity. The goal is to eliminate barriers and provide clear pathways to success for new contributors.*</code></pre>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../09-community/CODE_OF_CONDUCT.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../09-community/PRD.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../09-community/CODE_OF_CONDUCT.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../09-community/PRD.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../assets/custom-scripts.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

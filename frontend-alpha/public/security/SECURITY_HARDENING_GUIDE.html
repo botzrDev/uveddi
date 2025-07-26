@@ -1,0 +1,716 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Security Hardening Guide - Uveddi Documentation</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="AI-Powered Code Analysis That Stays Private - Comprehensive guide to using Uveddi for architectural analysis">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../assets/brand/colors/palette.css">
+        <link rel="stylesheet" href="../assets/custom-styles.css">
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Uveddi Documentation</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/botzrDev/uveddi" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://github.com/botzrDev/uveddi/edit/main/docs/./security/SECURITY_HARDENING_GUIDE.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="uveddi-security-hardening-guide"><a class="header" href="#uveddi-security-hardening-guide">Uveddi Security Hardening Guide</a></h1>
+<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
+<p>This guide documents the comprehensive security hardening measures implemented in Uveddi as part of UV-94: Security Hardening initiative. It covers HTTP client security, container security, testing protocols, and compliance validation.</p>
+<h2 id="table-of-contents"><a class="header" href="#table-of-contents">Table of Contents</a></h2>
+<ol>
+<li><a href="#http-client-security">HTTP Client Security</a></li>
+<li><a href="#container-security-hardening">Container Security Hardening</a></li>
+<li><a href="#security-testing-framework">Security Testing Framework</a></li>
+<li><a href="#compliance-validation">Compliance Validation</a></li>
+<li><a href="#security-configuration">Security Configuration</a></li>
+<li><a href="#incident-response">Incident Response</a></li>
+<li><a href="#security-monitoring">Security Monitoring</a></li>
+<li><a href="#best-practices">Best Practices</a></li>
+</ol>
+<h2 id="http-client-security"><a class="header" href="#http-client-security">HTTP Client Security</a></h2>
+<h3 id="securehttpclient-implementation"><a class="header" href="#securehttpclient-implementation">SecureHttpClient Implementation</a></h3>
+<p>Uveddi implements a hardened HTTP client (<code>SecureHttpClient</code>) that enforces security best practices:</p>
+<h4 id="key-features"><a class="header" href="#key-features">Key Features:</a></h4>
+<ul>
+<li><strong>HTTPS Enforcement</strong>: Blocks all HTTP requests in production</li>
+<li><strong>Certificate Validation</strong>: Strict TLS certificate verification</li>
+<li><strong>Timeout Management</strong>: Configurable request, connection, and read timeouts</li>
+<li><strong>Rate Limiting</strong>: Built-in rate limiting to prevent abuse</li>
+<li><strong>User Agent Control</strong>: Configurable user agent strings</li>
+</ul>
+<h4 id="configuration"><a class="header" href="#configuration">Configuration:</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>HttpSecurityConfig {
+    enforce_https: true,           // Force HTTPS in production
+    timeout_seconds: 30,           // Request timeout
+    connect_timeout_seconds: 10,   // Connection timeout
+    read_timeout_seconds: 30,      // Read timeout
+    user_agent: "Uveddi/1.0",     // Custom user agent
+    max_redirects: 3,              // Maximum redirects
+}
+<span class="boring">}</span></code></pre></pre>
+<h4 id="usage"><a class="header" href="#usage">Usage:</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use uveddi::security::{SecureHttpClient, HttpSecurityConfig};
+
+let config = HttpSecurityConfig::default();
+let client = SecureHttpClient::new(config)?;
+let response = client.get("https://api.example.com").await?;
+<span class="boring">}</span></code></pre></pre>
+<h3 id="security-considerations"><a class="header" href="#security-considerations">Security Considerations:</a></h3>
+<ul>
+<li>All HTTP clients in the codebase have been updated to use <code>SecureHttpClient</code></li>
+<li>Development builds allow HTTP for localhost testing</li>
+<li>Production builds strictly enforce HTTPS</li>
+<li>Certificate pinning can be enabled for critical endpoints</li>
+</ul>
+<h2 id="container-security-hardening"><a class="header" href="#container-security-hardening">Container Security Hardening</a></h2>
+<h3 id="dockerfile-security-measures"><a class="header" href="#dockerfile-security-measures">Dockerfile Security Measures</a></h3>
+<p>The Uveddi container implements multiple security layers:</p>
+<h4 id="multi-stage-build"><a class="header" href="#multi-stage-build">Multi-Stage Build:</a></h4>
+<pre><code class="language-dockerfile"># Builder stage - minimal build dependencies
+FROM rust:1.70-slim AS builder
+RUN apt-get update &amp;&amp; apt-get install -y --no-install-recommends \
+    pkg-config libssl-dev ca-certificates libsqlite3-dev git
+
+# Runtime stage - minimal runtime image
+FROM debian:bookworm-slim AS runtime
+RUN apt-get update &amp;&amp; apt-get install -y --no-install-recommends \
+    ca-certificates libssl3 libsqlite3-0 curl
+</code></pre>
+<h4 id="non-root-user-execution"><a class="header" href="#non-root-user-execution">Non-Root User Execution:</a></h4>
+<pre><code class="language-dockerfile"># Create dedicated user with minimal privileges
+RUN groupadd -r -g 1001 uveddi &amp;&amp; \
+    useradd -r -g uveddi -u 1001 -s /bin/false -M uveddi
+
+# Switch to non-root user
+USER uveddi
+</code></pre>
+<h4 id="secure-file-permissions"><a class="header" href="#secure-file-permissions">Secure File Permissions:</a></h4>
+<pre><code class="language-dockerfile"># Create directories with proper ownership
+RUN mkdir -p /app/data /app/cache /app/logs &amp;&amp; \
+    chown -R uveddi:uveddi /app
+
+# Set executable permissions
+RUN chmod +x /docker-entrypoint.sh &amp;&amp; \
+    chmod +x /usr/local/bin/uveddi
+</code></pre>
+<h3 id="docker-compose-security-constraints"><a class="header" href="#docker-compose-security-constraints">Docker Compose Security Constraints</a></h3>
+<p>The <code>docker-compose.yml</code> implements comprehensive security controls:</p>
+<pre><code class="language-yaml">services:
+  uveddi:
+    security_opt:
+      - no-new-privileges:true    # Prevent privilege escalation
+      - apparmor:docker-default   # Enable AppArmor
+    read_only: true              # Read-only filesystem
+    tmpfs:
+      - /tmp:noexec,nosuid,size=100m
+      - /var/tmp:noexec,nosuid,size=50m
+    cap_drop:
+      - ALL                      # Drop all capabilities
+    cap_add:
+      - NET_BIND_SERVICE         # Only required capabilities
+    user: "1001:1001"           # Non-root user
+    deploy:
+      resources:
+        limits:
+          memory: 2G             # Memory limits
+          cpus: '1.0'           # CPU limits
+</code></pre>
+<h3 id="security-entrypoint-script"><a class="header" href="#security-entrypoint-script">Security Entrypoint Script</a></h3>
+<p>The <code>docker-entrypoint.sh</code> script implements additional security measures:</p>
+<h4 id="signal-handling"><a class="header" href="#signal-handling">Signal Handling:</a></h4>
+<pre><code class="language-bash">cleanup() {
+    log "Received shutdown signal, cleaning up..."
+    if [ ! -z "$UVEDDI_PID" ]; then
+        kill -TERM "$UVEDDI_PID" 2&gt;/dev/null || true
+        wait "$UVEDDI_PID" 2&gt;/dev/null || true
+    fi
+    exit 0
+}
+trap cleanup SIGTERM SIGINT
+</code></pre>
+<h4 id="security-validation"><a class="header" href="#security-validation">Security Validation:</a></h4>
+<pre><code class="language-bash"># Ensure non-root execution
+if [ "$(id -u)" = "0" ]; then
+    log "ERROR: Container should not run as root user"
+    exit 1
+fi
+
+# Validate required directories
+for dir in "/app/data" "/app/cache" "/app/logs"; do
+    if [ ! -w "$dir" ]; then
+        log "ERROR: Directory $dir is not writable"
+        exit 1
+    fi
+done
+</code></pre>
+<h2 id="security-testing-framework"><a class="header" href="#security-testing-framework">Security Testing Framework</a></h2>
+<h3 id="test-categories"><a class="header" href="#test-categories">Test Categories</a></h3>
+<h4 id="1-comprehensive-security-validation"><a class="header" href="#1-comprehensive-security-validation">1. Comprehensive Security Validation</a></h4>
+<p>Location: <code>tests/security/comprehensive_security_validation.rs</code></p>
+<p>Tests include:</p>
+<ul>
+<li>HTTP client security enforcement</li>
+<li>Certificate validation</li>
+<li>Input validation security</li>
+<li>File access security</li>
+<li>Rate limiting enforcement</li>
+<li>Audit logging functionality</li>
+<li>Encryption configuration</li>
+<li>Container security validation</li>
+</ul>
+<h4 id="2-compliance-validation"><a class="header" href="#2-compliance-validation">2. Compliance Validation</a></h4>
+<p>Location: <code>tests/security/compliance_validation.rs</code></p>
+<p>OWASP Top 10 Tests:</p>
+<ul>
+<li><strong>A01</strong>: Broken Access Control</li>
+<li><strong>A02</strong>: Cryptographic Failures</li>
+<li><strong>A03</strong>: Injection attacks</li>
+<li><strong>A04</strong>: Insecure Design</li>
+<li><strong>A05</strong>: Security Misconfiguration</li>
+<li><strong>A06</strong>: Vulnerable Components</li>
+<li><strong>A07</strong>: Authentication Failures</li>
+<li><strong>A08</strong>: Integrity Failures</li>
+<li><strong>A09</strong>: Logging/Monitoring Failures</li>
+<li><strong>A10</strong>: Server-Side Request Forgery</li>
+</ul>
+<h3 id="running-security-tests"><a class="header" href="#running-security-tests">Running Security Tests</a></h3>
+<pre><code class="language-bash"># Run all security tests
+cargo test --test comprehensive_security_validation
+cargo test --test compliance_validation
+
+# Run specific security test categories
+cargo test security:: -- --nocapture
+cargo test input_validation -- --nocapture
+cargo test path_traversal -- --nocapture
+</code></pre>
+<h2 id="compliance-validation"><a class="header" href="#compliance-validation">Compliance Validation</a></h2>
+<h3 id="owasp-top-10-compliance"><a class="header" href="#owasp-top-10-compliance">OWASP Top 10 Compliance</a></h3>
+<p>Uveddi implements protections against all OWASP Top 10 vulnerabilities:</p>
+<ol>
+<li>
+<p><strong>Broken Access Control (A01)</strong></p>
+<ul>
+<li>Role-based access control</li>
+<li>Default deny principle</li>
+<li>Session timeout enforcement</li>
+</ul>
+</li>
+<li>
+<p><strong>Cryptographic Failures (A02)</strong></p>
+<ul>
+<li>Strong encryption algorithms (AES-256-GCM)</li>
+<li>Minimum 256-bit keys</li>
+<li>No hardcoded secrets</li>
+</ul>
+</li>
+<li>
+<p><strong>Injection (A03)</strong></p>
+<ul>
+<li>Input validation and sanitization</li>
+<li>Parameterized queries</li>
+<li>Command injection prevention</li>
+</ul>
+</li>
+<li>
+<p><strong>Insecure Design (A04)</strong></p>
+<ul>
+<li>Secure defaults</li>
+<li>Defense in depth</li>
+<li>Threat modeling</li>
+</ul>
+</li>
+<li>
+<p><strong>Security Misconfiguration (A05)</strong></p>
+<ul>
+<li>Hardened containers</li>
+<li>Secure configuration management</li>
+<li>Regular security reviews</li>
+</ul>
+</li>
+<li>
+<p><strong>Vulnerable Components (A06)</strong></p>
+<ul>
+<li>Dependency scanning (cargo-audit)</li>
+<li>Automated vulnerability detection</li>
+<li>Regular updates</li>
+</ul>
+</li>
+<li>
+<p><strong>Authentication Failures (A07)</strong></p>
+<ul>
+<li>Strong authentication requirements</li>
+<li>Account lockout mechanisms</li>
+<li>Secure session management</li>
+</ul>
+</li>
+<li>
+<p><strong>Integrity Failures (A08)</strong></p>
+<ul>
+<li>Container image verification</li>
+<li>Dependency integrity checks</li>
+<li>Configuration validation</li>
+</ul>
+</li>
+<li>
+<p><strong>Logging/Monitoring Failures (A09)</strong></p>
+<ul>
+<li>Comprehensive audit logging</li>
+<li>Security event monitoring</li>
+<li>Log retention policies</li>
+</ul>
+</li>
+<li>
+<p><strong>Server-Side Request Forgery (A10)</strong></p>
+<ul>
+<li>URL validation</li>
+<li>Network access restrictions</li>
+<li>Input sanitization</li>
+</ul>
+</li>
+</ol>
+<h3 id="container-security-standards"><a class="header" href="#container-security-standards">Container Security Standards</a></h3>
+<ul>
+<li><strong>Non-root execution</strong>: UID/GID 1001</li>
+<li><strong>Minimal attack surface</strong>: Multi-stage builds</li>
+<li><strong>Capability dropping</strong>: ALL capabilities dropped</li>
+<li><strong>Resource limits</strong>: Memory and CPU constraints</li>
+<li><strong>Read-only filesystem</strong>: Write access only to specific directories</li>
+<li><strong>Security options</strong>: no-new-privileges, AppArmor</li>
+</ul>
+<h2 id="security-configuration"><a class="header" href="#security-configuration">Security Configuration</a></h2>
+<h3 id="main-security-configuration"><a class="header" href="#main-security-configuration">Main Security Configuration</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>SecurityConfig {
+    authentication: AuthenticationConfig {
+        enabled: true,
+        max_failed_attempts: 5,
+        lockout_duration_minutes: 15,
+        session_timeout_minutes: 240,
+        require_secure_cookies: true,
+    },
+    authorization: AuthorizationConfig {
+        enabled: true,
+        default_role: "guest",
+    },
+    encryption: EncryptionConfig {
+        enabled: true,
+        algorithm: "AES-256-GCM",
+        key_length: 256,
+    },
+    rate_limiting: RateLimitingConfig {
+        enabled: true,
+        requests_per_minute: 100,
+        burst_size: 10,
+    },
+    audit_logging: AuditLoggingConfig {
+        enabled: true,
+        log_file_path: "/app/logs/audit.log",
+        max_file_size_mb: 100,
+        max_files: 10,
+        log_failed_auth: true,
+        log_access_violations: true,
+        log_config_changes: true,
+    },
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="environment-variables"><a class="header" href="#environment-variables">Environment Variables</a></h3>
+<p>Security-sensitive configuration should use environment variables:</p>
+<pre><code class="language-bash"># Required security configuration
+export SECURITY_ENCRYPTION_KEY_FILE=/secrets/encryption.key
+export AUDIT_LOG_PATH=/app/logs/audit.log
+export RATE_LIMIT_REQUESTS_PER_MINUTE=100
+export SESSION_TIMEOUT_MINUTES=240
+</code></pre>
+<h2 id="incident-response"><a class="header" href="#incident-response">Incident Response</a></h2>
+<h3 id="security-incident-classification"><a class="header" href="#security-incident-classification">Security Incident Classification</a></h3>
+<p><strong>Critical (P0)</strong>:</p>
+<ul>
+<li>Confirmed data breach</li>
+<li>System compromise</li>
+<li>Privilege escalation</li>
+</ul>
+<p><strong>High (P1)</strong>:</p>
+<ul>
+<li>Suspected data breach</li>
+<li>Authentication bypass</li>
+<li>Injection attacks</li>
+</ul>
+<p><strong>Medium (P2)</strong>:</p>
+<ul>
+<li>Failed authentication patterns</li>
+<li>Configuration drift</li>
+<li>Dependency vulnerabilities</li>
+</ul>
+<p><strong>Low (P3)</strong>:</p>
+<ul>
+<li>Security warnings</li>
+<li>Compliance violations</li>
+<li>Monitoring alerts</li>
+</ul>
+<h3 id="response-procedures"><a class="header" href="#response-procedures">Response Procedures</a></h3>
+<ol>
+<li><strong>Detection</strong>: Automated monitoring and manual reporting</li>
+<li><strong>Assessment</strong>: Severity classification and impact analysis</li>
+<li><strong>Containment</strong>: Immediate threat mitigation</li>
+<li><strong>Investigation</strong>: Root cause analysis</li>
+<li><strong>Recovery</strong>: System restoration and hardening</li>
+<li><strong>Lessons Learned</strong>: Post-incident review and improvements</li>
+</ol>
+<h2 id="security-monitoring"><a class="header" href="#security-monitoring">Security Monitoring</a></h2>
+<h3 id="continuous-security-scanning"><a class="header" href="#continuous-security-scanning">Continuous Security Scanning</a></h3>
+<p>The GitHub Actions security workflow provides continuous monitoring:</p>
+<ul>
+<li><strong>Dependency Scanning</strong>: cargo-audit, cargo-deny</li>
+<li><strong>Static Code Analysis</strong>: Clippy with security lints, Semgrep</li>
+<li><strong>Container Scanning</strong>: Trivy, Docker Scout</li>
+<li><strong>Secret Detection</strong>: truffleHog</li>
+<li><strong>Compliance Validation</strong>: Automated OWASP Top 10 checks</li>
+</ul>
+<h3 id="security-metrics"><a class="header" href="#security-metrics">Security Metrics</a></h3>
+<p>Key security metrics tracked:</p>
+<ul>
+<li>Failed authentication attempts</li>
+<li>Rate limiting violations</li>
+<li>Certificate validation failures</li>
+<li>Container security violations</li>
+<li>Dependency vulnerabilities</li>
+<li>Compliance score</li>
+</ul>
+<h3 id="alerting"><a class="header" href="#alerting">Alerting</a></h3>
+<p>Security alerts are configured for:</p>
+<ul>
+<li>Critical security events</li>
+<li>Compliance violations</li>
+<li>Failed security tests</li>
+<li>Dependency vulnerabilities</li>
+<li>Configuration drift</li>
+</ul>
+<h2 id="best-practices"><a class="header" href="#best-practices">Best Practices</a></h2>
+<h3 id="development-guidelines"><a class="header" href="#development-guidelines">Development Guidelines</a></h3>
+<ol>
+<li>
+<p><strong>Secure Coding</strong>:</p>
+<ul>
+<li>Use <code>SecureHttpClient</code> for all HTTP requests</li>
+<li>Validate all inputs</li>
+<li>Follow principle of least privilege</li>
+<li>Implement defense in depth</li>
+</ul>
+</li>
+<li>
+<p><strong>Testing</strong>:</p>
+<ul>
+<li>Run security tests before deployment</li>
+<li>Validate compliance requirements</li>
+<li>Test failure scenarios</li>
+<li>Monitor security metrics</li>
+</ul>
+</li>
+<li>
+<p><strong>Configuration</strong>:</p>
+<ul>
+<li>Use secure defaults</li>
+<li>Environment-specific configuration</li>
+<li>Regular security reviews</li>
+<li>Automated compliance checks</li>
+</ul>
+</li>
+<li>
+<p><strong>Deployment</strong>:</p>
+<ul>
+<li>Container security scanning</li>
+<li>Non-root user execution</li>
+<li>Resource limits</li>
+<li>Security monitoring</li>
+</ul>
+</li>
+</ol>
+<h3 id="security-checklist"><a class="header" href="#security-checklist">Security Checklist</a></h3>
+<ul>
+<li><input disabled="" type="checkbox"/>
+All HTTP clients use <code>SecureHttpClient</code></li>
+<li><input disabled="" type="checkbox"/>
+HTTPS enforcement enabled in production</li>
+<li><input disabled="" type="checkbox"/>
+Container runs as non-root user (UID 1001)</li>
+<li><input disabled="" type="checkbox"/>
+Security constraints applied in docker-compose</li>
+<li><input disabled="" type="checkbox"/>
+All security tests passing</li>
+<li><input disabled="" type="checkbox"/>
+Dependency vulnerabilities resolved</li>
+<li><input disabled="" type="checkbox"/>
+Compliance requirements validated</li>
+<li><input disabled="" type="checkbox"/>
+Security monitoring configured</li>
+<li><input disabled="" type="checkbox"/>
+Incident response procedures documented</li>
+<li><input disabled="" type="checkbox"/>
+Security training completed</li>
+</ul>
+<h2 id="updates-and-maintenance"><a class="header" href="#updates-and-maintenance">Updates and Maintenance</a></h2>
+<h3 id="regular-security-tasks"><a class="header" href="#regular-security-tasks">Regular Security Tasks</a></h3>
+<p><strong>Weekly</strong>:</p>
+<ul>
+<li>Review security alerts</li>
+<li>Check dependency updates</li>
+<li>Monitor compliance scores</li>
+</ul>
+<p><strong>Monthly</strong>:</p>
+<ul>
+<li>Security configuration review</li>
+<li>Penetration testing</li>
+<li>Compliance assessment</li>
+</ul>
+<p><strong>Quarterly</strong>:</p>
+<ul>
+<li>Security architecture review</li>
+<li>Incident response testing</li>
+<li>Security training updates</li>
+</ul>
+<h3 id="security-contacts"><a class="header" href="#security-contacts">Security Contacts</a></h3>
+<ul>
+<li><strong>Security Team</strong>: security@uveddi.dev</li>
+<li><strong>Incident Response</strong>: incident-response@uveddi.dev</li>
+<li><strong>Compliance</strong>: compliance@uveddi.dev</li>
+</ul>
+<h2 id="conclusion"><a class="header" href="#conclusion">Conclusion</a></h2>
+<p>This security hardening guide provides comprehensive protection against modern security threats. Regular review and updates ensure continued security posture improvement. For questions or concerns, contact the security team.</p>
+<hr />
+<p><strong>Document Version</strong>: 1.0<br />
+<strong>Last Updated</strong>: 2024-01-24<br />
+<strong>Next Review</strong>: 2024-04-24</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../operations/deployment-guide.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../security/threat-model.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../operations/deployment-guide.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../security/threat-model.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../assets/custom-scripts.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

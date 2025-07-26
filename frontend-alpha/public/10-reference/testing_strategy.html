@@ -1,0 +1,823 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Testing Strategy - Uveddi Documentation</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="AI-Powered Code Analysis That Stays Private - Comprehensive guide to using Uveddi for architectural analysis">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../assets/brand/colors/palette.css">
+        <link rel="stylesheet" href="../assets/custom-styles.css">
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Uveddi Documentation</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/botzrDev/uveddi" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://github.com/botzrDev/uveddi/edit/main/docs/./10-reference/testing_strategy.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="uveddi-testing-strategy"><a class="header" href="#uveddi-testing-strategy">Uveddi Testing Strategy</a></h1>
+<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
+<p>This document outlines the comprehensive testing strategy for Uveddi, covering all aspects from unit tests to end-to-end integration testing. Our testing approach ensures reliability, maintainability, and confidence in the codebase as it scales with a larger development team.</p>
+<h2 id="testing-philosophy"><a class="header" href="#testing-philosophy">Testing Philosophy</a></h2>
+<h3 id="core-principles"><a class="header" href="#core-principles">Core Principles</a></h3>
+<ol>
+<li><strong>Test Pyramid</strong>: More unit tests, fewer integration tests, minimal E2E tests</li>
+<li><strong>Fast Feedback</strong>: Tests should run quickly to enable rapid development</li>
+<li><strong>Reliability</strong>: Tests should be deterministic and not flaky</li>
+<li><strong>Maintainability</strong>: Tests should be easy to understand and modify</li>
+<li><strong>Coverage</strong>: Focus on meaningful coverage, not just percentage targets</li>
+</ol>
+<h3 id="quality-gates"><a class="header" href="#quality-gates">Quality Gates</a></h3>
+<p><strong>Minimum Requirements</strong>:</p>
+<ul>
+<li>All tests must pass before merging</li>
+<li>Code coverage: Minimum 15%, target 25%+</li>
+<li>No test flakiness tolerated</li>
+<li>Performance tests must not regress</li>
+</ul>
+<h2 id="test-categories"><a class="header" href="#test-categories">Test Categories</a></h2>
+<h3 id="1-unit-tests"><a class="header" href="#1-unit-tests">1. Unit Tests</a></h3>
+<p><strong>Purpose</strong>: Test individual functions and modules in isolation</p>
+<p><strong>Location</strong>: <code>src/</code> directory with <code>#[cfg(test)]</code> modules</p>
+<p><strong>Scope</strong>:</p>
+<ul>
+<li>Pure functions and algorithms</li>
+<li>Data structure operations</li>
+<li>Error handling logic</li>
+<li>Business logic validation</li>
+</ul>
+<p><strong>Example Structure</strong>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[cfg(test)]
+mod tests {
+    use super::*;
+    
+    #[test]
+    fn test_god_object_detection_basic() {
+        // Arrange
+        let ast = create_test_ast();
+        let detector = GodObjectDetector::new();
+        
+        // Act
+        let result = detector.analyze(&amp;ast);
+        
+        // Assert
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap().len(), 1);
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>Guidelines</strong>:</p>
+<ul>
+<li>Test both happy path and error cases</li>
+<li>Use descriptive test names</li>
+<li>Follow Arrange-Act-Assert pattern</li>
+<li>Mock external dependencies</li>
+<li>Keep tests focused and independent</li>
+</ul>
+<h3 id="2-integration-tests"><a class="header" href="#2-integration-tests">2. Integration Tests</a></h3>
+<p><strong>Purpose</strong>: Test interaction between multiple modules</p>
+<p><strong>Location</strong>: <code>tests/</code> directory</p>
+<p><strong>Scope</strong>:</p>
+<ul>
+<li>Module integration</li>
+<li>API contract testing</li>
+<li>Database operations</li>
+<li>File system interactions</li>
+</ul>
+<p><strong>Current Integration Tests</strong>:</p>
+<pre><code>tests/
+├── ai_integration.rs          # AI provider integration
+├── analysis_pipeline.rs      # Full analysis workflow
+├── ast_multilang.rs          # Multi-language AST parsing
+├── cli_integration.rs        # CLI command testing
+├── database_operations.rs    # Database CRUD operations
+└── plugin_system.rs          # Plugin loading and execution
+</code></pre>
+<p><strong>Example</strong>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[tokio::test]
+async fn test_full_analysis_pipeline() {
+    let temp_dir = create_test_project();
+    let config = AnalysisConfig::default();
+    
+    let result = run_analysis(&amp;temp_dir, config).await;
+    
+    assert!(result.is_ok());
+    let report = result.unwrap();
+    assert!(!report.issues.is_empty());
+    assert!(report.summary.total_files &gt; 0);
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="3-end-to-end-tests"><a class="header" href="#3-end-to-end-tests">3. End-to-End Tests</a></h3>
+<p><strong>Purpose</strong>: Test complete user workflows</p>
+<p><strong>Location</strong>: <code>tests/e2e/</code> and <code>frontend/cypress/</code></p>
+<p><strong>Scope</strong>:</p>
+<ul>
+<li>CLI command execution</li>
+<li>Frontend user journeys</li>
+<li>API endpoint testing</li>
+<li>Cross-platform compatibility</li>
+</ul>
+<p><strong>CLI E2E Tests</strong>:</p>
+<pre><code class="language-bash"># Test basic analysis command
+./target/release/uveddi analyze ./test-project --output report.md
+
+# Test AI integration
+OPENAI_API_KEY=test ./target/release/uveddi analyze ./test-project --enable-ai
+
+# Test configuration management
+./target/release/uveddi config set analysis.threshold 0.8
+</code></pre>
+<h3 id="4-performance-tests"><a class="header" href="#4-performance-tests">4. Performance Tests</a></h3>
+<p><strong>Purpose</strong>: Ensure performance requirements are met</p>
+<p><strong>Location</strong>: <code>benches/</code> directory</p>
+<p><strong>Scope</strong>:</p>
+<ul>
+<li>Analysis engine throughput</li>
+<li>Memory usage profiling</li>
+<li>AI provider response times</li>
+<li>Large codebase handling</li>
+</ul>
+<p><strong>Benchmark Structure</strong>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use criterion::{black_box, criterion_group, criterion_main, Criterion};
+
+fn benchmark_analysis_engine(c: &amp;mut Criterion) {
+    let test_project = setup_large_test_project();
+    
+    c.bench_function("analyze_large_project", |b| {
+        b.iter(|| {
+            let engine = AnalysisEngine::new();
+            black_box(engine.analyze(&amp;test_project))
+        })
+    });
+}
+
+criterion_group!(benches, benchmark_analysis_engine);
+criterion_main!(benches);
+<span class="boring">}</span></code></pre></pre>
+<p><strong>Performance Targets</strong>:</p>
+<ul>
+<li>100-file Rust project: &lt;30 seconds</li>
+<li>1000-file project: &lt;5 minutes</li>
+<li>Memory usage: &lt;2GB for large projects</li>
+<li>AI response time: &lt;10 seconds local, &lt;5 seconds cloud</li>
+</ul>
+<h3 id="5-security-tests"><a class="header" href="#5-security-tests">5. Security Tests</a></h3>
+<p><strong>Purpose</strong>: Validate security measures and identify vulnerabilities</p>
+<p><strong>Scope</strong>:</p>
+<ul>
+<li>Input validation testing</li>
+<li>API key handling</li>
+<li>Plugin sandboxing</li>
+<li>Dependency vulnerability scanning</li>
+</ul>
+<p><strong>Security Test Examples</strong>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[test]
+fn test_malicious_input_handling() {
+    let malicious_code = include_str!("fixtures/malicious.rs");
+    let result = parse_and_analyze(malicious_code);
+    
+    // Should handle gracefully without panicking
+    assert!(result.is_ok() || result.is_err());
+    // Should not expose sensitive information
+    assert!(!format!("{:?}", result).contains("secret"));
+}
+
+#[test]
+fn test_api_key_sanitization() {
+    let config = Config::new();
+    config.set_api_key("sk-test123");
+    
+    let debug_output = format!("{:?}", config);
+    assert!(!debug_output.contains("sk-test123"));
+    assert!(debug_output.contains("***"));
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="test-infrastructure"><a class="header" href="#test-infrastructure">Test Infrastructure</a></h2>
+<h3 id="test-fixtures-and-data"><a class="header" href="#test-fixtures-and-data">Test Fixtures and Data</a></h3>
+<p><strong>Location</strong>: <code>tests/fixtures/</code></p>
+<p><strong>Structure</strong>:</p>
+<pre><code>tests/fixtures/
+├── rust/
+│   ├── god_object.rs          # Large class example
+│   ├── cyclic_deps/           # Circular dependency example
+│   └── clean_code.rs          # Well-structured code
+├── python/
+│   ├── anti_patterns.py       # Various anti-patterns
+│   └── good_practices.py      # Clean Python code
+├── javascript/
+│   ├── callback_hell.js       # Async anti-patterns
+│   └── modern_async.js        # Clean async code
+└── projects/
+    ├── small_rust_project/    # &lt;50 files
+    ├── medium_project/        # 100-500 files
+    └── large_project/         # 1000+ files
+</code></pre>
+<p><strong>Fixture Guidelines</strong>:</p>
+<ul>
+<li>Use realistic code examples</li>
+<li>Cover both positive and negative cases</li>
+<li>Include edge cases and boundary conditions</li>
+<li>Maintain fixtures as code evolves</li>
+<li>Document the purpose of each fixture</li>
+</ul>
+<h3 id="mock-and-stub-infrastructure"><a class="header" href="#mock-and-stub-infrastructure">Mock and Stub Infrastructure</a></h3>
+<p><strong>AI Provider Mocking</strong>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[cfg(test)]
+pub struct MockAiProvider {
+    responses: HashMap&lt;String, String&gt;,
+}
+
+impl MockAiProvider {
+    pub fn new() -&gt; Self {
+        let mut responses = HashMap::new();
+        responses.insert(
+            "god_object".to_string(),
+            "This class has too many responsibilities...".to_string()
+        );
+        Self { responses }
+    }
+}
+
+impl LlmProvider for MockAiProvider {
+    async fn generate_explanation(&amp;self, prompt: &amp;str) -&gt; Result&lt;String, AiError&gt; {
+        Ok(self.responses.get("god_object").unwrap().clone())
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>Database Mocking</strong>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[cfg(test)]
+pub struct InMemoryDatabase {
+    data: Arc&lt;Mutex&lt;HashMap&lt;String, Vec&lt;u8&gt;&gt;&gt;&gt;,
+}
+
+impl Database for InMemoryDatabase {
+    async fn store(&amp;self, key: &amp;str, value: &amp;[u8]) -&gt; Result&lt;(), DatabaseError&gt; {
+        self.data.lock().unwrap().insert(key.to_string(), value.to_vec());
+        Ok(())
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="test-utilities"><a class="header" href="#test-utilities">Test Utilities</a></h3>
+<p><strong>Common Test Helpers</strong>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// tests/test_utils.rs
+pub fn create_temp_project(files: &amp;[(&amp;str, &amp;str)]) -&gt; TempDir {
+    let temp_dir = TempDir::new().unwrap();
+    for (path, content) in files {
+        let file_path = temp_dir.path().join(path);
+        std::fs::create_dir_all(file_path.parent().unwrap()).unwrap();
+        std::fs::write(file_path, content).unwrap();
+    }
+    temp_dir
+}
+
+pub fn assert_contains_issue(report: &amp;AnalysisReport, issue_type: &amp;str) {
+    assert!(
+        report.issues.iter().any(|issue| issue.issue_type == issue_type),
+        "Report should contain {} issue", issue_type
+    );
+}
+
+pub async fn setup_test_database() -&gt; TestDatabase {
+    let db = TestDatabase::new().await;
+    db.run_migrations().await.unwrap();
+    db
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="test-execution-strategy"><a class="header" href="#test-execution-strategy">Test Execution Strategy</a></h2>
+<h3 id="local-development"><a class="header" href="#local-development">Local Development</a></h3>
+<p><strong>Fast Test Subset</strong>:</p>
+<pre><code class="language-bash"># Unit tests only (fastest)
+cargo test --lib
+
+# Core integration tests
+cargo test --test analysis_pipeline
+
+# Specific module tests
+cargo test analysis::detectors::god_object
+</code></pre>
+<p><strong>Full Test Suite</strong>:</p>
+<pre><code class="language-bash"># All tests with coverage
+cargo llvm-cov --all-features --workspace
+
+# Performance tests
+cargo bench
+
+# Security audit
+cargo audit
+</code></pre>
+<h3 id="continuous-integration"><a class="header" href="#continuous-integration">Continuous Integration</a></h3>
+<p><strong>PR Validation Pipeline</strong>:</p>
+<ol>
+<li>
+<p><strong>Fast Checks</strong> (2-3 minutes)</p>
+<ul>
+<li>Formatting and linting</li>
+<li>Unit tests</li>
+<li>Compilation check</li>
+</ul>
+</li>
+<li>
+<p><strong>Comprehensive Testing</strong> (8-12 minutes)</p>
+<ul>
+<li>Integration tests</li>
+<li>Multi-platform testing</li>
+<li>Security audit</li>
+</ul>
+</li>
+<li>
+<p><strong>Extended Validation</strong> (15-20 minutes)</p>
+<ul>
+<li>Performance benchmarks</li>
+<li>E2E tests</li>
+<li>Coverage analysis</li>
+</ul>
+</li>
+</ol>
+<p><strong>Matrix Testing</strong>:</p>
+<pre><code class="language-yaml">strategy:
+  matrix:
+    os: [ubuntu-latest, windows-latest, macos-latest]
+    rust: [stable, beta]
+    features: [
+      "default",
+      "minimal",
+      "analysis,local-ai",
+      "all-features"
+    ]
+</code></pre>
+<h3 id="test-data-management"><a class="header" href="#test-data-management">Test Data Management</a></h3>
+<p><strong>Synthetic Data Generation</strong>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// src/bin/generate_benchmark_data.rs
+pub fn generate_rust_project(size: ProjectSize) -&gt; Vec&lt;(PathBuf, String)&gt; {
+    match size {
+        ProjectSize::Small =&gt; generate_files(10, 50),   // 10 files, 50 LOC each
+        ProjectSize::Medium =&gt; generate_files(100, 100), // 100 files, 100 LOC each
+        ProjectSize::Large =&gt; generate_files(1000, 200), // 1000 files, 200 LOC each
+    }
+}
+
+fn generate_god_object(complexity: usize) -&gt; String {
+    let mut code = String::new();
+    code.push_str("pub struct GodObject {\n");
+    
+    // Generate many fields
+    for i in 0..complexity {
+        code.push_str(&amp;format!("    field_{}: i32,\n", i));
+    }
+    
+    code.push_str("}\n\nimpl GodObject {\n");
+    
+    // Generate many methods
+    for i in 0..complexity {
+        code.push_str(&amp;format!(
+            "    pub fn method_{}(&amp;self) -&gt; i32 {{ self.field_{} }}\n", 
+            i, i
+        ));
+    }
+    
+    code.push_str("}\n");
+    code
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="test-coverage-strategy"><a class="header" href="#test-coverage-strategy">Test Coverage Strategy</a></h2>
+<h3 id="coverage-targets"><a class="header" href="#coverage-targets">Coverage Targets</a></h3>
+<p><strong>Module-Level Targets</strong>:</p>
+<ul>
+<li>Core analysis engine: 80%+</li>
+<li>CLI interface: 70%+</li>
+<li>AI integration: 60%+</li>
+<li>Database layer: 75%+</li>
+<li>Plugin system: 50%+ (experimental)</li>
+</ul>
+<p><strong>Overall Project Target</strong>: 25% minimum, 35% goal</p>
+<h3 id="coverage-analysis"><a class="header" href="#coverage-analysis">Coverage Analysis</a></h3>
+<p><strong>Tools</strong>:</p>
+<ul>
+<li><code>cargo-llvm-cov</code>: Primary coverage tool</li>
+<li><code>codecov.io</code>: Coverage reporting and tracking</li>
+<li><code>grcov</code>: Alternative coverage analysis</li>
+</ul>
+<p><strong>Coverage Commands</strong>:</p>
+<pre><code class="language-bash"># Generate coverage report
+cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info
+
+# HTML report for local viewing
+cargo llvm-cov --all-features --workspace --html
+
+# Coverage for specific module
+cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info -- analysis::detectors
+</code></pre>
+<h3 id="coverage-quality"><a class="header" href="#coverage-quality">Coverage Quality</a></h3>
+<p><strong>Focus Areas</strong>:</p>
+<ul>
+<li>Critical path coverage (error handling, main workflows)</li>
+<li>Edge case coverage (boundary conditions, error states)</li>
+<li>Integration point coverage (module interfaces)</li>
+</ul>
+<p><strong>Exclusions</strong>:</p>
+<ul>
+<li>Generated code</li>
+<li>Test utilities</li>
+<li>Debug/development code</li>
+<li>Experimental features</li>
+</ul>
+<h2 id="testing-best-practices"><a class="header" href="#testing-best-practices">Testing Best Practices</a></h2>
+<h3 id="test-design-principles"><a class="header" href="#test-design-principles">Test Design Principles</a></h3>
+<p><strong>FIRST Principles</strong>:</p>
+<ul>
+<li><strong>Fast</strong>: Tests should run quickly</li>
+<li><strong>Independent</strong>: Tests should not depend on each other</li>
+<li><strong>Repeatable</strong>: Tests should produce consistent results</li>
+<li><strong>Self-Validating</strong>: Tests should have clear pass/fail criteria</li>
+<li><strong>Timely</strong>: Tests should be written close to the code they test</li>
+</ul>
+<h3 id="common-patterns"><a class="header" href="#common-patterns">Common Patterns</a></h3>
+<p><strong>Arrange-Act-Assert</strong>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[test]
+fn test_dependency_cycle_detection() {
+    // Arrange
+    let graph = DependencyGraph::new();
+    graph.add_edge("A", "B");
+    graph.add_edge("B", "C");
+    graph.add_edge("C", "A");  // Creates cycle
+    
+    // Act
+    let cycles = detect_cycles(&amp;graph);
+    
+    // Assert
+    assert_eq!(cycles.len(), 1);
+    assert!(cycles[0].contains(&amp;"A".to_string()));
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>Given-When-Then</strong> (for integration tests):</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[tokio::test]
+async fn test_analysis_with_ai_explanation() {
+    // Given a project with god object
+    let project = create_test_project(&amp;[
+        ("src/main.rs", GOD_OBJECT_CODE),
+    ]);
+    
+    // When analysis is run with AI enabled
+    let config = AnalysisConfig {
+        enable_ai: true,
+        ai_provider: Some("mock".to_string()),
+    };
+    let result = analyze_project(&amp;project, config).await;
+    
+    // Then the result should include AI explanation
+    assert!(result.is_ok());
+    let report = result.unwrap();
+    assert!(report.issues[0].ai_explanation.is_some());
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="error-testing"><a class="header" href="#error-testing">Error Testing</a></h3>
+<p><strong>Error Condition Testing</strong>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[test]
+fn test_malformed_rust_file_handling() {
+    let malformed_code = "fn incomplete_function(";
+    let result = parse_rust_code(malformed_code);
+    
+    match result {
+        Err(ParseError::SyntaxError { line, column, .. }) =&gt; {
+            assert!(line &gt; 0);
+            assert!(column &gt; 0);
+        }
+        _ =&gt; panic!("Expected syntax error"),
+    }
+}
+
+#[test]
+fn test_network_timeout_handling() {
+    let slow_provider = SlowMockProvider::new(Duration::from_secs(30));
+    let config = AiConfig {
+        timeout: Duration::from_secs(5),
+        ..Default::default()
+    };
+    
+    let result = tokio::time::timeout(
+        Duration::from_secs(10),
+        slow_provider.generate_explanation("test")
+    ).await;
+    
+    assert!(result.is_err()); // Should timeout
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="async-testing"><a class="header" href="#async-testing">Async Testing</a></h3>
+<p><strong>Async Test Patterns</strong>:</p>
+<pre><pre class="playground"><code class="language-rust">#[tokio::test]
+async fn test_concurrent_analysis() {
+    let projects = vec![
+        create_test_project(&amp;[("main.rs", "fn main() {}")]),
+        create_test_project(&amp;[("lib.rs", "pub fn test() {}")]),
+    ];
+    
+    let futures: Vec&lt;_&gt; = projects
+        .into_iter()
+        .map(|project| analyze_project_async(project))
+        .collect();
+    
+    let results = futures::future::join_all(futures).await;
+    
+    for result in results {
+        assert!(result.is_ok());
+    }
+}</code></pre></pre>
+<h2 id="debugging-and-troubleshooting-tests"><a class="header" href="#debugging-and-troubleshooting-tests">Debugging and Troubleshooting Tests</a></h2>
+<h3 id="test-debugging"><a class="header" href="#test-debugging">Test Debugging</a></h3>
+<p><strong>Debug Output</strong>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[test]
+fn test_with_debug_output() {
+    env_logger::init();
+    
+    let result = complex_operation();
+    
+    // Use debug output for troubleshooting
+    eprintln!("Debug: result = {:?}", result);
+    
+    assert!(result.is_ok());
+}
+<span class="boring">}</span></code></pre></pre>
+<p><strong>Conditional Testing</strong>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[test]
+#[cfg(feature = "expensive-tests")]
+fn test_large_project_analysis() {
+    // Only run with: cargo test --features expensive-tests
+}
+
+#[test]
+#[ignore = "requires network access"]
+fn test_real_ai_provider() {
+    // Run with: cargo test -- --ignored
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="test-maintenance"><a class="header" href="#test-maintenance">Test Maintenance</a></h3>
+<p><strong>Regular Maintenance Tasks</strong>:</p>
+<ul>
+<li>Review and update test fixtures</li>
+<li>Remove obsolete tests</li>
+<li>Refactor duplicated test code</li>
+<li>Update test documentation</li>
+<li>Monitor test execution times</li>
+</ul>
+<p><strong>Test Metrics Monitoring</strong>:</p>
+<ul>
+<li>Test execution time trends</li>
+<li>Test failure rates</li>
+<li>Coverage trends</li>
+<li>Flaky test identification</li>
+</ul>
+<hr />
+<p><em>This testing strategy ensures comprehensive validation of Uveddi's functionality while maintaining development velocity and code quality.</em></p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../10-reference/security-api-reference.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../10-reference/ci/cd_guide.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../10-reference/security-api-reference.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../10-reference/ci/cd_guide.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../assets/custom-scripts.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

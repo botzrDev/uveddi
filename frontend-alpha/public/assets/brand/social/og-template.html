@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uveddi Open Graph Template</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* Import Uveddi brand colors */
+        :root {
+            --uveddi-primary-600: #4f46e5;
+            --uveddi-primary-800: #3730a3;
+            --uveddi-secondary-100: #f1f5f9;
+            --uveddi-secondary-300: #cbd5e1;
+            --uveddi-action-500: #f97316;
+        }
+
+        .og-card {
+            width: 1200px;
+            height: 630px;
+            background: linear-gradient(135deg, var(--uveddi-primary-600) 0%, var(--uveddi-primary-800) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 80px;
+            box-sizing: border-box;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .og-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, rgba(249, 115, 22, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .logo-section {
+            flex: 0 0 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+        }
+
+        .logo {
+            width: 120px;
+            height: 120px;
+            background: white;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 64px;
+            font-weight: 700;
+            color: var(--uveddi-primary-600);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .content-section {
+            flex: 1;
+            margin-left: 60px;
+            z-index: 2;
+        }
+
+        .brand-name {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 72px;
+            font-weight: 700;
+            color: white;
+            margin: 0 0 20px 0;
+            line-height: 1;
+            letter-spacing: -0.02em;
+        }
+
+        .tagline {
+            font-family: 'Inter', sans-serif;
+            font-size: 36px;
+            font-weight: 500;
+            color: var(--uveddi-secondary-100);
+            margin: 0 0 24px 0;
+            line-height: 1.2;
+        }
+
+        .features {
+            font-family: 'Inter', sans-serif;
+            font-size: 24px;
+            font-weight: 400;
+            color: var(--uveddi-secondary-300);
+            margin: 0;
+            line-height: 1.3;
+        }
+
+        .accent-dot {
+            position: absolute;
+            top: 60px;
+            right: 120px;
+            width: 24px;
+            height: 24px;
+            background: var(--uveddi-action-500);
+            border-radius: 50%;
+            z-index: 3;
+        }
+
+        /* Twitter Card Variant */
+        .twitter-card {
+            width: 1200px;
+            height: 600px;
+            background: linear-gradient(135deg, var(--uveddi-primary-600) 0%, var(--uveddi-primary-800) 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 80px;
+            box-sizing: border-box;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .twitter-card::before {
+            content: '';
+            position: absolute;
+            top: -30%;
+            left: -30%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(249, 115, 22, 0.08) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .twitter-card .logo {
+            width: 80px;
+            height: 80px;
+            font-size: 48px;
+            margin-bottom: 32px;
+        }
+
+        .twitter-card .brand-name {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        .twitter-card .tagline {
+            font-size: 32px;
+            margin-bottom: 20px;
+        }
+
+        .twitter-card .features {
+            font-size: 20px;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <!-- Open Graph Card (1200x630) -->
+    <div class="og-card" id="og-card">
+        <div class="logo-section">
+            <div class="logo">U</div>
+        </div>
+        <div class="content-section">
+            <h1 class="brand-name">Uveddi</h1>
+            <p class="tagline">AI-Powered Code Analysis That Stays Private</p>
+            <p class="features">Architectural insights • Privacy-first • Local analysis</p>
+        </div>
+        <div class="accent-dot"></div>
+    </div>
+
+    <!-- Twitter Card (1200x600) -->
+    <div class="twitter-card" id="twitter-card" style="display: none;">
+        <div class="logo">U</div>
+        <h1 class="brand-name">Uveddi</h1>
+        <p class="tagline">AI-Powered Code Analysis</p>
+        <p class="features">Multi-language • AI-enhanced • Zero data sharing</p>
+    </div>
+
+    <script>
+        // Function to switch between card types for screenshot generation
+        function showTwitterCard() {
+            document.getElementById('og-card').style.display = 'none';
+            document.getElementById('twitter-card').style.display = 'flex';
+        }
+
+        function showOGCard() {
+            document.getElementById('og-card').style.display = 'flex';
+            document.getElementById('twitter-card').style.display = 'none';
+        }
+
+        // Instructions for generating images:
+        // 1. Open this HTML file in a browser
+        // 2. Use browser dev tools to set viewport to exact dimensions
+        // 3. Take screenshot or use tools like Puppeteer for automation
+        // 4. Call showTwitterCard() in console to switch to Twitter variant
+        console.log('Use showTwitterCard() or showOGCard() to switch between designs');
+    </script>
+</body>
+</html>

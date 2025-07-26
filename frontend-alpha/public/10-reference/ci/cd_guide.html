@@ -1,0 +1,606 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>CI/CD Guide - Uveddi Documentation</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="AI-Powered Code Analysis That Stays Private - Comprehensive guide to using Uveddi for architectural analysis">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../../favicon.svg">
+        <link rel="shortcut icon" href="../../favicon.png">
+        <link rel="stylesheet" href="../../css/variables.css">
+        <link rel="stylesheet" href="../../css/general.css">
+        <link rel="stylesheet" href="../../css/chrome.css">
+        <link rel="stylesheet" href="../../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../../assets/brand/colors/palette.css">
+        <link rel="stylesheet" href="../../assets/custom-styles.css">
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../../";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Uveddi Documentation</h1>
+
+                    <div class="right-buttons">
+                        <a href="../../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/botzrDev/uveddi" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://github.com/botzrDev/uveddi/edit/main/docs/./10-reference/ci/cd_guide.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="uveddi-cicd-pipeline-guide"><a class="header" href="#uveddi-cicd-pipeline-guide">Uveddi CI/CD Pipeline Guide</a></h1>
+<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
+<p>Uveddi uses a comprehensive CI/CD pipeline built with GitHub Actions to ensure code quality, security, and reliability across all supported platforms. This guide covers the complete pipeline architecture, configuration, and usage.</p>
+<h2 id="pipeline-architecture"><a class="header" href="#pipeline-architecture">Pipeline Architecture</a></h2>
+<h3 id="core-workflows"><a class="header" href="#core-workflows">Core Workflows</a></h3>
+<ol>
+<li>
+<p><strong>Rust CI Pipeline</strong> (<code>.github/workflows/rust-ci.yml</code>)</p>
+<ul>
+<li>Primary quality gate for all Rust code</li>
+<li>Multi-platform testing and validation</li>
+<li>Security auditing and dependency checking</li>
+</ul>
+</li>
+<li>
+<p><strong>Frontend E2E Pipeline</strong> (<code>.github/workflows/frontend-e2e.yml</code>)</p>
+<ul>
+<li>End-to-end testing for the React frontend</li>
+<li>Cross-browser compatibility testing</li>
+<li>Performance and accessibility validation</li>
+</ul>
+</li>
+<li>
+<p><strong>Dependency Updates</strong> (<code>.github/workflows/dependency-update.yml</code>)</p>
+<ul>
+<li>Automated weekly dependency updates</li>
+<li>Security vulnerability patching</li>
+<li>Automated PR creation for review</li>
+</ul>
+</li>
+</ol>
+<h2 id="rust-ci-pipeline-details"><a class="header" href="#rust-ci-pipeline-details">Rust CI Pipeline Details</a></h2>
+<h3 id="trigger-conditions"><a class="header" href="#trigger-conditions">Trigger Conditions</a></h3>
+<p>The Rust CI pipeline runs on:</p>
+<ul>
+<li><strong>Push</strong> to <code>main</code> or <code>develop</code> branches</li>
+<li><strong>Pull requests</strong> targeting <code>main</code> or <code>develop</code></li>
+<li><strong>Path filters</strong>: Only when Rust-related files change
+<ul>
+<li><code>src/**</code>, <code>tests/**</code>, <code>benches/**</code>, <code>plugins/**</code></li>
+<li><code>Cargo.toml</code>, <code>Cargo.lock</code></li>
+<li>CI configuration files</li>
+</ul>
+</li>
+</ul>
+<h3 id="pipeline-jobs"><a class="header" href="#pipeline-jobs">Pipeline Jobs</a></h3>
+<h4 id="1-check--format-check"><a class="header" href="#1-check--format-check">1. Check &amp; Format (<code>check</code>)</a></h4>
+<p><strong>Purpose</strong>: Fast feedback on code quality and formatting
+<strong>Runtime</strong>: ~2-3 minutes</p>
+<pre><code class="language-yaml">Steps:
+- Code formatting check (cargo fmt --check)
+- Linting with Clippy (cargo clippy -- -D warnings)
+- Compilation check (cargo check --all-features)
+</code></pre>
+<p><strong>Requirements for Success</strong>:</p>
+<ul>
+<li>All code must be formatted with <code>cargo fmt</code></li>
+<li>No Clippy warnings allowed</li>
+<li>Code must compile without errors</li>
+</ul>
+<h4 id="2-test-suite-test"><a class="header" href="#2-test-suite-test">2. Test Suite (<code>test</code>)</a></h4>
+<p><strong>Purpose</strong>: Comprehensive testing across platforms and Rust versions
+<strong>Runtime</strong>: ~8-12 minutes
+<strong>Matrix Strategy</strong>:</p>
+<ul>
+<li><strong>Platforms</strong>: Ubuntu, Windows, macOS</li>
+<li><strong>Rust Versions</strong>: Stable, Beta (Ubuntu only for Beta)</li>
+</ul>
+<pre><code class="language-yaml">Test Types:
+- Unit tests (cargo test --lib --bins)
+- Integration tests (cargo test --test '*')
+- Documentation tests (cargo test --doc)
+</code></pre>
+<h4 id="3-minimal-build-testing-test-minimal"><a class="header" href="#3-minimal-build-testing-test-minimal">3. Minimal Build Testing (<code>test-minimal</code>)</a></h4>
+<p><strong>Purpose</strong>: Ensure core functionality works without optional dependencies
+<strong>Runtime</strong>: ~3-5 minutes</p>
+<pre><code class="language-yaml">Feature Combinations Tested:
+- No default features
+- Core analysis only
+- Minimal build configuration
+</code></pre>
+<h4 id="4-security-audit-security"><a class="header" href="#4-security-audit-security">4. Security Audit (<code>security</code>)</a></h4>
+<p><strong>Purpose</strong>: Vulnerability and dependency compliance checking
+<strong>Runtime</strong>: ~2-4 minutes</p>
+<pre><code class="language-yaml">Security Tools:
+- cargo-audit: CVE vulnerability scanning
+- cargo-deny: License and dependency policy enforcement
+</code></pre>
+<h4 id="5-architecture-validation-architecture"><a class="header" href="#5-architecture-validation-architecture">5. Architecture Validation (<code>architecture</code>)</a></h4>
+<p><strong>Purpose</strong>: Enforce architectural constraints and boundaries
+<strong>Runtime</strong>: ~1-2 minutes</p>
+<pre><code class="language-yaml">Validations:
+- Layer boundary enforcement
+- Module dependency rules
+- Error handling patterns
+- Documentation requirements
+</code></pre>
+<h4 id="6-performance-benchmarks-benchmarks"><a class="header" href="#6-performance-benchmarks-benchmarks">6. Performance Benchmarks (<code>benchmarks</code>)</a></h4>
+<p><strong>Purpose</strong>: Performance regression detection
+<strong>Runtime</strong>: ~5-10 minutes
+<strong>Trigger</strong>: Only on <code>main</code> branch pushes</p>
+<pre><code class="language-yaml">Benchmark Suites:
+- AST parsing performance
+- Analysis engine throughput
+- Memory usage profiling
+</code></pre>
+<h4 id="7-code-coverage-coverage"><a class="header" href="#7-code-coverage-coverage">7. Code Coverage (<code>coverage</code>)</a></h4>
+<p><strong>Purpose</strong>: Track test coverage and identify gaps
+<strong>Runtime</strong>: ~5-8 minutes</p>
+<pre><code class="language-yaml">Coverage Tools:
+- cargo-llvm-cov for coverage generation
+- Codecov integration for reporting
+- LCOV format for detailed analysis
+</code></pre>
+<h4 id="8-multi-platform-builds-build"><a class="header" href="#8-multi-platform-builds-build">8. Multi-Platform Builds (<code>build</code>)</a></h4>
+<p><strong>Purpose</strong>: Create release-ready binaries
+<strong>Runtime</strong>: ~10-15 minutes
+<strong>Trigger</strong>: Only on <code>main</code> or <code>develop</code> branches</p>
+<pre><code class="language-yaml">Build Targets:
+- Linux x86_64 (Ubuntu)
+- Windows x86_64 (MSVC)
+- macOS x86_64 (Intel)
+- macOS aarch64 (Apple Silicon)
+</code></pre>
+<h4 id="9-ai-integration-tests-ai-integration"><a class="header" href="#9-ai-integration-tests-ai-integration">9. AI Integration Tests (<code>ai-integration</code>)</a></h4>
+<p><strong>Purpose</strong>: Validate AI provider integrations
+<strong>Runtime</strong>: ~3-5 minutes
+<strong>Trigger</strong>: Only on main/develop pushes with secrets available</p>
+<pre><code class="language-yaml">AI Providers Tested:
+- OpenAI GPT integration
+- Anthropic Claude integration
+- Ollama local AI integration
+- Graceful fallback behavior
+</code></pre>
+<h2 id="feature-flags-system"><a class="header" href="#feature-flags-system">Feature Flags System</a></h2>
+<p>Uveddi uses Cargo feature flags for modular compilation:</p>
+<h3 id="available-features"><a class="header" href="#available-features">Available Features</a></h3>
+<pre><code class="language-toml">[features]
+default = ["analysis", "local-ai"]
+
+# Core functionality
+analysis = ["tree-sitter", "tree-sitter-rust", "tree-sitter-python", 
+           "tree-sitter-javascript", "tree-sitter-typescript"]
+
+# AI provider groups
+ai = ["openai", "anthropic", "ollama"]
+local-ai = ["ollama"]
+cloud-ai = ["openai", "anthropic"]
+
+# Individual providers
+openai = ["reqwest"]
+anthropic = ["reqwest"]
+ollama = ["reqwest"]
+
+# Optional components
+backend = ["reqwest"]
+plugins = []  # Experimental
+minimal = []  # Lightweight build
+</code></pre>
+<h3 id="feature-usage-in-ci"><a class="header" href="#feature-usage-in-ci">Feature Usage in CI</a></h3>
+<pre><code class="language-bash"># Test different feature combinations
+cargo test --no-default-features                    # Minimal
+cargo test --no-default-features --features analysis # Core only
+cargo test --all-features                           # Everything
+cargo test --features "analysis,local-ai"           # Typical usage
+</code></pre>
+<h2 id="security-configuration"><a class="header" href="#security-configuration">Security Configuration</a></h2>
+<h3 id="dependency-policy-denytoml"><a class="header" href="#dependency-policy-denytoml">Dependency Policy (<code>deny.toml</code>)</a></h3>
+<p>The pipeline enforces strict dependency policies:</p>
+<pre><code class="language-toml">[advisories]
+vulnerability = "deny"    # Block known CVEs
+unmaintained = "warn"     # Warn about unmaintained crates
+yanked = "warn"          # Warn about yanked versions
+
+[licenses]
+allow = ["MIT", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "ISC"]
+deny = ["GPL-2.0", "GPL-3.0", "AGPL-1.0", "AGPL-3.0"]
+
+[bans]
+multiple-versions = "warn"  # Warn about duplicate dependencies
+</code></pre>
+<h3 id="security-scanning"><a class="header" href="#security-scanning">Security Scanning</a></h3>
+<ul>
+<li><strong>Vulnerability Database</strong>: Updated from RustSec Advisory DB</li>
+<li><strong>License Compliance</strong>: Automated license compatibility checking</li>
+<li><strong>Dependency Auditing</strong>: Transitive dependency analysis</li>
+</ul>
+<h2 id="quality-gates"><a class="header" href="#quality-gates">Quality Gates</a></h2>
+<h3 id="branch-protection-requirements"><a class="header" href="#branch-protection-requirements">Branch Protection Requirements</a></h3>
+<p>For production readiness, configure these branch protection rules:</p>
+<pre><code class="language-yaml">Required Status Checks:
+- Check &amp; Format
+- Test Suite (all matrix combinations)
+- Security Audit
+- Architecture Validation
+
+Additional Requirements:
+- Require code review approval
+- Dismiss stale reviews when new commits are pushed
+- Require up-to-date branches before merging
+</code></pre>
+<h3 id="code-quality-standards"><a class="header" href="#code-quality-standards">Code Quality Standards</a></h3>
+<pre><code class="language-yaml">Formatting:
+- Must pass `cargo fmt --check`
+- Consistent with Rust standard formatting
+
+Linting:
+- Zero Clippy warnings allowed
+- Custom lint configuration in Cargo.toml
+
+Testing:
+- All tests must pass on all platforms
+- Minimum 15% code coverage (target: 25%+)
+- Integration tests for major features
+
+Documentation:
+- Public APIs must have doc comments
+- Architecture decisions documented
+- README kept up-to-date
+</code></pre>
+<h2 id="performance-monitoring"><a class="header" href="#performance-monitoring">Performance Monitoring</a></h2>
+<h3 id="benchmark-integration"><a class="header" href="#benchmark-integration">Benchmark Integration</a></h3>
+<pre><code class="language-yaml">Benchmark Suites:
+- File scanning performance (benches/analysis_engine.rs)
+- AST parsing throughput
+- Memory usage profiling
+- AI provider response times
+
+Regression Detection:
+- Baseline performance metrics
+- Automated performance alerts
+- Historical trend analysis
+</code></pre>
+<h3 id="performance-targets"><a class="header" href="#performance-targets">Performance Targets</a></h3>
+<pre><code class="language-yaml">Analysis Performance:
+- 100-file Rust project: &lt;30 seconds
+- 1000-file project: &lt;5 minutes
+- Memory usage: &lt;2GB for large projects
+
+AI Integration:
+- Local AI response: &lt;10 seconds
+- Cloud AI response: &lt;5 seconds
+- Fallback activation: &lt;1 second
+</code></pre>
+<h2 id="monitoring-and-alerting"><a class="header" href="#monitoring-and-alerting">Monitoring and Alerting</a></h2>
+<h3 id="success-indicators"><a class="header" href="#success-indicators">Success Indicators</a></h3>
+<pre><code class="language-yaml">Green Build Indicators:
+✅ All tests pass across platforms
+✅ Zero security vulnerabilities
+✅ Code coverage maintained/improved
+✅ Performance within acceptable bounds
+✅ Architecture constraints satisfied
+</code></pre>
+<h3 id="failure-notifications"><a class="header" href="#failure-notifications">Failure Notifications</a></h3>
+<pre><code class="language-yaml">Slack Integration:
+- Channel: #uveddi-alerts
+- Triggers: Failures on main/develop
+- Information: Failed jobs, commit details, action links
+
+GitHub Integration:
+- PR status checks
+- Detailed job summaries
+- Artifact uploads for debugging
+</code></pre>
+<h2 id="troubleshooting-common-issues"><a class="header" href="#troubleshooting-common-issues">Troubleshooting Common Issues</a></h2>
+<h3 id="build-failures"><a class="header" href="#build-failures">Build Failures</a></h3>
+<p><strong>Compilation Errors</strong>:</p>
+<pre><code class="language-bash"># Local debugging
+cargo check --all-features
+cargo clippy --all-features -- -D warnings
+</code></pre>
+<p><strong>Test Failures</strong>:</p>
+<pre><code class="language-bash"># Run specific test suite
+cargo test --test integration_tests
+cargo test --lib -- --nocapture
+</code></pre>
+<p><strong>Platform-Specific Issues</strong>:</p>
+<pre><code class="language-bash"># Test on specific platform
+cargo test --target x86_64-pc-windows-msvc
+cargo test --target x86_64-apple-darwin
+</code></pre>
+<h3 id="security-audit-failures"><a class="header" href="#security-audit-failures">Security Audit Failures</a></h3>
+<p><strong>Vulnerability Found</strong>:</p>
+<pre><code class="language-bash"># Check specific advisory
+cargo audit --db ~/.cargo/advisory-db
+# Update dependencies
+cargo update
+</code></pre>
+<p><strong>License Issues</strong>:</p>
+<pre><code class="language-bash"># Check license compliance
+cargo deny check licenses
+# Review deny.toml configuration
+</code></pre>
+<h3 id="performance-regressions"><a class="header" href="#performance-regressions">Performance Regressions</a></h3>
+<p><strong>Benchmark Failures</strong>:</p>
+<pre><code class="language-bash"># Run benchmarks locally
+cargo bench
+# Compare with baseline
+cargo bench -- --save-baseline main
+</code></pre>
+<h2 id="local-development-integration"><a class="header" href="#local-development-integration">Local Development Integration</a></h2>
+<h3 id="pre-commit-hooks"><a class="header" href="#pre-commit-hooks">Pre-commit Hooks</a></h3>
+<p>Install and configure pre-commit hooks:</p>
+<pre><code class="language-bash"># Install pre-commit
+pip install pre-commit
+pre-commit install
+
+# Manual run
+pre-commit run --all-files
+</code></pre>
+<h3 id="development-environment-setup"><a class="header" href="#development-environment-setup">Development Environment Setup</a></h3>
+<p>Use the automated setup script:</p>
+<pre><code class="language-bash"># One-command environment setup
+./scripts/setup-dev-environment.sh
+</code></pre>
+<p>This script installs:</p>
+<ul>
+<li>Required Rust components</li>
+<li>Cargo tools (audit, deny, llvm-cov, etc.)</li>
+<li>Pre-commit hooks</li>
+<li>Development configuration</li>
+</ul>
+<h2 id="continuous-improvement"><a class="header" href="#continuous-improvement">Continuous Improvement</a></h2>
+<h3 id="pipeline-optimization"><a class="header" href="#pipeline-optimization">Pipeline Optimization</a></h3>
+<pre><code class="language-yaml">Current Optimizations:
+- Aggressive caching of Cargo dependencies
+- Parallel job execution
+- Conditional job triggers
+- Artifact reuse between jobs
+
+Future Improvements:
+- Build time optimization
+- Test parallelization
+- Cache hit rate improvement
+- Resource usage optimization
+</code></pre>
+<h3 id="metrics-and-analytics"><a class="header" href="#metrics-and-analytics">Metrics and Analytics</a></h3>
+<pre><code class="language-yaml">Tracked Metrics:
+- Build success rate
+- Average build time
+- Test coverage trends
+- Security vulnerability count
+- Performance benchmark trends
+
+Review Schedule:
+- Weekly: Build performance review
+- Monthly: Security audit review
+- Quarterly: Pipeline architecture review
+</code></pre>
+<h2 id="integration-with-development-workflow"><a class="header" href="#integration-with-development-workflow">Integration with Development Workflow</a></h2>
+<h3 id="pull-request-workflow"><a class="header" href="#pull-request-workflow">Pull Request Workflow</a></h3>
+<ol>
+<li><strong>Developer creates PR</strong></li>
+<li><strong>CI pipeline triggers automatically</strong></li>
+<li><strong>All quality gates must pass</strong></li>
+<li><strong>Code review required</strong></li>
+<li><strong>Merge after approval + CI success</strong></li>
+</ol>
+<h3 id="release-workflow"><a class="header" href="#release-workflow">Release Workflow</a></h3>
+<ol>
+<li><strong>Merge to main triggers full pipeline</strong></li>
+<li><strong>Release binaries built for all platforms</strong></li>
+<li><strong>Performance benchmarks updated</strong></li>
+<li><strong>Security audit completed</strong></li>
+<li><strong>Artifacts available for distribution</strong></li>
+</ol>
+<hr />
+<p><em>For questions about the CI/CD pipeline, see the troubleshooting section or contact the development team.</em></p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../../10-reference/testing_strategy.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../../10-reference/testing_strategy.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../../ace.js"></script>
+        <script src="../../mode-rust.js"></script>
+        <script src="../../editor.js"></script>
+        <script src="../../theme-dawn.js"></script>
+        <script src="../../theme-tomorrow_night.js"></script>
+
+        <script src="../../elasticlunr.min.js"></script>
+        <script src="../../mark.min.js"></script>
+        <script src="../../searcher.js"></script>
+
+        <script src="../../clipboard.min.js"></script>
+        <script src="../../highlight.js"></script>
+        <script src="../../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../../assets/custom-scripts.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

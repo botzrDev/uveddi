@@ -1,0 +1,1589 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Comprehensive Manual - Uveddi Documentation</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="AI-Powered Code Analysis That Stays Private - Comprehensive guide to using Uveddi for architectural analysis">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../assets/brand/colors/palette.css">
+        <link rel="stylesheet" href="../assets/custom-styles.css">
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Uveddi Documentation</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/botzrDev/uveddi" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://github.com/botzrDev/uveddi/edit/main/docs/./02-user-guide/comprehensive-manual.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="uveddi-comprehensive-architecture--development-manual"><a class="header" href="#uveddi-comprehensive-architecture--development-manual">Uveddi Comprehensive Architecture &amp; Development Manual</a></h1>
+<blockquote>
+<p><strong>Version 0.9.0</strong> | <strong>Last Updated</strong>: July 2025 | <strong>Rust Edition</strong>: 2021</p>
+</blockquote>
+<h2 id="table-of-contents"><a class="header" href="#table-of-contents">Table of Contents</a></h2>
+<ol>
+<li><a href="#quick-start-guide">Quick Start Guide</a></li>
+<li><a href="#project-overview">Project Overview</a></li>
+<li><a href="#architecture-deep-dive">Architecture Deep Dive</a></li>
+<li><a href="#core-modules--components">Core Modules &amp; Components</a></li>
+<li><a href="#feature-flags--compilation-options">Feature Flags &amp; Compilation Options</a></li>
+<li><a href="#dependencies--technology-stack">Dependencies &amp; Technology Stack</a></li>
+<li><a href="#development-patterns--methods">Development Patterns &amp; Methods</a></li>
+<li><a href="#plugin-system">Plugin System</a></li>
+<li><a href="#ai-integration">AI Integration</a></li>
+<li><a href="#security--rbac">Security &amp; RBAC</a></li>
+<li><a href="#resilience--error-handling">Resilience &amp; Error Handling</a></li>
+<li><a href="#performance--monitoring">Performance &amp; Monitoring</a></li>
+<li><a href="#terminal-user-interface-tui">Terminal User Interface (TUI)</a></li>
+<li><a href="#chaos-engineering">Chaos Engineering</a></li>
+<li><a href="#testing-strategy">Testing Strategy</a></li>
+<li><a href="#configuration-management">Configuration Management</a></li>
+<li><a href="#deployment--operations">Deployment &amp; Operations</a></li>
+<li><a href="#development-workflow">Development Workflow</a></li>
+<li><a href="#troubleshooting--best-practices">Troubleshooting &amp; Best Practices</a></li>
+<li><a href="#api-reference">API Reference</a></li>
+</ol>
+<hr />
+<h2 id="quick-start-guide"><a class="header" href="#quick-start-guide">Quick Start Guide</a></h2>
+<h3 id="installation"><a class="header" href="#installation">Installation</a></h3>
+<h4 id="quick-install-not-available-yet"><a class="header" href="#quick-install-not-available-yet">Quick Install (Not Available Yet)</a></h4>
+<pre><code class="language-bash"># Installation script not yet available - use source build
+</code></pre>
+<h4 id="from-source"><a class="header" href="#from-source">From Source</a></h4>
+<pre><code class="language-bash">git clone https://github.com/botzrDev/uveddi.git
+cd uveddi
+cargo install --path .
+</code></pre>
+<h4 id="using-cargo-not-available-yet"><a class="header" href="#using-cargo-not-available-yet">Using Cargo (Not Available Yet)</a></h4>
+<pre><code class="language-bash"># Package not published to crates.io yet - use source build
+</code></pre>
+<h3 id="basic-usage"><a class="header" href="#basic-usage">Basic Usage</a></h3>
+<h4 id="analyze-a-codebase"><a class="header" href="#analyze-a-codebase">Analyze a Codebase</a></h4>
+<pre><code class="language-bash"># Basic analysis
+uveddi analyze /path/to/code
+
+# With AI-powered insights (requires Ollama)
+uveddi analyze /path/to/code --enable-ai
+
+# Generate detailed report
+uveddi analyze /path/to/code --output report.md --format markdown
+</code></pre>
+<h4 id="interactive-terminal-ui-development"><a class="header" href="#interactive-terminal-ui-development">Interactive Terminal UI (Development)</a></h4>
+<pre><code class="language-bash"># TUI is in development - use test binary
+cargo run --bin tui_test --features="tui"
+
+# Note: TUI commands not yet integrated into main CLI
+</code></pre>
+<h4 id="configuration"><a class="header" href="#configuration">Configuration</a></h4>
+<pre><code class="language-bash"># Show current configuration
+uveddi config show
+
+# Set configuration value
+uveddi config set key value
+
+# Validate configuration
+uveddi config validate
+</code></pre>
+<h3 id="first-analysis-example"><a class="header" href="#first-analysis-example">First Analysis Example</a></h3>
+<pre><code class="language-bash"># 1. Analyze your Rust project
+uveddi analyze src/ --output-format markdown --output analysis.md
+
+# 2. View results  
+cat analysis.md
+
+# 3. Enable AI explanations (optional)
+uveddi analyze src/ --enable-ai --ollama-model deepseek-coder:6.7b-instruct-q4_0
+</code></pre>
+<h3 id="common-use-cases"><a class="header" href="#common-use-cases">Common Use Cases</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Use Case</th><th>Command</th><th>Description</th></tr></thead><tbody>
+<tr><td><strong>Quick Check</strong></td><td><code>uveddi analyze src/</code></td><td>Fast analysis without AI</td></tr>
+<tr><td><strong>Detailed Report</strong></td><td><code>uveddi analyze src/ --output report.md</code></td><td>Generate comprehensive report</td></tr>
+<tr><td><strong>AI Insights</strong></td><td><code>uveddi analyze src/ --enable-ai</code></td><td>Include AI-powered explanations</td></tr>
+<tr><td><strong>Interactive Mode</strong></td><td><code>cargo run --bin tui_test --features="tui"</code></td><td>Launch terminal interface (dev)</td></tr>
+<tr><td><strong>CI/CD Integration</strong></td><td><code>uveddi analyze src/ --format json</code></td><td>Machine-readable output</td></tr>
+</tbody></table>
+</div>
+<hr />
+<h2 id="project-overview"><a class="header" href="#project-overview">Project Overview</a></h2>
+<p><strong>Uveddi</strong> is a sophisticated AI-powered CLI tool for architectural analysis of codebases, designed to identify architectural anti-patterns and prevent architectural drift. It combines static code analysis with AI-powered insights to help developers understand and improve their codebases.</p>
+<h3 id="core-philosophy"><a class="header" href="#core-philosophy">Core Philosophy</a></h3>
+<ol>
+<li><strong>Privacy First</strong>: All analysis happens locally - no data leaves your machine by default</li>
+<li><strong>Developer-Centric</strong>: Built by developers, for developers, with real-world workflows in mind</li>
+<li><strong>Extensible by Design</strong>: Plugin architecture allows custom detectors and integrations</li>
+<li><strong>Performance Focused</strong>: Optimized for large codebases with intelligent caching</li>
+<li><strong>AI-Enhanced</strong>: Optional AI integration provides intelligent insights while preserving privacy</li>
+</ol>
+<h3 id="key-features"><a class="header" href="#key-features">Key Features</a></h3>
+<h4 id="-multi-language-analysis"><a class="header" href="#-multi-language-analysis">🔍 <strong>Multi-Language Analysis</strong></a></h4>
+<ul>
+<li><strong>Rust</strong>: Advanced ownership, lifetime, and memory safety analysis</li>
+<li><strong>Python</strong>: OOP patterns, data structure usage, exception handling</li>
+<li><strong>JavaScript/TypeScript</strong>: Async patterns, scope issues, type safety</li>
+<li><strong>Universal Patterns</strong>: Cross-language architectural anti-patterns</li>
+</ul>
+<h4 id="-ai-powered-insights"><a class="header" href="#-ai-powered-insights">🤖 <strong>AI-Powered Insights</strong></a></h4>
+<ul>
+<li><strong>Local AI (Ollama)</strong>: Privacy-preserving analysis with local models</li>
+<li><strong>Cloud AI</strong>: Optional integration with OpenAI, Anthropic, Google Gemini</li>
+<li><strong>Smart Prompting</strong>: Context-aware AI prompts for accurate analysis</li>
+<li><strong>Self-Correction</strong>: AI response validation and improvement</li>
+</ul>
+<h4 id="-architectural-analysis"><a class="header" href="#-architectural-analysis">🏗️ <strong>Architectural Analysis</strong></a></h4>
+<ul>
+<li><strong>Anti-Pattern Detection</strong>: God objects, tight coupling, dead code, etc.</li>
+<li><strong>Dependency Analysis</strong>: Circular dependencies, coupling metrics</li>
+<li><strong>Code Quality Metrics</strong>: Complexity, maintainability scores</li>
+<li><strong>Visualization</strong>: Mermaid diagrams for architectural insights</li>
+</ul>
+<h4 id="-developer-experience"><a class="header" href="#-developer-experience">🔧 <strong>Developer Experience</strong></a></h4>
+<ul>
+<li><strong>Terminal UI</strong>: Interactive analysis and exploration</li>
+<li><strong>Multiple Output Formats</strong>: Markdown, JSON, HTML reports</li>
+<li><strong>IDE Integration</strong>: VS Code extension support</li>
+<li><strong>CI/CD Ready</strong>: Machine-readable outputs for automation</li>
+</ul>
+<h4 id="-performance--scalability"><a class="header" href="#-performance--scalability">🚀 <strong>Performance &amp; Scalability</strong></a></h4>
+<ul>
+<li><strong>Tree-sitter Parsing</strong>: Fast, accurate syntax analysis</li>
+<li><strong>Intelligent Caching</strong>: AST and result caching for speed</li>
+<li><strong>Parallel Processing</strong>: Multi-threaded analysis for large codebases</li>
+<li><strong>Memory Optimization</strong>: Efficient memory usage with arena allocation</li>
+</ul>
+<h4 id="-enterprise-features"><a class="header" href="#-enterprise-features">🔒 <strong>Enterprise Features</strong></a></h4>
+<ul>
+<li><strong>Security &amp; RBAC</strong>: Role-based access control and audit logging</li>
+<li><strong>Chaos Engineering</strong>: Fault injection and resilience testing</li>
+<li><strong>Monitoring</strong>: Real-time metrics and performance tracking</li>
+<li><strong>Plugin System</strong>: WASM-based secure plugin architecture</li>
+</ul>
+<h3 id="supported-environments"><a class="header" href="#supported-environments">Supported Environments</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Environment</th><th>Support Level</th><th>Notes</th></tr></thead><tbody>
+<tr><td><strong>Linux</strong></td><td>✅ Full</td><td>Primary development platform</td></tr>
+<tr><td><strong>macOS</strong></td><td>✅ Full</td><td>Native Apple Silicon support</td></tr>
+<tr><td><strong>Windows</strong></td><td>✅ Full</td><td>WSL2 recommended for best experience</td></tr>
+<tr><td><strong>Docker</strong></td><td>✅ Full</td><td>Official container images available</td></tr>
+<tr><td><strong>CI/CD</strong></td><td>✅ Full</td><td>GitHub Actions, GitLab CI, Jenkins</td></tr>
+</tbody></table>
+</div>
+<h3 id="version--metadata"><a class="header" href="#version--metadata">Version &amp; Metadata</a></h3>
+<ul>
+<li><strong>Version</strong>: 0.9.0</li>
+<li><strong>Edition</strong>: Rust 2021</li>
+<li><strong>License</strong>: MIT</li>
+<li><strong>Repository</strong>: https://github.com/botzrDev/uveddi</li>
+<li><strong>Documentation</strong>: https://botzrdev.github.io/uveddi/</li>
+<li><strong>Community</strong>: <a href="https://discord.gg/uveddi">Discord</a> | <a href="https://github.com/botzrDev/uveddi/discussions">Discussions</a></li>
+</ul>
+<hr />
+<h2 id="core-modules--components"><a class="header" href="#core-modules--components">Core Modules &amp; Components</a></h2>
+<h3 id="analysis-engine-srcanalysis"><a class="header" href="#analysis-engine-srcanalysis">Analysis Engine (<code>src/analysis/</code>)</a></h3>
+<p>The heart of Uveddi's static code analysis capabilities, implementing a pluggable detector architecture.</p>
+<h4 id="key-components"><a class="header" href="#key-components">Key Components:</a></h4>
+<ul>
+<li><strong>AnalysisEngine</strong>: Core orchestrator that runs detectors and collects results</li>
+<li><strong>DetectorRegistry</strong>: Manages and coordinates all analysis detectors</li>
+<li><strong>AST Cache</strong>: High-performance caching layer for parsed syntax trees</li>
+<li><strong>Dependency Graph</strong>: Graph-based analysis for architectural patterns</li>
+<li><strong>Memory Optimization</strong>: Arena allocation and zero-copy serialization</li>
+</ul>
+<h4 id="anti-pattern-detectors"><a class="header" href="#anti-pattern-detectors">Anti-Pattern Detectors:</a></h4>
+<ul>
+<li><strong>God Object Detector</strong>: Identifies classes/modules with excessive responsibilities</li>
+<li><strong>Dead Code Detector</strong>: Finds unused code and unreachable functions</li>
+<li><strong>Code Duplication Detector</strong>: Detects similar code blocks across the codebase</li>
+<li><strong>Tight Coupling Detector</strong>: Analyzes component interdependencies</li>
+<li><strong>Large Classes Detector</strong>: Identifies oversized classes and modules</li>
+<li><strong>Cyclic Dependencies Detector</strong>: Finds circular dependency chains</li>
+</ul>
+<h4 id="language-specific-analysis"><a class="header" href="#language-specific-analysis">Language-Specific Analysis:</a></h4>
+<ul>
+<li><strong>Rust</strong>: Clone abuse, unwrap abuse, lifetime complexity, memory management</li>
+<li><strong>Python</strong>: Data structure misuse, exception handling, OOP violations</li>
+<li><strong>JavaScript</strong>: Async anti-patterns, scope issues, type coercion problems</li>
+</ul>
+<h3 id="ai-integration-srcai"><a class="header" href="#ai-integration-srcai">AI Integration (<code>src/ai/</code>)</a></h3>
+<p>Provides AI-powered analysis capabilities with multiple provider support and privacy focus.</p>
+<h4 id="components"><a class="header" href="#components">Components:</a></h4>
+<ul>
+<li><strong>AI Engine</strong>: Core AI analysis orchestrator with provider abstraction</li>
+<li><strong>Ollama Provider</strong>: Local AI integration for privacy-preserving analysis</li>
+<li><strong>Context Builder</strong>: Builds structured context for AI analysis</li>
+<li><strong>Prompt Templates</strong>: Specialized prompts for different analysis types</li>
+<li><strong>Self Correction</strong>: AI response validation and improvement system</li>
+<li><strong>Carbon Aware</strong>: Energy-efficient AI usage optimization</li>
+</ul>
+<h4 id="features"><a class="header" href="#features">Features:</a></h4>
+<ul>
+<li><strong>Multi-Provider Support</strong>: OpenAI, Anthropic, Google Gemini, Local Ollama</li>
+<li><strong>Smart Prompting</strong>: Context-aware prompt generation for accurate results</li>
+<li><strong>Response Validation</strong>: Automatic validation and correction of AI responses</li>
+<li><strong>Privacy Controls</strong>: Local-first processing with optional cloud integration</li>
+<li><strong>Rate Limiting</strong>: Intelligent request throttling and cost management</li>
+</ul>
+<hr />
+<h2 id="feature-flags--compilation-options"><a class="header" href="#feature-flags--compilation-options">Feature Flags &amp; Compilation Options</a></h2>
+<p>Uveddi uses Cargo feature flags to enable modular compilation and reduce binary size for specific use cases.</p>
+<h3 id="default-features"><a class="header" href="#default-features">Default Features</a></h3>
+<pre><code class="language-toml">default = ["local-ai", "tree-sitter", "memory-optimization"]
+</code></pre>
+<h3 id="core-feature-categories"><a class="header" href="#core-feature-categories">Core Feature Categories</a></h3>
+<h4 id="analysis-features"><a class="header" href="#analysis-features"><strong>Analysis Features</strong></a></h4>
+<pre><code class="language-toml"># Tree-sitter parsing (enabled by default)
+tree-sitter = [
+    "dep:tree-sitter",
+    "dep:tree-sitter-rust", 
+    "dep:tree-sitter-python",
+    "dep:tree-sitter-javascript",
+    "dep:tree-sitter-typescript"
+]
+
+# Memory optimization features
+memory-optimization = ["mimalloc", "bumpalo", "bumpalo-herd", "memmap2", "rkyv"]
+</code></pre>
+<h4 id="ai-features"><a class="header" href="#ai-features"><strong>AI Features</strong></a></h4>
+<pre><code class="language-toml"># Base AI functionality
+ai = ["reqwest", "async-trait"]
+
+# Local AI only (Ollama)
+local-ai = ["ai"]
+</code></pre>
+<h4 id="user-interface-features"><a class="header" href="#user-interface-features"><strong>User Interface Features</strong></a></h4>
+<pre><code class="language-toml"># Terminal User Interface
+tui = ["ratatui", "crossterm", "tui-input"]
+
+# Image rendering service integration
+image-rendering = ["reqwest"]
+</code></pre>
+<h4 id="enterprise-features"><a class="header" href="#enterprise-features"><strong>Enterprise Features</strong></a></h4>
+<pre><code class="language-toml"># WASM plugin system
+wasm-plugins = ["wasmtime", "wasmtime-wasi", "cap-std", "wit-bindgen"]
+
+# Chaos engineering and load testing
+chaos = ["fail", "statrs", "ndarray-stats"]
+
+# Performance regression detection
+regression-detection = ["changepoint", "linfa", "influxdb2"]
+
+# SLA monitoring and validation
+sla-monitoring = ["metrics-exporter-prometheus", "tokio-metrics"]
+</code></pre>
+<h3 id="predefined-feature-combinations"><a class="header" href="#predefined-feature-combinations">Predefined Feature Combinations</a></h3>
+<h4 id="zero-cost-option-minimal-dependencies"><a class="header" href="#zero-cost-option-minimal-dependencies"><strong>Zero-Cost Option</strong> (Minimal Dependencies)</a></h4>
+<pre><code class="language-toml">zero-cost = ["local-ai", "tree-sitter", "memory-optimization"]
+</code></pre>
+<ul>
+<li>Local analysis only</li>
+<li>No external service dependencies</li>
+<li>Optimized for individual developers</li>
+</ul>
+<h4 id="full-featured-option-complete-experience"><a class="header" href="#full-featured-option-complete-experience"><strong>Full-Featured Option</strong> (Complete Experience)</a></h4>
+<pre><code class="language-toml">full-featured = ["local-ai", "tree-sitter", "memory-optimization", "image-rendering", "tui"]
+</code></pre>
+<ul>
+<li>All user-facing features</li>
+<li>Interactive terminal interface</li>
+<li>Diagram generation support</li>
+</ul>
+<h4 id="enterprise-option-all-features"><a class="header" href="#enterprise-option-all-features"><strong>Enterprise Option</strong> (All Features)</a></h4>
+<pre><code class="language-toml">enterprise = [
+    "local-ai", "tree-sitter", "memory-optimization", 
+    "image-rendering", "tui", "wasm-plugins", 
+    "chaos", "sla-monitoring"
+]
+</code></pre>
+<ul>
+<li>Complete feature set</li>
+<li>Plugin system support</li>
+<li>Chaos engineering capabilities</li>
+<li>Enterprise monitoring</li>
+</ul>
+<h3 id="compilation-examples"><a class="header" href="#compilation-examples">Compilation Examples</a></h3>
+<pre><code class="language-bash"># Minimal build (fastest compilation)
+cargo build --no-default-features --features="tree-sitter"
+
+# Full-featured build
+cargo build --features="full-featured"
+
+# Enterprise build with all features
+cargo build --features="enterprise"
+
+# Custom build
+cargo build --features="local-ai,tui,wasm-plugins"
+</code></pre>
+<hr />
+<h2 id="architecture-deep-dive"><a class="header" href="#architecture-deep-dive">Architecture Deep Dive</a></h2>
+<h3 id="architectural-principles"><a class="header" href="#architectural-principles">Architectural Principles</a></h3>
+<ol>
+<li><strong>Privacy First</strong>: All analysis happens locally - no data leaves the user's machine by default</li>
+<li><strong>Separation of Concerns</strong>: Each module has a single, well-defined responsibility</li>
+<li><strong>Layered Architecture</strong>: Strict dependency flow with clear boundaries</li>
+<li><strong>Extensibility</strong>: Plugin architecture enables custom detectors and integrations</li>
+<li><strong>Performance Focus</strong>: Optimized for large codebases with intelligent caching</li>
+<li><strong>Type Safety</strong>: Leverages Rust's type system for reliability and performance</li>
+</ol>
+<h3 id="layer-architecture"><a class="header" href="#layer-architecture">Layer Architecture</a></h3>
+<pre><code>┌─────────────────────────────────────────────────────────────┐
+│                        CLI Layer                            │
+│                  (User Interface)                          │
+└─────────────────────────────────────────────────────────────┘
+                              │
+┌─────────────────────────────────────────────────────────────┐
+│                   Application Layer                         │
+│              (Command Orchestration)                       │
+└─────────────────────────────────────────────────────────────┘
+                              │
+┌─────────────────────────────────────────────────────────────┐
+│                    Analysis Layer                           │
+│           (Core Analysis Engine)                           │
+└─────────────────────────────────────────────────────────────┘
+                              │
+┌─────────────────────────────────────────────────────────────┐
+│                   Infrastructure Layer                      │
+│        (AST, Caching, Database, Monitoring)               │
+└─────────────────────────────────────────────────────────────┘
+</code></pre>
+<h3 id="c4-architecture-model"><a class="header" href="#c4-architecture-model">C4 Architecture Model</a></h3>
+<h4 id="level-1-system-context"><a class="header" href="#level-1-system-context">Level 1: System Context</a></h4>
+<ul>
+<li><strong>Developer/Tech Lead</strong>: Primary users who analyze codebases</li>
+<li><strong>CI/CD Pipeline</strong>: Automated analysis integration</li>
+<li><strong>AI Services</strong>: OpenAI GPT-4, Anthropic Claude, Local Ollama</li>
+<li><strong>Data Storage</strong>: Local SQLite DB, Cloud PostgreSQL (optional)</li>
+</ul>
+<h4 id="level-2-container-diagram"><a class="header" href="#level-2-container-diagram">Level 2: Container Diagram</a></h4>
+<ul>
+<li><strong>Rust CLI Application</strong>: Core analysis engine</li>
+<li><strong>Node.js Rendering Service</strong>: Diagram generation service</li>
+<li><strong>TypeScript Frontend</strong>: Web-based dashboard (optional)</li>
+<li><strong>Local Database</strong>: SQLite for caching and results</li>
+<li><strong>AI Provider</strong>: Ollama for local AI analysis</li>
+</ul>
+<h4 id="level-3-component-diagram"><a class="header" href="#level-3-component-diagram">Level 3: Component Diagram</a></h4>
+<p>Key components within the Rust CLI application:</p>
+<ul>
+<li><strong>Analysis Engine</strong>: Core orchestrator</li>
+<li><strong>AST Parser</strong>: Tree-sitter based parsing</li>
+<li><strong>Detector Registry</strong>: Pluggable detector system</li>
+<li><strong>Dependency Graph</strong>: Graph-based analysis</li>
+<li><strong>Cache Manager</strong>: Result and AST caching</li>
+<li><strong>Plugin Engine</strong>: WASM plugin execution</li>
+<li><strong>AI Engine</strong>: AI provider abstraction</li>
+<li><strong>TUI System</strong>: Terminal user interface</li>
+</ul>
+<hr />
+<h2 id="core-modules--components-1"><a class="header" href="#core-modules--components-1">Core Modules &amp; Components</a></h2>
+<h3 id="analysis-module-srcanalysis"><a class="header" href="#analysis-module-srcanalysis">Analysis Module (<code>src/analysis/</code>)</a></h3>
+<p>The heart of Uveddi's functionality, providing comprehensive framework for detecting anti-patterns and architectural issues.</p>
+<h4 id="key-components-1"><a class="header" href="#key-components-1">Key Components:</a></h4>
+<ul>
+<li><strong>AnalysisEngine</strong>: Core orchestrator that runs detectors and collects results</li>
+<li><strong>AnalysisDetector</strong>: Trait that all detectors must implement</li>
+<li><strong>Anti-pattern Detectors</strong>: Specialized detectors for various code quality issues</li>
+<li><strong>Dependency Graph</strong>: Graph-based analysis for architectural patterns</li>
+<li><strong>AST Cache</strong>: Caching layer for parsed syntax trees</li>
+</ul>
+<h4 id="detector-categories"><a class="header" href="#detector-categories">Detector Categories:</a></h4>
+<p><strong>Universal Anti-patterns</strong> (Multi-language):</p>
+<ul>
+<li>God Object: Classes/structs with too many responsibilities</li>
+<li>Cyclic Dependencies: Circular dependencies between modules</li>
+<li>Magic Values: Hardcoded constants without explanation</li>
+<li>Global State: Excessive use of global variables</li>
+<li>Tight Coupling: High interdependence between components</li>
+<li>Resource Leaks: Improper resource management</li>
+<li>Silent Failures: Errors that fail without notification</li>
+<li>Code Duplication: Repeated code patterns</li>
+<li>Leaky Abstraction: Implementation details exposed through interfaces</li>
+</ul>
+<p><strong>Language-Specific Detectors</strong>:</p>
+<p><em>Rust</em>:</p>
+<ul>
+<li>Clone Abuse: Excessive use of <code>.clone()</code></li>
+<li>Unwrap Abuse: Overuse of <code>.unwrap()</code> without error handling</li>
+<li>Lifetime Complexity: Overly complex lifetime annotations</li>
+<li>Memory Management: Improper memory handling patterns</li>
+</ul>
+<p><em>Python</em>:</p>
+<ul>
+<li>Data Structure Misuse: Inefficient data structure usage</li>
+<li>Exception Handling: Poor exception handling patterns</li>
+<li>OOP Issues: Object-oriented programming violations</li>
+<li>Performance Issues: Performance anti-patterns</li>
+</ul>
+<p><em>JavaScript</em>:</p>
+<ul>
+<li>Async Anti-patterns: Improper async/await usage</li>
+<li>Scope Issues: Variable scoping problems</li>
+<li>Type Coercion: Problematic type conversion patterns</li>
+<li>DOM Issues: DOM manipulation anti-patterns</li>
+</ul>
+<h3 id="ai-module-srcai"><a class="header" href="#ai-module-srcai">AI Module (<code>src/ai/</code>)</a></h3>
+<p>Provides AI-powered analysis capabilities with multiple provider support.</p>
+<h4 id="components-1"><a class="header" href="#components-1">Components:</a></h4>
+<ul>
+<li><strong>AI Engine</strong>: Core AI analysis orchestrator</li>
+<li><strong>Ollama Provider</strong>: Local AI integration</li>
+<li><strong>Prompt Templates</strong>: Structured prompts for different analysis types</li>
+<li><strong>Context Builder</strong>: Builds context for AI analysis</li>
+<li><strong>Self Correction</strong>: AI response validation and improvement</li>
+</ul>
+<h4 id="features-1"><a class="header" href="#features-1">Features:</a></h4>
+<ul>
+<li>Local AI analysis via Ollama</li>
+<li>Structured prompt generation</li>
+<li>Response validation and correction</li>
+<li>Context-aware analysis</li>
+<li>Privacy-focused design</li>
+</ul>
+<h3 id="monitoring-module-srcmonitoring"><a class="header" href="#monitoring-module-srcmonitoring">Monitoring Module (<code>src/monitoring/</code>)</a></h3>
+<p>Real-time test execution monitoring, failure categorization, and performance tracking.</p>
+<h4 id="components-2"><a class="header" href="#components-2">Components:</a></h4>
+<ul>
+<li><strong>Metrics Collection</strong>: Prometheus-based metrics</li>
+<li><strong>Performance Metrics Collector</strong>: System performance tracking</li>
+<li><strong>Carbon Metrics</strong>: Energy consumption tracking</li>
+<li><strong>Baseline Collector</strong>: Performance baseline management</li>
+<li><strong>Reporting Engine</strong>: Automated report generation</li>
+</ul>
+<h3 id="observability-module-srcobservability"><a class="header" href="#observability-module-srcobservability">Observability Module (<code>src/observability/</code>)</a></h3>
+<p>Enterprise-grade observability and resilience framework implementing UV-86 specifications.</p>
+<h4 id="five-core-pillars"><a class="header" href="#five-core-pillars">Five Core Pillars:</a></h4>
+<ol>
+<li><strong>Structured Logging</strong>: Built on <code>tracing</code> ecosystem with JSON output</li>
+<li><strong>Metrics Collection</strong>: Prometheus-based Four Golden Signals</li>
+<li><strong>Graceful Degradation</strong>: Circuit breaker patterns for external dependencies</li>
+<li><strong>Error Recovery</strong>: Intelligent retry mechanisms with exponential backoff</li>
+<li><strong>Unified Observability</strong>: Cross-system correlation via trace_id</li>
+</ol>
+<h3 id="resilience-module-srcresilience"><a class="header" href="#resilience-module-srcresilience">Resilience Module (<code>src/resilience/</code>)</a></h3>
+<p>Provides resilience patterns for handling transient failures in distributed systems.</p>
+<h4 id="components-3"><a class="header" href="#components-3">Components:</a></h4>
+<ul>
+<li><strong>Circuit Breaker</strong>: Prevents cascade failures</li>
+<li><strong>Retry Logic</strong>: Exponential backoff with jitter</li>
+<li><strong>Fallback Strategies</strong>: Graceful degradation mechanisms</li>
+<li><strong>Health Monitoring</strong>: System health tracking</li>
+<li><strong>Alert System</strong>: Advanced alerting with escalation</li>
+</ul>
+<h3 id="security-module-srcsecurity"><a class="header" href="#security-module-srcsecurity">Security Module (<code>src/security/</code>)</a></h3>
+<p>Comprehensive security framework with RBAC and enterprise features.</p>
+<h4 id="components-4"><a class="header" href="#components-4">Components:</a></h4>
+<ul>
+<li><strong>Authentication</strong>: OAuth2, OpenID Connect, JWT</li>
+<li><strong>Authorization</strong>: Casbin-based RBAC</li>
+<li><strong>Rate Limiting</strong>: Request rate limiting</li>
+<li><strong>Audit System</strong>: Security event logging</li>
+<li><strong>Secret Management</strong>: HashiCorp Vault integration</li>
+</ul>
+<h3 id="plugin-system-srcplugins"><a class="header" href="#plugin-system-srcplugins">Plugin System (<code>src/plugins/</code>)</a></h3>
+<p>WASM-based plugin architecture for extensibility.</p>
+<h4 id="components-5"><a class="header" href="#components-5">Components:</a></h4>
+<ul>
+<li><strong>Plugin Engine</strong>: WASM runtime management</li>
+<li><strong>Plugin Registry</strong>: Plugin discovery and management</li>
+<li><strong>Security Sandbox</strong>: Secure plugin execution</li>
+<li><strong>Lifecycle Management</strong>: Plugin loading/unloading</li>
+<li><strong>Data Plane</strong>: Plugin data exchange</li>
+</ul>
+<h3 id="tui-module-srctui"><a class="header" href="#tui-module-srctui">TUI Module (<code>src/tui/</code>)</a></h3>
+<p>Interactive terminal user interface for analysis and exploration.</p>
+<h4 id="components-6"><a class="header" href="#components-6">Components:</a></h4>
+<ul>
+<li><strong>App State</strong>: Application state management</li>
+<li><strong>Event System</strong>: User input handling</li>
+<li><strong>UI Components</strong>: Reusable UI elements</li>
+<li><strong>Terminal Management</strong>: Terminal initialization and cleanup</li>
+<li><strong>Theme System</strong>: Customizable themes</li>
+</ul>
+<hr />
+<h2 id="dependencies--technology-stack"><a class="header" href="#dependencies--technology-stack">Dependencies &amp; Technology Stack</a></h2>
+<hr />
+<h2 id="all-project-dependencies--their-roles"><a class="header" href="#all-project-dependencies--their-roles">All Project Dependencies &amp; Their Roles</a></h2>
+<p>Below is a comprehensive list of all dependencies used in Uveddi, with a brief explanation of their purpose in the context of the project:</p>
+<h3 id="core-runtime--async"><a class="header" href="#core-runtime--async">Core Runtime &amp; Async</a></h3>
+<ul>
+<li><strong>tokio</strong>: The async runtime powering all concurrent operations, file IO, and networking.</li>
+<li><strong>tokio-stream</strong>: Utilities for working with asynchronous streams, e.g., file and network data.</li>
+<li><strong>futures</strong>: Core futures and combinators for async programming.</li>
+<li><strong>async-stream</strong>: Macros for easily creating async streams.</li>
+<li><strong>async-trait</strong>: Enables async functions in traits, used for extensible async APIs.</li>
+</ul>
+<h3 id="serialization-data-and-config"><a class="header" href="#serialization-data-and-config">Serialization, Data, and Config</a></h3>
+<ul>
+<li><strong>serde</strong>: Serialization/deserialization for config, cache, and data interchange.</li>
+<li><strong>serde_json</strong>: JSON serialization for reports, config, and AI communication.</li>
+<li><strong>bincode</strong>: Compact binary serialization for fast cache storage.</li>
+<li><strong>toml</strong>: Parsing and writing TOML config files.</li>
+<li><strong>chrono</strong>: Date/time handling for timestamps, logs, and metrics.</li>
+</ul>
+<h3 id="database--storage"><a class="header" href="#database--storage">Database &amp; Storage</a></h3>
+<ul>
+<li><strong>rusqlite</strong>: Embedded SQLite database for caching, state, and results.</li>
+<li><strong>rmp-serde</strong>: MessagePack serialization for efficient cache storage.</li>
+<li><strong>flate2</strong>: Compression for diagram/image cache and storage.</li>
+</ul>
+<h3 id="cli--user-interface"><a class="header" href="#cli--user-interface">CLI &amp; User Interface</a></h3>
+<ul>
+<li><strong>clap</strong>: Command-line argument parsing and CLI interface.</li>
+<li><strong>color-eyre</strong>: Enhanced error reporting for CLI and TUI.</li>
+<li><strong>log</strong>: Logging facade for all log output.</li>
+<li><strong>env_logger</strong>: Environment-based logger initialization.</li>
+</ul>
+<h3 id="ast--language-support"><a class="header" href="#ast--language-support">AST &amp; Language Support</a></h3>
+<ul>
+<li><strong>tree-sitter</strong>: Core parser for building ASTs from source code.</li>
+<li><strong>tree-sitter-rust/python/javascript/typescript</strong>: Language grammars for multi-language analysis.</li>
+</ul>
+<h3 id="http-networking-and-web"><a class="header" href="#http-networking-and-web">HTTP, Networking, and Web</a></h3>
+<ul>
+<li><strong>reqwest</strong>: HTTP client for AI, image rendering, and remote services.</li>
+<li><strong>axum</strong>: Web server for API endpoints and TUI backend.</li>
+<li><strong>tokio-tungstenite</strong>: WebSocket support for real-time communication.</li>
+</ul>
+<h3 id="performance-concurrency-and-caching"><a class="header" href="#performance-concurrency-and-caching">Performance, Concurrency, and Caching</a></h3>
+<ul>
+<li><strong>rayon</strong>: Data parallelism for fast analysis and graph traversal.</li>
+<li><strong>lru</strong>: In-memory LRU cache for frequently accessed data.</li>
+<li><strong>num_cpus</strong>: Detects CPU count for optimal parallelism.</li>
+<li><strong>lazy_static</strong>: Global static initialization for caches and config.</li>
+</ul>
+<h3 id="monitoring-observability-and-metrics"><a class="header" href="#monitoring-observability-and-metrics">Monitoring, Observability, and Metrics</a></h3>
+<ul>
+<li><strong>prometheus</strong>: Metrics collection and export for monitoring.</li>
+<li><strong>tracing</strong>: Structured, async-aware logging and diagnostics.</li>
+<li><strong>tracing-subscriber/appender</strong>: Log formatting, filtering, and output.</li>
+<li><strong>metrics</strong>: Metrics collection framework for custom and system metrics.</li>
+<li><strong>metrics-exporter-prometheus</strong>: Exports metrics to Prometheus (feature).</li>
+<li><strong>tokio-metrics</strong>: Tokio runtime metrics (feature).</li>
+<li><strong>influxdb2</strong>: InfluxDB client for time series data (feature).</li>
+</ul>
+<h3 id="security-authentication-and-cryptography"><a class="header" href="#security-authentication-and-cryptography">Security, Authentication, and Cryptography</a></h3>
+<ul>
+<li><strong>ring</strong>: Cryptographic primitives for secure operations.</li>
+<li><strong>rustls</strong>: TLS for secure HTTP and WebSocket connections.</li>
+<li><strong>sha2</strong>: SHA-2 hashing for integrity and security.</li>
+<li><strong>md5</strong>: MD5 hashing for legacy/compatibility.</li>
+<li><strong>argon2</strong>: Password hashing for authentication.</li>
+<li><strong>blake3</strong>: Fast, secure hashing for IDs and cache keys.</li>
+<li><strong>casbin</strong>: RBAC/authorization for API and TUI.</li>
+<li><strong>oauth2/openidconnect/jsonwebtoken</strong>: Authentication and token management.</li>
+<li><strong>vaultrs</strong>: HashiCorp Vault integration for secret management.</li>
+</ul>
+<h3 id="template-rendering-and-visualization"><a class="header" href="#template-rendering-and-visualization">Template, Rendering, and Visualization</a></h3>
+<ul>
+<li><strong>tera</strong>: Template engine for generating diagrams and reports.</li>
+<li><strong>base64</strong>: Encoding/decoding images and binary data.</li>
+</ul>
+<h3 id="utilities-and-miscellaneous"><a class="header" href="#utilities-and-miscellaneous">Utilities and Miscellaneous</a></h3>
+<ul>
+<li><strong>uuid</strong>: Unique IDs for components, runs, and cache keys.</li>
+<li><strong>url</strong>: URL parsing and manipulation.</li>
+<li><strong>walkdir</strong>: Recursive directory traversal for file discovery.</li>
+<li><strong>ignore</strong>: Gitignore-style file filtering for analysis.</li>
+<li><strong>regex</strong>: Regular expressions for pattern matching.</li>
+<li><strong>glob</strong>: File pattern matching for filtering and config.</li>
+<li><strong>petgraph</strong>: Graph data structures for dependency analysis.</li>
+<li><strong>color-eyre</strong>: User-friendly error reporting.</li>
+<li><strong>ndarray/ndarray-stats</strong>: N-dimensional arrays and statistics for performance/chaos features.</li>
+<li><strong>strum/strum_macros</strong>: Enum utilities and macro derivations.</li>
+<li><strong>arrow/arrow-ipc/arrow-schema/arrow-array</strong>: Columnar data and serialization for advanced reporting.</li>
+<li><strong>sysinfo</strong>: System information for monitoring and reporting.</li>
+<li><strong>confy</strong>: Persistent configuration for TUI and CLI.</li>
+<li><strong>persisted</strong>: State persistence for TUI.</li>
+<li><strong>streaming-iterator</strong>: Efficient streaming over collections.</li>
+</ul>
+<h3 id="wasm-plugin-system-feature"><a class="header" href="#wasm-plugin-system-feature">WASM Plugin System (Feature)</a></h3>
+<ul>
+<li><strong>wasmtime/wasmtime-wasi</strong>: WASM runtime and WASI support for plugins.</li>
+<li><strong>cap-std</strong>: Capability-based stdlib for secure plugin execution.</li>
+<li><strong>wit-bindgen</strong>: WebAssembly Interface Types for plugin API.</li>
+</ul>
+<h3 id="terminal-ui-feature"><a class="header" href="#terminal-ui-feature">Terminal UI (Feature)</a></h3>
+<ul>
+<li><strong>ratatui</strong>: Terminal UI framework for interactive analysis.</li>
+<li><strong>crossterm</strong>: Terminal manipulation and input.</li>
+<li><strong>tui-input</strong>: Input handling for TUI.</li>
+</ul>
+<h3 id="memory-optimization-feature"><a class="header" href="#memory-optimization-feature">Memory Optimization (Feature)</a></h3>
+<ul>
+<li><strong>mimalloc</strong>: High-performance memory allocator.</li>
+<li><strong>bumpalo/bumpalo-herd</strong>: Arena allocation for temporary objects.</li>
+<li><strong>memmap2</strong>: Memory mapping for large data.</li>
+<li><strong>rkyv</strong>: Zero-copy serialization for fast cache.</li>
+</ul>
+<h3 id="chaos-engineering--testing-feature"><a class="header" href="#chaos-engineering--testing-feature">Chaos Engineering &amp; Testing (Feature)</a></h3>
+<ul>
+<li><strong>fail</strong>: Failpoint injection for chaos testing.</li>
+<li><strong>statrs</strong>: Statistical analysis for regression detection.</li>
+<li><strong>changepoint</strong>: Change point detection for performance.</li>
+<li><strong>linfa</strong>: Machine learning for anomaly detection.</li>
+</ul>
+<h3 id="dev--test-utilities"><a class="header" href="#dev--test-utilities">Dev &amp; Test Utilities</a></h3>
+<ul>
+<li><strong>tempfile</strong>: Temporary file creation for tests.</li>
+<li><strong>tokio-test</strong>: Async test utilities.</li>
+<li><strong>mockall/mockito</strong>: Mocking for unit/integration tests.</li>
+<li><strong>assert_cmd/predicates</strong>: CLI testing and assertions.</li>
+<li><strong>rstest/proptest/serial_test</strong>: Advanced test frameworks.</li>
+<li><strong>criterion/iai-callgrind</strong>: Benchmarking and profiling.</li>
+</ul>
+<hr />
+<h2 id="development-patterns--methods"><a class="header" href="#development-patterns--methods">Development Patterns &amp; Methods</a></h2>
+<h3 id="trait-based-architecture"><a class="header" href="#trait-based-architecture">Trait-Based Architecture</a></h3>
+<p>Uveddi uses extensive trait-based design for modularity and testability:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub trait AnalysisDetector {
+    fn detect_issues(&amp;self, file: &amp;ParsedFile) -&gt; Result&lt;Vec&lt;ArchitecturalIssue&gt;, AnalysisError&gt;;
+    fn detect_graph_issues(&amp;self, graph: &amp;LocalDependencyGraph, run_id: i64) -&gt; Vec&lt;ArchitecturalIssue&gt;;
+    fn get_anti_pattern_types(&amp;self) -&gt; Vec&lt;AntiPatternType&gt;;
+    fn get_detector_name(&amp;self) -&gt; &amp;'static str;
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="builder-pattern"><a class="header" href="#builder-pattern">Builder Pattern</a></h3>
+<p>Complex objects use the builder pattern for configuration:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let engine = AnalysisEngine::builder()
+    .enable_plugins(true)
+    .build_async()
+    .await?;
+<span class="boring">}</span></code></pre></pre>
+<h3 id="facade-pattern"><a class="header" href="#facade-pattern">Facade Pattern</a></h3>
+<p>The analysis engine implements the facade pattern to simplify complex subsystem interactions:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct AnalysisEngine {
+    pub config_service: Arc&lt;ConfigurationService&gt;,
+    pub ast_provider: Arc&lt;AstProviderImpl&gt;,
+    pub cache_manager: Arc&lt;CacheManagerImpl&gt;,
+    pub detector_scheduler: Arc&lt;DetectorScheduler&gt;,
+    pub dependency_graph_builder: Arc&lt;DependencyGraphBuilderImpl&gt;,
+    pub analysis_aggregator: Arc&lt;AnalysisAggregator&gt;,
+    pub plugin_manager: Arc&lt;PluginManagerHandle&gt;,
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="error-handling-strategy"><a class="header" href="#error-handling-strategy">Error Handling Strategy</a></h3>
+<p>Comprehensive error handling using <code>thiserror</code> and <code>color-eyre</code>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[derive(thiserror::Error, Debug)]
+pub enum AnalysisError {
+    #[error("Anti-pattern detection failed: {0}")]
+    AntiPatternDetection(String),
+    #[error("Query execution failed: {0}")]
+    QueryError(String),
+    #[error("AST error: {0}")]
+    AstError(#[from] AstError),
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="asyncawait-patterns"><a class="header" href="#asyncawait-patterns">Async/Await Patterns</a></h3>
+<p>Consistent async patterns throughout the codebase:</p>
+<pre><pre class="playground"><code class="language-rust">#[tokio::main]
+async fn main() -&gt; Result&lt;()&gt; {
+    let engine = AnalysisEngine::new_async().await?;
+    let (issues, graph) = engine.analyze(Path::new("src/")).await?;
+    Ok(())
+}</code></pre></pre>
+<h3 id="memory-management"><a class="header" href="#memory-management">Memory Management</a></h3>
+<p>Advanced memory optimization techniques:</p>
+<ol>
+<li><strong>Arena Allocation</strong>: Using <code>bumpalo</code> for temporary objects</li>
+<li><strong>Zero-Copy Serialization</strong>: Using <code>rkyv</code> for AST cache</li>
+<li><strong>Memory Mapping</strong>: Using <code>memmap2</code> for large data structures</li>
+<li><strong>Custom Allocator</strong>: Using <code>mimalloc</code> for performance</li>
+</ol>
+<h3 id="caching-strategy"><a class="header" href="#caching-strategy">Caching Strategy</a></h3>
+<p>Multi-layer caching system:</p>
+<ol>
+<li><strong>AST Cache</strong>: Parsed syntax trees cached in SQLite</li>
+<li><strong>Result Cache</strong>: Analysis results cached with file modification tracking</li>
+<li><strong>Diagram Cache</strong>: Generated diagrams cached with compression</li>
+<li><strong>Memory Cache</strong>: In-memory LRU cache for frequently accessed data</li>
+</ol>
+<hr />
+<h2 id="plugin-system"><a class="header" href="#plugin-system">Plugin System</a></h2>
+<h3 id="wasm-based-architecture"><a class="header" href="#wasm-based-architecture">WASM-Based Architecture</a></h3>
+<p>Uveddi uses WebAssembly for secure, sandboxed plugin execution:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct WasmPluginEngine {
+    engine: wasmtime::Engine,
+    store: wasmtime::Store&lt;PluginState&gt;,
+    instances: HashMap&lt;String, wasmtime::Instance&gt;,
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="plugin-interface"><a class="header" href="#plugin-interface">Plugin Interface</a></h3>
+<p>Plugins implement the WebAssembly Interface Types (WIT) specification:</p>
+<pre><code class="language-wit">// wit/plugin.wit
+interface plugin {
+    record analysis-result {
+        issues: list&lt;architectural-issue&gt;,
+        metrics: plugin-metrics,
+    }
+    
+    analyze: func(code: string, language: string) -&gt; analysis-result
+}
+</code></pre>
+<h3 id="plugin-lifecycle"><a class="header" href="#plugin-lifecycle">Plugin Lifecycle</a></h3>
+<ol>
+<li><strong>Discovery</strong>: Plugins discovered via manifest files</li>
+<li><strong>Loading</strong>: WASM modules loaded into runtime</li>
+<li><strong>Initialization</strong>: Plugin state initialized</li>
+<li><strong>Execution</strong>: Plugin functions called during analysis</li>
+<li><strong>Cleanup</strong>: Resources cleaned up on unload</li>
+</ol>
+<h3 id="security-model"><a class="header" href="#security-model">Security Model</a></h3>
+<ul>
+<li><strong>Sandboxed Execution</strong>: WASM provides memory isolation</li>
+<li><strong>Capability-Based Security</strong>: Limited system access via WASI</li>
+<li><strong>Resource Limits</strong>: CPU and memory limits enforced</li>
+<li><strong>Audit Logging</strong>: All plugin actions logged</li>
+</ul>
+<hr />
+<h2 id="ai-integration"><a class="header" href="#ai-integration">AI Integration</a></h2>
+<h3 id="provider-abstraction"><a class="header" href="#provider-abstraction">Provider Abstraction</a></h3>
+<p>AI functionality abstracted through provider interface:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[async_trait]
+pub trait LlmProvider {
+    async fn generate_explanation(&amp;self, context: &amp;AnalysisContext) -&gt; Result&lt;String&gt;;
+    async fn suggest_refactoring(&amp;self, issue: &amp;ArchitecturalIssue) -&gt; Result&lt;String&gt;;
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="ollama-integration"><a class="header" href="#ollama-integration">Ollama Integration</a></h3>
+<p>Local AI via Ollama for privacy:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct OllamaProvider {
+    client: reqwest::Client,
+    base_url: String,
+    model: String,
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="prompt-engineering"><a class="header" href="#prompt-engineering">Prompt Engineering</a></h3>
+<p>Structured prompts for consistent AI responses:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct PromptTemplate {
+    pub system_prompt: String,
+    pub user_prompt_template: String,
+    pub context_variables: Vec&lt;String&gt;,
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="context-building"><a class="header" href="#context-building">Context Building</a></h3>
+<p>Rich context provided to AI models:</p>
+<ul>
+<li>Code snippets with syntax highlighting</li>
+<li>Architectural issue descriptions</li>
+<li>Related code patterns</li>
+<li>Project metadata</li>
+<li>Language-specific idioms</li>
+</ul>
+<hr />
+<h2 id="security--resilience"><a class="header" href="#security--resilience">Security &amp; Resilience</a></h2>
+<h3 id="authentication--authorization"><a class="header" href="#authentication--authorization">Authentication &amp; Authorization</a></h3>
+<p>Multi-layer security approach:</p>
+<ol>
+<li><strong>Authentication</strong>: OAuth2, OpenID Connect, JWT tokens</li>
+<li><strong>Authorization</strong>: Role-Based Access Control (RBAC) via Casbin</li>
+<li><strong>Rate Limiting</strong>: Request throttling to prevent abuse</li>
+<li><strong>Audit Logging</strong>: Comprehensive security event logging</li>
+</ol>
+<h3 id="circuit-breaker-pattern"><a class="header" href="#circuit-breaker-pattern">Circuit Breaker Pattern</a></h3>
+<p>Prevents cascade failures in distributed systems:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct CircuitBreaker {
+    state: CircuitBreakerState,
+    failure_threshold: usize,
+    timeout: Duration,
+    failure_count: AtomicUsize,
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="retry-logic"><a class="header" href="#retry-logic">Retry Logic</a></h3>
+<p>Intelligent retry with exponential backoff:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct RetryConfig {
+    pub max_attempts: usize,
+    pub base_delay: Duration,
+    pub max_delay: Duration,
+    pub jitter: bool,
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="secret-management"><a class="header" href="#secret-management">Secret Management</a></h3>
+<p>Integration with HashiCorp Vault for secure credential storage:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct VaultSecretManager {
+    client: vaultrs::client::VaultClient,
+    mount_path: String,
+}
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="security--rbac"><a class="header" href="#security--rbac">Security &amp; RBAC</a></h2>
+<p>Comprehensive security framework implementing enterprise-grade authentication, authorization, and audit capabilities.</p>
+<h3 id="security-architecture-srcsecurity"><a class="header" href="#security-architecture-srcsecurity">Security Architecture (<code>src/security/</code>)</a></h3>
+<h4 id="authentication-systems"><a class="header" href="#authentication-systems">Authentication Systems</a></h4>
+<ul>
+<li><strong>OAuth 2.0/OIDC Integration</strong>: Federated authentication with enterprise IdPs</li>
+<li><strong>API Key Authentication</strong>: Secure service-to-service authentication</li>
+<li><strong>Session Management</strong>: Secure session handling with expiration</li>
+<li><strong>JWT Token Validation</strong>: Standards-compliant token verification</li>
+</ul>
+<h4 id="authorization-rbacabac"><a class="header" href="#authorization-rbacabac">Authorization (RBAC/ABAC)</a></h4>
+<ul>
+<li><strong>Role-Based Access Control</strong>: Hierarchical role system with predefined roles</li>
+<li><strong>Attribute-Based Access Control</strong>: Fine-grained permission system</li>
+<li><strong>Permission Scoping</strong>: Resource-level access control (own/team/all)</li>
+<li><strong>Policy Engine</strong>: Casbin-powered authorization engine</li>
+</ul>
+<h4 id="security-features"><a class="header" href="#security-features">Security Features</a></h4>
+<ul>
+<li><strong>Audit Logging</strong>: Comprehensive, immutable security event logging</li>
+<li><strong>Input Validation</strong>: Path traversal prevention and input sanitization</li>
+<li><strong>Rate Limiting</strong>: DDoS protection and resource abuse prevention</li>
+<li><strong>Secret Management</strong>: HashiCorp Vault integration for secure credential storage</li>
+<li><strong>Compliance</strong>: SOC2, GDPR, and enterprise compliance support</li>
+</ul>
+<h4 id="configuration-example"><a class="header" href="#configuration-example">Configuration Example</a></h4>
+<pre><code class="language-toml">[security]
+enabled = true
+audit_logging = true
+rate_limiting = true
+
+[security.authentication]
+provider = "oidc"
+issuer_url = "https://auth.company.com"
+client_id = "uveddi-client"
+
+[security.authorization]
+policy_file = "policies/rbac.conf"
+default_role = "viewer"
+
+[security.rate_limiting]
+requests_per_minute = 100
+burst_size = 10
+</code></pre>
+<h4 id="predefined-roles"><a class="header" href="#predefined-roles">Predefined Roles</a></h4>
+<ul>
+<li><strong>Admin</strong>: Full system access and user management</li>
+<li><strong>Analyst</strong>: Analysis execution and report generation</li>
+<li><strong>Viewer</strong>: Read-only access to reports and results</li>
+<li><strong>Developer</strong>: Code analysis and plugin management</li>
+</ul>
+<hr />
+<h2 id="resilience--error-handling"><a class="header" href="#resilience--error-handling">Resilience &amp; Error Handling</a></h2>
+<p>Advanced resilience patterns for handling transient failures and maintaining system stability.</p>
+<h3 id="resilience-framework-srcresilience"><a class="header" href="#resilience-framework-srcresilience">Resilience Framework (<code>src/resilience/</code>)</a></h3>
+<h4 id="core-patterns"><a class="header" href="#core-patterns">Core Patterns</a></h4>
+<ul>
+<li><strong>Circuit Breaker</strong>: Prevents cascade failures with automatic recovery</li>
+<li><strong>Retry Logic</strong>: Exponential backoff with jitter for transient failures</li>
+<li><strong>Fallback Strategies</strong>: Graceful degradation when services are unavailable</li>
+<li><strong>Health Monitoring</strong>: Continuous health checks and status reporting</li>
+<li><strong>Graceful Shutdown</strong>: Clean resource cleanup and state preservation</li>
+</ul>
+<h4 id="advanced-features"><a class="header" href="#advanced-features">Advanced Features</a></h4>
+<ul>
+<li><strong>Alert System</strong>: Multi-channel alerting with escalation policies</li>
+<li><strong>Analytics Dashboard</strong>: Real-time resilience metrics and trends</li>
+<li><strong>Recovery Management</strong>: Automated recovery procedures and manual overrides</li>
+<li><strong>Availability Detection</strong>: Service availability monitoring and reporting</li>
+</ul>
+<h4 id="error-handling-strategy-1"><a class="header" href="#error-handling-strategy-1">Error Handling Strategy</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[derive(thiserror::Error, Debug)]
+pub enum UveddiError {
+    #[error("Analysis failed: {0}")]
+    Analysis(String),
+    
+    #[error("AI provider error: {provider} - {message}")]
+    AiProvider { provider: String, message: String },
+    
+    #[error("Security violation: {0}")]
+    Security(#[from] SecurityError),
+    
+    #[error("Configuration error: {0}")]
+    Config(String),
+}
+<span class="boring">}</span></code></pre></pre>
+<h4 id="resilience-configuration"><a class="header" href="#resilience-configuration">Resilience Configuration</a></h4>
+<pre><code class="language-toml">[resilience.retry]
+max_attempts = 3
+initial_delay = "1s"
+max_delay = "30s"
+backoff_multiplier = 2.0
+
+[resilience.circuit_breaker]
+failure_threshold = 5
+timeout = "60s"
+half_open_max_calls = 3
+
+[resilience.fallback]
+enable_cache_fallback = true
+enable_offline_mode = true
+</code></pre>
+<h4 id="monitoring-integration"><a class="header" href="#monitoring-integration">Monitoring Integration</a></h4>
+<ul>
+<li><strong>Prometheus Metrics</strong>: Comprehensive metrics collection</li>
+<li><strong>Health Endpoints</strong>: HTTP health check endpoints</li>
+<li><strong>Alert Integration</strong>: Slack, PagerDuty, email notifications</li>
+<li><strong>Dashboard</strong>: Real-time resilience status visualization</li>
+</ul>
+<hr />
+<h2 id="performance--monitoring"><a class="header" href="#performance--monitoring">Performance &amp; Monitoring</a></h2>
+<h3 id="metrics-collection"><a class="header" href="#metrics-collection">Metrics Collection</a></h3>
+<p>Comprehensive metrics using Prometheus:</p>
+<ul>
+<li><strong>Four Golden Signals</strong>: Latency, traffic, errors, saturation</li>
+<li><strong>Application Metrics</strong>: Analysis pipeline performance</li>
+<li><strong>System Metrics</strong>: CPU, memory, disk usage</li>
+<li><strong>Custom Metrics</strong>: Domain-specific measurements</li>
+</ul>
+<h3 id="performance-optimization"><a class="header" href="#performance-optimization">Performance Optimization</a></h3>
+<p>Multiple optimization strategies:</p>
+<ol>
+<li><strong>Async Processing</strong>: Non-blocking file analysis</li>
+<li><strong>Parallel Execution</strong>: CPU-bound tasks distributed across cores</li>
+<li><strong>Smart Caching</strong>: Multi-layer caching strategy</li>
+<li><strong>Memory Optimization</strong>: Arena allocation and zero-copy serialization</li>
+<li><strong>Lazy Loading</strong>: Resources loaded on demand</li>
+</ol>
+<h3 id="benchmarking"><a class="header" href="#benchmarking">Benchmarking</a></h3>
+<p>Comprehensive benchmarking suite using Criterion:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn benchmark_analysis_engine(c: &amp;mut Criterion) {
+    c.bench_function("analyze_large_codebase", |b| {
+        b.iter(|| {
+            // Benchmark code
+        })
+    });
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="carbon-awareness"><a class="header" href="#carbon-awareness">Carbon Awareness</a></h3>
+<p>Energy consumption tracking for sustainable computing:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct CarbonAwarenessCollector {
+    energy_monitor: EnergyMonitor,
+    carbon_intensity_api: CarbonIntensityApi,
+}
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<h2 id="testing-strategy"><a class="header" href="#testing-strategy">Testing Strategy</a></h2>
+<h3 id="test-categories"><a class="header" href="#test-categories">Test Categories</a></h3>
+<ol>
+<li><strong>Unit Tests</strong>: Individual component testing</li>
+<li><strong>Integration Tests</strong>: Component interaction testing</li>
+<li><strong>End-to-End Tests</strong>: Complete workflow testing</li>
+<li><strong>Performance Tests</strong>: Scalability and performance validation</li>
+<li><strong>Security Tests</strong>: Vulnerability assessment</li>
+</ol>
+<h3 id="test-infrastructure"><a class="header" href="#test-infrastructure">Test Infrastructure</a></h3>
+<ul>
+<li><strong>Test Fixtures</strong>: Reusable test data and mocks</li>
+<li><strong>Test Utilities</strong>: Helper functions for common test patterns</li>
+<li><strong>Coverage Tracking</strong>: Code coverage measurement and reporting</li>
+<li><strong>Regression Testing</strong>: Automated regression detection</li>
+</ul>
+<h3 id="quality-gates"><a class="header" href="#quality-gates">Quality Gates</a></h3>
+<ul>
+<li><strong>Code Coverage</strong>: Minimum 90% coverage requirement</li>
+<li><strong>Performance Benchmarks</strong>: All benchmarks must pass</li>
+<li><strong>Security Audit</strong>: No critical vulnerabilities</li>
+<li><strong>Documentation</strong>: All public APIs documented</li>
+</ul>
+<hr />
+<h2 id="deployment--operations"><a class="header" href="#deployment--operations">Deployment &amp; Operations</a></h2>
+<h3 id="deployment-options"><a class="header" href="#deployment-options">Deployment Options</a></h3>
+<ol>
+<li><strong>Standalone Binary</strong>: Single executable with embedded dependencies</li>
+<li><strong>Docker Container</strong>: Containerized deployment with health checks</li>
+<li><strong>Kubernetes</strong>: Scalable deployment with monitoring</li>
+<li><strong>CI/CD Integration</strong>: Automated analysis in build pipelines</li>
+</ol>
+<h3 id="configuration-management"><a class="header" href="#configuration-management">Configuration Management</a></h3>
+<p>Hierarchical configuration system:</p>
+<ol>
+<li><strong>Default Configuration</strong>: Built-in defaults</li>
+<li><strong>System Configuration</strong>: System-wide settings</li>
+<li><strong>User Configuration</strong>: User-specific preferences</li>
+<li><strong>Project Configuration</strong>: Project-specific overrides</li>
+<li><strong>Environment Variables</strong>: Runtime configuration</li>
+</ol>
+<h3 id="monitoring--alerting"><a class="header" href="#monitoring--alerting">Monitoring &amp; Alerting</a></h3>
+<p>Production monitoring setup:</p>
+<ul>
+<li><strong>Health Checks</strong>: Application health endpoints</li>
+<li><strong>Metrics Dashboard</strong>: Real-time metrics visualization</li>
+<li><strong>Alert Rules</strong>: Automated alerting for critical issues</li>
+<li><strong>Log Aggregation</strong>: Centralized log collection and analysis</li>
+</ul>
+<h3 id="disaster-recovery"><a class="header" href="#disaster-recovery">Disaster Recovery</a></h3>
+<ul>
+<li><strong>Backup Strategy</strong>: Regular data backups</li>
+<li><strong>Recovery Procedures</strong>: Documented recovery steps</li>
+<li><strong>Failover Mechanisms</strong>: Automatic failover capabilities</li>
+<li><strong>Data Integrity</strong>: Checksums and validation</li>
+</ul>
+<hr />
+<h2 id="development-workflow"><a class="header" href="#development-workflow">Development Workflow</a></h2>
+<h3 id="getting-started"><a class="header" href="#getting-started">Getting Started</a></h3>
+<ol>
+<li>
+<p><strong>Environment Setup</strong>:</p>
+<pre><code class="language-bash">git clone https://github.com/botzrDev/uveddi.git
+cd uveddi
+cargo install --path .
+</code></pre>
+</li>
+<li>
+<p><strong>Development Tools</strong>:</p>
+<pre><code class="language-bash">cargo install cargo-nextest cargo-llvm-cov
+</code></pre>
+</li>
+<li>
+<p><strong>Running Tests</strong>:</p>
+<pre><code class="language-bash">cargo nextest run --all-features
+</code></pre>
+</li>
+</ol>
+<h3 id="code-organization"><a class="header" href="#code-organization">Code Organization</a></h3>
+<ul>
+<li><strong>Module Structure</strong>: Clear separation of concerns</li>
+<li><strong>Naming Conventions</strong>: Consistent naming throughout</li>
+<li><strong>Documentation</strong>: Comprehensive inline documentation</li>
+<li><strong>Error Handling</strong>: Consistent error handling patterns</li>
+</ul>
+<h3 id="contribution-guidelines"><a class="header" href="#contribution-guidelines">Contribution Guidelines</a></h3>
+<ol>
+<li><strong>Code Style</strong>: Follow Rust standard conventions</li>
+<li><strong>Testing</strong>: All changes must include tests</li>
+<li><strong>Documentation</strong>: Update documentation for public APIs</li>
+<li><strong>Performance</strong>: Consider performance implications</li>
+<li><strong>Security</strong>: Follow security best practices</li>
+</ol>
+<h3 id="release-process"><a class="header" href="#release-process">Release Process</a></h3>
+<ol>
+<li><strong>Version Bumping</strong>: Semantic versioning</li>
+<li><strong>Changelog</strong>: Detailed change documentation</li>
+<li><strong>Testing</strong>: Comprehensive test suite execution</li>
+<li><strong>Documentation</strong>: Documentation updates</li>
+<li><strong>Deployment</strong>: Automated deployment pipeline</li>
+</ol>
+<hr />
+<h2 id="conclusion"><a class="header" href="#conclusion">Conclusion</a></h2>
+<p>Uveddi represents a sophisticated approach to static code analysis, combining modern Rust development practices with AI-powered insights and enterprise-grade observability. Its modular architecture, comprehensive testing strategy, and focus on performance and security make it suitable for both individual developers and large-scale enterprise deployments.</p>
+<p>The system's extensibility through WASM plugins, privacy-focused AI integration, and comprehensive monitoring capabilities position it as a powerful tool for maintaining code quality and preventing architectural drift in modern software development.</p>
+<hr />
+<h2 id="terminal-user-interface-tui"><a class="header" href="#terminal-user-interface-tui">Terminal User Interface (TUI)</a></h2>
+<p>Interactive terminal interface implementing The Elm Architecture (TEA) pattern for predictable state management.</p>
+<h3 id="tui-architecture-srctui"><a class="header" href="#tui-architecture-srctui">TUI Architecture (<code>src/tui/</code>)</a></h3>
+<h4 id="core-components"><a class="header" href="#core-components">Core Components</a></h4>
+<ul>
+<li><strong>App State</strong>: Centralized application state management</li>
+<li><strong>Event Handler</strong>: Keyboard and mouse input processing</li>
+<li><strong>UI Components</strong>: Reusable terminal widgets and layouts</li>
+<li><strong>Terminal Manager</strong>: Terminal initialization and cleanup</li>
+<li><strong>Themes</strong>: Customizable color schemes and styling</li>
+</ul>
+<h4 id="features-2"><a class="header" href="#features-2">Features</a></h4>
+<ul>
+<li><strong>Interactive Analysis Form</strong>: Replace CLI arguments with guided forms</li>
+<li><strong>Real-time Progress</strong>: Live analysis progress and status updates</li>
+<li><strong>Report Viewer</strong>: Multi-format report display with syntax highlighting</li>
+<li><strong>Configuration Editor</strong>: Visual configuration management</li>
+<li><strong>Plugin Manager</strong>: Interactive plugin installation and management</li>
+</ul>
+<h4 id="key-screens"><a class="header" href="#key-screens">Key Screens</a></h4>
+<ul>
+<li><strong>Main Menu</strong>: Navigation hub with project selection</li>
+<li><strong>Analysis Form</strong>: Interactive analysis configuration</li>
+<li><strong>Progress View</strong>: Real-time analysis monitoring</li>
+<li><strong>Report Browser</strong>: Results exploration and export</li>
+<li><strong>Settings</strong>: Configuration and preferences</li>
+</ul>
+<h4 id="usage-examples"><a class="header" href="#usage-examples">Usage Examples</a></h4>
+<pre><code class="language-bash"># Launch TUI (development)
+cargo run --bin tui_test --features="tui"
+
+# Note: TUI project and theme options not yet implemented
+# Use configuration files for customization
+</code></pre>
+<h4 id="configuration-1"><a class="header" href="#configuration-1">Configuration</a></h4>
+<pre><code class="language-toml">[tui]
+theme = "dark"
+auto_save = true
+show_help = true
+
+[tui.keybindings]
+quit = "q"
+help = "?"
+analyze = "a"
+</code></pre>
+<hr />
+<h2 id="chaos-engineering"><a class="header" href="#chaos-engineering">Chaos Engineering</a></h2>
+<p>Comprehensive chaos engineering framework for testing system resilience and fault tolerance.</p>
+<h3 id="chaos-framework-srcchaos"><a class="header" href="#chaos-framework-srcchaos">Chaos Framework (<code>src/chaos/</code>)</a></h3>
+<h4 id="core-capabilities"><a class="header" href="#core-capabilities">Core Capabilities</a></h4>
+<ul>
+<li><strong>Multi-tier Fault Injection</strong>: Unit, service, and system level failures</li>
+<li><strong>Safe Failure Scenarios</strong>: Automatic rollback and safety constraints</li>
+<li><strong>Comprehensive Observability</strong>: Detailed measurement and reporting</li>
+<li><strong>CI/CD Integration</strong>: Automated chaos testing in pipelines</li>
+</ul>
+<h4 id="experiment-types"><a class="header" href="#experiment-types">Experiment Types</a></h4>
+<ul>
+<li><strong>Network Failures</strong>: Latency injection, packet loss, connection drops</li>
+<li><strong>Resource Exhaustion</strong>: Memory pressure, CPU saturation, disk full</li>
+<li><strong>Service Failures</strong>: Process crashes, dependency unavailability</li>
+<li><strong>Data Corruption</strong>: File system errors, database inconsistencies</li>
+</ul>
+<h4 id="safety-features"><a class="header" href="#safety-features">Safety Features</a></h4>
+<ul>
+<li><strong>Blast Radius Control</strong>: Limit experiment scope and impact</li>
+<li><strong>Emergency Stop</strong>: Immediate experiment termination</li>
+<li><strong>Health Monitoring</strong>: Continuous system health validation</li>
+<li><strong>Rollback Procedures</strong>: Automatic recovery from failed experiments</li>
+</ul>
+<h4 id="configuration-example-1"><a class="header" href="#configuration-example-1">Configuration Example</a></h4>
+<pre><code class="language-toml">[chaos]
+enabled = true
+max_concurrent_experiments = 3
+safety_checks_enabled = true
+
+[chaos.experiments.network_latency]
+enabled = true
+target_services = ["analysis-engine"]
+latency_ms = 100
+duration = "30s"
+blast_radius = "single_service"
+
+[chaos.experiments.memory_pressure]
+enabled = false
+memory_percentage = 80
+duration = "60s"
+blast_radius = "unit_test"
+</code></pre>
+<h4 id="experiment-lifecycle"><a class="header" href="#experiment-lifecycle">Experiment Lifecycle</a></h4>
+<ol>
+<li><strong>Planning</strong>: Define experiment parameters and safety constraints</li>
+<li><strong>Validation</strong>: Verify system health and readiness</li>
+<li><strong>Execution</strong>: Inject failures and monitor system behavior</li>
+<li><strong>Observation</strong>: Collect metrics and analyze system response</li>
+<li><strong>Recovery</strong>: Restore normal operation and validate recovery</li>
+<li><strong>Analysis</strong>: Generate reports and identify improvements</li>
+</ol>
+<h4 id="integration-with-cicd"><a class="header" href="#integration-with-cicd">Integration with CI/CD</a></h4>
+<pre><code class="language-yaml"># .github/workflows/chaos-testing.yml
+- name: Run Chaos Experiments
+  run: |
+    uveddi chaos run --experiment network_latency
+    uveddi chaos run --experiment memory_pressure
+    uveddi chaos report --format json
+</code></pre>
+<hr />
+<h2 id="configuration-management-1"><a class="header" href="#configuration-management-1">Configuration Management</a></h2>
+<p>Comprehensive configuration system supporting multiple formats and environments.</p>
+<h3 id="configuration-architecture"><a class="header" href="#configuration-architecture">Configuration Architecture</a></h3>
+<h4 id="configuration-sources-priority-order"><a class="header" href="#configuration-sources-priority-order">Configuration Sources (Priority Order)</a></h4>
+<ol>
+<li><strong>Command Line Arguments</strong>: Highest priority, overrides all other sources</li>
+<li><strong>Environment Variables</strong>: <code>UVEDDI_*</code> prefixed variables</li>
+<li><strong>Configuration Files</strong>: TOML, JSON, YAML support</li>
+<li><strong>Default Values</strong>: Built-in sensible defaults</li>
+</ol>
+<h4 id="configuration-file-example"><a class="header" href="#configuration-file-example">Configuration File Example</a></h4>
+<pre><code class="language-toml"># ~/.uveddi/config.toml
+
+[analysis]
+max_file_size = "2MB"
+parallel_jobs = 4
+timeout = 300
+enable_cache = true
+
+[ai]
+default_provider = "ollama"
+enable_explanations = true
+
+[ai.providers.ollama]
+url = "http://localhost:11434"
+model = "deepseek-coder:6.7b"
+temperature = 0.7
+
+[ai.providers.openai]
+model = "gpt-4"
+api_key = "${OPENAI_API_KEY}"
+max_tokens = 2000
+
+[detectors.god_object]
+enabled = true
+max_methods = 20
+max_fields = 15
+
+[security]
+enabled = false
+audit_logging = true
+
+[tui]
+theme = "dark"
+auto_save = true
+</code></pre>
+<h4 id="environment-variables"><a class="header" href="#environment-variables">Environment Variables</a></h4>
+<pre><code class="language-bash"># Core settings
+export UVEDDI_ANALYSIS_PARALLEL_JOBS=8
+export UVEDDI_AI_PROVIDER=ollama
+export UVEDDI_CACHE_SIZE=2000
+
+# AI provider settings
+export UVEDDI_OPENAI_API_KEY="your-key-here"
+export UVEDDI_OLLAMA_URL="http://localhost:11434"
+
+# Security settings
+export UVEDDI_SECURITY_ENABLED=true
+export UVEDDI_VAULT_URL="https://vault.company.com"
+</code></pre>
+<hr />
+<h2 id="troubleshooting--best-practices"><a class="header" href="#troubleshooting--best-practices">Troubleshooting &amp; Best Practices</a></h2>
+<h3 id="common-issues-and-solutions"><a class="header" href="#common-issues-and-solutions">Common Issues and Solutions</a></h3>
+<h4 id="performance-issues"><a class="header" href="#performance-issues">Performance Issues</a></h4>
+<p><strong>Problem</strong>: Slow analysis on large codebases
+<strong>Solutions</strong>:</p>
+<ul>
+<li>Enable parallel processing: <code>--parallel-jobs 8</code></li>
+<li>Increase cache size: <code>--cache-size 5000</code></li>
+<li>Use memory optimization features</li>
+<li>Exclude unnecessary files with <code>.uveddiignore</code></li>
+</ul>
+<h4 id="memory-issues"><a class="header" href="#memory-issues">Memory Issues</a></h4>
+<p><strong>Problem</strong>: High memory usage during analysis
+<strong>Solutions</strong>:</p>
+<ul>
+<li>Enable memory optimization feature flag</li>
+<li>Reduce parallel job count</li>
+<li>Use incremental analysis for large projects</li>
+<li>Configure memory limits in analysis config</li>
+</ul>
+<h4 id="ai-integration-issues"><a class="header" href="#ai-integration-issues">AI Integration Issues</a></h4>
+<p><strong>Problem</strong>: AI provider timeouts or errors
+<strong>Solutions</strong>:</p>
+<ul>
+<li>Check provider availability and API keys</li>
+<li>Implement retry logic with exponential backoff</li>
+<li>Use fallback providers</li>
+<li>Enable offline mode for local-only analysis</li>
+</ul>
+<h3 id="best-practices"><a class="header" href="#best-practices">Best Practices</a></h3>
+<h4 id="for-individual-developers"><a class="header" href="#for-individual-developers">For Individual Developers</a></h4>
+<ul>
+<li>Use local AI (Ollama) for privacy</li>
+<li>Enable caching for faster repeated analysis</li>
+<li>Configure IDE integration for real-time feedback</li>
+<li>Use TUI for interactive exploration</li>
+</ul>
+<h4 id="for-teams"><a class="header" href="#for-teams">For Teams</a></h4>
+<ul>
+<li>Standardize configuration across team members</li>
+<li>Use CI/CD integration for automated analysis</li>
+<li>Implement security and RBAC for sensitive codebases</li>
+<li>Share custom detectors via plugin system</li>
+</ul>
+<h4 id="for-enterprises"><a class="header" href="#for-enterprises">For Enterprises</a></h4>
+<ul>
+<li>Deploy with full security features enabled</li>
+<li>Use chaos engineering for resilience testing</li>
+<li>Implement comprehensive monitoring and alerting</li>
+<li>Integrate with existing observability stack</li>
+</ul>
+<hr />
+<h2 id="api-reference"><a class="header" href="#api-reference">API Reference</a></h2>
+<h3 id="command-line-interface"><a class="header" href="#command-line-interface">Command Line Interface</a></h3>
+<h4 id="core-commands"><a class="header" href="#core-commands">Core Commands</a></h4>
+<pre><code class="language-bash"># Analysis commands
+uveddi analyze &lt;path&gt; [OPTIONS]
+
+# Configuration commands  
+uveddi config show
+uveddi config set &lt;key&gt; &lt;value&gt;
+uveddi config validate
+
+# Plugin commands (not yet implemented)
+# Plugin system in development
+uveddi plugin remove &lt;plugin&gt;
+
+# Chaos engineering commands (not yet implemented)
+# Chaos features available via feature flags only
+uveddi chaos stop &lt;experiment-id&gt;
+uveddi chaos list
+</code></pre>
+<h4 id="global-options"><a class="header" href="#global-options">Global Options</a></h4>
+<ul>
+<li><code>--config &lt;file&gt;</code>: Specify configuration file</li>
+<li><code>--verbose</code>: Enable verbose logging</li>
+<li><code>--quiet</code>: Suppress non-error output</li>
+<li><code>--help</code>: Show help information</li>
+</ul>
+<h3 id="rust-api"><a class="header" href="#rust-api">Rust API</a></h3>
+<h4 id="core-types"><a class="header" href="#core-types">Core Types</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Analysis engine
+pub struct AnalysisEngine { /* ... */ }
+pub trait AnalysisDetector { /* ... */ }
+
+// Configuration
+pub struct AnalysisConfig { /* ... */ }
+pub struct SecurityConfig { /* ... */ }
+
+// Results
+pub struct AnalysisResult { /* ... */ }
+pub struct ArchitecturalIssue { /* ... */ }
+<span class="boring">}</span></code></pre></pre>
+<h4 id="usage-examples-1"><a class="header" href="#usage-examples-1">Usage Examples</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use uveddi::analysis::AnalysisEngine;
+use std::path::Path;
+
+// Basic analysis
+let engine = AnalysisEngine::new()?;
+let (issues, graph) = engine.analyze(Path::new("src/")).await?;
+
+// With custom configuration
+let config = AnalysisConfig::from_file(Path::new("config.toml"))?;
+let engine = config.create_engine().await?;
+<span class="boring">}</span></code></pre></pre>
+<hr />
+<p><em>This comprehensive manual serves as the definitive guide for understanding, developing, and operating Uveddi. For specific implementation details, refer to the source code and inline documentation. For community support, join our <a href="https://discord.gg/uveddi">Discord</a> or visit our <a href="https://github.com/botzrDev/uveddi/discussions">GitHub Discussions</a>.</em></p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../02-user-guide/troubleshooting.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../02-user-guide/feature-flags.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../02-user-guide/troubleshooting.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../02-user-guide/feature-flags.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../assets/custom-scripts.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

@@ -1,0 +1,870 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Incident Response Runbooks - Uveddi Documentation</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="AI-Powered Code Analysis That Stays Private - Comprehensive guide to using Uveddi for architectural analysis">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../assets/brand/colors/palette.css">
+        <link rel="stylesheet" href="../assets/custom-styles.css">
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Uveddi Documentation</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/botzrDev/uveddi" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://github.com/botzrDev/uveddi/edit/main/docs/./security/INCIDENT_RESPONSE_RUNBOOKS.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="uveddi-security-incident-response-runbooks"><a class="header" href="#uveddi-security-incident-response-runbooks">Uveddi Security Incident Response Runbooks</a></h1>
+<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
+<p>This document provides step-by-step runbooks for responding to various security incidents in the Uveddi environment. These runbooks ensure consistent, effective responses to security threats and minimize impact on operations.</p>
+<h2 id="table-of-contents"><a class="header" href="#table-of-contents">Table of Contents</a></h2>
+<ol>
+<li><a href="#general-incident-response-process">General Incident Response Process</a></li>
+<li><a href="#runbook-1-data-breach-response">Runbook 1: Data Breach Response</a></li>
+<li><a href="#runbook-2-container-security-compromise">Runbook 2: Container Security Compromise</a></li>
+<li><a href="#runbook-3-dependency-vulnerability-response">Runbook 3: Dependency Vulnerability Response</a></li>
+<li><a href="#runbook-4-authentication-system-compromise">Runbook 4: Authentication System Compromise</a></li>
+<li><a href="#runbook-5-injection-attack-response">Runbook 5: Injection Attack Response</a></li>
+<li><a href="#runbook-6-ddos-attack-response">Runbook 6: DDoS Attack Response</a></li>
+<li><a href="#runbook-7-configuration-drift-response">Runbook 7: Configuration Drift Response</a></li>
+<li><a href="#runbook-8-certificatetls-issues">Runbook 8: Certificate/TLS Issues</a></li>
+<li><a href="#communication-templates">Communication Templates</a></li>
+<li><a href="#post-incident-activities">Post-Incident Activities</a></li>
+</ol>
+<h2 id="general-incident-response-process"><a class="header" href="#general-incident-response-process">General Incident Response Process</a></h2>
+<h3 id="phase-1-detection-and-analysis-0-15-minutes"><a class="header" href="#phase-1-detection-and-analysis-0-15-minutes">Phase 1: Detection and Analysis (0-15 minutes)</a></h3>
+<ol>
+<li><strong>Alert Receipt</strong>: Security monitoring system or human report</li>
+<li><strong>Initial Triage</strong>: Determine severity and impact</li>
+<li><strong>Team Activation</strong>: Notify appropriate response team members</li>
+<li><strong>Preliminary Assessment</strong>: Gather initial evidence</li>
+</ol>
+<h3 id="phase-2-containment-15-30-minutes"><a class="header" href="#phase-2-containment-15-30-minutes">Phase 2: Containment (15-30 minutes)</a></h3>
+<ol>
+<li><strong>Immediate Containment</strong>: Stop ongoing attack/damage</li>
+<li><strong>System Isolation</strong>: Isolate affected systems if necessary</li>
+<li><strong>Preserve Evidence</strong>: Maintain forensic integrity</li>
+<li><strong>Stakeholder Notification</strong>: Inform key stakeholders</li>
+</ol>
+<h3 id="phase-3-investigation-and-recovery-30-minutes---hours"><a class="header" href="#phase-3-investigation-and-recovery-30-minutes---hours">Phase 3: Investigation and Recovery (30 minutes - hours)</a></h3>
+<ol>
+<li><strong>Detailed Analysis</strong>: Conduct thorough investigation</li>
+<li><strong>Root Cause Analysis</strong>: Identify attack vectors and vulnerabilities</li>
+<li><strong>System Recovery</strong>: Restore services safely</li>
+<li><strong>Validation</strong>: Confirm systems are clean and secure</li>
+</ol>
+<h3 id="phase-4-post-incident-activities-days-weeks"><a class="header" href="#phase-4-post-incident-activities-days-weeks">Phase 4: Post-Incident Activities (Days-Weeks)</a></h3>
+<ol>
+<li><strong>Lessons Learned</strong>: Document improvements</li>
+<li><strong>Policy Updates</strong>: Update procedures based on findings</li>
+<li><strong>Monitoring Enhancement</strong>: Improve detection capabilities</li>
+<li><strong>Training Updates</strong>: Update team training materials</li>
+</ol>
+<hr />
+<h2 id="runbook-1-data-breach-response"><a class="header" href="#runbook-1-data-breach-response">Runbook 1: Data Breach Response</a></h2>
+<h3 id="incident-type-confirmed-or-suspected-unauthorized-access-to-sensitive-data"><a class="header" href="#incident-type-confirmed-or-suspected-unauthorized-access-to-sensitive-data"><strong>Incident Type</strong>: Confirmed or suspected unauthorized access to sensitive data</a></h3>
+<h3 id="severity-classification"><a class="header" href="#severity-classification"><strong>Severity Classification</strong>:</a></h3>
+<ul>
+<li><strong>P0 (Critical)</strong>: Confirmed breach with customer data exposure</li>
+<li><strong>P1 (High)</strong>: Suspected breach or internal data exposure</li>
+<li><strong>P2 (Medium)</strong>: Potential breach with limited scope</li>
+</ul>
+<h3 id="immediate-response-0-15-minutes"><a class="header" href="#immediate-response-0-15-minutes"><strong>Immediate Response (0-15 minutes)</strong></a></h3>
+<h4 id="step-1-initial-assessment"><a class="header" href="#step-1-initial-assessment">Step 1: Initial Assessment</a></h4>
+<pre><code class="language-bash"># Check system logs for suspicious access patterns
+tail -n 1000 /app/logs/audit.log | grep -i "unauthorized\|failed\|breach"
+
+# Verify user access logs
+grep "authentication" /app/logs/audit.log | tail -50
+
+# Check container status
+docker ps -a
+docker logs uveddi_app_1 | tail -100
+</code></pre>
+<h4 id="step-2-alert-key-personnel"><a class="header" href="#step-2-alert-key-personnel">Step 2: Alert Key Personnel</a></h4>
+<ul>
+<li><strong>Security Team</strong>: security@uveddi.dev</li>
+<li><strong>Incident Commander</strong>: incident-commander@uveddi.dev</li>
+<li><strong>Legal Team</strong>: legal@uveddi.dev</li>
+<li><strong>Executive Team</strong>: executives@uveddi.dev</li>
+</ul>
+<h4 id="step-3-preserve-evidence"><a class="header" href="#step-3-preserve-evidence">Step 3: Preserve Evidence</a></h4>
+<pre><code class="language-bash"># Create forensic snapshot
+sudo dd if=/dev/sda of=/forensics/disk-$(date +%Y%m%d-%H%M%S).img bs=4096
+
+# Capture memory dump
+sudo gcore -o /forensics/memory-$(date +%Y%m%d-%H%M%S) $(pgrep uveddi)
+
+# Copy critical logs
+cp -r /app/logs /forensics/logs-$(date +%Y%m%d-%H%M%S)
+cp -r /var/log /forensics/system-logs-$(date +%Y%m%d-%H%M%S)
+</code></pre>
+<h3 id="containment-15-30-minutes"><a class="header" href="#containment-15-30-minutes"><strong>Containment (15-30 minutes)</strong></a></h3>
+<h4 id="step-4-immediate-containment"><a class="header" href="#step-4-immediate-containment">Step 4: Immediate Containment</a></h4>
+<pre><code class="language-bash"># If breach is confirmed, isolate affected systems
+docker-compose down
+
+# Block suspicious IP addresses (example)
+iptables -A INPUT -s SUSPICIOUS_IP -j DROP
+
+# Disable compromised user accounts
+# (Implementation depends on authentication system)
+</code></pre>
+<h4 id="step-5-damage-assessment"><a class="header" href="#step-5-damage-assessment">Step 5: Damage Assessment</a></h4>
+<pre><code class="language-bash"># Check for data exfiltration
+grep -r "SELECT\|COPY\|EXPORT" /app/logs/ | grep -v "normal_operation"
+
+# Verify database integrity
+sqlite3 /app/data/uveddi.db ".backup /forensics/db-backup-$(date +%Y%m%d-%H%M%S).db"
+
+# Check file system changes
+find /app -type f -mtime -1 -ls &gt; /forensics/recent-changes-$(date +%Y%m%d-%H%M%S).log
+</code></pre>
+<h3 id="investigation-and-recovery-30-minutes---4-hours"><a class="header" href="#investigation-and-recovery-30-minutes---4-hours"><strong>Investigation and Recovery (30 minutes - 4 hours)</strong></a></h3>
+<h4 id="step-6-detailed-investigation"><a class="header" href="#step-6-detailed-investigation">Step 6: Detailed Investigation</a></h4>
+<ol>
+<li>
+<p><strong>Access Pattern Analysis</strong>:</p>
+<ul>
+<li>Review authentication logs</li>
+<li>Identify unauthorized access attempts</li>
+<li>Map data access patterns</li>
+</ul>
+</li>
+<li>
+<p><strong>System Compromise Assessment</strong>:</p>
+<ul>
+<li>Check for malware or backdoors</li>
+<li>Verify system integrity</li>
+<li>Review configuration changes</li>
+</ul>
+</li>
+<li>
+<p><strong>Data Impact Assessment</strong>:</p>
+<ul>
+<li>Identify affected data types</li>
+<li>Quantify scope of exposure</li>
+<li>Assess data sensitivity levels</li>
+</ul>
+</li>
+</ol>
+<h4 id="step-7-system-recovery"><a class="header" href="#step-7-system-recovery">Step 7: System Recovery</a></h4>
+<pre><code class="language-bash"># Clean system recovery
+git checkout HEAD -- .  # Reset to known good state
+docker-compose build --no-cache
+docker-compose up -d
+
+# Verify system integrity
+cargo test --test comprehensive_security_validation
+cargo test --test compliance_validation
+
+# Update all credentials
+# - Generate new API keys
+# - Rotate database passwords
+# - Update TLS certificates
+</code></pre>
+<h3 id="communication-requirements"><a class="header" href="#communication-requirements"><strong>Communication Requirements</strong></a></h3>
+<h4 id="internal-communication-immediate"><a class="header" href="#internal-communication-immediate">Internal Communication (Immediate)</a></h4>
+<ul>
+<li>Executive briefing within 1 hour</li>
+<li>All-hands notification (if public-facing)</li>
+<li>Customer support team briefing</li>
+</ul>
+<h4 id="external-communication-as-required"><a class="header" href="#external-communication-as-required">External Communication (As Required)</a></h4>
+<ul>
+<li><strong>Regulatory Notification</strong>: 72 hours (GDPR) or as required by jurisdiction</li>
+<li><strong>Customer Notification</strong>: Based on impact assessment</li>
+<li><strong>Public Disclosure</strong>: As required by regulations and company policy</li>
+</ul>
+<h3 id="documentation-requirements"><a class="header" href="#documentation-requirements"><strong>Documentation Requirements</strong></a></h3>
+<ul>
+<li>Incident timeline</li>
+<li>Impact assessment</li>
+<li>Response actions taken</li>
+<li>Evidence preservation log</li>
+<li>Communication log</li>
+</ul>
+<hr />
+<h2 id="runbook-2-container-security-compromise"><a class="header" href="#runbook-2-container-security-compromise">Runbook 2: Container Security Compromise</a></h2>
+<h3 id="incident-type-container-escape-privilege-escalation-or-container-compromise"><a class="header" href="#incident-type-container-escape-privilege-escalation-or-container-compromise"><strong>Incident Type</strong>: Container escape, privilege escalation, or container compromise</a></h3>
+<h3 id="severity-classification-1"><a class="header" href="#severity-classification-1"><strong>Severity Classification</strong>:</a></h3>
+<ul>
+<li><strong>P0 (Critical)</strong>: Container escape with host access</li>
+<li><strong>P1 (High)</strong>: Container compromise with sensitive data access</li>
+<li><strong>P2 (Medium)</strong>: Container compromise without data access</li>
+</ul>
+<h3 id="immediate-response-0-15-minutes-1"><a class="header" href="#immediate-response-0-15-minutes-1"><strong>Immediate Response (0-15 minutes)</strong></a></h3>
+<h4 id="step-1-detect-container-compromise"><a class="header" href="#step-1-detect-container-compromise">Step 1: Detect Container Compromise</a></h4>
+<pre><code class="language-bash"># Check container status and resource usage
+docker stats --no-stream
+
+# Review container security events
+docker events --filter container=uveddi --since="1h"
+
+# Check for privilege escalation
+docker exec uveddi ps aux | grep -E "(root|sudo|su)"
+
+# Verify container user
+docker exec uveddi id
+</code></pre>
+<h4 id="step-2-immediate-containment"><a class="header" href="#step-2-immediate-containment">Step 2: Immediate Containment</a></h4>
+<pre><code class="language-bash"># Stop compromised container
+docker stop uveddi
+
+# Prevent container restart
+docker update --restart=no uveddi
+
+# Isolate container network
+docker network disconnect bridge uveddi
+</code></pre>
+<h3 id="investigation-15-60-minutes"><a class="header" href="#investigation-15-60-minutes"><strong>Investigation (15-60 minutes)</strong></a></h3>
+<h4 id="step-3-forensic-analysis"><a class="header" href="#step-3-forensic-analysis">Step 3: Forensic Analysis</a></h4>
+<pre><code class="language-bash"># Export container filesystem
+docker export uveddi &gt; /forensics/container-$(date +%Y%m%d-%H%M%S).tar
+
+# Examine container logs
+docker logs uveddi &gt; /forensics/container-logs-$(date +%Y%m%d-%H%M%S).log
+
+# Check container image integrity
+docker history uveddi:latest
+docker inspect uveddi:latest | jq '.RootFS'
+</code></pre>
+<h4 id="step-4-host-system-check"><a class="header" href="#step-4-host-system-check">Step 4: Host System Check</a></h4>
+<pre><code class="language-bash"># Check for host compromise
+sudo netstat -tulpn | grep LISTEN
+sudo ps aux | grep -v "\[.*\]" | sort
+
+# Verify file system integrity
+sudo find /var/lib/docker -type f -mtime -1 -ls
+
+# Check for suspicious processes
+sudo lsof | grep deleted
+</code></pre>
+<h3 id="recovery-1-2-hours"><a class="header" href="#recovery-1-2-hours"><strong>Recovery (1-2 hours)</strong></a></h3>
+<h4 id="step-5-clean-recovery"><a class="header" href="#step-5-clean-recovery">Step 5: Clean Recovery</a></h4>
+<pre><code class="language-bash"># Remove compromised container and images
+docker rm -f uveddi
+docker rmi $(docker images -q uveddi)
+
+# Rebuild from clean source
+git status  # Ensure clean repository state
+docker-compose build --no-cache
+docker-compose up -d
+
+# Verify security controls
+docker exec uveddi id  # Should be UID 1001
+docker exec uveddi ls -la /proc/1/  # Verify process isolation
+</code></pre>
+<h4 id="step-6-security-hardening"><a class="header" href="#step-6-security-hardening">Step 6: Security Hardening</a></h4>
+<pre><code class="language-bash"># Run security validation
+cargo test --test comprehensive_security_validation
+
+# Update container security scanning
+docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+  aquasec/trivy image uveddi:latest
+
+# Verify docker-compose security constraints
+grep -E "(no-new-privileges|read_only|cap_drop)" docker-compose.yml
+</code></pre>
+<hr />
+<h2 id="runbook-3-dependency-vulnerability-response"><a class="header" href="#runbook-3-dependency-vulnerability-response">Runbook 3: Dependency Vulnerability Response</a></h2>
+<h3 id="incident-type-critical-vulnerability-discovered-in-project-dependencies"><a class="header" href="#incident-type-critical-vulnerability-discovered-in-project-dependencies"><strong>Incident Type</strong>: Critical vulnerability discovered in project dependencies</a></h3>
+<h3 id="severity-classification-2"><a class="header" href="#severity-classification-2"><strong>Severity Classification</strong>:</a></h3>
+<ul>
+<li><strong>P0 (Critical)</strong>: Remote code execution vulnerabilities</li>
+<li><strong>P1 (High)</strong>: Privilege escalation or data exposure vulnerabilities</li>
+<li><strong>P2 (Medium)</strong>: Denial of service or information disclosure</li>
+</ul>
+<h3 id="immediate-response-0-30-minutes"><a class="header" href="#immediate-response-0-30-minutes"><strong>Immediate Response (0-30 minutes)</strong></a></h3>
+<h4 id="step-1-vulnerability-assessment"><a class="header" href="#step-1-vulnerability-assessment">Step 1: Vulnerability Assessment</a></h4>
+<pre><code class="language-bash"># Run dependency audit
+cargo audit
+
+# Check for specific vulnerabilities
+cargo audit --json | jq '.vulnerabilities[] | select(.severity == "critical")'
+
+# Verify current dependency versions
+cargo tree | grep -E "(tokio|serde|reqwest|openssl)"
+</code></pre>
+<h4 id="step-2-impact-analysis"><a class="header" href="#step-2-impact-analysis">Step 2: Impact Analysis</a></h4>
+<pre><code class="language-bash"># Check if vulnerable code paths are used
+grep -r "vulnerable_function" src/
+rg "use.*vulnerable_crate" src/
+
+# Review recent commits using vulnerable dependencies
+git log --oneline --since="30 days ago" -- Cargo.toml Cargo.lock
+</code></pre>
+<h3 id="mitigation-30-minutes---2-hours"><a class="header" href="#mitigation-30-minutes---2-hours"><strong>Mitigation (30 minutes - 2 hours)</strong></a></h3>
+<h4 id="step-3-immediate-mitigation"><a class="header" href="#step-3-immediate-mitigation">Step 3: Immediate Mitigation</a></h4>
+<pre><code class="language-bash"># Update vulnerable dependencies
+cargo update --package vulnerable_crate
+
+# If no update available, check for alternatives
+cargo search alternative_crate
+
+# Build and test with updates
+cargo build --release
+cargo test
+</code></pre>
+<h4 id="step-4-validation"><a class="header" href="#step-4-validation">Step 4: Validation</a></h4>
+<pre><code class="language-bash"># Re-run security tests
+cargo test --test comprehensive_security_validation
+
+# Verify vulnerability is resolved
+cargo audit
+
+# Check for regression issues
+cargo test --all-features
+</code></pre>
+<h3 id="deployment-2-4-hours"><a class="header" href="#deployment-2-4-hours"><strong>Deployment (2-4 hours)</strong></a></h3>
+<h4 id="step-5-emergency-deployment"><a class="header" href="#step-5-emergency-deployment">Step 5: Emergency Deployment</a></h4>
+<pre><code class="language-bash"># Build new container image
+docker build -t uveddi:security-patch-$(date +%Y%m%d) .
+
+# Test container security
+docker run --rm uveddi:security-patch-$(date +%Y%m%d) cargo audit
+
+# Deploy to production
+docker-compose up -d
+
+# Verify deployment
+curl -f https://api.uveddi.com/health
+</code></pre>
+<hr />
+<h2 id="runbook-4-authentication-system-compromise"><a class="header" href="#runbook-4-authentication-system-compromise">Runbook 4: Authentication System Compromise</a></h2>
+<h3 id="incident-type-authentication-bypass-credential-theft-or-session-hijacking"><a class="header" href="#incident-type-authentication-bypass-credential-theft-or-session-hijacking"><strong>Incident Type</strong>: Authentication bypass, credential theft, or session hijacking</a></h3>
+<h3 id="immediate-response-0-15-minutes-2"><a class="header" href="#immediate-response-0-15-minutes-2"><strong>Immediate Response (0-15 minutes)</strong></a></h3>
+<h4 id="step-1-detect-authentication-issues"><a class="header" href="#step-1-detect-authentication-issues">Step 1: Detect Authentication Issues</a></h4>
+<pre><code class="language-bash"># Check for suspicious authentication patterns
+grep -i "authentication.*failed" /app/logs/audit.log | tail -50
+grep -i "session.*invalid" /app/logs/audit.log | tail -50
+
+# Look for unusual access patterns
+awk '/authentication/ {print $4, $7}' /app/logs/audit.log | sort | uniq -c | sort -nr
+</code></pre>
+<h4 id="step-2-immediate-protection"><a class="header" href="#step-2-immediate-protection">Step 2: Immediate Protection</a></h4>
+<pre><code class="language-bash"># Disable compromised accounts (if identified)
+# Implementation depends on authentication system
+
+# Invalidate all active sessions
+# Clear session storage/cache
+
+# Enable enhanced monitoring
+# Reduce session timeout temporarily
+</code></pre>
+<h3 id="investigation-and-recovery-15-minutes---2-hours"><a class="header" href="#investigation-and-recovery-15-minutes---2-hours"><strong>Investigation and Recovery (15 minutes - 2 hours)</strong></a></h3>
+<h4 id="step-3-session-and-credential-analysis"><a class="header" href="#step-3-session-and-credential-analysis">Step 3: Session and Credential Analysis</a></h4>
+<ul>
+<li>Review all active sessions</li>
+<li>Check for credential stuffing attacks</li>
+<li>Verify MFA bypass attempts</li>
+<li>Analyze geographic access patterns</li>
+</ul>
+<h4 id="step-4-system-hardening"><a class="header" href="#step-4-system-hardening">Step 4: System Hardening</a></h4>
+<pre><code class="language-bash"># Force password resets for affected accounts
+# Update authentication configurations
+# Implement additional monitoring rules
+# Review and update access controls
+</code></pre>
+<hr />
+<h2 id="runbook-5-injection-attack-response"><a class="header" href="#runbook-5-injection-attack-response">Runbook 5: Injection Attack Response</a></h2>
+<h3 id="incident-type-sql-injection-command-injection-or-code-injection-attempts"><a class="header" href="#incident-type-sql-injection-command-injection-or-code-injection-attempts"><strong>Incident Type</strong>: SQL injection, command injection, or code injection attempts</a></h3>
+<h3 id="immediate-response-0-15-minutes-3"><a class="header" href="#immediate-response-0-15-minutes-3"><strong>Immediate Response (0-15 minutes)</strong></a></h3>
+<h4 id="step-1-detect-injection-attempts"><a class="header" href="#step-1-detect-injection-attempts">Step 1: Detect Injection Attempts</a></h4>
+<pre><code class="language-bash"># Check for SQL injection patterns
+grep -iE "(union select|drop table|insert into|'; --)" /app/logs/audit.log
+
+# Check for command injection
+grep -iE "(\||\&amp;|;|`|\$\()" /app/logs/audit.log
+
+# Review input validation failures
+grep "input_validation.*failed" /app/logs/audit.log
+</code></pre>
+<h4 id="step-2-block-malicious-requests"><a class="header" href="#step-2-block-malicious-requests">Step 2: Block Malicious Requests</a></h4>
+<pre><code class="language-bash"># Block suspicious IP addresses
+iptables -A INPUT -s MALICIOUS_IP -j DROP
+
+# Rate limit if needed
+# Enable DDoS protection
+</code></pre>
+<h3 id="analysis-and-hardening-15-minutes---1-hour"><a class="header" href="#analysis-and-hardening-15-minutes---1-hour"><strong>Analysis and Hardening (15 minutes - 1 hour)</strong></a></h3>
+<h4 id="step-3-input-validation-review"><a class="header" href="#step-3-input-validation-review">Step 3: Input Validation Review</a></h4>
+<pre><code class="language-bash"># Run injection prevention tests
+cargo test input_validation -- --nocapture
+cargo test sql_injection -- --nocapture
+cargo test command_injection -- --nocapture
+
+# Review code for new injection vectors
+rg "execute|query|command" src/ --type rust
+</code></pre>
+<h4 id="step-4-database-security-check"><a class="header" href="#step-4-database-security-check">Step 4: Database Security Check</a></h4>
+<pre><code class="language-bash"># Check database logs for successful injections
+# Verify database user permissions
+# Review parameterized query usage
+</code></pre>
+<hr />
+<h2 id="runbook-6-ddos-attack-response"><a class="header" href="#runbook-6-ddos-attack-response">Runbook 6: DDoS Attack Response</a></h2>
+<h3 id="incident-type-distributed-denial-of-service-attack"><a class="header" href="#incident-type-distributed-denial-of-service-attack"><strong>Incident Type</strong>: Distributed Denial of Service attack</a></h3>
+<h3 id="immediate-response-0-5-minutes"><a class="header" href="#immediate-response-0-5-minutes"><strong>Immediate Response (0-5 minutes)</strong></a></h3>
+<h4 id="step-1-detect-ddos-attack"><a class="header" href="#step-1-detect-ddos-attack">Step 1: Detect DDoS Attack</a></h4>
+<pre><code class="language-bash"># Check connection counts
+netstat -an | grep :8080 | wc -l
+
+# Monitor resource usage
+top -n 1 | head -20
+free -m
+df -h
+
+# Check request patterns
+tail -1000 /app/logs/access.log | awk '{print $1}' | sort | uniq -c | sort -nr | head -20
+</code></pre>
+<h4 id="step-2-immediate-mitigation"><a class="header" href="#step-2-immediate-mitigation">Step 2: Immediate Mitigation</a></h4>
+<pre><code class="language-bash"># Enable rate limiting
+# Block top attacking IPs
+for ip in $(tail -1000 /app/logs/access.log | awk '{print $1}' | sort | uniq -c | sort -nr | head -10 | awk '$1 &gt; 100 {print $2}'); do
+    iptables -A INPUT -s $ip -j DROP
+done
+
+# Scale resources if possible
+docker-compose up --scale uveddi=3
+</code></pre>
+<hr />
+<h2 id="runbook-7-configuration-drift-response"><a class="header" href="#runbook-7-configuration-drift-response">Runbook 7: Configuration Drift Response</a></h2>
+<h3 id="incident-type-unauthorized-configuration-changes-or-security-misconfiguration"><a class="header" href="#incident-type-unauthorized-configuration-changes-or-security-misconfiguration"><strong>Incident Type</strong>: Unauthorized configuration changes or security misconfiguration</a></h3>
+<h3 id="immediate-response-0-30-minutes-1"><a class="header" href="#immediate-response-0-30-minutes-1"><strong>Immediate Response (0-30 minutes)</strong></a></h3>
+<h4 id="step-1-detect-configuration-drift"><a class="header" href="#step-1-detect-configuration-drift">Step 1: Detect Configuration Drift</a></h4>
+<pre><code class="language-bash"># Check for unauthorized changes
+git status
+git diff HEAD
+
+# Review configuration files
+diff docker-compose.yml docker-compose.yml.backup
+diff src/security/config.rs.backup src/security/config.rs
+
+# Check container configuration
+docker inspect uveddi | jq '.[] | {User, SecurityOpt, ReadonlyRootfs}'
+</code></pre>
+<h4 id="step-2-revert-to-secure-configuration"><a class="header" href="#step-2-revert-to-secure-configuration">Step 2: Revert to Secure Configuration</a></h4>
+<pre><code class="language-bash"># Revert unauthorized changes
+git checkout HEAD -- .
+
+# Rebuild with secure configuration
+docker-compose down
+docker-compose build --no-cache
+docker-compose up -d
+
+# Validate security controls
+cargo test --test compliance_validation
+</code></pre>
+<hr />
+<h2 id="runbook-8-certificatetls-issues"><a class="header" href="#runbook-8-certificatetls-issues">Runbook 8: Certificate/TLS Issues</a></h2>
+<h3 id="incident-type-certificate-expiration-compromise-or-tls-configuration-issues"><a class="header" href="#incident-type-certificate-expiration-compromise-or-tls-configuration-issues"><strong>Incident Type</strong>: Certificate expiration, compromise, or TLS configuration issues</a></h3>
+<h3 id="immediate-response-0-30-minutes-2"><a class="header" href="#immediate-response-0-30-minutes-2"><strong>Immediate Response (0-30 minutes)</strong></a></h3>
+<h4 id="step-1-certificate-status-check"><a class="header" href="#step-1-certificate-status-check">Step 1: Certificate Status Check</a></h4>
+<pre><code class="language-bash"># Check certificate expiration
+openssl x509 -in /path/to/cert.pem -noout -dates
+
+# Test TLS configuration
+curl -I https://api.uveddi.com
+openssl s_client -connect api.uveddi.com:443 -servername api.uveddi.com
+
+# Verify certificate chain
+openssl verify -CAfile ca-bundle.crt server.crt
+</code></pre>
+<h4 id="step-2-certificate-renewalreplacement"><a class="header" href="#step-2-certificate-renewalreplacement">Step 2: Certificate Renewal/Replacement</a></h4>
+<pre><code class="language-bash"># Generate new certificate (if needed)
+# Update certificate in configuration
+# Restart services with new certificate
+docker-compose restart
+
+# Verify TLS functionality
+cargo test tls_validation -- --nocapture
+</code></pre>
+<hr />
+<h2 id="communication-templates"><a class="header" href="#communication-templates">Communication Templates</a></h2>
+<h3 id="initial-alert-template"><a class="header" href="#initial-alert-template"><strong>Initial Alert Template</strong></a></h3>
+<pre><code>SECURITY INCIDENT ALERT
+
+Incident ID: INC-YYYY-MMDD-XXXX
+Detected At: [Timestamp]
+Severity: [P0/P1/P2]
+Incident Type: [Breach/Compromise/Attack]
+Status: [Active/Contained/Resolved]
+
+Initial Assessment:
+- [Brief description of incident]
+- [Affected systems/services]
+- [Potential impact]
+
+Response Actions:
+- [Immediate containment measures]
+- [Investigation status]
+- [ETA for next update]
+
+Incident Commander: [Name/Contact]
+Next Update: [Timestamp]
+</code></pre>
+<h3 id="executive-briefing-template"><a class="header" href="#executive-briefing-template"><strong>Executive Briefing Template</strong></a></h3>
+<pre><code>EXECUTIVE SECURITY BRIEFING
+
+Incident: [Brief description]
+Business Impact: [High/Medium/Low]
+Customer Impact: [Yes/No - Details]
+Data Involved: [Type and scope]
+
+Current Status: [Active response/Contained/Resolved]
+Resolution ETA: [Timestamp]
+
+Required Actions:
+- [ ] Customer notification
+- [ ] Regulatory notification
+- [ ] Public disclosure
+- [ ] Legal review
+
+Key Personnel:
+- Incident Commander: [Name]
+- Security Lead: [Name]
+- Business Owner: [Name]
+</code></pre>
+<h3 id="customer-communication-template"><a class="header" href="#customer-communication-template"><strong>Customer Communication Template</strong></a></h3>
+<pre><code>Subject: Important Security Notice - [Company Name]
+
+Dear [Customer Name],
+
+We are writing to inform you of a security incident that may have affected your account/data. We take the security and privacy of your information very seriously, and we want to provide you with details about what happened and what we are doing about it.
+
+What Happened:
+[Clear, non-technical description of the incident]
+
+Information Involved:
+[Specific types of data that may have been affected]
+
+What We Are Doing:
+[Actions taken to address the incident and prevent future occurrences]
+
+What You Can Do:
+[Specific recommendations for customers]
+
+Contact Information:
+[Support contact details]
+
+We sincerely apologize for this incident and any inconvenience it may cause.
+</code></pre>
+<hr />
+<h2 id="post-incident-activities"><a class="header" href="#post-incident-activities">Post-Incident Activities</a></h2>
+<h3 id="immediate-post-incident-24-48-hours"><a class="header" href="#immediate-post-incident-24-48-hours"><strong>Immediate Post-Incident (24-48 hours)</strong></a></h3>
+<h4 id="1-incident-documentation"><a class="header" href="#1-incident-documentation">1. Incident Documentation</a></h4>
+<ul>
+<li>Complete incident timeline</li>
+<li>Document all response actions</li>
+<li>Collect evidence and logs</li>
+<li>Record lessons learned</li>
+</ul>
+<h4 id="2-system-validation"><a class="header" href="#2-system-validation">2. System Validation</a></h4>
+<pre><code class="language-bash"># Comprehensive security testing
+cargo test --test comprehensive_security_validation
+cargo test --test compliance_validation
+
+# Vulnerability scanning
+cargo audit
+docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image uveddi:latest
+
+# Security configuration review
+./scripts/security-config-check.sh
+</code></pre>
+<h4 id="3-communication-wrap-up"><a class="header" href="#3-communication-wrap-up">3. Communication Wrap-up</a></h4>
+<ul>
+<li>Final stakeholder notification</li>
+<li>Customer follow-up (if applicable)</li>
+<li>Regulatory compliance documentation</li>
+<li>Internal team debrief</li>
+</ul>
+<h3 id="short-term-follow-up-1-2-weeks"><a class="header" href="#short-term-follow-up-1-2-weeks"><strong>Short-term Follow-up (1-2 weeks)</strong></a></h3>
+<h4 id="1-root-cause-analysis"><a class="header" href="#1-root-cause-analysis">1. Root Cause Analysis</a></h4>
+<ul>
+<li>Technical analysis completion</li>
+<li>Process improvement identification</li>
+<li>Training needs assessment</li>
+<li>Policy update requirements</li>
+</ul>
+<h4 id="2-security-enhancement"><a class="header" href="#2-security-enhancement">2. Security Enhancement</a></h4>
+<ul>
+<li>Implement additional monitoring</li>
+<li>Update security controls</li>
+<li>Enhance detection capabilities</li>
+<li>Update response procedures</li>
+</ul>
+<h3 id="long-term-improvements-1-3-months"><a class="header" href="#long-term-improvements-1-3-months"><strong>Long-term Improvements (1-3 months)</strong></a></h3>
+<h4 id="1-process-enhancement"><a class="header" href="#1-process-enhancement">1. Process Enhancement</a></h4>
+<ul>
+<li>Update incident response procedures</li>
+<li>Enhance security training programs</li>
+<li>Implement lessons learned</li>
+<li>Update compliance documentation</li>
+</ul>
+<h4 id="2-technology-improvements"><a class="header" href="#2-technology-improvements">2. Technology Improvements</a></h4>
+<ul>
+<li>Upgrade security tools</li>
+<li>Implement new monitoring capabilities</li>
+<li>Enhance automation</li>
+<li>Update security architecture</li>
+</ul>
+<hr />
+<h2 id="emergency-contacts"><a class="header" href="#emergency-contacts">Emergency Contacts</a></h2>
+<h3 id="247-security-response-team"><a class="header" href="#247-security-response-team"><strong>24/7 Security Response Team</strong></a></h3>
+<ul>
+<li><strong>Primary</strong>: +1-XXX-XXX-XXXX</li>
+<li><strong>Secondary</strong>: +1-XXX-XXX-XXXX</li>
+<li><strong>Email</strong>: security-emergency@uveddi.dev</li>
+</ul>
+<h3 id="key-personnel"><a class="header" href="#key-personnel"><strong>Key Personnel</strong></a></h3>
+<ul>
+<li><strong>CISO</strong>: ciso@uveddi.dev / +1-XXX-XXX-XXXX</li>
+<li><strong>Security Architect</strong>: security-arch@uveddi.dev</li>
+<li><strong>Incident Commander</strong>: incident-commander@uveddi.dev</li>
+<li><strong>Legal Counsel</strong>: legal@uveddi.dev</li>
+<li><strong>Executive Team</strong>: executives@uveddi.dev</li>
+</ul>
+<h3 id="external-contacts"><a class="header" href="#external-contacts"><strong>External Contacts</strong></a></h3>
+<ul>
+<li><strong>Law Enforcement</strong>: [Local FBI Cyber Crime Unit]</li>
+<li><strong>Legal Counsel</strong>: [External legal firm]</li>
+<li><strong>Insurance</strong>: [Cyber insurance provider]</li>
+<li><strong>Forensics</strong>: [External forensics partner]</li>
+</ul>
+<hr />
+<p><strong>Document Version</strong>: 1.0<br />
+<strong>Created</strong>: 2024-01-24<br />
+<strong>Last Updated</strong>: 2024-01-24<br />
+<strong>Next Review</strong>: 2024-07-24</p>
+<p><strong>Approved by</strong>: ___________________<br />
+<strong>Security Team Lead</strong>: ____________<br />
+<strong>Date</strong>: _________________________</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../security/vulnerability-disclosure.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../security/SECURITY_COMPLIANCE_CHECKLIST.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../security/vulnerability-disclosure.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../security/SECURITY_COMPLIANCE_CHECKLIST.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../assets/custom-scripts.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

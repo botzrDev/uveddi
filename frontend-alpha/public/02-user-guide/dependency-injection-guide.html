@@ -1,0 +1,592 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Dependency Injection Guide - Uveddi Documentation</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="AI-Powered Code Analysis That Stays Private - Comprehensive guide to using Uveddi for architectural analysis">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../assets/brand/colors/palette.css">
+        <link rel="stylesheet" href="../assets/custom-styles.css">
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Uveddi Documentation</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/botzrDev/uveddi" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://github.com/botzrDev/uveddi/edit/main/docs/./02-user-guide/dependency-injection-guide.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="dependency-injection-user-guide"><a class="header" href="#dependency-injection-user-guide">Dependency Injection User Guide</a></h1>
+<h2 id="introduction"><a class="header" href="#introduction">Introduction</a></h2>
+<p>Uveddi's analysis engine now supports <strong>dependency injection</strong>, allowing you to customize which detectors are used and how they're configured. This guide shows you how to use these features in your projects.</p>
+<h2 id="quick-start"><a class="header" href="#quick-start">Quick Start</a></h2>
+<h3 id="default-usage-no-changes-required"><a class="header" href="#default-usage-no-changes-required">Default Usage (No Changes Required)</a></h3>
+<p>Your existing code continues to work exactly as before:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use uveddi::analysis::AnalysisEngine;
+
+let engine = AnalysisEngine::new()?;
+let (issues, graph) = engine.analyze(Path::new("src/")).await?;
+<span class="boring">}</span></code></pre></pre>
+<h3 id="using-configuration-files"><a class="header" href="#using-configuration-files">Using Configuration Files</a></h3>
+<p>Create a configuration file to customize detector behavior:</p>
+<p><strong>analysis.toml</strong>:</p>
+<pre><code class="language-toml"># Cache settings
+cache_size = 1000
+cache_path = "uveddi_cache.db"
+enable_plugins = true
+
+# Detector configurations
+[detectors.god_object]
+threshold_methods = 5
+threshold_fields = 8
+
+[detectors.code_duplication]
+# Uses default settings
+
+[detectors.dead_code]
+# Uses default settings
+</code></pre>
+<p><strong>Your code</strong>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use uveddi::analysis::{AnalysisConfig, AnalysisEngineBuilder};
+
+// Load configuration and create engine
+let engine = AnalysisEngineBuilder::new()
+    .from_config_file(Path::new("analysis.toml"))?
+    .build().await?;
+
+let (issues, graph) = engine.analyze(Path::new("src/")).await?;
+<span class="boring">}</span></code></pre></pre>
+<h2 id="configuration-options"><a class="header" href="#configuration-options">Configuration Options</a></h2>
+<h3 id="detector-configuration"><a class="header" href="#detector-configuration">Detector Configuration</a></h3>
+<p>Each detector can be configured with custom parameters:</p>
+<pre><code class="language-toml">[detectors.god_object]
+threshold_methods = 10    # Maximum methods before flagging
+threshold_fields = 15     # Maximum fields before flagging
+
+[detectors.code_duplication]
+# No configuration options currently
+
+[detectors.dead_code]
+# No configuration options currently
+
+[detectors.large_classes]
+# No configuration options currently
+
+[detectors.tight_coupling]
+# No configuration options currently
+</code></pre>
+<h3 id="cache-configuration"><a class="header" href="#cache-configuration">Cache Configuration</a></h3>
+<p>Control how analysis results are cached:</p>
+<pre><code class="language-toml"># File-based cache
+cache_size = 1000
+cache_path = "custom_cache.db"
+
+# Or use in-memory cache (for testing)
+# Omit cache_path or set to null
+cache_size = 500
+</code></pre>
+<h3 id="plugin-configuration"><a class="header" href="#plugin-configuration">Plugin Configuration</a></h3>
+<p>Enable or disable WASM plugin support:</p>
+<pre><code class="language-toml">enable_plugins = true   # Enable WASM plugins
+# enable_plugins = false  # Disable plugins (default)
+</code></pre>
+<h2 id="builder-pattern-usage"><a class="header" href="#builder-pattern-usage">Builder Pattern Usage</a></h2>
+<p>The builder pattern provides a fluent interface for configuring engines:</p>
+<h3 id="basic-builder-usage"><a class="header" href="#basic-builder-usage">Basic Builder Usage</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use uveddi::analysis::AnalysisEngineBuilder;
+
+let engine = AnalysisEngineBuilder::new()
+    .enable_plugins()
+    .with_memory_cache()
+    .build().await?;
+<span class="boring">}</span></code></pre></pre>
+<h3 id="custom-detectors"><a class="header" href="#custom-detectors">Custom Detectors</a></h3>
+<p>Add your own detector implementations:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use uveddi::analysis::{AnalysisEngineBuilder, GodObjectDetector};
+
+let engine = AnalysisEngineBuilder::new()
+    .add_detector(Box::new(GodObjectDetector::new(15, 20))) // Custom thresholds
+    .add_detector(Box::new(MyCustomDetector::new()))
+    .build().await?;
+<span class="boring">}</span></code></pre></pre>
+<h3 id="configuration-override"><a class="header" href="#configuration-override">Configuration Override</a></h3>
+<p>Load configuration but override specific settings:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let engine = AnalysisEngineBuilder::new()
+    .from_config_file(Path::new("production.toml"))?
+    .with_memory_cache() // Override cache setting for testing
+    .build().await?;
+<span class="boring">}</span></code></pre></pre>
+<h2 id="environment-specific-configurations"><a class="header" href="#environment-specific-configurations">Environment-Specific Configurations</a></h2>
+<p>Create different configuration files for different environments:</p>
+<h3 id="development-configuration"><a class="header" href="#development-configuration">Development Configuration</a></h3>
+<p><strong>dev.toml</strong>:</p>
+<pre><code class="language-toml">cache_size = 100
+enable_plugins = false
+
+[detectors.god_object]
+threshold_methods = 15    # More relaxed for development
+threshold_fields = 20
+</code></pre>
+<h3 id="production-configuration"><a class="header" href="#production-configuration">Production Configuration</a></h3>
+<p><strong>production.toml</strong>:</p>
+<pre><code class="language-toml">cache_size = 5000
+cache_path = "/var/cache/uveddi/cache.db"
+enable_plugins = true
+
+[detectors.god_object]
+threshold_methods = 5     # Strict for production
+threshold_fields = 8
+</code></pre>
+<h3 id="usage"><a class="header" href="#usage">Usage</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let config_file = if cfg!(debug_assertions) {
+    "dev.toml"
+} else {
+    "production.toml"
+};
+
+let engine = AnalysisEngineBuilder::new()
+    .from_config_file(Path::new(config_file))?
+    .build().await?;
+<span class="boring">}</span></code></pre></pre>
+<h2 id="plugin-integration"><a class="header" href="#plugin-integration">Plugin Integration</a></h2>
+<h3 id="automatic-plugin-loading"><a class="header" href="#automatic-plugin-loading">Automatic Plugin Loading</a></h3>
+<p>When plugins are enabled, they're automatically loaded:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let engine = AnalysisEngineBuilder::new()
+    .enable_plugins()
+    .build().await?; // Plugins loaded automatically
+<span class="boring">}</span></code></pre></pre>
+<h3 id="manual-plugin-management"><a class="header" href="#manual-plugin-management">Manual Plugin Management</a></h3>
+<p>For more control over plugin loading:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let mut engine = AnalysisEngine::new_with_plugins().await?;
+
+// Load all available plugins
+let plugin_count = engine.add_plugin_detectors().await?;
+println!("Loaded {} plugin detectors", plugin_count);
+
+// Later: reload plugins (e.g., after installing new ones)
+let new_count = engine.reload_plugin_detectors().await?;
+println!("Reloaded {} plugin detectors", new_count);
+
+// Remove plugins if needed
+let removed_count = engine.remove_plugin_detectors();
+println!("Removed {} plugin detectors", removed_count);
+<span class="boring">}</span></code></pre></pre>
+<h2 id="advanced-usage"><a class="header" href="#advanced-usage">Advanced Usage</a></h2>
+<h3 id="programmatic-configuration"><a class="header" href="#programmatic-configuration">Programmatic Configuration</a></h3>
+<p>Create configurations in code:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use uveddi::analysis::{AnalysisConfig, DetectorConfig};
+
+let mut config = AnalysisConfig::default();
+
+// Customize god object detector
+config.add_detector("god_object".to_string(), 
+    DetectorConfig::new()
+        .with_param("threshold_methods", 10)
+        .with_param("threshold_fields", 15));
+
+// Enable plugins
+config.enable_plugins = true;
+
+let engine = config.create_engine().await?;
+<span class="boring">}</span></code></pre></pre>
+<h3 id="registry-based-management"><a class="header" href="#registry-based-management">Registry-Based Management</a></h3>
+<p>For complex detector management scenarios:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use uveddi::analysis::{DetectorRegistry, DetectorFactory};
+
+let mut registry = DetectorRegistry::new();
+
+// Load different detector sets
+registry.load_defaults();
+registry.load_from_config(&amp;custom_configs)?;
+
+// Add plugin detectors if available
+if let Some(plugin_engine) = get_plugin_engine() {
+    registry.load_plugin_detectors(plugin_engine).await?;
+}
+
+// Create engine with all detectors
+let detectors = registry.get_all_detectors();
+let engine = AnalysisEngine::with_detectors(detectors, None, false)?;
+<span class="boring">}</span></code></pre></pre>
+<h2 id="testing-with-dependency-injection"><a class="header" href="#testing-with-dependency-injection">Testing with Dependency Injection</a></h2>
+<h3 id="mock-detectors-for-testing"><a class="header" href="#mock-detectors-for-testing">Mock Detectors for Testing</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[cfg(test)]
+mod tests {
+    use super::*;
+    use mockall::mock;
+
+    mock! {
+        TestDetector {}
+        impl AnalysisDetector for TestDetector {
+            fn detect_issues(&amp;self, file: &amp;ParsedFile) -&gt; Result&lt;Vec&lt;ArchitecturalIssue&gt;, UveddiError&gt;;
+            fn get_anti_pattern_types(&amp;self) -&gt; Vec&lt;AntiPatternType&gt;;
+            fn get_detector_name(&amp;self) -&gt; &amp;'static str;
+        }
+    }
+
+    #[test]
+    fn test_with_mock_detector() {
+        let mut mock = MockTestDetector::new();
+        mock.expect_detect_issues()
+            .returning(|_| Ok(vec![]));
+        mock.expect_get_detector_name()
+            .returning(|| "test-detector");
+
+        let detectors: Vec&lt;Box&lt;dyn AnalysisDetector + Send + Sync&gt;&gt; = vec![
+            Box::new(mock)
+        ];
+
+        let engine = AnalysisEngine::with_detectors(detectors, None, false)?;
+        // Test with controlled detector behavior
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="isolated-test-configurations"><a class="header" href="#isolated-test-configurations">Isolated Test Configurations</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[test]
+fn test_analysis_with_custom_config() {
+    let engine = AnalysisEngineBuilder::new()
+        .add_detector(Box::new(TestSpecificDetector::new()))
+        .with_memory_cache() // Isolated cache
+        .build().await?;
+
+    // Test analysis with specific detector configuration
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="best-practices"><a class="header" href="#best-practices">Best Practices</a></h2>
+<h3 id="1-use-configuration-files-for-production"><a class="header" href="#1-use-configuration-files-for-production">1. Use Configuration Files for Production</a></h3>
+<ul>
+<li>Keep detector settings in version-controlled configuration files</li>
+<li>Use environment-specific configurations</li>
+<li>Document configuration changes in your project</li>
+</ul>
+<h3 id="2-use-builder-pattern-for-complex-setup"><a class="header" href="#2-use-builder-pattern-for-complex-setup">2. Use Builder Pattern for Complex Setup</a></h3>
+<ul>
+<li>Builder pattern is ideal for programmatic configuration</li>
+<li>Chain methods for readable configuration</li>
+<li>Override configuration file settings when needed</li>
+</ul>
+<h3 id="3-handle-plugin-failures-gracefully"><a class="header" href="#3-handle-plugin-failures-gracefully">3. Handle Plugin Failures Gracefully</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>match engine.add_plugin_detectors().await {
+    Ok(count) =&gt; println!("Loaded {} plugins", count),
+    Err(e) =&gt; {
+        eprintln!("Plugin loading failed: {}", e);
+        // Continue with built-in detectors
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="4-use-memory-cache-for-testing"><a class="header" href="#4-use-memory-cache-for-testing">4. Use Memory Cache for Testing</a></h3>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// In tests, always use memory cache
+let engine = AnalysisEngineBuilder::new()
+    .with_memory_cache()
+    .build().await?;
+<span class="boring">}</span></code></pre></pre>
+<h2 id="migration-from-legacy-api"><a class="header" href="#migration-from-legacy-api">Migration from Legacy API</a></h2>
+<h3 id="step-1-assess-current-usage"><a class="header" href="#step-1-assess-current-usage">Step 1: Assess Current Usage</a></h3>
+<p>If you're using:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let engine = AnalysisEngine::new()?;
+<span class="boring">}</span></code></pre></pre>
+<p><strong>You don't need to change anything!</strong> This continues to work.</p>
+<h3 id="step-2-identify-customization-needs"><a class="header" href="#step-2-identify-customization-needs">Step 2: Identify Customization Needs</a></h3>
+<p>If you need to:</p>
+<ul>
+<li>Change detector thresholds → Use configuration files</li>
+<li>Add custom detectors → Use builder pattern</li>
+<li>Support plugins → Enable plugins in configuration</li>
+<li>Test with mocks → Use dependency injection</li>
+</ul>
+<h3 id="step-3-gradual-migration"><a class="header" href="#step-3-gradual-migration">Step 3: Gradual Migration</a></h3>
+<p>Start with configuration files:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Before
+let engine = AnalysisEngine::new()?;
+
+// After
+let engine = AnalysisEngineBuilder::new()
+    .from_config_file(Path::new("analysis.toml"))?
+    .build().await?;
+<span class="boring">}</span></code></pre></pre>
+<p>Then add custom features as needed.</p>
+<h2 id="troubleshooting"><a class="header" href="#troubleshooting">Troubleshooting</a></h2>
+<h3 id="configuration-not-loading"><a class="header" href="#configuration-not-loading">Configuration Not Loading</a></h3>
+<ul>
+<li>Check file path is correct</li>
+<li>Validate TOML syntax</li>
+<li>Ensure all detector names are recognized</li>
+</ul>
+<h3 id="plugin-issues"><a class="header" href="#plugin-issues">Plugin Issues</a></h3>
+<ul>
+<li>Verify <code>enable_plugins = true</code> in configuration</li>
+<li>Check plugin directory exists and has valid plugins</li>
+<li>Review plugin loading logs</li>
+</ul>
+<h3 id="performance-issues"><a class="header" href="#performance-issues">Performance Issues</a></h3>
+<ul>
+<li>Adjust cache size based on your project size</li>
+<li>Consider using file-based cache for large projects</li>
+<li>Monitor detector performance and adjust configurations</li>
+</ul>
+<h2 id="related-documentation"><a class="header" href="#related-documentation">Related Documentation</a></h2>
+<ul>
+<li><a href="./configuration-options.html">Configuration Reference</a></li>
+<li><a href="../05-development/plugin_development_guide.html">Plugin Development Guide</a></li>
+<li><a href="../10-reference/testing_strategy.html">Testing Strategy</a></li>
+</ul>
+<hr />
+<p>This guide covers the most common use cases for dependency injection in Uveddi. For advanced scenarios or custom implementations, refer to the developer documentation.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../02-user-guide/dashboard-guide.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../02-user-guide/tui-interface.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../02-user-guide/dashboard-guide.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../02-user-guide/tui-interface.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../assets/custom-scripts.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

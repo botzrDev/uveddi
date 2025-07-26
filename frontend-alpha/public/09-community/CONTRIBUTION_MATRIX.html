@@ -1,0 +1,541 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Contribution Matrix - Uveddi Documentation</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="AI-Powered Code Analysis That Stays Private - Comprehensive guide to using Uveddi for architectural analysis">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../assets/brand/colors/palette.css">
+        <link rel="stylesheet" href="../assets/custom-styles.css">
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Uveddi Documentation</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/botzrDev/uveddi" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://github.com/botzrDev/uveddi/edit/main/docs/./09-community/CONTRIBUTION_MATRIX.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="contribution-difficulty-matrix"><a class="header" href="#contribution-difficulty-matrix">Contribution Difficulty Matrix</a></h1>
+<p>This guide helps contributors understand the complexity and requirements for different types of tasks in the Uveddi project.</p>
+<h2 id="task-categories-by-skill-level"><a class="header" href="#task-categories-by-skill-level">Task Categories by Skill Level</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Task Type</th><th>Beginner</th><th>Intermediate</th><th>Advanced</th></tr></thead><tbody>
+<tr><td><strong>Documentation</strong></td><td>README updates, typo fixes, basic examples</td><td>API docs, tutorials, user guides</td><td>Architecture guides, design docs</td></tr>
+<tr><td><strong>Testing</strong></td><td>Unit tests, simple test cases</td><td>Integration tests, CLI testing</td><td>Performance tests, chaos testing</td></tr>
+<tr><td><strong>Frontend</strong></td><td>UI fixes, styling, accessibility</td><td>Component development, state management</td><td>Architecture changes, performance optimization</td></tr>
+<tr><td><strong>Backend</strong></td><td>Bug fixes, utility functions</td><td>Feature development, detector improvements</td><td>Core engine work, performance optimization</td></tr>
+<tr><td><strong>DevOps</strong></td><td>Docker improvements, documentation</td><td>CI/CD enhancements, automation</td><td>Infrastructure design, monitoring</td></tr>
+</tbody></table>
+</div>
+<h2 id="time-investment-guide"><a class="header" href="#time-investment-guide">Time Investment Guide</a></h2>
+<h3 id="-1-2-hours-quick-wins"><a class="header" href="#-1-2-hours-quick-wins">🕐 1-2 Hours (Quick Wins)</a></h3>
+<p><strong>Perfect for first-time contributors or when you have limited time</strong></p>
+<ul>
+<li>Fix typos and formatting in documentation</li>
+<li>Add simple examples to existing guides</li>
+<li>Update outdated links and references</li>
+<li>Add missing tests for utility functions</li>
+<li>Improve error messages and help text</li>
+<li>Small UI improvements and bug fixes</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<ul>
+<li>Update installation instructions</li>
+<li>Add code examples to README</li>
+<li>Fix broken links in documentation</li>
+<li>Add unit tests for helper functions</li>
+</ul>
+<h3 id="-4-8-hours-weekend-projects"><a class="header" href="#-4-8-hours-weekend-projects">🕕 4-8 Hours (Weekend Projects)</a></h3>
+<p><strong>Great for regular contributors who want to make meaningful impact</strong></p>
+<ul>
+<li>Write comprehensive tutorials and guides</li>
+<li>Implement new output formats (CSV, XML)</li>
+<li>Add significant CLI enhancements</li>
+<li>Create integration test suites</li>
+<li>Develop new UI components</li>
+<li>Implement configuration improvements</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<ul>
+<li>Create a "Getting Started" video tutorial</li>
+<li>Add interactive CLI prompts</li>
+<li>Build a new analysis report format</li>
+<li>Implement progress bars for long operations</li>
+</ul>
+<h3 id="-8-hours-major-contributions"><a class="header" href="#-8-hours-major-contributions">🕘 8+ Hours (Major Contributions)</a></h3>
+<p><strong>For experienced contributors ready to tackle complex challenges</strong></p>
+<ul>
+<li>Design and implement new analysis features</li>
+<li>Add support for new programming languages</li>
+<li>Optimize performance for large codebases</li>
+<li>Refactor core architecture components</li>
+<li>Build comprehensive plugin systems</li>
+<li>Implement advanced AI integrations</li>
+</ul>
+<p><strong>Examples:</strong></p>
+<ul>
+<li>Add support for Go language analysis</li>
+<li>Implement distributed analysis processing</li>
+<li>Build a plugin marketplace system</li>
+<li>Create advanced visualization features</li>
+</ul>
+<h2 id="skill-prerequisites"><a class="header" href="#skill-prerequisites">Skill Prerequisites</a></h2>
+<h3 id="-beginner-level"><a class="header" href="#-beginner-level">🟢 Beginner Level</a></h3>
+<p><strong>Ready to start? You'll need:</strong></p>
+<p><strong>Technical Skills:</strong></p>
+<ul>
+<li><strong>Git</strong>: Basic commands (clone, commit, push, pull)</li>
+<li><strong>Language</strong>: Basic familiarity with Rust, TypeScript, or Markdown</li>
+<li><strong>Tools</strong>: Text editor, terminal basics</li>
+<li><strong>Reading</strong>: Ability to understand existing code patterns</li>
+</ul>
+<p><strong>Soft Skills:</strong></p>
+<ul>
+<li><strong>Time</strong>: Available for 1-4 hour focused sessions</li>
+<li><strong>Learning</strong>: Willingness to ask questions and learn</li>
+<li><strong>Patience</strong>: Comfortable with trial and error</li>
+</ul>
+<p><strong>Best Starting Points:</strong></p>
+<ul>
+<li>Documentation improvements</li>
+<li>Simple bug fixes</li>
+<li>Adding tests for existing code</li>
+<li>UI/UX improvements</li>
+</ul>
+<h3 id="-intermediate-level"><a class="header" href="#-intermediate-level">🟡 Intermediate Level</a></h3>
+<p><strong>Building expertise? You should have:</strong></p>
+<p><strong>Technical Skills:</strong></p>
+<ul>
+<li><strong>Git</strong>: Branching, merging, rebasing, conflict resolution</li>
+<li><strong>Language</strong>: Comfortable with project's main languages (Rust, TypeScript)</li>
+<li><strong>Tools</strong>: IDE setup, debugging, testing frameworks</li>
+<li><strong>Domain</strong>: Understanding of static analysis concepts</li>
+<li><strong>Architecture</strong>: Basic grasp of project structure</li>
+</ul>
+<p><strong>Soft Skills:</strong></p>
+<ul>
+<li><strong>Time</strong>: Available for 4-8 hour projects</li>
+<li><strong>Communication</strong>: Comfortable discussing technical decisions</li>
+<li><strong>Collaboration</strong>: Experience with code reviews</li>
+</ul>
+<p><strong>Recommended Tasks:</strong></p>
+<ul>
+<li>Feature development</li>
+<li>Integration improvements</li>
+<li>Performance enhancements</li>
+<li>Complex testing scenarios</li>
+</ul>
+<h3 id="-advanced-level"><a class="header" href="#-advanced-level">🔴 Advanced Level</a></h3>
+<p><strong>Becoming a core contributor? You need:</strong></p>
+<p><strong>Technical Skills:</strong></p>
+<ul>
+<li><strong>Architecture</strong>: Deep understanding of project structure and design patterns</li>
+<li><strong>Performance</strong>: Profiling and optimization experience</li>
+<li><strong>Design</strong>: Ability to design new features and APIs</li>
+<li><strong>Leadership</strong>: Code review skills and architectural decision-making</li>
+<li><strong>Specialization</strong>: Deep expertise in specific domains (parsing, AI, performance)</li>
+</ul>
+<p><strong>Soft Skills:</strong></p>
+<ul>
+<li><strong>Time</strong>: Available for multi-day/week projects</li>
+<li><strong>Mentorship</strong>: Willing to help guide other contributors</li>
+<li><strong>Vision</strong>: Understanding of project roadmap and goals</li>
+<li><strong>Communication</strong>: Ability to explain complex technical concepts</li>
+</ul>
+<p><strong>Focus Areas:</strong></p>
+<ul>
+<li>Core engine development</li>
+<li>New language support</li>
+<li>Performance optimization</li>
+<li>Plugin architecture</li>
+<li>AI/ML integration</li>
+</ul>
+<h2 id="getting-started-path"><a class="header" href="#getting-started-path">Getting Started Path</a></h2>
+<h3 id="week-1-orientation"><a class="header" href="#week-1-orientation">Week 1: Orientation</a></h3>
+<p><strong>Goal: Understand the project and make your first contribution</strong></p>
+<ol>
+<li>
+<p><strong>Setup Development Environment</strong></p>
+<ul>
+<li>Follow the complete setup guide</li>
+<li>Run all tests successfully</li>
+<li>Build the project from source</li>
+</ul>
+</li>
+<li>
+<p><strong>Explore the Codebase</strong></p>
+<ul>
+<li>Read architecture documentation</li>
+<li>Understand key components</li>
+<li>Identify areas of interest</li>
+</ul>
+</li>
+<li>
+<p><strong>Make Your First Contribution</strong></p>
+<ul>
+<li>Pick a <code>time/quick-win</code> task</li>
+<li>Comment on the issue to claim it</li>
+<li>Submit your first PR</li>
+</ul>
+</li>
+<li>
+<p><strong>Engage with Community</strong></p>
+<ul>
+<li>Join GitHub discussions</li>
+<li>Introduce yourself</li>
+<li>Ask questions and get feedback</li>
+</ul>
+</li>
+</ol>
+<h3 id="week-2-3-building-confidence"><a class="header" href="#week-2-3-building-confidence">Week 2-3: Building Confidence</a></h3>
+<p><strong>Goal: Establish yourself as a regular contributor</strong></p>
+<ol>
+<li>
+<p><strong>Complete Multiple Tasks</strong></p>
+<ul>
+<li>Finish 2-3 beginner-level tasks</li>
+<li>Get comfortable with code review process</li>
+<li>Learn project conventions and patterns</li>
+</ul>
+</li>
+<li>
+<p><strong>Expand Your Knowledge</strong></p>
+<ul>
+<li>Read more detailed documentation</li>
+<li>Understand testing strategies</li>
+<li>Learn about CI/CD processes</li>
+</ul>
+</li>
+<li>
+<p><strong>Start Helping Others</strong></p>
+<ul>
+<li>Review other contributors' PRs</li>
+<li>Answer questions in discussions</li>
+<li>Share your learning experiences</li>
+</ul>
+</li>
+</ol>
+<h3 id="month-2-becoming-a-regular-contributor"><a class="header" href="#month-2-becoming-a-regular-contributor">Month 2+: Becoming a Regular Contributor</a></h3>
+<p><strong>Goal: Take on significant responsibilities</strong></p>
+<ol>
+<li>
+<p><strong>Take On Bigger Challenges</strong></p>
+<ul>
+<li>Work on intermediate-level tasks</li>
+<li>Propose new features or improvements</li>
+<li>Lead small initiatives</li>
+</ul>
+</li>
+<li>
+<p><strong>Develop Expertise</strong></p>
+<ul>
+<li>Specialize in specific areas (frontend, backend, DevOps)</li>
+<li>Become the go-to person for certain topics</li>
+<li>Contribute to architectural discussions</li>
+</ul>
+</li>
+<li>
+<p><strong>Mentor Others</strong></p>
+<ul>
+<li>Help onboard new contributors</li>
+<li>Review and guide complex PRs</li>
+<li>Share knowledge through documentation</li>
+</ul>
+</li>
+</ol>
+<h2 id="mentorship-program"><a class="header" href="#mentorship-program">Mentorship Program</a></h2>
+<h3 id="for-new-contributors"><a class="header" href="#for-new-contributors">For New Contributors</a></h3>
+<p><strong>Getting guidance from experienced team members</strong></p>
+<p><strong>How to Request a Mentor:</strong></p>
+<ol>
+<li>Comment on your chosen issue mentioning @maintainers</li>
+<li>Specify what type of help you need</li>
+<li>Share your experience level and goals</li>
+</ol>
+<p><strong>What Mentors Provide:</strong></p>
+<ul>
+<li>Code review and feedback</li>
+<li>Architecture guidance</li>
+<li>Best practices coaching</li>
+<li>Career development advice</li>
+</ul>
+<p><strong>Mentor Interactions:</strong></p>
+<ul>
+<li>Regular check-ins (weekly/bi-weekly)</li>
+<li>Real-time help via GitHub comments</li>
+<li>Pair programming sessions (when possible)</li>
+<li>Goal setting and progress tracking</li>
+</ul>
+<h3 id="for-experienced-contributors"><a class="header" href="#for-experienced-contributors">For Experienced Contributors</a></h3>
+<p><strong>Becoming a mentor and giving back to the community</strong></p>
+<p><strong>Mentor Responsibilities:</strong></p>
+<ul>
+<li>Guide new contributors through their first PRs</li>
+<li>Provide timely, constructive feedback</li>
+<li>Share domain expertise and best practices</li>
+<li>Help with technical decision-making</li>
+</ul>
+<p><strong>Benefits of Mentoring:</strong></p>
+<ul>
+<li>Develop leadership skills</li>
+<li>Deepen your own understanding</li>
+<li>Build community relationships</li>
+<li>Shape the project's future</li>
+</ul>
+<p><strong>How to Become a Mentor:</strong></p>
+<ol>
+<li>Demonstrate consistent, quality contributions</li>
+<li>Show patience and teaching ability</li>
+<li>Express interest to maintainers</li>
+<li>Complete mentor training (if available)</li>
+</ol>
+<h2 id="contribution-quality-standards"><a class="header" href="#contribution-quality-standards">Contribution Quality Standards</a></h2>
+<h3 id="code-quality"><a class="header" href="#code-quality">Code Quality</a></h3>
+<ul>
+<li><strong>Style</strong>: Follow project coding standards (rustfmt, clippy)</li>
+<li><strong>Tests</strong>: Include appropriate test coverage</li>
+<li><strong>Documentation</strong>: Comment complex logic, update relevant docs</li>
+<li><strong>Performance</strong>: Consider impact on build time and runtime</li>
+</ul>
+<h3 id="communication-quality"><a class="header" href="#communication-quality">Communication Quality</a></h3>
+<ul>
+<li><strong>PR Descriptions</strong>: Clear explanation of changes and rationale</li>
+<li><strong>Commit Messages</strong>: Follow conventional commit format</li>
+<li><strong>Issue Discussion</strong>: Constructive, helpful communication</li>
+<li><strong>Code Reviews</strong>: Thoughtful, actionable feedback</li>
+</ul>
+<h3 id="learning-and-growth"><a class="header" href="#learning-and-growth">Learning and Growth</a></h3>
+<ul>
+<li><strong>Feedback Reception</strong>: Open to criticism and suggestions</li>
+<li><strong>Continuous Learning</strong>: Stay updated with project evolution</li>
+<li><strong>Knowledge Sharing</strong>: Document learnings for others</li>
+<li><strong>Community Building</strong>: Help create a welcoming environment</li>
+</ul>
+<hr />
+<p>Ready to contribute? Use this matrix to find tasks that match your skill level and available time. Remember, every contribution matters, no matter how small! 🚀</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../09-community/PRD.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../09-community/teamwork.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../09-community/PRD.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../09-community/teamwork.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../assets/custom-scripts.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

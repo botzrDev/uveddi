@@ -1,0 +1,401 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>PRD - Uveddi Documentation</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="AI-Powered Code Analysis That Stays Private - Comprehensive guide to using Uveddi for architectural analysis">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../assets/brand/colors/palette.css">
+        <link rel="stylesheet" href="../assets/custom-styles.css">
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Uveddi Documentation</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/botzrDev/uveddi" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://github.com/botzrDev/uveddi/edit/main/docs/./09-community/PRD.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <p>Product Requirements Document: AI Architectural Analysis CLI</p>
+<p><strong>1. Introduction</strong></p>
+<p>This Product Requirements Document (PRD) outlines the requirements for a Command-Line Interface (CLI) tool designed to perform high-level architectural analysis of software codebases. The tool will leverage a hybrid approach, combining local and API-based Artificial Intelligence (AI) models, to identify architectural anti-patterns and provide actionable insights to developers.</p>
+<p><strong>1.1. Purpose</strong><br />
+The primary purpose of this tool is to address the significant and underserved market need for automated architectural review. It aims to reduce the time-consuming and cognitively demanding task of manual architectural review, which is inadequately addressed by existing static analysis solutions and AI code generators.</p>
+<p><strong>1.2. Scope</strong><br />
+This document covers the core functionalities, user experience, technical requirements, and release considerations for the initial version of the AI Architectural Analysis CLI. It focuses on the core analysis engine, AI model integration, reporting, and initial community-led growth strategies.</p>
+<p><strong>1.3. Target Audience</strong><br />
+The primary target audience includes:</p>
+<ul>
+<li><strong>Senior Developers:</strong> Individual contributors responsible for designing significant features and mentoring others, needing to ensure their work aligns with broader architecture and avoids technical debt.</li>
+<li><strong>Tech Leads:</strong> Responsible for technical direction of a team, seeking to automate code review burden and enforce architectural standards.</li>
+<li><strong>Software Architects:</strong> Leaders defining architectural principles and standards for projects or organizations, focused on strategic, long-term consequences of design decisions.</li>
+</ul>
+<p><strong>2. Product Overview</strong></p>
+<p>The AI Architectural Analysis CLI will be a developer-first tool offering a unique emphasis on high-level structural anti-patterns. It will provide a flexible hybrid AI model approach (private, fast local models for individual use; powerful, high-accuracy API-based models for team and CI/CD workflows), and generate well-formatted markdown reports with diagrams for communication and decision-making.</p>
+<p><strong>2.1. Key Features</strong></p>
+<ul>
+<li><strong>Architectural Anti-pattern Detection:</strong>
+<ul>
+<li>Identify dependency-based smells (e.g., Unstable Interface, Cyclic Dependency, Modularity Violation).</li>
+<li>Identify abstraction-based smells (e.g., The Blob/God Object, Leaky Abstraction, Violation of Inheritance Hierarchy).</li>
+<li>Identify microservice-specific smells (e.g., Insufficient Access Control, Hardcoded Endpoints, Shared Database).</li>
+</ul>
+</li>
+<li><strong>Hybrid AI Model Integration:</strong>
+<ul>
+<li><strong>Local Model (Free Tier):</strong> Utilize high-performance, open-source LLMs (e.g., DeepSeek-Coder, Code Llama, Mistral, Qwen) for privacy-focused, offline analysis.</li>
+<li><strong>API-based Model (Paid Tier):</strong> Integrate with state-of-the-art commercial LLM APIs (e.g., OpenAI's GPT-4, Anthropic's Claude 3, Google's Gemini) for enhanced accuracy and complex analysis.</li>
+</ul>
+</li>
+<li><strong>Abstract Syntax Tree (AST) Analysis:</strong> Parse source code into ASTs for deep, structural understanding and deterministic detection of anti-patterns.</li>
+<li><strong>Actionable Report Generation:</strong>
+<ul>
+<li>Generate standard markdown reports summarizing architectural findings.</li>
+<li>Integrate diagrams (e.g., Mermaid.js, PlantUML syntax) within reports to visually explain complex issues like cyclic dependencies or poor modularity.</li>
+</ul>
+</li>
+<li><strong>CI/CD Integration:</strong>
+<ul>
+<li>Enable headless execution via command-line flags and environment variables.</li>
+<li>Provide meaningful exit codes for CI/CD pipeline automation (e.g., quality gates).</li>
+<li>Offer platform-specific integration examples (e.g., GitHub Actions, GitLab CI).</li>
+</ul>
+</li>
+<li><strong>Plugin System:</strong>
+<ul>
+<li>Allow community contributions of custom scanners for new architectural patterns or languages.</li>
+<li>Define a stable plugin interface (API/traits).</li>
+<li>Support plugin discovery and loading (e.g., from a designated directory).</li>
+<li>Implement sandboxing for security (e.g., using WebAssembly).</li>
+</ul>
+</li>
+<li><strong>User Scoping of Analysis:</strong> Allow users to specify directories or modules for analysis to enable faster, targeted scans.</li>
+</ul>
+<p><strong>2.2. Value Proposition</strong></p>
+<p>The tool provides deep architectural intelligence on-demand, enabling technical leaders to:</p>
+<ul>
+<li>Proactively manage technical debt and ensure long-term maintainability.</li>
+<li>Automate significant portions of manual architectural review.</li>
+<li>Gain objective, data-driven insights into code structure.</li>
+<li>Preserve architectural integrity in an increasingly complex and AI-augmented software development lifecycle.</li>
+</ul>
+<p><strong>3. User Experience &amp; Design</strong></p>
+<p><strong>3.1. User Flow</strong></p>
+<ol>
+<li><strong>Installation:</strong> User downloads and installs the CLI tool (including Ollama for local models in the free tier).</li>
+<li><strong>Configuration:</strong> User optionally configures API keys for the paid tier or sets up <code>.archlintignore</code> file.</li>
+<li><strong>Local Analysis (Free Tier):</strong> User runs CLI command in a local codebase directory.
+<ul>
+<li>Tool performs AST analysis and local LLM inference.</li>
+<li>Generates a markdown report with diagrams.</li>
+<li>User reviews the report.</li>
+</ul>
+</li>
+<li><strong>CI/CD Integration (Paid Tier):</strong> User integrates the CLI command into their CI/CD pipeline.
+<ul>
+<li>Tool executes headless.</li>
+<li>Leverages API-based LLMs for analysis.</li>
+<li>Provides exit codes to influence build status.</li>
+<li>Generates reports (e.g., as pull request comments or artifacts).</li>
+</ul>
+</li>
+<li><strong>Community Engagement:</strong> User interacts with the community via Discord/Slack, GitHub issue tracker, or contributes plugins.</li>
+</ol>
+<p><strong>3.2. Interface Design</strong></p>
+<p>The tool will be a CLI, prioritizing:</p>
+<ul>
+<li><strong>Speed and Efficiency:</strong> Fast execution with minimal resource consumption.</li>
+<li><strong>Scriptability:</strong> Easy integration into automated workflows.</li>
+<li><strong>Clear Output:</strong> Well-structured and readable console output.</li>
+<li><strong>Progress Indicators:</strong> Use of progress bars, spinners, or status messages for long-running tasks.</li>
+</ul>
+<p><strong>3.3. Reporting Design</strong></p>
+<p>Reports will be generated in markdown format, featuring:</p>
+<ul>
+<li><strong>Clear Headings:</strong> Structuring findings logically (e.g., by anti-pattern category).</li>
+<li><strong>Problem Description:</strong> Concise explanation of the identified architectural issue.</li>
+<li><strong>Code Snippets:</strong> Relevant code examples highlighting the problem area (contextualized via RAG).</li>
+<li><strong>Visualizations:</strong> Embedded Mermaid.js or PlantUML diagrams for complex patterns (e.g., dependency graphs).</li>
+<li><strong>Actionable Suggestions:</strong> AI-generated refactoring suggestions and best practice recommendations.</li>
+<li><strong>Severity/Impact:</strong> Indication of the potential impact or severity of the issue.</li>
+</ul>
+<p><strong>4. Technical Requirements</strong></p>
+<p><strong>4.1. Architecture</strong></p>
+<ul>
+<li><strong>Core Language:</strong> Rust for high performance, memory safety, and efficient binary distribution.</li>
+<li><strong>Analysis Pipeline:</strong> Hybrid system combining:
+<ul>
+<li><strong>Deterministic AST Analysis:</strong> First pass for efficient issue detection and context retrieval.</li>
+<li><strong>Probabilistic LLM Analysis:</strong> Second pass for nuanced explanation, suggestions, and verification.</li>
+</ul>
+</li>
+<li><strong>Parser:</strong> Leverage Tree-sitter for multi-language AST generation.</li>
+<li><strong>Caching:</strong> Implement intelligent caching of ASTs and analysis results to optimize performance for subsequent runs.</li>
+<li><strong>Concurrency:</strong> Utilize Rust's concurrency features (e.g., <code>tokio</code>) for parallel file parsing.</li>
+</ul>
+<p><strong>4.2. AI Model Details</strong></p>
+<ul>
+<li><strong>Local Models:</strong>
+<ul>
+<li>Target models: 7-billion-parameter range (e.g., DeepSeek-Coder, Code Llama, Mistral, Qwen).</li>
+<li>Distribution: Packaged and distributed via Ollama.</li>
+<li>Hardware Requirement: Minimum 16GB RAM, ideally GPU with 8-12GB VRAM (e.g., NVIDIA RTX 3060+).</li>
+</ul>
+</li>
+<li><strong>API-based Models:</strong>
+<ul>
+<li>Target APIs: OpenAI GPT-4, Anthropic Claude 3 family (Opus), Google Gemini.</li>
+<li>Cost Mitigation: Smart-prompting strategy to send only relevant, targeted code snippets to minimize token consumption.</li>
+</ul>
+</li>
+<li><strong>Accuracy &amp; Hallucination Mitigation (Critical):</strong>
+<ul>
+<li>Retrieval-Augmented Generation (RAG): Ground LLM in codebase facts.</li>
+<li>Structured Prompt Engineering: Constrain AI output and guide reasoning.</li>
+<li>Self-Correction/Validation: Multi-step verification for critical suggestions.</li>
+<li>Human-in-the-Loop: Tool provides <em>suggestions</em>, developer remains ultimate authority.</li>
+</ul>
+</li>
+</ul>
+<p><strong>4.3. Data Flow</strong></p>
+<ol>
+<li><strong>Code Ingestion:</strong> Recursively walk file system, respecting <code>.archlintignore</code>.</li>
+<li><strong>AST Parsing:</strong> Language-specific parsers (via Tree-sitter) generate ASTs.</li>
+<li><strong>Dependency Graph Construction:</strong> Build a directed graph of module dependencies from ASTs.</li>
+<li><strong>Deterministic Anti-pattern Detection:</strong> Analyze ASTs and dependency graph to identify high-probability architectural issue candidates.</li>
+<li><strong>Contextualization for LLM:</strong> Extract relevant code snippets and structural context for identified candidates.</li>
+<li><strong>LLM Inference (Local or API):</strong> Send contextualized data to chosen LLM for detailed analysis, explanation, and suggestion generation.</li>
+<li><strong>Report Generation:</strong> Compile findings into a markdown report, including diagrams and actionable recommendations.</li>
+</ol>
+<p><strong>4.4. Scalability &amp; Performance</strong></p>
+<ul>
+<li><strong>Parallel Processing:</strong> For file parsing.</li>
+<li><strong>Intelligent Caching:</strong> For ASTs and analysis results.</li>
+<li>**Efficient</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../09-community/ISSUE_PREPARATION_TEMPLATE.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../09-community/CONTRIBUTION_MATRIX.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../09-community/ISSUE_PREPARATION_TEMPLATE.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../09-community/CONTRIBUTION_MATRIX.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../assets/custom-scripts.js"></script>
+
+
+
+    </div>
+    </body>
+</html>
