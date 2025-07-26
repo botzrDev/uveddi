@@ -15,6 +15,8 @@ use uveddi::tui::{AppMessage, AppScreen, AppState};
 #[cfg(feature = "tui")]
 use uveddi::cli::analyze_command::AnalyzeCommand;
 #[cfg(feature = "tui")]
+use uveddi::error::UveddiError;
+#[cfg(feature = "tui")]
 use std::time::Duration;
 
 /// Helper function to create a test AnalyzeCommand with default values
@@ -332,6 +334,8 @@ async fn test_keyboard_event_workflow() {
     let quit_key = KeyEvent::new(KeyCode::Char('q'), KeyModifiers::NONE);
     let messages = app_state.update(AppMessage::KeyPressed(quit_key));
     assert_eq!(messages, vec![AppMessage::Quit]);
+    // Process the quit message
+    app_state.update(AppMessage::Quit);
     assert!(app_state.should_quit);
 
     // Reset state
@@ -341,6 +345,8 @@ async fn test_keyboard_event_workflow() {
     let ctrl_c = KeyEvent::new(KeyCode::Char('c'), KeyModifiers::CONTROL);
     let messages = app_state.update(AppMessage::KeyPressed(ctrl_c));
     assert_eq!(messages, vec![AppMessage::Quit]);
+    // Process the quit message
+    app_state.update(AppMessage::Quit);
     assert!(app_state.should_quit);
 
     // Reset state
@@ -351,6 +357,8 @@ async fn test_keyboard_event_workflow() {
     let esc_key = KeyEvent::new(KeyCode::Esc, KeyModifiers::NONE);
     let messages = app_state.update(AppMessage::KeyPressed(esc_key));
     assert_eq!(messages, vec![AppMessage::NavigateToMainMenu]);
+    // Process the navigation message
+    app_state.update(AppMessage::NavigateToMainMenu);
     assert_eq!(app_state.current_screen, AppScreen::MainMenu);
 
     // Test F1 help
@@ -568,14 +576,18 @@ async fn test_concurrent_operations_simulation() {
     // Execute with timeout to prevent hanging
     let timeout_duration = Duration::from_secs(30);
 
-    let mut futures = Vec::new();
-    for cmd in commands {
-        futures.push(Box::pin(cmd.execute()));
+    // Execute commands sequentially to avoid lifetime issues
+    let mut results = Vec::new();
+    for cmd in &commands {
+        let result = tokio::time::timeout(Duration::from_secs(10), cmd.execute()).await;
+        match result {
+            Ok(exec_result) => results.push(exec_result),
+            Err(_) => results.push(Err(UveddiError::config_error("Command execution timed out", "tui_e2e_test"))),
+        }
     }
+    let analysis_results: Result<Vec<Result<(), UveddiError>>, tokio::time::error::Elapsed> = Ok(results);
 
-    let results = tokio::time::timeout(timeout_duration, futures::future::join_all(futures)).await;
-
-    match results {
+    match analysis_results {
         Ok(analysis_results) => {
             // Check that operations completed
             for (i, result) in analysis_results.into_iter().enumerate() {

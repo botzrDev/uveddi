@@ -1,15 +1,19 @@
-# Common Use Cases
+# Common Use Cases (Alpha Release)
+
+⚠️ **Alpha Status**: These examples show the CLI interface structure. Analysis engine is in development and will show "execution failed" errors.
 
 ## Basic Codebase Analysis
 
 ```bash
-uveddi analyze ./project --output analysis.json
+# Alpha: CLI works, analysis shows expected errors
+./target/release/uveddi analyze ./project --output-format=json --output=analysis.json
 ```
 
-Key flags:
-- `--focus`: Limit to specific issue types (cyclic_dependencies, god_objects, etc.)
-- `--format`: Output format (json, markdown, html)
-- `--fail-on`: Exit with error if issues exceed threshold
+Available CLI flags (ready for when analysis engine is complete):
+- `--output-format`: Format (json, markdown, text)
+- `--output`: Output file path
+- `--dead-code-confidence`: Confidence threshold (0.0-1.0)
+- `--enable-ai`: Enable AI analysis (when engine ready)
 
 ## CI/CD Integration
 

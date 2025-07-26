@@ -103,7 +103,14 @@
       "WebFetch(domain:docs.rs)",
       "Bash(./scripts/run-automated-tests.sh:*)",
       "Bash(./target/release/uveddi:*)",
-      "Bash(RUST_BACKTRACE=1 cargo test analysis::detector_factory::tests::test_create_default_detectors --lib --features=\"alpha\" -- --nocapture)"
+      "Bash(RUST_BACKTRACE=1 cargo test analysis::detector_factory::tests::test_create_default_detectors --lib --features=\"alpha\" -- --nocapture)",
+      "Bash(RUST_BACKTRACE=1 RUST_LOG=debug ./target/release/uveddi analyze /tmp/uveddi_test --output-format=json)",
+      "Bash(RUST_LOG=debug ./target/release/uveddi analyze:*)",
+      "Bash(RUST_LOG=trace ./target/release/uveddi analyze:*)",
+      "Bash(for:*)",
+      "Bash(do mv \"$file\" \"$file.disabled\")",
+      "Bash(done)",
+      "Bash(DISPLAY=:99 npm run test:e2e:headless)"
     ],
     "deny": []
   }

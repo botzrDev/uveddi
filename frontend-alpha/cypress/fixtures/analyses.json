@@ -1,0 +1,68 @@
+{
+  "analyses": [
+    {
+      "id": "1",
+      "projectName": "Sample Project",
+      "projectPath": "/path/to/project", 
+      "createdAt": "2025-07-01T10:00:00Z",
+      "status": "completed",
+      "language": "rust",
+      "totalFiles": 150,
+      "issues": {
+        "critical": 2,
+        "high": 5,
+        "medium": 12,
+        "low": 8
+      },
+      "antiPatterns": [
+        {
+          "type": "god_object",
+          "severity": "high",
+          "file": "src/main.rs",
+          "line": 45,
+          "description": "Large struct with too many responsibilities"
+        },
+        {
+          "type": "cyclic_dependency", 
+          "severity": "critical",
+          "files": ["src/module_a.rs", "src/module_b.rs"],
+          "description": "Circular dependency detected between modules"
+        }
+      ]
+    },
+    {
+      "id": "2", 
+      "projectName": "Another Project",
+      "projectPath": "/path/to/another",
+      "createdAt": "2025-06-30T15:30:00Z",
+      "status": "in_progress",
+      "language": "javascript",
+      "totalFiles": 89,
+      "issues": {
+        "critical": 0,
+        "high": 3,
+        "medium": 7,
+        "low": 15
+      }
+    }
+  ],
+  "singleAnalysis": {
+    "id": "1",
+    "projectName": "Sample Project",
+    "projectPath": "/path/to/project",
+    "createdAt": "2025-07-01T10:00:00Z",
+    "status": "completed",
+    "language": "rust",
+    "totalFiles": 150,
+    "summary": {
+      "totalIssues": 27,
+      "criticalIssues": 2,
+      "highIssues": 5,
+      "mediumIssues": 12,
+      "lowIssues": 8,
+      "linesOfCode": 15420,
+      "technicalDebt": "High"
+    },
+    "report": "# Analysis Report\n\n## Summary\nThis analysis found several architectural issues...\n\n## Issues Found\n\n### Critical Issues\n- Cyclic dependency detected\n- God object pattern identified\n\n### Recommendations\n- Refactor large modules\n- Break circular dependencies"
+  }
+}

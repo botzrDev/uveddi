@@ -40,28 +40,44 @@ cd uveddi
 cargo install --path . --features="alpha"
 ```
 
-## Quick Start
+## Alpha Quick Start
 
-### Basic Analysis
+**⚠️ Alpha Release Status**: The CLI interface is fully functional with comprehensive argument parsing and help system. The analysis engine is in development and will show "Analysis execution failed" errors - this is expected alpha behavior.
+
+### Check Available Commands
 ```bash
+# See all available commands
+./target/release/uveddi --help
+
+# See analysis options
+./target/release/uveddi analyze --help
+
+# See configuration options  
+./target/release/uveddi config --help
+```
+
+### Test CLI Interface (Working)
+```bash
+# These commands demonstrate the CLI but will show expected analysis errors
 ./target/release/uveddi analyze /path/to/code --output-format=markdown
-```
-
-### JSON Output
-```bash
 ./target/release/uveddi analyze /path/to/code --output-format=json --output=report.json
+./target/release/uveddi analyze /path/to/code --dead-code-confidence=0.8
 ```
 
-### With Dead Code Detection
+### Interactive TUI Mode (Development Binary)
 ```bash
-./target/release/uveddi analyze /path/to/code --dead-code-confidence=0.8 --output-format=json
-```
-
-### Interactive TUI Mode (Development)
-```bash
-# TUI is in development - use separate binary for testing
+# TUI testing binary - separate from main CLI
 cargo run --bin tui_test --features="tui"
 ```
+
+### What Works in Alpha
+- ✅ Full CLI argument parsing and validation
+- ✅ Comprehensive help system
+- ✅ Configuration commands
+- ✅ All output format options
+- ✅ Error handling and user-friendly messages
+- ⚠️ Analysis engine (shows expected "execution failed" errors)
+- ⚠️ TUI (development binary only)
 
 ## Documentation
 

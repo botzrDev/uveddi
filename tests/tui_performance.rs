@@ -11,6 +11,10 @@ use std::time::{Duration, Instant};
 #[cfg(feature = "tui")]
 use uveddi::tui::{AppMessage, AppScreen, AppState};
 #[cfg(feature = "tui")]
+use uveddi::tui::ui::analyze_form::FormField;
+#[cfg(feature = "tui")]
+use uveddi::tui::messages::FieldValue;
+#[cfg(feature = "tui")]
 use uveddi::cli::analyze_command::AnalyzeCommand;
 
 /// Performance test configuration
@@ -267,7 +271,7 @@ async fn test_memory_usage_stability() {
         // Simulate error conditions
         app_state.update(AppMessage::MenuItemSelected(999));
         app_state.update(AppMessage::FormFieldChanged {
-        field: FormField::Input,
+        field: FormField::Path,
         value: FieldValue::String("test_input".to_string()),
     });
 
@@ -536,7 +540,7 @@ async fn test_stress_operations() {
             AppMessage::MenuItemSelected(2),
             AppMessage::MenuItemSelected(3),
             AppMessage::FormFieldChanged {
-        field: FormField::Input,
+        field: FormField::Path,
         value: FieldValue::String("test".to_string()),
     },
         ];
