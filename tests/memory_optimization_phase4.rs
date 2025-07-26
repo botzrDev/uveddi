@@ -1,15 +1,20 @@
 //! Integration tests for Phase 4: Zero-copy AST caching with rkyv and memory mapping
 //! Tests the complete zero-copy AST serialization and caching system
 
+#[cfg(feature = "memory-optimization")]
 use tempfile::TempDir;
 
+#[cfg(feature = "memory-optimization")]
 use uveddi::analysis::cache::ast::{AstCache, CacheConfig};
+
+#[cfg(feature = "memory-optimization")]
 use uveddi::analysis::memory::{
     get_optimization_status, initialize_memory_optimization,
     zero_copy::{SerializableAst, ZeroCopyAstCache},
     MemoryOptimizationConfig,
 };
 
+#[cfg(feature = "memory-optimization")]
 #[test]
 fn test_zero_copy_ast_serialization() {
     let temp_dir = TempDir::new().unwrap();
@@ -56,6 +61,7 @@ fn test_zero_copy_ast_serialization() {
     assert_eq!(loaded_ast.language, "rust");
 }
 
+#[cfg(feature = "memory-optimization")]
 #[test]
 fn test_zero_copy_cache_stats() {
     let temp_dir = TempDir::new().unwrap();
@@ -127,6 +133,7 @@ fn test_zero_copy_cache_stats() {
     assert_eq!(stats.hit_rate_percentage(), 50.0);
 }
 
+#[cfg(feature = "memory-optimization")]
 #[test]
 fn test_zero_copy_cache_validation() {
     let temp_dir = TempDir::new().unwrap();
@@ -171,6 +178,7 @@ fn test_zero_copy_cache_validation() {
     assert!(!cache.is_valid(&file_path, 54321));
 }
 
+#[cfg(feature = "memory-optimization")]
 #[test]
 fn test_zero_copy_cache_removal() {
     let temp_dir = TempDir::new().unwrap();
@@ -218,6 +226,7 @@ fn test_zero_copy_cache_removal() {
     assert!(cache.load(&file_path).unwrap().is_none());
 }
 
+#[cfg(feature = "memory-optimization")]
 #[test]
 fn test_zero_copy_cache_clear() {
     let temp_dir = TempDir::new().unwrap();
@@ -270,6 +279,7 @@ fn test_zero_copy_cache_clear() {
     assert_eq!(stats.total_bytes_stored, 0);
 }
 
+#[cfg(feature = "memory-optimization")]
 #[test]
 fn test_zero_copy_metrics_export() {
     let temp_dir = TempDir::new().unwrap();
@@ -329,6 +339,7 @@ fn test_zero_copy_metrics_export() {
     assert_eq!(cache_metrics["hit_rate_percent"], 100.0);
 }
 
+#[cfg(feature = "memory-optimization")]
 #[test]
 fn test_ast_cache_zero_copy_integration() {
     let temp_dir = TempDir::new().unwrap();
@@ -363,6 +374,7 @@ fn test_ast_cache_zero_copy_integration() {
     assert!(zero_copy_metrics["cache_directory"].is_string());
 }
 
+#[cfg(feature = "memory-optimization")]
 #[test]
 fn test_ast_cache_config_serialization() {
     let config = CacheConfig::default();
@@ -385,6 +397,7 @@ fn test_ast_cache_config_serialization() {
     }
 }
 
+#[cfg(feature = "memory-optimization")]
 #[test]
 fn test_serializable_ast_efficiency_score() {
     let test_ast = SerializableAst {
@@ -430,6 +443,7 @@ fn test_serializable_ast_efficiency_score() {
     assert!(small_score < score); // Smaller files should have lower efficiency scores
 }
 
+#[cfg(feature = "memory-optimization")]
 #[test]
 fn test_source_hash_consistency() {
     let source1 = "fn main() { println!(\"Hello, world!\"); }";
@@ -476,6 +490,7 @@ fn test_source_hash_consistency() {
     assert!(!ast1.is_valid_for_source(source3));
 }
 
+#[cfg(feature = "memory-optimization")]
 #[test]
 fn test_concurrent_zero_copy_access() {
     let temp_dir = TempDir::new().unwrap();
@@ -562,6 +577,7 @@ fn test_concurrent_zero_copy_access() {
     assert_eq!(stats.hit_rate_percentage(), 100.0);
 }
 
+#[cfg(feature = "memory-optimization")]
 #[test]
 fn test_phase4_memory_optimization_initialization() {
     let config = MemoryOptimizationConfig {
@@ -597,6 +613,7 @@ fn test_phase4_memory_optimization_initialization() {
     assert!(status["arenas"].is_object());
 }
 
+#[cfg(feature = "memory-optimization")]
 #[test]
 fn test_memory_optimization_config_validation() {
     let config = MemoryOptimizationConfig::default();
@@ -617,6 +634,7 @@ fn test_memory_optimization_config_validation() {
     assert!(config.ast_cache_optimization.zero_copy_threshold_bytes > 0);
 }
 
+#[cfg(feature = "memory-optimization")]
 #[test]
 fn test_large_ast_zero_copy_performance() {
     let temp_dir = TempDir::new().unwrap();

@@ -21,7 +21,7 @@ fn create_test_parsed_file(name: &str) -> ParsedFile {
         tree: None,
         source: Arc::new(format!("fn {}() {{}}", name)),
         custom_ast: Arc::new(None),
-        modified_at: std::time::SystemTime::now(),
+        modified_at: uveddi::analysis::cache::compat::ArchivableSystemTime(std::time::SystemTime::now()),
     }
 }
 
@@ -36,8 +36,8 @@ fn create_test_issues(count: usize) -> Vec<ArchitecturalIssue> {
             end_line: Some(10),
             description: format!("Test issue {}", i),
             severity: "medium".to_string(),
-            suggestion: Some("Fix this issue".to_string()),
-            created_at: chrono::Utc::now(),
+            code_snippet: Some("test code".to_string()),
+            ai_explanation: Some("Test AI explanation".to_string()),
         })
         .collect()
 }
@@ -61,7 +61,8 @@ async fn test_cache_performance_characteristics() {
     let start_time = Instant::now();
     
     for i in 0..50 {
-        let file_path = std::path::Path::new(&format!("test_{}.rs", i));
+        let file_path_str = format!("test_{}.rs", i);
+        let file_path = std::path::Path::new(&file_path_str);
         let file_name = format!("test_{}", i);
         
         let parser = move || Ok(create_test_parsed_file(&file_name));
@@ -76,7 +77,8 @@ async fn test_cache_performance_characteristics() {
     let start_time = Instant::now();
     
     for i in 0..50 {
-        let file_path = std::path::Path::new(&format!("test_{}.rs", i));
+        let file_path_str = format!("test_{}.rs", i);
+        let file_path = std::path::Path::new(&file_path_str);
         
         let parser = || panic!("Should not be called - cache hit expected");
         
@@ -91,7 +93,8 @@ async fn test_cache_performance_characteristics() {
 
     // Test result cache performance
     for i in 0..50 {
-        let file_path = std::path::Path::new(&format!("result_{}.rs", i));
+        let file_path_str = format!("result_{}.rs", i);
+        let file_path = std::path::Path::new(&file_path_str);
         let issues = create_test_issues(5);
         
         cache.cache_results(file_path, issues).await;
@@ -99,7 +102,8 @@ async fn test_cache_performance_characteristics() {
 
     // Verify results can be retrieved
     for i in 0..50 {
-        let file_path = std::path::Path::new(&format!("result_{}.rs", i));
+        let file_path_str = format!("result_{}.rs", i);
+        let file_path = std::path::Path::new(&file_path_str);
         let cached_results = cache.get_cached_results(file_path).await;
         
         assert!(cached_results.is_some());
@@ -133,7 +137,8 @@ async fn test_cache_eviction_behavior() {
 
     // Fill cache beyond capacity
     for i in 0..10 {
-        let file_path = std::path::Path::new(&format!("test_{}.rs", i));
+        let file_path_str = format!("test_{}.rs", i);
+        let file_path = std::path::Path::new(&file_path_str);
         let file_name = format!("test_{}", i);
         
         let parser = move || Ok(create_test_parsed_file(&file_name));
@@ -146,7 +151,8 @@ async fn test_cache_eviction_behavior() {
     
     // Test result cache eviction
     for i in 0..10 {
-        let file_path = std::path::Path::new(&format!("result_{}.rs", i));
+        let file_path_str = format!("result_{}.rs", i);
+        let file_path = std::path::Path::new(&file_path_str);
         let issues = create_test_issues(3);
         
         cache.cache_results(file_path, issues).await;
@@ -207,7 +213,8 @@ async fn test_cache_maintenance() {
 
     // Add many results
     for i in 0..20 {
-        let file_path = std::path::Path::new(&format!("maintenance_{}.rs", i));
+        let file_path_str = format!("maintenance_{}.rs", i);
+        let file_path = std::path::Path::new(&file_path_str);
         let issues = create_test_issues(2);
         
         cache.cache_results(file_path, issues).await;
@@ -245,7 +252,8 @@ async fn test_concurrent_cache_access() {
         
         let handle = tokio::spawn(async move {
             for i in 0..10 {
-                let file_path = std::path::Path::new(&format!("concurrent_{}_{}.rs", task_id, i));
+                let file_path_str = format!("concurrent_{}_{}.rs", task_id, i);
+        let file_path = std::path::Path::new(&file_path_str);
                 let file_name = format!("concurrent_{}_{}", task_id, i);
                 
                 let parser = move || Ok(create_test_parsed_file(&file_name));

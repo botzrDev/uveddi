@@ -8,7 +8,7 @@
 use std::path::PathBuf;
 // TUI tests require the 'tui' feature to be enabled
 #[cfg(feature = "tui")]
-use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 #[cfg(feature = "tui")]
 use uveddi::tui::{AppMessage, AppScreen, AppState};
@@ -527,6 +527,14 @@ async fn test_concurrent_operations_simulation() {
             large_classes_max_lcom: Some(0.7),
             large_classes_ignore_patterns: None,
             large_classes_min_severity: Some(10),
+            enable_memory_optimization: false,
+            memory_limit_gb: None,
+            memory_profile: None,
+            enable_image_rendering: false,
+            mermaid_only: false,
+            rendering_service_url: "http://localhost:3001".to_string(),
+            no_fallback: false,
+            check_rendering_service: false,
         },
         AnalyzeCommand {
             path: test_project.clone(),
@@ -546,6 +554,14 @@ async fn test_concurrent_operations_simulation() {
             large_classes_max_lcom: Some(0.8),
             large_classes_ignore_patterns: Some(vec!["generated".to_string()]),
             large_classes_min_severity: Some(20),
+            enable_memory_optimization: false,
+            memory_limit_gb: None,
+            memory_profile: None,
+            enable_image_rendering: false,
+            mermaid_only: false,
+            rendering_service_url: "http://localhost:3001".to_string(),
+            no_fallback: false,
+            check_rendering_service: false,
         },
     ];
 
@@ -618,6 +634,14 @@ async fn test_application_lifecycle() {
         large_classes_max_lcom: Some(0.3),
         large_classes_ignore_patterns: None,
         large_classes_min_severity: Some(0),
+        enable_memory_optimization: false,
+        memory_limit_gb: None,
+        memory_profile: None,
+        enable_image_rendering: false,
+        mermaid_only: false,
+        rendering_service_url: "http://localhost:3001".to_string(),
+        no_fallback: false,
+        check_rendering_service: false,
     };
 
     // Try analysis with timeout

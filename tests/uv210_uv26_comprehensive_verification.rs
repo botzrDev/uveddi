@@ -1,15 +1,21 @@
 //! Comprehensive verification test suite for UV-210 and UV-26
 //! This test validates all requirements from the verification checklist
 
+#[cfg(feature = "memory-optimization")]
 use std::path::PathBuf;
 
+#[cfg(feature = "memory-optimization")]
 use uveddi::analysis::memory::{
     get_optimization_status, initialize_memory_optimization, MemoryOptimizationConfig,
     BASIC_MEMORY_METRICS, DETECTOR_POOLS, GLOBAL_ARENA_MANAGER,
 };
+
+#[cfg(feature = "memory-optimization")]
 use uveddi::application::{AnalysisConfig, AnalysisOrchestrator};
 
+#[cfg(feature = "memory-optimization")]
 #[tokio::test]
+#[cfg(feature = "memory-optimization")]
 async fn test_uv210_uv26_comprehensive_verification() {
     println!("🎯 Starting UV-210 & UV-26 Comprehensive Verification");
 
@@ -45,6 +51,8 @@ async fn test_uv210_uv26_comprehensive_verification() {
 }
 
 /// Test memory pool system functionality
+#[cfg(feature = "memory-optimization")]
+#[cfg(feature = "memory-optimization")]
 async fn test_memory_pool_system() {
     println!("🔧 Testing Memory Pool System");
 
@@ -75,6 +83,7 @@ async fn test_memory_pool_system() {
 }
 
 /// Test arena allocation system functionality
+#[cfg(feature = "memory-optimization")]
 async fn test_arena_allocation_system() {
     println!("🏗️  Testing Arena Allocation System");
 
@@ -104,6 +113,7 @@ async fn test_arena_allocation_system() {
 }
 
 /// Test global allocator functionality
+#[cfg(feature = "memory-optimization")]
 async fn test_global_allocator() {
     println!("🔧 Testing Global Allocator");
 
@@ -132,6 +142,7 @@ async fn test_global_allocator() {
 }
 
 /// Test configuration and initialization
+#[cfg(feature = "memory-optimization")]
 async fn test_configuration_initialization() {
     println!("⚙️  Testing Configuration & Initialization");
 
@@ -163,6 +174,7 @@ async fn test_configuration_initialization() {
 }
 
 /// Test performance targets
+#[cfg(feature = "memory-optimization")]
 async fn test_performance_targets() {
     println!("🚀 Testing Performance Targets");
 
@@ -185,6 +197,7 @@ async fn test_performance_targets() {
 }
 
 /// Test zero-copy AST caching
+#[cfg(feature = "memory-optimization")]
 async fn test_zero_copy_ast_caching() {
     println!("🗃️  Testing Zero-Copy AST Caching");
 
@@ -217,6 +230,7 @@ async fn test_zero_copy_ast_caching() {
 }
 
 /// Test unit test coverage
+#[cfg(feature = "memory-optimization")]
 async fn test_unit_test_coverage() {
     println!("🧪 Testing Unit Test Coverage");
 
@@ -234,6 +248,7 @@ async fn test_unit_test_coverage() {
 }
 
 /// Test integration testing
+#[cfg(feature = "memory-optimization")]
 async fn test_integration_testing() {
     println!("🔗 Testing Integration Testing");
 
@@ -274,6 +289,7 @@ async fn test_integration_testing() {
 }
 
 /// Test memory metrics collection
+#[cfg(feature = "memory-optimization")]
 async fn test_memory_metrics_collection() {
     println!("📊 Testing Memory Metrics Collection");
 
@@ -299,6 +315,7 @@ async fn test_memory_metrics_collection() {
 }
 
 /// Test observability and debugging
+#[cfg(feature = "memory-optimization")]
 async fn test_observability_debugging() {
     println!("🔍 Testing Observability & Debugging");
 
@@ -326,6 +343,7 @@ async fn test_observability_debugging() {
 }
 
 /// Test system integration
+#[cfg(feature = "memory-optimization")]
 async fn test_system_integration() {
     println!("🔧 Testing System Integration");
 
@@ -374,6 +392,7 @@ async fn test_system_integration() {
 }
 
 /// Test production readiness
+#[cfg(feature = "memory-optimization")]
 async fn test_production_readiness() {
     println!("🏭 Testing Production Readiness");
 
@@ -400,6 +419,7 @@ async fn test_production_readiness() {
 }
 
 /// Test UV-210 specific requirements
+#[cfg(feature = "memory-optimization")]
 async fn test_uv210_specific_requirements() {
     println!("🎯 Testing UV-210 Specific Requirements");
 
@@ -447,6 +467,7 @@ async fn test_uv210_specific_requirements() {
 }
 
 /// Test UV-26 specific requirements
+#[cfg(feature = "memory-optimization")]
 async fn test_uv26_specific_requirements() {
     println!("🤖 Testing UV-26 Specific Requirements");
 
@@ -470,6 +491,7 @@ async fn test_uv26_specific_requirements() {
 }
 
 #[tokio::test]
+#[cfg(feature = "memory-optimization")]
 async fn test_memory_optimization_end_to_end() {
     println!("🎯 Running End-to-End Memory Optimization Test");
 
@@ -516,6 +538,7 @@ async fn test_memory_optimization_end_to_end() {
 }
 
 #[tokio::test]
+#[cfg(feature = "memory-optimization")]
 async fn test_memory_optimization_performance_requirements() {
     println!("🚀 Testing Memory Optimization Performance Requirements");
 
@@ -550,6 +573,7 @@ async fn test_memory_optimization_performance_requirements() {
 }
 
 #[tokio::test]
+#[cfg(feature = "memory-optimization")]
 async fn test_memory_optimization_graceful_degradation() {
     println!("🛡️  Testing Memory Optimization Graceful Degradation");
 

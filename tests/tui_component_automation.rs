@@ -10,6 +10,8 @@ use uveddi::tui::ui::components::form_inputs::{
     TextInput, Toggle, Dropdown, NumericInput, PathPicker, ValidationResult
 };
 #[cfg(feature = "tui")]
+use uveddi::tui::ui::analyze_form::FormField;
+#[cfg(feature = "tui")]
 use uveddi::tui::ui::components::FocusableInput;
 
 /// Comprehensive test suite for TextInput component
@@ -19,7 +21,7 @@ mod text_input_tests {
 
     #[test]
     fn test_text_input_initialization() {
-        let input = TextInput::new("Test Label");
+        let input = TextInput::new("Test Label", FormField::Path);
         assert_eq!(input.label, "Test Label");
         assert!(input.value().is_empty());
         assert!(!input.is_focused());
@@ -28,26 +30,26 @@ mod text_input_tests {
 
     #[test]
     fn test_text_input_with_placeholder() {
-        let input = TextInput::new("Test").with_placeholder("Enter text here");
+        let input = TextInput::new("Test", FormField::Path).with_placeholder("Enter text here");
         assert_eq!(input.placeholder, Some("Enter text here".to_string()));
     }
 
     #[test]
     fn test_text_input_with_max_length() {
-        let input = TextInput::new("Test").with_max_length(50);
+        let input = TextInput::new("Test", FormField::Path).with_max_length(50);
         assert_eq!(input.max_length, Some(50));
     }
 
     #[test]
     fn test_text_input_value_setting() {
-        let mut input = TextInput::new("Test");
+        let mut input = TextInput::new("Test", FormField::Path);
         input.set_value("Hello World");
         assert_eq!(input.value(), "Hello World");
     }
 
     #[test]
     fn test_text_input_focus_management() {
-        let mut input = TextInput::new("Test");
+        let mut input = TextInput::new("Test", FormField::Path);
         
         assert!(!input.is_focused());
         input.set_focused(true);
@@ -58,7 +60,7 @@ mod text_input_tests {
 
     #[test]
     fn test_text_input_error_handling() {
-        let mut input = TextInput::new("Test");
+        let mut input = TextInput::new("Test", FormField::Path);
         
         assert!(input.error.is_none());
         input.set_error(Some("This is an error".to_string()));
@@ -69,7 +71,7 @@ mod text_input_tests {
 
     #[test]
     fn test_text_input_validation_empty() {
-        let input = TextInput::new("Test");
+        let input = TextInput::new("Test", FormField::Path);
         let result = input.validate();
         assert!(!result.is_valid);
         assert_eq!(result.error_message, Some("This field is required".to_string()));
@@ -77,7 +79,7 @@ mod text_input_tests {
 
     #[test]
     fn test_text_input_validation_max_length() {
-        let mut input = TextInput::new("Test").with_max_length(5);
+        let mut input = TextInput::new("Test", FormField::Path).with_max_length(5);
         input.set_value("123456"); // Exceeds max length
         
         let result = input.validate();
@@ -87,7 +89,7 @@ mod text_input_tests {
 
     #[test]
     fn test_text_input_validation_success() {
-        let mut input = TextInput::new("Test").with_max_length(10);
+        let mut input = TextInput::new("Test", FormField::Path).with_max_length(10);
         input.set_value("Hello");
         
         let result = input.validate();
@@ -97,7 +99,7 @@ mod text_input_tests {
 
     #[test]
     fn test_text_input_key_handling() {
-        let mut input = TextInput::new("Test");
+        let mut input = TextInput::new("Test", FormField::Path);
         input.set_focused(true);
         
         // Test character input
@@ -113,7 +115,7 @@ mod text_input_tests {
 
     #[test]
     fn test_text_input_max_length_enforcement() {
-        let mut input = TextInput::new("Test").with_max_length(3);
+        let mut input = TextInput::new("Test", FormField::Path).with_max_length(3);
         input.set_focused(true);
         
         // Fill to max length
@@ -132,7 +134,7 @@ mod text_input_tests {
 
     #[test]
     fn test_text_input_unfocused_ignores_keys() {
-        let mut input = TextInput::new("Test");
+        let mut input = TextInput::new("Test", FormField::Path);
         assert!(!input.is_focused());
         
         let key = KeyEvent::new(KeyCode::Char('a'), KeyModifiers::NONE);

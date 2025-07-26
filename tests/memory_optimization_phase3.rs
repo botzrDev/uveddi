@@ -1,8 +1,9 @@
 //! Integration tests for Phase 3 memory optimization - Arena Allocation
 
+#[cfg(feature = "memory-optimization")]
 use uveddi::analysis::memory::*;
-// use std::path::PathBuf; // Not needed in current tests
 
+#[cfg(feature = "memory-optimization")]
 #[test]
 fn test_phase3_arena_allocation_initialization() {
     // Test that arena allocation can be initialized with custom config
@@ -25,6 +26,7 @@ fn test_phase3_arena_allocation_initialization() {
     assert!(status["arenas"].is_object());
 }
 
+#[cfg(feature = "memory-optimization")]
 #[test]
 fn test_analysis_arena_basic_functionality() {
     // Test core ArenaManager functionality with bumpalo-herd pattern
@@ -45,6 +47,7 @@ fn test_analysis_arena_basic_functionality() {
     assert!(handle.bytes_allocated() > 0);
 }
 
+#[cfg(feature = "memory-optimization")]
 #[test]
 fn test_arena_collections() {
     let manager = AnalysisArenaManager::new();
@@ -79,6 +82,7 @@ fn test_arena_collections() {
     assert_eq!(owned_issues.len(), 1);
 }
 
+#[cfg(feature = "memory-optimization")]
 #[test]
 fn test_arena_handle_functionality() {
     let manager = AnalysisArenaManager::new();
@@ -99,6 +103,7 @@ fn test_arena_handle_functionality() {
     assert_eq!(handle.bytes_allocated(), 0);
 }
 
+#[cfg(feature = "memory-optimization")]
 #[test]
 fn test_arena_manager_stats() {
     let manager = AnalysisArenaManager::new();
@@ -122,6 +127,7 @@ fn test_arena_manager_stats() {
     assert_eq!(metrics["arena_manager"]["contention_free"], true);
 }
 
+#[cfg(feature = "memory-optimization")]
 #[test]
 fn test_arena_analysis_result_structure() {
     let result = ArenaAnalysisResult {
@@ -147,6 +153,7 @@ fn test_arena_analysis_result_structure() {
     let _json = serde_json::to_string(&result).unwrap();
 }
 
+#[cfg(feature = "memory-optimization")]
 #[test]
 fn test_arena_conversion_helpers() {
     let manager = AnalysisArenaManager::new();
@@ -189,6 +196,7 @@ fn test_arena_conversion_helpers() {
     assert_eq!(owned_strings[1], "test2");
 }
 
+#[cfg(feature = "memory-optimization")]
 #[test]
 fn test_rayon_integration_example() {
     let manager = AnalysisArenaManager::new();
@@ -213,6 +221,7 @@ fn test_rayon_integration_example() {
     }
 }
 
+#[cfg(feature = "memory-optimization")]
 #[test]
 fn test_example_file_analyzer() {
     let manager = AnalysisArenaManager::new();
@@ -231,6 +240,7 @@ fn test_example_file_analyzer() {
     ); // Verify field exists
 }
 
+#[cfg(feature = "memory-optimization")]
 #[test]
 fn test_configuration_presets_with_arenas() {
     // Test large codebase configuration
@@ -251,6 +261,7 @@ fn test_configuration_presets_with_arenas() {
     assert!(small_config.validate().is_ok());
 }
 
+#[cfg(feature = "memory-optimization")]
 #[test]
 fn test_arena_config_validation() {
     let mut config = MemoryOptimizationConfig::default();
@@ -278,6 +289,7 @@ fn test_arena_config_validation() {
     assert!(config.validate().is_ok());
 }
 
+#[cfg(feature = "memory-optimization")]
 #[test]
 fn test_full_memory_optimization_with_arenas() {
     // Test full memory optimization initialization with arenas
@@ -302,6 +314,7 @@ fn test_full_memory_optimization_with_arenas() {
     assert!(status["metrics"].is_object()); // Should still have basic metrics
 }
 
+#[cfg(feature = "memory-optimization")]
 #[test]
 fn test_global_arena_manager() {
     // Test the global GLOBAL_ARENA_MANAGER static
@@ -319,6 +332,7 @@ fn test_global_arena_manager() {
     assert_eq!(metrics["arena_manager"]["contention_free"], true);
 }
 
+#[cfg(feature = "memory-optimization")]
 #[test]
 fn test_arena_manager_with_custom_capacity() {
     let manager = AnalysisArenaManager::with_capacity(64 * 1024 * 1024); // 64MB
@@ -331,6 +345,7 @@ fn test_arena_manager_with_custom_capacity() {
     assert_eq!(updated_stats.total_arenas_created, 1);
 }
 
+#[cfg(feature = "memory-optimization")]
 #[test]
 fn test_arena_for_computation_owned_for_results_pattern() {
     let manager = AnalysisArenaManager::new();
