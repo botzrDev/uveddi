@@ -19,6 +19,9 @@ pub mod ollama_provider;
 /// The `prompts` submodule provides tools for building and managing prompts for the AI models.
 #[cfg(feature = "ai")]
 pub mod prompts;
+/// The `knowledge` submodule provides the AI Knowledge Library with compressed pattern data.
+#[cfg(feature = "ai")]
+pub mod knowledge;
 
 #[cfg(feature = "ai")]
 pub use engine::AiAnalysisEngine;

@@ -199,6 +199,10 @@ config = "0.14"
 streaming-iterator = "0.1.9"
 # Security patches to force newer versions
 
+# Knowledge Library Dependencies (UV-335)
+# Perfect Hash Functions for O(1) lookups
+phf = { version = "0.11", features = ["macros"] }
+
 [[bin]]
 name = "tui_test"
 path = "src/bin/tui_test.rs"
@@ -218,6 +222,16 @@ iai-callgrind = "0.10"
 serial_test = "3.0"
 proptest = "1.4"
 # Note: Coverage tools (tarpaulin, cargo-llvm-cov) are installed via CI, not as dependencies
+
+[build-dependencies]
+# PHF code generation for build-time index creation
+phf_codegen = "0.11"
+# JSON serialization for knowledge base processing
+serde_json = "1.0"
+# Compression for build-time knowledge library preparation
+flate2 = "1.0"
+# SHA-256 hashing for checksums
+sha2 = "0.10"
 
 [[test]]
 name = "analysis_engine"
