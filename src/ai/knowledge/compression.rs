@@ -589,7 +589,12 @@ mod tests {
 
     #[test]
     fn test_dictionary_generation() {
-        let trainer = DictionaryTrainer::new();
+        let mut trainer = DictionaryTrainer::new();
+        // Add some training samples first
+        trainer.add_sample("fn main() { println!(\"Hello\"); }");
+        trainer.add_sample("class MyClass { public void method() {} }");
+        trainer.add_sample("def function(): return value");
+        
         let dict = trainer.generate_dictionary(1024).unwrap();
         assert!(!dict.is_empty());
         assert!(dict.len() <= 1024);

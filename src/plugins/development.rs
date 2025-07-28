@@ -8,6 +8,7 @@ use crate::plugins::knowledge::*;
 use crate::plugins::PluginError;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 /// Plugin development macros for easy plugin creation
 #[macro_export]
@@ -100,7 +101,7 @@ impl KnowledgePlugin for ExampleAntiPatternPlugin {
     async fn get_framework_knowledge(
         &self,
         _framework: &str,
-    ) -> Result<Option<FrameworkKnowledge>, PluginError> {
+    ) -> Result<Option<crate::plugins::knowledge::FrameworkKnowledge>, PluginError> {
         Ok(None)
     }
 
@@ -137,29 +138,28 @@ impl ExampleAntiPatternPlugin {
             impact: ImpactLevel::High,
             category: AntiPatternCategory::ObjectOriented,
             detection_methods: vec![
-                DetectionMethod {
-                    method_type: DetectionMethodType::Structural,
-                    description: CompressedString::new("Count singleton pattern implementations"),
-                    thresholds: vec![("singleton_count".to_string(), 3.0)],
-                    confidence: 0.8,
+                DetectionMethod::MetricThreshold {
+                    metric_name: "singleton_count".to_string(),
+                    threshold: 3.0,
+                    operator: ComparisonOperator::GreaterThan,
                 }
             ],
             solutions: vec![
                 SolutionPattern {
-                    name: "Dependency Injection".to_string(),
-                    description: CompressedString::new("Replace singletons with dependency injection"),
-                    implementation_steps: vec![
-                        CompressedString::new("1. Identify singleton dependencies"),
-                        CompressedString::new("2. Create interfaces for singleton services"),
-                        CompressedString::new("3. Implement dependency injection container"),
-                        CompressedString::new("4. Refactor code to use injected dependencies"),
-                    ],
-                    benefits: vec![
-                        CompressedString::new("Improved testability"),
-                        CompressedString::new("Reduced coupling"),
-                        CompressedString::new("Better separation of concerns"),
-                    ],
+                    id: "dependency_injection_solution".to_string(),
+                    title: "Dependency Injection".to_string(),
+                    implementation: CompressedString::new(
+                        "Replace singletons with dependency injection:\n\
+                        1. Identify singleton dependencies\n\
+                        2. Create interfaces for singleton services\n\
+                        3. Implement dependency injection container\n\
+                        4. Refactor code to use injected dependencies\n\
+                        Benefits: Improved testability, reduced coupling, better separation of concerns"
+                    ),
+                    examples: vec![],
                     effort_level: EffortLevel::Medium,
+                    prerequisites: vec!["Understanding of dependency injection patterns".to_string()],
+                    expected_impact: ImpactLevel::High,
                 }
             ],
             examples: CodeExamples {
@@ -241,7 +241,7 @@ impl KnowledgePlugin for ExampleEnterprisePlugin {
     async fn get_framework_knowledge(
         &self,
         _framework: &str,
-    ) -> Result<Option<FrameworkKnowledge>, PluginError> {
+    ) -> Result<Option<crate::plugins::knowledge::FrameworkKnowledge>, PluginError> {
         Ok(None)
     }
 
@@ -349,28 +349,26 @@ impl ExampleEnterprisePlugin {
             impact: ImpactLevel::Medium,
             category: AntiPatternCategory::Maintainability,
             detection_methods: vec![
-                DetectionMethod {
-                    method_type: DetectionMethodType::Textual,
-                    description: CompressedString::new("Detect non-standard logging patterns"),
-                    thresholds: vec![("println_usage".to_string(), 1.0)],
-                    confidence: 0.9,
+                DetectionMethod::RegexPattern {
+                    pattern: r"println!\s*\(".to_string(),
+                    context: "logging_standard_violation".to_string(),
                 }
             ],
             solutions: vec![
                 SolutionPattern {
-                    name: "Structured Logging".to_string(),
-                    description: CompressedString::new("Use organization's logging framework"),
-                    implementation_steps: vec![
-                        CompressedString::new("1. Replace println! with log macros"),
-                        CompressedString::new("2. Add correlation IDs to all log messages"),
-                        CompressedString::new("3. Use appropriate log levels"),
-                    ],
-                    benefits: vec![
-                        CompressedString::new("Better observability"),
-                        CompressedString::new("Consistent log format"),
-                        CompressedString::new("Easier debugging"),
-                    ],
+                    id: "structured_logging_solution".to_string(),
+                    title: "Structured Logging".to_string(),
+                    implementation: CompressedString::new(
+                        "Use organization's logging framework:\n\
+                        1. Replace println! with log macros\n\
+                        2. Add correlation IDs to all log messages\n\
+                        3. Use appropriate log levels\n\
+                        Benefits: Better observability, consistent log format, easier debugging"
+                    ),
+                    examples: vec![],
                     effort_level: EffortLevel::Low,
+                    prerequisites: vec!["Access to organization's logging framework".to_string()],
+                    expected_impact: ImpactLevel::Medium,
                 }
             ],
             examples: CodeExamples {
@@ -396,10 +394,8 @@ impl ExampleEnterprisePlugin {
                     id: "sox_001".to_string(),
                     description: "All financial operations must be logged".to_string(),
                     severity: crate::ai::knowledge::context_selection::SeverityLevel::High,
-                    detection: DetectionMethod {
-                        method_type: DetectionMethodType::Semantic,
-                        description: CompressedString::new("Detect financial operations without logging"),
-                        thresholds: vec![],
+                    detection: DetectionMethod::StaticAnalysis {
+                        pattern: "financial_operation_without_logging".to_string(),
                         confidence: 0.85,
                     },
                 }
@@ -425,7 +421,7 @@ impl ExampleEnterprisePlugin {
 /// Example framework-specific plugin (e.g., for React patterns)
 pub struct ExampleFrameworkPlugin {
     metadata: KnowledgePluginMetadata,
-    framework_knowledge: HashMap<String, FrameworkKnowledge>,
+    framework_knowledge: HashMap<String, crate::plugins::knowledge::FrameworkKnowledge>,
     initialized: bool,
 }
 
@@ -478,7 +474,7 @@ impl KnowledgePlugin for ExampleFrameworkPlugin {
     async fn get_framework_knowledge(
         &self,
         framework: &str,
-    ) -> Result<Option<FrameworkKnowledge>, PluginError> {
+    ) -> Result<Option<crate::plugins::knowledge::FrameworkKnowledge>, PluginError> {
         Ok(self.framework_knowledge.get(framework).cloned())
     }
 
@@ -514,29 +510,27 @@ impl ExampleFrameworkPlugin {
             impact: ImpactLevel::Medium,
             category: AntiPatternCategory::Performance,
             detection_methods: vec![
-                DetectionMethod {
-                    method_type: DetectionMethodType::Structural,
-                    description: CompressedString::new("Detect React performance anti-patterns"),
-                    thresholds: vec![("missing_deps".to_string(), 1.0)],
-                    confidence: 0.8,
+                DetectionMethod::AstPattern {
+                    query: "useEffect_without_deps".to_string(),
+                    node_types: vec!["CallExpression".to_string(), "useEffect".to_string()],
                 }
             ],
             solutions: vec![
                 SolutionPattern {
-                    name: "Optimize React Performance".to_string(),
-                    description: CompressedString::new("Use proper dependency management and memoization"),
-                    implementation_steps: vec![
-                        CompressedString::new("1. Add proper dependency arrays to useEffect"),
-                        CompressedString::new("2. Use useCallback for function dependencies"),
-                        CompressedString::new("3. Use useMemo for expensive calculations"),
-                        CompressedString::new("4. Wrap components with React.memo when appropriate"),
-                    ],
-                    benefits: vec![
-                        CompressedString::new("Reduced unnecessary re-renders"),
-                        CompressedString::new("Better performance"),
-                        CompressedString::new("Improved user experience"),
-                    ],
+                    id: "react_performance_optimization".to_string(),
+                    title: "Optimize React Performance".to_string(),
+                    implementation: CompressedString::new(
+                        "Use proper dependency management and memoization:\n\
+                        1. Add proper dependency arrays to useEffect\n\
+                        2. Use useCallback for function dependencies\n\
+                        3. Use useMemo for expensive calculations\n\
+                        4. Wrap components with React.memo when appropriate\n\
+                        Benefits: Reduced unnecessary re-renders, better performance, improved user experience"
+                    ),
+                    examples: vec![],
                     effort_level: EffortLevel::Medium,
+                    prerequisites: vec!["Understanding of React hooks and memoization".to_string()],
+                    expected_impact: ImpactLevel::Medium,
                 }
             ],
             examples: CodeExamples {
@@ -550,7 +544,7 @@ impl ExampleFrameworkPlugin {
             detection_confidence: 0.8,
         };
 
-        let react_knowledge = FrameworkKnowledge {
+        let react_knowledge = crate::plugins::knowledge::FrameworkKnowledge {
             name: "React".to_string(),
             version: "18.x".to_string(),
             patterns: vec![react_pattern],
@@ -616,34 +610,57 @@ impl Default for KnowledgePluginPermissions {
     }
 }
 
-// Plugin creation macro usage examples
-define_knowledge_plugin!(
-    name: "Example Anti-Pattern Plugin",
-    version: "1.0.0",
-    author: "Uveddi Community",
-    description: "Example plugin demonstrating custom anti-pattern definitions",
-    plugin_type: KnowledgePluginType::AntiPattern,
-    supported_languages: [SourceLanguage::Rust, SourceLanguage::Python],
-    implementation: ExampleAntiPatternPlugin
-);
+// Plugin creation functions - separated to avoid macro conflicts
+pub fn create_anti_pattern_plugin() -> Box<dyn KnowledgePlugin> {
+    let metadata = KnowledgePluginMetadata {
+        id: "example-anti-pattern-plugin-1.0.0".to_string(),
+        name: "Example Anti-Pattern Plugin".to_string(),
+        version: "1.0.0".to_string(),
+        author: "Uveddi Community".to_string(),
+        description: "Example plugin demonstrating custom anti-pattern definitions".to_string(),
+        plugin_type: KnowledgePluginType::AntiPattern,
+        supported_languages: vec![SourceLanguage::Rust, SourceLanguage::Python],
+        dependencies: vec![],
+        api_version: "1.0.0".to_string(),
+        capabilities: KnowledgePluginCapabilities::default(),
+        permissions: KnowledgePluginPermissions::default(),
+    };
 
-// Additional plugin examples can be created using the macro
-define_knowledge_plugin!(
-    name: "Enterprise Compliance Plugin",
-    version: "1.0.0",
-    author: "Enterprise Team",
-    description: "Organization-specific patterns and compliance rules",
-    plugin_type: KnowledgePluginType::Enterprise,
-    supported_languages: [SourceLanguage::Universal],
-    implementation: ExampleEnterprisePlugin
-);
+    Box::new(ExampleAntiPatternPlugin::new(metadata))
+}
 
-define_knowledge_plugin!(
-    name: "React Framework Plugin",
-    version: "1.0.0",
-    author: "Frontend Team",
-    description: "React-specific anti-patterns and best practices",
-    plugin_type: KnowledgePluginType::Framework,
-    supported_languages: [SourceLanguage::JavaScript, SourceLanguage::TypeScript],
-    implementation: ExampleFrameworkPlugin
-);
+pub fn create_enterprise_plugin() -> Box<dyn KnowledgePlugin> {
+    let metadata = KnowledgePluginMetadata {
+        id: "enterprise-compliance-plugin-1.0.0".to_string(),
+        name: "Enterprise Compliance Plugin".to_string(),
+        version: "1.0.0".to_string(),
+        author: "Enterprise Team".to_string(),
+        description: "Organization-specific patterns and compliance rules".to_string(),
+        plugin_type: KnowledgePluginType::Enterprise,
+        supported_languages: vec![SourceLanguage::Universal],
+        dependencies: vec![],
+        api_version: "1.0.0".to_string(),
+        capabilities: KnowledgePluginCapabilities::default(),
+        permissions: KnowledgePluginPermissions::default(),
+    };
+
+    Box::new(ExampleEnterprisePlugin::new(metadata))
+}
+
+pub fn create_framework_plugin() -> Box<dyn KnowledgePlugin> {
+    let metadata = KnowledgePluginMetadata {
+        id: "react-framework-plugin-1.0.0".to_string(),
+        name: "React Framework Plugin".to_string(),
+        version: "1.0.0".to_string(),
+        author: "Frontend Team".to_string(),
+        description: "React-specific anti-patterns and best practices".to_string(),
+        plugin_type: KnowledgePluginType::Framework,
+        supported_languages: vec![SourceLanguage::JavaScript, SourceLanguage::TypeScript],
+        dependencies: vec![],
+        api_version: "1.0.0".to_string(),
+        capabilities: KnowledgePluginCapabilities::default(),
+        permissions: KnowledgePluginPermissions::default(),
+    };
+
+    Box::new(ExampleFrameworkPlugin::new(metadata))
+}

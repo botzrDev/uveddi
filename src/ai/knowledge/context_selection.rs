@@ -101,7 +101,7 @@ pub struct DetectedPattern {
 }
 
 /// Severity levels for pattern detection
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize)]
 pub enum SeverityLevel {
     Low,
     Medium,
@@ -110,7 +110,7 @@ pub enum SeverityLevel {
 }
 
 /// Location context for detected patterns
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct LocationContext {
     /// File path
     pub file_path: String,

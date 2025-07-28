@@ -1,3 +1,9 @@
+
+<!-- Badges -->
+![Build Status](https://github.com/botzrDev/uveddi/actions/workflows/build.yml/badge.svg)
+![Test Coverage](https://img.shields.io/badge/coverage-auto-blue)
+![License: MIT](https://img.shields.io/badge/license-MIT-green)
+
 <div class="uveddi-logo-header">
   <img src="./assets/brand/logos/logo-blue.png" alt="Uveddi Logo" class="uveddi-logo" />
   <div class="uveddi-brand-text">
@@ -48,13 +54,15 @@ Our documentation is organized to help you succeed, whether you're a new user or
 - [**Dashboard Guide**](./02-user-guide/dashboard-guide.md) - Navigate the interactive dashboard
 - [**Troubleshooting**](./02-user-guide/troubleshooting.md) - Solutions to common issues
 
+
 ### Architecture & Development
-- [**Architecture Overview**](./04-architecture/overview.md) - System design and components
+- [**Architecture Overview**](./01-architecture/overview.md) - System design and components
 - [**Developer Guide**](./05-development/DEVELOPER_GUIDE.md) - Contributing to Uveddi
 - [**Detector Development**](./05-development/detector_development_guide.md) - Build custom detectors
 
+
 ### Security & Operations
-- [**Security Model**](./04-architecture/security-model.md) - How we protect your data
+- [**Security Model**](./01-architecture/security-model.md) - How we protect your data
 - [**Deployment Guide**](./operations/deployment-guide.md) - Production deployment strategies
 - [**Threat Model**](./security/threat-model.md) - Security considerations and mitigations
 
@@ -125,16 +133,24 @@ uveddi analyze ./src --detectors god-object,tight-coupling --severity high
 
 **Performance-Focused**: Optimized for large codebases with intelligent caching and parallel processing
 
-## Contributing
+
+## Contributing & Reporting Issues
 
 We welcome contributions from developers of all skill levels! Here's how to get involved:
 
-1. **Report Issues** - Found a bug? [Open an issue](https://github.com/botzrDev/uveddi/issues)
+1. **Report Issues**
+   - Found a bug? [Open an issue](https://github.com/botzrDev/uveddi/issues)
+   - **Before reporting:**
+     - Check the [Known Issues](./known-issues.md) and existing [GitHub Issues](https://github.com/botzrDev/uveddi/issues) to avoid duplicates.
+     - Try to reproduce the issue and gather logs or error messages.
+     - **Privacy Reminder:** Please sanitize any sensitive information from logs or screenshots before submitting.
+   - Use the [Bug Report template](https://github.com/botzrDev/uveddi/issues/new?assignees=&labels=bug&template=bug_report.md&title=) for consistency.
 2. **Suggest Features** - Have an idea? We'd love to hear it
 3. **Improve Documentation** - Help make our docs even better
 4. **Submit Code** - Check out our [good first issues](./09-community/GOOD_FIRST_ISSUES.md)
 
 > **New to Open Source?** Check out our [Mentorship System](./09-community/MENTORSHIP_SYSTEM.md) for guidance and support.
+
 
 ## Support & Community
 
@@ -142,6 +158,7 @@ We welcome contributions from developers of all skill levels! Here's how to get 
 - **Discussions**: [GitHub Discussions](https://github.com/botzrDev/uveddi/discussions) for questions and ideas
 - **Issues**: [GitHub Issues](https://github.com/botzrDev/uveddi/issues) for bugs and feature requests
 - **Discord**: [Join our Discord server](https://discord.gg/uveddi) for support and community discussions
+
 
 ## License
 

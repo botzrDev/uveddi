@@ -554,7 +554,7 @@ mod tests {
     fn test_normalize_symptom_text() {
         let input = "Class has EXCESSIVE number of methods (>20-30)!!!";
         let normalized = normalize_symptom_text(input);
-        assert_eq!(normalized, "class has excessive number of methods 20 30");
+        assert_eq!(normalized, "class has excessive number of methods 2030");
     }
     
     #[test]

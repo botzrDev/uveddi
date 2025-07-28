@@ -261,11 +261,11 @@ impl PluginKnowledgeIntegrator {
 
             // Index framework patterns
             for (framework_name, framework_knowledge) in &lang_knowledge.frameworks {
-                for pattern in &framework_knowledge.patterns {
+                for pattern_id in &framework_knowledge.specific_patterns {
                     cache.framework_patterns
                         .entry(framework_name.clone())
                         .or_insert_with(Vec::new)
-                        .push(pattern.id.clone());
+                        .push(pattern_id.clone());
                 }
             }
         }
@@ -273,7 +273,7 @@ impl PluginKnowledgeIntegrator {
 
     /// Index patterns from plugin library
     async fn index_plugin_patterns(&self, plugin_lib: &PluginKnowledgeLibrary, cache: &mut IntegrationCache) {
-        for (plugin_id, plugin_knowledge) in &plugin_lib.plugin_knowledge {
+        for (plugin_id, plugin_knowledge) in plugin_lib.get_all_plugin_knowledge() {
             for pattern in &plugin_knowledge.patterns {
                 cache.pattern_index.insert(
                     pattern.id.clone(),
@@ -316,7 +316,7 @@ impl PluginKnowledgeIntegrator {
         let plugin_lib = self.plugin_library.read().await;
         let mut patterns = Vec::new();
 
-        for plugin_knowledge in plugin_lib.plugin_knowledge.values() {
+        for plugin_knowledge in plugin_lib.get_all_plugin_knowledge().values() {
             patterns.extend(plugin_knowledge.patterns.clone());
         }
 
@@ -367,7 +367,7 @@ impl PluginKnowledgeIntegrator {
 
     /// Calculate relevance score for a pattern
     fn calculate_relevance_score(&self, pattern: &PatternKnowledge, context: &AnalysisContext) -> f32 {
-        let mut score = 0.0;
+        let mut score: f32 = 0.0;
 
         // Base score from pattern confidence
         score += pattern.detection_confidence * 0.3;
@@ -403,7 +403,7 @@ impl PluginKnowledgeIntegrator {
         }
 
         // Remove duplicates
-        solutions.dedup_by(|a, b| a.name == b.name);
+        solutions.dedup_by(|a, b| a.id == b.id);
 
         Ok(solutions)
     }
@@ -424,12 +424,12 @@ impl PluginKnowledgeIntegrator {
         let plugin_lib = self.plugin_library.read().await;
         
         let mut contributions = PluginContributions {
-            total_plugins: plugin_lib.plugin_knowledge.len(),
+            total_plugins: plugin_lib.plugin_count(),
             pattern_contributions: HashMap::new(),
             framework_support: Vec::new(),
         };
 
-        for (plugin_id, plugin_knowledge) in &plugin_lib.plugin_knowledge {
+        for (plugin_id, plugin_knowledge) in plugin_lib.get_all_plugin_knowledge() {
             contributions.pattern_contributions.insert(
                 plugin_id.clone(),
                 plugin_knowledge.patterns.len()
@@ -468,7 +468,7 @@ impl PluginKnowledgeIntegrator {
                 }
                 PatternSource::Plugin(plugin_id) => {
                     let plugin_lib = self.plugin_library.read().await;
-                    if let Some(plugin_knowledge) = plugin_lib.plugin_knowledge.get(plugin_id) {
+                    if let Some(plugin_knowledge) = plugin_lib.get_plugin_knowledge(plugin_id) {
                         for pattern in &plugin_knowledge.patterns {
                             if pattern.id == pattern_id {
                                 return Ok(Some(pattern.clone()));
@@ -492,7 +492,7 @@ impl PluginKnowledgeIntegrator {
                 .map(|lang| lang.patterns.len())
                 .sum::<usize>();
 
-        let plugin_patterns = plugin_lib.plugin_knowledge.values()
+        let plugin_patterns = plugin_lib.get_all_plugin_knowledge().values()
             .map(|plugin| plugin.patterns.len())
             .sum::<usize>();
 

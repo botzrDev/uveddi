@@ -7609,6 +7609,7 @@ dependencies = [
  "num_cpus",
  "oauth2",
  "openidconnect",
+ "paste",
  "persisted",
  "petgraph 0.8.2",
  "phf",

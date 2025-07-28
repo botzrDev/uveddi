@@ -751,6 +751,33 @@ impl PluginKnowledgeLibrary {
     pub fn get_plugin_patterns(&self, plugin_id: &str) -> Option<&Vec<PatternKnowledge>> {
         self.plugin_knowledge.get(plugin_id).map(|k| &k.patterns)
     }
+
+    /// Get all plugin knowledge entries
+    pub fn get_all_plugin_knowledge(&self) -> &HashMap<String, PluginKnowledge> {
+        &self.plugin_knowledge
+    }
+
+    /// Get plugin knowledge by ID
+    pub fn get_plugin_knowledge(&self, plugin_id: &str) -> Option<&PluginKnowledge> {
+        self.plugin_knowledge.get(plugin_id)
+    }
+
+    /// Get number of plugins
+    pub fn plugin_count(&self) -> usize {
+        self.plugin_knowledge.len()
+    }
+
+    /// Get all plugin IDs
+    pub fn plugin_ids(&self) -> Vec<String> {
+        self.plugin_knowledge.keys().cloned().collect()
+    }
+
+    /// Get all patterns from all plugins
+    pub fn get_all_patterns(&self) -> Vec<&PatternKnowledge> {
+        self.plugin_knowledge.values()
+            .flat_map(|k| k.patterns.iter())
+            .collect()
+    }
 }
 
 /// Performance metrics for plugin library

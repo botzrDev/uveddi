@@ -108,6 +108,7 @@ color-eyre = "0.6"
 ndarray = "0.16.1"
 strum = { version = "0.26", features = ["derive"] }
 strum_macros = "0.26"
+paste = "1.0"
 # WASM plugin system dependencies (optional via features)
 wasmtime = { version = "34.0.2", features = ["component-model"], optional = true }
 wasmtime-wasi = { version = "34.0.2", optional = true }
