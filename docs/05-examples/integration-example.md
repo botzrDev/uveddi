@@ -20,7 +20,10 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
-      - run: cargo install uveddi
+      - run: |
+          git clone https://github.com/botzrDev/uveddi.git
+          cd uveddi
+          cargo build --release --features="alpha"
       - run: uveddi analyze ./src --format markdown --output analysis.md
       - uses: actions/upload-artifact@v3
         if: always()

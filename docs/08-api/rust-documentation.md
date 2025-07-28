@@ -563,7 +563,7 @@ pub fn detect_patterns(input: &str) -> String {
         issues.push(DetectedIssue {
             issue_type: "unfinished_code".to_string(),
             severity: "warning".to_string(),
-            description: "Found TODO marker in production code".to_string(),
+            description: "Found unfinished code marker in production code".to_string(),
             line_number: 1, // Would need to parse actual line
             column_number: 1,
         });

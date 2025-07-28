@@ -31,9 +31,12 @@
 
 ### Installation
 
-#### Quick Install (Not Available Yet)
+#### Alpha Installation (Source Build Required)
 ```bash
-# Installation script not yet available - use source build
+# Alpha release - source build only
+git clone https://github.com/botzrDev/uveddi.git
+cd uveddi
+cargo build --release --features="alpha"
 ```
 
 #### From Source
@@ -43,9 +46,11 @@ cd uveddi
 cargo install --path .
 ```
 
-#### Using Cargo (Not Available Yet)
+#### System Installation (Optional)
 ```bash
-# Package not published to crates.io yet - use source build
+# Install to system PATH after building
+cargo install --path . --features="alpha"
+# Then use 'uveddi' instead of './target/release/uveddi'
 ```
 
 ### Basic Usage
@@ -1203,7 +1208,7 @@ Interactive terminal interface implementing The Elm Architecture (TEA) pattern f
 # Launch TUI (development)
 cargo run --bin tui_test --features="tui"
 
-# Note: TUI project and theme options not yet implemented
+# Note: Additional TUI features are planned for future releases
 # Use configuration files for customization
 ```
 
@@ -1419,14 +1424,8 @@ uveddi config show
 uveddi config set <key> <value>
 uveddi config validate
 
-# Plugin commands (not yet implemented)
-# Plugin system in development
-uveddi plugin remove <plugin>
-
-# Chaos engineering commands (not yet implemented)
-# Chaos features available via feature flags only
-uveddi chaos stop <experiment-id>
-uveddi chaos list
+# Plugin and chaos engineering commands are planned for future releases
+# Current alpha focuses on core analysis functionality
 ```
 
 #### Global Options

@@ -140,7 +140,7 @@ pub enum Commands {
 ### Phase 3: Resolver Implementation (Week 5-6)
 
 #### Complete Resolver Functions
-Implement all TODO placeholders in `resolvers.rs` with:
+Implement all resolver functions in `resolvers.rs` with:
 - Database queries using the extended DatabaseManager
 - Error handling with proper GraphQL error types
 - Field-level permissions and validation

@@ -336,18 +336,15 @@ The TUI seamlessly integrates with Uveddi's CLI functionality:
 ### Export Configuration
 ```bash
 # Generate CLI command from TUI settings
-# Export command not yet implemented
-# Use manual configuration copying for now
-
-# Run the exported command
-bash analysis.sh
+# Feature planned for future release
+# Currently use manual configuration
 ```
 
 ### Import Settings
 ```bash
 # Import CLI configuration into TUI
-# Import config command not yet implemented
-# Use manual configuration files instead
+# Feature planned for future release
+# Currently use manual configuration files
 ```
 
 ## 🚀 Advanced Features

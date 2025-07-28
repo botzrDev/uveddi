@@ -6,16 +6,18 @@
 Uveddi is an architectural analysis tool that helps identify anti-patterns and maintain design integrity in codebases.
 
 ### Which languages does Uveddi support?
-Currently supports Rust, Python, and JavaScript with more languages coming soon.
+Currently supports Rust, Python, and JavaScript. Additional language support is planned for future releases.
 
 ## Installation
 
 ### How do I install Uveddi?
-You can install Uveddi using cargo:
+**Alpha Release**: Currently requires building from source:
 ```bash
-cargo install uveddi
+git clone https://github.com/botzrDev/uveddi.git
+cd uveddi
+cargo build --release --features="alpha"
 ```
-Or by building from source. Please see the [Installation Guide](../../docs/01-getting-started/installation.md) for more details.
+Please see the [Installation Guide](../../docs/01-getting-started/installation.md) for complete instructions.
 
 ### What are the system requirements?
 - Rust toolchain (latest stable version)

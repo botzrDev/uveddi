@@ -18,7 +18,7 @@ We're excited to announce the alpha release of Uveddi, an AI-powered architectur
 ## Known Limitations
 
 1. **Limited Language Support**: Currently supports Rust, Python, and JavaScript analysis. Support for additional languages is planned.
-2. **Plugin Sandboxing**: WebAssembly (WASM) sandboxing for plugins is not yet implemented (UV-456).
+2. **Plugin Sandboxing**: WebAssembly (WASM) sandboxing for plugins is planned for future release (UV-456).
 3. **Enterprise Scalability**: Performance degrades with very large codebases (>1M LOC) (UV-512).
 4. **UI Polish**: The TUI interface requires additional refinement for better user experience (UV-478).
 5. **Documentation Gaps**: Some advanced features lack comprehensive documentation (UV-523).
