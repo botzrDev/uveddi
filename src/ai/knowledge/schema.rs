@@ -9,7 +9,7 @@ use std::collections::HashMap;
 use crate::ai::knowledge::compression::{CompressedString, CompressionMetadata};
 
 /// Primary source languages supported by the knowledge library
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum SourceLanguage {
     Rust,
     Python,
@@ -24,7 +24,7 @@ pub enum SourceLanguage {
 }
 
 /// Anti-pattern categories for hierarchical organization
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum AntiPatternCategory {
     /// Object-oriented design issues
     ObjectOriented,
