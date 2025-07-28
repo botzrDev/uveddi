@@ -64,34 +64,58 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Ok(());
     }
 
-    println!("cargo:warning=Building AI Knowledge Library with compression and indexing...");
+    println!("cargo:warning=Building AI Knowledge Library with comprehensive patterns and compression...");
 
-    // 1. Load and validate knowledge base
-    let knowledge_base = load_knowledge_base()?;
-    println!("cargo:warning=Loaded {} patterns from knowledge base", 
-             count_patterns(&knowledge_base));
+    // Use the new comprehensive knowledge library generation system
+    if std::path::Path::new("src").exists() {
+        // Full implementation using the new knowledge library system
+        println!("cargo:warning=Using comprehensive knowledge library system");
+        
+        // This would normally be:
+        // use uveddi::ai::knowledge::build_integration::generate_knowledge_library_for_build;
+        // generate_knowledge_library_for_build(&out_path)?;
+        
+        // For now, provide integration hook with fallback
+        match generate_comprehensive_knowledge_library(&out_path) {
+            Ok(_) => {
+                println!("cargo:warning=Successfully generated comprehensive knowledge library");
+            }
+            Err(e) => {
+                println!("cargo:warning=Comprehensive generation failed ({}), falling back to basic system", e);
+                
+                // Fallback to existing system
+                let knowledge_base = load_knowledge_base()?;
+                println!("cargo:warning=Loaded {} patterns from knowledge base (fallback)", 
+                         count_patterns(&knowledge_base));
 
-    // 2. Train compression dictionary
-    let dictionary = train_compression_dictionary(&knowledge_base)?;
-    println!("cargo:warning=Trained compression dictionary: {} bytes", dictionary.len());
+                let dictionary = train_compression_dictionary(&knowledge_base)?;
+                println!("cargo:warning=Trained compression dictionary: {} bytes", dictionary.len());
 
-    // 3. Compress with trained dictionary
-    let compressed_data = compress_with_dictionary(&knowledge_base, &dictionary)?;
-    let original_size = calculate_original_size(&knowledge_base);
-    let compression_ratio = compressed_data.len() as f32 / original_size as f32;
-    
-    println!("cargo:warning=Compression results: {} -> {} bytes ({:.1}% reduction)", 
-             original_size, compressed_data.len(), (1.0 - compression_ratio) * 100.0);
+                let compressed_data = compress_with_dictionary(&knowledge_base, &dictionary)?;
+                let original_size = calculate_original_size(&knowledge_base);
+                let compression_ratio = compressed_data.len() as f32 / original_size as f32;
+                
+                println!("cargo:warning=Compression results: {} -> {} bytes ({:.1}% reduction)", 
+                         original_size, compressed_data.len(), (1.0 - compression_ratio) * 100.0);
 
-    // 4. Generate PHF indices
-    generate_phf_indices(&knowledge_base, &out_path)?;
-    println!("cargo:warning=Generated PHF indices for O(1) lookups");
+                generate_phf_indices(&knowledge_base, &out_path)?;
+                println!("cargo:warning=Generated PHF indices for O(1) lookups");
 
-    // 5. Validate compression targets
-    validate_compression_targets(&compressed_data, original_size)?;
-
-    // 6. Write compressed data and metadata
-    write_compressed_library(&out_path, &compressed_data, &dictionary, original_size)?;
+                validate_compression_targets(&compressed_data, original_size)?;
+                write_compressed_library(&out_path, &compressed_data, &dictionary, original_size)?;
+            }
+        }
+    } else {
+        // Fallback for environments without source access
+        println!("cargo:warning=Source not available, using basic knowledge library system");
+        let knowledge_base = load_knowledge_base()?;
+        let dictionary = train_compression_dictionary(&knowledge_base)?;
+        let compressed_data = compress_with_dictionary(&knowledge_base, &dictionary)?;
+        let original_size = calculate_original_size(&knowledge_base);
+        generate_phf_indices(&knowledge_base, &out_path)?;
+        validate_compression_targets(&compressed_data, original_size)?;
+        write_compressed_library(&out_path, &compressed_data, &dictionary, original_size)?;
+    }
 
     println!("cargo:warning=Knowledge library build completed successfully");
     Ok(())
@@ -459,6 +483,40 @@ fn validate_compression_targets(compressed_data: &[u8], original_size: usize) ->
              size_reduction, compressed_data.len());
 
     Ok(())
+}
+
+/// Generate comprehensive knowledge library using the new system
+fn generate_comprehensive_knowledge_library(out_path: &Path) -> Result<(), BuildError> {
+    // This function would integrate with the comprehensive knowledge library system
+    // For now, it returns an error to trigger fallback, but in a full implementation
+    // it would call the build integration module
+    
+    // The full implementation would be:
+    /*
+    use crate::ai::knowledge::build_integration::KnowledgeLibraryBuilder;
+    
+    let builder = KnowledgeLibraryBuilder::new()
+        .with_strict_validation(true)
+        .with_compression_optimization(true)
+        .with_compression_target(0.25);
+    
+    let artifacts = builder.generate_for_build(out_path)
+        .map_err(|e| BuildError::CompressionError(e.to_string()))?;
+    
+    println!("cargo:warning=Generated comprehensive knowledge library with {} patterns", 
+             artifacts.metadata.pattern_count);
+    println!("cargo:warning=Compression: {} -> {} bytes ({:.1}% reduction)",
+             artifacts.original_size,
+             artifacts.compressed_data.len(),
+             (1.0 - artifacts.metadata.compression_ratio) * 100.0);
+    
+    Ok(())
+    */
+    
+    // For now, return error to trigger fallback to existing system
+    Err(BuildError::CompressionError(
+        "Comprehensive knowledge library system not yet integrated".to_string()
+    ))
 }
 
 /// Write compressed library data and metadata
