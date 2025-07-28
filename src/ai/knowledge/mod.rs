@@ -1,1 +1,80 @@
-//! AI Knowledge Library Infrastructure\n//! \n//! This module provides the complete infrastructure for Uveddi's AI Knowledge Library,\n//! including schema definitions, compression, indexing, loading, performance monitoring,\n//! concurrent access patterns, AI integration, error handling, and configuration management.\n//!\n//! Key Features:\n//! - Hierarchical schema optimized for AI consumption and zstd compression\n//! - Perfect Hash Function (PHF) indexing for O(1) lookups\n//! - Dictionary-trained compression achieving 70-75% size reduction\n//! - Production-ready loading with integrity validation and error recovery\n//! - High-performance concurrent access with thread-safety guarantees\n//! - AI engine integration with smart prompt building and context optimization\n//! - Comprehensive monitoring, alerting, and observability\n//! - Extensible design supporting language-specific and custom knowledge\n//! - Build-time preprocessing for compression and index generation\n\n// Core modules\npub mod schema;\npub mod compression;\npub mod indexing;\npub mod loader;\n\n// Advanced infrastructure modules\npub mod performance;\npub mod concurrent;\npub mod integration;\npub mod errors;\npub mod config;\n\n// Knowledge content modules\npub mod patterns;\npub mod population;\npub mod validation;\npub mod build_integration;\n\n// Re-export core functionality\npub use schema::*;\npub use compression::*;\npub use indexing::*;\npub use loader::*;\n\n// Re-export infrastructure components\npub use performance::{\n    KnowledgePerformanceMonitor, PerformanceMetrics, PerformanceReport,\n    OptimizationSuggestion, PerformanceTargets\n};\npub use concurrent::{\n    ConcurrentKnowledgeAccess, AccessStatistics, ConcurrentHealthStatus,\n    UpdateNotification, UpdateReceiver\n};\npub use integration::{\n    AIKnowledgeIntegration, EnhancedPrompt, PatternContext, ContextRequirements,\n    SmartPromptBuilder, RelatedPattern\n};\npub use errors::{\n    KnowledgeInfrastructureError, ErrorRecoverySystem, RecoveryResult,\n    MinimalKnowledgeAccess, CircuitBreaker\n};\npub use config::{\n    KnowledgeInfrastructureConfig, ConfigurationManager, MonitoringSystem,\n    PerformanceConfig, MonitoringConfig\n};\n\n// Re-export knowledge content functionality\npub use population::{\n    populate_knowledge_library, populate_from_detector_analysis, PopulationError\n};\npub use validation::{\n    KnowledgeValidator, ValidationReport, ValidationIssue, Severity\n};\npub use build_integration::{\n    KnowledgeLibraryBuilder, BuildArtifacts, CompressionMetadata,\n    generate_knowledge_library_for_build\n};\n
+//! AI Knowledge Library Infrastructure
+//! 
+//! This module provides the complete infrastructure for Uveddi's AI Knowledge Library,
+//! including schema definitions, compression, indexing, loading, performance monitoring,
+//! concurrent access patterns, AI integration, error handling, and configuration management.
+//!
+//! Key Features:
+//! - Hierarchical schema optimized for AI consumption and zstd compression
+//! - Perfect Hash Function (PHF) indexing for O(1) lookups
+//! - Dictionary-trained compression achieving 70-75% size reduction
+//! - Production-ready loading with integrity validation and error recovery
+//! - High-performance concurrent access with thread-safety guarantees
+//! - AI engine integration with smart prompt building and context optimization
+//! - Comprehensive monitoring, alerting, and observability
+//! - Extensible design supporting language-specific and custom knowledge
+//! - Build-time preprocessing for compression and index generation
+
+// Core modules
+pub mod schema;
+pub mod compression;
+pub mod indexing;
+pub mod loader;
+
+// Advanced infrastructure modules
+pub mod performance;
+pub mod concurrent;
+pub mod integration;
+pub mod errors;
+pub mod config;
+
+// Knowledge content modules
+pub mod patterns;
+pub mod language_integration;
+pub mod population;
+pub mod validation;
+pub mod build_integration;
+
+// Re-export core functionality
+pub use schema::*;
+pub use compression::*;
+pub use indexing::*;
+pub use loader::*;
+
+// Re-export infrastructure components
+pub use performance::{
+    KnowledgePerformanceMonitor, PerformanceMetrics, PerformanceReport,
+    OptimizationSuggestion, PerformanceTargets
+};
+pub use concurrent::{
+    ConcurrentKnowledgeAccess, AccessStatistics, ConcurrentHealthStatus,
+    UpdateNotification, UpdateReceiver
+};
+pub use integration::{
+    AIKnowledgeIntegration, EnhancedPrompt, PatternContext, ContextRequirements,
+    SmartPromptBuilder, RelatedPattern
+};
+pub use errors::{
+    KnowledgeInfrastructureError, ErrorRecoverySystem, RecoveryResult,
+    MinimalKnowledgeAccess, CircuitBreaker
+};
+pub use config::{
+    KnowledgeInfrastructureConfig, ConfigurationManager, MonitoringSystem,
+    PerformanceConfig, MonitoringConfig
+};
+
+// Re-export knowledge content functionality
+pub use population::{
+    populate_knowledge_library, populate_from_detector_analysis, PopulationError
+};
+pub use validation::{
+    KnowledgeValidator, ValidationReport, ValidationIssue, Severity
+};
+pub use build_integration::{
+    KnowledgeLibraryBuilder, BuildArtifacts, CompressionMetadata,
+    generate_knowledge_library_for_build
+};
+pub use language_integration::{
+    LanguageKnowledgeIntegrator, EnhancedPattern, LanguageContext, PatternMetadata,
+    LanguageIndices, IntegratedKnowledgeFactory
+};

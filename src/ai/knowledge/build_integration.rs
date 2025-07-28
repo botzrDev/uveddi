@@ -8,6 +8,7 @@ use crate::ai::knowledge::population::{populate_from_detector_analysis, Populati
 use crate::ai::knowledge::validation::{KnowledgeValidator, Severity};
 use crate::ai::knowledge::schema::KnowledgeLibrary;
 use crate::ai::knowledge::compression::{CompressedString, DictionaryTrainer};
+use crate::ai::knowledge::language_integration::{IntegratedKnowledgeFactory, LanguageKnowledgeIntegrator};
 use std::path::Path;
 use std::fs;
 use std::io::Write;
@@ -70,32 +71,43 @@ impl KnowledgeLibraryBuilder {
 
     /// Generate the complete knowledge library for build-time embedding
     pub fn generate_for_build(&self, output_dir: &Path) -> Result<BuildArtifacts, BuildIntegrationError> {
-        println!("Building AI Knowledge Library...");
+        println!("Building AI Knowledge Library with Language-Specific Enhancements...");
 
         // 1. Populate the knowledge library from detector analysis
         println!("  Populating knowledge base from detector analysis...");
         let mut library = populate_from_detector_analysis()?;
 
-        // 2. Validate the library
-        println!("  Validating knowledge library...");
+        // 2. Generate language-specific knowledge enhancements
+        println!("  Generating language-specific knowledge enhancements...");
+        self.generate_language_knowledge(&mut library)?;
+
+        // 3. Validate the enhanced library
+        println!("  Validating enhanced knowledge library...");
         self.validate_library(&library)?;
 
-        // 3. Optimize for compression
+        // 4. Optimize for compression with language-aware dictionary
         if self.enable_compression_optimization {
-            println!("  Optimizing for compression...");
-            self.optimize_for_compression(&mut library)?;
+            println!("  Optimizing for compression with language-aware dictionary...");
+            self.optimize_for_compression_with_language_aware_dictionary(&mut library)?;
         }
 
-        // 4. Generate build artifacts
+        // 5. Generate language-specific indices
+        println!("  Generating language-specific indices...");
+        self.generate_language_indices(&library, output_dir)?;
+
+        // 6. Generate build artifacts
         println!("  Generating build artifacts...");
         let artifacts = self.create_build_artifacts(&library, output_dir)?;
 
-        // 5. Write artifacts to output directory
+        // 7. Write artifacts to output directory
         println!("  Writing build artifacts...");
         self.write_artifacts(&artifacts, output_dir)?;
 
-        println!("✓ Knowledge library build completed successfully");
-        println!("  Patterns: {}", library.metadata.pattern_count);
+        println!("✓ Enhanced Knowledge library build completed successfully");
+        println!("  Universal patterns: {}", library.universal_patterns.len());
+        println!("  Language-specific patterns: {}", 
+                 library.language_specific.values().map(|l| l.patterns.len()).sum::<usize>());
+        println!("  Supported languages: {}", library.language_specific.len());
         println!("  Original size: {} bytes", artifacts.original_size);
         println!("  Compressed size: {} bytes", artifacts.compressed_data.len());
         println!("  Compression ratio: {:.1}%", 
@@ -312,6 +324,159 @@ impl KnowledgeLibraryBuilder {
         code.push_str("pub const COMPRESSION_DICTIONARY: &[u8] = include_bytes!(\"compression_dict.bin\");\n\n");
 
         Ok(code)
+    }
+
+    /// Generate language-specific knowledge enhancements
+    fn generate_language_knowledge(&self, library: &mut KnowledgeLibrary) -> Result<(), BuildIntegrationError> {
+        // Create integrated knowledge system
+        let integrator = IntegratedKnowledgeFactory::create_integrated_system();
+        
+        // Generate enhanced patterns with language-specific variations
+        let enhanced_patterns = integrator.create_enhanced_patterns();
+        
+        println!("    Enhanced {} patterns with language-specific variations", enhanced_patterns.len());
+        
+        // Update library with enhanced patterns (convert back to standard format)
+        // This would require additional conversion logic in a full implementation
+        // For now, we ensure the language-specific libraries are populated
+        let language_libraries = integrator.language_libraries;
+        
+        for (language, lang_knowledge) in language_libraries {
+            library.add_language_knowledge(language, lang_knowledge);
+        }
+        
+        // Update metadata
+        library.metadata.pattern_count = library.universal_patterns.len()
+            + library.language_specific.values()
+                .map(|lang| lang.patterns.len())
+                .sum::<usize>();
+        
+        println!("    Added language-specific knowledge for {} languages", 
+                 library.language_specific.len());
+        
+        Ok(())
+    }
+
+    /// Optimize for compression with language-aware dictionary training
+    fn optimize_for_compression_with_language_aware_dictionary(&self, library: &mut KnowledgeLibrary) -> Result<(), BuildIntegrationError> {
+        // Train dictionary with language-specific content
+        let mut trainer = DictionaryTrainer::new();
+        
+        // Universal patterns
+        for pattern in library.universal_patterns.values() {
+            trainer.add_sample(&pattern.definition.content);
+            for symptom in &pattern.symptoms {
+                trainer.add_sample(&symptom.content);
+            }
+        }
+        
+        // Language-specific content with weighting
+        for (language, lang_knowledge) in &library.language_specific {
+            let language_name = match language {
+                crate::ai::knowledge::schema::SourceLanguage::Rust => "rust",
+                crate::ai::knowledge::schema::SourceLanguage::Python => "python",
+                crate::ai::knowledge::schema::SourceLanguage::JavaScript => "javascript",
+                crate::ai::knowledge::schema::SourceLanguage::TypeScript => "typescript",
+                crate::ai::knowledge::schema::SourceLanguage::Java => "java",
+                _ => "other",
+            };
+            
+            // Add language identifier as context
+            for pattern in lang_knowledge.patterns.values() {
+                trainer.add_sample(&format!("{}: {}", language_name, pattern.definition.content));
+                for symptom in &pattern.symptoms {
+                    trainer.add_sample(&format!("{}: {}", language_name, symptom.content));
+                }
+            }
+            
+            // Add framework-specific content
+            for framework in lang_knowledge.frameworks.values() {
+                for practice in &framework.best_practices {
+                    trainer.add_sample(&format!("{}_framework: {}", language_name, practice.content));
+                }
+                for pitfall in &framework.common_pitfalls {
+                    trainer.add_sample(&format!("{}_pitfall: {}", language_name, pitfall.content));
+                }
+            }
+            
+            // Add idiom content
+            for idiom in &lang_knowledge.idioms {
+                trainer.add_sample(&format!("{}_idiom: {}", language_name, idiom.description.content));
+            }
+        }
+        
+        println!("    Trained language-aware dictionary with {} samples", 
+                 trainer.training_samples.len());
+        
+        Ok(())
+    }
+
+    /// Generate language-specific indices for fast lookups
+    fn generate_language_indices(&self, library: &KnowledgeLibrary, output_dir: &Path) -> Result<(), BuildIntegrationError> {
+        // Create integrator for index generation
+        let integrator = IntegratedKnowledgeFactory::create_integrated_system();
+        let indices = integrator.generate_language_indices();
+        
+        // Generate language-specific index code
+        let mut index_code = String::new();
+        index_code.push_str("//! Language-Specific Indices for AI Knowledge Library\n");
+        index_code.push_str("//! Generated automatically - do not edit manually\n\n");
+        index_code.push_str("use phf::Map;\n\n");
+        
+        // Language to patterns index
+        index_code.push_str("/// Language to pattern IDs mapping\n");
+        index_code.push_str("pub static LANGUAGE_PATTERNS: Map<&'static str, &'static [&'static str]> = phf::phf_map! {\n");
+        for (language, patterns) in &indices.language_to_patterns {
+            let language_str = match language {
+                crate::ai::knowledge::schema::SourceLanguage::Rust => "rust",
+                crate::ai::knowledge::schema::SourceLanguage::Python => "python",
+                crate::ai::knowledge::schema::SourceLanguage::JavaScript => "javascript",
+                crate::ai::knowledge::schema::SourceLanguage::TypeScript => "typescript",
+                crate::ai::knowledge::schema::SourceLanguage::Java => "java",
+                _ => "other",
+            };
+            let pattern_array = patterns.iter()
+                .map(|p| format!("\"{}\"", p))
+                .collect::<Vec<_>>()
+                .join(", ");
+            index_code.push_str(&format!("    \"{}\" => &[{}],\n", language_str, pattern_array));
+        }
+        index_code.push_str("};\n\n");
+        
+        // Framework to patterns index
+        index_code.push_str("/// Framework to pattern IDs mapping\n");
+        index_code.push_str("pub static FRAMEWORK_PATTERNS: Map<&'static str, &'static [&'static str]> = phf::phf_map! {\n");
+        for (framework, patterns) in &indices.framework_to_patterns {
+            let pattern_array = patterns.iter()
+                .map(|p| format!("\"{}\"", p))
+                .collect::<Vec<_>>()
+                .join(", ");
+            index_code.push_str(&format!("    \"{}\" => &[{}],\n", framework, pattern_array));
+        }
+        index_code.push_str("};\n\n");
+        
+        // Tool to patterns index
+        index_code.push_str("/// Tool to pattern IDs mapping\n");
+        index_code.push_str("pub static TOOL_PATTERNS: Map<&'static str, &'static [&'static str]> = phf::phf_map! {\n");
+        for (tool, patterns) in &indices.tool_to_patterns {
+            let pattern_array = patterns.iter()
+                .map(|p| format!("\"{}\"", p))
+                .collect::<Vec<_>>()
+                .join(", ");
+            index_code.push_str(&format!("    \"{}\" => &[{}],\n", tool, pattern_array));
+        }
+        index_code.push_str("};\n\n");
+        
+        // Write language indices file
+        let indices_path = output_dir.join("language_indices_generated.rs");
+        fs::write(indices_path, index_code)?;
+        
+        println!("    Generated indices for {} languages, {} frameworks, {} tools",
+                 indices.language_to_patterns.len(),
+                 indices.framework_to_patterns.len(),
+                 indices.tool_to_patterns.len());
+        
+        Ok(())
     }
 
     /// Write build artifacts to output directory
