@@ -110,7 +110,8 @@
       "Bash(for:*)",
       "Bash(do mv \"$file\" \"$file.disabled\")",
       "Bash(done)",
-      "Bash(DISPLAY=:99 npm run test:e2e:headless)"
+      "Bash(DISPLAY=:99 npm run test:e2e:headless)",
+      "Bash(timeout 60s cargo test --test knowledge_integration_tests --features=\"alpha\")"
     ],
     "deny": []
   }

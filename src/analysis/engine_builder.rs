@@ -16,6 +16,10 @@ use crate::cache::result_cache::ResultCache;
 use crate::error::UveddiError;
 use crate::plugins::WasmPluginEngine;
 
+// Knowledge Library imports
+use crate::ai::knowledge::{KnowledgeLibrary, ContextSelector};
+use crate::ai::engine::AiAnalysisEngine;
+
 /// Builder for `AnalysisEngine` to provide flexible and consistent construction.
 ///
 /// This builder supports both synchronous and asynchronous construction paths,
@@ -60,6 +64,11 @@ pub struct AnalysisEngineBuilder {
     injected_ast_parser: Option<Box<dyn AstParserTrait>>,
     injected_dependency_extractor: Option<Box<dyn DependencyExtractorTrait>>,
     injected_result_cache: Option<Box<dyn ResultCacheTrait>>,
+    
+    // Knowledge Library options
+    enable_knowledge_enhancement: bool,
+    enable_ai_explanations: bool,
+    knowledge_library_path: Option<PathBuf>,
 }
 
 impl Default for AnalysisEngineBuilder {
@@ -72,6 +81,11 @@ impl Default for AnalysisEngineBuilder {
             injected_ast_parser: None,
             injected_dependency_extractor: None,
             injected_result_cache: None,
+            
+            // Knowledge Library defaults
+            enable_knowledge_enhancement: false,
+            enable_ai_explanations: false,
+            knowledge_library_path: None,
         }
     }
 }
@@ -130,6 +144,24 @@ impl AnalysisEngineBuilder {
         self
     }
 
+    /// Enable knowledge library integration for enhanced analysis
+    pub fn with_knowledge_library(mut self, enable: bool) -> Self {
+        self.enable_knowledge_enhancement = enable;
+        self
+    }
+
+    /// Enable AI explanations (requires knowledge library to be enabled)
+    pub fn with_ai_explanations(mut self, enable: bool) -> Self {
+        self.enable_ai_explanations = enable;
+        self
+    }
+
+    /// Set a custom path for the knowledge library
+    pub fn with_knowledge_library_path(mut self, path: &Path) -> Self {
+        self.knowledge_library_path = Some(path.to_path_buf());
+        self
+    }
+
     /// Builds the `AnalysisEngine` synchronously.
     ///
     /// This method should be used when no asynchronous operations (like plugin loading)
@@ -137,20 +169,29 @@ impl AnalysisEngineBuilder {
     ///
     /// # Errors
     /// Returns `UveddiError` if initialization fails.
-    pub fn build(self) -> crate::error::Result<crate::analysis::AnalysisEngine> {
+    pub fn build(mut self) -> crate::error::Result<crate::analysis::AnalysisEngine> {
         if self.enable_plugins {
             warn!("Plugins enabled, but building synchronously. Use `build_async().await` for proper plugin initialization.");
         }
+
+        // Extract all values before using self methods to avoid partial moves
+        let enable_knowledge = self.enable_knowledge_enhancement;
+        let enable_ai = self.enable_ai_explanations;
+        let injected_result_cache = self.injected_result_cache;
+        let in_memory_cache = self.in_memory_cache;
+        let cache_path = self.cache_path;
+        let injected_ast_parser = self.injected_ast_parser;
+        let injected_dependency_extractor = self.injected_dependency_extractor;
 
         let detectors = self
             .detectors
             .unwrap_or_else(DetectorFactory::create_default_detectors);
 
-        let cache = if let Some(injected_cache) = self.injected_result_cache {
+        let cache = if let Some(injected_cache) = injected_result_cache {
             injected_cache
-        } else if self.in_memory_cache {
+        } else if in_memory_cache {
             Box::new(ResultCacheAdapter::new(ResultCache::new_in_memory()?))
-        } else if let Some(path) = self.cache_path {
+        } else if let Some(path) = cache_path {
             Box::new(ResultCacheAdapter::new(ResultCache::new(&path)?))
         } else {
             Box::new(ResultCacheAdapter::new(ResultCache::new(&PathBuf::from(
@@ -164,7 +205,7 @@ impl AnalysisEngineBuilder {
 
         // Initialize components
         let config_service = Arc::new(ConfigurationService::new());
-        let ast_provider = if let Some(parser) = self.injected_ast_parser {
+        let ast_provider = if let Some(parser) = injected_ast_parser {
             Arc::new(AstProviderImpl::new()?)
         } else {
             Arc::new(AstProviderImpl::new()?)
@@ -173,7 +214,7 @@ impl AnalysisEngineBuilder {
         let aggregator = Arc::new(AnalysisAggregator::new());
 
         // Components that need dependencies
-        let dependency_builder = if let Some(extractor) = self.injected_dependency_extractor {
+        let dependency_builder = if let Some(extractor) = injected_dependency_extractor {
             Arc::new(DependencyGraphBuilderImpl::new(ast_provider.clone())?)
         } else {
             Arc::new(DependencyGraphBuilderImpl::new(ast_provider.clone())?)
@@ -187,6 +228,57 @@ impl AnalysisEngineBuilder {
             detectors,
         ));
 
+        // Initialize knowledge library components if enabled
+        let knowledge_library_result = if enable_knowledge {
+            match self.knowledge_library_path {
+                Some(ref custom_path) => {
+                    info!("Loading knowledge library from custom path: {:?}", custom_path);
+                    // TODO: Implement custom path loading
+                    Ok(KnowledgeLibrary::new())
+                },
+                None => {
+                    info!("Loading default knowledge library");
+                    // For now, create an empty knowledge library
+                    // TODO: Load from bundled knowledge base
+                    Ok(KnowledgeLibrary::new())
+                }
+            }
+        } else {
+            Err(UveddiError::config_error("Knowledge library disabled", "builder"))
+        };
+
+        let (knowledge_library, context_selector, ai_engine) = if enable_knowledge {
+            let knowledge_lib = match knowledge_library_result {
+                Ok(lib) => Some(Arc::new(lib)),
+                Err(e) => {
+                    warn!("Failed to initialize knowledge library: {}. Disabling knowledge enhancement.", e);
+                    None
+                }
+            };
+
+            let context_sel = if let Some(ref lib) = knowledge_lib {
+                match ContextSelector::new(Arc::clone(lib)) {
+                    Ok(selector) => Some(Arc::new(selector)),
+                    Err(e) => {
+                        warn!("Failed to create context selector: {}. Disabling knowledge enhancement.", e);
+                        None
+                    }
+                }
+            } else {
+                None
+            };
+
+            let ai_eng = if enable_ai {
+                Some(Arc::new(AiAnalysisEngine::new()))
+            } else {
+                None
+            };
+
+            (knowledge_lib, context_sel, ai_eng)
+        } else {
+            (None, None, None)
+        };
+
         Ok(crate::analysis::AnalysisEngine {
             config_service,
             ast_provider,
@@ -195,7 +287,13 @@ impl AnalysisEngineBuilder {
             detector_scheduler,
             plugin_manager: None, // No plugin manager in sync build
             aggregator,
-            // No plugin engine field needed - removed per UV-294
+            
+            // Knowledge Library components
+            knowledge_library,
+            context_selector,
+            ai_engine,
+            enable_knowledge_enhancement: enable_knowledge,
+            enable_ai_explanations: enable_ai,
         })
     }
 
@@ -206,16 +304,26 @@ impl AnalysisEngineBuilder {
     ///
     /// # Errors
     /// Returns `UveddiError` if initialization fails.
-    pub async fn build_async(self) -> crate::error::Result<crate::analysis::AnalysisEngine> {
+    pub async fn build_async(mut self) -> crate::error::Result<crate::analysis::AnalysisEngine> {
+        // Extract all values before using self methods to avoid partial moves
+        let enable_knowledge = self.enable_knowledge_enhancement;
+        let enable_ai = self.enable_ai_explanations;
+        let enable_plugins = self.enable_plugins;
+        let injected_result_cache = self.injected_result_cache;
+        let in_memory_cache = self.in_memory_cache;
+        let cache_path = self.cache_path;
+        let injected_ast_parser = self.injected_ast_parser;
+        let injected_dependency_extractor = self.injected_dependency_extractor;
+
         let detectors = self
             .detectors
             .unwrap_or_else(DetectorFactory::create_default_detectors);
 
-        let cache = if let Some(injected_cache) = self.injected_result_cache {
+        let cache = if let Some(injected_cache) = injected_result_cache {
             injected_cache
-        } else if self.in_memory_cache {
+        } else if in_memory_cache {
             Box::new(ResultCacheAdapter::new(ResultCache::new_in_memory()?))
-        } else if let Some(path) = self.cache_path {
+        } else if let Some(path) = cache_path {
             Box::new(ResultCacheAdapter::new(ResultCache::new(&path)?))
         } else {
             Box::new(ResultCacheAdapter::new(ResultCache::new(&PathBuf::from(
@@ -224,7 +332,7 @@ impl AnalysisEngineBuilder {
         };
 
         // Initialize plugin engine if enabled
-        let plugin_engine = if self.enable_plugins {
+        let plugin_engine = if enable_plugins {
             match WasmPluginEngine::new().await {
                 Ok(engine) => {
                     info!("WASM plugin engine initialized successfully");
@@ -248,7 +356,7 @@ impl AnalysisEngineBuilder {
 
         // Initialize components
         let config_service = Arc::new(ConfigurationService::new());
-        let ast_provider = if let Some(parser) = self.injected_ast_parser {
+        let ast_provider = if let Some(parser) = injected_ast_parser {
             Arc::new(AstProviderImpl::new()?)
         } else {
             Arc::new(AstProviderImpl::new()?)
@@ -264,7 +372,7 @@ impl AnalysisEngineBuilder {
         };
 
         // Components that need dependencies
-        let dependency_builder = if let Some(extractor) = self.injected_dependency_extractor {
+        let dependency_builder = if let Some(extractor) = injected_dependency_extractor {
             Arc::new(DependencyGraphBuilderImpl::new(ast_provider.clone())?)
         } else {
             Arc::new(DependencyGraphBuilderImpl::new(ast_provider.clone())?)
@@ -278,6 +386,60 @@ impl AnalysisEngineBuilder {
             detectors,
         ));
 
+        // Initialize knowledge library components if enabled
+        let knowledge_library_result = if enable_knowledge {
+            match self.knowledge_library_path {
+                Some(ref custom_path) => {
+                    info!("Loading knowledge library from custom path: {:?}", custom_path);
+                    // TODO: Implement custom path loading
+                    Ok(KnowledgeLibrary::new())
+                },
+                None => {
+                    info!("Loading default knowledge library");
+                    // For now, create an empty knowledge library
+                    // TODO: Load from bundled knowledge base
+                    Ok(KnowledgeLibrary::new())
+                }
+            }
+        } else {
+            Err(UveddiError::config_error("Knowledge library disabled", "builder"))
+        };
+
+        let (knowledge_library, context_selector, ai_engine) = if enable_knowledge {
+            let knowledge_lib = match knowledge_library_result {
+                Ok(lib) => Some(Arc::new(lib)),
+                Err(e) => {
+                    warn!("Failed to initialize knowledge library: {}. Disabling knowledge enhancement.", e);
+                    None
+                }
+            };
+
+            let context_sel = if let Some(ref lib) = knowledge_lib {
+                match ContextSelector::new(Arc::clone(lib)) {
+                    Ok(selector) => Some(Arc::new(selector)),
+                    Err(e) => {
+                        warn!("Failed to create context selector: {}. Disabling knowledge enhancement.", e);
+                        None
+                    }
+                }
+            } else {
+                None
+            };
+
+            let ai_eng = if enable_ai {
+                Some(Arc::new(AiAnalysisEngine::new()))
+            } else {
+                None
+            };
+
+            (knowledge_lib, context_sel, ai_eng)
+        } else {
+            (None, None, None)
+        };
+
+        info!("Knowledge library integration: enabled={}, AI explanations: enabled={}", 
+              enable_knowledge, enable_ai);
+
         Ok(crate::analysis::AnalysisEngine {
             config_service,
             ast_provider,
@@ -286,6 +448,14 @@ impl AnalysisEngineBuilder {
             detector_scheduler,
             plugin_manager,
             aggregator,
+            
+            // Knowledge Library components
+            knowledge_library,
+            context_selector,
+            ai_engine,
+            enable_knowledge_enhancement: enable_knowledge,
+            enable_ai_explanations: enable_ai,
         })
     }
+
 }

@@ -64,6 +64,9 @@ pub use loader::*;
 //     PerformanceConfig, MonitoringConfig
 // }; // Temporarily disabled
 
+// Knowledge content modules
+pub mod types;
+
 // Re-export knowledge content functionality
 pub use population::{
     populate_knowledge_library, populate_from_detector_analysis, PopulationError
@@ -83,4 +86,10 @@ pub use context_selection::{
     DynamicContextSelector, ContextSelectionConfig, ScoringWeights, SelectionStrategy,
     AnalysisContext, DetectedPattern, CodebaseInfo, UserIntent, TokenConstraints,
     SelectedContext, ContextMetadata, ContextAnalytics, ContextSelectionError
+};
+pub use types::{
+    AnalysisContext as EngineAnalysisContext, 
+    KnowledgeContext, 
+    ComplexityMetrics as EngineComplexityMetrics,
+    ContextSelector
 };

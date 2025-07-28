@@ -3,6 +3,8 @@
 // use crate::ast::CustomAst;
 use crate::database::models::ArchitecturalIssue;
 use crate::semantic_search::{IndexedChunk, VectorIndex};
+use crate::ai::knowledge::KnowledgeContext;
+use crate::error::UveddiError;
 
 /// Smart prompt builder for generating AI prompts for architectural issues
 #[derive(Clone)]
@@ -129,6 +131,211 @@ Given the following architectural issue, provide a detailed explanation and reco
         }
 
         prompt
+    }
+
+    /// Build knowledge-enhanced prompt for architectural issues
+    ///
+    /// This method creates AI prompts that incorporate relevant knowledge patterns
+    /// from the knowledge library to provide more context-aware analysis.
+    ///
+    /// # Arguments
+    ///
+    /// * `issue` - The architectural issue to analyze
+    /// * `knowledge_context` - Selected knowledge patterns relevant to the issue
+    ///
+    /// # Returns
+    ///
+    /// * `Result<String, UveddiError>` - Enhanced prompt with knowledge context
+    pub fn build_knowledge_enhanced_prompt(
+        &self,
+        issue: &ArchitecturalIssue,
+        knowledge_context: &KnowledgeContext,
+    ) -> Result<String, UveddiError> {
+        // Start with base prompt structure
+        let mut prompt = self.build_base_prompt_structure(issue)?;
+
+        // Add knowledge context section if patterns are available
+        if !knowledge_context.selected_patterns.is_empty() {
+            let knowledge_section = self.build_knowledge_section(knowledge_context)?;
+            prompt = self.insert_knowledge_section(prompt, knowledge_section)?;
+        }
+
+        // Add knowledge-specific instructions
+        prompt = self.add_knowledge_instructions(prompt, knowledge_context)?;
+
+        // Apply final formatting and validation
+        let final_prompt = self.finalize_prompt(prompt)?;
+
+        Ok(final_prompt)
+    }
+
+    /// Build the base prompt structure
+    fn build_base_prompt_structure(&self, issue: &ArchitecturalIssue) -> Result<String, UveddiError> {
+        let issue_context = format!(
+            "**Architectural Issue Analysis**\n\
+            Anti-pattern Type: {}\n\
+            Description: {}\n\
+            File: {}\n\
+            Severity: {}\n\
+            Location: Line {} to {}",
+            issue.anti_pattern_type_id,
+            issue.description,
+            issue.file_path,
+            issue.severity,
+            issue.start_line.unwrap_or(0),
+            issue.end_line.unwrap_or(0)
+        );
+
+        let mut prompt = format!(
+            "You are an expert software architect and code quality specialist.\n\
+            Your task is to analyze the following architectural issue and provide actionable guidance.\n\n\
+            {}\n",
+            issue_context
+        );
+
+        // Add code snippet if available
+        if let Some(code_snippet) = &issue.code_snippet {
+            prompt.push_str(&format!(
+                "\n**Code Context:**\n```\n{}\n```\n",
+                code_snippet
+            ));
+        }
+
+        Ok(prompt)
+    }
+
+    /// Build knowledge context section
+    fn build_knowledge_section(&self, knowledge_context: &KnowledgeContext) -> Result<String, UveddiError> {
+        let mut section = String::from("\n**ARCHITECTURAL KNOWLEDGE BASE**\n");
+        section.push_str(&format!(
+            "*Relevance Score: {:.1}% | Patterns: {} | Library Version: {}*\n\n",
+            knowledge_context.relevance_score * 100.0,
+            knowledge_context.selected_patterns.len(),
+            knowledge_context.library_version
+        ));
+
+        for (i, pattern) in knowledge_context.selected_patterns.iter().enumerate() {
+            section.push_str(&format!(
+                "**Pattern {}: {}**\n\
+                • **Type**: {:?}\n\
+                • **Description**: {}\n\
+                • **Impact**: {:?}\n\
+                • **Common Symptoms**: {}\n\
+                • **Detection Methods**: Available\n\
+                • **Solutions Available**: {}\n\n",
+                i + 1,
+                pattern.name,
+                pattern.category,
+                pattern.definition.as_str(),
+                pattern.impact,
+                pattern.symptoms.iter()
+                    .map(|s| s.as_str())
+                    .collect::<Vec<_>>()
+                    .join(", "),
+                pattern.solutions.len()
+            ));
+
+            // Add top 2 solutions for each pattern
+            for (j, solution) in pattern.solutions.iter().take(2).enumerate() {
+                section.push_str(&format!(
+                    "  **Solution {}.{}**: {} (Effort: {:?}, Impact: {:?})\n",
+                    i + 1,
+                    j + 1,
+                    solution.title,
+                    solution.effort_level,
+                    solution.expected_impact
+                ));
+            }
+            section.push('\n');
+        }
+
+        Ok(section)
+    }
+
+    /// Insert knowledge section into prompt
+    fn insert_knowledge_section(&self, mut prompt: String, knowledge_section: String) -> Result<String, UveddiError> {
+        // Find insertion point (before response format instructions)
+        let insertion_markers = [
+            "Respond in the following",
+            "Please provide",
+            "Your response should",
+            "Format your response"
+        ];
+
+        let mut insertion_point = None;
+        for marker in &insertion_markers {
+            if let Some(pos) = prompt.find(marker) {
+                insertion_point = Some(pos);
+                break;
+            }
+        }
+
+        match insertion_point {
+            Some(pos) => {
+                prompt.insert_str(pos, &knowledge_section);
+                Ok(prompt)
+            }
+            None => {
+                // If no insertion point found, append before the end
+                prompt.push_str(&knowledge_section);
+                Ok(prompt)
+            }
+        }
+    }
+
+    /// Add knowledge-specific instructions
+    fn add_knowledge_instructions(&self, mut prompt: String, knowledge_context: &KnowledgeContext) -> Result<String, UveddiError> {
+        let instructions = format!(
+            "\n**ANALYSIS INSTRUCTIONS:**\n\
+            1. **Use the provided architectural knowledge** to enhance your analysis\n\
+            2. **Reference specific patterns and solutions** from the knowledge base\n\
+            3. **Prioritize solutions** based on effort/impact ratios provided\n\
+            4. **Indicate confidence level** based on knowledge completeness ({:.1}% relevance)\n\
+            5. **Provide implementation steps** based on proven architectural patterns\n\
+            6. **Consider the specific context** of the detected anti-pattern\n\
+            7. **Base recommendations on established best practices** from the knowledge base\n\n",
+            knowledge_context.relevance_score * 100.0
+        );
+
+        prompt.push_str(&instructions);
+        Ok(prompt)
+    }
+
+    /// Finalize prompt with response format and anti-hallucination measures
+    fn finalize_prompt(&self, mut prompt: String) -> Result<String, UveddiError> {
+        // Add response format
+        prompt.push_str(
+            "**RESPONSE FORMAT:**\n\
+            Provide your analysis in the following JSON structure:\n\
+            ```json\n\
+            {\n\
+              \"title\": \"Brief, specific title for this architectural issue\",\n\
+              \"severity_assessment\": \"Your assessment of the severity (Critical/High/Medium/Low)\",\n\
+              \"root_cause_analysis\": \"Detailed explanation of why this issue exists\",\n\
+              \"architectural_impact\": \"How this affects the overall system architecture\",\n\
+              \"recommended_solution\": \"Primary recommended solution with implementation steps\",\n\
+              \"alternative_solutions\": [\"List of alternative approaches if applicable\"],\n\
+              \"implementation_effort\": \"Estimated effort level (Low/Medium/High/Very High)\",\n\
+              \"business_impact\": \"How fixing this issue benefits the business/team\",\n\
+              \"confidence_level\": \"Your confidence in this analysis (High/Medium/Low)\",\n\
+              \"knowledge_patterns_used\": [\"List of knowledge patterns that informed this analysis\"]\n\
+            }\n\
+            ```\n\n"
+        );
+
+        // Add anti-hallucination instructions
+        prompt.push_str(
+            "**CRITICAL GUIDELINES:**\n\
+            • Base your analysis ONLY on the provided issue details and knowledge base patterns\n\
+            • DO NOT invent or assume details not present in the context\n\
+            • If information is insufficient, clearly state your limitations\n\
+            • Reference specific knowledge patterns when making recommendations\n\
+            • Indicate uncertainty levels clearly in your confidence assessment\n\
+            • Focus on actionable, practical solutions based on proven patterns\n\
+            • Avoid generic advice - tailor recommendations to the specific issue context\n"
+        );
+
+        Ok(prompt)
     }
 }
 

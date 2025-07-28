@@ -55,6 +55,10 @@ use crate::analysis::detector_factory::DetectorFactory;
 use crate::analysis::engine_builder::AnalysisEngineBuilder; // Import the builder
 use crate::error::UveddiError;
 
+// Knowledge Library imports
+use crate::ai::knowledge::{KnowledgeLibrary, ContextSelector, KnowledgeContext, EngineAnalysisContext, EngineComplexityMetrics};
+use crate::ai::engine::AiAnalysisEngine;
+
 // Component imports
 use crate::analysis::components::traits::{
     AnalysisAggregator as AnalysisAggregatorTrait, AstProvider as AstProviderTrait,
@@ -112,8 +116,15 @@ pub struct AnalysisEngine {
     pub detector_scheduler: Arc<DetectorScheduler>,
     pub plugin_manager: Option<PluginManagerHandle>,
     pub aggregator: Arc<AnalysisAggregator>,
-    // The `plugin_engine` field is removed as `PluginManagerHandle` now encapsulates its functionality.
-    // This simplifies the `AnalysisEngine` struct and aligns with the component-based architecture.
+    
+    // NEW: Knowledge Library Integration Components
+    pub knowledge_library: Option<Arc<KnowledgeLibrary>>,
+    pub context_selector: Option<Arc<ContextSelector>>,
+    pub ai_engine: Option<Arc<AiAnalysisEngine>>,
+    
+    // Configuration flags for knowledge enhancement
+    pub enable_knowledge_enhancement: bool,
+    pub enable_ai_explanations: bool,
 }
 
 impl AnalysisEngine {
@@ -446,6 +457,298 @@ impl AnalysisEngine {
         }
 
         Ok((file_issues, dependency_graph))
+    }
+
+    /// Enhanced analysis with AI Knowledge Library integration
+    ///
+    /// This method provides knowledge-enhanced architectural analysis by:
+    /// 1. Performing standard analysis pipeline (existing functionality)
+    /// 2. Enhancing detected issues with knowledge library context
+    /// 3. Adding AI-powered explanations and recommendations (if enabled)
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - Directory or file path to analyze
+    ///
+    /// # Returns
+    ///
+    /// A tuple containing:
+    /// - `Vec<ArchitecturalIssue>` - Enhanced issues with knowledge context
+    /// - `LocalDependencyGraph` - The constructed dependency graph
+    ///
+    /// # Errors
+    ///
+    /// Returns `UveddiError` if analysis or knowledge enhancement fails
+    pub async fn analyze_with_knowledge(
+        &mut self,
+        path: &Path,
+    ) -> crate::error::Result<(Vec<ArchitecturalIssue>, LocalDependencyGraph)> {
+        let start_time = Instant::now();
+        info!("Starting knowledge-enhanced analysis for: {:?}", path);
+
+        // 1. Perform standard analysis pipeline (existing functionality)
+        let (mut issues, dependency_graph) = self.analyze(path).await?;
+
+        // 2. Early return if knowledge enhancement is disabled
+        if !self.enable_knowledge_enhancement {
+            info!("Knowledge enhancement disabled, returning standard analysis");
+            return Ok((issues, dependency_graph));
+        }
+
+        // 3. Check if knowledge library components are available
+        let (knowledge_library, context_selector, ai_engine) = match (
+            &self.knowledge_library,
+            &self.context_selector,
+            &self.ai_engine,
+        ) {
+            (Some(kb), Some(cs), Some(ai)) => (kb, cs, ai),
+            _ => {
+                warn!("Knowledge library components not properly initialized, falling back to standard analysis");
+                return Ok((issues, dependency_graph));
+            }
+        };
+
+        // 4. Enhance each issue with knowledge library context
+        let enhancement_start = Instant::now();
+        let mut enhanced_count = 0;
+
+        for issue in &mut issues {
+            match self.enhance_issue_with_knowledge(issue, &dependency_graph).await {
+                Ok(enhanced) => {
+                    if enhanced {
+                        enhanced_count += 1;
+                    }
+                }
+                Err(e) => {
+                    warn!("Failed to enhance issue {}: {}", issue.description, e);
+                    // Continue with other issues - don't fail entire analysis
+                }
+            }
+        }
+
+        let enhancement_time = enhancement_start.elapsed();
+        let total_time = start_time.elapsed();
+
+        info!(
+            "Knowledge-enhanced analysis completed in {:?}: {}/{} issues enhanced (enhancement: {:?})",
+            total_time, enhanced_count, issues.len(), enhancement_time
+        );
+
+        // 5. Record metrics
+        self.record_enhancement_metrics(enhanced_count, issues.len(), enhancement_time);
+
+        Ok((issues, dependency_graph))
+    }
+
+    /// Enhance a single issue with knowledge library context
+    async fn enhance_issue_with_knowledge(
+        &self,
+        issue: &mut ArchitecturalIssue,
+        dependency_graph: &LocalDependencyGraph,
+    ) -> crate::error::Result<bool> {
+        // 1. Build analysis context for this issue
+        let analysis_context = match self.build_analysis_context(issue, dependency_graph).await {
+            Ok(context) => context,
+            Err(e) => {
+                warn!("Failed to build analysis context for issue {}: {}", issue.description, e);
+                return Ok(false);
+            }
+        };
+
+        // 2. Select relevant knowledge context
+        let context_selector = match &self.context_selector {
+            Some(selector) => selector,
+            None => return Ok(false),
+        };
+
+        let knowledge_context = match context_selector.select_context(&analysis_context).await {
+            Ok(context) => context,
+            Err(e) => {
+                warn!("Context selection failed for issue {}: {}", issue.description, e);
+                return Ok(false);
+            }
+        };
+
+        // 3. Skip enhancement if no relevant knowledge found
+        if knowledge_context.selected_patterns.is_empty() {
+            info!("No relevant knowledge found for issue: {}", issue.description);
+            return Ok(false);
+        }
+
+        // 4. Enhance with AI explanation if enabled and provider available
+        if self.enable_ai_explanations {
+            if let Some(ai_engine) = &self.ai_engine {
+                match ai_engine.analyze_issue_with_knowledge(issue, &knowledge_context).await {
+                    Ok(_) => {
+                        info!("Successfully enhanced issue {} with AI analysis", issue.description);
+                    }
+                    Err(e) => {
+                        warn!("AI enhancement failed for issue {}: {}", issue.description, e);
+                        // Fallback to knowledge-only enhancement
+                        self.apply_knowledge_only_enhancement(issue, &knowledge_context).await?;
+                    }
+                }
+            } else {
+                // Fallback to knowledge-only enhancement
+                self.apply_knowledge_only_enhancement(issue, &knowledge_context).await?;
+            }
+        } else {
+            // Knowledge-only enhancement
+            self.apply_knowledge_only_enhancement(issue, &knowledge_context).await?;
+        }
+
+        // 5. Log knowledge metadata (fields don't exist in current DB model)
+        info!(
+            "Enhanced issue with knowledge: patterns={}, relevance={:.2}, library_version={}",
+            knowledge_context.selected_patterns.len(),
+            knowledge_context.relevance_score,
+            knowledge_context.library_version
+        );
+
+        Ok(true)
+    }
+
+    /// Build analysis context from issue and surrounding code
+    async fn build_analysis_context(
+        &self,
+        issue: &ArchitecturalIssue,
+        dependency_graph: &LocalDependencyGraph,
+    ) -> crate::error::Result<EngineAnalysisContext> {
+        // Extract language from file extension
+        let language = self.detect_language_from_issue(&issue.file_path)?;
+
+        // Detect frameworks (simplified implementation)
+        let frameworks = self.detect_frameworks_from_issue(issue).await?;
+
+        // Calculate basic complexity metrics
+        let complexity_metrics = self.calculate_issue_complexity(issue).await?;
+
+        // Extract surrounding components from dependency graph
+        let surrounding_components = self.extract_surrounding_components(issue, dependency_graph);
+
+        Ok(EngineAnalysisContext {
+            language,
+            detected_patterns: vec![issue.anti_pattern_type_id.to_string()],
+            frameworks,
+            complexity_metrics,
+            file_context: Some(issue.file_path.clone()),
+            surrounding_components,
+        })
+    }
+
+    /// Apply knowledge-only enhancement when AI is not available
+    async fn apply_knowledge_only_enhancement(
+        &self,
+        issue: &mut ArchitecturalIssue,
+        knowledge_context: &KnowledgeContext,
+    ) -> crate::error::Result<()> {
+        if let Some(pattern_knowledge) = knowledge_context.selected_patterns.first() {
+            // Create structured explanation from knowledge base
+            let explanation = format!(
+                "**Anti-Pattern**: {}\n\n\
+                **Description**: {}\n\n\
+                **Common Causes**:\n{}\n\n\
+                **Recommended Solutions**:\n{}\n\n\
+                **Impact**: {:?}\n\
+                **Detection Confidence**: {:.1}%",
+                pattern_knowledge.name,
+                pattern_knowledge.definition.as_str(),
+                pattern_knowledge.symptoms.iter()
+                    .map(|symptom| format!("• {}", symptom.as_str()))
+                    .collect::<Vec<_>>()
+                    .join("\n"),
+                pattern_knowledge.solutions.iter()
+                    .map(|solution| format!("• {} (Effort: {:?}, Impact: {:?})",
+                                           solution.title,
+                                           solution.effort_level,
+                                           solution.expected_impact))
+                    .collect::<Vec<_>>()
+                    .join("\n"),
+                pattern_knowledge.impact,
+                knowledge_context.relevance_score * 100.0
+            );
+
+            issue.ai_explanation = Some(explanation);
+
+            // TODO: Add solution recommendations when DB model supports it
+            if let Some(best_solution) = pattern_knowledge.solutions.first() {
+                info!("Recommended solution for issue: {}", best_solution.implementation.as_str());
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Helper methods for context building
+    fn detect_language_from_issue(&self, file_path: &str) -> crate::error::Result<crate::ai::knowledge::schema::SourceLanguage> {
+        let extension = Path::new(file_path)
+            .extension()
+            .and_then(|ext| ext.to_str())
+            .unwrap_or("");
+
+        match extension {
+            "rs" => Ok(crate::ai::knowledge::schema::SourceLanguage::Rust),
+            "py" => Ok(crate::ai::knowledge::schema::SourceLanguage::Python),
+            "js" | "ts" => Ok(crate::ai::knowledge::schema::SourceLanguage::JavaScript),
+            "java" => Ok(crate::ai::knowledge::schema::SourceLanguage::Java),
+            _ => Ok(crate::ai::knowledge::schema::SourceLanguage::Universal),
+        }
+    }
+
+    async fn detect_frameworks_from_issue(&self, issue: &ArchitecturalIssue) -> crate::error::Result<Vec<String>> {
+        // Simplified framework detection based on file path and content
+        let mut frameworks = Vec::new();
+
+        if issue.file_path.contains("tokio") || issue.description.contains("async") {
+            frameworks.push("tokio".to_string());
+        }
+        if issue.file_path.contains("axum") || issue.description.contains("web") {
+            frameworks.push("axum".to_string());
+        }
+        if issue.file_path.contains("serde") || issue.description.contains("serialization") {
+            frameworks.push("serde".to_string());
+        }
+
+        Ok(frameworks)
+    }
+
+    async fn calculate_issue_complexity(&self, issue: &ArchitecturalIssue) -> crate::error::Result<EngineComplexityMetrics> {
+        // Basic complexity calculation based on issue characteristics
+        Ok(EngineComplexityMetrics {
+            cyclomatic_complexity: 1, // Default for single issue
+            cognitive_complexity: match issue.severity.as_str() {
+                "Critical" => 10,
+                "High" => 7,
+                "Medium" => 4,
+                "Low" => 2,
+                _ => 1,
+            },
+            lines_of_code: issue.code_snippet.as_ref().map(|s| s.lines().count()).unwrap_or(0),
+            number_of_methods: 1, // Simplified
+        })
+    }
+
+    fn extract_surrounding_components(
+        &self,
+        issue: &ArchitecturalIssue,
+        dependency_graph: &LocalDependencyGraph,
+    ) -> Vec<String> {
+        // Extract component names that are related to this issue's file
+        // For now, return the issue file path as a simple implementation
+        // TODO: Implement proper component extraction from dependency graph
+        vec![issue.file_path.clone()]
+    }
+
+    /// Record enhancement metrics for monitoring
+    fn record_enhancement_metrics(&self, enhanced_count: usize, total_count: usize, enhancement_time: std::time::Duration) {
+        // Implementation depends on your metrics collection system
+        info!(
+            "Enhancement metrics: {}/{} issues enhanced in {:?} (rate: {:.1}%)",
+            enhanced_count,
+            total_count,
+            enhancement_time,
+            (enhanced_count as f64 / total_count as f64) * 100.0
+        );
     }
 
     /// Performs incremental analysis with 50%+ time reduction for enterprise codebases
