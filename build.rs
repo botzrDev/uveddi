@@ -49,20 +49,56 @@ impl std::fmt::Display for BuildError {
 
 impl std::error::Error for BuildError {}
 
+//! Build-time integration following research pattern from docs/compression_research.md
+
+use std::env;
+use std::path::Path;
+use std::sync::OnceLock;
+use zstd::stream::decode_all;
+use phf_codegen::Map;
+use crate::ai::knowledge::schema::*;
+use crate::ai::knowledge::build_optimization::BuildOptimizationSystem;
+use crate::ai::knowledge::compression::advanced_compression::AdvancedCompressionSystem;
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("cargo:rerun-if-changed=data/knowledge_base.json");
-    println!("cargo:rerun-if-changed=data/patterns/");
-    println!("cargo:rerun-if-changed=build.rs");
-
+    println!("cargo:rerun-if-changed=src/ai/knowledge/");
+    
     let out_dir = env::var("OUT_DIR")?;
     let out_path = Path::new(&out_dir);
 
-    // Check if we're in a context where we can build the knowledge library
-    if !should_build_knowledge_library() {
-        println!("cargo:warning=Skipping knowledge library build (development/testing context)");
-        create_stub_files(&out_path)?;
-        return Ok(());
+    // 1. Load and optimize knowledge base
+    let knowledge_base = load_knowledge_base()?;
+    let optimization_system = BuildOptimizationSystem::new(BuildOptimizationConfig::default());
+    let optimized = optimization_system.optimize_build_pipeline(&knowledge_base)?;
+
+    // 2. Apply advanced compression (research: zstd level 9-12)
+    let compression_system = AdvancedCompressionSystem::new(CompressionConfig::default());
+    let compressed = compression_system.compress_knowledge_library(&optimized.optimized_library)?;
+
+    // 3. Write compressed data (research pattern)
+    std::fs::write(
+        Path::new(&out_dir).join("knowledge_base.zst"),
+        &compressed.compressed_data
+    )?;
+
+    // 4. Write dictionary if available
+    if let Some(dictionary) = &compressed.dictionary {
+        std::fs::write(
+            Path::new(&out_dir).join("compression_dictionary.zst"),
+            dictionary
+        )?;
     }
+
+    // 5. Generate PHF indices (research: O(1) lookups)
+    generate_phf_indices(&optimized.optimized_library, &out_dir)?;
+
+    // 6. Validate epic targets
+    validate_epic_targets(&compressed)?;
+
+    println!("cargo:warning=Knowledge library build completed successfully");
+    Ok(())
+}
 
     println!("cargo:warning=Building AI Knowledge Library with comprehensive patterns and compression...");
 
@@ -142,12 +178,30 @@ fn should_build_knowledge_library() -> bool {
     true
 }
 
+/// Runtime access pattern (research: OnceLock lazy loading)
+static KNOWLEDGE_BASE: OnceLock<OptimizedKnowledgeLibrary> = OnceLock::new();
+
+pub fn get_knowledge_base() -> &'static OptimizedKnowledgeLibrary {
+    KNOWLEDGE_BASE.get_or_init(|| {
+        // Research pattern: lazy decompression
+        let compressed = include_bytes!(concat!(env!("OUT_DIR"), "/knowledge_base.zst"));
+        let dictionary = include_bytes!(concat!(env!("OUT_DIR"), "/compression_dictionary.zst"));
+
+        let decompressed = decode_all_with_dictionary(compressed, dictionary)
+            .expect("Failed to decompress knowledge base");
+
+        OptimizedKnowledgeLibrary::from_compressed(&decompressed)
+            .expect("Failed to load knowledge base")
+    })
+}
+
 /// Create stub files for development/testing contexts
 fn create_stub_files(out_path: &Path) -> Result<(), BuildError> {
     // Create minimal stub implementations
     let stub_content = r#"
 // Stub implementation for development builds
 use phf::Map;
+use std::sync::OnceLock;
 
 pub static PATTERN_INDEX: Map<&'static str, u32> = phf::phf_map! {
     "god_object" => 0u32,

@@ -50,6 +50,11 @@ pub mod security;
 pub mod types;
 pub mod verification;
 
+// Knowledge plugin system modules
+pub mod knowledge;
+pub mod development;
+pub mod integration;
+
 // Re-exports for convenience
 pub use data_plane::AstDataPlane;
 pub use engine::WasmPluginEngine;
@@ -60,6 +65,15 @@ pub use registry::{PluginManifest, PluginMetadata, PluginRegistry};
 pub use security::{Permission, SecurityPolicy};
 pub use types::*;
 pub use verification::{PluginVerifier, VerificationReport};
+
+// Knowledge plugin system re-exports
+pub use knowledge::{
+    KnowledgePluginSystem, KnowledgePlugin, AntiPatternPlugin, DetectorPlugin, EnterprisePlugin,
+    KnowledgePluginMetadata, KnowledgePluginType, KnowledgePluginCapabilities, KnowledgePluginPermissions,
+    PluginKnowledgeLibrary, CustomPatternDefinition, FrameworkKnowledge, ComplianceKnowledge
+};
+pub use development::{ExampleAntiPatternPlugin, ExampleEnterprisePlugin, ExampleFrameworkPlugin};
+pub use integration::{PluginKnowledgeIntegrator, IntegratedKnowledgeContext, RankedPattern};
 
 // Feature gate for WASM plugin system
 #[cfg(feature = "wasm-plugins")]
