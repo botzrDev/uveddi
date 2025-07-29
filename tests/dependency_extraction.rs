@@ -82,11 +82,15 @@ mod tests {
         let extractor = DependencyExtractor::new().unwrap();
         let deps = extractor.extract_from_ast(&parsed).unwrap();
         let dep_names: Vec<_> = deps.iter().map(|d| d.to_module.as_str()).collect();
-        
+
         // Should extract standard library dependencies
-        assert!(dep_names.iter().any(|name| name.contains("HashMap") || name.contains("collections")));
+        assert!(dep_names
+            .iter()
+            .any(|name| name.contains("HashMap") || name.contains("collections")));
         // Should extract external crate dependencies
-        assert!(dep_names.contains(&"serde") || dep_names.iter().any(|name| name.contains("serde")));
+        assert!(
+            dep_names.contains(&"serde") || dep_names.iter().any(|name| name.contains("serde"))
+        );
         // Should extract internal module dependencies
         assert!(dep_names.contains(&"internal_module") || dep_names.contains(&"public_module"));
     }
@@ -119,14 +123,16 @@ def function_with_late_import():
         let extractor = DependencyExtractor::new().unwrap();
         let deps = extractor.extract_from_ast(&parsed).unwrap();
         let dep_names: Vec<_> = deps.iter().map(|d| d.to_module.as_str()).collect();
-        
+
         // Standard library imports
         assert!(dep_names.contains(&"os"));
         assert!(dep_names.contains(&"sys"));
         // From imports - should capture parent modules
         assert!(dep_names.iter().any(|name| name.contains("collections")));
         // Relative imports
-        assert!(dep_names.iter().any(|name| name.contains("local_module") || name.contains("parent_module")));
+        assert!(dep_names
+            .iter()
+            .any(|name| name.contains("local_module") || name.contains("parent_module")));
         // External packages
         assert!(dep_names.contains(&"numpy") || dep_names.contains(&"np"));
         // Late imports inside functions
@@ -165,14 +171,19 @@ function processFile() {
         let extractor = DependencyExtractor::new().unwrap();
         let deps = extractor.extract_from_ast(&parsed).unwrap();
         let dep_names: Vec<_> = deps.iter().map(|d| d.to_module.as_str()).collect();
-        
+
         // ES6 imports
         assert!(dep_names.contains(&"react"));
-        assert!(dep_names.contains(&"react-router-dom") || dep_names.iter().any(|name| name.contains("react-router")));
+        assert!(
+            dep_names.contains(&"react-router-dom")
+                || dep_names.iter().any(|name| name.contains("react-router"))
+        );
         assert!(dep_names.contains(&"axios"));
         // Local imports
         assert!(dep_names.contains(&"utils"));
-        assert!(dep_names.iter().any(|name| name.contains("constants") || name.contains("config")));
+        assert!(dep_names
+            .iter()
+            .any(|name| name.contains("constants") || name.contains("config")));
         // CommonJS requires
         assert!(dep_names.contains(&"fs"));
         assert!(dep_names.contains(&"path"));
@@ -204,13 +215,17 @@ export class UserService {
         let extractor = DependencyExtractor::new().unwrap();
         let deps = extractor.extract_from_ast(&parsed).unwrap();
         let dep_names: Vec<_> = deps.iter().map(|d| d.to_module.as_str()).collect();
-        
+
         // Angular dependencies
-        assert!(dep_names.iter().any(|name| name.contains("angular") || name.contains("core")));
+        assert!(dep_names
+            .iter()
+            .any(|name| name.contains("angular") || name.contains("core")));
         // RxJS dependencies
         assert!(dep_names.contains(&"rxjs"));
         // Local type imports
-        assert!(dep_names.iter().any(|name| name.contains("types") || name.contains("user")));
+        assert!(dep_names
+            .iter()
+            .any(|name| name.contains("types") || name.contains("user")));
         // Environment imports
         assert!(dep_names.iter().any(|name| name.contains("environment")));
     }
@@ -230,9 +245,13 @@ export class UserService {
     fn malformed_syntax_dependency_extraction() {
         let dir = tempdir().unwrap();
         // Create a file with syntax errors
-        let file_path = create_temp_file(&dir, "malformed.rs", "use std::; // Invalid syntax\nimport missing_semicolon");
+        let file_path = create_temp_file(
+            &dir,
+            "malformed.rs",
+            "use std::; // Invalid syntax\nimport missing_semicolon",
+        );
         let mut parser = AstParser::new().unwrap();
-        
+
         // Parser should handle malformed syntax gracefully
         let parse_result = parser.parse_file(&file_path);
         if let Ok(parsed) = parse_result {
@@ -256,27 +275,27 @@ export class UserService {
     #[test]
     fn circular_dependency_detection() {
         let dir = tempdir().unwrap();
-        
+
         // Create file A that depends on B
         let file_a = create_temp_file(&dir, "a.rs", "mod b;\nuse b::SomeStruct;");
-        
+
         // Create file B that depends on A (circular)
         let file_b = create_temp_file(&dir, "b.rs", "use crate::a::AnotherStruct;");
-        
+
         let mut parser = AstParser::new().unwrap();
         let extractor = DependencyExtractor::new().unwrap();
-        
+
         // Extract dependencies from both files
         let parsed_a = parser.parse_file(&file_a).unwrap();
         let deps_a = extractor.extract_from_ast(&parsed_a).unwrap();
-        
+
         let parsed_b = parser.parse_file(&file_b).unwrap();
         let deps_b = extractor.extract_from_ast(&parsed_b).unwrap();
-        
+
         // Verify that each file's dependencies are detected
         let deps_a_names: Vec<_> = deps_a.iter().map(|d| d.to_module.as_str()).collect();
         let deps_b_names: Vec<_> = deps_b.iter().map(|d| d.to_module.as_str()).collect();
-        
+
         assert!(deps_a_names.contains(&"b"));
         assert!(deps_b_names.iter().any(|name| name.contains("a")));
     }
@@ -284,23 +303,27 @@ export class UserService {
     #[test]
     fn large_file_dependency_extraction() {
         let dir = tempdir().unwrap();
-        
+
         // Generate a large file with many dependencies
         let mut content = String::new();
         for i in 0..100 {
             content.push_str(&format!("use crate::module_{}::SomeStruct{};\n", i, i));
         }
         content.push_str("fn main() {}\n");
-        
+
         let file_path = create_temp_file(&dir, "large.rs", &content);
         let mut parser = AstParser::new().unwrap();
         let parsed = parser.parse_file(&file_path).unwrap();
         let extractor = DependencyExtractor::new().unwrap();
         let deps = extractor.extract_from_ast(&parsed).unwrap();
-        
+
         // Should extract all 100 module dependencies
-        assert!(deps.len() >= 100, "Should extract dependencies from large file, got {}", deps.len());
-        
+        assert!(
+            deps.len() >= 100,
+            "Should extract dependencies from large file, got {}",
+            deps.len()
+        );
+
         // Verify some specific dependencies
         let dep_names: Vec<_> = deps.iter().map(|d| d.to_module.as_str()).collect();
         assert!(dep_names.iter().any(|name| name.contains("module_0")));
@@ -323,7 +346,7 @@ use std::fs; // Real import
         let extractor = DependencyExtractor::new().unwrap();
         let deps = extractor.extract_from_ast(&parsed).unwrap();
         let dep_names: Vec<_> = deps.iter().map(|d| d.to_module.as_str()).collect();
-        
+
         // Should only extract real imports, not commented ones
         assert!(dep_names.iter().any(|name| name.contains("fs")));
         assert!(!dep_names.contains(&"fake_module"));

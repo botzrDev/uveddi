@@ -3,10 +3,10 @@
 //! This module provides intelligent cache invalidation mechanisms using
 //! content-based hashing to ensure cache coherence and optimal performance.
 
+use crate::analysis::cache::wrappers::{ArchivablePathBuf, ArchivableSystemTime};
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use crate::analysis::cache::wrappers::{ArchivablePathBuf, ArchivableSystemTime};
 use std::time::SystemTime;
 use thiserror::Error;
 
@@ -24,10 +24,10 @@ pub enum InvalidationError {
 pub trait InvalidationStrategy: Send + Sync {
     /// Check if a cache entry should be invalidated
     fn should_invalidate(&self, key: &str, cached_hash: &str) -> Result<bool, InvalidationError>;
-    
+
     /// Get the current content hash for a key
     fn get_current_hash(&self, key: &str) -> Result<String, InvalidationError>;
-    
+
     /// Invalidate entries based on dependency changes
     fn invalidate_dependents(&self, changed_key: &str) -> Result<Vec<String>, InvalidationError>;
 }
@@ -100,7 +100,7 @@ impl ContentHashInvalidator {
     /// Create composite hash for a file and its dependencies
     fn calculate_composite_hash(&mut self, path: &Path) -> Result<String, InvalidationError> {
         let mut hasher = Sha256::new();
-        
+
         // Hash the main file
         let main_hash = self.get_file_hash_cached(path)?;
         hasher.update(main_hash.as_bytes());
@@ -110,14 +110,14 @@ impl ContentHashInvalidator {
         let dependencies = self.dependency_graph.get(&path_buf).cloned();
         if let Some(dependencies) = dependencies {
             let mut dep_hashes: Vec<String> = Vec::new();
-            
+
             for dep_path in dependencies {
                 if dep_path.exists() {
                     let dep_hash = self.get_file_hash_cached(&dep_path)?;
                     dep_hashes.push(dep_hash);
                 }
             }
-            
+
             // Sort for deterministic ordering
             dep_hashes.sort();
             for dep_hash in dep_hashes {
@@ -212,7 +212,7 @@ impl InvalidationStrategy for ContentHashInvalidator {
     fn invalidate_dependents(&self, changed_key: &str) -> Result<Vec<String>, InvalidationError> {
         let changed_path = Path::new(changed_key);
         let dependents = self.find_dependents(changed_path);
-        
+
         Ok(dependents
             .into_iter()
             .map(|p| p.to_string_lossy().to_string())
@@ -287,7 +287,7 @@ impl InvalidationStrategy for TimeBasedInvalidator {
         let metadata = std::fs::metadata(path)?;
         let size = metadata.len();
         let content_hint = format!("{}:{}", timestamp, size);
-        
+
         let mut hasher = Sha256::new();
         hasher.update(content_hint.as_bytes());
         let hash = format!("{:x}", hasher.finalize());
@@ -320,7 +320,7 @@ mod tests {
     fn test_content_hash_invalidator() {
         let temp_dir = TempDir::new().unwrap();
         let file_path = temp_dir.path().join("test.txt");
-        
+
         // Create a test file
         let mut file = File::create(&file_path).unwrap();
         writeln!(file, "Hello, world!").unwrap();
@@ -330,7 +330,7 @@ mod tests {
 
         // Get initial hash
         let hash1 = invalidator.get_current_hash(&key).unwrap();
-        
+
         // Should not invalidate with same content
         assert!(!invalidator.should_invalidate(&key, &hash1).unwrap());
 
@@ -366,7 +366,7 @@ mod tests {
     fn test_time_based_invalidator() {
         let temp_dir = TempDir::new().unwrap();
         let file_path = temp_dir.path().join("test.txt");
-        
+
         // Create a test file
         std::fs::write(&file_path, "Hello, world!").unwrap();
 
@@ -375,7 +375,7 @@ mod tests {
 
         // Get initial hash
         let hash1 = invalidator.get_current_hash(&key).unwrap();
-        
+
         // Should not invalidate immediately
         assert!(!invalidator.should_invalidate(&key, &hash1).unwrap());
 
@@ -390,7 +390,7 @@ mod tests {
     #[test]
     fn test_invalidation_stats() {
         let mut invalidator = ContentHashInvalidator::new();
-        
+
         let temp_dir = TempDir::new().unwrap();
         let file1 = temp_dir.path().join("file1.rs");
         let file2 = temp_dir.path().join("file2.rs");
@@ -407,7 +407,7 @@ mod tests {
     #[test]
     fn test_hash_cache_cleanup() {
         let mut invalidator = ContentHashInvalidator::with_ttl(1); // 1 second TTL
-        
+
         let temp_dir = TempDir::new().unwrap();
         let file_path = temp_dir.path().join("test.txt");
         std::fs::write(&file_path, "test content").unwrap();

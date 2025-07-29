@@ -4,8 +4,8 @@
 //! choose the most relevant knowledge from the comprehensive pattern library based
 //! on analysis context, detected issues, and AI prompt requirements.
 
-use crate::ai::knowledge::schema::*;
 use crate::ai::knowledge::language_integration::{EnhancedPattern, LanguageContext};
+use crate::ai::knowledge::schema::*;
 use std::collections::HashMap;
 use std::time::Instant;
 
@@ -136,9 +136,9 @@ pub struct CodebaseInfo {
 /// Codebase size categories
 #[derive(Debug, Clone)]
 pub enum CodebaseSizeCategory {
-    Small,    // < 10k LOC
-    Medium,   // 10k - 100k LOC
-    Large,    // 100k - 1M LOC
+    Small,     // < 10k LOC
+    Medium,    // 10k - 100k LOC
+    Large,     // 100k - 1M LOC
     VeryLarge, // > 1M LOC
 }
 
@@ -341,7 +341,9 @@ pub enum ContextSelectionError {
     #[error("Invalid scoring configuration: {details}")]
     InvalidScoringConfig { details: String },
     #[error("Analytics error: {source}")]
-    AnalyticsError { source: Box<dyn std::error::Error + Send + Sync> },
+    AnalyticsError {
+        source: Box<dyn std::error::Error + Send + Sync>,
+    },
     #[error("Pattern processing error: {details}")]
     PatternProcessingError { details: String },
 }
@@ -379,12 +381,14 @@ impl DynamicContextSelector {
 
         // 3. Apply selection strategy
         let strategy_start = Instant::now();
-        let selected_patterns = self.apply_selection_strategy(&scored_patterns, analysis_context)?;
+        let selected_patterns =
+            self.apply_selection_strategy(&scored_patterns, analysis_context)?;
         let strategy_time = strategy_start.elapsed().as_millis() as u64;
 
         // 4. Optimize for token budget
         let optimization_start = Instant::now();
-        let optimized_selection = self.optimize_for_token_budget(&selected_patterns, analysis_context)?;
+        let optimized_selection =
+            self.optimize_for_token_budget(&selected_patterns, analysis_context)?;
         let optimization_time = optimization_start.elapsed().as_millis() as u64;
 
         // 5. Build final context
@@ -397,7 +401,7 @@ impl DynamicContextSelector {
                 strategy_time_ms: strategy_time,
                 optimization_time_ms: optimization_time,
                 total_time_ms: start_time.elapsed().as_millis() as u64,
-            }
+            },
         )?;
 
         // 6. Update analytics and metrics
@@ -468,7 +472,8 @@ impl DynamicContextSelector {
 
             // Find patterns by category similarity
             for (id, pattern) in &self.enhanced_patterns {
-                if id != pattern_id && pattern.universal.category == base_pattern.universal.category {
+                if id != pattern_id && pattern.universal.category == base_pattern.universal.category
+                {
                     related.push(pattern.clone());
                 }
             }
@@ -476,10 +481,13 @@ impl DynamicContextSelector {
             // Find patterns by tag similarity
             for (id, pattern) in &self.enhanced_patterns {
                 if id != pattern_id {
-                    let common_tags = base_pattern.universal.tags.iter()
+                    let common_tags = base_pattern
+                        .universal
+                        .tags
+                        .iter()
                         .filter(|tag| pattern.universal.tags.contains(tag))
                         .count();
-                    
+
                     if common_tags > 0 && common_tags >= base_pattern.universal.tags.len() / 2 {
                         related.push(pattern.clone());
                     }
@@ -500,7 +508,9 @@ impl DynamicContextSelector {
         for (pattern_id, pattern) in &self.enhanced_patterns {
             if pattern.language_contexts.contains_key(&context.language) {
                 // Skip if already included as direct match
-                let already_included = context.detected_patterns.iter()
+                let already_included = context
+                    .detected_patterns
+                    .iter()
                     .any(|detected| detected.pattern_id == *pattern_id);
 
                 if !already_included {
@@ -543,7 +553,12 @@ impl DynamicContextSelector {
         }
 
         // Suggest patterns based on complexity metrics
-        if context.codebase_info.complexity_metrics.cyclomatic_complexity > 10.0 {
+        if context
+            .codebase_info
+            .complexity_metrics
+            .cyclomatic_complexity
+            > 10.0
+        {
             for (pattern_id, pattern) in &self.enhanced_patterns {
                 if pattern.universal.tags.contains(&"complexity".to_string()) {
                     candidates.push(PatternCandidate {
@@ -622,13 +637,19 @@ impl DynamicContextSelector {
 
         // 6. Usage frequency score (adaptive learning)
         if self.config.enable_adaptive_learning {
-            let usage_score = self.analytics.get_usage_score(&candidate.pattern.universal.id);
+            let usage_score = self
+                .analytics
+                .get_usage_score(&candidate.pattern.universal.id);
             total_score += usage_score * weights.usage_frequency;
             total_weight += weights.usage_frequency;
         }
 
         // Normalize by total weight
-        Ok(if total_weight > 0.0 { total_score / total_weight } else { 0.0 })
+        Ok(if total_weight > 0.0 {
+            total_score / total_weight
+        } else {
+            0.0
+        })
     }
 
     /// Calculate detailed score breakdown for transparency
@@ -644,7 +665,8 @@ impl DynamicContextSelector {
             confidence_score: candidate.base_score,
             solution_score: self.calculate_solution_score(candidate, context),
             usage_score: if self.config.enable_adaptive_learning {
-                self.analytics.get_usage_score(&candidate.pattern.universal.id)
+                self.analytics
+                    .get_usage_score(&candidate.pattern.universal.id)
             } else {
                 0.5
             },
@@ -658,33 +680,49 @@ impl DynamicContextSelector {
         context: &AnalysisContext,
     ) -> f32 {
         // Exact language match
-        if candidate.pattern.language_contexts.contains_key(&context.language) {
+        if candidate
+            .pattern
+            .language_contexts
+            .contains_key(&context.language)
+        {
             return 1.0;
         }
 
         // Language family similarity based on context language
         let language_similarity = match context.language {
             SourceLanguage::JavaScript => {
-                if candidate.pattern.language_contexts.contains_key(&SourceLanguage::TypeScript) {
+                if candidate
+                    .pattern
+                    .language_contexts
+                    .contains_key(&SourceLanguage::TypeScript)
+                {
                     0.9
                 } else {
                     0.3
                 }
-            },
+            }
             SourceLanguage::TypeScript => {
-                if candidate.pattern.language_contexts.contains_key(&SourceLanguage::JavaScript) {
+                if candidate
+                    .pattern
+                    .language_contexts
+                    .contains_key(&SourceLanguage::JavaScript)
+                {
                     0.9
                 } else {
                     0.3
                 }
-            },
+            }
             SourceLanguage::Java => {
-                if candidate.pattern.language_contexts.contains_key(&SourceLanguage::CSharp) {
+                if candidate
+                    .pattern
+                    .language_contexts
+                    .contains_key(&SourceLanguage::CSharp)
+                {
                     0.7
                 } else {
                     0.3
                 }
-            },
+            }
             _ => 0.3, // Some cross-language applicability
         };
 
@@ -707,7 +745,11 @@ impl DynamicContextSelector {
         if let Some(lang_context) = candidate.pattern.language_contexts.get(&context.language) {
             for framework in &context.frameworks {
                 for pattern_framework in &lang_context.frameworks {
-                    if pattern_framework.framework_name.to_lowercase().contains(&framework.to_lowercase()) {
+                    if pattern_framework
+                        .framework_name
+                        .to_lowercase()
+                        .contains(&framework.to_lowercase())
+                    {
                         max_score = max_score.max(1.0);
                     }
                 }
@@ -740,10 +782,8 @@ impl DynamicContextSelector {
             similarity_score = similarity_score.max(category_similarity);
 
             // Tag-based similarity
-            let tag_similarity = self.calculate_tag_similarity(
-                &candidate.pattern.universal.tags,
-                &detected.pattern_id,
-            );
+            let tag_similarity = self
+                .calculate_tag_similarity(&candidate.pattern.universal.tags, &detected.pattern_id);
             similarity_score = similarity_score.max(tag_similarity);
         }
 
@@ -760,7 +800,7 @@ impl DynamicContextSelector {
             if detected_pattern.universal.category == *candidate_category {
                 return 0.8; // High similarity for same category
             }
-            
+
             // Define category relationships
             match (candidate_category, &detected_pattern.universal.category) {
                 (AntiPatternCategory::ObjectOriented, AntiPatternCategory::Architectural) => 0.6,
@@ -782,15 +822,17 @@ impl DynamicContextSelector {
         detected_pattern_id: &str,
     ) -> f32 {
         if let Some(detected_pattern) = self.enhanced_patterns.get(detected_pattern_id) {
-            let common_tags = candidate_tags.iter()
+            let common_tags = candidate_tags
+                .iter()
                 .filter(|tag| detected_pattern.universal.tags.contains(tag))
                 .count();
-            
+
             if candidate_tags.is_empty() || detected_pattern.universal.tags.is_empty() {
                 return 0.0;
             }
-            
-            let total_unique_tags = candidate_tags.len() + detected_pattern.universal.tags.len() - common_tags;
+
+            let total_unique_tags =
+                candidate_tags.len() + detected_pattern.universal.tags.len() - common_tags;
             common_tags as f32 / total_unique_tags as f32
         } else {
             0.0
@@ -847,21 +889,18 @@ impl DynamicContextSelector {
         context: &AnalysisContext,
     ) -> Result<Vec<ScoredPattern>, ContextSelectionError> {
         match self.config.selection_strategy {
-            SelectionStrategy::TopScoring => {
-                Ok(scored_patterns.iter()
-                    .take(self.config.max_patterns)
-                    .cloned()
-                    .collect())
-            },
+            SelectionStrategy::TopScoring => Ok(scored_patterns
+                .iter()
+                .take(self.config.max_patterns)
+                .cloned()
+                .collect()),
             SelectionStrategy::Diversified => {
                 self.apply_diversified_selection(scored_patterns, context)
-            },
+            }
             SelectionStrategy::Focused { ref domain } => {
                 self.apply_focused_selection(scored_patterns, domain, context)
-            },
-            SelectionStrategy::Adaptive => {
-                self.apply_adaptive_selection(scored_patterns, context)
-            },
+            }
+            SelectionStrategy::Adaptive => self.apply_adaptive_selection(scored_patterns, context),
         }
     }
 
@@ -891,7 +930,10 @@ impl DynamicContextSelector {
                 break;
             }
 
-            if !selected.iter().any(|s| s.candidate.pattern.universal.id == pattern.candidate.pattern.universal.id) {
+            if !selected
+                .iter()
+                .any(|s| s.candidate.pattern.universal.id == pattern.candidate.pattern.universal.id)
+            {
                 selected.push(pattern.clone());
             }
         }
@@ -906,7 +948,8 @@ impl DynamicContextSelector {
         domain: &AntiPatternCategory,
         _context: &AnalysisContext,
     ) -> Result<Vec<ScoredPattern>, ContextSelectionError> {
-        let focused_patterns: Vec<_> = scored_patterns.iter()
+        let focused_patterns: Vec<_> = scored_patterns
+            .iter()
             .filter(|pattern| pattern.candidate.pattern.universal.category == *domain)
             .take(self.config.max_patterns)
             .cloned()
@@ -944,10 +987,9 @@ impl DynamicContextSelector {
                 used_tokens += pattern_tokens;
             } else {
                 // Try to fit a smaller version of the pattern
-                if let Some(compressed_pattern) = self.compress_pattern_for_budget(
-                    pattern,
-                    available_tokens - used_tokens
-                ) {
+                if let Some(compressed_pattern) =
+                    self.compress_pattern_for_budget(pattern, available_tokens - used_tokens)
+                {
                     optimized.push(compressed_pattern);
                     break; // Budget exhausted
                 }
@@ -965,16 +1007,25 @@ impl DynamicContextSelector {
         // Base pattern info
         tokens += pattern.universal.name.len() / 4; // ~4 chars per token
         tokens += pattern.universal.definition.as_str().len() / 4;
-        tokens += pattern.universal.symptoms.iter()
+        tokens += pattern
+            .universal
+            .symptoms
+            .iter()
             .map(|s| s.as_str().len() / 4)
             .sum::<usize>();
 
         // Solutions
-        tokens += pattern.universal.solutions.iter()
+        tokens += pattern
+            .universal
+            .solutions
+            .iter()
             .map(|s| {
-                s.title.len() / 4 + 
-                s.implementation.as_str().len() / 4 +
-                s.examples.iter().map(|e| e.explanation.as_str().len() / 4).sum::<usize>()
+                s.title.len() / 4
+                    + s.implementation.as_str().len() / 4
+                    + s.examples
+                        .iter()
+                        .map(|e| e.explanation.as_str().len() / 4)
+                        .sum::<usize>()
             })
             .sum::<usize>();
 
@@ -993,10 +1044,21 @@ impl DynamicContextSelector {
 
         // Create a compressed version by reducing examples and details
         let mut compressed_pattern = pattern.clone();
-        
+
         // Keep only the most essential information
-        compressed_pattern.candidate.pattern.universal.examples.primary.truncate(1);
-        compressed_pattern.candidate.pattern.universal.solutions.truncate(1);
+        compressed_pattern
+            .candidate
+            .pattern
+            .universal
+            .examples
+            .primary
+            .truncate(1);
+        compressed_pattern
+            .candidate
+            .pattern
+            .universal
+            .solutions
+            .truncate(1);
 
         Some(compressed_pattern)
     }
@@ -1010,25 +1072,35 @@ impl DynamicContextSelector {
     ) -> Result<SelectedContext, ContextSelectionError> {
         let selected_count = optimized_selection.len();
         let average_relevance = if selected_count > 0 {
-            optimized_selection.iter()
+            optimized_selection
+                .iter()
                 .map(|p| p.relevance_score)
-                .sum::<f32>() / selected_count as f32
+                .sum::<f32>()
+                / selected_count as f32
         } else {
             0.0
         };
 
-        let used_tokens = optimized_selection.iter()
+        let used_tokens = optimized_selection
+            .iter()
             .map(|p| self.estimate_pattern_tokens(&p.candidate.pattern))
             .sum::<usize>();
 
         let token_usage = TokenUsage {
             used_tokens,
             available_tokens: context.token_constraints.available_tokens,
-            utilization_percent: (used_tokens as f32 / context.token_constraints.available_tokens as f32) * 100.0,
+            utilization_percent: (used_tokens as f32
+                / context.token_constraints.available_tokens as f32)
+                * 100.0,
         };
 
         let language_context = if let Some(first_pattern) = optimized_selection.first() {
-            first_pattern.candidate.pattern.language_contexts.get(&context.language).cloned()
+            first_pattern
+                .candidate
+                .pattern
+                .language_contexts
+                .get(&context.language)
+                .cloned()
         } else {
             None
         };
@@ -1063,7 +1135,8 @@ impl DynamicContextSelector {
         selected_context: &SelectedContext,
         analysis_context: &AnalysisContext,
     ) {
-        self.analytics.update_selection_analytics(selected_context, analysis_context);
+        self.analytics
+            .update_selection_analytics(selected_context, analysis_context);
     }
 }
 
@@ -1175,7 +1248,9 @@ impl ContextAnalytics {
         for scored_pattern in &selected_context.patterns {
             let pattern_id = &scored_pattern.candidate.pattern.universal.id;
 
-            let stats = self.usage_frequency.entry(pattern_id.clone())
+            let stats = self
+                .usage_frequency
+                .entry(pattern_id.clone())
                 .or_insert_with(|| UsageStats {
                     selection_count: 0,
                     success_count: 0,
@@ -1209,11 +1284,15 @@ impl ContextAnalytics {
 
         // Update average rating for the pattern
         if let Some(stats) = self.usage_frequency.get_mut(&pattern_id) {
-            let feedback_count = self.feedback_history.iter()
+            let feedback_count = self
+                .feedback_history
+                .iter()
                 .filter(|f| f.pattern_id == pattern_id)
                 .count() as f32;
-            
-            let total_rating: f32 = self.feedback_history.iter()
+
+            let total_rating: f32 = self
+                .feedback_history
+                .iter()
                 .filter(|f| f.pattern_id == pattern_id)
                 .map(|f| f.rating as f32)
                 .sum();
@@ -1255,9 +1334,7 @@ impl SelectionMetrics {
         }
 
         // Update average
-        let total_ms: u128 = self.recent_times.iter()
-            .map(|d| d.as_millis())
-            .sum();
+        let total_ms: u128 = self.recent_times.iter().map(|d| d.as_millis()).sum();
         self.average_time_ms = total_ms as f64 / self.recent_times.len() as f64;
     }
 
@@ -1301,19 +1378,17 @@ mod tests {
         AnalysisContext {
             language: SourceLanguage::Rust,
             frameworks: vec!["tokio".to_string(), "serde".to_string()],
-            detected_patterns: vec![
-                DetectedPattern {
-                    pattern_id: "god_object".to_string(),
-                    confidence: 0.9,
-                    severity: SeverityLevel::High,
-                    location: LocationContext {
-                        file_path: "src/main.rs".to_string(),
-                        line_range: (100, 200),
-                        context_name: Some("MainService".to_string()),
-                    },
-                    related_patterns: vec!["tight_coupling".to_string()],
-                }
-            ],
+            detected_patterns: vec![DetectedPattern {
+                pattern_id: "god_object".to_string(),
+                confidence: 0.9,
+                severity: SeverityLevel::High,
+                location: LocationContext {
+                    file_path: "src/main.rs".to_string(),
+                    line_range: (100, 200),
+                    context_name: Some("MainService".to_string()),
+                },
+                related_patterns: vec!["tight_coupling".to_string()],
+            }],
             codebase_info: CodebaseInfo {
                 size_category: CodebaseSizeCategory::Medium,
                 architectural_patterns: vec!["MVC".to_string()],
@@ -1342,21 +1417,26 @@ mod tests {
 
     fn create_test_pattern() -> EnhancedPattern {
         let mut language_contexts = HashMap::new();
-        language_contexts.insert(SourceLanguage::Rust, LanguageContext {
-            language: SourceLanguage::Rust,
-            specific_symptoms: vec![CompressedString::new("Large struct with many fields")],
-            detection_methods: vec![],
-            solutions: vec![],
-            tools: vec![CompressedString::new("clippy")],
-            frameworks: vec![],
-            stdlib_guidance: None,
-        });
+        language_contexts.insert(
+            SourceLanguage::Rust,
+            LanguageContext {
+                language: SourceLanguage::Rust,
+                specific_symptoms: vec![CompressedString::new("Large struct with many fields")],
+                detection_methods: vec![],
+                solutions: vec![],
+                tools: vec![CompressedString::new("clippy")],
+                frameworks: vec![],
+                stdlib_guidance: None,
+            },
+        );
 
         EnhancedPattern {
             universal: PatternKnowledge {
                 id: "god_object".to_string(),
                 name: "God Object".to_string(),
-                definition: CompressedString::new("A class or struct that knows too much or does too much"),
+                definition: CompressedString::new(
+                    "A class or struct that knows too much or does too much",
+                ),
                 symptoms: vec![CompressedString::new("Large class size")],
                 impact: ImpactLevel::High,
                 category: AntiPatternCategory::ObjectOriented,
@@ -1386,10 +1466,10 @@ mod tests {
     fn test_context_selector_creation() {
         let mut patterns = HashMap::new();
         patterns.insert("god_object".to_string(), create_test_pattern());
-        
+
         let config = ContextSelectionConfig::default();
         let selector = DynamicContextSelector::new(patterns, config);
-        
+
         assert_eq!(selector.enhanced_patterns.len(), 1);
     }
 
@@ -1397,13 +1477,13 @@ mod tests {
     fn test_candidate_generation() {
         let mut patterns = HashMap::new();
         patterns.insert("god_object".to_string(), create_test_pattern());
-        
+
         let config = ContextSelectionConfig::default();
         let selector = DynamicContextSelector::new(patterns, config);
-        
+
         let context = create_test_context();
         let candidates = selector.generate_candidates(&context).unwrap();
-        
+
         assert!(!candidates.is_empty());
         assert_eq!(candidates[0].pattern.universal.id, "god_object");
         assert!(matches!(candidates[0].match_type, MatchType::Direct));
@@ -1413,10 +1493,10 @@ mod tests {
     fn test_language_score_calculation() {
         let mut patterns = HashMap::new();
         patterns.insert("god_object".to_string(), create_test_pattern());
-        
+
         let config = ContextSelectionConfig::default();
         let selector = DynamicContextSelector::new(patterns, config);
-        
+
         let context = create_test_context();
         let candidate = PatternCandidate {
             pattern: create_test_pattern(),
@@ -1424,7 +1504,7 @@ mod tests {
             base_score: 0.9,
             detection_context: None,
         };
-        
+
         let score = selector.calculate_language_score(&candidate, &context);
         assert_eq!(score, 1.0); // Exact match for Rust
     }
@@ -1433,10 +1513,10 @@ mod tests {
     fn test_pattern_scoring() {
         let mut patterns = HashMap::new();
         patterns.insert("god_object".to_string(), create_test_pattern());
-        
+
         let config = ContextSelectionConfig::default();
         let selector = DynamicContextSelector::new(patterns, config);
-        
+
         let context = create_test_context();
         let candidates = vec![PatternCandidate {
             pattern: create_test_pattern(),
@@ -1444,7 +1524,7 @@ mod tests {
             base_score: 0.9,
             detection_context: None,
         }];
-        
+
         let scored = selector.score_patterns(&candidates, &context).unwrap();
         assert!(!scored.is_empty());
         assert!(scored[0].relevance_score > 0.0);
@@ -1454,10 +1534,10 @@ mod tests {
     fn test_token_budget_optimization() {
         let mut patterns = HashMap::new();
         patterns.insert("god_object".to_string(), create_test_pattern());
-        
+
         let config = ContextSelectionConfig::default();
         let selector = DynamicContextSelector::new(patterns, config);
-        
+
         let context = create_test_context();
         let scored = vec![ScoredPattern {
             candidate: PatternCandidate {
@@ -1476,8 +1556,10 @@ mod tests {
                 usage_score: 0.5,
             },
         }];
-        
-        let optimized = selector.optimize_for_token_budget(&scored, &context).unwrap();
+
+        let optimized = selector
+            .optimize_for_token_budget(&scored, &context)
+            .unwrap();
         assert!(!optimized.is_empty());
     }
 
@@ -1485,54 +1567,54 @@ mod tests {
     fn test_diversified_selection() {
         let mut patterns = HashMap::new();
         patterns.insert("god_object".to_string(), create_test_pattern());
-        
+
         // Create another pattern with different category
         let mut arch_pattern = create_test_pattern();
         arch_pattern.universal.id = "tight_coupling".to_string();
         arch_pattern.universal.category = AntiPatternCategory::Architectural;
         patterns.insert("tight_coupling".to_string(), arch_pattern);
-        
+
         let config = ContextSelectionConfig {
             selection_strategy: SelectionStrategy::Diversified,
             ..Default::default()
         };
         let selector = DynamicContextSelector::new(patterns, config);
-        
+
         let context = create_test_context();
-        let scored = vec![
-            ScoredPattern {
-                candidate: PatternCandidate {
-                    pattern: create_test_pattern(),
-                    match_type: MatchType::Direct,
-                    base_score: 0.9,
-                    detection_context: None,
-                },
-                relevance_score: 0.8,
-                score_breakdown: ScoreBreakdown {
-                    language_score: 1.0,
-                    framework_score: 0.5,
-                    similarity_score: 1.0,
-                    confidence_score: 0.9,
-                    solution_score: 0.6,
-                    usage_score: 0.5,
-                },
-            }
-        ];
-        
-        let selected = selector.apply_diversified_selection(&scored, &context).unwrap();
+        let scored = vec![ScoredPattern {
+            candidate: PatternCandidate {
+                pattern: create_test_pattern(),
+                match_type: MatchType::Direct,
+                base_score: 0.9,
+                detection_context: None,
+            },
+            relevance_score: 0.8,
+            score_breakdown: ScoreBreakdown {
+                language_score: 1.0,
+                framework_score: 0.5,
+                similarity_score: 1.0,
+                confidence_score: 0.9,
+                solution_score: 0.6,
+                usage_score: 0.5,
+            },
+        }];
+
+        let selected = selector
+            .apply_diversified_selection(&scored, &context)
+            .unwrap();
         assert!(!selected.is_empty());
     }
 
     #[test]
     fn test_analytics_usage_tracking() {
         let mut analytics = ContextAnalytics::new();
-        
+
         // Test initial neutral score
         assert_eq!(analytics.get_usage_score("test_pattern"), 0.5);
-        
+
         // Add feedback
         analytics.add_feedback("test_pattern".to_string(), 4, "Good detection".to_string());
-        
+
         // Verify feedback was recorded
         assert_eq!(analytics.feedback_history.len(), 1);
     }

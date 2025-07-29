@@ -567,28 +567,44 @@ impl GeneticBottleneckDetector {
 
         // Calculate resource utilization statistics
         let cpu_stats = self.calculate_resource_stats(
-            &performance_data.iter().map(|p| p.cpu_usage).collect::<Vec<_>>()
+            &performance_data
+                .iter()
+                .map(|p| p.cpu_usage)
+                .collect::<Vec<_>>(),
         );
         let mem_stats = self.calculate_resource_stats(
-            &performance_data.iter().map(|p| p.memory_usage).collect::<Vec<_>>()
+            &performance_data
+                .iter()
+                .map(|p| p.memory_usage)
+                .collect::<Vec<_>>(),
         );
         let io_stats = self.calculate_resource_stats(
-            &performance_data.iter().map(|p| p.io_wait).collect::<Vec<_>>()
+            &performance_data
+                .iter()
+                .map(|p| p.io_wait)
+                .collect::<Vec<_>>(),
         );
         let net_stats = self.calculate_resource_stats(
-            &performance_data.iter().map(|p| p.network_latency).collect::<Vec<_>>()
+            &performance_data
+                .iter()
+                .map(|p| p.network_latency)
+                .collect::<Vec<_>>(),
         );
 
         // Check for CPU bottlenecks
         if cpu_stats.mean > *cpu_threshold || cpu_stats.peak > 0.9 {
             let severity = self.determine_severity(cpu_stats.mean, *cpu_threshold, cpu_stats.peak);
             let confidence = self.calculate_confidence(&cpu_stats, *cpu_threshold);
-            
+
             bottlenecks.push(Bottleneck {
                 resource_type: ResourceType::CPU,
                 severity,
                 confidence,
-                impact_score: self.calculate_impact_score(cpu_stats.mean, *cpu_threshold, &cpu_stats),
+                impact_score: self.calculate_impact_score(
+                    cpu_stats.mean,
+                    *cpu_threshold,
+                    &cpu_stats,
+                ),
                 location: self.identify_bottleneck_location(ResourceType::CPU, performance_data),
                 metrics: BottleneckMetrics {
                     current_utilization: cpu_stats.mean,
@@ -604,12 +620,16 @@ impl GeneticBottleneckDetector {
         if mem_stats.mean > *mem_threshold || mem_stats.peak > 0.9 {
             let severity = self.determine_severity(mem_stats.mean, *mem_threshold, mem_stats.peak);
             let confidence = self.calculate_confidence(&mem_stats, *mem_threshold);
-            
+
             bottlenecks.push(Bottleneck {
                 resource_type: ResourceType::Memory,
                 severity,
                 confidence,
-                impact_score: self.calculate_impact_score(mem_stats.mean, *mem_threshold, &mem_stats),
+                impact_score: self.calculate_impact_score(
+                    mem_stats.mean,
+                    *mem_threshold,
+                    &mem_stats,
+                ),
                 location: self.identify_bottleneck_location(ResourceType::Memory, performance_data),
                 metrics: BottleneckMetrics {
                     current_utilization: mem_stats.mean,
@@ -625,7 +645,7 @@ impl GeneticBottleneckDetector {
         if io_stats.mean > *io_threshold || io_stats.peak > 0.8 {
             let severity = self.determine_severity(io_stats.mean, *io_threshold, io_stats.peak);
             let confidence = self.calculate_confidence(&io_stats, *io_threshold);
-            
+
             bottlenecks.push(Bottleneck {
                 resource_type: ResourceType::IO,
                 severity,
@@ -645,25 +665,34 @@ impl GeneticBottleneckDetector {
         // Check for Network bottlenecks (convert latency to normalized scale)
         let normalized_net_mean = net_stats.mean / 100.0;
         let normalized_net_peak = net_stats.peak / 100.0;
-        
+
         if normalized_net_mean > *net_threshold || normalized_net_peak > 1.0 {
-            let severity = self.determine_severity(normalized_net_mean, *net_threshold, normalized_net_peak);
-            let confidence = self.calculate_confidence(&ResourceStats {
-                mean: normalized_net_mean,
-                peak: normalized_net_peak,
-                variance: net_stats.variance / 10000.0, // Normalize variance too
-            }, *net_threshold);
-            
+            let severity =
+                self.determine_severity(normalized_net_mean, *net_threshold, normalized_net_peak);
+            let confidence = self.calculate_confidence(
+                &ResourceStats {
+                    mean: normalized_net_mean,
+                    peak: normalized_net_peak,
+                    variance: net_stats.variance / 10000.0, // Normalize variance too
+                },
+                *net_threshold,
+            );
+
             bottlenecks.push(Bottleneck {
                 resource_type: ResourceType::Network,
                 severity,
                 confidence,
-                impact_score: self.calculate_impact_score(normalized_net_mean, *net_threshold, &ResourceStats {
-                    mean: normalized_net_mean,
-                    peak: normalized_net_peak,
-                    variance: net_stats.variance / 10000.0,
-                }),
-                location: self.identify_bottleneck_location(ResourceType::Network, performance_data),
+                impact_score: self.calculate_impact_score(
+                    normalized_net_mean,
+                    *net_threshold,
+                    &ResourceStats {
+                        mean: normalized_net_mean,
+                        peak: normalized_net_peak,
+                        variance: net_stats.variance / 10000.0,
+                    },
+                ),
+                location: self
+                    .identify_bottleneck_location(ResourceType::Network, performance_data),
                 metrics: BottleneckMetrics {
                     current_utilization: net_stats.mean,
                     baseline_utilization: *net_threshold * 100.0,
@@ -675,12 +704,16 @@ impl GeneticBottleneckDetector {
         }
 
         // Check for compound bottlenecks (multiple resources stressed simultaneously)
-        let compound_bottleneck = self.detect_compound_bottleneck(chromosome, performance_data, &[
-            (ResourceType::CPU, cpu_stats.mean, *cpu_threshold),
-            (ResourceType::Memory, mem_stats.mean, *mem_threshold),
-            (ResourceType::IO, io_stats.mean, *io_threshold),
-            (ResourceType::Network, normalized_net_mean, *net_threshold),
-        ]);
+        let compound_bottleneck = self.detect_compound_bottleneck(
+            chromosome,
+            performance_data,
+            &[
+                (ResourceType::CPU, cpu_stats.mean, *cpu_threshold),
+                (ResourceType::Memory, mem_stats.mean, *mem_threshold),
+                (ResourceType::IO, io_stats.mean, *io_threshold),
+                (ResourceType::Network, normalized_net_mean, *net_threshold),
+            ],
+        );
 
         if let Some(compound) = compound_bottleneck {
             bottlenecks.push(compound);
@@ -695,20 +728,31 @@ impl GeneticBottleneckDetector {
     /// Calculate resource utilization statistics
     fn calculate_resource_stats(&self, values: &[f64]) -> ResourceStats {
         if values.is_empty() {
-            return ResourceStats { mean: 0.0, peak: 0.0, variance: 0.0 };
+            return ResourceStats {
+                mean: 0.0,
+                peak: 0.0,
+                variance: 0.0,
+            };
         }
 
         let mean = values.iter().sum::<f64>() / values.len() as f64;
         let peak = values.iter().fold(0.0f64, |acc, &x| acc.max(x));
-        let variance = values.iter()
-            .map(|v| (v - mean).powi(2))
-            .sum::<f64>() / values.len() as f64;
+        let variance = values.iter().map(|v| (v - mean).powi(2)).sum::<f64>() / values.len() as f64;
 
-        ResourceStats { mean, peak, variance }
+        ResourceStats {
+            mean,
+            peak,
+            variance,
+        }
     }
 
     /// Determine bottleneck severity based on utilization levels
-    fn determine_severity(&self, mean_utilization: f64, threshold: f64, peak_utilization: f64) -> BottleneckSeverity {
+    fn determine_severity(
+        &self,
+        mean_utilization: f64,
+        threshold: f64,
+        peak_utilization: f64,
+    ) -> BottleneckSeverity {
         let excess_ratio = (mean_utilization - threshold) / threshold;
         let peak_ratio = peak_utilization / threshold;
 
@@ -746,12 +790,18 @@ impl GeneticBottleneckDetector {
         };
 
         // Combine factors for overall confidence
-        let confidence: f64 = (consistency * 0.4) + (threshold_distance.min(1.0) * 0.4) + (peak_consistency * 0.2);
+        let confidence: f64 =
+            (consistency * 0.4) + (threshold_distance.min(1.0) * 0.4) + (peak_consistency * 0.2);
         confidence.clamp(0.0, 1.0)
     }
 
     /// Calculate impact score for bottleneck
-    fn calculate_impact_score(&self, utilization: f64, threshold: f64, stats: &ResourceStats) -> f64 {
+    fn calculate_impact_score(
+        &self,
+        utilization: f64,
+        threshold: f64,
+        stats: &ResourceStats,
+    ) -> f64 {
         let severity_impact = ((utilization - threshold) / threshold).max(0.0);
         let peak_impact = (stats.peak - threshold).max(0.0) / threshold;
         let variability_penalty = stats.variance.sqrt() * 0.1;
@@ -761,14 +811,17 @@ impl GeneticBottleneckDetector {
     }
 
     /// Identify location of bottleneck
-    fn identify_bottleneck_location(&self, resource_type: ResourceType, performance_data: &[PerformanceDataPoint]) -> BottleneckLocation {
+    fn identify_bottleneck_location(
+        &self,
+        resource_type: ResourceType,
+        performance_data: &[PerformanceDataPoint],
+    ) -> BottleneckLocation {
         // Find the data point with highest utilization for this resource type
-        let worst_point = performance_data.iter()
-            .max_by(|a, b| {
-                let a_val = self.get_resource_value(a, &resource_type);
-                let b_val = self.get_resource_value(b, &resource_type);
-                a_val.partial_cmp(&b_val).unwrap()
-            });
+        let worst_point = performance_data.iter().max_by(|a, b| {
+            let a_val = self.get_resource_value(a, &resource_type);
+            let b_val = self.get_resource_value(b, &resource_type);
+            a_val.partial_cmp(&b_val).unwrap()
+        });
 
         if let Some(point) = worst_point {
             BottleneckLocation {
@@ -788,7 +841,11 @@ impl GeneticBottleneckDetector {
     }
 
     /// Get resource value for specific resource type
-    fn get_resource_value(&self, data_point: &PerformanceDataPoint, resource_type: &ResourceType) -> f64 {
+    fn get_resource_value(
+        &self,
+        data_point: &PerformanceDataPoint,
+        resource_type: &ResourceType,
+    ) -> f64 {
         match resource_type {
             ResourceType::CPU => data_point.cpu_usage,
             ResourceType::Memory => data_point.memory_usage,
@@ -806,14 +863,17 @@ impl GeneticBottleneckDetector {
         performance_data: &[PerformanceDataPoint],
         resource_states: &[(ResourceType, f64, f64)], // (type, utilization, threshold)
     ) -> Option<Bottleneck> {
-        let stressed_resources: Vec<_> = resource_states.iter()
+        let stressed_resources: Vec<_> = resource_states
+            .iter()
             .filter(|(_, utilization, threshold)| *utilization > *threshold * 0.8)
             .collect();
 
         if stressed_resources.len() >= 2 {
             // Calculate weighted impact across resources
             let total_weight: f64 = chromosome.resource_weights.iter().sum();
-            let weighted_impact: f64 = stressed_resources.iter().enumerate()
+            let weighted_impact: f64 = stressed_resources
+                .iter()
+                .enumerate()
                 .map(|(i, (_, utilization, threshold))| {
                     let weight = chromosome.resource_weights.get(i).unwrap_or(&0.25) / total_weight;
                     let excess = (utilization - threshold) / threshold;
@@ -847,7 +907,6 @@ impl GeneticBottleneckDetector {
         None
     }
 
-
     /// Generate optimization recommendations based on identified bottlenecks
     fn generate_recommendations(&self, bottlenecks: &[Bottleneck]) -> Result<Vec<Recommendation>> {
         let mut recommendations = Vec::new();
@@ -879,9 +938,10 @@ impl GeneticBottleneckDetector {
         recommendations.sort_by(|a, b| {
             let a_priority_score = self.get_priority_score(&a.priority);
             let b_priority_score = self.get_priority_score(&b.priority);
-            
+
             // First sort by priority, then by impact
-            b_priority_score.cmp(&a_priority_score)
+            b_priority_score
+                .cmp(&a_priority_score)
                 .then_with(|| b.estimated_impact.partial_cmp(&a.estimated_impact).unwrap())
         });
 
@@ -1001,7 +1061,8 @@ impl GeneticBottleneckDetector {
             BottleneckSeverity::Medium => {
                 recommendations.push(Recommendation {
                     title: "Optimize memory allocation patterns".to_string(),
-                    description: "Memory usage could be optimized to prevent future bottlenecks.".to_string(),
+                    description: "Memory usage could be optimized to prevent future bottlenecks."
+                        .to_string(),
                     priority: RecommendationPriority::Medium,
                     estimated_impact: bottleneck.impact_score * 0.5,
                     implementation_effort: ImplementationEffort::Low,
@@ -1091,7 +1152,8 @@ impl GeneticBottleneckDetector {
             BottleneckSeverity::Medium => {
                 recommendations.push(Recommendation {
                     title: "Optimize network usage".to_string(),
-                    description: "Network performance can be improved through optimization.".to_string(),
+                    description: "Network performance can be improved through optimization."
+                        .to_string(),
                     priority: RecommendationPriority::Medium,
                     estimated_impact: bottleneck.impact_score * 0.5,
                     implementation_effort: ImplementationEffort::Low,
@@ -1111,22 +1173,22 @@ impl GeneticBottleneckDetector {
 
     /// Generate Database-specific optimization recommendations
     fn generate_database_recommendations(&self, bottleneck: &Bottleneck) -> Vec<Recommendation> {
-        vec![
-            Recommendation {
-                title: "Optimize database queries".to_string(),
-                description: "Database performance issues detected. Focus on query optimization and indexing.".to_string(),
-                priority: RecommendationPriority::High,
-                estimated_impact: bottleneck.impact_score * 0.8,
-                implementation_effort: ImplementationEffort::Medium,
-                category: RecommendationCategory::DatabaseOptimization,
-                specific_actions: vec![
-                    "Profile slow queries and add appropriate indexes".to_string(),
-                    "Implement query result caching".to_string(),
-                    "Consider database connection pooling".to_string(),
-                    "Review database schema for normalization issues".to_string(),
-                ],
-            }
-        ]
+        vec![Recommendation {
+            title: "Optimize database queries".to_string(),
+            description:
+                "Database performance issues detected. Focus on query optimization and indexing."
+                    .to_string(),
+            priority: RecommendationPriority::High,
+            estimated_impact: bottleneck.impact_score * 0.8,
+            implementation_effort: ImplementationEffort::Medium,
+            category: RecommendationCategory::DatabaseOptimization,
+            specific_actions: vec![
+                "Profile slow queries and add appropriate indexes".to_string(),
+                "Implement query result caching".to_string(),
+                "Consider database connection pooling".to_string(),
+                "Review database schema for normalization issues".to_string(),
+            ],
+        }]
     }
 
     /// Generate Cache-specific optimization recommendations
@@ -1208,12 +1270,13 @@ impl FitnessEvaluator {
 
         // Apply multi-objective optimization with Pareto dominance consideration
         let pareto_fitness = self.calculate_pareto_fitness(&objective_scores);
-        
+
         // Consider bottleneck detection accuracy
         let detection_accuracy = self.evaluate_detection_accuracy(chromosome, performance_data)?;
-        
+
         // Combine scores with weights
-        let combined_fitness = (total_fitness * 0.6) + (pareto_fitness * 0.2) + (detection_accuracy * 0.2);
+        let combined_fitness =
+            (total_fitness * 0.6) + (pareto_fitness * 0.2) + (detection_accuracy * 0.2);
 
         Ok(combined_fitness.clamp(0.0, 1.0))
     }
@@ -1232,9 +1295,7 @@ impl FitnessEvaluator {
             OptimizationObjective::MemoryUsage => {
                 performance_data.iter().map(|p| p.memory_usage).collect()
             }
-            OptimizationObjective::IOWait => {
-                performance_data.iter().map(|p| p.io_wait).collect()
-            }
+            OptimizationObjective::IOWait => performance_data.iter().map(|p| p.io_wait).collect(),
             OptimizationObjective::CPUUtilization => {
                 performance_data.iter().map(|p| p.cpu_usage).collect()
             }
@@ -1246,17 +1307,20 @@ impl FitnessEvaluator {
             }
             OptimizationObjective::ResourceContention => {
                 // Calculate resource contention as combination of resource utilizations
-                performance_data.iter().map(|p| {
-                    let cpu_weight = chromosome.resource_weights.get(0).unwrap_or(&0.25);
-                    let mem_weight = chromosome.resource_weights.get(1).unwrap_or(&0.25);
-                    let io_weight = chromosome.resource_weights.get(2).unwrap_or(&0.25);
-                    let net_weight = chromosome.resource_weights.get(3).unwrap_or(&0.25);
-                    
-                    p.cpu_usage * cpu_weight + 
-                    p.memory_usage * mem_weight + 
-                    p.io_wait * io_weight + 
-                    (p.network_latency / 100.0) * net_weight
-                }).collect()
+                performance_data
+                    .iter()
+                    .map(|p| {
+                        let cpu_weight = chromosome.resource_weights.get(0).unwrap_or(&0.25);
+                        let mem_weight = chromosome.resource_weights.get(1).unwrap_or(&0.25);
+                        let io_weight = chromosome.resource_weights.get(2).unwrap_or(&0.25);
+                        let net_weight = chromosome.resource_weights.get(3).unwrap_or(&0.25);
+
+                        p.cpu_usage * cpu_weight
+                            + p.memory_usage * mem_weight
+                            + p.io_wait * io_weight
+                            + (p.network_latency / 100.0) * net_weight
+                    })
+                    .collect()
             }
         };
 
@@ -1266,28 +1330,41 @@ impl FitnessEvaluator {
 
         // Calculate statistical measures
         let mean = values.iter().sum::<f64>() / values.len() as f64;
-        let variance = values.iter()
-            .map(|v| (v - mean).powi(2))
-            .sum::<f64>() / values.len() as f64;
+        let variance = values.iter().map(|v| (v - mean).powi(2)).sum::<f64>() / values.len() as f64;
         let std_dev = variance.sqrt();
 
         // Score based on objective direction and statistical properties
-        let baseline = self.baseline_metrics.get(&format!("{:?}", objective)).unwrap_or(&mean);
-        
+        let baseline = self
+            .baseline_metrics
+            .get(&format!("{:?}", objective))
+            .unwrap_or(&mean);
+
         let improvement_ratio = match objective {
             OptimizationObjective::Throughput => {
                 // Higher is better
-                if *baseline > 0.0 { mean / baseline } else { 1.0 }
+                if *baseline > 0.0 {
+                    mean / baseline
+                } else {
+                    1.0
+                }
             }
             _ => {
                 // Lower is better for most objectives
-                if mean > 0.0 { baseline / mean } else { 1.0 }
+                if mean > 0.0 {
+                    baseline / mean
+                } else {
+                    1.0
+                }
             }
         };
 
         // Consider consistency (lower variance is better)
-        let consistency_score = if std_dev > 0.0 { 1.0 / (1.0 + std_dev / mean) } else { 1.0 };
-        
+        let consistency_score = if std_dev > 0.0 {
+            1.0 / (1.0 + std_dev / mean)
+        } else {
+            1.0
+        };
+
         // Combine improvement and consistency
         let score = (improvement_ratio * 0.7) + (consistency_score * 0.3);
         Ok(score.clamp(0.0, 2.0)) // Allow scores up to 2.0 for exceptional performance
@@ -1304,12 +1381,14 @@ impl FitnessEvaluator {
         let geometric_mean = product.powf(1.0 / objective_scores.len() as f64);
 
         // Consider trade-offs between objectives
-        let variance = objective_scores.iter()
+        let variance = objective_scores
+            .iter()
             .map(|&score| {
                 let mean = objective_scores.iter().sum::<f64>() / objective_scores.len() as f64;
                 (score - mean).powi(2)
             })
-            .sum::<f64>() / objective_scores.len() as f64;
+            .sum::<f64>()
+            / objective_scores.len() as f64;
 
         // Balance between performance and trade-off management
         geometric_mean - (variance.sqrt() * 0.1)
@@ -1335,28 +1414,35 @@ impl FitnessEvaluator {
             // Evaluate detection accuracy for each resource type
             if data_point.cpu_usage > *cpu_threshold {
                 let cpu_weight = chromosome.resource_weights.get(0).unwrap_or(&0.25);
-                detection_score += cpu_weight * self.calculate_detection_precision(data_point.cpu_usage, *cpu_threshold);
+                detection_score += cpu_weight
+                    * self.calculate_detection_precision(data_point.cpu_usage, *cpu_threshold);
                 bottleneck_count += 1;
             }
 
             if data_point.memory_usage > *mem_threshold {
                 let mem_weight = chromosome.resource_weights.get(1).unwrap_or(&0.25);
-                detection_score += mem_weight * self.calculate_detection_precision(data_point.memory_usage, *mem_threshold);
+                detection_score += mem_weight
+                    * self.calculate_detection_precision(data_point.memory_usage, *mem_threshold);
                 bottleneck_count += 1;
             }
 
             if data_point.io_wait > *io_threshold {
                 let io_weight = chromosome.resource_weights.get(2).unwrap_or(&0.25);
-                detection_score += io_weight * self.calculate_detection_precision(data_point.io_wait, *io_threshold);
+                detection_score += io_weight
+                    * self.calculate_detection_precision(data_point.io_wait, *io_threshold);
                 bottleneck_count += 1;
             }
 
             if data_point.network_latency > (*net_threshold * 100.0) {
                 let net_weight = chromosome.resource_weights.get(3).unwrap_or(&0.25);
-                detection_score += net_weight * self.calculate_detection_precision(data_point.network_latency / 100.0, *net_threshold);
+                detection_score += net_weight
+                    * self.calculate_detection_precision(
+                        data_point.network_latency / 100.0,
+                        *net_threshold,
+                    );
                 bottleneck_count += 1;
             }
-            
+
             total_evaluations += 1;
         }
 
@@ -1365,10 +1451,13 @@ impl FitnessEvaluator {
         } else {
             // No bottlenecks detected - this could be good (healthy system) or bad (poor detection)
             // Check if the system actually has good performance characteristics
-            let avg_cpu = performance_data.iter().map(|p| p.cpu_usage).sum::<f64>() / performance_data.len() as f64;
-            let avg_mem = performance_data.iter().map(|p| p.memory_usage).sum::<f64>() / performance_data.len() as f64;
-            let avg_io = performance_data.iter().map(|p| p.io_wait).sum::<f64>() / performance_data.len() as f64;
-            
+            let avg_cpu = performance_data.iter().map(|p| p.cpu_usage).sum::<f64>()
+                / performance_data.len() as f64;
+            let avg_mem = performance_data.iter().map(|p| p.memory_usage).sum::<f64>()
+                / performance_data.len() as f64;
+            let avg_io = performance_data.iter().map(|p| p.io_wait).sum::<f64>()
+                / performance_data.len() as f64;
+
             if avg_cpu < 0.6 && avg_mem < 0.6 && avg_io < 0.3 {
                 Ok(0.8) // High score for correctly identifying healthy system
             } else {
@@ -1385,7 +1474,7 @@ impl FitnessEvaluator {
 
         // Calculate how far above threshold the value is (normalized)
         let excess_ratio = (actual_value - threshold) / threshold;
-        
+
         // Score based on appropriate threshold setting
         // Higher excess with lower threshold = better detection
         // But penalize thresholds that are too low (false positives)

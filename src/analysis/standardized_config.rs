@@ -722,8 +722,8 @@ mod tests {
         assert_eq!(int_val.as_int().unwrap(), 42);
         assert_eq!(int_val.as_float().unwrap(), 42.0);
 
-        let float_val = ConfigValue::Float(3.14);
-        assert_eq!(float_val.as_float().unwrap(), 3.14);
+        let float_val = ConfigValue::Float(std::f64::consts::PI);
+        assert_eq!(float_val.as_float().unwrap(), std::f64::consts::PI);
         assert_eq!(float_val.as_int().unwrap(), 3);
 
         let string_val = ConfigValue::String("test".to_string());

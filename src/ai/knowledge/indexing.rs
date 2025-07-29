@@ -1,11 +1,11 @@
 //! Perfect Hash Function (PHF) Indexing for O(1) Knowledge Lookups
-//! 
+//!
 //! This module implements compile-time indexing using Perfect Hash Functions (PHF)
 //! for achieving O(1) lookup performance in the knowledge library. The indexing
 //! system supports pattern IDs, language mappings, and symptom-based searches.
 
-use crate::ai::knowledge::schema::*;
 use crate::ai::knowledge::compression::CompressedString;
+use crate::ai::knowledge::schema::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -13,22 +13,22 @@ use std::collections::HashMap;
 pub trait KnowledgeLookup {
     /// Get a pattern by its unique identifier
     fn get_pattern(&self, pattern_id: &str) -> Option<&PatternKnowledge>;
-    
+
     /// Get all patterns for a specific language (includes universal patterns)
     fn get_language_patterns(&self, language: SourceLanguage) -> Vec<&PatternKnowledge>;
-    
+
     /// Search patterns by symptoms or indicators
     fn search_by_symptoms(&self, symptoms: &[String]) -> Vec<&PatternKnowledge>;
-    
+
     /// Get patterns by category
     fn get_patterns_by_category(&self, category: AntiPatternCategory) -> Vec<&PatternKnowledge>;
-    
+
     /// Get patterns by impact level
     fn get_patterns_by_impact(&self, min_impact: ImpactLevel) -> Vec<&PatternKnowledge>;
-    
+
     /// Search patterns by tags
     fn search_by_tags(&self, tags: &[String]) -> Vec<&PatternKnowledge>;
-    
+
     /// Get related patterns for a given pattern ID
     fn get_related_patterns(&self, pattern_id: &str) -> Vec<&PatternKnowledge>;
 }
@@ -187,7 +187,10 @@ impl IndexBuilder {
     }
 
     /// Build indices from a knowledge library
-    pub fn build_from_library(&mut self, library: &KnowledgeLibrary) -> Result<KnowledgeIndex, String> {
+    pub fn build_from_library(
+        &mut self,
+        library: &KnowledgeLibrary,
+    ) -> Result<KnowledgeIndex, String> {
         let start_time = std::time::Instant::now();
 
         // Build pattern index
@@ -216,8 +219,10 @@ impl IndexBuilder {
         }
 
         let generation_time = start_time.elapsed();
-        let total_patterns = library.universal_patterns.len() 
-            + library.language_specific.values()
+        let total_patterns = library.universal_patterns.len()
+            + library
+                .language_specific
+                .values()
                 .map(|lang| lang.patterns.len())
                 .sum::<usize>();
 
@@ -281,7 +286,8 @@ impl IndexBuilder {
     /// Build language-specific index
     fn build_language_index(&mut self, library: &KnowledgeLibrary) -> Result<(), String> {
         // Universal patterns are available to all languages
-        let universal_pattern_ids: Vec<String> = library.universal_patterns.keys().cloned().collect();
+        let universal_pattern_ids: Vec<String> =
+            library.universal_patterns.keys().cloned().collect();
 
         // Add entry for universal patterns
         self.language_entries.push(LanguageIndexEntry {
@@ -313,7 +319,8 @@ impl IndexBuilder {
         for pattern in library.universal_patterns.values() {
             for symptom in &pattern.symptoms {
                 let normalized_symptom = self.normalize_symptom(symptom.as_str());
-                symptom_map.entry(normalized_symptom)
+                symptom_map
+                    .entry(normalized_symptom)
                     .or_insert_with(Vec::new)
                     .push(pattern.id.clone());
             }
@@ -324,7 +331,8 @@ impl IndexBuilder {
             for pattern in lang_knowledge.patterns.values() {
                 for symptom in &pattern.symptoms {
                     let normalized_symptom = self.normalize_symptom(symptom.as_str());
-                    symptom_map.entry(normalized_symptom)
+                    symptom_map
+                        .entry(normalized_symptom)
                         .or_insert_with(Vec::new)
                         .push(pattern.id.clone());
                 }
@@ -350,7 +358,8 @@ impl IndexBuilder {
 
         // Process universal patterns
         for pattern in library.universal_patterns.values() {
-            category_map.entry(pattern.category.clone())
+            category_map
+                .entry(pattern.category.clone())
                 .or_insert_with(Vec::new)
                 .push(pattern.id.clone());
         }
@@ -358,7 +367,8 @@ impl IndexBuilder {
         // Process language-specific patterns
         for lang_knowledge in library.language_specific.values() {
             for pattern in lang_knowledge.patterns.values() {
-                category_map.entry(pattern.category.clone())
+                category_map
+                    .entry(pattern.category.clone())
                     .or_insert_with(Vec::new)
                     .push(pattern.id.clone());
             }
@@ -384,7 +394,8 @@ impl IndexBuilder {
         // Process universal patterns
         for pattern in library.universal_patterns.values() {
             for tag in &pattern.tags {
-                tag_map.entry(tag.clone())
+                tag_map
+                    .entry(tag.clone())
                     .or_insert_with(Vec::new)
                     .push(pattern.id.clone());
             }
@@ -394,7 +405,8 @@ impl IndexBuilder {
         for lang_knowledge in library.language_specific.values() {
             for pattern in lang_knowledge.patterns.values() {
                 for tag in &pattern.tags {
-                    tag_map.entry(tag.clone())
+                    tag_map
+                        .entry(tag.clone())
                         .or_insert_with(Vec::new)
                         .push(pattern.id.clone());
                 }
@@ -440,7 +452,9 @@ impl IndexBuilder {
                 self.impact_to_score(&pattern.impact)
             } else {
                 // Search in language-specific patterns
-                library.language_specific.values()
+                library
+                    .language_specific
+                    .values()
                     .find_map(|lang| lang.patterns.get(pattern_id))
                     .map(|pattern| self.impact_to_score(&pattern.impact))
                     .unwrap_or(0.0)
@@ -474,30 +488,30 @@ impl IndexBuilder {
         let base_size = pattern.id.len() + pattern.name.len() + pattern.definition.len();
         let symptoms_size: usize = pattern.symptoms.iter().map(|s| s.len()).sum();
         let examples_size = pattern.examples.primary.len() * 100; // Rough estimate
-        
+
         (base_size + symptoms_size + examples_size) as u32
     }
 
     /// Estimate memory usage of indices
     fn estimate_memory_usage(&self) -> usize {
-        std::mem::size_of_val(&self.pattern_entries) +
-        std::mem::size_of_val(&self.language_entries) +
-        std::mem::size_of_val(&self.symptom_entries) +
-        std::mem::size_of_val(&self.category_entries) +
-        std::mem::size_of_val(&self.tag_entries)
+        std::mem::size_of_val(&self.pattern_entries)
+            + std::mem::size_of_val(&self.language_entries)
+            + std::mem::size_of_val(&self.symptom_entries)
+            + std::mem::size_of_val(&self.category_entries)
+            + std::mem::size_of_val(&self.tag_entries)
     }
 
     /// Generate checksum for index validation
     fn generate_checksum(&self) -> String {
-        use sha2::{Sha256, Digest};
-        
+        use sha2::{Digest, Sha256};
+
         let mut hasher = Sha256::new();
         hasher.update(self.pattern_entries.len().to_string());
         hasher.update(self.language_entries.len().to_string());
         hasher.update(self.symptom_entries.len().to_string());
         hasher.update(self.category_entries.len().to_string());
         hasher.update(self.tag_entries.len().to_string());
-        
+
         format!("{:x}", hasher.finalize())
     }
 }
@@ -523,10 +537,22 @@ impl KnowledgeLibraryLookup {
     pub fn get_index_stats(&self) -> HashMap<String, usize> {
         let mut stats = HashMap::new();
         stats.insert("total_patterns".to_string(), self.index.total_patterns);
-        stats.insert("pattern_entries".to_string(), self.index.pattern_entries.len());
-        stats.insert("language_entries".to_string(), self.index.language_entries.len());
-        stats.insert("symptom_entries".to_string(), self.index.symptom_entries.len());
-        stats.insert("category_entries".to_string(), self.index.category_entries.len());
+        stats.insert(
+            "pattern_entries".to_string(),
+            self.index.pattern_entries.len(),
+        );
+        stats.insert(
+            "language_entries".to_string(),
+            self.index.language_entries.len(),
+        );
+        stats.insert(
+            "symptom_entries".to_string(),
+            self.index.symptom_entries.len(),
+        );
+        stats.insert(
+            "category_entries".to_string(),
+            self.index.category_entries.len(),
+        );
         stats.insert("tag_entries".to_string(), self.index.tag_entries.len());
         stats
     }
@@ -580,7 +606,8 @@ impl KnowledgeLookup for KnowledgeLibraryLookup {
             }
         }
 
-        pattern_ids.into_iter()
+        pattern_ids
+            .into_iter()
             .filter_map(|id| self.get_pattern(&id))
             .collect()
     }
@@ -588,7 +615,9 @@ impl KnowledgeLookup for KnowledgeLibraryLookup {
     fn get_patterns_by_category(&self, category: AntiPatternCategory) -> Vec<&PatternKnowledge> {
         for entry in &self.index.category_entries {
             if entry.category == category {
-                return entry.pattern_ids.iter()
+                return entry
+                    .pattern_ids
+                    .iter()
                     .filter_map(|id| self.get_pattern(id))
                     .collect();
             }
@@ -601,15 +630,19 @@ impl KnowledgeLookup for KnowledgeLibraryLookup {
 
         // Search universal patterns
         patterns.extend(
-            self.library.universal_patterns.values()
-                .filter(|p| p.impact >= min_impact)
+            self.library
+                .universal_patterns
+                .values()
+                .filter(|p| p.impact >= min_impact),
         );
 
         // Search language-specific patterns
         for lang_knowledge in self.library.language_specific.values() {
             patterns.extend(
-                lang_knowledge.patterns.values()
-                    .filter(|p| p.impact >= min_impact)
+                lang_knowledge
+                    .patterns
+                    .values()
+                    .filter(|p| p.impact >= min_impact),
             );
         }
 
@@ -627,14 +660,17 @@ impl KnowledgeLookup for KnowledgeLibraryLookup {
             }
         }
 
-        pattern_ids.into_iter()
+        pattern_ids
+            .into_iter()
             .filter_map(|id| self.get_pattern(&id))
             .collect()
     }
 
     fn get_related_patterns(&self, pattern_id: &str) -> Vec<&PatternKnowledge> {
         if let Some(pattern) = self.get_pattern(pattern_id) {
-            pattern.related_patterns.iter()
+            pattern
+                .related_patterns
+                .iter()
                 .filter_map(|id| self.get_pattern(id))
                 .collect()
         } else {
@@ -649,7 +685,7 @@ mod tests {
 
     fn create_test_library() -> KnowledgeLibrary {
         let mut library = KnowledgeLibrary::new();
-        
+
         // Add a test pattern
         let pattern = PatternKnowledge {
             id: "god_object".to_string(),

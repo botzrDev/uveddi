@@ -9,13 +9,13 @@ use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
 #[cfg(feature = "tui")]
-use uveddi::tui::{AppMessage, AppScreen, AppState};
-#[cfg(feature = "tui")]
-use uveddi::tui::ui::analyze_form::FormField;
+use uveddi::cli::analyze_command::AnalyzeCommand;
 #[cfg(feature = "tui")]
 use uveddi::tui::messages::FieldValue;
 #[cfg(feature = "tui")]
-use uveddi::cli::analyze_command::AnalyzeCommand;
+use uveddi::tui::ui::analyze_form::FormField;
+#[cfg(feature = "tui")]
+use uveddi::tui::{AppMessage, AppScreen, AppState};
 
 /// Performance test configuration
 const STRESS_TEST_DURATION: Duration = Duration::from_secs(5);
@@ -271,9 +271,9 @@ async fn test_memory_usage_stability() {
         // Simulate error conditions
         app_state.update(AppMessage::MenuItemSelected(999));
         app_state.update(AppMessage::FormFieldChanged {
-        field: FormField::Path,
-        value: FieldValue::String("test_input".to_string()),
-    });
+            field: FormField::Path,
+            value: FieldValue::String("test_input".to_string()),
+        });
 
         // Clear errors by navigating
         app_state.update(AppMessage::NavigateToMainMenu);
@@ -314,61 +314,61 @@ async fn test_command_creation_performance() {
     // Create many AnalyzeCommand instances
     let mut commands = Vec::new();
     for i in 0..1000 {
-    let command = AnalyzeCommand {
-        path: test_project.clone(),
-        output_format: if i % 2 == 0 {
-            "json".to_string()
-        } else {
-            "markdown".to_string()
-        },
-        output: if i % 3 == 0 {
-            Some(PathBuf::from(format!("output_{}.txt", i)))
-        } else {
-            None
-        },
-        enable_ai: i % 4 == 0,
-        ollama_api_url: if i % 5 == 0 {
-            Some("http://localhost:11434".to_string())
-        } else {
-            None
-        },
-        ollama_model: if i % 6 == 0 {
-            Some("deepseek-coder".to_string())
-        } else {
-            None
-        },
-        dead_code_confidence: Some(0.1 + (i as f64 % 10.0) / 10.0),
-        dead_code_library_mode: i % 2 == 0,
-        dead_code_ignore_patterns: if i % 3 == 0 {
-            Some(vec!["test".to_string()])
-        } else {
-            None
-        },
-        dead_code_keep_alive: if i % 4 == 0 {
-            Some(vec!["main".to_string()])
-        } else {
-            None
-        },
-        large_classes_max_loc: Some(100 + (i % 500) as u32),
-        large_classes_max_methods: Some(10 + (i % 20) as u32),
-        large_classes_max_fields: Some(5 + (i % 15) as u32),
-        large_classes_max_complexity: Some(20 + (i % 50) as u32),
-        large_classes_max_lcom: Some(0.1 + (i as f64 % 8.0) / 10.0),
-        large_classes_ignore_patterns: if i % 7 == 0 {
-            Some(vec!["generated".to_string()])
-        } else {
-            None
-        },
-        large_classes_min_severity: Some((i % 100) as u32),
-        enable_memory_optimization: false,
-        memory_limit_gb: None,
-        memory_profile: None,
-        enable_image_rendering: false,
-        mermaid_only: false,
-        rendering_service_url: "http://localhost:3001".to_string(),
-        no_fallback: false,
-        check_rendering_service: false,
-    };
+        let command = AnalyzeCommand {
+            path: test_project.clone(),
+            output_format: if i % 2 == 0 {
+                "json".to_string()
+            } else {
+                "markdown".to_string()
+            },
+            output: if i % 3 == 0 {
+                Some(PathBuf::from(format!("output_{}.txt", i)))
+            } else {
+                None
+            },
+            enable_ai: i % 4 == 0,
+            ollama_api_url: if i % 5 == 0 {
+                Some("http://localhost:11434".to_string())
+            } else {
+                None
+            },
+            ollama_model: if i % 6 == 0 {
+                Some("deepseek-coder".to_string())
+            } else {
+                None
+            },
+            dead_code_confidence: Some(0.1 + (i as f64 % 10.0) / 10.0),
+            dead_code_library_mode: i % 2 == 0,
+            dead_code_ignore_patterns: if i % 3 == 0 {
+                Some(vec!["test".to_string()])
+            } else {
+                None
+            },
+            dead_code_keep_alive: if i % 4 == 0 {
+                Some(vec!["main".to_string()])
+            } else {
+                None
+            },
+            large_classes_max_loc: Some(100 + (i % 500) as u32),
+            large_classes_max_methods: Some(10 + (i % 20) as u32),
+            large_classes_max_fields: Some(5 + (i % 15) as u32),
+            large_classes_max_complexity: Some(20 + (i % 50) as u32),
+            large_classes_max_lcom: Some(0.1 + (i as f64 % 8.0) / 10.0),
+            large_classes_ignore_patterns: if i % 7 == 0 {
+                Some(vec!["generated".to_string()])
+            } else {
+                None
+            },
+            large_classes_min_severity: Some((i % 100) as u32),
+            enable_memory_optimization: false,
+            memory_limit_gb: None,
+            memory_profile: None,
+            enable_image_rendering: false,
+            mermaid_only: false,
+            rendering_service_url: "http://localhost:3001".to_string(),
+            no_fallback: false,
+            check_rendering_service: false,
+        };
         commands.push(command);
     }
 
@@ -540,9 +540,9 @@ async fn test_stress_operations() {
             AppMessage::MenuItemSelected(2),
             AppMessage::MenuItemSelected(3),
             AppMessage::FormFieldChanged {
-        field: FormField::Path,
-        value: FieldValue::String("test".to_string()),
-    },
+                field: FormField::Path,
+                value: FieldValue::String("test".to_string()),
+            },
         ];
 
         for operation in operations {

@@ -11,13 +11,13 @@ use std::path::PathBuf;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 #[cfg(feature = "tui")]
-use uveddi::tui::{AppMessage, AppScreen, AppState};
+use std::time::Duration;
 #[cfg(feature = "tui")]
 use uveddi::cli::analyze_command::AnalyzeCommand;
 #[cfg(feature = "tui")]
 use uveddi::error::UveddiError;
 #[cfg(feature = "tui")]
-use std::time::Duration;
+use uveddi::tui::{AppMessage, AppScreen, AppState};
 
 /// Helper function to create a test AnalyzeCommand with default values
 #[cfg(feature = "tui")]
@@ -462,7 +462,8 @@ async fn test_error_handling_workflow() {
     assert!(app_state.error_message.is_none());
 
     // Simulate analysis error
-    let mut invalid_command = create_test_analyze_command(PathBuf::from("/definitely/does/not/exist"));
+    let mut invalid_command =
+        create_test_analyze_command(PathBuf::from("/definitely/does/not/exist"));
     invalid_command.dead_code_confidence = None;
 
     // This should fail gracefully
@@ -582,10 +583,14 @@ async fn test_concurrent_operations_simulation() {
         let result = tokio::time::timeout(Duration::from_secs(10), cmd.execute()).await;
         match result {
             Ok(exec_result) => results.push(exec_result),
-            Err(_) => results.push(Err(UveddiError::config_error("Command execution timed out", "tui_e2e_test"))),
+            Err(_) => results.push(Err(UveddiError::config_error(
+                "Command execution timed out",
+                "tui_e2e_test",
+            ))),
         }
     }
-    let analysis_results: Result<Vec<Result<(), UveddiError>>, tokio::time::error::Elapsed> = Ok(results);
+    let analysis_results: Result<Vec<Result<(), UveddiError>>, tokio::time::error::Elapsed> =
+        Ok(results);
 
     match analysis_results {
         Ok(analysis_results) => {

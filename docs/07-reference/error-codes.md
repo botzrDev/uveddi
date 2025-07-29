@@ -52,4 +52,7 @@
 
 4. **Update to latest version**:
    ```bash
-   cargo install --force uveddi
+   # For alpha release, build from source:
+   git clone https://github.com/botzrDev/uveddi.git
+   cd uveddi
+   cargo build --release --features="alpha"

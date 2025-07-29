@@ -111,7 +111,11 @@
       "Bash(do mv \"$file\" \"$file.disabled\")",
       "Bash(done)",
       "Bash(DISPLAY=:99 npm run test:e2e:headless)",
-      "Bash(timeout 60s cargo test --test knowledge_integration_tests --features=\"alpha\")"
+      "Bash(timeout 60s cargo test --test knowledge_integration_tests --features=\"alpha\")",
+      "Bash(timeout 5 cargo run --bin tui_test --features=\"tui\")",
+      "Bash(RUST_LOG=error cargo run --features=\"alpha\" -- analyze --help)",
+      "Bash(RUST_LOG=error cargo run --bin uveddi --features=\"alpha\" -- analyze --help)",
+      "Bash(timeout:*)"
     ],
     "deny": []
   }

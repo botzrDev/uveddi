@@ -4,9 +4,9 @@
 //! analysis engine's needs, avoiding complex serialization issues.
 
 use crate::analysis::cache::metrics::CacheMetrics;
+use crate::analysis::cache::wrappers::ArchivableSystemTime;
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
 use crate::database::models::ArchitecturalIssue;
-use crate::analysis::cache::wrappers::ArchivableSystemTime;
 use lru::LruCache;
 use std::collections::HashMap;
 use std::num::NonZeroUsize;
@@ -74,7 +74,9 @@ impl CachedResult {
 
 impl EngineCache {
     /// Create new engine cache with default configuration
-    pub async fn new(metrics: Arc<CacheMetrics>) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn new(
+        metrics: Arc<CacheMetrics>,
+    ) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
         Self::new_with_config(EngineCacheConfig::default(), metrics).await
     }
 
@@ -83,8 +85,8 @@ impl EngineCache {
         config: EngineCacheConfig,
         metrics: Arc<CacheMetrics>,
     ) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
-        let ast_capacity = NonZeroUsize::new(config.ast_capacity)
-            .ok_or("AST cache capacity must be > 0")?;
+        let ast_capacity =
+            NonZeroUsize::new(config.ast_capacity).ok_or("AST cache capacity must be > 0")?;
 
         let ast_cache = Arc::new(RwLock::new(LruCache::new(ast_capacity)));
         let result_cache = Arc::new(RwLock::new(HashMap::new()));
@@ -98,7 +100,11 @@ impl EngineCache {
     }
 
     /// Get or compute AST for a file
-    pub async fn get_or_parse_ast<F>(&self, file_path: &Path, parser: F) -> Result<Arc<ParsedFile>, Box<dyn std::error::Error + Send + Sync>>
+    pub async fn get_or_parse_ast<F>(
+        &self,
+        file_path: &Path,
+        parser: F,
+    ) -> Result<Arc<ParsedFile>, Box<dyn std::error::Error + Send + Sync>>
     where
         F: FnOnce() -> Result<ParsedFile, Box<dyn std::error::Error + Send + Sync>>,
     {
@@ -138,7 +144,7 @@ impl EngineCache {
         let cache_key = file_path.to_string_lossy().to_string();
 
         let mut cache = self.result_cache.write().await;
-        
+
         // Clean up expired entries while we're here
         let ttl = self.config.result_ttl;
         cache.retain(|_, result| !result.is_expired(ttl));
@@ -166,7 +172,7 @@ impl EngineCache {
         let cached_result = CachedResult::new(results);
 
         let mut cache = self.result_cache.write().await;
-        
+
         // Enforce capacity limits
         while cache.len() >= self.config.result_capacity {
             // Find and remove the least recently used entry

@@ -186,7 +186,11 @@ impl AnalyzeForm {
         ));
         focus_manager.add_input(Box::new(Dropdown::new(
             "Output Format",
-            vec!["markdown".to_string(), "json".to_string(), "text".to_string()],
+            vec![
+                "markdown".to_string(),
+                "json".to_string(),
+                "text".to_string(),
+            ],
             FormField::OutputFormat,
         )));
         focus_manager.add_input(Box::new(
@@ -349,7 +353,8 @@ impl AnalyzeForm {
             .first()
             .map(|f| f.to_index())
             .unwrap_or(0);
-        self.focus_manager.set_focus_by_index(first_field_in_section);
+        self.focus_manager
+            .set_focus_by_index(first_field_in_section);
     }
 
     /// Move to previous section
@@ -369,7 +374,8 @@ impl AnalyzeForm {
             .first()
             .map(|f| f.to_index())
             .unwrap_or(0);
-        self.focus_manager.set_focus_by_index(first_field_in_section);
+        self.focus_manager
+            .set_focus_by_index(first_field_in_section);
     }
 
     /// Move to next field in current section
@@ -603,7 +609,10 @@ mod tests {
     fn test_form_creation() {
         let form = AnalyzeForm::new();
         assert_eq!(form.current_section, FormSection::BasicSettings);
-        assert_eq!(form.focus_manager.current_focus(), Some(FormField::Path.to_index()));
+        assert_eq!(
+            form.focus_manager.current_focus(),
+            Some(FormField::Path.to_index())
+        );
     }
 
     #[test]
@@ -612,11 +621,17 @@ mod tests {
 
         form.next_section();
         assert_eq!(form.current_section, FormSection::AIConfiguration);
-        assert_eq!(form.focus_manager.current_focus(), Some(FormField::EnableAI.to_index()));
+        assert_eq!(
+            form.focus_manager.current_focus(),
+            Some(FormField::EnableAI.to_index())
+        );
 
         form.previous_section();
         assert_eq!(form.current_section, FormSection::BasicSettings);
-        assert_eq!(form.focus_manager.current_focus(), Some(FormField::Path.to_index()));
+        assert_eq!(
+            form.focus_manager.current_focus(),
+            Some(FormField::Path.to_index())
+        );
     }
 
     #[test]

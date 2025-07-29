@@ -218,24 +218,38 @@ impl AstCache {
     }
 
     // Safe mutex access methods for UV-276
-    fn safe_cache_read(&self) -> Result<std::sync::RwLockReadGuard<HashMap<PathBuf, CachedAST>>, AnalysisError> {
-        self.cache.read().map_err(|_| AnalysisError::lock_error("Cache read lock poisoned"))
+    fn safe_cache_read(
+        &self,
+    ) -> Result<std::sync::RwLockReadGuard<HashMap<PathBuf, CachedAST>>, AnalysisError> {
+        self.cache
+            .read()
+            .map_err(|_| AnalysisError::lock_error("Cache read lock poisoned"))
     }
 
-    fn safe_cache_write(&self) -> Result<std::sync::RwLockWriteGuard<HashMap<PathBuf, CachedAST>>, AnalysisError> {
-        self.cache.write().map_err(|_| AnalysisError::lock_error("Cache write lock poisoned"))
+    fn safe_cache_write(
+        &self,
+    ) -> Result<std::sync::RwLockWriteGuard<HashMap<PathBuf, CachedAST>>, AnalysisError> {
+        self.cache
+            .write()
+            .map_err(|_| AnalysisError::lock_error("Cache write lock poisoned"))
     }
 
     fn safe_metrics_lock(&self) -> Result<std::sync::MutexGuard<CacheMetrics>, AnalysisError> {
-        self.metrics.lock().map_err(|_| AnalysisError::lock_error("Metrics mutex poisoned"))
+        self.metrics
+            .lock()
+            .map_err(|_| AnalysisError::lock_error("Metrics mutex poisoned"))
     }
 
     fn safe_memory_usage_lock(&self) -> Result<std::sync::MutexGuard<usize>, AnalysisError> {
-        self.memory_usage.lock().map_err(|_| AnalysisError::lock_error("Memory usage mutex poisoned"))
+        self.memory_usage
+            .lock()
+            .map_err(|_| AnalysisError::lock_error("Memory usage mutex poisoned"))
     }
 
     fn safe_lru_order_lock(&self) -> Result<std::sync::MutexGuard<Vec<PathBuf>>, AnalysisError> {
-        self.lru_order.lock().map_err(|_| AnalysisError::lock_error("LRU order mutex poisoned"))
+        self.lru_order
+            .lock()
+            .map_err(|_| AnalysisError::lock_error("LRU order mutex poisoned"))
     }
 
     /// Retrieves an AST from the cache if valid
@@ -628,7 +642,7 @@ impl AstCache {
         // Check if we need to evict with bounded attempts
         while eviction_count < MAX_EVICTIONS {
             let current_memory = *self.memory_usage.lock().unwrap();
-            
+
             if (current_memory + new_entry_size) <= max_memory
                 && self.cache.read().unwrap().len() < self.config.max_memory_entries
             {
@@ -1547,7 +1561,7 @@ mod tests {
     #[test]
     fn test_infinite_loop_prevention_in_eviction() {
         use std::path::PathBuf;
-        
+
         // Create a cache with very low memory limits to trigger eviction
         let temp_dir = tempfile::tempdir().unwrap();
         let config = CacheConfig {
@@ -1565,7 +1579,7 @@ mod tests {
             #[cfg(feature = "memory-optimization")]
             zero_copy_threshold_bytes: 1024,
         };
-        
+
         let cache = AstCache::new(config).unwrap();
 
         // Create large entries that will exceed memory limits
@@ -1588,20 +1602,27 @@ mod tests {
         let result = std::panic::catch_unwind(|| {
             // Use a timeout to ensure this doesn't run forever
             let start = std::time::Instant::now();
-            
+
             // This should trigger the eviction logic with the infinite loop protection
             let _ = cache.ensure_cache_capacity(1024 * 1024); // Request 1MB space
-            
+
             let duration = start.elapsed();
             // Should complete quickly due to eviction counter limit
-            assert!(duration.as_secs() < 5, "Eviction took too long: {:?}", duration);
+            assert!(
+                duration.as_secs() < 5,
+                "Eviction took too long: {:?}",
+                duration
+            );
         });
 
         // Test should not panic (no infinite loop)
-        assert!(result.is_ok(), "Cache eviction caused infinite loop or panic");
-        
+        assert!(
+            result.is_ok(),
+            "Cache eviction caused infinite loop or panic"
+        );
+
         // Verify cache is still functional
         let metrics = cache.get_metrics();
-        assert!(metrics.total_requests >= 0); // Basic sanity check
+        assert!(metrics.total_requests < u64::MAX); // Basic sanity check
     }
 }

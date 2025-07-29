@@ -6,7 +6,7 @@
 
 use crate::ai::knowledge::{
     context_selection::{DynamicContextSelector, SelectedContext, AnalysisContext},
-    schema::{PatternKnowledge, LanguageContext, FrameworkKnowledge, SourceLanguage},
+    schema::{PatternKnowledge, /* LanguageContext, */ FrameworkKnowledge, SourceLanguage},
     language_integration::EnhancedPattern,
 };
 use crate::database::models::ArchitecturalIssue;
@@ -370,7 +370,6 @@ impl EnhancedPromptTemplateSystem {
         // 1. Select optimal knowledge context
         let selected_context = self.context_selector
             .select_context(analysis_context)
-            .await
             .map_err(|e| PromptGenerationError::ContextSelectionError(e.to_string()))?;
 
         // 2. Get base template for analysis type
@@ -553,7 +552,7 @@ impl EnhancedPromptTemplateSystem {
         for framework_knowledge in &selected_context.framework_guidance {
             let framework_content = format!(
                 "### {} Framework Guidance:\n\n**Best Practices**:\n",
-                framework_knowledge.name
+                framework_knowledge.framework_name
             );
 
             let header_tokens = self.estimate_tokens(&framework_content);
@@ -596,17 +595,13 @@ impl EnhancedPromptTemplateSystem {
         let mut used_tokens = 0;
 
         for scored_pattern in &selected_context.patterns {
-            let solutions = &scored_pattern.candidate.pattern.universal.solution_patterns;
+            let solutions = &scored_pattern.candidate.pattern.universal.solutions;
 
             for solution in solutions {
                 let solution_content = format!(
-                    "### {}\n\n**Steps**:\n{}\n\n",
-                    solution.name,
-                    solution.steps.iter()
-                        .enumerate()
-                        .map(|(i, step)| format!("{}. {}", i + 1, step.content))
-                        .collect::<Vec<_>>()
-                        .join("\n")
+                    "### {}\n\n**Implementation**:\n{}\n\n",
+                    solution.title,
+                    solution.implementation.as_str()
                 );
 
                 let solution_tokens = self.estimate_tokens(&solution_content);
@@ -645,10 +640,8 @@ impl EnhancedPromptTemplateSystem {
 
             for related_pattern in related {
                 let related_content = format!(
-                    "- **{}**: {} (Relationship: {})\n",
-                    related_pattern.pattern_name,
-                    related_pattern.description,
-                    related_pattern.relationship_type
+                    "- **{}**: Related pattern\n",
+                    related_pattern
                 );
 
                 let related_tokens = self.estimate_tokens(&related_content);
@@ -681,27 +674,27 @@ impl EnhancedPromptTemplateSystem {
         let mut content = String::new();
         let mut used_tokens = 0;
 
-        if let Some(language_context) = &selected_context.language_context {
-            content.push_str("### Code Examples:\n\n");
-
-            for example in &language_context.code_examples {
-                let example_content = format!(
-                    "**{}**:\n```{}\n{}\n```\n\n",
-                    example.title,
-                    format!("{:?}", analysis_context.language).to_lowercase(),
-                    example.code
-                );
-
-                let example_tokens = self.estimate_tokens(&example_content);
-
-                if used_tokens + example_tokens <= token_budget {
-                    content.push_str(&example_content);
-                    used_tokens += example_tokens;
-                } else {
-                    break;
-                }
-            }
-        }
+        // TODO: Language context disabled for alpha release
+        // if let Some(language_context) = &selected_context.language_context {
+        //     content.push_str("### Code Examples:\n\n");
+        //     for example in &language_context.code_examples {
+        //         let example_content = format!(
+        //             "**{}**:\n```{}\n{}\n```\n\n",
+        //             example.title,
+        //             format!("{:?}", analysis_context.language).to_lowercase(),
+        //             example.code
+        //         );
+        //
+        //         let example_tokens = self.estimate_tokens(&example_content);
+        //
+        //         if used_tokens + example_tokens <= token_budget {
+        //             content.push_str(&example_content);
+        //             used_tokens += example_tokens;
+        //         } else {
+        //             break;
+        //         }
+        //     }
+        // }
 
         Ok(InjectedContent {
             content,

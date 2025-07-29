@@ -88,7 +88,7 @@ pub fn initialize_memory_optimization(config: MemoryOptimizationConfig) -> Resul
 pub fn get_optimization_status() -> serde_json::Value {
     let metrics = BASIC_MEMORY_METRICS.export_json();
     let pool_metrics = DETECTOR_POOLS.export_metrics();
-    
+
     #[cfg(feature = "memory-optimization")]
     let arena_metrics = GLOBAL_ARENA_MANAGER.export_metrics();
     #[cfg(not(feature = "memory-optimization"))]

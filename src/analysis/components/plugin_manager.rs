@@ -212,9 +212,11 @@ impl PluginManager {
                         tree: Some((*ast).clone()),
                         source: std::sync::Arc::new(source_content),
                         custom_ast: std::sync::Arc::new(None),
-                        modified_at: crate::analysis::cache::wrappers::ArchivableSystemTime(std::fs::metadata(&source_file_path)
-                            .and_then(|m| m.modified())
-                            .unwrap_or_else(|_| std::time::SystemTime::now())),
+                        modified_at: crate::analysis::cache::wrappers::ArchivableSystemTime(
+                            std::fs::metadata(&source_file_path)
+                                .and_then(|m| m.modified())
+                                .unwrap_or_else(|_| std::time::SystemTime::now()),
+                        ),
                     };
 
                     // Execute the plugin through the adapter

@@ -108,7 +108,7 @@ color-eyre = "0.6"
 ndarray = "0.16.1"
 strum = { version = "0.26", features = ["derive"] }
 strum_macros = "0.26"
-paste = "1.0"
+pastey = "0.1"
 # WASM plugin system dependencies (optional via features)
 wasmtime = { version = "34.0.2", features = ["component-model"], optional = true }
 wasmtime-wasi = { version = "34.0.2", optional = true }
@@ -187,7 +187,7 @@ tower_governor = "0.3"
 casbin = "2.1"
 # Authentication
 oauth2 = "4.4"
-openidconnect = "3.5.0"
+openidconnect = "4.0.1"
 jsonwebtoken = "9.3"
 # Security
 argon2 = "0.5"

@@ -18,7 +18,6 @@
 use crate::analysis::{AnalysisDetector, AnalysisError};
 use crate::ast::tree_sitter::{Query, QueryCursor};
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
-use tree_sitter::StreamingIterator;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use crate::error::UveddiError;
 use async_trait::async_trait;
@@ -27,6 +26,7 @@ use rayon::prelude::*;
 use sha2::{Digest, Sha256};
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
+use tree_sitter::StreamingIterator;
 use tree_sitter::TreeCursor;
 
 /// Represents a contiguous block of code extracted for duplication analysis.

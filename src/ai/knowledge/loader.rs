@@ -1,13 +1,13 @@
 //! Knowledge Library Loader and Runtime Access
-//! 
+//!
 //! This module provides the runtime loading and access layer for the compressed
 //! knowledge library. It implements lazy loading with OnceLock pattern for
 //! thread-safe access and supports both embedded and file-based loading.
 
-use crate::ai::knowledge::{schema::*, indexing::*, compression::*};
-use std::sync::OnceLock;
-use std::path::Path;
+use crate::ai::knowledge::{compression::*, indexing::*, schema::*};
 use std::io::Read;
+use std::path::Path;
+use std::sync::OnceLock;
 
 /// Global knowledge library instance using OnceLock for lazy loading
 static KNOWLEDGE_LIBRARY: OnceLock<KnowledgeLibraryLookup> = OnceLock::new();
@@ -34,22 +34,22 @@ pub struct LoaderConfig {
 pub enum LoaderError {
     #[error("Failed to read library file: {0}")]
     FileRead(#[from] std::io::Error),
-    
+
     #[error("Failed to decompress library data: {0}")]
     Decompression(String),
-    
+
     #[error("Failed to deserialize library: {0}")]
     Deserialization(#[from] serde_json::Error),
-    
+
     #[error("Checksum validation failed")]
     ChecksumMismatch,
-    
+
     #[error("Library version incompatible: expected {expected}, found {found}")]
     VersionMismatch { expected: String, found: String },
-    
+
     #[error("Index file not found: {path}")]
     IndexNotFound { path: String },
-    
+
     #[error("Library not initialized")]
     NotInitialized,
 }
@@ -114,21 +114,27 @@ impl KnowledgeLibraryLoader {
         // For now, we'll create a minimal library for testing
         let library = self.create_minimal_library();
         let index = self.create_minimal_index(&library)?;
-        
+
         Ok((library, index))
     }
 
     /// Load knowledge library and index from external files
     fn load_from_files(&self) -> Result<(KnowledgeLibrary, KnowledgeIndex), LoaderError> {
-        let library_path = self.config.library_path.as_ref()
-            .ok_or_else(|| LoaderError::IndexNotFound { 
-                path: "library_path not configured".to_string() 
-            })?;
-        
-        let index_path = self.config.index_path.as_ref()
-            .ok_or_else(|| LoaderError::IndexNotFound { 
-                path: "index_path not configured".to_string() 
-            })?;
+        let library_path =
+            self.config
+                .library_path
+                .as_ref()
+                .ok_or_else(|| LoaderError::IndexNotFound {
+                    path: "library_path not configured".to_string(),
+                })?;
+
+        let index_path =
+            self.config
+                .index_path
+                .as_ref()
+                .ok_or_else(|| LoaderError::IndexNotFound {
+                    path: "index_path not configured".to_string(),
+                })?;
 
         // Load and decompress library
         let library_data = std::fs::read(library_path)?;
@@ -161,7 +167,8 @@ impl KnowledgeLibraryLoader {
         }
 
         // Validate library structure
-        library.validate()
+        library
+            .validate()
             .map_err(|e| LoaderError::Decompression(format!("Library validation failed: {}", e)))?;
 
         Ok(())
@@ -238,7 +245,9 @@ impl KnowledgeLibraryLoader {
         let magic_numbers = PatternKnowledge {
             id: "magic_numbers".to_string(),
             name: "Magic Numbers".to_string(),
-            definition: CompressedString::new("Using hard-coded numeric values without explanation"),
+            definition: CompressedString::new(
+                "Using hard-coded numeric values without explanation",
+            ),
             symptoms: vec![
                 CompressedString::new("Unexplained numeric literals"),
                 CompressedString::new("Repeated numeric values"),
@@ -246,25 +255,21 @@ impl KnowledgeLibraryLoader {
             ],
             impact: ImpactLevel::Medium,
             category: AntiPatternCategory::Maintainability,
-            detection_methods: vec![
-                DetectionMethod::RegexPattern {
-                    pattern: r"\b\d+\b".to_string(),
-                    context: "numeric_literal".to_string(),
-                },
-            ],
-            solutions: vec![
-                SolutionPattern {
-                    id: "named_constants".to_string(),
-                    title: "Use Named Constants".to_string(),
-                    implementation: CompressedString::new(
-                        "Replace magic numbers with named constants that explain their purpose."
-                    ),
-                    examples: vec![],
-                    effort_level: EffortLevel::Low,
-                    prerequisites: vec![],
-                    expected_impact: ImpactLevel::Medium,
-                },
-            ],
+            detection_methods: vec![DetectionMethod::RegexPattern {
+                pattern: r"\b\d+\b".to_string(),
+                context: "numeric_literal".to_string(),
+            }],
+            solutions: vec![SolutionPattern {
+                id: "named_constants".to_string(),
+                title: "Use Named Constants".to_string(),
+                implementation: CompressedString::new(
+                    "Replace magic numbers with named constants that explain their purpose.",
+                ),
+                examples: vec![],
+                effort_level: EffortLevel::Low,
+                prerequisites: vec![],
+                expected_impact: ImpactLevel::Medium,
+            }],
             examples: CodeExamples {
                 primary: vec![],
                 variations: std::collections::HashMap::new(),
@@ -283,9 +288,13 @@ impl KnowledgeLibraryLoader {
     }
 
     /// Create a minimal index for testing
-    fn create_minimal_index(&self, library: &KnowledgeLibrary) -> Result<KnowledgeIndex, LoaderError> {
+    fn create_minimal_index(
+        &self,
+        library: &KnowledgeLibrary,
+    ) -> Result<KnowledgeIndex, LoaderError> {
         let mut builder = crate::ai::knowledge::indexing::IndexBuilder::default();
-        builder.build_from_library(library)
+        builder
+            .build_from_library(library)
             .map_err(|e| LoaderError::Decompression(format!("Index creation failed: {}", e)))
     }
 }
@@ -293,7 +302,8 @@ impl KnowledgeLibraryLoader {
 /// Global initialization function
 pub fn initialize_knowledge_library(loader: KnowledgeLibraryLoader) -> Result<(), LoaderError> {
     let lookup = loader.load()?;
-    KNOWLEDGE_LIBRARY.set(lookup)
+    KNOWLEDGE_LIBRARY
+        .set(lookup)
         .map_err(|_| LoaderError::NotInitialized)?;
     Ok(())
 }
@@ -311,8 +321,8 @@ pub fn initialize_embedded() -> Result<(), LoaderError> {
 
 /// Convenience function to initialize from files
 pub fn initialize_from_files<P: AsRef<Path>>(
-    library_path: P, 
-    index_path: P
+    library_path: P,
+    index_path: P,
 ) -> Result<(), LoaderError> {
     let loader = KnowledgeLibraryLoader::from_files(library_path, index_path);
     initialize_knowledge_library(loader)
@@ -335,12 +345,14 @@ pub struct LibraryStats {
 pub fn get_library_stats() -> Result<LibraryStats, LoaderError> {
     let lookup = get_knowledge_library()?;
     let index_stats = lookup.get_index_stats();
-    
+
     let library = lookup.get_library();
     let stats = LibraryStats {
         total_patterns: *index_stats.get("total_patterns").unwrap_or(&0),
         universal_patterns: library.universal_patterns.len(),
-        language_specific_patterns: library.language_specific.values()
+        language_specific_patterns: library
+            .language_specific
+            .values()
             .map(|lang| lang.patterns.len())
             .sum(),
         supported_languages: library.metadata.supported_languages.clone(),
@@ -360,46 +372,50 @@ pub fn get_library_stats() -> Result<LibraryStats, LoaderError> {
         index_size: lookup.get_index_metadata().memory_used,
         load_time_ms: lookup.get_index_metadata().generation_time_ms,
     };
-    
+
     Ok(stats)
 }
 
 /// Search patterns using the global knowledge library
 pub fn search_patterns(query: &str) -> Result<Vec<&'static PatternKnowledge>, LoaderError> {
     let lookup = get_knowledge_library()?;
-    
+
     // Try different search strategies
     let mut results = Vec::new();
-    
+
     // 1. Direct pattern ID lookup
     if let Some(pattern) = lookup.get_pattern(query) {
         results.push(pattern);
         return Ok(results);
     }
-    
+
     // 2. Symptom-based search
     let symptom_results = lookup.search_by_symptoms(&[query.to_string()]);
     results.extend(symptom_results);
-    
+
     // 3. Tag-based search
     let tag_results = lookup.search_by_tags(&[query.to_string()]);
     results.extend(tag_results);
-    
+
     // Deduplicate results
     results.sort_by_key(|p| &p.id);
     results.dedup_by_key(|p| &p.id);
-    
+
     Ok(results)
 }
 
 /// Get patterns for a specific language
-pub fn get_language_patterns(language: SourceLanguage) -> Result<Vec<&'static PatternKnowledge>, LoaderError> {
+pub fn get_language_patterns(
+    language: SourceLanguage,
+) -> Result<Vec<&'static PatternKnowledge>, LoaderError> {
     let lookup = get_knowledge_library()?;
     Ok(lookup.get_language_patterns(language))
 }
 
 /// Get patterns by category
-pub fn get_category_patterns(category: AntiPatternCategory) -> Result<Vec<&'static PatternKnowledge>, LoaderError> {
+pub fn get_category_patterns(
+    category: AntiPatternCategory,
+) -> Result<Vec<&'static PatternKnowledge>, LoaderError> {
     let lookup = get_knowledge_library()?;
     Ok(lookup.get_patterns_by_category(category))
 }
@@ -432,7 +448,7 @@ mod tests {
     fn test_embedded_loading() {
         let loader = KnowledgeLibraryLoader::embedded();
         let lookup = loader.load().unwrap();
-        
+
         // Test that we can perform lookups
         let pattern = lookup.get_pattern("god_object");
         assert!(pattern.is_some());
@@ -442,7 +458,7 @@ mod tests {
     #[test]
     fn test_global_initialization() {
         let loader = KnowledgeLibraryLoader::embedded();
-        
+
         // This test might fail if run multiple times since OnceLock can only be set once
         if KNOWLEDGE_LIBRARY.get().is_none() {
             assert!(initialize_knowledge_library(loader).is_ok());
@@ -456,7 +472,7 @@ mod tests {
         if KNOWLEDGE_LIBRARY.get().is_none() {
             let _ = initialize_knowledge_library(loader);
         }
-        
+
         if let Ok(results) = search_patterns("god_object") {
             assert!(!results.is_empty());
             assert_eq!(results[0].id, "god_object");
@@ -469,7 +485,7 @@ mod tests {
         if KNOWLEDGE_LIBRARY.get().is_none() {
             let _ = initialize_knowledge_library(loader);
         }
-        
+
         if let Ok(stats) = get_library_stats() {
             assert!(stats.total_patterns > 0);
             assert!(stats.universal_patterns > 0);

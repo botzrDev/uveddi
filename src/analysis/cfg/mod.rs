@@ -13,7 +13,6 @@
 use crate::analysis::errors::AnalysisError;
 use crate::ast::tree_sitter::{Node, Query, QueryCursor};
 use crate::ast::tree_sitter_impl::SourceLanguage;
-use streaming_iterator::StreamingIterator;
 use log::{debug, warn};
 use petgraph::{
     visit::{EdgeRef, IntoNodeReferences},
@@ -21,6 +20,7 @@ use petgraph::{
 };
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
+use streaming_iterator::StreamingIterator;
 
 /// CFG node types based on control flow semantics
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

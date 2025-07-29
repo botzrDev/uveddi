@@ -1,7 +1,7 @@
 //! Simple test for CLI input validation integration
 
-use uveddi::cli::analyze_command::AnalyzeCommand;
 use std::path::PathBuf;
+use uveddi::cli::analyze_command::AnalyzeCommand;
 
 #[test]
 fn test_cli_validation_integration() {

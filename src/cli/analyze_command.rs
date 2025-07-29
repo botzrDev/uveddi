@@ -37,7 +37,9 @@ use std::path::PathBuf;
 use crate::application::{AnalysisConfig, AnalysisOrchestrator};
 use crate::error::UveddiError;
 use crate::report::DiagramMode;
-use crate::security::{validate_input, validate_url, validate_model_name, validate_numeric_range, SecurityError};
+use crate::security::{
+    validate_input, validate_model_name, validate_numeric_range, validate_url, SecurityError,
+};
 
 /// Command-line arguments for the analyze subcommand
 ///
@@ -267,62 +269,67 @@ impl AnalyzeCommand {
         // Validate path
         let path_str = self.path.to_string_lossy();
         validate_input(&path_str, "path")?;
-        
+
         // Validate output format
         validate_input(&self.output_format, "output_format")?;
-        
+
         // Validate output file if specified
         if let Some(ref output) = self.output {
             let output_str = output.to_string_lossy();
             validate_input(&output_str, "output")?;
         }
-        
+
         // Validate Ollama API URL if specified
         if let Some(ref url) = self.ollama_api_url {
             validate_url(url)?;
         }
-        
+
         // Validate Ollama model name if specified
         if let Some(ref model) = self.ollama_model {
             validate_model_name(model)?;
         }
-        
+
         // Validate numeric parameters
         if let Some(confidence) = self.dead_code_confidence {
             let confidence_int = (confidence * 100.0) as i32;
             validate_numeric_range(confidence_int, 0, 100, "dead_code_confidence")?;
         }
-        
+
         if let Some(max_loc) = self.large_classes_max_loc {
             validate_numeric_range(max_loc as i32, 1, 100_000, "large_classes_max_loc")?;
         }
-        
+
         if let Some(max_methods) = self.large_classes_max_methods {
             validate_numeric_range(max_methods as i32, 1, 10_000, "large_classes_max_methods")?;
         }
-        
+
         if let Some(max_fields) = self.large_classes_max_fields {
             validate_numeric_range(max_fields as i32, 1, 10_000, "large_classes_max_fields")?;
         }
-        
+
         if let Some(max_complexity) = self.large_classes_max_complexity {
-            validate_numeric_range(max_complexity as i32, 1, 10_000, "large_classes_max_complexity")?;
+            validate_numeric_range(
+                max_complexity as i32,
+                1,
+                10_000,
+                "large_classes_max_complexity",
+            )?;
         }
-        
+
         if let Some(max_lcom) = self.large_classes_max_lcom {
             let lcom_int = (max_lcom * 100.0) as i32;
             validate_numeric_range(lcom_int, 0, 100, "large_classes_max_lcom")?;
         }
-        
+
         if let Some(min_severity) = self.large_classes_min_severity {
             validate_numeric_range(min_severity as i32, 0, 100, "large_classes_min_severity")?;
         }
-        
+
         if let Some(memory_limit) = self.memory_limit_gb {
             let memory_int = (memory_limit * 10.0) as i32; // Convert to decidigabytes for int validation
             validate_numeric_range(memory_int, 1, 1000, "memory_limit_gb")?; // 0.1 GB to 100 GB
         }
-        
+
         // Validate memory profile if specified
         if let Some(ref profile) = self.memory_profile {
             let allowed_profiles = ["small", "default", "large"];
@@ -333,26 +340,26 @@ impl AnalyzeCommand {
                 });
             }
         }
-        
+
         // Validate ignore patterns if specified
         if let Some(ref patterns) = self.dead_code_ignore_patterns {
             for pattern in patterns {
                 validate_input(pattern, "dead_code_ignore_pattern")?;
             }
         }
-        
+
         if let Some(ref patterns) = self.dead_code_keep_alive {
             for pattern in patterns {
                 validate_input(pattern, "dead_code_keep_alive_pattern")?;
             }
         }
-        
+
         if let Some(ref patterns) = self.large_classes_ignore_patterns {
             for pattern in patterns {
                 validate_input(pattern, "large_classes_ignore_pattern")?;
             }
         }
-        
+
         Ok(())
     }
 
@@ -360,7 +367,7 @@ impl AnalyzeCommand {
     pub async fn execute_validated(&self) -> Result<(), UveddiError> {
         // Validate inputs first
         self.validate_inputs()?;
-        
+
         // Proceed with existing execution logic
         self.execute().await
     }

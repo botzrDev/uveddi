@@ -1,5 +1,5 @@
 //! Integration tests for AI Knowledge Library integration with Analysis Engine
-//! 
+//!
 //! These tests validate the end-to-end functionality of the knowledge-enhanced
 //! analysis pipeline as implemented in UV-340 Phase 1.
 
@@ -7,8 +7,10 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use tokio;
 
+use uveddi::ai::knowledge::{
+    ContextSelector, EngineAnalysisContext, EngineComplexityMetrics, KnowledgeLibrary,
+};
 use uveddi::analysis::AnalysisEngine;
-use uveddi::ai::knowledge::{KnowledgeLibrary, ContextSelector, EngineAnalysisContext, EngineComplexityMetrics};
 
 #[tokio::test]
 async fn test_analysis_engine_with_knowledge_library() -> Result<(), Box<dyn std::error::Error>> {
@@ -72,7 +74,7 @@ async fn test_knowledge_context_selection() -> Result<(), Box<dyn std::error::Er
 
     // Test context selection
     let knowledge_context = context_selector.select_context(&analysis_context).await?;
-    
+
     // Verify context structure
     assert!(knowledge_context.relevance_score >= 0.0);
     assert!(knowledge_context.selection_time_ms >= 0); // Could be 0 for fast operations
@@ -105,7 +107,8 @@ async fn test_analysis_engine_builder_options() -> Result<(), Box<dyn std::error
 }
 
 #[tokio::test]
-async fn test_analysis_engine_without_knowledge_library() -> Result<(), Box<dyn std::error::Error>> {
+async fn test_analysis_engine_without_knowledge_library() -> Result<(), Box<dyn std::error::Error>>
+{
     // Create an analysis engine without knowledge library
     let engine = AnalysisEngine::builder()
         .with_knowledge_library(false)
@@ -160,7 +163,7 @@ async fn test_analyze_with_knowledge_method() -> Result<(), Box<dyn std::error::
 
     // Test the analyze_with_knowledge method
     let result = engine.analyze_with_knowledge(temp_dir.path()).await;
-    
+
     // The method should complete without error (even if no issues are found)
     match result {
         Ok((issues, _dependency_graph)) => {

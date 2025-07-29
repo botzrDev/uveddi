@@ -5,9 +5,9 @@
 //! optimized serialization, and intelligent invalidation strategies.
 
 use crate::analysis::cache::{
+    ast::{AstCache, CacheConfig},
     engine_cache::{EngineCache, EngineCacheConfig},
     metrics::CacheMetrics,
-    ast::{AstCache, CacheConfig},
 };
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
 use crate::database::models::ArchitecturalIssue;
@@ -135,16 +135,17 @@ impl CacheManagerImpl {
     /// Update cache statistics using engine cache stats
     async fn update_stats(&self) {
         let mut stats = self.cache_stats.write().await;
-        
+
         // Get statistics from engine cache
         let engine_stats = self.engine_cache.stats().await;
-        
+
         // Update combined statistics
         stats.ast_cache_size = engine_stats.ast_entries;
         stats.result_cache_size = engine_stats.result_entries;
         stats.ast_hit_rate = engine_stats.hit_rate;
         stats.result_hit_rate = engine_stats.hit_rate;
-        stats.total_memory_usage = (engine_stats.ast_entries + engine_stats.result_entries) * 1024; // Estimate
+        stats.total_memory_usage = (engine_stats.ast_entries + engine_stats.result_entries) * 1024;
+        // Estimate
     }
 }
 
@@ -154,7 +155,8 @@ impl CacheManager for CacheManagerImpl {
             use crate::ast::tree_sitter_impl::AstParser;
             let mut ast_parser = AstParser::new()
                 .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?;
-            let parsed_file = ast_parser.parse_file(file_path)
+            let parsed_file = ast_parser
+                .parse_file(file_path)
                 .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?;
             Ok(parsed_file)
         };
@@ -206,7 +208,7 @@ impl CacheManager for CacheManagerImpl {
     fn get_cache_metrics(&self) -> Value {
         // Get performance summary from metrics collector
         let summary = self.metrics.performance_summary();
-        
+
         serde_json::json!({
             "overall_hit_rate": summary.overall_hit_rate,
             "average_latency_ms": summary.average_latency_ms,

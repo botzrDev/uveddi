@@ -17,8 +17,8 @@ use crate::error::UveddiError;
 use crate::plugins::WasmPluginEngine;
 
 // Knowledge Library imports
-use crate::ai::knowledge::{KnowledgeLibrary, ContextSelector};
 use crate::ai::engine::AiAnalysisEngine;
+use crate::ai::knowledge::{ContextSelector, KnowledgeLibrary};
 
 /// Builder for `AnalysisEngine` to provide flexible and consistent construction.
 ///
@@ -64,7 +64,7 @@ pub struct AnalysisEngineBuilder {
     injected_ast_parser: Option<Box<dyn AstParserTrait>>,
     injected_dependency_extractor: Option<Box<dyn DependencyExtractorTrait>>,
     injected_result_cache: Option<Box<dyn ResultCacheTrait>>,
-    
+
     // Knowledge Library options
     enable_knowledge_enhancement: bool,
     enable_ai_explanations: bool,
@@ -81,7 +81,7 @@ impl Default for AnalysisEngineBuilder {
             injected_ast_parser: None,
             injected_dependency_extractor: None,
             injected_result_cache: None,
-            
+
             // Knowledge Library defaults
             enable_knowledge_enhancement: false,
             enable_ai_explanations: false,
@@ -210,7 +210,9 @@ impl AnalysisEngineBuilder {
         } else {
             Arc::new(AstProviderImpl::new()?)
         };
-        let cache_manager = Arc::new(futures::executor::block_on(CacheManagerImpl::with_ast_cache(ast_cache))?);
+        let cache_manager = Arc::new(futures::executor::block_on(
+            CacheManagerImpl::with_ast_cache(ast_cache),
+        )?);
         let aggregator = Arc::new(AnalysisAggregator::new());
 
         // Components that need dependencies
@@ -232,10 +234,13 @@ impl AnalysisEngineBuilder {
         let knowledge_library_result = if enable_knowledge {
             match self.knowledge_library_path {
                 Some(ref custom_path) => {
-                    info!("Loading knowledge library from custom path: {:?}", custom_path);
+                    info!(
+                        "Loading knowledge library from custom path: {:?}",
+                        custom_path
+                    );
                     // TODO: Implement custom path loading
                     Ok(KnowledgeLibrary::new())
-                },
+                }
                 None => {
                     info!("Loading default knowledge library");
                     // For now, create an empty knowledge library
@@ -244,7 +249,10 @@ impl AnalysisEngineBuilder {
                 }
             }
         } else {
-            Err(UveddiError::config_error("Knowledge library disabled", "builder"))
+            Err(UveddiError::config_error(
+                "Knowledge library disabled",
+                "builder",
+            ))
         };
 
         let (knowledge_library, context_selector, ai_engine) = if enable_knowledge {
@@ -287,7 +295,7 @@ impl AnalysisEngineBuilder {
             detector_scheduler,
             plugin_manager: None, // No plugin manager in sync build
             aggregator,
-            
+
             // Knowledge Library components
             knowledge_library,
             context_selector,
@@ -361,7 +369,9 @@ impl AnalysisEngineBuilder {
         } else {
             Arc::new(AstProviderImpl::new()?)
         };
-        let cache_manager = Arc::new(futures::executor::block_on(CacheManagerImpl::with_ast_cache(ast_cache))?);
+        let cache_manager = Arc::new(futures::executor::block_on(
+            CacheManagerImpl::with_ast_cache(ast_cache),
+        )?);
         let aggregator = Arc::new(AnalysisAggregator::new());
 
         // PluginManagerHandle needs to be created from WasmPluginEngine
@@ -390,10 +400,13 @@ impl AnalysisEngineBuilder {
         let knowledge_library_result = if enable_knowledge {
             match self.knowledge_library_path {
                 Some(ref custom_path) => {
-                    info!("Loading knowledge library from custom path: {:?}", custom_path);
+                    info!(
+                        "Loading knowledge library from custom path: {:?}",
+                        custom_path
+                    );
                     // TODO: Implement custom path loading
                     Ok(KnowledgeLibrary::new())
-                },
+                }
                 None => {
                     info!("Loading default knowledge library");
                     // For now, create an empty knowledge library
@@ -402,7 +415,10 @@ impl AnalysisEngineBuilder {
                 }
             }
         } else {
-            Err(UveddiError::config_error("Knowledge library disabled", "builder"))
+            Err(UveddiError::config_error(
+                "Knowledge library disabled",
+                "builder",
+            ))
         };
 
         let (knowledge_library, context_selector, ai_engine) = if enable_knowledge {
@@ -437,8 +453,10 @@ impl AnalysisEngineBuilder {
             (None, None, None)
         };
 
-        info!("Knowledge library integration: enabled={}, AI explanations: enabled={}", 
-              enable_knowledge, enable_ai);
+        info!(
+            "Knowledge library integration: enabled={}, AI explanations: enabled={}",
+            enable_knowledge, enable_ai
+        );
 
         Ok(crate::analysis::AnalysisEngine {
             config_service,
@@ -448,7 +466,7 @@ impl AnalysisEngineBuilder {
             detector_scheduler,
             plugin_manager,
             aggregator,
-            
+
             // Knowledge Library components
             knowledge_library,
             context_selector,
@@ -457,5 +475,4 @@ impl AnalysisEngineBuilder {
             enable_ai_explanations: enable_ai,
         })
     }
-
 }

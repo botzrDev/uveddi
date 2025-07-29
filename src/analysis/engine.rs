@@ -56,8 +56,11 @@ use crate::analysis::engine_builder::AnalysisEngineBuilder; // Import the builde
 use crate::error::UveddiError;
 
 // Knowledge Library imports
-use crate::ai::knowledge::{KnowledgeLibrary, ContextSelector, KnowledgeContext, EngineAnalysisContext, EngineComplexityMetrics};
 use crate::ai::engine::AiAnalysisEngine;
+use crate::ai::knowledge::{
+    ContextSelector, EngineAnalysisContext, EngineComplexityMetrics, KnowledgeContext,
+    KnowledgeLibrary,
+};
 
 // Component imports
 use crate::analysis::components::traits::{
@@ -116,12 +119,12 @@ pub struct AnalysisEngine {
     pub detector_scheduler: Arc<DetectorScheduler>,
     pub plugin_manager: Option<PluginManagerHandle>,
     pub aggregator: Arc<AnalysisAggregator>,
-    
+
     // NEW: Knowledge Library Integration Components
     pub knowledge_library: Option<Arc<KnowledgeLibrary>>,
     pub context_selector: Option<Arc<ContextSelector>>,
     pub ai_engine: Option<Arc<AiAnalysisEngine>>,
-    
+
     // Configuration flags for knowledge enhancement
     pub enable_knowledge_enhancement: bool,
     pub enable_ai_explanations: bool,
@@ -513,7 +516,10 @@ impl AnalysisEngine {
         let mut enhanced_count = 0;
 
         for issue in &mut issues {
-            match self.enhance_issue_with_knowledge(issue, &dependency_graph).await {
+            match self
+                .enhance_issue_with_knowledge(issue, &dependency_graph)
+                .await
+            {
                 Ok(enhanced) => {
                     if enhanced {
                         enhanced_count += 1;
@@ -550,7 +556,10 @@ impl AnalysisEngine {
         let analysis_context = match self.build_analysis_context(issue, dependency_graph).await {
             Ok(context) => context,
             Err(e) => {
-                warn!("Failed to build analysis context for issue {}: {}", issue.description, e);
+                warn!(
+                    "Failed to build analysis context for issue {}: {}",
+                    issue.description, e
+                );
                 return Ok(false);
             }
         };
@@ -564,37 +573,55 @@ impl AnalysisEngine {
         let knowledge_context = match context_selector.select_context(&analysis_context).await {
             Ok(context) => context,
             Err(e) => {
-                warn!("Context selection failed for issue {}: {}", issue.description, e);
+                warn!(
+                    "Context selection failed for issue {}: {}",
+                    issue.description, e
+                );
                 return Ok(false);
             }
         };
 
         // 3. Skip enhancement if no relevant knowledge found
         if knowledge_context.selected_patterns.is_empty() {
-            info!("No relevant knowledge found for issue: {}", issue.description);
+            info!(
+                "No relevant knowledge found for issue: {}",
+                issue.description
+            );
             return Ok(false);
         }
 
         // 4. Enhance with AI explanation if enabled and provider available
         if self.enable_ai_explanations {
             if let Some(ai_engine) = &self.ai_engine {
-                match ai_engine.analyze_issue_with_knowledge(issue, &knowledge_context).await {
+                match ai_engine
+                    .analyze_issue_with_knowledge(issue, &knowledge_context)
+                    .await
+                {
                     Ok(_) => {
-                        info!("Successfully enhanced issue {} with AI analysis", issue.description);
+                        info!(
+                            "Successfully enhanced issue {} with AI analysis",
+                            issue.description
+                        );
                     }
                     Err(e) => {
-                        warn!("AI enhancement failed for issue {}: {}", issue.description, e);
+                        warn!(
+                            "AI enhancement failed for issue {}: {}",
+                            issue.description, e
+                        );
                         // Fallback to knowledge-only enhancement
-                        self.apply_knowledge_only_enhancement(issue, &knowledge_context).await?;
+                        self.apply_knowledge_only_enhancement(issue, &knowledge_context)
+                            .await?;
                     }
                 }
             } else {
                 // Fallback to knowledge-only enhancement
-                self.apply_knowledge_only_enhancement(issue, &knowledge_context).await?;
+                self.apply_knowledge_only_enhancement(issue, &knowledge_context)
+                    .await?;
             }
         } else {
             // Knowledge-only enhancement
-            self.apply_knowledge_only_enhancement(issue, &knowledge_context).await?;
+            self.apply_knowledge_only_enhancement(issue, &knowledge_context)
+                .await?;
         }
 
         // 5. Log knowledge metadata (fields don't exist in current DB model)
@@ -653,15 +680,19 @@ impl AnalysisEngine {
                 **Detection Confidence**: {:.1}%",
                 pattern_knowledge.name,
                 pattern_knowledge.definition.as_str(),
-                pattern_knowledge.symptoms.iter()
+                pattern_knowledge
+                    .symptoms
+                    .iter()
                     .map(|symptom| format!("• {}", symptom.as_str()))
                     .collect::<Vec<_>>()
                     .join("\n"),
-                pattern_knowledge.solutions.iter()
-                    .map(|solution| format!("• {} (Effort: {:?}, Impact: {:?})",
-                                           solution.title,
-                                           solution.effort_level,
-                                           solution.expected_impact))
+                pattern_knowledge
+                    .solutions
+                    .iter()
+                    .map(|solution| format!(
+                        "• {} (Effort: {:?}, Impact: {:?})",
+                        solution.title, solution.effort_level, solution.expected_impact
+                    ))
                     .collect::<Vec<_>>()
                     .join("\n"),
                 pattern_knowledge.impact,
@@ -672,7 +703,10 @@ impl AnalysisEngine {
 
             // TODO: Add solution recommendations when DB model supports it
             if let Some(best_solution) = pattern_knowledge.solutions.first() {
-                info!("Recommended solution for issue: {}", best_solution.implementation.as_str());
+                info!(
+                    "Recommended solution for issue: {}",
+                    best_solution.implementation.as_str()
+                );
             }
         }
 
@@ -680,7 +714,10 @@ impl AnalysisEngine {
     }
 
     /// Helper methods for context building
-    fn detect_language_from_issue(&self, file_path: &str) -> crate::error::Result<crate::ai::knowledge::schema::SourceLanguage> {
+    fn detect_language_from_issue(
+        &self,
+        file_path: &str,
+    ) -> crate::error::Result<crate::ai::knowledge::schema::SourceLanguage> {
         let extension = Path::new(file_path)
             .extension()
             .and_then(|ext| ext.to_str())
@@ -695,7 +732,10 @@ impl AnalysisEngine {
         }
     }
 
-    async fn detect_frameworks_from_issue(&self, issue: &ArchitecturalIssue) -> crate::error::Result<Vec<String>> {
+    async fn detect_frameworks_from_issue(
+        &self,
+        issue: &ArchitecturalIssue,
+    ) -> crate::error::Result<Vec<String>> {
         // Simplified framework detection based on file path and content
         let mut frameworks = Vec::new();
 
@@ -712,7 +752,10 @@ impl AnalysisEngine {
         Ok(frameworks)
     }
 
-    async fn calculate_issue_complexity(&self, issue: &ArchitecturalIssue) -> crate::error::Result<EngineComplexityMetrics> {
+    async fn calculate_issue_complexity(
+        &self,
+        issue: &ArchitecturalIssue,
+    ) -> crate::error::Result<EngineComplexityMetrics> {
         // Basic complexity calculation based on issue characteristics
         Ok(EngineComplexityMetrics {
             cyclomatic_complexity: 1, // Default for single issue
@@ -723,7 +766,11 @@ impl AnalysisEngine {
                 "Low" => 2,
                 _ => 1,
             },
-            lines_of_code: issue.code_snippet.as_ref().map(|s| s.lines().count()).unwrap_or(0),
+            lines_of_code: issue
+                .code_snippet
+                .as_ref()
+                .map(|s| s.lines().count())
+                .unwrap_or(0),
             number_of_methods: 1, // Simplified
         })
     }
@@ -740,7 +787,12 @@ impl AnalysisEngine {
     }
 
     /// Record enhancement metrics for monitoring
-    fn record_enhancement_metrics(&self, enhanced_count: usize, total_count: usize, enhancement_time: std::time::Duration) {
+    fn record_enhancement_metrics(
+        &self,
+        enhanced_count: usize,
+        total_count: usize,
+        enhancement_time: std::time::Duration,
+    ) {
         // Implementation depends on your metrics collection system
         info!(
             "Enhancement metrics: {}/{} issues enhanced in {:?} (rate: {:.1}%)",
@@ -981,7 +1033,9 @@ impl AnalysisEngine {
                         tree: Some((*cached_tree).clone()),
                         source: std::sync::Arc::new(source_content),
                         custom_ast: std::sync::Arc::new(None),
-                        modified_at: crate::analysis::cache::wrappers::ArchivableSystemTime(std::fs::metadata(path)?.modified()?),
+                        modified_at: crate::analysis::cache::wrappers::ArchivableSystemTime(
+                            std::fs::metadata(path)?.modified()?,
+                        ),
                     };
                     return Ok(parsed_file);
                 }
@@ -999,7 +1053,9 @@ impl AnalysisEngine {
                     tree: Some((*cached_tree).clone()),
                     source: std::sync::Arc::new(source_content),
                     custom_ast: std::sync::Arc::new(None),
-                    modified_at: crate::analysis::cache::wrappers::ArchivableSystemTime(std::fs::metadata(path)?.modified()?),
+                    modified_at: crate::analysis::cache::wrappers::ArchivableSystemTime(
+                        std::fs::metadata(path)?.modified()?,
+                    ),
                 };
                 return Ok(parsed_file);
             }
@@ -1025,7 +1081,9 @@ impl AnalysisEngine {
                     tree: Some((*cached_tree).clone()),
                     source: std::sync::Arc::new(source_content),
                     custom_ast: std::sync::Arc::new(None),
-                    modified_at: crate::analysis::cache::wrappers::ArchivableSystemTime(std::fs::metadata(path)?.modified()?),
+                    modified_at: crate::analysis::cache::wrappers::ArchivableSystemTime(
+                        std::fs::metadata(path)?.modified()?,
+                    ),
                 };
                 return Ok(parsed_file);
             }

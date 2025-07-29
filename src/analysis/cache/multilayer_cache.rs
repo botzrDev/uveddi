@@ -8,25 +8,25 @@
 
 #![cfg(feature = "memory-optimization")]
 
+use crate::analysis::cache::wrappers::ArchivablePathBuf;
 use crate::analysis::cache::{
-    invalidation::{InvalidationStrategy, ContentHashInvalidator},
+    invalidation::{ContentHashInvalidator, InvalidationStrategy},
     metrics::CacheMetrics,
     serialization::{CacheEntry, CacheSerializer, SerializationFormat},
 };
-use rkyv::de::deserializers::SharedDeserializeMap;
 use lru::LruCache;
+use rkyv::de::deserializers::SharedDeserializeMap;
 use serde::{de::DeserializeOwned, Serialize};
 use std::collections::HashMap;
 use std::hash::Hash;
 use std::marker::PhantomData;
 use std::num::NonZeroUsize;
 use std::path::{Path, PathBuf};
-use crate::analysis::cache::wrappers::ArchivablePathBuf;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use thiserror::Error;
-use tokio::sync::RwLock;
 use tokio::fs;
+use tokio::sync::RwLock;
 
 #[derive(Error, Debug)]
 pub enum CacheError {
@@ -124,10 +124,7 @@ where
     V::Archived: for<'a> rkyv::CheckBytes<rkyv::validation::validators::DefaultValidator<'a>>,
 {
     /// Create a new multi-layer cache
-    pub async fn new(
-        config: CacheConfig,
-        metrics: Arc<CacheMetrics>,
-    ) -> Result<Self, CacheError> {
+    pub async fn new(config: CacheConfig, metrics: Arc<CacheMetrics>) -> Result<Self, CacheError> {
         // Create cache directory if it doesn't exist
         if !config.disk_cache_path.exists() {
             fs::create_dir_all(&config.disk_cache_path).await?;
@@ -166,10 +163,10 @@ where
                 if self.is_entry_valid(entry) {
                     let duration = start_time.elapsed();
                     self.metrics.record_hit("memory", duration);
-                    
+
                     // Update access count and timestamp
                     entry.touch();
-                    
+
                     return Ok(Some(entry.data.clone()));
                 } else {
                     // Entry expired, remove it
@@ -189,21 +186,21 @@ where
                 if self.is_entry_valid(&entry) {
                     let duration = start_time.elapsed();
                     self.metrics.record_hit("disk", duration);
-                    
+
                     // Update access count
                     entry.touch();
-                    
+
                     // Consider promoting to memory cache
                     if self.should_promote(&entry) {
                         self.promote_to_memory(key.clone(), entry.clone()).await?;
                     }
-                    
+
                     // Update disk cache with new access info
                     {
                         let mut disk_cache = self.disk_cache.write().await;
                         disk_cache.set(key, &entry).await?;
                     }
-                    
+
                     Ok(Some(entry.data))
                 } else {
                     // Entry expired, remove from disk
@@ -211,7 +208,7 @@ where
                         let mut disk_cache = self.disk_cache.write().await;
                         disk_cache.remove(key).await?;
                     }
-                    
+
                     let duration = start_time.elapsed();
                     self.metrics.record_miss("disk", duration);
                     Ok(None)
@@ -230,7 +227,7 @@ where
     pub async fn set(&self, key: K, value: V) -> Result<(), CacheError> {
         let key_str = key.to_string();
         let size_estimate = self.estimate_size(&value);
-        
+
         // Create cache entry
         let content_hash = self.calculate_content_hash(&value);
         let entry = CacheEntry::new(value, content_hash, size_estimate);
@@ -244,14 +241,15 @@ where
         // Add to memory cache if there's space or if it's hot data
         if self.should_cache_in_memory(&entry) {
             let mut memory_cache = self.memory_cache.write().await;
-            
+
             // Check if we need to evict from memory
             while memory_cache.len() >= self.config.memory_capacity {
                 if let Some((evicted_key, evicted_entry)) = memory_cache.pop_lru() {
-                    self.metrics.record_eviction("memory", evicted_entry.size_bytes);
+                    self.metrics
+                        .record_eviction("memory", evicted_entry.size_bytes);
                 }
             }
-            
+
             memory_cache.put(key, entry.clone());
             self.metrics.record_insertion("memory", size_estimate);
         }
@@ -325,14 +323,14 @@ where
         {
             let mut memory_cache = self.memory_cache.write().await;
             let mut to_remove = Vec::new();
-            
+
             // We need to iterate without mutating, so collect keys first
             for (key, entry) in memory_cache.iter() {
                 if !self.is_entry_valid(entry) {
                     to_remove.push(key.clone());
                 }
             }
-            
+
             for key in to_remove {
                 if let Some(entry) = memory_cache.pop(&key) {
                     self.metrics.record_eviction("memory", entry.size_bytes);
@@ -371,14 +369,15 @@ where
 
     async fn promote_to_memory(&self, key: K, entry: CacheEntry<V>) -> Result<(), CacheError> {
         let mut memory_cache = self.memory_cache.write().await;
-        
+
         // Make room if needed
         while memory_cache.len() >= self.config.memory_capacity {
             if let Some((evicted_key, evicted_entry)) = memory_cache.pop_lru() {
-                self.metrics.record_eviction("memory", evicted_entry.size_bytes);
+                self.metrics
+                    .record_eviction("memory", evicted_entry.size_bytes);
             }
         }
-        
+
         memory_cache.put(key, entry.clone());
         self.metrics.record_insertion("memory", entry.size_bytes);
         Ok(())
@@ -393,10 +392,10 @@ where
         // Simple hash based on serialized content
         use std::collections::hash_map::DefaultHasher;
         use std::hash::{Hash, Hasher};
-        
+
         // This is a simplified approach - in production, you'd want proper content hashing
         let mut hasher = DefaultHasher::new();
-        
+
         // For now, use a simple approach
         // In production, serialize the value and hash the bytes
         format!("hash_{}", hasher.finish())
@@ -413,7 +412,7 @@ where
 {
     async fn new(config: CacheConfig) -> Result<Self, CacheError> {
         let serializer = CacheSerializer::new(config.serialization_format);
-        
+
         let mut cache = Self {
             cache_dir: config.disk_cache_path.clone(),
             file_map: HashMap::new(),
@@ -425,13 +424,13 @@ where
 
         // Load existing cache entries
         cache.load_existing_entries().await?;
-        
+
         Ok(cache)
     }
 
     async fn load_existing_entries(&mut self) -> Result<(), CacheError> {
         let mut entries = fs::read_dir(&self.cache_dir).await?;
-        
+
         while let Some(entry) = entries.next_entry().await? {
             let path = entry.path();
             if path.is_file() {
@@ -442,13 +441,13 @@ where
                 }
             }
         }
-        
+
         Ok(())
     }
 
     async fn get(&self, key: &K) -> Result<Option<CacheEntry<V>>, CacheError> {
         let key_hash = self.hash_key(key);
-        
+
         if let Some(file_path) = self.file_map.get(&key_hash) {
             let data = fs::read(file_path).await?;
             let entry: CacheEntry<V> = self.serializer.deserialize(&data)?;
@@ -461,16 +460,18 @@ where
     async fn set(&mut self, key: &K, entry: &CacheEntry<V>) -> Result<(), CacheError> {
         let key_hash = self.hash_key(key);
         let file_path = self.cache_dir.join(&key_hash);
-        
+
         let data = self.serializer.serialize(entry)?;
-        
+
         // Check if we need to evict entries to make space
-        while self.current_size + data.len() as u64 > self.config.disk_size_limit && !self.file_map.is_empty() {
+        while self.current_size + data.len() as u64 > self.config.disk_size_limit
+            && !self.file_map.is_empty()
+        {
             self.evict_lru_entry().await?;
         }
-        
+
         fs::write(&file_path, &data).await?;
-        
+
         // Update tracking
         if let Some(old_path) = self.file_map.insert(key_hash, file_path) {
             // Replace existing entry
@@ -478,27 +479,27 @@ where
                 self.current_size -= metadata.len();
             }
         }
-        
+
         self.current_size += data.len() as u64;
         Ok(())
     }
 
     async fn remove(&mut self, key: &K) -> Result<Option<CacheEntry<V>>, CacheError> {
         let key_hash = self.hash_key(key);
-        
+
         if let Some(file_path) = self.file_map.remove(&key_hash) {
             // Read entry before removing
             let data = fs::read(&file_path).await?;
             let entry: CacheEntry<V> = self.serializer.deserialize(&data)?;
-            
+
             // Remove file
             fs::remove_file(&file_path).await?;
-            
+
             // Update size tracking
             if let Ok(metadata) = fs::metadata(&file_path).await {
                 self.current_size -= metadata.len();
             }
-            
+
             Ok(Some(entry))
         } else {
             Ok(None)
@@ -509,7 +510,7 @@ where
         for file_path in self.file_map.values() {
             let _ = fs::remove_file(file_path).await; // Ignore errors
         }
-        
+
         self.file_map.clear();
         self.current_size = 0;
         Ok(())
@@ -523,7 +524,7 @@ where
 
         let mut removed_count = 0;
         let mut to_remove = Vec::new();
-        
+
         for (key_hash, file_path) in &self.file_map {
             if let Ok(data) = fs::read(file_path).await {
                 if let Ok(entry) = self.serializer.deserialize::<CacheEntry<V>>(&data) {
@@ -533,14 +534,14 @@ where
                 }
             }
         }
-        
+
         for key_hash in to_remove {
             if let Some(file_path) = self.file_map.remove(&key_hash) {
                 let _ = fs::remove_file(&file_path).await;
                 removed_count += 1;
             }
         }
-        
+
         Ok(removed_count)
     }
 
@@ -548,7 +549,7 @@ where
         // Find the oldest entry (simple LRU approximation using file modification time)
         let mut oldest_key = None;
         let mut oldest_time = std::time::SystemTime::now();
-        
+
         for (key_hash, file_path) in &self.file_map {
             if let Ok(metadata) = fs::metadata(file_path).await {
                 if let Ok(modified) = metadata.modified() {
@@ -559,20 +560,20 @@ where
                 }
             }
         }
-        
+
         if let Some(key_hash) = oldest_key {
             if let Some(file_path) = self.file_map.remove(&key_hash) {
                 let _ = fs::remove_file(&file_path).await;
             }
         }
-        
+
         Ok(())
     }
 
     fn hash_key(&self, key: &K) -> String {
         use std::collections::hash_map::DefaultHasher;
         use std::hash::{Hash, Hasher};
-        
+
         let mut hasher = DefaultHasher::new();
         key.to_string().hash(&mut hasher);
         hasher.finish().to_string()
@@ -596,8 +597,9 @@ mod tests {
     use prometheus::Registry;
     use tempfile::TempDir;
 
-    #[derive(Debug, Clone, PartialEq, Serialize, serde::Deserialize)]
-    #[derive(rkyv::Archive, rkyv::Serialize)]
+    #[derive(
+        Debug, Clone, PartialEq, Serialize, serde::Deserialize, rkyv::Archive, rkyv::Serialize,
+    )]
     #[archive(check_bytes)]
     struct TestValue {
         id: u64,
@@ -606,7 +608,10 @@ mod tests {
 
     // Manual implementation of the required Deserialize trait
     impl rkyv::Deserialize<ArchivedTestValue, SharedDeserializeMap> for TestValue {
-        fn deserialize(&self, _deserializer: &mut SharedDeserializeMap) -> Result<ArchivedTestValue, rkyv::de::deserializers::SharedDeserializeMapError> {
+        fn deserialize(
+            &self,
+            _deserializer: &mut SharedDeserializeMap,
+        ) -> Result<ArchivedTestValue, rkyv::de::deserializers::SharedDeserializeMapError> {
             // This implementation is not actually used in practice for this direction
             // The real deserialization happens from ArchivedTestValue -> TestValue
             unreachable!("This direction of deserialization should not be called")
@@ -624,7 +629,8 @@ mod tests {
 
         let registry = Registry::new();
         let metrics = Arc::new(CacheMetrics::new(&registry).unwrap());
-        let cache: MultiLayerCache<String, TestValue> = MultiLayerCache::new(config, metrics).await.unwrap();
+        let cache: MultiLayerCache<String, TestValue> =
+            MultiLayerCache::new(config, metrics).await.unwrap();
 
         let key = "test_key".to_string();
         let value = TestValue {
@@ -659,7 +665,8 @@ mod tests {
 
         let registry = Registry::new();
         let metrics = Arc::new(CacheMetrics::new(&registry).unwrap());
-        let cache: MultiLayerCache<String, TestValue> = MultiLayerCache::new(config, metrics).await.unwrap();
+        let cache: MultiLayerCache<String, TestValue> =
+            MultiLayerCache::new(config, metrics).await.unwrap();
 
         // Fill memory cache beyond capacity
         for i in 0..3 {
@@ -686,7 +693,8 @@ mod tests {
 
         let registry = Registry::new();
         let metrics = Arc::new(CacheMetrics::new(&registry).unwrap());
-        let cache: MultiLayerCache<String, TestValue> = MultiLayerCache::new(config, metrics).await.unwrap();
+        let cache: MultiLayerCache<String, TestValue> =
+            MultiLayerCache::new(config, metrics).await.unwrap();
 
         let value = TestValue {
             id: 1,
@@ -711,7 +719,8 @@ mod tests {
 
         let registry = Registry::new();
         let metrics = Arc::new(CacheMetrics::new(&registry).unwrap());
-        let cache: MultiLayerCache<String, TestValue> = MultiLayerCache::new(config, metrics).await.unwrap();
+        let cache: MultiLayerCache<String, TestValue> =
+            MultiLayerCache::new(config, metrics).await.unwrap();
 
         let value = TestValue {
             id: 1,

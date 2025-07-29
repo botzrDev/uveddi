@@ -73,8 +73,8 @@ mod tui_tests {
 
         // 2. Simulate Tab to cycle focus
         let tab_key = ratatui::crossterm::event::KeyEvent::new(
-            ratatui::crossterm::event::KeyCode::Tab, 
-            ratatui::crossterm::event::KeyModifiers::NONE
+            ratatui::crossterm::event::KeyCode::Tab,
+            ratatui::crossterm::event::KeyModifiers::NONE,
         );
         let messages = app_state.update(AppMessage::FormKeyPressed(tab_key));
         assert!(messages.is_empty()); // Focus change is handled internally
@@ -90,8 +90,8 @@ mod tui_tests {
             .set_focus_by_index(FormField::Path.to_index());
 
         let char_key = ratatui::crossterm::event::KeyEvent::new(
-            ratatui::crossterm::event::KeyCode::Char('a'), 
-            ratatui::crossterm::event::KeyModifiers::NONE
+            ratatui::crossterm::event::KeyCode::Char('a'),
+            ratatui::crossterm::event::KeyModifiers::NONE,
         );
         let messages = app_state.update(AppMessage::FormKeyPressed(char_key));
 
@@ -116,8 +116,8 @@ mod tui_tests {
             .analyze_form
             .set_focus_by_index(FormField::EnableAI.to_index());
         let enter_key = ratatui::crossterm::event::KeyEvent::new(
-            ratatui::crossterm::event::KeyCode::Enter, 
-            ratatui::crossterm::event::KeyModifiers::NONE
+            ratatui::crossterm::event::KeyCode::Enter,
+            ratatui::crossterm::event::KeyModifiers::NONE,
         );
         let messages = app_state.update(AppMessage::FormKeyPressed(enter_key));
         assert_eq!(messages.len(), 1);
@@ -157,9 +157,18 @@ mod tui_tests {
         );
         form_data.insert(FormField::DeadCodeConfidence, FieldValue::Float(0.8));
         form_data.insert(FormField::DeadCodeLibraryMode, FieldValue::Boolean(true));
-        form_data.insert(FormField::DeadCodeIgnorePatterns, FieldValue::String("".to_string()));
-        form_data.insert(FormField::DeadCodeKeepAlive, FieldValue::String("".to_string()));
-        form_data.insert(FormField::LargeClassesIgnorePatterns, FieldValue::String("".to_string()));
+        form_data.insert(
+            FormField::DeadCodeIgnorePatterns,
+            FieldValue::String("".to_string()),
+        );
+        form_data.insert(
+            FormField::DeadCodeKeepAlive,
+            FieldValue::String("".to_string()),
+        );
+        form_data.insert(
+            FormField::LargeClassesIgnorePatterns,
+            FieldValue::String("".to_string()),
+        );
         app_state.form_data = form_data;
 
         // Trigger submission

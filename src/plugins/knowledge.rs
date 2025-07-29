@@ -4,8 +4,8 @@
 //! and organizations to extend the AI Knowledge Library with custom anti-patterns,
 //! domain-specific knowledge, and specialized detection methods.
 
-use crate::ai::knowledge::schema::*;
 use crate::ai::knowledge::context_selection::*;
+use crate::ai::knowledge::schema::*;
 use crate::plugins::{PluginError, PluginId, PluginMetadata, SecurityPolicy};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
@@ -474,10 +474,7 @@ impl KnowledgePluginSystem {
     }
 
     /// Install and register a new knowledge plugin
-    pub async fn install_plugin(
-        &mut self,
-        plugin_path: &PathBuf,
-    ) -> Result<String, PluginError> {
+    pub async fn install_plugin(&mut self, plugin_path: &PathBuf) -> Result<String, PluginError> {
         // 1. Load and validate plugin
         let plugin_package = self.loader.load_plugin(plugin_path).await?;
 
@@ -488,7 +485,9 @@ impl KnowledgePluginSystem {
         self.resolve_dependencies(&plugin_package.metadata).await?;
 
         // 4. Performance validation
-        self.performance.validate_performance(&plugin_package).await?;
+        self.performance
+            .validate_performance(&plugin_package)
+            .await?;
 
         // 5. Register plugin
         let plugin_id = plugin_package.metadata.id.clone();
@@ -498,7 +497,8 @@ impl KnowledgePluginSystem {
             metrics: KnowledgePluginMetrics::new(),
         };
 
-        self.registry.register_plugin(plugin_id.clone(), registered_plugin)?;
+        self.registry
+            .register_plugin(plugin_id.clone(), registered_plugin)?;
 
         // 6. Initialize plugin
         self.initialize_plugin(&plugin_id).await?;
@@ -507,9 +507,7 @@ impl KnowledgePluginSystem {
     }
 
     /// Load custom knowledge from all active plugins
-    pub async fn load_plugin_knowledge(
-        &self,
-    ) -> Result<PluginKnowledgeLibrary, PluginError> {
+    pub async fn load_plugin_knowledge(&self) -> Result<PluginKnowledgeLibrary, PluginError> {
         let mut plugin_knowledge = PluginKnowledgeLibrary::new();
         let active_plugins = self.active_plugins.read().await;
 
@@ -539,7 +537,9 @@ impl KnowledgePluginSystem {
 
         for plugin_id in relevant_plugins {
             if let Some(plugin) = active_plugins.get(&plugin_id) {
-                let context = self.get_context_from_plugin(&plugin_id, plugin, analysis_context).await?;
+                let context = self
+                    .get_context_from_plugin(&plugin_id, plugin, analysis_context)
+                    .await?;
                 plugin_context.add_plugin_context(plugin_id, context);
             }
         }
@@ -595,10 +595,21 @@ impl KnowledgePluginSystem {
     }
 
     /// Check if plugin is relevant for analysis context
-    fn is_plugin_relevant(&self, plugin: &RegisteredKnowledgePlugin, context: &AnalysisContext) -> bool {
+    fn is_plugin_relevant(
+        &self,
+        plugin: &RegisteredKnowledgePlugin,
+        context: &AnalysisContext,
+    ) -> bool {
         // Check language support
-        if !plugin.metadata.supported_languages.contains(&context.language) &&
-           !plugin.metadata.supported_languages.contains(&SourceLanguage::Universal) {
+        if !plugin
+            .metadata
+            .supported_languages
+            .contains(&context.language)
+            && !plugin
+                .metadata
+                .supported_languages
+                .contains(&SourceLanguage::Universal)
+        {
             return false;
         }
 
@@ -618,8 +629,10 @@ impl KnowledgePluginSystem {
         plugin: &Box<dyn KnowledgePlugin>,
         analysis_context: &AnalysisContext,
     ) -> Result<PluginSpecificContext, PluginError> {
-        let language_knowledge = plugin.get_language_knowledge(analysis_context.language).await?;
-        
+        let language_knowledge = plugin
+            .get_language_knowledge(analysis_context.language)
+            .await?;
+
         let mut framework_knowledge = HashMap::new();
         for framework in &analysis_context.frameworks {
             if let Some(knowledge) = plugin.get_framework_knowledge(framework).await? {
@@ -714,7 +727,8 @@ impl PluginKnowledgeLibrary {
 
         // Index patterns
         for pattern in &knowledge.patterns {
-            self.pattern_index.insert(pattern.id.clone(), plugin_id.clone());
+            self.pattern_index
+                .insert(pattern.id.clone(), plugin_id.clone());
         }
 
         self.plugin_knowledge.insert(plugin_id, knowledge);
@@ -741,7 +755,10 @@ impl PluginKnowledgeLibrary {
     pub fn get_pattern(&self, pattern_id: &str) -> Option<&PatternKnowledge> {
         if let Some(plugin_id) = self.pattern_index.get(pattern_id) {
             if let Some(plugin_knowledge) = self.plugin_knowledge.get(plugin_id) {
-                return plugin_knowledge.patterns.iter().find(|p| p.id == pattern_id);
+                return plugin_knowledge
+                    .patterns
+                    .iter()
+                    .find(|p| p.id == pattern_id);
             }
         }
         None
@@ -774,7 +791,8 @@ impl PluginKnowledgeLibrary {
 
     /// Get all patterns from all plugins
     pub fn get_all_patterns(&self) -> Vec<&PatternKnowledge> {
-        self.plugin_knowledge.values()
+        self.plugin_knowledge
+            .values()
             .flat_map(|k| k.patterns.iter())
             .collect()
     }
@@ -896,7 +914,10 @@ impl KnowledgePluginLoader {
         }
     }
 
-    pub async fn load_plugin(&self, plugin_path: &PathBuf) -> Result<KnowledgePluginPackage, PluginError> {
+    pub async fn load_plugin(
+        &self,
+        plugin_path: &PathBuf,
+    ) -> Result<KnowledgePluginPackage, PluginError> {
         // Implementation for loading plugin packages
         // This would parse plugin manifests, validate structure, etc.
         todo!("Implement plugin loading")
@@ -921,7 +942,10 @@ impl KnowledgePluginSecurityManager {
         }
     }
 
-    pub async fn validate_plugin(&self, package: &KnowledgePluginPackage) -> Result<(), PluginError> {
+    pub async fn validate_plugin(
+        &self,
+        package: &KnowledgePluginPackage,
+    ) -> Result<(), PluginError> {
         // Implementation for security validation
         // This would check permissions, scan for vulnerabilities, etc.
         Ok(())
@@ -938,7 +962,10 @@ impl KnowledgePluginPerformanceMonitor {
         Self {}
     }
 
-    pub async fn validate_performance(&self, package: &KnowledgePluginPackage) -> Result<(), PluginError> {
+    pub async fn validate_performance(
+        &self,
+        package: &KnowledgePluginPackage,
+    ) -> Result<(), PluginError> {
         // Implementation for performance validation
         // This would test initialization time, memory usage, etc.
         Ok(())

@@ -262,7 +262,10 @@ impl CommunityDatabase {
 
         let mut member_iter = stmt.query_map([email], |row| {
             self.row_to_member(row).map_err(|e| match e {
-                UveddiError::DatabaseError { source: Some(sql_err), .. } => sql_err,
+                UveddiError::DatabaseError {
+                    source: Some(sql_err),
+                    ..
+                } => sql_err,
                 _ => rusqlite::Error::ToSqlConversionFailure(Box::new(e)),
             })
         })?;
@@ -288,7 +291,10 @@ impl CommunityDatabase {
 
         let mut member_iter = stmt.query_map([id], |row| {
             self.row_to_member(row).map_err(|e| match e {
-                UveddiError::DatabaseError { source: Some(sql_err), .. } => sql_err,
+                UveddiError::DatabaseError {
+                    source: Some(sql_err),
+                    ..
+                } => sql_err,
                 _ => rusqlite::Error::ToSqlConversionFailure(Box::new(e)),
             })
         })?;
@@ -349,7 +355,10 @@ impl CommunityDatabase {
 
         let member_iter = stmt.query_map(&param_refs[..], |row| {
             self.row_to_member(row).map_err(|e| match e {
-                UveddiError::DatabaseError { source: Some(sql_err), .. } => sql_err,
+                UveddiError::DatabaseError {
+                    source: Some(sql_err),
+                    ..
+                } => sql_err,
                 _ => rusqlite::Error::ToSqlConversionFailure(Box::new(e)),
             })
         })?;
@@ -538,7 +547,10 @@ impl CommunityDatabase {
         let mut stmt = self.conn.prepare(&sql)?;
         let activity_iter = stmt.query_map([member_id], |row| {
             self.row_to_activity(row).map_err(|e| match e {
-                UveddiError::DatabaseError { source: Some(sql_err), .. } => sql_err,
+                UveddiError::DatabaseError {
+                    source: Some(sql_err),
+                    ..
+                } => sql_err,
                 _ => rusqlite::Error::ToSqlConversionFailure(Box::new(e)),
             })
         })?;
@@ -552,90 +564,102 @@ impl CommunityDatabase {
 
     /// Helper method to convert database row to CommunityMember
     fn row_to_member(&self, row: &Row) -> Result<CommunityMember, UveddiError> {
-        let languages_json: String = row.get(11).map_err(|e| UveddiError::database_error(
-            "get languages_json", "community database", e
-        ))?;
-        let custom_fields_json: String = row.get(17).map_err(|e| UveddiError::database_error(
-            "get custom_fields_json", "community database", e
-        ))?;
+        let languages_json: String = row.get(11).map_err(|e| {
+            UveddiError::database_error("get languages_json", "community database", e)
+        })?;
+        let custom_fields_json: String = row.get(17).map_err(|e| {
+            UveddiError::database_error("get custom_fields_json", "community database", e)
+        })?;
 
-        let languages = self.deserialize_languages(&languages_json)
-            .map_err(|e| {
-                log::warn!("Failed to deserialize languages for member: {}", e);
-                e
-            })?;
+        let languages = self.deserialize_languages(&languages_json).map_err(|e| {
+            log::warn!("Failed to deserialize languages for member: {}", e);
+            e
+        })?;
 
-        let custom_fields = self.deserialize_custom_fields(&custom_fields_json)
+        let custom_fields = self
+            .deserialize_custom_fields(&custom_fields_json)
             .map_err(|e| {
                 log::warn!("Failed to deserialize custom fields for member: {}", e);
                 e
             })?;
 
-        let last_active_str: Option<String> = row.get(5).map_err(|e| UveddiError::database_error(
-            "get last_active", "community database", e
-        ))?;
+        let last_active_str: Option<String> = row
+            .get(5)
+            .map_err(|e| UveddiError::database_error("get last_active", "community database", e))?;
         let last_active = last_active_str
             .and_then(|s| DateTime::parse_from_rfc3339(&s).ok())
             .map(|dt| dt.with_timezone(&Utc));
 
         Ok(CommunityMember {
-            id: row.get(0).map_err(|e| UveddiError::database_error(
-                "get id", "community database", e
-            ))?,
-            email: row.get(1).map_err(|e| UveddiError::database_error(
-                "get email", "community database", e
-            ))?,
-            name: row.get(2).map_err(|e| UveddiError::database_error(
-                "get name", "community database", e
-            ))?,
-            role: MemberRole::from_str(&row.get::<_, String>(3).map_err(|e| UveddiError::database_error(
-                "get role", "community database", e
-            ))?),
+            id: row
+                .get(0)
+                .map_err(|e| UveddiError::database_error("get id", "community database", e))?,
+            email: row
+                .get(1)
+                .map_err(|e| UveddiError::database_error("get email", "community database", e))?,
+            name: row
+                .get(2)
+                .map_err(|e| UveddiError::database_error("get name", "community database", e))?,
+            role: MemberRole::from_str(
+                &row.get::<_, String>(3).map_err(|e| {
+                    UveddiError::database_error("get role", "community database", e)
+                })?,
+            ),
             created_at: {
-                let timestamp_str = row.get::<_, String>(4).map_err(|e| UveddiError::database_error(
-                    "get created_at", "community database", e
-                ))?;
+                let timestamp_str = row.get::<_, String>(4).map_err(|e| {
+                    UveddiError::database_error("get created_at", "community database", e)
+                })?;
                 DateTime::parse_from_rfc3339(&timestamp_str)
-                    .map_err(|_e| UveddiError::database_error(
-                        "parse created_at timestamp",
-                        "community database", 
-                        rusqlite::Error::InvalidColumnType(4, timestamp_str.clone(), rusqlite::types::Type::Text)
-                    ))?
+                    .map_err(|_e| {
+                        UveddiError::database_error(
+                            "parse created_at timestamp",
+                            "community database",
+                            rusqlite::Error::InvalidColumnType(
+                                4,
+                                timestamp_str.clone(),
+                                rusqlite::types::Type::Text,
+                            ),
+                        )
+                    })?
                     .with_timezone(&Utc)
             },
             last_active,
-            is_active: row.get(6).map_err(|e| UveddiError::database_error(
-                "get is_active", "community database", e
-            ))?,
-            email_verified: row.get(7).map_err(|e| UveddiError::database_error(
-                "get email_verified", "community database", e
-            ))?,
-            avatar_url: row.get(8).map_err(|e| UveddiError::database_error(
-                "get avatar_url", "community database", e
-            ))?,
+            is_active: row.get(6).map_err(|e| {
+                UveddiError::database_error("get is_active", "community database", e)
+            })?,
+            email_verified: row.get(7).map_err(|e| {
+                UveddiError::database_error("get email_verified", "community database", e)
+            })?,
+            avatar_url: row.get(8).map_err(|e| {
+                UveddiError::database_error("get avatar_url", "community database", e)
+            })?,
             profile: MemberProfile {
-                company: row.get(9).map_err(|e| UveddiError::database_error(
-                    "get company", "community database", e
-                ))?,
-                job_title: row.get(10).map_err(|e| UveddiError::database_error(
-                    "get job_title", "community database", e
-                ))?,
+                company: row.get(9).map_err(|e| {
+                    UveddiError::database_error("get company", "community database", e)
+                })?,
+                job_title: row.get(10).map_err(|e| {
+                    UveddiError::database_error("get job_title", "community database", e)
+                })?,
                 languages,
-                experience_level: row.get(12).map_err(|e| UveddiError::database_error(
-                    "get experience_level", "community database", e
-                ))?,
-                use_case: row.get(13).map_err(|e| UveddiError::database_error(
-                    "get use_case", "community database", e
-                ))?,
-                referral_source: row.get(14).map_err(|e| UveddiError::database_error(
-                    "get referral_source", "community database", e
-                ))?,
-                newsletter_subscribed: row.get(15).map_err(|e| UveddiError::database_error(
-                    "get newsletter_subscribed", "community database", e
-                ))?,
-                marketing_consent: row.get(16).map_err(|e| UveddiError::database_error(
-                    "get marketing_consent", "community database", e
-                ))?,
+                experience_level: row.get(12).map_err(|e| {
+                    UveddiError::database_error("get experience_level", "community database", e)
+                })?,
+                use_case: row.get(13).map_err(|e| {
+                    UveddiError::database_error("get use_case", "community database", e)
+                })?,
+                referral_source: row.get(14).map_err(|e| {
+                    UveddiError::database_error("get referral_source", "community database", e)
+                })?,
+                newsletter_subscribed: row.get(15).map_err(|e| {
+                    UveddiError::database_error(
+                        "get newsletter_subscribed",
+                        "community database",
+                        e,
+                    )
+                })?,
+                marketing_consent: row.get(16).map_err(|e| {
+                    UveddiError::database_error("get marketing_consent", "community database", e)
+                })?,
                 custom_fields,
             },
         })
@@ -643,47 +667,52 @@ impl CommunityDatabase {
 
     /// Helper method to convert database row to MemberActivity
     fn row_to_activity(&self, row: &Row) -> Result<MemberActivity, UveddiError> {
-        let metadata_json: String = row.get(7).map_err(|e| UveddiError::database_error(
-            "get metadata_json", "community database", e
-        ))?;
-        
-        let metadata = self.deserialize_metadata(&metadata_json)
-            .map_err(|e| {
-                log::warn!("Failed to deserialize activity metadata: {}", e);
-                e
-            })?;
+        let metadata_json: String = row.get(7).map_err(|e| {
+            UveddiError::database_error("get metadata_json", "community database", e)
+        })?;
+
+        let metadata = self.deserialize_metadata(&metadata_json).map_err(|e| {
+            log::warn!("Failed to deserialize activity metadata: {}", e);
+            e
+        })?;
 
         Ok(MemberActivity {
-            id: Some(row.get(0).map_err(|e| UveddiError::database_error(
-                "get activity id", "community database", e
-            ))?),
-            member_id: row.get(1).map_err(|e| UveddiError::database_error(
-                "get member_id", "community database", e
-            ))?,
-            activity_type: ActivityType::from_str(&row.get::<_, String>(2).map_err(|e| UveddiError::database_error(
-                "get activity_type", "community database", e
-            ))?),
+            id: Some(row.get(0).map_err(|e| {
+                UveddiError::database_error("get activity id", "community database", e)
+            })?),
+            member_id: row.get(1).map_err(|e| {
+                UveddiError::database_error("get member_id", "community database", e)
+            })?,
+            activity_type: ActivityType::from_str(&row.get::<_, String>(2).map_err(|e| {
+                UveddiError::database_error("get activity_type", "community database", e)
+            })?),
             timestamp: {
-                let timestamp_str = row.get::<_, String>(3).map_err(|e| UveddiError::database_error(
-                    "get timestamp", "community database", e
-                ))?;
+                let timestamp_str = row.get::<_, String>(3).map_err(|e| {
+                    UveddiError::database_error("get timestamp", "community database", e)
+                })?;
                 DateTime::parse_from_rfc3339(&timestamp_str)
-                    .map_err(|_e| UveddiError::database_error(
-                        "parse timestamp",
-                        "community database", 
-                        rusqlite::Error::InvalidColumnType(3, timestamp_str.clone(), rusqlite::types::Type::Text)
-                    ))?
+                    .map_err(|_e| {
+                        UveddiError::database_error(
+                            "parse timestamp",
+                            "community database",
+                            rusqlite::Error::InvalidColumnType(
+                                3,
+                                timestamp_str.clone(),
+                                rusqlite::types::Type::Text,
+                            ),
+                        )
+                    })?
                     .with_timezone(&Utc)
             },
-            description: row.get(4).map_err(|e| UveddiError::database_error(
-                "get description", "community database", e
-            ))?,
-            ip_address: row.get(5).map_err(|e| UveddiError::database_error(
-                "get ip_address", "community database", e
-            ))?,
-            user_agent: row.get(6).map_err(|e| UveddiError::database_error(
-                "get user_agent", "community database", e
-            ))?,
+            description: row.get(4).map_err(|e| {
+                UveddiError::database_error("get description", "community database", e)
+            })?,
+            ip_address: row.get(5).map_err(|e| {
+                UveddiError::database_error("get ip_address", "community database", e)
+            })?,
+            user_agent: row.get(6).map_err(|e| {
+                UveddiError::database_error("get user_agent", "community database", e)
+            })?,
             metadata,
         })
     }
@@ -1184,8 +1213,8 @@ impl CommunityDatabase {
         }
 
         // Parse with proper error handling
-        let languages: Vec<String> = serde_json::from_str(json_str)
-            .map_err(|e| UveddiError::Deserialization {
+        let languages: Vec<String> =
+            serde_json::from_str(json_str).map_err(|e| UveddiError::Deserialization {
                 message: format!("Invalid JSON format: {}", e),
                 context: "languages deserialization".to_string(),
                 suggestion: "Check JSON syntax and structure".to_string(),
@@ -1199,20 +1228,28 @@ impl CommunityDatabase {
                 context: "languages deserialization".to_string(),
                 suggestion: "Reduce number of languages or increase limits".to_string(),
                 source: Some(DeserializationError::SecurityValidation(format!(
-                    "Languages array too large: {} items", languages.len()
+                    "Languages array too large: {} items",
+                    languages.len()
                 ))),
             });
         }
 
         // Validate each language string
         for lang in &languages {
-            if lang.len() > 50 || !lang.chars().all(|c| c.is_alphanumeric() || c == '-' || c == '_') {
+            if lang.len() > 50
+                || !lang
+                    .chars()
+                    .all(|c| c.is_alphanumeric() || c == '-' || c == '_')
+            {
                 return Err(UveddiError::Deserialization {
                     message: format!("Invalid language format: {}", lang),
                     context: "languages deserialization".to_string(),
-                    suggestion: "Use valid language codes (alphanumeric, hyphens, underscores only)".to_string(),
+                    suggestion:
+                        "Use valid language codes (alphanumeric, hyphens, underscores only)"
+                            .to_string(),
                     source: Some(DeserializationError::SecurityValidation(format!(
-                        "Invalid language format: {}", lang
+                        "Invalid language format: {}",
+                        lang
                     ))),
                 });
             }
@@ -1222,7 +1259,10 @@ impl CommunityDatabase {
     }
 
     /// Securely deserialize custom fields with validation
-    pub(crate) fn deserialize_custom_fields(&self, json_str: &str) -> Result<HashMap<String, String>, UveddiError> {
+    pub(crate) fn deserialize_custom_fields(
+        &self,
+        json_str: &str,
+    ) -> Result<HashMap<String, String>, UveddiError> {
         // Size validation
         if json_str.len() > Self::MAX_JSON_SIZE {
             return Err(UveddiError::Deserialization {
@@ -1237,8 +1277,8 @@ impl CommunityDatabase {
         }
 
         // Parse with proper error handling
-        let custom_fields: HashMap<String, String> = serde_json::from_str(json_str)
-            .map_err(|e| UveddiError::Deserialization {
+        let custom_fields: HashMap<String, String> =
+            serde_json::from_str(json_str).map_err(|e| UveddiError::Deserialization {
                 message: format!("Invalid JSON format: {}", e),
                 context: "custom fields deserialization".to_string(),
                 suggestion: "Check JSON syntax and structure".to_string(),
@@ -1252,7 +1292,8 @@ impl CommunityDatabase {
                 context: "custom fields deserialization".to_string(),
                 suggestion: "Reduce number of custom fields".to_string(),
                 source: Some(DeserializationError::SecurityValidation(format!(
-                    "Too many custom fields: {}", custom_fields.len()
+                    "Too many custom fields: {}",
+                    custom_fields.len()
                 ))),
             });
         }
@@ -1265,7 +1306,7 @@ impl CommunityDatabase {
                     context: "custom fields deserialization".to_string(),
                     suggestion: "Reduce field key/value length (max 100/1000 chars)".to_string(),
                     source: Some(DeserializationError::SecurityValidation(
-                        "Custom field key or value too large".to_string()
+                        "Custom field key or value too large".to_string(),
                     )),
                 });
             }
@@ -1275,7 +1316,10 @@ impl CommunityDatabase {
     }
 
     /// Securely deserialize metadata with validation
-    pub(crate) fn deserialize_metadata(&self, json_str: &str) -> Result<HashMap<String, String>, UveddiError> {
+    pub(crate) fn deserialize_metadata(
+        &self,
+        json_str: &str,
+    ) -> Result<HashMap<String, String>, UveddiError> {
         // Reuse custom_fields validation logic
         self.deserialize_custom_fields(json_str)
     }
@@ -1411,7 +1455,11 @@ mod tests {
         let large_json = serde_json::to_string(&large_languages).unwrap();
         let result = db.deserialize_languages(&large_json);
         assert!(result.is_err());
-        if let Err(UveddiError::Deserialization { source: Some(DeserializationError::PayloadTooLarge { .. }), .. }) = result {
+        if let Err(UveddiError::Deserialization {
+            source: Some(DeserializationError::PayloadTooLarge { .. }),
+            ..
+        }) = result
+        {
             // Expected error type
         } else {
             panic!("Expected PayloadTooLarge error for oversized payload");
@@ -1421,7 +1469,11 @@ mod tests {
         let malformed = "{ invalid json }";
         let result = db.deserialize_custom_fields(malformed);
         assert!(result.is_err());
-        if let Err(UveddiError::Deserialization { source: Some(DeserializationError::InvalidFormat(_)), .. }) = result {
+        if let Err(UveddiError::Deserialization {
+            source: Some(DeserializationError::InvalidFormat(_)),
+            ..
+        }) = result
+        {
             // Expected error type
         } else {
             panic!("Expected InvalidFormat error for malformed JSON");
@@ -1437,15 +1489,20 @@ mod tests {
         let json = serde_json::to_string(&too_many_languages).unwrap();
         let result = db.deserialize_languages(&json);
         assert!(result.is_err());
-        if let Err(UveddiError::Deserialization { source: Some(DeserializationError::SecurityValidation(_)), .. }) = result {
+        if let Err(UveddiError::Deserialization {
+            source: Some(DeserializationError::SecurityValidation(_)),
+            ..
+        }) = result
+        {
             // Expected error type
         } else {
             panic!("Expected SecurityValidation error for too many languages");
         }
 
         // Test field count limits for custom fields
-        let too_many_fields: HashMap<String, String> = 
-            (0..100).map(|i| (format!("key{}", i), format!("value{}", i))).collect();
+        let too_many_fields: HashMap<String, String> = (0..100)
+            .map(|i| (format!("key{}", i), format!("value{}", i)))
+            .collect();
         let json = serde_json::to_string(&too_many_fields).unwrap();
         let result = db.deserialize_custom_fields(&json);
         assert!(result.is_err());

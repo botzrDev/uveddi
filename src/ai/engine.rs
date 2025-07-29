@@ -1,7 +1,7 @@
 use crate::ai::api::llm_provider::LlmProvider;
+use crate::ai::knowledge::KnowledgeContext;
 use crate::ai::ollama_provider::{OllamaConfig, OllamaProvider};
 use crate::ai::prompts::smart_prompting::SmartPromptBuilder;
-use crate::ai::knowledge::{KnowledgeContext};
 use crate::database::models::ArchitecturalIssue;
 use crate::error::UveddiError;
 use log::{info, warn};
@@ -30,7 +30,9 @@ impl AiAnalysisEngine {
             };
 
             match OllamaProvider::new(config) {
-                Ok(ollama_provider) => Some(Box::new(ollama_provider) as Box<dyn LlmProvider + Send + Sync>),
+                Ok(ollama_provider) => {
+                    Some(Box::new(ollama_provider) as Box<dyn LlmProvider + Send + Sync>)
+                }
                 Err(e) => {
                     warn!("Failed to create Ollama provider: {}", e);
                     None
@@ -110,33 +112,45 @@ impl AiAnalysisEngine {
         knowledge_context: &KnowledgeContext,
     ) -> Result<(), UveddiError> {
         let start_time = Instant::now();
-        info!("AI Engine analyzing issue with knowledge context: {}", issue.description);
+        info!(
+            "AI Engine analyzing issue with knowledge context: {}",
+            issue.description
+        );
 
         // Check if AI provider is available
         let provider = match &self.provider {
             Some(provider) => provider,
             None => {
                 info!("No AI provider configured, using knowledge-only enhancement");
-                return self.apply_knowledge_only_enhancement(issue, knowledge_context).await;
+                return self
+                    .apply_knowledge_only_enhancement(issue, knowledge_context)
+                    .await;
             }
         };
 
         // Build knowledge-enhanced prompt
-        let enhanced_prompt = self.prompt_builder
+        let enhanced_prompt = self
+            .prompt_builder
             .build_knowledge_enhanced_prompt(issue, knowledge_context)
-            .map_err(|e| UveddiError::config_error(
-                &format!("Failed to build enhanced prompt: {}", e),
-                "AI analysis"
-            ))?;
+            .map_err(|e| {
+                UveddiError::config_error(
+                    &format!("Failed to build enhanced prompt: {}", e),
+                    "AI analysis",
+                )
+            })?;
 
         // Generate AI explanation with knowledge context
         match provider.generate_explanation(&enhanced_prompt).await {
             Ok(explanation) => {
                 let analysis_time = start_time.elapsed();
-                info!("Generated knowledge-enhanced AI explanation in {:?}", analysis_time);
+                info!(
+                    "Generated knowledge-enhanced AI explanation in {:?}",
+                    analysis_time
+                );
 
                 // Parse and validate AI response
-                let validated_explanation = self.validate_ai_explanation(&explanation, knowledge_context)?;
+                let validated_explanation =
+                    self.validate_ai_explanation(&explanation, knowledge_context)?;
                 issue.ai_explanation = Some(validated_explanation);
 
                 // Extract and log solution recommendations (DB model doesn't support this field yet)
@@ -150,7 +164,9 @@ impl AiAnalysisEngine {
             Err(e) => {
                 warn!("Failed to generate AI explanation: {e}");
                 // Fallback to knowledge-only enhancement
-                return self.apply_knowledge_only_enhancement(issue, knowledge_context).await;
+                return self
+                    .apply_knowledge_only_enhancement(issue, knowledge_context)
+                    .await;
             }
         }
 
@@ -177,12 +193,16 @@ impl AiAnalysisEngine {
                 pattern_knowledge.name,
                 pattern_knowledge.definition.as_str(),
                 pattern_knowledge.impact,
-                pattern_knowledge.symptoms.iter()
+                pattern_knowledge
+                    .symptoms
+                    .iter()
                     .enumerate()
                     .map(|(i, symptom)| format!("{}. {}", i + 1, symptom.as_str()))
                     .collect::<Vec<_>>()
                     .join("\n"),
-                pattern_knowledge.solutions.iter()
+                pattern_knowledge
+                    .solutions
+                    .iter()
                     .enumerate()
                     .map(|(i, solution)| format!(
                         "{}. **{}** (Effort: {:?}, Impact: {:?})\n   {}",
@@ -201,10 +221,16 @@ impl AiAnalysisEngine {
 
             // Log recommended solution (DB model doesn't support this field yet)
             if let Some(best_solution) = pattern_knowledge.solutions.first() {
-                info!("Knowledge-based recommended solution: {}", best_solution.implementation.as_str());
+                info!(
+                    "Knowledge-based recommended solution: {}",
+                    best_solution.implementation.as_str()
+                );
             }
 
-            info!("Applied knowledge-only enhancement for pattern: {}", pattern_knowledge.name);
+            info!(
+                "Applied knowledge-only enhancement for pattern: {}",
+                pattern_knowledge.name
+            );
         } else {
             warn!("No pattern knowledge available for enhancement");
         }
@@ -222,20 +248,21 @@ impl AiAnalysisEngine {
         if explanation.trim().is_empty() {
             return Err(UveddiError::config_error(
                 "Empty AI explanation",
-                "AI validation"
+                "AI validation",
             ));
         }
 
         if explanation.len() < 50 {
             return Err(UveddiError::config_error(
                 "AI explanation too short",
-                "AI validation"
+                "AI validation",
             ));
         }
 
         // Check for hallucination indicators
-        if explanation.contains("I don't have enough information") ||
-           explanation.contains("I cannot determine") {
+        if explanation.contains("I don't have enough information")
+            || explanation.contains("I cannot determine")
+        {
             warn!("AI explanation indicates uncertainty, may need knowledge fallback");
         }
 
@@ -256,15 +283,12 @@ impl AiAnalysisEngine {
         let lines: Vec<&str> = explanation.lines().collect();
 
         for (i, line) in lines.iter().enumerate() {
-            if line.to_lowercase().contains("solution") ||
-               line.to_lowercase().contains("recommendation") ||
-               line.to_lowercase().contains("refactor") {
+            if line.to_lowercase().contains("solution")
+                || line.to_lowercase().contains("recommendation")
+                || line.to_lowercase().contains("refactor")
+            {
                 // Take the next few lines as the solution
-                let solution_lines: Vec<&str> = lines.iter()
-                    .skip(i)
-                    .take(3)
-                    .cloned()
-                    .collect();
+                let solution_lines: Vec<&str> = lines.iter().skip(i).take(3).cloned().collect();
                 return Some(solution_lines.join(" ").trim().to_string());
             }
         }

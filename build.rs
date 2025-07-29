@@ -1,5 +1,5 @@
 //! Build Script for Knowledge Library - Simplified Version
-//! 
+//!
 //! This is a simplified build script that allows compilation while
 //! the full knowledge library system is being developed.
 
@@ -10,13 +10,13 @@ use std::path::Path;
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("cargo:rerun-if-changed=data/knowledge_base.json");
     println!("cargo:rerun-if-changed=src/ai/knowledge/");
-    
+
     let out_dir = env::var("OUT_DIR")?;
     let out_path = Path::new(&out_dir);
-    
+
     // Generate a minimal knowledge library stub for now
-    generate_minimal_knowledge_library(&out_path)?;
-    
+    generate_minimal_knowledge_library(out_path)?;
+
     println!("cargo:warning=Knowledge library build completed (minimal version)");
     Ok(())
 }
@@ -54,6 +54,6 @@ pub fn get_knowledge_base() -> &'static OptimizedKnowledgeLibrary {
 
     let stub_file = out_path.join("knowledge_library_generated.rs");
     fs::write(stub_file, stub_content)?;
-    
+
     Ok(())
 }

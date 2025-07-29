@@ -12,9 +12,9 @@ use uveddi::report::RenderingServiceError;
 use uveddi::resilience::retry::{RetryClient, RetryConfig};
 use uveddi::resilience::CircuitBreaker;
 use uveddi::security::authentication::AuthenticationService;
-use uveddi::security::AuthenticationConfig;
 use uveddi::security::models::{Role, User, UserRole};
 use uveddi::security::secrets::InMemorySecretStore;
+use uveddi::security::AuthenticationConfig;
 use uveddi::security::SecretStore;
 
 use chrono::{DateTime, Utc};

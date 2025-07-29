@@ -1,12 +1,12 @@
 //! Core Schema Types for AI Knowledge Library
-//! 
+//!
 //! This module defines the hierarchical schema structures optimized for AI consumption
 //! and compression. The design follows the UV-330 epic requirements for a compressed
 //! knowledge base achieving <10MB size and <100ms retrieval performance.
 
+use crate::ai::knowledge::compression::{CompressedString, CompressionMetadata};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use crate::ai::knowledge::compression::{CompressedString, CompressionMetadata};
 
 /// Primary source languages supported by the knowledge library
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash)]
@@ -61,10 +61,7 @@ pub enum ImpactLevel {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum DetectionMethod {
     /// Static analysis patterns
-    StaticAnalysis {
-        pattern: String,
-        confidence: f32,
-    },
+    StaticAnalysis { pattern: String, confidence: f32 },
     /// AST-based detection
     AstPattern {
         query: String,
@@ -82,10 +79,7 @@ pub enum DetectionMethod {
         relationship_type: String,
     },
     /// Regular expression matching
-    RegexPattern {
-        pattern: String,
-        context: String,
-    },
+    RegexPattern { pattern: String, context: String },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -365,17 +359,25 @@ impl KnowledgeLibrary {
     pub fn add_universal_pattern(&mut self, pattern: PatternKnowledge) {
         self.universal_patterns.insert(pattern.id.clone(), pattern);
         self.metadata.pattern_count = self.universal_patterns.len()
-            + self.language_specific.values()
+            + self
+                .language_specific
+                .values()
                 .map(|lang| lang.patterns.len())
                 .sum::<usize>();
         self.metadata.updated_at = chrono::Utc::now();
     }
 
     /// Add language-specific knowledge
-    pub fn add_language_knowledge(&mut self, language: SourceLanguage, knowledge: LanguageKnowledge) {
+    pub fn add_language_knowledge(
+        &mut self,
+        language: SourceLanguage,
+        knowledge: LanguageKnowledge,
+    ) {
         self.language_specific.insert(language, knowledge);
         self.metadata.pattern_count = self.universal_patterns.len()
-            + self.language_specific.values()
+            + self
+                .language_specific
+                .values()
                 .map(|lang| lang.patterns.len())
                 .sum::<usize>();
         self.metadata.updated_at = chrono::Utc::now();
@@ -384,36 +386,42 @@ impl KnowledgeLibrary {
     /// Get all patterns for a specific language (includes universal patterns)
     pub fn get_language_patterns(&self, language: &SourceLanguage) -> Vec<&PatternKnowledge> {
         let mut patterns = Vec::new();
-        
+
         // Add universal patterns
         patterns.extend(self.universal_patterns.values());
-        
+
         // Add language-specific patterns
         if let Some(lang_knowledge) = self.language_specific.get(language) {
             patterns.extend(lang_knowledge.patterns.values());
         }
-        
+
         patterns
     }
 
     /// Search patterns by category
-    pub fn get_patterns_by_category(&self, category: &AntiPatternCategory) -> Vec<&PatternKnowledge> {
+    pub fn get_patterns_by_category(
+        &self,
+        category: &AntiPatternCategory,
+    ) -> Vec<&PatternKnowledge> {
         let mut patterns = Vec::new();
-        
+
         // Search universal patterns
         patterns.extend(
-            self.universal_patterns.values()
-                .filter(|p| &p.category == category)
+            self.universal_patterns
+                .values()
+                .filter(|p| &p.category == category),
         );
-        
+
         // Search language-specific patterns
         for lang_knowledge in self.language_specific.values() {
             patterns.extend(
-                lang_knowledge.patterns.values()
-                    .filter(|p| &p.category == category)
+                lang_knowledge
+                    .patterns
+                    .values()
+                    .filter(|p| &p.category == category),
             );
         }
-        
+
         patterns
     }
 
@@ -421,13 +429,13 @@ impl KnowledgeLibrary {
     pub fn validate(&self) -> Result<(), String> {
         // Check for duplicate pattern IDs
         let mut all_ids = std::collections::HashSet::new();
-        
+
         for pattern in self.universal_patterns.values() {
             if !all_ids.insert(&pattern.id) {
                 return Err(format!("Duplicate pattern ID: {}", pattern.id));
             }
         }
-        
+
         for lang_knowledge in self.language_specific.values() {
             for pattern in lang_knowledge.patterns.values() {
                 if !all_ids.insert(&pattern.id) {
@@ -435,20 +443,22 @@ impl KnowledgeLibrary {
                 }
             }
         }
-        
+
         // Validate pattern count
         let actual_count = self.universal_patterns.len()
-            + self.language_specific.values()
+            + self
+                .language_specific
+                .values()
                 .map(|lang| lang.patterns.len())
                 .sum::<usize>();
-                
+
         if actual_count != self.metadata.pattern_count {
             return Err(format!(
                 "Pattern count mismatch: metadata says {}, actual is {}",
                 self.metadata.pattern_count, actual_count
             ));
         }
-        
+
         Ok(())
     }
 }

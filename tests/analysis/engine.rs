@@ -106,7 +106,11 @@ impl GodObject {
     .unwrap();
 
     let result = engine.analyze(temp_dir.path()).await;
-    assert!(result.is_ok(), "Analysis should succeed: {:?}", result.err());
+    assert!(
+        result.is_ok(),
+        "Analysis should succeed: {:?}",
+        result.err()
+    );
     let (issues, _graph) = result.unwrap();
 
     // Check what detectors are available
@@ -119,9 +123,12 @@ impl GodObject {
     // Should have analyzed one file
     let files_analyzed = engine.get_files_analyzed();
     println!("Files analyzed: {}", files_analyzed);
-    
+
     if files_analyzed == 0 {
-        println!("WARNING: No files were analyzed. Temp dir path: {:?}", temp_dir.path());
+        println!(
+            "WARNING: No files were analyzed. Temp dir path: {:?}",
+            temp_dir.path()
+        );
         println!("Files in temp dir:");
         for entry in std::fs::read_dir(temp_dir.path()).unwrap() {
             let entry = entry.unwrap();
@@ -134,11 +141,11 @@ impl GodObject {
     for issue in &issues {
         println!("Issue: {}", issue.description);
     }
-    
+
     if issues.is_empty() {
         println!("ERROR: No issues found despite having {} fields and {} methods which should exceed thresholds of 5 methods and 8 fields", 10, 10);
     }
-    
+
     assert!(!issues.is_empty(), "Expected to find god object issue");
 
     // Check if we found a god object issue

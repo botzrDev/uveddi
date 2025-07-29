@@ -4,8 +4,8 @@
 //! idioms, detection methods, and solutions tailored to each programming language.
 //! It provides contextually rich, language-aware knowledge for precise AI-powered analysis.
 
-use crate::ai::knowledge::schema::*;
 use crate::ai::knowledge::compression::CompressedString;
+use crate::ai::knowledge::schema::*;
 use std::collections::HashMap;
 
 /// Create comprehensive language-specific pattern libraries
@@ -625,76 +625,87 @@ fn create_rust_idioms() -> Vec<LanguageIdiom> {
 fn create_rust_frameworks() -> HashMap<String, FrameworkKnowledge> {
     let mut frameworks = HashMap::new();
 
-    frameworks.insert("tokio".to_string(), FrameworkKnowledge {
-        framework_name: "Tokio".to_string(),
-        version_range: "1.0+".to_string(),
-        specific_patterns: vec![
-            "async_blocking_operations".to_string(),
-            "unbounded_task_spawning".to_string(),
-            "panic_in_async_task".to_string(),
-        ],
-        best_practices: vec![
-            CompressedString::new("Use spawn_blocking for CPU-intensive work"),
-            CompressedString::new("Implement proper backpressure with bounded channels"),
-            CompressedString::new("Use timeout for external operations"),
-            CompressedString::new("Handle task panics with proper error propagation"),
-            CompressedString::new("Use structured concurrency with JoinSet"),
-            CompressedString::new("Implement graceful shutdown with CancellationToken"),
-        ],
-        common_pitfalls: vec![
-            CompressedString::new("Blocking operations in async context (use spawn_blocking)"),
-            CompressedString::new("Creating too many tasks without bounds (use semaphores/pools)"),
-            CompressedString::new("Not handling task panics (tasks fail silently)"),
-            CompressedString::new("Async recursion without Box<> (stack overflow)"),
-            CompressedString::new("Holding locks across .await points (deadlocks)"),
-        ],
-    });
+    frameworks.insert(
+        "tokio".to_string(),
+        FrameworkKnowledge {
+            framework_name: "Tokio".to_string(),
+            version_range: "1.0+".to_string(),
+            specific_patterns: vec![
+                "async_blocking_operations".to_string(),
+                "unbounded_task_spawning".to_string(),
+                "panic_in_async_task".to_string(),
+            ],
+            best_practices: vec![
+                CompressedString::new("Use spawn_blocking for CPU-intensive work"),
+                CompressedString::new("Implement proper backpressure with bounded channels"),
+                CompressedString::new("Use timeout for external operations"),
+                CompressedString::new("Handle task panics with proper error propagation"),
+                CompressedString::new("Use structured concurrency with JoinSet"),
+                CompressedString::new("Implement graceful shutdown with CancellationToken"),
+            ],
+            common_pitfalls: vec![
+                CompressedString::new("Blocking operations in async context (use spawn_blocking)"),
+                CompressedString::new(
+                    "Creating too many tasks without bounds (use semaphores/pools)",
+                ),
+                CompressedString::new("Not handling task panics (tasks fail silently)"),
+                CompressedString::new("Async recursion without Box<> (stack overflow)"),
+                CompressedString::new("Holding locks across .await points (deadlocks)"),
+            ],
+        },
+    );
 
-    frameworks.insert("serde".to_string(), FrameworkKnowledge {
-        framework_name: "Serde".to_string(),
-        version_range: "1.0+".to_string(),
-        specific_patterns: vec![
-            "primitive_obsession_serde".to_string(),
-            "untrusted_deserialization".to_string(),
-            "missing_field_validation".to_string(),
-        ],
-        best_practices: vec![
-            CompressedString::new("Use strong types instead of primitive obsession"),
-            CompressedString::new("Implement custom Deserialize for validation"),
-            CompressedString::new("Use #[serde(default)] for optional fields"),
-            CompressedString::new("Validate data during deserialization, not after"),
-            CompressedString::new("Use #[serde(with)] for custom serialization logic"),
-        ],
-        common_pitfalls: vec![
-            CompressedString::new("Deserializing untrusted data without validation"),
-            CompressedString::new("Using String for all fields instead of proper types"),
-            CompressedString::new("Not handling missing fields gracefully"),
-            CompressedString::new("Infinite recursion in custom serialization"),
-            CompressedString::new("Performance issues with large enums"),
-        ],
-    });
+    frameworks.insert(
+        "serde".to_string(),
+        FrameworkKnowledge {
+            framework_name: "Serde".to_string(),
+            version_range: "1.0+".to_string(),
+            specific_patterns: vec![
+                "primitive_obsession_serde".to_string(),
+                "untrusted_deserialization".to_string(),
+                "missing_field_validation".to_string(),
+            ],
+            best_practices: vec![
+                CompressedString::new("Use strong types instead of primitive obsession"),
+                CompressedString::new("Implement custom Deserialize for validation"),
+                CompressedString::new("Use #[serde(default)] for optional fields"),
+                CompressedString::new("Validate data during deserialization, not after"),
+                CompressedString::new("Use #[serde(with)] for custom serialization logic"),
+            ],
+            common_pitfalls: vec![
+                CompressedString::new("Deserializing untrusted data without validation"),
+                CompressedString::new("Using String for all fields instead of proper types"),
+                CompressedString::new("Not handling missing fields gracefully"),
+                CompressedString::new("Infinite recursion in custom serialization"),
+                CompressedString::new("Performance issues with large enums"),
+            ],
+        },
+    );
 
-    frameworks.insert("clap".to_string(), FrameworkKnowledge {
-        framework_name: "Clap".to_string(),
-        version_range: "4.0+".to_string(),
-        specific_patterns: vec![
-            "argument_validation_missing".to_string(),
-            "help_text_inconsistency".to_string(),
-        ],
-        best_practices: vec![
-            CompressedString::new("Use derive API for type safety"),
-            CompressedString::new("Implement custom validation with value_parser"),
-            CompressedString::new("Provide comprehensive help text"),
-            CompressedString::new("Use subcommands for complex CLIs"),
-            CompressedString::new("Handle argument conflicts explicitly"),
-        ],
-        common_pitfalls: vec![
-            CompressedString::new("Missing input validation"),
-            CompressedString::new("Inconsistent help text"),
-            CompressedString::new("Not handling argument conflicts"),
-            CompressedString::new("Complex boolean logic in argument parsing"),
-        ],
-    });
+    frameworks.insert(
+        "clap".to_string(),
+        FrameworkKnowledge {
+            framework_name: "Clap".to_string(),
+            version_range: "4.0+".to_string(),
+            specific_patterns: vec![
+                "argument_validation_missing".to_string(),
+                "help_text_inconsistency".to_string(),
+            ],
+            best_practices: vec![
+                CompressedString::new("Use derive API for type safety"),
+                CompressedString::new("Implement custom validation with value_parser"),
+                CompressedString::new("Provide comprehensive help text"),
+                CompressedString::new("Use subcommands for complex CLIs"),
+                CompressedString::new("Handle argument conflicts explicitly"),
+            ],
+            common_pitfalls: vec![
+                CompressedString::new("Missing input validation"),
+                CompressedString::new("Inconsistent help text"),
+                CompressedString::new("Not handling argument conflicts"),
+                CompressedString::new("Complex boolean logic in argument parsing"),
+            ],
+        },
+    );
 
     frameworks
 }
@@ -705,11 +716,11 @@ fn create_rust_stdlib_patterns() -> Vec<StdlibPattern> {
         StdlibPattern {
             pattern_name: "Option and Result".to_string(),
             description: CompressedString::new(
-                "Proper use of Option<T> and Result<T, E> for error handling and null safety"
+                "Proper use of Option<T> and Result<T, E> for error handling and null safety",
             ),
             recommended_usage: CompressedString::new(
                 "Use Option for values that may not exist, Result for operations that may fail. \
-                 Combine with ? operator, map, and_then, etc. for ergonomic handling."
+                 Combine with ? operator, map, and_then, etc. for ergonomic handling.",
             ),
             alternatives: vec![
                 "unwrap() for prototyping only".to_string(),
@@ -720,12 +731,12 @@ fn create_rust_stdlib_patterns() -> Vec<StdlibPattern> {
         StdlibPattern {
             pattern_name: "Vec vs slice".to_string(),
             description: CompressedString::new(
-                "Choose between Vec<T> for owned data and &[T] for borrowed slices"
+                "Choose between Vec<T> for owned data and &[T] for borrowed slices",
             ),
             recommended_usage: CompressedString::new(
                 "Use &[T] in function parameters for maximum flexibility. \
                  Use Vec<T> when you need ownership or mutation. \
-                 Consider Box<[T]> for immutable owned data."
+                 Consider Box<[T]> for immutable owned data.",
             ),
             alternatives: vec![
                 "Arrays [T; N] for fixed-size data".to_string(),
@@ -736,12 +747,12 @@ fn create_rust_stdlib_patterns() -> Vec<StdlibPattern> {
         StdlibPattern {
             pattern_name: "String vs str".to_string(),
             description: CompressedString::new(
-                "Distinguish between owned String and borrowed &str for text handling"
+                "Distinguish between owned String and borrowed &str for text handling",
             ),
             recommended_usage: CompressedString::new(
                 "Use &str for function parameters and borrowed text. \
                  Use String for owned, mutable, or dynamically created text. \
-                 Use Cow<str> when you might need either."
+                 Use Cow<str> when you might need either.",
             ),
             alternatives: vec![
                 "OsString/OsStr for OS-specific strings".to_string(),
@@ -767,54 +778,56 @@ fn create_python_patterns() -> HashMap<String, PatternKnowledge> {
     let mut patterns = HashMap::new();
 
     // God Object in Python context
-    patterns.insert("god_object".to_string(), PatternKnowledge {
-        id: "python_god_object".to_string(),
-        name: "God Object (Python)".to_string(),
-        definition: CompressedString::new(
-            "A class with too many methods and responsibilities that violates Python's \
-             'Simple is better than complex' principle and duck typing philosophy."
-        ),
-        symptoms: vec![
-            CompressedString::new("Class with 25+ methods (Python allows more due to duck typing)"),
-            CompressedString::new("Class with 20+ instance variables"),
-            CompressedString::new("__init__ method with 10+ parameters"),
-            CompressedString::new("Multiple inheritance from unrelated classes"),
-            CompressedString::new("Class that imports many unrelated modules"),
-            CompressedString::new("Utility classes with only @staticmethod or @classmethod"),
-            CompressedString::new("Classes that handle multiple data formats"),
-        ],
-        impact: ImpactLevel::High,
-        category: AntiPatternCategory::ObjectOriented,
-        detection_methods: vec![
-            DetectionMethod::MetricThreshold {
-                metric_name: "method_count".to_string(),
-                threshold: 25.0, // Higher for Python due to duck typing
-                operator: ComparisonOperator::GreaterThan,
-            },
-            DetectionMethod::MetricThreshold {
-                metric_name: "attribute_count".to_string(),
-                threshold: 20.0,
-                operator: ComparisonOperator::GreaterThan,
-            },
-            DetectionMethod::MetricThreshold {
-                metric_name: "import_count".to_string(),
-                threshold: 15.0,
-                operator: ComparisonOperator::GreaterThan,
-            },
-        ],
-        solutions: vec![
-            SolutionPattern {
+    patterns.insert(
+        "god_object".to_string(),
+        PatternKnowledge {
+            id: "python_god_object".to_string(),
+            name: "God Object (Python)".to_string(),
+            definition: CompressedString::new(
+                "A class with too many methods and responsibilities that violates Python's \
+             'Simple is better than complex' principle and duck typing philosophy.",
+            ),
+            symptoms: vec![
+                CompressedString::new(
+                    "Class with 25+ methods (Python allows more due to duck typing)",
+                ),
+                CompressedString::new("Class with 20+ instance variables"),
+                CompressedString::new("__init__ method with 10+ parameters"),
+                CompressedString::new("Multiple inheritance from unrelated classes"),
+                CompressedString::new("Class that imports many unrelated modules"),
+                CompressedString::new("Utility classes with only @staticmethod or @classmethod"),
+                CompressedString::new("Classes that handle multiple data formats"),
+            ],
+            impact: ImpactLevel::High,
+            category: AntiPatternCategory::ObjectOriented,
+            detection_methods: vec![
+                DetectionMethod::MetricThreshold {
+                    metric_name: "method_count".to_string(),
+                    threshold: 25.0, // Higher for Python due to duck typing
+                    operator: ComparisonOperator::GreaterThan,
+                },
+                DetectionMethod::MetricThreshold {
+                    metric_name: "attribute_count".to_string(),
+                    threshold: 20.0,
+                    operator: ComparisonOperator::GreaterThan,
+                },
+                DetectionMethod::MetricThreshold {
+                    metric_name: "import_count".to_string(),
+                    threshold: 15.0,
+                    operator: ComparisonOperator::GreaterThan,
+                },
+            ],
+            solutions: vec![SolutionPattern {
                 id: "python_composition_mixins".to_string(),
                 title: "Composition with Mixins".to_string(),
                 implementation: CompressedString::new(
                     "Use mixins and composition instead of large classes. \
-                     Leverage Python's duck typing and multiple inheritance judiciously."
+                     Leverage Python's duck typing and multiple inheritance judiciously.",
                 ),
-                examples: vec![
-                    CodeExample {
-                        language: SourceLanguage::Python,
-                        problem_code: CompressedString::new(
-                            "# God class - too many responsibilities\n\
+                examples: vec![CodeExample {
+                    language: SourceLanguage::Python,
+                    problem_code: CompressedString::new(
+                        "# God class - too many responsibilities\n\
                              class UserManager:\n\
                                  def __init__(self, db_url, email_config, cache_config):\n\
                                      self.db = Database(db_url)\n\
@@ -830,10 +843,10 @@ fn create_python_patterns() -> HashMap<String, PatternKnowledge> {
                                  def invalidate_cache(self, user_id): ...\n\
                                  def generate_report(self): ...\n\
                                  def export_users(self, format): ...\n\
-                                 # ... 20+ more methods"
-                        ),
-                        solution_code: CompressedString::new(
-                            "# Split into focused classes using composition\n\
+                                 # ... 20+ more methods",
+                    ),
+                    solution_code: CompressedString::new(
+                        "# Split into focused classes using composition\n\
                              class UserRepository:\n\
                                  \"\"\"Handles user data persistence.\"\"\"\n\
                                  def __init__(self, db):\n\
@@ -883,66 +896,61 @@ fn create_python_patterns() -> HashMap<String, PatternKnowledge> {
                                  notifications = NotificationService(email)\n\
                                  cache_service = UserCacheService(cache)\n\
                                  \n\
-                                 return UserService(repository, notifications, cache_service)"
-                        ),
-                        explanation: CompressedString::new(
-                            "Split the god class into focused, single-purpose classes. \
+                                 return UserService(repository, notifications, cache_service)",
+                    ),
+                    explanation: CompressedString::new(
+                        "Split the god class into focused, single-purpose classes. \
                              Benefits: better testability with dependency injection, \
-                             clearer separation of concerns, easier to mock individual components."
-                        ),
-                        file_context: Some("user_management.py".to_string()),
-                    }
-                ],
+                             clearer separation of concerns, easier to mock individual components.",
+                    ),
+                    file_context: Some("user_management.py".to_string()),
+                }],
                 effort_level: EffortLevel::Medium,
                 prerequisites: vec![
                     "Understanding of Python's composition patterns".to_string(),
                     "Test coverage for refactoring safety".to_string(),
                 ],
                 expected_impact: ImpactLevel::High,
+            }],
+            examples: CodeExamples {
+                primary: vec![],
+                variations: HashMap::new(),
             },
-        ],
-        examples: CodeExamples {
-            primary: vec![],
-            variations: HashMap::new(),
+            language_variations: HashMap::new(),
+            related_patterns: vec!["large_class".to_string(), "feature_envy".to_string()],
+            tags: vec![
+                "python".to_string(),
+                "composition".to_string(),
+                "duck-typing".to_string(),
+            ],
+            frequency_score: 0.75,
+            detection_confidence: 0.85,
         },
-        language_variations: HashMap::new(),
-        related_patterns: vec![
-            "large_class".to_string(),
-            "feature_envy".to_string(),
-        ],
-        tags: vec![
-            "python".to_string(),
-            "composition".to_string(),
-            "duck-typing".to_string(),
-        ],
-        frequency_score: 0.75,
-        detection_confidence: 0.85,
-    });
+    );
 
     patterns
 }
 
 fn create_python_idioms() -> Vec<LanguageIdiom> {
-    vec![
-        LanguageIdiom {
-            name: "List Comprehensions".to_string(),
-            description: CompressedString::new(
-                "Use list comprehensions for concise, readable data transformations \
-                 instead of explicit loops"
-            ),
-            example: CodeExample {
-                language: SourceLanguage::Python,
-                problem_code: CompressedString::new(
-                    "# Verbose imperative style\n\
+    vec![LanguageIdiom {
+        name: "List Comprehensions".to_string(),
+        description: CompressedString::new(
+            "Use list comprehensions for concise, readable data transformations \
+                 instead of explicit loops",
+        ),
+        example: CodeExample {
+            language: SourceLanguage::Python,
+            problem_code: CompressedString::new(
+                "# Verbose imperative style\n\
                      result = []\n\
                      for item in items:\n\
                          if item.is_valid():\n\
                              processed = item.process()\n\
                              if processed is not None:\n\
-                                 result.append(processed.upper())"
-                ),
-                solution_code: CompressedString::new(
-                    "# Concise list comprehension\n\
+                                 result.append(processed.upper())",
+            ),
+            solution_code: CompressedString::new(
+                "# Concise list comprehension\n\
                      result = [\n\
                          processed.upper()\n\
                          for item in items\n\
@@ -958,73 +966,75 @@ fn create_python_idioms() -> Vec<LanguageIdiom> {
                          if item.is_valid()\n\
                          for processed in [item.process()]\n\
                          if processed is not None\n\
-                     )"
-                ),
-                explanation: CompressedString::new(
-                    "List comprehensions are more readable and often faster than equivalent loops"
-                ),
-                file_context: Some("data_processing.py".to_string()),
-            },
-            when_to_use: CompressedString::new(
-                "Simple transformations and filtering operations"
+                     )",
             ),
-            alternatives: vec![
-                "map() and filter() for functional style".to_string(),
-                "explicit loops for complex logic".to_string(),
-                "generator expressions for memory efficiency".to_string(),
-            ],
+            explanation: CompressedString::new(
+                "List comprehensions are more readable and often faster than equivalent loops",
+            ),
+            file_context: Some("data_processing.py".to_string()),
         },
-    ]
+        when_to_use: CompressedString::new("Simple transformations and filtering operations"),
+        alternatives: vec![
+            "map() and filter() for functional style".to_string(),
+            "explicit loops for complex logic".to_string(),
+            "generator expressions for memory efficiency".to_string(),
+        ],
+    }]
 }
 
 fn create_python_frameworks() -> HashMap<String, FrameworkKnowledge> {
     let mut frameworks = HashMap::new();
 
-    frameworks.insert("django".to_string(), FrameworkKnowledge {
-        framework_name: "Django".to_string(),
-        version_range: "3.0+".to_string(),
-        specific_patterns: vec![
-            "fat_models".to_string(),
-            "n_plus_one_queries".to_string(),
-            "circular_imports".to_string(),
-        ],
-        best_practices: vec![
-            CompressedString::new("Use select_related and prefetch_related for query optimization"),
-            CompressedString::new("Keep models thin, use services for business logic"),
-            CompressedString::new("Use Django's built-in security features (CSRF, XSS protection)"),
-            CompressedString::new("Organize apps by business domain, not technical layer"),
-            CompressedString::new("Use custom managers for complex queries"),
-        ],
-        common_pitfalls: vec![
-            CompressedString::new("Fat models with business logic (use services instead)"),
-            CompressedString::new("N+1 query problems (use select_related/prefetch_related)"),
-            CompressedString::new("Circular imports between apps"),
-            CompressedString::new("Not using database transactions properly"),
-            CompressedString::new("Mixing business logic in views"),
-        ],
-    });
+    frameworks.insert(
+        "django".to_string(),
+        FrameworkKnowledge {
+            framework_name: "Django".to_string(),
+            version_range: "3.0+".to_string(),
+            specific_patterns: vec![
+                "fat_models".to_string(),
+                "n_plus_one_queries".to_string(),
+                "circular_imports".to_string(),
+            ],
+            best_practices: vec![
+                CompressedString::new(
+                    "Use select_related and prefetch_related for query optimization",
+                ),
+                CompressedString::new("Keep models thin, use services for business logic"),
+                CompressedString::new(
+                    "Use Django's built-in security features (CSRF, XSS protection)",
+                ),
+                CompressedString::new("Organize apps by business domain, not technical layer"),
+                CompressedString::new("Use custom managers for complex queries"),
+            ],
+            common_pitfalls: vec![
+                CompressedString::new("Fat models with business logic (use services instead)"),
+                CompressedString::new("N+1 query problems (use select_related/prefetch_related)"),
+                CompressedString::new("Circular imports between apps"),
+                CompressedString::new("Not using database transactions properly"),
+                CompressedString::new("Mixing business logic in views"),
+            ],
+        },
+    );
 
     frameworks
 }
 
 fn create_python_stdlib_patterns() -> Vec<StdlibPattern> {
-    vec![
-        StdlibPattern {
-            pattern_name: "Context Managers".to_string(),
-            description: CompressedString::new(
-                "Use context managers (with statement) for proper resource management"
-            ),
-            recommended_usage: CompressedString::new(
-                "Always use 'with' for file operations, database connections, locks, etc. \
-                 Create custom context managers with __enter__ and __exit__ methods."
-            ),
-            alternatives: vec![
-                "try/finally for manual cleanup".to_string(),
-                "@contextmanager decorator for simple cases".to_string(),
-                "contextlib.ExitStack for multiple resources".to_string(),
-            ],
-        },
-    ]
+    vec![StdlibPattern {
+        pattern_name: "Context Managers".to_string(),
+        description: CompressedString::new(
+            "Use context managers (with statement) for proper resource management",
+        ),
+        recommended_usage: CompressedString::new(
+            "Always use 'with' for file operations, database connections, locks, etc. \
+                 Create custom context managers with __enter__ and __exit__ methods.",
+        ),
+        alternatives: vec![
+            "try/finally for manual cleanup".to_string(),
+            "@contextmanager decorator for simple cases".to_string(),
+            "contextlib.ExitStack for multiple resources".to_string(),
+        ],
+    }]
 }
 
 /// Create comprehensive JavaScript-specific knowledge
@@ -1204,16 +1214,15 @@ fn create_javascript_patterns() -> HashMap<String, PatternKnowledge> {
 }
 
 fn create_javascript_idioms() -> Vec<LanguageIdiom> {
-    vec![
-        LanguageIdiom {
-            name: "Async/Await over Promises".to_string(),
-            description: CompressedString::new(
-                "Use async/await syntax instead of .then() chains for better readability"
-            ),
-            example: CodeExample {
-                language: SourceLanguage::JavaScript,
-                problem_code: CompressedString::new(
-                    "// Promise chains - harder to read and debug\n\
+    vec![LanguageIdiom {
+        name: "Async/Await over Promises".to_string(),
+        description: CompressedString::new(
+            "Use async/await syntax instead of .then() chains for better readability",
+        ),
+        example: CodeExample {
+            language: SourceLanguage::JavaScript,
+            problem_code: CompressedString::new(
+                "// Promise chains - harder to read and debug\n\
                      function processUser(userId) {\n\
                          return fetchUser(userId)\n\
                              .then(user => validateUser(user))\n\
@@ -1224,10 +1233,10 @@ fn create_javascript_idioms() -> Vec<LanguageIdiom> {
                                  console.error('Error processing user:', error);\n\
                                  throw error;\n\
                              });\n\
-                     }"
-                ),
-                solution_code: CompressedString::new(
-                    "// Async/await - clear sequential flow\n\
+                     }",
+            ),
+            solution_code: CompressedString::new(
+                "// Async/await - clear sequential flow\n\
                      async function processUser(userId) {\n\
                          try {\n\
                              const user = await fetchUser(userId);\n\
@@ -1253,97 +1262,100 @@ fn create_javascript_idioms() -> Vec<LanguageIdiom> {
                              console.error('Error processing users:', error);\n\
                              throw error;\n\
                          }\n\
-                     }"
-                ),
-                explanation: CompressedString::new(
-                    "Async/await provides better error handling, debugging, and readability"
-                ),
-                file_context: Some("userProcessor.js".to_string()),
-            },
-            when_to_use: CompressedString::new(
-                "Any asynchronous operation, especially sequential async calls"
+                     }",
             ),
-            alternatives: vec![
-                "Promise.then() for simple transformations".to_string(),
-                "Promise.all() for parallel operations".to_string(),
-                "Callbacks for event-based operations".to_string(),
-            ],
+            explanation: CompressedString::new(
+                "Async/await provides better error handling, debugging, and readability",
+            ),
+            file_context: Some("userProcessor.js".to_string()),
         },
-    ]
+        when_to_use: CompressedString::new(
+            "Any asynchronous operation, especially sequential async calls",
+        ),
+        alternatives: vec![
+            "Promise.then() for simple transformations".to_string(),
+            "Promise.all() for parallel operations".to_string(),
+            "Callbacks for event-based operations".to_string(),
+        ],
+    }]
 }
 
 fn create_javascript_frameworks() -> HashMap<String, FrameworkKnowledge> {
     let mut frameworks = HashMap::new();
 
-    frameworks.insert("react".to_string(), FrameworkKnowledge {
-        framework_name: "React".to_string(),
-        version_range: "16.8+".to_string(),
-        specific_patterns: vec![
-            "prop_drilling".to_string(),
-            "unnecessary_renders".to_string(),
-            "useeffect_dependencies".to_string(),
-        ],
-        best_practices: vec![
-            CompressedString::new("Use hooks instead of class components"),
-            CompressedString::new("Memoize expensive computations with useMemo"),
-            CompressedString::new("Use Context API to avoid prop drilling"),
-            CompressedString::new("Include all dependencies in useEffect"),
-            CompressedString::new("Split components into smaller, reusable pieces"),
-        ],
-        common_pitfalls: vec![
-            CompressedString::new("Prop drilling instead of context or state management"),
-            CompressedString::new("Missing dependencies in useEffect"),
-            CompressedString::new("Unnecessary re-renders due to object/array creation"),
-            CompressedString::new("Mutating state directly instead of using setState"),
-            CompressedString::new("Not cleaning up effects (memory leaks)"),
-        ],
-    });
+    frameworks.insert(
+        "react".to_string(),
+        FrameworkKnowledge {
+            framework_name: "React".to_string(),
+            version_range: "16.8+".to_string(),
+            specific_patterns: vec![
+                "prop_drilling".to_string(),
+                "unnecessary_renders".to_string(),
+                "useeffect_dependencies".to_string(),
+            ],
+            best_practices: vec![
+                CompressedString::new("Use hooks instead of class components"),
+                CompressedString::new("Memoize expensive computations with useMemo"),
+                CompressedString::new("Use Context API to avoid prop drilling"),
+                CompressedString::new("Include all dependencies in useEffect"),
+                CompressedString::new("Split components into smaller, reusable pieces"),
+            ],
+            common_pitfalls: vec![
+                CompressedString::new("Prop drilling instead of context or state management"),
+                CompressedString::new("Missing dependencies in useEffect"),
+                CompressedString::new("Unnecessary re-renders due to object/array creation"),
+                CompressedString::new("Mutating state directly instead of using setState"),
+                CompressedString::new("Not cleaning up effects (memory leaks)"),
+            ],
+        },
+    );
 
-    frameworks.insert("express".to_string(), FrameworkKnowledge {
-        framework_name: "Express.js".to_string(),
-        version_range: "4.0+".to_string(),
-        specific_patterns: vec![
-            "callback_hell_middleware".to_string(),
-            "missing_error_handling".to_string(),
-            "middleware_order_issues".to_string(),
-        ],
-        best_practices: vec![
-            CompressedString::new("Use async/await in route handlers"),
-            CompressedString::new("Implement proper error handling middleware"),
-            CompressedString::new("Validate input data with middleware"),
-            CompressedString::new("Use helmet for security headers"),
-            CompressedString::new("Implement request logging and monitoring"),
-        ],
-        common_pitfalls: vec![
-            CompressedString::new("Callback hell in middleware chains"),
-            CompressedString::new("Missing error handling middleware"),
-            CompressedString::new("Incorrect middleware order"),
-            CompressedString::new("Not validating input data"),
-            CompressedString::new("Blocking operations in request handlers"),
-        ],
-    });
+    frameworks.insert(
+        "express".to_string(),
+        FrameworkKnowledge {
+            framework_name: "Express.js".to_string(),
+            version_range: "4.0+".to_string(),
+            specific_patterns: vec![
+                "callback_hell_middleware".to_string(),
+                "missing_error_handling".to_string(),
+                "middleware_order_issues".to_string(),
+            ],
+            best_practices: vec![
+                CompressedString::new("Use async/await in route handlers"),
+                CompressedString::new("Implement proper error handling middleware"),
+                CompressedString::new("Validate input data with middleware"),
+                CompressedString::new("Use helmet for security headers"),
+                CompressedString::new("Implement request logging and monitoring"),
+            ],
+            common_pitfalls: vec![
+                CompressedString::new("Callback hell in middleware chains"),
+                CompressedString::new("Missing error handling middleware"),
+                CompressedString::new("Incorrect middleware order"),
+                CompressedString::new("Not validating input data"),
+                CompressedString::new("Blocking operations in request handlers"),
+            ],
+        },
+    );
 
     frameworks
 }
 
 fn create_javascript_stdlib_patterns() -> Vec<StdlibPattern> {
-    vec![
-        StdlibPattern {
-            pattern_name: "Array Methods".to_string(),
-            description: CompressedString::new(
-                "Use functional array methods (map, filter, reduce) instead of imperative loops"
-            ),
-            recommended_usage: CompressedString::new(
-                "Prefer map() for transformations, filter() for selection, reduce() for aggregation. \
-                 Chain methods for complex operations. Use forEach() only for side effects."
-            ),
-            alternatives: vec![
-                "for...of loops for complex logic".to_string(),
-                "while loops for early termination".to_string(),
-                "for loops for performance-critical code".to_string(),
-            ],
-        },
-    ]
+    vec![StdlibPattern {
+        pattern_name: "Array Methods".to_string(),
+        description: CompressedString::new(
+            "Use functional array methods (map, filter, reduce) instead of imperative loops",
+        ),
+        recommended_usage: CompressedString::new(
+            "Prefer map() for transformations, filter() for selection, reduce() for aggregation. \
+                 Chain methods for complex operations. Use forEach() only for side effects.",
+        ),
+        alternatives: vec![
+            "for...of loops for complex logic".to_string(),
+            "while loops for early termination".to_string(),
+            "for loops for performance-critical code".to_string(),
+        ],
+    }]
 }
 
 /// Create comprehensive TypeScript-specific knowledge
@@ -1596,50 +1608,51 @@ fn create_typescript_idioms() -> Vec<LanguageIdiom> {
 fn create_typescript_frameworks() -> HashMap<String, FrameworkKnowledge> {
     let mut frameworks = HashMap::new();
 
-    frameworks.insert("angular".to_string(), FrameworkKnowledge {
-        framework_name: "Angular".to_string(),
-        version_range: "12+".to_string(),
-        specific_patterns: vec![
-            "any_type_in_templates".to_string(),
-            "untyped_observables".to_string(),
-            "missing_interface_definitions".to_string(),
-        ],
-        best_practices: vec![
-            CompressedString::new("Use strict TypeScript configuration"),
-            CompressedString::new("Define interfaces for all data structures"),
-            CompressedString::new("Type RxJS observables properly"),
-            CompressedString::new("Use generic types in services"),
-            CompressedString::new("Implement proper error handling with typed errors"),
-        ],
-        common_pitfalls: vec![
-            CompressedString::new("Using 'any' in component templates"),
-            CompressedString::new("Untyped HTTP client responses"),
-            CompressedString::new("Missing type definitions for third-party libraries"),
-            CompressedString::new("Not using strict mode compilation"),
-        ],
-    });
+    frameworks.insert(
+        "angular".to_string(),
+        FrameworkKnowledge {
+            framework_name: "Angular".to_string(),
+            version_range: "12+".to_string(),
+            specific_patterns: vec![
+                "any_type_in_templates".to_string(),
+                "untyped_observables".to_string(),
+                "missing_interface_definitions".to_string(),
+            ],
+            best_practices: vec![
+                CompressedString::new("Use strict TypeScript configuration"),
+                CompressedString::new("Define interfaces for all data structures"),
+                CompressedString::new("Type RxJS observables properly"),
+                CompressedString::new("Use generic types in services"),
+                CompressedString::new("Implement proper error handling with typed errors"),
+            ],
+            common_pitfalls: vec![
+                CompressedString::new("Using 'any' in component templates"),
+                CompressedString::new("Untyped HTTP client responses"),
+                CompressedString::new("Missing type definitions for third-party libraries"),
+                CompressedString::new("Not using strict mode compilation"),
+            ],
+        },
+    );
 
     frameworks
 }
 
 fn create_typescript_stdlib_patterns() -> Vec<StdlibPattern> {
-    vec![
-        StdlibPattern {
-            pattern_name: "Utility Types".to_string(),
-            description: CompressedString::new(
-                "Use TypeScript's built-in utility types for type transformations"
-            ),
-            recommended_usage: CompressedString::new(
-                "Use Partial<T> for optional updates, Pick<T, K> for selecting properties, \
-                 Omit<T, K> for excluding properties, Record<K, V> for key-value mappings."
-            ),
-            alternatives: vec![
-                "Custom mapped types for complex transformations".to_string(),
-                "Conditional types for advanced logic".to_string(),
-                "Template literal types for string manipulation".to_string(),
-            ],
-        },
-    ]
+    vec![StdlibPattern {
+        pattern_name: "Utility Types".to_string(),
+        description: CompressedString::new(
+            "Use TypeScript's built-in utility types for type transformations",
+        ),
+        recommended_usage: CompressedString::new(
+            "Use Partial<T> for optional updates, Pick<T, K> for selecting properties, \
+                 Omit<T, K> for excluding properties, Record<K, V> for key-value mappings.",
+        ),
+        alternatives: vec![
+            "Custom mapped types for complex transformations".to_string(),
+            "Conditional types for advanced logic".to_string(),
+            "Template literal types for string manipulation".to_string(),
+        ],
+    }]
 }
 
 /// Create comprehensive Java-specific knowledge
@@ -1940,50 +1953,51 @@ fn create_java_idioms() -> Vec<LanguageIdiom> {
 fn create_java_frameworks() -> HashMap<String, FrameworkKnowledge> {
     let mut frameworks = HashMap::new();
 
-    frameworks.insert("spring".to_string(), FrameworkKnowledge {
-        framework_name: "Spring Framework".to_string(),
-        version_range: "5.0+".to_string(),
-        specific_patterns: vec![
-            "circular_bean_dependencies".to_string(),
-            "overuse_of_autowired".to_string(),
-            "missing_transaction_boundaries".to_string(),
-        ],
-        best_practices: vec![
-            CompressedString::new("Use constructor injection over field injection"),
-            CompressedString::new("Define clear transaction boundaries with @Transactional"),
-            CompressedString::new("Use @Configuration classes for bean definitions"),
-            CompressedString::new("Implement proper exception handling with @ControllerAdvice"),
-            CompressedString::new("Use profiles for environment-specific configuration"),
-        ],
-        common_pitfalls: vec![
-            CompressedString::new("Circular bean dependencies"),
-            CompressedString::new("Overuse of @Autowired leading to tight coupling"),
-            CompressedString::new("Missing or incorrect @Transactional annotations"),
-            CompressedString::new("Not handling lazy initialization properly"),
-            CompressedString::new("Mixing business logic in controllers"),
-        ],
-    });
+    frameworks.insert(
+        "spring".to_string(),
+        FrameworkKnowledge {
+            framework_name: "Spring Framework".to_string(),
+            version_range: "5.0+".to_string(),
+            specific_patterns: vec![
+                "circular_bean_dependencies".to_string(),
+                "overuse_of_autowired".to_string(),
+                "missing_transaction_boundaries".to_string(),
+            ],
+            best_practices: vec![
+                CompressedString::new("Use constructor injection over field injection"),
+                CompressedString::new("Define clear transaction boundaries with @Transactional"),
+                CompressedString::new("Use @Configuration classes for bean definitions"),
+                CompressedString::new("Implement proper exception handling with @ControllerAdvice"),
+                CompressedString::new("Use profiles for environment-specific configuration"),
+            ],
+            common_pitfalls: vec![
+                CompressedString::new("Circular bean dependencies"),
+                CompressedString::new("Overuse of @Autowired leading to tight coupling"),
+                CompressedString::new("Missing or incorrect @Transactional annotations"),
+                CompressedString::new("Not handling lazy initialization properly"),
+                CompressedString::new("Mixing business logic in controllers"),
+            ],
+        },
+    );
 
     frameworks
 }
 
 fn create_java_stdlib_patterns() -> Vec<StdlibPattern> {
-    vec![
-        StdlibPattern {
-            pattern_name: "Optional".to_string(),
-            description: CompressedString::new(
-                "Use Optional<T> to handle null values safely and expressively"
-            ),
-            recommended_usage: CompressedString::new(
-                "Use Optional for return types that may be empty. \
+    vec![StdlibPattern {
+        pattern_name: "Optional".to_string(),
+        description: CompressedString::new(
+            "Use Optional<T> to handle null values safely and expressively",
+        ),
+        recommended_usage: CompressedString::new(
+            "Use Optional for return types that may be empty. \
                  Use map(), flatMap(), filter() for transformations. \
-                 Avoid Optional in fields and parameters."
-            ),
-            alternatives: vec![
-                "Null checks with defensive programming".to_string(),
-                "@Nullable and @NonNull annotations".to_string(),
-                "Default values with null coalescing".to_string(),
-            ],
-        },
-    ]
+                 Avoid Optional in fields and parameters.",
+        ),
+        alternatives: vec![
+            "Null checks with defensive programming".to_string(),
+            "@Nullable and @NonNull annotations".to_string(),
+            "Default values with null coalescing".to_string(),
+        ],
+    }]
 }

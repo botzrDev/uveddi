@@ -6,12 +6,12 @@
 use crate::analysis::{AnalysisDetector, AnalysisError};
 use crate::ast::tree_sitter::{Node, Query, QueryCursor, Tree};
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
-use tree_sitter::StreamingIterator;
 use crate::constants::detector_thresholds;
 use crate::constants::severity_weights;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use async_trait::async_trait;
 use log::debug;
+use tree_sitter::StreamingIterator;
 
 /// Holds the collected metrics for a single class or struct.
 #[derive(Debug, Clone)]

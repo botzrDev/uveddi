@@ -171,10 +171,8 @@ async fn test_basic_analysis_compatibility() {
         issues.is_empty() || !issues.is_empty(),
         "Issues should be a Vec<ArchitecturalIssue>"
     );
-    assert!(
-        graph.node_count() >= 0,
-        "Graph should be a LocalDependencyGraph"
-    );
+    // Graph node count validation
+    let _ = graph.node_count(); // Ensures graph is a LocalDependencyGraph
 }
 
 #[tokio::test]
@@ -279,10 +277,8 @@ async fn test_plugin_system_compatibility() {
         Ok(mut engine) => {
             // Test plugin support check
             let has_support = engine.has_plugin_support();
-            assert!(
-                has_support || !has_support,
-                "has_plugin_support should return bool"
-            );
+            // Validate has_plugin_support returns bool
+            let _ = has_support; // Ensures it's a boolean value
 
             if has_support {
                 // Test plugin loading

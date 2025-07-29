@@ -3,7 +3,7 @@
 //! This module extends the existing MermaidGenerator to provide metadata
 //! and support for interactive diagram features.
 
-use crate::analysis::mermaid_generator::{MermaidGenerator, MermaidGenerationError};
+use crate::analysis::mermaid_generator::{MermaidGenerationError, MermaidGenerator};
 use crate::models::visualization::{ArchitecturalComponent, DiagramType as VizDiagramType};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -117,14 +117,16 @@ impl InteractiveDiagramGenerator {
         config: Option<InteractionConfig>,
     ) -> Result<InteractiveDiagramResult, MermaidGenerationError> {
         // Generate the base Mermaid diagram
-        let diagram_result = self.mermaid_generator.generate_diagram(components, diagram_type.clone())?;
-        
+        let diagram_result = self
+            .mermaid_generator
+            .generate_diagram(components, diagram_type.clone())?;
+
         // Extract node metadata from components
         let node_metadata = self.extract_node_metadata(components, &diagram_result.mermaid_src)?;
-        
+
         // Use provided config or default
         let interaction_config = config.unwrap_or_else(|| self.default_config.clone());
-        
+
         Ok(InteractiveDiagramResult {
             mermaid_code: diagram_result.mermaid_src,
             node_metadata,
@@ -141,13 +143,13 @@ impl InteractiveDiagramGenerator {
         mermaid_code: &str,
     ) -> Result<HashMap<String, InteractiveNodeMetadata>, MermaidGenerationError> {
         let mut metadata = HashMap::new();
-        
+
         for component in components {
             let node_id = self.generate_node_id(component);
-            
+
             // Find connections by analyzing the mermaid code
             let connections = self.extract_connections(&node_id, mermaid_code);
-            
+
             let node_metadata = InteractiveNodeMetadata {
                 node_id: node_id.clone(),
                 component_id: component.component_id,
@@ -159,23 +161,26 @@ impl InteractiveDiagramGenerator {
                 metrics: Some(self.convert_metrics(&component.metrics)),
                 metadata: self.generate_additional_metadata(component),
             };
-            
+
             metadata.insert(node_id, node_metadata);
         }
-        
+
         Ok(metadata)
     }
 
     /// Generate a consistent node ID for a component
     fn generate_node_id(&self, component: &ArchitecturalComponent) -> String {
         // Create a stable, unique node ID based on component data
-        format!("node_{}", component.component_id.to_string().replace('-', "_"))
+        format!(
+            "node_{}",
+            component.component_id.to_string().replace('-', "_")
+        )
     }
 
     /// Extract connections for a node from Mermaid code
     fn extract_connections(&self, node_id: &str, mermaid_code: &str) -> Vec<String> {
         let mut connections = Vec::new();
-        
+
         // Parse Mermaid code to find connections
         // This is a simplified implementation - could be enhanced with proper parsing
         for line in mermaid_code.lines() {
@@ -187,7 +192,7 @@ impl InteractiveDiagramGenerator {
                     if parts.len() == 2 {
                         let source = parts[0].trim();
                         let target = parts[1].trim();
-                        
+
                         if source.contains(node_id) && !target.contains(node_id) {
                             if let Some(target_id) = self.extract_node_id_from_line(target) {
                                 connections.push(target_id);
@@ -201,7 +206,7 @@ impl InteractiveDiagramGenerator {
                 }
             }
         }
-        
+
         connections
     }
 
@@ -219,36 +224,50 @@ impl InteractiveDiagramGenerator {
     }
 
     /// Convert component metrics to interactive format
-    fn convert_metrics(&self, metrics: &crate::models::visualization::ComponentMetrics) -> ComponentMetrics {
+    fn convert_metrics(
+        &self,
+        metrics: &crate::models::visualization::ComponentMetrics,
+    ) -> ComponentMetrics {
         ComponentMetrics {
             lines_of_code: metrics.lines_of_code,
             complexity: metrics.complexity,
             coupling: Some((metrics.afferent_coupling + metrics.efferent_coupling) as f64),
             cohesion: metrics.coupling_between_objects, // Use coupling_between_objects as a proxy for cohesion
-            maintainability_index: None, // Not available in the source metrics
-            test_coverage: None, // Not available in the source metrics
+            maintainability_index: None,                // Not available in the source metrics
+            test_coverage: None,                        // Not available in the source metrics
         }
     }
 
     /// Generate additional metadata for context menus and tooltips
-    fn generate_additional_metadata(&self, component: &ArchitecturalComponent) -> HashMap<String, serde_json::Value> {
+    fn generate_additional_metadata(
+        &self,
+        component: &ArchitecturalComponent,
+    ) -> HashMap<String, serde_json::Value> {
         let mut metadata = HashMap::new();
-        
-        metadata.insert("group".to_string(), serde_json::Value::String(
-            component.group.clone().unwrap_or_else(|| "default".to_string())
-        ));
-        
-        metadata.insert("dependency_count".to_string(), serde_json::Value::Number(
-            component.dependencies.len().into()
-        ));
-        
+
+        metadata.insert(
+            "group".to_string(),
+            serde_json::Value::String(
+                component
+                    .group
+                    .clone()
+                    .unwrap_or_else(|| "default".to_string()),
+            ),
+        );
+
+        metadata.insert(
+            "dependency_count".to_string(),
+            serde_json::Value::Number(component.dependencies.len().into()),
+        );
+
         // Add more metadata as needed
         if let Some(parent) = component.file_path.parent() {
-            metadata.insert("directory".to_string(), serde_json::Value::String(
-                parent.to_string_lossy().to_string()
-            ));
+            metadata.insert(
+                "directory".to_string(),
+                serde_json::Value::String(parent.to_string_lossy().to_string()),
+            );
         }
-        
+
         metadata
     }
 
@@ -272,7 +291,7 @@ mod tests {
     #[tokio::test]
     async fn test_interactive_diagram_generation() {
         let generator = InteractiveDiagramGenerator::new().unwrap();
-        
+
         let component = ArchitecturalComponent {
             component_id: Uuid::new_v4(),
             name: "TestComponent".to_string(),
@@ -282,13 +301,11 @@ mod tests {
             metrics: crate::models::visualization::ComponentMetrics::default(),
             group: Some("test_group".to_string()),
         };
-        
-        let result = generator.generate_interactive_diagram(
-            &[component],
-            VizDiagramType::Component,
-            None,
-        ).await;
-        
+
+        let result = generator
+            .generate_interactive_diagram(&[component], VizDiagramType::Component, None)
+            .await;
+
         assert!(result.is_ok());
         let interactive_result = result.unwrap();
         assert!(!interactive_result.mermaid_code.is_empty());
@@ -299,7 +316,7 @@ mod tests {
     fn test_node_id_generation() {
         let generator = InteractiveDiagramGenerator::new().unwrap();
         let component_id = Uuid::new_v4();
-        
+
         let component = ArchitecturalComponent {
             component_id,
             name: "TestComponent".to_string(),
@@ -309,7 +326,7 @@ mod tests {
             metrics: crate::models::visualization::ComponentMetrics::default(),
             group: None,
         };
-        
+
         let node_id = generator.generate_node_id(&component);
         assert!(node_id.starts_with("node_"));
         assert!(node_id.contains(&component_id.to_string().replace('-', "_")));
@@ -324,7 +341,7 @@ mod tests {
             B --> C[Component C]
             node_123 --> node_456
         ";
-        
+
         let connections = generator.extract_connections("A", mermaid_code);
         assert!(connections.contains(&"B".to_string()));
     }

@@ -3,8 +3,8 @@
 #![cfg(feature = "memory-optimization")]
 
 use rkyv::{Archive, Deserialize, Serialize};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use std::path::PathBuf;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 #[repr(transparent)]
 #[derive(Debug, Clone)]
@@ -48,7 +48,10 @@ impl<S: rkyv::ser::Serializer + ?Sized> Serialize<S> for ArchivableSystemTime {
 
 use rkyv::de::deserializers::SharedDeserializeMap;
 impl Deserialize<ArchivableSystemTime, SharedDeserializeMap> for rkyv::Archived<u128> {
-    fn deserialize(&self, deserializer: &mut SharedDeserializeMap) -> Result<ArchivableSystemTime, rkyv::de::deserializers::SharedDeserializeMapError> {
+    fn deserialize(
+        &self,
+        deserializer: &mut SharedDeserializeMap,
+    ) -> Result<ArchivableSystemTime, rkyv::de::deserializers::SharedDeserializeMapError> {
         let nanos: u128 = rkyv::Deserialize::deserialize(self, deserializer)?;
         let duration = Duration::from_nanos(nanos as u64); // Note: truncation for extreme future dates
         Ok(ArchivableSystemTime(UNIX_EPOCH + duration))
@@ -61,7 +64,9 @@ impl serde::Serialize for ArchivableSystemTime {
     where
         S: serde::Serializer,
     {
-        let nanos = self.0.duration_since(UNIX_EPOCH)
+        let nanos = self
+            .0
+            .duration_since(UNIX_EPOCH)
             .map_err(|e| serde::ser::Error::custom(format!("SystemTime error: {}", e)))?
             .as_nanos();
         serializer.serialize_u128(nanos)
@@ -120,7 +125,10 @@ impl<S: rkyv::ser::Serializer + ?Sized> Serialize<S> for ArchivablePathBuf {
 }
 
 impl Deserialize<ArchivablePathBuf, SharedDeserializeMap> for rkyv::Archived<String> {
-    fn deserialize(&self, deserializer: &mut SharedDeserializeMap) -> Result<ArchivablePathBuf, rkyv::de::deserializers::SharedDeserializeMapError> {
+    fn deserialize(
+        &self,
+        deserializer: &mut SharedDeserializeMap,
+    ) -> Result<ArchivablePathBuf, rkyv::de::deserializers::SharedDeserializeMapError> {
         let string: String = rkyv::Deserialize::deserialize(self, deserializer)?;
         Ok(ArchivablePathBuf(PathBuf::from(string)))
     }

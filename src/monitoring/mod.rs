@@ -30,8 +30,8 @@ pub use baseline_collector::{
     BaselineCollectionConfig, BaselineCollector, BaselineComparison, StoredBaseline,
 };
 pub use carbon_metrics::{
-    CarbonAwarenessCollector, CarbonAwarenessConfig, CarbonFootprintReport, 
-    EnergyConsumptionMetrics, WorkloadType, WorkloadCarbonSummary,
+    CarbonAwarenessCollector, CarbonAwarenessConfig, CarbonFootprintReport,
+    EnergyConsumptionMetrics, WorkloadCarbonSummary, WorkloadType,
 };
 pub use config::{ConfigManager, ReportJobConfig, ReportingSystemConfig, SystemConfig};
 pub use distribution::{DistributionChannel, DistributionManager, SlackWebhookConfig, SmtpConfig};

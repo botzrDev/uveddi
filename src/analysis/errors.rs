@@ -33,7 +33,7 @@ pub enum AnalysisError {
     Other(String),
     #[error("Unsupported language: {0}")]
     UnsupportedLanguage(String),
-    
+
     // New error types for unwrap replacements (UV-276)
     #[error("Parse operation failed: {message}")]
     ParseError { message: String },
@@ -52,7 +52,9 @@ pub enum AnalysisError {
 impl AnalysisError {
     /// Create parse error with context
     pub fn parse_error(message: impl Into<String>) -> Self {
-        Self::ParseError { message: message.into() }
+        Self::ParseError {
+            message: message.into(),
+        }
     }
 
     /// Create query error with context
@@ -62,22 +64,30 @@ impl AnalysisError {
 
     /// Create collection access error
     pub fn collection_access_error(message: impl Into<String>) -> Self {
-        Self::CollectionAccessError { message: message.into() }
+        Self::CollectionAccessError {
+            message: message.into(),
+        }
     }
 
     /// Create conversion error
     pub fn conversion_error(message: impl Into<String>) -> Self {
-        Self::ConversionError { message: message.into() }
+        Self::ConversionError {
+            message: message.into(),
+        }
     }
 
     /// Create data not found error
     pub fn data_not_found_error(message: impl Into<String>) -> Self {
-        Self::DataNotFoundError { message: message.into() }
+        Self::DataNotFoundError {
+            message: message.into(),
+        }
     }
 
     /// Create lock error
     pub fn lock_error(message: impl Into<String>) -> Self {
-        Self::LockError { message: message.into() }
+        Self::LockError {
+            message: message.into(),
+        }
     }
 }
 

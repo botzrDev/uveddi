@@ -24,10 +24,10 @@ pub struct CacheMetrics {
     pub deserialization_duration: Histogram,
     pub disk_read_duration: Histogram,
     pub disk_write_duration: Histogram,
-    
+
     // Internal metrics
     internal_metrics: Arc<Mutex<InternalMetrics>>,
-    
+
     // Registry for exporting metrics
     registry: Arc<Registry>,
 }
@@ -85,36 +85,54 @@ impl CacheMetrics {
         let cache_size_bytes = IntGauge::new("cache_size_bytes", "Current cache size in bytes")?;
         registry.register(Box::new(cache_size_bytes.clone()))?;
 
-        let cache_entry_count = IntGauge::new("cache_entry_count", "Current number of cache entries")?;
+        let cache_entry_count =
+            IntGauge::new("cache_entry_count", "Current number of cache entries")?;
         registry.register(Box::new(cache_entry_count.clone()))?;
 
         let cache_operation_duration = Histogram::with_opts(
-            prometheus::HistogramOpts::new("cache_operation_duration_seconds", "Cache operation duration")
-                .buckets(vec![0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0]),
+            prometheus::HistogramOpts::new(
+                "cache_operation_duration_seconds",
+                "Cache operation duration",
+            )
+            .buckets(vec![
+                0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0,
+            ]),
         )?;
         registry.register(Box::new(cache_operation_duration.clone()))?;
 
         let serialization_duration = Histogram::with_opts(
-            prometheus::HistogramOpts::new("cache_serialization_duration_seconds", "Serialization duration")
-                .buckets(vec![0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1]),
+            prometheus::HistogramOpts::new(
+                "cache_serialization_duration_seconds",
+                "Serialization duration",
+            )
+            .buckets(vec![0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1]),
         )?;
         registry.register(Box::new(serialization_duration.clone()))?;
 
         let deserialization_duration = Histogram::with_opts(
-            prometheus::HistogramOpts::new("cache_deserialization_duration_seconds", "Deserialization duration")
-                .buckets(vec![0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1]),
+            prometheus::HistogramOpts::new(
+                "cache_deserialization_duration_seconds",
+                "Deserialization duration",
+            )
+            .buckets(vec![0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1]),
         )?;
         registry.register(Box::new(deserialization_duration.clone()))?;
 
         let disk_read_duration = Histogram::with_opts(
-            prometheus::HistogramOpts::new("cache_disk_read_duration_seconds", "Disk read duration")
-                .buckets(vec![0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0]),
+            prometheus::HistogramOpts::new(
+                "cache_disk_read_duration_seconds",
+                "Disk read duration",
+            )
+            .buckets(vec![0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0]),
         )?;
         registry.register(Box::new(disk_read_duration.clone()))?;
 
         let disk_write_duration = Histogram::with_opts(
-            prometheus::HistogramOpts::new("cache_disk_write_duration_seconds", "Disk write duration")
-                .buckets(vec![0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0]),
+            prometheus::HistogramOpts::new(
+                "cache_disk_write_duration_seconds",
+                "Disk write duration",
+            )
+            .buckets(vec![0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0]),
         )?;
         registry.register(Box::new(disk_write_duration.clone()))?;
 
@@ -142,13 +160,17 @@ impl CacheMetrics {
     /// Record a cache hit
     pub fn record_hit(&self, layer: &str, duration: Duration) {
         self.cache_hits.inc();
-        self.cache_operation_duration.observe(duration.as_secs_f64());
-        
+        self.cache_operation_duration
+            .observe(duration.as_secs_f64());
+
         if let Ok(mut metrics) = self.internal_metrics.lock() {
             metrics.total_operations += 1;
             metrics.total_hit_time_ns += duration.as_nanos() as u64;
-            
-            let layer_stats = metrics.cache_layer_stats.entry(layer.to_string()).or_default();
+
+            let layer_stats = metrics
+                .cache_layer_stats
+                .entry(layer.to_string())
+                .or_default();
             layer_stats.hits += 1;
 
             metrics.recent_operations.push(OperationRecord {
@@ -169,13 +191,17 @@ impl CacheMetrics {
     /// Record a cache miss
     pub fn record_miss(&self, layer: &str, duration: Duration) {
         self.cache_misses.inc();
-        self.cache_operation_duration.observe(duration.as_secs_f64());
-        
+        self.cache_operation_duration
+            .observe(duration.as_secs_f64());
+
         if let Ok(mut metrics) = self.internal_metrics.lock() {
             metrics.total_operations += 1;
             metrics.total_miss_time_ns += duration.as_nanos() as u64;
-            
-            let layer_stats = metrics.cache_layer_stats.entry(layer.to_string()).or_default();
+
+            let layer_stats = metrics
+                .cache_layer_stats
+                .entry(layer.to_string())
+                .or_default();
             layer_stats.misses += 1;
 
             metrics.recent_operations.push(OperationRecord {
@@ -193,9 +219,12 @@ impl CacheMetrics {
         self.cache_evictions.inc();
         self.cache_size_bytes.sub(bytes_freed as i64);
         self.cache_entry_count.dec();
-        
+
         if let Ok(mut metrics) = self.internal_metrics.lock() {
-            let layer_stats = metrics.cache_layer_stats.entry(layer.to_string()).or_default();
+            let layer_stats = metrics
+                .cache_layer_stats
+                .entry(layer.to_string())
+                .or_default();
             layer_stats.evictions += 1;
             layer_stats.size_bytes = layer_stats.size_bytes.saturating_sub(bytes_freed);
             layer_stats.entry_count = layer_stats.entry_count.saturating_sub(1);
@@ -206,9 +235,12 @@ impl CacheMetrics {
     pub fn record_insertion(&self, layer: &str, bytes_added: u64) {
         self.cache_size_bytes.add(bytes_added as i64);
         self.cache_entry_count.inc();
-        
+
         if let Ok(mut metrics) = self.internal_metrics.lock() {
-            let layer_stats = metrics.cache_layer_stats.entry(layer.to_string()).or_default();
+            let layer_stats = metrics
+                .cache_layer_stats
+                .entry(layer.to_string())
+                .or_default();
             layer_stats.size_bytes += bytes_added;
             layer_stats.entry_count += 1;
         }
@@ -217,10 +249,10 @@ impl CacheMetrics {
     /// Record serialization operation
     pub fn record_serialization(&self, duration: Duration, bytes: u64) {
         self.serialization_duration.observe(duration.as_secs_f64());
-        
+
         if let Ok(mut metrics) = self.internal_metrics.lock() {
             metrics.total_serialization_bytes += bytes;
-            
+
             metrics.recent_operations.push(OperationRecord {
                 timestamp: Instant::now(),
                 operation_type: OperationType::Serialization,
@@ -233,8 +265,9 @@ impl CacheMetrics {
 
     /// Record deserialization operation
     pub fn record_deserialization(&self, duration: Duration) {
-        self.deserialization_duration.observe(duration.as_secs_f64());
-        
+        self.deserialization_duration
+            .observe(duration.as_secs_f64());
+
         if let Ok(mut metrics) = self.internal_metrics.lock() {
             metrics.recent_operations.push(OperationRecord {
                 timestamp: Instant::now(),
@@ -261,7 +294,7 @@ impl CacheMetrics {
         let hits = self.cache_hits.get() as f64;
         let misses = self.cache_misses.get() as f64;
         let total = hits + misses;
-        
+
         if total > 0.0 {
             hits / total
         } else {
@@ -303,16 +336,19 @@ impl CacheMetrics {
         let mut layer_summaries = HashMap::new();
         if let Ok(metrics) = self.internal_metrics.lock() {
             for (layer, stats) in &metrics.cache_layer_stats {
-                layer_summaries.insert(layer.clone(), LayerSummary {
-                    hit_rate: if stats.hits + stats.misses > 0 {
-                        stats.hits as f64 / (stats.hits + stats.misses) as f64
-                    } else {
-                        0.0
+                layer_summaries.insert(
+                    layer.clone(),
+                    LayerSummary {
+                        hit_rate: if stats.hits + stats.misses > 0 {
+                            stats.hits as f64 / (stats.hits + stats.misses) as f64
+                        } else {
+                            0.0
+                        },
+                        size_bytes: stats.size_bytes,
+                        entry_count: stats.entry_count,
+                        evictions: stats.evictions,
                     },
-                    size_bytes: stats.size_bytes,
-                    entry_count: stats.entry_count,
-                    evictions: stats.evictions,
-                });
+                );
             }
         }
 
@@ -330,7 +366,9 @@ impl CacheMetrics {
         use prometheus::Encoder;
         let encoder = prometheus::TextEncoder::new();
         let metric_families = self.registry.gather();
-        encoder.encode_to_string(&metric_families).unwrap_or_default()
+        encoder
+            .encode_to_string(&metric_families)
+            .unwrap_or_default()
     }
 }
 
@@ -383,10 +421,10 @@ pub struct AlertThresholds {
 impl Default for AlertThresholds {
     fn default() -> Self {
         Self {
-            min_hit_rate: 0.8,         // 80% minimum hit rate
-            max_latency_ms: 10.0,      // 10ms maximum latency
+            min_hit_rate: 0.8,                          // 80% minimum hit rate
+            max_latency_ms: 10.0,                       // 10ms maximum latency
             max_memory_usage_bytes: 1024 * 1024 * 1024, // 1GB maximum
-            max_eviction_rate: 0.1,    // 10% maximum eviction rate
+            max_eviction_rate: 0.1,                     // 10% maximum eviction rate
         }
     }
 }
@@ -489,7 +527,7 @@ mod tests {
     fn test_cache_metrics_creation() {
         let registry = Registry::new();
         let metrics = CacheMetrics::new(&registry).unwrap();
-        
+
         assert_eq!(metrics.cache_hits.get(), 0);
         assert_eq!(metrics.cache_misses.get(), 0);
     }
@@ -498,12 +536,12 @@ mod tests {
     fn test_hit_rate_calculation() {
         let registry = Registry::new();
         let metrics = CacheMetrics::new(&registry).unwrap();
-        
+
         // Record some hits and misses
         metrics.record_hit("L1", Duration::from_millis(1));
         metrics.record_hit("L1", Duration::from_millis(1));
         metrics.record_miss("L1", Duration::from_millis(5));
-        
+
         let hit_rate = metrics.hit_rate();
         assert!((hit_rate - 0.666).abs() < 0.01); // ~66.7%
     }
@@ -512,14 +550,14 @@ mod tests {
     fn test_layer_specific_metrics() {
         let registry = Registry::new();
         let metrics = CacheMetrics::new(&registry).unwrap();
-        
+
         metrics.record_hit("L1", Duration::from_millis(1));
         metrics.record_miss("L1", Duration::from_millis(5));
         metrics.record_hit("L2", Duration::from_millis(10));
-        
+
         let l1_hit_rate = metrics.layer_hit_rate("L1");
         let l2_hit_rate = metrics.layer_hit_rate("L2");
-        
+
         assert!((l1_hit_rate - 0.5).abs() < 0.01); // 50% for L1
         assert!((l2_hit_rate - 1.0).abs() < 0.01); // 100% for L2
     }
@@ -528,10 +566,10 @@ mod tests {
     fn test_performance_summary() {
         let registry = Registry::new();
         let metrics = CacheMetrics::new(&registry).unwrap();
-        
+
         metrics.record_hit("L1", Duration::from_millis(2));
         metrics.record_insertion("L1", 1024);
-        
+
         let summary = metrics.performance_summary();
         assert_eq!(summary.total_entries, 1);
         assert_eq!(summary.total_size_bytes, 1024);
@@ -542,18 +580,18 @@ mod tests {
     async fn test_cache_monitor() {
         let registry = Registry::new();
         let metrics = Arc::new(CacheMetrics::new(&registry).unwrap());
-        
+
         let monitor = CacheMonitor::new(metrics.clone());
-        
+
         // Start monitoring
         monitor.start_monitoring().await;
-        
+
         // Record some metrics
         metrics.record_hit("L1", Duration::from_millis(1));
-        
+
         // Wait a bit
         tokio::time::sleep(Duration::from_millis(100)).await;
-        
+
         // Stop monitoring
         monitor.stop_monitoring().await;
     }
@@ -562,9 +600,9 @@ mod tests {
     fn test_metrics_export() {
         let registry = Registry::new();
         let metrics = CacheMetrics::new(&registry).unwrap();
-        
+
         metrics.record_hit("L1", Duration::from_millis(1));
-        
+
         let exported = metrics.export_metrics();
         assert!(exported.contains("cache_hits_total"));
     }

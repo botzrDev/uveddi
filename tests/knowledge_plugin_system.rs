@@ -6,11 +6,11 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 use tokio;
-use uveddi::ai::knowledge::schema::*;
 use uveddi::ai::knowledge::context_selection::*;
-use uveddi::plugins::knowledge::*;
+use uveddi::ai::knowledge::schema::*;
 use uveddi::plugins::development::*;
 use uveddi::plugins::integration::*;
+use uveddi::plugins::knowledge::*;
 use uveddi::plugins::PluginError;
 
 /// Test basic plugin system initialization and configuration
@@ -34,7 +34,7 @@ async fn test_plugin_system_initialization() {
     };
 
     let plugin_system = KnowledgePluginSystem::new(config);
-    
+
     // Verify system is properly initialized
     assert!(plugin_system.get_metrics().total_patterns == 0);
 }
@@ -92,17 +92,21 @@ async fn test_example_antipattern_plugin() {
 
     // Test plugin lifecycle
     assert!(plugin.initialize().await.is_ok());
-    
+
     // Test pattern retrieval
     let patterns = plugin.get_patterns().await.unwrap();
     assert!(!patterns.is_empty());
-    
-    let singleton_pattern = patterns.iter()
+
+    let singleton_pattern = patterns
+        .iter()
         .find(|p| p.id == "custom_singleton_abuse")
         .expect("Should find singleton abuse pattern");
-    
+
     assert_eq!(singleton_pattern.name, "Singleton Abuse");
-    assert_eq!(singleton_pattern.category, AntiPatternCategory::ObjectOriented);
+    assert_eq!(
+        singleton_pattern.category,
+        AntiPatternCategory::ObjectOriented
+    );
     assert_eq!(singleton_pattern.impact, ImpactLevel::High);
     assert!(!singleton_pattern.solutions.is_empty());
 
@@ -135,7 +139,10 @@ async fn test_enterprise_plugin() {
     assert!(plugin.initialize().await.is_ok());
 
     // Test organization patterns
-    let org_patterns = plugin.get_organization_patterns("example_org").await.unwrap();
+    let org_patterns = plugin
+        .get_organization_patterns("example_org")
+        .await
+        .unwrap();
     assert!(!org_patterns.is_empty());
 
     // Test compliance knowledge
@@ -144,25 +151,29 @@ async fn test_enterprise_plugin() {
     assert!(!compliance.rules.is_empty());
 
     // Test policy validation
-    let policies = vec![
-        OrganizationPolicy {
-            id: "no_println".to_string(),
-            name: "No println usage".to_string(),
-            description: "Avoid using println! in production code".to_string(),
-            patterns: vec!["println_usage".to_string()],
-            enforcement: EnforcementLevel::Error,
-        }
-    ];
+    let policies = vec![OrganizationPolicy {
+        id: "no_println".to_string(),
+        name: "No println usage".to_string(),
+        description: "Avoid using println! in production code".to_string(),
+        patterns: vec!["println_usage".to_string()],
+        enforcement: EnforcementLevel::Error,
+    }];
 
     // Test compliant code
     let compliant_code = "log::info!(\"This is proper logging\");";
-    let result = plugin.validate_against_policies(compliant_code, &policies).await.unwrap();
+    let result = plugin
+        .validate_against_policies(compliant_code, &policies)
+        .await
+        .unwrap();
     assert!(result.compliant);
     assert!(result.violations.is_empty());
 
     // Test non-compliant code
     let non_compliant_code = "println!(\"This should not be used\");";
-    let result = plugin.validate_against_policies(non_compliant_code, &policies).await.unwrap();
+    let result = plugin
+        .validate_against_policies(non_compliant_code, &policies)
+        .await
+        .unwrap();
     assert!(!result.compliant);
     assert!(!result.violations.is_empty());
 }
@@ -193,7 +204,7 @@ async fn test_framework_plugin() {
     // Test framework knowledge
     let react_knowledge = plugin.get_framework_knowledge("React").await.unwrap();
     assert!(react_knowledge.is_some());
-    
+
     let knowledge = react_knowledge.unwrap();
     assert_eq!(knowledge.name, "React");
     assert!(!knowledge.patterns.is_empty());
@@ -203,11 +214,12 @@ async fn test_framework_plugin() {
     // Test patterns from framework
     let patterns = plugin.get_patterns().await.unwrap();
     assert!(!patterns.is_empty());
-    
-    let rerender_pattern = patterns.iter()
+
+    let rerender_pattern = patterns
+        .iter()
         .find(|p| p.id == "react_unnecessary_rerender")
         .expect("Should find React re-render pattern");
-    
+
     assert_eq!(rerender_pattern.category, AntiPatternCategory::Performance);
     assert!(rerender_pattern.tags.contains(&"react".to_string()));
 }
@@ -244,7 +256,7 @@ async fn test_plugin_knowledge_library() {
 async fn test_knowledge_integration() {
     // Create a minimal core knowledge library
     let core_library = create_test_core_library();
-    
+
     let mut integrator = PluginKnowledgeIntegrator::new(core_library);
 
     // Create plugin knowledge library
@@ -258,7 +270,10 @@ async fn test_knowledge_integration() {
     plugin_library.merge(plugin_knowledge).unwrap();
 
     // Update integrator with plugin knowledge
-    assert!(integrator.update_plugin_knowledge(plugin_library).await.is_ok());
+    assert!(integrator
+        .update_plugin_knowledge(plugin_library)
+        .await
+        .is_ok());
 
     // Test integrated context retrieval
     let analysis_context = AnalysisContext {
@@ -285,19 +300,28 @@ async fn test_knowledge_integration() {
         },
     };
 
-    let integrated_context = integrator.get_integrated_context(&analysis_context, 10).await.unwrap();
-    
+    let integrated_context = integrator
+        .get_integrated_context(&analysis_context, 10)
+        .await
+        .unwrap();
+
     // Verify integration results
     assert!(!integrated_context.patterns.is_empty());
     assert!(integrated_context.retrieval_time_ms > 0.0);
     assert!(integrated_context.plugin_contributions.total_plugins > 0);
 
     // Test category-based retrieval
-    let category_patterns = integrator.get_patterns_by_category(AntiPatternCategory::Performance).await.unwrap();
+    let category_patterns = integrator
+        .get_patterns_by_category(AntiPatternCategory::Performance)
+        .await
+        .unwrap();
     // Should work even if empty for this test
 
     // Test language-based retrieval
-    let language_patterns = integrator.get_patterns_by_language(SourceLanguage::Rust).await.unwrap();
+    let language_patterns = integrator
+        .get_patterns_by_language(SourceLanguage::Rust)
+        .await
+        .unwrap();
     // Should include patterns from both core and plugins
 
     // Verify metrics
@@ -425,7 +449,7 @@ async fn test_error_handling() {
     // Test operations on uninitialized plugin
     let result = plugin.get_patterns().await;
     assert!(result.is_err());
-    
+
     if let Err(PluginError::Execution(msg)) = result {
         assert!(msg.contains("not initialized"));
     } else {
@@ -437,7 +461,7 @@ async fn test_error_handling() {
 
 fn create_test_pattern() -> PatternKnowledge {
     use uveddi::ai::knowledge::compression::CompressedString;
-    
+
     PatternKnowledge {
         id: "test_pattern_id".to_string(),
         name: "Test Pattern".to_string(),
@@ -445,23 +469,19 @@ fn create_test_pattern() -> PatternKnowledge {
         symptoms: vec![CompressedString::new("Test symptom")],
         impact: ImpactLevel::Medium,
         category: AntiPatternCategory::Performance,
-        detection_methods: vec![
-            DetectionMethod {
-                method_type: DetectionMethodType::Structural,
-                description: CompressedString::new("Test detection method"),
-                thresholds: vec![("test_threshold".to_string(), 1.0)],
-                confidence: 0.8,
-            }
-        ],
-        solutions: vec![
-            SolutionPattern {
-                name: "Test Solution".to_string(),
-                description: CompressedString::new("A test solution"),
-                implementation_steps: vec![CompressedString::new("Step 1: Test")],
-                benefits: vec![CompressedString::new("Test benefit")],
-                effort_level: EffortLevel::Low,
-            }
-        ],
+        detection_methods: vec![DetectionMethod {
+            method_type: DetectionMethodType::Structural,
+            description: CompressedString::new("Test detection method"),
+            thresholds: vec![("test_threshold".to_string(), 1.0)],
+            confidence: 0.8,
+        }],
+        solutions: vec![SolutionPattern {
+            name: "Test Solution".to_string(),
+            description: CompressedString::new("A test solution"),
+            implementation_steps: vec![CompressedString::new("Step 1: Test")],
+            benefits: vec![CompressedString::new("Test benefit")],
+            effort_level: EffortLevel::Low,
+        }],
         examples: CodeExamples {
             primary: vec![],
             variations: HashMap::new(),
@@ -476,13 +496,12 @@ fn create_test_pattern() -> PatternKnowledge {
 
 fn create_test_core_library() -> KnowledgeLibrary {
     let mut library = KnowledgeLibrary::new();
-    
+
     // Add a test universal pattern
-    library.universal_patterns.insert(
-        "test_universal_pattern".to_string(),
-        create_test_pattern()
-    );
-    
+    library
+        .universal_patterns
+        .insert("test_universal_pattern".to_string(), create_test_pattern());
+
     library
 }
 
@@ -537,7 +556,7 @@ async fn test_real_world_integration() {
 
     // Simulate loading plugin knowledge
     let mut plugin_library = PluginKnowledgeLibrary::new();
-    
+
     // Add knowledge from multiple plugins
     let antipattern_knowledge = PluginKnowledge {
         plugin_id: "antipattern-plugin".to_string(),
@@ -545,26 +564,24 @@ async fn test_real_world_integration() {
         detectors: vec![],
         solutions: vec![],
     };
-    
+
     plugin_library.merge(antipattern_knowledge).unwrap();
 
     // Test the complete workflow
     let analysis_context = AnalysisContext {
         language: SourceLanguage::Rust,
         frameworks: vec!["tokio".to_string(), "serde".to_string()],
-        detected_patterns: vec![
-            DetectedPattern {
-                pattern_id: "test_pattern_id".to_string(),
-                confidence: 0.9,
-                severity: SeverityLevel::Medium,
-                location: LocationContext {
-                    file_path: "src/main.rs".to_string(),
-                    line_range: (10, 20),
-                    context_name: Some("main".to_string()),
-                },
-                related_patterns: vec![],
-            }
-        ],
+        detected_patterns: vec![DetectedPattern {
+            pattern_id: "test_pattern_id".to_string(),
+            confidence: 0.9,
+            severity: SeverityLevel::Medium,
+            location: LocationContext {
+                file_path: "src/main.rs".to_string(),
+                line_range: (10, 20),
+                context_name: Some("main".to_string()),
+            },
+            related_patterns: vec![],
+        }],
         codebase_info: CodebaseInfo {
             size_category: CodebaseSizeCategory::Medium,
             architectural_patterns: vec!["microservices".to_string()],
@@ -586,16 +603,26 @@ async fn test_real_world_integration() {
     };
 
     // Get plugin context
-    let plugin_context = plugin_system.get_plugin_context(&analysis_context).await.unwrap();
-    
+    let plugin_context = plugin_system
+        .get_plugin_context(&analysis_context)
+        .await
+        .unwrap();
+
     // Verify context contains relevant information
     assert!(!plugin_context.get_all_contexts().is_empty());
-    
+
     // Test performance requirements (should be under 100ms for retrieval)
     let start = std::time::Instant::now();
-    let _context = plugin_system.get_plugin_context(&analysis_context).await.unwrap();
+    let _context = plugin_system
+        .get_plugin_context(&analysis_context)
+        .await
+        .unwrap();
     let elapsed = start.elapsed();
-    
+
     // This should be fast (under 100ms as per UV-337 requirements)
-    assert!(elapsed.as_millis() < 100, "Plugin context retrieval took too long: {}ms", elapsed.as_millis());
+    assert!(
+        elapsed.as_millis() < 100,
+        "Plugin context retrieval took too long: {}ms",
+        elapsed.as_millis()
+    );
 }

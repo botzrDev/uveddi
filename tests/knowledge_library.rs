@@ -1,5 +1,5 @@
 //! Comprehensive tests for the AI Knowledge Library (UV-335)
-//! 
+//!
 //! This test suite validates the schema design, compression effectiveness,
 //! indexing performance, and build system integration.
 
@@ -35,17 +35,19 @@ mod schema_tests {
         let lang_knowledge = create_test_language_knowledge();
 
         library.add_language_knowledge(SourceLanguage::Rust, lang_knowledge);
-        assert!(library.language_specific.contains_key(&SourceLanguage::Rust));
+        assert!(library
+            .language_specific
+            .contains_key(&SourceLanguage::Rust));
         assert_eq!(library.metadata.pattern_count, 1);
     }
 
     #[test]
     fn test_get_language_patterns() {
         let mut library = KnowledgeLibrary::new();
-        
+
         // Add universal pattern
         library.add_universal_pattern(create_test_pattern());
-        
+
         // Add Rust-specific knowledge
         library.add_language_knowledge(SourceLanguage::Rust, create_test_language_knowledge());
 
@@ -58,9 +60,9 @@ mod schema_tests {
         let mut library = KnowledgeLibrary::new();
         let pattern = create_test_pattern();
         let category = pattern.category.clone();
-        
+
         library.add_universal_pattern(pattern);
-        
+
         let category_patterns = library.get_patterns_by_category(&category);
         assert_eq!(category_patterns.len(), 1);
         assert_eq!(category_patterns[0].id, "test_pattern");
@@ -101,25 +103,28 @@ mod schema_tests {
 
     fn create_test_language_knowledge() -> LanguageKnowledge {
         let mut patterns = HashMap::new();
-        patterns.insert("rust_pattern".to_string(), PatternKnowledge {
-            id: "rust_pattern".to_string(),
-            name: "Rust Pattern".to_string(),
-            definition: CompressedString::new("A Rust-specific pattern"),
-            symptoms: vec![],
-            impact: ImpactLevel::Low,
-            category: AntiPatternCategory::Memory,
-            detection_methods: vec![],
-            solutions: vec![],
-            examples: CodeExamples {
-                primary: vec![],
-                variations: HashMap::new(),
+        patterns.insert(
+            "rust_pattern".to_string(),
+            PatternKnowledge {
+                id: "rust_pattern".to_string(),
+                name: "Rust Pattern".to_string(),
+                definition: CompressedString::new("A Rust-specific pattern"),
+                symptoms: vec![],
+                impact: ImpactLevel::Low,
+                category: AntiPatternCategory::Memory,
+                detection_methods: vec![],
+                solutions: vec![],
+                examples: CodeExamples {
+                    primary: vec![],
+                    variations: HashMap::new(),
+                },
+                language_variations: HashMap::new(),
+                related_patterns: vec![],
+                tags: vec!["rust".to_string()],
+                frequency_score: 0.3,
+                detection_confidence: 0.9,
             },
-            language_variations: HashMap::new(),
-            related_patterns: vec![],
-            tags: vec!["rust".to_string()],
-            frequency_score: 0.3,
-            detection_confidence: 0.9,
-        });
+        );
 
         LanguageKnowledge {
             language: SourceLanguage::Rust,
@@ -157,16 +162,24 @@ mod compression_tests {
         let cs = CompressedString::new(error_content);
         // The algorithm classifies this as Configuration, let's adjust our expectation
         // or use a different test string
-        println!("Actual content type: {:?}", cs.compression_hints.content_type);
-        
+        println!(
+            "Actual content type: {:?}",
+            cs.compression_hints.content_type
+        );
+
         // Try a different diagnostic string
         let panic_content = "panic at 'index out of bounds'";
         let cs_panic = CompressedString::new(panic_content);
-        println!("Panic content type: {:?}", cs_panic.compression_hints.content_type);
-        
+        println!(
+            "Panic content type: {:?}",
+            cs_panic.compression_hints.content_type
+        );
+
         // For now, just test that we get a valid content type
-        assert!(matches!(cs.compression_hints.content_type, 
-            ContentType::Diagnostic | ContentType::Configuration | ContentType::Text));
+        assert!(matches!(
+            cs.compression_hints.content_type,
+            ContentType::Diagnostic | ContentType::Configuration | ContentType::Text
+        ));
     }
 
     #[test]
@@ -185,7 +198,7 @@ mod compression_tests {
         let mut trainer = DictionaryTrainer::new();
         trainer.add_sample("fn main() { let x = 42; }");
         trainer.add_sample("def calculate(): return value");
-        
+
         let metadata = trainer.analyze_training_data();
         assert_eq!(metadata.sample_count, 2);
         assert!(metadata.top_keywords.contains(&"fn".to_string()));
@@ -198,7 +211,7 @@ mod compression_tests {
         // Add some training samples first
         trainer.add_sample("fn main() { let x = 42; }");
         trainer.add_sample("def calculate(): return value");
-        
+
         let dict = trainer.generate_dictionary(1024).unwrap();
         assert!(!dict.is_empty());
         assert!(dict.len() <= 1024);
@@ -395,11 +408,11 @@ mod loader_tests {
     fn test_embedded_loading() {
         let loader = KnowledgeLibraryLoader::embedded();
         let lookup = loader.load().unwrap();
-        
+
         // Test that we can perform basic operations
         let library = lookup.get_library();
         assert!(!library.metadata.schema_version.is_empty());
-        
+
         // Test that patterns exist
         assert!(!library.universal_patterns.is_empty());
     }
@@ -426,20 +439,28 @@ mod performance_tests {
         let duration = start.elapsed();
 
         // Should be very fast for O(1) lookups
-        assert!(duration.as_millis() < 10, "Lookups took too long: {:?}", duration);
+        assert!(
+            duration.as_millis() < 10,
+            "Lookups took too long: {:?}",
+            duration
+        );
     }
 
     #[test]
     fn test_index_generation_performance() {
         let library = create_large_test_library(1000);
-        
+
         let start = Instant::now();
         let mut builder = IndexBuilder::default();
         let _index = builder.build_from_library(&library).unwrap();
         let duration = start.elapsed();
 
         // Index generation should be reasonably fast
-        assert!(duration.as_millis() < 1000, "Index generation took too long: {:?}", duration);
+        assert!(
+            duration.as_millis() < 1000,
+            "Index generation took too long: {:?}",
+            duration
+        );
     }
 
     #[test]
@@ -447,10 +468,14 @@ mod performance_tests {
         let library = create_large_test_library(100);
         let mut builder = IndexBuilder::default();
         let index = builder.build_from_library(&library).unwrap();
-        
+
         // Memory usage should be reasonable
         let memory_used = index.metadata.memory_used;
-        assert!(memory_used < 10 * 1024 * 1024, "Memory usage too high: {} bytes", memory_used);
+        assert!(
+            memory_used < 10 * 1024 * 1024,
+            "Memory usage too high: {} bytes",
+            memory_used
+        );
     }
 
     fn create_large_test_library(pattern_count: usize) -> KnowledgeLibrary {
@@ -462,7 +487,11 @@ mod performance_tests {
                 name: format!("Pattern {}", i),
                 definition: CompressedString::new(&format!("Test pattern number {}", i)),
                 symptoms: vec![CompressedString::new(&format!("Symptom {}", i))],
-                impact: if i % 3 == 0 { ImpactLevel::High } else { ImpactLevel::Medium },
+                impact: if i % 3 == 0 {
+                    ImpactLevel::High
+                } else {
+                    ImpactLevel::Medium
+                },
                 category: AntiPatternCategory::Maintainability,
                 detection_methods: vec![],
                 solutions: vec![],
@@ -494,44 +523,57 @@ mod integration_tests {
 
         // Add comprehensive test data
         library.add_universal_pattern(create_comprehensive_test_pattern());
-        
+
         // Build index
         let mut builder = IndexBuilder::default();
         let index = builder.build_from_library(&library).unwrap();
-        
+
         // Create lookup
         let lookup = KnowledgeLibraryLookup::new(library, index);
-        
+
         // Test all lookup types
         assert!(lookup.get_pattern("comprehensive_test").is_some());
-        assert!(!lookup.get_language_patterns(SourceLanguage::Universal).is_empty());
-        assert!(!lookup.search_by_symptoms(&["test symptom".to_string()]).is_empty());
-        assert!(!lookup.get_patterns_by_category(AntiPatternCategory::Architectural).is_empty());
-        assert!(!lookup.search_by_tags(&["integration".to_string()]).is_empty());
+        assert!(!lookup
+            .get_language_patterns(SourceLanguage::Universal)
+            .is_empty());
+        assert!(!lookup
+            .search_by_symptoms(&["test symptom".to_string()])
+            .is_empty());
+        assert!(!lookup
+            .get_patterns_by_category(AntiPatternCategory::Architectural)
+            .is_empty());
+        assert!(!lookup
+            .search_by_tags(&["integration".to_string()])
+            .is_empty());
         assert!(!lookup.get_patterns_by_impact(ImpactLevel::High).is_empty());
     }
 
     #[test]
     fn test_compression_effectiveness() {
         let library = create_large_test_library(50);
-        
+
         // Simulate compression (simplified)
         let serialized = serde_json::to_string(&library).unwrap();
         let original_size = serialized.len();
-        
+
         // Test that serialization works
         assert!(original_size > 0);
-        
+
         // Test that the library can be deserialized
         let deserialized: KnowledgeLibrary = serde_json::from_str(&serialized).unwrap();
-        assert_eq!(deserialized.metadata.pattern_count, library.metadata.pattern_count);
+        assert_eq!(
+            deserialized.metadata.pattern_count,
+            library.metadata.pattern_count
+        );
     }
 
     fn create_comprehensive_test_pattern() -> PatternKnowledge {
         PatternKnowledge {
             id: "comprehensive_test".to_string(),
             name: "Comprehensive Test Pattern".to_string(),
-            definition: CompressedString::new("A comprehensive test pattern for integration testing"),
+            definition: CompressedString::new(
+                "A comprehensive test pattern for integration testing",
+            ),
             symptoms: vec![
                 CompressedString::new("Test symptom one"),
                 CompressedString::new("Test symptom two"),
@@ -539,34 +581,28 @@ mod integration_tests {
             ],
             impact: ImpactLevel::High,
             category: AntiPatternCategory::Architectural,
-            detection_methods: vec![
-                DetectionMethod::MetricThreshold {
-                    metric_name: "test_metric".to_string(),
-                    threshold: 100.0,
-                    operator: ComparisonOperator::GreaterThan,
-                },
-            ],
-            solutions: vec![
-                SolutionPattern {
-                    id: "test_solution".to_string(),
-                    title: "Test Solution".to_string(),
-                    implementation: CompressedString::new("Apply the test solution"),
-                    examples: vec![],
-                    effort_level: EffortLevel::Medium,
-                    prerequisites: vec!["Test understanding".to_string()],
-                    expected_impact: ImpactLevel::High,
-                },
-            ],
+            detection_methods: vec![DetectionMethod::MetricThreshold {
+                metric_name: "test_metric".to_string(),
+                threshold: 100.0,
+                operator: ComparisonOperator::GreaterThan,
+            }],
+            solutions: vec![SolutionPattern {
+                id: "test_solution".to_string(),
+                title: "Test Solution".to_string(),
+                implementation: CompressedString::new("Apply the test solution"),
+                examples: vec![],
+                effort_level: EffortLevel::Medium,
+                prerequisites: vec!["Test understanding".to_string()],
+                expected_impact: ImpactLevel::High,
+            }],
             examples: CodeExamples {
-                primary: vec![
-                    CodeExample {
-                        language: SourceLanguage::Universal,
-                        problem_code: CompressedString::new("// Problem code here"),
-                        solution_code: CompressedString::new("// Solution code here"),
-                        explanation: CompressedString::new("This is how to fix it"),
-                        file_context: Some("test.rs".to_string()),
-                    },
-                ],
+                primary: vec![CodeExample {
+                    language: SourceLanguage::Universal,
+                    problem_code: CompressedString::new("// Problem code here"),
+                    solution_code: CompressedString::new("// Solution code here"),
+                    explanation: CompressedString::new("This is how to fix it"),
+                    file_context: Some("test.rs".to_string()),
+                }],
                 variations: HashMap::new(),
             },
             language_variations: HashMap::new(),
@@ -590,7 +626,11 @@ mod integration_tests {
                 name: format!("Pattern {}", i),
                 definition: CompressedString::new(&format!("Test pattern number {}", i)),
                 symptoms: vec![CompressedString::new(&format!("Symptom {}", i))],
-                impact: if i % 3 == 0 { ImpactLevel::High } else { ImpactLevel::Medium },
+                impact: if i % 3 == 0 {
+                    ImpactLevel::High
+                } else {
+                    ImpactLevel::Medium
+                },
                 category: AntiPatternCategory::Maintainability,
                 detection_methods: vec![],
                 solutions: vec![],

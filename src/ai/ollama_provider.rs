@@ -37,9 +37,9 @@
 //! # Ok::<(), Box<dyn std::error::Error>>(())
 //! ```
 
-use log::{debug, info, warn};
 #[cfg(feature = "ai")]
-use crate::security::{SecureHttpClient, HttpSecurityConfig};
+use crate::security::{HttpSecurityConfig, SecureHttpClient};
+use log::{debug, info, warn};
 #[cfg(feature = "ai")]
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
@@ -199,18 +199,18 @@ impl OllamaProvider {
     pub fn new(config: OllamaConfig) -> Result<Self, String> {
         // Create secure HTTP client with appropriate timeouts
         let mut http_config = HttpSecurityConfig::default();
-        
+
         // Configure for local development (Ollama typically runs on localhost)
         #[cfg(debug_assertions)]
         {
             http_config.enforce_https = false; // Allow HTTP for local development
         }
-        
+
         // Set timeouts based on Ollama config
         http_config.timeout_seconds = config.timeout_seconds + 5;
         http_config.connect_timeout_seconds = 10;
         http_config.read_timeout_seconds = config.timeout_seconds;
-        
+
         let client = SecureHttpClient::new(http_config)
             .map_err(|e| format!("Failed to create secure HTTP client: {}", e))?;
 
@@ -250,7 +250,8 @@ impl OllamaProvider {
         // First check if service is running
         match timeout(
             Duration::from_secs(5),
-            self.client.get(&format!("{}/api/tags", self.config.api_url)),
+            self.client
+                .get(&format!("{}/api/tags", self.config.api_url)),
         )
         .await
         {
@@ -349,7 +350,8 @@ impl OllamaProvider {
         // Use timeout to prevent hanging
         let result = timeout(
             Duration::from_secs(self.config.timeout_seconds),
-            self.client.post(&format!("{}/api/generate", self.config.api_url), json_body),
+            self.client
+                .post(&format!("{}/api/generate", self.config.api_url), json_body),
         )
         .await;
 

@@ -1,5 +1,5 @@
 //! AI Knowledge Library Infrastructure
-//! 
+//!
 //! This module provides the complete infrastructure for Uveddi's AI Knowledge Library,
 //! including schema definitions, compression, indexing, loading, performance monitoring,
 //! concurrent access patterns, AI integration, error handling, and configuration management.
@@ -16,10 +16,10 @@
 //! - Build-time preprocessing for compression and index generation
 
 // Core modules
-pub mod schema;
 pub mod compression;
 pub mod indexing;
 pub mod loader;
+pub mod schema;
 
 // Advanced infrastructure modules
 // pub mod performance; // Temporarily disabled
@@ -29,18 +29,18 @@ pub mod loader;
 // pub mod config; // Temporarily disabled
 
 // Knowledge content modules
-pub mod patterns;
-pub mod language_integration;
 pub mod context_selection;
+pub mod language_integration;
+pub mod patterns;
 pub mod population;
 pub mod validation;
 // pub mod build_integration; // Temporarily disabled
 
 // Re-export core functionality
-pub use schema::*;
 pub use compression::*;
 pub use indexing::*;
 pub use loader::*;
+pub use schema::*;
 
 // Re-export infrastructure components
 // pub use performance::{
@@ -69,27 +69,23 @@ pub mod types;
 
 // Re-export knowledge content functionality
 pub use population::{
-    populate_knowledge_library, populate_from_detector_analysis, PopulationError
+    populate_from_detector_analysis, populate_knowledge_library, PopulationError,
 };
-pub use validation::{
-    KnowledgeValidator, ValidationReport, ValidationIssue, Severity
-};
+pub use validation::{KnowledgeValidator, Severity, ValidationIssue, ValidationReport};
 // pub use build_integration::{
 //     KnowledgeLibraryBuilder, BuildArtifacts, CompressionMetadata,
 //     generate_knowledge_library_for_build
 // }; // Temporarily disabled
-pub use language_integration::{
-    LanguageKnowledgeIntegrator, EnhancedPattern, LanguageContext, PatternMetadata,
-    LanguageIndices, IntegratedKnowledgeFactory
-};
 pub use context_selection::{
-    DynamicContextSelector, ContextSelectionConfig, ScoringWeights, SelectionStrategy,
-    AnalysisContext, DetectedPattern, CodebaseInfo, UserIntent, TokenConstraints,
-    SelectedContext, ContextMetadata, ContextAnalytics, ContextSelectionError
+    AnalysisContext, CodebaseInfo, ContextAnalytics, ContextMetadata, ContextSelectionConfig,
+    ContextSelectionError, DetectedPattern, DynamicContextSelector, ScoringWeights,
+    SelectedContext, SelectionStrategy, TokenConstraints, UserIntent,
+};
+pub use language_integration::{
+    EnhancedPattern, IntegratedKnowledgeFactory, LanguageContext, LanguageIndices,
+    LanguageKnowledgeIntegrator, PatternMetadata,
 };
 pub use types::{
-    AnalysisContext as EngineAnalysisContext, 
-    KnowledgeContext, 
-    ComplexityMetrics as EngineComplexityMetrics,
-    ContextSelector
+    AnalysisContext as EngineAnalysisContext, ComplexityMetrics as EngineComplexityMetrics,
+    ContextSelector, KnowledgeContext,
 };

@@ -135,11 +135,11 @@ pub use authentication::{AuthenticationConfig, OAuthProviderConfig, OidcProvider
 pub use authorization::AuthorizationEngine;
 pub use config::RateLimitingConfig;
 pub use config::{SecurityConfig, SecurityConfigLoader};
-pub use http_client::{SecureHttpClient, HttpSecurityConfig};
+pub use http_client::{HttpSecurityConfig, SecureHttpClient};
 pub use middleware::SecurityServices;
 pub use rate_limiting::RateLimiter;
-pub use secrets::{SecretStore, SecretStoreFactory, SecretRotationManager, RotationPolicy};
-pub use secure_config_loader::{SecureConfigLoader, SecretStoreHealthStatus};
+pub use secrets::{RotationPolicy, SecretRotationManager, SecretStore, SecretStoreFactory};
+pub use secure_config_loader::{SecretStoreHealthStatus, SecureConfigLoader};
 
 use crate::error::UveddiError;
 use std::path::Component;
@@ -247,14 +247,14 @@ pub fn validate_file_count(count: usize) -> Result<(), SecurityError> {
 }
 
 /// Comprehensive input validation function
-/// 
+///
 /// Validates input for SQL injection patterns, length constraints, and other security concerns.
 /// This is the primary validation function for general text inputs.
-/// 
+///
 /// # Arguments
 /// * `input` - The input string to validate
 /// * `field_name` - The name of the field being validated (for error reporting)
-/// 
+///
 /// # Returns
 /// * `Ok(())` - Input is valid
 /// * `Err(SecurityError)` - Input contains dangerous patterns or exceeds limits
@@ -266,42 +266,65 @@ pub fn validate_input(input: &str, field_name: &str) -> Result<(), SecurityError
             reason: "Contains potentially dangerous SQL patterns".to_string(),
         });
     }
-    
+
     // Check length constraints
     if input.len() > MAX_INPUT_LENGTH {
         return Err(SecurityError::InvalidInput {
             field: field_name.to_string(),
-            reason: format!("Input length {} exceeds maximum {}", input.len(), MAX_INPUT_LENGTH),
+            reason: format!(
+                "Input length {} exceeds maximum {}",
+                input.len(),
+                MAX_INPUT_LENGTH
+            ),
         });
     }
-    
+
     Ok(())
 }
 
 /// Check for SQL injection patterns
-/// 
+///
 /// Detects common SQL injection attack patterns in input strings.
 /// Uses a comprehensive list of dangerous SQL keywords and patterns.
 fn contains_sql_injection_patterns(input: &str) -> bool {
     let dangerous_patterns = [
-        ";", "--", "/*", "*/", "xp_", "sp_", 
-        "union", "select", "insert", "update", "delete", "drop",
-        "exec", "execute", "script", "javascript:",
-        "alter", "create", "truncate", "grant", "revoke",
+        ";",
+        "--",
+        "/*",
+        "*/",
+        "xp_",
+        "sp_",
+        "union",
+        "select",
+        "insert",
+        "update",
+        "delete",
+        "drop",
+        "exec",
+        "execute",
+        "script",
+        "javascript:",
+        "alter",
+        "create",
+        "truncate",
+        "grant",
+        "revoke",
     ];
-    
+
     let input_lower = input.to_lowercase();
-    dangerous_patterns.iter().any(|pattern| input_lower.contains(pattern))
+    dangerous_patterns
+        .iter()
+        .any(|pattern| input_lower.contains(pattern))
 }
 
 /// Validate URL format for API endpoints
-/// 
+///
 /// Validates that URLs are properly formatted and don't contain dangerous characters.
 /// Only allows HTTP and HTTPS protocols for security.
-/// 
+///
 /// # Arguments
 /// * `url` - The URL string to validate
-/// 
+///
 /// # Returns
 /// * `Ok(())` - URL is valid
 /// * `Err(SecurityError)` - URL is invalid or contains dangerous patterns
@@ -312,7 +335,7 @@ pub fn validate_url(url: &str) -> Result<(), SecurityError> {
             reason: "URL cannot be empty".to_string(),
         });
     }
-    
+
     // Basic URL validation
     if !url.starts_with("http://") && !url.starts_with("https://") {
         return Err(SecurityError::InvalidInput {
@@ -320,7 +343,7 @@ pub fn validate_url(url: &str) -> Result<(), SecurityError> {
             reason: "URL must start with http:// or https://".to_string(),
         });
     }
-    
+
     // Check for dangerous characters
     if url.contains("..") || url.contains("\\") || url.contains("\0") {
         return Err(SecurityError::InvalidInput {
@@ -328,25 +351,30 @@ pub fn validate_url(url: &str) -> Result<(), SecurityError> {
             reason: "URL contains invalid characters".to_string(),
         });
     }
-    
+
     Ok(())
 }
 
 /// Validate numeric input ranges
-/// 
+///
 /// Ensures numeric values fall within acceptable ranges to prevent overflow
 /// and other numeric-based attacks.
-/// 
+///
 /// # Arguments
 /// * `value` - The numeric value to validate
 /// * `min` - Minimum allowed value (inclusive)
 /// * `max` - Maximum allowed value (inclusive)
 /// * `field_name` - The name of the field being validated
-/// 
+///
 /// # Returns
 /// * `Ok(())` - Value is within range
 /// * `Err(SecurityError)` - Value is outside acceptable range
-pub fn validate_numeric_range(value: i32, min: i32, max: i32, field_name: &str) -> Result<(), SecurityError> {
+pub fn validate_numeric_range(
+    value: i32,
+    min: i32,
+    max: i32,
+    field_name: &str,
+) -> Result<(), SecurityError> {
     if value < min || value > max {
         return Err(SecurityError::InvalidInput {
             field: field_name.to_string(),
@@ -357,19 +385,23 @@ pub fn validate_numeric_range(value: i32, min: i32, max: i32, field_name: &str) 
 }
 
 /// Validate character set for specific fields
-/// 
+///
 /// Restricts input to only allowed characters to prevent injection attacks
 /// and ensure data integrity.
-/// 
+///
 /// # Arguments
 /// * `input` - The input string to validate
 /// * `field_name` - The name of the field being validated
 /// * `allowed_chars` - String containing all allowed characters
-/// 
+///
 /// # Returns
 /// * `Ok(())` - All characters are allowed
 /// * `Err(SecurityError)` - Input contains disallowed characters
-pub fn validate_character_set(input: &str, field_name: &str, allowed_chars: &str) -> Result<(), SecurityError> {
+pub fn validate_character_set(
+    input: &str,
+    field_name: &str,
+    allowed_chars: &str,
+) -> Result<(), SecurityError> {
     for ch in input.chars() {
         if !allowed_chars.contains(ch) {
             return Err(SecurityError::InvalidInput {
@@ -382,52 +414,56 @@ pub fn validate_character_set(input: &str, field_name: &str, allowed_chars: &str
 }
 
 /// Sanitize and validate file paths to prevent path traversal attacks
-/// 
+///
 /// This function implements comprehensive path security by:
 /// - Resolving all symbolic links using canonicalize()
 /// - Ensuring the resolved path stays within the base directory
 /// - Preventing Unicode normalization attacks
 /// - Blocking common path traversal patterns
-/// 
+///
 /// # Security Features
 /// - **Symlink Resolution**: Uses `std::fs::canonicalize()` to resolve all symbolic links
 /// - **Path Containment**: Strict verification that resolved path is within base directory
 /// - **Unicode Safety**: Handles Unicode normalization attacks
 /// - **Error Handling**: Secure error messages that don't leak path information
-/// 
+///
 /// # Arguments
 /// * `input_path` - The untrusted path to sanitize
 /// * `base_dir` - The trusted base directory that must contain the resolved path
-/// 
+///
 /// # Returns
 /// * `Ok(PathBuf)` - The canonicalized, safe path
 /// * `Err(SecurityError)` - Path traversal attempt or invalid path
-/// 
+///
 /// # Examples
 /// ```rust
 /// use uveddi::security::sanitize_path;
 /// use std::path::Path;
-/// 
+///
 /// // Safe path within base directory
 /// let safe_path = sanitize_path("./file.txt", "/safe/base")?;
-/// 
+///
 /// // Path traversal attempt - will return error
 /// let result = sanitize_path("../../../etc/passwd", "/safe/base");
 /// assert!(result.is_err());
 /// ```
 pub fn sanitize_path<P: AsRef<Path>>(input_path: P, base_dir: P) -> Result<PathBuf, SecurityError> {
     // Step 1: Canonicalize the base directory to get absolute, resolved path
-    let base = base_dir.as_ref().canonicalize()
+    let base = base_dir
+        .as_ref()
+        .canonicalize()
         .map_err(|_| SecurityError::InvalidBasePath)?;
-    
+
     // Step 2: Canonicalize the input path to resolve symlinks and normalize
-    let resolved = input_path.as_ref().canonicalize()
+    let resolved = input_path
+        .as_ref()
+        .canonicalize()
         .map_err(|_| SecurityError::InvalidPath)?;
-    
+
     // Step 3: Verify that the canonicalized path is within the base directory
     if !resolved.starts_with(&base) {
         return Err(SecurityError::PathTraversalAttempt);
     }
-    
+
     Ok(resolved)
 }

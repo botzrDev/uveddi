@@ -1,4 +1,3 @@
-
 //! High-performance serialization formats for cache data
 //!
 //! This module provides optimized binary serialization formats to minimize
@@ -103,7 +102,11 @@ impl CacheSerializer {
     }
 
     /// Write serialized data directly to a writer (for streaming)
-    pub fn serialize_to_writer<T, W>(&self, data: &T, mut writer: W) -> Result<(), SerializationError>
+    pub fn serialize_to_writer<T, W>(
+        &self,
+        data: &T,
+        mut writer: W,
+    ) -> Result<(), SerializationError>
     where
         T: Serialize,
         W: Write,
@@ -153,17 +156,17 @@ impl CacheSerializer {
     /// Get estimated compression ratio for the format
     pub fn compression_ratio(&self) -> f32 {
         match self.format {
-            SerializationFormat::ZeroCopy => 0.95, // Minimal overhead
+            SerializationFormat::ZeroCopy => 0.95,   // Minimal overhead
             SerializationFormat::MessagePack => 0.7, // Good compression
-            SerializationFormat::Bincode => 0.85, // Moderate compression
+            SerializationFormat::Bincode => 0.85,    // Moderate compression
         }
     }
 
     /// Get performance tier (higher is faster)
     pub fn performance_tier(&self) -> u8 {
         match self.format {
-            SerializationFormat::ZeroCopy => 10, // Fastest (zero-copy)
-            SerializationFormat::Bincode => 8,   // Fast
+            SerializationFormat::ZeroCopy => 10,   // Fastest (zero-copy)
+            SerializationFormat::Bincode => 8,     // Fast
             SerializationFormat::MessagePack => 6, // Good
         }
     }
@@ -171,11 +174,12 @@ impl CacheSerializer {
 
 use std::time::SystemTime;
 
-
-
 /// Serializable cache entry with metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "memory-optimization", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "memory-optimization",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize)
+)]
 #[cfg_attr(feature = "memory-optimization", archive(check_bytes))]
 pub struct CacheEntry<T> {
     pub data: T,
@@ -189,7 +193,9 @@ impl<T> CacheEntry<T> {
     pub fn new(data: T, content_hash: String, size_bytes: u64) -> Self {
         Self {
             data,
-            timestamp: crate::analysis::cache::wrappers::ArchivableSystemTime(std::time::SystemTime::now()),
+            timestamp: crate::analysis::cache::wrappers::ArchivableSystemTime(
+                std::time::SystemTime::now(),
+            ),
             access_count: 0,
             size_bytes,
             content_hash,
@@ -198,7 +204,8 @@ impl<T> CacheEntry<T> {
 
     pub fn touch(&mut self) {
         self.access_count += 1;
-        self.timestamp = crate::analysis::cache::wrappers::ArchivableSystemTime(std::time::SystemTime::now());
+        self.timestamp =
+            crate::analysis::cache::wrappers::ArchivableSystemTime(std::time::SystemTime::now());
     }
 
     pub fn age(&self) -> std::time::Duration {
@@ -212,7 +219,10 @@ mod tests {
     use serde::{Deserialize, Serialize};
 
     #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-    #[cfg_attr(feature = "memory-optimization", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+    #[cfg_attr(
+        feature = "memory-optimization",
+        derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize)
+    )]
     #[archive(check_bytes)]
     struct TestData {
         id: u64,
@@ -279,7 +289,7 @@ mod tests {
 
         entry.touch();
         assert_eq!(entry.access_count, 1);
-        assert!(entry.age().as_secs() >= 0);
+        assert!(entry.age().as_secs() < u64::MAX);
     }
 
     #[test]

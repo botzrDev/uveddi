@@ -143,10 +143,10 @@ impl IncrementalCache {
         let non_zero_capacity = std::num::NonZero::new(capacity).ok_or_else(|| {
             crate::error::UveddiError::config_error(
                 "Cache capacity must be greater than zero",
-                "IncrementalCacheConfig.max_analysis_results"
+                "IncrementalCacheConfig.max_analysis_results",
             )
         })?;
-        
+
         let analysis_cache = Arc::new(RwLock::new(LruCache::new(non_zero_capacity)));
 
         Ok(Self {
@@ -662,7 +662,10 @@ mod tests {
             .expect("Failed to store analysis result");
 
         // Retrieve result
-        let cached_result = cache.get_analysis_result(&file_path).await.expect("Failed to get analysis result");
+        let cached_result = cache
+            .get_analysis_result(&file_path)
+            .await
+            .expect("Failed to get analysis result");
         assert!(cached_result.is_some());
         assert_eq!(cached_result.expect("Expected cached result").len(), 0);
 
@@ -678,7 +681,10 @@ mod tests {
         let cache = IncrementalCache::new(config).expect("Failed to create cache");
 
         let file_path = PathBuf::from("nonexistent.rs");
-        let result = cache.get_analysis_result(&file_path).await.expect("Failed to get analysis result");
+        let result = cache
+            .get_analysis_result(&file_path)
+            .await
+            .expect("Failed to get analysis result");
 
         assert!(result.is_none());
 
@@ -713,10 +719,16 @@ mod tests {
         // Invalidate
         let mut changed_files = HashSet::new();
         changed_files.insert(file_path.clone());
-        cache.invalidate_files(&changed_files).await.expect("Failed to invalidate files");
+        cache
+            .invalidate_files(&changed_files)
+            .await
+            .expect("Failed to invalidate files");
 
         // Try to retrieve
-        let result = cache.get_analysis_result(&file_path).await.expect("Failed to get analysis result");
+        let result = cache
+            .get_analysis_result(&file_path)
+            .await
+            .expect("Failed to get analysis result");
         assert!(result.is_none());
 
         let stats = cache.get_statistics().await;
@@ -730,7 +742,7 @@ mod tests {
         stats.misses = 20;
 
         assert_eq!(stats.hit_rate(), 0.8);
-        assert_eq!(stats.miss_rate(), 0.2);
+        assert!((stats.miss_rate() - 0.2).abs() < f64::EPSILON);
 
         stats.memory_usage_bytes = 1024 * 1024; // 1MB
         assert_eq!(stats.memory_utilization_mb(), 1.0);

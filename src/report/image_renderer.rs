@@ -4,7 +4,7 @@
 //! Node.js rendering service for converting Mermaid.js diagrams to images.
 
 use crate::error::rendering::RenderingServiceError;
-use crate::security::{SecureHttpClient, HttpSecurityConfig};
+use crate::security::{HttpSecurityConfig, SecureHttpClient};
 use md5;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
@@ -170,22 +170,23 @@ impl ImageRenderer {
     pub fn with_config(config: RenderingServiceConfig) -> Result<Self, RenderingServiceError> {
         // Create secure HTTP client with appropriate configuration for rendering service
         let mut http_config = HttpSecurityConfig::default();
-        
+
         // Configure for local development (rendering service typically runs on localhost)
         #[cfg(debug_assertions)]
         {
             http_config.enforce_https = false; // Allow HTTP for local development
         }
-        
+
         // Set timeouts based on rendering service config
         http_config.timeout_seconds = config.timeout_seconds;
         http_config.connect_timeout_seconds = 10;
         http_config.read_timeout_seconds = config.timeout_seconds;
-        
-        let client = SecureHttpClient::new(http_config)
-            .map_err(|e| RenderingServiceError::NetworkError {
+
+        let client = SecureHttpClient::new(http_config).map_err(|e| {
+            RenderingServiceError::NetworkError {
                 message: format!("Failed to create secure HTTP client: {}", e),
-            })?;
+            }
+        })?;
 
         Ok(Self { client, config })
     }
@@ -194,11 +195,13 @@ impl ImageRenderer {
     pub async fn health_check(&self) -> Result<HealthResponse, RenderingServiceError> {
         let url = format!("{}/health", self.config.base_url);
 
-        let response = self.client.get(&url).await.map_err(|e| {
-            RenderingServiceError::NetworkError {
-                message: format!("Health check request failed: {}", e),
-            }
-        })?;
+        let response =
+            self.client
+                .get(&url)
+                .await
+                .map_err(|e| RenderingServiceError::NetworkError {
+                    message: format!("Health check request failed: {}", e),
+                })?;
 
         if !response.status().is_success() {
             return Err(match response.status().as_u16() {
@@ -267,8 +270,8 @@ impl ImageRenderer {
         let url = format!("{}/render", self.config.base_url);
 
         // Serialize the request to JSON
-        let json_body = serde_json::to_string(request)
-            .map_err(|e| RenderingServiceError::NetworkError {
+        let json_body =
+            serde_json::to_string(request).map_err(|e| RenderingServiceError::NetworkError {
                 message: format!("Failed to serialize request: {}", e),
             })?;
 
@@ -364,8 +367,8 @@ impl ImageRenderer {
         let url = format!("{}/render/batch", self.config.base_url);
 
         // Serialize the request to JSON
-        let json_body = serde_json::to_string(&request)
-            .map_err(|e| RenderingServiceError::NetworkError {
+        let json_body =
+            serde_json::to_string(&request).map_err(|e| RenderingServiceError::NetworkError {
                 message: format!("Failed to serialize batch request: {}", e),
             })?;
 
@@ -586,7 +589,6 @@ impl ImageRenderer {
         Ok(())
     }
 }
-
 
 #[cfg(test)]
 mod tests {

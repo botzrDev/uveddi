@@ -1,7 +1,7 @@
 //! Stub implementations for image rendering types when the image-rendering feature is not enabled
 
-use serde::{Deserialize, Serialize};
 use crate::error::rendering::RenderingServiceError;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ImageFormat {

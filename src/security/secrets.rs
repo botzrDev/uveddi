@@ -5,7 +5,7 @@
 
 use crate::security::errors::{SecurityError, SecurityResult};
 use async_trait::async_trait;
-use base64::{Engine, engine::general_purpose};
+use base64::{engine::general_purpose, Engine};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -164,7 +164,7 @@ impl VaultSecretStore {
     pub async fn new(vault_url: &str, vault_token: &str, mount_path: &str) -> SecurityResult<Self> {
         // For now, we'll create a simplified implementation
         // In production, this would use the vaultrs crate with proper client setup
-        
+
         let store = Self {
             vault_url: vault_url.to_string(),
             vault_token: vault_token.to_string(),
@@ -192,26 +192,36 @@ impl SecretStore for VaultSecretStore {
     async fn get_secret(&self, key: &str) -> SecurityResult<String> {
         // Simplified implementation for demonstration
         // In production, this would use the vaultrs crate to make actual Vault API calls
-        
+
         match key {
             "jwt_secret" => Ok("vault-injected-jwt-secret-production-ready".to_string()),
-            "database_url" => Ok("postgresql://vault_user:vault_pass@vault_db:5432/vault_db".to_string()),
+            "database_url" => {
+                Ok("postgresql://vault_user:vault_pass@vault_db:5432/vault_db".to_string())
+            }
             _ => Err(SecurityError::SecretNotFound {
                 key: key.to_string(),
-            })
+            }),
         }
     }
 
     async fn set_secret(&self, key: &str, value: &str) -> SecurityResult<()> {
         // Simplified implementation for demonstration
         // In production, this would use the vaultrs crate to store secrets in Vault
-        tracing::info!("Would store secret '{}' in Vault at {}", key, self.vault_url);
+        tracing::info!(
+            "Would store secret '{}' in Vault at {}",
+            key,
+            self.vault_url
+        );
         Ok(())
     }
 
     async fn delete_secret(&self, key: &str) -> SecurityResult<()> {
         // Simplified implementation for demonstration
-        tracing::info!("Would delete secret '{}' from Vault at {}", key, self.vault_url);
+        tracing::info!(
+            "Would delete secret '{}' from Vault at {}",
+            key,
+            self.vault_url
+        );
         Ok(())
     }
 
@@ -620,10 +630,10 @@ impl SecretRotationManager {
     /// Check which secrets need rotation
     pub async fn check_rotation_needed(&self) -> SecurityResult<Vec<String>> {
         let mut keys_needing_rotation = Vec::new();
-        
+
         for (key_pattern, policy) in &self.rotation_policies {
             let all_keys = self.secret_store.list_secret_keys().await?;
-            
+
             for key in all_keys {
                 if key.contains(key_pattern) {
                     // In a real implementation, you'd track last rotation dates
@@ -634,7 +644,7 @@ impl SecretRotationManager {
                 }
             }
         }
-        
+
         Ok(keys_needing_rotation)
     }
 
@@ -653,19 +663,19 @@ impl SecretRotationManager {
                 });
             }
         }
-        
+
         Ok(())
     }
 
     /// Generate a new JWT secret
     fn generate_jwt_secret(&self) -> String {
-        use ring::rand::SystemRandom;
         use ring::rand::SecureRandom;
-        
+        use ring::rand::SystemRandom;
+
         let rng = SystemRandom::new();
         let mut secret = [0u8; 64]; // 512-bit secret
         rng.fill(&mut secret).unwrap();
-        
+
         general_purpose::STANDARD.encode(secret)
     }
 }

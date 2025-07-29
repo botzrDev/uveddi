@@ -94,7 +94,10 @@ impl FocusManager {
         self.focusable_inputs.get(index).map(|b| b.as_ref())
     }
 
-    pub fn handle_key(&mut self, key: ratatui::crossterm::event::KeyEvent) -> Option<crate::tui::messages::AppMessage> {
+    pub fn handle_key(
+        &mut self,
+        key: ratatui::crossterm::event::KeyEvent,
+    ) -> Option<crate::tui::messages::AppMessage> {
         if let Some(index) = self.current_focus_index {
             if let Some(input) = self.focusable_inputs.get_mut(index) {
                 return input.handle_key(key);

@@ -1,5 +1,5 @@
 //! Compression-Optimized Types and Dictionary Training
-//! 
+//!
 //! This module implements compression-aware data structures and dictionary training
 //! for achieving 70-75% size reduction with zstd compression as specified in the
 //! compression research findings.
@@ -155,31 +155,48 @@ impl CompressedString {
     /// Classify content type for optimization
     fn classify_content(content: &str) -> ContentType {
         // Check for code patterns
-        if content.contains("fn ") || content.contains("def ") || content.contains("function ") ||
-           content.contains("class ") || content.contains("struct ") || content.contains("impl ") {
+        if content.contains("fn ")
+            || content.contains("def ")
+            || content.contains("function ")
+            || content.contains("class ")
+            || content.contains("struct ")
+            || content.contains("impl ")
+        {
             return ContentType::Code;
         }
 
         // Check for configuration patterns
-        if content.starts_with('{') || content.starts_with('[') || content.contains(": ") ||
-           content.contains("=") && content.lines().count() < 10 {
+        if content.starts_with('{')
+            || content.starts_with('[')
+            || content.contains(": ")
+            || content.contains("=") && content.lines().count() < 10
+        {
             return ContentType::Configuration;
         }
 
         // Check for documentation patterns
-        if content.contains("# ") || content.contains("## ") || content.contains("```") ||
-           content.contains("*") && content.contains("\n") {
+        if content.contains("# ")
+            || content.contains("## ")
+            || content.contains("```")
+            || content.contains("*") && content.contains("\n")
+        {
             return ContentType::Documentation;
         }
 
         // Check for error/diagnostic patterns
-        if content.contains("error:") || content.contains("warning:") || content.contains("Error") ||
-           content.contains("Exception") || content.contains("panic") {
+        if content.contains("error:")
+            || content.contains("warning:")
+            || content.contains("Error")
+            || content.contains("Exception")
+            || content.contains("panic")
+        {
             return ContentType::Diagnostic;
         }
 
         // Check for regex patterns
-        if content.contains("\\") && (content.contains("+") || content.contains("*") || content.contains("?")) {
+        if content.contains("\\")
+            && (content.contains("+") || content.contains("*") || content.contains("?"))
+        {
             return ContentType::Pattern;
         }
 
@@ -221,7 +238,7 @@ impl CompressedString {
 
         let total_words = words.len() as f32;
         let unique_words = word_counts.len() as f32;
-        
+
         // Higher repetition factor means more repeated content
         1.0 - (unique_words / total_words)
     }
@@ -239,7 +256,7 @@ impl CompressedString {
                     r"\b(if|else|for|while|loop|match|switch|case)\b",
                     r"\b(return|break|continue|yield|await|async)\b",
                 ];
-                
+
                 for pattern in &code_patterns {
                     if let Ok(regex) = regex::Regex::new(pattern) {
                         for mat in regex.find_iter(content) {
@@ -247,7 +264,7 @@ impl CompressedString {
                         }
                     }
                 }
-            },
+            }
             ContentType::Documentation => {
                 // Extract common documentation terms
                 let doc_patterns = ["## ", "### ", "#### ", "```", "**", "*", "`"];
@@ -256,16 +273,23 @@ impl CompressedString {
                         candidates.push(pattern.to_string());
                     }
                 }
-            },
+            }
             ContentType::Diagnostic => {
                 // Extract error message patterns
-                let error_patterns = ["error:", "warning:", "Error", "Exception", "panic!", "unwrap()"];
+                let error_patterns = [
+                    "error:",
+                    "warning:",
+                    "Error",
+                    "Exception",
+                    "panic!",
+                    "unwrap()",
+                ];
                 for pattern in &error_patterns {
                     if content.contains(pattern) {
                         candidates.push(pattern.to_string());
                     }
                 }
-            },
+            }
             _ => {
                 // Extract common words for general text
                 let words: Vec<&str> = content.split_whitespace().collect();
@@ -273,15 +297,16 @@ impl CompressedString {
                 for word in words {
                     *word_counts.entry(word).or_insert(0) += 1;
                 }
-                
+
                 // Get most frequent words as candidates
                 let mut sorted_words: Vec<_> = word_counts.into_iter().collect();
                 sorted_words.sort_by(|a, b| b.1.cmp(&a.1));
-                
+
                 candidates.extend(
-                    sorted_words.into_iter()
+                    sorted_words
+                        .into_iter()
                         .take(10)
-                        .map(|(word, _)| word.to_string())
+                        .map(|(word, _)| word.to_string()),
                 );
             }
         }
@@ -310,57 +335,212 @@ impl DictionaryTrainer {
     pub fn new() -> Self {
         let programming_keywords = [
             // Rust keywords
-            "fn", "let", "mut", "const", "static", "pub", "impl", "trait", "struct", "enum",
-            "match", "if", "else", "for", "while", "loop", "break", "continue", "return",
-            "use", "mod", "crate", "super", "self", "async", "await", "unsafe",
-            
+            "fn",
+            "let",
+            "mut",
+            "const",
+            "static",
+            "pub",
+            "impl",
+            "trait",
+            "struct",
+            "enum",
+            "match",
+            "if",
+            "else",
+            "for",
+            "while",
+            "loop",
+            "break",
+            "continue",
+            "return",
+            "use",
+            "mod",
+            "crate",
+            "super",
+            "self",
+            "async",
+            "await",
+            "unsafe",
             // Python keywords
-            "def", "class", "import", "from", "as", "if", "elif", "else", "for", "while",
-            "try", "except", "finally", "with", "lambda", "yield", "async", "await",
-            
+            "def",
+            "class",
+            "import",
+            "from",
+            "as",
+            "if",
+            "elif",
+            "else",
+            "for",
+            "while",
+            "try",
+            "except",
+            "finally",
+            "with",
+            "lambda",
+            "yield",
+            "async",
+            "await",
             // JavaScript/TypeScript keywords
-            "function", "var", "let", "const", "class", "extends", "interface", "type",
-            "import", "export", "from", "default", "async", "await", "promise",
-            
+            "function",
+            "var",
+            "let",
+            "const",
+            "class",
+            "extends",
+            "interface",
+            "type",
+            "import",
+            "export",
+            "from",
+            "default",
+            "async",
+            "await",
+            "promise",
             // Universal keywords
-            "true", "false", "null", "undefined", "void", "this", "super", "new",
-        ].iter().map(|s| s.to_string()).collect();
+            "true",
+            "false",
+            "null",
+            "undefined",
+            "void",
+            "this",
+            "super",
+            "new",
+        ]
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
 
         let api_patterns = vec![
             // Common method patterns
-            "get_", "set_", "is_", "has_", "can_", "should_", "will_",
-            "create_", "update_", "delete_", "remove_", "add_", "insert_",
-            "find_", "search_", "filter_", "map_", "reduce_", "collect_",
-            "parse_", "serialize_", "deserialize_", "encode_", "decode_",
-            "connect_", "disconnect_", "send_", "receive_", "read_", "write_",
+            "get_",
+            "set_",
+            "is_",
+            "has_",
+            "can_",
+            "should_",
+            "will_",
+            "create_",
+            "update_",
+            "delete_",
+            "remove_",
+            "add_",
+            "insert_",
+            "find_",
+            "search_",
+            "filter_",
+            "map_",
+            "reduce_",
+            "collect_",
+            "parse_",
+            "serialize_",
+            "deserialize_",
+            "encode_",
+            "decode_",
+            "connect_",
+            "disconnect_",
+            "send_",
+            "receive_",
+            "read_",
+            "write_",
             // Common suffixes
-            "_impl", "_test", "_error", "_result", "_option", "_future",
-            "_handler", "_service", "_client", "_server", "_config",
-        ].iter().map(|s| s.to_string()).collect();
+            "_impl",
+            "_test",
+            "_error",
+            "_result",
+            "_option",
+            "_future",
+            "_handler",
+            "_service",
+            "_client",
+            "_server",
+            "_config",
+        ]
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
 
         let architectural_terms = vec![
             // Design patterns
-            "singleton", "factory", "builder", "observer", "strategy", "adapter",
-            "facade", "proxy", "decorator", "command", "state", "visitor",
+            "singleton",
+            "factory",
+            "builder",
+            "observer",
+            "strategy",
+            "adapter",
+            "facade",
+            "proxy",
+            "decorator",
+            "command",
+            "state",
+            "visitor",
             // Architectural patterns
-            "mvc", "mvp", "mvvm", "repository", "service", "controller",
-            "middleware", "interceptor", "filter", "guard", "wrapper",
+            "mvc",
+            "mvp",
+            "mvvm",
+            "repository",
+            "service",
+            "controller",
+            "middleware",
+            "interceptor",
+            "filter",
+            "guard",
+            "wrapper",
             // Anti-patterns
-            "god_object", "spaghetti_code", "magic_number", "shotgun_surgery",
-            "feature_envy", "data_clump", "long_method", "large_class",
-        ].iter().map(|s| s.to_string()).collect();
+            "god_object",
+            "spaghetti_code",
+            "magic_number",
+            "shotgun_surgery",
+            "feature_envy",
+            "data_clump",
+            "long_method",
+            "large_class",
+        ]
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
 
         let error_patterns = vec![
-            "Error", "Exception", "Panic", "Failure", "Invalid", "Missing",
-            "Timeout", "Connection", "Network", "Permission", "Access",
-            "NotFound", "BadRequest", "InternalError", "ServiceUnavailable",
-        ].iter().map(|s| s.to_string()).collect();
+            "Error",
+            "Exception",
+            "Panic",
+            "Failure",
+            "Invalid",
+            "Missing",
+            "Timeout",
+            "Connection",
+            "Network",
+            "Permission",
+            "Access",
+            "NotFound",
+            "BadRequest",
+            "InternalError",
+            "ServiceUnavailable",
+        ]
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
 
         let documentation_patterns = vec![
-            "TODO", "FIXME", "NOTE", "WARNING", "DEPRECATED", "SAFETY",
-            "Examples", "Parameters", "Returns", "Errors", "Panics",
-            "See also", "Reference", "Documentation", "Usage",
-        ].iter().map(|s| s.to_string()).collect();
+            "TODO",
+            "FIXME",
+            "NOTE",
+            "WARNING",
+            "DEPRECATED",
+            "SAFETY",
+            "Examples",
+            "Parameters",
+            "Returns",
+            "Errors",
+            "Panics",
+            "See also",
+            "Reference",
+            "Documentation",
+            "Usage",
+        ]
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
 
         Self {
             programming_keywords,
@@ -386,30 +566,33 @@ impl DictionaryTrainer {
     }
 
     /// Generate a training dictionary for zstd compression
-    pub fn generate_dictionary(&self, max_size: usize) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+    pub fn generate_dictionary(
+        &self,
+        max_size: usize,
+    ) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
         if self.training_samples.is_empty() {
             return Err("No training samples provided".into());
         }
 
         // Combine all training samples
         let training_data = self.training_samples.join("\n");
-        
+
         // For now, create a simple dictionary from most frequent terms
         // In a full implementation, this would use zstd's dictionary training API
         let mut dictionary_content = String::new();
-        
+
         // Add programming keywords
         for keyword in &self.programming_keywords {
             dictionary_content.push_str(keyword);
             dictionary_content.push('\n');
         }
-        
+
         // Add API patterns
         for pattern in &self.api_patterns {
             dictionary_content.push_str(pattern);
             dictionary_content.push('\n');
         }
-        
+
         // Add architectural terms
         for term in &self.architectural_terms {
             dictionary_content.push_str(term);
@@ -428,9 +611,7 @@ impl DictionaryTrainer {
     /// Analyze training samples and generate metadata
     pub fn analyze_training_data(&self) -> DictionaryMetadata {
         let sample_count = self.training_samples.len();
-        let training_data_size = self.training_samples.iter()
-            .map(|s| s.len())
-            .sum();
+        let training_data_size = self.training_samples.iter().map(|s| s.len()).sum();
 
         // Analyze keyword frequency
         let mut keyword_frequency = HashMap::new();
@@ -444,7 +625,8 @@ impl DictionaryTrainer {
 
         let mut top_keywords: Vec<_> = keyword_frequency.into_iter().collect();
         top_keywords.sort_by(|a, b| b.1.cmp(&a.1));
-        let top_keywords: Vec<String> = top_keywords.into_iter()
+        let top_keywords: Vec<String> = top_keywords
+            .into_iter()
             .take(20)
             .map(|(keyword, _)| keyword)
             .collect();
@@ -461,7 +643,8 @@ impl DictionaryTrainer {
 
         let mut top_api_patterns: Vec<_> = api_frequency.into_iter().collect();
         top_api_patterns.sort_by(|a, b| b.1.cmp(&a.1));
-        let top_api_patterns: Vec<String> = top_api_patterns.into_iter()
+        let top_api_patterns: Vec<String> = top_api_patterns
+            .into_iter()
             .take(20)
             .map(|(pattern, _)| pattern)
             .collect();
@@ -471,7 +654,8 @@ impl DictionaryTrainer {
             (top_keywords.len() + top_api_patterns.len()) as f32 / (sample_count as f32 * 0.1)
         } else {
             0.0
-        }.min(1.0);
+        }
+        .min(1.0);
 
         DictionaryMetadata {
             sample_count,
@@ -569,7 +753,7 @@ mod tests {
         let mut trainer = DictionaryTrainer::new();
         trainer.add_sample("fn main() { let x = 42; }");
         trainer.add_sample("def calculate(): return value");
-        
+
         let metadata = trainer.analyze_training_data();
         assert_eq!(metadata.sample_count, 2);
         assert!(metadata.top_keywords.contains(&"fn".to_string()));
@@ -594,7 +778,7 @@ mod tests {
         trainer.add_sample("fn main() { println!(\"Hello\"); }");
         trainer.add_sample("class MyClass { public void method() {} }");
         trainer.add_sample("def function(): return value");
-        
+
         let dict = trainer.generate_dictionary(1024).unwrap();
         assert!(!dict.is_empty());
         assert!(dict.len() <= 1024);

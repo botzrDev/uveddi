@@ -158,8 +158,8 @@ pub use incremental::{
     IncrementalAnalysisEngine, IncrementalConfig, IncrementalStateManager,
 };
 pub use interactive_diagram_generator::{
-    InteractiveDiagramGenerator, InteractiveDiagramResult, InteractiveNodeMetadata,
-    InteractionConfig, NodePosition, ComponentMetrics as InteractiveComponentMetrics,
+    ComponentMetrics as InteractiveComponentMetrics, InteractionConfig,
+    InteractiveDiagramGenerator, InteractiveDiagramResult, InteractiveNodeMetadata, NodePosition,
 };
 pub use memory::{get_optimization_status, MemoryOptimizationConfig};
 pub use plugin_adapter::{WasmPluginAdapterFactory, WasmPluginDetectorAdapter};

@@ -1,10 +1,10 @@
 //! Comprehensive tests for the WASM plugin system
 
-use uveddi::{analysis::AnalysisEngine, plugins::WasmPluginEngine};
-use tempfile::TempDir;
-use uveddi::plugins::SecurityPolicy;
 use std::path::PathBuf;
 use std::sync::Arc;
+use tempfile::TempDir;
+use uveddi::plugins::SecurityPolicy;
+use uveddi::{analysis::AnalysisEngine, plugins::WasmPluginEngine};
 
 #[cfg(feature = "wasm-plugins")]
 mod wasm_plugin_tests {
@@ -82,8 +82,8 @@ mod wasm_plugin_tests {
 
     #[tokio::test]
     async fn test_ast_data_plane() {
-        use uveddi::ast::{ParsedFile, SourceLanguage, CustomAst};
         use tree_sitter::Tree;
+        use uveddi::ast::{CustomAst, ParsedFile, SourceLanguage};
 
         let data_plane = AstDataPlane::new().unwrap();
 
@@ -182,8 +182,8 @@ mod wasm_plugin_tests {
     }
 
     fn create_test_parsed_file() -> uveddi::ast::tree_sitter::ParsedFile {
-        use uveddi::ast::{ParsedFile, SourceLanguage, CustomAst};
         use tree_sitter::Tree;
+        use uveddi::ast::{CustomAst, ParsedFile, SourceLanguage};
 
         ParsedFile {
             path: PathBuf::from("test.rs"),
@@ -1095,8 +1095,8 @@ mod comprehensive_wasm_tests {
     }
 
     fn create_large_test_ast() -> uveddi::ast::tree_sitter::ParsedFile {
-        use uveddi::ast::{ParsedFile, SourceLanguage, CustomAst};
         use tree_sitter::Tree;
+        use uveddi::ast::{CustomAst, ParsedFile, SourceLanguage};
 
         let mut children = Vec::new();
         for i in 0..100 {
@@ -1129,8 +1129,8 @@ mod comprehensive_wasm_tests {
     }
 
     fn create_very_large_test_ast() -> uveddi::ast::tree_sitter::ParsedFile {
-        use uveddi::ast::{ParsedFile, SourceLanguage, CustomAst};
         use tree_sitter::Tree;
+        use uveddi::ast::{CustomAst, ParsedFile, SourceLanguage};
 
         let mut children = Vec::new();
         for i in 0..1000 {
@@ -1181,8 +1181,8 @@ mod comprehensive_wasm_tests {
     }
 
     fn create_javascript_test_ast() -> uveddi::ast::tree_sitter::ParsedFile {
-        use uveddi::ast::{ParsedFile, SourceLanguage, CustomAst};
         use tree_sitter::Tree;
+        use uveddi::ast::{CustomAst, ParsedFile, SourceLanguage};
 
         ParsedFile {
             path: PathBuf::from("test.js"),
@@ -1207,8 +1207,8 @@ mod comprehensive_wasm_tests {
     }
 
     fn create_python_test_ast() -> uveddi::ast::tree_sitter::ParsedFile {
-        use uveddi::ast::{ParsedFile, SourceLanguage, CustomAst};
         use tree_sitter::Tree;
+        use uveddi::ast::{CustomAst, ParsedFile, SourceLanguage};
 
         ParsedFile {
             path: PathBuf::from("test.py"),

@@ -170,7 +170,7 @@ impl Database {
         // Only sanitize to ensure safe storage
         anti_pattern_type.description =
             security::sanitize_description(&anti_pattern_type.description);
-        
+
         self.conn.execute(
             "INSERT OR IGNORE INTO anti_pattern_types (name, description, category) VALUES (?, ?, ?)",
             rusqlite::params![
@@ -209,7 +209,7 @@ impl Database {
                 .map_err(crate::error::UveddiError::from)?;
             security::validate_input(&issue.severity, "severity")
                 .map_err(crate::error::UveddiError::from)?;
-            
+
             // Validate line numbers
             if let Some(start_line) = issue.start_line {
                 security::validate_numeric_range(start_line, 1, 1_000_000, "start_line")
@@ -219,19 +219,19 @@ impl Database {
                 security::validate_numeric_range(end_line, 1, 1_000_000, "end_line")
                     .map_err(crate::error::UveddiError::from)?;
             }
-            
+
             // Validate code snippet if present
             if let Some(ref snippet) = issue.code_snippet {
                 security::validate_input(snippet, "code_snippet")
                     .map_err(crate::error::UveddiError::from)?;
             }
-            
+
             // Validate AI explanation if present
             if let Some(ref explanation) = issue.ai_explanation {
                 security::validate_input(explanation, "ai_explanation")
                     .map_err(crate::error::UveddiError::from)?;
             }
-            
+
             // Sanitize description and AI explanation after validation
             let sanitized_description = security::sanitize_description(&issue.description);
             let sanitized_ai_explanation = if let Some(ref explanation) = issue.ai_explanation {
@@ -239,7 +239,7 @@ impl Database {
             } else {
                 None
             };
-            
+
             tx.execute(
                 "INSERT INTO architectural_issues (analysis_run_id, anti_pattern_type_id, file_path, start_line, end_line, severity, description, code_snippet, ai_explanation) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 rusqlite::params![

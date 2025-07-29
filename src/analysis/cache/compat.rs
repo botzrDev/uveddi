@@ -1,11 +1,11 @@
 //! Compatibility layer for serialization types when memory-optimization is disabled
-//! 
+//!
 //! This module provides basic versions of serialization wrapper types that are used
 //! throughout the codebase, allowing compilation without the memory-optimization feature.
 
 use serde::{Deserialize, Serialize};
-use std::time::SystemTime;
 use std::path::PathBuf;
+use std::time::SystemTime;
 
 /// Basic wrapper for SystemTime when memory optimization is disabled
 #[derive(Debug, Clone, Serialize, Deserialize)]

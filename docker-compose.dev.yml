@@ -57,7 +57,7 @@ services:
     environment:
       - POSTGRES_DB=uveddi_test
       - POSTGRES_USER=uveddi_test
-      - POSTGRES_PASSWORD=test_password
+      - POSTGRES_PASSWORD=${POSTGRES_TEST_PASSWORD:-test_password}
     volumes:
       - postgres_test_data:/var/lib/postgresql/data
     ports:

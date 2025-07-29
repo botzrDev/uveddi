@@ -785,8 +785,10 @@ impl PerformanceRegressionDetector {
         hours_back: u64,
     ) -> Result<Option<BottleneckAnalysis>> {
         // Get recent performance data
-        let performance_data = self.get_performance_data_for_genetic_analysis(metric_name, hours_back).await?;
-        
+        let performance_data = self
+            .get_performance_data_for_genetic_analysis(metric_name, hours_back)
+            .await?;
+
         if performance_data.is_empty() {
             debug!(metric = %metric_name, "No performance data available for genetic analysis");
             return Ok(None);
@@ -800,8 +802,10 @@ impl PerformanceRegressionDetector {
             .with_crossover_rate(0.8);
 
         // Run genetic algorithm analysis
-        let analysis = genetic_detector.evolve_bottleneck_detection(&performance_data).await?;
-        
+        let analysis = genetic_detector
+            .evolve_bottleneck_detection(&performance_data)
+            .await?;
+
         info!(
             metric = %metric_name,
             bottlenecks_found = analysis.identified_bottlenecks.len(),
@@ -829,7 +833,7 @@ impl PerformanceRegressionDetector {
         let cutoff_timestamp = cutoff_time.duration_since(UNIX_EPOCH)?.as_secs();
 
         let mut performance_data = Vec::new();
-        
+
         // Convert baseline data to performance data points
         for data_point in &baseline.historical_values {
             let timestamp_u64 = data_point.timestamp.duration_since(UNIX_EPOCH)?.as_secs();
@@ -841,7 +845,11 @@ impl PerformanceRegressionDetector {
                     io_wait: 0.1,
                     network_latency: 10.0,
                     execution_time: data_point.value,
-                    throughput: if data_point.value > 0.0 { 1000.0 / data_point.value } else { 1000.0 },
+                    throughput: if data_point.value > 0.0 {
+                        1000.0 / data_point.value
+                    } else {
+                        1000.0
+                    },
                     component: metric_name.to_string(),
                 });
             }
@@ -849,7 +857,7 @@ impl PerformanceRegressionDetector {
 
         // Sort by timestamp
         performance_data.sort_by_key(|p| p.timestamp);
-        
+
         Ok(performance_data)
     }
 }

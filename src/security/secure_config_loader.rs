@@ -7,12 +7,12 @@ use crate::security::{
     authentication::AuthenticationConfig,
     config::SecurityConfig,
     errors::{SecurityError, SecurityResult},
-    secrets::{SecretStore, SecretStoreFactory, SecretStoreConfig},
+    secrets::{SecretStore, SecretStoreConfig, SecretStoreFactory},
 };
 use async_trait::async_trait;
-use base64::{Engine, engine::general_purpose};
+use base64::{engine::general_purpose, Engine};
 use std::sync::Arc;
-use tracing::{info, warn, error};
+use tracing::{error, info, warn};
 
 /// Secure configuration loader that injects secrets at runtime
 pub struct SecureConfigLoader {
@@ -23,9 +23,9 @@ pub struct SecureConfigLoader {
 impl SecureConfigLoader {
     /// Create a new secure configuration loader with HashiCorp Vault
     pub async fn with_vault(
-        vault_url: &str, 
-        vault_token: &str, 
-        mount_path: &str
+        vault_url: &str,
+        vault_token: &str,
+        mount_path: &str,
     ) -> SecurityResult<Self> {
         let mut config = SecretStoreConfig::default();
         config.vault_url = Some(vault_url.to_string());
@@ -33,7 +33,7 @@ impl SecureConfigLoader {
         config.vault_mount_path = Some(mount_path.to_string());
 
         let secret_store = SecretStoreFactory::create_store("vault", &config).await?;
-        
+
         Ok(Self {
             secret_store,
             fallback_to_env: true,
@@ -54,7 +54,7 @@ impl SecureConfigLoader {
             vault_config.vault_url = Some(url);
             vault_config.vault_token = Some(token);
             vault_config.vault_mount_path = mount_path.or_else(|| Some("secret".to_string()));
-            
+
             store_configs.push(("vault".to_string(), vault_config.clone()));
             info!("Added HashiCorp Vault as primary secret store");
         }
@@ -65,7 +65,7 @@ impl SecureConfigLoader {
         info!("Added environment variables as fallback secret store");
 
         let secret_store = SecretStoreFactory::create_composite_store(store_configs).await?;
-        
+
         Ok(Self {
             secret_store,
             fallback_to_env: true,
@@ -77,11 +77,15 @@ impl SecureConfigLoader {
     pub async fn for_testing() -> SecurityResult<Self> {
         let config = SecretStoreConfig::default();
         let secret_store = SecretStoreFactory::create_store("memory", &config).await?;
-        
+
         // Populate test secrets
-        secret_store.set_secret("jwt_secret", "test-jwt-secret-from-secure-store").await?;
-        secret_store.set_secret("database_url", "sqlite://test.db").await?;
-        
+        secret_store
+            .set_secret("jwt_secret", "test-jwt-secret-from-secure-store")
+            .await?;
+        secret_store
+            .set_secret("database_url", "sqlite://test.db")
+            .await?;
+
         Ok(Self {
             secret_store,
             fallback_to_env: false,
@@ -91,10 +95,10 @@ impl SecureConfigLoader {
     /// Load a complete security configuration with injected secrets
     pub async fn load_security_config(&self) -> SecurityResult<SecurityConfig> {
         info!("Loading security configuration with runtime secret injection");
-        
+
         // Start with base configuration
         let mut config = SecurityConfig::default();
-        
+
         // Inject JWT secret
         match self.get_secret_with_fallback("jwt_secret").await {
             Ok(jwt_secret) => {
@@ -112,7 +116,7 @@ impl SecureConfigLoader {
                 config.authentication.jwt_secret = self.generate_secure_jwt_secret();
             }
         }
-        
+
         // Inject database credentials if needed
         if let Ok(database_url) = self.get_secret_with_fallback("database_url").await {
             info!("Successfully injected database URL from secure store");
@@ -121,34 +125,48 @@ impl SecureConfigLoader {
 
         // Inject OAuth/OIDC secrets
         for provider in &mut config.authentication.oauth_providers {
-            let client_secret_key = format!("oauth_{}_client_secret", provider.provider_name.to_lowercase());
+            let client_secret_key = format!(
+                "oauth_{}_client_secret",
+                provider.provider_name.to_lowercase()
+            );
             if let Ok(client_secret) = self.get_secret_with_fallback(&client_secret_key).await {
                 provider.client_secret = client_secret;
-                info!("Injected OAuth client secret for provider: {}", provider.provider_name);
+                info!(
+                    "Injected OAuth client secret for provider: {}",
+                    provider.provider_name
+                );
             }
         }
 
         for provider in &mut config.authentication.oidc_providers {
-            let client_secret_key = format!("oidc_{}_client_secret", provider.provider_name.to_lowercase());
+            let client_secret_key = format!(
+                "oidc_{}_client_secret",
+                provider.provider_name.to_lowercase()
+            );
             if let Ok(client_secret) = self.get_secret_with_fallback(&client_secret_key).await {
                 provider.client_secret = client_secret;
-                info!("Injected OIDC client secret for provider: {}", provider.provider_name);
+                info!(
+                    "Injected OIDC client secret for provider: {}",
+                    provider.provider_name
+                );
             }
         }
 
         // Validate the final configuration
         config.validate()?;
-        
-        info!("Successfully loaded secure configuration with {} injected secrets", 
-              self.count_injected_secrets(&config).await);
-        
+
+        info!(
+            "Successfully loaded secure configuration with {} injected secrets",
+            self.count_injected_secrets(&config).await
+        );
+
         Ok(config)
     }
 
     /// Get authentication configuration with secure JWT secret injection
     pub async fn load_auth_config(&self) -> SecurityResult<AuthenticationConfig> {
         let mut config = AuthenticationConfig::default();
-        
+
         // Inject JWT secret from secure store
         match self.get_secret_with_fallback("jwt_secret").await {
             Ok(jwt_secret) => {
@@ -184,11 +202,11 @@ impl SecureConfigLoader {
     /// Generate a secure JWT secret as ultimate fallback
     fn generate_secure_jwt_secret(&self) -> String {
         use ring::rand::{SecureRandom, SystemRandom};
-        
+
         let rng = SystemRandom::new();
         let mut secret = [0u8; 64]; // 512-bit secret
         rng.fill(&mut secret).unwrap();
-        
+
         general_purpose::STANDARD.encode(secret)
     }
 
@@ -220,16 +238,23 @@ impl SecureConfigLoader {
     /// Pre-populate secrets for initial deployment
     pub async fn bootstrap_secrets(&self) -> SecurityResult<()> {
         info!("Bootstrapping initial secrets");
-        
+
         // Generate and store initial JWT secret if it doesn't exist
-        if !self.secret_store.secret_exists("jwt_secret").await.unwrap_or(false) {
+        if !self
+            .secret_store
+            .secret_exists("jwt_secret")
+            .await
+            .unwrap_or(false)
+        {
             let jwt_secret = self.generate_secure_jwt_secret();
-            self.secret_store.set_secret("jwt_secret", &jwt_secret).await?;
+            self.secret_store
+                .set_secret("jwt_secret", &jwt_secret)
+                .await?;
             info!("Generated and stored initial JWT secret");
         }
 
         // Add other bootstrap secrets as needed
-        
+
         Ok(())
     }
 }
@@ -250,7 +275,7 @@ mod tests {
     #[tokio::test]
     async fn test_secure_config_loading() {
         let loader = SecureConfigLoader::for_testing().await.unwrap();
-        
+
         let config = loader.load_security_config().await.unwrap();
         assert!(!config.authentication.jwt_secret.is_empty());
         assert!(config.authentication.jwt_secret.len() >= 32);
@@ -259,7 +284,7 @@ mod tests {
     #[tokio::test]
     async fn test_auth_config_loading() {
         let loader = SecureConfigLoader::for_testing().await.unwrap();
-        
+
         let auth_config = loader.load_auth_config().await.unwrap();
         assert_eq!(auth_config.jwt_secret, "test-jwt-secret-from-secure-store");
     }
@@ -267,7 +292,7 @@ mod tests {
     #[tokio::test]
     async fn test_health_check() {
         let loader = SecureConfigLoader::for_testing().await.unwrap();
-        
+
         let health = loader.health_check().await.unwrap();
         assert_eq!(health.status, "healthy");
     }
@@ -275,13 +300,17 @@ mod tests {
     #[tokio::test]
     async fn test_bootstrap_secrets() {
         let loader = SecureConfigLoader::for_testing().await.unwrap();
-        
+
         // Delete the existing JWT secret
-        loader.secret_store.delete_secret("jwt_secret").await.unwrap();
-        
+        loader
+            .secret_store
+            .delete_secret("jwt_secret")
+            .await
+            .unwrap();
+
         // Bootstrap should recreate it
         loader.bootstrap_secrets().await.unwrap();
-        
+
         let jwt_secret = loader.secret_store.get_secret("jwt_secret").await.unwrap();
         assert!(!jwt_secret.is_empty());
         assert!(jwt_secret.len() >= 32);
@@ -289,14 +318,25 @@ mod tests {
 
     #[tokio::test]
     async fn test_secret_injection_with_fallback() {
-        let loader = SecureConfigLoader::for_testing().await.unwrap();
-        
+        let config = SecretStoreConfig::default();
+        let secret_store = SecretStoreFactory::create_store("memory", &config)
+            .await
+            .unwrap();
+
+        let loader = SecureConfigLoader {
+            secret_store,
+            fallback_to_env: true, // Enable environment fallback for this test
+        };
+
         // Set environment variable for fallback testing
         std::env::set_var("UVEDDI_SECRET_NONEXISTENT_KEY", "fallback_value");
-        
-        let secret = loader.get_secret_with_fallback("nonexistent_key").await.unwrap();
+
+        let secret = loader
+            .get_secret_with_fallback("nonexistent_key")
+            .await
+            .unwrap();
         assert_eq!(secret, "fallback_value");
-        
+
         // Clean up
         std::env::remove_var("UVEDDI_SECRET_NONEXISTENT_KEY");
     }

@@ -1,10 +1,10 @@
 //! Smart prompting and RAG strategy implementation
 
 // use crate::ast::CustomAst;
-use crate::database::models::ArchitecturalIssue;
-use crate::semantic_search::{IndexedChunk, VectorIndex};
 use crate::ai::knowledge::KnowledgeContext;
+use crate::database::models::ArchitecturalIssue;
 use crate::error::UveddiError;
+use crate::semantic_search::{IndexedChunk, VectorIndex};
 
 /// Smart prompt builder for generating AI prompts for architectural issues
 #[derive(Clone)]
@@ -170,7 +170,10 @@ Given the following architectural issue, provide a detailed explanation and reco
     }
 
     /// Build the base prompt structure
-    fn build_base_prompt_structure(&self, issue: &ArchitecturalIssue) -> Result<String, UveddiError> {
+    fn build_base_prompt_structure(
+        &self,
+        issue: &ArchitecturalIssue,
+    ) -> Result<String, UveddiError> {
         let issue_context = format!(
             "**Architectural Issue Analysis**\n\
             Anti-pattern Type: {}\n\
@@ -205,7 +208,10 @@ Given the following architectural issue, provide a detailed explanation and reco
     }
 
     /// Build knowledge context section
-    fn build_knowledge_section(&self, knowledge_context: &KnowledgeContext) -> Result<String, UveddiError> {
+    fn build_knowledge_section(
+        &self,
+        knowledge_context: &KnowledgeContext,
+    ) -> Result<String, UveddiError> {
         let mut section = String::from("\n**ARCHITECTURAL KNOWLEDGE BASE**\n");
         section.push_str(&format!(
             "*Relevance Score: {:.1}% | Patterns: {} | Library Version: {}*\n\n",
@@ -228,7 +234,9 @@ Given the following architectural issue, provide a detailed explanation and reco
                 pattern.category,
                 pattern.definition.as_str(),
                 pattern.impact,
-                pattern.symptoms.iter()
+                pattern
+                    .symptoms
+                    .iter()
                     .map(|s| s.as_str())
                     .collect::<Vec<_>>()
                     .join(", "),
@@ -253,13 +261,17 @@ Given the following architectural issue, provide a detailed explanation and reco
     }
 
     /// Insert knowledge section into prompt
-    fn insert_knowledge_section(&self, mut prompt: String, knowledge_section: String) -> Result<String, UveddiError> {
+    fn insert_knowledge_section(
+        &self,
+        mut prompt: String,
+        knowledge_section: String,
+    ) -> Result<String, UveddiError> {
         // Find insertion point (before response format instructions)
         let insertion_markers = [
             "Respond in the following",
             "Please provide",
             "Your response should",
-            "Format your response"
+            "Format your response",
         ];
 
         let mut insertion_point = None;
@@ -284,7 +296,11 @@ Given the following architectural issue, provide a detailed explanation and reco
     }
 
     /// Add knowledge-specific instructions
-    fn add_knowledge_instructions(&self, mut prompt: String, knowledge_context: &KnowledgeContext) -> Result<String, UveddiError> {
+    fn add_knowledge_instructions(
+        &self,
+        mut prompt: String,
+        knowledge_context: &KnowledgeContext,
+    ) -> Result<String, UveddiError> {
         let instructions = format!(
             "\n**ANALYSIS INSTRUCTIONS:**\n\
             1. **Use the provided architectural knowledge** to enhance your analysis\n\
@@ -332,7 +348,7 @@ Given the following architectural issue, provide a detailed explanation and reco
             • Reference specific knowledge patterns when making recommendations\n\
             • Indicate uncertainty levels clearly in your confidence assessment\n\
             • Focus on actionable, practical solutions based on proven patterns\n\
-            • Avoid generic advice - tailor recommendations to the specific issue context\n"
+            • Avoid generic advice - tailor recommendations to the specific issue context\n",
         );
 
         Ok(prompt)

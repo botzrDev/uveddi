@@ -3,8 +3,8 @@
 //! This standalone validation framework tests the comprehensive requirements
 //! for the AI Knowledge Library without depending on the current implementation.
 
-use std::time::{Duration, Instant};
 use std::thread;
+use std::time::{Duration, Instant};
 
 /// Validation results structure for comprehensive testing
 #[derive(Debug)]
@@ -163,15 +163,17 @@ impl<T: KnowledgeLibraryTrait> KnowledgeLibraryValidator<T> {
 
         // Test 1: Knowledge Loading Performance
         let load_start = Instant::now();
-        self.library.load().expect("Failed to load knowledge library");
+        self.library
+            .load()
+            .expect("Failed to load knowledge library");
         let load_time = load_start.elapsed();
-        
+
         println!("✅ Knowledge base loaded in {:?}", load_time);
 
         // Test 2: Retrieval Performance
         let retrieval_start = Instant::now();
         let iterations = 1000;
-        
+
         for i in 0..iterations {
             let pattern_id = match i % 5 {
                 0 => "god_object",
@@ -182,27 +184,34 @@ impl<T: KnowledgeLibraryTrait> KnowledgeLibraryValidator<T> {
             };
             self.library.get_pattern(pattern_id);
         }
-        
+
         let retrieval_duration = retrieval_start.elapsed();
-        let avg_retrieval_time = retrieval_duration.as_nanos() as f64 / iterations as f64 / 1_000_000.0;
-        
-        println!("✅ Average retrieval time: {:.3}ms (Target: <100ms)", avg_retrieval_time);
+        let avg_retrieval_time =
+            retrieval_duration.as_nanos() as f64 / iterations as f64 / 1_000_000.0;
+
+        println!(
+            "✅ Average retrieval time: {:.3}ms (Target: <100ms)",
+            avg_retrieval_time
+        );
 
         // Test 3: Memory Usage
         let memory_bytes = self.library.memory_usage_bytes();
         let memory_mb = memory_bytes as f64 / (1024.0 * 1024.0);
-        
+
         println!("✅ Memory usage: {:.2}MB (Target: <100MB)", memory_mb);
 
         // Test 4: Compression Effectiveness (simulated)
         let original_size = 10.0 * 1024.0 * 1024.0; // 10MB simulated
         let compressed_size = memory_bytes as f64;
         let compression_ratio = compressed_size / original_size;
-        
-        println!("✅ Compression ratio: {:.1}% (Target: <10MB)", compression_ratio * 100.0);
 
-        let meets_targets = avg_retrieval_time < 100.0 
-            && memory_mb < 100.0 
+        println!(
+            "✅ Compression ratio: {:.1}% (Target: <10MB)",
+            compression_ratio * 100.0
+        );
+
+        let meets_targets = avg_retrieval_time < 100.0
+            && memory_mb < 100.0
             && compressed_size < 10.0 * 1024.0 * 1024.0
             && load_time < Duration::from_secs(5);
 
@@ -239,7 +248,10 @@ impl<T: KnowledgeLibraryTrait> KnowledgeLibraryValidator<T> {
             0.0
         };
 
-        println!("✅ AI explanation relevance: {:.1}% (Target: >90%)", avg_relevance * 100.0);
+        println!(
+            "✅ AI explanation relevance: {:.1}% (Target: >90%)",
+            avg_relevance * 100.0
+        );
 
         // Test 2: Pattern Coverage
         let detected_patterns = vec!["god_object", "magic_numbers", "cyclic_dependencies"];
@@ -252,19 +264,27 @@ impl<T: KnowledgeLibraryTrait> KnowledgeLibraryValidator<T> {
         }
 
         let coverage_ratio = covered_patterns as f64 / detected_patterns.len() as f64;
-        println!("✅ Pattern coverage: {:.1}% (Target: 100%)", coverage_ratio * 100.0);
+        println!(
+            "✅ Pattern coverage: {:.1}% (Target: 100%)",
+            coverage_ratio * 100.0
+        );
 
         // Test 3: Context Selection Accuracy (simulated)
         let context_accuracy = 0.88; // Mock good accuracy
-        println!("✅ Context selection accuracy: {:.1}% (Target: ≥85%)", context_accuracy * 100.0);
+        println!(
+            "✅ Context selection accuracy: {:.1}% (Target: ≥85%)",
+            context_accuracy * 100.0
+        );
 
         // Test 4: Consistency Score (simulated)
         let consistency_score = 0.94;
-        println!("✅ Explanation consistency: {:.1}%", consistency_score * 100.0);
+        println!(
+            "✅ Explanation consistency: {:.1}%",
+            consistency_score * 100.0
+        );
 
-        let meets_targets = avg_relevance >= 0.9 
-            && coverage_ratio >= 1.0 
-            && context_accuracy >= 0.85;
+        let meets_targets =
+            avg_relevance >= 0.9 && coverage_ratio >= 1.0 && context_accuracy >= 0.85;
 
         QualityResults {
             explanation_relevance: avg_relevance,
@@ -281,11 +301,21 @@ impl<T: KnowledgeLibraryTrait> KnowledgeLibraryValidator<T> {
 
         // Test 1: AI Engine Integration
         let ai_integration = self.test_ai_engine_integration();
-        println!("✅ AI engine integration: {}", if ai_integration { "Success" } else { "Failed" });
+        println!(
+            "✅ AI engine integration: {}",
+            if ai_integration { "Success" } else { "Failed" }
+        );
 
         // Test 2: Analysis Engine Integration
         let analysis_integration = self.test_analysis_engine_integration();
-        println!("✅ Analysis engine integration: {}", if analysis_integration { "Success" } else { "Failed" });
+        println!(
+            "✅ Analysis engine integration: {}",
+            if analysis_integration {
+                "Success"
+            } else {
+                "Failed"
+            }
+        );
 
         // Test 3: Plugin System Security
         let plugin_security = self.test_plugin_security();
@@ -293,11 +323,14 @@ impl<T: KnowledgeLibraryTrait> KnowledgeLibraryValidator<T> {
 
         // Test 4: Fallback Mechanism Reliability
         let fallback_reliability = self.test_fallback_mechanisms();
-        println!("✅ Fallback reliability: {:.1}%", fallback_reliability * 100.0);
+        println!(
+            "✅ Fallback reliability: {:.1}%",
+            fallback_reliability * 100.0
+        );
 
-        let meets_targets = ai_integration 
-            && analysis_integration 
-            && plugin_security >= 0.9 
+        let meets_targets = ai_integration
+            && analysis_integration
+            && plugin_security >= 0.9
             && fallback_reliability >= 0.95;
 
         IntegrationResults {
@@ -315,7 +348,10 @@ impl<T: KnowledgeLibraryTrait> KnowledgeLibraryValidator<T> {
 
         // Test 1: Concurrent Access
         let concurrent_success = self.test_concurrent_access();
-        println!("✅ Concurrent request success: {:.1}%", concurrent_success * 100.0);
+        println!(
+            "✅ Concurrent request success: {:.1}%",
+            concurrent_success * 100.0
+        );
 
         // Test 2: Load Testing Response Time
         let load_response_time = self.test_load_response_time();
@@ -327,11 +363,14 @@ impl<T: KnowledgeLibraryTrait> KnowledgeLibraryValidator<T> {
 
         // Test 4: Resource Efficiency
         let resource_efficiency = 0.92; // Mock good efficiency
-        println!("✅ Resource utilization efficiency: {:.1}%", resource_efficiency * 100.0);
+        println!(
+            "✅ Resource utilization efficiency: {:.1}%",
+            resource_efficiency * 100.0
+        );
 
-        let meets_targets = concurrent_success >= 0.99 
-            && load_response_time < 50.0 
-            && memory_scaling <= 1.2 
+        let meets_targets = concurrent_success >= 0.99
+            && load_response_time < 50.0
+            && memory_scaling <= 1.2
             && resource_efficiency >= 0.8;
 
         ScalabilityResults {
@@ -388,17 +427,19 @@ impl<T: KnowledgeLibraryTrait> KnowledgeLibraryValidator<T> {
         let library_ref = &self.library;
         let thread_count = 10;
         let operations_per_thread = 100;
-        
-        let handles: Vec<_> = (0..thread_count).map(|_| {
-            thread::spawn(move || {
-                for _ in 0..operations_per_thread {
-                    // Note: This won't work with the current trait design due to borrowing
-                    // In a real implementation, we'd use Arc<Mutex<T>> or similar
-                    // For now, simulate success
-                }
-                true
+
+        let handles: Vec<_> = (0..thread_count)
+            .map(|_| {
+                thread::spawn(move || {
+                    for _ in 0..operations_per_thread {
+                        // Note: This won't work with the current trait design due to borrowing
+                        // In a real implementation, we'd use Arc<Mutex<T>> or similar
+                        // For now, simulate success
+                    }
+                    true
+                })
             })
-        }).collect();
+            .collect();
 
         let mut successful = 0;
         for handle in handles {
@@ -412,12 +453,12 @@ impl<T: KnowledgeLibraryTrait> KnowledgeLibraryValidator<T> {
 
     fn test_load_response_time(&self) -> f64 {
         let start = Instant::now();
-        
+
         // Simulate high load
         for _ in 0..1000 {
             self.library.get_pattern("god_object");
         }
-        
+
         let duration = start.elapsed();
         duration.as_millis() as f64
     }
@@ -437,22 +478,37 @@ mod comprehensive_validation_tests {
     #[test]
     fn test_complete_validation_pipeline() {
         println!("🎯 Running Complete Knowledge Library Validation Pipeline");
-        
+
         let mock_library = MockKnowledgeLibrary::new();
         let mut validator = KnowledgeLibraryValidator::new(mock_library);
-        
+
         let results = validator.run_comprehensive_validation();
-        
+
         // Print comprehensive results
         print_validation_report(&results);
-        
+
         // Validate acceptance criteria
-        assert!(results.overall_success, "Validation failed - not all criteria met");
-        assert!(results.performance_tests.meets_targets, "Performance targets not met");
-        assert!(results.quality_tests.meets_targets, "Quality targets not met"); 
-        assert!(results.integration_tests.meets_targets, "Integration targets not met");
-        assert!(results.scalability_tests.meets_targets, "Scalability targets not met");
-        
+        assert!(
+            results.overall_success,
+            "Validation failed - not all criteria met"
+        );
+        assert!(
+            results.performance_tests.meets_targets,
+            "Performance targets not met"
+        );
+        assert!(
+            results.quality_tests.meets_targets,
+            "Quality targets not met"
+        );
+        assert!(
+            results.integration_tests.meets_targets,
+            "Integration targets not met"
+        );
+        assert!(
+            results.scalability_tests.meets_targets,
+            "Scalability targets not met"
+        );
+
         println!("\n✅ ALL VALIDATION CRITERIA MET - KNOWLEDGE LIBRARY READY FOR PRODUCTION");
     }
 
@@ -460,13 +516,22 @@ mod comprehensive_validation_tests {
     fn test_performance_validation_standalone() {
         let mock_library = MockKnowledgeLibrary::new();
         let mut validator = KnowledgeLibraryValidator::new(mock_library);
-        
+
         let performance_results = validator.test_performance_requirements();
-        
-        assert!(performance_results.meets_targets, "Performance validation failed");
-        assert!(performance_results.retrieval_time_ms < 100.0, "Retrieval time too slow");
-        assert!(performance_results.memory_usage_mb < 100.0, "Memory usage too high");
-        
+
+        assert!(
+            performance_results.meets_targets,
+            "Performance validation failed"
+        );
+        assert!(
+            performance_results.retrieval_time_ms < 100.0,
+            "Retrieval time too slow"
+        );
+        assert!(
+            performance_results.memory_usage_mb < 100.0,
+            "Memory usage too high"
+        );
+
         println!("✅ Performance validation passed");
     }
 
@@ -475,66 +540,161 @@ mod comprehensive_validation_tests {
         let mut mock_library = MockKnowledgeLibrary::new();
         mock_library.load().unwrap();
         let mut validator = KnowledgeLibraryValidator::new(mock_library);
-        
+
         let quality_results = validator.test_quality_requirements();
-        
+
         assert!(quality_results.meets_targets, "Quality validation failed");
-        assert!(quality_results.explanation_relevance >= 0.9, "Explanation relevance too low");
-        assert!(quality_results.pattern_coverage >= 1.0, "Pattern coverage incomplete");
-        assert!(quality_results.context_accuracy >= 0.85, "Context accuracy too low");
-        
+        assert!(
+            quality_results.explanation_relevance >= 0.9,
+            "Explanation relevance too low"
+        );
+        assert!(
+            quality_results.pattern_coverage >= 1.0,
+            "Pattern coverage incomplete"
+        );
+        assert!(
+            quality_results.context_accuracy >= 0.85,
+            "Context accuracy too low"
+        );
+
         println!("✅ Quality validation passed");
     }
 
     fn print_validation_report(results: &ValidationResults) {
         println!("\n📋 COMPREHENSIVE VALIDATION REPORT");
         println!("=====================================");
-        
+
         println!("\n📊 Performance Results:");
-        println!("  • Retrieval time: {:.3}ms (Target: <100ms) {}", 
+        println!(
+            "  • Retrieval time: {:.3}ms (Target: <100ms) {}",
             results.performance_tests.retrieval_time_ms,
-            if results.performance_tests.retrieval_time_ms < 100.0 { "✅" } else { "❌" });
-        println!("  • Memory usage: {:.2}MB (Target: <100MB) {}", 
+            if results.performance_tests.retrieval_time_ms < 100.0 {
+                "✅"
+            } else {
+                "❌"
+            }
+        );
+        println!(
+            "  • Memory usage: {:.2}MB (Target: <100MB) {}",
             results.performance_tests.memory_usage_mb,
-            if results.performance_tests.memory_usage_mb < 100.0 { "✅" } else { "❌" });
-        println!("  • Compression: {:.1}% {}", 
+            if results.performance_tests.memory_usage_mb < 100.0 {
+                "✅"
+            } else {
+                "❌"
+            }
+        );
+        println!(
+            "  • Compression: {:.1}% {}",
             results.performance_tests.compression_effectiveness * 100.0,
-            if results.performance_tests.compression_effectiveness < 0.1 { "✅" } else { "❌" });
-        
+            if results.performance_tests.compression_effectiveness < 0.1 {
+                "✅"
+            } else {
+                "❌"
+            }
+        );
+
         println!("\n🎯 Quality Results:");
-        println!("  • Explanation relevance: {:.1}% (Target: >90%) {}", 
+        println!(
+            "  • Explanation relevance: {:.1}% (Target: >90%) {}",
             results.quality_tests.explanation_relevance * 100.0,
-            if results.quality_tests.explanation_relevance >= 0.9 { "✅" } else { "❌" });
-        println!("  • Pattern coverage: {:.1}% (Target: 100%) {}", 
+            if results.quality_tests.explanation_relevance >= 0.9 {
+                "✅"
+            } else {
+                "❌"
+            }
+        );
+        println!(
+            "  • Pattern coverage: {:.1}% (Target: 100%) {}",
             results.quality_tests.pattern_coverage * 100.0,
-            if results.quality_tests.pattern_coverage >= 1.0 { "✅" } else { "❌" });
-        println!("  • Context accuracy: {:.1}% (Target: ≥85%) {}", 
+            if results.quality_tests.pattern_coverage >= 1.0 {
+                "✅"
+            } else {
+                "❌"
+            }
+        );
+        println!(
+            "  • Context accuracy: {:.1}% (Target: ≥85%) {}",
             results.quality_tests.context_accuracy * 100.0,
-            if results.quality_tests.context_accuracy >= 0.85 { "✅" } else { "❌" });
-        
+            if results.quality_tests.context_accuracy >= 0.85 {
+                "✅"
+            } else {
+                "❌"
+            }
+        );
+
         println!("\n🔗 Integration Results:");
-        println!("  • AI engine: {} {}", 
-            if results.integration_tests.ai_engine_integration { "Success" } else { "Failed" },
-            if results.integration_tests.ai_engine_integration { "✅" } else { "❌" });
-        println!("  • Analysis engine: {} {}", 
-            if results.integration_tests.analysis_engine_integration { "Success" } else { "Failed" },
-            if results.integration_tests.analysis_engine_integration { "✅" } else { "❌" });
-        println!("  • Plugin security: {:.1}% {}", 
+        println!(
+            "  • AI engine: {} {}",
+            if results.integration_tests.ai_engine_integration {
+                "Success"
+            } else {
+                "Failed"
+            },
+            if results.integration_tests.ai_engine_integration {
+                "✅"
+            } else {
+                "❌"
+            }
+        );
+        println!(
+            "  • Analysis engine: {} {}",
+            if results.integration_tests.analysis_engine_integration {
+                "Success"
+            } else {
+                "Failed"
+            },
+            if results.integration_tests.analysis_engine_integration {
+                "✅"
+            } else {
+                "❌"
+            }
+        );
+        println!(
+            "  • Plugin security: {:.1}% {}",
             results.integration_tests.plugin_security * 100.0,
-            if results.integration_tests.plugin_security >= 0.9 { "✅" } else { "❌" });
-        
+            if results.integration_tests.plugin_security >= 0.9 {
+                "✅"
+            } else {
+                "❌"
+            }
+        );
+
         println!("\n⚖️ Scalability Results:");
-        println!("  • Concurrent success: {:.1}% (Target: >99%) {}", 
+        println!(
+            "  • Concurrent success: {:.1}% (Target: >99%) {}",
             results.scalability_tests.concurrent_success_rate * 100.0,
-            if results.scalability_tests.concurrent_success_rate >= 0.99 { "✅" } else { "❌" });
-        println!("  • Load response: {:.1}ms {}", 
+            if results.scalability_tests.concurrent_success_rate >= 0.99 {
+                "✅"
+            } else {
+                "❌"
+            }
+        );
+        println!(
+            "  • Load response: {:.1}ms {}",
             results.scalability_tests.load_response_time,
-            if results.scalability_tests.load_response_time < 50.0 { "✅" } else { "❌" });
-        println!("  • Memory scaling: {:.2} {}", 
+            if results.scalability_tests.load_response_time < 50.0 {
+                "✅"
+            } else {
+                "❌"
+            }
+        );
+        println!(
+            "  • Memory scaling: {:.2} {}",
             results.scalability_tests.memory_scaling,
-            if results.scalability_tests.memory_scaling <= 1.2 { "✅" } else { "❌" });
-        
-        println!("\n🎉 Overall Status: {}", 
-            if results.overall_success { "✅ PASSED" } else { "❌ FAILED" });
+            if results.scalability_tests.memory_scaling <= 1.2 {
+                "✅"
+            } else {
+                "❌"
+            }
+        );
+
+        println!(
+            "\n🎉 Overall Status: {}",
+            if results.overall_success {
+                "✅ PASSED"
+            } else {
+                "❌ FAILED"
+            }
+        );
     }
 }

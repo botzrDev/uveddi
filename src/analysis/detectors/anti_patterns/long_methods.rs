@@ -25,13 +25,13 @@
 use crate::analysis::{AnalysisDetector, AnalysisError};
 use crate::ast::tree_sitter::{Node, Query, QueryCursor};
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
-use tree_sitter::StreamingIterator;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use async_trait::async_trait;
 use futures::TryFutureExt;
 use log::debug;
 use log::info;
 use std::collections::HashMap;
+use tree_sitter::StreamingIterator;
 
 /// Represents metrics collected for a method/function
 #[derive(Debug, Clone)]
@@ -367,15 +367,14 @@ impl LongMethodsDetector {
 
             let mut cursor = QueryCursor::new();
             let mut matches = cursor.matches(&function_query, tree.root_node(), source);
-            
+
             // Process matches directly to avoid lifetime issues
             let mut metrics = Vec::new();
             while let Some(query_match) = matches.next() {
                 if let Some(function_node) = query_match.captures.get(0) {
-                    if let (Some(name_node), Some(body_node)) = (
-                        query_match.captures.get(1), 
-                        query_match.captures.get(2)
-                    ) {
+                    if let (Some(name_node), Some(body_node)) =
+                        (query_match.captures.get(1), query_match.captures.get(2))
+                    {
                         match self.calculate_method_metrics(
                             name_node.node,
                             body_node.node,
@@ -392,7 +391,7 @@ impl LongMethodsDetector {
                     }
                 }
             }
-            
+
             Ok(metrics)
         }
     }
@@ -1207,7 +1206,8 @@ fn test_function(param1: i32, param2: String) -> i32 {
 }
 "#;
 
-        let tree = parser.parse(rust_code, None)
+        let tree = parser
+            .parse(rust_code, None)
             .ok_or_else(|| AnalysisError::parse_error("Failed to parse Rust test code"))?;
         let source = rust_code.as_bytes();
         let language = tree.language();
@@ -1215,28 +1215,43 @@ fn test_function(param1: i32, param2: String) -> i32 {
         let function_query = detector.create_rust_function_query(&language)?;
         let mut cursor = tree_sitter::QueryCursor::new();
         let mut matches = cursor.matches(&function_query, tree.root_node(), source);
-        
+
         // Extract the first match and get owned data
         let mut found_match = false;
         let mut name_node = None;
-        let mut body_node = None; 
+        let mut body_node = None;
         let mut function_node = None;
-        
+
         if let Some(query_match) = matches.next() {
             found_match = true;
             let captures = &query_match.captures;
-            function_node = Some(captures.get(0)
-                .ok_or_else(|| AnalysisError::query_error("Missing function capture"))?.node);
-            name_node = Some(captures.get(1)
-                .ok_or_else(|| AnalysisError::query_error("Missing name capture"))?.node);
-            body_node = Some(captures.get(2)
-                .ok_or_else(|| AnalysisError::query_error("Missing body capture"))?.node);
+            function_node = Some(
+                captures
+                    .get(0)
+                    .ok_or_else(|| AnalysisError::query_error("Missing function capture"))?
+                    .node,
+            );
+            name_node = Some(
+                captures
+                    .get(1)
+                    .ok_or_else(|| AnalysisError::query_error("Missing name capture"))?
+                    .node,
+            );
+            body_node = Some(
+                captures
+                    .get(2)
+                    .ok_or_else(|| AnalysisError::query_error("Missing body capture"))?
+                    .node,
+            );
         }
-        
+
         assert!(found_match, "Should find function");
-        let name_node = name_node.ok_or_else(|| AnalysisError::data_not_found_error("Name node not found"))?;
-        let body_node = body_node.ok_or_else(|| AnalysisError::data_not_found_error("Body node not found"))?;
-        let function_node = function_node.ok_or_else(|| AnalysisError::data_not_found_error("Function node not found"))?;
+        let name_node =
+            name_node.ok_or_else(|| AnalysisError::data_not_found_error("Name node not found"))?;
+        let body_node =
+            body_node.ok_or_else(|| AnalysisError::data_not_found_error("Body node not found"))?;
+        let function_node = function_node
+            .ok_or_else(|| AnalysisError::data_not_found_error("Function node not found"))?;
 
         let metrics = detector.calculate_method_metrics(
             name_node,
@@ -1267,7 +1282,8 @@ fn test_function(param1: i32, param2: String) -> i32 {
 
         // Create a mock node that will fail utf8_text extraction
         let rust_code = "fn test() {}";
-        let tree = parser.parse(rust_code, None)
+        let tree = parser
+            .parse(rust_code, None)
             .ok_or_else(|| AnalysisError::parse_error("Failed to parse Rust test code"))?;
         let source = rust_code.as_bytes();
         let language = tree.language();
@@ -1275,16 +1291,22 @@ fn test_function(param1: i32, param2: String) -> i32 {
         let function_query = detector.create_rust_function_query(&language)?;
         let mut cursor = tree_sitter::QueryCursor::new();
         let mut matches = cursor.matches(&function_query, tree.root_node(), source);
-        
+
         if let Some(query_match) = matches.next() {
             let mat = query_match;
             let captures = &mat.captures;
-            let name_node = captures.get(1)
-                .ok_or_else(|| AnalysisError::query_error("Missing name capture"))?.node;
-            let body_node = captures.get(2)
-                .ok_or_else(|| AnalysisError::query_error("Missing body capture"))?.node;
-            let function_node = captures.get(0)
-                .ok_or_else(|| AnalysisError::query_error("Missing function capture"))?.node;
+            let name_node = captures
+                .get(1)
+                .ok_or_else(|| AnalysisError::query_error("Missing name capture"))?
+                .node;
+            let body_node = captures
+                .get(2)
+                .ok_or_else(|| AnalysisError::query_error("Missing body capture"))?
+                .node;
+            let function_node = captures
+                .get(0)
+                .ok_or_else(|| AnalysisError::query_error("Missing function capture"))?
+                .node;
 
             // This should work normally, but we can test the error path conceptually
             let result = detector.calculate_method_metrics(
@@ -1330,7 +1352,8 @@ fn function_two() {
 }
 "#;
 
-        let tree = parser.parse(rust_code, None)
+        let tree = parser
+            .parse(rust_code, None)
             .ok_or_else(|| AnalysisError::parse_error("Failed to parse Rust test code"))?;
         let source = rust_code.as_bytes();
         let language = tree.language();
@@ -1338,15 +1361,14 @@ fn function_two() {
         let function_query = detector.create_rust_function_query(&language)?;
         let mut cursor = tree_sitter::QueryCursor::new();
         let mut matches_iter = cursor.matches(&function_query, tree.root_node(), source);
-        
+
         // Process matches directly like the main analysis does
         let mut metrics = Vec::new();
         while let Some(query_match) = matches_iter.next() {
             if let Some(function_node) = query_match.captures.get(0) {
-                if let (Some(name_node), Some(body_node)) = (
-                    query_match.captures.get(1), 
-                    query_match.captures.get(2)
-                ) {
+                if let (Some(name_node), Some(body_node)) =
+                    (query_match.captures.get(1), query_match.captures.get(2))
+                {
                     match detector.calculate_method_metrics(
                         name_node.node,
                         body_node.node,
@@ -1419,7 +1441,8 @@ fn valid_function() {
 }
 "#;
 
-        let tree = parser.parse(rust_code, None)
+        let tree = parser
+            .parse(rust_code, None)
             .ok_or_else(|| AnalysisError::parse_error("Failed to parse Rust test code"))?;
         let source = rust_code.as_bytes();
         let language = tree.language();
@@ -1427,15 +1450,14 @@ fn valid_function() {
         let function_query = detector.create_rust_function_query(&language)?;
         let mut cursor = tree_sitter::QueryCursor::new();
         let mut matches_iter = cursor.matches(&function_query, tree.root_node(), source);
-        
+
         // Process matches directly like the main analysis does
         let mut metrics = Vec::new();
         while let Some(query_match) = matches_iter.next() {
             if let Some(function_node) = query_match.captures.get(0) {
-                if let (Some(name_node), Some(body_node)) = (
-                    query_match.captures.get(1), 
-                    query_match.captures.get(2)
-                ) {
+                if let (Some(name_node), Some(body_node)) =
+                    (query_match.captures.get(1), query_match.captures.get(2))
+                {
                     match detector.calculate_method_metrics(
                         name_node.node,
                         body_node.node,

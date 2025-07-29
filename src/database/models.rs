@@ -92,7 +92,10 @@ pub struct AnalysisRun {
 /// - `"high"`: Important issues that impact code quality
 /// - `"critical"`: Severe issues that require immediate attention
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
-#[cfg_attr(feature = "memory-optimization", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "memory-optimization",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize)
+)]
 pub struct ArchitecturalIssue {
     /// Unique identifier for this issue (auto-generated)
     pub issue_id: Option<i64>,

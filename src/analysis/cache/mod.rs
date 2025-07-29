@@ -1,5 +1,5 @@
 //! Multi-layered cache system for Uveddi analysis engine
-//! 
+//!
 //! This module implements a comprehensive caching strategy with:
 //! - L1: In-memory cache for hot data (LRU eviction)
 //! - L2: Disk-based cache with efficient binary serialization
@@ -7,9 +7,9 @@
 //! - Real-time cache metrics and monitoring
 
 pub mod ast;
+pub mod engine_cache;
 pub mod invalidation;
 pub mod metrics;
-pub mod engine_cache;
 
 #[cfg(feature = "memory-optimization")]
 pub mod multilayer_cache;
@@ -20,23 +20,23 @@ pub mod serialization;
 pub mod compat;
 
 pub use ast::AstCache;
-pub use invalidation::{InvalidationStrategy, ContentHashInvalidator};
+pub use invalidation::{ContentHashInvalidator, InvalidationStrategy};
 pub use metrics::{CacheMetrics, CacheMonitor};
 
 #[cfg(feature = "memory-optimization")]
-pub use multilayer_cache::{MultiLayerCache, CacheLayer, CacheConfig as MultiLayerCacheConfig};
+pub use multilayer_cache::{CacheConfig as MultiLayerCacheConfig, CacheLayer, MultiLayerCache};
 #[cfg(feature = "memory-optimization")]
-pub use serialization::{SerializationFormat, CacheSerializer};
+pub use serialization::{CacheSerializer, SerializationFormat};
 
 // Compatibility wrappers for when memory optimization is disabled
 #[cfg(not(feature = "memory-optimization"))]
 pub mod wrappers {
-    pub use super::compat::{ArchivableSystemTime, ArchivablePathBuf};
+    pub use super::compat::{ArchivablePathBuf, ArchivableSystemTime};
 }
 
 #[cfg(feature = "memory-optimization")]
 pub mod wrappers {
-    pub use super::serialization::wrappers::{ArchivableSystemTime, ArchivablePathBuf};
+    pub use super::serialization::wrappers::{ArchivablePathBuf, ArchivableSystemTime};
 }
 
 pub use engine_cache::{EngineCache, EngineCacheConfig, EngineCacheStats};

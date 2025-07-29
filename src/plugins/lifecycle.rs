@@ -90,7 +90,9 @@ impl PluginLifecycleManager {
             let wasi_ctx = security_policy.configure_wasi_context()?.build_p1();
 
             // NOTE: UV-108 - Add basic WASI support (filesystem traits temporarily disabled)
-            wasmtime_wasi::preview1::add_to_linker_sync(&mut linker, |host: &mut HostContext| &mut host.wasi_ctx)?;
+            wasmtime_wasi::preview1::add_to_linker_sync(&mut linker, |host: &mut HostContext| {
+                &mut host.wasi_ctx
+            })?;
 
             // Add our custom host functions
             self.add_host_functions(&mut linker)?;

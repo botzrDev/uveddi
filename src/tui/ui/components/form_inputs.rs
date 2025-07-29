@@ -951,7 +951,8 @@ mod tests {
 
     #[test]
     fn test_path_picker_validation() {
-        let mut picker = PathPicker::new("Test", FormField::OutputFile).with_extension_filter("txt");
+        let mut picker =
+            PathPicker::new("Test", FormField::OutputFile).with_extension_filter("txt");
         picker.set_value("test.txt");
         assert!(picker.validate().is_valid);
 

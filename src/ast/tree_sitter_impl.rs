@@ -1,3 +1,4 @@
+use crate::analysis::cache::wrappers::{ArchivablePathBuf, ArchivableSystemTime};
 use crate::security;
 use lru::LruCache;
 use serde::{Deserialize, Serialize};
@@ -8,7 +9,6 @@ use std::hash::{DefaultHasher, Hash, Hasher};
 use std::io::{Read, Write};
 use std::num::NonZeroUsize;
 use std::path::{Path, PathBuf};
-use crate::analysis::cache::wrappers::{ArchivableSystemTime, ArchivablePathBuf};
 use std::sync::{Arc, Mutex, MutexGuard};
 use tracing::{info, warn};
 use tree_sitter::{Parser, Tree};
@@ -109,7 +109,10 @@ impl AstParser {
 
     /// Get cache statistics for monitoring (UV-152). Public-facing method.
     pub fn get_cache_stats(&self) -> Result<CacheStats, AstError> {
-        let cache_guard = self.cache.lock().map_err(|_| AstError::Other("Cache mutex poisoned".to_string()))?;
+        let cache_guard = self
+            .cache
+            .lock()
+            .map_err(|_| AstError::Other("Cache mutex poisoned".to_string()))?;
         Ok(self.get_cache_stats_with_lock(&cache_guard))
     }
 
@@ -120,7 +123,10 @@ impl AstParser {
 
     /// Get current cache utilization as percentage
     pub fn get_cache_utilization(&self) -> Result<f64, AstError> {
-        let cache = self.cache.lock().map_err(|_| AstError::Other("Cache mutex poisoned".to_string()))?;
+        let cache = self
+            .cache
+            .lock()
+            .map_err(|_| AstError::Other("Cache mutex poisoned".to_string()))?;
         Ok(cache.len() as f64 / self.max_cache_size.get() as f64 * 100.0)
     }
 
@@ -146,8 +152,14 @@ impl AstParser {
 
     /// Helper method to safely reset cache stats
     fn reset_cache_stats_safe(&self) -> Result<(), AstError> {
-        let mut hits = self.cache_hits.lock().map_err(|_| AstError::Other("Cache hits mutex poisoned".to_string()))?;
-        let mut misses = self.cache_misses.lock().map_err(|_| AstError::Other("Cache misses mutex poisoned".to_string()))?;
+        let mut hits = self
+            .cache_hits
+            .lock()
+            .map_err(|_| AstError::Other("Cache hits mutex poisoned".to_string()))?;
+        let mut misses = self
+            .cache_misses
+            .lock()
+            .map_err(|_| AstError::Other("Cache misses mutex poisoned".to_string()))?;
         *hits = 0;
         *misses = 0;
         Ok(())
@@ -172,9 +184,9 @@ impl AstParser {
                             if let Some(name_node) = child.child_by_field_name("name") {
                                 let name = name_node
                                     .utf8_text(source.as_bytes())
-                                    .map_err(|_|
+                                    .map_err(|_| {
                                         AstError::Other("Failed to get node text".to_string())
-                                    )?
+                                    })?
                                     .to_string();
                                 struct_names.push(name.clone());
                                 structs.insert(name, Vec::new());
@@ -184,9 +196,9 @@ impl AstParser {
                             if let Some(type_node) = child.child_by_field_name("type") {
                                 let type_name = type_node
                                     .utf8_text(source.as_bytes())
-                                    .map_err(|_|
+                                    .map_err(|_| {
                                         AstError::Other("Failed to get node text".to_string())
-                                    )?
+                                    })?
                                     .to_string();
                                 let mut methods = Vec::new();
                                 if let Some(body_node) = child.child_by_field_name("body") {
@@ -197,11 +209,11 @@ impl AstParser {
                                             {
                                                 let method_name = name_node
                                                     .utf8_text(source.as_bytes())
-                                                    .map_err(|_|
+                                                    .map_err(|_| {
                                                         AstError::Other(
                                                             "Failed to get node text".to_string(),
                                                         )
-                                                    )?
+                                                    })?
                                                     .to_string();
                                                 methods.push(method_name);
                                             }
@@ -232,9 +244,9 @@ impl AstParser {
                             if let Some(name_node) = child.child_by_field_name("name") {
                                 let name = name_node
                                     .utf8_text(source.as_bytes())
-                                    .map_err(|_|
+                                    .map_err(|_| {
                                         AstError::Other("Failed to get node text".to_string())
-                                    )?
+                                    })?
                                     .to_string();
                                 items.push(CustomAst::Struct {
                                     name,
@@ -246,9 +258,9 @@ impl AstParser {
                             if let Some(name_node) = child.child_by_field_name("name") {
                                 let name = name_node
                                     .utf8_text(source.as_bytes())
-                                    .map_err(|_|
+                                    .map_err(|_| {
                                         AstError::Other("Failed to get node text".to_string())
-                                    )?
+                                    })?
                                     .to_string();
                                 items.push(CustomAst::Function {
                                     name,
@@ -268,9 +280,9 @@ impl AstParser {
                             if let Some(name_node) = child.child_by_field_name("name") {
                                 let name = name_node
                                     .utf8_text(source.as_bytes())
-                                    .map_err(|_|
+                                    .map_err(|_| {
                                         AstError::Other("Failed to get node text".to_string())
-                                    )?
+                                    })?
                                     .to_string();
                                 items.push(CustomAst::Function {
                                     name,
@@ -282,9 +294,9 @@ impl AstParser {
                             if let Some(name_node) = child.child_by_field_name("name") {
                                 let name = name_node
                                     .utf8_text(source.as_bytes())
-                                    .map_err(|_|
+                                    .map_err(|_| {
                                         AstError::Other("Failed to get node text".to_string())
-                                    )?
+                                    })?
                                     .to_string();
                                 items.push(CustomAst::Struct {
                                     name,
@@ -330,10 +342,7 @@ impl AstParser {
                     cache.pop(&path_str);
                     None
                 }
-            }
-
-
-            else {
+            } else {
                 None
             }
         };
@@ -454,7 +463,9 @@ impl AstParser {
             tree: Some(tree),
             source: Arc::new(content.to_string()),
             custom_ast: Arc::new(Some(custom_ast)),
-            modified_at: crate::analysis::cache::wrappers::ArchivableSystemTime(std::time::SystemTime::now()),
+            modified_at: crate::analysis::cache::wrappers::ArchivableSystemTime(
+                std::time::SystemTime::now(),
+            ),
         };
 
         Ok(parsed)
@@ -601,7 +612,10 @@ pub enum CustomAst {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[cfg_attr(feature = "memory-optimization", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "memory-optimization",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize)
+)]
 pub enum SourceLanguage {
     Rust,
     Python,

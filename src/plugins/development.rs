@@ -294,9 +294,15 @@ impl EnterprisePlugin for ExampleEnterprisePlugin {
                     policy_id: policy.id.clone(),
                     description: format!("Code violates policy: {}", policy.name),
                     severity: match policy.enforcement {
-                        EnforcementLevel::Warning => crate::ai::knowledge::context_selection::SeverityLevel::Low,
-                        EnforcementLevel::Error => crate::ai::knowledge::context_selection::SeverityLevel::Medium,
-                        EnforcementLevel::Blocking => crate::ai::knowledge::context_selection::SeverityLevel::High,
+                        EnforcementLevel::Warning => {
+                            crate::ai::knowledge::context_selection::SeverityLevel::Low
+                        }
+                        EnforcementLevel::Error => {
+                            crate::ai::knowledge::context_selection::SeverityLevel::Medium
+                        }
+                        EnforcementLevel::Blocking => {
+                            crate::ai::knowledge::context_selection::SeverityLevel::High
+                        }
                     },
                     location: crate::ai::knowledge::context_selection::LocationContext {
                         file_path: "unknown".to_string(),
@@ -339,7 +345,7 @@ impl ExampleEnterprisePlugin {
             id: "enterprise_logging_standard".to_string(),
             name: "Enterprise Logging Standard Violation".to_string(),
             definition: CompressedString::new(
-                "Code that doesn't follow the organization's logging standards"
+                "Code that doesn't follow the organization's logging standards",
             ),
             symptoms: vec![
                 CompressedString::new("Use of println! instead of structured logging"),
@@ -348,29 +354,25 @@ impl ExampleEnterprisePlugin {
             ],
             impact: ImpactLevel::Medium,
             category: AntiPatternCategory::Maintainability,
-            detection_methods: vec![
-                DetectionMethod::RegexPattern {
-                    pattern: r"println!\s*\(".to_string(),
-                    context: "logging_standard_violation".to_string(),
-                }
-            ],
-            solutions: vec![
-                SolutionPattern {
-                    id: "structured_logging_solution".to_string(),
-                    title: "Structured Logging".to_string(),
-                    implementation: CompressedString::new(
-                        "Use organization's logging framework:\n\
+            detection_methods: vec![DetectionMethod::RegexPattern {
+                pattern: r"println!\s*\(".to_string(),
+                context: "logging_standard_violation".to_string(),
+            }],
+            solutions: vec![SolutionPattern {
+                id: "structured_logging_solution".to_string(),
+                title: "Structured Logging".to_string(),
+                implementation: CompressedString::new(
+                    "Use organization's logging framework:\n\
                         1. Replace println! with log macros\n\
                         2. Add correlation IDs to all log messages\n\
                         3. Use appropriate log levels\n\
-                        Benefits: Better observability, consistent log format, easier debugging"
-                    ),
-                    examples: vec![],
-                    effort_level: EffortLevel::Low,
-                    prerequisites: vec!["Access to organization's logging framework".to_string()],
-                    expected_impact: ImpactLevel::Medium,
-                }
-            ],
+                        Benefits: Better observability, consistent log format, easier debugging",
+                ),
+                examples: vec![],
+                effort_level: EffortLevel::Low,
+                prerequisites: vec!["Access to organization's logging framework".to_string()],
+                expected_impact: ImpactLevel::Medium,
+            }],
             examples: CodeExamples {
                 primary: vec![],
                 variations: HashMap::new(),
@@ -382,27 +384,27 @@ impl ExampleEnterprisePlugin {
             detection_confidence: 0.9,
         };
 
-        self.org_patterns.insert("example_org".to_string(), vec![org_pattern]);
+        self.org_patterns
+            .insert("example_org".to_string(), vec![org_pattern]);
 
         // Example compliance knowledge
         let compliance = ComplianceKnowledge {
             framework: "SOX".to_string(),
             required_patterns: vec!["audit_logging".to_string()],
             forbidden_patterns: vec!["hardcoded_secrets".to_string()],
-            rules: vec![
-                ComplianceRule {
-                    id: "sox_001".to_string(),
-                    description: "All financial operations must be logged".to_string(),
-                    severity: crate::ai::knowledge::context_selection::SeverityLevel::High,
-                    detection: DetectionMethod::StaticAnalysis {
-                        pattern: "financial_operation_without_logging".to_string(),
-                        confidence: 0.85,
-                    },
-                }
-            ],
+            rules: vec![ComplianceRule {
+                id: "sox_001".to_string(),
+                description: "All financial operations must be logged".to_string(),
+                severity: crate::ai::knowledge::context_selection::SeverityLevel::High,
+                detection: DetectionMethod::StaticAnalysis {
+                    pattern: "financial_operation_without_logging".to_string(),
+                    confidence: 0.85,
+                },
+            }],
         };
 
-        self.compliance_knowledge.insert("SOX".to_string(), compliance);
+        self.compliance_knowledge
+            .insert("SOX".to_string(), compliance);
 
         Ok(())
     }
@@ -560,7 +562,8 @@ impl ExampleFrameworkPlugin {
             ],
         };
 
-        self.framework_knowledge.insert("React".to_string(), react_knowledge);
+        self.framework_knowledge
+            .insert("React".to_string(), react_knowledge);
 
         Ok(())
     }

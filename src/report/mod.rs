@@ -755,11 +755,13 @@ impl ReportGenerator {
                 height: Some(600),
             };
 
-            let result = renderer.render_diagram(
-                &request.mermaid_code, 
-                request.format, 
-                request.width.zip(request.height)
-            ).await?;
+            let result = renderer
+                .render_diagram(
+                    &request.mermaid_code,
+                    request.format,
+                    request.width.zip(request.height),
+                )
+                .await?;
 
             // Return markdown with embedded image
             Ok(format!(

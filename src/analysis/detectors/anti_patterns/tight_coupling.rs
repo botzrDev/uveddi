@@ -1,9 +1,9 @@
 //! Tight Coupling Anti-Pattern Detector
-//! 
+//!
 //! This module detects tight coupling between components, which makes code
 //! difficult to maintain, test, and modify. Tight coupling occurs when
 //! components are overly dependent on each other's internal implementation details.
-//! 
+//!
 //! Features:
 //! - Multi-language Tree-sitter analysis for Rust, Python, JavaScript
 //! - Configurable thresholds for different languages and contexts
@@ -24,8 +24,8 @@ use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::Path;
-use streaming_iterator::StreamingIterator;
 use std::sync::Arc;
+use streaming_iterator::StreamingIterator;
 use tracing::{debug, info, warn};
 
 /// Represents a dependency relationship between components
@@ -702,9 +702,10 @@ impl RustAnalyzer {
         source: &str,
     ) -> Result<Vec<Dependency>, AnalysisError> {
         let mut dependencies = Vec::new();
-        let query = Query::new(&tree_sitter_rust::LANGUAGE.into(), Self::CALL_QUERY).map_err(|e| {
-            AnalysisError::QueryError(format!("Failed to create call query: {}", e))
-        })?;
+        let query =
+            Query::new(&tree_sitter_rust::LANGUAGE.into(), Self::CALL_QUERY).map_err(|e| {
+                AnalysisError::QueryError(format!("Failed to create call query: {}", e))
+            })?;
 
         let mut cursor = QueryCursor::new();
         let mut matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
@@ -745,9 +746,10 @@ impl RustAnalyzer {
         source: &str,
     ) -> Result<Vec<Dependency>, AnalysisError> {
         let mut dependencies = Vec::new();
-        let query = Query::new(&tree_sitter_rust::LANGUAGE.into(), Self::STRUCT_QUERY).map_err(|e| {
-            AnalysisError::QueryError(format!("Failed to create struct query: {}", e))
-        })?;
+        let query =
+            Query::new(&tree_sitter_rust::LANGUAGE.into(), Self::STRUCT_QUERY).map_err(|e| {
+                AnalysisError::QueryError(format!("Failed to create struct query: {}", e))
+            })?;
 
         let mut cursor = QueryCursor::new();
         let mut matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
@@ -1060,7 +1062,8 @@ impl JavaScriptAnalyzer {
     ) -> Result<Vec<Dependency>, AnalysisError> {
         let mut dependencies = Vec::new();
 
-        if let Ok(query) = Query::new(&tree_sitter_javascript::LANGUAGE.into(), Self::IMPORT_QUERY) {
+        if let Ok(query) = Query::new(&tree_sitter_javascript::LANGUAGE.into(), Self::IMPORT_QUERY)
+        {
             let mut cursor = QueryCursor::new();
             let mut matches = cursor.matches(&query, tree.root_node(), source.as_bytes());
 

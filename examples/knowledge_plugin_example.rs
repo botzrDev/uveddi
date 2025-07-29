@@ -6,11 +6,11 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 use tokio;
-use uveddi::ai::knowledge::schema::*;
 use uveddi::ai::knowledge::context_selection::*;
-use uveddi::plugins::knowledge::*;
+use uveddi::ai::knowledge::schema::*;
 use uveddi::plugins::development::*;
 use uveddi::plugins::integration::*;
+use uveddi::plugins::knowledge::*;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -37,11 +37,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Box::new(antipattern_plugin),
         Box::new(enterprise_plugin),
         Box::new(framework_plugin),
-    ]).await?;
-    
-    println!("✅ Loaded knowledge from {} plugins", plugin_knowledge.plugin_knowledge.len());
-    println!("   - Total patterns: {}", 
-        plugin_knowledge.plugin_knowledge.values()
+    ])
+    .await?;
+
+    println!(
+        "✅ Loaded knowledge from {} plugins",
+        plugin_knowledge.plugin_knowledge.len()
+    );
+    println!(
+        "   - Total patterns: {}",
+        plugin_knowledge
+            .plugin_knowledge
+            .values()
             .map(|k| k.patterns.len())
             .sum::<usize>()
     );
@@ -55,7 +62,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // 5. Demonstrate context-aware knowledge retrieval
     println!("\n5. Demonstrating Context-Aware Knowledge Retrieval...");
-    
+
     // Example 1: Rust code analysis context
     let rust_context = create_rust_analysis_context();
     demonstrate_context_retrieval(&integrator, &rust_context, "Rust Codebase").await?;
@@ -66,7 +73,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Example 3: Enterprise compliance context
     let enterprise_context = create_enterprise_analysis_context();
-    demonstrate_context_retrieval(&integrator, &enterprise_context, "Enterprise Application").await?;
+    demonstrate_context_retrieval(&integrator, &enterprise_context, "Enterprise Application")
+        .await?;
 
     // 6. Demonstrate plugin-specific features
     println!("\n6. Demonstrating Plugin-Specific Features...");
@@ -80,7 +88,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("   - Total patterns: {}", metrics.total_patterns);
     println!("   - Core patterns: {}", metrics.core_patterns);
     println!("   - Plugin patterns: {}", metrics.plugin_patterns);
-    println!("   - Avg retrieval time: {:.2}ms", metrics.avg_retrieval_time_ms);
+    println!(
+        "   - Avg retrieval time: {:.2}ms",
+        metrics.avg_retrieval_time_ms
+    );
 
     println!("\n🎉 Knowledge Plugin System Example Complete!");
     println!("The plugin system successfully demonstrated:");
@@ -118,15 +129,24 @@ fn create_plugin_system_config() -> KnowledgePluginSystemConfig {
 }
 
 /// Create example plugins for demonstration
-fn create_example_plugins() -> (ExampleAntiPatternPlugin, ExampleEnterprisePlugin, ExampleFrameworkPlugin) {
+fn create_example_plugins() -> (
+    ExampleAntiPatternPlugin,
+    ExampleEnterprisePlugin,
+    ExampleFrameworkPlugin,
+) {
     let antipattern_metadata = KnowledgePluginMetadata {
         id: "example-antipattern-1.0.0".to_string(),
         name: "Example Anti-Pattern Plugin".to_string(),
         version: "1.0.0".to_string(),
         author: "Uveddi Community".to_string(),
-        description: "Demonstrates custom anti-pattern definitions including singleton abuse".to_string(),
+        description: "Demonstrates custom anti-pattern definitions including singleton abuse"
+            .to_string(),
         plugin_type: KnowledgePluginType::AntiPattern,
-        supported_languages: vec![SourceLanguage::Rust, SourceLanguage::Python, SourceLanguage::Java],
+        supported_languages: vec![
+            SourceLanguage::Rust,
+            SourceLanguage::Python,
+            SourceLanguage::Java,
+        ],
         dependencies: vec![],
         api_version: "1.0.0".to_string(),
         capabilities: KnowledgePluginCapabilities {
@@ -143,7 +163,8 @@ fn create_example_plugins() -> (ExampleAntiPatternPlugin, ExampleEnterprisePlugi
         name: "Enterprise Compliance Plugin".to_string(),
         version: "1.0.0".to_string(),
         author: "Enterprise Security Team".to_string(),
-        description: "Provides SOX compliance validation and enterprise-specific patterns".to_string(),
+        description: "Provides SOX compliance validation and enterprise-specific patterns"
+            .to_string(),
         plugin_type: KnowledgePluginType::Enterprise,
         supported_languages: vec![SourceLanguage::Universal],
         dependencies: vec![],
@@ -168,7 +189,8 @@ fn create_example_plugins() -> (ExampleAntiPatternPlugin, ExampleEnterprisePlugi
         name: "React Framework Plugin".to_string(),
         version: "1.0.0".to_string(),
         author: "Frontend Development Team".to_string(),
-        description: "React-specific anti-patterns and performance optimization guidance".to_string(),
+        description: "React-specific anti-patterns and performance optimization guidance"
+            .to_string(),
         plugin_type: KnowledgePluginType::Framework,
         supported_languages: vec![SourceLanguage::JavaScript, SourceLanguage::TypeScript],
         dependencies: vec![],
@@ -191,7 +213,7 @@ fn create_example_plugins() -> (ExampleAntiPatternPlugin, ExampleEnterprisePlugi
 
 /// Load knowledge from plugins
 async fn load_plugin_knowledge(
-    mut plugins: Vec<Box<dyn KnowledgePlugin>>
+    mut plugins: Vec<Box<dyn KnowledgePlugin>>,
 ) -> Result<PluginKnowledgeLibrary, Box<dyn std::error::Error>> {
     let mut library = PluginKnowledgeLibrary::new();
 
@@ -223,9 +245,9 @@ async fn load_plugin_knowledge(
 /// Create a minimal core library for demonstration
 fn create_minimal_core_library() -> KnowledgeLibrary {
     use uveddi::ai::knowledge::compression::CompressedString;
-    
+
     let mut library = KnowledgeLibrary::new();
-    
+
     // Add a sample universal pattern
     let god_object_pattern = PatternKnowledge {
         id: "god_object".to_string(),
@@ -238,34 +260,32 @@ fn create_minimal_core_library() -> KnowledgeLibrary {
         ],
         impact: ImpactLevel::High,
         category: AntiPatternCategory::ObjectOriented,
-        detection_methods: vec![
-            DetectionMethod {
-                method_type: DetectionMethodType::Structural,
-                description: CompressedString::new("Count methods and fields in class"),
-                thresholds: vec![
-                    ("method_count".to_string(), 20.0),
-                    ("field_count".to_string(), 15.0),
-                ],
-                confidence: 0.85,
-            }
-        ],
-        solutions: vec![
-            SolutionPattern {
-                name: "Single Responsibility Principle".to_string(),
-                description: CompressedString::new("Break down the class into smaller, focused classes"),
-                implementation_steps: vec![
-                    CompressedString::new("1. Identify distinct responsibilities"),
-                    CompressedString::new("2. Extract related methods into new classes"),
-                    CompressedString::new("3. Use composition or delegation"),
-                ],
-                benefits: vec![
-                    CompressedString::new("Improved maintainability"),
-                    CompressedString::new("Better testability"),
-                    CompressedString::new("Reduced coupling"),
-                ],
-                effort_level: EffortLevel::High,
-            }
-        ],
+        detection_methods: vec![DetectionMethod {
+            method_type: DetectionMethodType::Structural,
+            description: CompressedString::new("Count methods and fields in class"),
+            thresholds: vec![
+                ("method_count".to_string(), 20.0),
+                ("field_count".to_string(), 15.0),
+            ],
+            confidence: 0.85,
+        }],
+        solutions: vec![SolutionPattern {
+            name: "Single Responsibility Principle".to_string(),
+            description: CompressedString::new(
+                "Break down the class into smaller, focused classes",
+            ),
+            implementation_steps: vec![
+                CompressedString::new("1. Identify distinct responsibilities"),
+                CompressedString::new("2. Extract related methods into new classes"),
+                CompressedString::new("3. Use composition or delegation"),
+            ],
+            benefits: vec![
+                CompressedString::new("Improved maintainability"),
+                CompressedString::new("Better testability"),
+                CompressedString::new("Reduced coupling"),
+            ],
+            effort_level: EffortLevel::High,
+        }],
         examples: CodeExamples {
             primary: vec![],
             variations: HashMap::new(),
@@ -277,7 +297,9 @@ fn create_minimal_core_library() -> KnowledgeLibrary {
         detection_confidence: 0.85,
     };
 
-    library.universal_patterns.insert("god_object".to_string(), god_object_pattern);
+    library
+        .universal_patterns
+        .insert("god_object".to_string(), god_object_pattern);
     library.metadata.pattern_count = 1;
 
     library
@@ -288,19 +310,17 @@ fn create_rust_analysis_context() -> AnalysisContext {
     AnalysisContext {
         language: SourceLanguage::Rust,
         frameworks: vec!["tokio".to_string(), "serde".to_string()],
-        detected_patterns: vec![
-            DetectedPattern {
-                pattern_id: "custom_singleton_abuse".to_string(),
-                confidence: 0.8,
-                severity: SeverityLevel::High,
-                location: LocationContext {
-                    file_path: "src/config.rs".to_string(),
-                    line_range: (45, 120),
-                    context_name: Some("ConfigManager".to_string()),
-                },
-                related_patterns: vec!["god_object".to_string()],
-            }
-        ],
+        detected_patterns: vec![DetectedPattern {
+            pattern_id: "custom_singleton_abuse".to_string(),
+            confidence: 0.8,
+            severity: SeverityLevel::High,
+            location: LocationContext {
+                file_path: "src/config.rs".to_string(),
+                line_range: (45, 120),
+                context_name: Some("ConfigManager".to_string()),
+            },
+            related_patterns: vec!["god_object".to_string()],
+        }],
         codebase_info: CodebaseInfo {
             size_category: CodebaseSizeCategory::Medium,
             architectural_patterns: vec!["microservices".to_string()],
@@ -327,19 +347,17 @@ fn create_react_analysis_context() -> AnalysisContext {
     AnalysisContext {
         language: SourceLanguage::TypeScript,
         frameworks: vec!["React".to_string(), "Next.js".to_string()],
-        detected_patterns: vec![
-            DetectedPattern {
-                pattern_id: "react_unnecessary_rerender".to_string(),
-                confidence: 0.9,
-                severity: SeverityLevel::Medium,
-                location: LocationContext {
-                    file_path: "components/UserProfile.tsx".to_string(),
-                    line_range: (25, 80),
-                    context_name: Some("UserProfile".to_string()),
-                },
-                related_patterns: vec![],
-            }
-        ],
+        detected_patterns: vec![DetectedPattern {
+            pattern_id: "react_unnecessary_rerender".to_string(),
+            confidence: 0.9,
+            severity: SeverityLevel::Medium,
+            location: LocationContext {
+                file_path: "components/UserProfile.tsx".to_string(),
+                line_range: (25, 80),
+                context_name: Some("UserProfile".to_string()),
+            },
+            related_patterns: vec![],
+        }],
         codebase_info: CodebaseInfo {
             size_category: CodebaseSizeCategory::Large,
             architectural_patterns: vec!["component-based".to_string()],
@@ -366,19 +384,17 @@ fn create_enterprise_analysis_context() -> AnalysisContext {
     AnalysisContext {
         language: SourceLanguage::Java,
         frameworks: vec!["Spring".to_string(), "Hibernate".to_string()],
-        detected_patterns: vec![
-            DetectedPattern {
-                pattern_id: "enterprise_logging_standard".to_string(),
-                confidence: 0.95,
-                severity: SeverityLevel::High,
-                location: LocationContext {
-                    file_path: "com/company/service/PaymentService.java".to_string(),
-                    line_range: (150, 200),
-                    context_name: Some("processPayment".to_string()),
-                },
-                related_patterns: vec![],
-            }
-        ],
+        detected_patterns: vec![DetectedPattern {
+            pattern_id: "enterprise_logging_standard".to_string(),
+            confidence: 0.95,
+            severity: SeverityLevel::High,
+            location: LocationContext {
+                file_path: "com/company/service/PaymentService.java".to_string(),
+                line_range: (150, 200),
+                context_name: Some("processPayment".to_string()),
+            },
+            related_patterns: vec![],
+        }],
         codebase_info: CodebaseInfo {
             size_category: CodebaseSizeCategory::VeryLarge,
             architectural_patterns: vec!["layered".to_string(), "enterprise".to_string()],
@@ -417,15 +433,25 @@ async fn demonstrate_context_retrieval(
 
     println!("   ⚡ Retrieval time: {:.2}ms", retrieval_time.as_millis());
     println!("   📊 Results:");
-    println!("      - Patterns found: {}", integrated_context.patterns.len());
-    println!("      - Solutions available: {}", integrated_context.solutions.len());
-    println!("      - Plugin contributions: {}", integrated_context.plugin_contributions.total_plugins);
+    println!(
+        "      - Patterns found: {}",
+        integrated_context.patterns.len()
+    );
+    println!(
+        "      - Solutions available: {}",
+        integrated_context.solutions.len()
+    );
+    println!(
+        "      - Plugin contributions: {}",
+        integrated_context.plugin_contributions.total_plugins
+    );
 
     // Show top patterns
     for (i, ranked_pattern) in integrated_context.patterns.iter().take(3).enumerate() {
-        println!("      {}. {} (score: {:.2}, source: {:?})", 
-            i + 1, 
-            ranked_pattern.pattern.name, 
+        println!(
+            "      {}. {} (score: {:.2}, source: {:?})",
+            i + 1,
+            ranked_pattern.pattern.name,
             ranked_pattern.relevance_score,
             match &ranked_pattern.source {
                 PatternSource::Core => "Core",
@@ -459,15 +485,13 @@ async fn demonstrate_enterprise_compliance() -> Result<(), Box<dyn std::error::E
     enterprise_plugin.initialize().await?;
 
     // Test compliance validation
-    let policies = vec![
-        OrganizationPolicy {
-            id: "logging_policy".to_string(),
-            name: "Structured Logging Policy".to_string(),
-            description: "All applications must use structured logging".to_string(),
-            patterns: vec!["println_usage".to_string()],
-            enforcement: EnforcementLevel::Error,
-        }
-    ];
+    let policies = vec![OrganizationPolicy {
+        id: "logging_policy".to_string(),
+        name: "Structured Logging Policy".to_string(),
+        description: "All applications must use structured logging".to_string(),
+        patterns: vec!["println_usage".to_string()],
+        enforcement: EnforcementLevel::Error,
+    }];
 
     // Test compliant code
     let compliant_code = r#"
@@ -478,9 +502,12 @@ async fn demonstrate_enterprise_compliance() -> Result<(), Box<dyn std::error::E
         );
     "#;
 
-    let result = enterprise_plugin.validate_against_policies(compliant_code, &policies).await?;
-    println!("   ✅ Compliant code validation: {} (score: {:.2})", 
-        if result.compliant { "PASS" } else { "FAIL" }, 
+    let result = enterprise_plugin
+        .validate_against_policies(compliant_code, &policies)
+        .await?;
+    println!(
+        "   ✅ Compliant code validation: {} (score: {:.2})",
+        if result.compliant { "PASS" } else { "FAIL" },
         result.score
     );
 
@@ -489,9 +516,12 @@ async fn demonstrate_enterprise_compliance() -> Result<(), Box<dyn std::error::E
         println!("Processing payment for user {}", user_id);
     "#;
 
-    let result = enterprise_plugin.validate_against_policies(non_compliant_code, &policies).await?;
-    println!("   ❌ Non-compliant code validation: {} (score: {:.2})", 
-        if result.compliant { "PASS" } else { "FAIL" }, 
+    let result = enterprise_plugin
+        .validate_against_policies(non_compliant_code, &policies)
+        .await?;
+    println!(
+        "   ❌ Non-compliant code validation: {} (score: {:.2})",
+        if result.compliant { "PASS" } else { "FAIL" },
         result.score
     );
     println!("      Violations: {}", result.violations.len());
@@ -499,8 +529,14 @@ async fn demonstrate_enterprise_compliance() -> Result<(), Box<dyn std::error::E
     // Show compliance knowledge
     let sox_compliance = enterprise_plugin.get_compliance_knowledge("SOX").await?;
     println!("   📋 SOX Compliance Framework:");
-    println!("      - Required patterns: {}", sox_compliance.required_patterns.len());
-    println!("      - Forbidden patterns: {}", sox_compliance.forbidden_patterns.len());
+    println!(
+        "      - Required patterns: {}",
+        sox_compliance.required_patterns.len()
+    );
+    println!(
+        "      - Forbidden patterns: {}",
+        sox_compliance.forbidden_patterns.len()
+    );
     println!("      - Compliance rules: {}", sox_compliance.rules.len());
 
     Ok(())
@@ -529,10 +565,13 @@ async fn demonstrate_framework_knowledge() -> Result<(), Box<dyn std::error::Err
 
     // Get React framework knowledge
     let react_knowledge = framework_plugin.get_framework_knowledge("React").await?;
-    
+
     if let Some(knowledge) = react_knowledge {
         println!("   📚 React Framework Knowledge:");
-        println!("      - Framework: {} v{}", knowledge.name, knowledge.version);
+        println!(
+            "      - Framework: {} v{}",
+            knowledge.name, knowledge.version
+        );
         println!("      - Patterns: {}", knowledge.patterns.len());
         println!("      - Best practices: {}", knowledge.best_practices.len());
         println!("      - Common pitfalls: {}", knowledge.pitfalls.len());
@@ -551,7 +590,10 @@ async fn demonstrate_framework_knowledge() -> Result<(), Box<dyn std::error::Err
         let patterns = framework_plugin.get_patterns().await?;
         println!("   🔍 React-Specific Patterns:");
         for pattern in patterns {
-            println!("      - {} (category: {:?})", pattern.name, pattern.category);
+            println!(
+                "      - {} (category: {:?})",
+                pattern.name, pattern.category
+            );
         }
     }
 

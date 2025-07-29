@@ -292,14 +292,19 @@ impl BenchmarkBaselineManager {
         let previous_baseline = match previous_baseline {
             Some(baseline) => baseline,
             None => {
-                return Err(anyhow!("No baseline exists for benchmark: {}", benchmark_name));
+                return Err(anyhow!(
+                    "No baseline exists for benchmark: {}",
+                    benchmark_name
+                ));
             }
         };
 
-        let comparison_result = self.calculate_comparison_result(&current_baseline, &previous_baseline)
+        let comparison_result = self
+            .calculate_comparison_result(&current_baseline, &previous_baseline)
             .await?;
 
-        let statistical_confidence = self.calculate_statistical_confidence(&current_baseline, &previous_baseline)
+        let statistical_confidence = self
+            .calculate_statistical_confidence(&current_baseline, &previous_baseline)
             .await?;
 
         let recommendation =

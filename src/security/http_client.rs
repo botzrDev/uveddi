@@ -89,7 +89,9 @@ impl SecureHttpClient {
             .timeout(Duration::from_secs(config.timeout_seconds))
             .connect_timeout(Duration::from_secs(config.connect_timeout_seconds))
             .read_timeout(Duration::from_secs(config.read_timeout_seconds))
-            .redirect(reqwest::redirect::Policy::limited(config.max_redirects as usize))
+            .redirect(reqwest::redirect::Policy::limited(
+                config.max_redirects as usize,
+            ))
             .user_agent(&config.user_agent)
             .pool_max_idle_per_host(config.max_idle_per_host);
 
@@ -102,7 +104,7 @@ impl SecureHttpClient {
             builder = builder.https_only(true);
         }
 
-        // Configure certificate verification  
+        // Configure certificate verification
         if !config.verify_certificates {
             // Only allow disabling certificate verification in development
             #[cfg(debug_assertions)]
@@ -112,7 +114,8 @@ impl SecureHttpClient {
             #[cfg(not(debug_assertions))]
             {
                 return Err(SecurityError::ConfigurationError {
-                    message: "Certificate verification cannot be disabled in production builds".to_string(),
+                    message: "Certificate verification cannot be disabled in production builds"
+                        .to_string(),
                 });
             }
         }
@@ -122,9 +125,11 @@ impl SecureHttpClient {
             builder = builder.tcp_keepalive(Some(Duration::from_secs(keepalive)));
         }
 
-        let client = builder.build().map_err(|e| SecurityError::HttpClientError {
-            message: format!("Failed to create HTTP client: {}", e),
-        })?;
+        let client = builder
+            .build()
+            .map_err(|e| SecurityError::HttpClientError {
+                message: format!("Failed to create HTTP client: {}", e),
+            })?;
 
         Ok(Self { client, config })
     }
@@ -137,24 +142,30 @@ impl SecureHttpClient {
     /// Perform a GET request with security validation
     pub async fn get(&self, url: &str) -> SecurityResult<Response> {
         self.validate_url(url)?;
-        
-        let response = self.client
-            .get(url)
-            .send()
-            .await
-            .map_err(|e| SecurityError::HttpRequestError {
-                message: format!("GET request failed: {}", e),
-            })?;
+
+        let response =
+            self.client
+                .get(url)
+                .send()
+                .await
+                .map_err(|e| SecurityError::HttpRequestError {
+                    message: format!("GET request failed: {}", e),
+                })?;
 
         self.validate_response(&response)?;
         Ok(response)
     }
 
     /// Perform a POST request with security validation
-    pub async fn post(&self, url: &str, body: impl Into<reqwest::Body>) -> SecurityResult<Response> {
+    pub async fn post(
+        &self,
+        url: &str,
+        body: impl Into<reqwest::Body>,
+    ) -> SecurityResult<Response> {
         self.validate_url(url)?;
 
-        let response = self.client
+        let response = self
+            .client
             .post(url)
             .body(body)
             .header("Content-Type", "application/json")
@@ -172,7 +183,8 @@ impl SecureHttpClient {
     pub async fn put(&self, url: &str, body: impl Into<reqwest::Body>) -> SecurityResult<Response> {
         self.validate_url(url)?;
 
-        let response = self.client
+        let response = self
+            .client
             .put(url)
             .body(body)
             .header("Content-Type", "application/json")
@@ -190,13 +202,14 @@ impl SecureHttpClient {
     pub async fn delete(&self, url: &str) -> SecurityResult<Response> {
         self.validate_url(url)?;
 
-        let response = self.client
-            .delete(url)
-            .send()
-            .await
-            .map_err(|e| SecurityError::HttpRequestError {
-                message: format!("DELETE request failed: {}", e),
-            })?;
+        let response =
+            self.client
+                .delete(url)
+                .send()
+                .await
+                .map_err(|e| SecurityError::HttpRequestError {
+                    message: format!("DELETE request failed: {}", e),
+                })?;
 
         self.validate_response(&response)?;
         Ok(response)
@@ -242,11 +255,15 @@ impl SecureHttpClient {
             // Block private IP ranges in production
             #[cfg(not(debug_assertions))]
             {
-                if host.starts_with("10.") || 
-                   host.starts_with("192.168.") || 
-                   (host.starts_with("172.") && host.split('.').nth(1)
-                    .and_then(|s| s.parse::<u8>().ok())
-                    .map_or(false, |n| n >= 16 && n <= 31)) {
+                if host.starts_with("10.")
+                    || host.starts_with("192.168.")
+                    || (host.starts_with("172.")
+                        && host
+                            .split('.')
+                            .nth(1)
+                            .and_then(|s| s.parse::<u8>().ok())
+                            .map_or(false, |n| n >= 16 && n <= 31))
+                {
                     return Err(SecurityError::InvalidInput {
                         field: "url".to_string(),
                         reason: "Private IP addresses are not allowed in production".to_string(),
@@ -338,7 +355,8 @@ impl HttpSecurityConfig {
 
             if !self.verify_certificates {
                 return Err(SecurityError::ConfigurationError {
-                    message: "Certificate verification cannot be disabled in production".to_string(),
+                    message: "Certificate verification cannot be disabled in production"
+                        .to_string(),
                 });
             }
         }
@@ -364,16 +382,16 @@ mod tests {
     #[test]
     fn test_config_validation_errors() {
         let mut config = HttpSecurityConfig::default();
-        
+
         // Test zero timeout
         config.timeout_seconds = 0;
         assert!(config.validate().is_err());
-        
+
         // Reset and test empty user agent
         config = HttpSecurityConfig::default();
         config.user_agent = String::new();
         assert!(config.validate().is_err());
-        
+
         // Reset and test excessive redirects
         config = HttpSecurityConfig::default();
         config.max_redirects = 20;
@@ -391,13 +409,13 @@ mod tests {
     fn test_url_validation() {
         let config = HttpSecurityConfig::default();
         let client = SecureHttpClient::new(config).unwrap();
-        
+
         // Valid HTTPS URL should pass
         assert!(client.validate_url("https://api.example.com/data").is_ok());
-        
+
         // HTTP URL should fail when HTTPS is enforced
         assert!(client.validate_url("http://api.example.com/data").is_err());
-        
+
         // Invalid URL should fail
         assert!(client.validate_url("not-a-url").is_err());
     }
@@ -405,20 +423,20 @@ mod tests {
     #[test]
     fn test_development_vs_production_config() {
         let mut config = HttpSecurityConfig::default();
-        
+
         #[cfg(debug_assertions)]
         {
             // In debug mode, we can disable certificate verification
             config.verify_certificates = false;
             assert!(config.validate().is_ok());
         }
-        
+
         #[cfg(not(debug_assertions))]
         {
             // In production, disabling HTTPS should fail
             config.enforce_https = false;
             assert!(config.validate().is_err());
-            
+
             // Reset and test certificate verification
             config = HttpSecurityConfig::default();
             config.verify_certificates = false;
@@ -444,6 +462,9 @@ mod tests {
 
         // This should not panic or fail to compile
         let result = SecureHttpClient::new(config);
-        assert!(result.is_ok(), "HTTP client creation should succeed with fixed types");
+        assert!(
+            result.is_ok(),
+            "HTTP client creation should succeed with fixed types"
+        );
     }
 }

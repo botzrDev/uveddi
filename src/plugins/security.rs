@@ -175,24 +175,28 @@ impl SecurityPolicy {
             }
         }
 
-        // Configure file system access using new v34 API 
+        // Configure file system access using new v34 API
         for permission in &self.permissions {
             match permission {
                 Permission::FileRead(path) => {
-                    builder.preopened_dir(
-                        path, 
-                        path.to_str().unwrap_or("/sandbox"),
-                        wasmtime_wasi::DirPerms::READ,
-                        wasmtime_wasi::FilePerms::READ
-                    ).map_err(|e| PluginError::SecurityViolation(e.to_string()))?;
+                    builder
+                        .preopened_dir(
+                            path,
+                            path.to_str().unwrap_or("/sandbox"),
+                            wasmtime_wasi::DirPerms::READ,
+                            wasmtime_wasi::FilePerms::READ,
+                        )
+                        .map_err(|e| PluginError::SecurityViolation(e.to_string()))?;
                 }
                 Permission::FileWrite(path) => {
-                    builder.preopened_dir(
-                        path,
-                        path.to_str().unwrap_or("/sandbox"),
-                        wasmtime_wasi::DirPerms::all(),
-                        wasmtime_wasi::FilePerms::all()
-                    ).map_err(|e| PluginError::SecurityViolation(e.to_string()))?;
+                    builder
+                        .preopened_dir(
+                            path,
+                            path.to_str().unwrap_or("/sandbox"),
+                            wasmtime_wasi::DirPerms::all(),
+                            wasmtime_wasi::FilePerms::all(),
+                        )
+                        .map_err(|e| PluginError::SecurityViolation(e.to_string()))?;
                 }
                 _ => {}
             }

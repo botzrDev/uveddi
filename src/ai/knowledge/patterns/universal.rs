@@ -4,8 +4,8 @@
 //! extracted from Uveddi's existing detectors and enhanced with AI-optimized content.
 //! The knowledge is structured for optimal AI consumption and compression efficiency.
 
-use crate::ai::knowledge::schema::*;
 use crate::ai::knowledge::compression::CompressedString;
+use crate::ai::knowledge::schema::*;
 use std::collections::HashMap;
 
 /// Create the complete universal anti-pattern knowledge base
@@ -18,25 +18,55 @@ pub fn create_universal_patterns() -> HashMap<String, PatternKnowledge> {
     patterns.insert("feature_envy".to_string(), create_feature_envy_pattern());
 
     // Architectural Anti-patterns
-    patterns.insert("tight_coupling".to_string(), create_tight_coupling_pattern());
-    patterns.insert("cyclic_dependencies".to_string(), create_cyclic_dependencies_pattern());
-    patterns.insert("inappropriate_intimacy".to_string(), create_inappropriate_intimacy_pattern());
+    patterns.insert(
+        "tight_coupling".to_string(),
+        create_tight_coupling_pattern(),
+    );
+    patterns.insert(
+        "cyclic_dependencies".to_string(),
+        create_cyclic_dependencies_pattern(),
+    );
+    patterns.insert(
+        "inappropriate_intimacy".to_string(),
+        create_inappropriate_intimacy_pattern(),
+    );
 
     // Performance Anti-patterns
-    patterns.insert("premature_optimization".to_string(), create_premature_optimization_pattern());
+    patterns.insert(
+        "premature_optimization".to_string(),
+        create_premature_optimization_pattern(),
+    );
     patterns.insert("resource_leak".to_string(), create_resource_leak_pattern());
-    patterns.insert("inefficient_algorithms".to_string(), create_inefficient_algorithms_pattern());
+    patterns.insert(
+        "inefficient_algorithms".to_string(),
+        create_inefficient_algorithms_pattern(),
+    );
 
     // Error Handling Anti-patterns
-    patterns.insert("silent_failure".to_string(), create_silent_failure_pattern());
-    patterns.insert("inappropriate_exception_type".to_string(), create_inappropriate_exception_pattern());
-    patterns.insert("error_information_loss".to_string(), create_error_information_loss_pattern());
+    patterns.insert(
+        "silent_failure".to_string(),
+        create_silent_failure_pattern(),
+    );
+    patterns.insert(
+        "inappropriate_exception_type".to_string(),
+        create_inappropriate_exception_pattern(),
+    );
+    patterns.insert(
+        "error_information_loss".to_string(),
+        create_error_information_loss_pattern(),
+    );
 
     // Maintainability Anti-patterns
     patterns.insert("dead_code".to_string(), create_dead_code_pattern());
-    patterns.insert("code_duplication".to_string(), create_code_duplication_pattern());
+    patterns.insert(
+        "code_duplication".to_string(),
+        create_code_duplication_pattern(),
+    );
     patterns.insert("magic_values".to_string(), create_magic_values_pattern());
-    patterns.insert("inconsistent_naming".to_string(), create_inconsistent_naming_pattern());
+    patterns.insert(
+        "inconsistent_naming".to_string(),
+        create_inconsistent_naming_pattern(),
+    );
 
     patterns
 }
@@ -435,7 +465,7 @@ fn create_dead_code_pattern() -> PatternKnowledge {
         name: "Dead Code".to_string(),
         definition: CompressedString::new(
             "Code that is defined but never used, including unused functions, variables, \
-             classes, and modules. Dead code clutters the codebase and can mislead developers."
+             classes, and modules. Dead code clutters the codebase and can mislead developers.",
         ),
         symptoms: vec![
             CompressedString::new("Functions or methods that are never called"),
@@ -457,22 +487,20 @@ fn create_dead_code_pattern() -> PatternKnowledge {
                 node_types: vec!["function_item".to_string(), "struct_item".to_string()],
             },
         ],
-        solutions: vec![
-            SolutionPattern {
-                id: "remove_unused_code".to_string(),
-                title: "Remove Unused Code".to_string(),
-                implementation: CompressedString::new(
-                    "Safely remove code that is confirmed to be unused after thorough analysis."
-                ),
-                examples: vec![],
-                effort_level: EffortLevel::Low,
-                prerequisites: vec![
-                    "Static analysis to confirm code is unused".to_string(),
-                    "Version control for safe removal".to_string(),
-                ],
-                expected_impact: ImpactLevel::Medium,
-            },
-        ],
+        solutions: vec![SolutionPattern {
+            id: "remove_unused_code".to_string(),
+            title: "Remove Unused Code".to_string(),
+            implementation: CompressedString::new(
+                "Safely remove code that is confirmed to be unused after thorough analysis.",
+            ),
+            examples: vec![],
+            effort_level: EffortLevel::Low,
+            prerequisites: vec![
+                "Static analysis to confirm code is unused".to_string(),
+                "Version control for safe removal".to_string(),
+            ],
+            expected_impact: ImpactLevel::Medium,
+        }],
         examples: CodeExamples {
             primary: vec![],
             variations: HashMap::new(),
@@ -552,13 +580,18 @@ fn create_feature_envy_pattern() -> PatternKnowledge {
     PatternKnowledge {
         id: "feature_envy".to_string(),
         name: "Feature Envy".to_string(),
-        definition: CompressedString::new("A method that uses more features of another class than its own."),
+        definition: CompressedString::new(
+            "A method that uses more features of another class than its own.",
+        ),
         symptoms: vec![],
         impact: ImpactLevel::Medium,
         category: AntiPatternCategory::ObjectOriented,
         detection_methods: vec![],
         solutions: vec![],
-        examples: CodeExamples { primary: vec![], variations: HashMap::new() },
+        examples: CodeExamples {
+            primary: vec![],
+            variations: HashMap::new(),
+        },
         language_variations: HashMap::new(),
         related_patterns: vec!["god_object".to_string()],
         tags: vec!["coupling".to_string()],
@@ -577,7 +610,10 @@ fn create_cyclic_dependencies_pattern() -> PatternKnowledge {
         category: AntiPatternCategory::Architectural,
         detection_methods: vec![],
         solutions: vec![],
-        examples: CodeExamples { primary: vec![], variations: HashMap::new() },
+        examples: CodeExamples {
+            primary: vec![],
+            variations: HashMap::new(),
+        },
         language_variations: HashMap::new(),
         related_patterns: vec!["tight_coupling".to_string()],
         tags: vec!["dependencies".to_string(), "architecture".to_string()],
@@ -590,13 +626,18 @@ fn create_inappropriate_intimacy_pattern() -> PatternKnowledge {
     PatternKnowledge {
         id: "inappropriate_intimacy".to_string(),
         name: "Inappropriate Intimacy".to_string(),
-        definition: CompressedString::new("Classes that know too much about each other's private details."),
+        definition: CompressedString::new(
+            "Classes that know too much about each other's private details.",
+        ),
         symptoms: vec![],
         impact: ImpactLevel::Medium,
         category: AntiPatternCategory::ObjectOriented,
         detection_methods: vec![],
         solutions: vec![],
-        examples: CodeExamples { primary: vec![], variations: HashMap::new() },
+        examples: CodeExamples {
+            primary: vec![],
+            variations: HashMap::new(),
+        },
         language_variations: HashMap::new(),
         related_patterns: vec!["tight_coupling".to_string()],
         tags: vec!["encapsulation".to_string()],
@@ -609,13 +650,18 @@ fn create_premature_optimization_pattern() -> PatternKnowledge {
     PatternKnowledge {
         id: "premature_optimization".to_string(),
         name: "Premature Optimization".to_string(),
-        definition: CompressedString::new("Optimizing code before identifying actual performance bottlenecks."),
+        definition: CompressedString::new(
+            "Optimizing code before identifying actual performance bottlenecks.",
+        ),
         symptoms: vec![],
         impact: ImpactLevel::Medium,
         category: AntiPatternCategory::Performance,
         detection_methods: vec![],
         solutions: vec![],
-        examples: CodeExamples { primary: vec![], variations: HashMap::new() },
+        examples: CodeExamples {
+            primary: vec![],
+            variations: HashMap::new(),
+        },
         language_variations: HashMap::new(),
         related_patterns: vec![],
         tags: vec!["performance".to_string(), "optimization".to_string()],
@@ -647,13 +693,18 @@ fn create_inefficient_algorithms_pattern() -> PatternKnowledge {
     PatternKnowledge {
         id: "inefficient_algorithms".to_string(),
         name: "Inefficient Algorithms".to_string(),
-        definition: CompressedString::new("Using algorithms with poor time or space complexity when better alternatives exist."),
+        definition: CompressedString::new(
+            "Using algorithms with poor time or space complexity when better alternatives exist.",
+        ),
         symptoms: vec![],
         impact: ImpactLevel::High,
         category: AntiPatternCategory::Performance,
         detection_methods: vec![],
         solutions: vec![],
-        examples: CodeExamples { primary: vec![], variations: HashMap::new() },
+        examples: CodeExamples {
+            primary: vec![],
+            variations: HashMap::new(),
+        },
         language_variations: HashMap::new(),
         related_patterns: vec![],
         tags: vec!["performance".to_string(), "algorithms".to_string()],
@@ -666,13 +717,18 @@ fn create_silent_failure_pattern() -> PatternKnowledge {
     PatternKnowledge {
         id: "silent_failure".to_string(),
         name: "Silent Failure".to_string(),
-        definition: CompressedString::new("Errors that are caught but not properly handled or reported."),
+        definition: CompressedString::new(
+            "Errors that are caught but not properly handled or reported.",
+        ),
         symptoms: vec![],
         impact: ImpactLevel::High,
         category: AntiPatternCategory::ErrorHandling,
         detection_methods: vec![],
         solutions: vec![],
-        examples: CodeExamples { primary: vec![], variations: HashMap::new() },
+        examples: CodeExamples {
+            primary: vec![],
+            variations: HashMap::new(),
+        },
         language_variations: HashMap::new(),
         related_patterns: vec![],
         tags: vec!["error-handling".to_string(), "debugging".to_string()],
@@ -685,13 +741,18 @@ fn create_inappropriate_exception_pattern() -> PatternKnowledge {
     PatternKnowledge {
         id: "inappropriate_exception_type".to_string(),
         name: "Inappropriate Exception Type".to_string(),
-        definition: CompressedString::new("Using generic or inappropriate exception types instead of specific, meaningful ones."),
+        definition: CompressedString::new(
+            "Using generic or inappropriate exception types instead of specific, meaningful ones.",
+        ),
         symptoms: vec![],
         impact: ImpactLevel::Medium,
         category: AntiPatternCategory::ErrorHandling,
         detection_methods: vec![],
         solutions: vec![],
-        examples: CodeExamples { primary: vec![], variations: HashMap::new() },
+        examples: CodeExamples {
+            primary: vec![],
+            variations: HashMap::new(),
+        },
         language_variations: HashMap::new(),
         related_patterns: vec![],
         tags: vec!["error-handling".to_string(), "exceptions".to_string()],
@@ -704,13 +765,18 @@ fn create_error_information_loss_pattern() -> PatternKnowledge {
     PatternKnowledge {
         id: "error_information_loss".to_string(),
         name: "Error Information Loss".to_string(),
-        definition: CompressedString::new("Loss of important error context when handling or re-throwing exceptions."),
+        definition: CompressedString::new(
+            "Loss of important error context when handling or re-throwing exceptions.",
+        ),
         symptoms: vec![],
         impact: ImpactLevel::Medium,
         category: AntiPatternCategory::ErrorHandling,
         detection_methods: vec![],
         solutions: vec![],
-        examples: CodeExamples { primary: vec![], variations: HashMap::new() },
+        examples: CodeExamples {
+            primary: vec![],
+            variations: HashMap::new(),
+        },
         language_variations: HashMap::new(),
         related_patterns: vec![],
         tags: vec!["error-handling".to_string(), "debugging".to_string()],
@@ -723,13 +789,18 @@ fn create_magic_values_pattern() -> PatternKnowledge {
     PatternKnowledge {
         id: "magic_values".to_string(),
         name: "Magic Values".to_string(),
-        definition: CompressedString::new("Unexplained numeric or string literals scattered throughout the code."),
+        definition: CompressedString::new(
+            "Unexplained numeric or string literals scattered throughout the code.",
+        ),
         symptoms: vec![],
         impact: ImpactLevel::Low,
         category: AntiPatternCategory::Maintainability,
         detection_methods: vec![],
         solutions: vec![],
-        examples: CodeExamples { primary: vec![], variations: HashMap::new() },
+        examples: CodeExamples {
+            primary: vec![],
+            variations: HashMap::new(),
+        },
         language_variations: HashMap::new(),
         related_patterns: vec![],
         tags: vec!["literals".to_string(), "constants".to_string()],
@@ -742,13 +813,18 @@ fn create_inconsistent_naming_pattern() -> PatternKnowledge {
     PatternKnowledge {
         id: "inconsistent_naming".to_string(),
         name: "Inconsistent Naming".to_string(),
-        definition: CompressedString::new("Inconsistent naming conventions that make code harder to understand and maintain."),
+        definition: CompressedString::new(
+            "Inconsistent naming conventions that make code harder to understand and maintain.",
+        ),
         symptoms: vec![],
         impact: ImpactLevel::Low,
         category: AntiPatternCategory::Maintainability,
         detection_methods: vec![],
         solutions: vec![],
-        examples: CodeExamples { primary: vec![], variations: HashMap::new() },
+        examples: CodeExamples {
+            primary: vec![],
+            variations: HashMap::new(),
+        },
         language_variations: HashMap::new(),
         related_patterns: vec![],
         tags: vec!["naming".to_string(), "conventions".to_string()],

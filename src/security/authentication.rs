@@ -18,10 +18,16 @@ use oauth2::{
 };
 use openidconnect::{
     core::{CoreAuthenticationFlow, CoreClient, CoreProviderMetadata, CoreResponseType},
-    reqwest::async_http_client as oidc_http_client,
-    AccessTokenHash, AuthenticationFlow, ClientId as OidcClientId,
-    ClientSecret as OidcClientSecret, CsrfToken as OidcCsrfToken, IssuerUrl, Nonce,
-    RedirectUrl as OidcRedirectUrl, TokenResponse as OidcTokenResponse,
+    // reqwest::async_http_client as oidc_http_client, // TODO: Fix for v4.0.1
+    AccessTokenHash,
+    AuthenticationFlow,
+    ClientId as OidcClientId,
+    ClientSecret as OidcClientSecret,
+    CsrfToken as OidcCsrfToken,
+    IssuerUrl,
+    Nonce,
+    RedirectUrl as OidcRedirectUrl,
+    TokenResponse as OidcTokenResponse,
 };
 use rand::Rng;
 use serde::{Deserialize, Serialize};
@@ -79,9 +85,16 @@ pub struct AuthenticationConfig {
 
 impl Default for AuthenticationConfig {
     fn default() -> Self {
-        // Generate a secure default JWT secret (32+ characters)
-        let jwt_secret =
-            "uveddi-default-jwt-secret-32-chars-min-change-in-production-environment".to_string();
+        // JWT secret MUST be set via environment variable or config file in production
+        let jwt_secret = std::env::var("UVEDDI_JWT_SECRET")
+            .unwrap_or_else(|_| {
+                eprintln!("WARNING: Using insecure default JWT secret. Set UVEDDI_JWT_SECRET environment variable in production!");
+                // Generate a random secret for development
+                use rand::Rng;
+                let mut rng = rand::thread_rng();
+                let bytes: Vec<u8> = (0..32).map(|_| rng.gen()).collect();
+                base64::encode(&bytes)
+            });
 
         Self {
             jwt_secret,
@@ -98,7 +111,8 @@ impl Default for AuthenticationConfig {
 pub struct AuthenticationService {
     config: AuthenticationConfig,
     oauth_clients: HashMap<String, BasicClient>,
-    oidc_clients: HashMap<String, CoreClient>,
+    // TODO: OIDC functionality temporarily disabled for alpha release due to v4.0.1 breaking changes
+    // oidc_clients: HashMap<String, CoreClient>,
     secret_store: Arc<dyn SecretStore>,
     session_store: Arc<RwLock<HashMap<String, Session>>>,
     api_key_store: Arc<RwLock<HashMap<String, ApiKey>>>,
@@ -111,7 +125,8 @@ impl AuthenticationService {
         secret_store: Arc<dyn SecretStore>,
     ) -> SecurityResult<Self> {
         let mut oauth_clients = HashMap::new();
-        let mut oidc_clients = HashMap::new();
+        // TODO: OIDC disabled for alpha release
+        // let mut oidc_clients = HashMap::new();
 
         // Initialize OAuth clients
         for provider in &config.oauth_providers {
@@ -143,6 +158,8 @@ impl AuthenticationService {
             oauth_clients.insert(provider.provider_name.clone(), client);
         }
 
+        // TODO: OIDC clients initialization disabled for alpha release
+        /*
         // Initialize OIDC clients
         for provider in &config.oidc_providers {
             let issuer_url = IssuerUrl::new(provider.issuer_url.clone()).map_err(|e| {
@@ -152,8 +169,9 @@ impl AuthenticationService {
                 }
             })?;
 
+            let http_client = reqwest::Client::new();
             let provider_metadata =
-                CoreProviderMetadata::discover_async(issuer_url, oidc_http_client)
+                CoreProviderMetadata::discover_async(issuer_url, &http_client)
                     .await
                     .map_err(|e| SecurityError::OidcProviderError {
                         provider: provider.provider_name.clone(),
@@ -176,11 +194,12 @@ impl AuthenticationService {
 
             oidc_clients.insert(provider.provider_name.clone(), client);
         }
+        */
 
         Ok(Self {
             config,
             oauth_clients,
-            oidc_clients,
+            // oidc_clients, // TODO: Disabled for alpha release
             secret_store,
             session_store: Arc::new(RwLock::new(HashMap::new())),
             api_key_store: Arc::new(RwLock::new(HashMap::new())),
@@ -220,11 +239,15 @@ impl AuthenticationService {
         Ok((auth_url.to_string(), csrf_token.secret().clone()))
     }
 
-    /// Generate OIDC authorization URL
+    /// Generate OIDC authorization URL (DISABLED FOR ALPHA RELEASE)
     pub async fn get_oidc_auth_url(
         &self,
-        provider: &str,
+        _provider: &str,
     ) -> SecurityResult<(String, String, String)> {
+        Err(SecurityError::AuthenticationFailed {
+            reason: "OIDC functionality temporarily disabled in alpha release".to_string(),
+        })
+        /*
         let client =
             self.oidc_clients
                 .get(provider)
@@ -260,6 +283,7 @@ impl AuthenticationService {
             csrf_token.secret().clone(),
             nonce.secret().clone(),
         ))
+        */
     }
 
     /// Authenticate user with OAuth authorization code
@@ -308,13 +332,17 @@ impl AuthenticationService {
         Ok(auth_user)
     }
 
-    /// Authenticate user with OIDC authorization code
+    /// Authenticate user with OIDC authorization code (DISABLED FOR ALPHA RELEASE)
     pub async fn authenticate_oidc(
         &self,
-        provider: &str,
-        auth_code: &str,
-        nonce: &str,
+        _provider: &str,
+        _auth_code: &str,
+        _nonce: &str,
     ) -> SecurityResult<AuthenticatedUser> {
+        Err(SecurityError::AuthenticationFailed {
+            reason: "OIDC functionality temporarily disabled in alpha release".to_string(),
+        })
+        /*
         let client =
             self.oidc_clients
                 .get(provider)
@@ -324,9 +352,10 @@ impl AuthenticationService {
                 })?;
 
         // Exchange authorization code for tokens
+        let http_client = reqwest::Client::new();
         let token_response = client
             .exchange_code(AuthorizationCode::new(auth_code.to_string()))
-            .request_async(oidc_http_client)
+            .request_async(&http_client)
             .await
             .map_err(|e| SecurityError::OidcProviderError {
                 provider: provider.to_string(),
@@ -374,6 +403,7 @@ impl AuthenticationService {
         );
 
         Ok(auth_user)
+        */
     }
 
     /// Authenticate user with API key

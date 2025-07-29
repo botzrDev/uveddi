@@ -89,8 +89,8 @@ impl AppState {
 
     /// Render the main menu (for testing)
     fn render_main_menu(&self, frame: &mut ratatui::Frame, area: ratatui::prelude::Rect) {
-        use ratatui::widgets::{Block, Borders, List, ListItem, ListState};
         use ratatui::style::{Color, Modifier, Style};
+        use ratatui::widgets::{Block, Borders, List, ListItem, ListState};
 
         let menu_items = vec![
             ListItem::new("Analyze Code"),
@@ -114,10 +114,7 @@ impl AppState {
     pub fn new(action_tx: Option<UnboundedSender<Action>>) -> Self {
         let mut form_data = HashMap::new();
         // Initialize with default values
-        form_data.insert(
-            FormField::Path,
-            FieldValue::String("./src".to_string()),
-        );
+        form_data.insert(FormField::Path, FieldValue::String("./src".to_string()));
         form_data.insert(
             FormField::OutputFormat,
             FieldValue::String("markdown".to_string()),
@@ -167,9 +164,7 @@ impl AppState {
             AppMessage::Quit => self.handle_quit(),
             AppMessage::Tick => self.handle_tick(),
             AppMessage::MenuItemSelected(index) => self.handle_menu_selection(index),
-            AppMessage::FormFieldChanged { field, value } => {
-                self.handle_form_change(field, value)
-            }
+            AppMessage::FormFieldChanged { field, value } => self.handle_form_change(field, value),
             AppMessage::ShowHelp => self.handle_show_help(),
             AppMessage::ShowAbout => self.handle_show_about(),
             AppMessage::TerminalResized(width, height) => {

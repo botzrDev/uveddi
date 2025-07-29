@@ -26,7 +26,9 @@ pub use large_codebase::{
     ErrorAggregator, ErrorContext, LargeCodebaseError, LargeCodebaseErrorHandler,
     NotificationSystem, ProgressState, ProgressTracker, RecoveryStrategies, RecoveryStrategy,
 };
-pub use main::{DeserializationError, ErrorCategory, ErrorHandler, ErrorSeverity, ExtractionError, UveddiError};
+pub use main::{
+    DeserializationError, ErrorCategory, ErrorHandler, ErrorSeverity, ExtractionError, UveddiError,
+};
 pub use rendering::RenderingServiceError;
 
 // Re-export rusqlite error for convenience

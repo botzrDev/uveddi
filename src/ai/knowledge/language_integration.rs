@@ -4,9 +4,9 @@
 //! knowledge with language-specific variations, creating enhanced patterns that
 //! provide contextually rich, language-aware guidance for AI-powered analysis.
 
-use crate::ai::knowledge::schema::*;
 use crate::ai::knowledge::compression::CompressedString;
-use crate::ai::knowledge::patterns::{universal, language_specific};
+use crate::ai::knowledge::patterns::{language_specific, universal};
+use crate::ai::knowledge::schema::*;
 use std::collections::HashMap;
 
 /// Language-specific context for pattern detection and resolution
@@ -95,7 +95,7 @@ impl LanguageKnowledgeIntegrator {
                 if !enhanced_patterns.contains_key(pattern_id) {
                     // This is a language-specific pattern not in universal set
                     let mut language_contexts = HashMap::new();
-                    
+
                     if let Some(context) = self.build_language_context(*language, pattern_id) {
                         language_contexts.insert(*language, context);
                     }
@@ -104,8 +104,12 @@ impl LanguageKnowledgeIntegrator {
                         complete_languages: vec![*language],
                         partial_languages: vec![],
                         completeness_score: 1.0, // Complete for this language
-                        language_confidence: [(language.clone(), lang_pattern.detection_confidence)]
-                            .into_iter().collect(),
+                        language_confidence: [(
+                            language.clone(),
+                            lang_pattern.detection_confidence,
+                        )]
+                        .into_iter()
+                        .collect(),
                     };
 
                     let enhanced_pattern = EnhancedPattern {
@@ -123,7 +127,10 @@ impl LanguageKnowledgeIntegrator {
     }
 
     /// Build language contexts for a specific pattern
-    fn build_language_contexts(&self, pattern_id: &str) -> HashMap<SourceLanguage, LanguageContext> {
+    fn build_language_contexts(
+        &self,
+        pattern_id: &str,
+    ) -> HashMap<SourceLanguage, LanguageContext> {
         let mut contexts = HashMap::new();
 
         for (language, _) in &self.language_libraries {
@@ -137,32 +144,33 @@ impl LanguageKnowledgeIntegrator {
 
     /// Build language context for a specific language and pattern
     fn build_language_context(
-        &self, 
-        language: SourceLanguage, 
-        pattern_id: &str
+        &self,
+        language: SourceLanguage,
+        pattern_id: &str,
     ) -> Option<LanguageContext> {
         let lang_knowledge = self.language_libraries.get(&language)?;
-        
+
         // Get language-specific pattern if it exists
         let lang_pattern = lang_knowledge.patterns.get(pattern_id)?;
-        
+
         // Extract language-specific information
-        let specific_symptoms = if let Some(lang_specific) = lang_pattern.language_variations.get(&language) {
-            lang_specific.symptoms.clone()
-        } else {
-            // Fallback to pattern's general symptoms
-            lang_pattern.symptoms.clone()
-        };
+        let specific_symptoms =
+            if let Some(lang_specific) = lang_pattern.language_variations.get(&language) {
+                lang_specific.symptoms.clone()
+            } else {
+                // Fallback to pattern's general symptoms
+                lang_pattern.symptoms.clone()
+            };
 
         let detection_methods = lang_pattern.detection_methods.clone();
         let solutions = lang_pattern.solutions.clone();
-        
+
         // Get tool recommendations (placeholder - would be extracted from pattern)
         let tools = self.extract_tool_recommendations(language, pattern_id);
-        
+
         // Get relevant frameworks
         let frameworks = self.get_relevant_frameworks(language, pattern_id);
-        
+
         // Get stdlib guidance
         let stdlib_guidance = self.get_stdlib_guidance(language, pattern_id);
 
@@ -190,7 +198,7 @@ impl LanguageKnowledgeIntegrator {
         for (language, context) in language_contexts {
             // Determine completeness based on available information
             let completeness = self.assess_language_completeness(language, pattern_id, context);
-            
+
             if completeness > 0.8 {
                 complete_languages.push(*language);
             } else if completeness > 0.3 {
@@ -272,7 +280,9 @@ impl LanguageKnowledgeIntegrator {
         }
 
         // Average confidence from detection methods
-        let total_confidence: f32 = context.detection_methods.iter()
+        let total_confidence: f32 = context
+            .detection_methods
+            .iter()
             .map(|method| match method {
                 DetectionMethod::StaticAnalysis { confidence, .. } => *confidence,
                 DetectionMethod::MetricThreshold { .. } => 0.9, // High confidence for metrics
@@ -286,7 +296,11 @@ impl LanguageKnowledgeIntegrator {
     }
 
     /// Extract tool and linting recommendations for language/pattern combination
-    fn extract_tool_recommendations(&self, language: SourceLanguage, pattern_id: &str) -> Vec<CompressedString> {
+    fn extract_tool_recommendations(
+        &self,
+        language: SourceLanguage,
+        pattern_id: &str,
+    ) -> Vec<CompressedString> {
         // This would be implemented based on the pattern and language
         // For now, return some common tools per language
         match language {
@@ -320,7 +334,11 @@ impl LanguageKnowledgeIntegrator {
     }
 
     /// Get relevant framework knowledge for language/pattern combination
-    fn get_relevant_frameworks(&self, language: SourceLanguage, pattern_id: &str) -> Vec<FrameworkKnowledge> {
+    fn get_relevant_frameworks(
+        &self,
+        language: SourceLanguage,
+        pattern_id: &str,
+    ) -> Vec<FrameworkKnowledge> {
         if let Some(lang_knowledge) = self.language_libraries.get(&language) {
             // Return frameworks that are relevant to this pattern
             // This is a simplified implementation - could be more sophisticated
@@ -331,7 +349,11 @@ impl LanguageKnowledgeIntegrator {
     }
 
     /// Get standard library guidance for language/pattern combination
-    fn get_stdlib_guidance(&self, language: SourceLanguage, pattern_id: &str) -> Option<CompressedString> {
+    fn get_stdlib_guidance(
+        &self,
+        language: SourceLanguage,
+        pattern_id: &str,
+    ) -> Option<CompressedString> {
         if let Some(lang_knowledge) = self.language_libraries.get(&language) {
             // Find relevant stdlib pattern
             for stdlib_pattern in &lang_knowledge.stdlib_patterns {
@@ -382,7 +404,7 @@ impl LanguageKnowledgeIntegrator {
     /// Generate language-specific indices for fast lookups
     pub fn generate_language_indices(&self) -> LanguageIndices {
         let enhanced_patterns = self.create_enhanced_patterns();
-        
+
         let mut language_to_patterns = HashMap::new();
         let mut framework_to_patterns = HashMap::new();
         let mut tool_to_patterns = HashMap::new();
@@ -441,7 +463,7 @@ impl IntegratedKnowledgeFactory {
     pub fn create_integrated_system() -> LanguageKnowledgeIntegrator {
         let universal_patterns = universal::create_universal_patterns();
         let language_libraries = language_specific::create_language_specific_libraries();
-        
+
         LanguageKnowledgeIntegrator::new(universal_patterns, language_libraries)
     }
 
@@ -469,9 +491,9 @@ mod tests {
     fn test_enhanced_pattern_generation() {
         let integrator = IntegratedKnowledgeFactory::create_integrated_system();
         let enhanced_patterns = integrator.create_enhanced_patterns();
-        
+
         assert!(!enhanced_patterns.is_empty());
-        
+
         // Check that god_object pattern has language enhancements
         if let Some(god_object) = enhanced_patterns.get("god_object") {
             assert!(!god_object.language_contexts.is_empty());
@@ -482,11 +504,9 @@ mod tests {
     #[test]
     fn test_language_context_building() {
         let integrator = IntegratedKnowledgeFactory::create_integrated_system();
-        
-        if let Some(context) = integrator.get_detection_context(
-            SourceLanguage::Rust,
-            "god_object"
-        ) {
+
+        if let Some(context) = integrator.get_detection_context(SourceLanguage::Rust, "god_object")
+        {
             assert_eq!(context.language, SourceLanguage::Rust);
             assert!(!context.specific_symptoms.is_empty());
         }
@@ -496,12 +516,14 @@ mod tests {
     fn test_language_patterns_retrieval() {
         let integrator = IntegratedKnowledgeFactory::create_integrated_system();
         let rust_patterns = integrator.get_language_patterns(SourceLanguage::Rust);
-        
+
         assert!(!rust_patterns.is_empty());
-        
+
         // All patterns should have Rust context
         for pattern in rust_patterns {
-            assert!(pattern.language_contexts.contains_key(&SourceLanguage::Rust));
+            assert!(pattern
+                .language_contexts
+                .contains_key(&SourceLanguage::Rust));
         }
     }
 
@@ -509,7 +531,7 @@ mod tests {
     fn test_indices_generation() {
         let integrator = IntegratedKnowledgeFactory::create_integrated_system();
         let indices = integrator.generate_language_indices();
-        
+
         assert!(!indices.language_to_patterns.is_empty());
         assert!(!indices.framework_to_patterns.is_empty());
         assert!(!indices.tool_to_patterns.is_empty());
@@ -519,12 +541,12 @@ mod tests {
     fn test_completeness_assessment() {
         let integrator = IntegratedKnowledgeFactory::create_integrated_system();
         let enhanced_patterns = integrator.create_enhanced_patterns();
-        
+
         for (pattern_id, pattern) in enhanced_patterns {
             // Metadata should be calculated
             assert!(pattern.metadata.completeness_score >= 0.0);
             assert!(pattern.metadata.completeness_score <= 1.0);
-            
+
             // Should have confidence scores for languages with contexts
             for language in pattern.language_contexts.keys() {
                 assert!(pattern.metadata.language_confidence.contains_key(language));

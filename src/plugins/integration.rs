@@ -3,9 +3,9 @@
 //! This module integrates plugin-provided knowledge with the core knowledge
 //! library while maintaining performance and consistency.
 
-use crate::ai::knowledge::schema::*;
 use crate::ai::knowledge::context_selection::*;
 use crate::ai::knowledge::loader::KnowledgeLibraryLoader;
+use crate::ai::knowledge::schema::*;
 use crate::plugins::knowledge::*;
 use crate::plugins::PluginError;
 use std::collections::HashMap;
@@ -107,12 +107,14 @@ impl PluginKnowledgeIntegrator {
         let plugin_patterns = self.get_plugin_patterns(analysis_context).await?;
 
         // Merge and rank patterns
-        let merged_patterns = self.merge_and_rank_patterns(
-            core_patterns,
-            plugin_patterns,
-            analysis_context,
-            max_patterns,
-        ).await?;
+        let merged_patterns = self
+            .merge_and_rank_patterns(
+                core_patterns,
+                plugin_patterns,
+                analysis_context,
+                max_patterns,
+            )
+            .await?;
 
         // Get related solutions and detectors
         let solutions = self.get_related_solutions(&merged_patterns).await?;
@@ -136,16 +138,16 @@ impl PluginKnowledgeIntegrator {
         category: AntiPatternCategory,
     ) -> Result<Vec<PatternKnowledge>, PluginError> {
         let cache = self.integration_cache.read().await;
-        
+
         if let Some(pattern_ids) = cache.category_patterns.get(&category) {
             let mut patterns = Vec::new();
-            
+
             for pattern_id in pattern_ids {
                 if let Some(pattern) = self.get_pattern_by_id(pattern_id).await? {
                     patterns.push(pattern);
                 }
             }
-            
+
             Ok(patterns)
         } else {
             Ok(vec![])
@@ -158,16 +160,16 @@ impl PluginKnowledgeIntegrator {
         language: SourceLanguage,
     ) -> Result<Vec<PatternKnowledge>, PluginError> {
         let cache = self.integration_cache.read().await;
-        
+
         if let Some(pattern_ids) = cache.language_patterns.get(&language) {
             let mut patterns = Vec::new();
-            
+
             for pattern_id in pattern_ids {
                 if let Some(pattern) = self.get_pattern_by_id(pattern_id).await? {
                     patterns.push(pattern);
                 }
             }
-            
+
             Ok(patterns)
         } else {
             Ok(vec![])
@@ -180,16 +182,16 @@ impl PluginKnowledgeIntegrator {
         framework: &str,
     ) -> Result<Vec<PatternKnowledge>, PluginError> {
         let cache = self.integration_cache.read().await;
-        
+
         if let Some(pattern_ids) = cache.framework_patterns.get(framework) {
             let mut patterns = Vec::new();
-            
+
             for pattern_id in pattern_ids {
                 if let Some(pattern) = self.get_pattern_by_id(pattern_id).await? {
                     patterns.push(pattern);
                 }
             }
-            
+
             Ok(patterns)
         } else {
             Ok(vec![])
@@ -226,17 +228,21 @@ impl PluginKnowledgeIntegrator {
     async fn index_core_patterns(&self, core_lib: &KnowledgeLibrary, cache: &mut IntegrationCache) {
         // Index universal patterns
         for (pattern_id, pattern) in &core_lib.universal_patterns {
-            cache.pattern_index.insert(pattern_id.clone(), PatternSource::Core);
-            
+            cache
+                .pattern_index
+                .insert(pattern_id.clone(), PatternSource::Core);
+
             // Index by category
-            cache.category_patterns
+            cache
+                .category_patterns
                 .entry(pattern.category)
                 .or_insert_with(Vec::new)
                 .push(pattern_id.clone());
 
             // Index by language (universal applies to all)
             for language in &core_lib.metadata.supported_languages {
-                cache.language_patterns
+                cache
+                    .language_patterns
                     .entry(*language)
                     .or_insert_with(Vec::new)
                     .push(pattern_id.clone());
@@ -246,14 +252,18 @@ impl PluginKnowledgeIntegrator {
         // Index language-specific patterns
         for (language, lang_knowledge) in &core_lib.language_specific {
             for (pattern_id, pattern) in &lang_knowledge.patterns {
-                cache.pattern_index.insert(pattern_id.clone(), PatternSource::Core);
-                
-                cache.category_patterns
+                cache
+                    .pattern_index
+                    .insert(pattern_id.clone(), PatternSource::Core);
+
+                cache
+                    .category_patterns
                     .entry(pattern.category)
                     .or_insert_with(Vec::new)
                     .push(pattern_id.clone());
 
-                cache.language_patterns
+                cache
+                    .language_patterns
                     .entry(*language)
                     .or_insert_with(Vec::new)
                     .push(pattern_id.clone());
@@ -262,7 +272,8 @@ impl PluginKnowledgeIntegrator {
             // Index framework patterns
             for (framework_name, framework_knowledge) in &lang_knowledge.frameworks {
                 for pattern_id in &framework_knowledge.specific_patterns {
-                    cache.framework_patterns
+                    cache
+                        .framework_patterns
                         .entry(framework_name.clone())
                         .or_insert_with(Vec::new)
                         .push(pattern_id.clone());
@@ -272,22 +283,27 @@ impl PluginKnowledgeIntegrator {
     }
 
     /// Index patterns from plugin library
-    async fn index_plugin_patterns(&self, plugin_lib: &PluginKnowledgeLibrary, cache: &mut IntegrationCache) {
+    async fn index_plugin_patterns(
+        &self,
+        plugin_lib: &PluginKnowledgeLibrary,
+        cache: &mut IntegrationCache,
+    ) {
         for (plugin_id, plugin_knowledge) in plugin_lib.get_all_plugin_knowledge() {
             for pattern in &plugin_knowledge.patterns {
-                cache.pattern_index.insert(
-                    pattern.id.clone(),
-                    PatternSource::Plugin(plugin_id.clone())
-                );
-                
-                cache.category_patterns
+                cache
+                    .pattern_index
+                    .insert(pattern.id.clone(), PatternSource::Plugin(plugin_id.clone()));
+
+                cache
+                    .category_patterns
                     .entry(pattern.category)
                     .or_insert_with(Vec::new)
                     .push(pattern.id.clone());
 
                 // Plugin patterns may support multiple languages
                 // This would require additional metadata in the plugin system
-                cache.language_patterns
+                cache
+                    .language_patterns
                     .entry(SourceLanguage::Universal)
                     .or_insert_with(Vec::new)
                     .push(pattern.id.clone());
@@ -296,7 +312,10 @@ impl PluginKnowledgeIntegrator {
     }
 
     /// Get patterns from core library for analysis context
-    async fn get_core_patterns(&self, context: &AnalysisContext) -> Result<Vec<PatternKnowledge>, PluginError> {
+    async fn get_core_patterns(
+        &self,
+        context: &AnalysisContext,
+    ) -> Result<Vec<PatternKnowledge>, PluginError> {
         let core_lib = self.core_library.read().await;
         let mut patterns = Vec::new();
 
@@ -312,7 +331,10 @@ impl PluginKnowledgeIntegrator {
     }
 
     /// Get patterns from plugin library for analysis context
-    async fn get_plugin_patterns(&self, context: &AnalysisContext) -> Result<Vec<PatternKnowledge>, PluginError> {
+    async fn get_plugin_patterns(
+        &self,
+        context: &AnalysisContext,
+    ) -> Result<Vec<PatternKnowledge>, PluginError> {
         let plugin_lib = self.plugin_library.read().await;
         let mut patterns = Vec::new();
 
@@ -347,13 +369,14 @@ impl PluginKnowledgeIntegrator {
             all_patterns.push(RankedPattern {
                 pattern,
                 source: PatternSource::Plugin("unknown".to_string()), // Would be properly tracked
-                relevance_score: 0.0, // Will be calculated
+                relevance_score: 0.0,                                 // Will be calculated
             });
         }
 
         // Calculate relevance scores
         for ranked_pattern in &mut all_patterns {
-            ranked_pattern.relevance_score = self.calculate_relevance_score(&ranked_pattern.pattern, context);
+            ranked_pattern.relevance_score =
+                self.calculate_relevance_score(&ranked_pattern.pattern, context);
         }
 
         // Sort by relevance score (descending)
@@ -366,7 +389,11 @@ impl PluginKnowledgeIntegrator {
     }
 
     /// Calculate relevance score for a pattern
-    fn calculate_relevance_score(&self, pattern: &PatternKnowledge, context: &AnalysisContext) -> f32 {
+    fn calculate_relevance_score(
+        &self,
+        pattern: &PatternKnowledge,
+        context: &AnalysisContext,
+    ) -> f32 {
         let mut score: f32 = 0.0;
 
         // Base score from pattern confidence
@@ -395,7 +422,10 @@ impl PluginKnowledgeIntegrator {
     }
 
     /// Get related solutions for patterns
-    async fn get_related_solutions(&self, patterns: &[RankedPattern]) -> Result<Vec<SolutionPattern>, PluginError> {
+    async fn get_related_solutions(
+        &self,
+        patterns: &[RankedPattern],
+    ) -> Result<Vec<SolutionPattern>, PluginError> {
         let mut solutions = Vec::new();
 
         for ranked_pattern in patterns {
@@ -409,7 +439,10 @@ impl PluginKnowledgeIntegrator {
     }
 
     /// Get related detectors for patterns
-    async fn get_related_detectors(&self, patterns: &[RankedPattern]) -> Result<Vec<DetectionMethod>, PluginError> {
+    async fn get_related_detectors(
+        &self,
+        patterns: &[RankedPattern],
+    ) -> Result<Vec<DetectionMethod>, PluginError> {
         let mut detectors = Vec::new();
 
         for ranked_pattern in patterns {
@@ -422,7 +455,7 @@ impl PluginKnowledgeIntegrator {
     /// Get plugin contributions summary
     async fn get_plugin_contributions(&self) -> Result<PluginContributions, PluginError> {
         let plugin_lib = self.plugin_library.read().await;
-        
+
         let mut contributions = PluginContributions {
             total_plugins: plugin_lib.plugin_count(),
             pattern_contributions: HashMap::new(),
@@ -430,10 +463,9 @@ impl PluginKnowledgeIntegrator {
         };
 
         for (plugin_id, plugin_knowledge) in plugin_lib.get_all_plugin_knowledge() {
-            contributions.pattern_contributions.insert(
-                plugin_id.clone(),
-                plugin_knowledge.patterns.len()
-            );
+            contributions
+                .pattern_contributions
+                .insert(plugin_id.clone(), plugin_knowledge.patterns.len());
         }
 
         Ok(contributions)
@@ -446,19 +478,22 @@ impl PluginKnowledgeIntegrator {
     }
 
     /// Get pattern by ID from either core or plugin library
-    async fn get_pattern_by_id(&self, pattern_id: &str) -> Result<Option<PatternKnowledge>, PluginError> {
+    async fn get_pattern_by_id(
+        &self,
+        pattern_id: &str,
+    ) -> Result<Option<PatternKnowledge>, PluginError> {
         let cache = self.integration_cache.read().await;
-        
+
         if let Some(source) = cache.pattern_index.get(pattern_id) {
             match source {
                 PatternSource::Core => {
                     let core_lib = self.core_library.read().await;
-                    
+
                     // Check universal patterns
                     if let Some(pattern) = core_lib.universal_patterns.get(pattern_id) {
                         return Ok(Some(pattern.clone()));
                     }
-                    
+
                     // Check language-specific patterns
                     for lang_knowledge in core_lib.language_specific.values() {
                         if let Some(pattern) = lang_knowledge.patterns.get(pattern_id) {
@@ -478,7 +513,7 @@ impl PluginKnowledgeIntegrator {
                 }
             }
         }
-        
+
         Ok(None)
     }
 
@@ -487,12 +522,16 @@ impl PluginKnowledgeIntegrator {
         let core_lib = self.core_library.read().await;
         let plugin_lib = self.plugin_library.read().await;
 
-        let core_patterns = core_lib.universal_patterns.len() +
-            core_lib.language_specific.values()
+        let core_patterns = core_lib.universal_patterns.len()
+            + core_lib
+                .language_specific
+                .values()
                 .map(|lang| lang.patterns.len())
                 .sum::<usize>();
 
-        let plugin_patterns = plugin_lib.get_all_plugin_knowledge().values()
+        let plugin_patterns = plugin_lib
+            .get_all_plugin_knowledge()
+            .values()
             .map(|plugin| plugin.patterns.len())
             .sum::<usize>();
 

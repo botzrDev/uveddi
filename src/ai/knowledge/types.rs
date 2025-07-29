@@ -3,9 +3,9 @@
 //! This module defines the data structures and types needed for integrating
 //! the AI Knowledge Library with the Analysis Engine.
 
+use crate::ai::knowledge::schema::{EffortLevel, ImpactLevel, PatternKnowledge, SourceLanguage};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use crate::ai::knowledge::schema::{SourceLanguage, PatternKnowledge, EffortLevel, ImpactLevel};
 
 /// Analysis context for intelligent pattern selection
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -80,47 +80,48 @@ impl ContextSelector {
         analysis_context: &AnalysisContext,
     ) -> Result<KnowledgeContext, crate::error::UveddiError> {
         let start_time = std::time::Instant::now();
-        
+
         // Get all patterns for the detected language
-        let available_patterns = self.knowledge_library
+        let available_patterns = self
+            .knowledge_library
             .get_language_patterns(&analysis_context.language);
-        
+
         // Score patterns based on relevance
         let mut scored_patterns = Vec::new();
-        
+
         for pattern in available_patterns {
             let score = self.calculate_relevance_score(pattern, analysis_context);
-            
+
             if score >= self.relevance_threshold {
                 scored_patterns.push((pattern.clone(), score));
             }
         }
-        
+
         // Sort by relevance score (descending)
         scored_patterns.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
-        
+
         // Take top patterns up to max_patterns limit
         let selected_patterns: Vec<PatternKnowledge> = scored_patterns
             .into_iter()
             .take(self.max_patterns)
             .map(|(pattern, _score)| pattern)
             .collect();
-            
+
         let selection_time_ms = start_time.elapsed().as_millis() as u64;
-        
+
         // Calculate overall relevance score
         let relevance_score = if !selected_patterns.is_empty() {
             selected_patterns.len() as f64 / self.max_patterns as f64
         } else {
             0.0
         };
-        
+
         // Estimate token count (rough estimation)
         let token_count = selected_patterns
             .iter()
             .map(|p| self.estimate_pattern_tokens(p))
             .sum();
-        
+
         Ok(KnowledgeContext {
             selected_patterns,
             relevance_score,
@@ -129,7 +130,7 @@ impl ContextSelector {
             token_count,
         })
     }
-    
+
     /// Calculate relevance score for a pattern given the analysis context
     fn calculate_relevance_score(
         &self,
@@ -138,15 +139,20 @@ impl ContextSelector {
     ) -> f64 {
         let mut score = 0.0;
         let mut factors = 0;
-        
+
         // Check for direct pattern matches
         for detected_pattern in &context.detected_patterns {
-            if pattern.id == *detected_pattern || pattern.name.to_lowercase().contains(&detected_pattern.to_lowercase()) {
+            if pattern.id == *detected_pattern
+                || pattern
+                    .name
+                    .to_lowercase()
+                    .contains(&detected_pattern.to_lowercase())
+            {
                 score += 1.0;
                 factors += 1;
             }
         }
-        
+
         // Check for related patterns
         for detected_pattern in &context.detected_patterns {
             if pattern.related_patterns.contains(detected_pattern) {
@@ -154,48 +160,64 @@ impl ContextSelector {
                 factors += 1;
             }
         }
-        
+
         // Check for framework relevance
         if !context.frameworks.is_empty() {
             for framework in &context.frameworks {
-                if pattern.tags.iter().any(|tag| tag.to_lowercase().contains(&framework.to_lowercase())) {
+                if pattern
+                    .tags
+                    .iter()
+                    .any(|tag| tag.to_lowercase().contains(&framework.to_lowercase()))
+                {
                     score += 0.6;
                     factors += 1;
                     break;
                 }
             }
         }
-        
+
         // Consider pattern frequency and detection confidence
         score += pattern.frequency_score as f64 * 0.5;
         score += pattern.detection_confidence as f64 * 0.3;
         factors += 2;
-        
+
         // Complexity-based relevance
         match context.complexity_metrics.cognitive_complexity {
             0..=5 => {
                 // Simple code - prefer simple solutions
-                if pattern.solutions.iter().any(|s| matches!(s.effort_level, EffortLevel::Trivial | EffortLevel::Low)) {
+                if pattern
+                    .solutions
+                    .iter()
+                    .any(|s| matches!(s.effort_level, EffortLevel::Trivial | EffortLevel::Low))
+                {
                     score += 0.4;
                     factors += 1;
                 }
-            },
+            }
             6..=15 => {
                 // Medium complexity - balanced solutions
-                if pattern.solutions.iter().any(|s| matches!(s.effort_level, EffortLevel::Medium)) {
+                if pattern
+                    .solutions
+                    .iter()
+                    .any(|s| matches!(s.effort_level, EffortLevel::Medium))
+                {
                     score += 0.5;
                     factors += 1;
                 }
-            },
+            }
             _ => {
                 // High complexity - comprehensive solutions needed
-                if pattern.solutions.iter().any(|s| matches!(s.effort_level, EffortLevel::High | EffortLevel::Significant)) {
+                if pattern
+                    .solutions
+                    .iter()
+                    .any(|s| matches!(s.effort_level, EffortLevel::High | EffortLevel::Significant))
+                {
                     score += 0.6;
                     factors += 1;
                 }
             }
         }
-        
+
         // Normalize score by number of factors
         if factors > 0 {
             score / factors as f64
@@ -203,29 +225,30 @@ impl ContextSelector {
             0.0
         }
     }
-    
+
     /// Estimate token count for a pattern (rough approximation)
     fn estimate_pattern_tokens(&self, pattern: &PatternKnowledge) -> usize {
         let mut tokens = 0;
-        
+
         // Pattern name and definition
         tokens += pattern.name.len() / 4; // ~4 chars per token
         tokens += pattern.definition.as_str().len() / 4;
-        
+
         // Symptoms
-        tokens += pattern.symptoms.iter()
+        tokens += pattern
+            .symptoms
+            .iter()
             .map(|s| s.as_str().len() / 4)
             .sum::<usize>();
-        
+
         // Solutions (limited to first 2 for token budget)
-        tokens += pattern.solutions.iter()
+        tokens += pattern
+            .solutions
+            .iter()
             .take(2)
-            .map(|s| {
-                s.title.len() / 4 + 
-                s.implementation.as_str().len() / 4
-            })
+            .map(|s| s.title.len() / 4 + s.implementation.as_str().len() / 4)
             .sum::<usize>();
-        
+
         tokens.max(50) // Minimum estimate
     }
 }

@@ -270,7 +270,7 @@ impl MockAnalyzeFormData {
 async fn create_unique_test_file() -> std::io::Result<(std::path::PathBuf, std::path::PathBuf)> {
     use std::sync::atomic::{AtomicU64, Ordering};
     static COUNTER: AtomicU64 = AtomicU64::new(0);
-    
+
     let unique_id = COUNTER.fetch_add(1, Ordering::SeqCst);
     let test_dir = std::path::PathBuf::from(format!("./tmp/form_validation_test_{}", unique_id));
     tokio::fs::create_dir_all(&test_dir).await?;
@@ -314,9 +314,7 @@ async fn test_form_validation_valid_path() {
     assert_eq!(command.path, test_file);
 
     // Cleanup
-    tokio::fs::remove_dir_all(&test_dir)
-        .await
-        .ok();
+    tokio::fs::remove_dir_all(&test_dir).await.ok();
 }
 
 #[tokio::test]
@@ -335,9 +333,7 @@ async fn test_form_validation_invalid_confidence() {
     );
 
     // Cleanup
-    tokio::fs::remove_dir_all(&test_dir)
-        .await
-        .ok();
+    tokio::fs::remove_dir_all(&test_dir).await.ok();
 }
 
 #[tokio::test]
@@ -356,9 +352,7 @@ async fn test_form_validation_invalid_confidence_format() {
     );
 
     // Cleanup
-    tokio::fs::remove_dir_all(&test_dir)
-        .await
-        .ok();
+    tokio::fs::remove_dir_all(&test_dir).await.ok();
 }
 
 #[tokio::test]
@@ -375,9 +369,7 @@ async fn test_form_validation_valid_confidence() {
     assert_eq!(command.dead_code_confidence, Some(0.8));
 
     // Cleanup
-    tokio::fs::remove_dir_all(&test_dir)
-        .await
-        .ok();
+    tokio::fs::remove_dir_all(&test_dir).await.ok();
 }
 
 #[tokio::test]
@@ -393,9 +385,7 @@ async fn test_form_validation_invalid_output_format() {
     assert!(result.unwrap_err().contains("Invalid output format"));
 
     // Cleanup
-    tokio::fs::remove_dir_all(&test_dir)
-        .await
-        .ok();
+    tokio::fs::remove_dir_all(&test_dir).await.ok();
 }
 
 #[tokio::test]
@@ -411,9 +401,7 @@ async fn test_form_validation_zero_numeric_fields() {
     assert_eq!(result.unwrap_err(), "Maximum LOC must be greater than 0");
 
     // Cleanup
-    tokio::fs::remove_dir_all(&test_dir)
-        .await
-        .ok();
+    tokio::fs::remove_dir_all(&test_dir).await.ok();
 }
 
 #[tokio::test]
@@ -431,9 +419,7 @@ async fn test_form_validation_pattern_parsing() {
     assert_eq!(patterns, vec!["test", "spec", "mock", "generated"]);
 
     // Cleanup
-    tokio::fs::remove_dir_all(&test_dir)
-        .await
-        .ok();
+    tokio::fs::remove_dir_all(&test_dir).await.ok();
 }
 
 #[tokio::test]
@@ -450,9 +436,7 @@ async fn test_form_validation_empty_patterns() {
     assert!(command.dead_code_ignore_patterns.is_none());
 
     // Cleanup
-    tokio::fs::remove_dir_all(&test_dir)
-        .await
-        .ok();
+    tokio::fs::remove_dir_all(&test_dir).await.ok();
 }
 
 #[tokio::test]
@@ -471,9 +455,7 @@ async fn test_form_validation_severity_range() {
     );
 
     // Cleanup
-    tokio::fs::remove_dir_all(&test_dir)
-        .await
-        .ok();
+    tokio::fs::remove_dir_all(&test_dir).await.ok();
 }
 
 #[tokio::test]
@@ -492,9 +474,7 @@ async fn test_form_validation_lcom_range() {
     );
 
     // Cleanup
-    tokio::fs::remove_dir_all(&test_dir)
-        .await
-        .ok();
+    tokio::fs::remove_dir_all(&test_dir).await.ok();
 }
 
 #[tokio::test]
@@ -562,9 +542,7 @@ async fn test_form_validation_complete_valid_form() {
     assert_eq!(command.large_classes_min_severity, Some(30));
 
     // Cleanup
-    tokio::fs::remove_dir_all(&test_dir)
-        .await
-        .ok();
+    tokio::fs::remove_dir_all(&test_dir).await.ok();
 }
 
 #[tokio::test]
@@ -592,9 +570,7 @@ async fn test_form_validation_optional_fields_empty() {
     assert_eq!(command.large_classes_min_severity, None);
 
     // Cleanup
-    tokio::fs::remove_dir_all(&test_dir)
-        .await
-        .ok();
+    tokio::fs::remove_dir_all(&test_dir).await.ok();
 }
 
 /// Test boundary values for numeric inputs
@@ -634,7 +610,5 @@ async fn test_form_validation_boundary_values() {
     assert!(form.to_analyze_command().is_err());
 
     // Cleanup
-    tokio::fs::remove_dir_all(&test_dir)
-        .await
-        .ok();
+    tokio::fs::remove_dir_all(&test_dir).await.ok();
 }
