@@ -126,6 +126,7 @@ use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use crate::error::ErrorHelpers;
 use log::{debug, info, warn};
 use std::collections::{HashMap, HashSet};
+#[cfg(feature = "tree-sitter")]
 use tree_sitter::StreamingIterator;
 
 // --- Queries for identifying language-specific containers (classes, structs) ---

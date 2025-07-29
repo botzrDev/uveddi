@@ -1,6 +1,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 #[cfg(feature = "tree-sitter")]
+#[cfg(feature = "tree-sitter")]
 use tree_sitter::{Query, QueryCursor, StreamingIterator};
 
 use crate::ast::tree_sitter::queries::{

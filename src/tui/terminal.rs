@@ -12,6 +12,7 @@ use crossterm::{
         disable_raw_mode, enable_raw_mode, size, Clear, ClearType, EnterAlternateScreen,
         LeaveAlternateScreen,
     },
+    tty::IsTty,
 };
 use ratatui::{backend::CrosstermBackend, Terminal};
 use std::io::{self, Stdout};
@@ -68,25 +69,97 @@ impl TerminalManager {
     }
 }
 
-/// Initialize terminal for TUI mode
+/// Initialize terminal for TUI mode with environment detection
 ///
 /// This function:
+/// - Checks if we're in an interactive terminal environment
 /// - Enables raw mode for direct key capture
 /// - Enters alternate screen to preserve user's terminal content
 /// - Shows the cursor for form input visibility
 /// - Enables mouse capture
 pub fn setup_terminal() -> Result<Terminal<CrosstermBackend<Stdout>>> {
+    // Check if we can actually use the terminal
+    if !is_terminal_available()? {
+        return Err(color_eyre::eyre::eyre!(
+            "TUI not available: running in non-interactive environment. Use --output=json or --output=text instead."
+        ).into());
+    }
+
     // Enable raw mode for direct key input
-    enable_raw_mode()?;
+    enable_raw_mode().map_err(|e| {
+        color_eyre::eyre::eyre!(
+            "Failed to enable raw mode: {}. This usually means the terminal doesn't support interactive input. Try using --output=json instead.", 
+            e
+        )
+    })?;
 
     // Enter alternate screen and show cursor for form inputs
-    execute!(io::stdout(), EnterAlternateScreen, Show, EnableMouseCapture)?;
+    execute!(io::stdout(), EnterAlternateScreen, Show, EnableMouseCapture)
+        .map_err(|e| {
+            let _ = disable_raw_mode(); // Cleanup on failure
+            color_eyre::eyre::eyre!(
+                "Failed to initialize terminal screen: {}. Try using --output=text instead.", 
+                e
+            )
+        })?;
 
     // Create terminal backend
     let backend = CrosstermBackend::new(io::stdout());
-    let terminal = Terminal::new(backend)?;
+    let terminal = Terminal::new(backend).map_err(|e| {
+        let _ = restore_terminal(); // Cleanup on failure
+        color_eyre::eyre::eyre!(
+            "Failed to create terminal: {}. Terminal may not support required features.", 
+            e
+        )
+    })?;
 
     Ok(terminal)
+}
+
+/// Check if terminal is available for interactive use
+///
+/// This function checks multiple conditions:
+/// - Is stdout connected to a TTY?
+/// - Are we in a CI environment?
+/// - Are we in a headless environment?
+/// - Do we have required environment variables?
+pub fn is_terminal_available() -> Result<bool> {
+    // Check if stdout is a TTY
+    if !io::stdout().is_tty() {
+        return Ok(false);
+    }
+
+    // Check for CI environments
+    if std::env::var("CI").is_ok() 
+        || std::env::var("GITHUB_ACTIONS").is_ok()
+        || std::env::var("GITLAB_CI").is_ok()
+        || std::env::var("JENKINS_URL").is_ok()
+        || std::env::var("TRAVIS").is_ok() {
+        return Ok(false);
+    }
+
+    // Check for headless environments
+    if std::env::var("DISPLAY").is_err() && std::env::var("WAYLAND_DISPLAY").is_err() {
+        // On Linux, check if we're in a truly headless environment
+        if cfg!(target_os = "linux") {
+            // If we're in WSL or have SSH_TTY, we might still have terminal support
+            if std::env::var("WSL_DISTRO_NAME").is_err() && std::env::var("SSH_TTY").is_err() {
+                // Additional check: try to get terminal size
+                if size().is_err() {
+                    return Ok(false);
+                }
+            }
+        }
+    }
+
+    // Check terminal type
+    let term = std::env::var("TERM").unwrap_or_default();
+    if term == "dumb" || term.is_empty() {
+        return Ok(false);
+    }
+
+    // If we get here, terminal should be available
+    Ok(true)
 }
 
 /// Restore terminal to normal state

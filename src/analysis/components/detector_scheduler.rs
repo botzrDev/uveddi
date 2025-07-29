@@ -147,7 +147,7 @@ impl DetectorScheduler {
         &self,
         plugin_manager: &PluginManagerHandle,
         file_path: &Path,
-        ast: Arc<tree_sitter::Tree>,
+        ast: Arc<crate::ast::tree_sitter::Tree>,
     ) -> Result<(), UveddiError> {
         // Get plugin configuration
         let plugin_config = self.config_service.get_plugin_config();

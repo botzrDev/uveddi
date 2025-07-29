@@ -3,14 +3,146 @@
 //! This module integrates plugin-provided knowledge with the core knowledge
 //! library while maintaining performance and consistency.
 
+#[cfg(feature = "ai")]
 use crate::ai::knowledge::context_selection::*;
+#[cfg(feature = "ai")]
 use crate::ai::knowledge::loader::KnowledgeLibraryLoader;
+#[cfg(feature = "ai")]
 use crate::ai::knowledge::schema::*;
 use crate::plugins::knowledge::*;
 use crate::plugins::PluginError;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
+
+// Stub types for when AI features are disabled
+#[cfg(not(feature = "ai"))]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct KnowledgeLibrary {
+    pub universal_patterns: HashMap<String, PatternKnowledge>,
+    pub language_specific: HashMap<SourceLanguage, LanguageKnowledge>,
+    pub metadata: LibraryMetadata,
+}
+
+#[cfg(not(feature = "ai"))]
+#[derive(Debug, Clone, Default)]
+pub struct KnowledgeLibraryLoader;
+
+#[cfg(not(feature = "ai"))]
+#[derive(Debug, Clone, Hash, PartialEq, Eq, Copy, Serialize, Deserialize)]
+pub enum SourceLanguage {
+    Rust,
+    Python,
+    JavaScript,
+    TypeScript,
+    Java,
+    Universal,
+}
+
+#[cfg(not(feature = "ai"))]
+#[derive(Debug, Clone, Hash, PartialEq, Eq, Copy, Serialize, Deserialize)]
+pub enum AntiPatternCategory {
+    GodObject,
+    CyclicDependency,
+    MagicValues,
+    GlobalState,
+    TightCoupling,
+    ResourceLeak,
+    SilentFailure,
+    CodeDuplication,
+    LeakyAbstraction,
+    DeadCode,
+    LongMethod,
+    LargeClass,
+}
+
+#[cfg(not(feature = "ai"))]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct PatternKnowledge {
+    pub id: String,
+    pub category: AntiPatternCategory,
+    pub detection_confidence: f32,
+    pub tags: Vec<String>,
+    pub solutions: Vec<SolutionPattern>,
+    pub detection_methods: Vec<DetectionMethod>,
+}
+
+#[cfg(not(feature = "ai"))]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct LanguageKnowledge {
+    pub patterns: HashMap<String, PatternKnowledge>,
+    pub frameworks: HashMap<String, FrameworkKnowledge>,
+}
+
+#[cfg(not(feature = "ai"))]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct FrameworkKnowledge {
+    pub specific_patterns: Vec<String>,
+}
+
+#[cfg(not(feature = "ai"))]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct LibraryMetadata {
+    pub supported_languages: Vec<SourceLanguage>,
+}
+
+#[cfg(not(feature = "ai"))]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct SolutionPattern {
+    pub id: String,
+}
+
+#[cfg(not(feature = "ai"))]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct DetectionMethod {
+    pub id: String,
+}
+
+#[cfg(not(feature = "ai"))]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct AnalysisContext {
+    pub language: SourceLanguage,
+    pub frameworks: Vec<String>,
+    pub detected_patterns: Vec<DetectedPattern>,
+}
+
+#[cfg(not(feature = "ai"))]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct DetectedPattern {
+    pub pattern_id: String,
+    pub confidence: f32,
+}
+
+#[cfg(not(feature = "ai"))]
+#[derive(Debug, Clone, Hash, PartialEq, Eq, Copy, Serialize, Deserialize)]
+pub enum SeverityLevel {
+    Low,
+    Medium,
+    High,
+    Critical,
+}
+
+#[cfg(not(feature = "ai"))]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct LocationContext {
+    pub file_path: String,
+    pub line_number: u32,
+}
+
+#[cfg(not(feature = "ai"))]
+impl Default for SeverityLevel {
+    fn default() -> Self {
+        SeverityLevel::Medium
+    }
+}
+
+#[cfg(not(feature = "ai"))]
+impl Default for AntiPatternCategory {
+    fn default() -> Self {
+        AntiPatternCategory::GodObject
+    }
+}
 
 /// Plugin knowledge integration manager
 pub struct PluginKnowledgeIntegrator {

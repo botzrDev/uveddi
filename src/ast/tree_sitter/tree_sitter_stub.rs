@@ -83,6 +83,13 @@ impl<'a> Node<'a> {
 #[derive(Debug, Clone)]
 pub struct TreeCursor;
 
+/// Stub for tree_sitter::StreamingIterator
+pub trait StreamingIterator {
+    type Item;
+    fn advance(&mut self);
+    fn get(&self) -> Option<&Self::Item>;
+}
+
 /// Stub for tree_sitter::Tree
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Tree;
@@ -92,14 +99,18 @@ impl Tree {
         Node::new()
     }
 
-    pub fn language(&self) -> () {
-        ()
+    pub fn language(&self) -> Language {
+        Language
     }
 }
 
 /// Stub for tree_sitter::Parser
 #[derive(Debug, Clone)]
 pub struct Parser;
+
+/// Stub for tree_sitter::Language
+#[derive(Debug, Clone)]
+pub struct Language;
 
 /// Additional stub types needed
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
@@ -112,6 +123,9 @@ pub struct Point {
 pub struct QueryMatch<'a> {
     pub captures: Vec<QueryCapture<'a>>,
 }
+
+// Need this as a standalone export too
+pub type QueryMatchRef<'a> = QueryMatch<'a>;
 
 #[derive(Debug, Clone)]
 pub struct QueryCapture<'a> {
@@ -203,7 +217,7 @@ pub enum AstError {
 
 // Stub implementations for tree-sitter types
 impl Query {
-    pub fn new(_language: &(), _query: &str) -> Result<Self, AstError> {
+    pub fn new(_language: &Language, _query: &str) -> Result<Self, AstError> {
         Err(AstError::FeatureNotEnabled(
             "tree-sitter feature not enabled".to_string(),
         ))
@@ -263,7 +277,7 @@ impl Parser {
         ))
     }
 
-    pub fn set_language(&mut self, _language: &()) -> Result<(), AstError> {
+    pub fn set_language(&mut self, _language: &Language) -> Result<(), AstError> {
         Err(AstError::FeatureNotEnabled(
             "tree-sitter feature not enabled".to_string(),
         ))
@@ -377,13 +391,15 @@ pub fn create_test_ast_parser() -> Result<AstParser, AstError> {
 }
 
 pub mod language {
-    pub fn rust() -> &'static () {
-        &()
+    use super::Language;
+    
+    pub fn rust() -> Language {
+        Language
     }
-    pub fn python() -> &'static () {
-        &()
+    pub fn python() -> Language {
+        Language
     }
-    pub fn javascript() -> &'static () {
-        &()
+    pub fn javascript() -> Language {
+        Language
     }
 }

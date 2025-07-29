@@ -11,7 +11,10 @@ use std::num::NonZeroUsize;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, MutexGuard};
 use tracing::{info, warn};
+#[cfg(feature = "tree-sitter")]
 use tree_sitter::{Parser, Tree};
+#[cfg(not(feature = "tree-sitter"))]
+use crate::ast::tree_sitter::{Parser, Tree};
 
 // Re-export tree-sitter types for public API
 
@@ -640,7 +643,11 @@ pub enum AstError {
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
     #[error("Tree-sitter language error: {0}")]
+    #[cfg(feature = "tree-sitter")]
     TreeSitterLanguage(#[from] tree_sitter::LanguageError),
+    #[cfg(not(feature = "tree-sitter"))]
+    #[error("Tree-sitter language error: {0}")]
+    TreeSitterLanguage(String),
     #[error("AST parsing failed")]
     ParseFailed,
     #[error("Unsupported language: {0}")]

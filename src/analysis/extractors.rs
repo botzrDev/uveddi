@@ -4,6 +4,7 @@ use crate::analysis::symbols::{CanonicalSymbol, GlobalSymbolTable, SourceLocatio
 use crate::ast::tree_sitter_impl::ParsedFile;
 use std::sync::atomic::{AtomicU64, Ordering};
 #[cfg(feature = "tree-sitter")]
+#[cfg(feature = "tree-sitter")]
 use tree_sitter::{Query, QueryCursor, StreamingIterator};
 
 /// A simple counter to generate unique symbol IDs.

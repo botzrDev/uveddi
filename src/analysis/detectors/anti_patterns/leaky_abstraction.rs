@@ -77,6 +77,7 @@ use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use std::collections::{HashMap, HashSet};
 use strum_macros::EnumString;
+#[cfg(feature = "tree-sitter")]
 use tree_sitter::StreamingIterator;
 
 /// Defines the configuration for architectural layers and boundaries.

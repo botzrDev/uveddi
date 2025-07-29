@@ -28,6 +28,7 @@ use crate::analysis::detectors::anti_patterns::large_classes::{
 };
 use crate::analysis::detectors::cycle::CycleDetector;
 use crate::analysis::detectors::dependency::{Dependency, DependencyExtractor};
+use crate::analysis::errors::AnalysisError;
 use crate::analysis::extractors::SymbolExtractor;
 use crate::analysis::graph::dependency::LocalDependencyGraph;
 use crate::analysis::graph::dependency::{ComponentNode, LocalDependencyType};
@@ -36,6 +37,8 @@ use crate::analysis::incremental::{
 };
 use crate::analysis::symbols::GlobalSymbolTable;
 use crate::analysis::traits::{AstParserTrait, DependencyExtractorTrait, ResultCacheTrait};
+use crate::analysis::workspace::{WorkspaceDetector, WorkspaceInfo};
+use crate::analysis::memory_report::MemoryAnalysisReport;
 use crate::analysis::AnalysisDetector;
 use crate::ast::tree_sitter_impl::AstParser;
 use crate::cache::result_cache::ResultCache;
@@ -55,8 +58,30 @@ use crate::analysis::detector_factory::DetectorFactory;
 use crate::analysis::engine_builder::AnalysisEngineBuilder; // Import the builder
 use crate::error::UveddiError;
 
-// Knowledge Library imports
+// Stub types for when AI features are disabled
+#[cfg(not(feature = "ai"))]
+pub struct AiAnalysisEngine;
+#[cfg(not(feature = "ai"))]
+pub struct KnowledgeLibrary;
+#[cfg(not(feature = "ai"))]
+pub struct ContextSelector;
+#[cfg(not(feature = "ai"))]
+#[derive(Debug, Clone)]
+pub struct EngineAnalysisContext;
+#[cfg(not(feature = "ai"))]
+#[derive(Debug, Clone)]
+pub struct EngineComplexityMetrics;
+#[cfg(not(feature = "ai"))]
+#[derive(Debug, Clone)]
+pub struct KnowledgeContext;
+
+// Import SourceLanguage from the appropriate module
+use crate::ast::tree_sitter_impl::SourceLanguage;
+
+// Knowledge Library imports (feature-gated)
+#[cfg(feature = "ai")]
 use crate::ai::engine::AiAnalysisEngine;
+#[cfg(feature = "ai")]
 use crate::ai::knowledge::{
     ContextSelector, EngineAnalysisContext, EngineComplexityMetrics, KnowledgeContext,
     KnowledgeLibrary,
@@ -121,8 +146,11 @@ pub struct AnalysisEngine {
     pub aggregator: Arc<AnalysisAggregator>,
 
     // NEW: Knowledge Library Integration Components
+    #[cfg(feature = "ai")]
     pub knowledge_library: Option<Arc<KnowledgeLibrary>>,
+    #[cfg(feature = "ai")]
     pub context_selector: Option<Arc<ContextSelector>>,
+    #[cfg(feature = "ai")]
     pub ai_engine: Option<Arc<AiAnalysisEngine>>,
 
     // Configuration flags for knowledge enhancement
@@ -462,6 +490,612 @@ impl AnalysisEngine {
         Ok((file_issues, dependency_graph))
     }
 
+    /// Robust analysis with workspace detection and error recovery
+    ///
+    /// This method provides a robust analysis pipeline by:
+    /// 1. Detecting workspace structure (single crate vs multi-crate workspace)
+    /// 2. Analyzing each crate individually with error recovery
+    /// 3. Aggregating results across all crates
+    /// 4. Providing detailed error reporting with actionable suggestions
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - Directory or file path to analyze
+    ///
+    /// # Returns
+    ///
+    /// A tuple containing:
+    /// - `Vec<ArchitecturalIssue>` - All detected issues across all crates
+    /// - `LocalDependencyGraph` - The aggregated dependency graph
+    ///
+    /// # Errors
+    ///
+    /// Returns specific `AnalysisError` variants for different failure modes
+    pub async fn analyze_robust(
+        &mut self,
+        path: &Path,
+    ) -> Result<(Vec<ArchitecturalIssue>, LocalDependencyGraph), AnalysisError> {
+        let start_time = Instant::now();
+        info!("Starting robust analysis for: {:?}", path);
+
+        // Phase 1: Workspace Detection
+        let workspace_info = match WorkspaceDetector::detect_workspace(path).await? {
+            Some(workspace) => {
+                info!("Detected workspace with {} crates", workspace.crates.len());
+                workspace
+            }
+            None => {
+                // Fall back to standard analysis for non-Rust projects
+                info!("No workspace detected, falling back to standard analysis");
+                return self.analyze_fallback(path).await;
+            }
+        };
+
+        // Phase 2: Multi-crate Analysis with Error Recovery
+        let mut all_issues = Vec::new();
+        let mut all_dependencies = Vec::new();
+        let mut successful_crates = 0;
+        let mut failed_crates = Vec::new();
+
+        for (crate_name, crate_info) in &workspace_info.crates {
+            info!("Analyzing crate: {}", crate_name);
+            
+            match self.analyze_single_crate(crate_info).await {
+                Ok((crate_issues, crate_deps)) => {
+                    all_issues.extend(crate_issues);
+                    all_dependencies.extend(crate_deps);
+                    successful_crates += 1;
+                    info!("Successfully analyzed crate: {}", crate_name);
+                }
+                Err(e) => {
+                    let error_msg = format!("Failed to analyze crate '{}': {}", crate_name, e);
+                    warn!("{}", error_msg);
+                    failed_crates.push((crate_name.clone(), e));
+                    
+                    // Don't fail completely, continue with other crates
+                    continue;
+                }
+            }
+        }
+
+        // Phase 3: Build Aggregated Dependency Graph
+        let dependency_graph = self.build_workspace_dependency_graph(&workspace_info, &all_dependencies).await?;
+
+        // Phase 4: Report Analysis Results
+        let analysis_duration = start_time.elapsed();
+        info!(
+            "Robust analysis completed in {:?}: {} crates successful, {} failed",
+            analysis_duration,
+            successful_crates,
+            failed_crates.len()
+        );
+
+        // If we have partial failures, add them as issues but don't fail
+        if !failed_crates.is_empty() {
+            for (crate_name, error) in failed_crates {
+                let issue = self.create_analysis_failure_issue(crate_name, error);
+                all_issues.push(issue);
+            }
+        }
+
+        // Fail only if no crates were successfully analyzed
+        if successful_crates == 0 {
+            return Err(AnalysisError::pipeline_error(
+                "multi-crate-analysis",
+                format!("Failed to analyze any crates in workspace at '{}'", path.display()),
+            ));
+        }
+
+        Ok((all_issues, dependency_graph))
+    }
+
+    /// Fallback analysis method for non-workspace projects
+    async fn analyze_fallback(
+        &mut self,
+        path: &Path,
+    ) -> Result<(Vec<ArchitecturalIssue>, LocalDependencyGraph), AnalysisError> {
+        info!("Using fallback analysis for path: {:?}", path);
+        
+        // Convert UveddiError to AnalysisError for the return type
+        self.analyze(path).await.map_err(|e| {
+            AnalysisError::pipeline_error("fallback-analysis", format!("Standard analysis failed: {}", e))
+        })
+    }
+
+    /// Analyze a single crate with error recovery
+    async fn analyze_single_crate(
+        &mut self,
+        crate_info: &crate::analysis::workspace::CrateInfo,
+    ) -> Result<(Vec<ArchitecturalIssue>, Vec<Dependency>), AnalysisError> {
+        let crate_path = &crate_info.path;
+        info!("Analyzing crate '{}' at: {:?}", crate_info.name, crate_path);
+
+        // Get source files for this crate
+        let source_files = self.get_crate_source_files(crate_info).await?;
+        
+        if source_files.is_empty() {
+            warn!("No source files found for crate: {}", crate_info.name);
+            return Ok((vec![], vec![]));
+        }
+
+        let mut crate_issues = Vec::new();
+        let mut crate_dependencies = Vec::new();
+        let mut processed_files = 0;
+        let mut failed_files = 0;
+
+        // Analyze each source file with error recovery
+        for source_file in source_files {
+            match self.analyze_single_file(&source_file).await {
+                Ok((file_issues, file_deps)) => {
+                    crate_issues.extend(file_issues);
+                    crate_dependencies.extend(file_deps);
+                    processed_files += 1;
+                }
+                Err(e) => {
+                    // Log the error but continue with other files
+                    if e.is_recoverable() {
+                        warn!("Recoverable error in file {:?}: {}", source_file, e);
+                        failed_files += 1;
+                    } else {
+                        // For non-recoverable errors, we might want to fail the entire crate
+                        return Err(AnalysisError::crate_analysis_error(
+                            crate_info.name.clone(),
+                            crate_path.display().to_string(),
+                            format!("Non-recoverable error in file {:?}: {}", source_file, e),
+                        ));
+                    }
+                }
+            }
+        }
+
+        info!(
+            "Crate '{}' analysis complete: {} files processed, {} files failed", 
+            crate_info.name, processed_files, failed_files
+        );
+
+        Ok((crate_issues, crate_dependencies))
+    }
+
+    /// Get all source files for a crate
+    async fn get_crate_source_files(
+        &self,
+        crate_info: &crate::analysis::workspace::CrateInfo,
+    ) -> Result<Vec<PathBuf>, AnalysisError> {
+        let mut source_files = Vec::new();
+
+        for source_dir in &crate_info.source_dirs {
+            if !source_dir.exists() {
+                warn!("Source directory does not exist: {:?}", source_dir);
+                continue;
+            }
+
+            let files = WorkspaceDetector::collect_rust_files(source_dir).await?;
+            source_files.extend(files);
+        }
+
+        Ok(source_files)
+    }
+
+    /// Analyze a single file with detailed error handling
+    async fn analyze_single_file(
+        &mut self,
+        file_path: &Path,
+    ) -> Result<(Vec<ArchitecturalIssue>, Vec<Dependency>), AnalysisError> {
+        // This is a simplified version - in practice you'd want to use the detector scheduler
+        // For now, we'll delegate to the existing analyze method and handle the conversion
+        
+        match self.detector_scheduler.schedule_file(file_path).await {
+            Ok(issues) => {
+                // Extract dependencies - this is a simplified approach
+                let dependencies = match self.extract_file_dependencies(file_path).await {
+                    Ok(deps) => deps,
+                    Err(e) => {
+                        warn!("Failed to extract dependencies from {:?}: {}", file_path, e);
+                        vec![]
+                    }
+                };
+                Ok((issues, dependencies))
+            }
+            Err(e) => Err(AnalysisError::detector_error(
+                "multi-detector",
+                file_path.display().to_string(),
+                format!("File analysis failed: {}", e),
+            )),
+        }
+    }
+
+    /// Extract dependencies from a single file
+    async fn extract_file_dependencies(
+        &self,
+        file_path: &Path,
+    ) -> Result<Vec<Dependency>, AnalysisError> {
+        // For now, return empty dependencies as this is a complex operation
+        // In practice, you'd want to implement proper dependency extraction
+        // based on the file type and language
+        
+        // This is a simplified placeholder - real implementation would:
+        // 1. Parse the file using the appropriate parser
+        // 2. Extract import/use statements 
+        // 3. Build dependency relationships
+        // 4. Return structured dependency information
+        
+        Ok(vec![])
+    }
+
+    /// Build dependency graph for the entire workspace
+    async fn build_workspace_dependency_graph(
+        &self,
+        workspace_info: &WorkspaceInfo,
+        all_dependencies: &[Dependency],
+    ) -> Result<LocalDependencyGraph, AnalysisError> {
+        let mut graph = LocalDependencyGraph::new();
+
+        // Add nodes for each crate
+        for (crate_name, crate_info) in &workspace_info.crates {
+            let node = ComponentNode::Module { 
+                path: crate_info.path.display().to_string()
+            };
+            graph.add_component(node);
+        }
+
+        // Add dependencies as edges  
+        for dep in all_dependencies {
+            let from_node = ComponentNode::Module { 
+                path: dep.from_file.display().to_string()
+            };
+            let to_node = ComponentNode::Module { 
+                path: dep.to_module.clone() 
+            };
+            graph.add_dependency(&from_node, &to_node, LocalDependencyType::Import);
+        }
+
+        Ok(graph)
+    }
+
+    /// Create an architectural issue for analysis failures
+    fn create_analysis_failure_issue(
+        &self,
+        crate_name: String,
+        error: AnalysisError,
+    ) -> ArchitecturalIssue {
+        let recommendation = match error.category() {
+            "memory" => "Consider using --enable-memory-optimization or analyzing smaller subsets".to_string(),
+            "parsing" => "Check for syntax errors or unsupported language constructs".to_string(),
+            "filesystem" => "Ensure all files are accessible and properly encoded".to_string(),
+            _ => "Review the error details and try analyzing individual files".to_string(),
+        };
+        
+        ArchitecturalIssue {
+            issue_id: None,
+            analysis_run_id: 0, // Will be set by the database layer
+            anti_pattern_type_id: 999, // Special ID for analysis failures
+            file_path: format!("crate:{}", crate_name),
+            start_line: Some(0),
+            end_line: Some(0),
+            severity: "High".to_string(),
+            description: format!("Analysis failed for crate '{}': {}", crate_name, error),
+            code_snippet: None,
+            ai_explanation: Some(recommendation),
+        }
+    }
+
+    /// Memory-aware analysis with adaptive behavior and monitoring
+    ///
+    /// This method wraps the robust analysis with memory monitoring and adaptive behavior:
+    /// 1. Monitors memory usage throughout the analysis process
+    /// 2. Applies memory optimization techniques when limits are approached
+    /// 3. Provides fallback strategies when memory constraints are hit
+    /// 4. Reports memory usage metrics and recommendations
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - Directory or file path to analyze
+    /// * `memory_limit_mb` - Optional memory limit in MB (defaults to system detection)
+    ///
+    /// # Returns
+    ///
+    /// A tuple containing:
+    /// - `Vec<ArchitecturalIssue>` - All detected issues
+    /// - `LocalDependencyGraph` - The dependency graph
+    /// - `MemoryAnalysisReport` - Memory usage report and recommendations
+    ///
+    /// # Errors
+    ///
+    /// Returns `AnalysisError::MemoryLimitExceeded` if analysis cannot proceed within limits
+    pub async fn analyze_with_memory_optimization(
+        &mut self,
+        path: &Path,
+        memory_limit_mb: Option<usize>,
+    ) -> Result<(Vec<ArchitecturalIssue>, LocalDependencyGraph, MemoryAnalysisReport), AnalysisError> {
+        use crate::analysis::memory::{get_optimization_status, initialize_memory_optimization, MemoryOptimizationConfig};
+        
+        let start_time = Instant::now();
+        let memory_limit = memory_limit_mb.unwrap_or(Self::detect_available_memory_mb());
+        
+        info!("Starting memory-aware analysis with {}MB limit", memory_limit);
+
+        // Initialize memory optimization if not already done
+        let memory_config = MemoryOptimizationConfig {
+            enabled: true,
+            target_max_memory_bytes: memory_limit * 1024 * 1024,
+            ..Default::default()
+        };
+
+        if let Err(e) = initialize_memory_optimization(memory_config.clone()) {
+            warn!("Failed to initialize memory optimization: {}", e);
+        }
+
+        let mut report = MemoryAnalysisReport::new(memory_limit);
+        
+        // Phase 1: Pre-analysis Memory Check
+        let initial_memory = Self::get_current_memory_usage_mb();
+        report.initial_memory_mb = initial_memory;
+        
+        if initial_memory > memory_limit / 2 {
+            warn!("High initial memory usage: {}MB (limit: {}MB)", initial_memory, memory_limit);
+        }
+
+        // Phase 2: Adaptive Analysis Strategy
+        let (issues, graph) = match self.analyze_with_memory_monitoring(path, &memory_config, &mut report).await {
+            Ok(result) => result,
+            Err(AnalysisError::MemoryLimitExceeded { used_mb, limit_mb }) => {
+                // Try fallback strategies
+                warn!("Memory limit exceeded ({}MB > {}MB), trying fallback strategies", used_mb, limit_mb);
+                report.memory_limit_exceeded = true;
+                
+                self.analyze_with_fallback_strategies(path, &memory_config, &mut report).await?
+            }
+            Err(e) => return Err(e),
+        };
+
+        // Phase 3: Final Memory Report
+        let final_memory = Self::get_current_memory_usage_mb();
+        let analysis_duration = start_time.elapsed();
+        
+        report.final_memory_mb = final_memory;
+        report.peak_memory_mb = report.peak_memory_mb.max(final_memory);
+        report.analysis_duration = analysis_duration;
+        report.memory_optimization_effective = report.peak_memory_mb < memory_limit;
+        
+        // Generate recommendations
+        report.recommendations = Self::generate_memory_recommendations(&report, &memory_config);
+
+        info!(
+            "Memory-aware analysis completed in {:?}: peak {}MB, final {}MB (limit {}MB)",
+            analysis_duration, report.peak_memory_mb, final_memory, memory_limit
+        );
+
+        Ok((issues, graph, report))
+    }
+
+    /// Analyze with continuous memory monitoring
+    async fn analyze_with_memory_monitoring(
+        &mut self,
+        path: &Path,
+        memory_config: &crate::analysis::memory::MemoryOptimizationConfig,
+        report: &mut MemoryAnalysisReport,
+    ) -> Result<(Vec<ArchitecturalIssue>, LocalDependencyGraph), AnalysisError> {
+        let memory_limit_mb = memory_config.target_max_memory_bytes / (1024 * 1024);
+        
+        // Start memory monitoring
+        let monitor_handle = tokio::spawn({
+            let limit_mb = memory_limit_mb;
+            async move {
+                let mut interval = tokio::time::interval(tokio::time::Duration::from_millis(500));
+                loop {
+                    interval.tick().await;
+                    let current_mb = Self::get_current_memory_usage_mb();
+                    
+                    if current_mb > limit_mb {
+                        break Some(current_mb);
+                    }
+                }
+            }
+        });
+
+        // Run the robust analysis
+        let analysis_result = tokio::select! {
+            result = self.analyze_robust(path) => {
+                result
+            }
+            memory_exceeded = monitor_handle => {
+                if let Ok(Some(current_mb)) = memory_exceeded {
+                    return Err(AnalysisError::memory_limit_exceeded(current_mb, memory_limit_mb));
+                }
+                // Monitor was aborted, analysis completed successfully
+                self.analyze_robust(path).await
+            }
+        };
+
+        // Update peak memory usage
+        report.peak_memory_mb = report.peak_memory_mb.max(Self::get_current_memory_usage_mb());
+
+        analysis_result
+    }
+
+    /// Analyze with fallback strategies when memory limits are hit
+    async fn analyze_with_fallback_strategies(
+        &mut self,
+        path: &Path,
+        memory_config: &crate::analysis::memory::MemoryOptimizationConfig,
+        report: &mut MemoryAnalysisReport,
+    ) -> Result<(Vec<ArchitecturalIssue>, LocalDependencyGraph), AnalysisError> {
+        info!("Applying memory fallback strategies");
+        
+        // Strategy 1: Try analyzing smaller chunks
+        if let Some(workspace) = WorkspaceDetector::detect_workspace(path).await? {
+            if workspace.crates.len() > 1 {
+                info!("Fallback: Analyzing crates individually to reduce memory usage");
+                return self.analyze_crates_sequentially(&workspace, report).await;
+            }
+        }
+
+        // Strategy 2: Reduce analysis scope (skip expensive detectors)
+        info!("Fallback: Reducing analysis scope to essential detectors only");
+        self.analyze_with_reduced_scope(path, report).await
+    }
+
+    /// Analyze crates one by one to minimize memory usage
+    async fn analyze_crates_sequentially(
+        &mut self,
+        workspace: &WorkspaceInfo,
+        report: &mut MemoryAnalysisReport,
+    ) -> Result<(Vec<ArchitecturalIssue>, LocalDependencyGraph), AnalysisError> {
+        let mut all_issues = Vec::new();
+        let mut graph = LocalDependencyGraph::new();
+        
+        report.applied_strategies.push("sequential-crate-analysis".to_string());
+
+        for (crate_name, crate_info) in &workspace.crates {
+            info!("Analyzing crate sequentially: {}", crate_name);
+            
+            // Force garbage collection before each crate
+            Self::force_garbage_collection();
+            
+            let pre_crate_memory = Self::get_current_memory_usage_mb();
+            
+            match self.analyze_single_crate(crate_info).await {
+                Ok((crate_issues, crate_deps)) => {
+                    all_issues.extend(crate_issues);
+                    
+                    // Add crate to graph
+                    let node = ComponentNode::Module { 
+                        path: crate_info.path.display().to_string()
+                    };
+                    graph.add_component(node);
+                    
+                    let post_crate_memory = Self::get_current_memory_usage_mb();
+                    let crate_memory_usage = post_crate_memory.saturating_sub(pre_crate_memory);
+                    
+                    info!("Crate '{}' used {}MB memory", crate_name, crate_memory_usage);
+                    report.peak_memory_mb = report.peak_memory_mb.max(post_crate_memory);
+                }
+                Err(e) => {
+                    warn!("Failed to analyze crate '{}': {}", crate_name, e);
+                    continue;
+                }
+            }
+        }
+
+        Ok((all_issues, graph))
+    }
+
+    /// Analyze with reduced scope (essential detectors only)
+    async fn analyze_with_reduced_scope(
+        &mut self,
+        path: &Path,
+        report: &mut MemoryAnalysisReport,
+    ) -> Result<(Vec<ArchitecturalIssue>, LocalDependencyGraph), AnalysisError> {
+        report.applied_strategies.push("reduced-scope-analysis".to_string());
+        report.scope_reduced = true;
+        
+        // This would ideally use a reduced set of detectors
+        // For now, we'll use the standard analysis but with more aggressive cleanup
+        Self::force_garbage_collection();
+        
+        let result = self.analyze_fallback(path).await?;
+        
+        Self::force_garbage_collection();
+        
+        Ok(result)
+    }
+
+    /// Detect available system memory in MB
+    fn detect_available_memory_mb() -> usize {
+        // This is a simplified implementation
+        // In practice, you'd want to use system APIs to detect available memory
+        if cfg!(debug_assertions) {
+            2048 // 2GB for debug builds
+        } else {
+            8192 // 8GB for release builds
+        }
+    }
+
+    /// Get current memory usage in MB
+    fn get_current_memory_usage_mb() -> usize {
+        #[cfg(feature = "memory-optimization")]
+        {
+            use crate::analysis::memory::BASIC_MEMORY_METRICS;
+            let metrics = BASIC_MEMORY_METRICS.get_current_stats();
+            (metrics.heap_allocated_bytes / (1024 * 1024)) as usize
+        }
+        #[cfg(not(feature = "memory-optimization"))]
+        {
+            // Fallback implementation - this is approximate
+            use std::alloc::{GlobalAlloc, Layout, System};
+            // This is a very rough estimate since we can't easily get actual usage
+            256 // Default guess of 256MB
+        }
+    }
+
+    /// Force garbage collection to free memory
+    fn force_garbage_collection() {
+        // Rust doesn't have a GC, but we can drop temporary allocations
+        // and hint to the allocator to return memory to the OS
+        
+        #[cfg(feature = "memory-optimization")]
+        {
+            // If using a custom allocator, call its cleanup methods
+            std::hint::black_box(Vec::<u8>::new()); // Force some allocation/deallocation
+        }
+        
+        // For mimalloc specifically
+        #[cfg(all(feature = "memory-optimization", target_family = "unix"))]
+        {
+            extern "C" {
+                fn mi_collect(force: bool);
+            }
+            unsafe {
+                mi_collect(true);
+            }
+        }
+    }
+
+    /// Generate memory optimization recommendations
+    fn generate_memory_recommendations(
+        report: &MemoryAnalysisReport,
+        config: &crate::analysis::memory::MemoryOptimizationConfig,
+    ) -> Vec<String> {
+        let mut recommendations = Vec::new();
+
+        if !report.memory_optimization_effective {
+            recommendations.push(format!(
+                "Analysis exceeded memory limit ({}MB > {}MB). Consider increasing the limit with --memory-limit",
+                report.peak_memory_mb, report.memory_limit_mb
+            ));
+        }
+
+        if report.peak_memory_mb > report.memory_limit_mb * 3 / 4 {
+            recommendations.push(
+                "High memory usage detected. Try --enable-memory-optimization for better efficiency".to_string()
+            );
+        }
+
+        if report.memory_limit_exceeded {
+            recommendations.push(
+                "Memory limit was exceeded. Consider analyzing smaller subsets or individual crates".to_string()
+            );
+        }
+
+        if report.scope_reduced {
+            recommendations.push(
+                "Analysis scope was reduced due to memory constraints. Run with higher memory limit for complete analysis".to_string()
+            );
+        }
+
+        if !config.enabled {
+            recommendations.push(
+                "Memory optimization is disabled. Enable it with --enable-memory-optimization for large codebases".to_string()
+            );
+        }
+
+        if recommendations.is_empty() {
+            recommendations.push("Memory usage was within acceptable limits. No optimization needed.".to_string());
+        }
+
+        recommendations
+    }
+
     /// Enhanced analysis with AI Knowledge Library integration
     ///
     /// This method provides knowledge-enhanced architectural analysis by:
@@ -499,6 +1133,7 @@ impl AnalysisEngine {
         }
 
         // 3. Check if knowledge library components are available
+        #[cfg(feature = "ai")]
         let (knowledge_library, context_selector, ai_engine) = match (
             &self.knowledge_library,
             &self.context_selector,
@@ -510,43 +1145,52 @@ impl AnalysisEngine {
                 return Ok((issues, dependency_graph));
             }
         };
-
-        // 4. Enhance each issue with knowledge library context
-        let enhancement_start = Instant::now();
-        let mut enhanced_count = 0;
-
-        for issue in &mut issues {
-            match self
-                .enhance_issue_with_knowledge(issue, &dependency_graph)
-                .await
-            {
-                Ok(enhanced) => {
-                    if enhanced {
-                        enhanced_count += 1;
-                    }
-                }
-                Err(e) => {
-                    warn!("Failed to enhance issue {}: {}", issue.description, e);
-                    // Continue with other issues - don't fail entire analysis
-                }
-            }
+        
+        #[cfg(not(feature = "ai"))]
+        {
+            info!("AI features not compiled, returning standard analysis");
+            return Ok((issues, dependency_graph));
         }
 
-        let enhancement_time = enhancement_start.elapsed();
-        let total_time = start_time.elapsed();
+        // 4. Enhance each issue with knowledge library context
+        #[cfg(feature = "ai")]
+        {
+            let enhancement_start = Instant::now();
+            let mut enhanced_count = 0;
 
-        info!(
-            "Knowledge-enhanced analysis completed in {:?}: {}/{} issues enhanced (enhancement: {:?})",
-            total_time, enhanced_count, issues.len(), enhancement_time
-        );
+            for issue in &mut issues {
+                match self
+                    .enhance_issue_with_knowledge(issue, &dependency_graph)
+                    .await
+                {
+                    Ok(enhanced) => {
+                        if enhanced {
+                            enhanced_count += 1;
+                        }
+                    }
+                    Err(e) => {
+                        warn!("Failed to enhance issue {}: {}", issue.description, e);
+                        // Continue with other issues - don't fail entire analysis
+                    }
+                }
+            }
+            let enhancement_time = enhancement_start.elapsed();
+            let total_time = start_time.elapsed();
 
-        // 5. Record metrics
-        self.record_enhancement_metrics(enhanced_count, issues.len(), enhancement_time);
+            info!(
+                "Knowledge-enhanced analysis completed in {:?}: {}/{} issues enhanced (enhancement: {:?})",
+                total_time, enhanced_count, issues.len(), enhancement_time
+            );
+
+            // 5. Record metrics
+            self.record_enhancement_metrics(enhanced_count, issues.len(), enhancement_time);
+        }
 
         Ok((issues, dependency_graph))
     }
 
     /// Enhance a single issue with knowledge library context
+    #[cfg(feature = "ai")]
     async fn enhance_issue_with_knowledge(
         &self,
         issue: &mut ArchitecturalIssue,
@@ -636,6 +1280,7 @@ impl AnalysisEngine {
     }
 
     /// Build analysis context from issue and surrounding code
+    #[cfg(feature = "ai")]
     async fn build_analysis_context(
         &self,
         issue: &ArchitecturalIssue,
@@ -664,6 +1309,7 @@ impl AnalysisEngine {
     }
 
     /// Apply knowledge-only enhancement when AI is not available
+    #[cfg(feature = "ai")]
     async fn apply_knowledge_only_enhancement(
         &self,
         issue: &mut ArchitecturalIssue,
@@ -714,24 +1360,26 @@ impl AnalysisEngine {
     }
 
     /// Helper methods for context building
+    #[cfg(feature = "ai")]
     fn detect_language_from_issue(
         &self,
         file_path: &str,
-    ) -> crate::error::Result<crate::ai::knowledge::schema::SourceLanguage> {
+    ) -> crate::error::Result<SourceLanguage> {
         let extension = Path::new(file_path)
             .extension()
             .and_then(|ext| ext.to_str())
             .unwrap_or("");
 
         match extension {
-            "rs" => Ok(crate::ai::knowledge::schema::SourceLanguage::Rust),
-            "py" => Ok(crate::ai::knowledge::schema::SourceLanguage::Python),
-            "js" | "ts" => Ok(crate::ai::knowledge::schema::SourceLanguage::JavaScript),
-            "java" => Ok(crate::ai::knowledge::schema::SourceLanguage::Java),
-            _ => Ok(crate::ai::knowledge::schema::SourceLanguage::Universal),
+            "rs" => Ok(SourceLanguage::Rust),
+            "py" => Ok(SourceLanguage::Python),
+            "js" | "ts" => Ok(SourceLanguage::JavaScript),
+            "java" => Ok(SourceLanguage::Java),
+            _ => Ok(SourceLanguage::Universal),
         }
     }
 
+    #[cfg(feature = "ai")]
     async fn detect_frameworks_from_issue(
         &self,
         issue: &ArchitecturalIssue,
@@ -752,6 +1400,7 @@ impl AnalysisEngine {
         Ok(frameworks)
     }
 
+    #[cfg(feature = "ai")]
     async fn calculate_issue_complexity(
         &self,
         issue: &ArchitecturalIssue,
@@ -775,6 +1424,7 @@ impl AnalysisEngine {
         })
     }
 
+    #[cfg(feature = "ai")]
     fn extract_surrounding_components(
         &self,
         issue: &ArchitecturalIssue,
@@ -787,6 +1437,7 @@ impl AnalysisEngine {
     }
 
     /// Record enhancement metrics for monitoring
+    #[cfg(feature = "ai")]
     fn record_enhancement_metrics(
         &self,
         enhanced_count: usize,

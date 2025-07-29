@@ -3,12 +3,91 @@
 //! This module provides the development framework and APIs for creating
 //! custom knowledge plugins, including traits, macros, and utilities.
 
+#[cfg(feature = "ai")]
 use crate::ai::knowledge::schema::*;
 use crate::plugins::knowledge::*;
 use crate::plugins::PluginError;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+// Stub types for when AI features are disabled
+#[cfg(not(feature = "ai"))]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PatternKnowledge;
+#[cfg(not(feature = "ai"))]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum AntiPatternCategory {
+    ObjectOriented,
+    Maintainability,
+    Performance,
+}
+#[cfg(not(feature = "ai"))]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum DetectionMethod {
+    MetricThreshold,
+    RegexPattern,
+    AstPattern,
+    StaticAnalysis,
+}
+#[cfg(not(feature = "ai"))]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum SeverityLevel {
+    Low,
+    Medium,
+    High,
+}
+#[cfg(not(feature = "ai"))]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LocationContext {
+    pub file_path: String,
+    pub line_number: u32,
+}
+#[cfg(not(feature = "ai"))]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CompressedString(String);
+#[cfg(not(feature = "ai"))]
+impl CompressedString {
+    pub fn new(s: &str) -> Self {
+        Self(s.to_string())
+    }
+}
+#[cfg(not(feature = "ai"))]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SolutionPattern;
+#[cfg(not(feature = "ai"))]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum SourceLanguage {
+    Rust,
+    Python,
+    JavaScript,
+    TypeScript,
+    Java,
+    Universal,
+}
+#[cfg(not(feature = "ai"))]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ImpactLevel {
+    Low,
+    Medium,
+    High,
+}
+#[cfg(not(feature = "ai"))]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LanguageKnowledge;
+#[cfg(not(feature = "ai"))]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum EffortLevel {
+    Low,
+    Medium,
+    High,
+}
+#[cfg(not(feature = "ai"))]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CodeExamples {
+    pub good: Vec<String>,
+    pub bad: Vec<String>,
+}
 
 /// Plugin development macros for easy plugin creation
 #[macro_export]
@@ -120,6 +199,7 @@ impl ExampleAntiPatternPlugin {
     }
 
     async fn load_custom_patterns(&self) -> Result<Vec<PatternKnowledge>, PluginError> {
+        #[cfg(feature = "ai")]
         use crate::ai::knowledge::compression::CompressedString;
         use std::collections::HashMap;
 
@@ -295,16 +375,16 @@ impl EnterprisePlugin for ExampleEnterprisePlugin {
                     description: format!("Code violates policy: {}", policy.name),
                     severity: match policy.enforcement {
                         EnforcementLevel::Warning => {
-                            crate::ai::knowledge::context_selection::SeverityLevel::Low
+                            SeverityLevel::Low
                         }
                         EnforcementLevel::Error => {
-                            crate::ai::knowledge::context_selection::SeverityLevel::Medium
+                            SeverityLevel::Medium
                         }
                         EnforcementLevel::Blocking => {
-                            crate::ai::knowledge::context_selection::SeverityLevel::High
+                            SeverityLevel::High
                         }
                     },
-                    location: crate::ai::knowledge::context_selection::LocationContext {
+                    location: LocationContext {
                         file_path: "unknown".to_string(),
                         line_range: (0, 0),
                         context_name: None,
@@ -338,6 +418,7 @@ impl ExampleEnterprisePlugin {
     }
 
     async fn load_enterprise_knowledge(&mut self) -> Result<(), PluginError> {
+        #[cfg(feature = "ai")]
         use crate::ai::knowledge::compression::CompressedString;
 
         // Example organization patterns
@@ -395,7 +476,7 @@ impl ExampleEnterprisePlugin {
             rules: vec![ComplianceRule {
                 id: "sox_001".to_string(),
                 description: "All financial operations must be logged".to_string(),
-                severity: crate::ai::knowledge::context_selection::SeverityLevel::High,
+                severity: SeverityLevel::High,
                 detection: DetectionMethod::StaticAnalysis {
                     pattern: "financial_operation_without_logging".to_string(),
                     confidence: 0.85,
@@ -495,6 +576,7 @@ impl ExampleFrameworkPlugin {
     }
 
     async fn load_framework_knowledge(&mut self) -> Result<(), PluginError> {
+        #[cfg(feature = "ai")]
         use crate::ai::knowledge::compression::CompressedString;
 
         // Example React framework knowledge

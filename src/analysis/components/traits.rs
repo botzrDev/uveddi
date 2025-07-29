@@ -18,7 +18,7 @@ use crate::error::UveddiError;
 pub trait AstProvider: Send + Sync {
     /// Retrieves the AST for a given file path.
     /// If the AST is not in the cache, it parses the file and caches the result.
-    async fn get_ast(&self, file_path: &Path) -> Result<Arc<tree_sitter::Tree>, UveddiError>;
+    async fn get_ast(&self, file_path: &Path) -> Result<Arc<crate::ast::tree_sitter::Tree>, UveddiError>;
 
     /// Clears the AST cache
     fn clear_cache(&self);
@@ -111,7 +111,7 @@ pub enum PluginCommand {
     Execute {
         plugin_id: String,
         source_file_path: PathBuf,
-        ast: Arc<tree_sitter::Tree>,
+        ast: Arc<crate::ast::tree_sitter::Tree>,
         responder: tokio::sync::oneshot::Sender<Result<Vec<ArchitecturalIssue>, UveddiError>>,
     },
     /// Load a plugin
@@ -157,7 +157,7 @@ pub trait PluginManagerHandle: Send + Sync {
         &self,
         plugin_id: String,
         source_file_path: PathBuf,
-        ast: Arc<tree_sitter::Tree>,
+        ast: Arc<crate::ast::tree_sitter::Tree>,
     ) -> Result<Vec<ArchitecturalIssue>, UveddiError>;
 
     /// Load a plugin from a file path

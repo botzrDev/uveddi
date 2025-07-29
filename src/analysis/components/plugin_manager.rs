@@ -182,7 +182,7 @@ impl PluginManager {
         &mut self,
         plugin_id: String,
         source_file_path: PathBuf,
-        ast: Arc<tree_sitter::Tree>,
+        ast: Arc<crate::ast::tree_sitter::Tree>,
     ) -> Result<Vec<ArchitecturalIssue>, UveddiError> {
         let start_time = Instant::now();
 
@@ -557,7 +557,7 @@ impl PluginManagerHandleTrait for PluginManagerHandle {
         &self,
         plugin_id: String,
         source_file_path: PathBuf,
-        ast: Arc<tree_sitter::Tree>,
+        ast: Arc<crate::ast::tree_sitter::Tree>,
     ) -> Result<Vec<ArchitecturalIssue>, UveddiError> {
         let (responder, receiver) = oneshot::channel();
 

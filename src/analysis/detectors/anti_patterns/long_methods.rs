@@ -23,7 +23,10 @@
 //! - **JavaScript**: Framework-aware thresholds for React/Node.js patterns
 
 use crate::analysis::{AnalysisDetector, AnalysisError};
-use crate::ast::tree_sitter::{Node, Query, QueryCursor};
+#[cfg(feature = "tree-sitter")]
+use tree_sitter::{Node, Query, QueryCursor, Language, QueryMatch, Parser};
+#[cfg(not(feature = "tree-sitter"))]
+use crate::ast::tree_sitter::{Node, Query, QueryCursor, Language, QueryMatch, Parser};
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use async_trait::async_trait;
@@ -31,7 +34,10 @@ use futures::TryFutureExt;
 use log::debug;
 use log::info;
 use std::collections::HashMap;
+#[cfg(feature = "tree-sitter")]
 use tree_sitter::StreamingIterator;
+#[cfg(not(feature = "tree-sitter"))]
+use crate::ast::tree_sitter::StreamingIterator;
 
 /// Represents metrics collected for a method/function
 #[derive(Debug, Clone)]
@@ -220,7 +226,7 @@ impl LongMethodsDetector {
     /// incompatible with the provided language grammar.
     fn create_rust_function_query(
         &self,
-        language: &tree_sitter::Language,
+        language: &Language,
     ) -> Result<Query, AnalysisError> {
         Query::new(language, RUST_FUNCTION_QUERY).map_err(|e| {
             AnalysisError::AntiPatternDetectionError(format!(
@@ -304,7 +310,7 @@ impl LongMethodsDetector {
     /// * `Err(AnalysisError)` - If processing fails
     fn process_function_matches(
         &self,
-        mut matches: Vec<tree_sitter::QueryMatch>,
+        mut matches: Vec<QueryMatch>,
         source: &[u8],
         file_path: &str,
     ) -> Result<Vec<MethodMetrics>, AnalysisError> {
@@ -1192,7 +1198,7 @@ fn short_function() {
     #[tokio::test]
     async fn test_calculate_method_metrics_success() -> Result<(), Box<dyn std::error::Error>> {
         let detector = LongMethodsDetector::new();
-        let mut parser = tree_sitter::Parser::new();
+        let mut parser = Parser::new();
         parser.set_language(&tree_sitter_rust::LANGUAGE.into())?;
 
         let rust_code = r#"
@@ -1213,7 +1219,7 @@ fn test_function(param1: i32, param2: String) -> i32 {
         let language = tree.language();
 
         let function_query = detector.create_rust_function_query(&language)?;
-        let mut cursor = tree_sitter::QueryCursor::new();
+        let mut cursor = QueryCursor::new();
         let mut matches = cursor.matches(&function_query, tree.root_node(), source);
 
         // Extract the first match and get owned data
@@ -1277,7 +1283,7 @@ fn test_function(param1: i32, param2: String) -> i32 {
     async fn test_calculate_method_metrics_invalid_name() -> Result<(), Box<dyn std::error::Error>>
     {
         let detector = LongMethodsDetector::new();
-        let mut parser = tree_sitter::Parser::new();
+        let mut parser = Parser::new();
         parser.set_language(&tree_sitter_rust::LANGUAGE.into())?;
 
         // Create a mock node that will fail utf8_text extraction
@@ -1289,7 +1295,7 @@ fn test_function(param1: i32, param2: String) -> i32 {
         let language = tree.language();
 
         let function_query = detector.create_rust_function_query(&language)?;
-        let mut cursor = tree_sitter::QueryCursor::new();
+        let mut cursor = QueryCursor::new();
         let mut matches = cursor.matches(&function_query, tree.root_node(), source);
 
         if let Some(query_match) = matches.next() {
@@ -1327,7 +1333,7 @@ fn test_function(param1: i32, param2: String) -> i32 {
     fn test_create_rust_function_query_success() {
         let detector = LongMethodsDetector::new();
         let language = tree_sitter_rust::LANGUAGE;
-        let tree_sitter_language: tree_sitter::Language = tree_sitter_rust::LANGUAGE.into();
+        let tree_sitter_language: Language = tree_sitter_rust::LANGUAGE.into();
         let result = detector.create_rust_function_query(&tree_sitter_language);
         assert!(result.is_ok());
     }
@@ -1335,7 +1341,7 @@ fn test_function(param1: i32, param2: String) -> i32 {
     #[tokio::test]
     async fn test_process_function_matches_success() -> Result<(), Box<dyn std::error::Error>> {
         let detector = LongMethodsDetector::new();
-        let mut parser = tree_sitter::Parser::new();
+        let mut parser = Parser::new();
         parser.set_language(&tree_sitter_rust::LANGUAGE.into())?;
 
         let rust_code = r#"
@@ -1359,7 +1365,7 @@ fn function_two() {
         let language = tree.language();
 
         let function_query = detector.create_rust_function_query(&language)?;
-        let mut cursor = tree_sitter::QueryCursor::new();
+        let mut cursor = QueryCursor::new();
         let mut matches_iter = cursor.matches(&function_query, tree.root_node(), source);
 
         // Process matches directly like the main analysis does
@@ -1432,7 +1438,7 @@ fn function_two() {
     #[tokio::test]
     async fn test_process_function_matches_malformed() -> Result<(), Box<dyn std::error::Error>> {
         let detector = LongMethodsDetector::new();
-        let mut parser = tree_sitter::Parser::new();
+        let mut parser = Parser::new();
         parser.set_language(&tree_sitter_rust::LANGUAGE.into())?;
 
         let rust_code = r#"
@@ -1448,7 +1454,7 @@ fn valid_function() {
         let language = tree.language();
 
         let function_query = detector.create_rust_function_query(&language)?;
-        let mut cursor = tree_sitter::QueryCursor::new();
+        let mut cursor = QueryCursor::new();
         let mut matches_iter = cursor.matches(&function_query, tree.root_node(), source);
 
         // Process matches directly like the main analysis does
@@ -1482,7 +1488,7 @@ fn valid_function() {
         // We can't easily test with an invalid language, but we can test the structure
         let detector = LongMethodsDetector::new();
         let language = tree_sitter_rust::LANGUAGE;
-        let tree_sitter_language: tree_sitter::Language = tree_sitter_rust::LANGUAGE.into();
+        let tree_sitter_language: Language = tree_sitter_rust::LANGUAGE.into();
         let result = detector.create_rust_function_query(&tree_sitter_language);
         assert!(result.is_ok());
 

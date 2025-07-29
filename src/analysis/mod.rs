@@ -120,6 +120,7 @@ pub mod graph;
 pub mod incremental;
 pub mod interactive_diagram_generator;
 pub mod memory;
+pub mod memory_report;
 pub mod mermaid_generator;
 pub mod performance;
 pub mod plugin_adapter;
@@ -129,6 +130,7 @@ pub mod standardized_config;
 pub mod symbols;
 pub mod traits;
 pub mod types;
+pub mod workspace;
 
 #[cfg(test)]
 pub mod tests;
@@ -162,12 +164,14 @@ pub use interactive_diagram_generator::{
     InteractiveDiagramGenerator, InteractiveDiagramResult, InteractiveNodeMetadata, NodePosition,
 };
 pub use memory::{get_optimization_status, MemoryOptimizationConfig};
+pub use memory_report::{MemoryAnalysisReport, PhaseMemoryBreakdown};
 pub use plugin_adapter::{WasmPluginAdapterFactory, WasmPluginDetectorAdapter};
 pub use standardized_config::{
     constants, AdvancedConfig, ConfigValue, DetectorMetadata, ExclusionConfig,
     StandardConfigBuilder, StandardDetectorConfig,
 };
 pub use traits::{AstParserTrait, CacheStats, DependencyExtractorTrait, ResultCacheTrait};
+pub use workspace::{CrateInfo, WorkspaceDetector, WorkspaceInfo};
 
 use crate::ast::ParsedFile;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};

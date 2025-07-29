@@ -11,6 +11,7 @@ use crate::constants::severity_weights;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use async_trait::async_trait;
 use log::debug;
+#[cfg(feature = "tree-sitter")]
 use tree_sitter::StreamingIterator;
 
 /// Holds the collected metrics for a single class or struct.

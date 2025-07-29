@@ -16,8 +16,39 @@ use crate::cache::result_cache::ResultCache;
 use crate::error::UveddiError;
 use crate::plugins::WasmPluginEngine;
 
-// Knowledge Library imports
+// Stub types for when AI features are disabled
+#[cfg(not(feature = "ai"))]
+pub struct AiAnalysisEngine;
+
+#[cfg(not(feature = "ai"))]
+impl AiAnalysisEngine {
+    pub fn new() -> Self {
+        Self
+    }
+}
+#[cfg(not(feature = "ai"))]
+pub struct KnowledgeLibrary;
+
+#[cfg(not(feature = "ai"))]
+impl KnowledgeLibrary {
+    pub fn new() -> Self {
+        Self
+    }
+}
+#[cfg(not(feature = "ai"))]
+pub struct ContextSelector;
+
+#[cfg(not(feature = "ai"))]
+impl ContextSelector {
+    pub fn new(_knowledge_library: std::sync::Arc<KnowledgeLibrary>) -> Result<Self, UveddiError> {
+        Ok(Self)
+    }
+}
+
+// Knowledge Library imports (feature-gated)
+#[cfg(feature = "ai")]
 use crate::ai::engine::AiAnalysisEngine;
+#[cfg(feature = "ai")]
 use crate::ai::knowledge::{ContextSelector, KnowledgeLibrary};
 
 /// Builder for `AnalysisEngine` to provide flexible and consistent construction.
@@ -297,8 +328,11 @@ impl AnalysisEngineBuilder {
             aggregator,
 
             // Knowledge Library components
+            #[cfg(feature = "ai")]
             knowledge_library,
+            #[cfg(feature = "ai")]
             context_selector,
+            #[cfg(feature = "ai")]
             ai_engine,
             enable_knowledge_enhancement: enable_knowledge,
             enable_ai_explanations: enable_ai,
@@ -468,8 +502,11 @@ impl AnalysisEngineBuilder {
             aggregator,
 
             // Knowledge Library components
+            #[cfg(feature = "ai")]
             knowledge_library,
+            #[cfg(feature = "ai")]
             context_selector,
+            #[cfg(feature = "ai")]
             ai_engine,
             enable_knowledge_enhancement: enable_knowledge,
             enable_ai_explanations: enable_ai,

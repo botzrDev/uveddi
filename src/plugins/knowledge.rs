@@ -4,9 +4,14 @@
 //! and organizations to extend the AI Knowledge Library with custom anti-patterns,
 //! domain-specific knowledge, and specialized detection methods.
 
+#[cfg(feature = "ai")]
 use crate::ai::knowledge::context_selection::*;
+#[cfg(feature = "ai")]
 use crate::ai::knowledge::schema::*;
 use crate::plugins::{PluginError, PluginId, PluginMetadata, SecurityPolicy};
+// Import stub types when AI features are disabled
+#[cfg(not(feature = "ai"))]
+use crate::plugins::integration::{SourceLanguage, PatternKnowledge, DetectionMethod, SolutionPattern, LanguageKnowledge, AnalysisContext, AntiPatternCategory, SeverityLevel, LocationContext};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

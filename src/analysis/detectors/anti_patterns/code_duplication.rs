@@ -26,8 +26,10 @@ use rayon::prelude::*;
 use sha2::{Digest, Sha256};
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
-use tree_sitter::StreamingIterator;
-use tree_sitter::TreeCursor;
+#[cfg(feature = "tree-sitter")]
+use tree_sitter::{StreamingIterator, TreeCursor};
+#[cfg(not(feature = "tree-sitter"))]
+use crate::ast::tree_sitter::{StreamingIterator, TreeCursor};
 
 /// Represents a contiguous block of code extracted for duplication analysis.
 ///
@@ -1212,11 +1214,12 @@ impl CodeDuplicationDetector {
     /// Simplified function node finder for parallel processing
     fn find_function_node_for_block_simple<'a>(
         &self,
-        tree: &'a tree_sitter::Tree,
+        tree: &'a crate::ast::tree_sitter::Tree,
         block: &CodeBlock,
         parsed_file: &ParsedFile,
-    ) -> Result<Option<tree_sitter::Node<'a>>, AnalysisError> {
-        use tree_sitter::{Query, QueryCursor};
+    ) -> Result<Option<crate::ast::tree_sitter::Node<'a>>, AnalysisError> {
+        #[cfg(feature = "tree-sitter")]
+        use crate::ast::tree_sitter::{Query, QueryCursor};
 
         let language = tree.language();
         let source = parsed_file.source.as_bytes();
@@ -1288,7 +1291,7 @@ impl CodeDuplicationDetector {
     /// Get or compute CFG for a function, using cache when possible
     fn get_or_compute_cfg(
         &self,
-        function_node: &tree_sitter::Node,
+        function_node: &crate::ast::tree_sitter::Node,
         source: &[u8],
         language: &SourceLanguage,
     ) -> Result<Option<crate::analysis::cfg::ControlFlowGraph>, AnalysisError> {
@@ -1341,7 +1344,7 @@ impl CodeDuplicationDetector {
     fn get_or_compute_semantic_features(
         &self,
         cfg: &crate::analysis::cfg::ControlFlowGraph,
-        function_node: &tree_sitter::Node,
+        function_node: &crate::ast::tree_sitter::Node,
         source: &str,
         language: &SourceLanguage,
     ) -> Result<Option<crate::analysis::semantic::SemanticFeatures>, AnalysisError> {

@@ -62,7 +62,7 @@ impl AstProviderImpl {
     async fn parse_and_cache(
         &self,
         file_path: &Path,
-    ) -> Result<Arc<tree_sitter::Tree>, UveddiError> {
+    ) -> Result<Arc<crate::ast::tree_sitter::Tree>, UveddiError> {
         info!("AST CACHE MISS: Parsing file {}", file_path.display());
 
         // Parse the file
@@ -111,7 +111,7 @@ impl AstProviderImpl {
 
 #[async_trait]
 impl AstProvider for AstProviderImpl {
-    async fn get_ast(&self, file_path: &Path) -> Result<Arc<tree_sitter::Tree>, UveddiError> {
+    async fn get_ast(&self, file_path: &Path) -> Result<Arc<crate::ast::tree_sitter::Tree>, UveddiError> {
         // Check cache first (with read lock to allow concurrent reads)
         {
             let _read_guard = self.cache_lock.read().await;
