@@ -202,8 +202,8 @@ impl Database {
     pub fn store_issues(&mut self, issues: &[ArchitecturalIssue]) -> Result<()> {
         let tx = self.conn.transaction()?;
         for issue in issues {
-            // Comprehensive input validation
-            security::validate_input(&issue.description, "description")
+            // Use code analysis validation for analysis results (more permissive than user input)
+            security::validate_code_analysis_data(&issue.description, "description", None)
                 .map_err(crate::error::UveddiError::from)?;
             security::validate_input(&issue.file_path, "file_path")
                 .map_err(crate::error::UveddiError::from)?;
@@ -220,15 +220,15 @@ impl Database {
                     .map_err(crate::error::UveddiError::from)?;
             }
 
-            // Validate code snippet if present
+            // Validate code snippet if present - use code analysis validation
             if let Some(ref snippet) = issue.code_snippet {
-                security::validate_input(snippet, "code_snippet")
+                security::validate_code_analysis_data(snippet, "code_snippet", None)
                     .map_err(crate::error::UveddiError::from)?;
             }
 
-            // Validate AI explanation if present
+            // Validate AI explanation if present - use code analysis validation
             if let Some(ref explanation) = issue.ai_explanation {
-                security::validate_input(explanation, "ai_explanation")
+                security::validate_code_analysis_data(explanation, "ai_explanation", None)
                     .map_err(crate::error::UveddiError::from)?;
             }
 

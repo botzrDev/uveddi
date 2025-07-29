@@ -6,7 +6,7 @@
 //!
 //! # Features
 //!
-//! - Multi-format output (text, JSON, markdown)
+//! - Multi-format output (text, JSON, markdown, HTML)
 //! - AI-powered analysis with Ollama integration
 //! - Configurable output destinations
 //! - Environment variable support for configuration
@@ -60,6 +60,7 @@ pub struct AnalyzeCommand {
     /// - `text`: Plain text format for terminal output
     /// - `json`: Structured JSON format for programmatic consumption
     /// - `markdown`: Markdown format for documentation
+    /// - `html`: Interactive HTML format with embedded diagrams and dark/light themes
     #[arg(long, default_value = "markdown")]
     pub output_format: String,
 

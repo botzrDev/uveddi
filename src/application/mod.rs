@@ -388,6 +388,15 @@ impl AnalysisOrchestrator {
                         ),
                     )
                 }),
+            "html" => report_generator
+                .generate_html_report(analysis_run, issues, &HashMap::new(), None)
+                .map_err(|e| {
+                    crate::error::UveddiError::from(
+                        crate::report::errors::ReportGenerationError::DataExtractionError(
+                            e.to_string(),
+                        ),
+                    )
+                }),
             _ => Err(UveddiError::config_error(
                 &format!(
                     "Unsupported output format specified: {}",

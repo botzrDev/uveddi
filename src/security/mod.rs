@@ -413,6 +413,52 @@ pub fn validate_character_set(
     Ok(())
 }
 
+/// Validate code analysis data (more permissive than user input validation)
+///
+/// This function provides validation specifically for code analysis results that may
+/// contain programming language keywords, symbols, and longer content that would be
+/// rejected by general input validation but are safe in the context of analysis results.
+///
+/// # Arguments
+/// * `input` - The code analysis data to validate
+/// * `field_name` - Name of the field for error reporting
+/// * `max_length` - Maximum allowed length (default: 100KB for code snippets)
+///
+/// # Returns
+/// * `Ok(())` - Input passes code analysis validation
+/// * `Err(SecurityError)` - Input violates security constraints
+pub fn validate_code_analysis_data(
+    input: &str,
+    field_name: &str,
+    max_length: Option<usize>,
+) -> Result<(), SecurityError> {
+    let max_len = max_length.unwrap_or(100_000); // 100KB default for code content
+    
+    // Only check for excessive length - code content naturally contains SQL keywords, etc.
+    if input.len() > max_len {
+        return Err(SecurityError::InvalidInput {
+            field: field_name.to_string(),
+            reason: format!(
+                "Content length {} exceeds maximum {} for code analysis data",
+                input.len(),
+                max_len
+            ),
+        });
+    }
+    
+    // Check for null bytes which could indicate binary data corruption
+    if input.contains('\0') {
+        return Err(SecurityError::InvalidInput {
+            field: field_name.to_string(),
+            reason: "Code analysis data contains null bytes".to_string(),
+        });
+    }
+    
+    // Allow all other content - programming languages naturally contain
+    // semicolons, SQL keywords, comments, etc. that are safe in this context
+    Ok(())
+}
+
 /// Sanitize and validate file paths to prevent path traversal attacks
 ///
 /// This function implements comprehensive path security by:

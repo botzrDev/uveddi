@@ -885,10 +885,15 @@ impl ReportGenerator {
         let god_object_issues: Vec<_> = issues
             .iter()
             .filter(|i| {
-                anti_pattern_types
+                // Check both the anti-pattern type name and the description
+                let by_type = anti_pattern_types
                     .get(&i.anti_pattern_type_id)
-                    .map(|apt| apt.name.contains("God Object") || apt.name.contains("god object"))
-                    .unwrap_or(false)
+                    .map(|apt| apt.name.to_lowercase().contains("god object") || 
+                              apt.name.to_lowercase().contains("large class"))
+                    .unwrap_or(false);
+                let by_description = i.description.to_lowercase().contains("god object");
+                
+                by_type || by_description
             })
             .collect();
 
@@ -897,28 +902,74 @@ impl ReportGenerator {
 
             for issue in god_object_issues {
                 // Extract the god object name from the description
-                let god_object_name = issue
-                    .description
-                    .split_whitespace()
-                    .next()
-                    .unwrap_or("Unknown");
+                // Description format: "God Object detected: 'ClassName' has X methods..."
+                let god_object_name = if let Some(start) = issue.description.find("'") {
+                    if let Some(end) = issue.description[start + 1..].find("'") {
+                        &issue.description[start + 1..start + 1 + end]
+                    } else {
+                        "Unknown"
+                    }
+                } else {
+                    // Fallback: try to extract from code snippet if available
+                    if let Some(code) = &issue.code_snippet {
+                        if let Some(line) = code.lines().next() {
+                            if line.contains("struct") {
+                                line.split_whitespace()
+                                    .skip_while(|&word| word != "struct")
+                                    .nth(1)
+                                    .unwrap_or("Unknown")
+                            } else {
+                                "Unknown"
+                            }
+                        } else {
+                            "Unknown"
+                        }
+                    } else {
+                        "Unknown"
+                    }
+                };
 
                 diagrams.push_str(&format!("#### {}\n\n", god_object_name));
                 diagrams.push_str("```mermaid\nclassDiagram\n");
                 diagrams.push_str(&format!("    class {} {{\n", god_object_name));
 
-                // If we have a code snippet, try to extract methods
+                // If we have a code snippet, try to extract fields and methods
                 if let Some(code) = &issue.code_snippet {
                     let lines: Vec<&str> = code.lines().collect();
+                    let mut in_struct = false;
+                    let mut in_impl = false;
+                    
                     for line in lines {
                         let trimmed = line.trim();
-                        // Very simple heuristic for method declarations
-                        if (trimmed.starts_with("fn ")
-                            || trimmed.starts_with("pub fn ")
-                            || trimmed.starts_with("def ")
-                            || trimmed.starts_with("function "))
-                            && trimmed.contains("(")
-                        {
+                        
+                        // Track if we're inside a struct definition
+                        if trimmed.starts_with("struct") || trimmed.starts_with("pub struct") {
+                            in_struct = true;
+                            continue;
+                        }
+                        if trimmed.starts_with("impl") {
+                            in_impl = true;
+                            in_struct = false;
+                            continue;
+                        }
+                        if trimmed == "}" {
+                            in_struct = false;
+                            in_impl = false;
+                            continue;
+                        }
+                        
+                        // Extract struct fields
+                        if in_struct && trimmed.contains(":") && !trimmed.starts_with("//") {
+                            let field_name = trimmed.split(":").next().unwrap_or("").trim();
+                            if !field_name.is_empty() {
+                                diagrams.push_str(&format!("        {}: Type\n", field_name));
+                            }
+                        }
+                        
+                        // Extract methods from impl block or direct function declarations
+                        if (in_impl || !in_struct) && 
+                           (trimmed.starts_with("fn ") || trimmed.starts_with("pub fn ")) &&
+                           trimmed.contains("(") {
                             // Extract method name
                             let method_name = trimmed
                                 .split("(")
@@ -929,12 +980,50 @@ impl ReportGenerator {
                                 .last()
                                 .unwrap_or("");
 
-                            diagrams.push_str(&format!("        +{}\n", method_name));
+                            if !method_name.is_empty() {
+                                diagrams.push_str(&format!("        +{}()\n", method_name));
+                            }
                         }
                     }
                 }
 
                 diagrams.push_str("    }\n```\n\n");
+            }
+        }
+
+        // Add dead code diagram if there are dead code issues
+        let dead_code_issues: Vec<_> = issues
+            .iter()
+            .filter(|i| {
+                i.description.to_lowercase().contains("dead code") ||
+                i.description.to_lowercase().contains("unused")
+            })
+            .collect();
+        
+        if !dead_code_issues.is_empty() && dead_code_issues.len() <= 20 {
+            diagrams.push_str("### Dead Code Analysis\n\n");
+            diagrams.push_str("```mermaid\nflowchart TD\n");
+            diagrams.push_str("    A[Project] --> B[Live Code]\n");
+            diagrams.push_str("    A --> C[Dead Code]\n");
+            diagrams.push_str("    style C fill:#ff9999,stroke:#ff0000,stroke-width:2px\n");
+            
+            for (idx, issue) in dead_code_issues.iter().enumerate().take(15) {
+                let node_id = format!("D{}", idx + 1);
+                let item_name = if let Some(snippet) = &issue.code_snippet {
+                    snippet.chars().take(20).collect::<String>()
+                } else {
+                    format!("Item {}", idx + 1)
+                };
+                diagrams.push_str(&format!("    C --> {}[{}]\n", node_id, item_name));
+                diagrams.push_str(&format!("    style {} fill:#ffcccc\n", node_id));
+            }
+            
+            diagrams.push_str("```\n\n");
+            diagrams.push_str(&format!("*Found {} dead code items. ", dead_code_issues.len()));
+            if dead_code_issues.len() > 15 {
+                diagrams.push_str(&format!("Showing first 15 items.*\n\n"));
+            } else {
+                diagrams.push_str("*\n\n");
             }
         }
 
@@ -1306,6 +1395,947 @@ impl ReportGenerator {
         });
 
         serde_json::to_string_pretty(&report_data)
+    }
+
+    /// Generate a stunning interactive HTML report with embedded diagrams
+    ///
+    /// # Arguments
+    ///
+    /// * `analysis_run` - The analysis run metadata
+    /// * `issues` - The architectural issues found
+    /// * `anti_pattern_types` - The anti-pattern type definitions
+    /// * `output_path` - Optional path to write the HTML file
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(String)` - The generated HTML content
+    /// * `Err(String)` - Error message if generation fails
+    pub fn generate_html_report(
+        &self,
+        analysis_run: &AnalysisRun,
+        issues: &[ArchitecturalIssue],
+        anti_pattern_types: &HashMap<i64, AntiPatternType>,
+        output_path: Option<&Path>,
+    ) -> Result<String, String> {
+        info!("Generating interactive HTML report with {} issues", issues.len());
+
+        let now: DateTime<Local> = Local::now();
+        
+        // Generate the HTML content
+        let html_content = self.generate_html_content(analysis_run, issues, anti_pattern_types, &now)?;
+
+        // Write to file if output path is provided
+        if let Some(path) = output_path {
+            match fs::File::create(path) {
+                Ok(mut file) => {
+                    if let Err(e) = file.write_all(html_content.as_bytes()) {
+                        error!("Failed to write HTML report to file: {}", e);
+                        return Err(format!("Failed to write HTML report to file: {}", e));
+                    }
+                    info!("HTML report written to {}", path.display());
+                }
+                Err(e) => {
+                    error!("Failed to create HTML report file: {}", e);
+                    return Err(format!("Failed to create HTML report file: {}", e));
+                }
+            }
+        }
+
+        Ok(html_content)
+    }
+
+    /// Generate the complete HTML content
+    fn generate_html_content(
+        &self,
+        analysis_run: &AnalysisRun,
+        issues: &[ArchitecturalIssue],
+        anti_pattern_types: &HashMap<i64, AntiPatternType>,
+        timestamp: &DateTime<Local>,
+    ) -> Result<String, String> {
+        let mut html = String::new();
+        
+        // HTML document structure
+        html.push_str("<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n");
+        html.push_str(&self.generate_html_head());
+        html.push_str("</head>\n<body>\n");
+        
+        // Main container
+        html.push_str("<div class=\"container\">\n");
+        
+        // Header
+        html.push_str(&self.generate_html_header(analysis_run, timestamp));
+        
+        // Navigation
+        html.push_str(&self.generate_html_navigation());
+        
+        // Executive summary
+        html.push_str(&self.generate_html_executive_summary(analysis_run, issues));
+        
+        // Severity dashboard
+        html.push_str(&self.generate_html_severity_dashboard(issues));
+        
+        // Interactive diagrams section
+        if self.include_diagrams {
+            html.push_str(&self.generate_html_diagrams_section(issues, anti_pattern_types));
+        }
+        
+        // Detailed issues
+        html.push_str(&self.generate_html_detailed_issues(issues, anti_pattern_types));
+        
+        // Footer
+        html.push_str(&self.generate_html_footer());
+        
+        html.push_str("</div>\n");
+        
+        // JavaScript
+        html.push_str(&self.generate_html_scripts());
+        
+        html.push_str("</body>\n</html>");
+        
+        Ok(html)
+    }
+
+    /// Generate HTML head with styles and meta tags
+    fn generate_html_head(&self) -> String {
+        format!(r#"
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uveddi Architectural Analysis Report</title>
+    
+    <!-- Mermaid.js for diagram rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* Modern CSS Variables for theming */
+        :root {{
+            --primary-color: #2563eb;
+            --secondary-color: #64748b;
+            --success-color: #059669;
+            --warning-color: #d97706;
+            --error-color: #dc2626;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-tertiary: #e2e8f0;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --border-color: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --radius: 8px;
+        }}
+
+        [data-theme="dark"] {{
+            --primary-color: #3b82f6;
+            --secondary-color: #94a3b8;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --border-color: #475569;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        }}
+
+        * {{
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }}
+
+        body {{
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }}
+
+        .container {{
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }}
+
+        /* Header Styles */
+        .header {{
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 2rem;
+            border-radius: var(--radius);
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }}
+
+        .header::before {{
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 49%, rgba(255,255,255,0.1) 50%, transparent 51%);
+            animation: shimmer 3s infinite;
+        }}
+
+        @keyframes shimmer {{
+            0% {{ transform: translateX(-100%); }}
+            100% {{ transform: translateX(100%); }}
+        }}
+
+        .header h1 {{
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }}
+
+        .header-meta {{
+            position: relative;
+            z-index: 1;
+            opacity: 0.9;
+        }}
+
+        /* Navigation */
+        .nav {{
+            background: var(--bg-primary);
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+        }}
+
+        .nav-links {{
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }}
+
+        .nav-link {{
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }}
+
+        .nav-link:hover {{
+            background: var(--bg-tertiary);
+            color: var(--primary-color);
+            transform: translateY(-2px);
+        }}
+
+        .theme-toggle {{
+            background: none;
+            border: 2px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }}
+
+        .theme-toggle:hover {{
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }}
+
+        /* Card Styles */
+        .card {{
+            background: var(--bg-primary);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }}
+
+        .card:hover {{
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.1);
+        }}
+
+        .card h2 {{
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }}
+
+        /* Dashboard Grid */
+        .dashboard {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }}
+
+        .stat-card {{
+            background: var(--bg-primary);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }}
+
+        .stat-card:hover {{
+            transform: translateY(-4px);
+            box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.15);
+        }}
+
+        .stat-number {{
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }}
+
+        .stat-label {{
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            font-size: 0.875rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }}
+
+        .stat-critical {{ color: var(--error-color); }}
+        .stat-high {{ color: var(--warning-color); }}
+        .stat-medium {{ color: var(--primary-color); }}
+        .stat-low {{ color: var(--success-color); }}
+
+        /* Severity Badges */
+        .severity-badge {{
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }}
+
+        .severity-critical {{
+            background: rgba(220, 38, 38, 0.1);
+            color: var(--error-color);
+            border: 1px solid rgba(220, 38, 38, 0.2);
+        }}
+
+        .severity-high {{
+            background: rgba(217, 119, 6, 0.1);
+            color: var(--warning-color);
+            border: 1px solid rgba(217, 119, 6, 0.2);
+        }}
+
+        .severity-medium {{
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary-color);
+            border: 1px solid rgba(37, 99, 235, 0.2);
+        }}
+
+        .severity-low {{
+            background: rgba(5, 150, 105, 0.1);
+            color: var(--success-color);  
+            border: 1px solid rgba(5, 150, 105, 0.2);
+        }}
+
+        /* Issue Cards */
+        .issue-card {{
+            background: var(--bg-primary);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--primary-color);
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+        }}
+
+        .issue-card:hover {{
+            transform: translateX(4px);
+            box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.1);
+        }}
+
+        .issue-header {{
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }}
+
+        .issue-title {{
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            flex: 1;
+        }}
+
+        .code-snippet {{
+            background: var(--bg-tertiary);
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin: 1rem 0;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.875rem;
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+        }}
+
+        /* Diagram Styles */
+        .diagram-container {{
+            background: var(--bg-primary);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            position: relative;
+        }}
+
+        .diagram-title {{
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }}
+
+        .mermaid {{
+            background: var(--bg-primary);
+            border-radius: var(--radius);
+        }}
+
+        /* Collapsible sections */
+        .collapsible {{
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            user-select: none;
+        }}
+
+        .collapsible-icon {{
+            transition: transform 0.3s ease;
+        }}
+
+        .collapsible.active .collapsible-icon {{
+            transform: rotate(90deg);
+        }}
+
+        .collapsible-content {{
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }}
+
+        .collapsible-content.active {{
+            max-height: 1000px;
+        }}
+
+        /* Search and Filter */
+        .search-filter {{
+            background: var(--bg-primary);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+        }}
+
+        .search-input {{
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }}
+
+        .search-input:focus {{
+            outline: none;
+            border-color: var(--primary-color);
+        }}
+
+        .filter-buttons {{
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }}
+
+        .filter-btn {{
+            padding: 0.5rem 1rem;
+            border: 2px solid var(--border-color);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+        }}
+
+        .filter-btn:hover, .filter-btn.active {{
+            border-color: var(--primary-color);
+            background: var(--primary-color);
+            color: white;
+        }}
+
+        /* Footer */
+        .footer {{
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border-color);
+            margin-top: 3rem;
+        }}
+
+        /* Responsive Design */
+        @media (max-width: 768px) {{
+            .container {{
+                padding: 10px;
+            }}
+
+            .header h1 {{
+                font-size: 2rem;
+            }}
+
+            .nav {{
+                flex-direction: column;
+                align-items: stretch;
+            }}
+
+            .nav-links {{
+                justify-content: center;
+            }}
+
+            .dashboard {{
+                grid-template-columns: 1fr;
+            }}
+
+            .issue-header {{
+                flex-direction: column;
+                align-items: stretch;
+            }}
+        }}
+
+        /* Loading Animation */
+        .loading {{
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--border-color);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s ease-in-out infinite;
+        }}
+
+        @keyframes spin {{
+            to {{ transform: rotate(360deg); }}
+        }}
+
+        /* Hidden class for filtering */
+        .hidden {{
+            display: none !important;
+        }}
+    </style>
+"#)
+    }
+
+    /// Generate HTML header section
+    fn generate_html_header(&self, analysis_run: &AnalysisRun, timestamp: &DateTime<Local>) -> String {
+        format!(r#"
+    <div class="header">
+        <h1><i class="fas fa-chart-line"></i> Uveddi Architectural Analysis</h1>
+        <div class="header-meta">
+            <p><i class="fas fa-calendar"></i> Generated on {}</p>
+            <p><i class="fas fa-cog"></i> Run ID: {}</p>
+        </div>
+    </div>
+"#, 
+            timestamp.format("%Y-%m-%d %H:%M:%S"),
+            analysis_run.run_id.map(|id| id.to_string()).unwrap_or_else(|| "unknown".to_string())
+        )
+    }
+
+    /// Generate HTML navigation
+    fn generate_html_navigation(&self) -> String {
+        let mut nav = String::new();
+        nav.push_str("\n    <nav class=\"nav\">\n");
+        nav.push_str("        <div class=\"nav-links\">\n");
+        nav.push_str("            <a href=\"#summary\" class=\"nav-link\"><i class=\"fas fa-chart-pie\"></i> Summary</a>\n");
+        nav.push_str("            <a href=\"#diagrams\" class=\"nav-link\"><i class=\"fas fa-project-diagram\"></i> Diagrams</a>\n");
+        nav.push_str("            <a href=\"#issues\" class=\"nav-link\"><i class=\"fas fa-exclamation-triangle\"></i> Issues</a>\n");
+        nav.push_str("        </div>\n");
+        nav.push_str("        <button class=\"theme-toggle\" onclick=\"toggleTheme()\">\n");
+        nav.push_str("            <i class=\"fas fa-moon\"></i> Dark Mode\n");
+        nav.push_str("        </button>\n");
+        nav.push_str("    </nav>\n");
+        nav
+    }
+
+    /// Generate HTML executive summary section
+    fn generate_html_executive_summary(&self, analysis_run: &AnalysisRun, issues: &[ArchitecturalIssue]) -> String {
+        let total_issues = issues.len();
+        let critical_issues = issues.iter().filter(|i| i.severity == "critical").count();
+        let high_issues = issues.iter().filter(|i| i.severity == "high").count();
+        let medium_issues = issues.iter().filter(|i| i.severity == "medium").count();
+        let low_issues = issues.iter().filter(|i| i.severity == "low").count();
+        
+        let unique_files = issues
+            .iter()
+            .map(|i| &i.file_path)
+            .collect::<std::collections::HashSet<_>>()
+            .len();
+
+        format!(r#"
+    <section id="summary" class="card">
+        <h2><i class="fas fa-chart-pie"></i> Executive Summary</h2>
+        <p>This analysis identified <strong>{} architectural issues</strong> across <strong>{} files</strong> in your codebase.</p>
+        
+        <div class="dashboard">
+            <div class="stat-card">
+                <div class="stat-number stat-critical">{}</div>
+                <div class="stat-label">Critical Issues</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number stat-high">{}</div>
+                <div class="stat-label">High Issues</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number stat-medium">{}</div>
+                <div class="stat-label">Medium Issues</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number stat-low">{}</div>
+                <div class="stat-label">Low Issues</div>
+            </div>
+        </div>
+    </section>
+"#, total_issues, unique_files, critical_issues, high_issues, medium_issues, low_issues)
+    }
+
+    /// Generate HTML severity dashboard
+    fn generate_html_severity_dashboard(&self, issues: &[ArchitecturalIssue]) -> String {
+        let mut severity_stats = HashMap::new();
+        for issue in issues {
+            *severity_stats.entry(&issue.severity).or_insert(0) += 1;
+        }
+
+        let mut dashboard_html = String::from(r#"
+    <section class="card">
+        <h2><i class="fas fa-tachometer-alt"></i> Severity Dashboard</h2>
+        <div class="dashboard">
+"#);
+
+        for (severity, count) in &severity_stats {
+            let icon = match severity.as_str() {
+                "critical" => "fas fa-times-circle",
+                "high" => "fas fa-exclamation-triangle", 
+                "medium" => "fas fa-exclamation-circle",
+                "low" => "fas fa-info-circle",
+                _ => "fas fa-circle",
+            };
+
+            dashboard_html.push_str(&format!(r#"
+            <div class="stat-card">
+                <div class="stat-number stat-{}">
+                    <i class="{}"></i> {}
+                </div>
+                <div class="stat-label">{} Severity</div>
+            </div>
+"#, severity, icon, count, severity.to_uppercase()));
+        }
+
+        dashboard_html.push_str("        </div>\n    </section>\n");
+        dashboard_html
+    }
+
+    /// Generate HTML diagrams section with embedded Mermaid
+    fn generate_html_diagrams_section(&self, issues: &[ArchitecturalIssue], anti_pattern_types: &HashMap<i64, AntiPatternType>) -> String {
+        let diagrams_content = self.generate_diagrams_section(issues, anti_pattern_types);
+        
+        if diagrams_content.trim().is_empty() {
+            return String::new();
+        }
+
+        let mut html = String::from(r#"
+    <section id="diagrams" class="card">
+        <h2 class="collapsible" onclick="toggleSection('diagrams-content')">
+            <i class="fas fa-chevron-right collapsible-icon"></i>
+            <i class="fas fa-project-diagram"></i> 
+            Architecture Diagrams
+        </h2>
+        <div id="diagrams-content" class="collapsible-content">
+"#);
+
+        // Convert Mermaid code blocks to HTML-embedded diagrams
+        let lines: Vec<&str> = diagrams_content.lines().collect();
+        let mut in_mermaid_block = false;
+        let mut mermaid_content = String::new();
+        let mut diagram_title = String::new();
+
+        for line in lines {
+            if line.starts_with("### ") {
+                // If we were in a mermaid block, render it first
+                if in_mermaid_block && !mermaid_content.trim().is_empty() {
+                    html.push_str(&self.render_mermaid_diagram(&diagram_title, &mermaid_content));
+                    mermaid_content.clear();
+                    in_mermaid_block = false;
+                }
+                diagram_title = line[4..].to_string();
+            } else if line.starts_with("```mermaid") {
+                in_mermaid_block = true;
+                mermaid_content.clear();
+            } else if line == "```" && in_mermaid_block {
+                if !mermaid_content.trim().is_empty() {
+                    html.push_str(&self.render_mermaid_diagram(&diagram_title, &mermaid_content));
+                }
+                mermaid_content.clear();
+                in_mermaid_block = false;
+            } else if in_mermaid_block {
+                mermaid_content.push_str(line);
+                mermaid_content.push('\n');
+            }
+        }
+
+        // Handle any remaining mermaid block
+        if in_mermaid_block && !mermaid_content.trim().is_empty() {
+            html.push_str(&self.render_mermaid_diagram(&diagram_title, &mermaid_content));
+        }
+
+        html.push_str("        </div>\n    </section>\n");
+        html
+    }
+
+    /// Render a single Mermaid diagram as HTML
+    fn render_mermaid_diagram(&self, title: &str, mermaid_code: &str) -> String {
+        let diagram_id = format!("diagram-{}", Uuid::new_v4().to_string().replace('-', "")[..8].to_string());
+        
+        format!(r#"
+            <div class="diagram-container">
+                <div class="diagram-title">{}</div>
+                <div class="mermaid" id="{}">{}</div>
+            </div>
+"#, title, diagram_id, mermaid_code.trim())
+    }
+
+    /// Generate HTML detailed issues section
+    fn generate_html_detailed_issues(&self, issues: &[ArchitecturalIssue], anti_pattern_types: &HashMap<i64, AntiPatternType>) -> String {
+        let mut html = String::from(r#"
+    <section id="issues" class="card">
+        <h2><i class="fas fa-exclamation-triangle"></i> Detailed Issues</h2>
+        
+        <div class="search-filter">
+            <input type="text" id="searchInput" class="search-input" placeholder="Search issues..." onkeyup="filterIssues()">
+            <div class="filter-buttons">
+                <button class="filter-btn active" onclick="filterBySeverity('all')">All</button>
+                <button class="filter-btn" onclick="filterBySeverity('critical')">Critical</button>
+                <button class="filter-btn" onclick="filterBySeverity('high')">High</button>
+                <button class="filter-btn" onclick="filterBySeverity('medium')">Medium</button>
+                <button class="filter-btn" onclick="filterBySeverity('low')">Low</button>
+            </div>
+        </div>
+        
+        <div id="issues-container">
+"#);
+
+        for (i, issue) in issues.iter().enumerate() {
+            let anti_pattern = anti_pattern_types.get(&issue.anti_pattern_type_id);
+            let pattern_name = anti_pattern
+                .map(|ap| ap.name.as_str())
+                .unwrap_or("Unknown");
+
+            html.push_str(&format!(r#"
+            <div class="issue-card" data-severity="{}" data-pattern="{}">
+                <div class="issue-header">
+                    <div class="issue-title">
+                        <i class="fas fa-bug"></i> {}
+                    </div>
+                    <span class="severity-badge severity-{}">
+                        <i class="fas fa-circle"></i> {}
+                    </span>
+                </div>
+                
+                <div class="issue-details">
+                    <p><strong>File:</strong> <code>{}</code></p>
+                    {}<p><strong>Description:</strong> {}</p>
+                    
+                    {}
+                    
+                    {}
+                </div>
+            </div>
+"#,
+                issue.severity,
+                pattern_name.to_lowercase().replace(' ', "-"),
+                pattern_name,
+                issue.severity,
+                issue.severity.to_uppercase(),
+                issue.file_path,
+                if let (Some(start), Some(end)) = (issue.start_line, issue.end_line) {
+                    format!("<p><strong>Lines:</strong> {}-{}</p>", start, end)
+                } else if let Some(start) = issue.start_line {
+                    format!("<p><strong>Line:</strong> {}</p>", start)
+                } else {
+                    String::new()
+                },
+                issue.description,
+                if self.include_code_snippets && issue.code_snippet.is_some() {
+                    format!("<div class=\"code-snippet\"><pre><code>{}</code></pre></div>", 
+                        issue.code_snippet.as_ref().unwrap())
+                } else {
+                    String::new()
+                },
+                if self.include_ai_explanations && issue.ai_explanation.is_some() {
+                    format!("<div class=\"collapsible-section\">
+                        <h4 class=\"collapsible\" onclick=\"toggleSection('ai-explanation-{}')\">
+                            <i class=\"fas fa-chevron-right collapsible-icon\"></i>
+                            <i class=\"fas fa-robot\"></i> AI Explanation
+                        </h4>
+                        <div id=\"ai-explanation-{}\" class=\"collapsible-content\">
+                            <p>{}</p>
+                        </div>
+                    </div>", i, i, issue.ai_explanation.as_ref().unwrap())
+                } else {
+                    String::new()
+                }
+            ));
+        }
+
+        html.push_str("        </div>\n    </section>\n");
+        html
+    }
+
+    /// Generate HTML footer
+    fn generate_html_footer(&self) -> String {
+        let mut footer = String::new();
+        footer.push_str("\n    <footer class=\"footer\">\n");
+        footer.push_str("        <p><i class=\"fas fa-code\"></i> Generated by <strong>Uveddi</strong> - AI-Powered Code Analysis</p>\n");
+        footer.push_str("        <p>For more information, visit <a href=\"https://github.com/botzrDev/uveddi\" target=\"_blank\">github.com/botzrDev/uveddi</a></p>\n");
+        footer.push_str("    </footer>\n");
+        footer
+    }
+
+    /// Generate JavaScript for interactivity
+    fn generate_html_scripts(&self) -> String {
+        format!(r#"
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({{ 
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: {{
+                useMaxWidth: true,
+                htmlLabels: true
+            }}
+        }});
+
+        // Theme toggle functionality
+        function toggleTheme() {{
+            const body = document.body;
+            const themeToggle = document.querySelector('.theme-toggle');
+            
+            if (body.dataset.theme === 'dark') {{
+                body.dataset.theme = 'light';
+                themeToggle.innerHTML = '<i class="fas fa-moon"></i> Dark Mode';
+                localStorage.setItem('theme', 'light');
+            }} else {{
+                body.dataset.theme = 'dark';
+                themeToggle.innerHTML = '<i class="fas fa-sun"></i> Light Mode';
+                localStorage.setItem('theme', 'dark');
+            }}
+        }}
+
+        // Load saved theme
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.body.dataset.theme = savedTheme;
+        if (savedTheme === 'dark') {{
+            document.querySelector('.theme-toggle').innerHTML = '<i class="fas fa-sun"></i> Light Mode';
+        }}
+
+        // Collapsible sections
+        function toggleSection(sectionId) {{
+            const content = document.getElementById(sectionId);
+            const icon = content.previousElementSibling.querySelector('.collapsible-icon');
+            
+            content.classList.toggle('active');
+            icon.style.transform = content.classList.contains('active') ? 'rotate(90deg)' : 'rotate(0deg)';
+        }}
+
+        // Issue filtering
+        let currentSeverityFilter = 'all';
+        let currentSearchQuery = '';
+
+        function filterBySeverity(severity) {{
+            currentSeverityFilter = severity;
+            
+            // Update active button
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            applyFilters();
+        }}
+
+        function filterIssues() {{
+            currentSearchQuery = document.getElementById('searchInput').value.toLowerCase();
+            applyFilters();
+        }}
+
+        function applyFilters() {{
+            const issues = document.querySelectorAll('.issue-card');
+            
+            issues.forEach(issue => {{
+                const severity = issue.dataset.severity;
+                const text = issue.textContent.toLowerCase();
+                
+                const matchesSeverity = currentSeverityFilter === 'all' || severity === currentSeverityFilter;
+                const matchesSearch = currentSearchQuery === '' || text.includes(currentSearchQuery);
+                
+                if (matchesSeverity && matchesSearch) {{
+                    issue.classList.remove('hidden');
+                }} else {{
+                    issue.classList.add('hidden');
+                }}
+            }});
+        }}
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {{
+            // Auto-expand diagrams section
+            const diagramsContent = document.getElementById('diagrams-content');
+            if (diagramsContent) {{
+                diagramsContent.classList.add('active');
+                const icon = diagramsContent.previousElementSibling.querySelector('.collapsible-icon');
+                if (icon) {{
+                    icon.style.transform = 'rotate(90deg)';
+                }}
+            }}
+        }});
+    </script>
+"#)
     }
 
     /// Create enhanced summary with component and diagram information

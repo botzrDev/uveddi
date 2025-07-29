@@ -115,7 +115,14 @@
       "Bash(timeout 5 cargo run --bin tui_test --features=\"tui\")",
       "Bash(RUST_LOG=error cargo run --features=\"alpha\" -- analyze --help)",
       "Bash(RUST_LOG=error cargo run --bin uveddi --features=\"alpha\" -- analyze --help)",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "Bash(RUST_BACKTRACE=1 ./target/release/uveddi analyze /home/austingreen/Documents/botzr/projects/community_demo --output-format text)",
+      "Bash(time:*)",
+      "Bash(./target/debug/uveddi:*)",
+      "Bash(git clone:*)",
+      "Bash(RUST_BACKTRACE=1 ./target/debug/uveddi analyze serde/serde/src --output-format=json)",
+      "Bash(/home/austingreen/Documents/botzr/projects/uveddi/target/release/uveddi analyze:*)",
+      "Bash(/home/austingreen/Documents/botzr/projects/uveddi/target/release/uveddi --help)"
     ],
     "deny": []
   }
