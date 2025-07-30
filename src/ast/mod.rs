@@ -35,3 +35,17 @@ pub mod tree_sitter_impl;
 pub use tree_sitter_impl::{
     AstError, AstParser, CacheStats, CustomAst, ParsedFile, SourceLanguage,
 };
+
+// Add missing error types for compatibility
+#[derive(Debug, Clone)]
+pub struct SyntaxError {
+    pub start_byte: usize,
+    pub end_byte: usize,
+    pub start_line: usize,
+    pub start_column: usize,
+    pub end_line: usize,
+    pub end_column: usize,
+    pub message: String,
+}
+
+pub type ParseError = AstError;

@@ -124,7 +124,8 @@
       "Bash(/home/austingreen/Documents/botzr/projects/uveddi/target/release/uveddi analyze:*)",
       "Bash(/home/austingreen/Documents/botzr/projects/uveddi/target/release/uveddi --help)",
       "Bash(./scripts/automated-github-testing.sh:*)",
-      "Bash(python3 scripts/analyze-test-results.py:*)"
+      "Bash(python3 scripts/analyze-test-results.py:*)",
+      "Bash(target/release/uveddi analyze:*)"
     ],
     "deny": []
   }

@@ -9,6 +9,7 @@ use crate::ast::{tree_sitter_impl::AstParser, SourceLanguage, SyntaxError, Parse
 use crate::error::UveddiError;
 
 use async_trait::async_trait;
+use dashmap::DashMap;
 use log::{info, warn};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -34,7 +35,7 @@ pub struct AstProviderImpl {
     ast_cache: AstCache,
     cache_lock: RwLock<()>, // For coordinating cache access
     language_map: HashMap<SourceLanguage, Language>, // Language grammar management
-    parsed_file_cache: HashMap<PathBuf, Arc<ParsedFile>>, // Performance-critical caching
+    parsed_file_cache: DashMap<PathBuf, Arc<ParsedFile>>, // Performance-critical concurrent caching
 }
 
 impl AstProviderImpl {
@@ -46,16 +47,16 @@ impl AstProviderImpl {
         
         // Initialize language grammar map
         let mut language_map = HashMap::new();
-        language_map.insert(SourceLanguage::Rust, tree_sitter_rust::language());
-        language_map.insert(SourceLanguage::Python, tree_sitter_python::language());
-        language_map.insert(SourceLanguage::JavaScript, tree_sitter_javascript::language());
+        language_map.insert(SourceLanguage::Rust, tree_sitter_rust::LANGUAGE.into());
+        language_map.insert(SourceLanguage::Python, tree_sitter_python::LANGUAGE.into());
+        language_map.insert(SourceLanguage::JavaScript, tree_sitter_javascript::LANGUAGE.into());
 
         Ok(Self {
             ast_parser: Mutex::new(ast_parser),
             ast_cache,
             cache_lock: RwLock::new(()),
             language_map,
-            parsed_file_cache: HashMap::new(),
+            parsed_file_cache: DashMap::new(),
         })
     }
 
@@ -66,16 +67,16 @@ impl AstProviderImpl {
         
         // Initialize language grammar map
         let mut language_map = HashMap::new();
-        language_map.insert(SourceLanguage::Rust, tree_sitter_rust::language());
-        language_map.insert(SourceLanguage::Python, tree_sitter_python::language());
-        language_map.insert(SourceLanguage::JavaScript, tree_sitter_javascript::language());
+        language_map.insert(SourceLanguage::Rust, tree_sitter_rust::LANGUAGE.into());
+        language_map.insert(SourceLanguage::Python, tree_sitter_python::LANGUAGE.into());
+        language_map.insert(SourceLanguage::JavaScript, tree_sitter_javascript::LANGUAGE.into());
 
         Ok(Self {
             ast_parser: Mutex::new(ast_parser),
             ast_cache,
             cache_lock: RwLock::new(()),
             language_map,
-            parsed_file_cache: HashMap::new(),
+            parsed_file_cache: DashMap::new(),
         })
     }
 
@@ -91,8 +92,8 @@ impl AstProviderImpl {
         }
     }
 
-    /// Parses a file and caches the result
-    async fn parse_and_cache(
+    /// Parses a file and caches the result - internal method
+    async fn internal_parse_and_cache(
         &self,
         file_path: &Path,
     ) -> Result<Arc<ParsedFile>, ParseError> {
@@ -107,17 +108,17 @@ impl AstProviderImpl {
             
         // Parse with error recovery
         let source = std::fs::read_to_string(file_path)
-            .map_err(|e| ParseError::IoError(e))?;
+            .map_err(|e| ParseError::Io(e))?;
             
         let mut parser = Parser::new();
-        parser.set_language(*grammar).map_err(|e| ParseError::CatastrophicFailure(e.to_string()))?;
+        parser.set_language(grammar).map_err(|e| ParseError::Other(e.to_string()))?;
         
         let tree = parser.parse(&source, None);
         
         // Handle catastrophic failure
         let tree = match tree {
             Some(t) => t,
-            None => return Err(ParseError::CatastrophicFailure("Parser returned None".to_string())),
+            None => return Err(ParseError::Other("Parser returned None".to_string())),
         };
             
         // Collect syntax errors
@@ -185,8 +186,37 @@ impl AstProviderImpl {
 #[async_trait]
 impl AstProvider for AstProviderImpl {
     async fn get_ast(&self, file_path: &Path) -> Result<Arc<Tree>, UveddiError> {
-        // Convert to the expected return type
-        let parsed_file = self.parse_internal(file_path).await
+        // Check performance-critical cache first
+        if let Some(parsed_file) = self.parsed_file_cache.get(file_path) {
+            info!("AST CACHE HIT: Using cached AST for {}", file_path.display());
+            if let Some(tree) = &parsed_file.tree {
+                return Ok(Arc::new(tree.clone()));
+            }
+        }
+        
+        // Check secondary cache (with read lock to allow concurrent reads)
+        {
+            let _read_guard = self.cache_lock.read().await;
+            if let Some(cached_tree) = self.ast_cache.get(file_path) {
+                info!("AST CACHE HIT: Using cached AST for {}", file_path.display());
+                return Ok(Arc::new(cached_tree.as_ref().clone()));
+            }
+        }
+
+        // Cache miss - need to parse and cache
+        // Use write lock to prevent concurrent parsing of the same file
+        let _write_guard = self.cache_lock.write().await;
+
+        // Double-check cache in case another thread parsed it while we were waiting
+        if let Some(parsed_file) = self.parsed_file_cache.get(file_path) {
+            info!("AST CACHE HIT: Using cached AST for {} (double-check)", file_path.display());
+            if let Some(tree) = &parsed_file.tree {
+                return Ok(Arc::new(tree.clone()));
+            }
+        }
+
+        // Parse and cache the file
+        let parsed_file = self.internal_parse_and_cache(file_path).await
             .map_err(|e| UveddiError::AstError {
                 file: file_path.to_string_lossy().to_string(),
                 language: "unknown".to_string(),
@@ -209,51 +239,6 @@ impl AstProvider for AstProviderImpl {
         }
     }
     
-    async fn parse_internal(&self, file_path: &Path) -> Result<Arc<ParsedFile>, ParseError> {
-        // Check performance-critical cache first
-        if let Some(parsed_file) = self.parsed_file_cache.get(file_path) {
-            info!("AST CACHE HIT: Using cached AST for {}", file_path.display());
-            return Ok(Arc::clone(parsed_file));
-        }
-        
-        // Check secondary cache (with read lock to allow concurrent reads)
-        {
-            let _read_guard = self.cache_lock.read().await;
-            if let Some(cached_tree) = self.ast_cache.get(file_path) {
-                // Reconstruct ParsedFile from cached tree
-                let parsed_file = Arc::new(ParsedFile {
-                    file_path: Arc::new(file_path.to_path_buf()),
-                    language: self.detect_language_from_path(file_path),
-                    tree: Some(cached_tree.as_ref().clone()),
-                    source: Arc::new("".to_string()), // Placeholder, not used
-                    syntax_errors: Vec::new(),
-                    custom_ast: Arc::new(None),
-                    modified_at: ArchivableSystemTime::now(),
-                });
-                info!(
-                    "AST CACHE HIT: Using cached AST for {}",
-                    file_path.display()
-                );
-                return Ok(parsed_file);
-            }
-        }
-
-        // Cache miss - need to parse and cache
-        // Use write lock to prevent concurrent parsing of the same file
-        let _write_guard = self.cache_lock.write().await;
-
-        // Double-check cache in case another thread parsed it while we were waiting
-        if let Some(parsed_file) = self.parsed_file_cache.get(file_path) {
-            info!(
-                "AST CACHE HIT: Using cached AST for {} (double-check)",
-                file_path.display()
-            );
-            return Ok(Arc::clone(parsed_file));
-        }
-
-        // Parse and cache the file
-        self.parse_and_cache(file_path).await
-    }
     
 
     fn clear_cache(&self) {

@@ -4,9 +4,11 @@ use crate::security;
 use chrono::Utc;
 use rusqlite::Connection;
 use std::path::Path;
+use std::sync::{Arc, Mutex};
 
+#[derive(Clone)]
 pub struct Database {
-    conn: Connection,
+    conn: Arc<Mutex<Connection>>,
 }
 
 impl Database {
@@ -61,7 +63,7 @@ impl Database {
                 path TEXT NOT NULL UNIQUE
             );
         ").map_err(crate::error::UveddiError::from)?;
-        Ok(Self { conn })
+        Ok(Self { conn: Arc::new(Mutex::new(conn)) })
     }
 
     /// Gets the project ID for the given path, creating a new project entry if needed.
@@ -76,17 +78,17 @@ impl Database {
     /// * `Err(UveddiError)` - If the query or insert fails.
     pub fn get_or_create_project_id(&self, project_path: &Path) -> Result<i64> {
         let path_str = project_path.to_string_lossy().to_string();
-        let mut stmt = self
-            .conn
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn
             .prepare("SELECT project_id FROM projects WHERE path = ?")?;
         let mut rows = stmt.query([&path_str])?;
 
         if let Some(row) = rows.next()? {
             Ok(row.get(0)?)
         } else {
-            self.conn
+            conn
                 .execute("INSERT INTO projects (path) VALUES (?)", [&path_str])?;
-            Ok(self.conn.last_insert_rowid())
+            Ok(conn.last_insert_rowid())
         }
     }
 
@@ -113,7 +115,8 @@ impl Database {
             analysis_config: "{}".to_string(), // Default empty JSON config
         };
 
-        self.conn.execute(
+        let conn = self.conn.lock().unwrap();
+        conn.execute(
             "INSERT INTO analysis_runs (project_id, start_time, status, analysis_config) VALUES (?, ?, ?, ?)",
             rusqlite::params![
                 analysis_run.project_id,
@@ -123,7 +126,7 @@ impl Database {
             ],
         )?;
 
-        let last_id = self.conn.last_insert_rowid();
+        let last_id = conn.last_insert_rowid();
         Ok(AnalysisRun {
             run_id: Some(last_id),
             ..analysis_run
@@ -141,7 +144,8 @@ impl Database {
     /// * `Ok(())` - If the update succeeds.
     /// * `Err(UveddiError)` - If the update fails.
     pub fn update_analysis_run(&self, run: &AnalysisRun) -> Result<()> {
-        self.conn.execute(
+        let conn = self.conn.lock().unwrap();
+        conn.execute(
             "UPDATE analysis_runs SET end_time = ?, status = ?, total_files_analyzed = ?, total_issues_found = ? WHERE run_id = ?",
             rusqlite::params![
                 run.end_time.map(|dt| dt.to_rfc3339()),
@@ -171,7 +175,8 @@ impl Database {
         anti_pattern_type.description =
             security::sanitize_description(&anti_pattern_type.description);
 
-        self.conn.execute(
+        let conn = self.conn.lock().unwrap();
+        conn.execute(
             "INSERT OR IGNORE INTO anti_pattern_types (name, description, category) VALUES (?, ?, ?)",
             rusqlite::params![
                 anti_pattern_type.name,
@@ -180,8 +185,7 @@ impl Database {
             ],
         )?;
         if anti_pattern_type.anti_pattern_type_id.is_none() {
-            let mut stmt = self
-                .conn
+            let mut stmt = conn
                 .prepare("SELECT anti_pattern_type_id FROM anti_pattern_types WHERE name = ?")?;
             anti_pattern_type.anti_pattern_type_id =
                 Some(stmt.query_row([&anti_pattern_type.name], |row| row.get(0))?);
@@ -200,7 +204,8 @@ impl Database {
     /// * `Ok(())` - If all issues are stored successfully.
     /// * `Err(UveddiError)` - If any insert fails.
     pub fn store_issues(&mut self, issues: &[ArchitecturalIssue]) -> Result<()> {
-        let tx = self.conn.transaction()?;
+        let mut conn = self.conn.lock().unwrap();
+        let tx = conn.transaction()?;
         for issue in issues {
             // Use code analysis validation for analysis results (more permissive than user input)
             security::validate_code_analysis_data(&issue.description, "description", None)
@@ -272,7 +277,8 @@ impl Database {
         &mut self,
         anti_pattern_types: &mut [AntiPatternType],
     ) -> Result<()> {
-        let tx = self.conn.transaction()?;
+        let mut conn = self.conn.lock().unwrap();
+        let tx = conn.transaction()?;
         {
             let mut stmt = tx.prepare(
                 "INSERT OR IGNORE INTO anti_pattern_types (name, description, category) VALUES (?, ?, ?)"
@@ -298,5 +304,22 @@ impl Database {
         }
         tx.commit()?;
         Ok(())
+    }
+
+    /// Get the project path by project ID
+    ///
+    /// # Arguments
+    ///
+    /// * `project_id` - The project ID to look up
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(String)` - The project path
+    /// * `Err(UveddiError)` - If the query fails or project not found
+    pub fn get_project_path(&self, project_id: i64) -> Result<String> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare("SELECT path FROM projects WHERE project_id = ?")?;
+        let path = stmt.query_row([project_id], |row| row.get::<_, String>(0))?;
+        Ok(path)
     }
 }

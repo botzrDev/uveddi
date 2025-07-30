@@ -368,8 +368,9 @@ impl AnalysisOrchestrator {
     ) -> Result<String, UveddiError> {
         match config.output_format.as_str() {
             "json" => {
+                let codebase_path = config.target_path.to_str();
                 let report = report_generator
-                    .generate_json_report(analysis_run, issues, &HashMap::new(), None)
+                    .generate_json_report(analysis_run, issues, &HashMap::new(), None, codebase_path)
                     .map_err(|e| {
                         crate::error::UveddiError::from(
                             crate::report::errors::ReportGenerationError::DataExtractionError(
@@ -379,25 +380,31 @@ impl AnalysisOrchestrator {
                     })?;
                 Ok(report.to_string())
             }
-            "markdown" => report_generator
-                .generate_markdown_report(analysis_run, issues, &HashMap::new(), None)
-                .map_err(|e| {
-                    crate::error::UveddiError::from(
-                        crate::report::errors::ReportGenerationError::DataExtractionError(
-                            e.to_string(),
-                        ),
-                    )
-                }),
-            "html" => report_generator
-                .generate_html_report(analysis_run, issues, &HashMap::new(), None)
-                .await
-                .map_err(|e| {
-                    crate::error::UveddiError::from(
-                        crate::report::errors::ReportGenerationError::DataExtractionError(
-                            e.to_string(),
-                        ),
-                    )
-                }),
+            "markdown" => {
+                let codebase_path = config.target_path.to_str();
+                report_generator
+                    .generate_markdown_report(analysis_run, issues, &HashMap::new(), None, codebase_path)
+                    .map_err(|e| {
+                        crate::error::UveddiError::from(
+                            crate::report::errors::ReportGenerationError::DataExtractionError(
+                                e.to_string(),
+                            ),
+                        )
+                    })
+            }
+            "html" => {
+                let codebase_path = config.target_path.to_str();
+                report_generator
+                    .generate_html_report(analysis_run, issues, &HashMap::new(), None, codebase_path)
+                    .await
+                    .map_err(|e| {
+                        crate::error::UveddiError::from(
+                            crate::report::errors::ReportGenerationError::DataExtractionError(
+                                e.to_string(),
+                            ),
+                        )
+                    })
+            }
             _ => Err(UveddiError::config_error(
                 &format!(
                     "Unsupported output format specified: {}",

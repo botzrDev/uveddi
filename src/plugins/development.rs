@@ -47,8 +47,7 @@ pub enum ImpactLevel {
     High,
 }
 #[cfg(not(feature = "ai"))]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct LanguageKnowledge;
+pub use crate::plugins::integration::LanguageKnowledge;
 #[cfg(not(feature = "ai"))]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum EffortLevel {
@@ -179,21 +178,21 @@ impl ExampleAntiPatternPlugin {
         // Using correct AI schema fields with all required fields
         let custom_pattern = PatternKnowledge {
             id: "singleton_abuse".to_string(),
-            name: "Singleton Abuse".to_string(),
-            definition: CompressedString::new("Overuse of singleton pattern leading to hidden dependencies"),
-            symptoms: vec![CompressedString::new("Multiple singleton classes, difficult testing")],
+            name: "Singleton Pattern Abuse".to_string(),
+            definition: CompressedString::new("Overuse of singleton pattern leading to global state issues"),
+            symptoms: vec![CompressedString::new("Global state access patterns")],
             impact: ImpactLevel::Medium,
             category: AntiPatternCategory::ObjectOriented,
+            detection_methods: vec![],
+            solutions: vec![],
             examples: CodeExamples {
                 primary: vec![],
                 variations: HashMap::new(),
             },
-            detection_methods: vec![],
             language_variations: HashMap::new(),
             related_patterns: vec![],
-            solutions: vec![],
             tags: vec!["singleton".to_string()],
-            frequency_score: 0.6,
+            frequency_score: 0.5,
             detection_confidence: 0.8,
         };
 

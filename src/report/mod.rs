@@ -393,6 +393,7 @@ impl ReportGenerator {
         issues: &[ArchitecturalIssue],
         anti_pattern_types: &HashMap<i64, AntiPatternType>,
         output_path: Option<&Path>,
+        codebase_path: Option<&str>,
     ) -> Result<String, String> {
         info!("Generating markdown report with {} issues", issues.len());
 
@@ -408,7 +409,7 @@ impl ReportGenerator {
 
         // Add executive summary
         report.push_str("## Executive Summary\n\n");
-        report.push_str(&self.generate_executive_summary(analysis_run, issues));
+        report.push_str(&self.generate_executive_summary(analysis_run, issues, codebase_path));
         report.push_str("\n\n");
 
         // Add severity summary if enabled
@@ -472,11 +473,12 @@ impl ReportGenerator {
         &self,
         analysis_run: &AnalysisRun,
         issues: &[ArchitecturalIssue],
+        codebase_path: Option<&str>,
     ) -> String {
         let total_issues = issues.len();
-        let high_severity = issues.iter().filter(|i| i.severity == "high").count();
-        let medium_severity = issues.iter().filter(|i| i.severity == "medium").count();
-        let low_severity = issues.iter().filter(|i| i.severity == "low").count();
+        let high_severity = issues.iter().filter(|i| i.severity.to_lowercase() == "high" || i.severity.to_lowercase() == "critical").count();
+        let medium_severity = issues.iter().filter(|i| i.severity.to_lowercase() == "medium").count();
+        let low_severity = issues.iter().filter(|i| i.severity.to_lowercase() == "low").count();
 
         let unique_files = issues
             .iter()
@@ -490,7 +492,7 @@ impl ReportGenerator {
             - **Medium Severity**: {} issues\n\
             - **Low Severity**: {} issues\n\n\
             The analysis took {:.2} seconds to complete.",
-            "Unknown".to_string(), // TODO: Add codebase_path to AnalysisRun model
+            codebase_path.unwrap_or("Unknown"),
             total_issues,
             unique_files,
             high_severity,
@@ -507,9 +509,9 @@ impl ReportGenerator {
         let mut summary = String::new();
 
         // Group issues by severity
-        let high_issues: Vec<_> = issues.iter().filter(|i| i.severity == "high").collect();
-        let medium_issues: Vec<_> = issues.iter().filter(|i| i.severity == "medium").collect();
-        let low_issues: Vec<_> = issues.iter().filter(|i| i.severity == "low").collect();
+        let high_issues: Vec<_> = issues.iter().filter(|i| i.severity.to_lowercase() == "high" || i.severity.to_lowercase() == "critical").collect();
+        let medium_issues: Vec<_> = issues.iter().filter(|i| i.severity.to_lowercase() == "medium").collect();
+        let low_issues: Vec<_> = issues.iter().filter(|i| i.severity.to_lowercase() == "low").collect();
 
         // High severity table
         if !high_issues.is_empty() {
@@ -1054,6 +1056,7 @@ impl ReportGenerator {
         issues: &[ArchitecturalIssue],
         anti_pattern_types: &HashMap<i64, AntiPatternType>,
         output_path: Option<&Path>,
+        codebase_path: Option<&str>,
     ) -> Result<String, String> {
         // Build the report structure
         let mut report = serde_json::Map::new();
@@ -1062,8 +1065,8 @@ impl ReportGenerator {
         let mut metadata = serde_json::Map::new();
         metadata.insert(
             "codebasePath".to_string(),
-            Value::String("Unknown".to_string()),
-        ); // TODO: Add codebase_path to AnalysisRun
+            Value::String(codebase_path.unwrap_or("Unknown").to_string()),
+        );
         metadata.insert(
             "timestamp".to_string(),
             Value::String(Local::now().to_rfc3339()),
@@ -1186,13 +1189,14 @@ impl ReportGenerator {
         issues: &[ArchitecturalIssue],
         anti_pattern_types: &HashMap<i64, AntiPatternType>,
         components: Option<&[ArchitecturalComponent]>,
+        codebase_path: Option<&str>,
     ) -> Result<EnhancedReportData, ReportGenerationError> {
         let mut report = String::new();
         let mut diagrams = Vec::new();
 
         // Generate standard report sections
         report.push_str(&self.generate_report_header(analysis_run));
-        report.push_str(&self.generate_executive_summary(analysis_run, issues));
+        report.push_str(&self.generate_executive_summary(analysis_run, issues, codebase_path));
 
         if self.include_severity_summary {
             report.push_str(&self.generate_severity_summary(issues));
@@ -1421,6 +1425,7 @@ impl ReportGenerator {
         issues: &[ArchitecturalIssue],
         anti_pattern_types: &HashMap<i64, AntiPatternType>,
         output_path: Option<&Path>,
+        codebase_path: Option<&str>,
     ) -> Result<String, String> {
         info!("Generating interactive HTML report with {} issues", issues.len());
 
@@ -2088,10 +2093,10 @@ impl ReportGenerator {
     /// Generate HTML executive summary section
     fn generate_html_executive_summary(&self, analysis_run: &AnalysisRun, issues: &[ArchitecturalIssue]) -> String {
         let total_issues = issues.len();
-        let critical_issues = issues.iter().filter(|i| i.severity == "critical").count();
-        let high_issues = issues.iter().filter(|i| i.severity == "high").count();
-        let medium_issues = issues.iter().filter(|i| i.severity == "medium").count();
-        let low_issues = issues.iter().filter(|i| i.severity == "low").count();
+        let critical_issues = issues.iter().filter(|i| i.severity.to_lowercase() == "critical").count();
+        let high_issues = issues.iter().filter(|i| i.severity.to_lowercase() == "high").count();
+        let medium_issues = issues.iter().filter(|i| i.severity.to_lowercase() == "medium").count();
+        let low_issues = issues.iter().filter(|i| i.severity.to_lowercase() == "low").count();
         
         let unique_files = issues
             .iter()
