@@ -30,6 +30,7 @@ use crate::analysis::detectors::cycle::CycleDetector;
 use crate::analysis::detectors::dependency::{Dependency, DependencyExtractor};
 use crate::analysis::errors::AnalysisError;
 use crate::analysis::extractors::SymbolExtractor;
+use crate::analysis::file_discovery::{FileDiscovery, SourceFile};
 use crate::analysis::graph::dependency::LocalDependencyGraph;
 use crate::analysis::graph::dependency::{ComponentNode, LocalDependencyType};
 use crate::analysis::incremental::{
@@ -41,6 +42,7 @@ use crate::analysis::workspace::{WorkspaceDetector, WorkspaceInfo};
 use crate::analysis::memory_report::MemoryAnalysisReport;
 use crate::analysis::AnalysisDetector;
 use crate::ast::tree_sitter_impl::AstParser;
+use crate::ast::ParsedFile;
 use crate::cache::result_cache::ResultCache;
 use crate::database::models::{
     AntiPatternType, ArchitecturalIssue, ComponentPerformanceMetrics, PerformanceMetricsConfig,
@@ -428,12 +430,13 @@ impl AnalysisEngine {
 
     /// Performs comprehensive analysis on a directory or file
     ///
-    /// This is the main entry point for analysis. It:
-    /// 1. Discovers and parses all source files in the given path
-    /// 2. Runs file-level detectors on each parsed file
-    /// 3. Extracts dependencies and builds a dependency graph
-    /// 4. Runs graph-level detectors (cycle detection, architectural patterns)
-    /// 5. Aggregates and returns all detected issues
+    /// This is the main entry point for analysis. It implements the robust,
+    /// concurrent analysis pipeline described in Section 1 of the roadmap:
+    /// 1. File Discovery: Discovers and filters source files
+    /// 2. AST Parsing: Parses files into structured representations
+    /// 3. Dependency Extraction: Builds dependency relationships
+    /// 4. Anti-Pattern Detection: Runs detectors concurrently
+    /// 5. Graph Construction: Creates dependency graph
     ///
     /// # Arguments
     ///
@@ -455,39 +458,310 @@ impl AnalysisEngine {
         &mut self,
         path: &Path,
     ) -> crate::error::Result<(Vec<ArchitecturalIssue>, LocalDependencyGraph)> {
-        // Facade pattern: delegate to components
+        info!("Starting comprehensive analysis for: {}", path.display());
+        let start_time = Instant::now();
 
-        // Phase 1: Use dependency builder to construct the dependency graph
-        info!("Building dependency graph...");
-        let dependency_graph = self.dependency_builder.build_graph(path).await?;
-        info!("Dependency graph built.");
+        // Execute the main analysis pipeline
+        let result = self.execute_analysis_pipeline(path).await;
+        
+        let duration = start_time.elapsed();
+        match &result {
+            Ok((issues, _)) => {
+                info!(
+                    "Analysis completed successfully in {:?}: {} issues found",
+                    duration, issues.len()
+                );
+            }
+            Err(e) => {
+                warn!("Analysis failed after {:?}: {}", duration, e);
+            }
+        }
 
-        // Phase 2: Use detector scheduler to run analysis
-        info!("Running detection analysis...");
-        let file_issues = if path.is_file() {
-            self.detector_scheduler.schedule_file(path).await?
+        result
+    }
+
+    /// Executes the core analysis pipeline with fault tolerance and concurrency
+    ///
+    /// This method implements the multi-stage pipeline from Section 1.1 of the roadmap:
+    /// - File Discovery: self.discover_source_files(path).await?
+    /// - AST Parsing: self.parse_files(files).await?
+    /// - Dependency Extraction: self.extract_dependencies(&parsed_files).await?
+    /// - Anti-Pattern Detection: self.run_detectors(&parsed_files).await?
+    /// - Graph Construction: self.build_dependency_graph(dependencies).await?
+    ///
+    /// Uses the "fan-out, fan-in" pattern for concurrent file processing with
+    /// graceful degradation when individual files fail.
+    async fn execute_analysis_pipeline(
+        &mut self,
+        path: &Path,
+    ) -> crate::error::Result<(Vec<ArchitecturalIssue>, LocalDependencyGraph)> {
+        // Stage 1: File Discovery
+        info!("Stage 1: Discovering source files...");
+        let source_files = self.discover_source_files(path).await?;
+        info!("Discovered {} source files", source_files.len());
+
+        if source_files.is_empty() {
+            warn!("No supported source files found in {}", path.display());
+            return Ok((Vec::new(), LocalDependencyGraph::new()));
+        }
+
+        // Stage 2: AST Parsing (concurrent with fault tolerance)
+        info!("Stage 2: Parsing files concurrently...");
+        let parsed_files = self.parse_files(source_files).await?;
+        info!("Successfully parsed {}/{} files", parsed_files.len(), parsed_files.len());
+
+        // Stage 3: Dependency Extraction
+        info!("Stage 3: Extracting dependencies...");
+        let dependencies = self.extract_dependencies(&parsed_files).await?;
+        info!("Extracted {} dependencies", dependencies.len());
+
+        // Stage 4: Anti-Pattern Detection (concurrent)
+        info!("Stage 4: Running detectors concurrently...");
+        let issues = self.run_detectors(&parsed_files).await?;
+        info!("Detected {} issues", issues.len());
+
+        // Stage 5: Graph Construction
+        info!("Stage 5: Building dependency graph...");
+        let dependency_graph = self.build_dependency_graph(&parsed_files, dependencies).await?;
+        info!("Built dependency graph with {} nodes", dependency_graph.node_count());
+
+        // Record metrics
+        self.record_analysis_metrics(&issues, parsed_files.len());
+
+        Ok((issues, dependency_graph))
+    }
+
+    /// Stage 1: Discovers source files using intelligent file discovery
+    ///
+    /// Implements Section 2.3 of the roadmap using the ignore crate for
+    /// high-performance directory traversal with git-style ignore patterns.
+    async fn discover_source_files(&self, path: &Path) -> crate::error::Result<Vec<SourceFile>> {
+        let file_discovery = FileDiscovery::new();
+        
+        if path.is_file() {
+            // Single file analysis
+            let language = self.detect_language_from_path(path);
+            Ok(vec![SourceFile {
+                path: path.to_path_buf(),
+                language,
+            }])
         } else {
-            self.detector_scheduler.schedule_directory(path).await?
-        };
-        info!("Detection analysis completed.");
+            // Directory analysis
+            file_discovery.discover_files(path).map_err(|e| {
+                crate::error::UveddiError::io_error(
+                    "file discovery",
+                    &path.to_string_lossy(),
+                    std::io::Error::new(std::io::ErrorKind::Other, e.to_string()),
+                )
+            })
+        }
+    }
 
-        // Phase 3: Use aggregator to collect and format results
-        self.aggregator.record_findings(file_issues.clone());
-        let aggregated_stats = self.aggregator.get_stats();
+    /// Stage 2: Parses files concurrently with fault tolerance
+    ///
+    /// Implements the "fan-out, fan-in" pattern from Section 1.2 using Tokio
+    /// for concurrent processing with graceful degradation.
+    async fn parse_files(&self, source_files: Vec<SourceFile>) -> crate::error::Result<Vec<ParsedFile>> {
+        use futures::future::join_all;
+        
+        info!("Parsing {} files concurrently", source_files.len());
+        
+        // Fan-out: Spawn concurrent parsing tasks
+        let parse_tasks: Vec<_> = source_files
+            .into_iter()
+            .map(|source_file| {
+                let ast_provider = self.ast_provider.clone();
+                tokio::spawn(async move {
+                    let path = &source_file.path;
+                    match ast_provider.get_ast(path).await {
+                        Ok(tree) => {
+                            // Read source content
+                            match std::fs::read_to_string(path) {
+                                Ok(source_content) => {
+                                    let parsed_file = ParsedFile {
+                                        file_path: std::sync::Arc::new(path.clone()),
+                                        language: source_file.language,
+                                        tree: Some((*tree).clone()),
+                                        source: std::sync::Arc::new(source_content),
+                                        custom_ast: std::sync::Arc::new(None),
+                                        modified_at: crate::analysis::cache::wrappers::ArchivableSystemTime(
+                                            std::fs::metadata(path)
+                                                .and_then(|m| m.modified())
+                                                .unwrap_or_else(|_| std::time::SystemTime::now()),
+                                        ),
+                                    };
+                                    Ok::<Option<ParsedFile>, crate::error::UveddiError>(Some(parsed_file))
+                                }
+                                Err(e) => {
+                                    warn!("Failed to read file {}: {}", path.display(), e);
+                                    Ok::<Option<ParsedFile>, crate::error::UveddiError>(None) // Graceful degradation
+                                }
+                            }
+                        }
+                        Err(e) => {
+                            warn!("Failed to parse file {}: {}", path.display(), e);
+                            Ok::<Option<ParsedFile>, crate::error::UveddiError>(None) // Graceful degradation
+                        }
+                    }
+                })
+            })
+            .collect();
 
-        // UV-2: Initialize metrics collector and emit metrics
+        // Fan-in: Collect results with fault tolerance
+        let parse_results = join_all(parse_tasks).await;
+        let mut parsed_files = Vec::new();
+        let mut failed_count = 0;
+
+        for result in parse_results {
+            match result {
+                Ok(Ok(Some(parsed_file))) => {
+                    parsed_files.push(parsed_file);
+                }
+                Ok(Ok(None)) => {
+                    failed_count += 1;
+                    // File failed to parse but we continue (graceful degradation)
+                }
+                Ok(Err(e)) => {
+                    failed_count += 1;
+                    warn!("Parse task returned error: {}", e);
+                }
+                Err(e) => {
+                    failed_count += 1;
+                    warn!("Parse task panicked: {}", e);
+                }
+            }
+        }
+
+        if failed_count > 0 {
+            warn!(
+                "Parsing completed with {} failures out of {} files",
+                failed_count,
+                parsed_files.len() + failed_count
+            );
+        }
+
+        Ok(parsed_files)
+    }
+
+    /// Stage 3: Extracts dependencies from parsed files
+    ///
+    /// Uses tree-sitter queries to extract syntactic dependencies and
+    /// performs semantic resolution as described in Section 3.1.
+    async fn extract_dependencies(&self, parsed_files: &[ParsedFile]) -> crate::error::Result<Vec<Dependency>> {
+        let mut all_dependencies = Vec::new();
+        
+        for parsed_file in parsed_files {
+            match self.extract_file_dependencies(&parsed_file.file_path).await {
+                Ok(mut deps) => {
+                    all_dependencies.append(&mut deps);
+                }
+                Err(e) => {
+                    warn!(
+                        "Failed to extract dependencies from {}: {}",
+                        parsed_file.file_path.display(),
+                        e
+                    );
+                    // Continue with other files (graceful degradation)
+                }
+            }
+        }
+        
+        Ok(all_dependencies)
+    }
+
+    /// Stage 4: Runs detectors concurrently on parsed files
+    ///
+    /// Implements concurrent detector execution with fault tolerance
+    /// as described in Section 1.3.
+    async fn run_detectors(&self, parsed_files: &[ParsedFile]) -> crate::error::Result<Vec<ArchitecturalIssue>> {
+        use futures::future::join_all;
+        
+        info!("Running detectors on {} files", parsed_files.len());
+        
+        // Fan-out: Run detectors concurrently on each file
+        let detector_tasks: Vec<_> = parsed_files
+            .iter()
+            .map(|parsed_file| {
+                let detector_scheduler = self.detector_scheduler.clone();
+                let file_path = parsed_file.file_path.as_ref().clone();
+                tokio::spawn(async move {
+                    match detector_scheduler.schedule_file(&file_path).await {
+                        Ok(issues) => Ok::<Vec<ArchitecturalIssue>, crate::error::UveddiError>(issues),
+                        Err(e) => {
+                            warn!("Detector failed for file {}: {}", file_path.display(), e);
+                            Ok::<Vec<ArchitecturalIssue>, crate::error::UveddiError>(Vec::new()) // Graceful degradation
+                        }
+                    }
+                })
+            })
+            .collect();
+
+        // Fan-in: Collect all issues
+        let detector_results = join_all(detector_tasks).await;
+        let mut all_issues = Vec::new();
+
+        for result in detector_results {
+            match result {
+                Ok(Ok(mut issues)) => {
+                    all_issues.append(&mut issues);
+                }
+                Ok(Err(e)) => {
+                    warn!("Detector task returned error: {}", e);
+                }
+                Err(e) => {
+                    warn!("Detector task panicked: {}", e);
+                }
+            }
+        }
+
+        // Record findings in aggregator
+        self.aggregator.record_findings(all_issues.clone());
+
+        Ok(all_issues)
+    }
+
+    /// Stage 5: Builds dependency graph from parsed files and dependencies
+    ///
+    /// Constructs a petgraph-based dependency graph as described in Section 3.2.
+    async fn build_dependency_graph(
+        &self,
+        parsed_files: &[ParsedFile],
+        dependencies: Vec<Dependency>,
+    ) -> crate::error::Result<LocalDependencyGraph> {
+        let mut graph = LocalDependencyGraph::new();
+
+        // Add nodes for each parsed file
+        for parsed_file in parsed_files {
+            let node = ComponentNode::Module {
+                path: parsed_file.file_path.display().to_string(),
+            };
+            graph.add_component(node);
+        }
+
+        // Add edges for dependencies
+        for dependency in dependencies {
+            let from_node = ComponentNode::Module {
+                path: dependency.from_file.display().to_string(),
+            };
+            let to_node = ComponentNode::Module {
+                path: dependency.to_module.clone(),
+            };
+            graph.add_dependency(&from_node, &to_node, LocalDependencyType::Import);
+        }
+
+        Ok(graph)
+    }
+
+    /// Records analysis metrics for observability
+    fn record_analysis_metrics(&self, issues: &[ArchitecturalIssue], files_processed: usize) {
         let metrics_config = PerformanceMetricsConfig::default();
-        let files_analyzed = aggregated_stats.files_processed;
-        let mut metrics_collector =
-            PerformanceMetricsCollector::new(metrics_config, files_analyzed);
+        let mut metrics_collector = PerformanceMetricsCollector::new(metrics_config, files_processed);
 
-        metrics_collector.record_analysis_metrics(file_issues.len(), files_analyzed);
+        metrics_collector.record_analysis_metrics(issues.len(), files_processed);
 
         if let Err(e) = metrics_collector.emit_metrics() {
             warn!("Failed to emit performance metrics: {}", e);
         }
-
-        Ok((file_issues, dependency_graph))
     }
 
     /// Robust analysis with workspace detection and error recovery

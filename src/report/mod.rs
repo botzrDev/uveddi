@@ -2714,7 +2714,7 @@ impl ReportGenerator {
     <script>
         // Initialize Mermaid.js for diagram rendering with unique IDs
         mermaid.initialize({{
-            startOnLoad: true,
+            startOnLoad: false,
             theme: 'default',
             deterministicIds: true,
             themeVariables: {{
@@ -2732,8 +2732,21 @@ impl ReportGenerator {
         document.addEventListener('DOMContentLoaded', function() {{
             const mermaidElements = document.querySelectorAll('.mermaid');
             mermaidElements.forEach((element, index) => {{
-                // Add unique ID seed as data attribute
-                element.setAttribute('data-diagram-seed', `diagram-${{index}}-${{Date.now()}}`);
+                const uniqueId = `mermaid-diagram-${{index}}-${{Date.now()}}`;
+                const graphDefinition = element.textContent.trim();
+                
+                const config = {{
+                    deterministicIds: true,
+                    deterministicIDSeed: `seed-${{index}}-${{Date.now()}}`,
+                    theme: document.body.dataset.theme === 'dark' ? 'dark' : 'default'
+                }};
+                
+                mermaid.render(uniqueId + '-svg', graphDefinition, config).then((result) => {{
+                    element.innerHTML = result.svg;
+                }}).catch((error) => {{
+                    console.error('Mermaid rendering error for diagram', index, ':', error);
+                    element.innerHTML = '<div class="diagram-error" style="color: red; padding: 1rem; border: 1px solid red; border-radius: 4px;">Diagram rendering failed: ' + error.message + '</div>';
+                }});
             }});
         }});
 
@@ -2765,13 +2778,24 @@ impl ReportGenerator {
                 themeVariables: themeVariables
             }});
 
-            // Re-render all mermaid diagrams
+            // Re-render all mermaid diagrams with unique seeds
             const mermaidElements = document.querySelectorAll('.mermaid');
             mermaidElements.forEach((element, index) => {{
                 const graphDefinition = element.textContent;
+                const diagramId = element.id || `mermaid-diagram-${{index}}`;
                 element.innerHTML = '';
                 element.removeAttribute('data-processed');
-                mermaid.render(`mermaid-diagram-${{index}}`, graphDefinition, (svgCode) => {{
+                
+                // Configure unique seed for each diagram to prevent ID conflicts
+                mermaid.initialize({{
+                    startOnLoad: false,
+                    theme: theme,
+                    deterministicIds: true,
+                    deterministicIDSeed: diagramId,
+                    themeVariables: themeVariables
+                }});
+                
+                mermaid.render(diagramId, graphDefinition, (svgCode) => {{
                     element.innerHTML = svgCode;
                 }});
             }});
@@ -2860,6 +2884,46 @@ impl ReportGenerator {
                     icon.style.transform = 'rotate(90deg)';
                 }}
             }}
+            
+            // Initial render of all Mermaid diagrams with unique IDs
+            setTimeout(() => {{
+                const mermaidElements = document.querySelectorAll('.mermaid');
+                mermaidElements.forEach((element, index) => {{
+                    const graphDefinition = element.textContent;
+                    const diagramId = element.id || `mermaid-diagram-${{index}}`;
+                    element.innerHTML = '';
+                    element.removeAttribute('data-processed');
+                    
+                    // Configure unique seed for each diagram to prevent ID conflicts
+                    mermaid.initialize({{
+                        startOnLoad: false,
+                        theme: document.body.dataset.theme === 'dark' ? 'dark' : 'default',
+                        deterministicIds: true,
+                        deterministicIDSeed: diagramId,
+                        themeVariables: document.body.dataset.theme === 'dark' ? {{
+                            primaryColor: '#3b82f6',
+                            primaryTextColor: '#f1f5f9',
+                            primaryBorderColor: '#64748b',
+                            lineColor: '#64748b',
+                            background: '#0f172a',
+                            secondaryColor: '#1e293b',
+                            tertiaryColor: '#334155'
+                        }} : {{
+                            primaryColor: '#2563eb',
+                            primaryTextColor: '#0f172a',
+                            primaryBorderColor: '#64748b',
+                            lineColor: '#64748b',
+                            background: '#ffffff',
+                            secondaryColor: '#f8fafc',
+                            tertiaryColor: '#e2e8f0'
+                        }}
+                    }});
+                    
+                    mermaid.render(diagramId, graphDefinition, (svgCode) => {{
+                        element.innerHTML = svgCode;
+                    }});
+                }});
+            }}, 100);
         }});
     </script>
 "#)

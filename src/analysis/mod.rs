@@ -116,6 +116,7 @@ pub mod engine;
 pub mod engine_builder;
 pub mod errors;
 pub mod extractors;
+pub mod file_discovery;
 pub mod graph;
 pub mod incremental;
 pub mod interactive_diagram_generator;

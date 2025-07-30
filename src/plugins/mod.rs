@@ -67,7 +67,9 @@ pub use types::*;
 pub use verification::{PluginVerifier, VerificationReport};
 
 // Knowledge plugin system re-exports
-pub use development::{ExampleAntiPatternPlugin, ExampleEnterprisePlugin, ExampleFrameworkPlugin};
+// TODO: Fix plugin compilation issues
+// #[cfg(feature = "ai")]
+// pub use development::{ExampleAntiPatternPlugin, ExampleEnterprisePlugin, ExampleFrameworkPlugin};
 pub use integration::{IntegratedKnowledgeContext, PluginKnowledgeIntegrator, RankedPattern};
 pub use knowledge::{
     AntiPatternPlugin, ComplianceKnowledge, CustomPatternDefinition, DetectorPlugin,
