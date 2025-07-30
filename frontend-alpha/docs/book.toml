@@ -1,5 +1,0 @@
-
-[output.html]
-git-repository-url = "https://github.com/botzrDev/uveddi"
-edit-url-template = "https://github.com/botzrDev/uveddi/edit/main/docs/{path}"
-curly-quotes = true

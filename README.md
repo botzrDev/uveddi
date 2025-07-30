@@ -76,34 +76,133 @@ cargo run --bin tui_test --features="tui"
 - ✅ Configuration commands
 - ✅ All output format options
 - ✅ Error handling and user-friendly messages
-- ⚠️ Analysis engine (shows expected "execution failed" errors)
 - ⚠️ TUI (development binary only)
 
 ## Documentation
 
-Full documentation is available in the `docs/` directory. Key documents include:
+Full documentation is available in the `docs/` directory and at [https://botzrdev.github.io/uveddi/](https://botzrdev.github.io/uveddi/). Key documents include:
 
 - [Getting Started](./docs/01-getting-started/installation.md)
 - [User Guide](./docs/02-user-guide/basic-concepts.md)
 - [Developer Guide](./docs/05-development/DEVELOPER_GUIDE.md)
 - [Community Guidelines](./docs/09-community/GUIDELINES.md)
+- [Known Issues](./docs/known-issues.md)
+- [Changelog](./CHANGELOG.md)
+
+### Rust API Documentation
+
+Generate and view HTML documentation for the public API:
+
+```bash
+cargo doc --open
+```
+The output is placed in `target/doc`. Documentation is also published to GitHub Pages.
 
 ## Contributing
 
 We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
+### Jira Integration & Commit Conventions
+
+- All code changes must reference a Jira issue in the format `UV-XXX` (e.g., UV-154).
+- Branches should be named with the issue key, e.g., `feature/UV-154-improve-logging`.
+- Commit messages should follow:
+  ```
+  type(scope): description (UV-XXX)
+  # Example:
+  fix(detector): handle edge case in dead code analysis (UV-154)
+  ```
+- PR titles and descriptions must link to the relevant Jira issue.
+- See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow and review checklist.
+
 ## 🤝 New Contributors Welcome!
 
 Looking to contribute? We have plenty of [good first issues](https://github.com/botzrDev/uveddi/labels/good-first-issue) perfect for getting started!
 
-- 📚 **Documentation**: Improve guides and examples
-- 🧪 **Testing**: Add test coverage and cases  
-- 🎨 **Frontend**: Enhance UI components
-- 🔧 **Backend**: Fix bugs and add features
-- 🚀 **DevOps**: Improve CI/CD and deployment
+
+## Testing
+
+Uveddi uses Rust's built-in test framework and recommends [cargo-nextest](https://nexte.st/) for fast, isolated test runs.
+
+### Running All Tests
+```bash
+cargo test
+# Or, for faster runs:
+cargo install cargo-nextest
+cargo nextest run --all-features
+```
+
+### Running Stub Implementation Tests
+```bash
+cargo nextest run --lib --no-default-features
+```
+
+### Integration Tests
+Integration tests are in the `tests/` directory. Each file is a separate crate and tests the public API.
+
+### Test Utilities
+- Property-based testing: [proptest](https://crates.io/crates/proptest)
+- Code coverage: [cargo-tarpaulin](https://crates.io/crates/cargo-tarpaulin) or [cargo-llvm-cov](https://crates.io/crates/cargo-llvm-cov)
+
+### Verifying Documentation Examples
+```bash
+cargo test --doc
+```
+All documentation examples are tested in CI to prevent documentation rot.
 
 Check our [Good First Issues Guide](docs/09-community/GOOD_FIRST_ISSUES.md) to find the perfect task for your skill level.
 
 ## License
 
 MIT - See [LICENSE](LICENSE) for details.
+
+## Docker & Deployment
+
+Uveddi provides a production-ready Dockerfile and docker-compose setup for local development and E2E testing.
+
+### Build and Run with Docker
+```bash
+docker build -t uveddi:latest .
+docker run --rm -it -v $(pwd):/workspace uveddi:latest
+```
+
+### Orchestrate with Docker Compose
+```bash
+docker-compose up --build
+```
+
+See [docker-compose.dev.yml](docker-compose.dev.yml) and [docker-entrypoint.sh](docker-entrypoint.sh) for details.
+
+## Dependencies
+
+Dependencies are managed in [Cargo.toml](Cargo.toml). To update dependencies:
+```bash
+cargo update
+```
+Key crates: `axum`, `sqlx`, `serde`, `jsonwebtoken`, `tracing`, `opentelemetry`, `tree-sitter`, and language grammars as optional features.
+
+Security and license compliance are enforced with [cargo-audit](https://crates.io/crates/cargo-audit) and [cargo-deny](https://crates.io/crates/cargo-deny).
+
+## Support & Community
+
+- Discord: [https://discord.gg/uveddi](https://discord.gg/uveddi)
+- GitHub Discussions: [https://github.com/botzrDev/uveddi/discussions](https://github.com/botzrDev/uveddi/discussions)
+
+To report bugs, please create a GitHub issue and include:
+- Uveddi version
+- Debug log output
+- Steps to reproduce
+- Severity and frequency
+- Screenshots or logs if possible
+
+See [docs/reporting-bugs.md](docs/reporting-bugs.md) for more details.
+
+## Project Status & Roadmap
+
+- **Current Version:** 0.9.0 (Rust Edition 2021)
+- **License:** MIT
+- **Repository:** https://github.com/botzrDev/uveddi
+- **Documentation:** https://botzrdev.github.io/uveddi/
+
+Major ongoing efforts and epics are tracked in Jira (see UV-97, UV-154, etc.).
+See the [Phased Implementation and Accountability Roadmap](docs/05-development/roadmap.md) for details on immediate, near-term, and long-term goals.
