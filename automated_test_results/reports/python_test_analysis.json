@@ -1,0 +1,193 @@
+{
+  "issues": [
+    {
+      "codeSnippet": "class LargeDataProcessor:\n    def __init__(self):\n        self.data1 = []\n        self.data2 = []\n        self.data3 = []\n        self.data4 = []\n        self.data5 = []\n        self.data6 = []\n        self.data7 = []\n        self.data8 = []\n        self.data9 = []\n        self.config = {}\n        self.cache = {}\n        self.state = {}\n        self.metadata = {}\n        self.stats = {}\n        self.temp = {}\n        self.buffer = {}\n    \n    def process_method1(self): pass\n    def process_method2(self): pass\n    def process_method3(self): pass\n    def process_method4(self): pass\n    def process_method5(self): pass\n    def process_method6(self): pass\n    def process_method7(self): pass\n    def process_method8(self): pass\n    def process_method9(self): pass\n    def process_method10(self): pass\n    def process_method11(self): pass\n    def process_method12(self): pass\n    def process_method13(self): pass\n    def process_method14(self): pass\n    def process_method15(self): pass\n    def process_method16(self): pass\n    def process_method17(self): pass\n    def process_method18(self): pass\n    def process_method19(self): pass\n    def process_method20(self): pass\n    def process_method21(self): pass\n    \n    def unused_method(self):\n        \"\"\"This method is never called\"\"\"\n        print(\"Dead code example\")",
+      "description": "God Object detected: 'LargeDataProcessor' has 23 methods and 16 fields. (Thresholds: methods>5, fields>8) LCOM4 score: 2 (>1 indicates low cohesion) Methods: 16 trivial, 7 complex",
+      "endLine": 2,
+      "filePath": "/tmp/simple_test/main.py",
+      "severity": "Critical",
+      "startLine": 2
+    },
+    {
+      "codeSnippet": "process_method2",
+      "description": "Potentially dead code: function 'process_method2' is not used in this file (confidence: 90.0%)",
+      "endLine": 22,
+      "filePath": "/tmp/simple_test/main.py",
+      "severity": "High",
+      "startLine": 22
+    },
+    {
+      "codeSnippet": "process_method3",
+      "description": "Potentially dead code: function 'process_method3' is not used in this file (confidence: 90.0%)",
+      "endLine": 23,
+      "filePath": "/tmp/simple_test/main.py",
+      "severity": "High",
+      "startLine": 23
+    },
+    {
+      "codeSnippet": "process_method4",
+      "description": "Potentially dead code: function 'process_method4' is not used in this file (confidence: 90.0%)",
+      "endLine": 24,
+      "filePath": "/tmp/simple_test/main.py",
+      "severity": "High",
+      "startLine": 24
+    },
+    {
+      "codeSnippet": "process_method5",
+      "description": "Potentially dead code: function 'process_method5' is not used in this file (confidence: 90.0%)",
+      "endLine": 25,
+      "filePath": "/tmp/simple_test/main.py",
+      "severity": "High",
+      "startLine": 25
+    },
+    {
+      "codeSnippet": "process_method6",
+      "description": "Potentially dead code: function 'process_method6' is not used in this file (confidence: 90.0%)",
+      "endLine": 26,
+      "filePath": "/tmp/simple_test/main.py",
+      "severity": "High",
+      "startLine": 26
+    },
+    {
+      "codeSnippet": "process_method7",
+      "description": "Potentially dead code: function 'process_method7' is not used in this file (confidence: 90.0%)",
+      "endLine": 27,
+      "filePath": "/tmp/simple_test/main.py",
+      "severity": "High",
+      "startLine": 27
+    },
+    {
+      "codeSnippet": "process_method8",
+      "description": "Potentially dead code: function 'process_method8' is not used in this file (confidence: 90.0%)",
+      "endLine": 28,
+      "filePath": "/tmp/simple_test/main.py",
+      "severity": "High",
+      "startLine": 28
+    },
+    {
+      "codeSnippet": "process_method9",
+      "description": "Potentially dead code: function 'process_method9' is not used in this file (confidence: 90.0%)",
+      "endLine": 29,
+      "filePath": "/tmp/simple_test/main.py",
+      "severity": "High",
+      "startLine": 29
+    },
+    {
+      "codeSnippet": "process_method10",
+      "description": "Potentially dead code: function 'process_method10' is not used in this file (confidence: 90.0%)",
+      "endLine": 30,
+      "filePath": "/tmp/simple_test/main.py",
+      "severity": "High",
+      "startLine": 30
+    },
+    {
+      "codeSnippet": "process_method11",
+      "description": "Potentially dead code: function 'process_method11' is not used in this file (confidence: 90.0%)",
+      "endLine": 31,
+      "filePath": "/tmp/simple_test/main.py",
+      "severity": "High",
+      "startLine": 31
+    },
+    {
+      "codeSnippet": "process_method12",
+      "description": "Potentially dead code: function 'process_method12' is not used in this file (confidence: 90.0%)",
+      "endLine": 32,
+      "filePath": "/tmp/simple_test/main.py",
+      "severity": "High",
+      "startLine": 32
+    },
+    {
+      "codeSnippet": "process_method13",
+      "description": "Potentially dead code: function 'process_method13' is not used in this file (confidence: 90.0%)",
+      "endLine": 33,
+      "filePath": "/tmp/simple_test/main.py",
+      "severity": "High",
+      "startLine": 33
+    },
+    {
+      "codeSnippet": "process_method14",
+      "description": "Potentially dead code: function 'process_method14' is not used in this file (confidence: 90.0%)",
+      "endLine": 34,
+      "filePath": "/tmp/simple_test/main.py",
+      "severity": "High",
+      "startLine": 34
+    },
+    {
+      "codeSnippet": "process_method15",
+      "description": "Potentially dead code: function 'process_method15' is not used in this file (confidence: 90.0%)",
+      "endLine": 35,
+      "filePath": "/tmp/simple_test/main.py",
+      "severity": "High",
+      "startLine": 35
+    },
+    {
+      "codeSnippet": "process_method16",
+      "description": "Potentially dead code: function 'process_method16' is not used in this file (confidence: 90.0%)",
+      "endLine": 36,
+      "filePath": "/tmp/simple_test/main.py",
+      "severity": "High",
+      "startLine": 36
+    },
+    {
+      "codeSnippet": "process_method17",
+      "description": "Potentially dead code: function 'process_method17' is not used in this file (confidence: 90.0%)",
+      "endLine": 37,
+      "filePath": "/tmp/simple_test/main.py",
+      "severity": "High",
+      "startLine": 37
+    },
+    {
+      "codeSnippet": "process_method18",
+      "description": "Potentially dead code: function 'process_method18' is not used in this file (confidence: 90.0%)",
+      "endLine": 38,
+      "filePath": "/tmp/simple_test/main.py",
+      "severity": "High",
+      "startLine": 38
+    },
+    {
+      "codeSnippet": "process_method19",
+      "description": "Potentially dead code: function 'process_method19' is not used in this file (confidence: 90.0%)",
+      "endLine": 39,
+      "filePath": "/tmp/simple_test/main.py",
+      "severity": "High",
+      "startLine": 39
+    },
+    {
+      "codeSnippet": "process_method20",
+      "description": "Potentially dead code: function 'process_method20' is not used in this file (confidence: 90.0%)",
+      "endLine": 40,
+      "filePath": "/tmp/simple_test/main.py",
+      "severity": "High",
+      "startLine": 40
+    },
+    {
+      "codeSnippet": "process_method21",
+      "description": "Potentially dead code: function 'process_method21' is not used in this file (confidence: 90.0%)",
+      "endLine": 41,
+      "filePath": "/tmp/simple_test/main.py",
+      "severity": "High",
+      "startLine": 41
+    },
+    {
+      "codeSnippet": "unused_method",
+      "description": "Potentially dead code: function 'unused_method' is not used in this file (confidence: 90.0%)",
+      "endLine": 43,
+      "filePath": "/tmp/simple_test/main.py",
+      "severity": "High",
+      "startLine": 43
+    },
+    {
+      "codeSnippet": "unused_function",
+      "description": "Potentially dead code: function 'unused_function' is not used in this file (confidence: 90.0%)",
+      "endLine": 47,
+      "filePath": "/tmp/simple_test/main.py",
+      "severity": "High",
+      "startLine": 47
+    }
+  ],
+  "metadata": {
+    "codebasePath": "Unknown",
+    "durationSeconds": 0.0,
+    "timestamp": "2025-07-29T14:18:10.153166914-05:00"
+  }
+}

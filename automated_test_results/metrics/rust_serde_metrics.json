@@ -1,0 +1,18 @@
+{
+    "repository": "rust_serde",
+    "language": "rust",
+    "description": "Serialization library",
+    "analysis": {
+        "status": "failed",
+        "duration_seconds": 120,
+        "timestamp": "2025-07-29T14:16:33-05:00"
+    },
+    "codebase": {
+        "file_count": 188,
+        "files_analyzed": 188
+    },
+    "results": {
+        "issues_found": 0,
+        "detectors_run": 0
+    }
+}

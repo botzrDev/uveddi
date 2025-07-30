@@ -511,12 +511,10 @@ fn bench_memory_fragmentation(c: &mut Criterion) {
                     let size = allocations[i].len();
                     MEMORY_TRACKER.deallocate(size);
                 }
+                let mut counter = 0;
                 allocations.retain(|_| {
-                    static mut COUNTER: usize = 0;
-                    unsafe {
-                        COUNTER += 1;
-                        COUNTER % 2 == 0
-                    }
+                    counter += 1;
+                    counter % 2 == 0
                 });
 
                 let phase2_metrics = MEMORY_TRACKER.get_metrics();

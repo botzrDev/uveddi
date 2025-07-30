@@ -1,0 +1,1497 @@
+{
+  "issues": [
+    {
+      "codeSnippet": "pub struct AuthService {\n    // User management\n    users: HashMap<u64, User>,\n    active_sessions: HashMap<String, Session>,\n    pending_registrations: HashMap<String, PendingUser>,\n    \n    // Token management\n    access_tokens: HashMap<String, TokenData>,\n    refresh_tokens: HashMap<String, TokenData>,\n    blacklisted_tokens: Vec<String>,\n    \n    // Permissions\n    user_roles: HashMap<u64, Vec<Role>>,\n    role_permissions: HashMap<String, Vec<Permission>>,\n    resource_access: HashMap<String, Vec<u64>>,\n    \n    // Security\n    failed_logins: HashMap<String, u32>,\n    blocked_ips: Vec<String>,\n    security_events: Vec<SecurityEvent>,\n    \n    // Configuration\n    token_expiry: u64,\n    max_failed_attempts: u32,\n    session_timeout: u64,\n    password_policy: PasswordPolicy,\n    \n    // External dependencies creating circular references\n    database: Option<DatabaseManager>,\n    user_service: Option<UserService>,\n    \n    // Statistics\n    total_logins: u64,\n    successful_logins: u64,\n    failed_logins_count: u64,\n    active_users_count: u32,\n    \n    // Caching\n    permission_cache: HashMap<u64, Vec<Permission>>,\n    role_cache: HashMap<String, Role>,\n    user_cache: HashMap<String, User>,\n}",
+      "description": "God Object detected: 'AuthService' has 34 methods and 25 fields. (Thresholds: methods>5, fields>8) LCOM4 score: 1 (>1 indicates low cohesion) Methods: 0 trivial, 0 complex",
+      "endLine": 12,
+      "filePath": "test_codebase/src/auth/mod.rs",
+      "severity": "Critical",
+      "startLine": 12
+    },
+    {
+      "codeSnippet": "authenticate",
+      "description": "Potentially dead code: function 'authenticate' is not used in this file (confidence: 60.0%)",
+      "endLine": 87,
+      "filePath": "test_codebase/src/auth/mod.rs",
+      "severity": "Medium",
+      "startLine": 87
+    },
+    {
+      "codeSnippet": "create_user",
+      "description": "Potentially dead code: function 'create_user' is not used in this file (confidence: 60.0%)",
+      "endLine": 88,
+      "filePath": "test_codebase/src/auth/mod.rs",
+      "severity": "Medium",
+      "startLine": 88
+    },
+    {
+      "codeSnippet": "delete_user",
+      "description": "Potentially dead code: function 'delete_user' is not used in this file (confidence: 60.0%)",
+      "endLine": 89,
+      "filePath": "test_codebase/src/auth/mod.rs",
+      "severity": "Medium",
+      "startLine": 89
+    },
+    {
+      "codeSnippet": "update_user",
+      "description": "Potentially dead code: function 'update_user' is not used in this file (confidence: 60.0%)",
+      "endLine": 90,
+      "filePath": "test_codebase/src/auth/mod.rs",
+      "severity": "Medium",
+      "startLine": 90
+    },
+    {
+      "codeSnippet": "get_user",
+      "description": "Potentially dead code: function 'get_user' is not used in this file (confidence: 60.0%)",
+      "endLine": 91,
+      "filePath": "test_codebase/src/auth/mod.rs",
+      "severity": "Medium",
+      "startLine": 91
+    },
+    {
+      "codeSnippet": "generate_token",
+      "description": "Potentially dead code: function 'generate_token' is not used in this file (confidence: 60.0%)",
+      "endLine": 92,
+      "filePath": "test_codebase/src/auth/mod.rs",
+      "severity": "Medium",
+      "startLine": 92
+    },
+    {
+      "codeSnippet": "validate_token",
+      "description": "Potentially dead code: function 'validate_token' is not used in this file (confidence: 60.0%)",
+      "endLine": 93,
+      "filePath": "test_codebase/src/auth/mod.rs",
+      "severity": "Medium",
+      "startLine": 93
+    },
+    {
+      "codeSnippet": "refresh_token",
+      "description": "Potentially dead code: function 'refresh_token' is not used in this file (confidence: 60.0%)",
+      "endLine": 94,
+      "filePath": "test_codebase/src/auth/mod.rs",
+      "severity": "Medium",
+      "startLine": 94
+    },
+    {
+      "codeSnippet": "revoke_token",
+      "description": "Potentially dead code: function 'revoke_token' is not used in this file (confidence: 60.0%)",
+      "endLine": 95,
+      "filePath": "test_codebase/src/auth/mod.rs",
+      "severity": "Medium",
+      "startLine": 95
+    },
+    {
+      "codeSnippet": "create_session",
+      "description": "Potentially dead code: function 'create_session' is not used in this file (confidence: 60.0%)",
+      "endLine": 96,
+      "filePath": "test_codebase/src/auth/mod.rs",
+      "severity": "Medium",
+      "startLine": 96
+    },
+    {
+      "codeSnippet": "validate_session",
+      "description": "Potentially dead code: function 'validate_session' is not used in this file (confidence: 60.0%)",
+      "endLine": 97,
+      "filePath": "test_codebase/src/auth/mod.rs",
+      "severity": "Medium",
+      "startLine": 97
+    },
+    {
+      "codeSnippet": "end_session",
+      "description": "Potentially dead code: function 'end_session' is not used in this file (confidence: 60.0%)",
+      "endLine": 98,
+      "filePath": "test_codebase/src/auth/mod.rs",
+      "severity": "Medium",
+      "startLine": 98
+    },
+    {
+      "codeSnippet": "assign_role",
+      "description": "Potentially dead code: function 'assign_role' is not used in this file (confidence: 60.0%)",
+      "endLine": 99,
+      "filePath": "test_codebase/src/auth/mod.rs",
+      "severity": "Medium",
+      "startLine": 99
+    },
+    {
+      "codeSnippet": "remove_role",
+      "description": "Potentially dead code: function 'remove_role' is not used in this file (confidence: 60.0%)",
+      "endLine": 100,
+      "filePath": "test_codebase/src/auth/mod.rs",
+      "severity": "Medium",
+      "startLine": 100
+    },
+    {
+      "codeSnippet": "check_permission",
+      "description": "Potentially dead code: function 'check_permission' is not used in this file (confidence: 60.0%)",
+      "endLine": 101,
+      "filePath": "test_codebase/src/auth/mod.rs",
+      "severity": "Medium",
+      "startLine": 101
+    },
+    {
+      "codeSnippet": "grant_permission",
+      "description": "Potentially dead code: function 'grant_permission' is not used in this file (confidence: 60.0%)",
+      "endLine": 102,
+      "filePath": "test_codebase/src/auth/mod.rs",
+      "severity": "Medium",
+      "startLine": 102
+    },
+    {
+      "codeSnippet": "revoke_permission",
+      "description": "Potentially dead code: function 'revoke_permission' is not used in this file (confidence: 60.0%)",
+      "endLine": 103,
+      "filePath": "test_codebase/src/auth/mod.rs",
+      "severity": "Medium",
+      "startLine": 103
+    },
+    {
+      "codeSnippet": "block_ip",
+      "description": "Potentially dead code: function 'block_ip' is not used in this file (confidence: 60.0%)",
+      "endLine": 104,
+      "filePath": "test_codebase/src/auth/mod.rs",
+      "severity": "Medium",
+      "startLine": 104
+    },
+    {
+      "codeSnippet": "unblock_ip",
+      "description": "Potentially dead code: function 'unblock_ip' is not used in this file (confidence: 60.0%)",
+      "endLine": 105,
+      "filePath": "test_codebase/src/auth/mod.rs",
+      "severity": "Medium",
+      "startLine": 105
+    },
+    {
+      "codeSnippet": "log_security_event",
+      "description": "Potentially dead code: function 'log_security_event' is not used in this file (confidence: 60.0%)",
+      "endLine": 106,
+      "filePath": "test_codebase/src/auth/mod.rs",
+      "severity": "Medium",
+      "startLine": 106
+    },
+    {
+      "codeSnippet": "get_security_events",
+      "description": "Potentially dead code: function 'get_security_events' is not used in this file (confidence: 60.0%)",
+      "endLine": 107,
+      "filePath": "test_codebase/src/auth/mod.rs",
+      "severity": "Medium",
+      "startLine": 107
+    },
+    {
+      "codeSnippet": "reset_failed_attempts",
+      "description": "Potentially dead code: function 'reset_failed_attempts' is not used in this file (confidence: 60.0%)",
+      "endLine": 108,
+      "filePath": "test_codebase/src/auth/mod.rs",
+      "severity": "Medium",
+      "startLine": 108
+    },
+    {
+      "codeSnippet": "increment_failed_attempts",
+      "description": "Potentially dead code: function 'increment_failed_attempts' is not used in this file (confidence: 60.0%)",
+      "endLine": 109,
+      "filePath": "test_codebase/src/auth/mod.rs",
+      "severity": "Medium",
+      "startLine": 109
+    },
+    {
+      "codeSnippet": "is_account_locked",
+      "description": "Potentially dead code: function 'is_account_locked' is not used in this file (confidence: 60.0%)",
+      "endLine": 110,
+      "filePath": "test_codebase/src/auth/mod.rs",
+      "severity": "Medium",
+      "startLine": 110
+    },
+    {
+      "codeSnippet": "get_user_statistics",
+      "description": "Potentially dead code: function 'get_user_statistics' is not used in this file (confidence: 60.0%)",
+      "endLine": 111,
+      "filePath": "test_codebase/src/auth/mod.rs",
+      "severity": "Medium",
+      "startLine": 111
+    },
+    {
+      "codeSnippet": "cleanup_expired_tokens",
+      "description": "Potentially dead code: function 'cleanup_expired_tokens' is not used in this file (confidence: 60.0%)",
+      "endLine": 112,
+      "filePath": "test_codebase/src/auth/mod.rs",
+      "severity": "Medium",
+      "startLine": 112
+    },
+    {
+      "codeSnippet": "cleanup_expired_sessions",
+      "description": "Potentially dead code: function 'cleanup_expired_sessions' is not used in this file (confidence: 60.0%)",
+      "endLine": 113,
+      "filePath": "test_codebase/src/auth/mod.rs",
+      "severity": "Medium",
+      "startLine": 113
+    },
+    {
+      "codeSnippet": "backup_user_data",
+      "description": "Potentially dead code: function 'backup_user_data' is not used in this file (confidence: 60.0%)",
+      "endLine": 114,
+      "filePath": "test_codebase/src/auth/mod.rs",
+      "severity": "Medium",
+      "startLine": 114
+    },
+    {
+      "codeSnippet": "restore_user_data",
+      "description": "Potentially dead code: function 'restore_user_data' is not used in this file (confidence: 60.0%)",
+      "endLine": 115,
+      "filePath": "test_codebase/src/auth/mod.rs",
+      "severity": "Medium",
+      "startLine": 115
+    },
+    {
+      "codeSnippet": "export_audit_log",
+      "description": "Potentially dead code: function 'export_audit_log' is not used in this file (confidence: 60.0%)",
+      "endLine": 116,
+      "filePath": "test_codebase/src/auth/mod.rs",
+      "severity": "Medium",
+      "startLine": 116
+    },
+    {
+      "codeSnippet": "change_password",
+      "description": "Potentially dead code: function 'change_password' is not used in this file (confidence: 60.0%)",
+      "endLine": 117,
+      "filePath": "test_codebase/src/auth/mod.rs",
+      "severity": "Medium",
+      "startLine": 117
+    },
+    {
+      "codeSnippet": "send_password_reset",
+      "description": "Potentially dead code: function 'send_password_reset' is not used in this file (confidence: 60.0%)",
+      "endLine": 118,
+      "filePath": "test_codebase/src/auth/mod.rs",
+      "severity": "Medium",
+      "startLine": 118
+    },
+    {
+      "codeSnippet": "verify_password_reset",
+      "description": "Potentially dead code: function 'verify_password_reset' is not used in this file (confidence: 60.0%)",
+      "endLine": 119,
+      "filePath": "test_codebase/src/auth/mod.rs",
+      "severity": "Medium",
+      "startLine": 119
+    },
+    {
+      "codeSnippet": "AuthService",
+      "description": "Potentially dead code: struct 'AuthService' is not used in this file (confidence: 60.0%)",
+      "endLine": 12,
+      "filePath": "test_codebase/src/auth/mod.rs",
+      "severity": "Medium",
+      "startLine": 12
+    },
+    {
+      "codeSnippet": "User",
+      "description": "Potentially dead code: struct 'User' is not used in this file (confidence: 60.0%)",
+      "endLine": 124,
+      "filePath": "test_codebase/src/auth/mod.rs",
+      "severity": "Medium",
+      "startLine": 124
+    },
+    {
+      "codeSnippet": "Session",
+      "description": "Potentially dead code: struct 'Session' is not used in this file (confidence: 60.0%)",
+      "endLine": 133,
+      "filePath": "test_codebase/src/auth/mod.rs",
+      "severity": "Medium",
+      "startLine": 133
+    },
+    {
+      "codeSnippet": "PendingUser",
+      "description": "Potentially dead code: struct 'PendingUser' is not used in this file (confidence: 60.0%)",
+      "endLine": 141,
+      "filePath": "test_codebase/src/auth/mod.rs",
+      "severity": "Medium",
+      "startLine": 141
+    },
+    {
+      "codeSnippet": "TokenData",
+      "description": "Potentially dead code: struct 'TokenData' is not used in this file (confidence: 60.0%)",
+      "endLine": 148,
+      "filePath": "test_codebase/src/auth/mod.rs",
+      "severity": "Medium",
+      "startLine": 148
+    },
+    {
+      "codeSnippet": "Role",
+      "description": "Potentially dead code: struct 'Role' is not used in this file (confidence: 60.0%)",
+      "endLine": 155,
+      "filePath": "test_codebase/src/auth/mod.rs",
+      "severity": "Medium",
+      "startLine": 155
+    },
+    {
+      "codeSnippet": "Permission",
+      "description": "Potentially dead code: struct 'Permission' is not used in this file (confidence: 60.0%)",
+      "endLine": 162,
+      "filePath": "test_codebase/src/auth/mod.rs",
+      "severity": "Medium",
+      "startLine": 162
+    },
+    {
+      "codeSnippet": "SecurityEvent",
+      "description": "Potentially dead code: struct 'SecurityEvent' is not used in this file (confidence: 60.0%)",
+      "endLine": 169,
+      "filePath": "test_codebase/src/auth/mod.rs",
+      "severity": "Medium",
+      "startLine": 169
+    },
+    {
+      "codeSnippet": "PasswordPolicy",
+      "description": "Potentially dead code: struct 'PasswordPolicy' is not used in this file (confidence: 60.0%)",
+      "endLine": 178,
+      "filePath": "test_codebase/src/auth/mod.rs",
+      "severity": "Medium",
+      "startLine": 178
+    },
+    {
+      "codeSnippet": "UserStatistics",
+      "description": "Potentially dead code: struct 'UserStatistics' is not used in this file (confidence: 60.0%)",
+      "endLine": 186,
+      "filePath": "test_codebase/src/auth/mod.rs",
+      "severity": "Medium",
+      "startLine": 186
+    },
+    {
+      "aiExplanation": "Consider reducing dependencies through dependency injection or interface abstraction",
+      "codeSnippet": "caller",
+      "description": "Component 'caller' has 16 dependencies, exceeding critical threshold of 12",
+      "filePath": "test_codebase/src/auth/mod.rs",
+      "severity": "Critical"
+    },
+    {
+      "codeSnippet": "pub struct ApiHandler {\n    // Tight coupling - depends on all services\n    auth_service: Option<AuthService>,\n    database: Option<DatabaseManager>,\n    user_service: Option<UserService>,\n    notification_service: Option<NotificationService>,\n    logging_service: Option<LoggingService>,\n    \n    // Request handling\n    active_requests: HashMap<String, RequestInfo>,\n    request_stats: RequestStatistics,\n    \n    // Rate limiting with magic numbers\n    rate_limits: HashMap<String, RateLimit>,\n    max_requests_per_minute: u32, // Will be magic number\n    max_requests_per_hour: u32, // Will be magic number\n    \n    // Caching\n    response_cache: HashMap<String, CachedResponse>,\n    cache_ttl: u64, // Will be magic number\n    \n    // Configuration with more magic numbers\n    max_request_size: usize, // Will be 1048576 (1MB)\n    timeout_seconds: u64, // Will be 30\n    max_concurrent_requests: u32, // Will be 100\n    \n    // Error handling\n    error_log: Vec<ApiError>,\n    max_errors: u32, // Will be 1000\n}",
+      "description": "God Object detected: 'ApiHandler' has 27 methods and 17 fields. (Thresholds: methods>5, fields>8) LCOM4 score: 1 (>1 indicates low cohesion) Methods: 0 trivial, 0 complex",
+      "endLine": 12,
+      "filePath": "test_codebase/src/api/mod.rs",
+      "severity": "Critical",
+      "startLine": 12
+    },
+    {
+      "aiExplanation": "This code block appears to be duplicated in another location. Consider extracting the common logic into a shared function or module to improve maintainability. The duplicate is located at test_codebase/src/auth/mod.rs:56-84 with 100.0% similarity.",
+      "codeSnippet": "pub fn new(auth: &AuthService, db: &DatabaseManager) -> Self {\n        Self {\n            auth_service: None,\n            database: None,\n            user_service: None,\n            notification_servi...",
+      "description": "Code duplication detected (Type3): 100.0% similarity between test_codebase/src/api/mod.rs:44-64 and test_codebase/src/auth/mod.rs:56-84",
+      "endLine": 64,
+      "filePath": "test_codebase/src/api/mod.rs",
+      "severity": "low",
+      "startLine": 44
+    },
+    {
+      "codeSnippet": "handle_request",
+      "description": "Potentially dead code: function 'handle_request' is not used in this file (confidence: 60.0%)",
+      "endLine": 67,
+      "filePath": "test_codebase/src/api/mod.rs",
+      "severity": "Medium",
+      "startLine": 67
+    },
+    {
+      "codeSnippet": "authenticate_request",
+      "description": "Potentially dead code: function 'authenticate_request' is not used in this file (confidence: 60.0%)",
+      "endLine": 68,
+      "filePath": "test_codebase/src/api/mod.rs",
+      "severity": "Medium",
+      "startLine": 68
+    },
+    {
+      "codeSnippet": "authorize_request",
+      "description": "Potentially dead code: function 'authorize_request' is not used in this file (confidence: 60.0%)",
+      "endLine": 69,
+      "filePath": "test_codebase/src/api/mod.rs",
+      "severity": "Medium",
+      "startLine": 69
+    },
+    {
+      "codeSnippet": "validate_request",
+      "description": "Potentially dead code: function 'validate_request' is not used in this file (confidence: 60.0%)",
+      "endLine": 70,
+      "filePath": "test_codebase/src/api/mod.rs",
+      "severity": "Medium",
+      "startLine": 70
+    },
+    {
+      "codeSnippet": "rate_limit_check",
+      "description": "Potentially dead code: function 'rate_limit_check' is not used in this file (confidence: 60.0%)",
+      "endLine": 71,
+      "filePath": "test_codebase/src/api/mod.rs",
+      "severity": "Medium",
+      "startLine": 71
+    },
+    {
+      "codeSnippet": "cache_response",
+      "description": "Potentially dead code: function 'cache_response' is not used in this file (confidence: 60.0%)",
+      "endLine": 72,
+      "filePath": "test_codebase/src/api/mod.rs",
+      "severity": "Medium",
+      "startLine": 72
+    },
+    {
+      "codeSnippet": "get_cached_response",
+      "description": "Potentially dead code: function 'get_cached_response' is not used in this file (confidence: 60.0%)",
+      "endLine": 73,
+      "filePath": "test_codebase/src/api/mod.rs",
+      "severity": "Medium",
+      "startLine": 73
+    },
+    {
+      "codeSnippet": "log_request",
+      "description": "Potentially dead code: function 'log_request' is not used in this file (confidence: 60.0%)",
+      "endLine": 74,
+      "filePath": "test_codebase/src/api/mod.rs",
+      "severity": "Medium",
+      "startLine": 74
+    },
+    {
+      "codeSnippet": "handle_error",
+      "description": "Potentially dead code: function 'handle_error' is not used in this file (confidence: 60.0%)",
+      "endLine": 75,
+      "filePath": "test_codebase/src/api/mod.rs",
+      "severity": "Medium",
+      "startLine": 75
+    },
+    {
+      "codeSnippet": "get_statistics",
+      "description": "Potentially dead code: function 'get_statistics' is not used in this file (confidence: 60.0%)",
+      "endLine": 76,
+      "filePath": "test_codebase/src/api/mod.rs",
+      "severity": "Medium",
+      "startLine": 76
+    },
+    {
+      "codeSnippet": "health_check",
+      "description": "Potentially dead code: function 'health_check' is not used in this file (confidence: 60.0%)",
+      "endLine": 77,
+      "filePath": "test_codebase/src/api/mod.rs",
+      "severity": "Medium",
+      "startLine": 77
+    },
+    {
+      "codeSnippet": "create_user_endpoint",
+      "description": "Potentially dead code: function 'create_user_endpoint' is not used in this file (confidence: 60.0%)",
+      "endLine": 78,
+      "filePath": "test_codebase/src/api/mod.rs",
+      "severity": "Medium",
+      "startLine": 78
+    },
+    {
+      "codeSnippet": "get_user_endpoint",
+      "description": "Potentially dead code: function 'get_user_endpoint' is not used in this file (confidence: 60.0%)",
+      "endLine": 79,
+      "filePath": "test_codebase/src/api/mod.rs",
+      "severity": "Medium",
+      "startLine": 79
+    },
+    {
+      "codeSnippet": "update_user_endpoint",
+      "description": "Potentially dead code: function 'update_user_endpoint' is not used in this file (confidence: 60.0%)",
+      "endLine": 80,
+      "filePath": "test_codebase/src/api/mod.rs",
+      "severity": "Medium",
+      "startLine": 80
+    },
+    {
+      "codeSnippet": "delete_user_endpoint",
+      "description": "Potentially dead code: function 'delete_user_endpoint' is not used in this file (confidence: 60.0%)",
+      "endLine": 81,
+      "filePath": "test_codebase/src/api/mod.rs",
+      "severity": "Medium",
+      "startLine": 81
+    },
+    {
+      "codeSnippet": "login_endpoint",
+      "description": "Potentially dead code: function 'login_endpoint' is not used in this file (confidence: 60.0%)",
+      "endLine": 82,
+      "filePath": "test_codebase/src/api/mod.rs",
+      "severity": "Medium",
+      "startLine": 82
+    },
+    {
+      "codeSnippet": "logout_endpoint",
+      "description": "Potentially dead code: function 'logout_endpoint' is not used in this file (confidence: 60.0%)",
+      "endLine": 83,
+      "filePath": "test_codebase/src/api/mod.rs",
+      "severity": "Medium",
+      "startLine": 83
+    },
+    {
+      "codeSnippet": "refresh_token_endpoint",
+      "description": "Potentially dead code: function 'refresh_token_endpoint' is not used in this file (confidence: 60.0%)",
+      "endLine": 84,
+      "filePath": "test_codebase/src/api/mod.rs",
+      "severity": "Medium",
+      "startLine": 84
+    },
+    {
+      "codeSnippet": "get_notifications_endpoint",
+      "description": "Potentially dead code: function 'get_notifications_endpoint' is not used in this file (confidence: 60.0%)",
+      "endLine": 85,
+      "filePath": "test_codebase/src/api/mod.rs",
+      "severity": "Medium",
+      "startLine": 85
+    },
+    {
+      "codeSnippet": "send_notification_endpoint",
+      "description": "Potentially dead code: function 'send_notification_endpoint' is not used in this file (confidence: 60.0%)",
+      "endLine": 86,
+      "filePath": "test_codebase/src/api/mod.rs",
+      "severity": "Medium",
+      "startLine": 86
+    },
+    {
+      "codeSnippet": "get_logs_endpoint",
+      "description": "Potentially dead code: function 'get_logs_endpoint' is not used in this file (confidence: 60.0%)",
+      "endLine": 87,
+      "filePath": "test_codebase/src/api/mod.rs",
+      "severity": "Medium",
+      "startLine": 87
+    },
+    {
+      "codeSnippet": "backup_data_endpoint",
+      "description": "Potentially dead code: function 'backup_data_endpoint' is not used in this file (confidence: 60.0%)",
+      "endLine": 88,
+      "filePath": "test_codebase/src/api/mod.rs",
+      "severity": "Medium",
+      "startLine": 88
+    },
+    {
+      "codeSnippet": "restore_data_endpoint",
+      "description": "Potentially dead code: function 'restore_data_endpoint' is not used in this file (confidence: 60.0%)",
+      "endLine": 89,
+      "filePath": "test_codebase/src/api/mod.rs",
+      "severity": "Medium",
+      "startLine": 89
+    },
+    {
+      "codeSnippet": "admin_stats_endpoint",
+      "description": "Potentially dead code: function 'admin_stats_endpoint' is not used in this file (confidence: 60.0%)",
+      "endLine": 90,
+      "filePath": "test_codebase/src/api/mod.rs",
+      "severity": "Medium",
+      "startLine": 90
+    },
+    {
+      "codeSnippet": "reset_stats_endpoint",
+      "description": "Potentially dead code: function 'reset_stats_endpoint' is not used in this file (confidence: 60.0%)",
+      "endLine": 91,
+      "filePath": "test_codebase/src/api/mod.rs",
+      "severity": "Medium",
+      "startLine": 91
+    },
+    {
+      "codeSnippet": "clear_cache_endpoint",
+      "description": "Potentially dead code: function 'clear_cache_endpoint' is not used in this file (confidence: 60.0%)",
+      "endLine": 92,
+      "filePath": "test_codebase/src/api/mod.rs",
+      "severity": "Medium",
+      "startLine": 92
+    },
+    {
+      "codeSnippet": "ApiHandler",
+      "description": "Potentially dead code: struct 'ApiHandler' is not used in this file (confidence: 60.0%)",
+      "endLine": 12,
+      "filePath": "test_codebase/src/api/mod.rs",
+      "severity": "Medium",
+      "startLine": 12
+    },
+    {
+      "codeSnippet": "RequestInfo",
+      "description": "Potentially dead code: struct 'RequestInfo' is not used in this file (confidence: 60.0%)",
+      "endLine": 97,
+      "filePath": "test_codebase/src/api/mod.rs",
+      "severity": "Medium",
+      "startLine": 97
+    },
+    {
+      "codeSnippet": "RequestStatistics",
+      "description": "Potentially dead code: struct 'RequestStatistics' is not used in this file (confidence: 60.0%)",
+      "endLine": 107,
+      "filePath": "test_codebase/src/api/mod.rs",
+      "severity": "Medium",
+      "startLine": 107
+    },
+    {
+      "codeSnippet": "RateLimit",
+      "description": "Potentially dead code: struct 'RateLimit' is not used in this file (confidence: 60.0%)",
+      "endLine": 116,
+      "filePath": "test_codebase/src/api/mod.rs",
+      "severity": "Medium",
+      "startLine": 116
+    },
+    {
+      "codeSnippet": "CachedResponse",
+      "description": "Potentially dead code: struct 'CachedResponse' is not used in this file (confidence: 60.0%)",
+      "endLine": 125,
+      "filePath": "test_codebase/src/api/mod.rs",
+      "severity": "Medium",
+      "startLine": 125
+    },
+    {
+      "codeSnippet": "ApiRequest",
+      "description": "Potentially dead code: struct 'ApiRequest' is not used in this file (confidence: 60.0%)",
+      "endLine": 132,
+      "filePath": "test_codebase/src/api/mod.rs",
+      "severity": "Medium",
+      "startLine": 132
+    },
+    {
+      "codeSnippet": "ApiResponse",
+      "description": "Potentially dead code: struct 'ApiResponse' is not used in this file (confidence: 60.0%)",
+      "endLine": 143,
+      "filePath": "test_codebase/src/api/mod.rs",
+      "severity": "Medium",
+      "startLine": 143
+    },
+    {
+      "codeSnippet": "ApiError",
+      "description": "Potentially dead code: struct 'ApiError' is not used in this file (confidence: 60.0%)",
+      "endLine": 151,
+      "filePath": "test_codebase/src/api/mod.rs",
+      "severity": "Medium",
+      "startLine": 151
+    },
+    {
+      "codeSnippet": "CreateUserRequest",
+      "description": "Potentially dead code: struct 'CreateUserRequest' is not used in this file (confidence: 60.0%)",
+      "endLine": 162,
+      "filePath": "test_codebase/src/api/mod.rs",
+      "severity": "Medium",
+      "startLine": 162
+    },
+    {
+      "codeSnippet": "UpdateUserRequest",
+      "description": "Potentially dead code: struct 'UpdateUserRequest' is not used in this file (confidence: 60.0%)",
+      "endLine": 169,
+      "filePath": "test_codebase/src/api/mod.rs",
+      "severity": "Medium",
+      "startLine": 169
+    },
+    {
+      "codeSnippet": "LoginRequest",
+      "description": "Potentially dead code: struct 'LoginRequest' is not used in this file (confidence: 60.0%)",
+      "endLine": 176,
+      "filePath": "test_codebase/src/api/mod.rs",
+      "severity": "Medium",
+      "startLine": 176
+    },
+    {
+      "codeSnippet": "SendNotificationRequest",
+      "description": "Potentially dead code: struct 'SendNotificationRequest' is not used in this file (confidence: 60.0%)",
+      "endLine": 182,
+      "filePath": "test_codebase/src/api/mod.rs",
+      "severity": "Medium",
+      "startLine": 182
+    },
+    {
+      "codeSnippet": "LogFilter",
+      "description": "Potentially dead code: struct 'LogFilter' is not used in this file (confidence: 60.0%)",
+      "endLine": 190,
+      "filePath": "test_codebase/src/api/mod.rs",
+      "severity": "Medium",
+      "startLine": 190
+    },
+    {
+      "codeSnippet": "HealthCheckResponse",
+      "description": "Potentially dead code: struct 'HealthCheckResponse' is not used in this file (confidence: 60.0%)",
+      "endLine": 197,
+      "filePath": "test_codebase/src/api/mod.rs",
+      "severity": "Medium",
+      "startLine": 197
+    },
+    {
+      "codeSnippet": "pub struct UserService {\n    // Direct dependencies on other modules - tight coupling\n    auth_service: Option<AuthService>,\n    database: Option<DatabaseManager>,\n    api_handler: Option<ApiHandler>,\n    notification_service: Option<NotificationService>,\n    logging_service: Option<LoggingService>,\n    \n    // User data\n    users: HashMap<u64, User>,\n    user_preferences: HashMap<u64, UserPreferences>,\n    user_activity: HashMap<u64, Vec<ActivityEntry>>,\n    \n    // Magic numbers everywhere\n    max_users: u64, // Will be 10000\n    session_timeout: u64, // Will be 3600\n    max_login_attempts: u32, // Will be 5\n    password_min_length: u32, // Will be 8\n}",
+      "description": "God Object detected: 'UserService' has 6 methods and 12 fields. (Thresholds: methods>5, fields>8) LCOM4 score: 1 (>1 indicates low cohesion) Methods: 0 trivial, 0 complex",
+      "endLine": 12,
+      "filePath": "test_codebase/src/services/mod.rs",
+      "severity": "High",
+      "startLine": 12
+    },
+    {
+      "codeSnippet": "pub struct NotificationService {\n    // Tight coupling - depends on everything\n    user_service: Option<UserService>,\n    database: Option<DatabaseManager>,\n    auth_service: Option<AuthService>,\n    logging_service: Option<LoggingService>,\n    \n    // Notification data\n    notifications: HashMap<String, Notification>,\n    user_subscriptions: HashMap<u64, Vec<String>>,\n    \n    // More magic numbers\n    max_notifications: u32, // Will be 1000\n    notification_ttl: u64, // Will be 86400\n    batch_size: u32, // Will be 50\n}",
+      "description": "God Object detected: 'NotificationService' has 4 methods and 9 fields. (Thresholds: methods>5, fields>8) LCOM4 score: 1 (>1 indicates low cohesion) Methods: 0 trivial, 0 complex",
+      "endLine": 58,
+      "filePath": "test_codebase/src/services/mod.rs",
+      "severity": "Medium",
+      "startLine": 58
+    },
+    {
+      "codeSnippet": "pub struct LoggingService {\n    // Circular dependencies with all other services\n    user_service: Option<UserService>,\n    database: Option<DatabaseManager>,\n    auth_service: Option<AuthService>,\n    notification_service: Option<NotificationService>,\n    \n    // Logging data\n    logs: Vec<LogEntry>,\n    log_levels: HashMap<String, u32>,\n    \n    // Magic numbers for logging\n    max_log_entries: u32, // Will be 100000\n    log_rotation_size: u64, // Will be 10485760\n    retention_days: u32, // Will be 30\n}",
+      "description": "God Object detected: 'LoggingService' has 4 methods and 9 fields. (Thresholds: methods>5, fields>8) LCOM4 score: 1 (>1 indicates low cohesion) Methods: 0 trivial, 0 complex",
+      "endLine": 96,
+      "filePath": "test_codebase/src/services/mod.rs",
+      "severity": "Medium",
+      "startLine": 96
+    },
+    {
+      "aiExplanation": "This code block appears to be duplicated in another location. Consider extracting the common logic into a shared function or module to improve maintainability. The duplicate is located at test_codebase/src/services/mod.rs:76-88 with 100.0% similarity.",
+      "codeSnippet": "pub fn new() -> Self {\n        Self {\n            user_service: None,\n            database: None,\n            auth_service: None,\n            notification_service: None,\n            logs: Vec::new(),\n...",
+      "description": "Code duplication detected (Type2): 100.0% similarity between test_codebase/src/services/mod.rs:114-126 and test_codebase/src/services/mod.rs:76-88",
+      "endLine": 126,
+      "filePath": "test_codebase/src/services/mod.rs",
+      "severity": "medium",
+      "startLine": 114
+    },
+    {
+      "aiExplanation": "This code block appears to be duplicated in another location. Consider extracting the common logic into a shared function or module to improve maintainability. The duplicate is located at test_codebase/src/auth/mod.rs:56-84 with 90.9% similarity.",
+      "codeSnippet": "pub fn new() -> Self {\n        Self {\n            user_service: None,\n            database: None,\n            auth_service: None,\n            notification_service: None,\n            logs: Vec::new(),\n...",
+      "description": "Code duplication detected (Type3): 90.9% similarity between test_codebase/src/services/mod.rs:114-126 and test_codebase/src/auth/mod.rs:56-84",
+      "endLine": 126,
+      "filePath": "test_codebase/src/services/mod.rs",
+      "severity": "low",
+      "startLine": 114
+    },
+    {
+      "aiExplanation": "This code block appears to be duplicated in another location. Consider extracting the common logic into a shared function or module to improve maintainability. The duplicate is located at test_codebase/src/api/mod.rs:44-64 with 90.9% similarity.",
+      "codeSnippet": "pub fn new() -> Self {\n        Self {\n            user_service: None,\n            database: None,\n            auth_service: None,\n            notification_service: None,\n            logs: Vec::new(),\n...",
+      "description": "Code duplication detected (Type3): 90.9% similarity between test_codebase/src/services/mod.rs:114-126 and test_codebase/src/api/mod.rs:44-64",
+      "endLine": 126,
+      "filePath": "test_codebase/src/services/mod.rs",
+      "severity": "low",
+      "startLine": 114
+    },
+    {
+      "aiExplanation": "This code block appears to be duplicated in another location. Consider extracting the common logic into a shared function or module to improve maintainability. The duplicate is located at test_codebase/src/services/mod.rs:33-48 with 100.0% similarity.",
+      "codeSnippet": "pub fn new() -> Self {\n        Self {\n            user_service: None,\n            database: None,\n            auth_service: None,\n            notification_service: None,\n            logs: Vec::new(),\n...",
+      "description": "Code duplication detected (Type3): 100.0% similarity between test_codebase/src/services/mod.rs:114-126 and test_codebase/src/services/mod.rs:33-48",
+      "endLine": 126,
+      "filePath": "test_codebase/src/services/mod.rs",
+      "severity": "low",
+      "startLine": 114
+    },
+    {
+      "aiExplanation": "This code block appears to be duplicated in another location. Consider extracting the common logic into a shared function or module to improve maintainability. The duplicate is located at test_codebase/src/services/mod.rs:76-88 with 100.0% similarity.",
+      "codeSnippet": "pub fn new() -> Self {\n        Self {\n            auth_service: None,\n            database: None,\n            api_handler: None,\n            notification_service: None,\n            logging_service: No...",
+      "description": "Code duplication detected (Type3): 100.0% similarity between test_codebase/src/services/mod.rs:33-48 and test_codebase/src/services/mod.rs:76-88",
+      "endLine": 48,
+      "filePath": "test_codebase/src/services/mod.rs",
+      "severity": "low",
+      "startLine": 33
+    },
+    {
+      "aiExplanation": "This code block appears to be duplicated in another location. Consider extracting the common logic into a shared function or module to improve maintainability. The duplicate is located at test_codebase/src/api/mod.rs:44-64 with 90.9% similarity.",
+      "codeSnippet": "pub fn new() -> Self {\n        Self {\n            auth_service: None,\n            database: None,\n            api_handler: None,\n            notification_service: None,\n            logging_service: No...",
+      "description": "Code duplication detected (Type3): 90.9% similarity between test_codebase/src/services/mod.rs:33-48 and test_codebase/src/api/mod.rs:44-64",
+      "endLine": 48,
+      "filePath": "test_codebase/src/services/mod.rs",
+      "severity": "low",
+      "startLine": 33
+    },
+    {
+      "aiExplanation": "This code block appears to be duplicated in another location. Consider extracting the common logic into a shared function or module to improve maintainability. The duplicate is located at test_codebase/src/services/mod.rs:114-126 with 100.0% similarity.",
+      "codeSnippet": "pub fn new() -> Self {\n        Self {\n            auth_service: None,\n            database: None,\n            api_handler: None,\n            notification_service: None,\n            logging_service: No...",
+      "description": "Code duplication detected (Type3): 100.0% similarity between test_codebase/src/services/mod.rs:33-48 and test_codebase/src/services/mod.rs:114-126",
+      "endLine": 48,
+      "filePath": "test_codebase/src/services/mod.rs",
+      "severity": "low",
+      "startLine": 33
+    },
+    {
+      "aiExplanation": "This code block appears to be duplicated in another location. Consider extracting the common logic into a shared function or module to improve maintainability. The duplicate is located at test_codebase/src/auth/mod.rs:56-84 with 90.9% similarity.",
+      "codeSnippet": "pub fn new() -> Self {\n        Self {\n            auth_service: None,\n            database: None,\n            api_handler: None,\n            notification_service: None,\n            logging_service: No...",
+      "description": "Code duplication detected (Type3): 90.9% similarity between test_codebase/src/services/mod.rs:33-48 and test_codebase/src/auth/mod.rs:56-84",
+      "endLine": 48,
+      "filePath": "test_codebase/src/services/mod.rs",
+      "severity": "low",
+      "startLine": 33
+    },
+    {
+      "aiExplanation": "This code block appears to be duplicated in another location. Consider extracting the common logic into a shared function or module to improve maintainability. The duplicate is located at test_codebase/src/api/mod.rs:44-64 with 90.9% similarity.",
+      "codeSnippet": "pub fn new() -> Self {\n        Self {\n            user_service: None,\n            database: None,\n            auth_service: None,\n            logging_service: None,\n            notifications: HashMap:...",
+      "description": "Code duplication detected (Type3): 90.9% similarity between test_codebase/src/services/mod.rs:76-88 and test_codebase/src/api/mod.rs:44-64",
+      "endLine": 88,
+      "filePath": "test_codebase/src/services/mod.rs",
+      "severity": "low",
+      "startLine": 76
+    },
+    {
+      "aiExplanation": "This code block appears to be duplicated in another location. Consider extracting the common logic into a shared function or module to improve maintainability. The duplicate is located at test_codebase/src/services/mod.rs:33-48 with 100.0% similarity.",
+      "codeSnippet": "pub fn new() -> Self {\n        Self {\n            user_service: None,\n            database: None,\n            auth_service: None,\n            logging_service: None,\n            notifications: HashMap:...",
+      "description": "Code duplication detected (Type3): 100.0% similarity between test_codebase/src/services/mod.rs:76-88 and test_codebase/src/services/mod.rs:33-48",
+      "endLine": 88,
+      "filePath": "test_codebase/src/services/mod.rs",
+      "severity": "low",
+      "startLine": 76
+    },
+    {
+      "aiExplanation": "This code block appears to be duplicated in another location. Consider extracting the common logic into a shared function or module to improve maintainability. The duplicate is located at test_codebase/src/auth/mod.rs:56-84 with 90.9% similarity.",
+      "codeSnippet": "pub fn new() -> Self {\n        Self {\n            user_service: None,\n            database: None,\n            auth_service: None,\n            logging_service: None,\n            notifications: HashMap:...",
+      "description": "Code duplication detected (Type3): 90.9% similarity between test_codebase/src/services/mod.rs:76-88 and test_codebase/src/auth/mod.rs:56-84",
+      "endLine": 88,
+      "filePath": "test_codebase/src/services/mod.rs",
+      "severity": "low",
+      "startLine": 76
+    },
+    {
+      "aiExplanation": "This code block appears to be duplicated in another location. Consider extracting the common logic into a shared function or module to improve maintainability. The duplicate is located at test_codebase/src/services/mod.rs:114-126 with 100.0% similarity.",
+      "codeSnippet": "pub fn new() -> Self {\n        Self {\n            user_service: None,\n            database: None,\n            auth_service: None,\n            logging_service: None,\n            notifications: HashMap:...",
+      "description": "Code duplication detected (Type2): 100.0% similarity between test_codebase/src/services/mod.rs:76-88 and test_codebase/src/services/mod.rs:114-126",
+      "endLine": 88,
+      "filePath": "test_codebase/src/services/mod.rs",
+      "severity": "medium",
+      "startLine": 76
+    },
+    {
+      "codeSnippet": "create_user",
+      "description": "Potentially dead code: function 'create_user' is not used in this file (confidence: 60.0%)",
+      "endLine": 50,
+      "filePath": "test_codebase/src/services/mod.rs",
+      "severity": "Medium",
+      "startLine": 50
+    },
+    {
+      "codeSnippet": "get_user",
+      "description": "Potentially dead code: function 'get_user' is not used in this file (confidence: 60.0%)",
+      "endLine": 51,
+      "filePath": "test_codebase/src/services/mod.rs",
+      "severity": "Medium",
+      "startLine": 51
+    },
+    {
+      "codeSnippet": "update_user",
+      "description": "Potentially dead code: function 'update_user' is not used in this file (confidence: 60.0%)",
+      "endLine": 52,
+      "filePath": "test_codebase/src/services/mod.rs",
+      "severity": "Medium",
+      "startLine": 52
+    },
+    {
+      "codeSnippet": "delete_user",
+      "description": "Potentially dead code: function 'delete_user' is not used in this file (confidence: 60.0%)",
+      "endLine": 53,
+      "filePath": "test_codebase/src/services/mod.rs",
+      "severity": "Medium",
+      "startLine": 53
+    },
+    {
+      "codeSnippet": "authenticate_user",
+      "description": "Potentially dead code: function 'authenticate_user' is not used in this file (confidence: 60.0%)",
+      "endLine": 54,
+      "filePath": "test_codebase/src/services/mod.rs",
+      "severity": "Medium",
+      "startLine": 54
+    },
+    {
+      "codeSnippet": "send_notification",
+      "description": "Potentially dead code: function 'send_notification' is not used in this file (confidence: 60.0%)",
+      "endLine": 90,
+      "filePath": "test_codebase/src/services/mod.rs",
+      "severity": "Medium",
+      "startLine": 90
+    },
+    {
+      "codeSnippet": "get_notifications",
+      "description": "Potentially dead code: function 'get_notifications' is not used in this file (confidence: 60.0%)",
+      "endLine": 91,
+      "filePath": "test_codebase/src/services/mod.rs",
+      "severity": "Medium",
+      "startLine": 91
+    },
+    {
+      "codeSnippet": "mark_as_read",
+      "description": "Potentially dead code: function 'mark_as_read' is not used in this file (confidence: 60.0%)",
+      "endLine": 92,
+      "filePath": "test_codebase/src/services/mod.rs",
+      "severity": "Medium",
+      "startLine": 92
+    },
+    {
+      "codeSnippet": "log",
+      "description": "Potentially dead code: function 'log' is not used in this file (confidence: 60.0%)",
+      "endLine": 128,
+      "filePath": "test_codebase/src/services/mod.rs",
+      "severity": "Medium",
+      "startLine": 128
+    },
+    {
+      "codeSnippet": "get_logs",
+      "description": "Potentially dead code: function 'get_logs' is not used in this file (confidence: 60.0%)",
+      "endLine": 129,
+      "filePath": "test_codebase/src/services/mod.rs",
+      "severity": "Medium",
+      "startLine": 129
+    },
+    {
+      "codeSnippet": "clear_logs",
+      "description": "Potentially dead code: function 'clear_logs' is not used in this file (confidence: 60.0%)",
+      "endLine": 130,
+      "filePath": "test_codebase/src/services/mod.rs",
+      "severity": "Medium",
+      "startLine": 130
+    },
+    {
+      "codeSnippet": "UserService",
+      "description": "Potentially dead code: struct 'UserService' is not used in this file (confidence: 60.0%)",
+      "endLine": 12,
+      "filePath": "test_codebase/src/services/mod.rs",
+      "severity": "Medium",
+      "startLine": 12
+    },
+    {
+      "codeSnippet": "NotificationService",
+      "description": "Potentially dead code: struct 'NotificationService' is not used in this file (confidence: 60.0%)",
+      "endLine": 58,
+      "filePath": "test_codebase/src/services/mod.rs",
+      "severity": "Medium",
+      "startLine": 58
+    },
+    {
+      "codeSnippet": "LoggingService",
+      "description": "Potentially dead code: struct 'LoggingService' is not used in this file (confidence: 60.0%)",
+      "endLine": 96,
+      "filePath": "test_codebase/src/services/mod.rs",
+      "severity": "Medium",
+      "startLine": 96
+    },
+    {
+      "codeSnippet": "UserPreferences",
+      "description": "Potentially dead code: struct 'UserPreferences' is not used in this file (confidence: 60.0%)",
+      "endLine": 135,
+      "filePath": "test_codebase/src/services/mod.rs",
+      "severity": "Medium",
+      "startLine": 135
+    },
+    {
+      "codeSnippet": "ActivityEntry",
+      "description": "Potentially dead code: struct 'ActivityEntry' is not used in this file (confidence: 60.0%)",
+      "endLine": 143,
+      "filePath": "test_codebase/src/services/mod.rs",
+      "severity": "Medium",
+      "startLine": 143
+    },
+    {
+      "codeSnippet": "Notification",
+      "description": "Potentially dead code: struct 'Notification' is not used in this file (confidence: 60.0%)",
+      "endLine": 151,
+      "filePath": "test_codebase/src/services/mod.rs",
+      "severity": "Medium",
+      "startLine": 151
+    },
+    {
+      "codeSnippet": "LogEntry",
+      "description": "Potentially dead code: struct 'LogEntry' is not used in this file (confidence: 60.0%)",
+      "endLine": 162,
+      "filePath": "test_codebase/src/services/mod.rs",
+      "severity": "Medium",
+      "startLine": 162
+    },
+    {
+      "codeSnippet": "pub struct Utils {\n    // Tight coupling - utilities shouldn't depend on business logic\n    auth_service: Option<AuthService>,\n    database: Option<DatabaseManager>,\n    user_service: Option<UserService>,\n    logging_service: Option<LoggingService>,\n    \n    // Configuration with magic numbers\n    max_file_size: u64, // Will be 10485760 (10MB)\n    allowed_extensions: Vec<String>,\n    temp_dir: String,\n    \n    // Caching\n    validation_cache: HashMap<String, bool>,\n    encryption_cache: HashMap<String, String>,\n    \n    // Statistics\n    files_processed: u64,\n    validations_performed: u64,\n    encryptions_performed: u64,\n}",
+      "description": "God Object detected: 'Utils' has 14 methods and 12 fields. (Thresholds: methods>5, fields>8) LCOM4 score: 1 (>1 indicates low cohesion) Methods: 0 trivial, 0 complex",
+      "endLine": 12,
+      "filePath": "test_codebase/src/utils/mod.rs",
+      "severity": "Critical",
+      "startLine": 12
+    },
+    {
+      "codeSnippet": "validate_email",
+      "description": "Potentially dead code: function 'validate_email' is not used in this file (confidence: 60.0%)",
+      "endLine": 58,
+      "filePath": "test_codebase/src/utils/mod.rs",
+      "severity": "Medium",
+      "startLine": 58
+    },
+    {
+      "codeSnippet": "validate_password",
+      "description": "Potentially dead code: function 'validate_password' is not used in this file (confidence: 60.0%)",
+      "endLine": 65,
+      "filePath": "test_codebase/src/utils/mod.rs",
+      "severity": "Medium",
+      "startLine": 65
+    },
+    {
+      "codeSnippet": "hash_password",
+      "description": "Potentially dead code: function 'hash_password' is not used in this file (confidence: 60.0%)",
+      "endLine": 73,
+      "filePath": "test_codebase/src/utils/mod.rs",
+      "severity": "Medium",
+      "startLine": 73
+    },
+    {
+      "codeSnippet": "generate_token",
+      "description": "Potentially dead code: function 'generate_token' is not used in this file (confidence: 60.0%)",
+      "endLine": 80,
+      "filePath": "test_codebase/src/utils/mod.rs",
+      "severity": "Medium",
+      "startLine": 80
+    },
+    {
+      "codeSnippet": "validate_file_size",
+      "description": "Potentially dead code: function 'validate_file_size' is not used in this file (confidence: 60.0%)",
+      "endLine": 86,
+      "filePath": "test_codebase/src/utils/mod.rs",
+      "severity": "Medium",
+      "startLine": 86
+    },
+    {
+      "codeSnippet": "validate_file_extension",
+      "description": "Potentially dead code: function 'validate_file_extension' is not used in this file (confidence: 60.0%)",
+      "endLine": 90,
+      "filePath": "test_codebase/src/utils/mod.rs",
+      "severity": "Medium",
+      "startLine": 90
+    },
+    {
+      "codeSnippet": "sanitize_input",
+      "description": "Potentially dead code: function 'sanitize_input' is not used in this file (confidence: 60.0%)",
+      "endLine": 98,
+      "filePath": "test_codebase/src/utils/mod.rs",
+      "severity": "Medium",
+      "startLine": 98
+    },
+    {
+      "codeSnippet": "format_timestamp",
+      "description": "Potentially dead code: function 'format_timestamp' is not used in this file (confidence: 60.0%)",
+      "endLine": 103,
+      "filePath": "test_codebase/src/utils/mod.rs",
+      "severity": "Medium",
+      "startLine": 103
+    },
+    {
+      "codeSnippet": "calculate_pagination",
+      "description": "Potentially dead code: function 'calculate_pagination' is not used in this file (confidence: 60.0%)",
+      "endLine": 107,
+      "filePath": "test_codebase/src/utils/mod.rs",
+      "severity": "Medium",
+      "startLine": 107
+    },
+    {
+      "codeSnippet": "compress_data",
+      "description": "Potentially dead code: function 'compress_data' is not used in this file (confidence: 60.0%)",
+      "endLine": 120,
+      "filePath": "test_codebase/src/utils/mod.rs",
+      "severity": "Medium",
+      "startLine": 120
+    },
+    {
+      "codeSnippet": "decompress_data",
+      "description": "Potentially dead code: function 'decompress_data' is not used in this file (confidence: 60.0%)",
+      "endLine": 128,
+      "filePath": "test_codebase/src/utils/mod.rs",
+      "severity": "Medium",
+      "startLine": 128
+    },
+    {
+      "codeSnippet": "rate_limit_key",
+      "description": "Potentially dead code: function 'rate_limit_key' is not used in this file (confidence: 60.0%)",
+      "endLine": 136,
+      "filePath": "test_codebase/src/utils/mod.rs",
+      "severity": "Medium",
+      "startLine": 136
+    },
+    {
+      "codeSnippet": "get_time_window",
+      "description": "Potentially dead code: function 'get_time_window' is not used in this file (confidence: 90.0%)",
+      "endLine": 140,
+      "filePath": "test_codebase/src/utils/mod.rs",
+      "severity": "High",
+      "startLine": 140
+    },
+    {
+      "codeSnippet": "validate",
+      "description": "Potentially dead code: function 'validate' is not used in this file (confidence: 60.0%)",
+      "endLine": 168,
+      "filePath": "test_codebase/src/utils/mod.rs",
+      "severity": "Medium",
+      "startLine": 168
+    },
+    {
+      "codeSnippet": "encrypt",
+      "description": "Potentially dead code: function 'encrypt' is not used in this file (confidence: 60.0%)",
+      "endLine": 186,
+      "filePath": "test_codebase/src/utils/mod.rs",
+      "severity": "Medium",
+      "startLine": 186
+    },
+    {
+      "codeSnippet": "decrypt",
+      "description": "Potentially dead code: function 'decrypt' is not used in this file (confidence: 60.0%)",
+      "endLine": 190,
+      "filePath": "test_codebase/src/utils/mod.rs",
+      "severity": "Medium",
+      "startLine": 190
+    },
+    {
+      "codeSnippet": "Utils",
+      "description": "Potentially dead code: struct 'Utils' is not used in this file (confidence: 60.0%)",
+      "endLine": 12,
+      "filePath": "test_codebase/src/utils/mod.rs",
+      "severity": "Medium",
+      "startLine": 12
+    },
+    {
+      "codeSnippet": "FileValidator",
+      "description": "Potentially dead code: struct 'FileValidator' is not used in this file (confidence: 60.0%)",
+      "endLine": 150,
+      "filePath": "test_codebase/src/utils/mod.rs",
+      "severity": "Medium",
+      "startLine": 150
+    },
+    {
+      "codeSnippet": "EncryptionHelper",
+      "description": "Potentially dead code: struct 'EncryptionHelper' is not used in this file (confidence: 60.0%)",
+      "endLine": 173,
+      "filePath": "test_codebase/src/utils/mod.rs",
+      "severity": "Medium",
+      "startLine": 173
+    },
+    {
+      "aiExplanation": "Consider reducing dependencies through dependency injection or interface abstraction",
+      "codeSnippet": "caller",
+      "description": "Component 'caller' has 24 dependencies, exceeding critical threshold of 12",
+      "filePath": "test_codebase/src/utils/mod.rs",
+      "severity": "Critical"
+    },
+    {
+      "codeSnippet": "pub struct DatabaseManager {\n    // Connection management\n    connections: HashMap<String, Connection>,\n    connection_pool: Vec<Connection>,\n    active_connections: u32,\n    max_connections: u32,\n    \n    // Transaction management\n    active_transactions: HashMap<String, Transaction>,\n    transaction_log: Vec<TransactionEntry>,\n    \n    // Query caching\n    query_cache: HashMap<String, QueryResult>,\n    prepared_statements: HashMap<String, PreparedStatement>,\n    \n    // Data management\n    users_table: HashMap<u64, User>,\n    sessions_table: HashMap<String, SessionRecord>,\n    audit_log: Vec<AuditEntry>,\n    \n    // Circular dependencies\n    auth_service: Option<AuthService>, // Circular reference\n    user_service: Option<UserService>, // Circular reference\n    notification_service: Option<NotificationService>, // Circular reference\n    logging_service: Option<LoggingService>, // Circular reference\n    \n    // Configuration with magic numbers\n    query_timeout: u64, // Will be set to magic number\n    max_query_size: usize, // Will be set to magic number\n    cache_ttl: u64, // Will be set to magic number\n    \n    // Statistics\n    total_queries: u64,\n    successful_queries: u64,\n    failed_queries: u64,\n    cache_hits: u64,\n    cache_misses: u64,\n}",
+      "description": "God Object detected: 'DatabaseManager' has 28 methods and 23 fields. (Thresholds: methods>5, fields>8) LCOM4 score: 1 (>1 indicates low cohesion) Methods: 0 trivial, 0 complex",
+      "endLine": 11,
+      "filePath": "test_codebase/src/database/mod.rs",
+      "severity": "Critical",
+      "startLine": 11
+    },
+    {
+      "aiExplanation": "This code block appears to be duplicated in another location. Consider extracting the common logic into a shared function or module to improve maintainability. The duplicate is located at test_codebase/src/services/mod.rs:76-88 with 100.0% similarity.",
+      "codeSnippet": "pub fn new() -> Self {\n        Self {\n            connections: HashMap::new(),\n            connection_pool: Vec::new(),\n            active_connections: 0,\n            max_connections: 50, // Magic num...",
+      "description": "Code duplication detected (Type3): 100.0% similarity between test_codebase/src/database/mod.rs:51-77 and test_codebase/src/services/mod.rs:76-88",
+      "endLine": 77,
+      "filePath": "test_codebase/src/database/mod.rs",
+      "severity": "low",
+      "startLine": 51
+    },
+    {
+      "aiExplanation": "This code block appears to be duplicated in another location. Consider extracting the common logic into a shared function or module to improve maintainability. The duplicate is located at test_codebase/src/services/mod.rs:114-126 with 100.0% similarity.",
+      "codeSnippet": "pub fn new() -> Self {\n        Self {\n            connections: HashMap::new(),\n            connection_pool: Vec::new(),\n            active_connections: 0,\n            max_connections: 50, // Magic num...",
+      "description": "Code duplication detected (Type3): 100.0% similarity between test_codebase/src/database/mod.rs:51-77 and test_codebase/src/services/mod.rs:114-126",
+      "endLine": 77,
+      "filePath": "test_codebase/src/database/mod.rs",
+      "severity": "low",
+      "startLine": 51
+    },
+    {
+      "aiExplanation": "This code block appears to be duplicated in another location. Consider extracting the common logic into a shared function or module to improve maintainability. The duplicate is located at test_codebase/src/auth/mod.rs:56-84 with 90.9% similarity.",
+      "codeSnippet": "pub fn new() -> Self {\n        Self {\n            connections: HashMap::new(),\n            connection_pool: Vec::new(),\n            active_connections: 0,\n            max_connections: 50, // Magic num...",
+      "description": "Code duplication detected (Type3): 90.9% similarity between test_codebase/src/database/mod.rs:51-77 and test_codebase/src/auth/mod.rs:56-84",
+      "endLine": 77,
+      "filePath": "test_codebase/src/database/mod.rs",
+      "severity": "low",
+      "startLine": 51
+    },
+    {
+      "aiExplanation": "This code block appears to be duplicated in another location. Consider extracting the common logic into a shared function or module to improve maintainability. The duplicate is located at test_codebase/src/api/mod.rs:44-64 with 90.9% similarity.",
+      "codeSnippet": "pub fn new() -> Self {\n        Self {\n            connections: HashMap::new(),\n            connection_pool: Vec::new(),\n            active_connections: 0,\n            max_connections: 50, // Magic num...",
+      "description": "Code duplication detected (Type3): 90.9% similarity between test_codebase/src/database/mod.rs:51-77 and test_codebase/src/api/mod.rs:44-64",
+      "endLine": 77,
+      "filePath": "test_codebase/src/database/mod.rs",
+      "severity": "low",
+      "startLine": 51
+    },
+    {
+      "aiExplanation": "This code block appears to be duplicated in another location. Consider extracting the common logic into a shared function or module to improve maintainability. The duplicate is located at test_codebase/src/services/mod.rs:33-48 with 100.0% similarity.",
+      "codeSnippet": "pub fn new() -> Self {\n        Self {\n            connections: HashMap::new(),\n            connection_pool: Vec::new(),\n            active_connections: 0,\n            max_connections: 50, // Magic num...",
+      "description": "Code duplication detected (Type3): 100.0% similarity between test_codebase/src/database/mod.rs:51-77 and test_codebase/src/services/mod.rs:33-48",
+      "endLine": 77,
+      "filePath": "test_codebase/src/database/mod.rs",
+      "severity": "low",
+      "startLine": 51
+    },
+    {
+      "codeSnippet": "connect",
+      "description": "Potentially dead code: function 'connect' is not used in this file (confidence: 60.0%)",
+      "endLine": 80,
+      "filePath": "test_codebase/src/database/mod.rs",
+      "severity": "Medium",
+      "startLine": 80
+    },
+    {
+      "codeSnippet": "disconnect",
+      "description": "Potentially dead code: function 'disconnect' is not used in this file (confidence: 60.0%)",
+      "endLine": 81,
+      "filePath": "test_codebase/src/database/mod.rs",
+      "severity": "Medium",
+      "startLine": 81
+    },
+    {
+      "codeSnippet": "execute_query",
+      "description": "Potentially dead code: function 'execute_query' is not used in this file (confidence: 60.0%)",
+      "endLine": 82,
+      "filePath": "test_codebase/src/database/mod.rs",
+      "severity": "Medium",
+      "startLine": 82
+    },
+    {
+      "codeSnippet": "execute_prepared",
+      "description": "Potentially dead code: function 'execute_prepared' is not used in this file (confidence: 60.0%)",
+      "endLine": 83,
+      "filePath": "test_codebase/src/database/mod.rs",
+      "severity": "Medium",
+      "startLine": 83
+    },
+    {
+      "codeSnippet": "prepare_statement",
+      "description": "Potentially dead code: function 'prepare_statement' is not used in this file (confidence: 60.0%)",
+      "endLine": 84,
+      "filePath": "test_codebase/src/database/mod.rs",
+      "severity": "Medium",
+      "startLine": 84
+    },
+    {
+      "codeSnippet": "begin_transaction",
+      "description": "Potentially dead code: function 'begin_transaction' is not used in this file (confidence: 60.0%)",
+      "endLine": 85,
+      "filePath": "test_codebase/src/database/mod.rs",
+      "severity": "Medium",
+      "startLine": 85
+    },
+    {
+      "codeSnippet": "commit_transaction",
+      "description": "Potentially dead code: function 'commit_transaction' is not used in this file (confidence: 60.0%)",
+      "endLine": 86,
+      "filePath": "test_codebase/src/database/mod.rs",
+      "severity": "Medium",
+      "startLine": 86
+    },
+    {
+      "codeSnippet": "rollback_transaction",
+      "description": "Potentially dead code: function 'rollback_transaction' is not used in this file (confidence: 60.0%)",
+      "endLine": 87,
+      "filePath": "test_codebase/src/database/mod.rs",
+      "severity": "Medium",
+      "startLine": 87
+    },
+    {
+      "codeSnippet": "create_user",
+      "description": "Potentially dead code: function 'create_user' is not used in this file (confidence: 60.0%)",
+      "endLine": 88,
+      "filePath": "test_codebase/src/database/mod.rs",
+      "severity": "Medium",
+      "startLine": 88
+    },
+    {
+      "codeSnippet": "get_user",
+      "description": "Potentially dead code: function 'get_user' is not used in this file (confidence: 60.0%)",
+      "endLine": 89,
+      "filePath": "test_codebase/src/database/mod.rs",
+      "severity": "Medium",
+      "startLine": 89
+    },
+    {
+      "codeSnippet": "update_user",
+      "description": "Potentially dead code: function 'update_user' is not used in this file (confidence: 60.0%)",
+      "endLine": 90,
+      "filePath": "test_codebase/src/database/mod.rs",
+      "severity": "Medium",
+      "startLine": 90
+    },
+    {
+      "codeSnippet": "delete_user",
+      "description": "Potentially dead code: function 'delete_user' is not used in this file (confidence: 60.0%)",
+      "endLine": 91,
+      "filePath": "test_codebase/src/database/mod.rs",
+      "severity": "Medium",
+      "startLine": 91
+    },
+    {
+      "codeSnippet": "create_session",
+      "description": "Potentially dead code: function 'create_session' is not used in this file (confidence: 60.0%)",
+      "endLine": 92,
+      "filePath": "test_codebase/src/database/mod.rs",
+      "severity": "Medium",
+      "startLine": 92
+    },
+    {
+      "codeSnippet": "get_session",
+      "description": "Potentially dead code: function 'get_session' is not used in this file (confidence: 60.0%)",
+      "endLine": 93,
+      "filePath": "test_codebase/src/database/mod.rs",
+      "severity": "Medium",
+      "startLine": 93
+    },
+    {
+      "codeSnippet": "delete_session",
+      "description": "Potentially dead code: function 'delete_session' is not used in this file (confidence: 60.0%)",
+      "endLine": 94,
+      "filePath": "test_codebase/src/database/mod.rs",
+      "severity": "Medium",
+      "startLine": 94
+    },
+    {
+      "codeSnippet": "log_audit_event",
+      "description": "Potentially dead code: function 'log_audit_event' is not used in this file (confidence: 60.0%)",
+      "endLine": 95,
+      "filePath": "test_codebase/src/database/mod.rs",
+      "severity": "Medium",
+      "startLine": 95
+    },
+    {
+      "codeSnippet": "get_audit_log",
+      "description": "Potentially dead code: function 'get_audit_log' is not used in this file (confidence: 60.0%)",
+      "endLine": 96,
+      "filePath": "test_codebase/src/database/mod.rs",
+      "severity": "Medium",
+      "startLine": 96
+    },
+    {
+      "codeSnippet": "vacuum_database",
+      "description": "Potentially dead code: function 'vacuum_database' is not used in this file (confidence: 60.0%)",
+      "endLine": 97,
+      "filePath": "test_codebase/src/database/mod.rs",
+      "severity": "Medium",
+      "startLine": 97
+    },
+    {
+      "codeSnippet": "backup_database",
+      "description": "Potentially dead code: function 'backup_database' is not used in this file (confidence: 60.0%)",
+      "endLine": 98,
+      "filePath": "test_codebase/src/database/mod.rs",
+      "severity": "Medium",
+      "startLine": 98
+    },
+    {
+      "codeSnippet": "restore_database",
+      "description": "Potentially dead code: function 'restore_database' is not used in this file (confidence: 60.0%)",
+      "endLine": 99,
+      "filePath": "test_codebase/src/database/mod.rs",
+      "severity": "Medium",
+      "startLine": 99
+    },
+    {
+      "codeSnippet": "optimize_queries",
+      "description": "Potentially dead code: function 'optimize_queries' is not used in this file (confidence: 60.0%)",
+      "endLine": 100,
+      "filePath": "test_codebase/src/database/mod.rs",
+      "severity": "Medium",
+      "startLine": 100
+    },
+    {
+      "codeSnippet": "clear_cache",
+      "description": "Potentially dead code: function 'clear_cache' is not used in this file (confidence: 60.0%)",
+      "endLine": 101,
+      "filePath": "test_codebase/src/database/mod.rs",
+      "severity": "Medium",
+      "startLine": 101
+    },
+    {
+      "codeSnippet": "get_statistics",
+      "description": "Potentially dead code: function 'get_statistics' is not used in this file (confidence: 60.0%)",
+      "endLine": 102,
+      "filePath": "test_codebase/src/database/mod.rs",
+      "severity": "Medium",
+      "startLine": 102
+    },
+    {
+      "codeSnippet": "health_check",
+      "description": "Potentially dead code: function 'health_check' is not used in this file (confidence: 60.0%)",
+      "endLine": 103,
+      "filePath": "test_codebase/src/database/mod.rs",
+      "severity": "Medium",
+      "startLine": 103
+    },
+    {
+      "codeSnippet": "migrate_schema",
+      "description": "Potentially dead code: function 'migrate_schema' is not used in this file (confidence: 60.0%)",
+      "endLine": 104,
+      "filePath": "test_codebase/src/database/mod.rs",
+      "severity": "Medium",
+      "startLine": 104
+    },
+    {
+      "codeSnippet": "export_data",
+      "description": "Potentially dead code: function 'export_data' is not used in this file (confidence: 60.0%)",
+      "endLine": 105,
+      "filePath": "test_codebase/src/database/mod.rs",
+      "severity": "Medium",
+      "startLine": 105
+    },
+    {
+      "codeSnippet": "import_data",
+      "description": "Potentially dead code: function 'import_data' is not used in this file (confidence: 60.0%)",
+      "endLine": 106,
+      "filePath": "test_codebase/src/database/mod.rs",
+      "severity": "Medium",
+      "startLine": 106
+    },
+    {
+      "codeSnippet": "DatabaseManager",
+      "description": "Potentially dead code: struct 'DatabaseManager' is not used in this file (confidence: 60.0%)",
+      "endLine": 11,
+      "filePath": "test_codebase/src/database/mod.rs",
+      "severity": "Medium",
+      "startLine": 11
+    },
+    {
+      "codeSnippet": "Connection",
+      "description": "Potentially dead code: struct 'Connection' is not used in this file (confidence: 60.0%)",
+      "endLine": 111,
+      "filePath": "test_codebase/src/database/mod.rs",
+      "severity": "Medium",
+      "startLine": 111
+    },
+    {
+      "codeSnippet": "Transaction",
+      "description": "Potentially dead code: struct 'Transaction' is not used in this file (confidence: 60.0%)",
+      "endLine": 120,
+      "filePath": "test_codebase/src/database/mod.rs",
+      "severity": "Medium",
+      "startLine": 120
+    },
+    {
+      "codeSnippet": "TransactionEntry",
+      "description": "Potentially dead code: struct 'TransactionEntry' is not used in this file (confidence: 60.0%)",
+      "endLine": 128,
+      "filePath": "test_codebase/src/database/mod.rs",
+      "severity": "Medium",
+      "startLine": 128
+    },
+    {
+      "codeSnippet": "QueryResult",
+      "description": "Potentially dead code: struct 'QueryResult' is not used in this file (confidence: 60.0%)",
+      "endLine": 136,
+      "filePath": "test_codebase/src/database/mod.rs",
+      "severity": "Medium",
+      "startLine": 136
+    },
+    {
+      "codeSnippet": "PreparedStatement",
+      "description": "Potentially dead code: struct 'PreparedStatement' is not used in this file (confidence: 60.0%)",
+      "endLine": 143,
+      "filePath": "test_codebase/src/database/mod.rs",
+      "severity": "Medium",
+      "startLine": 143
+    },
+    {
+      "codeSnippet": "SessionRecord",
+      "description": "Potentially dead code: struct 'SessionRecord' is not used in this file (confidence: 60.0%)",
+      "endLine": 151,
+      "filePath": "test_codebase/src/database/mod.rs",
+      "severity": "Medium",
+      "startLine": 151
+    },
+    {
+      "codeSnippet": "AuditEntry",
+      "description": "Potentially dead code: struct 'AuditEntry' is not used in this file (confidence: 60.0%)",
+      "endLine": 160,
+      "filePath": "test_codebase/src/database/mod.rs",
+      "severity": "Medium",
+      "startLine": 160
+    },
+    {
+      "codeSnippet": "DatabaseStatistics",
+      "description": "Potentially dead code: struct 'DatabaseStatistics' is not used in this file (confidence: 60.0%)",
+      "endLine": 169,
+      "filePath": "test_codebase/src/database/mod.rs",
+      "severity": "Medium",
+      "startLine": 169
+    },
+    {
+      "codeSnippet": "HealthStatus",
+      "description": "Potentially dead code: struct 'HealthStatus' is not used in this file (confidence: 60.0%)",
+      "endLine": 178,
+      "filePath": "test_codebase/src/database/mod.rs",
+      "severity": "Medium",
+      "startLine": 178
+    }
+  ],
+  "metadata": {
+    "codebasePath": "Unknown",
+    "durationSeconds": 0.0,
+    "timestamp": "2025-07-29T19:48:53.740156738-05:00"
+  }
+}

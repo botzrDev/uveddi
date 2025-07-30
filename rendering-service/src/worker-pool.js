@@ -126,13 +126,28 @@ class WorkerPool {
             }
           });
           
-          window.renderMermaid = async function(code) {
+          window.renderMermaid = async function(code, diagramId = 'diagram-svg') {
             const element = document.getElementById('diagram');
             element.innerHTML = '';
             
             try {
-              const { svg } = await mermaid.render('diagram-svg', code);
-              element.innerHTML = svg;
+              // Use unique diagram ID to prevent SVG ID conflicts
+              const { svg } = await mermaid.render(diagramId, code);
+              
+              // Post-process SVG to replace hardcoded IDs with unique ones
+              let processedSvg = svg;
+              
+              // Replace the main SVG id
+              processedSvg = processedSvg.replace(/id="my-svg"/g, 'id="' + diagramId + '"');
+              
+              // Replace all CSS selectors and references to #my-svg
+              processedSvg = processedSvg.replace(/#my-svg/g, '#' + diagramId);
+              
+              // Replace marker IDs to prevent conflicts
+              processedSvg = processedSvg.replace(/id="my-svg_/g, 'id="' + diagramId + '_');
+              processedSvg = processedSvg.replace(/url\\(#my-svg_/g, 'url(#' + diagramId + '_');
+              
+              element.innerHTML = processedSvg;
               return true;
             } catch (error) {
               console.error('Mermaid rendering error:', error);

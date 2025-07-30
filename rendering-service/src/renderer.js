@@ -71,10 +71,11 @@ async function renderDiagram({ mermaidCode, format = 'svg', width = 1200, height
       mermaid.initialize(config);
     }, mermaidConfig);
     
-    // Render the Mermaid diagram
-    const success = await worker.page.evaluate(async (code) => {
-      return await window.renderMermaid(code);
-    }, mermaidCode);
+    // Render the Mermaid diagram with unique ID to prevent CSS conflicts
+    const diagramId = `diagram-${cacheKey.substring(0, 12)}`;
+    const success = await worker.page.evaluate(async ({code, id}) => {
+      return await window.renderMermaid(code, id);
+    }, {code: mermaidCode, id: diagramId});
     
     if (!success) {
       throw new Error('Mermaid diagram compilation failed');

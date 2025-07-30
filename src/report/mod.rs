@@ -99,6 +99,7 @@
 
 // use crate::analysis::graph::ComponentNode;
 use crate::analysis::mermaid_generator::{MermaidGenerationError, MermaidGenerator};
+use crate::report::svg_generator::{SvgGenerator, SvgConfig};
 use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
 use crate::models::visualization::{ArchitecturalComponent, DiagramMetadata, DiagramType};
 use serde::{Deserialize, Serialize};
@@ -147,6 +148,7 @@ pub use crate::error::rendering::RenderingServiceError;
 pub use image_renderer::{ImageFormat, ImageRenderer, RenderedImage};
 
 pub mod diagrams;
+pub mod svg_generator;
 use chrono::{DateTime, Local};
 use log::{error, info};
 use serde_json::Value;
@@ -183,6 +185,8 @@ pub struct ReportGenerator {
     include_remediation_steps: bool,
     /// Mermaid generator for creating diagrams
     mermaid_generator: Option<MermaidGenerator>,
+    /// SVG generator for static diagram rendering
+    svg_generator: Option<SvgGenerator>,
     /// Diagram generation mode (hybrid rendering approach)
     diagram_mode: DiagramMode,
     /// Image renderer for generating images from Mermaid diagrams
@@ -210,6 +214,7 @@ impl ReportGenerator {
             include_severity_summary: true,
             include_remediation_steps: true,
             mermaid_generator: MermaidGenerator::new().ok(),
+            svg_generator: SvgGenerator::new().ok(),
             diagram_mode: DiagramMode::default(), // MermaidOnly by default for zero hosting costs
             #[cfg(feature = "image-rendering")]
             image_renderer: None,
@@ -1410,7 +1415,7 @@ impl ReportGenerator {
     ///
     /// * `Ok(String)` - The generated HTML content
     /// * `Err(String)` - Error message if generation fails
-    pub fn generate_html_report(
+    pub async fn generate_html_report(
         &self,
         analysis_run: &AnalysisRun,
         issues: &[ArchitecturalIssue],
@@ -1422,7 +1427,7 @@ impl ReportGenerator {
         let now: DateTime<Local> = Local::now();
         
         // Generate the HTML content
-        let html_content = self.generate_html_content(analysis_run, issues, anti_pattern_types, &now)?;
+        let html_content = self.generate_html_content(analysis_run, issues, anti_pattern_types, &now).await?;
 
         // Write to file if output path is provided
         if let Some(path) = output_path {
@@ -1445,7 +1450,7 @@ impl ReportGenerator {
     }
 
     /// Generate the complete HTML content
-    fn generate_html_content(
+    async fn generate_html_content(
         &self,
         analysis_run: &AnalysisRun,
         issues: &[ArchitecturalIssue],
@@ -1474,12 +1479,7 @@ impl ReportGenerator {
         // Severity dashboard
         html.push_str(&self.generate_html_severity_dashboard(issues));
         
-        // Interactive diagrams section
-        if self.include_diagrams {
-            html.push_str(&self.generate_html_diagrams_section(issues, anti_pattern_types));
-        }
-        
-        // Detailed issues
+        // Detailed issues with inline diagrams
         html.push_str(&self.generate_html_detailed_issues(issues, anti_pattern_types));
         
         // Footer
@@ -1503,7 +1503,7 @@ impl ReportGenerator {
     <title>Uveddi Architectural Analysis Report</title>
     
     <!-- Mermaid.js for diagram rendering -->
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
     
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -1820,6 +1820,23 @@ impl ReportGenerator {
             margin-bottom: 1rem;
             color: var(--primary-color);
         }}
+        
+        /* SVG Diagram Styles - Critical for rendering */
+        .svg-diagram {{
+            width: 100%;
+            min-height: 400px;
+            display: block;
+            overflow: visible;
+            text-align: center;
+        }}
+        
+        .svg-diagram svg {{
+            width: 100% !important;
+            height: auto !important;
+            max-width: none !important;
+            display: block;
+            margin: 0 auto;
+        }}
 
         .mermaid {{
             background: var(--bg-primary);
@@ -1959,6 +1976,80 @@ impl ReportGenerator {
         .hidden {{
             display: none !important;
         }}
+
+        /* Anti-pattern section styles */
+        .anti-pattern-section {{
+            margin-bottom: 2.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            background: var(--bg-secondary);
+            padding: 1.5rem;
+        }}
+
+        .anti-pattern-header {{
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }}
+
+        .diagram-explanation {{
+            background: var(--bg-tertiary);
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin: 0.5rem 0 1rem 0;
+            border-left: 4px solid var(--primary-color);
+            font-style: italic;
+            color: var(--text-secondary);
+        }}
+
+        .diagram-explanation p {{
+            margin: 0;
+        }}
+
+        /* Enhanced diagram containers */
+        .diagram-isolator {{
+            background: var(--bg-primary);
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius);
+            margin: 1.5rem 0;
+            transition: all 0.3s ease;
+        }}
+
+        .diagram-isolator:hover {{
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow);
+        }}
+
+        /* Issue numbering within sections */
+        .anti-pattern-section .issue-card .issue-title {{
+            font-size: 1rem;
+            font-weight: 500;
+        }}
+
+        /* Responsive diagram containers */
+        @media (max-width: 768px) {{
+            .anti-pattern-section {{
+                padding: 1rem;
+            }}
+            
+            .anti-pattern-header {{
+                font-size: 1.25rem;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }}
+            
+            .diagram-explanation {{
+                font-size: 0.875rem;
+                padding: 0.75rem;
+            }}
+        }}
     </style>
 "#)
     }
@@ -1985,8 +2076,7 @@ impl ReportGenerator {
         nav.push_str("\n    <nav class=\"nav\">\n");
         nav.push_str("        <div class=\"nav-links\">\n");
         nav.push_str("            <a href=\"#summary\" class=\"nav-link\"><i class=\"fas fa-chart-pie\"></i> Summary</a>\n");
-        nav.push_str("            <a href=\"#diagrams\" class=\"nav-link\"><i class=\"fas fa-project-diagram\"></i> Diagrams</a>\n");
-        nav.push_str("            <a href=\"#issues\" class=\"nav-link\"><i class=\"fas fa-exclamation-triangle\"></i> Issues</a>\n");
+        nav.push_str("            <a href=\"#issues\" class=\"nav-link\"><i class=\"fas fa-exclamation-triangle\"></i> Issues & Diagrams</a>\n");
         nav.push_str("        </div>\n");
         nav.push_str("        <button class=\"theme-toggle\" onclick=\"toggleTheme()\">\n");
         nav.push_str("            <i class=\"fas fa-moon\"></i> Dark Mode\n");
@@ -2073,7 +2163,7 @@ impl ReportGenerator {
     }
 
     /// Generate HTML diagrams section with embedded Mermaid
-    fn generate_html_diagrams_section(&self, issues: &[ArchitecturalIssue], anti_pattern_types: &HashMap<i64, AntiPatternType>) -> String {
+    async fn generate_html_diagrams_section(&self, issues: &[ArchitecturalIssue], anti_pattern_types: &HashMap<i64, AntiPatternType>) -> String {
         let diagrams_content = self.generate_diagrams_section(issues, anti_pattern_types);
         
         if diagrams_content.trim().is_empty() {
@@ -2095,12 +2185,14 @@ impl ReportGenerator {
         let mut in_mermaid_block = false;
         let mut mermaid_content = String::new();
         let mut diagram_title = String::new();
+        let mut diagrams_to_render = Vec::new();
 
+        // Collect all diagrams first
         for line in lines {
             if line.starts_with("### ") {
-                // If we were in a mermaid block, render it first
+                // If we were in a mermaid block, save it for rendering
                 if in_mermaid_block && !mermaid_content.trim().is_empty() {
-                    html.push_str(&self.render_mermaid_diagram(&diagram_title, &mermaid_content));
+                    diagrams_to_render.push((diagram_title.clone(), mermaid_content.clone()));
                     mermaid_content.clear();
                     in_mermaid_block = false;
                 }
@@ -2110,7 +2202,7 @@ impl ReportGenerator {
                 mermaid_content.clear();
             } else if line == "```" && in_mermaid_block {
                 if !mermaid_content.trim().is_empty() {
-                    html.push_str(&self.render_mermaid_diagram(&diagram_title, &mermaid_content));
+                    diagrams_to_render.push((diagram_title.clone(), mermaid_content.clone()));
                 }
                 mermaid_content.clear();
                 in_mermaid_block = false;
@@ -2122,26 +2214,63 @@ impl ReportGenerator {
 
         // Handle any remaining mermaid block
         if in_mermaid_block && !mermaid_content.trim().is_empty() {
-            html.push_str(&self.render_mermaid_diagram(&diagram_title, &mermaid_content));
+            diagrams_to_render.push((diagram_title, mermaid_content));
+        }
+
+        // Render all diagrams asynchronously
+        for (title, code) in diagrams_to_render {
+            html.push_str(&self.render_mermaid_diagram_async(&title, &code).await);
         }
 
         html.push_str("        </div>\n    </section>\n");
         html
     }
 
-    /// Render a single Mermaid diagram as HTML
-    fn render_mermaid_diagram(&self, title: &str, mermaid_code: &str) -> String {
-        let diagram_id = format!("diagram-{}", Uuid::new_v4().to_string().replace('-', "")[..8].to_string());
+    /// Render a single Mermaid diagram as HTML with static SVG generation
+    async fn render_mermaid_diagram_async(&self, title: &str, mermaid_code: &str) -> String {
+        let diagram_id = format!("diagram-{}", uuid::Uuid::new_v4().to_string().replace('-', "")[..8].to_string());
         
+        // Try to generate static SVG first
+        if let Some(ref svg_generator) = self.svg_generator {
+            let svg_content = svg_generator.generate_svg_with_fallback(mermaid_code, &diagram_id).await;
+            return format!(r#"
+            <div class="diagram-isolator" style="display: block; width: 100%; margin: 1rem 0; isolation: isolate;">
+                <div class="diagram-container">
+                    <div class="diagram-title">{}</div>
+                    <div class="svg-diagram" id="{}">
+                        {}
+                    </div>
+                </div>
+            </div>
+"#, title, diagram_id, svg_content);
+        }
+        
+        // Fallback to client-side Mermaid (existing behavior)
         format!(r#"
-            <div class="diagram-container">
-                <div class="diagram-title">{}</div>
-                <div class="mermaid" id="{}">{}</div>
+            <div class="diagram-isolator" style="display: block; width: 100%; margin: 1rem 0; isolation: isolate;">
+                <div class="diagram-container">
+                    <div class="diagram-title">{}</div>
+                    <div class="mermaid" id="{}">{}</div>
+                </div>
             </div>
 "#, title, diagram_id, mermaid_code.trim())
     }
 
-    /// Generate HTML detailed issues section
+    /// Synchronous wrapper for backward compatibility
+    fn render_mermaid_diagram(&self, title: &str, mermaid_code: &str) -> String {
+        // For now, use the fallback approach - we'll update the calling code to be async
+        let diagram_id = format!("diagram-{}", uuid::Uuid::new_v4().to_string().replace('-', "")[..8].to_string());
+        format!(r#"
+            <div class="diagram-isolator" style="display: block; width: 100%; margin: 1rem 0; isolation: isolate;">
+                <div class="diagram-container">
+                    <div class="diagram-title">{}</div>
+                    <div class="mermaid" id="{}">{}</div>
+                </div>
+            </div>
+"#, title, diagram_id, mermaid_code.trim())
+    }
+
+    /// Generate HTML detailed issues section with inline diagrams
     fn generate_html_detailed_issues(&self, issues: &[ArchitecturalIssue], anti_pattern_types: &HashMap<i64, AntiPatternType>) -> String {
         let mut html = String::from(r#"
     <section id="issues" class="card">
@@ -2161,71 +2290,412 @@ impl ReportGenerator {
         <div id="issues-container">
 "#);
 
-        for (i, issue) in issues.iter().enumerate() {
-            let anti_pattern = anti_pattern_types.get(&issue.anti_pattern_type_id);
+        // Group issues by anti-pattern type for better organization and diagram generation
+        let mut issues_by_type: HashMap<i64, Vec<&ArchitecturalIssue>> = HashMap::new();
+        for issue in issues {
+            issues_by_type
+                .entry(issue.anti_pattern_type_id)
+                .or_default()
+                .push(issue);
+        }
+
+        // Sort anti-pattern types by name for consistent ordering
+        let mut anti_pattern_ids: Vec<i64> = issues_by_type.keys().cloned().collect();
+        anti_pattern_ids.sort_by_key(|id| {
+            anti_pattern_types
+                .get(id)
+                .map(|ap| ap.name.clone())
+                .unwrap_or_default()
+        });
+
+        for type_id in anti_pattern_ids {
+            let type_issues = issues_by_type.get(&type_id).unwrap();
+            let anti_pattern = anti_pattern_types.get(&type_id);
             let pattern_name = anti_pattern
                 .map(|ap| ap.name.as_str())
                 .unwrap_or("Unknown");
 
+            // Infer actual pattern name from issues
+            let inferred_pattern = self.infer_anti_pattern_from_issues(type_issues);
+            let display_name = if inferred_pattern != "Unknown" {
+                &inferred_pattern
+            } else {
+                pattern_name
+            };
+
+            // Add section header for this anti-pattern type
             html.push_str(&format!(r#"
-            <div class="issue-card" data-severity="{}" data-pattern="{}">
-                <div class="issue-header">
-                    <div class="issue-title">
-                        <i class="fas fa-bug"></i> {}
-                    </div>
-                    <span class="severity-badge severity-{}">
-                        <i class="fas fa-circle"></i> {}
-                    </span>
-                </div>
-                
-                <div class="issue-details">
-                    <p><strong>File:</strong> <code>{}</code></p>
-                    {}<p><strong>Description:</strong> {}</p>
-                    
-                    {}
-                    
-                    {}
-                </div>
-            </div>
-"#,
-                issue.severity,
-                pattern_name.to_lowercase().replace(' ', "-"),
-                pattern_name,
-                issue.severity,
-                issue.severity.to_uppercase(),
-                issue.file_path,
-                if let (Some(start), Some(end)) = (issue.start_line, issue.end_line) {
-                    format!("<p><strong>Lines:</strong> {}-{}</p>", start, end)
-                } else if let Some(start) = issue.start_line {
-                    format!("<p><strong>Line:</strong> {}</p>", start)
-                } else {
-                    String::new()
-                },
-                issue.description,
-                if self.include_code_snippets && issue.code_snippet.is_some() {
-                    format!("<div class=\"code-snippet\"><pre><code>{}</code></pre></div>", 
-                        issue.code_snippet.as_ref().unwrap())
-                } else {
-                    String::new()
-                },
-                if self.include_ai_explanations && issue.ai_explanation.is_some() {
-                    format!("<div class=\"collapsible-section\">
-                        <h4 class=\"collapsible\" onclick=\"toggleSection('ai-explanation-{}')\">
-                            <i class=\"fas fa-chevron-right collapsible-icon\"></i>
-                            <i class=\"fas fa-robot\"></i> AI Explanation
-                        </h4>
-                        <div id=\"ai-explanation-{}\" class=\"collapsible-content\">
-                            <p>{}</p>
-                        </div>
-                    </div>", i, i, issue.ai_explanation.as_ref().unwrap())
-                } else {
-                    String::new()
+            <div class="anti-pattern-section">
+                <h3 class="anti-pattern-header">
+                    <i class="fas fa-layer-group"></i> {} Issues ({} found)
+                </h3>
+"#, display_name, type_issues.len()));
+
+            // Generate diagram for this specific anti-pattern type if diagrams are enabled
+            if self.include_diagrams {
+                let diagram_html = self.generate_inline_diagram_for_anti_pattern(type_id, type_issues, anti_pattern_types);
+                if !diagram_html.is_empty() {
+                    html.push_str(&diagram_html);
                 }
-            ));
+            }
+
+            // Add individual issues for this type
+            for (i, issue) in type_issues.iter().enumerate() {
+                html.push_str(&format!(r#"
+                <div class="issue-card" data-severity="{}" data-pattern="{}">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #{}: {}
+                        </div>
+                        <span class="severity-badge severity-{}">
+                            <i class="fas fa-circle"></i> {}
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>{}</code></p>
+                        {}<p><strong>Description:</strong> {}</p>
+                        
+                        {}
+                        
+                        {}
+                    </div>
+                </div>
+    "#,
+                    issue.severity,
+                    pattern_name.to_lowercase().replace(' ', "-"),
+                    i + 1,
+                    pattern_name,
+                    issue.severity,
+                    issue.severity.to_uppercase(),
+                    issue.file_path,
+                    if let (Some(start), Some(end)) = (issue.start_line, issue.end_line) {
+                        format!("<p><strong>Lines:</strong> {}-{}</p>", start, end)
+                    } else if let Some(start) = issue.start_line {
+                        format!("<p><strong>Line:</strong> {}</p>", start)
+                    } else {
+                        String::new()
+                    },
+                    issue.description,
+                    if self.include_code_snippets && issue.code_snippet.is_some() {
+                        format!("<div class=\"code-snippet\"><pre><code>{}</code></pre></div>", 
+                            issue.code_snippet.as_ref().unwrap())
+                    } else {
+                        String::new()
+                    },
+                    if self.include_ai_explanations && issue.ai_explanation.is_some() {
+                        format!("<div class=\"collapsible-section\">
+                            <h4 class=\"collapsible\" onclick=\"toggleSection('ai-explanation-{}-{}')\">
+                                <i class=\"fas fa-chevron-right collapsible-icon\"></i>
+                                <i class=\"fas fa-robot\"></i> AI Explanation
+                            </h4>
+                            <div id=\"ai-explanation-{}-{}\" class=\"collapsible-content\">
+                                <p>{}</p>
+                            </div>
+                        </div>", type_id, i, type_id, i, issue.ai_explanation.as_ref().unwrap())
+                    } else {
+                        String::new()
+                    }
+                ));
+            }
+
+            html.push_str("            </div>\n"); // Close anti-pattern-section
         }
 
         html.push_str("        </div>\n    </section>\n");
         html
+    }
+
+    /// Generate inline diagram for a specific anti-pattern type
+    fn generate_inline_diagram_for_anti_pattern(&self, type_id: i64, issues: &[&ArchitecturalIssue], anti_pattern_types: &HashMap<i64, AntiPatternType>) -> String {
+        let anti_pattern = anti_pattern_types.get(&type_id);
+        let pattern_name = anti_pattern.map(|ap| ap.name.as_str()).unwrap_or("Unknown");
+        
+        // Determine anti-pattern type from actual issue descriptions
+        let inferred_pattern = self.infer_anti_pattern_from_issues(issues);
+        let actual_pattern_name = if inferred_pattern != "Unknown" {
+            &inferred_pattern
+        } else {
+            pattern_name
+        };
+
+        // Generate appropriate diagram based on inferred or provided anti-pattern type
+        let mermaid_code = match actual_pattern_name.to_lowercase().as_str() {
+            name if name.contains("god object") || name.contains("large class") => {
+                self.generate_god_object_diagram_for_issues(issues)
+            },
+            name if name.contains("cyclic") || name.contains("cycle") => {
+                self.generate_cyclic_dependency_diagram_for_issues(issues)
+            },
+            name if name.contains("dead code") || name.contains("unused") => {
+                self.generate_dead_code_diagram_for_issues(issues)
+            },
+            _ => {
+                // Use actual issue data for meaningful diagrams
+                self.generate_meaningful_diagram_for_issues(actual_pattern_name, issues)
+            }
+        };
+
+        if mermaid_code.is_empty() {
+            return String::new();
+        }
+
+        let diagram_id = format!("inline-diagram-{}", type_id);
+        
+        // Generate static SVG if available
+        if let Some(ref svg_generator) = self.svg_generator {
+            let svg_content = format!("<svg id=\"my-svg\">{}</svg>", mermaid_code); // Fallback content
+            format!(r#"
+                <div class="diagram-isolator" style="display: block; width: 100%; margin: 1rem 0; isolation: isolate;">
+                    <div class="diagram-container">
+                        <div class="diagram-title">
+                            <i class="fas fa-project-diagram"></i> {} Analysis
+                        </div>
+                        <div id="diagram-explanation-{}" class="diagram-explanation">
+                            <p><em>This diagram shows the architectural issues found in this anti-pattern category. Each node represents a component or relationship affected by the identified problems.</em></p>
+                        </div>
+                        <div class="svg-diagram" id="{}">
+                            <div class="mermaid">{}</div>
+                        </div>
+                    </div>
+                </div>
+"#, pattern_name, type_id, diagram_id, mermaid_code.trim())
+        } else {
+            // Fallback to client-side Mermaid
+            format!(r#"
+                <div class="diagram-isolator" style="display: block; width: 100%; margin: 1rem 0; isolation: isolate;">
+                    <div class="diagram-container">
+                        <div class="diagram-title">
+                            <i class="fas fa-project-diagram"></i> {} Analysis
+                        </div>
+                        <div id="diagram-explanation-{}" class="diagram-explanation">
+                            <p><em>This diagram shows the architectural issues found in this anti-pattern category.</em></p>
+                        </div>
+                        <div class="mermaid" id="{}">{}</div>
+                    </div>
+                </div>
+"#, pattern_name, type_id, diagram_id, mermaid_code.trim())
+        }
+    }
+
+    /// Generate God Object diagram for specific issues
+    fn generate_god_object_diagram_for_issues(&self, issues: &[&ArchitecturalIssue]) -> String {
+        let mut diagram = String::from("classDiagram\n");
+        
+        for (i, issue) in issues.iter().enumerate() {
+            // Extract class name from description or file path
+            let class_name = if let Some(start) = issue.description.find("'") {
+                if let Some(end) = issue.description[start + 1..].find("'") {
+                    &issue.description[start + 1..start + 1 + end]
+                } else {
+                    &format!("GodObject{}", i + 1)
+                }
+            } else {
+                &format!("GodObject{}", i + 1)
+            };
+
+            diagram.push_str(&format!("    class {} {{\n", class_name));
+            
+            // Add some representative methods/fields
+            if let Some(code) = &issue.code_snippet {
+                let lines: Vec<&str> = code.lines().take(8).collect(); // Limit to avoid huge diagrams
+                for line in lines {
+                    let trimmed = line.trim();
+                    if trimmed.starts_with("fn ") || trimmed.starts_with("pub fn ") {
+                        if let Some(method_name) = trimmed.split('(').next() {
+                            let method = method_name.split_whitespace().last().unwrap_or("method");
+                            diagram.push_str(&format!("        +{}()\n", method));
+                        }
+                    } else if trimmed.contains(":") && !trimmed.starts_with("//") {
+                        if let Some(field_name) = trimmed.split(':').next() {
+                            let field = field_name.trim().replace("pub ", "");
+                            if !field.is_empty() && field.len() < 20 {
+                                diagram.push_str(&format!("        {}: Type\n", field));
+                            }
+                        }
+                    }
+                }
+            } else {
+                // Generic large class representation
+                diagram.push_str("        +method1()\n");
+                diagram.push_str("        +method2()\n");
+                diagram.push_str("        +method3()\n");
+                diagram.push_str("        ...\n");
+                diagram.push_str("        +methodN()\n");
+            }
+            
+            diagram.push_str("    }\n");
+            
+            // Add style to highlight the god object
+            diagram.push_str(&format!("    style {} fill:#ffcccc,stroke:#ff0000,stroke-width:3px\n", class_name));
+        }
+        
+        diagram
+    }
+
+    /// Generate Cyclic Dependency diagram for specific issues
+    fn generate_cyclic_dependency_diagram_for_issues(&self, issues: &[&ArchitecturalIssue]) -> String {
+        let mut diagram = String::from("graph TD\n");
+        let mut components = std::collections::HashSet::new();
+        let mut dependencies = std::collections::HashSet::new();
+        
+        for issue in issues {
+            // Extract component names from cycle descriptions
+            if let Some(components_str) = issue.description.split(": ").nth(1) {
+                let parts: Vec<&str> = components_str.split(" → ").collect();
+                
+                for part in &parts {
+                    let clean_name = part.trim().replace(" ", "_").replace(".", "_");
+                    components.insert(clean_name);
+                }
+                
+                // Add dependencies
+                for i in 0..parts.len() - 1 {
+                    let from = parts[i].trim().replace(" ", "_").replace(".", "_");
+                    let to = parts[i + 1].trim().replace(" ", "_").replace(".", "_");
+                    dependencies.insert((from, to));
+                }
+                
+                // Add the last to first dependency to complete the cycle
+                if parts.len() > 1 {
+                    let from = parts[parts.len() - 1].trim().replace(" ", "_").replace(".", "_");
+                    let to = parts[0].trim().replace(" ", "_").replace(".", "_");
+                    dependencies.insert((from, to));
+                }
+            }
+        }
+        
+        // Add components to diagram
+        for component in &components {
+            diagram.push_str(&format!("    {}[{}]\n", component, component.replace("_", " ")));
+        }
+        
+        // Add dependencies with cycle highlighting
+        for (from, to) in &dependencies {
+            diagram.push_str(&format!("    {} -->|depends on| {}\n", from, to));
+            diagram.push_str(&format!("    style {} fill:#ffcccc,stroke:#ff0000\n", from));
+            diagram.push_str(&format!("    style {} fill:#ffcccc,stroke:#ff0000\n", to));
+        }
+        
+        diagram
+    }
+
+    /// Generate Dead Code diagram for specific issues
+    fn generate_dead_code_diagram_for_issues(&self, issues: &[&ArchitecturalIssue]) -> String {
+        let mut diagram = String::from("flowchart TD\n");
+        diagram.push_str("    Live[Live Code]\n");
+        diagram.push_str("    Dead[Dead Code]\n");
+        diagram.push_str("    style Dead fill:#ffcccc,stroke:#ff0000,stroke-width:2px\n");
+        
+        for (i, issue) in issues.iter().enumerate().take(10) { // Limit to prevent huge diagrams
+            let item_id = format!("DeadItem{}", i + 1);
+            let item_name = if let Some(snippet) = &issue.code_snippet {
+                snippet.lines().next().unwrap_or("Dead Code").chars().take(15).collect::<String>()
+            } else {
+                format!("Unused Item {}", i + 1)
+            };
+            
+            diagram.push_str(&format!("    Dead --> {}[{}]\n", item_id, item_name));
+            diagram.push_str(&format!("    style {} fill:#ffe6e6\n", item_id));
+        }
+        
+        if issues.len() > 10 {
+            diagram.push_str("    Dead --> More[... and more]\n");
+            diagram.push_str("    style More fill:#ffe6e6\n");
+        }
+        
+        diagram
+    }
+
+    /// Infer anti-pattern type from issue descriptions
+    fn infer_anti_pattern_from_issues(&self, issues: &[&ArchitecturalIssue]) -> String {
+        // Count different types of issues
+        let mut god_object_count = 0;
+        let mut dead_code_count = 0;
+        let mut cyclic_dep_count = 0;
+        
+        for issue in issues {
+            let desc = issue.description.to_lowercase();
+            if desc.contains("god object") || desc.contains("has") && desc.contains("methods") && desc.contains("fields") {
+                god_object_count += 1;
+            } else if desc.contains("dead code") || desc.contains("not used") || desc.contains("unused") {
+                dead_code_count += 1;
+            } else if desc.contains("cyclic") || desc.contains("circular") {
+                cyclic_dep_count += 1;
+            }
+        }
+        
+        // Return the most common pattern type
+        if god_object_count > 0 {
+            "God Objects".to_string()
+        } else if dead_code_count > 0 {
+            "Dead Code".to_string()
+        } else if cyclic_dep_count > 0 {
+            "Cyclic Dependencies".to_string()
+        } else {
+            "Unknown".to_string()
+        }
+    }
+
+    /// Generate meaningful diagram using actual issue data
+    fn generate_meaningful_diagram_for_issues(&self, pattern_name: &str, issues: &[&ArchitecturalIssue]) -> String {
+        let mut diagram = String::from("mindmap\n");
+        diagram.push_str(&format!("  root(({}))\n", pattern_name));
+        
+        for (i, issue) in issues.iter().enumerate().take(8) {
+            let file_name = std::path::Path::new(&issue.file_path)
+                .file_name()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .replace(".rs", "");
+            
+            // Extract meaningful info from description
+            let short_desc = if issue.description.len() > 50 {
+                format!("{}...", &issue.description[..47])
+            } else {
+                issue.description.clone()
+            };
+            
+            diagram.push_str(&format!("    Issue{}\n", i + 1));
+            diagram.push_str(&format!("      {}\n", file_name));
+            diagram.push_str(&format!("      ({})\n", issue.severity.to_uppercase()));
+            
+            // Add description as sub-node if it's meaningful
+            if !short_desc.contains("Unknown") && short_desc.len() > 10 {
+                diagram.push_str(&format!("        \"{}\"\n", short_desc.replace('"', "'")));
+            }
+        }
+        
+        if issues.len() > 8 {
+            diagram.push_str("    More\n");
+            diagram.push_str(&format!("      {} more issues\n", issues.len() - 8));
+        }
+        
+        diagram
+    }
+
+    /// Generate generic diagram for other anti-pattern types
+    fn generate_generic_diagram_for_issues(&self, pattern_name: &str, issues: &[&ArchitecturalIssue]) -> String {
+        let mut diagram = String::from("mindmap\n");
+        diagram.push_str(&format!("  root(({}))\n", pattern_name));
+        
+        for (i, issue) in issues.iter().enumerate().take(8) { // Limit for readability
+            let file_name = std::path::Path::new(&issue.file_path)
+                .file_name()
+                .unwrap_or_default()
+                .to_string_lossy();
+            
+            diagram.push_str(&format!("    Issue{}\n", i + 1));
+            diagram.push_str(&format!("      {}\n", file_name));
+            diagram.push_str(&format!("      ({})\n", issue.severity.to_uppercase()));
+        }
+        
+        if issues.len() > 8 {
+            diagram.push_str("    More\n");
+            diagram.push_str(&format!("      {} more issues\n", issues.len() - 8));
+        }
+        
+        diagram
     }
 
     /// Generate HTML footer
@@ -2242,16 +2712,70 @@ impl ReportGenerator {
     fn generate_html_scripts(&self) -> String {
         format!(r#"
     <script>
-        // Initialize Mermaid
-        mermaid.initialize({{ 
+        // Initialize Mermaid.js for diagram rendering with unique IDs
+        mermaid.initialize({{
             startOnLoad: true,
             theme: 'default',
-            securityLevel: 'loose',
-            flowchart: {{
-                useMaxWidth: true,
-                htmlLabels: true
+            deterministicIds: true,
+            themeVariables: {{
+                primaryColor: '#2563eb',
+                primaryTextColor: '#0f172a',
+                primaryBorderColor: '#64748b',
+                lineColor: '#64748b',
+                background: '#ffffff',
+                secondaryColor: '#f8fafc',
+                tertiaryColor: '#e2e8f0'
             }}
         }});
+
+        // Generate unique seeds for each diagram to prevent ID conflicts
+        document.addEventListener('DOMContentLoaded', function() {{
+            const mermaidElements = document.querySelectorAll('.mermaid');
+            mermaidElements.forEach((element, index) => {{
+                // Add unique ID seed as data attribute
+                element.setAttribute('data-diagram-seed', `diagram-${{index}}-${{Date.now()}}`);
+            }});
+        }});
+
+        // Re-render Mermaid diagrams when theme changes
+        function rerenderMermaidDiagrams() {{
+            const isDark = document.body.dataset.theme === 'dark';
+            const theme = isDark ? 'dark' : 'default';
+            const themeVariables = isDark ? {{
+                primaryColor: '#3b82f6',
+                primaryTextColor: '#f1f5f9',
+                primaryBorderColor: '#94a3b8',
+                lineColor: '#94a3b8',
+                background: '#0f172a',
+                secondaryColor: '#1e293b',
+                tertiaryColor: '#334155'
+            }} : {{
+                primaryColor: '#2563eb',
+                primaryTextColor: '#0f172a',
+                primaryBorderColor: '#64748b',
+                lineColor: '#64748b',
+                background: '#ffffff',
+                secondaryColor: '#f8fafc',
+                tertiaryColor: '#e2e8f0'
+            }};
+
+            mermaid.initialize({{
+                startOnLoad: false,
+                theme: theme,
+                themeVariables: themeVariables
+            }});
+
+            // Re-render all mermaid diagrams
+            const mermaidElements = document.querySelectorAll('.mermaid');
+            mermaidElements.forEach((element, index) => {{
+                const graphDefinition = element.textContent;
+                element.innerHTML = '';
+                element.removeAttribute('data-processed');
+                mermaid.render(`mermaid-diagram-${{index}}`, graphDefinition, (svgCode) => {{
+                    element.innerHTML = svgCode;
+                }});
+            }});
+        }}
 
         // Theme toggle functionality
         function toggleTheme() {{
@@ -2267,6 +2791,9 @@ impl ReportGenerator {
                 themeToggle.innerHTML = '<i class="fas fa-sun"></i> Light Mode';
                 localStorage.setItem('theme', 'dark');
             }}
+            
+            // Re-render Mermaid diagrams with new theme
+            setTimeout(rerenderMermaidDiagrams, 100);
         }}
 
         // Load saved theme

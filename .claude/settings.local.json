@@ -122,7 +122,9 @@
       "Bash(git clone:*)",
       "Bash(RUST_BACKTRACE=1 ./target/debug/uveddi analyze serde/serde/src --output-format=json)",
       "Bash(/home/austingreen/Documents/botzr/projects/uveddi/target/release/uveddi analyze:*)",
-      "Bash(/home/austingreen/Documents/botzr/projects/uveddi/target/release/uveddi --help)"
+      "Bash(/home/austingreen/Documents/botzr/projects/uveddi/target/release/uveddi --help)",
+      "Bash(./scripts/automated-github-testing.sh:*)",
+      "Bash(python3 scripts/analyze-test-results.py:*)"
     ],
     "deny": []
   }

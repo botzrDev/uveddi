@@ -5,6 +5,8 @@
 
 #[cfg(feature = "ai")]
 use crate::ai::knowledge::schema::*;
+#[cfg(feature = "ai")]
+use crate::ai::knowledge::context_selection::{SeverityLevel, LocationContext};
 use crate::plugins::knowledge::*;
 use crate::plugins::PluginError;
 use async_trait::async_trait;

@@ -308,7 +308,7 @@ impl AnalysisOrchestrator {
         // Generate report
         let report_generator = ReportGenerator::new();
         let report_content =
-            self.generate_report(&config, &analysis_run, &issues, &report_generator)?;
+            self.generate_report(&config, &analysis_run, &issues, &report_generator).await?;
 
         // Write output file if specified
         if let Some(output_path) = &config.output_file {
@@ -359,7 +359,7 @@ impl AnalysisOrchestrator {
     }
 
     /// Generate the final report
-    fn generate_report(
+    async fn generate_report(
         &self,
         config: &AnalysisConfig,
         analysis_run: &AnalysisRun,
@@ -390,6 +390,7 @@ impl AnalysisOrchestrator {
                 }),
             "html" => report_generator
                 .generate_html_report(analysis_run, issues, &HashMap::new(), None)
+                .await
                 .map_err(|e| {
                     crate::error::UveddiError::from(
                         crate::report::errors::ReportGenerationError::DataExtractionError(

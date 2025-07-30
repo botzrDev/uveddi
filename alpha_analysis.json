@@ -1,0 +1,102 @@
+{
+  "repositories": [
+    {
+      "name": "test_repo",
+      "language": "rust",
+      "status": "success",
+      "duration": 1,
+      "issues_found": 24,
+      "detectors_run": 2,
+      "file_count": 1,
+      "timestamp": "2025-07-29T14:17:12-05:00",
+      "patterns_detected": [],
+      "performance_rating": "excellent"
+    },
+    {
+      "name": "rust_serde",
+      "language": "rust",
+      "status": "failed",
+      "duration": 120,
+      "issues_found": 0,
+      "detectors_run": 0,
+      "file_count": 188,
+      "timestamp": "2025-07-29T14:16:33-05:00",
+      "patterns_detected": [],
+      "performance_rating": "failed"
+    }
+  ],
+  "summary": {
+    "total_repositories": 2,
+    "successful_analyses": 1,
+    "failed_analyses": 1,
+    "success_rate": 0.5,
+    "average_duration": 1,
+    "median_duration": 1,
+    "average_issues_found": 24,
+    "median_issues_found": 24,
+    "total_issues_found": 24,
+    "total_files_analyzed": 189
+  },
+  "language_breakdown": {
+    "rust": {
+      "total_repositories": 2,
+      "successful_analyses": 1,
+      "success_rate": 0.5,
+      "performance_ratings": {
+        "excellent": 1,
+        "failed": 1
+      },
+      "common_patterns": [],
+      "average_duration": 1,
+      "average_issues": 24,
+      "total_issues": 24,
+      "meets_expectations": {
+        "success_rate": {
+          "actual": 0.5,
+          "expected": 0.9,
+          "meets_expectation": false,
+          "difference": -0.4
+        },
+        "average_issues": {
+          "actual": 24,
+          "expected": 4,
+          "meets_expectation": true,
+          "difference": 20
+        }
+      }
+    }
+  },
+  "pattern_detection": {},
+  "performance_metrics": [],
+  "failure_analysis": {
+    "total_failures": 1,
+    "failures_by_language": {
+      "rust": 1
+    },
+    "failure_reasons": {
+      "unknown_error": 1
+    },
+    "failed_repositories": [
+      "rust_serde"
+    ]
+  },
+  "recommendations": [
+    {
+      "priority": "HIGH",
+      "category": "Stability",
+      "issue": "Low success rate (50.0%)",
+  // FILE REMOVED (moved to archive/reports)
+    "scores": {
+      "stability": 50.0,
+      "detection": 100,
+      "reliability": 80
+    },
+    "message": "Alpha release possible with known limitations",
+    "assessment_date": "2025-07-29T14:17:34.663064"
+  },
+  "metadata": {
+    "analysis_date": "2025-07-29T14:17:34.663075",
+    "uveddi_version": "0.9.0-alpha",
+    "analyzer_version": "1.0.0"
+  }
+}

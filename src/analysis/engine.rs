@@ -1298,8 +1298,15 @@ impl AnalysisEngine {
         // Extract surrounding components from dependency graph
         let surrounding_components = self.extract_surrounding_components(issue, dependency_graph);
 
+        // Convert AST SourceLanguage to schema SourceLanguage
+        let schema_language = match language {
+            crate::ast::tree_sitter_impl::SourceLanguage::Rust => crate::ai::knowledge::schema::SourceLanguage::Rust,
+            crate::ast::tree_sitter_impl::SourceLanguage::Python => crate::ai::knowledge::schema::SourceLanguage::Python,
+            crate::ast::tree_sitter_impl::SourceLanguage::JavaScript => crate::ai::knowledge::schema::SourceLanguage::JavaScript,
+        };
+
         Ok(EngineAnalysisContext {
-            language,
+            language: schema_language,
             detected_patterns: vec![issue.anti_pattern_type_id.to_string()],
             frameworks,
             complexity_metrics,
@@ -1374,8 +1381,7 @@ impl AnalysisEngine {
             "rs" => Ok(SourceLanguage::Rust),
             "py" => Ok(SourceLanguage::Python),
             "js" | "ts" => Ok(SourceLanguage::JavaScript),
-            "java" => Ok(SourceLanguage::Java),
-            _ => Ok(SourceLanguage::Universal),
+            _ => Ok(SourceLanguage::JavaScript), // Default fallback
         }
     }
 

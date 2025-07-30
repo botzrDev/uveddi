@@ -144,6 +144,13 @@ impl Default for AntiPatternCategory {
     }
 }
 
+#[cfg(not(feature = "ai"))]
+impl Default for SourceLanguage {
+    fn default() -> Self {
+        SourceLanguage::Universal
+    }
+}
+
 /// Plugin knowledge integration manager
 pub struct PluginKnowledgeIntegrator {
     /// Core knowledge library

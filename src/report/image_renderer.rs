@@ -37,7 +37,7 @@ pub struct RenderingServiceConfig {
 impl Default for RenderingServiceConfig {
     fn default() -> Self {
         Self {
-            base_url: "http://localhost:3001".to_string(),
+            base_url: "http://localhost:3002".to_string(),
             timeout_seconds: 30,
             max_retries: 3,
 

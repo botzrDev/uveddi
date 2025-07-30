@@ -1,0 +1,209 @@
+{
+  "issues": [
+    {
+      "codeSnippet": "pub struct LargeClass {\n    field1: String, field2: i32, field3: f64, field4: bool,\n    field5: Vec<String>, field6: std::collections::HashMap<String, i32>,\n    field7: Option<String>, field8: Result<i32, String>,\n    field9: u64, field10: char, field11: Box<dyn std::fmt::Display>,\n    field12: String, field13: i32, field14: f64, field15: bool,\n    field16: Vec<i32>, field17: String, field18: i32,\n}",
+      "description": "God Object detected: 'LargeClass' has 23 methods and 18 fields. (Thresholds: methods>5, fields>8) LCOM4 score: 1 (>1 indicates low cohesion) Methods: 0 trivial, 0 complex",
+      "endLine": 2,
+      "filePath": "/tmp/test_repo/main.rs",
+      "severity": "Critical",
+      "startLine": 2
+    },
+    {
+      "codeSnippet": "method1",
+      "description": "Potentially dead code: function 'method1' is not used in this file (confidence: 60.0%)",
+      "endLine": 13,
+      "filePath": "/tmp/test_repo/main.rs",
+      "severity": "Medium",
+      "startLine": 13
+    },
+    {
+      "codeSnippet": "method2",
+      "description": "Potentially dead code: function 'method2' is not used in this file (confidence: 60.0%)",
+      "endLine": 14,
+      "filePath": "/tmp/test_repo/main.rs",
+      "severity": "Medium",
+      "startLine": 14
+    },
+    {
+      "codeSnippet": "method3",
+      "description": "Potentially dead code: function 'method3' is not used in this file (confidence: 60.0%)",
+      "endLine": 15,
+      "filePath": "/tmp/test_repo/main.rs",
+      "severity": "Medium",
+      "startLine": 15
+    },
+    {
+      "codeSnippet": "method4",
+      "description": "Potentially dead code: function 'method4' is not used in this file (confidence: 60.0%)",
+      "endLine": 16,
+      "filePath": "/tmp/test_repo/main.rs",
+      "severity": "Medium",
+      "startLine": 16
+    },
+    {
+      "codeSnippet": "method5",
+      "description": "Potentially dead code: function 'method5' is not used in this file (confidence: 60.0%)",
+      "endLine": 17,
+      "filePath": "/tmp/test_repo/main.rs",
+      "severity": "Medium",
+      "startLine": 17
+    },
+    {
+      "codeSnippet": "method6",
+      "description": "Potentially dead code: function 'method6' is not used in this file (confidence: 60.0%)",
+      "endLine": 18,
+      "filePath": "/tmp/test_repo/main.rs",
+      "severity": "Medium",
+      "startLine": 18
+    },
+    {
+      "codeSnippet": "method7",
+      "description": "Potentially dead code: function 'method7' is not used in this file (confidence: 60.0%)",
+      "endLine": 19,
+      "filePath": "/tmp/test_repo/main.rs",
+      "severity": "Medium",
+      "startLine": 19
+    },
+    {
+      "codeSnippet": "method8",
+      "description": "Potentially dead code: function 'method8' is not used in this file (confidence: 60.0%)",
+      "endLine": 20,
+      "filePath": "/tmp/test_repo/main.rs",
+      "severity": "Medium",
+      "startLine": 20
+    },
+    {
+      "codeSnippet": "method9",
+      "description": "Potentially dead code: function 'method9' is not used in this file (confidence: 60.0%)",
+      "endLine": 21,
+      "filePath": "/tmp/test_repo/main.rs",
+      "severity": "Medium",
+      "startLine": 21
+    },
+    {
+      "codeSnippet": "method10",
+      "description": "Potentially dead code: function 'method10' is not used in this file (confidence: 60.0%)",
+      "endLine": 22,
+      "filePath": "/tmp/test_repo/main.rs",
+      "severity": "Medium",
+      "startLine": 22
+    },
+    {
+      "codeSnippet": "method11",
+      "description": "Potentially dead code: function 'method11' is not used in this file (confidence: 60.0%)",
+      "endLine": 23,
+      "filePath": "/tmp/test_repo/main.rs",
+      "severity": "Medium",
+      "startLine": 23
+    },
+    {
+      "codeSnippet": "method12",
+      "description": "Potentially dead code: function 'method12' is not used in this file (confidence: 60.0%)",
+      "endLine": 24,
+      "filePath": "/tmp/test_repo/main.rs",
+      "severity": "Medium",
+      "startLine": 24
+    },
+    {
+      "codeSnippet": "method13",
+      "description": "Potentially dead code: function 'method13' is not used in this file (confidence: 60.0%)",
+      "endLine": 25,
+      "filePath": "/tmp/test_repo/main.rs",
+      "severity": "Medium",
+      "startLine": 25
+    },
+    {
+      "codeSnippet": "method14",
+      "description": "Potentially dead code: function 'method14' is not used in this file (confidence: 60.0%)",
+      "endLine": 26,
+      "filePath": "/tmp/test_repo/main.rs",
+      "severity": "Medium",
+      "startLine": 26
+    },
+    {
+      "codeSnippet": "method15",
+      "description": "Potentially dead code: function 'method15' is not used in this file (confidence: 60.0%)",
+      "endLine": 27,
+      "filePath": "/tmp/test_repo/main.rs",
+      "severity": "Medium",
+      "startLine": 27
+    },
+    {
+      "codeSnippet": "method16",
+      "description": "Potentially dead code: function 'method16' is not used in this file (confidence: 60.0%)",
+      "endLine": 28,
+      "filePath": "/tmp/test_repo/main.rs",
+      "severity": "Medium",
+      "startLine": 28
+    },
+    {
+      "codeSnippet": "method17",
+      "description": "Potentially dead code: function 'method17' is not used in this file (confidence: 60.0%)",
+      "endLine": 29,
+      "filePath": "/tmp/test_repo/main.rs",
+      "severity": "Medium",
+      "startLine": 29
+    },
+    {
+      "codeSnippet": "method18",
+      "description": "Potentially dead code: function 'method18' is not used in this file (confidence: 60.0%)",
+      "endLine": 30,
+      "filePath": "/tmp/test_repo/main.rs",
+      "severity": "Medium",
+      "startLine": 30
+    },
+    {
+      "codeSnippet": "method19",
+      "description": "Potentially dead code: function 'method19' is not used in this file (confidence: 60.0%)",
+      "endLine": 31,
+      "filePath": "/tmp/test_repo/main.rs",
+      "severity": "Medium",
+      "startLine": 31
+    },
+    {
+      "codeSnippet": "method20",
+      "description": "Potentially dead code: function 'method20' is not used in this file (confidence: 60.0%)",
+      "endLine": 32,
+      "filePath": "/tmp/test_repo/main.rs",
+      "severity": "Medium",
+      "startLine": 32
+    },
+    {
+      "codeSnippet": "method21",
+      "description": "Potentially dead code: function 'method21' is not used in this file (confidence: 60.0%)",
+      "endLine": 33,
+      "filePath": "/tmp/test_repo/main.rs",
+      "severity": "Medium",
+      "startLine": 33
+    },
+    {
+      "codeSnippet": "unused_method",
+      "description": "Potentially dead code: function 'unused_method' is not used in this file (confidence: 90.0%)",
+      "endLine": 36,
+      "filePath": "/tmp/test_repo/main.rs",
+      "severity": "High",
+      "startLine": 36
+    },
+    {
+      "codeSnippet": "unused_function",
+      "description": "Potentially dead code: function 'unused_function' is not used in this file (confidence: 90.0%)",
+      "endLine": 42,
+      "filePath": "/tmp/test_repo/main.rs",
+      "severity": "High",
+      "startLine": 42
+    },
+    {
+      "codeSnippet": "LargeClass",
+      "description": "Potentially dead code: struct 'LargeClass' is not used in this file (confidence: 60.0%)",
+      "endLine": 2,
+      "filePath": "/tmp/test_repo/main.rs",
+      "severity": "Medium",
+      "startLine": 2
+    }
+  ],
+  "metadata": {
+    "codebasePath": "Unknown",
+    "durationSeconds": 0.0,
+    "timestamp": "2025-07-29T14:17:12.983038485-05:00"
+  }
+}

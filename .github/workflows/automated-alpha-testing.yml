@@ -1,0 +1,384 @@
+name: Automated Alpha Testing
+
+on:
+  # Run daily at 2 AM UTC
+  schedule:
+    - cron: '0 2 * * *'
+  
+  # Allow manual triggering
+  workflow_dispatch:
+    inputs:
+      test_scope:
+        description: 'Test scope to run'
+        required: true
+        default: 'quick_validation'
+        type: choice
+        options:
+          - quick_validation
+          - comprehensive_python
+          - comprehensive_javascript
+          - comprehensive_typescript
+          - problematic_cases
+          - full
+      
+      max_repos:
+        description: 'Maximum number of repositories to test'
+        required: false
+        default: '10'
+        type: string
+
+  # Run on alpha branch changes
+  push:
+    branches: [ alpha ]
+    paths:
+      - 'src/**'
+      - 'Cargo.toml'
+      - 'scripts/automated-github-testing.sh'
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  alpha-testing:
+    name: Alpha Repository Testing
+    runs-on: ubuntu-latest
+    timeout-minutes: 120  # 2 hours max
+    
+    strategy:
+      matrix:
+        # Test different configurations
+        test_config:
+          - name: "Quick Validation"
+            scope: "quick_validation"
+            max_repos: 5
+          - name: "Python Focus"
+            scope: "comprehensive_python"
+            max_repos: 8
+          - name: "JavaScript Focus"
+            scope: "comprehensive_javascript"
+            max_repos: 8
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 1
+    
+    - name: Setup Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        components: rustfmt, clippy
+    
+    - name: Cache Rust dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target/
+        key: ${{ runner.os }}-cargo-alpha-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-alpha-
+          ${{ runner.os }}-cargo-
+    
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y jq bc git curl
+        
+        # Install GitHub CLI for potential issue reporting
+        curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+        sudo apt-get update
+        sudo apt-get install -y gh
+    
+    - name: Build Uveddi with alpha features
+      run: |
+        echo "Building Uveddi with alpha features..."
+        cargo build --release --features="alpha"
+        
+        # Verify binary works
+        ./target/release/uveddi --version
+        ./target/release/uveddi --help
+    
+    - name: Run focused alpha testing
+      id: alpha_test
+      run: |
+        echo "Running alpha testing with scope: ${{ matrix.test_config.scope }}"
+        
+        # Create modified test script for CI
+        cat > scripts/ci-alpha-testing.sh << 'EOF'
+        #!/bin/bash
+        set -euo pipefail
+        
+        SCOPE="${1:-quick_validation}"
+        MAX_REPOS="${2:-5}"
+        
+        # Source the main testing script functions
+        source scripts/automated-github-testing.sh
+        
+        # Override repository list based on scope
+        case "$SCOPE" in
+          "quick_validation")
+            TEST_REPOSITORIES=(
+              ["flask_web"]="https://github.com/pallets/flask.git|python|Web framework"
+              ["express_web"]="https://github.com/expressjs/express.git|javascript|Node.js framework"
+              ["tokio_async"]="https://github.com/tokio-rs/tokio.git|rust|Async runtime"
+            )
+            ;;
+          "comprehensive_python")
+            TEST_REPOSITORIES=(
+              ["django_web"]="https://github.com/django/django.git|python|Web framework"
+              ["flask_web"]="https://github.com/pallets/flask.git|python|Web framework"
+              ["requests_http"]="https://github.com/psf/requests.git|python|HTTP library"
+              ["scrapy_crawler"]="https://github.com/scrapy/scrapy.git|python|Web scraping"
+            )
+            ;;
+          "comprehensive_javascript")
+            TEST_REPOSITORIES=(
+              ["express_web"]="https://github.com/expressjs/express.git|javascript|Web framework"
+              ["lodash_utils"]="https://github.com/lodash/lodash.git|javascript|Utility library"
+              ["axios_http"]="https://github.com/axios/axios.git|javascript|HTTP client"
+            )
+            ;;
+        esac
+        
+        # Run the main testing function
+        main
+        EOF
+        
+        chmod +x scripts/ci-alpha-testing.sh
+        
+        # Run the testing
+        ./scripts/ci-alpha-testing.sh "${{ matrix.test_config.scope }}" "${{ matrix.test_config.max_repos }}"
+      
+      continue-on-error: true
+    
+    - name: Collect test results
+      if: always()
+      run: |
+        echo "Collecting test results..."
+        
+        # Create summary for GitHub
+        if [[ -d "automated_test_results" ]]; then
+          echo "## Alpha Testing Results - ${{ matrix.test_config.name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Count results
+          total_tests=$(find automated_test_results/metrics -name "*.json" | wc -l)
+          successful_tests=$(find automated_test_results/reports -name "*.json" | wc -l)
+          
+          echo "- **Total Repositories Tested**: $total_tests" >> $GITHUB_STEP_SUMMARY
+          echo "- **Successful Analyses**: $successful_tests" >> $GITHUB_STEP_SUMMARY
+          
+          if [[ $total_tests -gt 0 ]]; then
+            success_rate=$(echo "scale=1; $successful_tests * 100 / $total_tests" | bc -l)
+            echo "- **Success Rate**: ${success_rate}%" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Detailed Results" >> $GITHUB_STEP_SUMMARY
+          
+          # Add detailed results if available
+          if [[ -f automated_test_results/summaries/test_summary_*.md ]]; then
+            latest_summary=$(ls -t automated_test_results/summaries/test_summary_*.md | head -1)
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            tail -n +10 "$latest_summary" | head -20 >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          fi
+        else
+          echo "❌ No test results found" >> $GITHUB_STEP_SUMMARY
+        fi
+    
+    - name: Upload test artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: alpha-test-results-${{ matrix.test_config.name }}
+        path: |
+          automated_test_results/
+          test_report_*.md
+        retention-days: 30
+    
+    - name: Check test success threshold
+      if: always()
+      run: |
+        if [[ -d "automated_test_results/metrics" ]]; then
+          total_tests=$(find automated_test_results/metrics -name "*.json" | wc -l)
+          successful_tests=$(find automated_test_results/reports -name "*.json" | wc -l)
+          
+          if [[ $total_tests -gt 0 ]]; then
+            success_rate=$(echo "$successful_tests * 100 / $total_tests" | bc)
+            echo "Success rate: ${success_rate}%"
+            
+            # Fail if success rate is below 60%
+            if [[ $success_rate -lt 60 ]]; then
+              echo "❌ Success rate below threshold (60%)"
+              exit 1
+            else
+              echo "✅ Success rate acceptable"
+            fi
+          else
+            echo "❌ No tests completed"
+            exit 1
+          fi
+        else
+          echo "❌ No test results directory found"
+          exit 1
+        fi
+
+  # Aggregate results from all matrix jobs
+  aggregate-results:
+    name: Aggregate Test Results
+    runs-on: ubuntu-latest
+    needs: alpha-testing
+    if: always()
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Download all test artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ./all-test-results
+    
+    - name: Generate aggregate report
+      run: |
+        echo "# Comprehensive Alpha Testing Report" > alpha_test_report.md
+        echo "" >> alpha_test_report.md
+        echo "**Generated**: $(date)" >> alpha_test_report.md
+        echo "**Workflow**: ${{ github.workflow }}" >> alpha_test_report.md
+        echo "**Run ID**: ${{ github.run_id }}" >> alpha_test_report.md
+        echo "" >> alpha_test_report.md
+        
+        total_repos=0
+        total_successful=0
+        
+        # Process each test configuration result
+        for result_dir in ./all-test-results/alpha-test-results-*; do
+          if [[ -d "$result_dir" ]]; then
+            config_name=$(basename "$result_dir" | sed 's/alpha-test-results-//')
+            echo "## $config_name Results" >> alpha_test_report.md
+            
+            if [[ -d "$result_dir/automated_test_results/metrics" ]]; then
+              repos=$(find "$result_dir/automated_test_results/metrics" -name "*.json" | wc -l)
+              successful=$(find "$result_dir/automated_test_results/reports" -name "*.json" | wc -l 2>/dev/null || echo 0)
+              
+              total_repos=$((total_repos + repos))
+              total_successful=$((total_successful + successful))
+              
+              echo "- Repositories tested: $repos" >> alpha_test_report.md
+              echo "- Successful analyses: $successful" >> alpha_test_report.md
+              
+              if [[ $repos -gt 0 ]]; then
+                rate=$(echo "scale=1; $successful * 100 / $repos" | bc -l)
+                echo "- Success rate: ${rate}%" >> alpha_test_report.md
+              fi
+            else
+              echo "- No results available" >> alpha_test_report.md
+            fi
+            
+            echo "" >> alpha_test_report.md
+          fi
+        done
+        
+        # Overall summary
+        echo "## Overall Summary" >> alpha_test_report.md
+        echo "- **Total repositories tested**: $total_repos" >> alpha_test_report.md
+        echo "- **Total successful analyses**: $total_successful" >> alpha_test_report.md
+        
+        if [[ $total_repos -gt 0 ]]; then
+          overall_rate=$(echo "scale=1; $total_successful * 100 / $total_repos" | bc -l)
+          echo "- **Overall success rate**: ${overall_rate}%" >> alpha_test_report.md
+          
+          # Alpha readiness assessment
+          echo "" >> alpha_test_report.md
+          echo "## Alpha Readiness Assessment" >> alpha_test_report.md
+          
+          if (( $(echo "$overall_rate >= 75" | bc -l) )); then
+            echo "✅ **READY FOR ALPHA RELEASE** - Success rate above 75%" >> alpha_test_report.md
+          elif (( $(echo "$overall_rate >= 60" | bc -l) )); then
+            echo "⚠️ **NEEDS IMPROVEMENT** - Success rate acceptable but could be better" >> alpha_test_report.md
+          else
+            echo "❌ **NOT READY** - Success rate below acceptable threshold" >> alpha_test_report.md
+          fi
+        fi
+        
+        echo "" >> alpha_test_report.md
+        echo "---" >> alpha_test_report.md
+        echo "*Generated by Uveddi Automated Alpha Testing Pipeline*" >> alpha_test_report.md
+    
+    - name: Upload aggregate report
+      uses: actions/upload-artifact@v4
+      with:
+        name: aggregate-alpha-test-report
+        path: alpha_test_report.md
+        retention-days: 90
+    
+    - name: Comment on PR (if applicable)
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          if (fs.existsSync('alpha_test_report.md')) {
+            const report = fs.readFileSync('alpha_test_report.md', 'utf8');
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## Automated Alpha Testing Results\n\n${report}`
+            });
+          }
+
+  # Create issues for failures (if enabled)
+  create-failure-issues:
+    name: Create Issues for Failures
+    runs-on: ubuntu-latest
+    needs: aggregate-results
+    if: failure() && github.event_name == 'schedule'
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Create failure issue
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const title = `Alpha Testing Failure - ${new Date().toISOString().split('T')[0]}`;
+          const body = `
+          ## Alpha Testing Pipeline Failure
+          
+          **Date**: ${new Date().toISOString()}
+          **Workflow Run**: ${context.runNumber}
+          **Run ID**: ${context.runId}
+          
+          The automated alpha testing pipeline has failed. This indicates potential issues with:
+          
+          - Uveddi analysis capabilities on diverse codebases
+          - Build or dependency issues
+          - Infrastructure problems
+          
+          ### Action Required
+          
+          1. Review the workflow logs: https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}
+          2. Check test artifacts for detailed failure information
+          3. Investigate and fix root cause
+          4. Re-run testing to validate fixes
+          
+          ### Labels
+          - bug
+          - alpha-testing
+          - ci-failure
+          `;
+          
+          await github.rest.issues.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: title,
+            body: body,
+            labels: ['bug', 'alpha-testing', 'ci-failure']
+          });
