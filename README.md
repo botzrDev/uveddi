@@ -16,7 +16,7 @@ Uveddi is an AI-powered CLI tool for architectural analysis of codebases, design
 - **Comprehensive reporting**: Markdown, JSON, and interactive outputs
 - **Advanced detection**: Dead code, large classes, tight coupling, cyclic dependencies
 - **Tree-sitter enabled**: Advanced parsing for accurate code analysis
-- **Memory optimization**: High-performance analysis for large codebases
+- **Memory optimization**: High-performance analysis for large codebases (enabled by default)
 - **Automated testing**: Comprehensive test suite with CI/CD integration
 
 ## Installation
@@ -58,10 +58,16 @@ cargo install --path . --features="alpha"
 
 ### Test CLI Interface (Working)
 ```bash
-# These commands demonstrate the CLI but will show expected analysis errors
+# Basic analysis with automatic memory optimization (enabled by default)
 ./target/release/uveddi analyze /path/to/code --output-format=markdown
 ./target/release/uveddi analyze /path/to/code --output-format=json --output=report.json
+
+# Advanced analysis options
 ./target/release/uveddi analyze /path/to/code --dead-code-confidence=0.8
+./target/release/uveddi analyze /path/to/code --memory-limit-gb=4 --memory-profile=large
+
+# Disable memory optimization if needed (not recommended)
+./target/release/uveddi analyze /path/to/code --disable-memory-optimization
 ```
 
 ### Interactive TUI Mode (Development Binary)
@@ -73,8 +79,10 @@ cargo run --bin tui_test --features="tui"
 ### What Works in Alpha
 - ✅ Full CLI argument parsing and validation
 - ✅ Comprehensive help system
-- ✅ Configuration commands
+- ✅ Configuration commands  
 - ✅ All output format options
+- ✅ **Memory optimization enabled by default** for better performance
+- ✅ Automatic memory detection and profile selection
 - ✅ Error handling and user-friendly messages
 - ⚠️ TUI (development binary only)
 

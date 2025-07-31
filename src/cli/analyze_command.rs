@@ -33,6 +33,7 @@ use anyhow::Context;
 use clap::Args;
 use log::info;
 use std::path::PathBuf;
+use sysinfo::System;
 
 use crate::application::{AnalysisConfig, AnalysisOrchestrator};
 use crate::error::UveddiError;
@@ -175,12 +176,12 @@ pub struct AnalyzeCommand {
     #[arg(long, value_name = "SCORE", default_value = "25")]
     pub large_classes_min_severity: Option<u32>,
 
-    /// Enable memory optimization features
+    /// Disable memory optimization features
     ///
-    /// Enables object pooling, arena allocation, and zero-copy AST caching
-    /// for improved performance on large codebases.
+    /// By default, Uveddi uses memory optimization (object pooling, arena allocation, 
+    /// and zero-copy AST caching) for better performance. Use this flag to disable optimizations.
     #[arg(long)]
-    pub enable_memory_optimization: bool,
+    pub disable_memory_optimization: bool,
 
     /// Memory limit in gigabytes for analysis
     ///
@@ -193,9 +194,9 @@ pub struct AnalyzeCommand {
     ///
     /// Selects pre-configured memory optimization settings:
     /// - `small`: Optimized for small projects (< 1000 files)
-    /// - `default`: Balanced settings for most projects
+    /// - `default`: Balanced settings for most projects (default)
     /// - `large`: Optimized for large codebases (> 10000 files)
-    #[arg(long, value_name = "PROFILE")]
+    #[arg(long, value_name = "PROFILE", default_value = "default")]
     pub memory_profile: Option<String>,
 
     // === HYBRID RENDERING OPTIONS ===
@@ -236,6 +237,48 @@ pub struct AnalyzeCommand {
 }
 
 impl AnalyzeCommand {
+    /// Auto-detect appropriate memory limit based on system RAM
+    /// Returns memory limit in GB, using conservative estimates for stability
+    fn auto_detect_memory_limit() -> Option<f64> {
+        let mut system = System::new_all();
+        system.refresh_memory();
+        
+        let total_memory_bytes = system.total_memory();
+        let total_memory_gb = total_memory_bytes as f64 / (1024.0 * 1024.0 * 1024.0);
+        
+        // Use conservative limits based on available RAM
+        if total_memory_gb >= 16.0 {
+            Some(8.0) // Use up to 8GB on systems with 16GB+ RAM
+        } else if total_memory_gb >= 8.0 {
+            Some(4.0) // Use up to 4GB on systems with 8GB+ RAM
+        } else if total_memory_gb >= 4.0 {
+            Some(2.0) // Use up to 2GB on systems with 4GB+ RAM
+        } else {
+            Some(1.0) // Use up to 1GB on systems with less RAM
+        }
+    }
+
+    /// Auto-detect appropriate memory profile based on project size and system resources
+    fn auto_detect_memory_profile(&self) -> String {
+        // If user specified a profile, respect it
+        if let Some(ref profile) = self.memory_profile {
+            return profile.clone();
+        }
+
+        let mut system = System::new_all();
+        system.refresh_memory();
+        let total_memory_gb = system.total_memory() as f64 / (1024.0 * 1024.0 * 1024.0);
+
+        // Auto-detect based on system capabilities
+        if total_memory_gb >= 16.0 {
+            "large".to_string()
+        } else if total_memory_gb >= 8.0 {
+            "default".to_string()
+        } else {
+            "small".to_string()
+        }
+    }
+
     /// Determine the appropriate diagram mode based on CLI flags
     pub fn get_diagram_mode(&self) -> DiagramMode {
         if self.mermaid_only {
@@ -504,6 +547,24 @@ impl AnalyzeCommand {
         let mut orchestrator =
             AnalysisOrchestrator::new().context("Failed to initialize analysis orchestrator")?;
 
+        // Memory optimization is enabled by default, unless explicitly disabled
+        let enable_memory_optimization = !self.disable_memory_optimization;
+
+        // Auto-detect memory settings if not specified
+        let memory_limit_gb = self.memory_limit_gb.or_else(|| {
+            if enable_memory_optimization {
+                Self::auto_detect_memory_limit()
+            } else {
+                None
+            }
+        });
+
+        let memory_profile = if enable_memory_optimization {
+            Some(self.auto_detect_memory_profile())
+        } else {
+            self.memory_profile.clone()
+        };
+
         // Configure analysis parameters
         let config = AnalysisConfig {
             target_path: self.path.clone(),
@@ -527,9 +588,9 @@ impl AnalyzeCommand {
             // Memory optimization fields
             #[cfg(feature = "memory-optimization")]
             memory_optimization: None, // Will be created based on profile/limits
-            enable_memory_optimization: self.enable_memory_optimization,
-            memory_limit_gb: self.memory_limit_gb,
-            memory_profile: self.memory_profile.clone(),
+            enable_memory_optimization,
+            memory_limit_gb,
+            memory_profile,
         };
 
         // Execute analysis through application layer
