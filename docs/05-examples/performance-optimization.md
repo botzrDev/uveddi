@@ -1,20 +1,42 @@
-# Performance Optimization Example
+# Performance Optimization Guide
 
-## Analyzing Large Codebases
+> **New in Latest Version**: Memory optimization is **enabled by default** with automatic system detection. Most users don't need manual configuration!
 
-### Parallel Processing
+## Automatic Optimizations (Default Behavior)
+
+Uveddi now automatically:
+- **Detects system memory** and sets appropriate limits
+- **Selects optimal memory profile** (small/default/large) based on RAM
+- **Enables object pooling** for reduced allocations
+- **Uses arena allocation** for temporary objects 
+- **Applies zero-copy AST caching** for better performance
+
+### Basic Usage (Optimized by Default)
 ```bash
-# Use all available cores
-uveddi analyze ./large-project --jobs 0
+# This automatically uses the best settings for your system
+uveddi analyze ./large-project
 
-# Limit to 4 cores
-uveddi analyze ./large-project --jobs 4
+# Memory optimization details will be logged
+RUST_LOG=debug uveddi analyze ./project
 ```
 
-### Memory Management
+## Manual Optimization (Advanced Users)
+
+### Memory Profile Override
 ```bash
-# Set memory limit (in MB)
-uveddi analyze ./project --memory-limit 4096
+# Force specific memory profile
+uveddi analyze ./project --memory-profile large    # For systems with 16GB+ RAM
+uveddi analyze ./project --memory-profile default  # Balanced (auto-selected for 8GB+ RAM)
+uveddi analyze ./project --memory-profile small    # For systems with <8GB RAM
+```
+
+### Memory Limit Override
+```bash
+# Set manual memory limit (auto-detected by default)
+uveddi analyze ./project --memory-limit-gb 8
+
+# Disable memory optimization (not recommended)
+uveddi analyze ./project --disable-memory-optimization
 ```
 
 ## Configuration Optimizations

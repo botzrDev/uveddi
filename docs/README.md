@@ -21,6 +21,7 @@ Uveddi is a sophisticated CLI tool that combines the power of AI with local-firs
 - **Multi-language analysis** - Support for Rust, Python, and JavaScript
 - **AI-powered insights** - Local and cloud AI integration for intelligent recommendations  
 - **Privacy-focused** - All analysis happens locally, your code never leaves your machine
+- **High-performance** - Memory optimization enabled by default with automatic system detection
 - **Comprehensive reporting** - Markdown, JSON, and interactive visual outputs
 - **Tree-sitter enabled** - Advanced parsing for improved accuracy and performance
 

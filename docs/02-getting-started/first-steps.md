@@ -76,8 +76,11 @@ Error: Analysis error in unknown:0: Unexpected error: Analysis execution failed
 
 Test all the CLI options to verify the interface:
 ```bash
-# Memory optimization options
-./target/release/uveddi analyze ./project --enable-memory-optimization --memory-limit-gb=4
+# Memory optimization (enabled by default, can be customized)
+./target/release/uveddi analyze ./project --memory-limit-gb=4 --memory-profile=large
+
+# Disable memory optimization if needed (not recommended)
+./target/release/uveddi analyze ./project --disable-memory-optimization
 
 # AI integration options (ready for when engine is complete)
 ./target/release/uveddi analyze ./project --enable-ai --ollama-model=deepseek-coder

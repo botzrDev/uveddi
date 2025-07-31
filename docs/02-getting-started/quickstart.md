@@ -17,6 +17,10 @@ uveddi --version
 ## 3. Analyze Your First Project
 
 ```bash
+# Basic analysis (memory optimization enabled by default)
+uveddi analyze /path/to/your/code
+
+# With AI-powered insights
 uveddi analyze /path/to/your/code --enable-ai
 ```
 
@@ -27,6 +31,8 @@ By default, the report will be printed to your terminal. To save it to a file:
 ```bash
 uveddi analyze /path/to/your/code --output report.md
 ```
+
+> **Performance Note**: Uveddi automatically optimizes memory usage based on your system. No configuration needed!
 
 ## 5. Next Steps
 

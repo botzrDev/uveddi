@@ -10,8 +10,10 @@
 - **Rust toolchain**: 1.70.0 or later
 - **Git**: For source code management
 - **C/C++ compiler**: Required for native dependencies
-- **Memory**: At least 4GB RAM (8GB+ recommended)
+- **Memory**: At least 2GB RAM (8GB+ recommended for large codebases)
 - **Storage**: 2GB free space for build artifacts
+
+> **Note**: Uveddi automatically detects your system memory and optimizes performance accordingly. Memory optimization is enabled by default for the best experience.
 
 ### Optional (for future features)
 - **PostgreSQL**: For database features (not active in alpha)

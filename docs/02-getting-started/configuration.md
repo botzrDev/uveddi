@@ -2,9 +2,26 @@
 
 ## Configuration Methods
 
-Uveddi is pre-configured with sensible defaults. As of vX.Y.Z, the "tree-sitter" feature is enabled by default for all supported languages, providing advanced parsing and analysis out of the box.
+Uveddi is pre-configured with sensible defaults for optimal performance:
 
-### Disabling Tree-sitter (Advanced)
+- **Memory optimization**: Enabled by default with automatic system detection
+- **Tree-sitter parsing**: Enabled by default for all supported languages
+- **Smart memory profiles**: Automatically selected based on your system (small/default/large)
+- **Memory limits**: Automatically set based on available RAM
+
+### Memory Optimization (New Default Behavior)
+Starting with the latest version, memory optimization is enabled by default:
+- **Object pooling** for reduced allocations
+- **Arena allocation** for temporary objects  
+- **Zero-copy AST caching** for better performance
+- **Automatic memory limits** based on system RAM
+
+To disable memory optimization (not recommended):
+```bash
+uveddi analyze --disable-memory-optimization
+```
+
+### Advanced Configuration Options
 If you need to disable tree-sitter for compatibility or debugging, use the following environment variable or cargo feature flag:
 
 - Environment: `UVEDDI_DISABLE_TREE_SITTER=1`
@@ -40,6 +57,13 @@ api_key = "your_api_key"
 [analysis]
 max_file_size = 1048576  # 1MB
 parallel_jobs = 4
+
+[memory]
+# Memory optimization is enabled by default
+# These settings override automatic detection
+disable_optimization = false  # Set to true to disable (not recommended)
+limit_gb = 4.0               # Manual memory limit (auto-detected by default)
+profile = "default"          # "small", "default", or "large" (auto-detected by default)
 ```
 
 ## Environment Variables

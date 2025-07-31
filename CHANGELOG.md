@@ -8,13 +8,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Memory optimization enabled by default** for all analysis operations
+- Automatic system memory detection and configuration
+- Smart memory profile selection (small/default/large) based on system resources
+- `--disable-memory-optimization` flag for advanced users who need to disable optimizations
 - New documentation structure
 - mdBook configuration for documentation website
 - Architecture documentation consolidation
 
 ### Changed
+- **BREAKING**: Memory optimization is now enabled by default instead of opt-in
+- Replaced `--enable-memory-optimization` with `--disable-memory-optimization` flag
+- Memory profiles now auto-detect based on system RAM (16GB+ → large, 8GB+ → default, <8GB → small)
+- Memory limits automatically set based on available system memory
 - Updated README and CONTRIBUTING files
 - Reorganized documentation directories
+
+### Performance
+- Significant performance improvements for all users through default memory optimization
+- Object pooling, arena allocation, and zero-copy AST caching now active by default
+- Better memory management for large codebases without user configuration
 
 ## [0.9.0-alpha] - 2025-07-29
 

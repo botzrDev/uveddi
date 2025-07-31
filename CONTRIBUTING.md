@@ -7,7 +7,10 @@ We welcome contributions from the community! This guide will help you get starte
 ### Prerequisites
 - Rust toolchain (latest stable version)
 - Git
+- At least 4GB RAM (8GB+ recommended for development)
 - Optional: Ollama for local AI analysis
+
+> **Performance Note**: Uveddi automatically enables memory optimization by default. During development, you can disable it with `--disable-memory-optimization` if needed for debugging.
 
 ### Setup Steps
 1. Clone the repository:
