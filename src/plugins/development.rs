@@ -175,25 +175,14 @@ impl ExampleAntiPatternPlugin {
         use std::collections::HashMap;
 
         // Example: Load patterns from plugin-specific source
-        // Using correct AI schema fields with all required fields
+        // TODO: Fix PatternKnowledge struct fields - using available fields only
         let custom_pattern = PatternKnowledge {
             id: "singleton_abuse".to_string(),
-            name: "Singleton Pattern Abuse".to_string(),
-            definition: CompressedString::new("Overuse of singleton pattern leading to global state issues"),
-            symptoms: vec![CompressedString::new("Global state access patterns")],
-            impact: ImpactLevel::Medium,
-            category: AntiPatternCategory::ObjectOriented,
-            detection_methods: vec![],
-            solutions: vec![],
-            examples: CodeExamples {
-                primary: vec![],
-                variations: HashMap::new(),
-            },
-            language_variations: HashMap::new(),
-            related_patterns: vec![],
-            tags: vec!["singleton".to_string()],
-            frequency_score: 0.5,
+            category: AntiPatternCategory::GodObject,
             detection_confidence: 0.8,
+            tags: vec!["singleton".to_string()],
+            solutions: vec![],
+            detection_methods: vec![],
         };
 
         Ok(vec![custom_pattern])

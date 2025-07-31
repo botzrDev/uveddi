@@ -2449,7 +2449,13 @@ impl ReportGenerator {
         
         // Generate static SVG if available
         if let Some(ref svg_generator) = self.svg_generator {
-            let svg_content = format!("<svg id=\"my-svg\">{}</svg>", mermaid_code); // Fallback content
+            // Actually generate SVG using the SVG generator
+            let svg_result = tokio::task::block_in_place(|| {
+                tokio::runtime::Handle::current().block_on(async {
+                    svg_generator.generate_svg_with_fallback(&mermaid_code, &diagram_id).await
+                })
+            });
+            
             format!(r#"
                 <div class="diagram-isolator" style="display: block; width: 100%; margin: 1rem 0; isolation: isolate;">
                     <div class="diagram-container">
@@ -2460,11 +2466,11 @@ impl ReportGenerator {
                             <p><em>This diagram shows the architectural issues found in this anti-pattern category. Each node represents a component or relationship affected by the identified problems.</em></p>
                         </div>
                         <div class="svg-diagram" id="{}">
-                            <div class="mermaid">{}</div>
+                            {}
                         </div>
                     </div>
                 </div>
-"#, pattern_name, type_id, diagram_id, mermaid_code.trim())
+"#, pattern_name, type_id, diagram_id, svg_result)
         } else {
             // Fallback to client-side Mermaid
             format!(r#"

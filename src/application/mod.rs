@@ -366,11 +366,30 @@ impl AnalysisOrchestrator {
         issues: &[ArchitecturalIssue],
         report_generator: &ReportGenerator,
     ) -> Result<String, UveddiError> {
+        // Retrieve anti-pattern types from database for proper report generation
+        let anti_pattern_types = self.database.get_all_anti_pattern_types()
+            .map_err(|e| {
+                error!("Failed to retrieve anti-pattern types from database: {}", e);
+                crate::error::UveddiError::from(
+                    crate::report::errors::ReportGenerationError::DataExtractionError(
+                        format!("Failed to retrieve anti-pattern types: {}", e),
+                    ),
+                )
+            })?;
+
+        // Build HashMap mapping anti-pattern type IDs to their definitions
+        let anti_pattern_map: HashMap<i64, crate::database::models::AntiPatternType> = anti_pattern_types
+            .into_iter()
+            .filter_map(|apt| apt.anti_pattern_type_id.map(|id| (id, apt)))
+            .collect();
+
+        info!("Retrieved {} anti-pattern types for report generation", anti_pattern_map.len());
+
         match config.output_format.as_str() {
             "json" => {
                 let codebase_path = config.target_path.to_str();
                 let report = report_generator
-                    .generate_json_report(analysis_run, issues, &HashMap::new(), None, codebase_path)
+                    .generate_json_report(analysis_run, issues, &anti_pattern_map, None, codebase_path)
                     .map_err(|e| {
                         crate::error::UveddiError::from(
                             crate::report::errors::ReportGenerationError::DataExtractionError(
@@ -383,7 +402,7 @@ impl AnalysisOrchestrator {
             "markdown" => {
                 let codebase_path = config.target_path.to_str();
                 report_generator
-                    .generate_markdown_report(analysis_run, issues, &HashMap::new(), None, codebase_path)
+                    .generate_markdown_report(analysis_run, issues, &anti_pattern_map, None, codebase_path)
                     .map_err(|e| {
                         crate::error::UveddiError::from(
                             crate::report::errors::ReportGenerationError::DataExtractionError(
@@ -395,7 +414,7 @@ impl AnalysisOrchestrator {
             "html" => {
                 let codebase_path = config.target_path.to_str();
                 report_generator
-                    .generate_html_report(analysis_run, issues, &HashMap::new(), None, codebase_path)
+                    .generate_html_report(analysis_run, issues, &anti_pattern_map, None, codebase_path)
                     .await
                     .map_err(|e| {
                         crate::error::UveddiError::from(

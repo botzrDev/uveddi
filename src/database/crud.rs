@@ -322,4 +322,37 @@ impl Database {
         let path = stmt.query_row([project_id], |row| row.get::<_, String>(0))?;
         Ok(path)
     }
+
+    /// Retrieves all anti-pattern types from the database.
+    ///
+    /// This method fetches all anti-pattern type definitions that have been
+    /// stored in the database, which are needed for proper report generation
+    /// and issue categorization.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(Vec<AntiPatternType>)` - Vector of all anti-pattern types in the database
+    /// * `Err(UveddiError)` - If the query fails
+    pub fn get_all_anti_pattern_types(&self) -> Result<Vec<AntiPatternType>> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT anti_pattern_type_id, name, description, category FROM anti_pattern_types ORDER BY name"
+        )?;
+        
+        let anti_pattern_iter = stmt.query_map([], |row| {
+            Ok(AntiPatternType {
+                anti_pattern_type_id: Some(row.get(0)?),
+                name: row.get(1)?,
+                description: row.get(2)?,
+                category: row.get(3)?,
+            })
+        })?;
+
+        let mut anti_patterns = Vec::new();
+        for anti_pattern in anti_pattern_iter {
+            anti_patterns.push(anti_pattern?);
+        }
+        
+        Ok(anti_patterns)
+    }
 }
