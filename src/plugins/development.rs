@@ -176,9 +176,31 @@ impl ExampleAntiPatternPlugin {
 
         // Example: Load patterns from plugin-specific source
         // TODO: Fix PatternKnowledge struct fields - using available fields only
+        #[cfg(feature = "ai")]
         let custom_pattern = PatternKnowledge {
             id: "singleton_abuse".to_string(),
-            category: AntiPatternCategory::GodObject,
+            name: "Singleton Abuse".to_string(),
+            definition: CompressedString::new("Overuse of singleton pattern causing tight coupling"),
+            symptoms: vec![CompressedString::new("Global state management")],
+            impact: crate::ai::knowledge::schema::ImpactLevel::Medium,
+            category: AntiPatternCategory::ObjectOriented,
+            detection_methods: vec![],
+            solutions: vec![],
+            examples: crate::ai::knowledge::schema::CodeExamples {
+                primary: vec![],
+                variations: HashMap::new(),
+            },
+            language_variations: HashMap::new(),
+            related_patterns: vec![],
+            tags: vec!["singleton".to_string()],
+            frequency_score: 0.7,
+            detection_confidence: 0.8,
+        };
+
+        #[cfg(not(feature = "ai"))]
+        let custom_pattern = PatternKnowledge {
+            id: "singleton_abuse".to_string(),
+            category: AntiPatternCategory::GlobalState,
             detection_confidence: 0.8,
             tags: vec!["singleton".to_string()],
             solutions: vec![],
@@ -407,6 +429,8 @@ impl ExampleEnterprisePlugin {
     async fn load_enterprise_knowledge(&mut self) -> Result<(), PluginError> {
         #[cfg(feature = "ai")]
         use crate::ai::knowledge::compression::CompressedString;
+        #[cfg(not(feature = "ai"))]
+        use crate::plugins::development::CompressedString;
 
         // Example organization patterns
         let org_pattern = PatternKnowledge {
@@ -565,6 +589,8 @@ impl ExampleFrameworkPlugin {
     async fn load_framework_knowledge(&mut self) -> Result<(), PluginError> {
         #[cfg(feature = "ai")]
         use crate::ai::knowledge::compression::CompressedString;
+        #[cfg(not(feature = "ai"))]
+        use crate::plugins::development::CompressedString;
 
         // Example React framework knowledge
         let react_pattern = PatternKnowledge {

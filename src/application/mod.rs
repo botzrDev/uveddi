@@ -414,7 +414,7 @@ impl AnalysisOrchestrator {
             "html" => {
                 let codebase_path = config.target_path.to_str();
                 report_generator
-                    .generate_html_report(analysis_run, issues, &anti_pattern_map, None, codebase_path)
+                    .generate_html_report(analysis_run, issues, &anti_pattern_map, config.output_file.as_deref(), codebase_path)
                     .await
                     .map_err(|e| {
                         crate::error::UveddiError::from(

@@ -125,7 +125,14 @@
       "Bash(/home/austingreen/Documents/botzr/projects/uveddi/target/release/uveddi --help)",
       "Bash(./scripts/automated-github-testing.sh:*)",
       "Bash(python3 scripts/analyze-test-results.py:*)",
-      "Bash(target/release/uveddi analyze:*)"
+      "Bash(target/release/uveddi analyze:*)",
+      "Bash(ollama list:*)",
+      "Bash(RUST_BACKTRACE=1 ./target/release/uveddi analyze /home/austingreen/Documents/botzr/projects/uveddi/alpha_testing/express-typescript --output-format=html --output=express_typescript_analysis_report.html --mermaid-only)",
+      "Bash(RUST_LOG=info ./target/release/uveddi analyze /home/austingreen/Documents/botzr/projects/uveddi/alpha_testing/requests/src/requests/models.py --output-format=html --output=test_separate_diagrams2.html --mermaid-only)",
+      "Bash(RUST_LOG=info ./target/release/uveddi analyze /home/austingreen/Documents/botzr/projects/uveddi/alpha_testing/requests/src/requests/models.py --output-format=html --output=test_debug_final.html --mermaid-only)",
+      "Bash(RUST_LOG=info ./target/release/uveddi analyze /home/austingreen/Documents/botzr/projects/uveddi/alpha_testing/requests/src/requests/models.py --output-format=html --output=test_debug_output_dir.html --mermaid-only)",
+      "Bash(RUST_LOG=info ./target/release/uveddi analyze /home/austingreen/Documents/botzr/projects/uveddi/alpha_testing/requests/src/requests/models.py --output-format=html --output=final_test_with_diagrams.html --mermaid-only)",
+      "Bash(RUST_BACKTRACE=1 cargo run --bin uveddi --features ai -- analyze --output-format html --output ../../test_report.html .)"
     ],
     "deny": []
   }

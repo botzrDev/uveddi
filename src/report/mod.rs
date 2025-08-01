@@ -150,7 +150,7 @@ pub use image_renderer::{ImageFormat, ImageRenderer, RenderedImage};
 pub mod diagrams;
 pub mod svg_generator;
 use chrono::{DateTime, Local};
-use log::{error, info};
+use log::{error, info, warn};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::fs;
@@ -1431,8 +1431,19 @@ impl ReportGenerator {
 
         let now: DateTime<Local> = Local::now();
         
+        // Extract output directory from path
+        let output_dir = output_path.and_then(|p| p.parent());
+        if let Some(path) = output_path {
+            info!("Output path: {}", path.display());
+            if let Some(dir) = output_dir {
+                info!("Output directory: {}", dir.display());
+            } else {
+                warn!("Failed to extract output directory from path: {}", path.display());
+            }
+        }
+        
         // Generate the HTML content
-        let html_content = self.generate_html_content(analysis_run, issues, anti_pattern_types, &now).await?;
+        let html_content = self.generate_html_content(analysis_run, issues, anti_pattern_types, &now, output_dir).await?;
 
         // Write to file if output path is provided
         if let Some(path) = output_path {
@@ -1461,6 +1472,7 @@ impl ReportGenerator {
         issues: &[ArchitecturalIssue],
         anti_pattern_types: &HashMap<i64, AntiPatternType>,
         timestamp: &DateTime<Local>,
+        output_dir: Option<&Path>,
     ) -> Result<String, String> {
         let mut html = String::new();
         
@@ -1483,6 +1495,9 @@ impl ReportGenerator {
         
         // Severity dashboard
         html.push_str(&self.generate_html_severity_dashboard(issues));
+        
+        // Architecture diagrams section (with links to separate files)
+        html.push_str(&self.generate_html_diagrams_section(issues, anti_pattern_types, output_dir).await);
         
         // Detailed issues with inline diagrams
         html.push_str(&self.generate_html_detailed_issues(issues, anti_pattern_types));
@@ -1824,6 +1839,182 @@ impl ReportGenerator {
             font-weight: 600;
             margin-bottom: 1rem;
             color: var(--primary-color);
+        }}
+
+        /* Diagram Link Cards */
+        .diagram-intro {{
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: var(--radius);
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }}
+
+        .diagram-links-grid {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }}
+
+        .diagram-link-card {{
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            transition: all 0.2s ease;
+            position: relative;
+        }}
+
+        .diagram-link-card:hover {{
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+            border-color: var(--primary-color);
+        }}
+
+        .diagram-card-header {{
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }}
+
+        .diagram-card-header h3 {{
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }}
+
+        .diagram-card-header i {{
+            color: var(--primary-color);
+        }}
+
+        .diagram-card-body p {{
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }}
+
+        .diagram-button {{
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--primary-color);
+            color: white;
+            text-decoration: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius);
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }}
+
+        .diagram-button:hover {{
+            background: var(--secondary-color);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
+        }}
+
+        /* Diagram Toggle Interface Styles */
+        .diagram-buttons {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }}
+
+        .diagram-button-card {{
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            transition: all 0.2s ease;
+            position: relative;
+        }}
+
+        .diagram-button-card:hover {{
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+            border-color: var(--primary-color);
+        }}
+
+        .diagram-toggle-btn {{
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius);
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }}
+
+        .diagram-toggle-btn:hover {{
+            background: var(--secondary-color);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
+        }}
+
+        .diagram-content {{
+            margin-top: 2rem;
+        }}
+
+        #active-diagram-header {{
+            display: none;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            margin-bottom: 1rem;
+        }}
+
+        #active-diagram-header h3 {{
+            margin: 0;
+            color: var(--text-primary);
+            font-size: 1.2rem;
+        }}
+
+        .hide-diagram-btn {{
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: calc(var(--radius) / 2);
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }}
+
+        .hide-diagram-btn:hover {{
+            background: #ef4444;
+            transform: translateY(-1px);
+        }}
+
+        .embedded-diagram {{
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }}
+
+        .embedded-diagram.visible {{
+            opacity: 1;
+            transform: translateY(0);
         }}
         
         /* SVG Diagram Styles - Critical for rendering */
@@ -2167,8 +2358,8 @@ impl ReportGenerator {
         dashboard_html
     }
 
-    /// Generate HTML diagrams section with embedded Mermaid
-    async fn generate_html_diagrams_section(&self, issues: &[ArchitecturalIssue], anti_pattern_types: &HashMap<i64, AntiPatternType>) -> String {
+    /// Generate HTML diagrams section with embedded diagrams that can be toggled
+    async fn generate_html_diagrams_section(&self, issues: &[ArchitecturalIssue], anti_pattern_types: &HashMap<i64, AntiPatternType>, _output_dir: Option<&Path>) -> String {
         let diagrams_content = self.generate_diagrams_section(issues, anti_pattern_types);
         
         if diagrams_content.trim().is_empty() {
@@ -2183,9 +2374,15 @@ impl ReportGenerator {
             Architecture Diagrams
         </h2>
         <div id="diagrams-content" class="collapsible-content">
+            <p class="diagram-intro">
+                <i class="fas fa-info-circle"></i> 
+                The following diagrams provide visual representations of the architectural issues found in your codebase. Click any diagram button to view it inline.
+            </p>
+            
+            <div class="diagram-buttons">
 "#);
 
-        // Convert Mermaid code blocks to HTML-embedded diagrams
+        // Parse Mermaid content to extract diagrams
         let lines: Vec<&str> = diagrams_content.lines().collect();
         let mut in_mermaid_block = false;
         let mut mermaid_content = String::new();
@@ -2222,13 +2419,314 @@ impl ReportGenerator {
             diagrams_to_render.push((diagram_title, mermaid_content));
         }
 
-        // Render all diagrams asynchronously
-        for (title, code) in diagrams_to_render {
-            html.push_str(&self.render_mermaid_diagram_async(&title, &code).await);
+        // Generate diagram buttons
+        for (i, (title, _)) in diagrams_to_render.iter().enumerate() {
+            let diagram_id = format!("diagram-{}", i);
+            let icon = match title {
+                title if title.contains("Cycle") => "fas fa-sync-alt",
+                title if title.contains("God Object") => "fas fa-cube",
+                title if title.contains("Dead Code") => "fas fa-skull-crossbones",
+                _ => "fas fa-chart-bar"
+            };
+            
+            html.push_str(&format!(r#"
+                <div class="diagram-button-card">
+                    <div class="diagram-card-header">
+                        <i class="{}"></i>
+                        <h3>{}</h3>
+                    </div>
+                    <div class="diagram-card-body">
+                        <p>Interactive architectural diagram showing {}.</p>
+                        <button onclick="toggleDiagram('{}')" class="diagram-toggle-btn">
+                            <i class="fas fa-eye"></i> Show Diagram
+                        </button>
+                    </div>
+                </div>
+"#, icon, title, title.to_lowercase(), diagram_id));
         }
 
-        html.push_str("        </div>\n    </section>\n");
+        html.push_str(r#"
+            </div>
+            
+            <div class="diagram-content">
+                <div id="active-diagram-header" style="display: none;">
+                    <h3 id="active-diagram-title"></h3>
+                    <button onclick="hideAllDiagrams()" class="hide-diagram-btn">
+                        <i class="fas fa-eye-slash"></i> Hide Diagram
+                    </button>
+                </div>
+"#);
+
+        // Generate embedded hidden diagrams
+        for (i, (title, code)) in diagrams_to_render.iter().enumerate() {
+            let diagram_id = format!("diagram-{}", i);
+            let unique_mermaid_id = format!("mermaid-{}", uuid::Uuid::new_v4().to_string().replace('-', "")[..8].to_string());
+            
+            html.push_str(&format!(r#"
+                <div id="{}" class="embedded-diagram" style="display: none;">
+                    <div class="diagram-container">
+                        <div class="mermaid" id="{}">{}</div>
+                    </div>
+                </div>
+"#, diagram_id, unique_mermaid_id, code.trim()));
+        }
+
+        html.push_str(r#"
+            </div>
+        </div>
+    </section>
+"#);
         html
+    }
+
+    /// Generate a separate HTML file for a single diagram
+    async fn generate_separate_diagram_file(&self, output_path: &Path, title: &str, mermaid_code: &str) -> Result<(), Box<dyn std::error::Error>> {
+        let diagram_id = format!("diagram-{}", uuid::Uuid::new_v4().to_string().replace('-', "")[..8].to_string());
+        let diagram_content = self.render_diagram_content(mermaid_code, &diagram_id).await;
+        
+        let html_content = format!(r#"<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{} - Uveddi Diagram</title>
+    
+    <!-- Mermaid.js for diagram rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {{
+            --primary-color: #2563eb;
+            --secondary-color: #64748b;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --border-color: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --radius: 8px;
+        }}
+
+        [data-theme="dark"] {{
+            --primary-color: #3b82f6;
+            --secondary-color: #94a3b8;
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --border-color: #475569;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        }}
+
+        * {{
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }}
+
+        body {{
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background-color: var(--bg-primary);
+            padding: 20px;
+        }}
+
+        .diagram-container {{
+            max-width: 100%;
+            margin: 0 auto;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 2rem;
+            overflow-x: auto;
+        }}
+
+        .diagram-header {{
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }}
+
+        .diagram-title {{
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }}
+
+        .theme-toggle {{
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }}
+
+        .theme-toggle:hover {{
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
+        }}
+
+        .mermaid {{
+            display: flex;
+            justify-content: center;
+            min-height: 400px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius);
+            padding: 1rem;
+        }}
+
+        .svg-diagram {{
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            overflow-x: auto;
+        }}
+
+        .svg-diagram svg {{
+            max-width: 100%;
+            height: auto;
+            background: white;
+            border-radius: var(--radius);
+        }}
+
+        .back-link {{
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+            margin-bottom: 1rem;
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--primary-color);
+            border-radius: var(--radius);
+            transition: all 0.2s ease;
+        }}
+
+        .back-link:hover {{
+            background: var(--primary-color);
+            color: white;
+            transform: translateY(-1px);
+        }}
+
+        @media (max-width: 768px) {{
+            body {{
+                padding: 10px;
+            }}
+            
+            .diagram-container {{
+                padding: 1rem;
+            }}
+            
+            .diagram-title {{
+                font-size: 1.25rem;
+            }}
+        }}
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" onclick="toggleTheme()" id="themeToggle">
+        <i class="fas fa-moon"></i> Dark Mode
+    </button>
+
+    <div class="diagram-container">
+        <div class="diagram-header">
+            <a href="javascript:history.back()" class="back-link">
+                <i class="fas fa-arrow-left"></i> Back to Report
+            </a>
+            <div class="diagram-title">
+                <i class="fas fa-project-diagram"></i> {}
+            </div>
+        </div>
+
+        <div class="svg-diagram" id="{}">
+{}
+        </div>
+    </div>
+
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({{
+            theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default',
+            startOnLoad: true,
+            flowchart: {{
+                useMaxWidth: true,
+                htmlLabels: true
+            }},
+            sequence: {{
+                useMaxWidth: true
+            }},
+            journey: {{
+                useMaxWidth: true
+            }}
+        }});
+
+        // Theme toggle functionality
+        function toggleTheme() {{
+            const html = document.documentElement;
+            const themeToggle = document.getElementById('themeToggle');
+            const currentTheme = html.getAttribute('data-theme');
+            
+            if (currentTheme === 'dark') {{
+                html.removeAttribute('data-theme');
+                themeToggle.innerHTML = '<i class="fas fa-moon"></i> Dark Mode';
+                localStorage.setItem('theme', 'light');
+                mermaid.initialize({{ theme: 'default' }});
+            }} else {{
+                html.setAttribute('data-theme', 'dark');
+                themeToggle.innerHTML = '<i class="fas fa-sun"></i> Light Mode';
+                localStorage.setItem('theme', 'dark');
+                mermaid.initialize({{ theme: 'dark' }});
+            }}
+            
+            // Re-render mermaid diagrams with new theme
+            location.reload();
+        }}
+
+        // Load saved theme
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {{
+            document.documentElement.setAttribute('data-theme', 'dark');
+            document.getElementById('themeToggle').innerHTML = '<i class="fas fa-sun"></i> Light Mode';
+        }}
+    </script>
+</body>
+</html>"#, title, title, diagram_id, diagram_content);
+
+        let mut file = fs::File::create(output_path)?;
+        file.write_all(html_content.as_bytes())?;
+        info!("Generated separate diagram file: {}", output_path.display());
+        
+        Ok(())
+    }
+
+    /// Render diagram content (SVG or Mermaid fallback)
+    async fn render_diagram_content(&self, mermaid_code: &str, diagram_id: &str) -> String {
+        // Try to generate static SVG first
+        if let Some(ref svg_generator) = self.svg_generator {
+            let svg_content = svg_generator.generate_svg_with_fallback(mermaid_code, diagram_id).await;
+            return svg_content;
+        }
+        
+        // Fallback to client-side Mermaid
+        format!(r#"<div class="mermaid" id="{}">{}</div>"#, diagram_id, mermaid_code.trim())
     }
 
     /// Render a single Mermaid diagram as HTML with static SVG generation
@@ -2845,6 +3343,78 @@ impl ReportGenerator {
             
             content.classList.toggle('active');
             icon.style.transform = content.classList.contains('active') ? 'rotate(90deg)' : 'rotate(0deg)';
+        }}
+
+        // Diagram toggle functionality
+        function toggleDiagram(diagramId) {{
+            // Hide all other diagrams first
+            hideAllDiagrams();
+            
+            // Show the selected diagram
+            const diagram = document.getElementById(diagramId);
+            const header = document.getElementById('active-diagram-header');
+            const title = document.getElementById('active-diagram-title');
+            
+            if (diagram && header && title) {{
+                // Update title
+                const diagramTitle = document.querySelector(`button[onclick="toggleDiagram('${{diagramId}}')"]`)
+                    .closest('.diagram-button-card')
+                    .querySelector('h3').textContent;
+                title.textContent = diagramTitle;
+                
+                // Show diagram with smooth transition
+                diagram.style.display = 'block';
+                header.style.display = 'flex';
+                
+                // Trigger reflow for animation
+                diagram.offsetHeight;
+                diagram.style.opacity = '1';
+                diagram.style.transform = 'translateY(0)';
+                
+                // Update button text
+                const button = document.querySelector(`button[onclick="toggleDiagram('${{diagramId}}')"]`);
+                button.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Diagram';
+                button.onclick = () => hideAllDiagrams();
+                
+                // Re-render the specific Mermaid diagram
+                setTimeout(() => {{
+                    const mermaidElement = diagram.querySelector('.mermaid');
+                    if (mermaidElement && !mermaidElement.getAttribute('data-processed')) {{
+                        const graphDefinition = mermaidElement.textContent;
+                        const diagramElementId = mermaidElement.id;
+                        mermaidElement.innerHTML = '';
+                        mermaidElement.removeAttribute('data-processed');
+                        
+                        mermaid.render(diagramElementId, graphDefinition, (svgCode) => {{
+                            mermaidElement.innerHTML = svgCode;
+                        }});
+                    }}
+                }}, 50);
+            }}
+        }}
+
+        function hideAllDiagrams() {{
+            // Hide all diagrams
+            document.querySelectorAll('.embedded-diagram').forEach(diagram => {{
+                diagram.style.opacity = '0';
+                diagram.style.transform = 'translateY(-10px)';
+                setTimeout(() => {{
+                    diagram.style.display = 'none';
+                }}, 200);
+            }});
+            
+            // Hide header
+            const header = document.getElementById('active-diagram-header');
+            if (header) {{
+                header.style.display = 'none';
+            }}
+            
+            // Reset all button texts
+            document.querySelectorAll('.diagram-toggle-btn').forEach(button => {{
+                const diagramId = button.getAttribute('onclick').match(/'([^']+)'/)[1];
+                button.innerHTML = '<i class="fas fa-eye"></i> Show Diagram';
+                button.onclick = () => toggleDiagram(diagramId);
+            }});
         }}
 
         // Issue filtering
