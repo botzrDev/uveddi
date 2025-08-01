@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="{{ theme | default(value='light') }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Uveddi Architectural Analysis Report{% endblock %}</title>
+    
+    {% block head_meta %}{% endblock %}
+    
+    <style>
+        {{ bundled_css | safe }}
+    </style>
+    
+    {% block additional_styles %}{% endblock %}
+</head>
+<body>
+    <div class="container">
+        {% block header %}
+        <div class="header">
+            <h1>{% block header_title %}Uveddi Architectural Analysis Report{% endblock %}</h1>
+            <div class="header-subtitle">
+                {% block header_subtitle %}
+                Generated on {{ timestamp | date(format="%Y-%m-%d at %H:%M:%S UTC") }}
+                {% if git_branch %} | Branch: {{ git_branch }}{% endif %}
+                {% endblock %}
+            </div>
+            <div class="header-controls">
+                <button onclick="toggleTheme()" class="theme-toggle" title="Toggle theme">
+                    <i class="fas fa-moon dark-icon"></i>
+                    <i class="fas fa-sun light-icon"></i>
+                </button>
+                <button onclick="window.print()" class="print-btn" title="Print report">
+                    <i class="fas fa-print"></i>
+                </button>
+            </div>
+        </div>
+        {% endblock %}
+
+        {% block navigation %}
+        <nav class="navigation">
+            <ul>
+                <li><a href="#executive-summary" class="nav-link">Executive Summary</a></li>
+                <li><a href="#severity-dashboard" class="nav-link">Severity Dashboard</a></li>
+                <li><a href="#diagrams" class="nav-link">Architecture Diagrams</a></li>
+                <li><a href="#detailed-issues" class="nav-link">Detailed Issues</a></li>
+            </ul>
+        </nav>
+        {% endblock %}
+
+        <main class="main-content">
+            {% block content %}{% endblock %}
+        </main>
+
+        {% block footer %}
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-left">
+                    <strong>Uveddi</strong> - Advanced Architectural Analysis Tool
+                </div>
+                <div class="footer-right">
+                    Generated in {{ generation_time_ms }}ms | {{ total_issues }} issues analyzed
+                </div>
+            </div>
+        </footer>
+        {% endblock %}
+    </div>
+
+    <script>
+        {{ bundled_js | safe }}
+    </script>
+    
+    {% block additional_scripts %}{% endblock %}
+</body>
+</html>

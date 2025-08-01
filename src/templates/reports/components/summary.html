@@ -1,0 +1,102 @@
+{% macro executive_summary(analysis_run, issues) %}
+<section id="executive-summary" class="executive-summary">
+    <h2>Executive Summary</h2>
+    
+    <div class="summary-grid">
+        <div class="summary-card overall-health">
+            <div class="card-icon">
+                <i class="fas fa-heartbeat"></i>
+            </div>
+            <div class="card-content">
+                <h3>Overall Health</h3>
+                <div class="health-score {{ health_status | lower }}">
+                    {{ health_score | round(precision=1) }}%
+                </div>
+                <div class="health-label">{{ health_status }}</div>
+            </div>
+        </div>
+        
+        <div class="summary-card issue-breakdown">
+            <div class="card-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="card-content">
+                <h3>Issues Found</h3>
+                <div class="issue-stats">
+                    <div class="issue-stat critical">
+                        <span class="count">{{ issue_counts.critical | default(value=0) }}</span>
+                        <span class="label">Critical</span>
+                    </div>
+                    <div class="issue-stat major">
+                        <span class="count">{{ issue_counts.major | default(value=0) }}</span>
+                        <span class="label">Major</span>
+                    </div>
+                    <div class="issue-stat moderate">
+                        <span class="count">{{ issue_counts.moderate | default(value=0) }}</span>
+                        <span class="label">Moderate</span>
+                    </div>
+                    <div class="issue-stat minor">
+                        <span class="count">{{ issue_counts.minor | default(value=0) }}</span>
+                        <span class="label">Minor</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="summary-card technical-debt">
+            <div class="card-icon">
+                <i class="fas fa-coins"></i>
+            </div>
+            <div class="card-content">
+                <h3>Technical Debt</h3>
+                <div class="debt-amount">
+                    {{ technical_debt_hours | default(value=0) | round(precision=1) }}h
+                </div>
+                <div class="debt-label">Estimated hours</div>
+            </div>
+        </div>
+        
+        <div class="summary-card complexity">
+            <div class="card-icon">
+                <i class="fas fa-project-diagram"></i>
+            </div>
+            <div class="card-content">
+                <h3>Complexity</h3>
+                <div class="complexity-score">
+                    {{ complexity_score | default(value=0) | round(precision=1) }}
+                </div>
+                <div class="complexity-label">Average complexity</div>
+            </div>
+        </div>
+    </div>
+    
+    {% if key_findings %}
+    <div class="key-findings">
+        <h3>Key Findings</h3>
+        <ul class="findings-list">
+            {% for finding in key_findings %}
+            <li class="finding-item">
+                <i class="fas fa-chevron-right"></i>
+                {{ finding }}
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+    
+    {% if recommendations %}
+    <div class="quick-recommendations">
+        <h3>Top Recommendations</h3>
+        <div class="recommendation-cards">
+            {% for rec in recommendations | slice(start=0, end=3) %}
+            <div class="recommendation-card priority-{{ rec.priority | lower }}">
+                <div class="rec-priority">{{ rec.priority }}</div>
+                <div class="rec-title">{{ rec.title }}</div>
+                <div class="rec-description">{{ rec.description | truncate(length=100) }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</section>
+{% endmacro %}

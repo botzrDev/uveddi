@@ -364,7 +364,7 @@
                     <div>{{ rec.description }}</div>
                     {% if rec.affected_benchmarks %}
                     <div style="margin-top: 10px; color: #6c757d; font-size: 0.9em;">
-                        Affects: {{ rec.affected_benchmarks | join(", ") }}
+                        Affects: {{ rec.affected_benchmarks | join(sep=", ") }}
                     </div>
                     {% endif %}
                 </div>

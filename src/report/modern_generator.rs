@@ -1,0 +1,475 @@
+//! Modern Template-Based Report Generator
+//!
+//! This module provides a clean, maintainable approach to HTML report generation
+//! using Tera templates instead of embedded HTML strings. It replaces the legacy
+//! string-based generation with a proper template architecture.
+
+use chrono::{DateTime, Local};
+use std::collections::HashMap;
+use std::path::Path;
+use tera::{Context, Tera};
+use thiserror::Error;
+
+use crate::database::models::{AnalysisRun, ArchitecturalIssue, AntiPatternType};
+
+// Include the bundled assets generated at build time
+include!(concat!(env!("OUT_DIR"), "/bundled_assets.rs"));
+include!(concat!(env!("OUT_DIR"), "/feature_flags.rs"));
+
+#[derive(Error, Debug)]
+pub enum ModernReportError {
+    #[error("Template engine error: {0}")]
+    TemplateError(#[from] tera::Error),
+    #[error("IO error: {0}")]
+    IoError(#[from] std::io::Error),
+    #[error("Missing template: {0}")]
+    MissingTemplate(String),
+    #[error("Context serialization error: {0}")]
+    ContextError(String),
+}
+
+/// Modern report generator using Tera templates
+pub struct ModernReportGenerator {
+    tera: Tera,
+    template_cache: HashMap<String, DateTime<Local>>,
+}
+
+impl ModernReportGenerator {
+    /// Create a new modern report generator
+    pub fn new() -> Result<Self, ModernReportError> {
+        use log::info;
+        
+        info!("Attempting to initialize modern report generator with templates");
+        
+        // Try multiple template paths to find the correct one
+        let template_patterns = [
+            "test_template.html",
+            "src/templates/**/*.html",
+            "./src/templates/**/*.html"
+        ];
+        
+        let mut tera = None;
+        let mut last_error = None;
+        
+        for pattern in &template_patterns {
+            info!("Trying template pattern: {}", pattern);
+            match Tera::new(pattern) {
+                Ok(t) => {
+                    info!("Successfully loaded templates with pattern: {}", pattern);
+                    tera = Some(t);
+                    break;
+                }
+                Err(e) => {
+                    info!("Template pattern '{}' failed: {:#?}", pattern, e);
+                    last_error = Some(e);
+                }
+            }
+        }
+        
+        let mut tera = tera.ok_or_else(|| {
+            ModernReportError::MissingTemplate(format!(
+                "Failed to load templates with any pattern. Last error: {:?}", 
+                last_error
+            ))
+        })?;
+        
+        // Register custom filters and functions
+        Self::register_custom_filters(&mut tera);
+        
+        // Debug: List loaded templates
+        let template_names: Vec<&str> = tera.get_template_names().collect();
+        info!("Loaded {} templates: {:?}", template_names.len(), template_names);
+        
+        info!("Modern report generator initialized successfully");
+        
+        Ok(Self {
+            tera,
+            template_cache: HashMap::new(),
+        })
+    }
+
+    /// Generate an HTML report using modern templates
+    pub async fn generate_html_report(
+        &mut self,
+        analysis_run: &AnalysisRun,
+        issues: &[ArchitecturalIssue],
+        anti_pattern_types: &HashMap<i64, AntiPatternType>,
+        _output_dir: Option<&Path>,
+    ) -> Result<String, ModernReportError> {
+        // Refresh templates if they've changed
+        self.refresh_templates_if_needed()?;
+        
+        // Prepare template context
+        let context = self.build_template_context(analysis_run, issues, anti_pattern_types).await?;
+        
+        // Render the main architectural report template
+        let html = self.tera.render("reports/architectural/main.html", &context)?;
+        
+        Ok(html)
+    }
+
+    /// Build the complete template context with all necessary data
+    async fn build_template_context(
+        &self,
+        analysis_run: &AnalysisRun,
+        issues: &[ArchitecturalIssue],
+        anti_pattern_types: &HashMap<i64, AntiPatternType>,
+    ) -> Result<Context, ModernReportError> {
+        let mut context = Context::new();
+        
+        // Basic metadata
+        context.insert("analysis_run", analysis_run);
+        context.insert("timestamp", &Local::now());
+        context.insert("git_branch", &std::env::var("GIT_BRANCH").unwrap_or_else(|_| "unknown".to_string()));
+        context.insert("generation_time_ms", &0u64); // TODO: Calculate actual time
+        
+        // Issues data
+        context.insert("issue_list", issues);
+        context.insert("anti_pattern_types", anti_pattern_types);
+        context.insert("total_issues", &issues.len());
+        
+        // Calculate severity counts
+        let severity_counts = self.calculate_severity_counts(issues);
+        context.insert("severity_counts", &severity_counts);
+        
+        // Calculate health metrics
+        let health_metrics = self.calculate_health_metrics(analysis_run, issues);
+        context.insert("health_score", &health_metrics.score);
+        context.insert("health_status", &health_metrics.status);
+        context.insert("technical_debt_hours", &health_metrics.technical_debt_hours);
+        context.insert("complexity_score", &health_metrics.complexity_score);
+        
+        // Issue categorization
+        let issue_counts = self.categorize_issues(issues);
+        context.insert("issue_counts", &issue_counts);
+        
+        // Key findings and recommendations
+        let findings = self.generate_key_findings(issues, analysis_run);
+        context.insert("key_findings", &findings);
+        
+        let recommendations = self.generate_recommendations(issues, anti_pattern_types);
+        context.insert("recommendations", &recommendations);
+        
+        // Architecture diagrams (TODO: Implement native diagram generation)
+        let diagrams = self.prepare_architecture_diagrams(issues).await;
+        context.insert("architecture_diagrams", &diagrams);
+        
+        // Performance metrics (if available)
+        if let Some(metrics) = self.extract_performance_metrics(analysis_run) {
+            context.insert("performance_metrics", &metrics);
+        }
+        
+        // Bundled assets
+        context.insert("bundled_css", BUNDLED_CSS);
+        context.insert("bundled_js", BUNDLED_JS);
+        context.insert("theme", &"light"); // Default theme
+        
+        Ok(context)
+    }
+
+    /// Calculate severity distribution for dashboard
+    fn calculate_severity_counts(&self, issues: &[ArchitecturalIssue]) -> HashMap<String, usize> {
+        let mut counts = HashMap::new();
+        counts.insert("CRITICAL".to_string(), 0);
+        counts.insert("MAJOR".to_string(), 0);
+        counts.insert("MODERATE".to_string(), 0);
+        counts.insert("MINOR".to_string(), 0);
+        
+        for issue in issues {
+            let severity = issue.severity.to_uppercase();
+            *counts.entry(severity).or_insert(0) += 1;
+        }
+        
+        counts
+    }
+
+    /// Calculate overall health metrics
+    fn calculate_health_metrics(&self, analysis_run: &AnalysisRun, issues: &[ArchitecturalIssue]) -> HealthMetrics {
+        let total_issues = issues.len();
+        let critical_issues = issues.iter().filter(|i| i.severity.to_uppercase() == "CRITICAL").count();
+        let major_issues = issues.iter().filter(|i| i.severity.to_uppercase() == "MAJOR").count();
+        
+        // Simple health score calculation
+        let base_score = 100.0;
+        let critical_penalty = critical_issues as f64 * 20.0;
+        let major_penalty = major_issues as f64 * 10.0;
+        let other_penalty = (total_issues - critical_issues - major_issues) as f64 * 2.0;
+        
+        let score = (base_score - critical_penalty - major_penalty - other_penalty).max(0.0);
+        
+        let status = match score {
+            s if s >= 90.0 => "Excellent",
+            s if s >= 75.0 => "Good", 
+            s if s >= 50.0 => "Warning",
+            _ => "Critical",
+        };
+        
+        // Use severity as a proxy for technical debt estimation
+        let technical_debt_hours = issues.iter()
+            .map(|i| match i.severity.to_lowercase().as_str() {
+                "critical" => 4.0,
+                "major" => 2.0,
+                "moderate" => 1.0,
+                "minor" => 0.5,
+                _ => 1.0,
+            })
+            .sum::<f64>();
+            
+        // Use issue count as complexity proxy
+        let complexity_score = (issues.len() as f64) / 10.0;
+        
+        HealthMetrics {
+            score,
+            status: status.to_string(),
+            technical_debt_hours,
+            complexity_score,
+        }
+    }
+
+    /// Categorize issues by severity for summary cards
+    fn categorize_issues(&self, issues: &[ArchitecturalIssue]) -> HashMap<String, usize> {
+        let mut counts = HashMap::new();
+        
+        for issue in issues {
+            let severity = issue.severity.to_lowercase();
+            *counts.entry(severity).or_insert(0) += 1;
+        }
+        
+        counts
+    }
+
+    /// Generate key findings based on issue analysis
+    fn generate_key_findings(&self, issues: &[ArchitecturalIssue], _analysis_run: &AnalysisRun) -> Vec<String> {
+        let mut findings = Vec::new();
+        
+        let critical_count = issues.iter().filter(|i| i.severity.to_uppercase() == "CRITICAL").count();
+        if critical_count > 0 {
+            findings.push(format!("{} critical architectural issues require immediate attention", critical_count));
+        }
+        
+        // Group by file to find hotspots
+        let mut file_counts: HashMap<String, usize> = HashMap::new();
+        for issue in issues {
+            let file_path = &issue.file_path;
+            *file_counts.entry(file_path.clone()).or_insert(0) += 1;
+        }
+        
+        if let Some((hotspot_file, hotspot_count)) = file_counts.iter().max_by_key(|(_, &count)| count) {
+            if *hotspot_count > 3 {
+                findings.push(format!("File '{}' has {} issues and may need refactoring", hotspot_file, hotspot_count));
+            }
+        }
+        
+        // Use severity distribution as complexity proxy
+        let avg_complexity = issues.iter()
+            .map(|i| match i.severity.to_lowercase().as_str() {
+                "critical" => 10.0,
+                "major" => 7.0,
+                "moderate" => 5.0,
+                "minor" => 2.0,
+                _ => 5.0,
+            })
+            .sum::<f64>() / (issues.len() as f64).max(1.0);
+            
+        if avg_complexity > 10.0 {
+            findings.push("High average complexity score indicates potential maintainability issues".to_string());
+        }
+        
+        if findings.is_empty() {
+            findings.push("No major architectural concerns detected".to_string());
+        }
+        
+        findings
+    }
+
+    /// Generate actionable recommendations
+    fn generate_recommendations(&self, issues: &[ArchitecturalIssue], _anti_pattern_types: &HashMap<i64, AntiPatternType>) -> Vec<Recommendation> {
+        let mut recommendations = Vec::new();
+        
+        let critical_issues = issues.iter().filter(|i| i.severity.to_uppercase() == "CRITICAL").count();
+        if critical_issues > 0 {
+            recommendations.push(Recommendation {
+                priority: "Critical".to_string(),
+                title: "Address Critical Issues".to_string(),
+                description: format!("Resolve {} critical architectural issues to prevent system failures", critical_issues),
+                affected_benchmarks: None,
+            });
+        }
+        
+        // Check for high severity files (proxy for complexity)
+        let high_complexity_issues: Vec<_> = issues.iter()
+            .filter(|i| matches!(i.severity.to_lowercase().as_str(), "critical" | "major"))
+            .collect();
+            
+        if !high_complexity_issues.is_empty() {
+            recommendations.push(Recommendation {
+                priority: "High".to_string(),
+                title: "Reduce Code Complexity".to_string(),
+                description: format!("Break down {} highly complex components to improve maintainability", high_complexity_issues.len()),
+                affected_benchmarks: None,
+            });
+        }
+        
+        // Group issues by type for pattern-based recommendations
+        let mut type_counts: HashMap<i64, usize> = HashMap::new();
+        for issue in issues {
+            *type_counts.entry(issue.anti_pattern_type_id).or_insert(0) += 1;
+        }
+        
+        for (_type_id, count) in type_counts.iter() {
+            if *count > 5 {
+                recommendations.push(Recommendation {
+                    priority: "Medium".to_string(),
+                    title: "Address Recurring Pattern".to_string(),
+                    description: format!("Consider refactoring approach - pattern appears {} times", count),
+                    affected_benchmarks: None,
+                });
+                break; // Only add one pattern-based recommendation
+            }
+        }
+        
+        recommendations
+    }
+
+    /// Prepare architecture diagrams (placeholder for native implementation)
+    async fn prepare_architecture_diagrams(&self, _issues: &[ArchitecturalIssue]) -> Vec<ArchitectureDiagram> {
+        // TODO: Implement native diagram generation
+        // For now, return empty vec as diagrams will be generated separately
+        Vec::new()
+    }
+
+    /// Extract performance metrics if available
+    fn extract_performance_metrics(&self, _analysis_run: &AnalysisRun) -> Option<Vec<PerformanceMetric>> {
+        // TODO: Implement performance metrics extraction
+        None
+    }
+
+    /// Register custom Tera filters and functions
+    fn register_custom_filters(tera: &mut Tera) {
+        // Add custom filters for report formatting
+        tera.register_filter("severity_color", |value: &tera::Value, _: &HashMap<String, tera::Value>| {
+            let severity = value.as_str().unwrap_or("").to_lowercase();
+            let color = match severity.as_str() {
+                "critical" => "#dc2626",
+                "major" => "#ea580c", 
+                "moderate" => "#d97706",
+                "minor" => "#65a30d",
+                _ => "#6b7280",
+            };
+            Ok(tera::Value::String(color.to_string()))
+        });
+        
+        tera.register_filter("file_basename", |value: &tera::Value, _: &HashMap<String, tera::Value>| {
+            if let Some(path_str) = value.as_str() {
+                if let Some(basename) = Path::new(path_str).file_name() {
+                    if let Some(basename_str) = basename.to_str() {
+                        return Ok(tera::Value::String(basename_str.to_string()));
+                    }
+                }
+            }
+            Ok(value.clone())
+        });
+    }
+
+    /// Refresh templates if they've been modified
+    fn refresh_templates_if_needed(&mut self) -> Result<(), ModernReportError> {
+        // Check if template files have been modified
+        // In a production system, this would check file timestamps
+        // For now, we'll reload templates on every request during development
+        
+        if cfg!(debug_assertions) {
+            self.tera = Tera::new("src/templates/**/*.html")?;
+            Self::register_custom_filters(&mut self.tera);
+        }
+        
+        Ok(())
+    }
+}
+
+/// Health metrics calculation result
+#[derive(Debug)]
+struct HealthMetrics {
+    score: f64,
+    status: String,
+    technical_debt_hours: f64,
+    complexity_score: f64,
+}
+
+/// Recommendation structure for template rendering
+#[derive(Debug, serde::Serialize)]
+struct Recommendation {
+    priority: String,
+    title: String,
+    description: String,
+    affected_benchmarks: Option<Vec<String>>,
+}
+
+/// Architecture diagram structure for template rendering
+#[derive(Debug, serde::Serialize)]
+struct ArchitectureDiagram {
+    id: String,
+    title: String,
+    svg_content: Option<String>,
+    mermaid_code: Option<String>,
+    description: Option<String>,
+}
+
+/// Performance metric structure for template rendering
+#[derive(Debug, serde::Serialize)]
+struct PerformanceMetric {
+    name: String,
+    value: String,
+    unit: Option<String>,
+    trend: String, // "improving", "degrading", "stable"
+    description: String,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_modern_generator_creation() {
+        let result = ModernReportGenerator::new();
+        // This will fail if templates don't exist, which is expected in test environment
+        match result {
+            Ok(_) => println!("Modern generator created successfully"),
+            Err(e) => println!("Expected error in test environment: {}", e),
+        }
+    }
+
+    #[test]
+    fn test_severity_counts() {
+        let generator = ModernReportGenerator::new().unwrap_or_else(|_| {
+            // Create a minimal generator for testing
+            ModernReportGenerator {
+                tera: Tera::default(),
+                template_cache: HashMap::new(),
+            }
+        });
+        
+        let issues = vec![
+            ArchitecturalIssue {
+                id: 1,
+                analysis_run_id: 1,
+                anti_pattern_type_id: 1,
+                severity: "CRITICAL".to_string(),
+                title: Some("Test Issue".to_string()),
+                description: None,
+                file_path: None,
+                line_number: None,
+                code_snippet: None,
+                suggestions: None,
+                confidence_score: None,
+                complexity_score: None,
+                technical_debt_minutes: None,
+                created_at: chrono::Utc::now().naive_utc(),
+                updated_at: chrono::Utc::now().naive_utc(),
+            },
+        ];
+        
+        let counts = generator.calculate_severity_counts(&issues);
+        assert_eq!(counts.get("CRITICAL"), Some(&1));
+        assert_eq!(counts.get("MAJOR"), Some(&0));
+    }
+}

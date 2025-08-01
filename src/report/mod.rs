@@ -149,6 +149,7 @@ pub use image_renderer::{ImageFormat, ImageRenderer, RenderedImage};
 
 pub mod diagrams;
 pub mod svg_generator;
+pub mod modern_generator;
 use chrono::{DateTime, Local};
 use log::{error, info, warn};
 use serde_json::Value;
@@ -192,6 +193,8 @@ pub struct ReportGenerator {
     /// Image renderer for generating images from Mermaid diagrams
     #[cfg(feature = "image-rendering")]
     image_renderer: Option<crate::report::ImageRenderer>,
+    /// Modern template-based generator (feature flagged)
+    modern_generator: Option<modern_generator::ModernReportGenerator>,
 }
 
 impl Default for ReportGenerator {
@@ -218,6 +221,7 @@ impl ReportGenerator {
             diagram_mode: DiagramMode::default(), // MermaidOnly by default for zero hosting costs
             #[cfg(feature = "image-rendering")]
             image_renderer: None,
+            modern_generator: modern_generator::ModernReportGenerator::new().ok(),
         }
     }
 
@@ -1420,7 +1424,7 @@ impl ReportGenerator {
     /// * `Ok(String)` - The generated HTML content
     /// * `Err(String)` - Error message if generation fails
     pub async fn generate_html_report(
-        &self,
+        &mut self,
         analysis_run: &AnalysisRun,
         issues: &[ArchitecturalIssue],
         anti_pattern_types: &HashMap<i64, AntiPatternType>,
@@ -1467,13 +1471,27 @@ impl ReportGenerator {
 
     /// Generate the complete HTML content
     async fn generate_html_content(
-        &self,
+        &mut self,
         analysis_run: &AnalysisRun,
         issues: &[ArchitecturalIssue],
         anti_pattern_types: &HashMap<i64, AntiPatternType>,
         timestamp: &DateTime<Local>,
         output_dir: Option<&Path>,
     ) -> Result<String, String> {
+        // Feature flag: Use modern template-based generator if available
+        if let Some(ref mut modern_gen) = self.modern_generator {
+            info!("Using modern template-based report generator");
+            match modern_gen.generate_html_report(analysis_run, issues, anti_pattern_types, output_dir).await {
+                Ok(html) => {
+                    info!("Modern report generated successfully ({} bytes)", html.len());
+                    return Ok(html);
+                }
+                Err(e) => {
+                    warn!("Modern generator failed, falling back to legacy: {}", e);
+                    // Fall through to legacy generator
+                }
+            }
+        }
         let mut html = String::new();
         
         // HTML document structure

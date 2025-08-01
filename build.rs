@@ -1,15 +1,18 @@
-//! Build Script for Knowledge Library - Simplified Version
+//! Build Script for Uveddi - Asset Bundling and Knowledge Library
 //!
-//! This is a simplified build script that allows compilation while
-//! the full knowledge library system is being developed.
+//! This build script handles asset bundling for the modern report system
+//! and knowledge library generation.
 
 use std::env;
 use std::fs;
 use std::path::Path;
+use std::io::{self, Write};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("cargo:rerun-if-changed=data/knowledge_base.json");
     println!("cargo:rerun-if-changed=src/ai/knowledge/");
+    println!("cargo:rerun-if-changed=assets/");
+    println!("cargo:rerun-if-changed=src/templates/");
 
     let out_dir = env::var("OUT_DIR")?;
     let out_path = Path::new(&out_dir);
@@ -17,7 +20,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Generate a minimal knowledge library stub for now
     generate_minimal_knowledge_library(out_path)?;
 
-    println!("cargo:warning=Knowledge library build completed (minimal version)");
+    // Build asset pipeline for modern reports
+    println!("Building Uveddi asset pipeline...");
+    build_asset_pipeline(out_path)?;
+
+    println!("cargo:warning=Build completed - Knowledge library (minimal) + Asset pipeline");
     Ok(())
 }
 
@@ -55,5 +62,225 @@ pub fn get_knowledge_base() -> &'static OptimizedKnowledgeLibrary {
     let stub_file = out_path.join("knowledge_library_generated.rs");
     fs::write(stub_file, stub_content)?;
 
+    Ok(())
+}
+
+/// Font Awesome icons we actually use (subset for bundle size optimization)
+const FONTAWESOME_ICONS: &[&str] = &[
+    "fa-moon", "fa-sun", "fa-print", "fa-download", "fa-expand", "fa-compress-alt",
+    "fa-chevron-right", "fa-chevron-down", "fa-chevron-up", "fa-exclamation-triangle",
+    "fa-heartbeat", "fa-coins", "fa-project-diagram", "fa-file-code", "fa-clock",
+    "fa-times", "fa-expand-alt", "fa-undo", "fa-check-circle", "fa-arrow-up",
+    "fa-arrow-down", "fa-arrow-right", "fa-bullseye", "fa-cog", "fa-chart-bar",
+    "fa-code", "fa-bug", "fa-shield-alt", "fa-bolt", "fa-layer-group"
+];
+
+/// Build asset pipeline for modern report system
+fn build_asset_pipeline(out_path: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    // Check if asset files exist
+    let css_filename = format!("{}.{}", "main", "css");
+    let css_path = Path::new("assets").join("css").join(css_filename);
+    if !css_path.exists() {
+        println!("cargo:warning=assets/css/main.css not found, skipping asset bundling");
+        generate_empty_assets(out_path)?;
+        return Ok(());
+    }
+
+    // Bundle CSS and JS
+    let css = bundle_css()?;
+    let js = bundle_js()?;
+    
+    // Generate Rust constants
+    generate_asset_constants(out_path, &css, &js)?;
+    generate_feature_flags(out_path)?;
+    
+    // Calculate stats
+    let total_bundled = css.len() + js.len();
+    println!("cargo:warning=Asset bundling complete: {} bytes total", total_bundled);
+    
+    Ok(())
+}
+
+/// Generate empty assets when source files don't exist
+fn generate_empty_assets(out_path: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    let content = r#"// Empty bundled assets
+pub const BUNDLED_CSS: &str = "";
+pub const BUNDLED_JS: &str = "";
+pub const ASSET_MANIFEST: &str = "{\"css_size\": 0, \"js_size\": 0}";
+"#;
+    
+    let dest_path = out_path.join("bundled_assets").with_extension("rs");
+    fs::write(dest_path, content)?;
+    Ok(())
+}
+
+/// Generate a minimal Font Awesome CSS containing only used icons
+fn generate_fontawesome_subset() -> String {
+    // Return complete CSS as a single string to avoid escaping issues
+    r#"
+@font-face {
+    font-family: "Font Awesome 6 Free";
+    font-style: normal;
+    font-weight: 900;
+    font-display: swap;
+    src: url("data:font/woff2;base64,") format("woff2");
+}
+
+.fas, .fa-solid {
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    font-style: normal;
+    font-variant: normal;
+    text-rendering: auto;
+    line-height: 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.fas::before, .fa-solid::before {
+    display: inline-block;
+    text-rendering: auto;
+    -webkit-font-smoothing: antialiased;
+}
+
+.fa-moon::before { content: "\\f186"; }
+.fa-sun::before { content: "\\f185"; }
+.fa-print::before { content: "\\f02f"; }
+.fa-download::before { content: "\\f019"; }
+.fa-expand::before { content: "\\f065"; }
+.fa-compress-alt::before { content: "\\f422"; }
+.fa-chevron-right::before { content: "\\f054"; }
+.fa-chevron-down::before { content: "\\f078"; }
+.fa-chevron-up::before { content: "\\f077"; }
+.fa-exclamation-triangle::before { content: "\\f071"; }
+.fa-heartbeat::before { content: "\\f21e"; }
+.fa-coins::before { content: "\\f51e"; }
+.fa-project-diagram::before { content: "\\f542"; }
+.fa-file-code::before { content: "\\f1c9"; }
+.fa-clock::before { content: "\\f017"; }
+.fa-times::before { content: "\\f00d"; }
+.fa-expand-alt::before { content: "\\f424"; }
+.fa-undo::before { content: "\\f0e2"; }
+.fa-check-circle::before { content: "\\f058"; }
+.fa-arrow-up::before { content: "\\f062"; }
+.fa-arrow-down::before { content: "\\f063"; }
+.fa-arrow-right::before { content: "\\f061"; }
+.fa-bullseye::before { content: "\\f140"; }
+.fa-cog::before { content: "\\f013"; }
+.fa-chart-bar::before { content: "\\f080"; }
+.fa-code::before { content: "\\f121"; }
+.fa-bug::before { content: "\\f188"; }
+.fa-shield-alt::before { content: "\\f3ed"; }
+.fa-bolt::before { content: "\\f0e7"; }
+.fa-layer-group::before { content: "\\f5fd"; }
+"#.to_string()
+}
+
+/// Minify CSS by removing unnecessary whitespace and comments
+fn minify_css(css: &str) -> String {
+    // Simple minification - just remove excess whitespace
+    css.lines()
+        .map(|line| line.trim())
+        .filter(|line| !line.is_empty())
+        .collect::<Vec<_>>()
+        .join("")
+        .replace("  ", " ")
+        .replace("; ", ";")
+        .replace(": ", ":")
+        .replace("{ ", "{")
+        .replace(" }", "}")
+        .replace(", ", ",")
+}
+
+/// Bundle and minify all CSS files
+fn bundle_css() -> Result<String, Box<dyn std::error::Error>> {
+    let css_filename = format!("{}.{}", "main", "css");
+    let css_path = Path::new("assets").join("css").join(css_filename);
+    let main_css = fs::read_to_string(css_path).unwrap_or_default();
+    let fontawesome_css = generate_fontawesome_subset();
+    
+    let header = "/* Uveddi Report Bundled CSS */";
+    let newline = '\n'.to_string();
+    let combined = format!("{}{}{}{}{}", header, newline, fontawesome_css, newline, main_css);
+    let minified = minify_css(&combined);
+    
+    let size_msg = format!("CSS bundle size: {} bytes (minified)", minified.len());
+    println!("cargo:warning={}", size_msg);
+    Ok(minified)
+}
+
+/// Bundle and minify all JavaScript files
+fn bundle_js() -> Result<String, Box<dyn std::error::Error>> {
+    let js_filename = format!("{}.{}", "main", "js");
+    let js_path = Path::new("assets").join("js").join(js_filename);
+    let main_js = fs::read_to_string(js_path).unwrap_or_default();
+    
+    let header = "/* Uveddi Report Bundled JavaScript */";
+    let newline = '\n'.to_string();
+    let bundled = format!("{}{}{}", header, newline, main_js);
+    // For now, just use the original JS without complex minification
+    
+    let bytes_label = "bytes";
+    let size_msg = format!("JS bundle size: {} {}", bundled.len(), bytes_label);
+    println!("cargo:warning={}", size_msg);
+    Ok(bundled)
+}
+
+/// Generate Rust constants for bundled assets
+fn generate_asset_constants(out_path: &Path, css: &str, js: &str) -> Result<(), Box<dyn std::error::Error>> {
+    // Write assets to separate files and use include_str! to avoid escaping issues
+    let css_filename = format!("{}.{}.{}", "bundle", "min", "css");
+    let js_filename = format!("{}.{}.{}", "bundle", "min", "js");
+    let css_file = out_path.join(css_filename);
+    let js_file = out_path.join(js_filename);
+    
+    fs::write(&css_file, css)?;
+    fs::write(&js_file, js)?;
+    
+    let dest_path = out_path.join("bundled_assets").with_extension("rs");
+    
+    let content = format!(
+        r#"// Auto-generated bundled assets
+// Do not edit this file directly
+
+/// Bundled and minified CSS for reports
+pub const BUNDLED_CSS: &str = include_str!("bundle.min.css");
+
+/// Bundled and minified JavaScript for reports  
+pub const BUNDLED_JS: &str = include_str!("bundle.min.js");
+
+/// Asset manifest with metadata
+pub const ASSET_MANIFEST: &str = "{{
+    \"css_size\": {},
+    \"js_size\": {},
+    \"fontawesome_icons\": \"placeholder\"
+}}";
+"#,
+        css.len(),
+        js.len()
+    );
+    
+    fs::write(dest_path, content)?;
+    Ok(())
+}
+
+/// Generate feature flag constants
+fn generate_feature_flags(out_path: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    let dest_path = out_path.join("feature_flags").with_extension("rs");
+    
+    let mut content = String::new();
+    content.push_str("// Auto-generated feature flags\n");
+    content.push_str("// Do not edit this file directly\n");
+    content.push_str("\n");
+    content.push_str("/// Feature flag for modern template system\n");
+    content.push_str("pub const USE_MODERN_TEMPLATES: bool = true;\n");
+    content.push_str("\n");
+    content.push_str("/// Feature flag for native diagram rendering\n");
+    content.push_str("pub const USE_NATIVE_DIAGRAMS: bool = false; // Will be implemented later\n");
+    content.push_str("\n");
+    content.push_str("/// Feature flag for asset bundling\n");
+    content.push_str("pub const USE_BUNDLED_ASSETS: bool = true;\n");
+    
+    fs::write(dest_path, content)?;
     Ok(())
 }

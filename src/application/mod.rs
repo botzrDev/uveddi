@@ -306,9 +306,9 @@ impl AnalysisOrchestrator {
         info!("Issues stored to database successfully");
 
         // Generate report
-        let report_generator = ReportGenerator::new();
+        let mut report_generator = ReportGenerator::new();
         let report_content =
-            self.generate_report(&config, &analysis_run, &issues, &report_generator).await?;
+            self.generate_report(&config, &analysis_run, &issues, &mut report_generator).await?;
 
         // Write output file if specified
         if let Some(output_path) = &config.output_file {
@@ -364,7 +364,7 @@ impl AnalysisOrchestrator {
         config: &AnalysisConfig,
         analysis_run: &AnalysisRun,
         issues: &[ArchitecturalIssue],
-        report_generator: &ReportGenerator,
+        report_generator: &mut ReportGenerator,
     ) -> Result<String, UveddiError> {
         // Retrieve anti-pattern types from database for proper report generation
         let anti_pattern_types = self.database.get_all_anti_pattern_types()

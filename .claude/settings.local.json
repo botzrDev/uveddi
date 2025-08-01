@@ -132,7 +132,11 @@
       "Bash(RUST_LOG=info ./target/release/uveddi analyze /home/austingreen/Documents/botzr/projects/uveddi/alpha_testing/requests/src/requests/models.py --output-format=html --output=test_debug_final.html --mermaid-only)",
       "Bash(RUST_LOG=info ./target/release/uveddi analyze /home/austingreen/Documents/botzr/projects/uveddi/alpha_testing/requests/src/requests/models.py --output-format=html --output=test_debug_output_dir.html --mermaid-only)",
       "Bash(RUST_LOG=info ./target/release/uveddi analyze /home/austingreen/Documents/botzr/projects/uveddi/alpha_testing/requests/src/requests/models.py --output-format=html --output=final_test_with_diagrams.html --mermaid-only)",
-      "Bash(RUST_BACKTRACE=1 cargo run --bin uveddi --features ai -- analyze --output-format html --output ../../test_report.html .)"
+      "Bash(RUST_BACKTRACE=1 cargo run --bin uveddi --features ai -- analyze --output-format html --output ../../test_report.html .)",
+      "Bash(RUST_LOG=info ./target/release/uveddi analyze test_repos/flask/src/flask --output-format html --output test_report_modern.html)",
+      "Bash(RUST_LOG=info ./target/release/uveddi analyze test_repos/flask/src/flask --output-format html --output test_report_debug.html)",
+      "Bash(RUST_LOG=info ./target/release/uveddi analyze test_repos/flask/src/flask --output-format html --output test_report_final.html)",
+      "Bash(RUST_LOG=info ./target/release/uveddi analyze test_repos/flask/src/flask --output-format html --output test_simple.html)"
     ],
     "deny": []
   }

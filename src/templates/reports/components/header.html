@@ -1,0 +1,38 @@
+{% macro render_header(analysis_run, timestamp, git_branch) %}
+<div class="header">
+    <div class="header-background"></div>
+    <div class="header-content">
+        <h1>{{ analysis_run.project_name | default(value="Project") }} Analysis Report</h1>
+        <div class="header-subtitle">
+            Generated on {{ timestamp | date(format="%Y-%m-%d at %H:%M:%S UTC") }}
+            {% if git_branch %} | Branch: <span class="branch-name">{{ git_branch }}</span>{% endif %}
+        </div>
+        <div class="header-stats">
+            <div class="stat-item">
+                <span class="stat-value">{{ analysis_run.total_files | default(value=0) }}</span>
+                <span class="stat-label">Files</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value">{{ analysis_run.total_loc | default(value=0) }}</span>
+                <span class="stat-label">Lines of Code</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value">{{ analysis_run.analysis_duration_ms | default(value=0) }}ms</span>
+                <span class="stat-label">Analysis Time</span>
+            </div>
+        </div>
+    </div>
+    <div class="header-controls">
+        <button onclick="toggleTheme()" class="theme-toggle" title="Toggle theme">
+            <i class="fas fa-moon dark-icon"></i>
+            <i class="fas fa-sun light-icon"></i>
+        </button>
+        <button onclick="window.print()" class="print-btn" title="Print report">
+            <i class="fas fa-print"></i>
+        </button>
+        <button onclick="exportReport()" class="export-btn" title="Export report">
+            <i class="fas fa-download"></i>
+        </button>
+    </div>
+</div>
+{% endmacro %}

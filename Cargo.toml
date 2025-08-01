@@ -238,6 +238,8 @@ serde_json = "1.0"
 flate2 = "1.0"
 # SHA-256 hashing for checksums
 sha2 = "0.10"
+# Chrono for build timestamp
+chrono = { version = "=0.4.39", features = ["serde"] }
 
 [[test]]
 name = "analysis_engine"
