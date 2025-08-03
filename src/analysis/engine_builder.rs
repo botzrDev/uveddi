@@ -14,6 +14,7 @@ use crate::analysis::AnalysisDetector;
 use crate::ast::tree_sitter_impl::AstParser;
 use crate::cache::result_cache::ResultCache;
 use crate::error::UveddiError;
+use crate::monitoring::performance_metrics_collector::PerformanceMetricsCollector;
 use crate::plugins::WasmPluginEngine;
 
 // Stub types for when AI features are disabled
@@ -430,6 +431,10 @@ impl AnalysisEngineBuilder {
             detectors,
         ));
 
+        // Create detector factory and performance metrics collector
+        let detector_factory = DetectorFactory;
+        let performance_metrics_collector = Arc::new(PerformanceMetricsCollector::new());
+
         // Initialize knowledge library components if enabled
         let knowledge_library_result = if enable_knowledge {
             match self.knowledge_library_path {
@@ -492,7 +497,7 @@ impl AnalysisEngineBuilder {
             enable_knowledge, enable_ai
         );
 
-        Ok(crate::analysis::AnalysisEngine {
+        crate::analysis::AnalysisEngine::from_components(
             config_service,
             ast_provider,
             cache_manager,
@@ -500,16 +505,16 @@ impl AnalysisEngineBuilder {
             detector_scheduler,
             plugin_manager,
             aggregator,
-
-            // Knowledge Library components
+            detector_factory,
+            performance_metrics_collector,
+            enable_knowledge,
+            enable_ai,
             #[cfg(feature = "ai")]
             knowledge_library,
             #[cfg(feature = "ai")]
             context_selector,
             #[cfg(feature = "ai")]
             ai_engine,
-            enable_knowledge_enhancement: enable_knowledge,
-            enable_ai_explanations: enable_ai,
-        })
+        )
     }
 }

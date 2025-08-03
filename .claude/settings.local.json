@@ -165,7 +165,10 @@
       "Bash(RUST_LOG=debug timeout 30s cargo run --bin uveddi -- analyze ./src/lib.rs --output-format html --output /tmp/template_test.html)",
       "Bash(RUST_LOG=debug timeout 30s cargo run --bin uveddi -- analyze ./src/lib.rs --output-format html --output /tmp/template_test_fixed.html)",
       "Bash(RUST_LOG=info timeout 30s cargo run --bin uveddi -- analyze ./src/lib.rs --output-format html --output /tmp/template_test_fixed.html)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(RUST_BACKTRACE=1 cargo test test_api_key_security --test security_tests -- --nocapture)",
+      "Bash(cp:*)",
+      "Bash(./tools/simple_analyzer:*)"
     ],
     "deny": []
   }

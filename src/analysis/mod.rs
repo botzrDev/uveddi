@@ -123,10 +123,12 @@ pub mod interactive_diagram_generator;
 pub mod memory;
 pub mod memory_report;
 pub mod mermaid_generator;
+pub mod orchestrator;
 pub mod performance;
 pub mod plugin_adapter;
 pub mod robust_parser;
 pub mod semantic;
+pub mod services;
 pub mod standardized_config;
 pub mod symbols;
 pub mod traits;
@@ -166,7 +168,9 @@ pub use interactive_diagram_generator::{
 };
 pub use memory::{get_optimization_status, MemoryOptimizationConfig};
 pub use memory_report::{MemoryAnalysisReport, PhaseMemoryBreakdown};
+pub use orchestrator::{AnalysisOrchestrator, AnalysisOrchestratorBuilder, AnalysisOptions, EnhancedAnalysisResult, OrchestratorStatus};
 pub use plugin_adapter::{WasmPluginAdapterFactory, WasmPluginDetectorAdapter};
+pub use services::{AnalysisService, DependencyAnalysisService, PerformanceAnalysisService};
 pub use standardized_config::{
     constants, AdvancedConfig, ConfigValue, DetectorMetadata, ExclusionConfig,
     StandardConfigBuilder, StandardDetectorConfig,

@@ -1,0 +1,1046 @@
+# Uveddi Dependency Analysis Report
+Generated: 2025-08-03 12:00:00 UTC
+
+## Summary
+- Total modules: 342
+- Circular dependencies: 3
+
+## Circular Dependencies
+1. regression ↔ regression
+2. report ↔ report
+3. chaos ↔ chaos
+
+## All Module Dependencies
+### ai
+
+### ai::api
+
+### ai::api::llm_provider
+  -> error
+
+### ai::carbon_aware_ollama
+  -> ai
+  -> monitoring
+
+### ai::context
+
+### ai::engine
+  -> ai
+  -> database
+  -> error
+
+### ai::human_loop
+  -> ai
+
+### ai::knowledge
+
+### ai::knowledge::build_integration
+  -> ai
+
+### ai::knowledge::build_optimization
+
+### ai::knowledge::compression
+
+### ai::knowledge::compression::advanced_compression
+  -> ai
+
+### ai::knowledge::concurrent
+  -> ai
+
+### ai::knowledge::config
+
+### ai::knowledge::context_selection
+  -> ai
+
+### ai::knowledge::errors
+
+### ai::knowledge::indexing
+  -> ai
+
+### ai::knowledge::integration
+
+### ai::knowledge::language_integration
+  -> ai
+
+### ai::knowledge::loader
+  -> ai
+
+### ai::knowledge::patterns
+
+### ai::knowledge::patterns::language_specific
+  -> ai
+
+### ai::knowledge::patterns::universal
+  -> ai
+
+### ai::knowledge::performance
+
+### ai::knowledge::performance::optimization_engine
+  -> ai
+
+### ai::knowledge::population
+  -> ai
+
+### ai::knowledge::schema
+  -> ai
+
+### ai::knowledge::types
+  -> ai
+
+### ai::knowledge::validation
+  -> ai
+
+### ai::ollama_provider
+  -> ai
+  -> error
+  -> security
+
+### ai::prompts
+
+### ai::prompts::context_builder
+  -> ast
+  -> database
+
+### ai::prompts::enhanced_templates
+  -> database
+  -> ai
+
+### ai::prompts::knowledge_integration
+  -> ai
+  -> database
+
+### ai::prompts::prompt_templates
+  -> database
+
+### ai::prompts::smart_prompting
+  -> ai
+  -> database
+  -> semantic_search
+  -> error
+
+### ai::prompts::templates
+
+### ai::self_correction
+  -> ai
+
+### ai::types
+
+### ai::verification
+
+### analysis
+  -> database
+  -> ast
+
+### analysis::adapters
+  -> ast
+  -> cache
+  -> analysis
+
+### analysis::buffer
+
+### analysis::cache
+
+### analysis::cache::ast
+  -> analysis
+  -> ast
+
+### analysis::cache::compat
+
+### analysis::cache::engine_cache
+  -> analysis
+  -> ast
+  -> database
+
+### analysis::cache::invalidation
+  -> analysis
+
+### analysis::cache::metrics
+
+### analysis::cache::multilayer_cache
+  -> analysis
+
+### analysis::cache::serialization
+
+### analysis::cache::serialization::wrappers
+
+### analysis::cfg
+  -> ast
+  -> analysis
+
+### analysis::component_extractor
+  -> models
+  -> ast
+
+### analysis::components
+
+### analysis::components::analysis_aggregator
+  -> database
+
+### analysis::components::ast_provider
+  -> analysis
+  -> ast
+  -> error
+
+### analysis::components::cache_manager
+  -> database
+  -> analysis
+  -> ast
+  -> error
+
+### analysis::components::config_service
+  -> analysis
+
+### analysis::components::dependency_graph_builder
+  -> error
+  -> analysis
+  -> ingestion
+  -> ast
+
+### analysis::components::detector_scheduler
+  -> database
+  -> ast
+  -> analysis
+  -> error
+  -> ingestion
+
+### analysis::components::plugin_manager
+  -> analysis
+  -> error
+  -> plugins
+  -> database
+  -> ast
+
+### analysis::components::tests
+  -> database
+  -> analysis
+
+### analysis::components::traits
+  -> analysis
+  -> database
+  -> error
+
+### analysis::config
+  -> analysis
+  -> error
+
+### analysis::config_migration
+  -> analysis
+  -> error
+  -> ast
+
+### analysis::detector_factory
+  -> analysis
+  -> error
+
+### analysis::detector_registry
+  -> error
+  -> analysis
+
+### analysis::detectors
+
+### analysis::detectors::anti_patterns
+
+### analysis::detectors::anti_patterns::code_duplication
+  -> database
+  -> analysis
+  -> ast
+  -> error
+
+### analysis::detectors::anti_patterns::cyclic_dependencies
+  -> ast
+  -> analysis
+  -> database
+
+### analysis::detectors::anti_patterns::dead_code
+  -> analysis
+  -> ast
+  -> error
+  -> database
+
+### analysis::detectors::anti_patterns::god_object
+  -> error
+  -> ast
+  -> analysis
+  -> database
+
+### analysis::detectors::anti_patterns::large_classes
+  -> ast
+  -> analysis
+  -> constants
+  -> database
+
+### analysis::detectors::anti_patterns::leaky_abstraction
+  -> ast
+  -> database
+  -> analysis
+
+### analysis::detectors::anti_patterns::long_methods
+  -> ast
+  -> analysis
+  -> error
+  -> database
+
+### analysis::detectors::anti_patterns::magic_values
+  -> analysis
+  -> ast
+  -> database
+
+### analysis::detectors::anti_patterns::tight_coupling
+  -> ast
+  -> database
+  -> analysis
+
+### analysis::detectors::cycle
+  -> analysis
+  -> database
+
+### analysis::detectors::dependency
+  -> ast
+
+### analysis::diagram_cache
+
+### analysis::diagram_cache::cache_engine
+  -> analysis
+
+### analysis::diagram_cache::compression
+
+### analysis::diagram_cache::diagram_tracker
+  -> analysis
+
+### analysis::diagram_cache::invalidation_manager
+  -> analysis
+
+### analysis::engine
+  -> analysis
+  -> database
+  -> monitoring
+  -> ai
+
+### analysis::engine_builder
+  -> ai
+  -> analysis
+  -> plugins
+  -> error
+  -> cache
+  -> ast
+
+### analysis::engine_old_backup
+  -> database
+  -> ai
+  -> monitoring
+  -> analysis
+  -> error
+  -> cache
+  -> plugins
+  -> ingestion
+  -> ast
+
+### analysis::engine_original
+  -> ingestion
+  -> analysis
+  -> monitoring
+  -> database
+  -> plugins
+  -> error
+  -> ai
+  -> ast
+  -> cache
+
+### analysis::errors
+  -> analysis
+  -> ast
+  -> plugins
+
+### analysis::extractors
+  -> analysis
+  -> ast
+
+### analysis::file_discovery
+  -> ast
+  -> error
+
+### analysis::graph
+
+### analysis::graph::dependency
+
+### analysis::incremental
+
+### analysis::incremental::change_detector
+
+### analysis::incremental::dependency_tracker
+
+### analysis::incremental::incremental_engine
+  -> analysis
+  -> database
+
+### analysis::incremental::state_manager
+  -> database
+
+### analysis::interactive_diagram_generator
+  -> analysis
+  -> models
+
+### analysis::memory
+
+### analysis::memory::allocator
+
+### analysis::memory::arena
+  -> analysis
+  -> database
+
+### analysis::memory::config
+  -> analysis
+
+### analysis::memory::detector_pools
+  -> analysis
+
+### analysis::memory::metrics
+
+### analysis::memory::pool
+  -> analysis
+
+### analysis::memory::zero_copy
+  -> ast
+  -> analysis
+
+### analysis::memory_report
+
+### analysis::mermaid_generator
+  -> analysis
+  -> models
+
+### analysis::orchestrator
+  -> ai
+  -> monitoring
+  -> database
+  -> analysis
+
+### analysis::parallel
+
+### analysis::parallel::batch_processor
+  -> analysis
+
+### analysis::parallel::engine
+  -> analysis
+  -> monitoring
+
+### analysis::parallel::scheduler
+  -> analysis
+
+### analysis::parallel::worker_pool
+  -> monitoring
+
+### analysis::performance
+
+### analysis::performance::baseline
+  -> report
+
+### analysis::performance::image_stubs
+  -> error
+
+### analysis::performance::optimizations
+  -> report
+
+### analysis::performance::testing
+  -> report
+  -> analysis
+
+### analysis::plugin_adapter
+  -> database
+  -> ast
+  -> analysis
+  -> plugins
+
+### analysis::queries
+  -> ast
+  -> analysis
+
+### analysis::queries::javascript
+
+### analysis::queries::python
+
+### analysis::queries::rust
+
+### analysis::robust_parser
+  -> ast
+
+### analysis::semantic
+  -> analysis
+  -> ast
+
+### analysis::services
+
+### analysis::services::analysis_service
+  -> ingestion
+  -> ast
+  -> analysis
+  -> database
+
+### analysis::services::dependency_service
+  -> analysis
+  -> ast
+  -> database
+
+### analysis::services::performance_service
+  -> analysis
+  -> monitoring
+  -> database
+
+### analysis::standardized_config
+  -> ast
+  -> analysis
+  -> error
+
+### analysis::symbols
+
+### analysis::tests
+
+### analysis::tests::archive::language_specific
+
+### analysis::tests::archive::language_specific::java_oop_issues
+
+### analysis::tests::archive::language_specific::js_async_antipatterns
+
+### analysis::tests::archive::language_specific::js_scope_issues
+
+### analysis::tests::archive::language_specific::js_type_coercion
+
+### analysis::tests::archive::language_specific::py_data_structure_misuse
+
+### analysis::tests::archive::language_specific::rust_error_handling
+
+### analysis::tests::archive::language_specific::rust_ownership_issues
+
+### analysis::tests::archive::universal::complexity_analysis
+
+### analysis::tests::archive::universal::debug_test
+  -> analysis
+  -> ast
+
+### analysis::tests::archive::universal::error_information_loss_detection
+
+### analysis::tests::archive::universal::global_state_pollution
+
+### analysis::tests::archive::universal::inappropriate_exception_type_detection
+
+### analysis::tests::archive::universal::inconsistent_naming_convention_detection
+
+### analysis::tests::archive::universal::insufficient_access_control_detection
+
+### analysis::tests::archive::universal::leaky_abstraction_detection
+
+### analysis::tests::archive::universal::mutable_defaults_detection
+
+### analysis::tests::archive::universal::premature_optimization_detection
+
+### analysis::tests::archive::universal::resource_leak_detection
+
+### analysis::tests::archive::universal::silent_failure_detection
+
+### analysis::tests::archive::universal::state_synchronization_detection
+
+### analysis::tests::backward_compatibility
+  -> analysis
+  -> database
+
+### analysis::traits
+  -> analysis
+  -> ast
+
+### analysis::types
+
+### analysis::visualization_tests
+  -> analysis
+  -> models
+
+### analysis::workspace
+  -> analysis
+
+### api
+
+### api::graphql
+  -> database
+  -> analysis
+
+### api::graphql::context
+  -> database
+  -> analysis
+
+### api::graphql::loaders
+  -> database
+
+### api::graphql::pagination
+
+### api::graphql::resolvers
+
+### api::graphql::subscriptions
+
+### api::graphql::types
+  -> database
+
+### api::server
+  -> database
+  -> analysis
+  -> api
+
+### application
+  -> cli
+  -> error
+  -> analysis
+  -> database
+  -> report
+
+### ast
+
+### ast::tree_sitter
+
+### ast::tree_sitter::mod_new
+
+### ast::tree_sitter::queries
+
+### ast::tree_sitter::tree_sitter_impl
+  -> error
+
+### ast::tree_sitter::tree_sitter_stub
+
+### ast::tree_sitter_impl
+  -> security
+  -> analysis
+  -> ast
+
+### ast::tree_sitter_impl::queries
+
+### bin::community_demo
+
+### bin::generate_benchmark_data
+  -> cyclic_a
+
+### bin::performance_baseline
+
+### bin::performance_validation
+
+### bin::test_ai_memory_aware
+
+### bin::test_knowledge_fallback
+
+### bin::test_memory_detection
+
+### bin::test_optimizations
+
+### bin::tui_test
+
+### cache
+
+### cache::incremental_cache
+  -> database
+  -> analysis
+
+### cache::result_cache
+
+### chaos
+  -> chaos
+
+### chaos::config
+
+### chaos::experiments
+  -> chaos
+
+### chaos::failpoints
+
+### cli
+
+### cli::analyze_command
+  -> report
+  -> application
+  -> error
+  -> security
+
+### cli::config_command
+  -> config
+
+### cli::plugin_command
+  -> plugins
+
+### community
+
+### community::analytics
+  -> error
+
+### community::community_standalone
+
+### community::database
+  -> error
+  -> community
+
+### community::models
+
+### community::plugins::uveddi-policy-engine-plugin::src::bindings
+
+### config
+  -> security
+
+### config::monitoring
+
+### constants
+
+### constants::tests
+
+### database
+
+### database::crud
+  -> database
+  -> error
+  -> security
+
+### database::models
+
+### deployment
+
+### deployment::blue_green
+
+### deployment::disaster_recovery
+
+### deployment::health_monitor
+
+### deployment::metrics
+
+### engine
+
+### error
+
+### error::helpers
+  -> analysis
+
+### error::large_codebase
+  -> resilience
+  -> monitoring
+  -> error
+
+### error::main
+  -> error
+
+### error::rendering
+
+### ingestion
+
+### ingestion::async_walker
+  -> security
+
+### ingestion::file_scanner
+  -> analysis
+
+### lib
+
+### main
+
+### models
+
+### models::antipattern_type
+
+### models::dependency_graph
+
+### models::visualization
+
+### monitoring
+
+### monitoring::baseline_collector
+  -> monitoring
+  -> analysis
+
+### monitoring::carbon_metrics
+
+### monitoring::classification
+
+### monitoring::config
+  -> monitoring
+
+### monitoring::dashboard
+  -> monitoring
+  -> config
+
+### monitoring::database
+
+### monitoring::distribution
+
+### monitoring::enterprise_metrics
+
+### monitoring::memory_monitor
+
+### monitoring::metrics
+
+### monitoring::parallel_metrics
+
+### monitoring::performance_metrics_collector
+  -> database
+  -> monitoring
+
+### monitoring::reporting
+  -> monitoring
+
+### monitoring::scheduler
+
+### monitoring::uv243_metrics
+
+### monitoring::websocket
+
+### observability
+
+### observability::config
+
+### observability::dlq
+  -> observability
+
+### observability::logging
+  -> observability
+
+### observability::metrics
+  -> observability
+
+### observability::resilience
+  -> resilience
+  -> error
+  -> observability
+
+### observability::service
+  -> observability
+
+### observability::telemetry
+  -> observability
+
+### observability::tracing_utils
+
+### performance
+
+### performance::benchmark_baseline
+  -> performance
+
+### performance::criterion_integration
+  -> performance
+
+### performance::genetic_bottleneck
+  -> performance
+  -> monitoring
+
+### performance::genetic_carbon_integration
+  -> monitoring
+  -> performance
+
+### performance::overhead_test
+
+### performance::performance_reports
+  -> performance
+
+### performance::regression_detection
+  -> performance
+
+### performance::statistical_analysis
+
+### performance::test_validation
+
+### performance::trend_detection
+  -> performance
+
+### plugins
+  -> error
+
+### plugins::data_plane
+  -> ast
+
+### plugins::development
+  -> ai
+  -> plugins
+
+### plugins::engine
+  -> database
+  -> analysis
+  -> ast
+  -> plugins
+
+### plugins::errors
+
+### plugins::integration
+  -> ai
+  -> plugins
+
+### plugins::knowledge
+  -> ai
+  -> plugins
+
+### plugins::lifecycle
+  -> plugins
+
+### plugins::registry
+  -> plugins
+
+### plugins::security
+  -> plugins
+
+### plugins::types
+  -> plugins
+
+### plugins::verification
+  -> plugins
+
+### regression
+  -> regression
+
+### report
+  -> models
+  -> report
+  -> analysis
+  -> database
+
+### report::diagrams
+  -> database
+  -> models
+
+### report::errors
+
+### report::image_renderer
+  -> security
+  -> error
+
+### report::models
+
+### report::modern_generator
+  -> database
+
+### report::svg_generator
+
+### resilience
+
+### resilience::alerting
+  -> resilience
+
+### resilience::analytics
+  -> resilience
+
+### resilience::availability
+  -> resilience
+
+### resilience::circuit_breaker
+  -> error
+
+### resilience::degradation
+  -> resilience
+
+### resilience::escalation
+  -> resilience
+
+### resilience::fallback
+  -> error
+
+### resilience::graceful_handler
+  -> error
+  -> resilience
+
+### resilience::health
+
+### resilience::metrics
+  -> error
+
+### resilience::notifications
+  -> resilience
+
+### resilience::recovery
+  -> error
+  -> resilience
+
+### resilience::retry
+  -> error
+
+### security
+  -> error
+
+### security::audit
+  -> security
+
+### security::authentication
+  -> security
+
+### security::authorization
+  -> security
+
+### security::compliance
+
+### security::config
+  -> security
+
+### security::errors
+
+### security::http_client
+  -> security
+
+### security::integration_tests
+  -> security
+
+### security::middleware
+  -> security
+
+### security::models
+
+### security::rate_limiting
+  -> security
+
+### security::secrets
+  -> security
+
+### security::secure_config_loader
+  -> security
+
+### semantic_search
+
+### semantic_search::embedding
+
+### semantic_search::embedding_tests
+
+### semantic_search::hybrid
+
+### semantic_search::mmr
+
+### server
+
+### sla
+
+### tui
+
+### tui::app
+
+### tui::events
+  -> tui
+
+### tui::messages
+  -> {cli
+
+### tui::state
+
+### tui::terminal
+
+### tui::themes
+
+### tui::ui
+  -> tui
+
+### tui::ui::analyze_form
+  -> constants
+
+### tui::ui::components
+
+### tui::ui::components::focus_manager
+  -> tui
+
+### tui::ui::components::focusable
+  -> tui
+
+### tui::ui::components::form_inputs
+  -> tui
+
+### tui::ui::components::logo
+
+### tui::ui::config_editor
+
+### tui::ui::main_menu
+  -> tui
+
+### tui::ui::report_viewer
+

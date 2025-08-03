@@ -7692,6 +7692,7 @@ dependencies = [
  "streaming-iterator",
  "strum",
  "strum_macros",
+ "subtle",
  "sysinfo",
  "tempfile",
  "tera",

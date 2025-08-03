@@ -10,7 +10,7 @@ use crate::security::{
 };
 use argon2::password_hash::{rand_core::OsRng, SaltString};
 use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, Duration as ChronoDuration, Utc};
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use oauth2::{
     basic::BasicClient, reqwest::async_http_client, AuthType, AuthUrl, AuthorizationCode, ClientId,
@@ -31,10 +31,12 @@ use openidconnect::{
 };
 use rand::Rng;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
+use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
 use uuid::Uuid;
+use base64::Engine;
 
 /// JWT claims structure
 #[derive(Debug, Serialize, Deserialize)]
@@ -47,6 +49,7 @@ pub struct JwtClaims {
     pub exp: i64,           // Expiration time
     pub aud: String,        // Audience
     pub iss: String,        // Issuer
+    pub jti: String,        // JWT ID for blacklisting
 }
 
 /// OAuth provider configuration
@@ -107,6 +110,112 @@ impl Default for AuthenticationConfig {
     }
 }
 
+/// JWT manager for secure JWT operations with timing attack protection
+pub struct JwtManager {
+    current_key: String,
+    previous_key: Option<String>, // For graceful key rotation
+    blacklisted_tokens: Arc<RwLock<HashSet<String>>>,
+    key_rotation_timestamp: Arc<RwLock<Option<std::time::SystemTime>>>,
+}
+
+impl JwtManager {
+    /// Create a new JWT manager
+    pub fn new(initial_key: String) -> Self {
+        Self {
+            current_key: initial_key,
+            previous_key: None,
+            blacklisted_tokens: Arc::new(RwLock::new(HashSet::new())),
+            key_rotation_timestamp: Arc::new(RwLock::new(None)),
+        }
+    }
+
+    /// Rotate JWT signing key
+    pub async fn rotate_key(&mut self) -> SecurityResult<()> {
+        self.previous_key = Some(self.current_key.clone());
+        self.current_key = self.generate_secure_key();
+        
+        // Update rotation timestamp
+        {
+            let mut timestamp = self.key_rotation_timestamp.write().await;
+            *timestamp = Some(std::time::SystemTime::now());
+        }
+        
+        // Schedule cleanup of previous key after rotation period
+        let blacklisted_tokens = self.blacklisted_tokens.clone();
+        let rotation_timestamp = self.key_rotation_timestamp.clone();
+        tokio::spawn(async move {
+            tokio::time::sleep(tokio::time::Duration::from_secs(24 * 3600)).await;
+            // Clean up old blacklisted tokens after 24 hours
+            if let Some(Ok(timestamp)) = rotation_timestamp.read().await.as_ref().map(|t| t.elapsed()) {
+                if timestamp > Duration::from_secs(24 * 3600) {
+                    blacklisted_tokens.write().await.clear();
+                }
+            }
+        });
+        
+        Ok(())
+    }
+    
+    /// Generate a secure random key
+    fn generate_secure_key(&self) -> String {
+        use rand::Rng;
+        let mut rng = rand::thread_rng();
+        let bytes: Vec<u8> = (0..64).map(|_| rng.gen()).collect();
+        base64::engine::general_purpose::STANDARD.encode(&bytes)
+    }
+    
+    /// Blacklist a JWT token
+    pub async fn blacklist_token(&self, token: &str) -> SecurityResult<()> {
+        let jti = self.extract_jti(token)?;
+        self.blacklisted_tokens.write().await.insert(jti);
+        Ok(())
+    }
+    
+    /// Check if token is blacklisted
+    pub async fn is_blacklisted(&self, token: &str) -> bool {
+        if let Ok(jti) = self.extract_jti(token) {
+            self.blacklisted_tokens.read().await.contains(&jti)
+        } else {
+            true // Invalid tokens are considered blacklisted
+        }
+    }
+    
+    /// Extract JWT ID from token
+    fn extract_jti(&self, token: &str) -> SecurityResult<String> {
+        // Simple extraction without validation (for blacklisting purposes)
+        let parts: Vec<&str> = token.split('.').collect();
+        if parts.len() != 3 {
+            return Err(SecurityError::InvalidCredentials);
+        }
+        
+        let payload = base64::engine::general_purpose::URL_SAFE_NO_PAD
+            .decode(parts[1])
+            .map_err(|_| SecurityError::InvalidCredentials)?;
+        
+        let claims: serde_json::Value = serde_json::from_slice(&payload)
+            .map_err(|_| SecurityError::InvalidCredentials)?;
+        
+        claims["jti"]
+            .as_str()
+            .map(|s| s.to_string())
+            .ok_or(SecurityError::InvalidCredentials)
+    }
+    
+    /// Get current key for encoding
+    pub fn get_current_key(&self) -> &str {
+        &self.current_key
+    }
+    
+    /// Get keys for decoding (current and previous for rotation support)
+    pub fn get_decoding_keys(&self) -> Vec<&str> {
+        let mut keys = vec![self.current_key.as_str()];
+        if let Some(ref prev_key) = self.previous_key {
+            keys.push(prev_key.as_str());
+        }
+        keys
+    }
+}
+
 /// Authentication service
 pub struct AuthenticationService {
     config: AuthenticationConfig,
@@ -116,6 +225,7 @@ pub struct AuthenticationService {
     secret_store: Arc<dyn SecretStore>,
     session_store: Arc<RwLock<HashMap<String, Session>>>,
     api_key_store: Arc<RwLock<HashMap<String, ApiKey>>>,
+    jwt_manager: Arc<RwLock<JwtManager>>,
 }
 
 impl AuthenticationService {
@@ -196,6 +306,13 @@ impl AuthenticationService {
         }
         */
 
+        // Initialize JWT manager with current configuration
+        let jwt_secret = secret_store
+            .get_secret("jwt_secret")
+            .await
+            .unwrap_or_else(|_| config.jwt_secret.clone());
+        let jwt_manager = Arc::new(RwLock::new(JwtManager::new(jwt_secret)));
+
         Ok(Self {
             config,
             oauth_clients,
@@ -203,6 +320,7 @@ impl AuthenticationService {
             secret_store,
             session_store: Arc::new(RwLock::new(HashMap::new())),
             api_key_store: Arc::new(RwLock::new(HashMap::new())),
+            jwt_manager,
         })
     }
 
@@ -436,7 +554,7 @@ impl AuthenticationService {
             return Err(SecurityError::InvalidCredentials);
         }
 
-        // Verify key hash
+        // Verify key hash using secure password verification
         let argon2 = Argon2::default();
         let parsed_hash = PasswordHash::new(&api_key_record.key_hash).map_err(|e| {
             SecurityError::CryptographicError {
@@ -445,10 +563,10 @@ impl AuthenticationService {
             }
         })?;
 
-        if argon2
-            .verify_password(key_secret.as_bytes(), &parsed_hash)
-            .is_err()
-        {
+        // Use constant-time verification to prevent timing attacks
+        let verification_result = argon2.verify_password(key_secret.as_bytes(), &parsed_hash);
+        
+        if verification_result.is_err() {
             return Err(SecurityError::InvalidCredentials);
         }
 
@@ -479,19 +597,70 @@ impl AuthenticationService {
         Ok(auth_user)
     }
 
-    /// Authenticate user with JWT token
+    /// Authenticate user with JWT token (with timing attack protection)
     pub async fn authenticate_jwt(&self, token: &str) -> SecurityResult<AuthenticatedUser> {
-        let jwt_secret = self
-            .secret_store
-            .get_secret("jwt_secret")
-            .await
-            .unwrap_or_else(|_| self.config.jwt_secret.clone());
+        self.authenticate_jwt_secure(token).await
+    }
 
-        let decoding_key = DecodingKey::from_secret(jwt_secret.as_ref());
-        let validation = Validation::new(Algorithm::HS256);
+    /// Secure JWT validation with timing attack protection
+    pub async fn authenticate_jwt_secure(&self, token: &str) -> SecurityResult<AuthenticatedUser> {
+        let start_time = Instant::now();
+        
+        // Perform actual validation
+        let result = self.authenticate_jwt_internal(token).await;
+        
+        // Add consistent timing to prevent timing attacks
+        let elapsed = start_time.elapsed();
+        let target_duration = Duration::from_millis(50); // Minimum processing time
+        
+        if elapsed < target_duration {
+            let delay = target_duration - elapsed;
+            tokio::time::sleep(delay).await;
+        }
+        
+        result
+    }
 
-        let token_data = decode::<JwtClaims>(token, &decoding_key, &validation)?;
+    /// Internal JWT authentication method
+    async fn authenticate_jwt_internal(&self, token: &str) -> SecurityResult<AuthenticatedUser> {
+        // Check if token is blacklisted first
+        let jwt_manager = self.jwt_manager.read().await;
+        if jwt_manager.is_blacklisted(token).await {
+            return Err(SecurityError::InvalidCredentials);
+        }
+
+        // Try decoding with current and previous keys (for key rotation support)
+        let decoding_keys = jwt_manager.get_decoding_keys();
+        let mut validation = Validation::new(Algorithm::HS256);
+        validation.validate_exp = true; // Ensure token expiration is checked
+        
+        let mut last_error = None;
+        let mut token_data = None;
+        
+        for key in decoding_keys {
+            let decoding_key = DecodingKey::from_secret(key.as_ref());
+            match decode::<JwtClaims>(token, &decoding_key, &validation) {
+                Ok(data) => {
+                    token_data = Some(data);
+                    break;
+                }
+                Err(e) => {
+                    last_error = Some(e);
+                    continue;
+                }
+            }
+        }
+        
+        let token_data = token_data.ok_or_else(|| {
+            last_error.unwrap_or_else(|| jsonwebtoken::errors::Error::from(jsonwebtoken::errors::ErrorKind::InvalidToken))
+        })?;
+        
         let claims = token_data.claims;
+
+        // Validate additional claims
+        if claims.aud != "uveddi" || claims.iss != "uveddi-auth" {
+            return Err(SecurityError::InvalidCredentials);
+        }
 
         // Load user from database
         let user = self.load_user_by_external_id(&claims.sub).await?;
@@ -514,10 +683,16 @@ impl AuthenticationService {
         Ok(auth_user)
     }
 
+    /// Constant-time string comparison for sensitive operations
+    fn constant_time_compare(a: &str, b: &str) -> bool {
+        use subtle::ConstantTimeEq;
+        a.as_bytes().ct_eq(b.as_bytes()).into()
+    }
+
     /// Create a new session for user
     pub async fn create_session(&self, user: &User) -> SecurityResult<Session> {
         let session_token = self.generate_session_token();
-        let expires_at = Utc::now() + Duration::hours(self.config.session_expiry_hours);
+        let expires_at = Utc::now() + ChronoDuration::hours(self.config.session_expiry_hours);
 
         let session = Session::new(
             user.id,
@@ -561,14 +736,14 @@ impl AuthenticationService {
 
     /// Generate JWT token for user
     pub async fn generate_jwt(&self, user: &AuthenticatedUser) -> SecurityResult<String> {
-        let jwt_secret = self
-            .secret_store
-            .get_secret("jwt_secret")
-            .await
-            .unwrap_or_else(|_| self.config.jwt_secret.clone());
+        let jwt_manager = self.jwt_manager.read().await;
+        let jwt_secret = jwt_manager.get_current_key();
 
         let now = Utc::now();
-        let exp = now + Duration::hours(self.config.jwt_expiry_hours);
+        let exp = now + ChronoDuration::hours(self.config.jwt_expiry_hours);
+
+        // Generate unique JWT ID for blacklisting support
+        let jti = Uuid::new_v4().to_string();
 
         let claims = JwtClaims {
             sub: user.external_id.clone(),
@@ -579,6 +754,7 @@ impl AuthenticationService {
             exp: exp.timestamp(),
             aud: "uveddi".to_string(),
             iss: "uveddi-auth".to_string(),
+            jti,
         };
 
         let header = Header::new(Algorithm::HS256);
@@ -586,6 +762,18 @@ impl AuthenticationService {
 
         let token = encode(&header, &claims, &encoding_key)?;
         Ok(token)
+    }
+
+    /// Blacklist a JWT token
+    pub async fn blacklist_jwt(&self, token: &str) -> SecurityResult<()> {
+        let jwt_manager = self.jwt_manager.read().await;
+        jwt_manager.blacklist_token(token).await
+    }
+
+    /// Rotate JWT signing key
+    pub async fn rotate_jwt_key(&self) -> SecurityResult<()> {
+        let mut jwt_manager = self.jwt_manager.write().await;
+        jwt_manager.rotate_key().await
     }
 
     /// Generate API key

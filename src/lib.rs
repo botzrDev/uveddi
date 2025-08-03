@@ -250,10 +250,12 @@ pub mod cli;
 pub mod community;
 pub mod config;
 pub mod constants;
+pub mod core;
 pub mod database;
 pub mod deployment;
 pub mod error;
 pub mod ingestion;
+pub mod infrastructure;
 pub mod models;
 // TODO: Re-enable when monitoring dependencies are properly configured
 pub mod monitoring;
