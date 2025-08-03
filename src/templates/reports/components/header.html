@@ -4,7 +4,7 @@
     <div class="header-content">
         <h1>{{ analysis_run.project_name | default(value="Project") }} Analysis Report</h1>
         <div class="header-subtitle">
-            Generated on {{ timestamp | date(format="%Y-%m-%d at %H:%M:%S UTC") }}
+            Generated on {{ timestamp }}
             {% if git_branch %} | Branch: <span class="branch-name">{{ git_branch }}</span>{% endif %}
         </div>
         <div class="header-stats">

@@ -101,7 +101,67 @@
 <div class="issues-grid">
     {% for issue in issues %}
         {% set anti_pattern_type = anti_pattern_types[issue.anti_pattern_type_id] %}
-        {{ issue_card(issue=issue, anti_pattern_type=anti_pattern_type) }}
+        <div class="issue-card severity-{{ issue.severity | lower }}" data-issue-id="{{ issue.issue_id | default(value=0) }}">
+            <div class="issue-header">
+                <div class="issue-type">
+                    <i class="fas {{ anti_pattern_type.icon | default(value='fa-exclamation-triangle') }}"></i>
+                    <span class="type-name">{{ anti_pattern_type.name | default(value="Unknown Issue") }}</span>
+                </div>
+                <div class="issue-severity">
+                    <span class="severity-badge severity-{{ issue.severity | lower }}">
+                        {{ issue.severity | upper }}
+                    </span>
+                </div>
+            </div>
+            
+            <div class="issue-content">
+                <h3 class="issue-title">{{ issue.description | truncate(length=100) | default(value="Untitled Issue") }}</h3>
+                <div class="issue-description">
+                    {{ issue.description | default(value="No description available.") }}
+                </div>
+                
+                {% if issue.file_path %}
+                <div class="issue-location">
+                    <i class="fas fa-file-code"></i>
+                    <span class="file-path">{{ issue.file_path }}</span>
+                    {% if issue.start_line %}
+                    <span class="line-number">:{{ issue.start_line }}</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                {% if issue.code_snippet %}
+                <div class="code-snippet">
+                    <pre><code>{{ issue.code_snippet }}</code></pre>
+                </div>
+                {% endif %}
+                
+                {% if issue.ai_explanation %}
+                <div class="issue-suggestions">
+                    <h4>AI Explanation:</h4>
+                    <div class="suggestions-content">
+                        {{ issue.ai_explanation }}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="issue-metadata">
+                    <div class="metadata-item">
+                        <span class="metadata-label">Pattern Type ID:</span>
+                        <span class="metadata-value">{{ issue.anti_pattern_type_id }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="issue-actions">
+                <button class="action-btn expand-btn" onclick="expandIssue('{{ issue.issue_id | default(value=0) }}')">
+                    <i class="fas fa-expand-alt"></i> Details
+                </button>
+                <button class="action-btn dismiss-btn" onclick="dismissIssue('{{ issue.issue_id | default(value=0) }}')">
+                    <i class="fas fa-times"></i> Dismiss
+                </button>
+            </div>
+        </div>
     {% endfor %}
 </div>
 {% endmacro %}

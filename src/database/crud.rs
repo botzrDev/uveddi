@@ -2,6 +2,7 @@ use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
 use crate::error::Result;
 use crate::security;
 use chrono::Utc;
+use log::error;
 use rusqlite::Connection;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
@@ -260,7 +261,21 @@ impl Database {
                 ],
             )?;
         }
-        tx.commit().map_err(crate::error::UveddiError::from)
+        match tx.commit() {
+            Ok(_) => Ok(()),
+            Err(e) => {
+                // Enhanced error logging to expose specific SQLite error codes
+                error!("Transaction commit failed: {:?}", e);
+                if let rusqlite::Error::SqliteFailure(sqlite_err, Some(msg)) = &e {
+                    error!("Underlying SQLite error message: {}", msg);
+                    error!("SQLite extended error code: {}", sqlite_err.extended_code);
+                }
+                if let Some(error_code) = e.sqlite_error_code() {
+                    error!("SQLite primary error code: {:?}", error_code);
+                }
+                Err(crate::error::UveddiError::from(e))
+            }
+        }
     }
 
     /// Stores multiple anti-pattern types in a batch operation.

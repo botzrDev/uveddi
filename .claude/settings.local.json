@@ -1,4 +1,5 @@
 {
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "permissions": {
     "allow": [
       "Bash(find:*)",
@@ -136,7 +137,16 @@
       "Bash(RUST_LOG=info ./target/release/uveddi analyze test_repos/flask/src/flask --output-format html --output test_report_modern.html)",
       "Bash(RUST_LOG=info ./target/release/uveddi analyze test_repos/flask/src/flask --output-format html --output test_report_debug.html)",
       "Bash(RUST_LOG=info ./target/release/uveddi analyze test_repos/flask/src/flask --output-format html --output test_report_final.html)",
-      "Bash(RUST_LOG=info ./target/release/uveddi analyze test_repos/flask/src/flask --output-format html --output test_simple.html)"
+      "Bash(RUST_LOG=info ./target/release/uveddi analyze test_repos/flask/src/flask --output-format html --output test_simple.html)",
+      "Bash(RUST_BACKTRACE=1 RUST_LOG=debug ./target/debug/uveddi analyze test_repos/flask --output reports/flask_report.html)",
+      "Bash(RUST_LOG=info cargo run --bin uveddi -- analyze test_with_issues --output-format html --output-dir reports)",
+      "Bash(RUST_LOG=info cargo run --bin uveddi -- analyze test_with_issues --output-format html --output reports/test_small_report.html)",
+      "Bash(RUST_LOG=error cargo run --bin uveddi -- analyze test_with_issues --output-format html --output reports/test_small_report.html)",
+      "Bash(RUST_LOG=info cargo run --bin uveddi -- analyze alpha_testing/zola --output-format html --output reports/zola_report.html)",
+      "Bash(RUST_LOG=debug cargo run --bin uveddi -- analyze test_with_issues --output-format html --output reports/debug_report.html)",
+      "Bash(RUST_BACKTRACE=1 RUST_LOG=debug cargo run --bin uveddi -- analyze test_with_issues --output-format html --output reports/debug_report.html)",
+      "Bash(RUST_LOG=info cargo run --bin uveddi -- analyze test_with_issues --output-format html --output reports/diagnostic_test.html)",
+      "Bash(RUST_LOG=info cargo run --bin uveddi -- analyze alpha_testing/zola --output-format html --output reports/diagnostic_test.html)"
     ],
     "deny": []
   }

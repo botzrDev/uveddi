@@ -154,10 +154,9 @@ impl ModernReportGenerator {
         let diagrams = self.prepare_architecture_diagrams(issues).await;
         context.insert("architecture_diagrams", &diagrams);
         
-        // Performance metrics (if available)
-        if let Some(metrics) = self.extract_performance_metrics(analysis_run) {
-            context.insert("performance_metrics", &metrics);
-        }
+        // Performance metrics (always provide, even if empty)
+        let metrics = self.extract_performance_metrics(analysis_run).unwrap_or_default();
+        context.insert("performance_metrics", &metrics);
         
         // Bundled assets
         context.insert("bundled_css", BUNDLED_CSS);
@@ -450,21 +449,16 @@ mod tests {
         
         let issues = vec![
             ArchitecturalIssue {
-                id: 1,
+                issue_id: Some(1),
                 analysis_run_id: 1,
                 anti_pattern_type_id: 1,
+                file_path: "/test/file.py".to_string(),
+                start_line: Some(10),
+                end_line: Some(15),
                 severity: "CRITICAL".to_string(),
-                title: Some("Test Issue".to_string()),
-                description: None,
-                file_path: None,
-                line_number: None,
-                code_snippet: None,
-                suggestions: None,
-                confidence_score: None,
-                complexity_score: None,
-                technical_debt_minutes: None,
-                created_at: chrono::Utc::now().naive_utc(),
-                updated_at: chrono::Utc::now().naive_utc(),
+                description: "Test architectural issue".to_string(),
+                code_snippet: Some("def problematic_function():\n    pass".to_string()),
+                ai_explanation: Some("This is a test issue explanation".to_string()),
             },
         ];
         

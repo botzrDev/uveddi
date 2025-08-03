@@ -152,10 +152,32 @@ pub mod svg_generator;
 pub mod modern_generator;
 use chrono::{DateTime, Local};
 use log::{error, info, warn};
+use std::error::Error;
 use serde_json::Value;
 use std::collections::HashMap;
 use std::fs;
 use std::io::Write;
+
+/// Logs the full causal chain of a tera::Error, providing maximum diagnostic visibility.
+///
+/// This function starts with the top-level error and iterates through its `source()`
+/// method, printing each underlying cause. This transforms a generic error message
+/// into a detailed, step-by-step report of the failure.
+fn log_tera_error_chain(e: &crate::report::modern_generator::ModernReportError) {
+    // Log the primary error message, which is the user-friendly summary.
+    error!("Root Error: {}", e);
+
+    // Start traversing the causal chain.
+    let mut source = e.source();
+    let mut level = 1;
+
+    while let Some(cause) = source {
+        // Log each subsequent cause, indented for clarity.
+        error!("  -> Caused by [Layer {}]: {}", level, cause);
+        source = cause.source();
+        level += 1;
+    }
+}
 use std::path::Path;
 use uuid::Uuid;
 
@@ -1487,7 +1509,8 @@ impl ReportGenerator {
                     return Ok(html);
                 }
                 Err(e) => {
-                    warn!("Modern generator failed, falling back to legacy: {}", e);
+                    warn!("Modern generator failed, falling back to legacy. Full error details below:");
+                    log_tera_error_chain(&e);
                     // Fall through to legacy generator
                 }
             }

@@ -6,12 +6,12 @@
 {% block title %}{{ analysis_run.project_name | default(value="Project") }} - Architectural Analysis Report{% endblock %}
 
 {% block header %}
-{% set header_content = header.render_header(analysis_run=analysis_run, timestamp=timestamp, git_branch=git_branch) %}{{ header_content | safe }}
+{{ header::render_header(analysis_run=analysis_run, timestamp=timestamp, git_branch=git_branch) }}
 {% endblock %}
 
 {% block content %}
 <!-- Executive Summary Section -->
-{% set summary_content = summary.executive_summary(analysis_run=analysis_run, issues=issue_list) %}{{ summary_content | safe }}
+{{ summary::executive_summary(analysis_run=analysis_run, issues=issue_list) }}
 
 <!-- Severity Dashboard Section -->
 <section id="severity-dashboard" class="severity-dashboard">
@@ -23,7 +23,7 @@
         </div>
         
         <div class="severity-breakdown">
-            {% for severity, count in severity_counts.items() %}
+            {% for severity, count in severity_counts %}
             <div class="severity-item severity-{{ severity | lower }}">
                 <div class="severity-bar">
                     <div class="bar-fill" style="width: {{ (count / total_issues * 100) | round(precision=1) }}%"></div>
@@ -125,7 +125,7 @@
             <label for="type-filter">Filter by Type:</label>
             <select id="type-filter" onchange="filterIssues()">
                 <option value="all">All Types</option>
-                {% for type_id, type_info in anti_pattern_types.items() %}
+                {% for type_id, type_info in anti_pattern_types %}
                 <option value="{{ type_id }}">{{ type_info.name }}</option>
                 {% endfor %}
             </select>
@@ -136,7 +136,7 @@
         </div>
     </div>
     
-    {% set grid_content = issues.issue_grid(issues=issue_list, anti_pattern_types=anti_pattern_types) %}{{ grid_content | safe }}
+    {{ issues::issue_grid(issues=issue_list, anti_pattern_types=anti_pattern_types) }}
     
     {% if issue_list | length == 0 %}
     <div class="no-issues">
@@ -160,7 +160,13 @@
             <div class="metric-header">
                 <h4>{{ metric.name }}</h4>
                 <div class="metric-trend {{ metric.trend | lower }}">
-                    <i class="fas fa-arrow-{{ 'up' if metric.trend == 'improving' else 'down' if metric.trend == 'degrading' else 'right' }}"></i>
+                    {% if metric.trend == 'improving' %}
+                        <i class="fas fa-arrow-up"></i>
+                    {% elif metric.trend == 'degrading' %}
+                        <i class="fas fa-arrow-down"></i>
+                    {% else %}
+                        <i class="fas fa-arrow-right"></i>
+                    {% endif %}
                 </div>
             </div>
             <div class="metric-value">
@@ -184,7 +190,7 @@ function renderSeverityChart() {
     if (!canvas) return;
     
     const ctx = canvas.getContext('2d');
-    const severityData = {{ severity_counts | tojson }};
+    const severityData = {{ severity_counts | json_encode }};
     
     // Simple native canvas chart implementation
     // This will be replaced with native Rust-generated SVG charts
