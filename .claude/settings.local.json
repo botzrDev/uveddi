@@ -164,7 +164,8 @@
       "Bash(RUST_LOG=debug timeout 30s cargo run --bin uveddi -- analyze ./alpha_testing/express-typescript/src/index.ts --output-format html --output /tmp/template_test.html)",
       "Bash(RUST_LOG=debug timeout 30s cargo run --bin uveddi -- analyze ./src/lib.rs --output-format html --output /tmp/template_test.html)",
       "Bash(RUST_LOG=debug timeout 30s cargo run --bin uveddi -- analyze ./src/lib.rs --output-format html --output /tmp/template_test_fixed.html)",
-      "Bash(RUST_LOG=info timeout 30s cargo run --bin uveddi -- analyze ./src/lib.rs --output-format html --output /tmp/template_test_fixed.html)"
+      "Bash(RUST_LOG=info timeout 30s cargo run --bin uveddi -- analyze ./src/lib.rs --output-format html --output /tmp/template_test_fixed.html)",
+      "Bash(python3:*)"
     ],
     "deny": []
   }

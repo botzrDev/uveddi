@@ -502,6 +502,8 @@ impl AppState {
             enable_ai: get_bool(FormField::EnableAI)?,
             ollama_api_url: get_string(FormField::OllamaApiUrl).ok(),
             ollama_model: get_string(FormField::OllamaModel).ok(),
+            timeout: 300,
+            verbose: false,
             dead_code_confidence: get_float(FormField::DeadCodeConfidence)?,
             dead_code_library_mode: get_bool(FormField::DeadCodeLibraryMode)?,
             dead_code_ignore_patterns: get_patterns(FormField::DeadCodeIgnorePatterns)?,
