@@ -459,6 +459,47 @@ pub fn validate_code_analysis_data(
     Ok(())
 }
 
+/// Validate file paths for database storage without path traversal checking
+///
+/// This function validates file paths specifically for database storage of analysis results.
+/// Unlike `sanitize_path`, it doesn't perform path traversal checks since these are analysis
+/// results being stored, not user input paths being accessed.
+///
+/// # Arguments
+/// * `file_path` - The file path from analysis results
+/// * `field_name` - Name of the field for error reporting
+///
+/// # Returns
+/// * `Ok(())` - Path is valid for storage
+/// * `Err(SecurityError)` - Path violates storage constraints
+pub fn validate_file_path_for_storage(file_path: &str, field_name: &str) -> Result<(), SecurityError> {
+    // Check length constraints
+    if file_path.len() > MAX_PATH_LENGTH {
+        return Err(SecurityError::InvalidInput {
+            field: field_name.to_string(),
+            reason: format!(
+                "Path length {} exceeds maximum {}",
+                file_path.len(),
+                MAX_PATH_LENGTH
+            ),
+        });
+    }
+
+    // Check for null bytes which could indicate corruption
+    if file_path.contains('\0') {
+        return Err(SecurityError::InvalidInput {
+            field: field_name.to_string(),
+            reason: "File path contains null bytes".to_string(),
+        });
+    }
+
+    // Don't apply SQL injection pattern detection to file paths
+    // as they naturally contain characters like dashes, dots, etc.
+    // that are flagged as dangerous but are normal in file paths
+    
+    Ok(())
+}
+
 /// Sanitize and validate file paths to prevent path traversal attacks
 ///
 /// This function implements comprehensive path security by:

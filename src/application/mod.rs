@@ -86,6 +86,9 @@ pub struct AnalysisConfig {
 
     /// Memory profile selection (small/default/large)
     pub memory_profile: Option<String>,
+
+    /// Analysis timeout in seconds (0 = no timeout)
+    pub timeout_seconds: u64,
 }
 
 /// Represents the result of a completed analysis operation.
@@ -302,6 +305,10 @@ impl AnalysisOrchestrator {
 
         self.database
             .store_issues(&issues)
+            .map_err(|e| {
+                error!("Database storage failure - detailed error: {:#}", e);
+                e
+            })
             .context("Failed to store analysis issues")?;
         info!("Issues stored to database successfully");
 
@@ -761,9 +768,7 @@ pub async fn run_app() -> Result<(), UveddiError> {
     let result = match cli.command {
         Commands::Analyze(command) => {
             info!("Executing analyze command...");
-            command.execute().await.map_err(|e| {
-                UveddiError::analysis_error("unknown", 0, &e.to_string(), "analyze command")
-            })
+            command.execute_validated().await
         }
         Commands::Config(command) => {
             info!("Executing config command...");

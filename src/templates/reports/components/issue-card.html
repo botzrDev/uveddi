@@ -33,7 +33,7 @@
             <div class="detail-row">
                 <span class="detail-label">Complexity:</span>
                 <span class="detail-value complexity-score">
-                    {{ issue.complexity_score | round(precision=1) }}
+                    {{ issue.complexity_score | safe_round(precision=1) }}
                 </span>
             </div>
             {% endif %}

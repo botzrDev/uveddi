@@ -10,7 +10,7 @@
             <div class="card-content">
                 <h3>Overall Health</h3>
                 <div class="health-score {{ health_status | lower }}">
-                    {{ health_score | round(precision=1) }}%
+                    {{ health_score | safe_round(precision=1) }}%
                 </div>
                 <div class="health-label">{{ health_status }}</div>
             </div>
@@ -50,7 +50,7 @@
             <div class="card-content">
                 <h3>Technical Debt</h3>
                 <div class="debt-amount">
-                    {{ technical_debt_hours | default(value=0) | round(precision=1) }}h
+                    {{ technical_debt_hours | default(value=0) | safe_round(precision=1) }}h
                 </div>
                 <div class="debt-label">Estimated hours</div>
             </div>
@@ -63,7 +63,7 @@
             <div class="card-content">
                 <h3>Complexity</h3>
                 <div class="complexity-score">
-                    {{ complexity_score | default(value=0) | round(precision=1) }}
+                    {{ complexity_score | default(value=0) | safe_round(precision=1) }}
                 </div>
                 <div class="complexity-label">Average complexity</div>
             </div>

@@ -274,3 +274,10 @@ name = "regression_prevention"
 path = "tests/coverage/regression_prevention.rs"
 
 # Benchmarks removed for Alpha release
+
+# Release profile with performance optimizations
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"

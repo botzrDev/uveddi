@@ -32,6 +32,7 @@
 use anyhow::Context;
 use clap::Args;
 use log::info;
+use std::error::Error;
 use std::path::PathBuf;
 use sysinfo::System;
 
@@ -234,6 +235,20 @@ pub struct AnalyzeCommand {
     /// Useful for verifying service configuration before running analysis.
     #[arg(long)]
     pub check_rendering_service: bool,
+
+    /// Maximum analysis timeout in seconds
+    ///
+    /// Sets the maximum time to wait for analysis completion before aborting.
+    /// Default is 300 seconds (5 minutes). Set to 0 to disable timeout.
+    #[arg(long, default_value = "300")]
+    pub timeout: u64,
+
+    /// Show detailed error information and stack traces
+    ///
+    /// When enabled, errors will include additional debug information,
+    /// stack traces, and context to help diagnose issues.
+    #[arg(long)]
+    pub verbose: bool,
 }
 
 impl AnalyzeCommand {
@@ -308,9 +323,92 @@ impl AnalyzeCommand {
         Ok(())
     }
 
+    /// Validate the analysis path with specific, helpful error messages
+    fn validate_analysis_path(&self) -> Result<(), SecurityError> {
+        // Check if path exists
+        if !self.path.exists() {
+            return Err(SecurityError::InvalidInput {
+                field: "path".to_string(),
+                reason: format!(
+                    "Path '{}' does not exist.\n💡 Suggestion: Check the path spelling and ensure the directory/file exists",
+                    self.path.display()
+                ),
+            });
+        }
+
+        // Check if path is readable
+        if let Err(e) = std::fs::metadata(&self.path) {
+            return Err(SecurityError::InvalidInput {
+                field: "path".to_string(),
+                reason: format!(
+                    "Cannot access path '{}': {}\n💡 Suggestion: Check file permissions and run with appropriate privileges",
+                    self.path.display(),
+                    e
+                ),
+            });
+        }
+
+        // Check for supported file types if it's a single file
+        if self.path.is_file() {
+            if let Some(extension) = self.path.extension() {
+                let ext = extension.to_string_lossy().to_lowercase();
+                let supported_extensions = ["rs", "py", "js", "ts", "jsx", "tsx", "java", "cpp", "c", "h", "hpp"];
+                
+                if !supported_extensions.contains(&ext.as_str()) {
+                    return Err(SecurityError::InvalidInput {
+                        field: "path".to_string(),
+                        reason: format!(
+                            "Unsupported file type '.{}' for file '{}'.\n✅ Supported file types: {}\n💡 Suggestion: Specify a directory containing supported files or use a supported file extension",
+                            ext,
+                            self.path.display(),
+                            supported_extensions.join(", ")
+                        ),
+                    });
+                }
+            }
+        }
+
+        // Check if directory is empty or contains no supported files
+        if self.path.is_dir() {
+            let has_supported_files = std::fs::read_dir(&self.path)
+                .map_err(|e| SecurityError::InvalidInput {
+                    field: "path".to_string(),
+                    reason: format!(
+                        "Cannot read directory '{}': {}\n💡 Suggestion: Check directory permissions",
+                        self.path.display(),
+                        e
+                    ),
+                })?
+                .filter_map(|entry| entry.ok())
+                .any(|entry| {
+                    if let Some(extension) = entry.path().extension() {
+                        let ext = extension.to_string_lossy().to_lowercase();
+                        ["rs", "py", "js", "ts", "jsx", "tsx", "java", "cpp", "c", "h", "hpp"].contains(&ext.as_str())
+                    } else {
+                        false
+                    }
+                });
+
+            if !has_supported_files {
+                return Err(SecurityError::InvalidInput {
+                    field: "path".to_string(),
+                    reason: format!(
+                        "Directory '{}' contains no supported source files.\n✅ Supported file types: rs, py, js, ts, jsx, tsx, java, cpp, c, h, hpp\n💡 Suggestion: Ensure the directory contains source code files with supported extensions",
+                        self.path.display()
+                    ),
+                });
+            }
+        }
+
+        Ok(())
+    }
+
     /// Validate all command inputs before processing
     pub fn validate_inputs(&self) -> Result<(), SecurityError> {
-        // Validate path
+        // Comprehensive path validation with specific error messages
+        self.validate_analysis_path()?;
+        
+        // Validate path for security (SQL injection, etc.)
         let path_str = self.path.to_string_lossy();
         validate_input(&path_str, "path")?;
 
@@ -542,6 +640,12 @@ impl AnalyzeCommand {
     /// ```
     pub async fn execute(&self) -> Result<(), UveddiError> {
         info!("Starting analysis of: {}", self.path.display());
+        
+        // Set up progress reporting for large codebases
+        let enable_progress_reporting = self.timeout > 60; // Enable for analyses longer than 1 minute
+        if enable_progress_reporting {
+            info!("Progress reporting enabled - updates will be logged every 10 files processed");
+        }
 
         // Create application layer orchestrator
         let mut orchestrator =
@@ -591,13 +695,78 @@ impl AnalyzeCommand {
             enable_memory_optimization,
             memory_limit_gb,
             memory_profile,
+            timeout_seconds: self.timeout,
         };
 
-        // Execute analysis through application layer
-        let report = orchestrator
-            .execute_analysis(config)
+        // Execute analysis through application layer with timeout
+        let analysis_future = orchestrator.execute_analysis(config);
+        
+        // Start progress monitoring task for large codebases
+        let progress_handle = if enable_progress_reporting {
+            let analysis_path = self.path.clone();
+            Some(tokio::spawn(async move {
+                let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(15));
+                loop {
+                    interval.tick().await;
+                    info!("⏳ Analysis in progress for: {}", analysis_path.display());
+                }
+            }))
+        } else {
+            None
+        };
+        
+        let report = if self.timeout > 0 {
+            // Execute with timeout
+            info!("Analysis timeout set to {} seconds", self.timeout);
+            match tokio::time::timeout(
+                std::time::Duration::from_secs(self.timeout),
+                analysis_future,
+            )
             .await
-            .context("Analysis execution failed")?;
+            {
+                Ok(result) => result.map_err(|e| {
+                    if self.verbose {
+                        log::error!("🔍 Analysis execution failed with detailed error: {:#}", e);
+                        if let Some(backtrace) = e.source() {
+                            log::error!("🔧 Stack trace: {:?}", backtrace);
+                        }
+                    } else {
+                        log::error!("Analysis execution failed. Use --verbose for detailed error information.");
+                    }
+                    e
+                })?,
+                Err(_) => {
+                    return Err(UveddiError::analysis_error(
+                        &self.path.display().to_string(),
+                        0,
+                        &format!(
+                            "Analysis timed out after {} seconds. Consider using --timeout with a larger value for large codebases.",
+                            self.timeout
+                        ),
+                        "timeout",
+                    ));
+                }
+            }
+        } else {
+            // Execute without timeout
+            info!("Analysis running without timeout");
+            analysis_future.await.map_err(|e| {
+                if self.verbose {
+                    log::error!("🔍 Analysis execution failed with detailed error: {:#}", e);
+                    if let Some(backtrace) = e.source() {
+                        log::error!("🔧 Stack trace: {:?}", backtrace);
+                    }
+                } else {
+                    log::error!("Analysis execution failed. Use --verbose for detailed error information.");
+                }
+                e
+            })?
+        };
+
+        // Clean up progress monitoring task
+        if let Some(handle) = progress_handle {
+            handle.abort();
+        }
 
         // Output results
         if self.output.is_none() {

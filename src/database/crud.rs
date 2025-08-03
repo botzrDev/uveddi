@@ -211,7 +211,7 @@ impl Database {
             // Use code analysis validation for analysis results (more permissive than user input)
             security::validate_code_analysis_data(&issue.description, "description", None)
                 .map_err(crate::error::UveddiError::from)?;
-            security::validate_input(&issue.file_path, "file_path")
+            security::validate_file_path_for_storage(&issue.file_path, "file_path")
                 .map_err(crate::error::UveddiError::from)?;
             security::validate_input(&issue.severity, "severity")
                 .map_err(crate::error::UveddiError::from)?;

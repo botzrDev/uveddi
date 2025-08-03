@@ -97,7 +97,16 @@ async function renderDiagram({ mermaidCode, format = 'svg', width = 1200, height
       
       data = await worker.page.evaluate(() => {
         const svg = document.querySelector('svg');
-        return svg ? svg.outerHTML : null;
+        let svgContent = svg ? svg.outerHTML : null;
+
+        // Regex to find Font Awesome-like codes (e.g., \f542)
+        // These are often unrendered icons when the font is not available.
+        // We remove the entire <text> element containing these codes.
+        if (svgContent) {
+          const regex = /<text[^>]*>\\f[0-9a-fA-F]{3,4}<\/text>/g;
+          svgContent = svgContent.replace(regex, '');
+        }
+        return svgContent;
       });
       
       if (!data) {

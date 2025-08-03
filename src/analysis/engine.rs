@@ -1290,8 +1290,8 @@ impl AnalysisEngine {
         #[cfg(feature = "memory-optimization")]
         {
             use crate::analysis::memory::BASIC_MEMORY_METRICS;
-            let metrics = BASIC_MEMORY_METRICS.get_current_stats();
-            (metrics.heap_allocated_bytes / (1024 * 1024)) as usize
+            let metrics = BASIC_MEMORY_METRICS.get_metrics();
+            (metrics.current_memory_bytes / (1024 * 1024)) as usize
         }
         #[cfg(not(feature = "memory-optimization"))]
         {

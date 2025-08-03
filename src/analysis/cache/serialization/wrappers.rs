@@ -29,6 +29,12 @@ impl std::ops::Deref for ArchivableSystemTime {
     }
 }
 
+impl ArchivableSystemTime {
+    pub fn now() -> Self {
+        Self(SystemTime::now())
+    }
+}
+
 impl Archive for ArchivableSystemTime {
     type Archived = rkyv::Archived<u128>;
     type Resolver = rkyv::Resolver<u128>;

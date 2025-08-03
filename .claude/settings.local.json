@@ -152,7 +152,19 @@
       "Bash(RUST_LOG=info cargo run --bin test_ai_memory_aware --features ai)",
       "Bash(RUST_LOG=info cargo run --bin test_knowledge_fallback --features ai)",
       "Bash(RUST_LOG=info ./target/release/uveddi:*)",
-      "Bash(RUST_LOG=error ./target/release/uveddi analyze:*)"
+      "Bash(RUST_LOG=error ./target/release/uveddi analyze:*)",
+      "Bash(RUST_BACKTRACE=1 RUST_LOG=debug ./target/release/uveddi analyze ./alpha_testing/express-typescript --language typescript --output-format html)",
+      "Bash(RUST_BACKTRACE=1 RUST_LOG=debug ./target/release/uveddi analyze ./alpha_testing/express-typescript --output-format html)",
+      "Bash(RUST_BACKTRACE=1 RUST_LOG=error ./target/release/uveddi analyze ./alpha_testing/express-typescript --output-format html)",
+      "Bash(sqlite3:*)",
+      "Bash(RUST_BACKTRACE=1 RUST_LOG=info ./target/release/uveddi analyze ./alpha_testing/express-typescript --output-format html --output test_typescript_fix.html)",
+      "Bash(RUST_BACKTRACE=1 RUST_LOG=debug ./target/release/uveddi analyze ./alpha_testing/express-typescript --output-format json)",
+      "Bash(RUST_LOG=debug mkdir -p /tmp/empty_test_dir)",
+      "Bash(RUST_LOG=debug timeout 30s cargo run --bin uveddi -- analyze ./alpha_testing/express-typescript --output-format html --output /tmp/template_test.html)",
+      "Bash(RUST_LOG=debug timeout 30s cargo run --bin uveddi -- analyze ./alpha_testing/express-typescript/src/index.ts --output-format html --output /tmp/template_test.html)",
+      "Bash(RUST_LOG=debug timeout 30s cargo run --bin uveddi -- analyze ./src/lib.rs --output-format html --output /tmp/template_test.html)",
+      "Bash(RUST_LOG=debug timeout 30s cargo run --bin uveddi -- analyze ./src/lib.rs --output-format html --output /tmp/template_test_fixed.html)",
+      "Bash(RUST_LOG=info timeout 30s cargo run --bin uveddi -- analyze ./src/lib.rs --output-format html --output /tmp/template_test_fixed.html)"
     ],
     "deny": []
   }

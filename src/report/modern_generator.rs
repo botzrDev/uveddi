@@ -6,7 +6,8 @@
 
 use chrono::{DateTime, Local};
 use std::collections::HashMap;
-use std::path::Path;
+use std::env;
+use std::path::{Path, PathBuf};
 use tera::{Context, Tera};
 use thiserror::Error;
 
@@ -37,27 +38,90 @@ pub struct ModernReportGenerator {
 impl ModernReportGenerator {
     /// Create a new modern report generator
     pub fn new() -> Result<Self, ModernReportError> {
-        use log::info;
+        use log::{info, warn};
+        use std::env;
         
         info!("Attempting to initialize modern report generator with templates");
         
-        // Try multiple template paths to find the correct one
-        let template_patterns = [
-            "test_template.html",
-            "src/templates/**/*.html",
-            "./src/templates/**/*.html"
-        ];
+        let tera = Self::resolve_templates_with_fallback()?;
+        
+        info!("Modern report generator initialized successfully");
+        
+        Ok(Self {
+            tera,
+            template_cache: HashMap::new(),
+        })
+    }
+
+    /// Resolve template paths with comprehensive fallback strategy
+    fn resolve_templates_with_fallback() -> Result<Tera, ModernReportError> {
+        use log::{info, warn};
+        use std::env;
+        use std::path::PathBuf;
+        
+        // Build comprehensive list of template search paths
+        let mut template_patterns: Vec<String> = Vec::new();
+        
+        // 1. Current working directory relative paths
+        template_patterns.extend([
+            "src/templates/**/*.html".to_string(),
+            "./src/templates/**/*.html".to_string(),
+            "templates/**/*.html".to_string(),
+            "./templates/**/*.html".to_string(),
+        ]);
+        
+        // 2. Executable directory relative paths
+        if let Ok(exe_path) = env::current_exe() {
+            if let Some(exe_dir) = exe_path.parent() {
+                let exe_templates = exe_dir.join("templates/**/*.html");
+                if let Some(exe_pattern) = exe_templates.to_str() {
+                    template_patterns.push(exe_pattern.to_string());
+                }
+                
+                // Also try relative to executable parent
+                if let Some(exe_parent) = exe_dir.parent() {
+                    let parent_templates = exe_parent.join("src/templates/**/*.html");
+                    if let Some(parent_pattern) = parent_templates.to_str() {
+                        template_patterns.push(parent_pattern.to_string());
+                    }
+                }
+            }
+        }
+        
+        // 3. Environment variable override
+        if let Ok(custom_template_dir) = env::var("UVEDDI_TEMPLATE_DIR") {
+            let custom_pattern = PathBuf::from(custom_template_dir).join("**/*.html");
+            if let Some(custom_str) = custom_pattern.to_str() {
+                template_patterns.insert(0, custom_str.to_string()); // High priority
+            }
+        }
         
         let mut tera = None;
         let mut last_error = None;
+        let mut attempted_patterns = Vec::new();
         
         for pattern in &template_patterns {
             info!("Trying template pattern: {}", pattern);
+            attempted_patterns.push(pattern.clone());
+            
             match Tera::new(pattern) {
-                Ok(t) => {
+                Ok(mut t) => {
                     info!("Successfully loaded templates with pattern: {}", pattern);
-                    tera = Some(t);
-                    break;
+                    
+                    // Register custom filters immediately
+                    Self::register_custom_filters(&mut t);
+                    
+                    // Debug: List loaded templates
+                    let template_names: Vec<&str> = t.get_template_names().collect();
+                    info!("Loaded {} templates: {:?}", template_names.len(), template_names);
+                    
+                    // Validate that we have the essential templates
+                    if Self::validate_essential_templates(&template_names) {
+                        tera = Some(t);
+                        break;
+                    } else {
+                        warn!("Pattern '{}' loaded templates but missing essential ones", pattern);
+                    }
                 }
                 Err(e) => {
                     info!("Template pattern '{}' failed: {:#?}", pattern, e);
@@ -66,26 +130,66 @@ impl ModernReportGenerator {
             }
         }
         
-        let mut tera = tera.ok_or_else(|| {
+        tera.ok_or_else(|| {
             ModernReportError::MissingTemplate(format!(
-                "Failed to load templates with any pattern. Last error: {:?}", 
-                last_error
+                "Failed to load templates with any pattern. Attempted patterns: {:?}. Last error: {:?}",
+                attempted_patterns, last_error
             ))
-        })?;
-        
-        // Register custom filters and functions
-        Self::register_custom_filters(&mut tera);
-        
-        // Debug: List loaded templates
-        let template_names: Vec<&str> = tera.get_template_names().collect();
-        info!("Loaded {} templates: {:?}", template_names.len(), template_names);
-        
-        info!("Modern report generator initialized successfully");
-        
-        Ok(Self {
-            tera,
-            template_cache: HashMap::new(),
         })
+    }
+
+    /// Validate that essential templates are present
+    fn validate_essential_templates(template_names: &[&str]) -> bool {
+        let essential_templates = [
+            "reports/architectural/main.html",
+            "reports/base.html",
+        ];
+        
+        for essential in &essential_templates {
+            if !template_names.contains(essential) {
+                use log::warn;
+                warn!("Missing essential template: {}", essential);
+                return false;
+            }
+        }
+        
+        true
+    }
+
+    /// Get template directory from various sources
+    pub fn get_template_directory() -> Option<PathBuf> {
+        use std::env;
+        use std::path::PathBuf;
+        
+        // 1. Environment variable
+        if let Ok(custom_dir) = env::var("UVEDDI_TEMPLATE_DIR") {
+            return Some(PathBuf::from(custom_dir));
+        }
+        
+        // 2. Current working directory
+        if let Ok(cwd) = env::current_dir() {
+            let src_templates = cwd.join("src/templates");
+            if src_templates.exists() {
+                return Some(src_templates);
+            }
+            
+            let templates = cwd.join("templates");
+            if templates.exists() {
+                return Some(templates);
+            }
+        }
+        
+        // 3. Executable directory
+        if let Ok(exe_path) = env::current_exe() {
+            if let Some(exe_dir) = exe_path.parent() {
+                let exe_templates = exe_dir.join("templates");
+                if exe_templates.exists() {
+                    return Some(exe_templates);
+                }
+            }
+        }
+        
+        None
     }
 
     /// Generate an HTML report using modern templates
@@ -368,6 +472,84 @@ impl ModernReportGenerator {
             }
             Ok(value.clone())
         });
+
+        // Safe percentage filter that handles division by zero and NaN values
+        tera.register_filter("safe_percentage", |value: &tera::Value, args: &HashMap<String, tera::Value>| {
+            let numerator = value.as_f64().unwrap_or(0.0);
+            let denominator = args.get("total")
+                .and_then(|v| v.as_f64())
+                .unwrap_or(1.0);
+            
+            if denominator == 0.0 || denominator.is_nan() || numerator.is_nan() {
+                Ok(tera::Value::Number(serde_json::Number::from_f64(0.0).unwrap_or_else(|| serde_json::Number::from(0))))
+            } else {
+                let percentage = (numerator / denominator * 100.0).round();
+                Ok(tera::Value::Number(serde_json::Number::from_f64(percentage).unwrap_or_else(|| serde_json::Number::from(0))))
+            }
+        });
+
+        // Safe round filter that handles NaN values
+        tera.register_filter("safe_round", |value: &tera::Value, args: &HashMap<String, tera::Value>| {
+            let precision = args.get("precision")
+                .and_then(|v| v.as_u64())
+                .unwrap_or(0) as u32;
+            
+            match value.as_f64() {
+                Some(num) if num.is_nan() || num.is_infinite() => {
+                    Ok(tera::Value::Number(serde_json::Number::from_f64(0.0).unwrap_or_else(|| serde_json::Number::from(0))))
+                }
+                Some(num) => {
+                    let multiplier = 10_f64.powi(precision as i32);
+                    let rounded = (num * multiplier).round() / multiplier;
+                    Ok(tera::Value::Number(serde_json::Number::from_f64(rounded).unwrap_or_else(|| serde_json::Number::from(0))))
+                }
+                None => {
+                    // Try to parse as string
+                    if let Some(str_val) = value.as_str() {
+                        match str_val.parse::<f64>() {
+                            Ok(num) if num.is_nan() || num.is_infinite() => {
+                                Ok(tera::Value::Number(serde_json::Number::from_f64(0.0).unwrap_or_else(|| serde_json::Number::from(0))))
+                            }
+                            Ok(num) => {
+                                let multiplier = 10_f64.powi(precision as i32);
+                                let rounded = (num * multiplier).round() / multiplier;
+                                Ok(tera::Value::Number(serde_json::Number::from_f64(rounded).unwrap_or_else(|| serde_json::Number::from(0))))
+                            }
+                            Err(_) => Ok(tera::Value::Number(serde_json::Number::from_f64(0.0).unwrap_or_else(|| serde_json::Number::from(0))))
+                        }
+                    } else {
+                        Ok(tera::Value::Number(serde_json::Number::from_f64(0.0).unwrap_or_else(|| serde_json::Number::from(0))))
+                    }
+                }
+            }
+        });
+
+        // Safe number format filter
+        tera.register_filter("safe_format_number", |value: &tera::Value, _: &HashMap<String, tera::Value>| {
+            match value.as_f64() {
+                Some(num) if num.is_nan() || num.is_infinite() => {
+                    Ok(tera::Value::String("N/A".to_string()))
+                }
+                Some(num) => {
+                    Ok(tera::Value::String(format!("{:.1}", num)))
+                }
+                None => {
+                    if let Some(str_val) = value.as_str() {
+                        match str_val.parse::<f64>() {
+                            Ok(num) if num.is_nan() || num.is_infinite() => {
+                                Ok(tera::Value::String("N/A".to_string()))
+                            }
+                            Ok(num) => {
+                                Ok(tera::Value::String(format!("{:.1}", num)))
+                            }
+                            Err(_) => Ok(tera::Value::String("N/A".to_string()))
+                        }
+                    } else {
+                        Ok(tera::Value::String("N/A".to_string()))
+                    }
+                }
+            }
+        });
     }
 
     /// Refresh templates if they've been modified
@@ -377,8 +559,9 @@ impl ModernReportGenerator {
         // For now, we'll reload templates on every request during development
         
         if cfg!(debug_assertions) {
-            self.tera = Tera::new("src/templates/**/*.html")?;
-            Self::register_custom_filters(&mut self.tera);
+            use log::info;
+            info!("Refreshing templates in debug mode");
+            self.tera = Self::resolve_templates_with_fallback()?;
         }
         
         Ok(())
@@ -426,6 +609,8 @@ struct PerformanceMetric {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use tera::Value;
+    use std::collections::HashMap;
 
     #[tokio::test]
     async fn test_modern_generator_creation() {
@@ -465,5 +650,75 @@ mod tests {
         let counts = generator.calculate_severity_counts(&issues);
         assert_eq!(counts.get("CRITICAL"), Some(&1));
         assert_eq!(counts.get("MAJOR"), Some(&0));
+    }
+
+    #[test]
+    fn test_safe_percentage_filter() {
+        let mut tera = Tera::default();
+        ModernReportGenerator::register_custom_filters(&mut tera);
+        
+        // Test normal percentage calculation
+        let mut args = HashMap::new();
+        args.insert("total".to_string(), Value::Number(10.0.into()));
+        
+        let result = tera.get_filter("safe_percentage").unwrap()(&Value::Number(5.0.into()), &args);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap().as_f64(), Some(50.0));
+        
+        // Test division by zero (should return 0)
+        args.insert("total".to_string(), Value::Number(0.0.into()));
+        let result = tera.get_filter("safe_percentage").unwrap()(&Value::Number(5.0.into()), &args);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap().as_f64(), Some(0.0));
+    }
+
+    #[test]
+    fn test_safe_round_filter() {
+        let mut tera = Tera::default();
+        ModernReportGenerator::register_custom_filters(&mut tera);
+        
+        // Test normal rounding
+        let mut args = HashMap::new();
+        args.insert("precision".to_string(), Value::Number(1.into()));
+        
+        let result = tera.get_filter("safe_round").unwrap()(&Value::Number(3.14159.into()), &args);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap().as_f64(), Some(3.1));
+        
+        // Test NaN handling (should return 0)
+        let result = tera.get_filter("safe_round").unwrap()(&Value::String("NaN".to_string()), &args);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap().as_f64(), Some(0.0));
+    }
+
+    #[test]
+    fn test_safe_format_number_filter() {
+        let mut tera = Tera::default();
+        ModernReportGenerator::register_custom_filters(&mut tera);
+        
+        // Test normal number formatting
+        let result = tera.get_filter("safe_format_number").unwrap()(&Value::Number(3.14159.into()), &HashMap::new());
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap().as_str(), Some("3.1"));
+        
+        // Test NaN handling (should return "N/A")
+        let result = tera.get_filter("safe_format_number").unwrap()(&Value::String("NaN".to_string()), &HashMap::new());
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap().as_str(), Some("N/A"));
+    }
+
+    #[test]
+    fn test_validate_essential_templates() {
+        let valid_templates = vec![
+            "reports/architectural/main.html",
+            "reports/base.html",
+            "reports/components/summary.html",
+        ];
+        assert!(ModernReportGenerator::validate_essential_templates(&valid_templates));
+        
+        let invalid_templates = vec![
+            "reports/components/summary.html",
+        ];
+        assert!(!ModernReportGenerator::validate_essential_templates(&invalid_templates));
     }
 }
