@@ -73,6 +73,12 @@ pub trait DetectorScheduler: Send + Sync {
         &self,
         graph: &LocalDependencyGraph,
     ) -> Result<Vec<ArchitecturalIssue>, UveddiError>;
+
+    /// Schedules analysis for a SourceFile (wrapper around schedule_file)
+    async fn schedule_file_analysis(
+        &self,
+        source_file: &crate::analysis::file_discovery::SourceFile,
+    ) -> Result<Vec<ArchitecturalIssue>, UveddiError>;
 }
 
 /// Aggregates analysis results from multiple sources.

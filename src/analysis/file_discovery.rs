@@ -17,6 +17,14 @@ pub struct SourceFile {
     pub language: SourceLanguage,
 }
 
+impl SourceFile {
+    /// Creates a new SourceFile with detected language
+    pub fn new(path: PathBuf) -> Result<Self, UveddiError> {
+        let language = SourceLanguage::detect_from_path(&path)?;
+        Ok(SourceFile { path, language })
+    }
+}
+
 /// File discovery component that respects ignore patterns and detects languages
 pub struct FileDiscovery {
     /// Mapping from file extensions to supported languages

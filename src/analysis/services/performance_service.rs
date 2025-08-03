@@ -281,7 +281,7 @@ impl PerformanceAnalysisService {
         let session = self.start_monitoring().await;
         
         // Monitor memory usage during analysis
-        let memory_check_task = {
+        let memory_check_task: tokio::task::JoinHandle<Result<(), String>> = {
             let memory_monitor = self.memory_monitor.clone();
             let session_id = session.session_id.clone();
             
@@ -302,8 +302,12 @@ impl PerformanceAnalysisService {
             result = analysis => result,
             memory_result = memory_check_task => {
                 match memory_result {
-                    Ok(Err(msg)) => return Err(crate::analysis::errors::AnalysisError::Configuration(format!("Memory limit exceeded: {}", msg))),
-                    _ => return Err(crate::analysis::errors::AnalysisError::Configuration("Memory monitoring failed".to_string())),
+                    Ok(Err(msg)) => return Err(crate::analysis::errors::AnalysisError::configuration_error(
+                        "memory_limit", format!("exceeded: {}", msg), "Available memory insufficient"
+                    )),
+                    _ => return Err(crate::analysis::errors::AnalysisError::configuration_error(
+                        "memory_monitor", "failed", "Memory monitoring system failed"
+                    )),
                 }
             }
         };

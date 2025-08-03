@@ -91,7 +91,7 @@ pub struct AnalysisRun {
 /// - `"medium"`: Moderate issues that should be addressed over time  
 /// - `"high"`: Important issues that impact code quality
 /// - `"critical"`: Severe issues that require immediate attention
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[cfg_attr(
     feature = "memory-optimization",
     derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize)
@@ -109,6 +109,18 @@ pub struct ArchitecturalIssue {
     pub start_line: Option<i32>,
     /// Ending line number of the problematic code (optional)
     pub end_line: Option<i32>,
+    /// Line number where issue was found (for compatibility with domain model)
+    pub line_number: Option<i32>,
+    /// Column number where issue was found (for compatibility with domain model)
+    pub column_number: Option<i32>,
+    /// Issue message (for compatibility with domain model)
+    pub message: String,
+    /// JSON metadata for additional issue information
+    pub metadata: String,
+    /// Name of the detector that found this issue
+    pub detector_name: String,
+    /// Timestamp when this issue was created
+    pub created_at: DateTime<Utc>,
     /// Severity level of this issue
     pub severity: String,
     /// Human-readable description of the issue
@@ -117,6 +129,29 @@ pub struct ArchitecturalIssue {
     pub code_snippet: Option<String>,
     /// Optional AI-generated explanation and remediation advice
     pub ai_explanation: Option<String>,
+}
+
+impl Default for ArchitecturalIssue {
+    fn default() -> Self {
+        Self {
+            issue_id: None,
+            analysis_run_id: 0,
+            anti_pattern_type_id: 0,
+            file_path: String::new(),
+            start_line: None,
+            end_line: None,
+            line_number: None,
+            column_number: None,
+            message: String::new(),
+            metadata: String::new(),
+            detector_name: String::new(),
+            created_at: Utc::now(),
+            severity: String::new(),
+            description: String::new(),
+            code_snippet: None,
+            ai_explanation: None,
+        }
+    }
 }
 
 /// Dependency relationship between code modules
@@ -165,7 +200,7 @@ pub enum DependencyType {
 }
 
 /// Anti-pattern type definitions
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct AntiPatternType {
     pub anti_pattern_type_id: Option<i64>,
     pub name: String,

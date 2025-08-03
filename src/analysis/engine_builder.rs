@@ -319,7 +319,34 @@ impl AnalysisEngineBuilder {
             (None, None, None)
         };
 
+        // Create services for the orchestrator
+        let detector_factory = Arc::new(crate::analysis::detector_factory::DetectorFactory::new());
+        
+        let analysis_service = Arc::new(crate::analysis::services::AnalysisService::new(
+            Arc::clone(&config_service),
+            Arc::clone(&detector_scheduler),
+            Arc::clone(&aggregator),
+            Arc::clone(&detector_factory),
+        ));
+        
+        let dependency_service = Arc::new(crate::analysis::services::DependencyAnalysisService::new(
+            Arc::clone(&dependency_builder),
+        ));
+        
+        let performance_service = Arc::new(crate::analysis::services::PerformanceAnalysisService::new(
+            Arc::new(crate::monitoring::performance_metrics_collector::PerformanceMetricsCollector::new()),
+            crate::analysis::services::performance_service::MemoryConfig::default(),
+        ));
+
+        // Create the orchestrator
+        let orchestrator = crate::analysis::orchestrator::AnalysisOrchestrator::new(
+            analysis_service,
+            dependency_service,
+            performance_service,
+        );
+
         Ok(crate::analysis::AnalysisEngine {
+            orchestrator,
             config_service,
             ast_provider,
             cache_manager,
@@ -433,7 +460,10 @@ impl AnalysisEngineBuilder {
 
         // Create detector factory and performance metrics collector
         let detector_factory = DetectorFactory;
-        let performance_metrics_collector = Arc::new(PerformanceMetricsCollector::new());
+        let performance_metrics_collector = Arc::new(PerformanceMetricsCollector::new(
+            crate::database::models::PerformanceMetricsConfig::default(),
+            100 // Default total components
+        ));
 
         // Initialize knowledge library components if enabled
         let knowledge_library_result = if enable_knowledge {
@@ -505,7 +535,7 @@ impl AnalysisEngineBuilder {
             detector_scheduler,
             plugin_manager,
             aggregator,
-            detector_factory,
+            Arc::new(detector_factory),
             performance_metrics_collector,
             enable_knowledge,
             enable_ai,
@@ -516,5 +546,13 @@ impl AnalysisEngineBuilder {
             #[cfg(feature = "ai")]
             ai_engine,
         )
+        .map_err(|e| crate::error::UveddiError::AnalysisError {
+            file: "engine_builder.rs".to_string(),
+            line: 503,
+            message: e.to_string(),
+            context: "Building analysis engine from components".to_string(),
+            suggestion: "Check component configuration and dependencies".to_string(),
+            source: None,
+        })
     }
 }

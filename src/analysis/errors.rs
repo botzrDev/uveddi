@@ -3,6 +3,7 @@ use crate::analysis::detectors::dependency::ExtractionError;
 use crate::analysis::mermaid_generator::MermaidGenerationError;
 use crate::ast::tree_sitter_impl::AstError;
 use crate::plugins::errors::PluginError;
+use crate::error::UveddiError;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -105,6 +106,10 @@ pub enum AnalysisError {
         worker_count: usize,
         failed_count: usize,
     },
+
+    // Engine and service errors
+    #[error("Engine error: {0}")]
+    Engine(String),
 
     // Configuration and setup errors
     #[error("Configuration error: {field} = {value}, {reason}")]
@@ -322,6 +327,12 @@ impl AnalysisError {
 
 impl From<Box<dyn std::error::Error + Send + Sync>> for AnalysisError {
     fn from(e: Box<dyn std::error::Error + Send + Sync>) -> Self {
+        AnalysisError::Other(e.to_string())
+    }
+}
+
+impl From<UveddiError> for AnalysisError {
+    fn from(e: UveddiError) -> Self {
         AnalysisError::Other(e.to_string())
     }
 }

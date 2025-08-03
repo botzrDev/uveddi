@@ -219,13 +219,10 @@ impl AnalysisOrchestrator {
         debug!("Running parallel analysis");
 
         // Execute analysis and dependency building concurrently
-        let (issues_result, graph_result) = tokio::try_join!(
+        let (issues, graph) = tokio::try_join!(
             self.run_core_analysis(path, options),
             self.run_dependency_analysis(path, options)
-        );
-
-        let issues = issues_result?;
-        let graph = graph_result?;
+        )?;
 
         Ok((issues, graph))
     }
@@ -329,13 +326,19 @@ impl AnalysisOrchestratorBuilder {
 
     pub fn build(self) -> AnalysisResult<AnalysisOrchestrator> {
         let analysis_service = self.analysis_service
-            .ok_or_else(|| crate::analysis::errors::AnalysisError::Configuration("Analysis service required".to_string()))?;
+            .ok_or_else(|| crate::analysis::errors::AnalysisError::configuration_error(
+                "analysis_service", "missing", "Analysis service must be configured"
+            ))?;
         
         let dependency_service = self.dependency_service
-            .ok_or_else(|| crate::analysis::errors::AnalysisError::Configuration("Dependency service required".to_string()))?;
+            .ok_or_else(|| crate::analysis::errors::AnalysisError::configuration_error(
+                "dependency_service", "missing", "Dependency service must be configured"
+            ))?;
         
         let performance_service = self.performance_service
-            .ok_or_else(|| crate::analysis::errors::AnalysisError::Configuration("Performance service required".to_string()))?;
+            .ok_or_else(|| crate::analysis::errors::AnalysisError::configuration_error(
+                "performance_service", "missing", "Performance service must be configured"
+            ))?;
 
         #[cfg(feature = "ai")]
         {

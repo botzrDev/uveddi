@@ -222,6 +222,14 @@ impl DetectorSchedulerTrait for DetectorScheduler {
         self.analyze_file(file_path).await
     }
 
+    /// Schedule analysis for a SourceFile (wrapper around schedule_file)
+    async fn schedule_file_analysis(
+        &self,
+        source_file: &crate::analysis::file_discovery::SourceFile,
+    ) -> Result<Vec<ArchitecturalIssue>, UveddiError> {
+        self.schedule_file(&source_file.path).await
+    }
+
     async fn schedule_directory(
         &self,
         dir_path: &Path,

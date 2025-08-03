@@ -265,15 +265,31 @@ impl AnalysisConfig {
 
         if self.enable_plugins {
             AnalysisEngine::with_detectors_and_plugins(detectors, cache_path).await
+                .map_err(|e| UveddiError::AnalysisError {
+                    file: "config.rs".to_string(),
+                    line: 267,
+                    message: e.to_string(),
+                    context: "Plugin-enabled analysis engine creation".to_string(),
+                    suggestion: "Check plugin configuration and dependencies".to_string(),
+                    source: Some(e),
+                })
         } else {
-            if let Some(path) = cache_path {
+            let result = if let Some(path) = cache_path {
                 AnalysisEngine::builder()
                     .with_detectors(detectors)
                     .with_cache_path(path)
                     .build()
             } else {
                 AnalysisEngine::builder().with_detectors(detectors).build()
-            }
+            };
+            result.map_err(|e| UveddiError::AnalysisError {
+                file: "config.rs".to_string(),
+                line: 275,
+                message: e.to_string(),
+                context: "Basic analysis engine creation".to_string(),
+                suggestion: "Check detector configuration".to_string(),
+                source: None, // Remove the problematic source field
+            })
         }
     }
 

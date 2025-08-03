@@ -39,6 +39,7 @@ pub struct DependencyEdge {
 /// between software components. It provides methods for adding components
 /// and dependencies, and will be the basis for running architectural analyses
 /// like cycle detection.
+#[derive(Debug, Clone)]
 pub struct LocalDependencyGraph {
     graph: DiGraph<ComponentNode, DependencyEdge>,
     node_map: HashMap<ComponentNode, NodeIndex>,

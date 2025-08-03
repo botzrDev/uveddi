@@ -92,7 +92,7 @@ impl AnalysisEngine {
 
     /// Create new analysis engine with default configuration
     pub fn new() -> Result<Self, AnalysisError> {
-        Self::builder().build()
+        Self::builder().build().map_err(|e| AnalysisError::Engine(e.to_string()))
     }
 
     /// Create analysis engine with detectors and plugins enabled
@@ -108,7 +108,7 @@ impl AnalysisEngine {
             builder = builder.with_cache_path(path);
         }
         
-        builder.build()
+        builder.build().map_err(|e| AnalysisError::Engine(e.to_string()))
     }
 
     /// Create analysis engine from components (used by builder)
