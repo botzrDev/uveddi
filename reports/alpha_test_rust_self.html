@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uveddi Architectural Analysis Report</title>
+    
+    <!-- Mermaid.js for diagram rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* Modern CSS Variables for theming */
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #64748b;
+            --success-color: #059669;
+            --warning-color: #d97706;
+            --error-color: #dc2626;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-tertiary: #e2e8f0;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --border-color: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --radius: 8px;
+        }
+
+        [data-theme="dark"] {
+            --primary-color: #3b82f6;
+            --secondary-color: #94a3b8;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --border-color: #475569;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header Styles */
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 2rem;
+            border-radius: var(--radius);
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 49%, rgba(255,255,255,0.1) 50%, transparent 51%);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header-meta {
+            position: relative;
+            z-index: 1;
+            opacity: 0.9;
+        }
+
+        /* Navigation */
+        .nav {
+            background: var(--bg-primary);
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-link:hover {
+            background: var(--bg-tertiary);
+            color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+
+        .theme-toggle {
+            background: none;
+            border: 2px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        /* Card Styles */
+        .card {
+            background: var(--bg-primary);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Dashboard Grid */
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-primary);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.15);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            font-size: 0.875rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-critical { color: var(--error-color); }
+        .stat-high { color: var(--warning-color); }
+        .stat-medium { color: var(--primary-color); }
+        .stat-low { color: var(--success-color); }
+
+        /* Severity Badges */
+        .severity-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .severity-critical {
+            background: rgba(220, 38, 38, 0.1);
+            color: var(--error-color);
+            border: 1px solid rgba(220, 38, 38, 0.2);
+        }
+
+        .severity-high {
+            background: rgba(217, 119, 6, 0.1);
+            color: var(--warning-color);
+            border: 1px solid rgba(217, 119, 6, 0.2);
+        }
+
+        .severity-medium {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary-color);
+            border: 1px solid rgba(37, 99, 235, 0.2);
+        }
+
+        .severity-low {
+            background: rgba(5, 150, 105, 0.1);
+            color: var(--success-color);  
+            border: 1px solid rgba(5, 150, 105, 0.2);
+        }
+
+        /* Issue Cards */
+        .issue-card {
+            background: var(--bg-primary);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--primary-color);
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+        }
+
+        .issue-card:hover {
+            transform: translateX(4px);
+            box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .issue-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .issue-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            flex: 1;
+        }
+
+        .code-snippet {
+            background: var(--bg-tertiary);
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin: 1rem 0;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.875rem;
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+        }
+
+        /* Diagram Styles */
+        .diagram-container {
+            background: var(--bg-primary);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            position: relative;
+        }
+
+        .diagram-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+
+        /* Diagram Link Cards */
+        .diagram-intro {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: var(--radius);
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .diagram-links-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .diagram-link-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .diagram-link-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+            border-color: var(--primary-color);
+        }
+
+        .diagram-card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .diagram-card-header h3 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .diagram-card-header i {
+            color: var(--primary-color);
+        }
+
+        .diagram-card-body p {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .diagram-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--primary-color);
+            color: white;
+            text-decoration: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius);
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .diagram-button:hover {
+            background: var(--secondary-color);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
+        }
+
+        /* Diagram Toggle Interface Styles */
+        .diagram-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .diagram-button-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .diagram-button-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+            border-color: var(--primary-color);
+        }
+
+        .diagram-toggle-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius);
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .diagram-toggle-btn:hover {
+            background: var(--secondary-color);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
+        }
+
+        .diagram-content {
+            margin-top: 2rem;
+        }
+
+        #active-diagram-header {
+            display: none;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            margin-bottom: 1rem;
+        }
+
+        #active-diagram-header h3 {
+            margin: 0;
+            color: var(--text-primary);
+            font-size: 1.2rem;
+        }
+
+        .hide-diagram-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: calc(var(--radius) / 2);
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .hide-diagram-btn:hover {
+            background: #ef4444;
+            transform: translateY(-1px);
+        }
+
+        .embedded-diagram {
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .embedded-diagram.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        /* SVG Diagram Styles - Critical for rendering */
+        .svg-diagram {
+            width: 100%;
+            min-height: 400px;
+            display: block;
+            overflow: visible;
+            text-align: center;
+        }
+        
+        .svg-diagram svg {
+            width: 100% !important;
+            height: auto !important;
+            max-width: none !important;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .mermaid {
+            background: var(--bg-primary);
+            border-radius: var(--radius);
+        }
+
+        /* Collapsible sections */
+        .collapsible {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            user-select: none;
+        }
+
+        .collapsible-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .collapsible.active .collapsible-icon {
+            transform: rotate(90deg);
+        }
+
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .collapsible-content.active {
+            max-height: 1000px;
+        }
+
+        /* Search and Filter */
+        .search-filter {
+            background: var(--bg-primary);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            border: 2px solid var(--border-color);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            border-color: var(--primary-color);
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border-color);
+            margin-top: 3rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .nav {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .nav-links {
+                justify-content: center;
+            }
+
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            .issue-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--border-color);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Hidden class for filtering */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Anti-pattern section styles */
+        .anti-pattern-section {
+            margin-bottom: 2.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            background: var(--bg-secondary);
+            padding: 1.5rem;
+        }
+
+        .anti-pattern-header {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+
+        .diagram-explanation {
+            background: var(--bg-tertiary);
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin: 0.5rem 0 1rem 0;
+            border-left: 4px solid var(--primary-color);
+            font-style: italic;
+            color: var(--text-secondary);
+        }
+
+        .diagram-explanation p {
+            margin: 0;
+        }
+
+        /* Enhanced diagram containers */
+        .diagram-isolator {
+            background: var(--bg-primary);
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius);
+            margin: 1.5rem 0;
+            transition: all 0.3s ease;
+        }
+
+        .diagram-isolator:hover {
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow);
+        }
+
+        /* Issue numbering within sections */
+        .anti-pattern-section .issue-card .issue-title {
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        /* Responsive diagram containers */
+        @media (max-width: 768px) {
+            .anti-pattern-section {
+                padding: 1rem;
+            }
+            
+            .anti-pattern-header {
+                font-size: 1.25rem;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+            
+            .diagram-explanation {
+                font-size: 0.875rem;
+                padding: 0.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <div class="header">
+        <h1><i class="fas fa-chart-line"></i> Uveddi Architectural Analysis</h1>
+        <div class="header-meta">
+            <p><i class="fas fa-calendar"></i> Generated on 2025-08-03 08:40:59</p>
+            <p><i class="fas fa-cog"></i> Run ID: 1</p>
+        </div>
+    </div>
+
+    <nav class="nav">
+        <div class="nav-links">
+            <a href="#summary" class="nav-link"><i class="fas fa-chart-pie"></i> Summary</a>
+            <a href="#issues" class="nav-link"><i class="fas fa-exclamation-triangle"></i> Issues & Diagrams</a>
+        </div>
+        <button class="theme-toggle" onclick="toggleTheme()">
+            <i class="fas fa-moon"></i> Dark Mode
+        </button>
+    </nav>
+
+    <section id="summary" class="card">
+        <h2><i class="fas fa-chart-pie"></i> Executive Summary</h2>
+        <p>This analysis identified <strong>0 architectural issues</strong> across <strong>0 files</strong> in your codebase.</p>
+        
+        <div class="dashboard">
+            <div class="stat-card">
+                <div class="stat-number stat-critical">0</div>
+                <div class="stat-label">Critical Issues</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number stat-high">0</div>
+                <div class="stat-label">High Issues</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number stat-medium">0</div>
+                <div class="stat-label">Medium Issues</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number stat-low">0</div>
+                <div class="stat-label">Low Issues</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="card">
+        <h2><i class="fas fa-tachometer-alt"></i> Severity Dashboard</h2>
+        <div class="dashboard">
+        </div>
+    </section>
+
+    <section id="issues" class="card">
+        <h2><i class="fas fa-exclamation-triangle"></i> Detailed Issues</h2>
+        
+        <div class="search-filter">
+            <input type="text" id="searchInput" class="search-input" placeholder="Search issues..." onkeyup="filterIssues()">
+            <div class="filter-buttons">
+                <button class="filter-btn active" onclick="filterBySeverity('all')">All</button>
+                <button class="filter-btn" onclick="filterBySeverity('critical')">Critical</button>
+                <button class="filter-btn" onclick="filterBySeverity('high')">High</button>
+                <button class="filter-btn" onclick="filterBySeverity('medium')">Medium</button>
+                <button class="filter-btn" onclick="filterBySeverity('low')">Low</button>
+            </div>
+        </div>
+        
+        <div id="issues-container">
+        </div>
+    </section>
+
+    <footer class="footer">
+        <p><i class="fas fa-code"></i> Generated by <strong>Uveddi</strong> - AI-Powered Code Analysis</p>
+        <p>For more information, visit <a href="https://github.com/botzrDev/uveddi" target="_blank">github.com/botzrDev/uveddi</a></p>
+    </footer>
+</div>
+
+    <script>
+        // Initialize Mermaid.js for diagram rendering with unique IDs
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: 'default',
+            deterministicIds: true,
+            themeVariables: {
+                primaryColor: '#2563eb',
+                primaryTextColor: '#0f172a',
+                primaryBorderColor: '#64748b',
+                lineColor: '#64748b',
+                background: '#ffffff',
+                secondaryColor: '#f8fafc',
+                tertiaryColor: '#e2e8f0'
+            }
+        });
+
+        // Generate unique seeds for each diagram to prevent ID conflicts
+        document.addEventListener('DOMContentLoaded', function() {
+            const mermaidElements = document.querySelectorAll('.mermaid');
+            mermaidElements.forEach((element, index) => {
+                const uniqueId = `mermaid-diagram-${index}-${Date.now()}`;
+                const graphDefinition = element.textContent.trim();
+                
+                const config = {
+                    deterministicIds: true,
+                    deterministicIDSeed: `seed-${index}-${Date.now()}`,
+                    theme: document.body.dataset.theme === 'dark' ? 'dark' : 'default'
+                };
+                
+                mermaid.render(uniqueId + '-svg', graphDefinition, config).then((result) => {
+                    element.innerHTML = result.svg;
+                }).catch((error) => {
+                    console.error('Mermaid rendering error for diagram', index, ':', error);
+                    element.innerHTML = '<div class="diagram-error" style="color: red; padding: 1rem; border: 1px solid red; border-radius: 4px;">Diagram rendering failed: ' + error.message + '</div>';
+                });
+            });
+        });
+
+        // Re-render Mermaid diagrams when theme changes
+        function rerenderMermaidDiagrams() {
+            const isDark = document.body.dataset.theme === 'dark';
+            const theme = isDark ? 'dark' : 'default';
+            const themeVariables = isDark ? {
+                primaryColor: '#3b82f6',
+                primaryTextColor: '#f1f5f9',
+                primaryBorderColor: '#94a3b8',
+                lineColor: '#94a3b8',
+                background: '#0f172a',
+                secondaryColor: '#1e293b',
+                tertiaryColor: '#334155'
+            } : {
+                primaryColor: '#2563eb',
+                primaryTextColor: '#0f172a',
+                primaryBorderColor: '#64748b',
+                lineColor: '#64748b',
+                background: '#ffffff',
+                secondaryColor: '#f8fafc',
+                tertiaryColor: '#e2e8f0'
+            };
+
+            mermaid.initialize({
+                startOnLoad: false,
+                theme: theme,
+                themeVariables: themeVariables
+            });
+
+            // Re-render all mermaid diagrams with unique seeds
+            const mermaidElements = document.querySelectorAll('.mermaid');
+            mermaidElements.forEach((element, index) => {
+                const graphDefinition = element.textContent;
+                const diagramId = element.id || `mermaid-diagram-${index}`;
+                element.innerHTML = '';
+                element.removeAttribute('data-processed');
+                
+                // Configure unique seed for each diagram to prevent ID conflicts
+                mermaid.initialize({
+                    startOnLoad: false,
+                    theme: theme,
+                    deterministicIds: true,
+                    deterministicIDSeed: diagramId,
+                    themeVariables: themeVariables
+                });
+                
+                mermaid.render(diagramId, graphDefinition, (svgCode) => {
+                    element.innerHTML = svgCode;
+                });
+            });
+        }
+
+        // Theme toggle functionality
+        function toggleTheme() {
+            const body = document.body;
+            const themeToggle = document.querySelector('.theme-toggle');
+            
+            if (body.dataset.theme === 'dark') {
+                body.dataset.theme = 'light';
+                themeToggle.innerHTML = '<i class="fas fa-moon"></i> Dark Mode';
+                localStorage.setItem('theme', 'light');
+            } else {
+                body.dataset.theme = 'dark';
+                themeToggle.innerHTML = '<i class="fas fa-sun"></i> Light Mode';
+                localStorage.setItem('theme', 'dark');
+            }
+            
+            // Re-render Mermaid diagrams with new theme
+            setTimeout(rerenderMermaidDiagrams, 100);
+        }
+
+        // Load saved theme
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.body.dataset.theme = savedTheme;
+        if (savedTheme === 'dark') {
+            document.querySelector('.theme-toggle').innerHTML = '<i class="fas fa-sun"></i> Light Mode';
+        }
+
+        // Collapsible sections
+        function toggleSection(sectionId) {
+            const content = document.getElementById(sectionId);
+            const icon = content.previousElementSibling.querySelector('.collapsible-icon');
+            
+            content.classList.toggle('active');
+            icon.style.transform = content.classList.contains('active') ? 'rotate(90deg)' : 'rotate(0deg)';
+        }
+
+        // Diagram toggle functionality
+        function toggleDiagram(diagramId) {
+            // Hide all other diagrams first
+            hideAllDiagrams();
+            
+            // Show the selected diagram
+            const diagram = document.getElementById(diagramId);
+            const header = document.getElementById('active-diagram-header');
+            const title = document.getElementById('active-diagram-title');
+            
+            if (diagram && header && title) {
+                // Update title
+                const diagramTitle = document.querySelector(`button[onclick="toggleDiagram('${diagramId}')"]`)
+                    .closest('.diagram-button-card')
+                    .querySelector('h3').textContent;
+                title.textContent = diagramTitle;
+                
+                // Show diagram with smooth transition
+                diagram.style.display = 'block';
+                header.style.display = 'flex';
+                
+                // Trigger reflow for animation
+                diagram.offsetHeight;
+                diagram.style.opacity = '1';
+                diagram.style.transform = 'translateY(0)';
+                
+                // Update button text
+                const button = document.querySelector(`button[onclick="toggleDiagram('${diagramId}')"]`);
+                button.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Diagram';
+                button.onclick = () => hideAllDiagrams();
+                
+                // Re-render the specific Mermaid diagram
+                setTimeout(() => {
+                    const mermaidElement = diagram.querySelector('.mermaid');
+                    if (mermaidElement && !mermaidElement.getAttribute('data-processed')) {
+                        const graphDefinition = mermaidElement.textContent;
+                        const diagramElementId = mermaidElement.id;
+                        mermaidElement.innerHTML = '';
+                        mermaidElement.removeAttribute('data-processed');
+                        
+                        mermaid.render(diagramElementId, graphDefinition, (svgCode) => {
+                            mermaidElement.innerHTML = svgCode;
+                        });
+                    }
+                }, 50);
+            }
+        }
+
+        function hideAllDiagrams() {
+            // Hide all diagrams
+            document.querySelectorAll('.embedded-diagram').forEach(diagram => {
+                diagram.style.opacity = '0';
+                diagram.style.transform = 'translateY(-10px)';
+                setTimeout(() => {
+                    diagram.style.display = 'none';
+                }, 200);
+            });
+            
+            // Hide header
+            const header = document.getElementById('active-diagram-header');
+            if (header) {
+                header.style.display = 'none';
+            }
+            
+            // Reset all button texts
+            document.querySelectorAll('.diagram-toggle-btn').forEach(button => {
+                const diagramId = button.getAttribute('onclick').match(/'([^']+)'/)[1];
+                button.innerHTML = '<i class="fas fa-eye"></i> Show Diagram';
+                button.onclick = () => toggleDiagram(diagramId);
+            });
+        }
+
+        // Issue filtering
+        let currentSeverityFilter = 'all';
+        let currentSearchQuery = '';
+
+        function filterBySeverity(severity) {
+            currentSeverityFilter = severity;
+            
+            // Update active button
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            applyFilters();
+        }
+
+        function filterIssues() {
+            currentSearchQuery = document.getElementById('searchInput').value.toLowerCase();
+            applyFilters();
+        }
+
+        function applyFilters() {
+            const issues = document.querySelectorAll('.issue-card');
+            
+            issues.forEach(issue => {
+                const severity = issue.dataset.severity;
+                const text = issue.textContent.toLowerCase();
+                
+                const matchesSeverity = currentSeverityFilter === 'all' || severity === currentSeverityFilter;
+                const matchesSearch = currentSearchQuery === '' || text.includes(currentSearchQuery);
+                
+                if (matchesSeverity && matchesSearch) {
+                    issue.classList.remove('hidden');
+                } else {
+                    issue.classList.add('hidden');
+                }
+            });
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-expand diagrams section
+            const diagramsContent = document.getElementById('diagrams-content');
+            if (diagramsContent) {
+                diagramsContent.classList.add('active');
+                const icon = diagramsContent.previousElementSibling.querySelector('.collapsible-icon');
+                if (icon) {
+                    icon.style.transform = 'rotate(90deg)';
+                }
+            }
+            
+            // Initial render of all Mermaid diagrams with unique IDs
+            setTimeout(() => {
+                const mermaidElements = document.querySelectorAll('.mermaid');
+                mermaidElements.forEach((element, index) => {
+                    const graphDefinition = element.textContent;
+                    const diagramId = element.id || `mermaid-diagram-${index}`;
+                    element.innerHTML = '';
+                    element.removeAttribute('data-processed');
+                    
+                    // Configure unique seed for each diagram to prevent ID conflicts
+                    mermaid.initialize({
+                        startOnLoad: false,
+                        theme: document.body.dataset.theme === 'dark' ? 'dark' : 'default',
+                        deterministicIds: true,
+                        deterministicIDSeed: diagramId,
+                        themeVariables: document.body.dataset.theme === 'dark' ? {
+                            primaryColor: '#3b82f6',
+                            primaryTextColor: '#f1f5f9',
+                            primaryBorderColor: '#64748b',
+                            lineColor: '#64748b',
+                            background: '#0f172a',
+                            secondaryColor: '#1e293b',
+                            tertiaryColor: '#334155'
+                        } : {
+                            primaryColor: '#2563eb',
+                            primaryTextColor: '#0f172a',
+                            primaryBorderColor: '#64748b',
+                            lineColor: '#64748b',
+                            background: '#ffffff',
+                            secondaryColor: '#f8fafc',
+                            tertiaryColor: '#e2e8f0'
+                        }
+                    });
+                    
+                    mermaid.render(diagramId, graphDefinition, (svgCode) => {
+                        element.innerHTML = svgCode;
+                    });
+                });
+            }, 100);
+        });
+    </script>
+</body>
+</html>

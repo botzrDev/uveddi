@@ -123,7 +123,7 @@ fn generate_fontawesome_subset() -> String {
     font-style: normal;
     font-weight: 900;
     font-display: swap;
-    src: url("data:font/woff2;base64,") format("woff2");
+    src: url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/webfonts/fa-solid-900.woff2") format("woff2");
 }
 
 .fas, .fa-solid {

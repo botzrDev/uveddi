@@ -144,19 +144,126 @@ pub struct OllamaConfig {
     pub max_tokens: i32,
 }
 
-impl Default for OllamaConfig {
-    /// Provides sensible default configuration for Ollama
+impl OllamaConfig {
+    /// Automatically selects an appropriate model based on available system memory
     ///
-    /// Uses DeepSeek Coder model with conservative generation parameters
-    /// suitable for code analysis tasks.
-    fn default() -> Self {
+    /// This function checks available system memory and selects a model that will
+    /// run efficiently without causing memory pressure or OOM conditions.
+    ///
+    /// # Memory Thresholds
+    ///
+    /// - 32GB+: deepseek-coder:6.7b-instruct-q4_0 (high-performance model)
+    /// - 16-32GB: llama3.2:3b (balanced performance/memory)
+    /// - 8-16GB: phi3:mini (efficient small model)
+    /// - 4-8GB: llama3.2:1b (ultra-lightweight)
+    /// - <4GB: tinyllama:1.1b (minimal memory footprint)
+    ///
+    /// # Returns
+    ///
+    /// String containing the recommended model name for the current system
+    pub fn get_memory_appropriate_model() -> String {
+        let available_memory_gb = Self::get_system_memory_gb();
+        
+        let model = match available_memory_gb {
+            mem if mem >= 32.0 => {
+                info!("High memory system ({}GB) - using deepseek-coder:6.7b-instruct-q4_0", mem);
+                "deepseek-coder:6.7b-instruct-q4_0".to_string()
+            },
+            mem if mem >= 16.0 => {
+                info!("Medium-high memory system ({}GB) - using llama3.2:3b", mem);
+                "llama3.2:3b".to_string()
+            },
+            mem if mem >= 8.0 => {
+                info!("Medium memory system ({}GB) - using phi3:mini", mem);
+                "phi3:mini".to_string()
+            },
+            mem if mem >= 4.0 => {
+                info!("Low memory system ({}GB) - using llama3.2:1b", mem);
+                "llama3.2:1b".to_string()
+            },
+            mem => {
+                warn!("Very low memory system ({}GB) - using tinyllama:1.1b", mem);
+                "tinyllama:1.1b".to_string()
+            }
+        };
+        
+        info!("Selected AI model: {} for {}GB system", model, available_memory_gb);
+        model
+    }
+
+    /// Gets available system memory in gigabytes
+    ///
+    /// Attempts to read system memory information from /proc/meminfo on Linux,
+    /// falls back to conservative estimates on other platforms or if reading fails.
+    ///
+    /// # Returns
+    ///
+    /// Available memory in gigabytes as f64
+    fn get_system_memory_gb() -> f64 {
+        #[cfg(target_os = "linux")]
+        {
+            use std::fs;
+            
+            if let Ok(meminfo) = fs::read_to_string("/proc/meminfo") {
+                for line in meminfo.lines() {
+                    if line.starts_with("MemAvailable:") {
+                        if let Some(kb_str) = line.split_whitespace().nth(1) {
+                            if let Ok(kb) = kb_str.parse::<u64>() {
+                                let gb = kb as f64 / 1024.0 / 1024.0;
+                                debug!("Detected {} GB available memory from /proc/meminfo", gb);
+                                return gb;
+                            }
+                        }
+                    }
+                }
+                
+                // Fallback to MemTotal if MemAvailable not found
+                for line in meminfo.lines() {
+                    if line.starts_with("MemTotal:") {
+                        if let Some(kb_str) = line.split_whitespace().nth(1) {
+                            if let Ok(kb) = kb_str.parse::<u64>() {
+                                let gb = (kb as f64 / 1024.0 / 1024.0) * 0.8; // Assume 80% available
+                                debug!("Detected {} GB total memory, estimating {} GB available", 
+                                       kb as f64 / 1024.0 / 1024.0, gb);
+                                return gb;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Conservative fallback for non-Linux or if reading fails
+        warn!("Could not detect system memory, using conservative 8GB estimate");
+        8.0
+    }
+
+    /// Creates a configuration with automatic memory-aware model selection
+    ///
+    /// # Arguments
+    ///
+    /// * `api_url` - Optional custom Ollama API URL (defaults to localhost:11434)
+    ///
+    /// # Returns
+    ///
+    /// OllamaConfig with automatically selected model based on system memory
+    pub fn memory_aware(api_url: Option<String>) -> Self {
         Self {
-            model: "deepseek-coder:6.7b-instruct-q4_0".to_string(),
-            api_url: "http://localhost:11434".to_string(),
+            model: Self::get_memory_appropriate_model(),
+            api_url: api_url.unwrap_or_else(|| "http://localhost:11434".to_string()),
             timeout_seconds: 60,
             temperature: 0.1,
             max_tokens: 2048,
         }
+    }
+}
+
+impl Default for OllamaConfig {
+    /// Provides sensible default configuration for Ollama
+    ///
+    /// Uses memory-appropriate model selection based on available system memory.
+    fn default() -> Self {
+        Self::memory_aware(None)
     }
 }
 
@@ -174,8 +281,53 @@ impl Default for OllamaConfig {
 pub struct OllamaProvider {
     /// Configuration settings for this provider instance
     pub config: OllamaConfig,
-    /// Secure HTTP client for making API requests to Ollama
-    pub client: SecureHttpClient,
+    /// HTTP client for making API requests to Ollama (either secure or basic for localhost)
+    pub client: OllamaHttpClient,
+}
+
+/// HTTP client wrapper for Ollama requests
+/// 
+/// This enum allows us to use either a secure HTTP client for external connections
+/// or a basic reqwest client for localhost connections.
+#[cfg(feature = "ai")]
+pub enum OllamaHttpClient {
+    /// Secure client for external connections
+    Secure(SecureHttpClient),
+    /// Basic client for localhost connections
+    Basic(reqwest::Client),
+}
+
+#[cfg(feature = "ai")]
+impl OllamaHttpClient {
+    /// Make a GET request to the specified URL
+    pub async fn get(&self, url: &str) -> Result<reqwest::Response, String> {
+        match self {
+            OllamaHttpClient::Secure(client) => {
+                client.get(url).await.map_err(|e| format!("Secure GET request failed: {}", e))
+            },
+            OllamaHttpClient::Basic(client) => {
+                client.get(url).send().await.map_err(|e| format!("Basic GET request failed: {}", e))
+            }
+        }
+    }
+
+    /// Make a POST request to the specified URL with JSON body
+    pub async fn post(&self, url: &str, json_body: String) -> Result<reqwest::Response, String> {
+        match self {
+            OllamaHttpClient::Secure(client) => {
+                client.post(url, json_body).await.map_err(|e| format!("Secure POST request failed: {}", e))
+            },
+            OllamaHttpClient::Basic(client) => {
+                client
+                    .post(url)
+                    .header("Content-Type", "application/json")
+                    .body(json_body)
+                    .send()
+                    .await
+                    .map_err(|e| format!("Basic POST request failed: {}", e))
+            }
+        }
+    }
 }
 
 impl OllamaProvider {
@@ -197,22 +349,38 @@ impl OllamaProvider {
     /// let provider = OllamaProvider::new(config);
     /// ```
     pub fn new(config: OllamaConfig) -> Result<Self, String> {
-        // Create secure HTTP client with appropriate timeouts
-        let mut http_config = HttpSecurityConfig::default();
+        // For localhost connections, use a basic reqwest client to bypass security restrictions
+        // Ollama typically runs on localhost with HTTP, which is safe for local AI inference
+        let client = if config.api_url.starts_with("http://localhost") || config.api_url.starts_with("http://127.0.0.1") {
+            info!("Creating localhost HTTP client for Ollama (bypassing HTTPS enforcement)");
+            
+            // Create a basic reqwest client for localhost connections
+            let reqwest_client = reqwest::Client::builder()
+                .timeout(Duration::from_secs(config.timeout_seconds))
+                .connect_timeout(Duration::from_secs(10))
+                .build()
+                .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
+            
+            OllamaHttpClient::Basic(reqwest_client)
+        } else {
+            // For external connections, use full security configuration
+            let mut http_config = HttpSecurityConfig::default();
+            
+            #[cfg(debug_assertions)]
+            {
+                http_config.enforce_https = false; // Allow HTTP for debug builds
+            }
 
-        // Configure for local development (Ollama typically runs on localhost)
-        #[cfg(debug_assertions)]
-        {
-            http_config.enforce_https = false; // Allow HTTP for local development
-        }
+            // Set timeouts based on Ollama config
+            http_config.timeout_seconds = config.timeout_seconds + 5;
+            http_config.connect_timeout_seconds = 10;
+            http_config.read_timeout_seconds = config.timeout_seconds;
 
-        // Set timeouts based on Ollama config
-        http_config.timeout_seconds = config.timeout_seconds + 5;
-        http_config.connect_timeout_seconds = 10;
-        http_config.read_timeout_seconds = config.timeout_seconds;
-
-        let client = SecureHttpClient::new(http_config)
-            .map_err(|e| format!("Failed to create secure HTTP client: {}", e))?;
+            let secure_client = SecureHttpClient::new(http_config)
+                .map_err(|e| format!("Failed to create secure HTTP client: {}", e))?;
+            
+            OllamaHttpClient::Secure(secure_client)
+        };
 
         Ok(Self { config, client })
     }

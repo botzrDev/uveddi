@@ -16,21 +16,26 @@ pub struct AiAnalysisEngine {
 }
 
 impl AiAnalysisEngine {
-    /// Creates a new instance of AiAnalysisEngine with default configurations.
+    /// Creates a new instance of AiAnalysisEngine with memory-aware model selection.
     pub fn new() -> Self {
         // Try to initialize with Ollama provider if available
         let provider = if let Ok(api_url) = env::var("OLLAMA_API_URL") {
-            let model = env::var("OLLAMA_MODEL")
-                .unwrap_or_else(|_| "deepseek-coder:6.7b-instruct-q4_0".to_string());
-
-            let config = OllamaConfig {
-                model,
-                api_url,
-                ..Default::default()
+            // Use memory-aware model selection unless explicitly overridden
+            let config = if let Ok(explicit_model) = env::var("OLLAMA_MODEL") {
+                info!("Using explicitly configured model: {}", explicit_model);
+                OllamaConfig {
+                    model: explicit_model,
+                    api_url,
+                    ..Default::default()
+                }
+            } else {
+                info!("Using memory-aware model selection");
+                OllamaConfig::memory_aware(Some(api_url))
             };
 
             match OllamaProvider::new(config) {
                 Ok(ollama_provider) => {
+                    info!("Successfully created Ollama provider with model: {}", ollama_provider.config.model);
                     Some(Box::new(ollama_provider) as Box<dyn LlmProvider + Send + Sync>)
                 }
                 Err(e) => {
@@ -39,7 +44,20 @@ impl AiAnalysisEngine {
                 }
             }
         } else {
-            None
+            // No API URL configured, try with default localhost and memory-aware model
+            info!("No OLLAMA_API_URL configured, attempting localhost with memory-aware model selection");
+            let config = OllamaConfig::memory_aware(None);
+            
+            match OllamaProvider::new(config) {
+                Ok(ollama_provider) => {
+                    info!("Successfully created Ollama provider with auto-selected model: {}", ollama_provider.config.model);
+                    Some(Box::new(ollama_provider) as Box<dyn LlmProvider + Send + Sync>)
+                }
+                Err(e) => {
+                    info!("No Ollama provider available ({}), will use knowledge-only mode", e);
+                    None
+                }
+            }
         };
 
         AiAnalysisEngine {
