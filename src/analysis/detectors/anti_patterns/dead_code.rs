@@ -655,23 +655,30 @@ impl AnalysisDetector for DeadCodeDetector {
                     _ => "Low",
                 };
 
-                issues.push(ArchitecturalIssue {
-                    issue_id: None,
-                    analysis_run_id: 0,
-                    anti_pattern_type_id: 2, // Dead Code
-                    file_path: symbol.path.display().to_string(), // Use symbol.path.display()
-                    start_line: Some(symbol.line_number as i32),
-                    end_line: Some(symbol.line_number as i32),
-                    severity: severity.to_string(),
-                    description: format!(
+                let mut issue = ArchitecturalIssue::new(
+                    0, // analysis_run_id will be set by the caller
+                    2, // anti_pattern_type_id for Dead Code
+                    symbol.path.display().to_string(),
+                    Some(symbol.line_number as i32),
+                    format!(
                         "Potentially dead code: {} '{}' is not used in this file (confidence: {:.1}%)",
                         format!("{:?}", symbol.symbol_type).to_lowercase(),
                         symbol.name,
                         symbol.confidence * 100.0
                     ),
-                    code_snippet: Some(symbol.code_snippet),
-                    ai_explanation: None,
-                });
+                    "DeadCodeDetector".to_string(),
+                    severity.to_string(),
+                    format!(
+                        "Potentially dead code: {} '{}' is not used in this file (confidence: {:.1}%)",
+                        format!("{:?}", symbol.symbol_type).to_lowercase(),
+                        symbol.name,
+                        symbol.confidence * 100.0
+                    ),
+                );
+                issue.start_line = Some(symbol.line_number as i32);
+                issue.end_line = Some(symbol.line_number as i32);
+                issue.code_snippet = Some(symbol.code_snippet);
+                issues.push(issue);
             }
         }
 

@@ -11,9 +11,9 @@ use crate::analysis::components::traits::{
 };
 use crate::analysis::components::CacheManager as CacheManagerTrait;
 use crate::analysis::detectors::dependency::{Dependency, DependencyExtractor};
-use crate::analysis::graph::dependency::{LocalDependencyGraph, ComponentNode, LocalDependencyType};
+use crate::analysis::graph::dependency::{LocalDependencyGraph, ComponentNode, LocalDependencyType, EdgeCount, IntoEdges};
 use crate::analysis::traits::DependencyExtractorTrait;
-use crate::ast::ParsedFile;
+use crate::analysis::components::ast_provider::ParsedFile;
 use crate::database::models::ArchitecturalIssue;
 
 use super::{AnalysisResult, ServiceConfiguration};
@@ -133,7 +133,7 @@ impl DependencyAnalysisService {
         let dependencies = self.dependency_extractor.extract_dependencies(&parsed_file).await?;
 
         // Build graph from dependencies
-        self.dependency_builder.build_graph_from_dependencies(&dependencies).await
+        Ok(self.dependency_builder.build_from_dependencies(dependencies))
     }
 
     /// Build dependency graph for a directory
@@ -141,14 +141,14 @@ impl DependencyAnalysisService {
         debug!("Building directory dependency graph for: {}", dir_path.display());
 
         // Use the dependency builder to scan the directory
-        self.dependency_builder.build_graph(dir_path).await
+        self.dependency_builder.build_graph(dir_path).await.map_err(Into::into)
     }
 
     /// Analyze circular dependencies in the graph
     pub async fn analyze_cycles(&self, graph: &LocalDependencyGraph) -> AnalysisResult<Vec<CycleDependency>> {
         info!("Analyzing cycles in dependency graph with {} nodes", graph.node_count());
 
-        let cycles = self.dependency_builder.detect_cycles(graph).await;
+        let cycles = self.dependency_builder.detect_cycles(graph).await?;
         
         // Convert internal cycle representation to our CycleDependency format
         let mut cycle_dependencies = Vec::new();
@@ -186,7 +186,7 @@ impl DependencyAnalysisService {
             match self.dependency_extractor.extract_dependencies(file).await {
                 Ok(deps) => all_dependencies.extend(deps),
                 Err(e) => warn!("Failed to extract dependencies from {}: {}", 
-                               file.path.display(), e),
+                               file.file_path.display(), e),
             }
         }
 
@@ -224,7 +224,7 @@ impl DependencyAnalysisService {
         let mut type_counts = HashMap::new();
         
         for edge in graph.edges() {
-            let dep_type = edge.dependency_type();
+            let dep_type = edge.dependency_type.clone();
             *type_counts.entry(dep_type).or_insert(0) += 1;
         }
 
@@ -232,8 +232,8 @@ impl DependencyAnalysisService {
     }
 
     /// Find strongly connected components in the graph
-    pub async fn find_strongly_connected_components(&self, graph: &LocalDependencyGraph) -> Vec<Vec<ComponentNode>> {
-        self.dependency_builder.find_strongly_connected_components(graph).await
+    pub async fn find_strongly_connected_components(&self, graph: &LocalDependencyGraph) -> AnalysisResult<Vec<Vec<String>>> {
+        self.dependency_builder.find_strongly_connected_components(graph).await.map_err(Into::into)
     }
 
     // Private helper methods
@@ -249,10 +249,10 @@ impl DependencyAnalysisService {
 
     async fn cache_dependency_graph(&self, cache_key: String, graph: &LocalDependencyGraph) -> AnalysisResult<()> {
         let mut cached_graphs = self.cached_graphs.write().await;
-        cached_graphs.insert(cache_key, graph.clone());
+        cached_graphs.insert(cache_key.clone(), graph.clone());
         
         // Also cache in the persistent cache manager
-        self.cache_manager.cache_dependency_graph(&cache_key, graph).await
+        self.cache_manager.cache_dependency_graph(&cache_key, graph).await.map_err(Into::into)
     }
 
     async fn update_cache_stats(&self, cache_hit: bool) {
@@ -283,7 +283,7 @@ impl DependencyAnalysisService {
             }
         }
         
-        affected_files.into_iter().collect()
+        affected_files.into_iter().map(|s| PathBuf::from(s)).collect()
     }
 }
 

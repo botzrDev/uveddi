@@ -851,16 +851,20 @@ impl GodObjectDetector {
                 if let Some((trivial, complex)) = behavioral_analysis {
                     description.push_str(&format!(" Methods: {} trivial, {} complex", trivial, complex));
                 }
-                ArchitecturalIssue {
-                    issue_id: None,
-                    analysis_run_id: 0, // Will be set by the engine
-                    anti_pattern_type_id: 1, // God Object
-                    file_path: parsed_file.file_path.display().to_string(), // TODO UV-222: Use Arc<PathBuf> for O(1) clones
-                    start_line: Some((name_node.start_position().row + 1) as i32),
-                    end_line: Some((name_node.end_position().row + 1) as i32),
-                    severity,
-                    description,
-                    code_snippet: Some(
+                {
+                    let mut issue = ArchitecturalIssue::new(
+                        0, // analysis_run_id will be set by the engine
+                        1, // anti_pattern_type_id for God Object
+                        parsed_file.file_path.display().to_string(),
+                        Some((name_node.start_position().row + 1) as i32),
+                        description.clone(),
+                        "GodObjectDetector".to_string(),
+                        severity.clone(),
+                        description.clone(),
+                    );
+                    issue.start_line = Some((name_node.start_position().row + 1) as i32);
+                    issue.end_line = Some((name_node.end_position().row + 1) as i32);
+                    issue.code_snippet = Some(
                         {
                             let source_str = parsed_file.source.as_str();
                             container_node
@@ -868,8 +872,8 @@ impl GodObjectDetector {
                                 .unwrap_or("")
                                 .to_string()
                         }
-                    ),
-                    ai_explanation: None,
+                    );
+                    issue
                 }
             })
     }

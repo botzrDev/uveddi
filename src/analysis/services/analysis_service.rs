@@ -72,7 +72,7 @@ impl AnalysisService {
             aggregator,
             plugin_manager,
             detector_factory,
-            workspace_detector: WorkspaceDetector::new(),
+            workspace_detector: WorkspaceDetector,
             file_discovery: FileDiscovery::new(),
             stats: Arc::new(Mutex::new(AnalysisStats::default())),
         }
@@ -163,9 +163,19 @@ impl AnalysisService {
             return Ok(vec![SourceFile::new(path.to_path_buf())?]);
         }
 
-        // Use file discovery to find source files
-        let walker = AsyncWalker::new(path.to_path_buf())?;
-        let discovered_paths = walker.discover_files().await?;
+        // Use AsyncWalker for file discovery
+        // Collect matching file paths from the async walker stream
+        let walker = AsyncWalker::for_source_code();
+        let mut stream = walker.walk(path);
+        // Need StreamExt for `.next()`
+        use futures::stream::StreamExt;
+        let mut discovered_paths = Vec::new();
+        while let Some(item) = stream.next().await {
+            match item {
+                Ok(p) => discovered_paths.push(p),
+                Err(e) => log::warn!("Error during file discovery: {}", e),
+            }
+        }
         
         let mut source_files = Vec::new();
         for path in discovered_paths {
@@ -180,7 +190,14 @@ impl AnalysisService {
 
     /// Detect workspace information for the given path
     async fn detect_workspace(&self, path: &Path) -> AnalysisResult<WorkspaceInfo> {
-        self.workspace_detector.detect_workspace(path).await
+        match WorkspaceDetector::detect_workspace(path).await {
+            Ok(Some(workspace)) => Ok(workspace),
+            Ok(None) => Err(crate::analysis::errors::AnalysisError::workspace_discovery_error(
+                path.display().to_string(),
+                "No workspace or crate detected",
+            ).into()),
+            Err(e) => Err(e.into()),
+        }
     }
 
     /// Get supported detector information
@@ -226,7 +243,7 @@ impl AnalysisService {
         info!("Running analysis with custom detectors: {:?}", enabled_detectors);
         
         // Configure detector scheduler with specific detectors
-        self.detector_scheduler.configure_enabled_detectors(enabled_detectors).await?;
+        self.detector_scheduler.configure_enabled_detectors(enabled_detectors.to_vec()).await?;
         
         // Run standard analysis
         self.run_analysis(path).await

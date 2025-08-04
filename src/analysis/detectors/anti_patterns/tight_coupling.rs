@@ -339,20 +339,25 @@ impl TightCouplingDetector {
             ComponentNode::Module { path } => (path.clone(), "module".to_string()),
         };
 
-        ArchitecturalIssue {
-            issue_id: None,
-            analysis_run_id: 0, // Will be set by caller
-            anti_pattern_type_id: 1, // Tight coupling type ID
-            file_path,
-            start_line: None,
-            end_line: None,
-            severity: severity.to_string(),
-            description,
-            code_snippet: Some(component_name),
-            ai_explanation: Some(format!(
+        {
+            let mut issue = ArchitecturalIssue::new(
+                0, // analysis_run_id will be set by caller
+                1, // anti_pattern_type_id for tight coupling
+                file_path,
+                None, // line_number
+                description.clone(),
+                "TightCouplingDetector".to_string(),
+                severity.to_string(),
+                description,
+            );
+            issue.start_line = None;
+            issue.end_line = None;
+            issue.code_snippet = Some(component_name);
+            issue.ai_explanation = Some(format!(
                 "Reduce coupling by: 1) Using dependency injection, 2) Applying interfaces/traits, 3) Reducing direct dependencies. Current metrics: Fan-out={}, Fan-in={}, CBO={}, RFC={}",
                 metrics.fan_out, metrics.fan_in, metrics.cbo, metrics.rfc
-            )),
+            ));
+            issue
         }
     }
 
@@ -499,21 +504,21 @@ impl AnalysisDetector for TightCouplingDetector {
 
         for (component_name, dep_count) in component_deps {
             if dep_count >= thresholds.fan_out_critical {
-                issues.push(ArchitecturalIssue {
-                    issue_id: None,
-                    analysis_run_id: 0,
-                    anti_pattern_type_id: 1, // Tight coupling type ID
-                    file_path: file.path().to_string_lossy().to_string(),
-                    start_line: None,
-                    end_line: None,
-                    severity: "Critical".to_string(),
-                    description: format!(
-                        "Component '{}' has {} dependencies, exceeding critical threshold of {}",
+                issues.push(ArchitecturalIssue::new(
+                    0, // analysis_run_id
+                    1, // anti_pattern_type_id: Tight coupling
+                    file.path().to_string_lossy().to_string(),
+                    None, // line_number
+                    format!("Component '{}' has {} dependencies (critical threshold: {})", 
+                        component_name, dep_count, thresholds.fan_out_critical),
+                    "TightCouplingDetector".to_string(),
+                    "Critical".to_string(),
+                    format!(
+                        "Component '{}' has {} dependencies, which exceeds the critical threshold of {}. \
+                         This indicates tight coupling and makes the code harder to maintain.",
                         component_name, dep_count, thresholds.fan_out_critical
                     ),
-                    code_snippet: Some(component_name),
-                    ai_explanation: Some("Consider reducing dependencies through dependency injection or interface abstraction".to_string()),
-                });
+                ));
             }
         }
 

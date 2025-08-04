@@ -15,9 +15,11 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use tokio::sync::{Mutex, RwLock};
+// Feature-gated tree-sitter imports
+#[cfg(feature = "tree-sitter")]
 use tree_sitter::{Language, Parser, Tree, Node};
-
-/// Enhanced ParsedFile structure with error metadata
+#[cfg(not(feature = "tree-sitter"))]
+use crate::ast::tree_sitter::{Language, Parser, Tree, Node};
 #[derive(Debug)]
 pub struct ParsedFile {
     pub file_path: Arc<PathBuf>,
@@ -47,9 +49,12 @@ impl AstProviderImpl {
         
         // Initialize language grammar map
         let mut language_map = HashMap::new();
-        language_map.insert(SourceLanguage::Rust, tree_sitter_rust::LANGUAGE.into());
-        language_map.insert(SourceLanguage::Python, tree_sitter_python::LANGUAGE.into());
-        language_map.insert(SourceLanguage::JavaScript, tree_sitter_javascript::LANGUAGE.into());
+        #[cfg(feature = "tree-sitter")]
+        {
+            language_map.insert(SourceLanguage::Rust, tree_sitter_rust::LANGUAGE.into());
+            language_map.insert(SourceLanguage::Python, tree_sitter_python::LANGUAGE.into());
+            language_map.insert(SourceLanguage::JavaScript, tree_sitter_javascript::LANGUAGE.into());
+        }
 
         Ok(Self {
             ast_parser: Mutex::new(ast_parser),
@@ -67,9 +72,12 @@ impl AstProviderImpl {
         
         // Initialize language grammar map
         let mut language_map = HashMap::new();
-        language_map.insert(SourceLanguage::Rust, tree_sitter_rust::LANGUAGE.into());
-        language_map.insert(SourceLanguage::Python, tree_sitter_python::LANGUAGE.into());
-        language_map.insert(SourceLanguage::JavaScript, tree_sitter_javascript::LANGUAGE.into());
+        #[cfg(feature = "tree-sitter")]
+        {
+            language_map.insert(SourceLanguage::Rust, tree_sitter_rust::LANGUAGE.into());
+            language_map.insert(SourceLanguage::Python, tree_sitter_python::LANGUAGE.into());
+            language_map.insert(SourceLanguage::JavaScript, tree_sitter_javascript::LANGUAGE.into());
+        }
 
         Ok(Self {
             ast_parser: Mutex::new(ast_parser),
@@ -238,8 +246,26 @@ impl AstProvider for AstProviderImpl {
             })
         }
     }
-    
-    
+
+    async fn parse_file(&self, file_path: &Path) -> Result<Arc<ParsedFile>, UveddiError> {
+        // Check performance-critical cache first
+        if let Some(parsed_file) = self.parsed_file_cache.get(file_path) {
+            info!("PARSED FILE CACHE HIT: Using cached parsed file for {}", file_path.display());
+            return Ok(Arc::clone(&parsed_file));
+        }
+        
+        // Parse and cache the file
+        let parsed_file = self.internal_parse_and_cache(file_path).await
+            .map_err(|e| UveddiError::AstError {
+                file: file_path.to_string_lossy().to_string(),
+                language: "unknown".to_string(),
+                message: format!("Parse error: {:?}", e),
+                suggestion: "Check file syntax".to_string(),
+                source: None,
+            })?;
+            
+        Ok(parsed_file)
+    }
 
     fn clear_cache(&self) {
         self.ast_cache.clear();

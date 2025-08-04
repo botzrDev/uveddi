@@ -110,6 +110,176 @@ impl DependencyGraphBuilderImpl {
         // based on the dependency information
         LocalDependencyType::Import
     }
+
+    /// Detects cycles in the dependency graph
+    pub async fn detect_cycles(&self, graph: &LocalDependencyGraph) -> Result<Vec<Vec<String>>, UveddiError> {
+        // Simple cycle detection using DFS
+        let nodes = graph.get_all_nodes();
+        let mut visited = std::collections::HashSet::new();
+        let mut recursion_stack = std::collections::HashSet::new();
+        let mut cycles = Vec::new();
+        let mut current_path = Vec::new();
+
+        for node in nodes {
+            if !visited.contains(&node) {
+                self.detect_cycles_dfs(
+                    graph,
+                    &node,
+                    &mut visited,
+                    &mut recursion_stack,
+                    &mut current_path,
+                    &mut cycles,
+                )?;
+            }
+        }
+
+        Ok(cycles)
+    }
+
+    /// DFS helper for cycle detection
+    fn detect_cycles_dfs(
+        &self,
+        graph: &LocalDependencyGraph,
+        node: &ComponentNode,
+        visited: &mut std::collections::HashSet<ComponentNode>,
+        recursion_stack: &mut std::collections::HashSet<ComponentNode>,
+        current_path: &mut Vec<String>,
+        cycles: &mut Vec<Vec<String>>,
+    ) -> Result<(), UveddiError> {
+        visited.insert(node.clone());
+        recursion_stack.insert(node.clone());
+        current_path.push(self.node_to_string(node));
+
+        if let Some(neighbors) = graph.get_dependencies(node) {
+            for neighbor in neighbors {
+                if !visited.contains(&neighbor) {
+                    self.detect_cycles_dfs(
+                        graph,
+                        &neighbor,
+                        visited,
+                        recursion_stack,
+                        current_path,
+                        cycles,
+                    )?;
+                } else if recursion_stack.contains(&neighbor) {
+                    // Found a cycle - extract the cycle path
+                    let cycle_start = current_path
+                        .iter()
+                        .position(|n| n == &self.node_to_string(&neighbor))
+                        .unwrap_or(0);
+                    let cycle = current_path[cycle_start..].to_vec();
+                    cycles.push(cycle);
+                }
+            }
+        }
+
+        recursion_stack.remove(node);
+        current_path.pop();
+        Ok(())
+    }
+
+    /// Finds strongly connected components using Tarjan's algorithm
+    pub async fn find_strongly_connected_components(
+        &self,
+        graph: &LocalDependencyGraph,
+    ) -> Result<Vec<Vec<String>>, UveddiError> {
+        let nodes = graph.get_all_nodes();
+        let mut index_counter = 0;
+        let mut stack = Vec::new();
+        let mut indices = std::collections::HashMap::new();
+        let mut lowlinks = std::collections::HashMap::new();
+        let mut on_stack = std::collections::HashSet::new();
+        let mut sccs = Vec::new();
+
+        for node in nodes {
+            if !indices.contains_key(&node) {
+                self.tarjan_scc(
+                    graph,
+                    &node,
+                    &mut index_counter,
+                    &mut stack,
+                    &mut indices,
+                    &mut lowlinks,
+                    &mut on_stack,
+                    &mut sccs,
+                )?;
+            }
+        }
+
+        Ok(sccs)
+    }
+
+    /// Tarjan's algorithm helper for finding strongly connected components
+    fn tarjan_scc(
+        &self,
+        graph: &LocalDependencyGraph,
+        node: &ComponentNode,
+        index_counter: &mut usize,
+        stack: &mut Vec<ComponentNode>,
+        indices: &mut std::collections::HashMap<ComponentNode, usize>,
+        lowlinks: &mut std::collections::HashMap<ComponentNode, usize>,
+        on_stack: &mut std::collections::HashSet<ComponentNode>,
+        sccs: &mut Vec<Vec<String>>,
+    ) -> Result<(), UveddiError> {
+        indices.insert(node.clone(), *index_counter);
+        lowlinks.insert(node.clone(), *index_counter);
+        *index_counter += 1;
+        stack.push(node.clone());
+        on_stack.insert(node.clone());
+
+        if let Some(neighbors) = graph.get_dependencies(node) {
+            for neighbor in neighbors {
+                if !indices.contains_key(&neighbor) {
+                    self.tarjan_scc(
+                        graph,
+                        &neighbor,
+                        index_counter,
+                        stack,
+                        indices,
+                        lowlinks,
+                        on_stack,
+                        sccs,
+                    )?;
+                    let neighbor_lowlink = *lowlinks.get(&neighbor).unwrap_or(&0);
+                    let current_lowlink = *lowlinks.get(node).unwrap_or(&0);
+                    lowlinks.insert(node.clone(), current_lowlink.min(neighbor_lowlink));
+                } else if on_stack.contains(&neighbor) {
+                    let neighbor_index = *indices.get(&neighbor).unwrap_or(&0);
+                    let current_lowlink = *lowlinks.get(node).unwrap_or(&0);
+                    lowlinks.insert(node.clone(), current_lowlink.min(neighbor_index));
+                }
+            }
+        }
+
+        if lowlinks.get(node) == indices.get(node) {
+            let mut scc = Vec::new();
+            loop {
+                if let Some(w) = stack.pop() {
+                    on_stack.remove(&w);
+                    scc.push(self.node_to_string(&w));
+                    if w == *node {
+                        break;
+                    }
+                } else {
+                    break;
+                }
+            }
+            if scc.len() > 1 {
+                sccs.push(scc);
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Helper to convert ComponentNode to string representation
+    fn node_to_string(&self, node: &ComponentNode) -> String {
+        match node {
+            ComponentNode::Module { path } => path.clone(),
+            ComponentNode::Function { name, file_path } => format!("{}::{}", file_path, name),
+            ComponentNode::Class { name, file_path } => format!("{}::{}", file_path, name),
+        }
+    }
 }
 
 #[async_trait]

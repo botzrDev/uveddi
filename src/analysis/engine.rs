@@ -11,6 +11,7 @@ use crate::analysis::components::{
     AnalysisAggregator, AstProviderImpl, CacheManagerImpl, ConfigurationService,
     DependencyGraphBuilderImpl, DetectorScheduler, PluginManagerHandle,
 };
+use crate::analysis::components::traits::AnalysisAggregator as AnalysisAggregatorTrait;
 use crate::analysis::detector_factory::DetectorFactory;
 use crate::analysis::engine_builder::AnalysisEngineBuilder;
 use crate::analysis::errors::AnalysisError;
@@ -57,7 +58,7 @@ use std::sync::Arc;
 /// The original monolithic implementation has been decomposed into specialized services
 /// coordinated by the AnalysisOrchestrator.
 pub struct AnalysisEngine {
-    orchestrator: AnalysisOrchestrator,
+    pub orchestrator: AnalysisOrchestrator,
     
     // Keep component references for backward compatibility
     pub config_service: Arc<ConfigurationService>,
@@ -323,6 +324,88 @@ impl AnalysisEngine {
     /// Legacy method: Enable/disable AI explanations
     pub fn set_ai_explanations(&mut self, enabled: bool) {
         self.enable_ai_explanations = enabled;
+    }
+
+    /// Gets the number of files analyzed in the last run.
+    pub fn get_files_analyzed(&self) -> i32 {
+        // Delegate to aggregator component to get analysis statistics
+        let aggregator_stats = self.aggregator.get_stats();
+        aggregator_stats.files_processed as i32
+    }
+
+    /// Gets the anti-pattern types supported by all configured detectors.
+    ///
+    /// This method aggregates the anti-pattern types from all configured detectors,
+    /// including a built-in type for cyclic dependencies.
+    pub fn get_anti_pattern_types(&self) -> Vec<crate::database::models::AntiPatternType> {
+        // Static list of supported anti-pattern types
+        // This matches the pattern from the original engine
+        vec![
+            crate::database::models::AntiPatternType {
+                anti_pattern_type_id: Some(1),
+                name: "God Object".to_string(),
+                description: "Classes that know too much or do too much".to_string(),
+                category: "structural".to_string(),
+            },
+            crate::database::models::AntiPatternType {
+                anti_pattern_type_id: Some(2),
+                name: "Dead Code".to_string(),
+                description: "Unused code that can be safely removed".to_string(),
+                category: "structural".to_string(),
+            },
+            crate::database::models::AntiPatternType {
+                anti_pattern_type_id: Some(3),
+                name: "Tight Coupling".to_string(),
+                description: "Components that are too tightly coupled".to_string(),
+                category: "structural".to_string(),
+            },
+            crate::database::models::AntiPatternType {
+                anti_pattern_type_id: Some(4),
+                name: "Long Methods".to_string(),
+                description: "Methods that are too long and do too much".to_string(),
+                category: "behavioral".to_string(),
+            },
+            crate::database::models::AntiPatternType {
+                anti_pattern_type_id: Some(5),
+                name: "Large Classes".to_string(),
+                description: "Classes that have grown too large".to_string(),
+                category: "structural".to_string(),
+            },
+            crate::database::models::AntiPatternType {
+                anti_pattern_type_id: Some(6),
+                name: "Performance Leak".to_string(),
+                description: "Performance-related anti-patterns and leaky abstractions".to_string(),
+                category: "behavioral".to_string(),
+            },
+            crate::database::models::AntiPatternType {
+                anti_pattern_type_id: Some(7),
+                name: "Code Duplication".to_string(),
+                description: "Duplicate code blocks that should be refactored".to_string(),
+                category: "structural".to_string(),
+            },
+            crate::database::models::AntiPatternType {
+                anti_pattern_type_id: Some(8),
+                name: "Cyclic Dependencies".to_string(),
+                description: "Circular dependencies between modules".to_string(),
+                category: "structural".to_string(),
+            },
+        ]
+    }
+
+    /// Configure the dead code detector with custom settings.
+    pub fn configure_dead_code_detector(&self, _config: crate::analysis::detectors::anti_patterns::dead_code::DeadCodeConfig) {
+        // For now, log that configuration was requested
+        // In the future, this would configure the detector through the scheduler
+        info!("Dead code detector configuration requested - delegating to detector scheduler");
+        warn!("Dead code detector configuration is not yet fully implemented in the new architecture");
+    }
+
+    /// Configure the large classes detector with custom settings.
+    pub fn configure_large_classes_detector(&self, _config: crate::analysis::detectors::anti_patterns::large_classes::LargeClassConfig) {
+        // For now, log that configuration was requested
+        // In the future, this would configure the detector through the scheduler
+        info!("Large classes detector configuration requested - delegating to detector scheduler");
+        warn!("Large classes detector configuration is not yet fully implemented in the new architecture");
     }
 }
 

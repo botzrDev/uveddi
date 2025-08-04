@@ -96,20 +96,23 @@ impl PersistenceProvider for DatabasePersistenceProvider {
 impl DatabasePersistenceProvider {
     /// Convert domain issue to database model
     fn convert_to_db_model(&self, domain_issue: DomainIssue) -> PersistenceResult<ArchitecturalIssue> {
-        Ok(ArchitecturalIssue {
-            issue_id: domain_issue.id.map(|id| id.parse().unwrap_or(0)),
-            analysis_run_id: domain_issue.run_id.unwrap_or(0),
-            anti_pattern_type_id: 1, // TODO: Map issue_type to anti_pattern_type_id
-            file_path: domain_issue.file_path,
-            line_number: domain_issue.line_number as i32,
-            column_number: domain_issue.column_number.map(|c| c as i32),
-            message: domain_issue.message,
-            description: domain_issue.description,
-            severity: domain_issue.severity.to_string(),
-            metadata: domain_issue.metadata.to_string(),
-            detector_name: domain_issue.detector_name,
-            created_at: domain_issue.created_at,
-        })
+        {
+            let mut issue = ArchitecturalIssue::new(
+                domain_issue.run_id.unwrap_or(0),
+                1, // TODO: Map issue_type to anti_pattern_type_id
+                domain_issue.file_path,
+                Some(domain_issue.line_number as i32),
+                domain_issue.message,
+                domain_issue.detector_name,
+                domain_issue.severity.to_string(),
+                domain_issue.description,
+            );
+            issue.issue_id = domain_issue.id.map(|id| id.parse().unwrap_or(0));
+            issue.column_number = domain_issue.column_number.map(|c| c as i32);
+            issue.created_at = domain_issue.created_at;
+            // Note: metadata field is not available in the new ArchitecturalIssue structure
+            Ok(issue)
+        }
     }
     
     /// Convert database model to domain issue
@@ -134,7 +137,7 @@ impl DatabasePersistenceProvider {
             message: db_issue.message,
             description: db_issue.description,
             file_path: db_issue.file_path,
-            line_number: db_issue.line_number as u32,
+            line_number: db_issue.line_number.map(|l| l as u32).unwrap_or(0),
             column_number: db_issue.column_number.map(|c| c as u32),
             metadata,
             created_at: db_issue.created_at,

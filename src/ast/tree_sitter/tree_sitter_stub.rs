@@ -7,18 +7,46 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::SystemTime;
 
-/// Placeholder documentation for public items
-
-// Stub types for tree-sitter when feature is disabled
-// These maintain API compatibility but return errors or empty results
-
 /// Stub for tree_sitter::Query
 #[derive(Debug, Clone)]
 pub struct Query;
 
+impl Query {
+    pub fn new(_language: &Language, _source: &str) -> Result<Self, String> {
+        Ok(Query)
+    }
+    
+    pub fn capture_index_for_name(&self, _name: &str) -> Option<u32> {
+        Some(0)
+    }
+    
+    pub fn capture_names(&self) -> &[&str] {
+        &[]
+    }
+}
+
 /// Stub for tree_sitter::QueryCursor
 #[derive(Debug, Clone)]
 pub struct QueryCursor;
+
+impl QueryCursor {
+    pub fn new() -> Self {
+        QueryCursor
+    }
+    
+    pub fn matches<'a>(&mut self, _query: &Query, _node: Node<'a>, _source: &'a [u8]) -> impl Iterator<Item = QueryMatch<'a>> {
+        std::iter::empty()
+    }
+    
+    pub fn captures<'a>(
+        &'a mut self,
+        _query: &'a Query,
+        _node: Node<'a>,
+        _source: &'a [u8],
+    ) -> std::iter::Empty<(QueryMatch<'a>, usize)> {
+        std::iter::empty()
+    }
+}
 
 /// Stub for tree_sitter::Node
 /// A stub for `tree_sitter::Node<'a>`. This struct MUST include a lifetime
@@ -71,17 +99,55 @@ impl<'a> Node<'a> {
     pub fn child_by_field_name(&self, _name: &str) -> Option<Node<'a>> {
         None
     }
-    pub fn walk(&self) -> TreeCursor {
-        TreeCursor
+    pub fn walk(&self) -> TreeCursor<'a> {
+        TreeCursor::new()
     }
     pub fn id(&self) -> usize {
         0
+    }
+    pub fn is_error(&self) -> bool {
+        false
+    }
+    pub fn has_error(&self) -> bool {
+        false
+    }
+    pub fn children(&self, _cursor: &mut TreeCursor<'a>) -> impl Iterator<Item = Node<'a>> {
+        std::iter::empty()
+    }
+    pub fn language(&self) -> Language {
+        Language
     }
 }
 
 /// Stub for tree_sitter::TreeCursor
 #[derive(Debug, Clone)]
-pub struct TreeCursor;
+pub struct TreeCursor<'a> {
+    _phantom: std::marker::PhantomData<&'a ()>,
+}
+
+impl<'a> TreeCursor<'a> {
+    pub fn new() -> Self {
+        TreeCursor {
+            _phantom: std::marker::PhantomData,
+        }
+    }
+    
+    pub fn node(&self) -> Node<'a> {
+        Node::new()
+    }
+    pub fn goto_first_child(&mut self) -> bool {
+        false
+    }
+    pub fn goto_next_sibling(&mut self) -> bool {
+        false
+    }
+    pub fn goto_previous_sibling(&mut self) -> bool {
+        false
+    }
+    pub fn goto_parent(&mut self) -> bool {
+        false
+    }
+}
 
 /// Stub for tree_sitter::StreamingIterator
 pub trait StreamingIterator {
@@ -107,6 +173,20 @@ impl Tree {
 /// Stub for tree_sitter::Parser
 #[derive(Debug, Clone)]
 pub struct Parser;
+
+impl Parser {
+    pub fn new() -> Self {
+        Parser
+    }
+
+    pub fn set_language(&mut self, _language: &Language) -> Result<(), String> {
+        Ok(())
+    }
+
+    pub fn parse(&mut self, _input: &str, _old_tree: Option<&Tree>) -> Option<Tree> {
+        Some(Tree)
+    }
+}
 
 /// Stub for tree_sitter::Language
 #[derive(Debug, Clone)]
@@ -215,76 +295,21 @@ pub enum AstError {
     Other(String),
 }
 
-// Stub implementations for tree-sitter types
-impl Query {
-    pub fn new(_language: &Language, _query: &str) -> Result<Self, AstError> {
-        Err(AstError::FeatureNotEnabled(
-            "tree-sitter feature not enabled".to_string(),
-        ))
-    }
-
-    pub fn capture_names(&self) -> &[&str] {
-        &[]
-    }
-}
-
-impl QueryCursor {
-    pub fn new() -> Self {
-        Self
-    }
-
-    pub fn captures<'a>(
-        &'a mut self,
-        _query: &'a Query,
-        _node: Node<'a>,
-        _source: &'a [u8],
-    ) -> std::iter::Empty<(QueryMatch<'a>, usize)> {
-        std::iter::empty()
-    }
-
-    pub fn matches<'a>(
-        &'a mut self,
-        _query: &'a Query,
-        _node: Node<'a>,
-        _source: &'a [u8],
-    ) -> std::iter::Empty<QueryMatch<'a>> {
-        std::iter::empty()
-    }
-}
-
-impl TreeCursor {
-    pub fn node(&self) -> Node<'_> {
-        Node::new()
-    }
-    pub fn goto_first_child(&mut self) -> bool {
-        false
-    }
-    pub fn goto_next_sibling(&mut self) -> bool {
-        false
-    }
-    pub fn goto_previous_sibling(&mut self) -> bool {
-        false
-    }
-    pub fn goto_parent(&mut self) -> bool {
-        false
-    }
-}
-
-impl Parser {
-    pub fn new() -> Result<Self, AstError> {
-        Err(AstError::FeatureNotEnabled(
-            "tree-sitter feature not enabled".to_string(),
-        ))
-    }
-
-    pub fn set_language(&mut self, _language: &Language) -> Result<(), AstError> {
-        Err(AstError::FeatureNotEnabled(
-            "tree-sitter feature not enabled".to_string(),
-        ))
-    }
-
-    pub fn parse(&mut self, _input: &str, _old_tree: Option<&Tree>) -> Option<Tree> {
-        None
+// Add conversion from stub AstError to tree_sitter_impl::AstError
+impl From<AstError> for crate::ast::tree_sitter_impl::AstError {
+    fn from(err: AstError) -> Self {
+        match err {
+            AstError::FeatureNotEnabled(msg) => crate::ast::tree_sitter_impl::AstError::Other(msg),
+            AstError::TreeSitterDisabled => crate::ast::tree_sitter_impl::AstError::Other("Tree-sitter disabled".to_string()),
+            AstError::ParseError(msg) => crate::ast::tree_sitter_impl::AstError::ParseFailed,
+            AstError::Io(io_err) => crate::ast::tree_sitter_impl::AstError::Io(io_err),
+            AstError::TreeSitterLanguage(msg) => crate::ast::tree_sitter_impl::AstError::TreeSitterLanguage(msg),
+            AstError::ParseFailed => crate::ast::tree_sitter_impl::AstError::ParseFailed,
+            AstError::UnsupportedLanguage(msg) => crate::ast::tree_sitter_impl::AstError::UnsupportedLanguage(msg),
+            AstError::CacheError(msg) => crate::ast::tree_sitter_impl::AstError::CacheError(msg),
+            AstError::AntiPatternDetectionError(msg) => crate::ast::tree_sitter_impl::AstError::AntiPatternDetectionError(msg),
+            AstError::Other(msg) => crate::ast::tree_sitter_impl::AstError::Other(msg),
+        }
     }
 }
 

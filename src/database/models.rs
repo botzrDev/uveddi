@@ -131,6 +131,39 @@ pub struct ArchitecturalIssue {
     pub ai_explanation: Option<String>,
 }
 
+impl ArchitecturalIssue {
+    /// Creates a new ArchitecturalIssue with required fields
+    pub fn new(
+        analysis_run_id: i64,
+        anti_pattern_type_id: i64,
+        file_path: String,
+        line_number: Option<i32>,
+        message: String,
+        detector_name: String,
+        severity: String,
+        description: String,
+    ) -> Self {
+        Self {
+            issue_id: None,
+            analysis_run_id,
+            anti_pattern_type_id,
+            file_path,
+            start_line: line_number,
+            end_line: line_number,
+            line_number,
+            column_number: None,
+            message,
+            metadata: "{}".to_string(),
+            detector_name,
+            created_at: chrono::Utc::now(),
+            severity,
+            description,
+            code_snippet: None,
+            ai_explanation: None,
+        }
+    }
+}
+
 impl Default for ArchitecturalIssue {
     fn default() -> Self {
         Self {

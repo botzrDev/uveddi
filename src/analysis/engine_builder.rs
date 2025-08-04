@@ -326,15 +326,21 @@ impl AnalysisEngineBuilder {
             Arc::clone(&config_service),
             Arc::clone(&detector_scheduler),
             Arc::clone(&aggregator),
+            None, // plugin_manager: Option<Arc<PluginManagerHandle>>
             Arc::clone(&detector_factory),
         ));
         
         let dependency_service = Arc::new(crate::analysis::services::DependencyAnalysisService::new(
+            Arc::clone(&ast_provider),
             Arc::clone(&dependency_builder),
+            Arc::clone(&cache_manager),
         ));
         
         let performance_service = Arc::new(crate::analysis::services::PerformanceAnalysisService::new(
-            Arc::new(crate::monitoring::performance_metrics_collector::PerformanceMetricsCollector::new()),
+            Arc::new(crate::monitoring::performance_metrics_collector::PerformanceMetricsCollector::new(
+                crate::database::models::PerformanceMetricsConfig::default(),
+                10, // total_components estimate
+            )),
             crate::analysis::services::performance_service::MemoryConfig::default(),
         ));
 

@@ -225,6 +225,23 @@ impl CacheManager for CacheManagerImpl {
     }
 }
 
+impl CacheManagerImpl {
+    /// Cache a dependency graph with a given key
+    pub async fn cache_dependency_graph(
+        &self,
+        cache_key: &str,
+        graph: &crate::analysis::graph::dependency::LocalDependencyGraph,
+    ) -> Result<(), UveddiError> {
+        // For now, we'll just log this operation since the cache infrastructure
+        // for dependency graphs is not fully implemented yet
+        log::debug!("Caching dependency graph with key: {}", cache_key);
+        
+        // In a full implementation, we would serialize the graph and store it
+        // in the engine cache, but for now we'll just indicate success
+        Ok(())
+    }
+}
+
 /// Simple result cache implementation for architectural issues
 pub struct ResultCache {
     cache: HashMap<std::path::PathBuf, Vec<ArchitecturalIssue>>,

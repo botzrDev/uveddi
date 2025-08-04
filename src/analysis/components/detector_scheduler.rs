@@ -59,6 +59,20 @@ impl DetectorScheduler {
         Ok(())
     }
 
+    /// Configures enabled detectors
+    pub async fn configure_enabled_detectors(&self, _enabled_detectors: Vec<String>) -> Result<(), UveddiError> {
+        // Stub implementation - in real implementation, this would filter active detectors
+        info!("Configuring enabled detectors (stub implementation)");
+        Ok(())
+    }
+
+    /// Sets symbol table for analysis
+    pub async fn set_symbol_table(&self, _symbol_table: Arc<crate::analysis::symbols::GlobalSymbolTable>) -> Result<(), UveddiError> {
+        // Stub implementation - in real implementation, this would set up symbol resolution
+        info!("Setting symbol table (stub implementation)");
+        Ok(())
+    }
+
     /// Analyzes a single file with all enabled detectors
     async fn analyze_file(&self, file_path: &Path) -> Result<Vec<ArchitecturalIssue>, UveddiError> {
         info!("Analyzing file: {}", file_path.display());

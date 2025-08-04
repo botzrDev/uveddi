@@ -50,17 +50,21 @@ impl AstParser {
             .ok_or_else(|| AstError::Other("Cache size must be > 0".to_string()))?;
 
         let mut parsers = HashMap::new();
-        let mut rust_parser = Parser::new();
-        rust_parser.set_language(&tree_sitter_rust::LANGUAGE.into())?;
-        parsers.insert(SourceLanguage::Rust, rust_parser);
+        
+        #[cfg(feature = "tree-sitter")]
+        {
+            let mut rust_parser = Parser::new();
+            rust_parser.set_language(&tree_sitter_rust::LANGUAGE.into())?;
+            parsers.insert(SourceLanguage::Rust, rust_parser);
 
-        let mut python_parser = Parser::new();
-        python_parser.set_language(&tree_sitter_python::LANGUAGE.into())?;
-        parsers.insert(SourceLanguage::Python, python_parser);
+            let mut python_parser = Parser::new();
+            python_parser.set_language(&tree_sitter_python::LANGUAGE.into())?;
+            parsers.insert(SourceLanguage::Python, python_parser);
 
-        let mut javascript_parser = Parser::new();
-        javascript_parser.set_language(&tree_sitter_javascript::LANGUAGE.into())?;
-        parsers.insert(SourceLanguage::JavaScript, javascript_parser);
+            let mut javascript_parser = Parser::new();
+            javascript_parser.set_language(&tree_sitter_javascript::LANGUAGE.into())?;
+            parsers.insert(SourceLanguage::JavaScript, javascript_parser);
+        }
 
         info!("Initialized AST parser with LRU cache size: {}", cache_size);
 
@@ -626,6 +630,23 @@ pub enum SourceLanguage {
 }
 
 impl SourceLanguage {
+    /// Detects source language from file path, returning UveddiError on unsupported extension
+    pub fn detect_from_path(path: &Path) -> Result<Self, crate::error::UveddiError> {
+        if let Some(lang) = SourceLanguage::from_path(path) {
+            Ok(lang)
+        } else {
+            let file = path.to_string_lossy().to_string();
+            Err(crate::error::UveddiError::AstError {
+                file: file.clone(),
+                language: "".to_string(),
+                message: format!("Unsupported file extension for '{}'; unable to detect language", file),
+                suggestion: "Ensure file extension is one of .rs, .py, .js, .ts, .jsx, .tsx".to_string(),
+                source: None,
+            })
+        }
+    }
+}
+impl SourceLanguage {
     pub fn from_path(path: &Path) -> Option<Self> {
         path.extension()
             .and_then(|ext| ext.to_str())
@@ -652,8 +673,18 @@ pub enum AstError {
     ParseFailed,
     #[error("Unsupported language: {0}")]
     UnsupportedLanguage(String),
+    #[error("Cache error: {0}")]
+    CacheError(String),
+    #[error("Anti-pattern detection error: {0}")]
+    AntiPatternDetectionError(String),
     #[error("Other error: {0}")]
     Other(String),
+}
+
+impl From<String> for AstError {
+    fn from(s: String) -> Self {
+        AstError::Other(s)
+    }
 }
 
 impl Clone for AstParser {

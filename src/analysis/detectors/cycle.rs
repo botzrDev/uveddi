@@ -100,18 +100,16 @@ impl CycleDetector {
                     ComponentNode::Function { file_path, .. } => file_path.clone(),
                 };
 
-                issues.push(ArchitecturalIssue {
-                    issue_id: None,
+                issues.push(ArchitecturalIssue::new(
                     analysis_run_id,
-                    anti_pattern_type_id: 1, // Assuming 1 is cyclic dependency type
+                    1, // anti_pattern_type_id: Assuming 1 is cyclic dependency type
                     file_path,
-                    start_line: Some(1), // TODO: Extract actual line numbers from AST
-                    end_line: Some(1),
-                    severity: "high".to_string(), // Cyclic dependencies are typically high severity
-                    description: description.clone(),
-                    code_snippet: None,   // Will be populated separately if needed
-                    ai_explanation: None, // Will be populated by AI engine
-                });
+                    Some(1), // line_number: TODO: Extract actual line numbers from AST
+                    description.clone(),
+                    "CycleDetector".to_string(),
+                    "high".to_string(), // Cyclic dependencies are typically high severity
+                    description.clone(),
+                ));
             }
         }
 

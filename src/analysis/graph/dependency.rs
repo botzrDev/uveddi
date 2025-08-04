@@ -12,6 +12,17 @@ pub enum ComponentNode {
     Function { name: String, file_path: String },
 }
 
+impl ComponentNode {
+    /// Get the file path associated with this component node
+    pub fn file_path(&self) -> Option<String> {
+        match self {
+            ComponentNode::Module { path } => Some(path.clone()),
+            ComponentNode::Class { file_path, .. } => Some(file_path.clone()),
+            ComponentNode::Function { file_path, .. } => Some(file_path.clone()),
+        }
+    }
+}
+
 /// Represents the type of dependency between two components.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum LocalDependencyType {
@@ -98,10 +109,66 @@ impl LocalDependencyGraph {
     pub fn node_count(&self) -> usize {
         self.graph.node_count()
     }
+    
+    /// Retrieves a component node by its identifier string.
+    pub fn get_node(&self, node_id: &str) -> Option<&ComponentNode> {
+        self.node_map.keys().find(|node| match node {
+            ComponentNode::Module { path } => path == node_id,
+            ComponentNode::Class { name, .. } => name == node_id,
+            ComponentNode::Function { name, .. } => name == node_id,
+        })
+    }
+
+    /// Returns all nodes in the graph
+    pub fn get_all_nodes(&self) -> Vec<ComponentNode> {
+        self.node_map.keys().cloned().collect()
+    }
+
+    /// Get dependencies for a given node
+    pub fn get_dependencies(&self, node: &ComponentNode) -> Option<Vec<ComponentNode>> {
+        if let Some(node_index) = self.node_map.get(node) {
+            let neighbors: Vec<ComponentNode> = self.graph
+                .neighbors(*node_index)
+                .filter_map(|neighbor_index| self.graph.node_weight(neighbor_index))
+                .cloned()
+                .collect();
+            Some(neighbors)
+        } else {
+            None
+        }
+    }
+
+    /// Get all edges in the graph
+    pub fn edges(&self) -> impl Iterator<Item = &DependencyEdge> {
+        self.graph.edge_weights()
+    }
 }
 
 impl Default for LocalDependencyGraph {
     fn default() -> Self {
         Self::new()
+    }
+}
+/// Trait for counting edges in the dependency graph.
+pub trait EdgeCount {
+    /// Returns the total number of edges in the graph.
+    fn edge_count(&self) -> usize;
+}
+
+/// Trait for iterating over edges in the dependency graph.
+pub trait IntoEdges {
+    /// Returns an iterator over cloned dependency edges.
+    fn edges(&self) -> Box<dyn Iterator<Item = DependencyEdge> + '_>;
+}
+
+impl EdgeCount for LocalDependencyGraph {
+    fn edge_count(&self) -> usize {
+        self.graph.edge_count()
+    }
+}
+
+impl IntoEdges for LocalDependencyGraph {
+    fn edges(&self) -> Box<dyn Iterator<Item = DependencyEdge> + '_> {
+        Box::new(self.graph.edge_weights().cloned())
     }
 }

@@ -401,27 +401,35 @@ impl AnalysisDetector for LargeClassDetector {
             {
                 let severity = self.calculate_severity_score(&class_metrics, thresholds);
 
-                let issue = ArchitecturalIssue {
-                    issue_id: None,
-                    analysis_run_id: 0,      // TODO: Get proper analysis run ID
-                    anti_pattern_type_id: 1, // TODO: Get proper ID for LargeClass from database
-                    file_path: class_metrics.file_path.clone(), // UV-222: Now O(1) Arc<PathBuf> clone
-                    start_line: class_metrics.start_line.try_into().ok().map(|l: i32| l),
-                    end_line: class_metrics.end_line.try_into().ok().map(|l: i32| l),
-                    severity: severity.to_string(),
-                    description: format!(
+                let mut issue = ArchitecturalIssue::new(
+                    0, // analysis_run_id - will be set by the engine
+                    1, // anti_pattern_type_id for LargeClass
+                    class_metrics.file_path.clone(),
+                    class_metrics.start_line.try_into().ok().map(|l: i32| l),
+                    format!(
                         "Large class '{}' detected: {} LOC, {} methods, {} fields",
                         class_metrics.name,
                         class_metrics.logical_loc,
                         class_metrics.method_count,
                         class_metrics.field_count
                     ),
-                    code_snippet: Some(class_metrics.code_snippet.clone()),
-                    ai_explanation: Some(
-                        "Consider breaking this class into smaller, more focused classes"
-                            .to_string(),
+                    "LargeClassDetector".to_string(),
+                    severity.to_string(),
+                    format!(
+                        "Large class '{}' detected: {} LOC, {} methods, {} fields",
+                        class_metrics.name,
+                        class_metrics.logical_loc,
+                        class_metrics.method_count,
+                        class_metrics.field_count
                     ),
-                };
+                );
+                issue.start_line = class_metrics.start_line.try_into().ok().map(|l: i32| l);
+                issue.end_line = class_metrics.end_line.try_into().ok().map(|l: i32| l);
+                issue.code_snippet = Some(class_metrics.code_snippet.clone());
+                issue.ai_explanation = Some(
+                    "Consider breaking this class into smaller, more focused classes"
+                        .to_string(),
+                );
 
                 issues.push(issue);
             }

@@ -654,28 +654,27 @@ impl LeakyAbstractionDetector {
                             if self.is_infrastructure_module(&module_name) {
                                 // Check if this is a layer violation (infrastructure should only be in Infrastructure layer)
                                 if current_layer != ArchitecturalLayer::Infrastructure {
-                                    let issue = ArchitecturalIssue {
-                                        issue_id: None,
+                                    let mut issue = ArchitecturalIssue::new(
                                         analysis_run_id,
-                                        anti_pattern_type_id: 1, // TODO: proper mapping
-                                        file_path: parsed_file
-                                            .file_path
-                                            .display()
-                                            .to_string()
-                                            .to_string(),
-                                        start_line: Some(
-                                            capture.node.start_position().row as i32 + 1,
-                                        ),
-                                        end_line: Some(capture.node.end_position().row as i32 + 1),
-                                        severity: "high".to_string(),
-                                        description: format!(
+                                        1, // anti_pattern_type_id for leaky abstraction
+                                        parsed_file.file_path.display().to_string(),
+                                        Some(capture.node.start_position().row as i32 + 1),
+                                        format!(
                                             "Framework module '{}' imported in {} layer",
                                             module_name,
                                             self.get_layer_name_string(&current_layer)
                                         ),
-                                        code_snippet: Some(capture_text.to_string()),
-                                        ai_explanation: None,
-                                    };
+                                        "LeakyAbstractionDetector".to_string(),
+                                        "high".to_string(),
+                                        format!(
+                                            "Framework module '{}' imported in {} layer",
+                                            module_name,
+                                            self.get_layer_name_string(&current_layer)
+                                        ),
+                                    );
+                                    issue.start_line = Some(capture.node.start_position().row as i32 + 1);
+                                    issue.end_line = Some(capture.node.end_position().row as i32 + 1);
+                                    issue.code_snippet = Some(capture_text.to_string());
                                     issues.push(issue);
                                 }
                             }
@@ -831,17 +830,21 @@ impl LeakyAbstractionDetector {
         description: &str,
         severity: &str,
     ) -> ArchitecturalIssue {
-        ArchitecturalIssue {
-            issue_id: None,
-            analysis_run_id,
-            anti_pattern_type_id: self.get_anti_pattern_id_for_leak_type(&leak_type),
-            file_path: file_path.to_string(),
-            start_line: Some(node.start_position().row as i32 + 1),
-            end_line: Some(node.end_position().row as i32 + 1),
-            severity: severity.to_string(),
-            description: description.to_string(),
-            code_snippet: None, // Could extract node text here
-            ai_explanation: None,
+        {
+            let mut issue = ArchitecturalIssue::new(
+                analysis_run_id,
+                self.get_anti_pattern_id_for_leak_type(&leak_type),
+                file_path.to_string(),
+                Some(node.start_position().row as i32 + 1),
+                description.to_string(),
+                "LeakyAbstractionDetector".to_string(),
+                severity.to_string(),
+                description.to_string(),
+            );
+            issue.start_line = Some(node.start_position().row as i32 + 1);
+            issue.end_line = Some(node.end_position().row as i32 + 1);
+            issue.code_snippet = None; // Could extract node text here
+            issue
         }
     }
 

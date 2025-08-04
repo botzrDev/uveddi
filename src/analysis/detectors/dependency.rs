@@ -1,5 +1,6 @@
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 #[cfg(feature = "tree-sitter")]
 #[cfg(feature = "tree-sitter")]
 use tree_sitter::{Query, QueryCursor, StreamingIterator};
@@ -284,5 +285,21 @@ impl DependencyExtractor {
         }
 
         Ok(dependencies)
+    }
+
+    /// Async version of extract_from_ast for compatibility with service layer
+    pub async fn extract_dependencies(&self, parsed_file: &crate::analysis::components::ast_provider::ParsedFile) -> Result<Vec<Dependency>, ExtractionError> {
+        // Convert between ParsedFile types - this is a compatibility layer
+        let ast_parsed_file = ParsedFile {
+            file_path: Arc::clone(&parsed_file.file_path),
+            language: parsed_file.language,
+            source: Arc::clone(&parsed_file.source),
+            tree: parsed_file.tree.clone(),
+            custom_ast: Arc::new(None),
+            modified_at: crate::analysis::cache::wrappers::ArchivableSystemTime::now(),
+        };
+        
+        // Call the sync version
+        self.extract_from_ast(&ast_parsed_file)
     }
 }

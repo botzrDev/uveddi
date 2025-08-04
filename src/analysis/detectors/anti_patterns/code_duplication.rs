@@ -719,18 +719,25 @@ impl CodeDuplicationDetector {
                 pair.similarity * 100.0
             ));
 
-            let issue = ArchitecturalIssue {
-                issue_id: None,
-                analysis_run_id: 0,      // Will be set by the engine
-                anti_pattern_type_id: 1, // Code duplication type ID
-                file_path: pair.block1.file_path.clone(), // UV-222: Now O(1) Arc<PathBuf> clone
-                start_line: Some(pair.block1.start_line as i32),
-                end_line: Some(pair.block1.end_line as i32),
-                severity: severity.to_string(),
-                description,
-                code_snippet: Some(code_snippet),
-                ai_explanation,
-            };
+            let mut issue = ArchitecturalIssue::new(
+                0,      // analysis_run_id - Will be set by the engine
+                1,      // anti_pattern_type_id - Code duplication type ID  
+                pair.block1.file_path.clone(), // file_path
+                Some(pair.block1.start_line as i32), // line_number
+                format!(
+                    "Code duplication detected: {} similar lines",
+                    pair.block1.end_line - pair.block1.start_line + 1
+                ), // message
+                "CodeDuplicationDetector".to_string(), // detector_name
+                severity.to_string(), // severity
+                description, // description
+            );
+            
+            // Set additional fields
+            issue.start_line = Some(pair.block1.start_line as i32);
+            issue.end_line = Some(pair.block1.end_line as i32);
+            issue.code_snippet = Some(code_snippet);
+            issue.ai_explanation = ai_explanation;
 
             issues.push(issue);
         }
