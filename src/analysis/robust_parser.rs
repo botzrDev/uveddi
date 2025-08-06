@@ -4,7 +4,7 @@
 //! AST parsing operations in async Rust applications without blocking the Tokio runtime.
 
 use crate::ast::tree_sitter_impl::AstParser;
-use log::{debug, error, info, warn};
+use crate::core::logging::{debug, error, info, warn};
 use std::sync::Arc;
 use std::time::Duration;
 use thiserror::Error;

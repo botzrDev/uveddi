@@ -5,7 +5,7 @@
 
 #[cfg(feature = "ai")]
 use uveddi::ai::ollama_provider::OllamaConfig;
-use log::LevelFilter;
+use crate::core::logging::LevelFilter;
 
 fn main() {
     // Initialize logging

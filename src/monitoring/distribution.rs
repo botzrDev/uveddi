@@ -102,8 +102,8 @@ impl EmailClient {
     pub async fn send_email(&self, to: &str, subject: &str, html_content: &str) -> Result<()> {
         // For now, we'll log the email sending attempt
         // In a real implementation, this would use an SMTP library like lettre
-        log::info!("Sending email to {} with subject: {}", to, subject);
-        log::debug!("Email content length: {} characters", html_content.len());
+        tracing::info!("Sending email to {} with subject: {}", to, subject);
+        tracing::debug!("Email content length: {} characters", html_content.len());
 
         // TODO: Implement actual SMTP sending using lettre crate
         // This would require adding lettre to Cargo.toml dependencies
@@ -228,14 +228,14 @@ impl SlackClient {
             anyhow::bail!("Slack API error {}: {}", status, body);
         }
 
-        log::info!("Successfully sent Slack notification");
+        tracing::info!("Successfully sent Slack notification");
         Ok(())
     }
 
     /// Send payload to Slack webhook (stub for when reqwest is not available)
     #[cfg(not(feature = "reqwest"))]
     async fn send_slack_payload(&self, webhook_url: &str, payload: &SlackMessage) -> Result<()> {
-        log::info!("Would send Slack message to {}: {:?}", webhook_url, payload);
+        tracing::info!("Would send Slack message to {}: {:?}", webhook_url, payload);
         Ok(())
     }
 }
@@ -271,7 +271,7 @@ impl DistributionManager {
         match &self.email_client {
             Some(client) => client.send_email(to, subject, content).await,
             None => {
-                log::warn!("Email client not configured, skipping email delivery");
+                tracing::warn!("Email client not configured, skipping email delivery");
                 Ok(())
             }
         }
@@ -287,7 +287,7 @@ impl DistributionManager {
         match &self.slack_client {
             Some(client) => client.send_message(webhook_name, channel, message).await,
             None => {
-                log::warn!("Slack client not configured, skipping Slack delivery");
+                tracing::warn!("Slack client not configured, skipping Slack delivery");
                 Ok(())
             }
         }
@@ -317,7 +317,7 @@ impl DistributionManager {
                     .await
             }
             None => {
-                log::warn!("Slack client not configured, skipping Slack delivery");
+                tracing::warn!("Slack client not configured, skipping Slack delivery");
                 Ok(())
             }
         }

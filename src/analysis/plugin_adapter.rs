@@ -145,7 +145,7 @@ impl WasmPluginDetectorAdapter {
                     category: "Clarity-Based".to_string(),
                 }),
                 _ => {
-                    log::warn!(
+                    tracing::warn!(
                         "Unknown anti-pattern type in plugin manifest: {}",
                         pattern_str
                     );
@@ -167,7 +167,7 @@ impl WasmPluginDetectorAdapter {
             Some(_adapter) => {
                 // For now, return empty results as the actual WASM execution
                 // is complex and would require the full WASM runtime integration
-                log::info!(
+                tracing::info!(
                     "Plugin {} would analyze file: {:?}",
                     self.plugin_id,
                     file.path()
@@ -175,7 +175,7 @@ impl WasmPluginDetectorAdapter {
                 Ok(Vec::new())
             }
             None => {
-                log::error!("Plugin {} not found or not loaded", self.plugin_id);
+                tracing::error!("Plugin {} not found or not loaded", self.plugin_id);
                 Ok(Vec::new())
             }
         }
@@ -264,10 +264,10 @@ impl WasmPluginAdapterFactory {
             {
                 Ok(adapter) => {
                     adapters.push(Box::new(adapter));
-                    log::info!("Created adapter for plugin: {}", plugin_id);
+                    tracing::info!("Created adapter for plugin: {}", plugin_id);
                 }
                 Err(e) => {
-                    log::error!("Failed to create adapter for plugin {}: {}", plugin_id, e);
+                    tracing::error!("Failed to create adapter for plugin {}: {}", plugin_id, e);
                     // Continue with other plugins
                 }
             }

@@ -253,7 +253,7 @@ impl DetectorRegistry {
             count += 1;
         }
 
-        log::info!("Loaded {} plugin detectors into registry", count);
+        tracing::info!("Loaded {} plugin detectors into registry", count);
         Ok(count)
     }
 
@@ -274,7 +274,7 @@ impl DetectorRegistry {
         let removed_count = initial_count - self.detectors.len();
 
         if removed_count > 0 {
-            log::info!("Removed {} plugin detectors from registry", removed_count);
+            tracing::info!("Removed {} plugin detectors from registry", removed_count);
         }
 
         removed_count

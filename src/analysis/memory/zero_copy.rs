@@ -187,7 +187,7 @@ impl ZeroCopyAstCache {
         std::fs::create_dir_all(&cache_dir)
             .map_err(|e| ZeroCopyError::CacheInitialization(e.to_string()))?;
 
-        log::info!(
+        tracing::info!(
             "Initialized zero-copy AST cache at: {}",
             cache_dir.display()
         );
@@ -216,7 +216,7 @@ impl ZeroCopyAstCache {
             stats.record_store(serialized.len());
         }
 
-        log::debug!(
+        tracing::debug!(
             "Stored zero-copy AST cache for: {} ({} bytes)",
             file_path.display(),
             serialized.len()
@@ -325,7 +325,7 @@ impl ZeroCopyAstCache {
             *stats = ZeroCopyCacheStats::new();
         }
 
-        log::info!("Cleared zero-copy AST cache");
+        tracing::info!("Cleared zero-copy AST cache");
         Ok(())
     }
 

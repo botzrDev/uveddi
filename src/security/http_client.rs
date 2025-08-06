@@ -278,13 +278,13 @@ impl SecureHttpClient {
     /// Validate HTTP response for security issues
     fn validate_response(&self, response: &Response) -> SecurityResult<()> {
         // Log response status for monitoring
-        log::debug!("HTTP response: {} {}", response.status(), response.url());
+        tracing::debug!("HTTP response: {} {}", response.status(), response.url());
 
         // Check for suspicious response headers
         if let Some(server) = response.headers().get("server") {
             if let Ok(server_str) = server.to_str() {
                 // Log server header for security monitoring
-                log::debug!("Server header: {}", server_str);
+                tracing::debug!("Server header: {}", server_str);
             }
         }
 

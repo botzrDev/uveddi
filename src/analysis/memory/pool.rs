@@ -36,7 +36,7 @@ where
             .map(|_| Arc::new(Mutex::new(VecDeque::with_capacity(capacity_per_shard))))
             .collect();
 
-        log::debug!(
+        tracing::debug!(
             "Created memory pool '{}' with {} shards, {} capacity per shard",
             name,
             shard_count,
@@ -119,7 +119,7 @@ where
             }
         }
 
-        log::debug!(
+        tracing::debug!(
             "Pre-populated pool '{}' with {} objects",
             self.pool_name,
             count

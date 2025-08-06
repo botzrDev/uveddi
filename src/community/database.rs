@@ -572,14 +572,14 @@ impl CommunityDatabase {
         })?;
 
         let languages = self.deserialize_languages(&languages_json).map_err(|e| {
-            log::warn!("Failed to deserialize languages for member: {}", e);
+            tracing::warn!("Failed to deserialize languages for member: {}", e);
             e
         })?;
 
         let custom_fields = self
             .deserialize_custom_fields(&custom_fields_json)
             .map_err(|e| {
-                log::warn!("Failed to deserialize custom fields for member: {}", e);
+                tracing::warn!("Failed to deserialize custom fields for member: {}", e);
                 e
             })?;
 
@@ -672,7 +672,7 @@ impl CommunityDatabase {
         })?;
 
         let metadata = self.deserialize_metadata(&metadata_json).map_err(|e| {
-            log::warn!("Failed to deserialize activity metadata: {}", e);
+            tracing::warn!("Failed to deserialize activity metadata: {}", e);
             e
         })?;
 

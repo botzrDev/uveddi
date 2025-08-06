@@ -10,7 +10,7 @@ use crate::database::models::{ComponentPerformanceMetrics, PerformanceMetricsCon
 
 use super::AnalysisResult;
 
-use log::{debug, info, warn};
+use crate::core::logging::{debug, info, warn};
 use std::collections::HashMap;
 use std::future::Future;
 use std::sync::Arc;

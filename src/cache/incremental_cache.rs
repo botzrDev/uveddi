@@ -12,7 +12,7 @@
 use crate::analysis::incremental::{FileState, IncrementalAnalysisError, Result};
 use crate::database::models::ArchitecturalIssue;
 use chrono::{DateTime, Utc};
-use log::{debug, info, warn};
+use crate::core::logging::{debug, info, warn};
 use lru::LruCache;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeSet, HashMap, HashSet};

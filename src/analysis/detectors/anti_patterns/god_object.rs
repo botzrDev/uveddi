@@ -124,7 +124,7 @@ use crate::ast::tree_sitter::{Node, Query, QueryCursor};
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use crate::error::ErrorHelpers;
-use log::{debug, info, warn};
+use crate::core::logging::{debug, info, warn};
 use std::collections::{HashMap, HashSet};
 #[cfg(feature = "tree-sitter")]
 use tree_sitter::StreamingIterator;

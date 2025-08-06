@@ -10,7 +10,7 @@ use super::{
 use crate::analysis::incremental::{ChangeSet, IncrementalAnalysisEngine};
 use blake3::Hasher;
 use chrono::Utc;
-use log::{debug, error, info, warn};
+use crate::core::logging::{debug, error, info, warn};
 use lru::LruCache;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};

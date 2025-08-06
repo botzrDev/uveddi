@@ -70,13 +70,13 @@ macro_rules! ai_feature {
 
 /// Conditional AI type definitions
 #[cfg(any(feature = "ai", feature = "local-ai"))]
-pub type AiAnalysisResult = crate::ai::analysis::AiAnalysisResult;
+pub type AiAnalysisResult = Vec<crate::core::mocks::ai_mocks::AiInsight>;
 
 #[cfg(not(any(feature = "ai", feature = "local-ai")))]
-pub type AiAnalysisResult = MockAiAnalysisResult;
+pub type AiAnalysisResult = Vec<crate::core::mocks::ai_mocks::AiInsight>;
 
 #[cfg(any(feature = "ai", feature = "local-ai"))]
-pub type AiService = crate::ai::services::AiAnalysisService;
+pub type AiService = crate::ai::engine::AiAnalysisEngine;
 
 #[cfg(not(any(feature = "ai", feature = "local-ai")))]
 pub type AiService = crate::core::mocks::MockAiService;

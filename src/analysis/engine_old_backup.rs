@@ -95,7 +95,7 @@ use crate::analysis::components::traits::{
     DependencyGraphBuilder as DependencyGraphBuilderTrait,
     DetectorScheduler as DetectorSchedulerTrait, PluginManagerHandle as PluginManagerHandleTrait,
 };
-use log::{info, warn};
+use crate::core::logging::{info, warn};
 use std::sync::Arc;
 
 use chrono::Utc;

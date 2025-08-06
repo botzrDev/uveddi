@@ -6,7 +6,9 @@
 pub mod interfaces;
 pub mod features;
 pub mod mocks;
+pub mod logging;
 
 pub use interfaces::*;
 pub use features::*;
 pub use mocks::*;
+pub use logging::*;

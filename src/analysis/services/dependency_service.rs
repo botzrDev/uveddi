@@ -18,7 +18,7 @@ use crate::database::models::ArchitecturalIssue;
 
 use super::{AnalysisResult, ServiceConfiguration};
 
-use log::{debug, info, warn};
+use crate::core::logging::{debug, info, warn};
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;

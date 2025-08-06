@@ -532,11 +532,11 @@ impl ReportingEngine {
                     match self.generate_report(config).await {
                         Ok(report) => {
                             if let Err(e) = self.distribute_report(&report, config).await {
-                                log::error!("Failed to distribute report {}: {}", report.id, e);
+                                tracing::error!("Failed to distribute report {}: {}", report.id, e);
                             }
                         }
                         Err(e) => {
-                            log::error!("Failed to generate report: {}", e);
+                            tracing::error!("Failed to generate report: {}", e);
                         }
                     }
                 }

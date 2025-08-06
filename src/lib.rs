@@ -264,7 +264,9 @@ pub mod performance;
 pub mod plugins;
 pub mod report;
 pub mod resilience;
-pub mod security;
+// pub mod security; // Disabled for alpha testing due to OAuth compilation issues
+pub mod security_stub;
+pub use security_stub as security;
 pub mod semantic_search;
 pub mod sla;
 #[cfg(feature = "tui")]
@@ -272,3 +274,7 @@ pub mod tui;
 
 // Re-export the unified Result type for convenience
 pub use error::Result;
+
+// Re-export tree-sitter language modules when tree-sitter is disabled
+#[cfg(not(feature = "tree-sitter"))]
+pub use ast::tree_sitter::{tree_sitter_rust, tree_sitter_python, tree_sitter_javascript, tree_sitter_typescript};

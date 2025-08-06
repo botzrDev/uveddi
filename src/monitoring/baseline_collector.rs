@@ -183,7 +183,7 @@ impl BaselineCollector {
                 match self.load_baseline_from_file(&path).await {
                     Ok(baseline) => self.baseline_history.push(baseline),
                     Err(e) => {
-                        log::warn!("Failed to load baseline from {:?}: {}", path, e);
+                        tracing::warn!("Failed to load baseline from {:?}: {}", path, e);
                     }
                 }
             }
@@ -198,7 +198,7 @@ impl BaselineCollector {
             self.current_baseline = Some(latest.baseline_data.clone());
         }
 
-        log::info!(
+        tracing::info!(
             "Loaded {} baselines from storage",
             self.baseline_history.len()
         );
@@ -210,7 +210,7 @@ impl BaselineCollector {
         &mut self,
         config: BaselineCollectionConfig,
     ) -> Result<StoredBaseline> {
-        log::info!(
+        tracing::info!(
             "Starting baseline collection with {} test scenarios",
             config.test_file_counts.len()
         );
@@ -223,7 +223,7 @@ impl BaselineCollector {
 
         // Run baseline tests for each file count scenario
         for &file_count in &config.test_file_counts {
-            log::info!("Collecting baseline for {} files", file_count);
+            tracing::info!("Collecting baseline for {} files", file_count);
 
             let measurements = self
                 .run_baseline_scenario(
@@ -282,7 +282,7 @@ impl BaselineCollector {
         self.baseline_history.push(stored_baseline.clone());
         self.current_baseline = Some(stored_baseline.baseline_data.clone());
 
-        log::info!(
+        tracing::info!(
             "Baseline collection completed successfully: ID={}",
             stored_baseline.id
         );
@@ -317,7 +317,7 @@ impl BaselineCollector {
 
         // Actual measurement iterations
         for i in 0..iterations {
-            log::debug!("Running analysis iteration {} of {}", i + 1, iterations);
+            tracing::debug!("Running analysis iteration {} of {}", i + 1, iterations);
 
             let measurement_start = Instant::now();
 
@@ -325,7 +325,7 @@ impl BaselineCollector {
             let snapshot = self.run_analysis_with_metrics(&temp_dir_path).await?;
 
             let iteration_time = measurement_start.elapsed();
-            log::debug!("Iteration {} completed in {:?}", i + 1, iteration_time);
+            tracing::debug!("Iteration {} completed in {:?}", i + 1, iteration_time);
 
             measurements.push(snapshot);
         }
@@ -730,7 +730,7 @@ impl BaselineCollector {
             .await
             .context("Failed to write baseline to file")?;
 
-        log::info!("Stored baseline to {:?}", file_path);
+        tracing::info!("Stored baseline to {:?}", file_path);
         Ok(())
     }
 

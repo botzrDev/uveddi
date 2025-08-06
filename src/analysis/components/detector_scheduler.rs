@@ -14,7 +14,7 @@ use crate::error::UveddiError;
 use crate::ingestion::AsyncWalker;
 
 use async_trait::async_trait;
-use log::{info, warn};
+use crate::core::logging::{info, warn};
 use std::path::Path;
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -257,7 +257,7 @@ impl DetectorSchedulerTrait for DetectorScheduler {
 
         while let Some(file_result) = file_stream.next().await {
             match file_result {
-                Ok(file_path) => {
+                Ok(ref file_path) => {
                     if self.should_analyze_file(&file_path) {
                         match self.analyze_file(&file_path).await {
                             Ok(mut file_issues) => {

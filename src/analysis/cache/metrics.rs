@@ -490,7 +490,7 @@ impl CacheMonitor {
     async fn check_alerts(summary: &PerformanceSummary, thresholds: &AlertThresholds) {
         // Check hit rate
         if summary.overall_hit_rate < thresholds.min_hit_rate {
-            log::warn!(
+            tracing::warn!(
                 "Cache hit rate below threshold: {:.2}% < {:.2}%",
                 summary.overall_hit_rate * 100.0,
                 thresholds.min_hit_rate * 100.0
@@ -499,7 +499,7 @@ impl CacheMonitor {
 
         // Check latency
         if summary.average_latency_ms > thresholds.max_latency_ms {
-            log::warn!(
+            tracing::warn!(
                 "Cache latency above threshold: {:.2}ms > {:.2}ms",
                 summary.average_latency_ms,
                 thresholds.max_latency_ms
@@ -508,7 +508,7 @@ impl CacheMonitor {
 
         // Check memory usage
         if summary.total_size_bytes > thresholds.max_memory_usage_bytes {
-            log::warn!(
+            tracing::warn!(
                 "Cache memory usage above threshold: {}MB > {}MB",
                 summary.total_size_bytes / (1024 * 1024),
                 thresholds.max_memory_usage_bytes / (1024 * 1024)

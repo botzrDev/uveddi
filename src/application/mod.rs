@@ -6,7 +6,7 @@
 
 use anyhow::Context;
 use chrono::Utc;
-use log::{error, info};
+use crate::core::logging::{error, info};
 use std::collections::HashMap;
 use std::path::PathBuf;
 
@@ -129,9 +129,9 @@ impl AnalysisOrchestrator {
         {
             let memory_config = crate::analysis::memory::MemoryOptimizationConfig::default();
             if let Err(e) = crate::analysis::memory::initialize_memory_optimization(memory_config) {
-                log::warn!("Failed to initialize memory optimization: {}", e);
+                tracing::warn!("Failed to initialize memory optimization: {}", e);
             } else {
-                log::info!("Memory optimization initialized successfully");
+                tracing::info!("Memory optimization initialized successfully");
             }
         }
 
@@ -154,9 +154,9 @@ impl AnalysisOrchestrator {
         {
             let memory_config = crate::analysis::memory::MemoryOptimizationConfig::default();
             if let Err(e) = crate::analysis::memory::initialize_memory_optimization(memory_config) {
-                log::warn!("Failed to initialize memory optimization: {}", e);
+                tracing::warn!("Failed to initialize memory optimization: {}", e);
             } else {
-                log::info!("Memory optimization initialized successfully");
+                tracing::info!("Memory optimization initialized successfully");
             }
         }
 
@@ -180,9 +180,9 @@ impl AnalysisOrchestrator {
         #[cfg(feature = "memory-optimization")]
         if let Some(config) = memory_config {
             if let Err(e) = crate::analysis::memory::initialize_memory_optimization(config) {
-                log::warn!("Failed to initialize memory optimization: {}", e);
+                tracing::warn!("Failed to initialize memory optimization: {}", e);
             } else {
-                log::info!("Memory optimization initialized with custom configuration");
+                tracing::info!("Memory optimization initialized with custom configuration");
             }
         }
 
@@ -217,24 +217,24 @@ impl AnalysisOrchestrator {
         &mut self,
         config: AnalysisConfig,
     ) -> Result<AnalysisReport, UveddiError> {
-        log::debug!(
+        tracing::debug!(
             "🚀 Starting execute_analysis for path: {}",
             config.target_path.display()
         );
 
         // Recreate analysis engine with memory optimization if enabled
         if config.enable_memory_optimization {
-            log::debug!("🔧 Memory optimization enabled, creating optimized analysis engine");
+            tracing::debug!("🔧 Memory optimization enabled, creating optimized analysis engine");
             self.analysis_engine = Self::create_analysis_engine_with_memory_optimization(&config)?;
-            log::debug!("✅ Memory-optimized analysis engine created successfully");
+            tracing::debug!("✅ Memory-optimized analysis engine created successfully");
         }
         let start_time = std::time::Instant::now();
-        log::debug!("⏱️  Analysis timer started");
+        tracing::debug!("⏱️  Analysis timer started");
 
         // Validate input path
-        log::debug!("🔍 Validating input path: {}", config.target_path.display());
+        tracing::debug!("🔍 Validating input path: {}", config.target_path.display());
         if !config.target_path.exists() {
-            log::error!("❌ Path does not exist: {}", config.target_path.display());
+            tracing::error!("❌ Path does not exist: {}", config.target_path.display());
             return Err(UveddiError::PathError {
                 path: config.target_path.display().to_string(),
                 reason: "Path does not exist".to_string(),
@@ -242,44 +242,44 @@ impl AnalysisOrchestrator {
             })
             .context("Input path validation failed")?;
         }
-        log::debug!("✅ Input path validated successfully");
+        tracing::debug!("✅ Input path validated successfully");
 
         info!("Starting analysis of: {}", config.target_path.display());
 
         // Configure dead code detector if settings provided
-        log::debug!("🔧 Configuring dead code detector");
+        tracing::debug!("🔧 Configuring dead code detector");
         self.configure_dead_code_detector(&config)?;
-        log::debug!("✅ Dead code detector configured");
+        tracing::debug!("✅ Dead code detector configured");
 
         // Configure large classes detector if settings provided
-        log::debug!("🔧 Configuring large classes detector");
+        tracing::debug!("🔧 Configuring large classes detector");
         self.configure_large_classes_detector(&config)?;
-        log::debug!("✅ Large classes detector configured");
+        tracing::debug!("✅ Large classes detector configured");
 
         // Initialize database schema
-        log::debug!("💾 Initializing database schema");
+        tracing::debug!("💾 Initializing database schema");
         self.initialize_database_schema().await?;
-        log::debug!("✅ Database schema initialized");
+        tracing::debug!("✅ Database schema initialized");
 
         // Create analysis run record
-        log::debug!("📝 Creating analysis run record");
+        tracing::debug!("📝 Creating analysis run record");
         let mut analysis_run = self
             .database
             .create_analysis_run(&config.target_path)
             .context("Failed to create analysis run")?;
-        log::debug!(
+        tracing::debug!(
             "✅ Analysis run record created with ID: {:?}",
             analysis_run.run_id
         );
 
         // Execute core analysis
-        log::debug!("🔍 Starting core analysis execution");
+        tracing::debug!("🔍 Starting core analysis execution");
         let (mut issues, _dependency_graph) = self
             .analysis_engine
             .analyze(&config.target_path)
             .await
             .context("Analysis failed")?;
-        log::debug!("✅ Core analysis completed - found {} issues", issues.len());
+        tracing::debug!("✅ Core analysis completed - found {} issues", issues.len());
 
         // Plugin system removed in community version
         info!("Plugin analysis skipped (not available in community version)");
@@ -580,11 +580,11 @@ impl AnalysisOrchestrator {
             {
                 // Validate memory optimization configuration
                 if let Err(validation_error) = Self::validate_memory_optimization_config(config) {
-                    log::warn!(
+                    tracing::warn!(
                         "Memory optimization configuration validation failed: {}",
                         validation_error
                     );
-                    log::warn!("Falling back to standard analysis mode");
+                    tracing::warn!("Falling back to standard analysis mode");
                     return AnalysisEngine::new()
                         .context("Failed to initialize analysis engine")
                         .map_err(|e| UveddiError::config_error(&e.to_string(), "analysis engine"));
@@ -593,11 +593,11 @@ impl AnalysisOrchestrator {
                 if let Some(memory_config) = config.memory_optimization.clone() {
                     // Validate provided memory config
                     if let Err(validation_error) = memory_config.validate() {
-                        log::warn!(
+                        tracing::warn!(
                             "Invalid memory optimization configuration: {}",
                             validation_error
                         );
-                        log::warn!("Falling back to standard analysis mode");
+                        tracing::warn!("Falling back to standard analysis mode");
                         return AnalysisEngine::new()
                             .context("Failed to initialize analysis engine")
                             .map_err(|e| {
@@ -608,8 +608,8 @@ impl AnalysisOrchestrator {
                     AnalysisEngine::new()
                         .context("Failed to initialize analysis engine with memory optimization")
                         .map_err(|e| {
-                            log::warn!("Memory optimization initialization failed: {}", e);
-                            log::warn!("Falling back to standard analysis mode");
+                            tracing::warn!("Memory optimization initialization failed: {}", e);
+                            tracing::warn!("Falling back to standard analysis mode");
                             // Graceful fallback to standard mode
                             AnalysisEngine::new()
                                 .context("Failed to initialize analysis engine")
@@ -635,7 +635,7 @@ impl AnalysisOrchestrator {
                     // Apply memory limit if specified
                     if let Some(limit_gb) = config.memory_limit_gb {
                         if limit_gb <= 0.0 {
-                            log::warn!(
+                            tracing::warn!(
                                 "Invalid memory limit: {}GB. Using default configuration.",
                                 limit_gb
                             );
@@ -647,11 +647,11 @@ impl AnalysisOrchestrator {
 
                     // Validate the created config
                     if let Err(validation_error) = memory_config.validate() {
-                        log::warn!(
+                        tracing::warn!(
                             "Generated memory optimization configuration is invalid: {}",
                             validation_error
                         );
-                        log::warn!("Falling back to standard analysis mode");
+                        tracing::warn!("Falling back to standard analysis mode");
                         return AnalysisEngine::new()
                             .context("Failed to initialize analysis engine")
                             .map_err(|e| {
@@ -662,8 +662,8 @@ impl AnalysisOrchestrator {
                     AnalysisEngine::new()
                         .context("Failed to initialize analysis engine with memory optimization")
                         .map_err(|e| {
-                            log::warn!("Memory optimization initialization failed: {}", e);
-                            log::warn!("Falling back to standard analysis mode");
+                            tracing::warn!("Memory optimization initialization failed: {}", e);
+                            tracing::warn!("Falling back to standard analysis mode");
                             // Graceful fallback to standard mode
                             AnalysisEngine::new()
                                 .context("Failed to initialize analysis engine")
@@ -682,8 +682,8 @@ impl AnalysisOrchestrator {
             }
             #[cfg(not(feature = "memory-optimization"))]
             {
-                log::warn!("Memory optimization requested but feature not enabled");
-                log::warn!("Falling back to standard analysis mode");
+                tracing::warn!("Memory optimization requested but feature not enabled");
+                tracing::warn!("Falling back to standard analysis mode");
                 AnalysisEngine::new()
                     .context("Failed to initialize analysis engine")
                     .map_err(|e| UveddiError::config_error(&e.to_string(), "analysis engine"))
@@ -748,7 +748,7 @@ impl Default for AnalysisOrchestrator {
 pub async fn run_app() -> Result<(), UveddiError> {
     use crate::cli::{analyze_command::AnalyzeCommand, config_command::ConfigCommand};
     use clap::Parser;
-    use log::{error, info};
+    use crate::core::logging::{error, info};
 
     #[derive(Parser)]
     #[command(name = "uveddi")]

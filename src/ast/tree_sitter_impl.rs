@@ -1,4 +1,5 @@
 use crate::analysis::cache::wrappers::{ArchivablePathBuf, ArchivableSystemTime};
+// Import security module (aliased to security_stub when security feature is disabled)
 use crate::security;
 use lru::LruCache;
 use serde::{Deserialize, Serialize};
@@ -17,6 +18,47 @@ use tree_sitter::{Parser, Tree};
 use crate::ast::tree_sitter::{Parser, Tree};
 
 // Re-export tree-sitter types for public API
+
+mod arc_pathbuf_serde {
+    use std::path::PathBuf;
+    use std::sync::Arc;
+    use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
+    pub fn serialize<S>(arc_pathbuf: &Arc<PathBuf>, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        arc_pathbuf.as_ref().serialize(serializer)
+    }
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<Arc<PathBuf>, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let pathbuf = PathBuf::deserialize(deserializer)?;
+        Ok(Arc::new(pathbuf))
+    }
+}
+
+mod arc_string_serde {
+    use std::sync::Arc;
+    use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
+    pub fn serialize<S>(arc_string: &Arc<String>, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        arc_string.as_ref().serialize(serializer)
+    }
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<Arc<String>, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let string = String::deserialize(deserializer)?;
+        Ok(Arc::new(string))
+    }
+}
 
 const CACHE_DIR: &str = ".uveddi_cache";
 
@@ -494,11 +536,12 @@ impl AstParser {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ParsedFile {
+    #[serde(with = "arc_pathbuf_serde")]
     pub file_path: Arc<PathBuf>,
     pub language: SourceLanguage,
     #[serde(skip)]
     pub tree: Option<Tree>,
-    #[serde(skip)]
+    #[serde(with = "arc_string_serde")]
     pub source: Arc<String>,
     #[serde(skip)]
     pub custom_ast: Arc<Option<CustomAst>>,

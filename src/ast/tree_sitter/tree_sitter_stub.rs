@@ -7,6 +7,39 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::SystemTime;
 
+// Stub tree-sitter language modules
+pub mod tree_sitter_rust {
+    use super::Language;
+    pub const LANGUAGE: Language = Language;
+    pub fn language() -> Language {
+        Language
+    }
+}
+
+pub mod tree_sitter_python {
+    use super::Language;
+    pub const LANGUAGE: Language = Language;
+    pub fn language() -> Language {
+        Language
+    }
+}
+
+pub mod tree_sitter_javascript {
+    use super::Language;
+    pub const LANGUAGE: Language = Language;
+    pub fn language() -> Language {
+        Language
+    }
+}
+
+pub mod tree_sitter_typescript {
+    use super::Language;
+    pub const LANGUAGE: Language = Language;
+    pub fn language() -> Language {
+        Language
+    }
+}
+
 /// Stub for tree_sitter::Query
 #[derive(Debug, Clone)]
 pub struct Query;
@@ -242,13 +275,45 @@ pub struct CachedAst {
 /// Parsed file structure stub
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ParsedFile {
+    #[serde(serialize_with = "serialize_arc_pathbuf", deserialize_with = "deserialize_arc_pathbuf")]
     pub file_path: Arc<PathBuf>,
     pub language: SourceLanguage,
+    #[serde(serialize_with = "serialize_arc_string", deserialize_with = "deserialize_arc_string")]
     pub source: Arc<String>,
     #[serde(skip)]
     pub tree: Option<Tree>,
     #[serde(skip)]
     pub custom_ast: Option<CustomAst>,
+}
+
+fn serialize_arc_pathbuf<S>(arc_pathbuf: &Arc<PathBuf>, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    arc_pathbuf.as_ref().serialize(serializer)
+}
+
+fn deserialize_arc_pathbuf<'de, D>(deserializer: D) -> Result<Arc<PathBuf>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let pathbuf = PathBuf::deserialize(deserializer)?;
+    Ok(Arc::new(pathbuf))
+}
+
+fn serialize_arc_string<S>(arc_string: &Arc<String>, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    arc_string.as_ref().serialize(serializer)
+}
+
+fn deserialize_arc_string<'de, D>(deserializer: D) -> Result<Arc<String>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let string = String::deserialize(deserializer)?;
+    Ok(Arc::new(string))
 }
 
 /// Custom AST representation stub

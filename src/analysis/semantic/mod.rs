@@ -14,7 +14,7 @@ use crate::analysis::cfg::{CfgEdge, CfgNode, CfgNodeType, ControlFlowGraph};
 use crate::analysis::errors::AnalysisError;
 use crate::ast::tree_sitter::Node;
 use crate::ast::tree_sitter_impl::SourceLanguage;
-use log::{debug, warn};
+use crate::core::logging::{debug, warn};
 use ndarray::Array1;
 use petgraph::{Direction, Graph};
 use rayon::prelude::*;

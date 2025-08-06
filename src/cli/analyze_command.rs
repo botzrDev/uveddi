@@ -31,17 +31,17 @@
 
 use anyhow::Context;
 use clap::Args;
-use log::info;
+use crate::core::logging::info;
 use std::error::Error;
 use std::path::PathBuf;
 use sysinfo::System;
 
 use crate::application::{AnalysisConfig, AnalysisOrchestrator};
 use crate::error::UveddiError;
+use crate::security::{self, SecurityError};
 use crate::report::DiagramMode;
-use crate::security::{
-    validate_input, validate_model_name, validate_numeric_range, validate_url, SecurityError,
-};
+
+// Security functions are now available through the security module import above
 
 /// Command-line arguments for the analyze subcommand
 ///
@@ -410,48 +410,48 @@ impl AnalyzeCommand {
         
         // Validate path for security (SQL injection, etc.)
         let path_str = self.path.to_string_lossy();
-        validate_input(&path_str, "path")?;
+        security::validate_input(&path_str, "path")?;
 
         // Validate output format
-        validate_input(&self.output_format, "output_format")?;
+        security::validate_input(&self.output_format, "output_format")?;
 
         // Validate output file if specified
         if let Some(ref output) = self.output {
             let output_str = output.to_string_lossy();
-            validate_input(&output_str, "output")?;
+            security::validate_input(&output_str, "output")?;
         }
 
         // Validate Ollama API URL if specified
         if let Some(ref url) = self.ollama_api_url {
-            validate_url(url)?;
+            security::validate_url(url)?;
         }
 
         // Validate Ollama model name if specified
         if let Some(ref model) = self.ollama_model {
-            validate_model_name(model)?;
+            security::validate_model_name(model)?;
         }
 
         // Validate numeric parameters
         if let Some(confidence) = self.dead_code_confidence {
             let confidence_int = (confidence * 100.0) as i32;
-            validate_numeric_range(confidence_int, 0, 100, "dead_code_confidence")?;
+            security::validate_numeric_range(confidence_int as i64, 0, 100, "dead_code_confidence")?;
         }
 
         if let Some(max_loc) = self.large_classes_max_loc {
-            validate_numeric_range(max_loc as i32, 1, 100_000, "large_classes_max_loc")?;
+            security::validate_numeric_range(max_loc as i64, 1, 100_000, "large_classes_max_loc")?;
         }
 
         if let Some(max_methods) = self.large_classes_max_methods {
-            validate_numeric_range(max_methods as i32, 1, 10_000, "large_classes_max_methods")?;
+            security::validate_numeric_range(max_methods as i64, 1, 10_000, "large_classes_max_methods")?;
         }
 
         if let Some(max_fields) = self.large_classes_max_fields {
-            validate_numeric_range(max_fields as i32, 1, 10_000, "large_classes_max_fields")?;
+            security::validate_numeric_range(max_fields as i64, 1, 10_000, "large_classes_max_fields")?;
         }
 
         if let Some(max_complexity) = self.large_classes_max_complexity {
-            validate_numeric_range(
-                max_complexity as i32,
+            security::validate_numeric_range(
+                max_complexity as i64,
                 1,
                 10_000,
                 "large_classes_max_complexity",
@@ -459,17 +459,17 @@ impl AnalyzeCommand {
         }
 
         if let Some(max_lcom) = self.large_classes_max_lcom {
-            let lcom_int = (max_lcom * 100.0) as i32;
-            validate_numeric_range(lcom_int, 0, 100, "large_classes_max_lcom")?;
+            let lcom_int = (max_lcom * 100.0) as i64;
+            security::validate_numeric_range(lcom_int, 0, 100, "large_classes_max_lcom")?;
         }
 
         if let Some(min_severity) = self.large_classes_min_severity {
-            validate_numeric_range(min_severity as i32, 0, 100, "large_classes_min_severity")?;
+            security::validate_numeric_range(min_severity as i64, 0, 100, "large_classes_min_severity")?;
         }
 
         if let Some(memory_limit) = self.memory_limit_gb {
-            let memory_int = (memory_limit * 10.0) as i32; // Convert to decidigabytes for int validation
-            validate_numeric_range(memory_int, 1, 1000, "memory_limit_gb")?; // 0.1 GB to 100 GB
+            let memory_int = (memory_limit * 10.0) as i64; // Convert to decidigabytes for int validation
+            security::validate_numeric_range(memory_int, 1, 1000, "memory_limit_gb")?; // 0.1 GB to 100 GB
         }
 
         // Validate memory profile if specified
@@ -486,19 +486,19 @@ impl AnalyzeCommand {
         // Validate ignore patterns if specified
         if let Some(ref patterns) = self.dead_code_ignore_patterns {
             for pattern in patterns {
-                validate_input(pattern, "dead_code_ignore_pattern")?;
+                security::validate_input(pattern, "dead_code_ignore_pattern")?;
             }
         }
 
         if let Some(ref patterns) = self.dead_code_keep_alive {
             for pattern in patterns {
-                validate_input(pattern, "dead_code_keep_alive_pattern")?;
+                security::validate_input(pattern, "dead_code_keep_alive_pattern")?;
             }
         }
 
         if let Some(ref patterns) = self.large_classes_ignore_patterns {
             for pattern in patterns {
-                validate_input(pattern, "large_classes_ignore_pattern")?;
+                security::validate_input(pattern, "large_classes_ignore_pattern")?;
             }
         }
 
@@ -726,12 +726,12 @@ impl AnalyzeCommand {
             {
                 Ok(result) => result.map_err(|e| {
                     if self.verbose {
-                        log::error!("🔍 Analysis execution failed with detailed error: {:#}", e);
+                        tracing::error!("🔍 Analysis execution failed with detailed error: {:#}", e);
                         if let Some(backtrace) = e.source() {
-                            log::error!("🔧 Stack trace: {:?}", backtrace);
+                            tracing::error!("🔧 Stack trace: {:?}", backtrace);
                         }
                     } else {
-                        log::error!("Analysis execution failed. Use --verbose for detailed error information.");
+                        tracing::error!("Analysis execution failed. Use --verbose for detailed error information.");
                     }
                     e
                 })?,
@@ -752,12 +752,12 @@ impl AnalyzeCommand {
             info!("Analysis running without timeout");
             analysis_future.await.map_err(|e| {
                 if self.verbose {
-                    log::error!("🔍 Analysis execution failed with detailed error: {:#}", e);
+                    tracing::error!("🔍 Analysis execution failed with detailed error: {:#}", e);
                     if let Some(backtrace) = e.source() {
-                        log::error!("🔧 Stack trace: {:?}", backtrace);
+                        tracing::error!("🔧 Stack trace: {:?}", backtrace);
                     }
                 } else {
-                    log::error!("Analysis execution failed. Use --verbose for detailed error information.");
+                    tracing::error!("Analysis execution failed. Use --verbose for detailed error information.");
                 }
                 e
             })?

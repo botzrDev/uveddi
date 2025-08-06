@@ -151,7 +151,7 @@ pub mod diagrams;
 pub mod svg_generator;
 pub mod modern_generator;
 use chrono::{DateTime, Local};
-use log::{error, info, warn};
+use crate::core::logging::{error, info, warn};
 use std::error::Error;
 use serde_json::Value;
 use std::collections::HashMap;
@@ -331,7 +331,7 @@ impl ReportGenerator {
             match crate::report::ImageRenderer::new() {
                 Ok(renderer) => self.image_renderer = Some(renderer),
                 Err(e) => {
-                    log::warn!("Failed to create image renderer: {}", e);
+                    tracing::warn!("Failed to create image renderer: {}", e);
                     // Fall back to text-only mode
                     self.diagram_mode = DiagramMode::MermaidOnly;
                 }
@@ -363,26 +363,26 @@ impl ReportGenerator {
                 .await
                 {
                     Ok(Ok(_)) => {
-                        log::debug!("Rendering service is available");
+                        tracing::debug!("Rendering service is available");
                         true
                     }
                     Ok(Err(e)) => {
-                        log::debug!("Rendering service health check failed: {}", e);
+                        tracing::debug!("Rendering service health check failed: {}", e);
                         false
                     }
                     Err(_) => {
-                        log::debug!("Rendering service health check timed out");
+                        tracing::debug!("Rendering service health check timed out");
                         false
                     }
                 }
             } else {
-                log::debug!("No image renderer configured");
+                tracing::debug!("No image renderer configured");
                 false
             }
         }
         #[cfg(not(feature = "image-rendering"))]
         {
-            log::debug!("Image rendering feature not enabled");
+            tracing::debug!("Image rendering feature not enabled");
             false
         }
     }
@@ -739,14 +739,14 @@ impl ReportGenerator {
                     if self.is_rendering_service_available().await {
                         match self.generate_image_only(mermaid_code).await {
                             Ok(image_result) => {
-                                log::info!(
+                                tracing::info!(
                                     "Successfully generated image for {} diagram",
                                     diagram_type
                                 );
                                 Ok(image_result)
                             }
                             Err(e) => {
-                                log::warn!(
+                                tracing::warn!(
                                     "Image rendering failed, falling back to Mermaid-only: {}",
                                     e
                                 );
@@ -757,7 +757,7 @@ impl ReportGenerator {
                             }
                         }
                     } else {
-                        log::info!("Rendering service not available, using Mermaid-only mode for {} diagram", diagram_type);
+                        tracing::info!("Rendering service not available, using Mermaid-only mode for {} diagram", diagram_type);
                         Ok(
                             self.generate_mermaid_only_with_instructions(
                                 mermaid_code,
@@ -768,7 +768,7 @@ impl ReportGenerator {
                 }
                 #[cfg(not(feature = "image-rendering"))]
                 {
-                    log::info!("Image rendering feature not enabled, using Mermaid-only mode");
+                    tracing::info!("Image rendering feature not enabled, using Mermaid-only mode");
                     Ok(self.generate_mermaid_only_with_instructions(mermaid_code, diagram_type))
                 }
             }

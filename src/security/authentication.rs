@@ -13,8 +13,9 @@ use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
 use chrono::{DateTime, Duration as ChronoDuration, Utc};
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use oauth2::{
-    basic::BasicClient, reqwest::async_http_client, AuthType, AuthUrl, AuthorizationCode, ClientId,
-    ClientSecret, CsrfToken, PkceCodeChallenge, RedirectUrl, Scope, TokenResponse, TokenUrl,
+    basic::BasicClient, AuthType, AuthUrl, AuthorizationCode, ClientId,
+    ClientSecret, CsrfToken, PkceCodeChallenge, RedirectUrl, Scope, TokenResponse, TokenUrl, 
+    ClientAuthenticationType,
 };
 use openidconnect::{
     core::{CoreAuthenticationFlow, CoreClient, CoreProviderMetadata, CoreResponseType},
@@ -240,30 +241,40 @@ impl AuthenticationService {
 
         // Initialize OAuth clients
         for provider in &config.oauth_providers {
+            // Create OAuth2 client with OAuth2 5.0 API
+            let client_id = ClientId::new(provider.client_id.clone());
+            let client_secret = ClientSecret::new(provider.client_secret.clone());
+            
+            let auth_url = AuthUrl::new(provider.auth_url.clone()).map_err(|e| {
+                SecurityError::OAuth2Error {
+                    error: format!("Invalid auth URL for {}: {}", provider.provider_name, e),
+                }
+            })?;
+            
+            let token_url = TokenUrl::new(provider.token_url.clone()).map_err(|e| {
+                SecurityError::OAuth2Error {
+                    error: format!("Invalid token URL for {}: {}", provider.provider_name, e),
+                }
+            })?;
+            
+            let redirect_url = RedirectUrl::new(provider.redirect_url.clone()).map_err(|e| {
+                SecurityError::OAuth2Error {
+                    error: format!(
+                        "Invalid redirect URL for {}: {}",
+                        provider.provider_name, e
+                    ),
+                }
+            })?;
+            
+            // Using constructor pattern compatible with OAuth2 5.0
             let client = BasicClient::new(
-                ClientId::new(provider.client_id.clone()),
-                Some(ClientSecret::new(provider.client_secret.clone())),
-                AuthUrl::new(provider.auth_url.clone()).map_err(|e| {
-                    SecurityError::OAuth2Error {
-                        error: format!("Invalid auth URL for {}: {}", provider.provider_name, e),
-                    }
-                })?,
-                Some(TokenUrl::new(provider.token_url.clone()).map_err(|e| {
-                    SecurityError::OAuth2Error {
-                        error: format!("Invalid token URL for {}: {}", provider.provider_name, e),
-                    }
-                })?),
+                client_id, 
+                Some(client_secret),
+                auth_url,
+                Some(token_url)
             )
-            .set_redirect_uri(
-                RedirectUrl::new(provider.redirect_url.clone()).map_err(|e| {
-                    SecurityError::OAuth2Error {
-                        error: format!(
-                            "Invalid redirect URL for {}: {}",
-                            provider.provider_name, e
-                        ),
-                    }
-                })?,
-            );
+            .set_redirect_uri(redirect_url)
+            .set_auth_type(ClientAuthenticationType::BasicAuth);
 
             oauth_clients.insert(provider.provider_name.clone(), client);
         }
@@ -344,13 +355,15 @@ impl AuthenticationService {
 
         let (pkce_challenge, pkce_verifier) = PkceCodeChallenge::new_random_sha256();
 
-        let mut auth_request = client.authorize_url(CsrfToken::new_random);
+        // Updated for OAuth2 5.0
+        let csrf_token = CsrfToken::new_random();
+        let mut auth_request = client.authorize_url(|| csrf_token.clone());
 
         for scope in &provider_config.scopes {
             auth_request = auth_request.add_scope(Scope::new(scope.clone()));
         }
 
-        let (auth_url, csrf_token) = auth_request.set_pkce_challenge(pkce_challenge).url();
+        let auth_url = auth_request.set_pkce_challenge(pkce_challenge).url();
 
         // Store PKCE verifier for later use (in production, use secure storage)
         // This is a simplified implementation
@@ -418,10 +431,12 @@ impl AuthenticationService {
                     error: format!("OAuth provider '{}' not found", provider),
                 })?;
 
-        // Exchange authorization code for access token
+        // Exchange authorization code for access token - updated for OAuth2 5.0
+        let http_client = reqwest::Client::new();
+        let auth_code = AuthorizationCode::new(auth_code.to_string());
         let token_response = client
-            .exchange_code(AuthorizationCode::new(auth_code.to_string()))
-            .request_async(async_http_client)
+            .exchange_code(auth_code)
+            .request_async(&http_client)
             .await
             .map_err(|e| SecurityError::OAuthProviderError {
                 provider: provider.to_string(),
@@ -469,10 +484,11 @@ impl AuthenticationService {
                     error: "OIDC provider not found".to_string(),
                 })?;
 
-        // Exchange authorization code for tokens
+        // Exchange authorization code for tokens - updated for OAuth2 5.0
         let http_client = reqwest::Client::new();
+        let auth_code = AuthorizationCode::new(auth_code.to_string());
         let token_response = client
-            .exchange_code(AuthorizationCode::new(auth_code.to_string()))
+            .exchange_code(auth_code)
             .request_async(&http_client)
             .await
             .map_err(|e| SecurityError::OidcProviderError {

@@ -390,7 +390,7 @@ impl KnowledgePerformanceMonitor {
         // Check if lookup time exceeds target
         let duration_ms = duration_ns as f64 / 1_000_000.0;
         if duration_ms > self.performance_targets.max_lookup_time_ms {
-            log::warn!(
+            tracing::warn!(
                 "Slow lookup detected: pattern={}, duration={}ms (target: {}ms)",
                 pattern_id, duration_ms, self.performance_targets.max_lookup_time_ms
             );

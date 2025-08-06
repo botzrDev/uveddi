@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project - Architectural Analysis Report</title>
+    
+    
+    
+    <style>
+        /* Uveddi Report Bundled CSS */@font-face {font-family:"Font Awesome 6 Free";font-style:normal;font-weight:900;font-display:swap;src:url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/webfonts/fa-solid-900.woff2") format("woff2");}.fas,.fa-solid {font-family:"Font Awesome 6 Free";font-weight:900;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}.fas::before,.fa-solid::before {display:inline-block;text-rendering:auto;-webkit-font-smoothing:antialiased;}.fa-moon::before {content:"\\f186";}.fa-sun::before {content:"\\f185";}.fa-print::before {content:"\\f02f";}.fa-download::before {content:"\\f019";}.fa-expand::before {content:"\\f065";}.fa-compress-alt::before {content:"\\f422";}.fa-chevron-right::before {content:"\\f054";}.fa-chevron-down::before {content:"\\f078";}.fa-chevron-up::before {content:"\\f077";}.fa-exclamation-triangle::before {content:"\\f071";}.fa-heartbeat::before {content:"\\f21e";}.fa-coins::before {content:"\\f51e";}.fa-project-diagram::before {content:"\\f542";}.fa-file-code::before {content:"\\f1c9";}.fa-clock::before {content:"\\f017";}.fa-times::before {content:"\\f00d";}.fa-expand-alt::before {content:"\\f424";}.fa-undo::before {content:"\\f0e2";}.fa-check-circle::before {content:"\\f058";}.fa-arrow-up::before {content:"\\f062";}.fa-arrow-down::before {content:"\\f063";}.fa-arrow-right::before {content:"\\f061";}.fa-bullseye::before {content:"\\f140";}.fa-cog::before {content:"\\f013";}.fa-chart-bar::before {content:"\\f080";}.fa-code::before {content:"\\f121";}.fa-bug::before {content:"\\f188";}.fa-shield-alt::before {content:"\\f3ed";}.fa-bolt::before {content:"\\f0e7";}.fa-layer-group::before {content:"\\f5fd";}/* Uveddi Report Modern CSS *//* CSS Variables for theming */:root {--primary-color:#2563eb;--secondary-color:#64748b;--success-color:#059669;--warning-color:#d97706;--error-color:#dc2626;--bg-primary:#ffffff;--bg-secondary:#f8fafc;--bg-tertiary:#e2e8f0;--text-primary:#0f172a;--text-secondary:#475569;--border-color:#e2e8f0;--shadow:0 4px 6px -1px rgba(0,0,0,0.1);--shadow-lg:0 10px 15px -3px rgba(0,0,0,0.1);--radius:8px;--radius-lg:12px;--transition:all 0.3s ease;}[data-theme="dark"] {--primary-color:#3b82f6;--secondary-color:#94a3b8;--success-color:#10b981;--warning-color:#f59e0b;--error-color:#ef4444;--bg-primary:#0f172a;--bg-secondary:#1e293b;--bg-tertiary:#334155;--text-primary:#f1f5f9;--text-secondary:#cbd5e1;--border-color:#475569;--shadow:0 4px 6px -1px rgba(0,0,0,0.3);--shadow-lg:0 10px 15px -3px rgba(0,0,0,0.3);}/* Base styles */* {margin:0;padding:0;box-sizing:border-box;}body {font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background-color:var(--bg-secondary);color:var(--text-primary);line-height:1.6;transition:var(--transition);}.container {max-width:1200px;margin:0 auto;padding:20px;}/* Header Styles */.header {background:linear-gradient(135deg,var(--primary-color),var(--secondary-color));color:white;padding:2rem;border-radius:var(--radius-lg);margin-bottom:2rem;position:relative;overflow:hidden;}.header::before {content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(45deg,transparent 49%,rgba(255,255,255,0.1) 50%,transparent 51%);animation:shimmer 3s infinite;}@keyframes shimmer {0% {transform:translateX(-100%);}100% {transform:translateX(100%);}}.header-content {position:relative;z-index:1;}.header h1 {font-size:2.5rem;font-weight:700;margin-bottom:0.5rem;}.header-subtitle {font-size:1.1rem;opacity:0.9;margin-bottom:1rem;}.branch-name {background:rgba(255,255,255,0.2);padding:0.2rem 0.5rem;border-radius:4px;font-family:monospace;}.header-stats {display:flex;gap:2rem;margin-top:1rem;}.stat-item {text-align:center;}.stat-value {display:block;font-size:1.8rem;font-weight:700;}.stat-label {font-size:0.9rem;opacity:0.8;}.header-controls {position:absolute;top:1rem;right:1rem;display:flex;gap:0.5rem;z-index:2;}.theme-toggle,.print-btn,.export-btn {background:rgba(255,255,255,0.2);border:none;border-radius:var(--radius);padding:0.75rem;color:white;cursor:pointer;transition:var(--transition);backdrop-filter:blur(10px);}.theme-toggle:hover,.print-btn:hover,.export-btn:hover {background:rgba(255,255,255,0.3);transform:translateY(-2px);}.dark-icon {display:none;}[data-theme="dark"] .dark-icon {display:inline;}[data-theme="dark"] .light-icon {display:none;}/* Navigation */.navigation {background:var(--bg-primary);border-radius:var(--radius);margin-bottom:2rem;box-shadow:var(--shadow);overflow:hidden;}.navigation ul {list-style:none;display:flex;margin:0;padding:0;}.navigation li {flex:1;}.nav-link {display:block;padding:1rem;text-decoration:none;color:var(--text-primary);text-align:center;transition:var(--transition);border-right:1px solid var(--border-color);}.navigation li:last-child .nav-link {border-right:none;}.nav-link:hover {background:var(--bg-secondary);color:var(--primary-color);}/* Executive Summary */.executive-summary {background:var(--bg-primary);border-radius:var(--radius-lg);padding:2rem;margin-bottom:2rem;box-shadow:var(--shadow);}.summary-grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1.5rem;margin-bottom:2rem;}.summary-card {background:linear-gradient(135deg,var(--bg-secondary),var(--bg-tertiary));border-radius:var(--radius);padding:1.5rem;text-align:center;transition:var(--transition);position:relative;overflow:hidden;}.summary-card::before {content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--primary-color);}.summary-card:hover {transform:translateY(-5px);box-shadow:var(--shadow-lg);}.card-icon {font-size:2rem;margin-bottom:1rem;color:var(--primary-color);}.health-score {font-size:2.5rem;font-weight:700;margin-bottom:0.5rem;}.health-score.excellent {color:var(--success-color);}.health-score.good {color:#10b981;}.health-score.warning {color:var(--warning-color);}.health-score.critical {color:var(--error-color);}.issue-stats {display:flex;justify-content:space-around;gap:1rem;}.issue-stat {text-align:center;}.issue-stat .count {display:block;font-size:1.5rem;font-weight:700;}.issue-stat.critical .count {color:var(--error-color);}.issue-stat.major .count {color:#ea580c;}.issue-stat.moderate .count {color:var(--warning-color);}.issue-stat.minor .count {color:#65a30d;}.debt-amount,.complexity-score {font-size:2rem;font-weight:700;color:var(--primary-color);margin-bottom:0.5rem;}/* Key Findings */.key-findings {background:var(--bg-secondary);border-radius:var(--radius);padding:1.5rem;margin-top:2rem;}.findings-list {list-style:none;}.finding-item {display:flex;align-items:center;gap:0.5rem;padding:0.5rem 0;border-bottom:1px solid var(--border-color);}.finding-item:last-child {border-bottom:none;}.finding-item i {color:var(--primary-color);}/* Quick Recommendations */.quick-recommendations {margin-top:2rem;}.recommendation-cards {display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem;}.recommendation-card {background:var(--bg-primary);border-radius:var(--radius);padding:1rem;border-left:4px solid var(--primary-color);transition:var(--transition);}.recommendation-card:hover {transform:translateX(5px);box-shadow:var(--shadow);}.recommendation-card.priority-critical {border-left-color:var(--error-color);}.recommendation-card.priority-major {border-left-color:#ea580c;}.recommendation-card.priority-moderate {border-left-color:var(--warning-color);}.rec-priority {display:inline-block;padding:0.2rem 0.6rem;border-radius:12px;font-size:0.8rem;font-weight:700;text-transform:uppercase;margin-bottom:0.5rem;}.priority-critical .rec-priority {background:var(--error-color);color:white;}.priority-major .rec-priority {background:#ea580c;color:white;}.priority-moderate .rec-priority {background:var(--warning-color);color:white;}.rec-title {font-weight:600;margin-bottom:0.5rem;}/* Severity Dashboard */.severity-dashboard {background:var(--bg-primary);border-radius:var(--radius-lg);padding:2rem;margin-bottom:2rem;box-shadow:var(--shadow);}.severity-overview {display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-bottom:2rem;}.severity-chart {text-align:center;}.severity-breakdown {display:flex;flex-direction:column;gap:1rem;}.severity-item {display:flex;align-items:center;gap:1rem;}.severity-bar {flex:1;height:20px;background:var(--bg-tertiary);border-radius:10px;overflow:hidden;}.bar-fill {height:100%;border-radius:inherit;transition:width 1s ease;}.severity-critical .bar-fill {background:var(--error-color);}.severity-major .bar-fill {background:#ea580c;}.severity-moderate .bar-fill {background:var(--warning-color);}.severity-minor .bar-fill {background:#65a30d;}.severity-info {display:flex;flex-direction:column;align-items:center;min-width:80px;}.severity-name {font-size:0.8rem;font-weight:600;}.severity-count {font-size:1.2rem;font-weight:700;}/* Issue Cards */.issues-grid {display:grid;grid-template-columns:repeat(auto-fill,minmax(400px,1fr));gap:1.5rem;}.issue-card {background:var(--bg-primary);border-radius:var(--radius-lg);padding:1.5rem;box-shadow:var(--shadow);transition:var(--transition);border-left:4px solid var(--border-color);}.issue-card:hover {transform:translateY(-2px);box-shadow:var(--shadow-lg);}.issue-card.severity-critical {border-left-color:var(--error-color);}.issue-card.severity-major {border-left-color:#ea580c;}.issue-card.severity-moderate {border-left-color:var(--warning-color);}.issue-card.severity-minor {border-left-color:#65a30d;}.issue-header {display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;}.issue-type {display:flex;align-items:center;gap:0.5rem;}.issue-type i {color:var(--primary-color);}.severity-badge {padding:0.3rem 0.8rem;border-radius:12px;font-size:0.75rem;font-weight:700;text-transform:uppercase;}.severity-badge.severity-critical {background:var(--error-color);color:white;}.severity-badge.severity-major {background:#ea580c;color:white;}.severity-badge.severity-moderate {background:var(--warning-color);color:white;}.severity-badge.severity-minor {background:#65a30d;color:white;}.issue-title {font-size:1.2rem;font-weight:600;margin-bottom:0.5rem;}.issue-description {color:var(--text-secondary);margin-bottom:1rem;}.issue-details {background:var(--bg-secondary);border-radius:var(--radius);padding:1rem;margin-bottom:1rem;}.detail-row {display:flex;justify-content:space-between;margin-bottom:0.5rem;}.detail-row:last-child {margin-bottom:0;}.detail-label {font-weight:600;color:var(--text-secondary);}.detail-value {font-family:monospace;font-size:0.9rem;}.complexity-score {color:var(--primary-color);font-weight:700;}.code-snippet {background:var(--bg-secondary);border-radius:var(--radius);margin-bottom:1rem;overflow:hidden;}.snippet-header {display:flex;justify-content:space-between;align-items:center;padding:0.5rem 1rem;background:var(--bg-tertiary);border-bottom:1px solid var(--border-color);}.toggle-btn {background:none;border:none;color:var(--text-secondary);cursor:pointer;padding:0.25rem;border-radius:4px;transition:var(--transition);}.toggle-btn:hover {background:var(--bg-primary);color:var(--text-primary);}.code-content {padding:1rem;font-family:'Courier New',monospace;font-size:0.9rem;overflow-x:auto;background:var(--bg-primary);}.issue-suggestions {margin-bottom:1rem;}.issue-suggestions h5 {margin-bottom:0.5rem;color:var(--primary-color);}.issue-suggestions ul {padding-left:1.5rem;}.issue-suggestions li {margin-bottom:0.25rem;}.related-patterns {margin-bottom:1rem;}.pattern-tags {display:flex;flex-wrap:wrap;gap:0.5rem;}.pattern-tag {background:var(--bg-secondary);color:var(--text-secondary);padding:0.25rem 0.75rem;border-radius:12px;font-size:0.8rem;font-weight:500;}.issue-actions {display:flex;gap:0.5rem;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border-color);}.action-btn {padding:0.5rem 1rem;border:1px solid var(--border-color);border-radius:var(--radius);background:var(--bg-primary);color:var(--text-primary);cursor:pointer;transition:var(--transition);font-size:0.9rem;display:flex;align-items:center;gap:0.5rem;}.action-btn:hover {background:var(--bg-secondary);border-color:var(--primary-color);color:var(--primary-color);}/* Filters */.issues-filters {background:var(--bg-primary);padding:1rem;border-radius:var(--radius);margin-bottom:1rem;display:flex;gap:1rem;align-items:center;flex-wrap:wrap;}.filter-group {display:flex;align-items:center;gap:0.5rem;}.filter-group label {font-weight:600;color:var(--text-secondary);}.filter-group select,.filter-group input {padding:0.5rem;border:1px solid var(--border-color);border-radius:var(--radius);background:var(--bg-primary);color:var(--text-primary);}/* Diagrams */.diagrams-section {background:var(--bg-primary);border-radius:var(--radius-lg);padding:2rem;margin-bottom:2rem;box-shadow:var(--shadow);}.diagrams-grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(500px,1fr));gap:2rem;}.diagram-container {background:var(--bg-secondary);border-radius:var(--radius);overflow:hidden;}.diagram-header {display:flex;justify-content:space-between;align-items:center;padding:1rem;background:var(--bg-tertiary);border-bottom:1px solid var(--border-color);}.diagram-controls {display:flex;gap:0.5rem;}.control-btn {background:var(--bg-primary);border:1px solid var(--border-color);border-radius:var(--radius);padding:0.5rem;cursor:pointer;transition:var(--transition);}.control-btn:hover {background:var(--primary-color);color:white;border-color:var(--primary-color);}.diagram-content {padding:1rem;text-align:center;min-height:300px;display:flex;align-items:center;justify-content:center;}.diagram-fallback {text-align:center;color:var(--text-secondary);}.fallback-message {font-size:1.1rem;margin-bottom:1rem;}.fallback-message i {color:var(--warning-color);margin-right:0.5rem;}/* Empty States */.empty-state {text-align:center;padding:3rem;color:var(--text-secondary);}.empty-state i {font-size:3rem;margin-bottom:1rem;color:var(--primary-color);}.empty-state h3 {margin-bottom:0.5rem;color:var(--text-primary);}/* Footer */.footer {background:var(--bg-primary);border-radius:var(--radius);padding:1.5rem;margin-top:2rem;box-shadow:var(--shadow);border-top:3px solid var(--primary-color);}.footer-content {display:flex;justify-content:space-between;align-items:center;}.footer-left {font-weight:600;}.footer-right {color:var(--text-secondary);font-size:0.9rem;}/* Responsive Design */@media (max-width:768px) {.container {padding:1rem;}.header {padding:1.5rem;}.header h1 {font-size:2rem;}.header-stats {flex-direction:column;gap:1rem;}.header-controls {position:relative;top:auto;right:auto;margin-top:1rem;}.navigation ul {flex-direction:column;}.navigation li .nav-link {border-right:none;border-bottom:1px solid var(--border-color);}.summary-grid,.issues-grid,.diagrams-grid {grid-template-columns:1fr;}.severity-overview {grid-template-columns:1fr;}.issues-filters {flex-direction:column;align-items:stretch;}.footer-content {flex-direction:column;gap:0.5rem;text-align:center;}}/* Print Styles */@media print {body {background:white;color:black;}.header-controls,.navigation,.issues-filters,.action-btn {display:none;}.container {max-width:none;padding:0;}.header {background:#2563eb;-webkit-print-color-adjust:exact;}.summary-card,.issue-card,.diagrams-section {break-inside:avoid;page-break-inside:avoid;}}
+    </style>
+    
+    
+</head>
+<body>
+    <div class="container">
+        
+
+<div class="header">
+    <div class="header-background"></div>
+    <div class="header-content">
+        <h1>Project Analysis Report</h1>
+        <div class="header-subtitle">
+            Generated on 2025-08-04T07:00:28.214504546-05:00
+             | Branch: <span class="branch-name">unknown</span>
+        </div>
+        <div class="header-stats">
+            <div class="stat-item">
+                <span class="stat-value">0</span>
+                <span class="stat-label">Files</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value">0</span>
+                <span class="stat-label">Lines of Code</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value">0ms</span>
+                <span class="stat-label">Analysis Time</span>
+            </div>
+        </div>
+    </div>
+    <div class="header-controls">
+        <button onclick="toggleTheme()" class="theme-toggle" title="Toggle theme">
+            <i class="fas fa-moon dark-icon"></i>
+            <i class="fas fa-sun light-icon"></i>
+        </button>
+        <button onclick="window.print()" class="print-btn" title="Print report">
+            <i class="fas fa-print"></i>
+        </button>
+        <button onclick="exportReport()" class="export-btn" title="Export report">
+            <i class="fas fa-download"></i>
+        </button>
+    </div>
+</div>
+
+
+
+        
+        <nav class="navigation">
+            <ul>
+                <li><a href="#executive-summary" class="nav-link">Executive Summary</a></li>
+                <li><a href="#severity-dashboard" class="nav-link">Severity Dashboard</a></li>
+                <li><a href="#diagrams" class="nav-link">Architecture Diagrams</a></li>
+                <li><a href="#detailed-issues" class="nav-link">Detailed Issues</a></li>
+            </ul>
+        </nav>
+        
+
+        <main class="main-content">
+            
+<!-- Executive Summary Section -->
+
+<section id="executive-summary" class="executive-summary">
+    <h2>Executive Summary</h2>
+    
+    <div class="summary-grid">
+        <div class="summary-card overall-health">
+            <div class="card-icon">
+                <i class="fas fa-heartbeat"></i>
+            </div>
+            <div class="card-content">
+                <h3>Overall Health</h3>
+                <div class="health-score excellent">
+                    100%
+                </div>
+                <div class="health-label">Excellent</div>
+            </div>
+        </div>
+        
+        <div class="summary-card issue-breakdown">
+            <div class="card-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="card-content">
+                <h3>Issues Found</h3>
+                <div class="issue-stats">
+                    <div class="issue-stat critical">
+                        <span class="count">0</span>
+                        <span class="label">Critical</span>
+                    </div>
+                    <div class="issue-stat major">
+                        <span class="count">0</span>
+                        <span class="label">Major</span>
+                    </div>
+                    <div class="issue-stat moderate">
+                        <span class="count">0</span>
+                        <span class="label">Moderate</span>
+                    </div>
+                    <div class="issue-stat minor">
+                        <span class="count">0</span>
+                        <span class="label">Minor</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="summary-card technical-debt">
+            <div class="card-icon">
+                <i class="fas fa-coins"></i>
+            </div>
+            <div class="card-content">
+                <h3>Technical Debt</h3>
+                <div class="debt-amount">
+                    -0h
+                </div>
+                <div class="debt-label">Estimated hours</div>
+            </div>
+        </div>
+        
+        <div class="summary-card complexity">
+            <div class="card-icon">
+                <i class="fas fa-project-diagram"></i>
+            </div>
+            <div class="card-content">
+                <h3>Complexity</h3>
+                <div class="complexity-score">
+                    0
+                </div>
+                <div class="complexity-label">Average complexity</div>
+            </div>
+        </div>
+    </div>
+    
+    
+    <div class="key-findings">
+        <h3>Key Findings</h3>
+        <ul class="findings-list">
+            
+            <li class="finding-item">
+                <i class="fas fa-chevron-right"></i>
+                No major architectural concerns detected
+            </li>
+            
+        </ul>
+    </div>
+    
+    
+    
+</section>
+
+
+<!-- Severity Dashboard Section -->
+<section id="severity-dashboard" class="severity-dashboard">
+    <h2>Severity Dashboard</h2>
+    
+    <div class="severity-overview">
+        <div class="severity-chart">
+            <canvas id="severityChart" width="400" height="200"></canvas>
+        </div>
+        
+        <div class="severity-breakdown">
+            
+            <div class="severity-item severity-critical">
+                <div class="severity-bar">
+                    <div class="bar-fill" style="width: 0%"></div>
+                </div>
+                <div class="severity-info">
+                    <span class="severity-name">CRITICAL</span>
+                    <span class="severity-count">0</span>
+                </div>
+            </div>
+            
+            <div class="severity-item severity-major">
+                <div class="severity-bar">
+                    <div class="bar-fill" style="width: 0%"></div>
+                </div>
+                <div class="severity-info">
+                    <span class="severity-name">MAJOR</span>
+                    <span class="severity-count">0</span>
+                </div>
+            </div>
+            
+            <div class="severity-item severity-minor">
+                <div class="severity-bar">
+                    <div class="bar-fill" style="width: 0%"></div>
+                </div>
+                <div class="severity-info">
+                    <span class="severity-name">MINOR</span>
+                    <span class="severity-count">0</span>
+                </div>
+            </div>
+            
+            <div class="severity-item severity-moderate">
+                <div class="severity-bar">
+                    <div class="bar-fill" style="width: 0%"></div>
+                </div>
+                <div class="severity-info">
+                    <span class="severity-name">MODERATE</span>
+                    <span class="severity-count">0</span>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+    
+    <div class="trend-analysis">
+        <h3>Trend Analysis</h3>
+        <div class="trend-chart">
+            <!-- Placeholder for trend visualization -->
+            <div class="trend-placeholder">
+                <p>Trend analysis will be implemented with native chart rendering</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Architecture Diagrams Section -->
+<section id="diagrams" class="diagrams-section">
+    <h2>Architecture Diagrams</h2>
+    
+    
+    <div class="no-diagrams">
+        <div class="empty-state">
+            <i class="fas fa-project-diagram"></i>
+            <h3>No Architecture Diagrams Available</h3>
+            <p>Diagrams could not be generated for this analysis.</p>
+        </div>
+    </div>
+    
+</section>
+
+<!-- Detailed Issues Section -->
+<section id="detailed-issues" class="detailed-issues">
+    <h2>Detailed Issues</h2>
+    
+    <div class="issues-filters">
+        <div class="filter-group">
+            <label for="severity-filter">Filter by Severity:</label>
+            <select id="severity-filter" onchange="filterIssues()">
+                <option value="all">All Severities</option>
+                <option value="critical">Critical</option>
+                <option value="major">Major</option>
+                <option value="moderate">Moderate</option>
+                <option value="minor">Minor</option>
+            </select>
+        </div>
+        
+        <div class="filter-group">
+            <label for="type-filter">Filter by Type:</label>
+            <select id="type-filter" onchange="filterIssues()">
+                <option value="all">All Types</option>
+                
+                <option value="1">God Object</option>
+                
+                <option value="2">Dead Code</option>
+                
+                <option value="3">Tight Coupling</option>
+                
+                <option value="4">Long Methods</option>
+                
+                <option value="5">Large Classes</option>
+                
+                <option value="6">Performance Leak</option>
+                
+                <option value="7">Code Duplication</option>
+                
+                <option value="8">Cyclic Dependencies</option>
+                
+            </select>
+        </div>
+        
+        <div class="filter-group">
+            <input type="text" id="search-filter" placeholder="Search issues..." onkeyup="searchIssues()">
+        </div>
+    </div>
+    
+    
+<div class="issues-grid">
+    
+</div>
+
+    
+    
+    <div class="no-issues">
+        <div class="empty-state">
+            <i class="fas fa-check-circle"></i>
+            <h3>No Issues Found</h3>
+            <p>Great! No architectural issues were detected in this analysis.</p>
+        </div>
+    </div>
+    
+</section>
+
+<!-- Performance Metrics Section -->
+
+
+        </main>
+
+        
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-left">
+                    <strong>Uveddi</strong> - Advanced Architectural Analysis Tool
+                </div>
+                <div class="footer-right">
+                    Generated in 0ms | 0 issues analyzed
+                </div>
+            </div>
+        </footer>
+        
+    </div>
+
+    <script>
+        /* Uveddi Report Bundled JavaScript */
+/**
+ * Uveddi Report Interactive JavaScript
+ * Self-contained, no external dependencies
+ */
+
+// Theme Management
+function toggleTheme() {
+    const html = document.documentElement;
+    const currentTheme = html.getAttribute('data-theme') || 'light';
+    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+    
+    html.setAttribute('data-theme', newTheme);
+    localStorage.setItem('uveddi-theme', newTheme);
+    
+    // Animate the transition
+    document.body.style.transition = 'background-color 0.3s ease, color 0.3s ease';
+}
+
+// Initialize theme from localStorage
+function initTheme() {
+    const savedTheme = localStorage.getItem('uveddi-theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+}
+
+// Smooth scrolling for navigation links
+function initSmoothScrolling() {
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const targetId = link.getAttribute('href').substring(1);
+            const targetElement = document.getElementById(targetId);
+            
+            if (targetElement) {
+                targetElement.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+                
+                // Update active nav state
+                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+            }
+        });
+    });
+}
+
+// Code snippet toggle functionality
+function toggleSnippet(button) {
+    const snippet = button.closest('.code-snippet');
+    const content = snippet.querySelector('.code-content');
+    const icon = button.querySelector('i');
+    
+    if (content.style.display === 'none' || !content.style.display) {
+        content.style.display = 'block';
+        icon.className = 'fas fa-chevron-up';
+        snippet.classList.add('expanded');
+    } else {
+        content.style.display = 'none';
+        icon.className = 'fas fa-chevron-down';
+        snippet.classList.remove('expanded');
+    }
+}
+
+// Issue filtering functionality
+function filterIssues() {
+    const severityFilter = document.getElementById('severity-filter')?.value || 'all';
+    const typeFilter = document.getElementById('type-filter')?.value || 'all';
+    const issues = document.querySelectorAll('.issue-card');
+    
+    let visibleCount = 0;
+    
+    issues.forEach(issue => {
+        let show = true;
+        
+        // Filter by severity
+        if (severityFilter !== 'all') {
+            const severityClasses = ['severity-critical', 'severity-major', 'severity-moderate', 'severity-minor'];
+            const hasSeverity = severityClasses.some(cls => issue.classList.contains(cls));
+            show = show && issue.classList.contains(`severity-${severityFilter}`);
+        }
+        
+        // Filter by type (simplified - in real implementation would check data attributes)
+        if (typeFilter !== 'all') {
+            // This would be implemented based on actual data structure
+            // show = show && issue.dataset.typeId === typeFilter;
+        }
+        
+        if (show) {
+            issue.style.display = 'block';
+            issue.style.animation = 'fadeIn 0.3s ease';
+            visibleCount++;
+        } else {
+            issue.style.display = 'none';
+        }
+    });
+    
+    // Update filter results counter
+    updateFilterCounter(visibleCount);
+}
+
+function searchIssues() {
+    const searchTerm = document.getElementById('search-filter')?.value.toLowerCase() || '';
+    const issues = document.querySelectorAll('.issue-card');
+    
+    let visibleCount = 0;
+    
+    issues.forEach(issue => {
+        const text = issue.textContent.toLowerCase();
+        const matches = text.includes(searchTerm);
+        
+        if (matches || searchTerm === '') {
+            issue.style.display = 'block';
+            issue.style.animation = 'fadeIn 0.3s ease';
+            visibleCount++;
+        } else {
+            issue.style.display = 'none';
+        }
+    });
+    
+    updateFilterCounter(visibleCount);
+}
+
+function updateFilterCounter(count) {
+    const counter = document.getElementById('filter-counter');
+    if (counter) {
+        counter.textContent = `${count} issue${count !== 1 ? 's' : ''} shown`;
+    }
+}
+
+// Issue interaction functions
+function expandIssue(issueId) {
+    const issue = document.querySelector(`[data-issue-id="${issueId}"]`);
+    if (issue) {
+        issue.classList.toggle('expanded');
+        
+        // Toggle button text
+        const expandBtn = issue.querySelector('.expand-btn');
+        if (expandBtn) {
+            const isExpanded = issue.classList.contains('expanded');
+            expandBtn.innerHTML = isExpanded 
+                ? '<i class="fas fa-compress-alt"></i> Collapse'
+                : '<i class="fas fa-expand-alt"></i> View Details';
+        }
+    }
+}
+
+function dismissIssue(issueId) {
+    const issue = document.querySelector(`[data-issue-id="${issueId}"]`);
+    if (issue && confirm('Are you sure you want to dismiss this issue?')) {
+        issue.style.transition = 'opacity 0.3s ease';
+        issue.style.opacity = '0.5';
+        issue.classList.add('dismissed');
+        
+        // Update dismiss button
+        const dismissBtn = issue.querySelector('.dismiss-btn');
+        if (dismissBtn) {
+            dismissBtn.innerHTML = '<i class="fas fa-undo"></i> Undismiss';
+            dismissBtn.onclick = () => undismissIssue(issueId);
+        }
+    }
+}
+
+function undismissIssue(issueId) {
+    const issue = document.querySelector(`[data-issue-id="${issueId}"]`);
+    if (issue) {
+        issue.style.opacity = '1';
+        issue.classList.remove('dismissed');
+        
+        const dismissBtn = issue.querySelector('.dismiss-btn');
+        if (dismissBtn) {
+            dismissBtn.innerHTML = '<i class="fas fa-times"></i> Dismiss';
+            dismissBtn.onclick = () => dismissIssue(issueId);
+        }
+    }
+}
+
+// Diagram interaction functions
+function fullscreenDiagram(diagramId) {
+    const diagram = document.getElementById(diagramId);
+    if (diagram) {
+        if (diagram.requestFullscreen) {
+            diagram.requestFullscreen();
+        } else if (diagram.webkitRequestFullscreen) {
+            diagram.webkitRequestFullscreen();
+        } else if (diagram.mozRequestFullScreen) {
+            diagram.mozRequestFullScreen();
+        } else if (diagram.msRequestFullscreen) {
+            diagram.msRequestFullscreen();
+        }
+    }
+}
+
+function exportDiagram(diagramId) {
+    const diagram = document.getElementById(diagramId);
+    const svg = diagram?.querySelector('svg');
+    
+    if (svg) {
+        try {
+            const serializer = new XMLSerializer();
+            const svgString = serializer.serializeToString(svg);
+            const blob = new Blob([svgString], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${diagramId}.svg`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Failed to export diagram:', error);
+            alert('Failed to export diagram. Please try again.');
+        }
+    } else {
+        alert('No diagram content available for export.');
+    }
+}
+
+// Report export functionality
+function exportReport() {
+    // Create a clean version for export
+    const originalControls = document.querySelectorAll('.header-controls, .issues-filters, .action-btn');
+    originalControls.forEach(el => el.style.display = 'none');
+    
+    // Print the page
+    window.print();
+    
+    // Restore controls after printing
+    setTimeout(() => {
+        originalControls.forEach(el => el.style.display = '');
+    }, 1000);
+}
+
+// Native chart rendering using Canvas API
+function renderSeverityChart() {
+    const canvas = document.getElementById('severityChart');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    const rect = canvas.getBoundingClientRect();
+    
+    // Set canvas size
+    canvas.width = rect.width * window.devicePixelRatio;
+    canvas.height = rect.height * window.devicePixelRatio;
+    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    
+    // Get severity data from the page
+    const severityData = extractSeverityData();
+    if (!severityData || Object.keys(severityData).length === 0) return;
+    
+    // Chart configuration
+    const colors = {
+        'CRITICAL': '#dc2626',
+        'MAJOR': '#ea580c',
+        'MODERATE': '#d97706',
+        'MINOR': '#65a30d'
+    };
+    
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const radius = Math.min(centerX, centerY) - 40;
+    
+    let total = 0;
+    Object.values(severityData).forEach(count => total += count);
+    
+    if (total === 0) return;
+    
+    // Draw pie chart
+    let currentAngle = -Math.PI / 2; // Start from top
+    
+    for (const [severity, count] of Object.entries(severityData)) {
+        if (count === 0) continue;
+        
+        const sliceAngle = (count / total) * 2 * Math.PI;
+        
+        // Draw slice
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius, currentAngle, currentAngle + sliceAngle);
+        ctx.closePath();
+        ctx.fillStyle = colors[severity] || '#6b7280';
+        ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // Draw label
+        const labelAngle = currentAngle + sliceAngle / 2;
+        const labelX = centerX + Math.cos(labelAngle) * (radius * 0.7);
+        const labelY = centerY + Math.sin(labelAngle) * (radius * 0.7);
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 12px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(count.toString(), labelX, labelY);
+        
+        currentAngle += sliceAngle;
+    }
+    
+    // Draw center circle
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius * 0.4, 0, 2 * Math.PI);
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--bg-primary').trim();
+    ctx.fill();
+    ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--border-color').trim();
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    
+    // Draw total in center
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim();
+    ctx.font = 'bold 18px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(total.toString(), centerX, centerY - 5);
+    ctx.font = '12px Arial';
+    ctx.fillText('Total Issues', centerX, centerY + 15);
+}
+
+function extractSeverityData() {
+    const severityData = {};
+    const severityBars = document.querySelectorAll('.severity-item');
+    
+    severityBars.forEach(item => {
+        const nameElement = item.querySelector('.severity-name');
+        const countElement = item.querySelector('.severity-count');
+        
+        if (nameElement && countElement) {
+            const name = nameElement.textContent.trim();
+            const count = parseInt(countElement.textContent.trim(), 10) || 0;
+            severityData[name] = count;
+        }
+    });
+    
+    return severityData;
+}
+
+// Scroll-based navigation highlighting
+function initScrollSpy() {
+    const sections = document.querySelectorAll('section[id]');
+    const navLinks = document.querySelectorAll('.nav-link');
+    
+    function updateActiveNav() {
+        let currentSection = '';
+        const scrollPos = window.scrollY + 100;
+        
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop;
+            const sectionHeight = section.offsetHeight;
+            
+            if (scrollPos >= sectionTop && scrollPos < sectionTop + sectionHeight) {
+                currentSection = section.id;
+            }
+        });
+        
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href') === `#${currentSection}`) {
+                link.classList.add('active');
+            }
+        });
+    }
+    
+    window.addEventListener('scroll', updateActiveNav);
+    updateActiveNav(); // Initial call
+}
+
+// Keyboard shortcuts
+function initKeyboardShortcuts() {
+    document.addEventListener('keydown', (e) => {
+        // Only activate shortcuts when not typing in input fields
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        
+        switch (e.key) {
+            case 't':
+                if (e.ctrlKey || e.metaKey) {
+                    e.preventDefault();
+                    toggleTheme();
+                }
+                break;
+            case 'p':
+                if (e.ctrlKey || e.metaKey) {
+                    e.preventDefault();
+                    window.print();
+                }
+                break;
+            case 'f':
+                if (e.ctrlKey || e.metaKey) {
+                    e.preventDefault();
+                    const searchInput = document.getElementById('search-filter');
+                    if (searchInput) {
+                        searchInput.focus();
+                    }
+                }
+                break;
+        }
+    });
+}
+
+// Performance monitoring
+function initPerformanceMonitoring() {
+    // Monitor page load performance
+    window.addEventListener('load', () => {
+        const perfData = performance.getEntriesByType('navigation')[0];
+        if (perfData) {
+            console.log(`Page loaded in ${Math.round(perfData.loadEventEnd - perfData.fetchStart)}ms`);
+        }
+    });
+    
+    // Monitor chart rendering performance
+    const observer = new PerformanceObserver((list) => {
+        list.getEntries().forEach((entry) => {
+            if (entry.name === 'chart-render') {
+                console.log(`Chart rendered in ${Math.round(entry.duration)}ms`);
+            }
+        });
+    });
+    
+    if ('PerformanceObserver' in window) {
+        observer.observe({ entryTypes: ['measure'] });
+    }
+}
+
+// Animation utilities
+function animateValue(element, start, end, duration) {
+    if (!element) return;
+    
+    const startTime = performance.now();
+    
+    function updateValue(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        const current = start + (end - start) * easeOutCubic(progress);
+        element.textContent = Math.round(current);
+        
+        if (progress < 1) {
+            requestAnimationFrame(updateValue);
+        }
+    }
+    
+    requestAnimationFrame(updateValue);
+}
+
+function easeOutCubic(t) {
+    return 1 - Math.pow(1 - t, 3);
+}
+
+// Initialize counters animation
+function initCounterAnimations() {
+    const counters = document.querySelectorAll('.stat-value, .severity-count, .count');
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting && !entry.target.classList.contains('animated')) {
+                const target = parseInt(entry.target.textContent) || 0;
+                entry.target.classList.add('animated');
+                animateValue(entry.target, 0, target, 1000);
+            }
+        });
+    });
+    
+    counters.forEach(counter => observer.observe(counter));
+}
+
+// Add CSS animations
+const animationCSS = `
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
+}
+
+.animated {
+    animation: fadeIn 0.5s ease;
+}
+`;
+
+// Inject animations
+function injectAnimations() {
+    const style = document.createElement('style');
+    style.textContent = animationCSS;
+    document.head.appendChild(style);
+}
+
+// Main initialization function
+function init() {
+    console.log('Initializing Uveddi Report Interface...');
+    
+    // Core functionality
+    initTheme();
+    initSmoothScrolling();
+    initScrollSpy();
+    initKeyboardShortcuts();
+    
+    // Visual enhancements
+    injectAnimations();
+    initCounterAnimations();
+    
+    // Chart rendering
+    setTimeout(() => {
+        performance.mark('chart-render-start');
+        renderSeverityChart();
+        performance.mark('chart-render-end');
+        performance.measure('chart-render', 'chart-render-start', 'chart-render-end');
+    }, 100);
+    
+    // Performance monitoring
+    if (typeof console !== 'undefined') {
+        initPerformanceMonitoring();
+    }
+    
+    // Initialize code snippet toggles
+    document.querySelectorAll('.code-snippet').forEach(snippet => {
+        const content = snippet.querySelector('.code-content');
+        if (content) {
+            content.style.display = 'none';
+        }
+    });
+    
+    console.log('Uveddi Report Interface initialized successfully');
+}
+
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else {
+    init();
+}
+
+// Handle resize events
+window.addEventListener('resize', () => {
+    // Redraw charts on resize
+    setTimeout(renderSeverityChart, 100);
+});
+
+// Handle theme changes from system
+if (window.matchMedia) {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    mediaQuery.addListener((e) => {
+        if (!localStorage.getItem('uveddi-theme')) {
+            document.documentElement.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+        }
+    });
+}
+    </script>
+    
+    
+<script>
+// Chart rendering for severity dashboard
+function renderSeverityChart() {
+    const canvas = document.getElementById('severityChart');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    const severityData = {&quot;CRITICAL&quot;:0,&quot;MAJOR&quot;:0,&quot;MINOR&quot;:0,&quot;MODERATE&quot;:0};
+    
+    // Simple native canvas chart implementation
+    // This will be replaced with native Rust-generated SVG charts
+    const colors = {
+        'CRITICAL': '#dc2626',
+        'MAJOR': '#ea580c', 
+        'MODERATE': '#d97706',
+        'MINOR': '#65a30d'
+    };
+    
+    let total = 0;
+    Object.values(severityData).forEach(count => total += count);
+    
+    let currentAngle = 0;
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const radius = Math.min(centerX, centerY) - 20;
+    
+    for (const [severity, count] of Object.entries(severityData)) {
+        const sliceAngle = (count / total) * 2 * Math.PI;
+        
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, currentAngle, currentAngle + sliceAngle);
+        ctx.lineTo(centerX, centerY);
+        ctx.fillStyle = colors[severity] || '#6b7280';
+        ctx.fill();
+        
+        currentAngle += sliceAngle;
+    }
+}
+
+// Filter and search functionality
+function filterIssues() {
+    const severityFilter = document.getElementById('severity-filter').value;
+    const typeFilter = document.getElementById('type-filter').value;
+    const issues = document.querySelectorAll('.issue-card');
+    
+    issues.forEach(issue => {
+        let show = true;
+        
+        if (severityFilter !== 'all') {
+            show = show && issue.classList.contains(`severity-${severityFilter}`);
+        }
+        
+        if (typeFilter !== 'all') {
+            show = show && issue.dataset.issueId; // Simplified check
+        }
+        
+        issue.style.display = show ? 'block' : 'none';
+    });
+}
+
+function searchIssues() {
+    const searchTerm = document.getElementById('search-filter').value.toLowerCase();
+    const issues = document.querySelectorAll('.issue-card');
+    
+    issues.forEach(issue => {
+        const text = issue.textContent.toLowerCase();
+        issue.style.display = text.includes(searchTerm) ? 'block' : 'none';
+    });
+}
+
+// Issue interaction
+function expandIssue(issueId) {
+    const issue = document.querySelector(`[data-issue-id="${issueId}"]`);
+    if (issue) {
+        issue.classList.toggle('expanded');
+    }
+}
+
+function dismissIssue(issueId) {
+    const issue = document.querySelector(`[data-issue-id="${issueId}"]`);
+    if (issue && confirm('Are you sure you want to dismiss this issue?')) {
+        issue.style.opacity = '0.5';
+        issue.classList.add('dismissed');
+    }
+}
+
+// Diagram interaction
+function fullscreenDiagram(diagramId) {
+    const diagram = document.getElementById(diagramId);
+    if (diagram && diagram.requestFullscreen) {
+        diagram.requestFullscreen();
+    }
+}
+
+function exportDiagram(diagramId) {
+    const diagram = document.getElementById(diagramId);
+    const svg = diagram.querySelector('svg');
+    if (svg) {
+        const serializer = new XMLSerializer();
+        const svgString = serializer.serializeToString(svg);
+        const blob = new Blob([svgString], { type: 'image/svg+xml' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${diagramId}.svg`;
+        a.click();
+        
+        URL.revokeObjectURL(url);
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    renderSeverityChart();
+});
+</script>
+
+</body>
+</html>

@@ -379,14 +379,14 @@ impl From<rusqlite::Error> for SecurityError {
 impl
     From<
         oauth2::RequestTokenError<
-            oauth2::reqwest::Error<reqwest::Error>,
+            reqwest::Error,
             oauth2::StandardErrorResponse<oauth2::basic::BasicErrorResponseType>,
         >,
     > for SecurityError
 {
     fn from(
         error: oauth2::RequestTokenError<
-            oauth2::reqwest::Error<reqwest::Error>,
+            reqwest::Error,
             oauth2::StandardErrorResponse<oauth2::basic::BasicErrorResponseType>,
         >,
     ) -> Self {

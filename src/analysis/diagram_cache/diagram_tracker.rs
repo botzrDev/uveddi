@@ -5,7 +5,7 @@
 
 use super::{DiagramCacheError, DiagramType, Result};
 use crate::analysis::incremental::ChangeSet;
-use log::{debug, info, warn};
+use crate::core::logging::{debug, info, warn};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;

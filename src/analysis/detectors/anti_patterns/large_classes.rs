@@ -10,7 +10,7 @@ use crate::constants::detector_thresholds;
 use crate::constants::severity_weights;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use async_trait::async_trait;
-use log::debug;
+use crate::core::logging::debug;
 #[cfg(feature = "tree-sitter")]
 use tree_sitter::StreamingIterator;
 

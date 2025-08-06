@@ -71,7 +71,7 @@ impl PerformanceMetricsCollector {
     pub fn record_analysis_metrics(&self, issues_found: usize, files_analyzed: usize) {
         // This can be used for overall analysis tracking
         // For now, we'll just log the metrics
-        log::info!(
+        tracing::info!(
             "Analysis completed: {} issues found in {} files",
             issues_found,
             files_analyzed
@@ -82,7 +82,7 @@ impl PerformanceMetricsCollector {
     pub fn emit_metrics(&self) -> Result<(), Box<dyn std::error::Error>> {
         // For now, just export as JSON and log
         let json_output = self.export_json();
-        log::debug!("Performance metrics: {}", json_output);
+        tracing::debug!("Performance metrics: {}", json_output);
         Ok(())
     }
 

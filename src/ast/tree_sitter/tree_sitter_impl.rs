@@ -8,6 +8,47 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use tree_sitter::{Parser, Tree};
 
+mod arc_pathbuf_serde {
+    use std::path::PathBuf;
+    use std::sync::Arc;
+    use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
+    pub fn serialize<S>(arc_pathbuf: &Arc<PathBuf>, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        arc_pathbuf.as_ref().serialize(serializer)
+    }
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<Arc<PathBuf>, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let pathbuf = PathBuf::deserialize(deserializer)?;
+        Ok(Arc::new(pathbuf))
+    }
+}
+
+mod arc_string_serde {
+    use std::sync::Arc;
+    use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
+    pub fn serialize<S>(arc_string: &Arc<String>, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        arc_string.as_ref().serialize(serializer)
+    }
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<Arc<String>, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let string = String::deserialize(deserializer)?;
+        Ok(Arc::new(string))
+    }
+}
+
 /// Tree-sitter parser implementation (feature enabled)
 pub struct AstParser {
     parsers: HashMap<SourceLanguage, Parser>,
@@ -54,8 +95,10 @@ impl SourceLanguage {
 
 #[derive(Debug, Clone, Serialize, Deserialize)] // Add Serialize/Deserialize
 pub struct ParsedFile {
+    #[serde(with = "arc_pathbuf_serde")]
     pub file_path: Arc<PathBuf>, // Changed to Arc<PathBuf>
     pub language: SourceLanguage,
+    #[serde(with = "arc_string_serde")]
     pub source: Arc<String>, // Renamed from content to source, and changed to Arc<String>
     #[serde(skip)]
     pub tree: Option<Tree>,

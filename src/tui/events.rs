@@ -388,7 +388,7 @@ fn spawn_action_handler(
                     };
                     if ui_tx.send(msg).is_err() {
                         // UI thread has likely panicked or closed.
-                        log::error!("Failed to send analysis result to UI. Channel closed.");
+                        tracing::error!("Failed to send analysis result to UI. Channel closed.");
                         break;
                     }
                 }

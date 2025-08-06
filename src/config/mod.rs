@@ -41,6 +41,8 @@
 // TODO: Re-enable when monitoring dependencies are properly configured
 // pub mod monitoring;
 
+// use crate::analysis::components::ComponentConfig; // Unused import
+use crate::error::{Result, UveddiError};
 use crate::security::{self, SecurityError};
 use serde::{Deserialize, Serialize};
 use std::{env, fs};
@@ -269,13 +271,13 @@ pub trait DatabaseService {
 /// This trait allows for different AI providers or mock engines to be used interchangeably.
 pub trait AiEngineService {
     /// Analyzes the given codebase path.
-    fn analyze(&self, codebase_path: &str) -> Result<(), crate::error::UveddiError>;
+    fn analyze(&self, codebase_path: &str) -> crate::error::Result<()>;
     /// Analyzes a single architectural issue asynchronously.
     fn analyze_issue(
         &self,
         issue: &mut crate::database::models::ArchitecturalIssue,
     ) -> std::pin::Pin<
-        Box<dyn std::future::Future<Output = Result<(), crate::error::UveddiError>> + Send>,
+        Box<dyn std::future::Future<Output = crate::error::Result<()>> + Send>,
     >;
 }
 
@@ -287,7 +289,7 @@ pub trait AstService {
     fn parse_file(
         &self,
         file_path: &std::path::Path,
-    ) -> Result<crate::ast::tree_sitter::ParsedFile, crate::error::UveddiError>;
+    ) -> crate::error::Result<crate::ast::tree_sitter::ParsedFile>;
 }
 
 /// Provides an abstraction for security checks and permission validation.

@@ -29,7 +29,7 @@ use crate::ast::tree_sitter::{Node, Query, QueryCursor};
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use crate::error::UveddiError;
-use log::{debug, info};
+use crate::core::logging::{debug, info};
 use std::collections::HashSet;
 #[cfg(feature = "tree-sitter")]
 use tree_sitter::StreamingIterator;

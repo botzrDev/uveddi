@@ -52,12 +52,12 @@ impl PluginRegistry {
 
             if path.is_dir() {
                 if let Err(e) = self.load_plugin_from_directory(&path).await {
-                    log::warn!("Failed to load plugin from {:?}: {}", path, e);
+                    tracing::warn!("Failed to load plugin from {:?}: {}", path, e);
                 }
             }
         }
 
-        log::info!("Discovered {} plugins", self.plugins.len());
+        tracing::info!("Discovered {} plugins", self.plugins.len());
         Ok(())
     }
 
@@ -148,7 +148,7 @@ impl PluginRegistry {
         self.plugins.insert(plugin_id.clone(), metadata);
         self.cache.invalidate(&plugin_id);
 
-        log::info!("Registered plugin: {}", plugin_id);
+        tracing::info!("Registered plugin: {}", plugin_id);
         Ok(plugin_id)
     }
 
@@ -167,7 +167,7 @@ impl PluginRegistry {
 
         self.cache.invalidate(plugin_id);
 
-        log::info!("Unregistered plugin: {}", plugin_id);
+        tracing::info!("Unregistered plugin: {}", plugin_id);
         Ok(())
     }
 

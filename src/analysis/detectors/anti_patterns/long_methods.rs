@@ -31,8 +31,8 @@ use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use async_trait::async_trait;
 use futures::TryFutureExt;
-use log::debug;
-use log::info;
+use crate::core::logging::debug;
+use crate::core::logging::info;
 use std::collections::HashMap;
 #[cfg(feature = "tree-sitter")]
 use tree_sitter::StreamingIterator;
@@ -355,7 +355,7 @@ impl LongMethodsDetector {
     ) -> Result<Vec<MethodMetrics>, AnalysisError> {
         #[cfg(not(feature = "tree-sitter"))]
         {
-            log::debug!("Tree-sitter feature not enabled, skipping Rust method metrics extraction");
+            tracing::debug!("Tree-sitter feature not enabled, skipping Rust method metrics extraction");
             return Ok(Vec::new());
         }
 
@@ -409,7 +409,7 @@ impl LongMethodsDetector {
     ) -> Result<Vec<MethodMetrics>, AnalysisError> {
         #[cfg(not(feature = "tree-sitter"))]
         {
-            log::debug!(
+            tracing::debug!(
                 "Tree-sitter feature not enabled, skipping Python method metrics extraction"
             );
             return Ok(Vec::new());
@@ -488,7 +488,7 @@ impl LongMethodsDetector {
     ) -> Result<Vec<MethodMetrics>, AnalysisError> {
         #[cfg(not(feature = "tree-sitter"))]
         {
-            log::debug!(
+            tracing::debug!(
                 "Tree-sitter feature not enabled, skipping JavaScript method metrics extraction"
             );
             return Ok(Vec::new());

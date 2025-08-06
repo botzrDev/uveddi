@@ -8,7 +8,7 @@ use uveddi::ai::engine::AiAnalysisEngine;
 use uveddi::ai::knowledge::types::KnowledgeContext;
 #[cfg(feature = "ai")]
 use uveddi::database::models::ArchitecturalIssue;
-use log::LevelFilter;
+use crate::core::logging::LevelFilter;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

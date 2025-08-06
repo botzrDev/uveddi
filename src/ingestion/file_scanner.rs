@@ -1,5 +1,5 @@
 use crate::analysis::incremental::{ChangeDetector, ChangeSet};
-use log::debug;
+use crate::core::logging::debug;
 use std::path::{Path, PathBuf};
 
 /// File scanner for recursive directory traversal

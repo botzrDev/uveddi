@@ -49,7 +49,7 @@ impl PluginLifecycleManager {
         binary: Vec<u8>,
         security_policy: SecurityPolicy,
     ) -> crate::error::Result<()> {
-        log::info!("Loading plugin: {}", plugin_id);
+        tracing::info!("Loading plugin: {}", plugin_id);
 
         // 1. Verify the plugin
         let verification_report = self
@@ -66,7 +66,7 @@ impl PluginLifecycleManager {
                 .into());
             }
             crate::plugins::verification::VerificationStatus::Warning(warning) => {
-                log::warn!("Plugin {} loaded with warnings: {}", plugin_id, warning);
+                tracing::warn!("Plugin {} loaded with warnings: {}", plugin_id, warning);
             }
             _ => {}
         }
@@ -130,7 +130,7 @@ impl PluginLifecycleManager {
             self.security_policies
                 .insert(plugin_id.clone(), security_policy);
 
-            log::info!("Successfully loaded plugin: {}", plugin_id);
+            tracing::info!("Successfully loaded plugin: {}", plugin_id);
             Ok(())
         }
 
@@ -142,7 +142,7 @@ impl PluginLifecycleManager {
 
     /// Unload a plugin and cleanup resources
     pub async fn unload_plugin(&mut self, plugin_id: &PluginId) -> crate::error::Result<()> {
-        log::info!("Unloading plugin: {}", plugin_id);
+        tracing::info!("Unloading plugin: {}", plugin_id);
 
         let mut active_plugins = self.active_plugins.write().await;
         if let Some(mut plugin) = active_plugins.remove(plugin_id) {
@@ -152,7 +152,7 @@ impl PluginLifecycleManager {
 
         self.security_policies.remove(plugin_id);
 
-        log::info!("Successfully unloaded plugin: {}", plugin_id);
+        tracing::info!("Successfully unloaded plugin: {}", plugin_id);
         Ok(())
     }
 
@@ -206,7 +206,7 @@ impl PluginLifecycleManager {
         // This would be implemented using proper WIT files and generated bindings
         // For now, we'll just return OK to get the basic loading working
 
-        log::info!("Host functions would be registered here with proper WIT bindings");
+        tracing::info!("Host functions would be registered here with proper WIT bindings");
         Ok(())
     }
 }

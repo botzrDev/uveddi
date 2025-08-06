@@ -13,15 +13,45 @@ keywords = ["code", "analysis", "tools", "visualization", "uveddi"]
 categories = ["development-tools"]
 readme = "README.md"
 
+# Workspace dependency management for version consistency
+[workspace.dependencies]
+# Core serialization - single version across workspace
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.142"
+
+# Async runtime - unified tokio ecosystem
+tokio = { version = "1.47", features = ["full"] }
+futures = "0.3.31"
+
+# Error handling - standardized approach
+anyhow = "1.0.86"
+thiserror = "1.0.69"
+
+# Logging - unified logging infrastructure
+tracing = { version = "0.1.41", features = ["log"] }
+tracing-subscriber = { version = "0.3.19", features = ["env-filter", "json"] }
+
+# HTTP client - single version with needed features
+reqwest = { version = "0.12.22", default-features = false, features = ["json", "rustls-tls"] }
+
+# Cryptography - consistent versions
+rustls = "0.23.31"
+ring = "0.17.14"
+
+# Date/time handling
+chrono = { version = "0.4.39", features = ["serde"] }
+
 # Feature flags for modular compilation
 [features]
-default = ["tree-sitter"]
+default = ["tree-sitter", "security"]
 # Chaos engineering and load testing
 chaos = ["fail", "statrs", "ndarray-stats"]
 # Performance regression detection with genetic algorithms
 regression-detection = ["changepoint", "linfa", "influxdb2"]
 # SLA monitoring and validation
 sla-monitoring = ["metrics-exporter-prometheus", "tokio-metrics"]
+# Security features
+security = []
 # Tree-sitter parsing functionality (enabled by default)
 tree-sitter = [
     "dep:tree-sitter",
@@ -53,23 +83,32 @@ full-featured = ["local-ai", "tree-sitter", "memory-optimization", "image-render
 # Enterprise option (all features)
 enterprise = ["local-ai", "tree-sitter", "memory-optimization", "image-rendering", "tui", "wasm-plugins", "chaos", "sla-monitoring"]
 # Alpha build with TUI and essential features
-alpha = ["tui", "tree-sitter", "local-ai"]
+alpha = ["tui", "tree-sitter", "local-ai", "security"]
 
 [dependencies]
+# Use workspace dependencies for consistency
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+futures = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+chrono = { workspace = true }
+reqwest = { workspace = true }
+rustls = { workspace = true }
+ring = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+# Project-specific dependencies
 rusqlite = { version = "0.31.0", features = ["bundled"] }
-tokio = { version = "1.37.0", features = ["full", "time", "macros"] }  # Always needed
-tokio-stream = { version = "0.1.15", features = ["fs"] }
-futures = "0.3"
+tokio-stream = { version = "0.1.17", features = ["fs"] }
 async-stream = "0.3"
-chrono = { version = "=0.4.39", features = ["serde"] }
-serde = { version = "1.0.203", features = ["derive", "rc"] }
-serde_json = { version = "1.0.117" }  # Always needed
 bincode = "1.3.3"
-thiserror = "1.0.61"
-anyhow = "1.0.86"
 clap = { version = "4.5.4", features = ["derive", "env"] }
-log = "0.4.21"
-env_logger = "0.11.3"
+# Unified logging with tracing (replaces log + env_logger)
+# log = "0.4.21"        # Replaced by tracing
+# env_logger = "0.11.3"  # Replaced by tracing-subscriber
 regex = "1.10"
 rayon = "1.8.0"
 # AST parsing dependencies (optional via features)
@@ -78,14 +117,9 @@ tree-sitter-rust = { version = "0.24.0", optional = true }
 tree-sitter-python = { version = "0.23.6", optional = true }
 tree-sitter-javascript = { version = "0.23.1", optional = true }
 tree-sitter-typescript = { version = "0.23.2", optional = true }
-# HTTP client for local AI (Ollama) and image rendering service
-reqwest = { version = "0.12.22", features = ["json"] }
-rustls = "0.23.28"  # Force newer rustls to get updated ring
 # HTML escaping for fallback diagram rendering
 html-escape = "0.2"
-# Resilience and retry dependencies
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "fmt", "registry"] }
+# Additional tracing appender
 tracing-appender = "0.2"
 prometheus = "0.14.0"
 rand = "0.8"
@@ -123,7 +157,7 @@ arrow-schema = { version = "52.2.0", optional = true }
 arrow-array = { version = "52.2.0", optional = true }
 wit-bindgen = { version = "0.30.0", optional = true }
 axum = { version = "0.7", features = ["ws", "macros"] }
-tokio-tungstenite = "0.20"
+tokio-tungstenite = "0.24"  # Updated to latest version
 criterion = { version = "0.5", features = ["html_reports"] }
 sysinfo = "0.30"
 # Memory optimization dependencies (UV-210)
@@ -155,8 +189,8 @@ persisted = "1.0"
 # Pattern matching for file filtering
 glob = "0.3.1"
 
-# MessagePack serialization for cache optimization
-rmp-serde = "1.1"
+# MessagePack serialization removed - using bincode for binary serialization
+# rmp-serde = "1.1"  # Redundant with bincode
 
 # Compression for diagram caching
 flate2 = "1.0"
@@ -189,14 +223,14 @@ tower_governor = "0.3"
 # Database (using existing rusqlite instead of sqlx to avoid conflicts)
 # Authorization
 casbin = "2.1"
-# Authentication
-oauth2 = "4.4"
-openidconnect = "4.0.1"
+# Authentication - updated for security (resolves RSA timing attack vulnerability)
+oauth2 = "5.0"
+openidconnect = "4.0.1"  # Note: RSA vulnerability exists but no fix available yet
 jsonwebtoken = "9.3"
 # Security
 argon2 = "0.5"
 blake3 = "1.5"
-ring = "0.17.12"
+# ring already defined in workspace dependencies
 # Constant-time operations for timing attack protection
 subtle = "2.5"
 # HashiCorp Vault integration

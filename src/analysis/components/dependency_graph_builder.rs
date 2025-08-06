@@ -11,7 +11,7 @@ use crate::error::UveddiError;
 use crate::ingestion::AsyncWalker;
 
 use async_trait::async_trait;
-use log::{info, warn};
+use crate::core::logging::{info, warn};
 use std::path::Path;
 use std::sync::Arc;
 use tokio_stream::StreamExt;
@@ -298,7 +298,7 @@ impl DependencyGraphBuilder for DependencyGraphBuilderImpl {
         // Walk through all source files and extract dependencies
         while let Some(file_result) = file_stream.next().await {
             match file_result {
-                Ok(file_path) => match self.extract_file_dependencies(&file_path).await {
+                Ok(ref file_path) => match self.extract_file_dependencies(file_path).await {
                     Ok(mut file_dependencies) => {
                         info!(
                             "Extracted {} dependencies from {}",

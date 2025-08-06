@@ -13,7 +13,7 @@
 use crate::analysis::errors::AnalysisError;
 use crate::ast::tree_sitter::{Node, Query, QueryCursor};
 use crate::ast::tree_sitter_impl::SourceLanguage;
-use log::{debug, warn};
+use crate::core::logging::{debug, warn};
 use petgraph::{
     visit::{EdgeRef, IntoNodeReferences},
     Graph,
@@ -234,7 +234,7 @@ impl<'a> CfgBuilder<'a> {
     pub fn build_from_ast(
         &mut self,
         ast_node: Node<'a>,
-        source: &str,
+        source: &'a str,
         language: SourceLanguage,
     ) -> Result<ControlFlowGraph, AnalysisError> {
         // 1. Create entry and exit nodes

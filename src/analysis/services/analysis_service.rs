@@ -22,7 +22,7 @@ use crate::ingestion::AsyncWalker;
 
 use super::{AnalysisResult, ServiceConfiguration};
 
-use log::{debug, info, warn};
+use crate::core::logging::{debug, info, warn};
 use std::path::Path;
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -173,7 +173,7 @@ impl AnalysisService {
         while let Some(item) = stream.next().await {
             match item {
                 Ok(p) => discovered_paths.push(p),
-                Err(e) => log::warn!("Error during file discovery: {}", e),
+                Err(e) => tracing::warn!("Error during file discovery: {}", e),
             }
         }
         

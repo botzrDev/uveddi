@@ -31,7 +31,7 @@ impl DetectorPools {
         let strategy = pool_config.allocation_strategy.clone();
         let capacity = pool_config.detector_pool_capacity;
 
-        log::info!("Initializing detector pools with capacity: {}", capacity);
+        tracing::info!("Initializing detector pools with capacity: {}", capacity);
 
         Self {
             // Detector configuration pools
@@ -63,7 +63,7 @@ impl DetectorPools {
         self.string_vectors.pre_populate(populate_count(200));
         self.issue_vectors.pre_populate(populate_count(100));
 
-        log::info!("Pre-populated detector pools with {}% capacity", percentage);
+        tracing::info!("Pre-populated detector pools with {}% capacity", percentage);
     }
 
     /// Get comprehensive statistics for all pools
@@ -171,7 +171,7 @@ pub fn initialize_detector_pools(config: &MemoryOptimizationConfig) -> DetectorP
         pools.pre_populate(25.0); // Start with 25% pre-population
     }
 
-    log::info!("Detector pools initialized successfully");
+    tracing::info!("Detector pools initialized successfully");
     pools
 }
 

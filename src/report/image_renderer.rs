@@ -4,7 +4,12 @@
 //! Node.js rendering service for converting Mermaid.js diagrams to images.
 
 use crate::error::rendering::RenderingServiceError;
-use crate::security::{HttpSecurityConfig, SecureHttpClient};
+use crate::render::RenderConfig;
+#[cfg(feature = "security")]
+use crate::security::{
+    HttpSecurityConfig,
+    SecureHttpClient,
+};
 use md5;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;

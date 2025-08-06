@@ -167,7 +167,7 @@ impl CacheManager for CacheManagerImpl {
                 Ok(parsed_file)
             }
             Err(e) => {
-                log::warn!("Cache error for AST {}: {}", file_path.display(), e);
+                tracing::warn!("Cache error for AST {}: {}", file_path.display(), e);
                 Err(UveddiError::AnalysisError {
                     message: format!("Failed to get or parse AST: {}", e),
                     file: file_path.to_string_lossy().to_string(),
@@ -234,7 +234,7 @@ impl CacheManagerImpl {
     ) -> Result<(), UveddiError> {
         // For now, we'll just log this operation since the cache infrastructure
         // for dependency graphs is not fully implemented yet
-        log::debug!("Caching dependency graph with key: {}", cache_key);
+        tracing::debug!("Caching dependency graph with key: {}", cache_key);
         
         // In a full implementation, we would serialize the graph and store it
         // in the engine cache, but for now we'll just indicate success

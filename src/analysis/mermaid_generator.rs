@@ -9,7 +9,7 @@ use crate::analysis::incremental::ChangeSet;
 use crate::models::visualization::{
     ArchitecturalComponent, DiagramMetadata, DiagramSpec, DiagramType as VizDiagramType,
 };
-use log::{debug, info, warn};
+use crate::core::logging::{debug, info, warn};
 use serde_json::{json, Value};
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;

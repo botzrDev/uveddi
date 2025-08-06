@@ -38,7 +38,7 @@ pub struct ModernReportGenerator {
 impl ModernReportGenerator {
     /// Create a new modern report generator
     pub fn new() -> Result<Self, ModernReportError> {
-        use log::{info, warn};
+        use crate::core::logging::{info, warn};
         use std::env;
         
         info!("Attempting to initialize modern report generator with templates");
@@ -55,7 +55,7 @@ impl ModernReportGenerator {
 
     /// Resolve template paths with comprehensive fallback strategy
     fn resolve_templates_with_fallback() -> Result<Tera, ModernReportError> {
-        use log::{info, warn};
+        use crate::core::logging::{info, warn};
         use std::env;
         use std::path::PathBuf;
         
@@ -147,7 +147,7 @@ impl ModernReportGenerator {
         
         for essential in &essential_templates {
             if !template_names.contains(essential) {
-                use log::warn;
+                use crate::core::logging::warn;
                 warn!("Missing essential template: {}", essential);
                 return false;
             }
@@ -559,7 +559,7 @@ impl ModernReportGenerator {
         // For now, we'll reload templates on every request during development
         
         if cfg!(debug_assertions) {
-            use log::info;
+            use crate::core::logging::info;
             info!("Refreshing templates in debug mode");
             self.tera = Self::resolve_templates_with_fallback()?;
         }

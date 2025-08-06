@@ -3,7 +3,7 @@
 //! This module provides server-side SVG generation from Mermaid diagrams,
 //! eliminating client-side rendering issues and providing reliable diagram output.
 
-use log::{debug, error, warn};
+use crate::core::logging::{debug, error, warn};
 use std::path::{Path, PathBuf};
 use tempfile::{TempDir};
 use thiserror::Error;

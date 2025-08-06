@@ -128,7 +128,7 @@ impl ReportScheduler {
         };
 
         self.jobs.insert(job_id, job);
-        log::info!(
+        tracing::info!(
             "Added scheduled job {} with next run at {}",
             job_id,
             next_run
@@ -140,7 +140,7 @@ impl ReportScheduler {
     /// Remove a scheduled job
     pub fn remove_job(&mut self, job_id: Uuid) -> Result<()> {
         self.jobs.remove(&job_id).context("Job not found")?;
-        log::info!("Removed scheduled job {}", job_id);
+        tracing::info!("Removed scheduled job {}", job_id);
         Ok(())
     }
 
@@ -155,7 +155,7 @@ impl ReportScheduler {
         job.schedule = schedule;
         job.next_run = next_run;
 
-        log::info!(
+        tracing::info!(
             "Updated schedule for job {} with next run at {}",
             job_id,
             job.next_run
@@ -174,7 +174,7 @@ impl ReportScheduler {
             JobStatus::Disabled
         };
 
-        log::info!(
+        tracing::info!(
             "Job {} is now {}",
             job_id,
             if enabled { "enabled" } else { "disabled" }
@@ -189,7 +189,7 @@ impl ReportScheduler {
         }
 
         self.is_running = true;
-        log::info!("Starting report scheduler with {} jobs", self.jobs.len());
+        tracing::info!("Starting report scheduler with {} jobs", self.jobs.len());
 
         let mut check_interval = interval(TokioDuration::from_secs(60)); // Check every minute
 
@@ -218,7 +218,7 @@ impl ReportScheduler {
                     let job_config = job.config.clone();
                     let job_name = job.name.clone();
 
-                    log::info!("Executing scheduled job: {} ({})", job_name, job_id);
+                    tracing::info!("Executing scheduled job: {} ({})", job_name, job_id);
 
                     let execution_result = self
                         .execute_job(job_id, &job_config, &mut reporting_engine)
@@ -258,13 +258,13 @@ impl ReportScheduler {
                                     job.last_run = Some(now);
                                     job.run_count += 1;
                                     job.next_run = next_run;
-                                    log::info!("{}", log_message);
+                                    tracing::info!("{}", log_message);
                                 }
                                 JobStatus::Failed => {
                                     job.status = JobStatus::Pending;
                                     job.failure_count += 1;
                                     job.next_run = next_run;
-                                    log::error!("{}", log_message);
+                                    tracing::error!("{}", log_message);
                                 }
                                 _ => {}
                             }
@@ -288,7 +288,7 @@ impl ReportScheduler {
     /// Stop the scheduler
     pub fn stop(&mut self) {
         self.is_running = false;
-        log::info!("Report scheduler stopped");
+        tracing::info!("Report scheduler stopped");
     }
 
     /// Get all scheduled jobs
@@ -341,13 +341,13 @@ impl ReportScheduler {
                         result.status = JobStatus::Completed;
                         result.report = Some(report);
                         result.completed_at = Some(Utc::now());
-                        log::info!("Successfully executed job {}", job_id);
+                        tracing::info!("Successfully executed job {}", job_id);
                     }
                     Err(e) => {
                         result.status = JobStatus::Failed;
                         result.error_message = Some(format!("Distribution failed: {}", e));
                         result.completed_at = Some(Utc::now());
-                        log::error!("Job {} distribution failed: {}", job_id, e);
+                        tracing::error!("Job {} distribution failed: {}", job_id, e);
                     }
                 }
             }
@@ -355,7 +355,7 @@ impl ReportScheduler {
                 result.status = JobStatus::Failed;
                 result.error_message = Some(format!("Report generation failed: {}", e));
                 result.completed_at = Some(Utc::now());
-                log::error!("Job {} generation failed: {}", job_id, e);
+                tracing::error!("Job {} generation failed: {}", job_id, e);
             }
         }
 

@@ -84,7 +84,7 @@ impl WasmPluginEngine {
             return Err(PluginError::Unsupported("Plugin engine is disabled".to_string()).into());
         }
 
-        log::info!("Loading plugin: {}", plugin_id);
+        tracing::info!("Loading plugin: {}", plugin_id);
 
         // Get plugin metadata from registry
         let manifest = self
@@ -118,14 +118,14 @@ impl WasmPluginEngine {
             .insert(plugin_id.clone(), adapter);
         self.registry.record_usage(plugin_id);
 
-        log::info!("Successfully loaded plugin: {}", plugin_id);
+        tracing::info!("Successfully loaded plugin: {}", plugin_id);
         Ok(())
     }
 
     /// Unload a plugin
     /// Placeholder documentation for public items
     pub async fn unload_plugin(&mut self, plugin_id: &PluginId) -> crate::error::Result<()> {
-        log::info!("Unloading plugin: {}", plugin_id);
+        tracing::info!("Unloading plugin: {}", plugin_id);
 
         // Remove adapter
         self.plugin_adapters.write().await.remove(plugin_id);
@@ -133,7 +133,7 @@ impl WasmPluginEngine {
         // Unload from lifecycle manager
         self.lifecycle_manager.unload_plugin(plugin_id).await?;
 
-        log::info!("Successfully unloaded plugin: {}", plugin_id);
+        tracing::info!("Successfully unloaded plugin: {}", plugin_id);
         Ok(())
     }
 
@@ -149,14 +149,14 @@ impl WasmPluginEngine {
                     loaded_plugins.push(plugin_id);
                 }
                 Err(e) => {
-                    log::error!("Failed to load plugin {}: {}", plugin_id, e);
+                    tracing::error!("Failed to load plugin {}: {}", plugin_id, e);
                     self.registry
                         .update_status(&plugin_id, PluginStatus::Error(e.to_string()));
                 }
             }
         }
 
-        log::info!("Loaded {} plugins", loaded_plugins.len());
+        tracing::info!("Loaded {} plugins", loaded_plugins.len());
         Ok(loaded_plugins)
     }
 
@@ -167,7 +167,7 @@ impl WasmPluginEngine {
         manifest: PluginManifest,
         binary: Vec<u8>,
     ) -> crate::error::Result<PluginId> {
-        log::info!("Installing plugin: {}", manifest.name);
+        tracing::info!("Installing plugin: {}", manifest.name);
 
         // Register in the registry
         let plugin_id = self.registry.register_plugin(manifest, binary).await?;
@@ -175,14 +175,14 @@ impl WasmPluginEngine {
         // Automatically load the plugin
         self.load_plugin(&plugin_id).await?;
 
-        log::info!("Successfully installed plugin: {}", plugin_id);
+        tracing::info!("Successfully installed plugin: {}", plugin_id);
         Ok(plugin_id)
     }
 
     /// Uninstall a plugin
     /// Placeholder documentation for public items
     pub async fn uninstall_plugin(&mut self, plugin_id: &PluginId) -> crate::error::Result<()> {
-        log::info!("Uninstalling plugin: {}", plugin_id);
+        tracing::info!("Uninstalling plugin: {}", plugin_id);
 
         // Unload if loaded
         if self.plugin_adapters.read().await.contains_key(plugin_id) {
@@ -192,7 +192,7 @@ impl WasmPluginEngine {
         // Unregister from registry
         self.registry.unregister_plugin(plugin_id).await?;
 
-        log::info!("Successfully uninstalled plugin: {}", plugin_id);
+        tracing::info!("Successfully uninstalled plugin: {}", plugin_id);
         Ok(())
     }
 
@@ -241,7 +241,7 @@ impl WasmPluginEngine {
     /// Placeholder documentation for public items
     pub fn set_enabled(&mut self, enabled: bool) {
         self.enabled = enabled;
-        log::info!(
+        tracing::info!(
             "Plugin engine {}",
             if enabled { "enabled" } else { "disabled" }
         );

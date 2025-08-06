@@ -96,7 +96,7 @@ impl Default for MockAiService {
 #[async_trait]
 impl AiServiceTrait for MockAiService {
     async fn analyze_issues(&self, issues: &[ArchitecturalIssue]) -> Result<Vec<AiInsight>, MockAiError> {
-        log::debug!("Mock AI service analyzing {} issues", issues.len());
+        tracing::debug!("Mock AI service analyzing {} issues", issues.len());
         
         let insights: Vec<AiInsight> = self.responses
             .iter()
@@ -166,7 +166,7 @@ impl AiServiceTrait for MockAiService {
     }
     
     async fn analyze_issue(&self, issue: &mut ArchitecturalIssue) -> Result<(), MockAiError> {
-        log::debug!("Mock AI service analyzing single issue: {}", issue.description);
+        tracing::debug!("Mock AI service analyzing single issue: {}", issue.description);
         
         // Generate a mock explanation based on the issue type
         let explanation = if issue.description.to_lowercase().contains("god object") {
@@ -224,7 +224,7 @@ impl Default for MockAiEngine {
 
 // Conditional type alias based on feature
 #[cfg(any(feature = "ai", feature = "local-ai"))]
-pub type DefaultAiService = crate::ai::services::AiAnalysisService;
+pub type DefaultAiService = crate::ai::engine::AiAnalysisEngine;
 
 #[cfg(not(any(feature = "ai", feature = "local-ai")))]
 pub type DefaultAiService = MockAiService;

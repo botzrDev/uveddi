@@ -480,7 +480,7 @@ impl RateLimitManager {
                 interval.tick().await;
 
                 if let Err(e) = limiter.cleanup_expired().await {
-                    log::error!("Failed to cleanup expired rate limit entries: {}", e);
+                    tracing::error!("Failed to cleanup expired rate limit entries: {}", e);
                 }
             }
         });

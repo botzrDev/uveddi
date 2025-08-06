@@ -6,7 +6,7 @@
 use crate::ast::tree_sitter_impl::SourceLanguage;
 use crate::error::UveddiError;
 use ignore::{Walk, WalkBuilder};
-use log::{info, warn};
+use crate::core::logging::{info, warn};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 

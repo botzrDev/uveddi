@@ -2,7 +2,7 @@ use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
 use crate::error::Result;
 use crate::security;
 use chrono::Utc;
-use log::error;
+use crate::core::logging::error;
 use rusqlite::Connection;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
@@ -218,11 +218,11 @@ impl Database {
 
             // Validate line numbers
             if let Some(start_line) = issue.start_line {
-                security::validate_numeric_range(start_line, 1, 1_000_000, "start_line")
+                security::validate_numeric_range(start_line as i64, 1, 1_000_000, "start_line")
                     .map_err(crate::error::UveddiError::from)?;
             }
             if let Some(end_line) = issue.end_line {
-                security::validate_numeric_range(end_line, 1, 1_000_000, "end_line")
+                security::validate_numeric_range(end_line as i64, 1, 1_000_000, "end_line")
                     .map_err(crate::error::UveddiError::from)?;
             }
 

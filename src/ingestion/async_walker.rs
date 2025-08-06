@@ -1,14 +1,16 @@
-//! Async file walking utilities for non-blocking directory traversal
-//!
-//! This module provides async file walking functionality to replace the
-//! synchronous walkdir usage for better performance on large codebases.
-
+use crate::error::UveddiError;
 use crate::security;
+use futures::stream::StreamExt;
+
+// Async file walking utilities for non-blocking directory traversal
+//
+// This module provides async file walking functionality to replace the
+// synchronous walkdir usage for better performance on large codebases.
 use futures::stream::Stream;
 use std::path::{Path, PathBuf};
 use std::pin::Pin;
 use tokio::fs;
-use tokio_stream::{wrappers::ReadDirStream, StreamExt};
+use tokio_stream::{wrappers::ReadDirStream, StreamExt as TokioStreamExt};
 
 /// Async file walker that yields file paths with security validation
 pub struct AsyncWalker {
@@ -126,12 +128,12 @@ impl AsyncWalker {
         path: PathBuf,
     ) -> Pin<Box<dyn Stream<Item = Result<PathBuf, std::io::Error>> + Send + '_>> {
         Box::pin(async_stream::stream! {
-            log::debug!("🚶 AsyncWalker::walk_recursive starting for: {}", path.display());
+            tracing::debug!("🚶 AsyncWalker::walk_recursive starting for: {}", path.display());
             let mut stack = vec![(path, 0usize)]; // (path, depth)
             let mut file_count = 0usize;
 
             while let Some((current_path, depth)) = stack.pop() {
-                log::debug!("🔍 Processing path: {} (depth: {})", current_path.display(), depth);
+                tracing::debug!("🔍 Processing path: {} (depth: {})", current_path.display(), depth);
                 // Validate directory depth if security is enabled
                 if self.validate_security {
                     if let Err(e) = security::validate_directory_depth(depth) {
@@ -139,23 +141,23 @@ impl AsyncWalker {
                         continue;
                     }
                 }
-                log::debug!("📊 Getting metadata for: {}", current_path.display());
+                tracing::debug!("📊 Getting metadata for: {}", current_path.display());
                 let metadata = match fs::metadata(&current_path).await {
                     Ok(metadata) => {
-                        log::debug!("✅ Metadata retrieved for: {}", current_path.display());
+                        tracing::debug!("✅ Metadata retrieved for: {}", current_path.display());
                         metadata
                     },
                     Err(e) => {
-                        log::error!("❌ Failed to get metadata for {}: {}", current_path.display(), e);
+                        tracing::error!("❌ Failed to get metadata for {}: {}", current_path.display(), e);
                         yield Err(e);
                         continue;
                     }
                 };
 
                 if metadata.is_file() {
-                    log::debug!("📄 Found file: {}", current_path.display());
+                    tracing::debug!("📄 Found file: {}", current_path.display());
                     if self.should_include_file(&current_path) {
-                        log::debug!("✅ File included: {}", current_path.display());
+                        tracing::debug!("✅ File included: {}", current_path.display());
                         // Validate file count if security is enabled
                         if self.validate_security {
                             file_count += 1;
@@ -192,7 +194,7 @@ impl AsyncWalker {
                     };
 
                     let mut entries = ReadDirStream::new(read_dir);
-                    while let Some(entry_result) = entries.next().await {
+                    while let Some(entry_result) = TokioStreamExt::next(&mut entries).await {
                         match entry_result {
                             Ok(entry) => {
                                 stack.push((entry.path(), depth + 1));

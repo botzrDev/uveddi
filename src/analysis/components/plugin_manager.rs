@@ -13,7 +13,7 @@ use crate::database::models::ArchitecturalIssue;
 use crate::error::UveddiError;
 use crate::plugins::WasmPluginEngine;
 
-use log::{error, info, warn};
+use crate::core::logging::{error, info, warn};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;

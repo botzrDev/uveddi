@@ -10,7 +10,7 @@ use crate::error::UveddiError;
 
 use async_trait::async_trait;
 use dashmap::DashMap;
-use log::{info, warn};
+use crate::core::logging::{info, warn};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -146,9 +146,24 @@ impl AstProviderImpl {
         // Cache result
         self.parsed_file_cache.insert(file_path.to_path_buf(), Arc::clone(&parsed_file));
         
-        // Also store in the secondary cache
-        if let Err(e) = self.ast_cache.store(file_path, parsed_file.tree.as_ref().unwrap().clone()) {
-            warn!("Failed to cache AST for {:?}: {}", file_path, e);
+        // Also store in the secondary cache (convert Tree to CacheableAst when tree-sitter is disabled)
+        #[cfg(feature = "tree-sitter")]
+        {
+            if let Err(e) = self.ast_cache.store(file_path, parsed_file.tree.as_ref().unwrap().clone()) {
+                warn!("Failed to cache AST for {:?}: {}", file_path, e);
+            }
+        }
+        #[cfg(not(feature = "tree-sitter"))]
+        {
+            use crate::analysis::cache::ast::CacheableAst;
+            let cacheable_ast = CacheableAst {
+                data: b"stub_ast_data".to_vec(),
+                timestamp: std::time::SystemTime::now(),
+                language: format!("{:?}", parsed_file.language),
+            };
+            if let Err(e) = self.ast_cache.store(file_path, cacheable_ast) {
+                warn!("Failed to cache AST for {:?}: {}", file_path, e);
+            }
         }
         
         Ok(parsed_file)
@@ -207,7 +222,16 @@ impl AstProvider for AstProviderImpl {
             let _read_guard = self.cache_lock.read().await;
             if let Some(cached_tree) = self.ast_cache.get(file_path) {
                 info!("AST CACHE HIT: Using cached AST for {}", file_path.display());
-                return Ok(Arc::new(cached_tree.as_ref().clone()));
+                #[cfg(feature = "tree-sitter")]
+                {
+                    return Ok(Arc::new(cached_tree.as_ref().clone()));
+                }
+                #[cfg(not(feature = "tree-sitter"))]
+                {
+                    // For stub builds, we need to create a stub Tree from CacheableAst
+                    use crate::ast::tree_sitter::Tree;
+                    return Ok(Arc::new(Tree));
+                }
             }
         }
 

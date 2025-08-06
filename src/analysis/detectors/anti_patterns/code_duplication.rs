@@ -21,7 +21,7 @@ use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use crate::error::UveddiError;
 use async_trait::async_trait;
-use log::{debug, info, warn};
+use crate::core::logging::{debug, info, warn};
 use rayon::prelude::*;
 use sha2::{Digest, Sha256};
 use std::collections::{HashMap, HashSet};
@@ -1223,7 +1223,7 @@ impl CodeDuplicationDetector {
         &self,
         tree: &'a crate::ast::tree_sitter::Tree,
         block: &CodeBlock,
-        parsed_file: &ParsedFile,
+        parsed_file: &'a ParsedFile,
     ) -> Result<Option<crate::ast::tree_sitter::Node<'a>>, AnalysisError> {
         #[cfg(feature = "tree-sitter")]
         use crate::ast::tree_sitter::{Query, QueryCursor};

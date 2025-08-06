@@ -48,7 +48,7 @@ pub struct EngineComplexityMetrics;
 #[derive(Debug, Clone)]
 pub struct KnowledgeContext;
 
-use log::{debug, info, warn};
+use crate::core::logging::{debug, info, warn};
 use std::path::Path;
 use std::sync::Arc;
 

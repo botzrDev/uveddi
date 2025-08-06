@@ -37,9 +37,8 @@
 //! # Ok::<(), Box<dyn std::error::Error>>(())
 //! ```
 
-#[cfg(feature = "ai")]
 use crate::security::{HttpSecurityConfig, SecureHttpClient};
-use log::{debug, info, warn};
+use crate::core::logging::{debug, info, warn};
 #[cfg(feature = "ai")]
 use serde::{Deserialize, Serialize};
 use std::time::Duration;

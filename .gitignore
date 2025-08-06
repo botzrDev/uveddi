@@ -80,9 +80,11 @@ frontend/cypress/.cache/
 *.bc
 *.lock
 
-# Prevent nested git repositories from being treated as submodules
-alpha_testing/*/.git/
-test_repos/*/.git/
+# Ignore test repositories and samples
+test_repos/
+alpha_testing/
+
+# Prevent nested git repositories from being treated as submodules  
 */*/.git/
 
 # Uncomment if config/ or plugins/ contain only generated or environment-specific files.

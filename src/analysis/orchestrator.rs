@@ -14,9 +14,11 @@ use crate::database::models::ArchitecturalIssue;
 
 // AI service imports (feature-gated)
 #[cfg(feature = "ai")]
+use crate::ai::{AiService, AiInsight};
+#[cfg(feature = "ai")]
 use crate::ai::engine::AiAnalysisEngine;
 
-use log::{debug, info, warn};
+use crate::core::logging::{debug, info, warn};
 use std::path::Path;
 use std::sync::Arc;
 use std::time::Instant;
@@ -27,6 +29,10 @@ pub struct EnhancedAnalysisResult {
     pub issues: Vec<ArchitecturalIssue>,
     pub dependency_graph: LocalDependencyGraph,
     pub performance_report: PerformanceReport,
+    
+    // AI insights are optional and only available when AI feature is enabled
+    #[cfg(feature = "ai")]
+    pub ai_insights: Option<Vec<AiInsight>>,
 }
 
 /// Analysis options for configuring orchestrator behavior
@@ -132,6 +138,8 @@ impl AnalysisOrchestrator {
             issues,
             dependency_graph,
             performance_report,
+            #[cfg(feature = "ai")]
+            ai_insights: None,
         })
     }
 
@@ -163,13 +171,19 @@ impl AnalysisOrchestrator {
             info!("Running AI-enhanced analysis for: {}", path.display());
             
             // Run standard analysis first
-            let enhanced_result = self.analyze_with_performance_monitoring(path).await?;
+            let mut enhanced_result = self.analyze_with_performance_monitoring(path).await?;
             
             // Enhance with AI analysis
-            let ai_insights = ai_service.analyze_issues(&enhanced_result.issues).await?;
-            
-            // TODO: Integrate AI insights into the result
-            info!("AI analysis completed with {} additional insights", ai_insights.len());
+            match ai_service.analyze_issues(&enhanced_result.issues).await {
+                Ok(ai_insights) => {
+                    info!("AI analysis completed with {} additional insights", ai_insights.len());
+                    enhanced_result.ai_insights = Some(ai_insights);
+                }
+                Err(e) => {
+                    warn!("AI analysis failed: {}, continuing with standard analysis only", e);
+                    enhanced_result.ai_insights = None;
+                }
+            }
             
             Ok(enhanced_result)
         } else {

@@ -326,7 +326,7 @@ impl ConfigManager {
                     channels.push(channel);
                 }
             } else {
-                log::warn!(
+                tracing::warn!(
                     "Distribution channel '{}' not found in configuration",
                     channel_name
                 );

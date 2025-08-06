@@ -229,7 +229,7 @@ impl EngineCache {
 
         let cleaned_count = before_count - result_cache.len();
         if cleaned_count > 0 {
-            log::info!("Cleaned up {} expired cache entries", cleaned_count);
+            tracing::info!("Cleaned up {} expired cache entries", cleaned_count);
         }
     }
 }

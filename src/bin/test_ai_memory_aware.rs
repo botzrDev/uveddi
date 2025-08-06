@@ -6,7 +6,7 @@
 use uveddi::ai::engine::AiAnalysisEngine;
 #[cfg(feature = "ai")]
 use uveddi::database::models::ArchitecturalIssue;
-use log::LevelFilter;
+use crate::core::logging::LevelFilter;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

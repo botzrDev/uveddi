@@ -44,15 +44,15 @@ pub fn initialize_memory_optimization(config: MemoryOptimizationConfig) -> Resul
     config.validate()?;
 
     // Log allocator information
-    log::info!(
+    tracing::info!(
         "Memory optimization Phase 3 initialized with allocator: {}",
         get_allocator_info()
     );
-    log::info!(
+    tracing::info!(
         "High-performance allocator enabled: {}",
         is_optimized_allocator()
     );
-    log::info!(
+    tracing::info!(
         "Target memory limit: {:.2} GB",
         config.target_max_memory_bytes as f64 / (1024.0 * 1024.0 * 1024.0)
     );
@@ -60,7 +60,7 @@ pub fn initialize_memory_optimization(config: MemoryOptimizationConfig) -> Resul
     // Initialize object pools if enabled
     if config.object_pools.enabled {
         let pools = initialize_detector_pools(&config);
-        log::info!(
+        tracing::info!(
             "Object pools initialized with {} total pools",
             pools.get_all_stats().dead_code_configs.shard_count
         );
@@ -68,11 +68,11 @@ pub fn initialize_memory_optimization(config: MemoryOptimizationConfig) -> Resul
 
     // Initialize arena system if enabled
     if config.arena_allocation.enabled {
-        log::info!(
+        tracing::info!(
             "Arena allocation initialized with default size: {:.1} MB",
             config.arena_allocation.default_arena_size_mb as f64
         );
-        log::info!(
+        tracing::info!(
             "Maximum concurrent arenas: {}",
             config.arena_allocation.max_concurrent_arenas
         );

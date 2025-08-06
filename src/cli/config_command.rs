@@ -2,7 +2,7 @@
 
 use crate::config::Config;
 use clap::{Args, Subcommand};
-use log::{error, info, warn};
+use crate::core::logging::{error, info, warn};
 use std::fs;
 use std::io::Write;
 use std::path::PathBuf;

@@ -308,7 +308,7 @@ impl AppState {
 
     /// Handle terminal resize
     fn handle_terminal_resize(&mut self, width: u16, height: u16) -> Vec<AppMessage> {
-        log::debug!("Terminal resized to {}x{}", width, height);
+        tracing::debug!("Terminal resized to {}x{}", width, height);
         if width < 80 || height < 24 {
             self.status_message = Some("Warning: Terminal size may be too small".to_string());
         }
@@ -345,12 +345,12 @@ impl AppState {
                 if let Some(tx) = &self.action_tx {
                     if let Err(e) = tx.send(Action::Analyze(command)) {
                         let error_msg = format!("Failed to start analysis: {}", e);
-                        log::error!("{}", error_msg);
+                        tracing::error!("{}", error_msg);
                         self.error_message = Some(error_msg);
                     }
                 } else {
                     // For testing without action_tx, we still consider this successful
-                    log::debug!("Action dispatcher is not available (testing mode)");
+                    tracing::debug!("Action dispatcher is not available (testing mode)");
                 }
                 vec![AppMessage::AnalysisStarted]
             }

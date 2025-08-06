@@ -4,6 +4,9 @@
 //! authorization, audit logging, and input validation for the Uveddi analysis platform.
 //! It implements a hybrid RBAC/ABAC system with enterprise-grade security controls.
 //!
+//! The module is feature-gated with the 'security' feature. When this feature is disabled,
+//! stub implementations are provided to maintain API compatibility.
+//!
 //! # Security Features
 //!
 //! ## Authentication
@@ -44,6 +47,47 @@
 //! - **Manager**: Read-only access to reports and dashboards
 //! - **Service**: API access for automated integrations
 //!
+//! # Usage Examples
+
+#[cfg(feature = "security")]
+pub mod authentication;
+#[cfg(feature = "security")]
+pub mod authorization;
+#[cfg(feature = "security")]
+pub mod audit;
+#[cfg(feature = "security")]
+pub mod errors;
+#[cfg(feature = "security")]
+pub mod http_client;
+#[cfg(feature = "security")]
+pub mod models;
+#[cfg(feature = "security")]
+pub mod rate_limiting;
+#[cfg(feature = "security")]
+pub mod secrets;
+
+// Stub implementations when security feature is disabled
+#[cfg(not(feature = "security"))]
+mod stub;
+
+// Re-export main components for API compatibility
+#[cfg(feature = "security")]
+pub use authentication::{AuthenticationService, AuthenticatedUser};
+#[cfg(feature = "security")]
+pub use authorization::{AuthorizationEngine, AuthContext};
+#[cfg(feature = "security")]
+pub use errors::{SecurityError, SecurityResult};
+#[cfg(feature = "security")]
+pub use http_client::{HttpSecurityConfig, SecureHttpClient};
+#[cfg(feature = "security")]
+pub use models::UserRole;
+
+// Re-export from stub when security feature is disabled
+#[cfg(not(feature = "security"))]
+pub use stub::{SecurityError, SecurityResult, HttpSecurityConfig, SecureHttpClient};
+
+// Input validation functions
+#[cfg(feature = "security")]
 //! # Usage Examples
 //!
 //! ## Authentication
@@ -107,17 +151,6 @@
 //! - Industry-standard authentication protocols
 
 // Core security modules
-pub mod audit;
-pub mod authentication;
-pub mod authorization;
-pub mod config;
-pub mod errors;
-pub mod http_client;
-pub mod middleware;
-pub mod models;
-pub mod rate_limiting;
-pub mod secrets;
-pub mod secure_config_loader;
 
 // Standard library imports
 use std::path::{Path, PathBuf};
@@ -135,6 +168,7 @@ pub use authentication::{AuthenticationConfig, OAuthProviderConfig, OidcProvider
 pub use authorization::AuthorizationEngine;
 pub use config::RateLimitingConfig;
 pub use config::{SecurityConfig, SecurityConfigLoader};
+pub use dependency_config::{SecurityLimits, create_secure_http_client, create_custom_http_client, validate_input_size};
 pub use http_client::{HttpSecurityConfig, SecureHttpClient};
 pub use middleware::SecurityServices;
 pub use rate_limiting::RateLimiter;

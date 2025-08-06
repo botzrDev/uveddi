@@ -97,7 +97,8 @@ enum Commands {
 async fn main() -> Result<()> {
     // Set up color_eyre for better error reporting
     color_eyre::install()?;
-    env_logger::init();
+    // Initialize logging using built-in logging system
+    tracing_subscriber::fmt::init();
 
     // TEMPORARILY DISABLED: Health monitoring server to debug hanging issue
     // TODO: Re-enable after fixing hanging issue
