@@ -488,20 +488,36 @@ impl ModernReportGenerator {
             }
         });
 
-        // Safe round filter that handles NaN values
+        // Safe round filter that handles NaN values  
         tera.register_filter("safe_round", |value: &tera::Value, args: &HashMap<String, tera::Value>| {
             let precision = args.get("precision")
                 .and_then(|v| v.as_u64())
-                .unwrap_or(0) as u32;
+                .unwrap_or(0)
+                .min(10) as u32; // Limit precision to prevent overflow
             
             match value.as_f64() {
                 Some(num) if num.is_nan() || num.is_infinite() => {
                     Ok(tera::Value::Number(serde_json::Number::from_f64(0.0).unwrap_or_else(|| serde_json::Number::from(0))))
                 }
                 Some(num) => {
-                    let multiplier = 10_f64.powi(precision as i32);
-                    let rounded = (num * multiplier).round() / multiplier;
-                    Ok(tera::Value::Number(serde_json::Number::from_f64(rounded).unwrap_or_else(|| serde_json::Number::from(0))))
+                    // Clamp the precision to avoid overflow
+                    let safe_precision = precision.min(10);
+                    let multiplier = 10_f64.powi(safe_precision as i32);
+                    let product = num * multiplier;
+                    
+                    // Check if multiplication caused overflow/underflow
+                    if !product.is_finite() {
+                        return Ok(tera::Value::Number(serde_json::Number::from_f64(0.0).unwrap_or_else(|| serde_json::Number::from(0))));
+                    }
+                    
+                    let rounded = product.round() / multiplier;
+                    
+                    // Final check for validity
+                    if !rounded.is_finite() {
+                        Ok(tera::Value::Number(serde_json::Number::from_f64(0.0).unwrap_or_else(|| serde_json::Number::from(0))))
+                    } else {
+                        Ok(tera::Value::Number(serde_json::Number::from_f64(rounded).unwrap_or_else(|| serde_json::Number::from(0))))
+                    }
                 }
                 None => {
                     // Try to parse as string
@@ -511,9 +527,21 @@ impl ModernReportGenerator {
                                 Ok(tera::Value::Number(serde_json::Number::from_f64(0.0).unwrap_or_else(|| serde_json::Number::from(0))))
                             }
                             Ok(num) => {
-                                let multiplier = 10_f64.powi(precision as i32);
-                                let rounded = (num * multiplier).round() / multiplier;
-                                Ok(tera::Value::Number(serde_json::Number::from_f64(rounded).unwrap_or_else(|| serde_json::Number::from(0))))
+                                let safe_precision = precision.min(10);
+                                let multiplier = 10_f64.powi(safe_precision as i32);
+                                let product = num * multiplier;
+                                
+                                if !product.is_finite() {
+                                    return Ok(tera::Value::Number(serde_json::Number::from_f64(0.0).unwrap_or_else(|| serde_json::Number::from(0))));
+                                }
+                                
+                                let rounded = product.round() / multiplier;
+                                
+                                if !rounded.is_finite() {
+                                    Ok(tera::Value::Number(serde_json::Number::from_f64(0.0).unwrap_or_else(|| serde_json::Number::from(0))))
+                                } else {
+                                    Ok(tera::Value::Number(serde_json::Number::from_f64(rounded).unwrap_or_else(|| serde_json::Number::from(0))))
+                                }
                             }
                             Err(_) => Ok(tera::Value::Number(serde_json::Number::from_f64(0.0).unwrap_or_else(|| serde_json::Number::from(0))))
                         }

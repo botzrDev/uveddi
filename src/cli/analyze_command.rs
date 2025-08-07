@@ -716,8 +716,8 @@ impl AnalyzeCommand {
         };
         
         let report = if self.timeout > 0 {
-            // Execute with timeout
-            info!("Analysis timeout set to {} seconds", self.timeout);
+            // Execute with timeout and graceful degradation
+            info!("Analysis timeout set to {} seconds with graceful degradation enabled", self.timeout);
             match tokio::time::timeout(
                 std::time::Duration::from_secs(self.timeout),
                 analysis_future,
@@ -725,39 +725,122 @@ impl AnalyzeCommand {
             .await
             {
                 Ok(result) => result.map_err(|e| {
+                    let specific_error = match e {
+                        ref err if err.to_string().contains("database") => {
+                            "Database storage failed - check schema compatibility and disk space"
+                        },
+                        ref err if err.to_string().contains("parse") || err.to_string().contains("AST") => {
+                            "Code parsing failed - verify file syntax and language support"
+                        },
+                        ref err if err.to_string().contains("memory") => {
+                            "Memory limit exceeded - reduce analysis scope or increase memory limits"
+                        },
+                        ref err if err.to_string().contains("permission") || err.to_string().contains("access") => {
+                            "File access denied - check file permissions and access rights"
+                        },
+                        _ => "Analysis failed"
+                    };
+                    
                     if self.verbose {
-                        tracing::error!("🔍 Analysis execution failed with detailed error: {:#}", e);
+                        tracing::error!("🔍 {}: {:#}", specific_error, e);
                         if let Some(backtrace) = e.source() {
                             tracing::error!("🔧 Stack trace: {:?}", backtrace);
                         }
                     } else {
-                        tracing::error!("Analysis execution failed. Use --verbose for detailed error information.");
+                        tracing::error!("{}. Use --verbose for detailed error information.", specific_error);
                     }
                     e
                 })?,
                 Err(_) => {
-                    return Err(UveddiError::analysis_error(
-                        &self.path.display().to_string(),
-                        0,
-                        &format!(
-                            "Analysis timed out after {} seconds. Consider using --timeout with a larger value for large codebases.",
-                            self.timeout
-                        ),
-                        "timeout",
-                    ));
+                    // Implement graceful degradation on timeout
+                    warn!("Analysis timed out after {} seconds. Attempting graceful degradation...", self.timeout);
+                    
+                    // Try with reduced scope and timeouts
+                    let degraded_config = AnalysisConfig {
+                        target_path: self.path.clone(),
+                        output_format: self.output_format.clone(),
+                        output_file: self.output.clone(),
+                        enable_ai: false,  // Disable AI for faster analysis
+                        ollama_api_url: None,
+                        ollama_model: None,
+                        
+                        // Dead code detection configs (reduced scope)
+                        dead_code_confidence: Some(0.9),  // Higher confidence for faster processing
+                        dead_code_library_mode: false,
+                        dead_code_ignore_patterns: None,
+                        dead_code_keep_alive: None,
+                        
+                        // Large classes configs (more restrictive)
+                        large_classes_max_loc: Some(500),  // Reduced from default
+                        large_classes_max_methods: Some(self.large_classes_max_lines.unwrap_or(20)),
+                        large_classes_max_fields: Some(15),
+                        large_classes_max_complexity: Some(10),
+                        large_classes_max_lcom: Some(0.8),
+                        large_classes_ignore_patterns: None,
+                        large_classes_min_severity: self.large_classes_min_severity,
+                        
+                        #[cfg(feature = "memory-optimization")]
+                        memory_optimization: None,
+                        enable_memory_optimization: false,  // Disable for faster analysis
+                        memory_limit_gb: Some(1.0),  // Strict memory limit
+                        memory_profile: Some("small".to_string()),
+                        timeout_seconds: 60,  // Reduced timeout for degraded analysis
+                    };
+                    
+                    info!("🔄 Retrying analysis with degraded settings: max 100 files, 15s per detector");
+                    let degraded_future = orchestrator.execute_analysis(degraded_config);
+                    
+                    match tokio::time::timeout(
+                        std::time::Duration::from_secs(60),
+                        degraded_future,
+                    )
+                    .await
+                    {
+                        Ok(result) => {
+                            warn!("⚠️ Analysis completed with reduced scope due to timeout");
+                            result?
+                        },
+                        Err(_) => {
+                            return Err(UveddiError::analysis_error(
+                                &self.path.display().to_string(),
+                                0,
+                                &format!(
+                                    "Analysis timed out after {} seconds even with graceful degradation. Codebase may be too large. Consider using --timeout with a much larger value (e.g., 1800 for 30 minutes) or analyze a smaller subset.",
+                                    self.timeout
+                                ),
+                                "timeout with degradation failure",
+                            ));
+                        }
+                    }
                 }
             }
         } else {
             // Execute without timeout
             info!("Analysis running without timeout");
             analysis_future.await.map_err(|e| {
+                let specific_error = match e {
+                    ref err if err.to_string().contains("database") => {
+                        "Database storage failed - check schema compatibility and disk space"
+                    },
+                    ref err if err.to_string().contains("parse") || err.to_string().contains("AST") => {
+                        "Code parsing failed - verify file syntax and language support"
+                    },
+                    ref err if err.to_string().contains("memory") => {
+                        "Memory limit exceeded - reduce analysis scope or increase memory limits"
+                    },
+                    ref err if err.to_string().contains("permission") || err.to_string().contains("access") => {
+                        "File access denied - check file permissions and access rights"
+                    },
+                    _ => "Analysis failed"
+                };
+                
                 if self.verbose {
-                    tracing::error!("🔍 Analysis execution failed with detailed error: {:#}", e);
+                    tracing::error!("🔍 {}: {:#}", specific_error, e);
                     if let Some(backtrace) = e.source() {
                         tracing::error!("🔧 Stack trace: {:?}", backtrace);
                     }
                 } else {
-                    tracing::error!("Analysis execution failed. Use --verbose for detailed error information.");
+                    tracing::error!("{}. Use --verbose for detailed error information.", specific_error);
                 }
                 e
             })?

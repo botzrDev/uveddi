@@ -43,7 +43,7 @@ chrono = { version = "0.4.39", features = ["serde"] }
 
 # Feature flags for modular compilation
 [features]
-default = ["tree-sitter", "security"]
+default = ["tree-sitter", "security", "memory-optimization"]
 # Chaos engineering and load testing
 chaos = ["fail", "statrs", "ndarray-stats"]
 # Performance regression detection with genetic algorithms
@@ -83,7 +83,7 @@ full-featured = ["local-ai", "tree-sitter", "memory-optimization", "image-render
 # Enterprise option (all features)
 enterprise = ["local-ai", "tree-sitter", "memory-optimization", "image-rendering", "tui", "wasm-plugins", "chaos", "sla-monitoring"]
 # Alpha build with TUI and essential features
-alpha = ["tui", "tree-sitter", "local-ai", "security"]
+alpha = ["tui", "tree-sitter", "local-ai", "security", "memory-optimization"]
 
 [dependencies]
 # Use workspace dependencies for consistency

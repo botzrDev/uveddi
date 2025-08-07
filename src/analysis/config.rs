@@ -128,14 +128,26 @@ pub struct PerformanceConfig {
     pub timeout_seconds: u64,
     /// Enable parallel processing
     pub parallel_processing: bool,
+    /// Per-file timeout in seconds (for individual file analysis)
+    pub file_timeout_seconds: u64,
+    /// Enable graceful degradation when hitting timeouts
+    pub enable_graceful_degradation: bool,
+    /// Maximum files to analyze before applying degradation strategies
+    pub degradation_file_threshold: usize,
+    /// Timeout multiplier for large files (> 1000 lines)
+    pub large_file_timeout_multiplier: f64,
 }
 
 impl Default for PerformanceConfig {
     fn default() -> Self {
         Self {
             max_concurrent_files: 10,
-            timeout_seconds: 30,
+            timeout_seconds: 300,  // Increased default to 5 minutes
             parallel_processing: true,
+            file_timeout_seconds: 30,  // 30 seconds per file
+            enable_graceful_degradation: true,
+            degradation_file_threshold: 500,  // Start degradation after 500 files
+            large_file_timeout_multiplier: 2.0,  // 2x timeout for large files
         }
     }
 }

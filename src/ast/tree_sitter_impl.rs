@@ -86,6 +86,37 @@ impl AstParser {
         Self::with_cache_size(default_cache_size)
     }
 
+    /// Clear the cache to free memory
+    pub fn clear_cache(&self) {
+        if let Ok(mut cache) = self.cache.lock() {
+            cache.clear();
+            info!("AST cache cleared, freed memory for {} entries", cache.cap().get());
+        }
+    }
+
+    /// Get cache statistics
+    pub fn cache_stats(&self) -> (u64, u64, usize, usize) {
+        let hits = *self.cache_hits.lock().unwrap_or_else(|_| self.cache_hits.lock().unwrap());
+        let misses = *self.cache_misses.lock().unwrap_or_else(|_| self.cache_misses.lock().unwrap());
+        let (current_size, max_size) = if let Ok(cache) = self.cache.lock() {
+            (cache.len(), cache.cap().get())
+        } else {
+            (0, 0)
+        };
+        
+        (hits, misses, current_size, max_size)
+    }
+
+    /// Shrink cache to a smaller size
+    pub fn shrink_cache(&self, new_size: usize) {
+        if let Some(new_capacity) = NonZeroUsize::new(new_size) {
+            if let Ok(mut cache) = self.cache.lock() {
+                cache.resize(new_capacity);
+                info!("AST cache resized to {} entries", new_size);
+            }
+        }
+    }
+
     /// Initialize parsers with custom cache size
     pub fn with_cache_size(cache_size: usize) -> Result<Self, AstError> {
         let max_size = NonZeroUsize::new(cache_size)
@@ -534,6 +565,26 @@ impl AstParser {
     }
 }
 
+impl Drop for AstParser {
+    fn drop(&mut self) {
+        // Clear cache on drop to free memory
+        if let Ok(mut cache) = self.cache.lock() {
+            let entries_cleared = cache.len();
+            cache.clear();
+            if entries_cleared > 0 {
+                info!("AstParser dropped, freed {} cached AST entries", entries_cleared);
+            }
+        }
+        
+        // Log final statistics
+        let (hits, misses, _, _) = self.cache_stats();
+        if hits + misses > 0 {
+            info!("Final AST cache stats: {} hits, {} misses ({:.1}% hit rate)", 
+                hits, misses, (hits as f64 / (hits + misses) as f64) * 100.0);
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ParsedFile {
     #[serde(with = "arc_pathbuf_serde")]
@@ -639,6 +690,17 @@ impl ParsedFile {
         }
 
         None
+    }
+}
+
+impl Drop for ParsedFile {
+    fn drop(&mut self) {
+        // Explicitly drop the tree to free tree-sitter memory
+        if let Some(tree) = self.tree.take() {
+            drop(tree);
+        }
+        // Arc<String> and Arc<PathBuf> will be automatically cleaned up
+        // when their reference counts reach zero
     }
 }
 

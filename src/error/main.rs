@@ -280,6 +280,17 @@ impl UveddiError {
         }
     }
 
+    /// Creates a database error from just a message
+    pub fn database_error_msg(message: &str) -> Self {
+        Self::DatabaseError {
+            operation: "database operation".to_string(),
+            database: "sqlite".to_string(),
+            message: message.to_string(),
+            recovery_hint: "Check database integrity and schema compatibility".to_string(),
+            source: None,
+        }
+    }
+
     /// Creates a helpful analysis error with context
     pub fn analysis_error(file: &str, line: u32, message: &str, context: &str) -> Self {
         let suggestion = Self::generate_analysis_suggestion(message, context);
@@ -604,10 +615,28 @@ impl From<ClapError> for UveddiError {
 
 impl From<anyhow::Error> for UveddiError {
     fn from(error: anyhow::Error) -> Self {
+        // Try to provide more specific context based on the error message
+        let error_msg = error.to_string();
+        let (context, suggestion) = if error_msg.contains("database") {
+            ("database operation", "Check database connection and schema integrity")
+        } else if error_msg.contains("parse") || error_msg.contains("syntax") {
+            ("code parsing", "Verify file syntax and encoding")
+        } else if error_msg.contains("memory") || error_msg.contains("allocation") {
+            ("memory management", "Increase available memory or reduce analysis scope")
+        } else if error_msg.contains("timeout") {
+            ("operation timeout", "Increase timeout values or analyze smaller codebases")
+        } else if error_msg.contains("permission") || error_msg.contains("access") {
+            ("file access", "Check file permissions and access rights")
+        } else if error_msg.contains("network") || error_msg.contains("connection") {
+            ("network operation", "Check network connectivity and firewall settings")
+        } else {
+            ("system operation", "Check logs for detailed error information")
+        };
+        
         Self::GenericError {
             message: error.to_string(),
-            context: "generic operation".to_string(),
-            suggestion: "Check logs for more details".to_string(),
+            context: context.to_string(),
+            suggestion: suggestion.to_string(),
             source: Some(error),
         }
     }

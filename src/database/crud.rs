@@ -52,6 +52,12 @@ impl Database {
                 file_path TEXT NOT NULL,
                 start_line INTEGER,
                 end_line INTEGER,
+                line_number INTEGER,
+                column_number INTEGER,
+                message TEXT NOT NULL,
+                metadata TEXT NOT NULL DEFAULT '{}',
+                detector_name TEXT NOT NULL,
+                created_at TEXT NOT NULL,
                 severity TEXT NOT NULL,
                 description TEXT NOT NULL,
                 code_snippet TEXT,
@@ -247,13 +253,19 @@ impl Database {
             };
 
             tx.execute(
-                "INSERT INTO architectural_issues (analysis_run_id, anti_pattern_type_id, file_path, start_line, end_line, severity, description, code_snippet, ai_explanation) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "INSERT INTO architectural_issues (analysis_run_id, anti_pattern_type_id, file_path, start_line, end_line, line_number, column_number, message, metadata, detector_name, created_at, severity, description, code_snippet, ai_explanation) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 rusqlite::params![
                     issue.analysis_run_id,
                     issue.anti_pattern_type_id,
                     issue.file_path,
                     issue.start_line,
                     issue.end_line,
+                    issue.line_number,
+                    issue.column_number,
+                    issue.message,
+                    issue.metadata,
+                    issue.detector_name,
+                    issue.created_at.to_rfc3339(),
                     issue.severity,
                     sanitized_description,
                     issue.code_snippet,
@@ -262,10 +274,13 @@ impl Database {
             )?;
         }
         match tx.commit() {
-            Ok(_) => Ok(()),
+            Ok(_) => {
+                tracing::debug!("Successfully stored {} architectural issues", issues.len());
+                Ok(())
+            },
             Err(e) => {
                 // Enhanced error logging to expose specific SQLite error codes
-                error!("Transaction commit failed: {:?}", e);
+                error!("Transaction commit failed while storing {} issues: {:?}", issues.len(), e);
                 if let rusqlite::Error::SqliteFailure(sqlite_err, Some(msg)) = &e {
                     error!("Underlying SQLite error message: {}", msg);
                     error!("SQLite extended error code: {}", sqlite_err.extended_code);
@@ -273,7 +288,23 @@ impl Database {
                 if let Some(error_code) = e.sqlite_error_code() {
                     error!("SQLite primary error code: {:?}", error_code);
                 }
-                Err(crate::error::UveddiError::from(e))
+                
+                // Provide more specific error context based on the error type
+                let context_msg = match &e {
+                    rusqlite::Error::SqliteFailure(sqlite_err, _) => {
+                        match sqlite_err.code {
+                            rusqlite::ErrorCode::ConstraintViolation => "Foreign key constraint violation - ensure analysis_run_id and anti_pattern_type_id are valid",
+                            rusqlite::ErrorCode::SchemaChanged => "Database schema mismatch - database may need to be recreated",
+                            rusqlite::ErrorCode::DatabaseCorrupt => "Database corruption detected - consider recreating the database",
+                            _ => "Database operation failed during issue storage"
+                        }
+                    },
+                    _ => "Unexpected database error during transaction commit"
+                };
+                
+                Err(crate::error::UveddiError::database_error_msg(
+                    &format!("Failed to store architectural issues: {}", context_msg)
+                ))
             }
         }
     }

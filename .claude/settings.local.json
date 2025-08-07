@@ -169,7 +169,8 @@
       "Bash(RUST_BACKTRACE=1 cargo test test_api_key_security --test security_tests -- --nocapture)",
       "Bash(cp:*)",
       "Bash(./tools/simple_analyzer:*)",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "Bash(git checkout:*)"
     ],
     "deny": []
   }
