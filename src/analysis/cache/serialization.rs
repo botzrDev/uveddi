@@ -18,9 +18,9 @@ pub enum SerializationError {
     #[error("rkyv serialization error: {0}")]
     RkyvError(String),
     #[error("MessagePack error: {0}")]
-    MessagePack(#[from] rmp_serde::encode::Error),
+    MessagePack(String),
     #[error("MessagePack decode error: {0}")]
-    MessagePackDecode(#[from] rmp_serde::decode::Error),
+    MessagePackDecode(String),
     #[error("Bincode error: {0}")]
     Bincode(#[from] bincode::Error),
     #[error("IO error: {0}")]
@@ -66,7 +66,8 @@ impl CacheSerializer {
                 bincode::serialize(data).map_err(SerializationError::Bincode)
             }
             SerializationFormat::MessagePack => {
-                rmp_serde::to_vec(data).map_err(SerializationError::MessagePack)
+                // MessagePack support temporarily disabled - fallback to bincode
+                bincode::serialize(data).map_err(SerializationError::Bincode)
             }
             SerializationFormat::Bincode => {
                 bincode::serialize(data).map_err(SerializationError::Bincode)
@@ -93,7 +94,8 @@ impl CacheSerializer {
                 }
             }
             SerializationFormat::MessagePack => {
-                rmp_serde::from_slice(bytes).map_err(SerializationError::MessagePackDecode)
+                // MessagePack support temporarily disabled - fallback to bincode
+                bincode::deserialize(bytes).map_err(SerializationError::Bincode)
             }
             SerializationFormat::Bincode => {
                 bincode::deserialize(bytes).map_err(SerializationError::Bincode)
@@ -120,7 +122,8 @@ impl CacheSerializer {
                 Ok(())
             }
             SerializationFormat::MessagePack => {
-                rmp_serde::encode::write(&mut writer, data).map_err(SerializationError::MessagePack)
+                // MessagePack support temporarily disabled - fallback to bincode
+                bincode::serialize_into(writer, data).map_err(SerializationError::Bincode)
             }
             SerializationFormat::Bincode => {
                 bincode::serialize_into(writer, data).map_err(SerializationError::Bincode)
@@ -145,7 +148,8 @@ impl CacheSerializer {
                 self.deserialize(&bytes)
             }
             SerializationFormat::MessagePack => {
-                rmp_serde::decode::from_read(reader).map_err(SerializationError::MessagePackDecode)
+                // MessagePack support temporarily disabled - fallback to bincode
+                bincode::deserialize_from(reader).map_err(SerializationError::Bincode)
             }
             SerializationFormat::Bincode => {
                 bincode::deserialize_from(reader).map_err(SerializationError::Bincode)

@@ -92,10 +92,12 @@ pub struct AnalysisRun {
 /// - `"high"`: Important issues that impact code quality
 /// - `"critical"`: Severe issues that require immediate attention
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(
-    feature = "memory-optimization",
-    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize)
-)]
+// Note: rkyv derives temporarily disabled due to DateTime<Utc> incompatibility
+// TODO: Implement custom wrapper or use different timestamp format for rkyv
+// #[cfg_attr(
+//     feature = "memory-optimization",
+//     derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize)
+// )]
 pub struct ArchitecturalIssue {
     /// Unique identifier for this issue (auto-generated)
     pub issue_id: Option<i64>,

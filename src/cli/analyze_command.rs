@@ -32,6 +32,7 @@
 use anyhow::Context;
 use clap::Args;
 use crate::core::logging::info;
+use tracing::warn;
 use std::error::Error;
 use std::path::PathBuf;
 use sysinfo::System;
@@ -772,7 +773,7 @@ impl AnalyzeCommand {
                         
                         // Large classes configs (more restrictive)
                         large_classes_max_loc: Some(500),  // Reduced from default
-                        large_classes_max_methods: Some(self.large_classes_max_lines.unwrap_or(20)),
+                        large_classes_max_methods: Some(self.large_classes_max_loc.unwrap_or(20)),
                         large_classes_max_fields: Some(15),
                         large_classes_max_complexity: Some(10),
                         large_classes_max_lcom: Some(0.8),
