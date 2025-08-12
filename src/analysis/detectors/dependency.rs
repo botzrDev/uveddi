@@ -114,6 +114,7 @@ impl DependencyExtractor {
                 SourceLanguage::Rust => (RUST_IMPORTS_QUERY, DependencyType::Use),
                 SourceLanguage::Python => (PYTHON_IMPORTS_QUERY, DependencyType::Import),
                 SourceLanguage::JavaScript => (JAVASCRIPT_IMPORTS_QUERY, DependencyType::Import),
+                SourceLanguage::TypeScript => (JAVASCRIPT_IMPORTS_QUERY, DependencyType::Import), // Reuse JS query for TS placeholder
             };
 
             // UV-2: Semantic dependency classification for function calls and data transformations
@@ -254,9 +255,8 @@ impl DependencyExtractor {
         let pattern = match parsed_file.language {
             SourceLanguage::Rust => r"use\s+([\w:]+)",
             SourceLanguage::Python => r"import\s+([\w.]+)",
-            SourceLanguage::JavaScript => {
-                r#"import\s+.*from\s+['"]([^'"]+)['"]|require\(['"]([^'"]+)['"]\)"#
-            }
+            SourceLanguage::JavaScript => r#"import\s+.*from\s+['"]([^'"]+)['"]|require\(['"]([^'"]+)['"]\)"#,
+            SourceLanguage::TypeScript => r#"import\s+.*from\s+['"]([^'"]+)['"]|require\(['"]([^'"]+)['"]\)"#, // reuse JS regex
         };
 
         // Create regex pattern

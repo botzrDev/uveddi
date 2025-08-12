@@ -31,7 +31,7 @@ impl SymbolExtractor {
             crate::ast::tree_sitter_impl::SourceLanguage::Rust => "rust",
             crate::ast::tree_sitter_impl::SourceLanguage::Python => "python",
             crate::ast::tree_sitter_impl::SourceLanguage::JavaScript => "javascript",
-            // Add other languages as needed
+            crate::ast::tree_sitter_impl::SourceLanguage::TypeScript => "typescript",
         };
 
         let query_source = match language {

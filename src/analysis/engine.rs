@@ -11,6 +11,7 @@ use crate::analysis::components::{
     AnalysisAggregator, AstProviderImpl, CacheManagerImpl, ConfigurationService,
     DependencyGraphBuilderImpl, DetectorScheduler, PluginManagerHandle,
 };
+use crate::analysis::components::cache_manager::CacheManager;
 use crate::analysis::components::traits::AnalysisAggregator as AnalysisAggregatorTrait;
 use crate::analysis::detector_factory::DetectorFactory;
 use crate::analysis::engine_builder::AnalysisEngineBuilder;
@@ -407,6 +408,87 @@ impl AnalysisEngine {
         info!("Large classes detector configuration requested - delegating to detector scheduler");
         warn!("Large classes detector configuration is not yet fully implemented in the new architecture");
     }
+
+    /// Legacy constructor: create engine with in-memory cache
+    ///
+    /// Deprecated: prefer `AnalysisEngine::builder().with_in_memory_cache().build()`
+    pub fn new_with_memory_cache() -> Result<Self, AnalysisError> {
+        Self::builder()
+            .with_in_memory_cache()
+            .build()
+            .map_err(|e| AnalysisError::Engine(e.to_string()))
+    }
+
+    /// Legacy constructor: create engine with explicit cache path
+    ///
+    /// Deprecated: prefer `AnalysisEngine::builder().with_cache_path(path).build()`
+    pub fn with_cache_path(path: &Path) -> Result<Self, AnalysisError> {
+        Self::builder()
+            .with_cache_path(path)
+            .build()
+            .map_err(|e| AnalysisError::Engine(e.to_string()))
+    }
+
+    /// Legacy async constructor enabling plugins
+    ///
+    /// Deprecated: prefer `AnalysisEngine::builder().enable_plugins(true).build_async().await`
+    pub async fn new_with_plugins() -> Result<Self, AnalysisError> {
+        Self::builder()
+            .enable_plugins(true)
+            .build()
+            .map_err(|e| AnalysisError::Engine(e.to_string()))
+    }
+
+    /// Legacy async constructor with cache path and plugins
+    #[allow(dead_code)]
+    pub async fn with_cache_path_and_plugins(path: &Path) -> Result<Self, AnalysisError> {
+        Self::builder()
+            .with_cache_path(path)
+            .enable_plugins(true)
+            .build()
+            .map_err(|e| AnalysisError::Engine(e.to_string()))
+    }
+
+    /// Legacy: expose AST cache metrics (empty placeholder until wired)
+    pub async fn get_ast_cache_metrics(&self) -> serde_json::Value {
+        serde_json::json!({ "status": "unimplemented", "cache": "ast" })
+    }
+
+    /// Legacy: clear AST cache (delegates to cache manager full clear)
+    pub fn clear_ast_cache(&self) {
+        // Fire and forget async clear; legacy API was sync
+        let mgr = self.cache_manager.clone();
+        tokio::spawn(async move { mgr.clear_all_caches().await; });
+    }
+
+    /// Legacy: load plugins after construction
+    pub async fn load_plugins(&mut self) -> Result<usize, AnalysisError> {
+        if self.plugin_manager.is_none() {
+            // Rebuild engine with plugins enabled (simple fallback)
+            let rebuilt = Self::builder()
+                .enable_plugins(true)
+                .build();
+            match rebuilt {
+                Ok(mut eng) => {
+                    // swap orchestrator & plugin manager
+                    self.orchestrator = eng.orchestrator;
+                    self.plugin_manager = eng.plugin_manager;
+                }
+                Err(e) => return Err(AnalysisError::Engine(e.to_string())),
+            }
+        }
+        Ok(0)
+    }
+
+    /// Legacy: plugin stats (placeholder)
+    pub async fn get_stats(&self) -> Option<serde_json::Value> {
+        Some(serde_json::json!({ "plugins": self.plugin_manager.is_some() }))
+    }
+
+    /// Legacy: monitor plugin resources (no-op)
+    pub async fn monitor_plugin_resources(&self) -> Result<(), AnalysisError> {
+        Ok(())
+    }
 }
 
 // Ensure the engine is Send and Sync for async usage
@@ -462,7 +544,7 @@ mod tests {
         let engine = AnalysisEngine::new().unwrap();
         let report = engine.generate_memory_report().await;
         
-        assert!(report.memory_limit_bytes.is_some());
+        assert!(report.memory_limit_mb > 0);
         assert!(!report.recommendations.is_empty());
     }
 

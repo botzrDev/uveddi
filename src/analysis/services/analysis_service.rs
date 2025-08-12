@@ -15,7 +15,7 @@ use crate::analysis::components::traits::{
 use crate::analysis::detector_factory::DetectorFactory;
 use crate::analysis::file_discovery::{FileDiscovery, SourceFile};
 use crate::analysis::symbols::GlobalSymbolTable;
-use crate::analysis::workspace::{WorkspaceDetector, WorkspaceInfo};
+use crate::analysis::workspace::{WorkspaceDetector, WorkspaceInfo, WorkspaceType};
 use crate::ast::ParsedFile;
 use crate::database::models::{ArchitecturalIssue, AntiPatternType};
 use crate::ingestion::AsyncWalker;
@@ -163,29 +163,10 @@ impl AnalysisService {
             return Ok(vec![SourceFile::new(path.to_path_buf())?]);
         }
 
-        // Use AsyncWalker for file discovery
-        // Collect matching file paths from the async walker stream
-        let walker = AsyncWalker::for_source_code();
-        let mut stream = walker.walk(path);
-        // Need StreamExt for `.next()`
-        use futures::stream::StreamExt;
-        let mut discovered_paths = Vec::new();
-        while let Some(item) = stream.next().await {
-            match item {
-                Ok(p) => discovered_paths.push(p),
-                Err(e) => tracing::warn!("Error during file discovery: {}", e),
-            }
-        }
-        
-        let mut source_files = Vec::new();
-        for path in discovered_paths {
-            match SourceFile::new(path) {
-                Ok(source_file) => source_files.push(source_file),
-                Err(e) => warn!("Failed to create source file: {}", e),
-            }
-        }
-
-        Ok(source_files)
+        let workspace_type = WorkspaceDetector::detect_composite_workspace_type(path);
+        // Use new filtered discovery
+        let files = self.file_discovery.discover_files_for_workspace_type(path, &workspace_type)?;
+        Ok(files)
     }
 
     /// Detect workspace information for the given path

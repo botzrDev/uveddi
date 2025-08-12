@@ -189,6 +189,7 @@ impl TightCouplingDetector {
             SourceLanguage::Rust => &self.config.rust_thresholds,
             SourceLanguage::Python => &self.config.python_thresholds,
             SourceLanguage::JavaScript => &self.config.javascript_thresholds,
+            SourceLanguage::TypeScript => &self.config.javascript_thresholds, // Reuse JS thresholds for now
         }
     }
 
@@ -198,6 +199,7 @@ impl TightCouplingDetector {
             SourceLanguage::Rust => &self.rust_analyzer,
             SourceLanguage::Python => &self.python_analyzer,
             SourceLanguage::JavaScript => &self.javascript_analyzer,
+            SourceLanguage::TypeScript => &self.javascript_analyzer, // Reuse JS analyzer placeholder
         }
     }
 

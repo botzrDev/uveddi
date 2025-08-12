@@ -296,6 +296,7 @@ impl CodeDuplicationDetector {
             SourceLanguage::Rust => RUST_FUNCTION_QUERY,
             SourceLanguage::Python => PYTHON_FUNCTION_QUERY,
             SourceLanguage::JavaScript => JAVASCRIPT_FUNCTION_QUERY,
+            SourceLanguage::TypeScript => JAVASCRIPT_FUNCTION_QUERY, // UV-XXX: Reuse JavaScript queries for TypeScript
         };
 
         let query = Query::new(&tree.language(), query_str).map_err(|e| {

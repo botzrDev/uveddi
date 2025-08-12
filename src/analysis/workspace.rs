@@ -5,7 +5,7 @@
 
 use crate::analysis::errors::AnalysisError;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 use tokio::fs as async_fs;
@@ -58,6 +58,17 @@ struct PackageInfo {
 #[derive(Debug, Deserialize)]
 struct WorkspaceManifest {
     members: Option<Vec<String>>,
+}
+
+/// Supported workspace types (multi-language Phase 1, UV-XXX)
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+pub enum WorkspaceType {
+    Rust,
+    Python,
+    JavaScript,
+    TypeScript,
+    Mixed,
+    Unknown,
 }
 
 /// Workspace detector and analyzer
@@ -351,6 +362,51 @@ impl WorkspaceDetector {
 
         Ok(files)
     }
+
+    /// New multi-language workspace type detection entry point
+    pub fn detect_workspace_type(path: &Path) -> WorkspaceType {
+        if path.join("Cargo.toml").exists() { return WorkspaceType::Rust; }
+        if Self::has_python_workspace(path) { return WorkspaceType::Python; }
+        if Self::has_typescript_workspace(path) { return WorkspaceType::TypeScript; }
+        if Self::has_javascript_workspace(path) { return WorkspaceType::JavaScript; }
+        WorkspaceType::Unknown
+    }
+
+    pub fn has_python_workspace(path: &Path) -> bool {
+        ["pyproject.toml", "setup.py", "requirements.txt", "Pipfile", "poetry.lock"].iter().any(|f| path.join(f).exists())
+    }
+    pub fn has_typescript_workspace(path: &Path) -> bool {
+        if path.join("tsconfig.json").exists() { return true; }
+        if path.join("package.json").exists() { return Self::has_typescript_deps(path); }
+        false
+    }
+    pub fn has_javascript_workspace(path: &Path) -> bool {
+        path.join("package.json").exists()
+    }
+    fn has_typescript_deps(path: &Path) -> bool {
+        let pkg = path.join("package.json");
+        if !pkg.exists() { return false; }
+        if let Ok(content) = std::fs::read_to_string(&pkg) {
+            return content.contains("typescript");
+        }
+        false
+    }
+
+    /// Derive overall workspace type by scanning immediate children (detect Mixed)
+    pub fn detect_composite_workspace_type(root: &Path) -> WorkspaceType {
+        let mut types: HashSet<WorkspaceType> = HashSet::new();
+        if let Ok(entries) = std::fs::read_dir(root) {
+            for entry in entries.flatten() {
+                let p = entry.path();
+                if p.is_dir() {
+                    let t = Self::detect_workspace_type(&p);
+                    if t != WorkspaceType::Unknown { types.insert(t); }
+                }
+            }
+        }
+        if types.is_empty() { return Self::detect_workspace_type(root); }
+        if types.len() > 1 { WorkspaceType::Mixed } else { types.into_iter().next().unwrap_or(WorkspaceType::Unknown) }
+    }
 }
 
 #[cfg(test)]
@@ -419,5 +475,32 @@ version = "0.1.0"
         assert_eq!(workspace.crates.len(), 2);
         assert!(workspace.crates.contains_key("crate_a"));
         assert!(workspace.crates.contains_key("crate_b"));
+    }
+}
+
+#[cfg(test)]
+mod multi_lang_tests {
+    use super::*;
+    use tempfile::TempDir;
+
+    #[test]
+    fn test_composite_workspace_type_single() {
+        let temp = TempDir::new().unwrap();
+        std::fs::write(temp.path().join("Cargo.toml"), "[package]\nname='x'\nversion='0.1.0'\n").unwrap();
+        let t = WorkspaceDetector::detect_composite_workspace_type(temp.path());
+        assert_eq!(t, WorkspaceType::Rust);
+    }
+
+    #[test]
+    fn test_composite_workspace_type_mixed() {
+        let temp = TempDir::new().unwrap();
+        // Rust subdir
+        std::fs::create_dir(temp.path().join("rust_mod")).unwrap();
+        std::fs::write(temp.path().join("rust_mod").join("Cargo.toml"), "[package]\nname='x'\nversion='0.1.0'\n").unwrap();
+        // Python subdir
+        std::fs::create_dir(temp.path().join("py_mod")).unwrap();
+        std::fs::write(temp.path().join("py_mod").join("pyproject.toml"), "[project]\nname='y'\nversion='0.1.0'\n").unwrap();
+        let t = WorkspaceDetector::detect_composite_workspace_type(temp.path());
+        assert_eq!(t, WorkspaceType::Mixed);
     }
 }

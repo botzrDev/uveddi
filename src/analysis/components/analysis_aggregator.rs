@@ -183,6 +183,12 @@ mod tests {
             file_path: file_path.to_string(),
             start_line: Some(10),
             end_line: Some(15),
+            line_number: Some(10),
+            column_number: Some(1),
+            message: format!("Test {} issue in {}", issue_type, file_path),
+            metadata: "{}".to_string(),
+            detector_name: "TestDetector".to_string(),
+            created_at: Utc::now(),
             severity: match severity_level {
                 1 => "low".to_string(),
                 2 => "medium".to_string(),

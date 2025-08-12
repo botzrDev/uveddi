@@ -879,6 +879,7 @@ impl AnalysisDetector for LeakyAbstractionDetector {
                 SourceLanguage::Rust => "rust",
                 SourceLanguage::Python => "python",
                 SourceLanguage::JavaScript => "javascript",
+                SourceLanguage::TypeScript => "typescript", // UV-XXX: Add TypeScript support
             };
 
             let analysis_run_id = 1; // TODO: Get from context

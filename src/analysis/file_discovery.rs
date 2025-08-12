@@ -9,6 +9,7 @@ use ignore::{Walk, WalkBuilder};
 use crate::core::logging::{info, warn};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
+use crate::analysis::workspace::WorkspaceType;
 
 /// Represents a discovered source file with its detected language
 #[derive(Debug, Clone)]
@@ -145,6 +146,22 @@ impl FileDiscovery {
     pub fn is_supported_extension(&self, extension: &str) -> bool {
         self.language_map.contains_key(extension)
     }
+
+    /// Discovers files restricted by workspace type (Phase 1 multi-language filtering)
+    pub fn discover_files_for_workspace_type(&self, path: &Path, workspace_type: &WorkspaceType) -> Result<Vec<SourceFile>, UveddiError> {
+        let allowed: Option<Vec<SourceLanguage>> = match workspace_type {
+            WorkspaceType::Rust => Some(vec![SourceLanguage::Rust]),
+            WorkspaceType::Python => Some(vec![SourceLanguage::Python]),
+            WorkspaceType::JavaScript => Some(vec![SourceLanguage::JavaScript]),
+            WorkspaceType::TypeScript => Some(vec![SourceLanguage::JavaScript, SourceLanguage::TypeScript]),
+            WorkspaceType::Mixed | WorkspaceType::Unknown => None, // No restriction
+        };
+        let mut files = self.discover_files(path)?;
+        if let Some(allowed_langs) = allowed {
+            files.retain(|f| allowed_langs.contains(&f.language));
+        }
+        Ok(files)
+    }
 }
 
 impl Default for FileDiscovery {
@@ -158,6 +175,7 @@ mod tests {
     use super::*;
     use std::fs;
     use tempfile::TempDir;
+    use crate::analysis::workspace::WorkspaceType;
 
     #[test]
     fn test_language_detection() {
@@ -239,5 +257,22 @@ mod tests {
         // Should only find main.rs, not ignored.rs or target/build.rs
         assert_eq!(files.len(), 1);
         assert!(files[0].path.file_name().unwrap() == "main.rs");
+    }
+
+    #[test]
+    fn test_workspace_type_filtering() {
+        let discovery = FileDiscovery::new();
+        let temp_dir = TempDir::new().unwrap();
+        let p = temp_dir.path();
+        std::fs::write(p.join("main.rs"), "fn main() {}").unwrap();
+        std::fs::write(p.join("script.py"), "print('hi')").unwrap();
+        std::fs::write(p.join("app.js"), "console.log('x')").unwrap();
+
+        let rust_only = discovery.discover_files_for_workspace_type(p, &WorkspaceType::Rust).unwrap();
+        assert!(rust_only.iter().all(|f| f.language == SourceLanguage::Rust));
+        assert_eq!(rust_only.len(), 1);
+
+        let mixed = discovery.discover_files_for_workspace_type(p, &WorkspaceType::Mixed).unwrap();
+        assert!(mixed.len() >= 3);
     }
 }

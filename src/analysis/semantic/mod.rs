@@ -716,6 +716,19 @@ fn get_common_apis_for_language(language: &SourceLanguage) -> Vec<String> {
             "setTimeout".to_string(),
             "Promise".to_string(),
         ],
+        SourceLanguage::TypeScript => vec![
+            // Reuse JS common APIs for placeholder
+            "console.log".to_string(),
+            "Array.from".to_string(),
+            "Object.keys".to_string(),
+            "JSON.parse".to_string(),
+            "JSON.stringify".to_string(),
+            "map".to_string(),
+            "filter".to_string(),
+            "reduce".to_string(),
+            "forEach".to_string(),
+            "Promise".to_string(),
+        ],
     }
 }
 
@@ -771,6 +784,26 @@ fn get_keywords_for_language(language: &SourceLanguage) -> Vec<String> {
             "export".to_string(),
             "async".to_string(),
             "await".to_string(),
+        ],
+        SourceLanguage::TypeScript => vec![
+            // Reuse JS keywords plus TS specific placeholders
+            "function".to_string(),
+            "let".to_string(),
+            "const".to_string(),
+            "class".to_string(),
+            "interface".to_string(),
+            "type".to_string(),
+            "enum".to_string(),
+            "implements".to_string(),
+            "extends".to_string(),
+            "import".to_string(),
+            "export".to_string(),
+            "from".to_string(),
+            "return".to_string(),
+            "if".to_string(),
+            "else".to_string(),
+            "for".to_string(),
+            "while".to_string(),
         ],
     }
 }

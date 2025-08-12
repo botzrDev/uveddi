@@ -251,6 +251,7 @@ impl<'a> CfgBuilder<'a> {
             SourceLanguage::Rust => RUST_CFG_QUERY,
             SourceLanguage::Python => PYTHON_CFG_QUERY,
             SourceLanguage::JavaScript => JAVASCRIPT_CFG_QUERY,
+            SourceLanguage::TypeScript => JAVASCRIPT_CFG_QUERY, // UV-XXX: Reuse JavaScript queries for TypeScript
         };
 
         // 3. Parse query and traverse AST

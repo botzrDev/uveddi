@@ -53,12 +53,20 @@ sla-monitoring = ["metrics-exporter-prometheus", "tokio-metrics"]
 # Security features
 security = []
 # Tree-sitter parsing functionality (enabled by default)
+# Refactored to allow per-language feature gating (Phase 1 multi-language support, UV-XXX)
+# Existing `tree-sitter` feature now aggregates individual language features for backward compatibility.
+# New granular features: rust-lang, python-lang, javascript-lang, typescript-lang
+rust-lang = ["dep:tree-sitter-rust"]
+python-lang = ["dep:tree-sitter-python"]
+javascript-lang = ["dep:tree-sitter-javascript"]
+typescript-lang = ["dep:tree-sitter-typescript"]
+# Aggregate feature retains prior behavior
 tree-sitter = [
     "dep:tree-sitter",
-    "dep:tree-sitter-rust", 
-    "dep:tree-sitter-python",
-    "dep:tree-sitter-javascript",
-    "dep:tree-sitter-typescript"
+    "rust-lang",
+    "python-lang",
+    "javascript-lang",
+    "typescript-lang"
 ]
 # Core analysis features (without tree-sitter by default)
 analysis = [] # No specific dependencies needed here, just a logical grouping

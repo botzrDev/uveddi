@@ -501,6 +501,7 @@ impl GodObjectDetector {
             SourceLanguage::Rust => RUST_USE_QUERY,
             SourceLanguage::Python => PYTHON_IMPORT_QUERY,
             SourceLanguage::JavaScript => JAVASCRIPT_IMPORT_QUERY,
+            SourceLanguage::TypeScript => JAVASCRIPT_IMPORT_QUERY, // UV-XXX: Reuse JavaScript queries for TypeScript
         };
 
         let query = Query::new(&language, query_str)
@@ -537,6 +538,18 @@ impl GodObjectDetector {
                 .unwrap_or(import_text)
                 .to_string(),
             SourceLanguage::JavaScript => {
+                if import_text.starts_with('"') || import_text.starts_with('\'') {
+                    let path = &import_text[1..import_text.len() - 1];
+                    if path.starts_with("./") || path.starts_with("../") {
+                        return "local".to_string();
+                    }
+                    path.split('/').next().unwrap_or(path).to_string()
+                } else {
+                    import_text.to_string()
+                }
+            },
+            SourceLanguage::TypeScript => {
+                // UV-XXX: Reuse JavaScript logic for TypeScript
                 if import_text.starts_with('"') || import_text.starts_with('\'') {
                     let path = &import_text[1..import_text.len() - 1];
                     if path.starts_with("./") || path.starts_with("../") {
@@ -656,6 +669,7 @@ impl GodObjectDetector {
             SourceLanguage::Rust => RUST_FUNCTION_COUNT_QUERY,
             SourceLanguage::Python => PYTHON_FUNCTION_COUNT_QUERY,
             SourceLanguage::JavaScript => JAVASCRIPT_FUNCTION_COUNT_QUERY,
+            SourceLanguage::TypeScript => JAVASCRIPT_FUNCTION_COUNT_QUERY, // UV-XXX: Reuse JavaScript queries for TypeScript
         };
 
         let query = Query::new(&language, method_query_str)
@@ -699,6 +713,7 @@ impl GodObjectDetector {
             SourceLanguage::Rust => RUST_FUNCTION_COUNT_QUERY,
             SourceLanguage::Python => PYTHON_FUNCTION_COUNT_QUERY,
             SourceLanguage::JavaScript => JAVASCRIPT_FUNCTION_COUNT_QUERY,
+            SourceLanguage::TypeScript => JAVASCRIPT_FUNCTION_COUNT_QUERY, // UV-XXX: Reuse JavaScript queries for TypeScript
         };
 
         let query = Query::new(&language, method_query_str)
@@ -1292,6 +1307,12 @@ impl AnalysisDetector for GodObjectDetector {
             SourceLanguage::JavaScript => self.analyze_standard(
                 parsed_file,
                 JAVASCRIPT_CLASS_QUERY,
+                JAVASCRIPT_FUNCTION_COUNT_QUERY,
+                JAVASCRIPT_FIELD_COUNT_QUERY,
+            ),
+            SourceLanguage::TypeScript => self.analyze_standard(
+                parsed_file,
+                JAVASCRIPT_CLASS_QUERY, // UV-XXX: Reuse JavaScript queries for TypeScript
                 JAVASCRIPT_FUNCTION_COUNT_QUERY,
                 JAVASCRIPT_FIELD_COUNT_QUERY,
             ),

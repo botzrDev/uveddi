@@ -177,6 +177,7 @@ impl DeadCodeDetector {
             SourceLanguage::Rust => self.extract_rust_symbols(parsed_file)?,
             SourceLanguage::Python => self.extract_python_symbols(parsed_file)?,
             SourceLanguage::JavaScript => self.extract_javascript_symbols(parsed_file)?,
+            SourceLanguage::TypeScript => self.extract_javascript_symbols(parsed_file)?, // UV-XXX: Reuse JavaScript extraction for TypeScript
         };
 
         Ok(symbols)
@@ -206,6 +207,7 @@ impl DeadCodeDetector {
             SourceLanguage::Rust => self.extract_rust_references(parsed_file)?,
             SourceLanguage::Python => self.extract_python_references(parsed_file)?,
             SourceLanguage::JavaScript => self.extract_javascript_references(parsed_file)?,
+            SourceLanguage::TypeScript => self.extract_javascript_references(parsed_file)?, // UV-XXX: Reuse JavaScript extraction for TypeScript
         };
 
         Ok(references)
