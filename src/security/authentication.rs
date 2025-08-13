@@ -14,8 +14,7 @@ use chrono::{DateTime, Duration as ChronoDuration, Utc};
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use oauth2::{
     basic::BasicClient, AuthType, AuthUrl, AuthorizationCode, ClientId,
-    ClientSecret, CsrfToken, PkceCodeChallenge, RedirectUrl, Scope, TokenResponse, TokenUrl, 
-    ClientAuthenticationType,
+    ClientSecret, CsrfToken, PkceCodeChallenge, RedirectUrl, Scope, TokenResponse, TokenUrl,
 };
 use openidconnect::{
     core::{CoreAuthenticationFlow, CoreClient, CoreProviderMetadata, CoreResponseType},
@@ -267,14 +266,11 @@ impl AuthenticationService {
             })?;
             
             // Using constructor pattern compatible with OAuth2 5.0
-            let client = BasicClient::new(
-                client_id, 
-                Some(client_secret),
-                auth_url,
-                Some(token_url)
-            )
-            .set_redirect_uri(redirect_url)
-            .set_auth_type(ClientAuthenticationType::BasicAuth);
+            let client = BasicClient::new(client_id)
+                .set_client_secret(client_secret)
+                .set_auth_url(auth_url)
+                .set_token_url(token_url)
+                .set_redirect_uri(redirect_url);
 
             oauth_clients.insert(provider.provider_name.clone(), client);
         }

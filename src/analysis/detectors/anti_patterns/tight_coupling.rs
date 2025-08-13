@@ -17,8 +17,7 @@ use crate::analysis::graph::dependency::{
 use crate::analysis::{AnalysisDetector, AnalysisError};
 use crate::ast::tree_sitter::{Node, Query, QueryCursor, Tree};
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
-#[cfg(not(feature = "tree-sitter"))]
-use crate::{tree_sitter_rust, tree_sitter_python, tree_sitter_javascript};
+use crate::ast::tree_sitter::{tree_sitter_rust, tree_sitter_python, tree_sitter_javascript};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use async_trait::async_trait;
 use petgraph::graph::{DiGraph, NodeIndex};

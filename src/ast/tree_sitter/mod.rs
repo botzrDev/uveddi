@@ -24,6 +24,8 @@ pub use tree_sitter::{Node, Query, QueryCursor, Tree};
 pub use tree_sitter_stub::{Node, Query, QueryCursor, Tree};
 
 // Re-export tree-sitter language modules
+#[cfg(feature = "tree-sitter")]
+pub use {tree_sitter_rust, tree_sitter_python, tree_sitter_javascript, tree_sitter_typescript};
 #[cfg(not(feature = "tree-sitter"))]
 pub use tree_sitter_stub::{tree_sitter_rust, tree_sitter_python, tree_sitter_javascript, tree_sitter_typescript};
 

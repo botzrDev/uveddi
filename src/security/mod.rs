@@ -56,15 +56,23 @@ pub mod authorization;
 #[cfg(feature = "security")]
 pub mod audit;
 #[cfg(feature = "security")]
+pub mod config;
+#[cfg(feature = "security")]
+pub mod dependency_config;
+#[cfg(feature = "security")]
 pub mod errors;
 #[cfg(feature = "security")]
 pub mod http_client;
+#[cfg(feature = "security")]
+pub mod middleware;
 #[cfg(feature = "security")]
 pub mod models;
 #[cfg(feature = "security")]
 pub mod rate_limiting;
 #[cfg(feature = "security")]
 pub mod secrets;
+#[cfg(feature = "security")]
+pub mod secure_config_loader;
 
 // Stub implementations when security feature is disabled
 #[cfg(not(feature = "security"))]
@@ -72,9 +80,11 @@ mod stub;
 
 // Re-export main components for API compatibility
 #[cfg(feature = "security")]
-pub use authentication::{AuthenticationService, AuthenticatedUser};
+pub use authentication::AuthenticationService;
 #[cfg(feature = "security")]
-pub use authorization::{AuthorizationEngine, AuthContext};
+pub use authorization::AuthorizationEngine;
+#[cfg(feature = "security")]
+pub use models::{AuthenticatedUser, AuthContext};
 #[cfg(feature = "security")]
 pub use errors::{SecurityError, SecurityResult};
 #[cfg(feature = "security")]
@@ -87,92 +97,39 @@ pub use models::UserRole;
 pub use stub::{SecurityError, SecurityResult, HttpSecurityConfig, SecureHttpClient};
 
 // Input validation functions
-#[cfg(feature = "security")]
-//! # Usage Examples
-//!
-//! ## Authentication
-//! ```rust,no_run
-//! use uveddi::security::{AuthenticationService, AuthenticatedUser};
-//!
-//! // OAuth authentication
-//! let auth_service = AuthenticationService::new(config).await?;
-//! let user = auth_service.authenticate_oidc("google", &auth_code, &nonce).await?;
-//!
-//! // API key authentication
-//! let user = auth_service.authenticate_api_key(&api_key).await?;
-//! # Ok::<(), Box<dyn std::error::Error>>(())
-//! ```
-//!
-//! ## Authorization
-//! ```rust,no_run
-//! use uveddi::security::{AuthorizationEngine, AuthContext};
-//!
-//! let authz_engine = AuthorizationEngine::new().await?;
-//! let context = AuthContext::new(user_id, "projects".to_string(), "read".to_string(), Some("own".to_string()));
-//! let allowed = authz_engine.check_permission(&user_id, "projects", "read", &context).await?;
-//! # Ok::<(), Box<dyn std::error::Error>>(())
-//! ```
-//!
-//! ## Audit Logging
-//! ```rust,no_run
-//! use uveddi::security::{AuditLogger, AuditEvent, AuditEventType, AuditOutcome};
-//!
-//! let audit_logger = AuditLogger::new().await?;
-//! let event = AuditEvent::new(
-//!     AuditEventType::Authentication,
-//!     Some(user_id),
-//!     None,
-//!     "users".to_string(),
-//!     "login".to_string(),
-//!     AuditOutcome::Success,
-//!     Some("127.0.0.1".to_string()),
-//!     None,
-//!     serde_json::json!({"method": "password"}),
-//! );
-//! audit_logger.log_event(event).await?;
-//! # Ok::<(), Box<dyn std::error::Error>>(())
-//! ```
-//!
-//! # Security Considerations
-//!
-//! - All authentication attempts are logged for security monitoring
-//! - Failed authorization attempts trigger security alerts
-//! - Rate limiting prevents brute force attacks
-//! - All secrets are stored securely using external secret management
-//! - Audit logs are tamper-evident and immutable
-//! - Input validation prevents injection attacks
-//!
-//! # Compliance
-//!
-//! This module is designed to meet enterprise security standards including:
-//! - SOC 2 Type II compliance
-//! - ISO 27001 information security management
-//! - GDPR privacy requirements
-//! - Industry-standard authentication protocols
 
 // Core security modules
 
 // Standard library imports
 use std::path::{Path, PathBuf};
 
-// Re-export commonly used types
-pub use errors::{SecurityError, SecurityErrorSeverity, SecurityResult};
+// Re-export commonly used types (feature-gated)
+#[cfg(feature = "security")]
+pub use errors::SecurityErrorSeverity;
+#[cfg(feature = "security")]
 pub use models::{
-    ApiKey, AuditEvent, AuditEventType, AuditOutcome, AuthContext, AuthenticatedUser, Permission,
-    RateLimitIdentifierType, RateLimitInfo, Role, Session, User, UserRole, UserRoleAssignment,
+    ApiKey, AuditEvent, AuditEventType, AuditOutcome, Permission,
+    RateLimitIdentifierType, RateLimitInfo, Role, Session, User, UserRoleAssignment,
 };
 
-// Re-export authentication and authorization config types
+// Re-export authentication and authorization config types (feature-gated)
+#[cfg(feature = "security")]
 pub use audit::{AuditLogger, AuditStore};
+#[cfg(feature = "security")]
 pub use authentication::{AuthenticationConfig, OAuthProviderConfig, OidcProviderConfig};
-pub use authorization::AuthorizationEngine;
+#[cfg(feature = "security")]
 pub use config::RateLimitingConfig;
+#[cfg(feature = "security")]
 pub use config::{SecurityConfig, SecurityConfigLoader};
+#[cfg(feature = "security")]
 pub use dependency_config::{SecurityLimits, create_secure_http_client, create_custom_http_client, validate_input_size};
-pub use http_client::{HttpSecurityConfig, SecureHttpClient};
+#[cfg(feature = "security")]
 pub use middleware::SecurityServices;
+#[cfg(feature = "security")]
 pub use rate_limiting::RateLimiter;
+#[cfg(feature = "security")]
 pub use secrets::{RotationPolicy, SecretRotationManager, SecretStore, SecretStoreFactory};
+#[cfg(feature = "security")]
 pub use secure_config_loader::{SecretStoreHealthStatus, SecureConfigLoader};
 
 use crate::error::UveddiError;

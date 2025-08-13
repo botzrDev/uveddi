@@ -31,6 +31,11 @@ impl ConfigurationService {
         config
     }
 
+    /// Creates a new configuration service with default settings (alias for new())
+    pub fn new_with_defaults() -> Self {
+        Self::new()
+    }
+
     /// Creates a configuration service from an AnalysisConfig
     pub fn from_analysis_config(config: &crate::analysis::AnalysisConfig) -> Self {
         let mut service = Self::new();

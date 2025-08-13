@@ -264,8 +264,11 @@ pub mod performance;
 pub mod plugins;
 pub mod report;
 pub mod resilience;
-// pub mod security; // Disabled for alpha testing due to OAuth compilation issues
+#[cfg(feature = "security")]
+pub mod security;
+#[cfg(not(feature = "security"))]
 pub mod security_stub;
+#[cfg(not(feature = "security"))]
 pub use security_stub as security;
 pub mod semantic_search;
 pub mod sla;

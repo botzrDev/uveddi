@@ -28,6 +28,7 @@ use tree_sitter::{Node, Query, QueryCursor, Language, QueryMatch, Parser};
 #[cfg(not(feature = "tree-sitter"))]
 use crate::ast::tree_sitter::{Node, Query, QueryCursor, Language, QueryMatch, Parser};
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
+use crate::ast::tree_sitter::{tree_sitter_rust, tree_sitter_python, tree_sitter_javascript};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use async_trait::async_trait;
 use futures::TryFutureExt;
