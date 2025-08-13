@@ -369,20 +369,12 @@ impl AnalyzeCommand {
             }
         }
 
-        // Check if directory is empty or contains no supported files
+        // Check if directory is empty or contains no supported files (using recursive discovery)
         if self.path.is_dir() {
-            let has_supported_files = std::fs::read_dir(&self.path)
-                .map_err(|e| SecurityError::InvalidInput {
-                    field: "path".to_string(),
-                    reason: format!(
-                        "Cannot read directory '{}': {}\n💡 Suggestion: Check directory permissions",
-                        self.path.display(),
-                        e
-                    ),
-                })?
-                .filter_map(|entry| entry.ok())
-                .any(|entry| {
-                    if let Some(extension) = entry.path().extension() {
+            let has_supported_files = Self::discover_files_recursive(&self.path)?
+                .into_iter()
+                .any(|path| {
+                    if let Some(extension) = path.extension() {
                         let ext = extension.to_string_lossy().to_lowercase();
                         ["rs", "py", "js", "ts", "jsx", "tsx", "java", "cpp", "c", "h", "hpp"].contains(&ext.as_str())
                     } else {
@@ -435,24 +427,24 @@ impl AnalyzeCommand {
         // Validate numeric parameters
         if let Some(confidence) = self.dead_code_confidence {
             let confidence_int = (confidence * 100.0) as i32;
-            security::validate_numeric_range(confidence_int as i64, 0, 100, "dead_code_confidence")?;
+            security::validate_numeric_range(confidence_int, 0, 100, "dead_code_confidence")?;
         }
 
         if let Some(max_loc) = self.large_classes_max_loc {
-            security::validate_numeric_range(max_loc as i64, 1, 100_000, "large_classes_max_loc")?;
+            security::validate_numeric_range(max_loc as i32, 1, 100_000, "large_classes_max_loc")?;
         }
 
         if let Some(max_methods) = self.large_classes_max_methods {
-            security::validate_numeric_range(max_methods as i64, 1, 10_000, "large_classes_max_methods")?;
+            security::validate_numeric_range(max_methods as i32, 1, 10_000, "large_classes_max_methods")?;
         }
 
         if let Some(max_fields) = self.large_classes_max_fields {
-            security::validate_numeric_range(max_fields as i64, 1, 10_000, "large_classes_max_fields")?;
+            security::validate_numeric_range(max_fields as i32, 1, 10_000, "large_classes_max_fields")?;
         }
 
         if let Some(max_complexity) = self.large_classes_max_complexity {
             security::validate_numeric_range(
-                max_complexity as i64,
+                max_complexity as i32,
                 1,
                 10_000,
                 "large_classes_max_complexity",
@@ -460,16 +452,16 @@ impl AnalyzeCommand {
         }
 
         if let Some(max_lcom) = self.large_classes_max_lcom {
-            let lcom_int = (max_lcom * 100.0) as i64;
+            let lcom_int = (max_lcom * 100.0) as i32;
             security::validate_numeric_range(lcom_int, 0, 100, "large_classes_max_lcom")?;
         }
 
         if let Some(min_severity) = self.large_classes_min_severity {
-            security::validate_numeric_range(min_severity as i64, 0, 100, "large_classes_min_severity")?;
+            security::validate_numeric_range(min_severity as i32, 0, 100, "large_classes_min_severity")?;
         }
 
         if let Some(memory_limit) = self.memory_limit_gb {
-            let memory_int = (memory_limit * 10.0) as i64; // Convert to decidigabytes for int validation
+            let memory_int = (memory_limit * 10.0) as i32; // Convert to decidigabytes for int validation
             security::validate_numeric_range(memory_int, 1, 1000, "memory_limit_gb")?; // 0.1 GB to 100 GB
         }
 
@@ -866,5 +858,94 @@ impl AnalyzeCommand {
         );
 
         Ok(())
+    }
+
+    /// Recursively discover files in a directory, respecting .gitignore patterns
+    /// and handling symlinks safely.
+    pub fn discover_files_recursive(dir: &std::path::Path) -> Result<Vec<std::path::PathBuf>, SecurityError> {
+        use walkdir::WalkDir;
+        use ignore::WalkBuilder;
+        use std::collections::HashSet;
+
+        let mut discovered_files = Vec::new();
+        let mut visited_inodes = HashSet::new();
+
+        // Use ignore crate for proper gitignore support
+        let walker = WalkBuilder::new(dir)
+            .standard_filters(true)  // Enable .gitignore, .ignore, etc.
+            .hidden(false)          // Include hidden files/dirs (let gitignore decide)
+            .follow_links(false)    // Don't follow symlinks to prevent infinite loops
+            .max_depth(Some(100))   // Reasonable depth limit to prevent runaway traversal
+            .build();
+
+        for result in walker {
+            match result {
+                Ok(entry) => {
+                    let path = entry.path();
+                    
+                    // Skip directories
+                    if !path.is_file() {
+                        continue;
+                    }
+
+                    // Prevent infinite loops with symlinks by tracking inodes
+                    if let Ok(metadata) = entry.metadata() {
+                        #[cfg(unix)]
+                        {
+                            use std::os::unix::fs::MetadataExt;
+                            let inode = metadata.ino();
+                            if !visited_inodes.insert(inode) {
+                                continue; // Already visited this inode
+                            }
+                        }
+                    }
+
+                    // Check file size to prevent analyzing extremely large files
+                    if let Ok(metadata) = entry.metadata() {
+                        const MAX_FILE_SIZE: u64 = 100 * 1024 * 1024; // 100MB limit
+                        if metadata.len() > MAX_FILE_SIZE {
+                            continue;
+                        }
+                    }
+
+                    // Add to discovered files
+                    discovered_files.push(path.to_path_buf());
+                }
+                Err(err) => {
+                    // Log but don't fail on individual file access errors
+                    warn!("Failed to access path during discovery: {}", err);
+                }
+            }
+        }
+
+        // If no files found with ignore patterns, fall back to basic walkdir
+        // This handles cases where .gitignore might be too restrictive
+        if discovered_files.is_empty() {
+            warn!("No files found with gitignore filtering, falling back to basic discovery");
+            
+            for entry in WalkDir::new(dir)
+                .follow_links(false)
+                .max_depth(50)
+                .into_iter()
+                .filter_map(|e| e.ok())
+            {
+                if entry.file_type().is_file() {
+                    // Basic filtering - skip common non-source directories
+                    let path_str = entry.path().to_string_lossy();
+                    if path_str.contains("/.git/") || 
+                       path_str.contains("/target/") ||
+                       path_str.contains("/node_modules/") ||
+                       path_str.contains("/__pycache__/") ||
+                       path_str.contains("/build/") ||
+                       path_str.contains("/dist/") {
+                        continue;
+                    }
+                    
+                    discovered_files.push(entry.path().to_path_buf());
+                }
+            }
+        }
+
+        Ok(discovered_files)
     }
 }
