@@ -177,7 +177,8 @@
       "Bash(RUST_LOG=info cargo run --release --bin uveddi --features=\"alpha,ai\" -- analyze reports/django/django/template --output-format html --output reports/django_template_analysis_report.html)",
       "Bash(RUST_LOG=info cargo run --release --bin uveddi --features=\"alpha,ai\" -- analyze reports/express --output-format html --output reports/express_analysis_report.html)",
       "Bash(RUST_LOG=info cargo run --release --bin uveddi --features=\"alpha,ai\" -- analyze reports/clap/src --output-format html --output reports/clap_ai_analysis_report.html --enable-ai --ollama-model deepseek-coder:6.7b)",
-      "Bash(RUST_LOG=info cargo run --release --bin uveddi --features=\"alpha,ai\" -- analyze reports/serde/serde --output-format html --output reports/serde_analysis_report.html)"
+      "Bash(RUST_LOG=info cargo run --release --bin uveddi --features=\"alpha,ai\" -- analyze reports/serde/serde --output-format html --output reports/serde_analysis_report.html)",
+      "Bash(./scripts/comprehensive_test_runner.sh:*)"
     ],
     "deny": []
   }
