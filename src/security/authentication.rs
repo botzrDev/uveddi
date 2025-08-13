@@ -238,42 +238,14 @@ impl AuthenticationService {
         // TODO: OIDC disabled for alpha release
         // let mut oidc_clients = HashMap::new();
 
+        // TODO: OAuth2 client initialization disabled for alpha release
+        // OAuth2 integration causes compilation issues and is not needed for core analysis
+        /*
         // Initialize OAuth clients
         for provider in &config.oauth_providers {
-            // Create OAuth2 client with OAuth2 5.0 API
-            let client_id = ClientId::new(provider.client_id.clone());
-            let client_secret = ClientSecret::new(provider.client_secret.clone());
-            
-            let auth_url = AuthUrl::new(provider.auth_url.clone()).map_err(|e| {
-                SecurityError::OAuth2Error {
-                    error: format!("Invalid auth URL for {}: {}", provider.provider_name, e),
-                }
-            })?;
-            
-            let token_url = TokenUrl::new(provider.token_url.clone()).map_err(|e| {
-                SecurityError::OAuth2Error {
-                    error: format!("Invalid token URL for {}: {}", provider.provider_name, e),
-                }
-            })?;
-            
-            let redirect_url = RedirectUrl::new(provider.redirect_url.clone()).map_err(|e| {
-                SecurityError::OAuth2Error {
-                    error: format!(
-                        "Invalid redirect URL for {}: {}",
-                        provider.provider_name, e
-                    ),
-                }
-            })?;
-            
-            // Using constructor pattern compatible with OAuth2 5.0
-            let client = BasicClient::new(client_id)
-                .set_client_secret(client_secret)
-                .set_auth_url(auth_url)
-                .set_token_url(token_url)
-                .set_redirect_uri(redirect_url);
-
-            oauth_clients.insert(provider.provider_name.clone(), client);
+            // OAuth2 client configuration would go here
         }
+        */
 
         // TODO: OIDC clients initialization disabled for alpha release
         /*
@@ -331,39 +303,11 @@ impl AuthenticationService {
         })
     }
 
-    /// Generate OAuth authorization URL
-    pub async fn get_oauth_auth_url(&self, provider: &str) -> SecurityResult<(String, String)> {
-        let client =
-            self.oauth_clients
-                .get(provider)
-                .ok_or_else(|| SecurityError::OAuth2Error {
-                    error: format!("OAuth provider '{}' not found", provider),
-                })?;
-
-        let provider_config = self
-            .config
-            .oauth_providers
-            .iter()
-            .find(|p| p.provider_name == provider)
-            .ok_or_else(|| SecurityError::OAuth2Error {
-                error: format!("OAuth provider config '{}' not found", provider),
-            })?;
-
-        let (pkce_challenge, pkce_verifier) = PkceCodeChallenge::new_random_sha256();
-
-        // Updated for OAuth2 5.0
-        let csrf_token = CsrfToken::new_random();
-        let mut auth_request = client.authorize_url(|| csrf_token.clone());
-
-        for scope in &provider_config.scopes {
-            auth_request = auth_request.add_scope(Scope::new(scope.clone()));
-        }
-
-        let auth_url = auth_request.set_pkce_challenge(pkce_challenge).url();
-
-        // Store PKCE verifier for later use (in production, use secure storage)
-        // This is a simplified implementation
-        Ok((auth_url.to_string(), csrf_token.secret().clone()))
+    /// Generate OAuth authorization URL (DISABLED FOR ALPHA RELEASE)
+    pub async fn get_oauth_auth_url(&self, _provider: &str) -> SecurityResult<(String, String)> {
+        Err(SecurityError::AuthenticationFailed {
+            reason: "OAuth2 authentication is disabled in alpha release".to_string(),
+        })
     }
 
     /// Generate OIDC authorization URL (DISABLED FOR ALPHA RELEASE)
@@ -413,52 +357,16 @@ impl AuthenticationService {
         */
     }
 
-    /// Authenticate user with OAuth authorization code
+    /// Authenticate user with OAuth authorization code (DISABLED FOR ALPHA RELEASE)  
     pub async fn authenticate_oauth(
         &self,
-        provider: &str,
-        auth_code: &str,
-        csrf_token: &str,
+        _provider: &str,
+        _auth_code: &str,
+        _csrf_token: &str,
     ) -> SecurityResult<AuthenticatedUser> {
-        let client =
-            self.oauth_clients
-                .get(provider)
-                .ok_or_else(|| SecurityError::OAuth2Error {
-                    error: format!("OAuth provider '{}' not found", provider),
-                })?;
-
-        // Exchange authorization code for access token - updated for OAuth2 5.0
-        let http_client = reqwest::Client::new();
-        let auth_code = AuthorizationCode::new(auth_code.to_string());
-        let token_response = client
-            .exchange_code(auth_code)
-            .request_async(&http_client)
-            .await
-            .map_err(|e| SecurityError::OAuthProviderError {
-                provider: provider.to_string(),
-                error: format!("Token exchange failed: {}", e),
-            })?;
-
-        // Get user info (this would typically call the provider's user info endpoint)
-        let user_info = self
-            .get_oauth_user_info(provider, token_response.access_token().secret())
-            .await?;
-
-        // Create or update user
-        let user = self.create_or_update_user(user_info).await?;
-
-        // Create session
-        let session = self.create_session(&user).await?;
-
-        // Create authenticated user
-        let auth_user = AuthenticatedUser::new(
-            user,
-            vec![UserRole::Developer], // Default role, would be determined by business logic
-            vec![],                    // Permissions would be loaded from database
-            Some(session.id),
-        );
-
-        Ok(auth_user)
+        Err(SecurityError::AuthenticationFailed {
+            reason: "OAuth2 authentication is disabled in alpha release".to_string(),
+        })
     }
 
     /// Authenticate user with OIDC authorization code (DISABLED FOR ALPHA RELEASE)

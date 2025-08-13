@@ -85,7 +85,7 @@ impl AnalysisService {
 
         // Detect workspace information
         let workspace_info = self.detect_workspace(path).await?;
-        info!("Detected workspace: {:?}", workspace_info.manifest_path);
+        info!("Detected workspace: {:?}", workspace_info.manifest_paths);
 
         // Discover files to analyze
         let source_files = self.discover_source_files(path).await?;
