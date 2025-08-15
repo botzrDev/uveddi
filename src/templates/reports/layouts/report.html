@@ -9,20 +9,49 @@
 
 {% block nav_content %}
     <ul class="nav-list" role="list">
-        <li><a href="#executive-summary" class="nav-link">Executive Summary</a></li>
-        <li><a href="#architecture-overview" class="nav-link">Architecture</a></li>
-        <li><a href="#issues-analysis" class="nav-link">Issues Analysis</a></li>
-        <li><a href="#technical-debt" class="nav-link">Technical Debt</a></li>
-        <li><a href="#recommendations" class="nav-link">Recommendations</a></li>
-        <li><a href="#appendix" class="nav-link">Appendix</a></li>
+        <li><a href="#executive-summary" class="nav-link" aria-describedby="nav-summary-desc">
+            <span class="nav-icon" aria-hidden="true">📊</span>
+            Executive Summary
+            <span id="nav-summary-desc" class="sr-only">Overview of analysis results</span>
+        </a></li>
+        <li><a href="#architecture-overview" class="nav-link" aria-describedby="nav-arch-desc">
+            <span class="nav-icon" aria-hidden="true">🏗️</span>
+            Architecture
+            <span id="nav-arch-desc" class="sr-only">System architecture diagrams and analysis</span>
+        </a></li>
+        <li><a href="#issues-analysis" class="nav-link" aria-describedby="nav-issues-desc">
+            <span class="nav-icon" aria-hidden="true">⚠️</span>
+            Issues Analysis
+            <span id="nav-issues-desc" class="sr-only">Detailed breakdown of detected issues</span>
+        </a></li>
+        <li><a href="#technical-debt" class="nav-link" aria-describedby="nav-debt-desc">
+            <span class="nav-icon" aria-hidden="true">💳</span>
+            Technical Debt
+            <span id="nav-debt-desc" class="sr-only">Technical debt metrics and analysis</span>
+        </a></li>
+        <li><a href="#recommendations" class="nav-link" aria-describedby="nav-rec-desc">
+            <span class="nav-icon" aria-hidden="true">💡</span>
+            Recommendations
+            <span id="nav-rec-desc" class="sr-only">Suggested improvements and action items</span>
+        </a></li>
+        <li><a href="#appendix" class="nav-link" aria-describedby="nav-app-desc">
+            <span class="nav-icon" aria-hidden="true">📋</span>
+            Appendix
+            <span id="nav-app-desc" class="sr-only">Additional configuration and metadata</span>
+        </a></li>
     </ul>
     
-    <div class="nav-actions">
-        <button type="button" class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark mode">
-            <span class="theme-icon">🌙</span>
+    <div class="nav-actions" role="toolbar" aria-label="Report actions">
+        <button type="button" class="theme-toggle" onclick="toggleTheme()" 
+                aria-label="Toggle between light and dark theme" 
+                aria-pressed="false">
+            <span class="theme-icon" aria-hidden="true">🌙</span>
+            <span class="sr-only">Current theme: light</span>
         </button>
-        <button type="button" class="print-button" onclick="window.print()" aria-label="Print report">
-            <span class="print-icon">🖨️</span>
+        <button type="button" class="print-button" onclick="window.print()" 
+                aria-label="Print this report">
+            <span class="print-icon" aria-hidden="true">🖨️</span>
+            <span class="sr-only">Print report</span>
         </button>
     </div>
 {% endblock %}
@@ -35,17 +64,39 @@
 
     <section id="architecture-overview" class="report-section" aria-labelledby="architecture-heading">
         <h2 id="architecture-heading">Architecture Overview</h2>
+        
         {% if architecture_diagrams %}
-            <div class="architecture-diagrams">
+            {% from "components/interactive-diagrams.html" import render_diagram_toolbar, render_interactive_diagram_selector, render_fullscreen_diagram_modal %}
+            
+            {{ render_diagram_toolbar() }}
+            {{ render_interactive_diagram_selector(architecture_diagrams) }}
+            {{ render_fullscreen_diagram_modal() }}
+            
+            <!-- Fallback: Traditional diagram view for non-interactive mode -->
+            <div class="traditional-diagrams" style="display: none;">
+                <h3>Traditional View</h3>
                 {% for diagram in architecture_diagrams %}
                     <div class="diagram-container">
-                        <h3>{{ diagram.title }}</h3>
+                        <h4>{{ diagram.title }}</h4>
                         <div class="mermaid">{{ diagram.content }}</div>
                         {% if diagram.description %}
                             <p class="diagram-description">{{ diagram.description }}</p>
                         {% endif %}
                     </div>
                 {% endfor %}
+            </div>
+        {% else %}
+            <div class="no-architecture-diagrams">
+                <div class="empty-state">
+                    <div class="empty-state-icon">🏗️</div>
+                    <h3>No Architecture Diagrams</h3>
+                    <p>No architectural diagrams were generated for this analysis. This typically occurs when:</p>
+                    <ul>
+                        <li>No significant architectural issues were detected</li>
+                        <li>The codebase structure is too simple to warrant diagram generation</li>
+                        <li>Diagram generation was disabled in the analysis configuration</li>
+                    </ul>
+                </div>
             </div>
         {% endif %}
     </section>
@@ -112,50 +163,402 @@
 
 {% block scripts %}
     <script>
-        // Theme management
+        // Enhanced theme management with accessibility support
         function toggleTheme() {
             const html = document.documentElement;
             const currentTheme = html.getAttribute('data-theme');
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
             html.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
             
+            // Update button state and content
+            const themeButton = document.querySelector('.theme-toggle');
             const themeIcon = document.querySelector('.theme-icon');
-            themeIcon.textContent = newTheme === 'dark' ? '☀️' : '🌙';
+            const themeStatus = themeButton.querySelector('.sr-only');
+            
+            if (themeIcon) {
+                themeIcon.textContent = newTheme === 'dark' ? '☀️' : '🌙';
+            }
+            
+            if (themeStatus) {
+                themeStatus.textContent = `Current theme: ${newTheme}`;
+            }
+            
+            themeButton.setAttribute('aria-pressed', newTheme === 'dark');
+            
+            // Announce theme change to screen readers
+            announceToScreenReader(`Theme changed to ${newTheme} mode`);
         }
 
-        // Initialize theme from localStorage
+        // Screen reader announcements
+        function announceToScreenReader(message) {
+            const announcement = document.createElement('div');
+            announcement.setAttribute('aria-live', 'polite');
+            announcement.setAttribute('aria-atomic', 'true');
+            announcement.className = 'sr-only';
+            announcement.textContent = message;
+            
+            document.body.appendChild(announcement);
+            
+            // Remove after announcement
+            setTimeout(() => {
+                document.body.removeChild(announcement);
+            }, 1000);
+        }
+
+        // Enhanced navigation with current page tracking
+        function updateCurrentNavigation() {
+            const sections = document.querySelectorAll('.report-section[id]');
+            const navLinks = document.querySelectorAll('.nav-link[href^="#"]');
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const id = entry.target.id;
+                        navLinks.forEach(link => {
+                            const isCurrentLink = link.getAttribute('href') === `#${id}`;
+                            link.setAttribute('aria-current', isCurrentLink ? 'page' : 'false');
+                            link.classList.toggle('current', isCurrentLink);
+                        });
+                    }
+                });
+            }, {
+                rootMargin: '-10% 0px -80% 0px'
+            });
+            
+            sections.forEach(section => observer.observe(section));
+        }
+
+        // Keyboard navigation enhancements
+        function enhanceKeyboardNavigation() {
+            // Skip link functionality
+            const skipLink = document.querySelector('.skip-link');
+            if (skipLink) {
+                skipLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const target = document.querySelector('#main-content');
+                    if (target) {
+                        target.focus();
+                        target.scrollIntoView({ behavior: 'smooth' });
+                    }
+                });
+            }
+            
+            // Escape key to close overlays/modals (future use)
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    // Close any open overlays
+                    const openOverlays = document.querySelectorAll('[aria-expanded="true"]');
+                    openOverlays.forEach(overlay => {
+                        overlay.setAttribute('aria-expanded', 'false');
+                    });
+                }
+            });
+        }
+
+        // Initialize theme from localStorage with accessibility support
         document.addEventListener('DOMContentLoaded', function() {
             const savedTheme = localStorage.getItem('theme') || 'light';
-            document.documentElement.setAttribute('data-theme', savedTheme);
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const initialTheme = savedTheme || (prefersDark ? 'dark' : 'light');
             
+            document.documentElement.setAttribute('data-theme', initialTheme);
+            
+            const themeButton = document.querySelector('.theme-toggle');
             const themeIcon = document.querySelector('.theme-icon');
+            const themeStatus = themeButton.querySelector('.sr-only');
+            
             if (themeIcon) {
-                themeIcon.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+                themeIcon.textContent = initialTheme === 'dark' ? '☀️' : '🌙';
             }
+            
+            if (themeStatus) {
+                themeStatus.textContent = `Current theme: ${initialTheme}`;
+            }
+            
+            themeButton.setAttribute('aria-pressed', initialTheme === 'dark');
+            
+            // Listen for system theme changes
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+                if (!localStorage.getItem('theme')) {
+                    const newTheme = e.matches ? 'dark' : 'light';
+                    document.documentElement.setAttribute('data-theme', newTheme);
+                    themeIcon.textContent = newTheme === 'dark' ? '☀️' : '🌙';
+                    themeStatus.textContent = `Current theme: ${newTheme}`;
+                    themeButton.setAttribute('aria-pressed', newTheme === 'dark');
+                }
+            });
+            
+            // Initialize accessibility enhancements
+            updateCurrentNavigation();
+            enhanceKeyboardNavigation();
             
             // Initialize Mermaid diagrams
             if (typeof mermaid !== 'undefined') {
                 mermaid.initialize({ 
-                    theme: savedTheme === 'dark' ? 'dark' : 'default',
+                    theme: initialTheme === 'dark' ? 'dark' : 'default',
                     startOnLoad: true,
                     securityLevel: 'loose'
                 });
             }
         });
 
-        // Smooth scrolling for anchor links
+        // Enhanced smooth scrolling with reduced motion support
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
                 e.preventDefault();
                 const target = document.querySelector(this.getAttribute('href'));
                 if (target) {
+                    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
                     target.scrollIntoView({
-                        behavior: 'smooth',
+                        behavior: prefersReducedMotion ? 'auto' : 'smooth',
                         block: 'start'
                     });
+                    
+                    // Set focus for keyboard users
+                    target.focus();
                 }
             });
+        });
+
+        // Interactive Diagram Functionality
+        let currentZoom = 1;
+        let currentDiagram = null;
+        let allDiagrams = [];
+
+        // Initialize diagram data on page load
+        function initializeDiagramData() {
+            const diagramCards = document.querySelectorAll('.interactive-diagram-card');
+            allDiagrams = Array.from(diagramCards).map(card => ({
+                id: card.onclick ? card.onclick.toString().match(/'([^']+)'/)[1] : Math.random().toString(36),
+                type: card.dataset.type || 'architecture',
+                complexity: card.dataset.complexity || 'medium',
+                title: card.querySelector('.diagram-title')?.textContent || 'Untitled',
+                element: card
+            }));
+        }
+
+        // Filter diagrams based on type and complexity
+        function filterDiagrams() {
+            const typeFilter = document.getElementById('diagram-type-filter')?.value || 'all';
+            const complexityFilter = document.getElementById('complexity-filter')?.value || 'all';
+            
+            allDiagrams.forEach(diagram => {
+                const matchesType = typeFilter === 'all' || diagram.type === typeFilter;
+                const matchesComplexity = complexityFilter === 'all' || diagram.complexity === complexityFilter;
+                const shouldShow = matchesType && matchesComplexity;
+                
+                diagram.element.style.display = shouldShow ? 'block' : 'none';
+                
+                // Update accessibility
+                diagram.element.setAttribute('aria-hidden', !shouldShow);
+            });
+            
+            // Announce filter results to screen readers
+            const visibleCount = allDiagrams.filter(d => d.element.style.display !== 'none').length;
+            announceToScreenReader(`Showing ${visibleCount} of ${allDiagrams.length} diagrams`);
+        }
+
+        // Reset diagram filters
+        function resetDiagramFilters() {
+            const typeSelect = document.getElementById('diagram-type-filter');
+            const complexitySelect = document.getElementById('complexity-filter');
+            
+            if (typeSelect) typeSelect.value = 'all';
+            if (complexitySelect) complexitySelect.value = 'all';
+            
+            filterDiagrams();
+            announceToScreenReader('All diagram filters reset');
+        }
+
+        // Show interactive diagram in modal
+        function showInteractiveDiagram(diagramId) {
+            const modal = document.getElementById('diagram-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalDescription = document.getElementById('diagram-description');
+            const diagramContainer = document.getElementById('modal-mermaid-diagram');
+            
+            if (!modal || !modalTitle || !diagramContainer) return;
+            
+            // Find diagram data
+            const diagram = allDiagrams.find(d => d.id === diagramId);
+            if (!diagram) return;
+            
+            // Update modal content
+            modalTitle.textContent = diagram.title;
+            modalDescription.textContent = `Detailed view of ${diagram.title} - ${diagram.type} diagram with ${diagram.complexity} complexity`;
+            
+            // Reset zoom
+            currentZoom = 1;
+            updateZoomContainer();
+            
+            // Show modal
+            modal.setAttribute('aria-hidden', 'false');
+            modal.style.display = 'flex';
+            
+            // Focus management
+            const closeButton = modal.querySelector('.modal-close-btn');
+            if (closeButton) closeButton.focus();
+            
+            // Load diagram content (placeholder for now)
+            diagramContainer.innerHTML = `
+                <div style="text-align: center; padding: 2rem; color: var(--color-gray-600);">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">📊</div>
+                    <h3>${diagram.title}</h3>
+                    <p>Interactive diagram view coming soon</p>
+                    <p>Type: ${diagram.type} | Complexity: ${diagram.complexity}</p>
+                </div>
+            `;
+            
+            currentDiagram = diagram;
+            
+            // Prevent body scroll
+            document.body.style.overflow = 'hidden';
+            
+            announceToScreenReader(`Opened ${diagram.title} diagram in full screen view`);
+        }
+
+        // Handle keyboard navigation for diagram cards
+        function handleDiagramCardKeydown(event, diagramId) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                showInteractiveDiagram(diagramId);
+            }
+        }
+
+        // Close modal
+        function closeModal() {
+            const modal = document.getElementById('diagram-modal');
+            if (!modal) return;
+            
+            modal.setAttribute('aria-hidden', 'true');
+            modal.style.display = 'none';
+            
+            // Restore focus to the diagram card
+            if (currentDiagram) {
+                currentDiagram.element.focus();
+            }
+            
+            // Restore body scroll
+            document.body.style.overflow = '';
+            
+            currentDiagram = null;
+            announceToScreenReader('Closed diagram view');
+        }
+
+        // Zoom functions
+        function zoomDiagram(direction) {
+            const zoomStep = 0.2;
+            const minZoom = 0.5;
+            const maxZoom = 3.0;
+            
+            if (direction === 'in') {
+                currentZoom = Math.min(currentZoom + zoomStep, maxZoom);
+            } else if (direction === 'out') {
+                currentZoom = Math.max(currentZoom - zoomStep, minZoom);
+            }
+            
+            updateZoomContainer();
+            announceToScreenReader(`Zoom level: ${Math.round(currentZoom * 100)}%`);
+        }
+
+        function resetDiagramZoom() {
+            currentZoom = 1;
+            updateZoomContainer();
+            announceToScreenReader('Zoom reset to 100%');
+        }
+
+        function updateZoomContainer() {
+            const zoomContainer = document.getElementById('zoom-container');
+            if (zoomContainer) {
+                zoomContainer.style.transform = `scale(${currentZoom})`;
+            }
+        }
+
+        // Download diagram
+        function downloadDiagram() {
+            if (!currentDiagram) return;
+            
+            // Placeholder for download functionality
+            announceToScreenReader(`Download initiated for ${currentDiagram.title}`);
+            
+            // In a real implementation, this would generate and download the SVG/PNG
+            console.log('Download diagram:', currentDiagram.title);
+        }
+
+        // Toggle diagram view (grid/list)
+        function toggleDiagramView(view) {
+            const grid = document.getElementById('diagram-grid');
+            const buttons = document.querySelectorAll('.toolbar-btn[data-view]');
+            
+            if (!grid) return;
+            
+            // Update grid class
+            grid.className = view === 'list' ? 'diagram-grid list-view' : 'diagram-grid';
+            
+            // Update button states
+            buttons.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.view === view);
+                btn.setAttribute('aria-pressed', btn.dataset.view === view);
+            });
+            
+            announceToScreenReader(`Switched to ${view} view`);
+        }
+
+        // Export all diagrams
+        function exportAllDiagrams() {
+            announceToScreenReader('Export all diagrams initiated');
+            console.log('Export all diagrams');
+        }
+
+        // Toggle diagram settings
+        function toggleDiagramSettings() {
+            announceToScreenReader('Diagram settings opened');
+            console.log('Toggle diagram settings');
+        }
+
+        // Keyboard shortcuts for modal
+        document.addEventListener('keydown', function(e) {
+            const modal = document.getElementById('diagram-modal');
+            if (!modal || modal.getAttribute('aria-hidden') === 'true') return;
+            
+            switch(e.key) {
+                case 'Escape':
+                    closeModal();
+                    break;
+                case '+':
+                case '=':
+                    if (e.ctrlKey || e.metaKey) {
+                        e.preventDefault();
+                        zoomDiagram('in');
+                    }
+                    break;
+                case '-':
+                    if (e.ctrlKey || e.metaKey) {
+                        e.preventDefault();
+                        zoomDiagram('out');
+                    }
+                    break;
+                case '0':
+                    if (e.ctrlKey || e.metaKey) {
+                        e.preventDefault();
+                        resetDiagramZoom();
+                    }
+                    break;
+            }
+        });
+
+        // Initialize interactive diagrams on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDiagramData();
+            
+            // Set initial view state
+            const firstViewButton = document.querySelector('.toolbar-btn[data-view]');
+            if (firstViewButton) {
+                firstViewButton.classList.add('active');
+                firstViewButton.setAttribute('aria-pressed', 'true');
+            }
         });
     </script>
 {% endblock %}

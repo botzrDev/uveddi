@@ -1,7 +1,12 @@
 use crate::analysis::detectors::anti_patterns::code_duplication::CodeDuplicationDetector;
+use crate::analysis::detectors::anti_patterns::data_clumps::DataClumpsDetector;
 use crate::analysis::detectors::anti_patterns::dead_code::DeadCodeDetector;
+use crate::analysis::detectors::anti_patterns::feature_envy::FeatureEnvyDetector;
 use crate::analysis::detectors::anti_patterns::god_object::GodObjectDetector;
 use crate::analysis::detectors::anti_patterns::large_classes::LargeClassDetector;
+use crate::analysis::detectors::anti_patterns::long_methods::LongMethodsDetector;
+use crate::analysis::detectors::anti_patterns::magic_values::MagicValuesDetector;
+use crate::analysis::detectors::anti_patterns::shotgun_surgery::ShotgunSurgeryDetector;
 use crate::analysis::detectors::anti_patterns::tight_coupling::TightCouplingDetector;
 use crate::analysis::AnalysisDetector;
 use crate::error::UveddiError;
@@ -26,11 +31,19 @@ impl DetectorFactory {
     /// A vector of boxed detectors implementing the `AnalysisDetector` trait
     pub fn create_default_detectors() -> Vec<Box<dyn AnalysisDetector + Send + Sync>> {
         vec![
+            // Original detectors
             Box::new(GodObjectDetector::new(5, 8)),
             Box::new(CodeDuplicationDetector::new()),
             Box::new(DeadCodeDetector::with_default_config()),
             Box::new(LargeClassDetector::with_default_config()),
             Box::new(TightCouplingDetector::default()),
+            
+            // Enhanced anti-pattern detectors
+            Box::new(ShotgunSurgeryDetector::new()),
+            Box::new(FeatureEnvyDetector::new()),
+            Box::new(DataClumpsDetector::new()),
+            Box::new(LongMethodsDetector::default()),
+            Box::new(MagicValuesDetector::default()),
         ]
     }
 
@@ -73,6 +86,11 @@ impl DetectorFactory {
             "dead_code" => Ok(Box::new(DeadCodeDetector::with_default_config())),
             "large_classes" => Ok(Box::new(LargeClassDetector::with_default_config())),
             "tight_coupling" => Ok(Box::new(TightCouplingDetector::default())),
+            "shotgun_surgery" => Ok(Box::new(ShotgunSurgeryDetector::new())),
+            "feature_envy" => Ok(Box::new(FeatureEnvyDetector::new())),
+            "data_clumps" => Ok(Box::new(DataClumpsDetector::new())),
+            "long_methods" => Ok(Box::new(LongMethodsDetector::default())),
+            "magic_values" => Ok(Box::new(MagicValuesDetector::default())),
             _ => Err(UveddiError::config_error(
                 &format!("Unknown detector: {}", name),
                 "detector factory",

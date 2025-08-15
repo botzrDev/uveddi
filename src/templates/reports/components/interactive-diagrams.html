@@ -1,0 +1,193 @@
+{% macro render_interactive_diagram_selector(architecture_diagrams) %}
+<div class="interactive-diagram-selector" role="region" aria-labelledby="diagram-selector-heading">
+    <h3 id="diagram-selector-heading">Interactive Architecture Diagrams</h3>
+    
+    <div class="diagram-filters" role="toolbar" aria-label="Diagram filters">
+        <div class="filter-group">
+            <label for="diagram-type-filter" class="filter-label">Filter by Type:</label>
+            <select id="diagram-type-filter" class="filter-select" onchange="filterDiagrams()">
+                <option value="all">All Diagrams</option>
+                <option value="architecture">Architecture Overview</option>
+                <option value="anti-pattern">Anti-Pattern Analysis</option>
+                <option value="dependency">Dependency Maps</option>
+                <option value="component">Component Relationships</option>
+            </select>
+        </div>
+        
+        <div class="filter-group">
+            <label for="complexity-filter" class="filter-label">Complexity:</label>
+            <select id="complexity-filter" class="filter-select" onchange="filterDiagrams()">
+                <option value="all">All Levels</option>
+                <option value="low">Low Complexity</option>
+                <option value="medium">Medium Complexity</option>
+                <option value="high">High Complexity</option>
+            </select>
+        </div>
+        
+        <div class="filter-group">
+            <button type="button" class="filter-reset-btn" onclick="resetDiagramFilters()" aria-label="Reset all filters">
+                🔄 Reset Filters
+            </button>
+        </div>
+    </div>
+    
+    <div class="diagram-grid" id="diagram-grid">
+        {% if architecture_diagrams %}
+            {% for diagram in architecture_diagrams %}
+                <div class="interactive-diagram-card" 
+                     data-type="{{ diagram.type | default(value='architecture') }}" 
+                     data-complexity="{{ diagram.complexity | default(value='medium') }}"
+                     role="button"
+                     tabindex="0"
+                     aria-describedby="diagram-{{ loop.index }}-desc"
+                     onclick="showInteractiveDiagram('{{ diagram.id | default(value=loop.index) }}')"
+                     onkeydown="handleDiagramCardKeydown(event, '{{ diagram.id | default(value=loop.index) }}')">
+                    
+                    <div class="diagram-card-header">
+                        <div class="diagram-icon">
+                            {% if diagram.type == "anti-pattern" %}🚨
+                            {% elif diagram.type == "dependency" %}🔗
+                            {% elif diagram.type == "component" %}📦
+                            {% else %}🏗️{% endif %}
+                        </div>
+                        <h4 class="diagram-title">{{ diagram.title }}</h4>
+                        <div class="complexity-badge complexity-{{ diagram.complexity | default(value='medium') }}">
+                            {{ diagram.complexity | default(value='medium') | title }}
+                        </div>
+                    </div>
+                    
+                    <div class="diagram-preview">
+                        <svg viewBox="0 0 200 120" class="preview-svg" aria-hidden="true">
+                            <!-- Simplified preview representation -->
+                            <rect x="10" y="20" width="40" height="30" fill="var(--color-primary)" opacity="0.3" rx="4"/>
+                            <rect x="80" y="20" width="40" height="30" fill="var(--color-primary)" opacity="0.3" rx="4"/>
+                            <rect x="150" y="20" width="40" height="30" fill="var(--color-primary)" opacity="0.3" rx="4"/>
+                            <line x1="50" y1="35" x2="80" y2="35" stroke="var(--color-primary)" stroke-width="2"/>
+                            <line x1="120" y1="35" x2="150" y2="35" stroke="var(--color-primary)" stroke-width="2"/>
+                            {% if diagram.issues_count %}
+                                <circle cx="180" cy="20" r="8" fill="var(--color-error)" opacity="0.8"/>
+                                <text x="180" y="24" text-anchor="middle" fill="white" font-size="10">{{ diagram.issues_count }}</text>
+                            {% endif %}
+                        </svg>
+                    </div>
+                    
+                    <div class="diagram-meta">
+                        <p id="diagram-{{ loop.index }}-desc" class="diagram-description">
+                            {{ diagram.description | default(value="Interactive architectural diagram") }}
+                        </p>
+                        {% if diagram.component_count %}
+                            <div class="meta-stat">
+                                <span class="stat-icon">📦</span>
+                                <span>{{ diagram.component_count }} components</span>
+                            </div>
+                        {% endif %}
+                        {% if diagram.issues_count %}
+                            <div class="meta-stat">
+                                <span class="stat-icon">⚠️</span>
+                                <span>{{ diagram.issues_count }} issues</span>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="diagram-actions">
+                        <button type="button" class="action-btn primary" aria-label="View {{ diagram.title }} in full screen">
+                            👁️ View
+                        </button>
+                        <button type="button" class="action-btn secondary" aria-label="Download {{ diagram.title }} as image">
+                            💾 Download
+                        </button>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-diagrams-message">
+                <div class="empty-state-icon">📊</div>
+                <h4>No Interactive Diagrams Available</h4>
+                <p>No architectural diagrams were generated for this analysis. This may occur if no architectural issues were detected or if diagram generation was disabled.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endmacro %}
+
+{% macro render_fullscreen_diagram_modal() %}
+<div id="diagram-modal" class="diagram-modal" aria-hidden="true" role="dialog" aria-labelledby="modal-title" aria-describedby="modal-description">
+    <div class="modal-backdrop" onclick="closeModal()" aria-label="Close modal"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modal-title" class="modal-title">Architecture Diagram</h3>
+            <div class="modal-controls">
+                <button type="button" class="modal-control-btn" onclick="zoomDiagram('in')" aria-label="Zoom in">
+                    🔍 +
+                </button>
+                <button type="button" class="modal-control-btn" onclick="zoomDiagram('out')" aria-label="Zoom out">
+                    🔍 -
+                </button>
+                <button type="button" class="modal-control-btn" onclick="resetDiagramZoom()" aria-label="Reset zoom">
+                    🔄 Reset
+                </button>
+                <button type="button" class="modal-control-btn" onclick="downloadDiagram()" aria-label="Download diagram">
+                    💾 Download
+                </button>
+                <button type="button" class="modal-close-btn" onclick="closeModal()" aria-label="Close modal">
+                    ✕
+                </button>
+            </div>
+        </div>
+        
+        <div class="modal-body">
+            <div id="modal-description" class="diagram-info">
+                <p id="diagram-description">Detailed architectural diagram view</p>
+            </div>
+            
+            <div class="diagram-container-modal" id="modal-diagram-container">
+                <div class="diagram-zoom-container" id="zoom-container">
+                    <div class="mermaid" id="modal-mermaid-diagram">
+                        <!-- Diagram content will be inserted here -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="diagram-legend" id="diagram-legend">
+                <h4>Legend</h4>
+                <div class="legend-items">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: var(--color-primary);"></div>
+                        <span>Components</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: var(--color-error);"></div>
+                        <span>Issues</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: var(--color-warning);"></div>
+                        <span>Dependencies</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endmacro %}
+
+{% macro render_diagram_toolbar() %}
+<div class="diagram-toolbar" role="toolbar" aria-label="Diagram view options">
+    <div class="toolbar-group">
+        <button type="button" class="toolbar-btn" onclick="toggleDiagramView('grid')" aria-label="Grid view" data-view="grid">
+            📊 Grid
+        </button>
+        <button type="button" class="toolbar-btn" onclick="toggleDiagramView('list')" aria-label="List view" data-view="list">
+            📋 List
+        </button>
+    </div>
+    
+    <div class="toolbar-group">
+        <button type="button" class="toolbar-btn" onclick="exportAllDiagrams()" aria-label="Export all diagrams">
+            📦 Export All
+        </button>
+        <button type="button" class="toolbar-btn" onclick="toggleDiagramSettings()" aria-label="Diagram settings">
+            ⚙️ Settings
+        </button>
+    </div>
+</div>
+{% endmacro %}
