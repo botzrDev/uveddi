@@ -1,0 +1,1562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uveddi Architectural Analysis Report</title>
+    
+    <!-- Mermaid.js for diagram rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* Modern CSS Variables for theming */
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #64748b;
+            --success-color: #059669;
+            --warning-color: #d97706;
+            --error-color: #dc2626;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-tertiary: #e2e8f0;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --border-color: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --radius: 8px;
+        }
+
+        [data-theme="dark"] {
+            --primary-color: #3b82f6;
+            --secondary-color: #94a3b8;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --border-color: #475569;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header Styles */
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 2rem;
+            border-radius: var(--radius);
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 49%, rgba(255,255,255,0.1) 50%, transparent 51%);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header-meta {
+            position: relative;
+            z-index: 1;
+            opacity: 0.9;
+        }
+
+        /* Navigation */
+        .nav {
+            background: var(--bg-primary);
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-link:hover {
+            background: var(--bg-tertiary);
+            color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+
+        .theme-toggle {
+            background: none;
+            border: 2px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        /* Card Styles */
+        .card {
+            background: var(--bg-primary);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Dashboard Grid */
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-primary);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.15);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            font-size: 0.875rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-critical { color: var(--error-color); }
+        .stat-high { color: var(--warning-color); }
+        .stat-medium { color: var(--primary-color); }
+        .stat-low { color: var(--success-color); }
+
+        /* Severity Badges */
+        .severity-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .severity-critical {
+            background: rgba(220, 38, 38, 0.1);
+            color: var(--error-color);
+            border: 1px solid rgba(220, 38, 38, 0.2);
+        }
+
+        .severity-high {
+            background: rgba(217, 119, 6, 0.1);
+            color: var(--warning-color);
+            border: 1px solid rgba(217, 119, 6, 0.2);
+        }
+
+        .severity-medium {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary-color);
+            border: 1px solid rgba(37, 99, 235, 0.2);
+        }
+
+        .severity-low {
+            background: rgba(5, 150, 105, 0.1);
+            color: var(--success-color);  
+            border: 1px solid rgba(5, 150, 105, 0.2);
+        }
+
+        /* Issue Cards */
+        .issue-card {
+            background: var(--bg-primary);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--primary-color);
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+        }
+
+        .issue-card:hover {
+            transform: translateX(4px);
+            box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .issue-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .issue-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            flex: 1;
+        }
+
+        .code-snippet {
+            background: var(--bg-tertiary);
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin: 1rem 0;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.875rem;
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+        }
+
+        /* Diagram Styles */
+        .diagram-container {
+            background: var(--bg-primary);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            position: relative;
+        }
+
+        .diagram-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+
+        /* Diagram Link Cards */
+        .diagram-intro {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: var(--radius);
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .diagram-links-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .diagram-link-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .diagram-link-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+            border-color: var(--primary-color);
+        }
+
+        .diagram-card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .diagram-card-header h3 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .diagram-card-header i {
+            color: var(--primary-color);
+        }
+
+        .diagram-card-body p {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .diagram-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--primary-color);
+            color: white;
+            text-decoration: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius);
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .diagram-button:hover {
+            background: var(--secondary-color);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
+        }
+
+        /* Diagram Toggle Interface Styles */
+        .diagram-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .diagram-button-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .diagram-button-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+            border-color: var(--primary-color);
+        }
+
+        .diagram-toggle-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius);
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .diagram-toggle-btn:hover {
+            background: var(--secondary-color);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
+        }
+
+        .diagram-content {
+            margin-top: 2rem;
+        }
+
+        #active-diagram-header {
+            display: none;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            margin-bottom: 1rem;
+        }
+
+        #active-diagram-header h3 {
+            margin: 0;
+            color: var(--text-primary);
+            font-size: 1.2rem;
+        }
+
+        .hide-diagram-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: calc(var(--radius) / 2);
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .hide-diagram-btn:hover {
+            background: #ef4444;
+            transform: translateY(-1px);
+        }
+
+        .embedded-diagram {
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .embedded-diagram.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        /* SVG Diagram Styles - Critical for rendering */
+        .svg-diagram {
+            width: 100%;
+            min-height: 400px;
+            display: block;
+            overflow: visible;
+            text-align: center;
+        }
+        
+        .svg-diagram svg {
+            width: 100% !important;
+            height: auto !important;
+            max-width: none !important;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .mermaid {
+            background: var(--bg-primary);
+            border-radius: var(--radius);
+        }
+
+        /* Collapsible sections */
+        .collapsible {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            user-select: none;
+        }
+
+        .collapsible-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .collapsible.active .collapsible-icon {
+            transform: rotate(90deg);
+        }
+
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .collapsible-content.active {
+            max-height: 1000px;
+        }
+
+        /* Search and Filter */
+        .search-filter {
+            background: var(--bg-primary);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            border: 2px solid var(--border-color);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            border-color: var(--primary-color);
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border-color);
+            margin-top: 3rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .nav {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .nav-links {
+                justify-content: center;
+            }
+
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            .issue-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--border-color);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Hidden class for filtering */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Anti-pattern section styles */
+        .anti-pattern-section {
+            margin-bottom: 2.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            background: var(--bg-secondary);
+            padding: 1.5rem;
+        }
+
+        .anti-pattern-header {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+
+        .diagram-explanation {
+            background: var(--bg-tertiary);
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin: 0.5rem 0 1rem 0;
+            border-left: 4px solid var(--primary-color);
+            font-style: italic;
+            color: var(--text-secondary);
+        }
+
+        .diagram-explanation p {
+            margin: 0;
+        }
+
+        /* Enhanced diagram containers */
+        .diagram-isolator {
+            background: var(--bg-primary);
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius);
+            margin: 1.5rem 0;
+            transition: all 0.3s ease;
+        }
+
+        .diagram-isolator:hover {
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow);
+        }
+
+        /* Issue numbering within sections */
+        .anti-pattern-section .issue-card .issue-title {
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        /* Responsive diagram containers */
+        @media (max-width: 768px) {
+            .anti-pattern-section {
+                padding: 1rem;
+            }
+            
+            .anti-pattern-header {
+                font-size: 1.25rem;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+            
+            .diagram-explanation {
+                font-size: 0.875rem;
+                padding: 0.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <div class="header">
+        <h1><i class="fas fa-chart-line"></i> Uveddi Architectural Analysis</h1>
+        <div class="header-meta">
+            <p><i class="fas fa-calendar"></i> Generated on 2025-08-15 17:59:20</p>
+            <p><i class="fas fa-cog"></i> Run ID: 1</p>
+        </div>
+    </div>
+
+    <nav class="nav">
+        <div class="nav-links">
+            <a href="#summary" class="nav-link"><i class="fas fa-chart-pie"></i> Summary</a>
+            <a href="#issues" class="nav-link"><i class="fas fa-exclamation-triangle"></i> Issues & Diagrams</a>
+        </div>
+        <button class="theme-toggle" onclick="toggleTheme()">
+            <i class="fas fa-moon"></i> Dark Mode
+        </button>
+    </nav>
+
+    <section id="summary" class="card">
+        <h2><i class="fas fa-chart-pie"></i> Executive Summary</h2>
+        <p>This analysis identified <strong>11 architectural issues</strong> across <strong>2 files</strong> in your codebase.</p>
+        
+        <div class="dashboard">
+            <div class="stat-card">
+                <div class="stat-number stat-critical">1</div>
+                <div class="stat-label">Critical Issues</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number stat-high">1</div>
+                <div class="stat-label">High Issues</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number stat-medium">9</div>
+                <div class="stat-label">Medium Issues</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number stat-low">0</div>
+                <div class="stat-label">Low Issues</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="card">
+        <h2><i class="fas fa-tachometer-alt"></i> Severity Dashboard</h2>
+        <div class="dashboard">
+
+            <div class="stat-card">
+                <div class="stat-number stat-High">
+                    <i class="fas fa-circle"></i> 1
+                </div>
+                <div class="stat-label">HIGH Severity</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-number stat-Critical">
+                    <i class="fas fa-circle"></i> 1
+                </div>
+                <div class="stat-label">CRITICAL Severity</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-number stat-Medium">
+                    <i class="fas fa-circle"></i> 8
+                </div>
+                <div class="stat-label">MEDIUM Severity</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-number stat-medium">
+                    <i class="fas fa-exclamation-circle"></i> 1
+                </div>
+                <div class="stat-label">MEDIUM Severity</div>
+            </div>
+        </div>
+    </section>
+
+    <section id="diagrams" class="card">
+        <h2 class="collapsible" onclick="toggleSection('diagrams-content')">
+            <i class="fas fa-chevron-right collapsible-icon"></i>
+            <i class="fas fa-project-diagram"></i> 
+            Architecture Diagrams
+        </h2>
+        <div id="diagrams-content" class="collapsible-content">
+            <p class="diagram-intro">
+                <i class="fas fa-info-circle"></i> 
+                The following diagrams provide visual representations of the architectural issues found in your codebase. Click any diagram button to view it inline.
+            </p>
+            
+            <div class="diagram-buttons">
+
+                <div class="diagram-button-card">
+                    <div class="diagram-card-header">
+                        <i class="fas fa-cube"></i>
+                        <h3>God Objects</h3>
+                    </div>
+                    <div class="diagram-card-body">
+                        <p>Interactive architectural diagram showing god objects.</p>
+                        <button onclick="toggleDiagram('diagram-0')" class="diagram-toggle-btn">
+                            <i class="fas fa-eye"></i> Show Diagram
+                        </button>
+                    </div>
+                </div>
+
+                <div class="diagram-button-card">
+                    <div class="diagram-card-header">
+                        <i class="fas fa-cube"></i>
+                        <h3>God Objects</h3>
+                    </div>
+                    <div class="diagram-card-body">
+                        <p>Interactive architectural diagram showing god objects.</p>
+                        <button onclick="toggleDiagram('diagram-1')" class="diagram-toggle-btn">
+                            <i class="fas fa-eye"></i> Show Diagram
+                        </button>
+                    </div>
+                </div>
+
+                <div class="diagram-button-card">
+                    <div class="diagram-card-header">
+                        <i class="fas fa-cube"></i>
+                        <h3>God Objects</h3>
+                    </div>
+                    <div class="diagram-card-body">
+                        <p>Interactive architectural diagram showing god objects.</p>
+                        <button onclick="toggleDiagram('diagram-2')" class="diagram-toggle-btn">
+                            <i class="fas fa-eye"></i> Show Diagram
+                        </button>
+                    </div>
+                </div>
+
+                <div class="diagram-button-card">
+                    <div class="diagram-card-header">
+                        <i class="fas fa-skull-crossbones"></i>
+                        <h3>Dead Code Analysis</h3>
+                    </div>
+                    <div class="diagram-card-body">
+                        <p>Interactive architectural diagram showing dead code analysis.</p>
+                        <button onclick="toggleDiagram('diagram-3')" class="diagram-toggle-btn">
+                            <i class="fas fa-eye"></i> Show Diagram
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+            
+            <div class="diagram-content">
+                <div id="active-diagram-header" style="display: none;">
+                    <h3 id="active-diagram-title"></h3>
+                    <button onclick="hideAllDiagrams()" class="hide-diagram-btn">
+                        <i class="fas fa-eye-slash"></i> Hide Diagram
+                    </button>
+                </div>
+
+                <div id="diagram-0" class="embedded-diagram" style="display: none;">
+                    <div class="diagram-container">
+                        <div class="mermaid" id="mermaid-b6bca446">classDiagram
+    class LargeClassConfig {
+        pub max_logical_loc: Type
+        pub max_methods: Type
+        pub max_fields: Type
+        pub max_cyclomatic_complexity: Type
+        pub max_cognitive_complexity: Type
+        pub max_lcom_score: Type
+        pub max_coupling: Type
+        pub ignore_patterns: Type
+        pub language_overrides: Type
+    }</div>
+                    </div>
+                </div>
+
+                <div id="diagram-1" class="embedded-diagram" style="display: none;">
+                    <div class="diagram-container">
+                        <div class="mermaid" id="mermaid-edd9e3ea">classDiagram
+    class Unknown {
+        +from_file()
+    }</div>
+                    </div>
+                </div>
+
+                <div id="diagram-2" class="embedded-diagram" style="display: none;">
+                    <div class="diagram-container">
+                        <div class="mermaid" id="mermaid-35c71783">classDiagram
+    class caller {
+    }</div>
+                    </div>
+                </div>
+
+                <div id="diagram-3" class="embedded-diagram" style="display: none;">
+                    <div class="diagram-container">
+                        <div class="mermaid" id="mermaid-3a2011f7">flowchart TD
+    A[Project] --> B[Live Code]
+    A --> C[Dead Code]
+    style C fill:#ff9999,stroke:#ff0000,stroke-width:2px
+    C --> D1[default]
+    style D1 fill:#ffcccc
+    C --> D2[MonitoringConfig]
+    style D2 fill:#ffcccc
+    C --> D3[from_env]
+    style D3 fill:#ffcccc
+    C --> D4[from_file]
+    style D4 fill:#ffcccc
+    C --> D5[Config]
+    style D5 fill:#ffcccc
+    C --> D6[DeadCodeConfig]
+    style D6 fill:#ffcccc
+    C --> D7[LargeClassConfig]
+    style D7 fill:#ffcccc
+    C --> D8[LanguageThresholds]
+    style D8 fill:#ffcccc</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <section id="issues" class="card">
+        <h2><i class="fas fa-exclamation-triangle"></i> Detailed Issues</h2>
+        
+        <div class="search-filter">
+            <input type="text" id="searchInput" class="search-input" placeholder="Search issues..." onkeyup="filterIssues()">
+            <div class="filter-buttons">
+                <button class="filter-btn active" onclick="filterBySeverity('all')">All</button>
+                <button class="filter-btn" onclick="filterBySeverity('critical')">Critical</button>
+                <button class="filter-btn" onclick="filterBySeverity('high')">High</button>
+                <button class="filter-btn" onclick="filterBySeverity('medium')">Medium</button>
+                <button class="filter-btn" onclick="filterBySeverity('low')">Low</button>
+            </div>
+        </div>
+        
+        <div id="issues-container">
+
+            <div class="anti-pattern-section">
+                <h3 class="anti-pattern-header">
+                    <i class="fas fa-layer-group"></i> Dead Code Issues (8 found)
+                </h3>
+
+                <div class="diagram-isolator" style="display: block; width: 100%; margin: 1rem 0; isolation: isolate;">
+                    <div class="diagram-container">
+                        <div class="diagram-title">
+                            <i class="fas fa-project-diagram"></i> Dead Code Analysis
+                        </div>
+                        <div id="diagram-explanation-2" class="diagram-explanation">
+                            <p><em>This diagram shows the architectural issues found in this anti-pattern category. Each node represents a component or relationship affected by the identified problems.</em></p>
+                        </div>
+                        <div class="svg-diagram" id="inline-diagram-2">
+                            <svg aria-roledescription="flowchart-v2" role="graphics-document document" viewBox="0 0 1630.625 174" style="max-width: 1630.62px; background-color: white;" class="flowchart" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" width="100%" id="my-svg"><style>#my-svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;fill:#333;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#my-svg .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#my-svg .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#my-svg .error-icon{fill:#552222;}#my-svg .error-text{fill:#552222;stroke:#552222;}#my-svg .edge-thickness-normal{stroke-width:1px;}#my-svg .edge-thickness-thick{stroke-width:3.5px;}#my-svg .edge-pattern-solid{stroke-dasharray:0;}#my-svg .edge-thickness-invisible{stroke-width:0;fill:none;}#my-svg .edge-pattern-dashed{stroke-dasharray:3;}#my-svg .edge-pattern-dotted{stroke-dasharray:2;}#my-svg .marker{fill:#333333;stroke:#333333;}#my-svg .marker.cross{stroke:#333333;}#my-svg svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;}#my-svg p{margin:0;}#my-svg .label{font-family:"trebuchet ms",verdana,arial,sans-serif;color:#333;}#my-svg .cluster-label text{fill:#333;}#my-svg .cluster-label span{color:#333;}#my-svg .cluster-label span p{background-color:transparent;}#my-svg .label text,#my-svg span{fill:#333;color:#333;}#my-svg .node rect,#my-svg .node circle,#my-svg .node ellipse,#my-svg .node polygon,#my-svg .node path{fill:#ECECFF;stroke:#9370DB;stroke-width:1px;}#my-svg .rough-node .label text,#my-svg .node .label text,#my-svg .image-shape .label,#my-svg .icon-shape .label{text-anchor:middle;}#my-svg .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#my-svg .rough-node .label,#my-svg .node .label,#my-svg .image-shape .label,#my-svg .icon-shape .label{text-align:center;}#my-svg .node.clickable{cursor:pointer;}#my-svg .root .anchor path{fill:#333333!important;stroke-width:0;stroke:#333333;}#my-svg .arrowheadPath{fill:#333333;}#my-svg .edgePath .path{stroke:#333333;stroke-width:2.0px;}#my-svg .flowchart-link{stroke:#333333;fill:none;}#my-svg .edgeLabel{background-color:rgba(232,232,232, 0.8);text-align:center;}#my-svg .edgeLabel p{background-color:rgba(232,232,232, 0.8);}#my-svg .edgeLabel rect{opacity:0.5;background-color:rgba(232,232,232, 0.8);fill:rgba(232,232,232, 0.8);}#my-svg .labelBkg{background-color:rgba(232, 232, 232, 0.5);}#my-svg .cluster rect{fill:#ffffde;stroke:#aaaa33;stroke-width:1px;}#my-svg .cluster text{fill:#333;}#my-svg .cluster span{color:#333;}#my-svg div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:12px;background:hsl(80, 100%, 96.2745098039%);border:1px solid #aaaa33;border-radius:2px;pointer-events:none;z-index:100;}#my-svg .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#333;}#my-svg rect.text{fill:none;stroke-width:0;}#my-svg .icon-shape,#my-svg .image-shape{background-color:rgba(232,232,232, 0.8);text-align:center;}#my-svg .icon-shape p,#my-svg .image-shape p{background-color:rgba(232,232,232, 0.8);padding:2px;}#my-svg .icon-shape rect,#my-svg .image-shape rect{opacity:0.5;background-color:rgba(232,232,232, 0.8);fill:rgba(232,232,232, 0.8);}#my-svg .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#my-svg .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#my-svg :root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}
+                .classDiagram .nodeLabel, .classDiagram .edgeLabel { visibility: visible !important; }
+                .classDiagram text { font-family: Arial, sans-serif !important; }
+                .classDiagram foreignObject { overflow: visible !important; }
+            </style><g><marker orient="auto" markerHeight="8" markerWidth="8" markerUnits="userSpaceOnUse" refY="5" refX="5" viewBox="0 0 10 10" class="marker flowchart-v2" id="my-svg_flowchart-v2-pointEnd"><path style="stroke-width: 1; stroke-dasharray: 1, 0;" class="arrowMarkerPath" d="M 0 0 L 10 5 L 0 10 z"/></marker><marker orient="auto" markerHeight="8" markerWidth="8" markerUnits="userSpaceOnUse" refY="5" refX="4.5" viewBox="0 0 10 10" class="marker flowchart-v2" id="my-svg_flowchart-v2-pointStart"><path style="stroke-width: 1; stroke-dasharray: 1, 0;" class="arrowMarkerPath" d="M 0 5 L 10 10 L 10 0 z"/></marker><marker orient="auto" markerHeight="11" markerWidth="11" markerUnits="userSpaceOnUse" refY="5" refX="11" viewBox="0 0 10 10" class="marker flowchart-v2" id="my-svg_flowchart-v2-circleEnd"><circle style="stroke-width: 1; stroke-dasharray: 1, 0;" class="arrowMarkerPath" r="5" cy="5" cx="5"/></marker><marker orient="auto" markerHeight="11" markerWidth="11" markerUnits="userSpaceOnUse" refY="5" refX="-1" viewBox="0 0 10 10" class="marker flowchart-v2" id="my-svg_flowchart-v2-circleStart"><circle style="stroke-width: 1; stroke-dasharray: 1, 0;" class="arrowMarkerPath" r="5" cy="5" cx="5"/></marker><marker orient="auto" markerHeight="11" markerWidth="11" markerUnits="userSpaceOnUse" refY="5.2" refX="12" viewBox="0 0 11 11" class="marker cross flowchart-v2" id="my-svg_flowchart-v2-crossEnd"><path style="stroke-width: 2; stroke-dasharray: 1, 0;" class="arrowMarkerPath" d="M 1,1 l 9,9 M 10,1 l -9,9"/></marker><marker orient="auto" markerHeight="11" markerWidth="11" markerUnits="userSpaceOnUse" refY="5.2" refX="-1" viewBox="0 0 11 11" class="marker cross flowchart-v2" id="my-svg_flowchart-v2-crossStart"><path style="stroke-width: 2; stroke-dasharray: 1, 0;" class="arrowMarkerPath" d="M 1,1 l 9,9 M 10,1 l -9,9"/></marker><g class="root"><g class="clusters"/><g class="edgePaths"><path marker-end="url(#my-svg_flowchart-v2-pointEnd)" style="" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" id="L_Dead_DeadItem1_0" d="M671.691,40.668L570.768,48.39C469.844,56.112,267.996,71.556,167.072,82.778C66.148,94,66.148,101,66.148,104.5L66.148,108"/><path marker-end="url(#my-svg_flowchart-v2-pointEnd)" style="" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" id="L_Dead_DeadItem2_0" d="M671.691,43.058L604.355,50.381C537.018,57.705,402.345,72.353,335.008,83.176C267.672,94,267.672,101,267.672,104.5L267.672,108"/><path marker-end="url(#my-svg_flowchart-v2-pointEnd)" style="" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" id="L_Dead_DeadItem3_0" d="M671.691,49.408L639.475,55.673C607.258,61.939,542.824,74.469,510.607,84.235C478.391,94,478.391,101,478.391,104.5L478.391,108"/><path marker-end="url(#my-svg_flowchart-v2-pointEnd)" style="" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" id="L_Dead_DeadItem4_0" d="M701.519,62L694.689,66.167C687.859,70.333,674.199,78.667,667.369,86.333C660.539,94,660.539,101,660.539,104.5L660.539,108"/><path marker-end="url(#my-svg_flowchart-v2-pointEnd)" style="" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" id="L_Dead_DeadItem5_0" d="M790.036,62L796.866,66.167C803.696,70.333,817.356,78.667,824.186,86.333C831.016,94,831.016,101,831.016,104.5L831.016,108"/><path marker-end="url(#my-svg_flowchart-v2-pointEnd)" style="" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" id="L_Dead_DeadItem6_0" d="M819.863,48.371L855.536,54.809C891.208,61.247,962.553,74.124,998.226,84.062C1033.898,94,1033.898,101,1033.898,104.5L1033.898,108"/><path marker-end="url(#my-svg_flowchart-v2-pointEnd)" style="" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" id="L_Dead_DeadItem7_0" d="M819.863,42.276L895.762,49.73C971.661,57.184,1123.46,72.092,1199.359,83.046C1275.258,94,1275.258,101,1275.258,104.5L1275.258,108"/><path marker-end="url(#my-svg_flowchart-v2-pointEnd)" style="" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" id="L_Dead_DeadItem8_0" d="M819.863,39.969L936.722,47.808C1053.581,55.646,1287.298,71.323,1404.157,82.662C1521.016,94,1521.016,101,1521.016,104.5L1521.016,108"/></g><g class="edgeLabels"><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><foreignObject height="0" width="0"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" class="labelBkg" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><foreignObject height="0" width="0"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" class="labelBkg" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><foreignObject height="0" width="0"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" class="labelBkg" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><foreignObject height="0" width="0"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" class="labelBkg" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><foreignObject height="0" width="0"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" class="labelBkg" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><foreignObject height="0" width="0"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" class="labelBkg" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><foreignObject height="0" width="0"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" class="labelBkg" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><foreignObject height="0" width="0"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" class="labelBkg" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignObject></g></g></g><g class="nodes"><g transform="translate(552.33203125, 35)" id="flowchart-Live-0" class="node default"><rect height="54" width="138.71875" y="-27" x="-69.359375" style="" class="basic label-container"/><g transform="translate(-39.359375, -12)" style="" class="label"><rect/><foreignObject height="24" width="78.71875"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Live Code</p></span></div></foreignObject></g></g><g transform="translate(745.77734375, 35)" id="flowchart-Dead-1" class="node default"><rect height="54" width="148.171875" y="-27" x="-74.0859375" style="fill:#ffcccc !important;stroke:#ff0000 !important;stroke-width:2px !important" class="basic label-container"/><g transform="translate(-44.0859375, -12)" style="" class="label"><rect/><foreignObject height="24" width="88.171875"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Dead Code</p></span></div></foreignObject></g></g><g transform="translate(66.1484375, 139)" id="flowchart-DeadItem1-4" class="node default"><rect height="54" width="116.296875" y="-27" x="-58.1484375" style="fill:#ffe6e6 !important" class="basic label-container"/><g transform="translate(-28.1484375, -12)" style="" class="label"><rect/><foreignObject height="24" width="56.296875"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>default</p></span></div></foreignObject></g></g><g transform="translate(267.671875, 139)" id="flowchart-DeadItem2-7" class="node default"><rect height="54" width="186.75" y="-27" x="-93.375" style="fill:#ffe6e6 !important" class="basic label-container"/><g transform="translate(-63.375, -12)" style="" class="label"><rect/><foreignObject height="24" width="126.75"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>MonitoringConfi</p></span></div></foreignObject></g></g><g transform="translate(478.390625, 139)" id="flowchart-DeadItem3-10" class="node default"><rect height="54" width="134.6875" y="-27" x="-67.34375" style="fill:#ffe6e6 !important" class="basic label-container"/><g transform="translate(-37.34375, -12)" style="" class="label"><rect/><foreignObject height="24" width="74.6875"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>from_env</p></span></div></foreignObject></g></g><g transform="translate(660.5390625, 139)" id="flowchart-DeadItem4-13" class="node default"><rect height="54" width="129.609375" y="-27" x="-64.8046875" style="fill:#ffe6e6 !important" class="basic label-container"/><g transform="translate(-34.8046875, -12)" style="" class="label"><rect/><foreignObject height="24" width="69.609375"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>from_file</p></span></div></foreignObject></g></g><g transform="translate(831.015625, 139)" id="flowchart-DeadItem5-16" class="node default"><rect height="54" width="111.34375" y="-27" x="-55.671875" style="fill:#ffe6e6 !important" class="basic label-container"/><g transform="translate(-25.671875, -12)" style="" class="label"><rect/><foreignObject height="24" width="51.34375"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Config</p></span></div></foreignObject></g></g><g transform="translate(1033.8984375, 139)" id="flowchart-DeadItem6-19" class="node default"><rect height="54" width="194.421875" y="-27" x="-97.2109375" style="fill:#ffe6e6 !important" class="basic label-container"/><g transform="translate(-67.2109375, -12)" style="" class="label"><rect/><foreignObject height="24" width="134.421875"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>DeadCodeConfig</p></span></div></foreignObject></g></g><g transform="translate(1275.2578125, 139)" id="flowchart-DeadItem7-22" class="node default"><rect height="54" width="188.296875" y="-27" x="-94.1484375" style="fill:#ffe6e6 !important" class="basic label-container"/><g transform="translate(-64.1484375, -12)" style="" class="label"><rect/><foreignObject height="24" width="128.296875"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>LargeClassConfi</p></span></div></foreignObject></g></g><g transform="translate(1521.015625, 139)" id="flowchart-DeadItem8-25" class="node default"><rect height="54" width="203.21875" y="-27" x="-101.609375" style="fill:#ffe6e6 !important" class="basic label-container"/><g transform="translate(-71.609375, -12)" style="" class="label"><rect/><foreignObject height="24" width="143.21875"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>LanguageThresho</p></span></div></foreignObject></g></g></g></g></g></svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="issue-card" data-severity="High" data-pattern="dead-code">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #1: Dead Code
+                        </div>
+                        <span class="severity-badge severity-High">
+                            <i class="fas fa-circle"></i> HIGH
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>src/config/monitoring.rs</code></p>
+                        <p><strong>Lines:</strong> 12-12</p><p><strong>Description:</strong> Potentially dead code: function 'default' is not used in this file (confidence: 90.0%)</p>
+                        
+                        <div class="code-snippet"><pre><code>default</code></pre></div>
+                        
+                        
+                    </div>
+                </div>
+    
+                <div class="issue-card" data-severity="Medium" data-pattern="dead-code">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #2: Dead Code
+                        </div>
+                        <span class="severity-badge severity-Medium">
+                            <i class="fas fa-circle"></i> MEDIUM
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>src/config/monitoring.rs</code></p>
+                        <p><strong>Lines:</strong> 4-4</p><p><strong>Description:</strong> Potentially dead code: struct 'MonitoringConfig' is not used in this file (confidence: 60.0%)</p>
+                        
+                        <div class="code-snippet"><pre><code>MonitoringConfig</code></pre></div>
+                        
+                        
+                    </div>
+                </div>
+    
+                <div class="issue-card" data-severity="Medium" data-pattern="dead-code">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #3: Dead Code
+                        </div>
+                        <span class="severity-badge severity-Medium">
+                            <i class="fas fa-circle"></i> MEDIUM
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>src/config/mod.rs</code></p>
+                        <p><strong>Lines:</strong> 137-137</p><p><strong>Description:</strong> Potentially dead code: function 'from_env' is not used in this file (confidence: 60.0%)</p>
+                        
+                        <div class="code-snippet"><pre><code>from_env</code></pre></div>
+                        
+                        
+                    </div>
+                </div>
+    
+                <div class="issue-card" data-severity="Medium" data-pattern="dead-code">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #4: Dead Code
+                        </div>
+                        <span class="severity-badge severity-Medium">
+                            <i class="fas fa-circle"></i> MEDIUM
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>src/config/mod.rs</code></p>
+                        <p><strong>Lines:</strong> 222-222</p><p><strong>Description:</strong> Potentially dead code: function 'from_file' is not used in this file (confidence: 60.0%)</p>
+                        
+                        <div class="code-snippet"><pre><code>from_file</code></pre></div>
+                        
+                        
+                    </div>
+                </div>
+    
+                <div class="issue-card" data-severity="Medium" data-pattern="dead-code">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #5: Dead Code
+                        </div>
+                        <span class="severity-badge severity-Medium">
+                            <i class="fas fa-circle"></i> MEDIUM
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>src/config/mod.rs</code></p>
+                        <p><strong>Lines:</strong> 63-63</p><p><strong>Description:</strong> Potentially dead code: struct 'Config' is not used in this file (confidence: 60.0%)</p>
+                        
+                        <div class="code-snippet"><pre><code>Config</code></pre></div>
+                        
+                        
+                    </div>
+                </div>
+    
+                <div class="issue-card" data-severity="Medium" data-pattern="dead-code">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #6: Dead Code
+                        </div>
+                        <span class="severity-badge severity-Medium">
+                            <i class="fas fa-circle"></i> MEDIUM
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>src/config/mod.rs</code></p>
+                        <p><strong>Lines:</strong> 78-78</p><p><strong>Description:</strong> Potentially dead code: struct 'DeadCodeConfig' is not used in this file (confidence: 60.0%)</p>
+                        
+                        <div class="code-snippet"><pre><code>DeadCodeConfig</code></pre></div>
+                        
+                        
+                    </div>
+                </div>
+    
+                <div class="issue-card" data-severity="Medium" data-pattern="dead-code">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #7: Dead Code
+                        </div>
+                        <span class="severity-badge severity-Medium">
+                            <i class="fas fa-circle"></i> MEDIUM
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>src/config/mod.rs</code></p>
+                        <p><strong>Lines:</strong> 91-91</p><p><strong>Description:</strong> Potentially dead code: struct 'LargeClassConfig' is not used in this file (confidence: 60.0%)</p>
+                        
+                        <div class="code-snippet"><pre><code>LargeClassConfig</code></pre></div>
+                        
+                        
+                    </div>
+                </div>
+    
+                <div class="issue-card" data-severity="Medium" data-pattern="dead-code">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #8: Dead Code
+                        </div>
+                        <span class="severity-badge severity-Medium">
+                            <i class="fas fa-circle"></i> MEDIUM
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>src/config/mod.rs</code></p>
+                        <p><strong>Lines:</strong> 114-114</p><p><strong>Description:</strong> Potentially dead code: struct 'LanguageThresholds' is not used in this file (confidence: 60.0%)</p>
+                        
+                        <div class="code-snippet"><pre><code>LanguageThresholds</code></pre></div>
+                        
+                        
+                    </div>
+                </div>
+                </div>
+
+            <div class="anti-pattern-section">
+                <h3 class="anti-pattern-header">
+                    <i class="fas fa-layer-group"></i> God Objects Issues (3 found)
+                </h3>
+
+                <div class="diagram-isolator" style="display: block; width: 100%; margin: 1rem 0; isolation: isolate;">
+                    <div class="diagram-container">
+                        <div class="diagram-title">
+                            <i class="fas fa-project-diagram"></i> God Object Analysis
+                        </div>
+                        <div id="diagram-explanation-1" class="diagram-explanation">
+                            <p><em>This diagram shows the architectural issues found in this anti-pattern category. Each node represents a component or relationship affected by the identified problems.</em></p>
+                        </div>
+                        <div class="svg-diagram" id="inline-diagram-1">
+                            <svg aria-roledescription="class" role="graphics-document document" viewBox="0 0 787.8125 232" style="max-width: 787.812px; background-color: white;" class="classDiagram" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" width="100%" id="my-svg"><style>#my-svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;fill:#333;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#my-svg .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#my-svg .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#my-svg .error-icon{fill:#552222;}#my-svg .error-text{fill:#552222;stroke:#552222;}#my-svg .edge-thickness-normal{stroke-width:1px;}#my-svg .edge-thickness-thick{stroke-width:3.5px;}#my-svg .edge-pattern-solid{stroke-dasharray:0;}#my-svg .edge-thickness-invisible{stroke-width:0;fill:none;}#my-svg .edge-pattern-dashed{stroke-dasharray:3;}#my-svg .edge-pattern-dotted{stroke-dasharray:2;}#my-svg .marker{fill:#333333;stroke:#333333;}#my-svg .marker.cross{stroke:#333333;}#my-svg svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;}#my-svg p{margin:0;}#my-svg g.classGroup text{fill:#9370DB;stroke:none;font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:10px;}#my-svg g.classGroup text .title{font-weight:bolder;}#my-svg .nodeLabel,#my-svg .edgeLabel{color:#131300;}#my-svg .edgeLabel .label rect{fill:#ECECFF;}#my-svg .label text{fill:#131300;}#my-svg .labelBkg{background:#ECECFF;}#my-svg .edgeLabel .label span{background:#ECECFF;}#my-svg .classTitle{font-weight:bolder;}#my-svg .node rect,#my-svg .node circle,#my-svg .node ellipse,#my-svg .node polygon,#my-svg .node path{fill:#ECECFF;stroke:#9370DB;stroke-width:1px;}#my-svg .divider{stroke:#9370DB;stroke-width:1;}#my-svg g.clickable{cursor:pointer;}#my-svg g.classGroup rect{fill:#ECECFF;stroke:#9370DB;}#my-svg g.classGroup line{stroke:#9370DB;stroke-width:1;}#my-svg .classLabel .box{stroke:none;stroke-width:0;fill:#ECECFF;opacity:0.5;}#my-svg .classLabel .label{fill:#9370DB;font-size:10px;}#my-svg .relation{stroke:#333333;stroke-width:1;fill:none;}#my-svg .dashed-line{stroke-dasharray:3;}#my-svg .dotted-line{stroke-dasharray:1 2;}#my-svg #compositionStart,#my-svg .composition{fill:#333333!important;stroke:#333333!important;stroke-width:1;}#my-svg #compositionEnd,#my-svg .composition{fill:#333333!important;stroke:#333333!important;stroke-width:1;}#my-svg #dependencyStart,#my-svg .dependency{fill:#333333!important;stroke:#333333!important;stroke-width:1;}#my-svg #dependencyStart,#my-svg .dependency{fill:#333333!important;stroke:#333333!important;stroke-width:1;}#my-svg #extensionStart,#my-svg .extension{fill:transparent!important;stroke:#333333!important;stroke-width:1;}#my-svg #extensionEnd,#my-svg .extension{fill:transparent!important;stroke:#333333!important;stroke-width:1;}#my-svg #aggregationStart,#my-svg .aggregation{fill:transparent!important;stroke:#333333!important;stroke-width:1;}#my-svg #aggregationEnd,#my-svg .aggregation{fill:transparent!important;stroke:#333333!important;stroke-width:1;}#my-svg #lollipopStart,#my-svg .lollipop{fill:#ECECFF!important;stroke:#333333!important;stroke-width:1;}#my-svg #lollipopEnd,#my-svg .lollipop{fill:#ECECFF!important;stroke:#333333!important;stroke-width:1;}#my-svg .edgeTerminals{font-size:11px;line-height:initial;}#my-svg .classTitleText{text-anchor:middle;font-size:18px;fill:#333;}#my-svg .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#my-svg .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#my-svg :root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}#my-svg .LargeClassConfig&gt;*{fill:#ffcccc!important;stroke:#ff0000!important;stroke-width:3px!important;}#my-svg .LargeClassConfig span{fill:#ffcccc!important;stroke:#ff0000!important;stroke-width:3px!important;}#my-svg .GodObject2&gt;*{fill:#ffcccc!important;stroke:#ff0000!important;stroke-width:3px!important;}#my-svg .GodObject2 span{fill:#ffcccc!important;stroke:#ff0000!important;stroke-width:3px!important;}#my-svg .caller&gt;*{fill:#ffcccc!important;stroke:#ff0000!important;stroke-width:3px!important;}#my-svg .caller span{fill:#ffcccc!important;stroke:#ff0000!important;stroke-width:3px!important;}
+                .classDiagram .nodeLabel, .classDiagram .edgeLabel { visibility: visible !important; }
+                .classDiagram text { font-family: Arial, sans-serif !important; }
+                .classDiagram foreignObject { overflow: visible !important; }
+            </style><g><defs><marker orient="auto" markerHeight="240" markerWidth="190" refY="7" refX="18" class="marker aggregation class" id="my-svg_class-aggregationStart"><path d="M 18,7 L9,13 L1,7 L9,1 Z"/></marker></defs><defs><marker orient="auto" markerHeight="28" markerWidth="20" refY="7" refX="1" class="marker aggregation class" id="my-svg_class-aggregationEnd"><path d="M 18,7 L9,13 L1,7 L9,1 Z"/></marker></defs><defs><marker orient="auto" markerHeight="240" markerWidth="190" refY="7" refX="18" class="marker extension class" id="my-svg_class-extensionStart"><path d="M 1,7 L18,13 V 1 Z"/></marker></defs><defs><marker orient="auto" markerHeight="28" markerWidth="20" refY="7" refX="1" class="marker extension class" id="my-svg_class-extensionEnd"><path d="M 1,1 V 13 L18,7 Z"/></marker></defs><defs><marker orient="auto" markerHeight="240" markerWidth="190" refY="7" refX="18" class="marker composition class" id="my-svg_class-compositionStart"><path d="M 18,7 L9,13 L1,7 L9,1 Z"/></marker></defs><defs><marker orient="auto" markerHeight="28" markerWidth="20" refY="7" refX="1" class="marker composition class" id="my-svg_class-compositionEnd"><path d="M 18,7 L9,13 L1,7 L9,1 Z"/></marker></defs><defs><marker orient="auto" markerHeight="240" markerWidth="190" refY="7" refX="6" class="marker dependency class" id="my-svg_class-dependencyStart"><path d="M 5,7 L9,13 L1,7 L9,1 Z"/></marker></defs><defs><marker orient="auto" markerHeight="28" markerWidth="20" refY="7" refX="13" class="marker dependency class" id="my-svg_class-dependencyEnd"><path d="M 18,7 L9,13 L14,7 L9,1 Z"/></marker></defs><defs><marker orient="auto" markerHeight="240" markerWidth="190" refY="7" refX="13" class="marker lollipop class" id="my-svg_class-lollipopStart"><circle r="6" cy="7" cx="7" fill="transparent" stroke="black"/></marker></defs><defs><marker orient="auto" markerHeight="240" markerWidth="190" refY="7" refX="1" class="marker lollipop class" id="my-svg_class-lollipopEnd"><circle r="6" cy="7" cx="7" fill="transparent" stroke="black"/></marker></defs><g class="root"><g class="clusters"/><g class="edgePaths"/><g class="edgeLabels"/><g class="nodes"><g transform="translate(145.42578125, 116)" id="classId-LargeClassConfig-0" class="node default"><g class="basic label-container"><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="#ffcccc" stroke-width="0" stroke="none" d="M-137.42578125 -84 L137.42578125 -84 L137.42578125 84 L-137.42578125 84"/><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="none" stroke-width="3" stroke="#ff0000" d="M-137.42578125 -84 C-63.25464565939821 -84, 10.916489931203586 -84, 137.42578125 -84 M-137.42578125 -84 C-46.19959636590967 -84, 45.02658851818066 -84, 137.42578125 -84 M137.42578125 -84 C137.42578125 -48.19560217101748, 137.42578125 -12.391204342034953, 137.42578125 84 M137.42578125 -84 C137.42578125 -48.78629692986563, 137.42578125 -13.572593859731256, 137.42578125 84 M137.42578125 84 C40.58366548062902 84, -56.258450288741955 84, -137.42578125 84 M137.42578125 84 C31.36784940219377 84, -74.69008244561246 84, -137.42578125 84 M-137.42578125 84 C-137.42578125 21.41856439118083, -137.42578125 -41.16287121763834, -137.42578125 -84 M-137.42578125 84 C-137.42578125 48.650507737539876, -137.42578125 13.301015475079751, -137.42578125 -84"/></g><g transform="translate(0, -60)" class="annotation-group text"/><g transform="translate(-77.8515625, -60)" class="label-group text"><g transform="translate(0,-12)" style="font-weight: bolder" class="label"><foreignObject height="24" width="155.703125"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 188px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="nodeLabel markdown-node-label"><p>LargeClassConfig</p></span></div></foreignObject></g></g><g transform="translate(-125.42578125, -12)" class="members-group text"><g transform="translate(0,-12)" style="" class="label"><foreignObject height="24" width="173"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 223px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="nodeLabel markdown-node-label"><p>max_logical_loc: Type</p></span></div></foreignObject></g><g transform="translate(0,12)" style="" class="label"><foreignObject height="24" width="160.21875"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 210px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="nodeLabel markdown-node-label"><p>max_methods: Type</p></span></div></foreignObject></g><g transform="translate(0,36)" style="" class="label"><foreignObject height="24" width="132.953125"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 183px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="nodeLabel markdown-node-label"><p>max_fields: Type</p></span></div></foreignObject></g></g><g transform="translate(-125.42578125, 84)" class="methods-group text"/><g style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="divider"><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="none" stroke-width="3" stroke="#ff0000" d="M-137.42578125 -36 C-41.93083546737 -36, 53.564110315259995 -36, 137.42578125 -36 M-137.42578125 -36 C-41.84928379844686 -36, 53.727213653106276 -36, 137.42578125 -36"/></g><g style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="divider"><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="none" stroke-width="3" stroke="#ff0000" d="M-137.42578125 60 C-50.52648060856873 60, 36.372820032862535 60, 137.42578125 60 M-137.42578125 60 C-28.903704586200348 60, 79.6183720775993 60, 137.42578125 60"/></g></g><g transform="translate(457.00390625, 116)" id="classId-GodObject2-1" class="node default"><g class="basic label-container"><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="#ffcccc" stroke-width="0" stroke="none" d="M-124.15234375 -84 L124.15234375 -84 L124.15234375 84 L-124.15234375 84"/><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="none" stroke-width="3" stroke="#ff0000" d="M-124.15234375 -84 C-40.96238671689122 -84, 42.227570316217566 -84, 124.15234375 -84 M-124.15234375 -84 C-37.579630388262046 -84, 48.99308297347591 -84, 124.15234375 -84 M124.15234375 -84 C124.15234375 -32.54633925345021, 124.15234375 18.907321493099573, 124.15234375 84 M124.15234375 -84 C124.15234375 -37.27820749524288, 124.15234375 9.443585009514237, 124.15234375 84 M124.15234375 84 C56.7371098052742 84, -10.678124139451597 84, -124.15234375 84 M124.15234375 84 C39.141993094964704 84, -45.86835756007059 84, -124.15234375 84 M-124.15234375 84 C-124.15234375 20.882090312216533, -124.15234375 -42.23581937556693, -124.15234375 -84 M-124.15234375 84 C-124.15234375 21.193700815409976, -124.15234375 -41.61259836918005, -124.15234375 -84"/></g><g transform="translate(0, -60)" class="annotation-group text"/><g transform="translate(-52.6171875, -60)" class="label-group text"><g transform="translate(0,-12)" style="font-weight: bolder" class="label"><foreignObject height="24" width="105.234375"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 144px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="nodeLabel markdown-node-label"><p>GodObject2</p></span></div></foreignObject></g></g><g transform="translate(-112.15234375, -12)" class="members-group text"><g transform="translate(0,-12)" style="" class="label"><foreignObject height="24" width="171.6875"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 220px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="nodeLabel markdown-node-label"><p>let content = fs: Type</p></span></div></foreignObject></g><g transform="translate(0,12)" style="" class="label"><foreignObject height="24" width="121.84375"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 171px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="nodeLabel markdown-node-label"><p>let config: Type</p></span></div></foreignObject></g></g><g transform="translate(-112.15234375, 60)" class="methods-group text"><g transform="translate(0,-12)" style="" class="label"><foreignObject height="24" width="95.5"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 151px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="nodeLabel markdown-node-label"><p>+from_file()</p></span></div></foreignObject></g></g><g style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="divider"><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="none" stroke-width="3" stroke="#ff0000" d="M-124.15234375 -36 C-34.30239310528536 -36, 55.54755753942928 -36, 124.15234375 -36 M-124.15234375 -36 C-53.62091584124654 -36, 16.910512067506914 -36, 124.15234375 -36"/></g><g style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="divider"><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="none" stroke-width="3" stroke="#ff0000" d="M-124.15234375 36 C-34.598581683602205 36, 54.95518038279559 36, 124.15234375 36 M-124.15234375 36 C-25.667242879706194 36, 72.81785799058761 36, 124.15234375 36"/></g></g><g transform="translate(705.484375, 116)" id="classId-caller-2" class="node default"><g class="basic label-container"><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="#ffcccc" stroke-width="0" stroke="none" d="M-74.328125 -108 L74.328125 -108 L74.328125 108 L-74.328125 108"/><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="none" stroke-width="3" stroke="#ff0000" d="M-74.328125 -108 C-22.52772873140981 -108, 29.272667537180382 -108, 74.328125 -108 M-74.328125 -108 C-15.783082139118463 -108, 42.761960721763074 -108, 74.328125 -108 M74.328125 -108 C74.328125 -60.505101665196655, 74.328125 -13.01020333039331, 74.328125 108 M74.328125 -108 C74.328125 -52.93057719162333, 74.328125 2.1388456167533434, 74.328125 108 M74.328125 108 C43.355555965662234 108, 12.382986931324467 108, -74.328125 108 M74.328125 108 C42.251806994602525 108, 10.17548898920505 108, -74.328125 108 M-74.328125 108 C-74.328125 26.73419430742109, -74.328125 -54.53161138515782, -74.328125 -108 M-74.328125 108 C-74.328125 40.522100122149624, -74.328125 -26.955799755700752, -74.328125 -108"/></g><g transform="translate(0, -84)" class="annotation-group text"/><g transform="translate(-25, -84)" class="label-group text"><g transform="translate(0,-12)" style="font-weight: bolder" class="label"><foreignObject height="24" width="50"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 94px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="nodeLabel markdown-node-label"><p>caller</p></span></div></foreignObject></g></g><g transform="translate(-62.328125, -36)" class="members-group text"><g transform="translate(0,-12)" style="" class="label"><foreignObject height="24" width="15.265625"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 65px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="nodeLabel markdown-node-label"><p>...</p></span></div></foreignObject></g></g><g transform="translate(-62.328125, 12)" class="methods-group text"><g transform="translate(0,-12)" style="" class="label"><foreignObject height="24" width="97.859375"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 152px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="nodeLabel markdown-node-label"><p>+method1()</p></span></div></foreignObject></g><g transform="translate(0,12)" style="" class="label"><foreignObject height="24" width="97.859375"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 152px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="nodeLabel markdown-node-label"><p>+method2()</p></span></div></foreignObject></g><g transform="translate(0,36)" style="" class="label"><foreignObject height="24" width="97.859375"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 152px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="nodeLabel markdown-node-label"><p>+method3()</p></span></div></foreignObject></g><g transform="translate(0,60)" style="" class="label"><foreignObject height="24" width="99.65625"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 154px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="nodeLabel markdown-node-label"><p>+methodN()</p></span></div></foreignObject></g></g><g style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="divider"><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="none" stroke-width="3" stroke="#ff0000" d="M-74.328125 -60 C-38.437028785972736 -60, -2.545932571945471 -60, 74.328125 -60 M-74.328125 -60 C-43.8128556519463 -60, -13.2975863038926 -60, 74.328125 -60"/></g><g style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="divider"><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="none" stroke-width="3" stroke="#ff0000" d="M-74.328125 -12 C-39.7755839436085 -12, -5.223042887217005 -12, 74.328125 -12 M-74.328125 -12 C-35.08822207420396 -12, 4.151680851592076 -12, 74.328125 -12"/></g></g></g></g></g></svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="issue-card" data-severity="Medium" data-pattern="god-object">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #1: God Object
+                        </div>
+                        <span class="severity-badge severity-Medium">
+                            <i class="fas fa-circle"></i> MEDIUM
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>src/config/mod.rs</code></p>
+                        <p><strong>Lines:</strong> 91-91</p><p><strong>Description:</strong> God Object detected: 'LargeClassConfig' has 0 methods and 9 fields. (Thresholds: methods>5, fields>8) LCOM4 score: 1 (>1 indicates low cohesion) Methods: 0 trivial, 0 complex</p>
+                        
+                        <div class="code-snippet"><pre><code>pub struct LargeClassConfig {
+    /// Maximum logical lines of code threshold
+    pub max_logical_loc: Option<u32>,
+    /// Maximum number of methods threshold
+    pub max_methods: Option<u32>,
+    /// Maximum number of fields threshold
+    pub max_fields: Option<u32>,
+    /// Maximum cyclomatic complexity threshold
+    pub max_cyclomatic_complexity: Option<u32>,
+    /// Maximum cognitive complexity threshold
+    pub max_cognitive_complexity: Option<u32>,
+    /// Maximum LCOM score threshold (0.0 to 1.0)
+    pub max_lcom_score: Option<f64>,
+    /// Maximum coupling count threshold
+    pub max_coupling: Option<u32>,
+    /// Patterns to ignore (e.g., test files, generated code)
+    pub ignore_patterns: Option<Vec<String>>,
+    /// Language-specific threshold overrides
+    pub language_overrides: Option<std::collections::HashMap<String, LanguageThresholds>>,
+}</code></pre></div>
+                        
+                        
+                    </div>
+                </div>
+    
+                <div class="issue-card" data-severity="medium" data-pattern="god-object">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #2: God Object
+                        </div>
+                        <span class="severity-badge severity-medium">
+                            <i class="fas fa-circle"></i> MEDIUM
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>src/config/mod.rs</code></p>
+                        <p><strong>Lines:</strong> 222-227</p><p><strong>Description:</strong> Code duplication detected (Type4): 93.9% similarity between src/config/mod.rs:222-227 and src/config/mod.rs:137-211</p>
+                        
+                        <div class="code-snippet"><pre><code>pub fn from_file(path: &str) -> crate::error::Result<Self> {
+        let content = fs::read_to_string(path).map_err(crate::error::UveddiError::from)?;
+        let config: Config = toml::from_str(&cont...</code></pre></div>
+                        
+                        <div class="collapsible-section">
+                            <h4 class="collapsible" onclick="toggleSection('ai-explanation-1-1')">
+                                <i class="fas fa-chevron-right collapsible-icon"></i>
+                                <i class="fas fa-robot"></i> AI Explanation
+                            </h4>
+                            <div id="ai-explanation-1-1" class="collapsible-content">
+                                <p>This code block appears to be duplicated in another location. Consider extracting the common logic into a shared function or module to improve maintainability. The duplicate is located at src/config/mod.rs:137-211 with 93.9% similarity.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+    
+                <div class="issue-card" data-severity="Critical" data-pattern="god-object">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #3: God Object
+                        </div>
+                        <span class="severity-badge severity-Critical">
+                            <i class="fas fa-circle"></i> CRITICAL
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>src/config/mod.rs</code></p>
+                        <p><strong>Description:</strong> Component 'caller' has 40 dependencies, which exceeds the critical threshold of 12. This indicates tight coupling and makes the code harder to maintain.</p>
+                        
+                        
+                        
+                        
+                    </div>
+                </div>
+                </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <p><i class="fas fa-code"></i> Generated by <strong>Uveddi</strong> - AI-Powered Code Analysis</p>
+        <p>For more information, visit <a href="https://github.com/botzrDev/uveddi" target="_blank">github.com/botzrDev/uveddi</a></p>
+    </footer>
+</div>
+
+    <script>
+        // Initialize Mermaid.js for diagram rendering with unique IDs
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: 'default',
+            deterministicIds: true,
+            themeVariables: {
+                primaryColor: '#2563eb',
+                primaryTextColor: '#0f172a',
+                primaryBorderColor: '#64748b',
+                lineColor: '#64748b',
+                background: '#ffffff',
+                secondaryColor: '#f8fafc',
+                tertiaryColor: '#e2e8f0'
+            }
+        });
+
+        // Generate unique seeds for each diagram to prevent ID conflicts
+        document.addEventListener('DOMContentLoaded', function() {
+            const mermaidElements = document.querySelectorAll('.mermaid');
+            mermaidElements.forEach((element, index) => {
+                const uniqueId = `mermaid-diagram-${index}-${Date.now()}`;
+                const graphDefinition = element.textContent.trim();
+                
+                const config = {
+                    deterministicIds: true,
+                    deterministicIDSeed: `seed-${index}-${Date.now()}`,
+                    theme: document.body.dataset.theme === 'dark' ? 'dark' : 'default'
+                };
+                
+                mermaid.render(uniqueId + '-svg', graphDefinition, config).then((result) => {
+                    element.innerHTML = result.svg;
+                }).catch((error) => {
+                    console.error('Mermaid rendering error for diagram', index, ':', error);
+                    element.innerHTML = '<div class="diagram-error" style="color: red; padding: 1rem; border: 1px solid red; border-radius: 4px;">Diagram rendering failed: ' + error.message + '</div>';
+                });
+            });
+        });
+
+        // Re-render Mermaid diagrams when theme changes
+        function rerenderMermaidDiagrams() {
+            const isDark = document.body.dataset.theme === 'dark';
+            const theme = isDark ? 'dark' : 'default';
+            const themeVariables = isDark ? {
+                primaryColor: '#3b82f6',
+                primaryTextColor: '#f1f5f9',
+                primaryBorderColor: '#94a3b8',
+                lineColor: '#94a3b8',
+                background: '#0f172a',
+                secondaryColor: '#1e293b',
+                tertiaryColor: '#334155'
+            } : {
+                primaryColor: '#2563eb',
+                primaryTextColor: '#0f172a',
+                primaryBorderColor: '#64748b',
+                lineColor: '#64748b',
+                background: '#ffffff',
+                secondaryColor: '#f8fafc',
+                tertiaryColor: '#e2e8f0'
+            };
+
+            mermaid.initialize({
+                startOnLoad: false,
+                theme: theme,
+                themeVariables: themeVariables
+            });
+
+            // Re-render all mermaid diagrams with unique seeds
+            const mermaidElements = document.querySelectorAll('.mermaid');
+            mermaidElements.forEach((element, index) => {
+                const graphDefinition = element.textContent;
+                const diagramId = element.id || `mermaid-diagram-${index}`;
+                element.innerHTML = '';
+                element.removeAttribute('data-processed');
+                
+                // Configure unique seed for each diagram to prevent ID conflicts
+                mermaid.initialize({
+                    startOnLoad: false,
+                    theme: theme,
+                    deterministicIds: true,
+                    deterministicIDSeed: diagramId,
+                    themeVariables: themeVariables
+                });
+                
+                mermaid.render(diagramId, graphDefinition, (svgCode) => {
+                    element.innerHTML = svgCode;
+                });
+            });
+        }
+
+        // Theme toggle functionality
+        function toggleTheme() {
+            const body = document.body;
+            const themeToggle = document.querySelector('.theme-toggle');
+            
+            if (body.dataset.theme === 'dark') {
+                body.dataset.theme = 'light';
+                themeToggle.innerHTML = '<i class="fas fa-moon"></i> Dark Mode';
+                localStorage.setItem('theme', 'light');
+            } else {
+                body.dataset.theme = 'dark';
+                themeToggle.innerHTML = '<i class="fas fa-sun"></i> Light Mode';
+                localStorage.setItem('theme', 'dark');
+            }
+            
+            // Re-render Mermaid diagrams with new theme
+            setTimeout(rerenderMermaidDiagrams, 100);
+        }
+
+        // Load saved theme
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.body.dataset.theme = savedTheme;
+        if (savedTheme === 'dark') {
+            document.querySelector('.theme-toggle').innerHTML = '<i class="fas fa-sun"></i> Light Mode';
+        }
+
+        // Collapsible sections
+        function toggleSection(sectionId) {
+            const content = document.getElementById(sectionId);
+            const icon = content.previousElementSibling.querySelector('.collapsible-icon');
+            
+            content.classList.toggle('active');
+            icon.style.transform = content.classList.contains('active') ? 'rotate(90deg)' : 'rotate(0deg)';
+        }
+
+        // Diagram toggle functionality
+        function toggleDiagram(diagramId) {
+            // Hide all other diagrams first
+            hideAllDiagrams();
+            
+            // Show the selected diagram
+            const diagram = document.getElementById(diagramId);
+            const header = document.getElementById('active-diagram-header');
+            const title = document.getElementById('active-diagram-title');
+            
+            if (diagram && header && title) {
+                // Update title
+                const diagramTitle = document.querySelector(`button[onclick="toggleDiagram('${diagramId}')"]`)
+                    .closest('.diagram-button-card')
+                    .querySelector('h3').textContent;
+                title.textContent = diagramTitle;
+                
+                // Show diagram with smooth transition
+                diagram.style.display = 'block';
+                header.style.display = 'flex';
+                
+                // Trigger reflow for animation
+                diagram.offsetHeight;
+                diagram.style.opacity = '1';
+                diagram.style.transform = 'translateY(0)';
+                
+                // Update button text
+                const button = document.querySelector(`button[onclick="toggleDiagram('${diagramId}')"]`);
+                button.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Diagram';
+                button.onclick = () => hideAllDiagrams();
+                
+                // Re-render the specific Mermaid diagram
+                setTimeout(() => {
+                    const mermaidElement = diagram.querySelector('.mermaid');
+                    if (mermaidElement && !mermaidElement.getAttribute('data-processed')) {
+                        const graphDefinition = mermaidElement.textContent;
+                        const diagramElementId = mermaidElement.id;
+                        mermaidElement.innerHTML = '';
+                        mermaidElement.removeAttribute('data-processed');
+                        
+                        mermaid.render(diagramElementId, graphDefinition, (svgCode) => {
+                            mermaidElement.innerHTML = svgCode;
+                        });
+                    }
+                }, 50);
+            }
+        }
+
+        function hideAllDiagrams() {
+            // Hide all diagrams
+            document.querySelectorAll('.embedded-diagram').forEach(diagram => {
+                diagram.style.opacity = '0';
+                diagram.style.transform = 'translateY(-10px)';
+                setTimeout(() => {
+                    diagram.style.display = 'none';
+                }, 200);
+            });
+            
+            // Hide header
+            const header = document.getElementById('active-diagram-header');
+            if (header) {
+                header.style.display = 'none';
+            }
+            
+            // Reset all button texts
+            document.querySelectorAll('.diagram-toggle-btn').forEach(button => {
+                const diagramId = button.getAttribute('onclick').match(/'([^']+)'/)[1];
+                button.innerHTML = '<i class="fas fa-eye"></i> Show Diagram';
+                button.onclick = () => toggleDiagram(diagramId);
+            });
+        }
+
+        // Issue filtering
+        let currentSeverityFilter = 'all';
+        let currentSearchQuery = '';
+
+        function filterBySeverity(severity) {
+            currentSeverityFilter = severity;
+            
+            // Update active button
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            applyFilters();
+        }
+
+        function filterIssues() {
+            currentSearchQuery = document.getElementById('searchInput').value.toLowerCase();
+            applyFilters();
+        }
+
+        function applyFilters() {
+            const issues = document.querySelectorAll('.issue-card');
+            
+            issues.forEach(issue => {
+                const severity = issue.dataset.severity;
+                const text = issue.textContent.toLowerCase();
+                
+                const matchesSeverity = currentSeverityFilter === 'all' || severity === currentSeverityFilter;
+                const matchesSearch = currentSearchQuery === '' || text.includes(currentSearchQuery);
+                
+                if (matchesSeverity && matchesSearch) {
+                    issue.classList.remove('hidden');
+                } else {
+                    issue.classList.add('hidden');
+                }
+            });
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-expand diagrams section
+            const diagramsContent = document.getElementById('diagrams-content');
+            if (diagramsContent) {
+                diagramsContent.classList.add('active');
+                const icon = diagramsContent.previousElementSibling.querySelector('.collapsible-icon');
+                if (icon) {
+                    icon.style.transform = 'rotate(90deg)';
+                }
+            }
+            
+            // Initial render of all Mermaid diagrams with unique IDs
+            setTimeout(() => {
+                const mermaidElements = document.querySelectorAll('.mermaid');
+                mermaidElements.forEach((element, index) => {
+                    const graphDefinition = element.textContent;
+                    const diagramId = element.id || `mermaid-diagram-${index}`;
+                    element.innerHTML = '';
+                    element.removeAttribute('data-processed');
+                    
+                    // Configure unique seed for each diagram to prevent ID conflicts
+                    mermaid.initialize({
+                        startOnLoad: false,
+                        theme: document.body.dataset.theme === 'dark' ? 'dark' : 'default',
+                        deterministicIds: true,
+                        deterministicIDSeed: diagramId,
+                        themeVariables: document.body.dataset.theme === 'dark' ? {
+                            primaryColor: '#3b82f6',
+                            primaryTextColor: '#f1f5f9',
+                            primaryBorderColor: '#64748b',
+                            lineColor: '#64748b',
+                            background: '#0f172a',
+                            secondaryColor: '#1e293b',
+                            tertiaryColor: '#334155'
+                        } : {
+                            primaryColor: '#2563eb',
+                            primaryTextColor: '#0f172a',
+                            primaryBorderColor: '#64748b',
+                            lineColor: '#64748b',
+                            background: '#ffffff',
+                            secondaryColor: '#f8fafc',
+                            tertiaryColor: '#e2e8f0'
+                        }
+                    });
+                    
+                    mermaid.render(diagramId, graphDefinition, (svgCode) => {
+                        element.innerHTML = svgCode;
+                    });
+                });
+            }, 100);
+        });
+    </script>
+</body>
+</html>

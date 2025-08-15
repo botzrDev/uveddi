@@ -4,9 +4,13 @@
 //! the same group of data items appear together in multiple places,
 //! suggesting they should be grouped into their own class.
 
-use crate::analysis::{AnalysisDetector, AnalysisResult};
-use crate::ast::AstProvider;
-use crate::models::{ArchitecturalIssue, IssueSeverity};
+use crate::analysis::{AnalysisDetector, AnalysisError};
+use crate::analysis::services::AnalysisResult;
+use crate::analysis::components::AstProvider;
+use crate::database::models::ArchitecturalIssue;
+use crate::analysis::detector_factory::{AntiPatternType, IssueSeverity};
+use crate::parsing::ParsedFile;
+use async_trait::async_trait;
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
 
