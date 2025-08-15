@@ -178,7 +178,21 @@
       "Bash(RUST_LOG=info cargo run --release --bin uveddi --features=\"alpha,ai\" -- analyze reports/express --output-format html --output reports/express_analysis_report.html)",
       "Bash(RUST_LOG=info cargo run --release --bin uveddi --features=\"alpha,ai\" -- analyze reports/clap/src --output-format html --output reports/clap_ai_analysis_report.html --enable-ai --ollama-model deepseek-coder:6.7b)",
       "Bash(RUST_LOG=info cargo run --release --bin uveddi --features=\"alpha,ai\" -- analyze reports/serde/serde --output-format html --output reports/serde_analysis_report.html)",
-      "Bash(./scripts/comprehensive_test_runner.sh:*)"
+      "Bash(./scripts/comprehensive_test_runner.sh:*)",
+      "Bash(RUST_LOG=info timeout 60s cargo run --release --features=\"alpha,ai\" -- analyze reports/test_repos/flask/src/flask --output-format html --output reports/flask_analysis_report.html --enable-ai --ollama-model deepseek-coder:6.7b)",
+      "Bash(RUST_LOG=info timeout 60s cargo run --release --bin uveddi --features=\"alpha,ai\" -- analyze reports/test_repos/flask/src/flask --output-format html --output reports/flask_analysis_report.html --enable-ai --ollama-model deepseek-coder:6.7b)",
+      "Bash(RUST_LOG=info timeout 60s cargo run --release --bin uveddi --features=\"alpha,ai\" -- analyze reports/serde/serde --output-format html --output reports/serde_analysis_report.html --enable-ai --ollama-model deepseek-coder:6.7b)",
+      "Bash(RUST_LOG=info timeout 60s cargo run --release --bin uveddi --features=\"alpha,ai\" -- analyze reports/test_repos/serde/serde --output-format html --output reports/serde_analysis_report.html --enable-ai --ollama-model deepseek-coder:6.7b)",
+      "Bash(RUST_LOG=info timeout 60s cargo run --release --bin uveddi --features=\"alpha,ai\" -- analyze reports/go_repo --output-format html --output reports/go_analysis_report.html --enable-ai --ollama-model deepseek-coder:6.7b)",
+      "Bash(xdg-open:*)",
+      "Bash(RUST_LOG=error cargo run --bin uveddi -- analyze src/lib.rs --output-format html --output /tmp/test_fixed_template.html)",
+      "Bash(RUST_LOG=info timeout 60s ./target/release/uveddi analyze reports/test_repos/flask/src/flask --output-format html --output reports/flask_alpha_test_report.html --enable-ai --ollama-model deepseek-coder:6.7b)",
+      "Bash(RUST_LOG=info timeout 60s /home/austingreen/Documents/botzr/projects/uveddi/target/release/uveddi analyze reports/test_repos/flask/src/flask --output-format html --output reports/flask_alpha_test_report.html --enable-ai --ollama-model deepseek-coder:6.7b)",
+      "Bash(RUST_LOG=info timeout 60s /home/austingreen/Documents/botzr/projects/uveddi/target/release/uveddi analyze /home/austingreen/Documents/botzr/projects/uveddi/reports/test_repos/flask/src/flask --output-format html --output /home/austingreen/Documents/botzr/projects/uveddi/reports/flask_alpha_test_report.html --enable-ai --ollama-model deepseek-coder:6.7b)",
+      "Bash(RUST_LOG=info timeout 60s /home/austingreen/Documents/botzr/projects/uveddi/target/release/uveddi analyze /home/austingreen/Documents/botzr/projects/uveddi/reports/test_repos/serde/serde --output-format html --output /home/austingreen/Documents/botzr/projects/uveddi/reports/serde_alpha_test_report.html --enable-ai --ollama-model deepseek-coder:6.7b)",
+      "Bash(RUST_LOG=info timeout 60s /home/austingreen/Documents/botzr/projects/uveddi/target/release/uveddi analyze /home/austingreen/Documents/botzr/projects/uveddi/reports/test_repos/express --output-format html --output /home/austingreen/Documents/botzr/projects/uveddi/reports/express_alpha_test_report.html --enable-ai --ollama-model deepseek-coder:6.7b)",
+      "Bash(RUST_LOG=info timeout 60s /home/austingreen/Documents/botzr/projects/uveddi/target/release/uveddi analyze /home/austingreen/Documents/botzr/projects/uveddi/reports/test_repos/gin --output-format html --output /home/austingreen/Documents/botzr/projects/uveddi/reports/gin_alpha_test_report.html --enable-ai --ollama-model deepseek-coder:6.7b)",
+      "Bash(RUST_LOG=info timeout 60s /home/austingreen/Documents/botzr/projects/uveddi/target/release/uveddi analyze /home/austingreen/Documents/botzr/projects/uveddi/reports/test_repos/typescript_repo/src --output-format html --output /home/austingreen/Documents/botzr/projects/uveddi/reports/typescript_alpha_test_report.html --enable-ai --ollama-model deepseek-coder:6.7b)"
     ],
     "deny": []
   }

@@ -1,0 +1,1820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uveddi Architectural Analysis Report</title>
+    
+    <!-- Mermaid.js for diagram rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* Modern CSS Variables for theming */
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #64748b;
+            --success-color: #059669;
+            --warning-color: #d97706;
+            --error-color: #dc2626;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-tertiary: #e2e8f0;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --border-color: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --radius: 8px;
+        }
+
+        [data-theme="dark"] {
+            --primary-color: #3b82f6;
+            --secondary-color: #94a3b8;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --border-color: #475569;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header Styles */
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 2rem;
+            border-radius: var(--radius);
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 49%, rgba(255,255,255,0.1) 50%, transparent 51%);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header-meta {
+            position: relative;
+            z-index: 1;
+            opacity: 0.9;
+        }
+
+        /* Navigation */
+        .nav {
+            background: var(--bg-primary);
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-link:hover {
+            background: var(--bg-tertiary);
+            color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+
+        .theme-toggle {
+            background: none;
+            border: 2px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        /* Card Styles */
+        .card {
+            background: var(--bg-primary);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Dashboard Grid */
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-primary);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.15);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            font-size: 0.875rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-critical { color: var(--error-color); }
+        .stat-high { color: var(--warning-color); }
+        .stat-medium { color: var(--primary-color); }
+        .stat-low { color: var(--success-color); }
+
+        /* Severity Badges */
+        .severity-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .severity-critical {
+            background: rgba(220, 38, 38, 0.1);
+            color: var(--error-color);
+            border: 1px solid rgba(220, 38, 38, 0.2);
+        }
+
+        .severity-high {
+            background: rgba(217, 119, 6, 0.1);
+            color: var(--warning-color);
+            border: 1px solid rgba(217, 119, 6, 0.2);
+        }
+
+        .severity-medium {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary-color);
+            border: 1px solid rgba(37, 99, 235, 0.2);
+        }
+
+        .severity-low {
+            background: rgba(5, 150, 105, 0.1);
+            color: var(--success-color);  
+            border: 1px solid rgba(5, 150, 105, 0.2);
+        }
+
+        /* Issue Cards */
+        .issue-card {
+            background: var(--bg-primary);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--primary-color);
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+        }
+
+        .issue-card:hover {
+            transform: translateX(4px);
+            box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .issue-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .issue-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            flex: 1;
+        }
+
+        .code-snippet {
+            background: var(--bg-tertiary);
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin: 1rem 0;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.875rem;
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+        }
+
+        /* Diagram Styles */
+        .diagram-container {
+            background: var(--bg-primary);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            position: relative;
+        }
+
+        .diagram-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+
+        /* Diagram Link Cards */
+        .diagram-intro {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: var(--radius);
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .diagram-links-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .diagram-link-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .diagram-link-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+            border-color: var(--primary-color);
+        }
+
+        .diagram-card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .diagram-card-header h3 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .diagram-card-header i {
+            color: var(--primary-color);
+        }
+
+        .diagram-card-body p {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .diagram-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--primary-color);
+            color: white;
+            text-decoration: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius);
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .diagram-button:hover {
+            background: var(--secondary-color);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
+        }
+
+        /* Diagram Toggle Interface Styles */
+        .diagram-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .diagram-button-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .diagram-button-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+            border-color: var(--primary-color);
+        }
+
+        .diagram-toggle-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius);
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .diagram-toggle-btn:hover {
+            background: var(--secondary-color);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
+        }
+
+        .diagram-content {
+            margin-top: 2rem;
+        }
+
+        #active-diagram-header {
+            display: none;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            margin-bottom: 1rem;
+        }
+
+        #active-diagram-header h3 {
+            margin: 0;
+            color: var(--text-primary);
+            font-size: 1.2rem;
+        }
+
+        .hide-diagram-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: calc(var(--radius) / 2);
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .hide-diagram-btn:hover {
+            background: #ef4444;
+            transform: translateY(-1px);
+        }
+
+        .embedded-diagram {
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .embedded-diagram.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        /* SVG Diagram Styles - Critical for rendering */
+        .svg-diagram {
+            width: 100%;
+            min-height: 400px;
+            display: block;
+            overflow: visible;
+            text-align: center;
+        }
+        
+        .svg-diagram svg {
+            width: 100% !important;
+            height: auto !important;
+            max-width: none !important;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .mermaid {
+            background: var(--bg-primary);
+            border-radius: var(--radius);
+        }
+
+        /* Collapsible sections */
+        .collapsible {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            user-select: none;
+        }
+
+        .collapsible-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .collapsible.active .collapsible-icon {
+            transform: rotate(90deg);
+        }
+
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .collapsible-content.active {
+            max-height: 1000px;
+        }
+
+        /* Search and Filter */
+        .search-filter {
+            background: var(--bg-primary);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            border: 2px solid var(--border-color);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            border-color: var(--primary-color);
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border-color);
+            margin-top: 3rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .nav {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .nav-links {
+                justify-content: center;
+            }
+
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            .issue-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--border-color);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Hidden class for filtering */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Anti-pattern section styles */
+        .anti-pattern-section {
+            margin-bottom: 2.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            background: var(--bg-secondary);
+            padding: 1.5rem;
+        }
+
+        .anti-pattern-header {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+
+        .diagram-explanation {
+            background: var(--bg-tertiary);
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin: 0.5rem 0 1rem 0;
+            border-left: 4px solid var(--primary-color);
+            font-style: italic;
+            color: var(--text-secondary);
+        }
+
+        .diagram-explanation p {
+            margin: 0;
+        }
+
+        /* Enhanced diagram containers */
+        .diagram-isolator {
+            background: var(--bg-primary);
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius);
+            margin: 1.5rem 0;
+            transition: all 0.3s ease;
+        }
+
+        .diagram-isolator:hover {
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow);
+        }
+
+        /* Issue numbering within sections */
+        .anti-pattern-section .issue-card .issue-title {
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        /* Responsive diagram containers */
+        @media (max-width: 768px) {
+            .anti-pattern-section {
+                padding: 1rem;
+            }
+            
+            .anti-pattern-header {
+                font-size: 1.25rem;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+            
+            .diagram-explanation {
+                font-size: 0.875rem;
+                padding: 0.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <div class="header">
+        <h1><i class="fas fa-chart-line"></i> Uveddi Architectural Analysis</h1>
+        <div class="header-meta">
+            <p><i class="fas fa-calendar"></i> Generated on 2025-08-15 13:19:40</p>
+            <p><i class="fas fa-cog"></i> Run ID: 1</p>
+        </div>
+    </div>
+
+    <nav class="nav">
+        <div class="nav-links">
+            <a href="#summary" class="nav-link"><i class="fas fa-chart-pie"></i> Summary</a>
+            <a href="#issues" class="nav-link"><i class="fas fa-exclamation-triangle"></i> Issues & Diagrams</a>
+        </div>
+        <button class="theme-toggle" onclick="toggleTheme()">
+            <i class="fas fa-moon"></i> Dark Mode
+        </button>
+    </nav>
+
+    <section id="summary" class="card">
+        <h2><i class="fas fa-chart-pie"></i> Executive Summary</h2>
+        <p>This analysis identified <strong>22 architectural issues</strong> across <strong>1 files</strong> in your codebase.</p>
+        
+        <div class="dashboard">
+            <div class="stat-card">
+                <div class="stat-number stat-critical">1</div>
+                <div class="stat-label">Critical Issues</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number stat-high">21</div>
+                <div class="stat-label">High Issues</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number stat-medium">0</div>
+                <div class="stat-label">Medium Issues</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number stat-low">0</div>
+                <div class="stat-label">Low Issues</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="card">
+        <h2><i class="fas fa-tachometer-alt"></i> Severity Dashboard</h2>
+        <div class="dashboard">
+
+            <div class="stat-card">
+                <div class="stat-number stat-High">
+                    <i class="fas fa-circle"></i> 21
+                </div>
+                <div class="stat-label">HIGH Severity</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-number stat-Critical">
+                    <i class="fas fa-circle"></i> 1
+                </div>
+                <div class="stat-label">CRITICAL Severity</div>
+            </div>
+        </div>
+    </section>
+
+    <section id="diagrams" class="card">
+        <h2 class="collapsible" onclick="toggleSection('diagrams-content')">
+            <i class="fas fa-chevron-right collapsible-icon"></i>
+            <i class="fas fa-project-diagram"></i> 
+            Architecture Diagrams
+        </h2>
+        <div id="diagrams-content" class="collapsible-content">
+            <p class="diagram-intro">
+                <i class="fas fa-info-circle"></i> 
+                The following diagrams provide visual representations of the architectural issues found in your codebase. Click any diagram button to view it inline.
+            </p>
+            
+            <div class="diagram-buttons">
+
+                <div class="diagram-button-card">
+                    <div class="diagram-card-header">
+                        <i class="fas fa-cube"></i>
+                        <h3>God Objects</h3>
+                    </div>
+                    <div class="diagram-card-body">
+                        <p>Interactive architectural diagram showing god objects.</p>
+                        <button onclick="toggleDiagram('diagram-0')" class="diagram-toggle-btn">
+                            <i class="fas fa-eye"></i> Show Diagram
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+            
+            <div class="diagram-content">
+                <div id="active-diagram-header" style="display: none;">
+                    <h3 id="active-diagram-title"></h3>
+                    <button onclick="hideAllDiagrams()" class="hide-diagram-btn">
+                        <i class="fas fa-eye-slash"></i> Hide Diagram
+                    </button>
+                </div>
+
+                <div id="diagram-0" class="embedded-diagram" style="display: none;">
+                    <div class="diagram-container">
+                        <div class="mermaid" id="mermaid-f9f30212">classDiagram
+    class UniversalApplicationController {
+    }</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <section id="issues" class="card">
+        <h2><i class="fas fa-exclamation-triangle"></i> Detailed Issues</h2>
+        
+        <div class="search-filter">
+            <input type="text" id="searchInput" class="search-input" placeholder="Search issues..." onkeyup="filterIssues()">
+            <div class="filter-buttons">
+                <button class="filter-btn active" onclick="filterBySeverity('all')">All</button>
+                <button class="filter-btn" onclick="filterBySeverity('critical')">Critical</button>
+                <button class="filter-btn" onclick="filterBySeverity('high')">High</button>
+                <button class="filter-btn" onclick="filterBySeverity('medium')">Medium</button>
+                <button class="filter-btn" onclick="filterBySeverity('low')">Low</button>
+            </div>
+        </div>
+        
+        <div id="issues-container">
+
+            <div class="anti-pattern-section">
+                <h3 class="anti-pattern-header">
+                    <i class="fas fa-layer-group"></i> Dead Code Issues (21 found)
+                </h3>
+
+                <div class="diagram-isolator" style="display: block; width: 100%; margin: 1rem 0; isolation: isolate;">
+                    <div class="diagram-container">
+                        <div class="diagram-title">
+                            <i class="fas fa-project-diagram"></i> Dead Code Analysis
+                        </div>
+                        <div id="diagram-explanation-2" class="diagram-explanation">
+                            <p><em>This diagram shows the architectural issues found in this anti-pattern category. Each node represents a component or relationship affected by the identified problems.</em></p>
+                        </div>
+                        <div class="svg-diagram" id="inline-diagram-2">
+                            <svg aria-roledescription="flowchart-v2" role="graphics-document document" viewBox="0 0 2351.015625 174" style="max-width: 2351.02px; background-color: white;" class="flowchart" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" width="100%" id="my-svg"><style>#my-svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;fill:#333;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#my-svg .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#my-svg .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#my-svg .error-icon{fill:#552222;}#my-svg .error-text{fill:#552222;stroke:#552222;}#my-svg .edge-thickness-normal{stroke-width:1px;}#my-svg .edge-thickness-thick{stroke-width:3.5px;}#my-svg .edge-pattern-solid{stroke-dasharray:0;}#my-svg .edge-thickness-invisible{stroke-width:0;fill:none;}#my-svg .edge-pattern-dashed{stroke-dasharray:3;}#my-svg .edge-pattern-dotted{stroke-dasharray:2;}#my-svg .marker{fill:#333333;stroke:#333333;}#my-svg .marker.cross{stroke:#333333;}#my-svg svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;}#my-svg p{margin:0;}#my-svg .label{font-family:"trebuchet ms",verdana,arial,sans-serif;color:#333;}#my-svg .cluster-label text{fill:#333;}#my-svg .cluster-label span{color:#333;}#my-svg .cluster-label span p{background-color:transparent;}#my-svg .label text,#my-svg span{fill:#333;color:#333;}#my-svg .node rect,#my-svg .node circle,#my-svg .node ellipse,#my-svg .node polygon,#my-svg .node path{fill:#ECECFF;stroke:#9370DB;stroke-width:1px;}#my-svg .rough-node .label text,#my-svg .node .label text,#my-svg .image-shape .label,#my-svg .icon-shape .label{text-anchor:middle;}#my-svg .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#my-svg .rough-node .label,#my-svg .node .label,#my-svg .image-shape .label,#my-svg .icon-shape .label{text-align:center;}#my-svg .node.clickable{cursor:pointer;}#my-svg .root .anchor path{fill:#333333!important;stroke-width:0;stroke:#333333;}#my-svg .arrowheadPath{fill:#333333;}#my-svg .edgePath .path{stroke:#333333;stroke-width:2.0px;}#my-svg .flowchart-link{stroke:#333333;fill:none;}#my-svg .edgeLabel{background-color:rgba(232,232,232, 0.8);text-align:center;}#my-svg .edgeLabel p{background-color:rgba(232,232,232, 0.8);}#my-svg .edgeLabel rect{opacity:0.5;background-color:rgba(232,232,232, 0.8);fill:rgba(232,232,232, 0.8);}#my-svg .labelBkg{background-color:rgba(232, 232, 232, 0.5);}#my-svg .cluster rect{fill:#ffffde;stroke:#aaaa33;stroke-width:1px;}#my-svg .cluster text{fill:#333;}#my-svg .cluster span{color:#333;}#my-svg div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:12px;background:hsl(80, 100%, 96.2745098039%);border:1px solid #aaaa33;border-radius:2px;pointer-events:none;z-index:100;}#my-svg .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#333;}#my-svg rect.text{fill:none;stroke-width:0;}#my-svg .icon-shape,#my-svg .image-shape{background-color:rgba(232,232,232, 0.8);text-align:center;}#my-svg .icon-shape p,#my-svg .image-shape p{background-color:rgba(232,232,232, 0.8);padding:2px;}#my-svg .icon-shape rect,#my-svg .image-shape rect{opacity:0.5;background-color:rgba(232,232,232, 0.8);fill:rgba(232,232,232, 0.8);}#my-svg .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#my-svg .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#my-svg :root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}
+                .classDiagram .nodeLabel, .classDiagram .edgeLabel { visibility: visible !important; }
+                .classDiagram text { font-family: Arial, sans-serif !important; }
+                .classDiagram foreignObject { overflow: visible !important; }
+            </style><g><marker orient="auto" markerHeight="8" markerWidth="8" markerUnits="userSpaceOnUse" refY="5" refX="5" viewBox="0 0 10 10" class="marker flowchart-v2" id="my-svg_flowchart-v2-pointEnd"><path style="stroke-width: 1; stroke-dasharray: 1, 0;" class="arrowMarkerPath" d="M 0 0 L 10 5 L 0 10 z"/></marker><marker orient="auto" markerHeight="8" markerWidth="8" markerUnits="userSpaceOnUse" refY="5" refX="4.5" viewBox="0 0 10 10" class="marker flowchart-v2" id="my-svg_flowchart-v2-pointStart"><path style="stroke-width: 1; stroke-dasharray: 1, 0;" class="arrowMarkerPath" d="M 0 5 L 10 10 L 10 0 z"/></marker><marker orient="auto" markerHeight="11" markerWidth="11" markerUnits="userSpaceOnUse" refY="5" refX="11" viewBox="0 0 10 10" class="marker flowchart-v2" id="my-svg_flowchart-v2-circleEnd"><circle style="stroke-width: 1; stroke-dasharray: 1, 0;" class="arrowMarkerPath" r="5" cy="5" cx="5"/></marker><marker orient="auto" markerHeight="11" markerWidth="11" markerUnits="userSpaceOnUse" refY="5" refX="-1" viewBox="0 0 10 10" class="marker flowchart-v2" id="my-svg_flowchart-v2-circleStart"><circle style="stroke-width: 1; stroke-dasharray: 1, 0;" class="arrowMarkerPath" r="5" cy="5" cx="5"/></marker><marker orient="auto" markerHeight="11" markerWidth="11" markerUnits="userSpaceOnUse" refY="5.2" refX="12" viewBox="0 0 11 11" class="marker cross flowchart-v2" id="my-svg_flowchart-v2-crossEnd"><path style="stroke-width: 2; stroke-dasharray: 1, 0;" class="arrowMarkerPath" d="M 1,1 l 9,9 M 10,1 l -9,9"/></marker><marker orient="auto" markerHeight="11" markerWidth="11" markerUnits="userSpaceOnUse" refY="5.2" refX="-1" viewBox="0 0 11 11" class="marker cross flowchart-v2" id="my-svg_flowchart-v2-crossStart"><path style="stroke-width: 2; stroke-dasharray: 1, 0;" class="arrowMarkerPath" d="M 1,1 l 9,9 M 10,1 l -9,9"/></marker><g class="root"><g class="clusters"/><g class="edgePaths"><path marker-end="url(#my-svg_flowchart-v2-pointEnd)" style="" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" id="L_Dead_DeadItem1_0" d="M1056.438,38.68L894.323,46.734C732.208,54.787,407.979,70.893,245.865,82.447C83.75,94,83.75,101,83.75,104.5L83.75,108"/><path marker-end="url(#my-svg_flowchart-v2-pointEnd)" style="" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" id="L_Dead_DeadItem2_0" d="M1056.438,39.486L925.655,47.405C794.872,55.324,533.307,71.162,402.525,82.581C271.742,94,271.742,101,271.742,104.5L271.742,108"/><path marker-end="url(#my-svg_flowchart-v2-pointEnd)" style="" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" id="L_Dead_DeadItem3_0" d="M1056.438,40.93L960.508,48.608C864.578,56.287,672.719,71.643,576.789,82.822C480.859,94,480.859,101,480.859,104.5L480.859,108"/><path marker-end="url(#my-svg_flowchart-v2-pointEnd)" style="" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" id="L_Dead_DeadItem4_0" d="M1056.438,44.543L1001.503,51.619C946.568,58.695,836.698,72.848,781.763,83.424C726.828,94,726.828,101,726.828,104.5L726.828,108"/><path marker-end="url(#my-svg_flowchart-v2-pointEnd)" style="" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" id="L_Dead_DeadItem5_0" d="M1056.438,55.634L1037.668,60.862C1018.898,66.089,981.359,76.545,962.59,85.272C943.82,94,943.82,101,943.82,104.5L943.82,108"/><path marker-end="url(#my-svg_flowchart-v2-pointEnd)" style="" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" id="L_Dead_DeadItem6_0" d="M1130.523,62L1130.523,66.167C1130.523,70.333,1130.523,78.667,1130.523,86.333C1130.523,94,1130.523,101,1130.523,104.5L1130.523,108"/><path marker-end="url(#my-svg_flowchart-v2-pointEnd)" style="" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" id="L_Dead_DeadItem7_0" d="M1204.609,53.517L1226.936,59.098C1249.263,64.678,1293.917,75.839,1316.243,84.92C1338.57,94,1338.57,101,1338.57,104.5L1338.57,108"/><path marker-end="url(#my-svg_flowchart-v2-pointEnd)" style="" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" id="L_Dead_DeadItem8_0" d="M1204.609,43.692L1266.133,50.91C1327.656,58.128,1450.703,72.564,1512.227,83.282C1573.75,94,1573.75,101,1573.75,104.5L1573.75,108"/><path marker-end="url(#my-svg_flowchart-v2-pointEnd)" style="" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" id="L_Dead_DeadItem9_0" d="M1204.609,40.674L1305.417,48.395C1406.224,56.116,1607.839,71.558,1708.646,82.779C1809.453,94,1809.453,101,1809.453,104.5L1809.453,108"/><path marker-end="url(#my-svg_flowchart-v2-pointEnd)" style="" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" id="L_Dead_DeadItem10_0" d="M1204.609,39.224L1344.279,47.186C1483.948,55.149,1763.286,71.075,1902.956,82.537C2042.625,94,2042.625,101,2042.625,104.5L2042.625,108"/><path marker-end="url(#my-svg_flowchart-v2-pointEnd)" style="" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" id="L_Dead_More_0" d="M1204.609,38.397L1381.262,46.498C1557.914,54.598,1911.219,70.799,2087.871,82.4C2264.523,94,2264.523,101,2264.523,104.5L2264.523,108"/></g><g class="edgeLabels"><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><foreignObject height="0" width="0"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" class="labelBkg" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><foreignObject height="0" width="0"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" class="labelBkg" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><foreignObject height="0" width="0"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" class="labelBkg" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><foreignObject height="0" width="0"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" class="labelBkg" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><foreignObject height="0" width="0"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" class="labelBkg" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><foreignObject height="0" width="0"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" class="labelBkg" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><foreignObject height="0" width="0"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" class="labelBkg" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><foreignObject height="0" width="0"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" class="labelBkg" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><foreignObject height="0" width="0"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" class="labelBkg" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><foreignObject height="0" width="0"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" class="labelBkg" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><foreignObject height="0" width="0"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" class="labelBkg" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignObject></g></g></g><g class="nodes"><g transform="translate(937.078125, 35)" id="flowchart-Live-0" class="node default"><rect height="54" width="138.71875" y="-27" x="-69.359375" style="" class="basic label-container"/><g transform="translate(-39.359375, -12)" style="" class="label"><rect/><foreignObject height="24" width="78.71875"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Live Code</p></span></div></foreignObject></g></g><g transform="translate(1130.5234375, 35)" id="flowchart-Dead-1" class="node default"><rect height="54" width="148.171875" y="-27" x="-74.0859375" style="fill:#ffcccc !important;stroke:#ff0000 !important;stroke-width:2px !important" class="basic label-container"/><g transform="translate(-44.0859375, -12)" style="" class="label"><rect/><foreignObject height="24" width="88.171875"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Dead Code</p></span></div></foreignObject></g></g><g transform="translate(83.75, 139)" id="flowchart-DeadItem1-4" class="node default"><rect height="54" width="151.5" y="-27" x="-75.75" style="fill:#ffe6e6 !important" class="basic label-container"/><g transform="translate(-45.75, -12)" style="" class="label"><rect/><foreignObject height="24" width="91.5"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>constructor</p></span></div></foreignObject></g></g><g transform="translate(271.7421875, 139)" id="flowchart-DeadItem2-7" class="node default"><rect height="54" width="124.484375" y="-27" x="-62.2421875" style="fill:#ffe6e6 !important" class="basic label-container"/><g transform="translate(-32.2421875, -12)" style="" class="label"><rect/><foreignObject height="24" width="64.484375"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>getData</p></span></div></foreignObject></g></g><g transform="translate(480.859375, 139)" id="flowchart-DeadItem3-10" class="node default"><rect height="54" width="193.75" y="-27" x="-96.875" style="fill:#ffe6e6 !important" class="basic label-container"/><g transform="translate(-66.875, -12)" style="" class="label"><rect/><foreignObject height="24" width="133.75"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>addEventListene</p></span></div></foreignObject></g></g><g transform="translate(726.828125, 139)" id="flowchart-DeadItem4-13" class="node default"><rect height="54" width="198.1875" y="-27" x="-99.09375" style="fill:#ffe6e6 !important" class="basic label-container"/><g transform="translate(-69.09375, -12)" style="" class="label"><rect/><foreignObject height="24" width="138.1875"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>registerCompone</p></span></div></foreignObject></g></g><g transform="translate(943.8203125, 139)" id="flowchart-DeadItem5-16" class="node default"><rect height="54" width="135.796875" y="-27" x="-67.8984375" style="fill:#ffe6e6 !important" class="basic label-container"/><g transform="translate(-37.8984375, -12)" style="" class="label"><rect/><foreignObject height="24" width="75.796875"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>setConfig</p></span></div></foreignObject></g></g><g transform="translate(1130.5234375, 139)" id="flowchart-DeadItem6-19" class="node default"><rect height="54" width="137.609375" y="-27" x="-68.8046875" style="fill:#ffe6e6 !important" class="basic label-container"/><g transform="translate(-38.8046875, -12)" style="" class="label"><rect/><foreignObject height="24" width="77.609375"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>getConfig</p></span></div></foreignObject></g></g><g transform="translate(1338.5703125, 139)" id="flowchart-DeadItem7-22" class="node default"><rect height="54" width="178.484375" y="-27" x="-89.2421875" style="fill:#ffe6e6 !important" class="basic label-container"/><g transform="translate(-59.2421875, -12)" style="" class="label"><rect/><foreignObject height="24" width="118.484375"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>getRecentLogs</p></span></div></foreignObject></g></g><g transform="translate(1573.75, 139)" id="flowchart-DeadItem8-25" class="node default"><rect height="54" width="191.875" y="-27" x="-95.9375" style="fill:#ffe6e6 !important" class="basic label-container"/><g transform="translate(-65.9375, -12)" style="" class="label"><rect/><foreignObject height="24" width="131.875"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>getMetricAverag</p></span></div></foreignObject></g></g><g transform="translate(1809.453125, 139)" id="flowchart-DeadItem9-28" class="node default"><rect height="54" width="179.53125" y="-27" x="-89.765625" style="fill:#ffe6e6 !important" class="basic label-container"/><g transform="translate(-59.765625, -12)" style="" class="label"><rect/><foreignObject height="24" width="119.53125"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>handleRequest</p></span></div></foreignObject></g></g><g transform="translate(2042.625, 139)" id="flowchart-DeadItem10-31" class="node default"><rect height="54" width="186.8125" y="-27" x="-93.40625" style="fill:#ffe6e6 !important" class="basic label-container"/><g transform="translate(-63.40625, -12)" style="" class="label"><rect/><foreignObject height="24" width="126.8125"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>unusedFunction</p></span></div></foreignObject></g></g><g transform="translate(2264.5234375, 139)" id="flowchart-More-34" class="node default"><rect height="54" width="156.984375" y="-27" x="-78.4921875" style="fill:#ffe6e6 !important" class="basic label-container"/><g transform="translate(-48.4921875, -12)" style="" class="label"><rect/><foreignObject height="24" width="96.984375"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>... and more</p></span></div></foreignObject></g></g></g></g></g></svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="issue-card" data-severity="High" data-pattern="dead-code">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #1: Dead Code
+                        </div>
+                        <span class="severity-badge severity-High">
+                            <i class="fas fa-circle"></i> HIGH
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>/home/austingreen/Documents/botzr/projects/uveddi/multi-lang-test/src/god_object.js</code></p>
+                        <p><strong>Lines:</strong> 3-3</p><p><strong>Description:</strong> Potentially dead code: function 'constructor' is not used in this file (confidence: 80.0%)</p>
+                        
+                        <div class="code-snippet"><pre><code>constructor</code></pre></div>
+                        
+                        
+                    </div>
+                </div>
+    
+                <div class="issue-card" data-severity="High" data-pattern="dead-code">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #2: Dead Code
+                        </div>
+                        <span class="severity-badge severity-High">
+                            <i class="fas fa-circle"></i> HIGH
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>/home/austingreen/Documents/botzr/projects/uveddi/multi-lang-test/src/god_object.js</code></p>
+                        <p><strong>Lines:</strong> 19-19</p><p><strong>Description:</strong> Potentially dead code: function 'getData' is not used in this file (confidence: 80.0%)</p>
+                        
+                        <div class="code-snippet"><pre><code>getData</code></pre></div>
+                        
+                        
+                    </div>
+                </div>
+    
+                <div class="issue-card" data-severity="High" data-pattern="dead-code">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #3: Dead Code
+                        </div>
+                        <span class="severity-badge severity-High">
+                            <i class="fas fa-circle"></i> HIGH
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>/home/austingreen/Documents/botzr/projects/uveddi/multi-lang-test/src/god_object.js</code></p>
+                        <p><strong>Lines:</strong> 26-26</p><p><strong>Description:</strong> Potentially dead code: function 'addEventListener' is not used in this file (confidence: 80.0%)</p>
+                        
+                        <div class="code-snippet"><pre><code>addEventListener</code></pre></div>
+                        
+                        
+                    </div>
+                </div>
+    
+                <div class="issue-card" data-severity="High" data-pattern="dead-code">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #4: Dead Code
+                        </div>
+                        <span class="severity-badge severity-High">
+                            <i class="fas fa-circle"></i> HIGH
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>/home/austingreen/Documents/botzr/projects/uveddi/multi-lang-test/src/god_object.js</code></p>
+                        <p><strong>Lines:</strong> 45-45</p><p><strong>Description:</strong> Potentially dead code: function 'registerComponent' is not used in this file (confidence: 80.0%)</p>
+                        
+                        <div class="code-snippet"><pre><code>registerComponent</code></pre></div>
+                        
+                        
+                    </div>
+                </div>
+    
+                <div class="issue-card" data-severity="High" data-pattern="dead-code">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #5: Dead Code
+                        </div>
+                        <span class="severity-badge severity-High">
+                            <i class="fas fa-circle"></i> HIGH
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>/home/austingreen/Documents/botzr/projects/uveddi/multi-lang-test/src/god_object.js</code></p>
+                        <p><strong>Lines:</strong> 72-72</p><p><strong>Description:</strong> Potentially dead code: function 'setConfig' is not used in this file (confidence: 80.0%)</p>
+                        
+                        <div class="code-snippet"><pre><code>setConfig</code></pre></div>
+                        
+                        
+                    </div>
+                </div>
+    
+                <div class="issue-card" data-severity="High" data-pattern="dead-code">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #6: Dead Code
+                        </div>
+                        <span class="severity-badge severity-High">
+                            <i class="fas fa-circle"></i> HIGH
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>/home/austingreen/Documents/botzr/projects/uveddi/multi-lang-test/src/god_object.js</code></p>
+                        <p><strong>Lines:</strong> 77-77</p><p><strong>Description:</strong> Potentially dead code: function 'getConfig' is not used in this file (confidence: 80.0%)</p>
+                        
+                        <div class="code-snippet"><pre><code>getConfig</code></pre></div>
+                        
+                        
+                    </div>
+                </div>
+    
+                <div class="issue-card" data-severity="High" data-pattern="dead-code">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #7: Dead Code
+                        </div>
+                        <span class="severity-badge severity-High">
+                            <i class="fas fa-circle"></i> HIGH
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>/home/austingreen/Documents/botzr/projects/uveddi/multi-lang-test/src/god_object.js</code></p>
+                        <p><strong>Lines:</strong> 88-88</p><p><strong>Description:</strong> Potentially dead code: function 'getRecentLogs' is not used in this file (confidence: 80.0%)</p>
+                        
+                        <div class="code-snippet"><pre><code>getRecentLogs</code></pre></div>
+                        
+                        
+                    </div>
+                </div>
+    
+                <div class="issue-card" data-severity="High" data-pattern="dead-code">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #8: Dead Code
+                        </div>
+                        <span class="severity-badge severity-High">
+                            <i class="fas fa-circle"></i> HIGH
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>/home/austingreen/Documents/botzr/projects/uveddi/multi-lang-test/src/god_object.js</code></p>
+                        <p><strong>Lines:</strong> 115-115</p><p><strong>Description:</strong> Potentially dead code: function 'getMetricAverage' is not used in this file (confidence: 80.0%)</p>
+                        
+                        <div class="code-snippet"><pre><code>getMetricAverage</code></pre></div>
+                        
+                        
+                    </div>
+                </div>
+    
+                <div class="issue-card" data-severity="High" data-pattern="dead-code">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #9: Dead Code
+                        </div>
+                        <span class="severity-badge severity-High">
+                            <i class="fas fa-circle"></i> HIGH
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>/home/austingreen/Documents/botzr/projects/uveddi/multi-lang-test/src/god_object.js</code></p>
+                        <p><strong>Lines:</strong> 121-121</p><p><strong>Description:</strong> Potentially dead code: function 'handleRequest' is not used in this file (confidence: 80.0%)</p>
+                        
+                        <div class="code-snippet"><pre><code>handleRequest</code></pre></div>
+                        
+                        
+                    </div>
+                </div>
+    
+                <div class="issue-card" data-severity="High" data-pattern="dead-code">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #10: Dead Code
+                        </div>
+                        <span class="severity-badge severity-High">
+                            <i class="fas fa-circle"></i> HIGH
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>/home/austingreen/Documents/botzr/projects/uveddi/multi-lang-test/src/god_object.js</code></p>
+                        <p><strong>Lines:</strong> 176-176</p><p><strong>Description:</strong> Potentially dead code: function 'unusedFunction' is not used in this file (confidence: 80.0%)</p>
+                        
+                        <div class="code-snippet"><pre><code>unusedFunction</code></pre></div>
+                        
+                        
+                    </div>
+                </div>
+    
+                <div class="issue-card" data-severity="High" data-pattern="dead-code">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #11: Dead Code
+                        </div>
+                        <span class="severity-badge severity-High">
+                            <i class="fas fa-circle"></i> HIGH
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>/home/austingreen/Documents/botzr/projects/uveddi/multi-lang-test/src/god_object.js</code></p>
+                        <p><strong>Lines:</strong> 180-180</p><p><strong>Description:</strong> Potentially dead code: function 'anotherUnusedFunction' is not used in this file (confidence: 80.0%)</p>
+                        
+                        <div class="code-snippet"><pre><code>anotherUnusedFunction</code></pre></div>
+                        
+                        
+                    </div>
+                </div>
+    
+                <div class="issue-card" data-severity="High" data-pattern="dead-code">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #12: Dead Code
+                        </div>
+                        <span class="severity-badge severity-High">
+                            <i class="fas fa-circle"></i> HIGH
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>/home/austingreen/Documents/botzr/projects/uveddi/multi-lang-test/src/god_object.js</code></p>
+                        <p><strong>Lines:</strong> 189-189</p><p><strong>Description:</strong> Potentially dead code: function 'constructor' is not used in this file (confidence: 80.0%)</p>
+                        
+                        <div class="code-snippet"><pre><code>constructor</code></pre></div>
+                        
+                        
+                    </div>
+                </div>
+    
+                <div class="issue-card" data-severity="High" data-pattern="dead-code">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #13: Dead Code
+                        </div>
+                        <span class="severity-badge severity-High">
+                            <i class="fas fa-circle"></i> HIGH
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>/home/austingreen/Documents/botzr/projects/uveddi/multi-lang-test/src/god_object.js</code></p>
+                        <p><strong>Lines:</strong> 193-193</p><p><strong>Description:</strong> Potentially dead code: function 'unusedMethod' is not used in this file (confidence: 80.0%)</p>
+                        
+                        <div class="code-snippet"><pre><code>unusedMethod</code></pre></div>
+                        
+                        
+                    </div>
+                </div>
+    
+                <div class="issue-card" data-severity="High" data-pattern="dead-code">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #14: Dead Code
+                        </div>
+                        <span class="severity-badge severity-High">
+                            <i class="fas fa-circle"></i> HIGH
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>/home/austingreen/Documents/botzr/projects/uveddi/multi-lang-test/src/god_object.js</code></p>
+                        <p><strong>Lines:</strong> 197-197</p><p><strong>Description:</strong> Potentially dead code: function 'unusedStaticMethod' is not used in this file (confidence: 80.0%)</p>
+                        
+                        <div class="code-snippet"><pre><code>unusedStaticMethod</code></pre></div>
+                        
+                        
+                    </div>
+                </div>
+    
+                <div class="issue-card" data-severity="High" data-pattern="dead-code">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #15: Dead Code
+                        </div>
+                        <span class="severity-badge severity-High">
+                            <i class="fas fa-circle"></i> HIGH
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>/home/austingreen/Documents/botzr/projects/uveddi/multi-lang-test/src/god_object.js</code></p>
+                        <p><strong>Lines:</strong> 205-205</p><p><strong>Description:</strong> Potentially dead code: function 'unusedDecorator' is not used in this file (confidence: 80.0%)</p>
+                        
+                        <div class="code-snippet"><pre><code>unusedDecorator</code></pre></div>
+                        
+                        
+                    </div>
+                </div>
+    
+                <div class="issue-card" data-severity="High" data-pattern="dead-code">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #16: Dead Code
+                        </div>
+                        <span class="severity-badge severity-High">
+                            <i class="fas fa-circle"></i> HIGH
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>/home/austingreen/Documents/botzr/projects/uveddi/multi-lang-test/src/god_object.js</code></p>
+                        <p><strong>Lines:</strong> 217-217</p><p><strong>Description:</strong> Potentially dead code: function 'constructor' is not used in this file (confidence: 80.0%)</p>
+                        
+                        <div class="code-snippet"><pre><code>constructor</code></pre></div>
+                        
+                        
+                    </div>
+                </div>
+    
+                <div class="issue-card" data-severity="High" data-pattern="dead-code">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #17: Dead Code
+                        </div>
+                        <span class="severity-badge severity-High">
+                            <i class="fas fa-circle"></i> HIGH
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>/home/austingreen/Documents/botzr/projects/uveddi/multi-lang-test/src/god_object.js</code></p>
+                        <p><strong>Lines:</strong> 221-221</p><p><strong>Description:</strong> Potentially dead code: function 'enter' is not used in this file (confidence: 80.0%)</p>
+                        
+                        <div class="code-snippet"><pre><code>enter</code></pre></div>
+                        
+                        
+                    </div>
+                </div>
+    
+                <div class="issue-card" data-severity="High" data-pattern="dead-code">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #18: Dead Code
+                        </div>
+                        <span class="severity-badge severity-High">
+                            <i class="fas fa-circle"></i> HIGH
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>/home/austingreen/Documents/botzr/projects/uveddi/multi-lang-test/src/god_object.js</code></p>
+                        <p><strong>Lines:</strong> 227-227</p><p><strong>Description:</strong> Potentially dead code: function 'exit' is not used in this file (confidence: 80.0%)</p>
+                        
+                        <div class="code-snippet"><pre><code>exit</code></pre></div>
+                        
+                        
+                    </div>
+                </div>
+    
+                <div class="issue-card" data-severity="High" data-pattern="dead-code">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #19: Dead Code
+                        </div>
+                        <span class="severity-badge severity-High">
+                            <i class="fas fa-circle"></i> HIGH
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>/home/austingreen/Documents/botzr/projects/uveddi/multi-lang-test/src/god_object.js</code></p>
+                        <p><strong>Lines:</strong> 234-234</p><p><strong>Description:</strong> Potentially dead code: function 'constructor' is not used in this file (confidence: 80.0%)</p>
+                        
+                        <div class="code-snippet"><pre><code>constructor</code></pre></div>
+                        
+                        
+                    </div>
+                </div>
+    
+                <div class="issue-card" data-severity="High" data-pattern="dead-code">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #20: Dead Code
+                        </div>
+                        <span class="severity-badge severity-High">
+                            <i class="fas fa-circle"></i> HIGH
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>/home/austingreen/Documents/botzr/projects/uveddi/multi-lang-test/src/god_object.js</code></p>
+                        <p><strong>Lines:</strong> 241-241</p><p><strong>Description:</strong> Potentially dead code: function 'mixedUsageEntry' is not used in this file (confidence: 80.0%)</p>
+                        
+                        <div class="code-snippet"><pre><code>mixedUsageEntry</code></pre></div>
+                        
+                        
+                    </div>
+                </div>
+    
+                <div class="issue-card" data-severity="High" data-pattern="dead-code">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #21: Dead Code
+                        </div>
+                        <span class="severity-badge severity-High">
+                            <i class="fas fa-circle"></i> HIGH
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>/home/austingreen/Documents/botzr/projects/uveddi/multi-lang-test/src/god_object.js</code></p>
+                        <p><strong>Lines:</strong> 249-249</p><p><strong>Description:</strong> Potentially dead code: function 'unusedHelperInMixed' is not used in this file (confidence: 80.0%)</p>
+                        
+                        <div class="code-snippet"><pre><code>unusedHelperInMixed</code></pre></div>
+                        
+                        
+                    </div>
+                </div>
+                </div>
+
+            <div class="anti-pattern-section">
+                <h3 class="anti-pattern-header">
+                    <i class="fas fa-layer-group"></i> God Objects Issues (1 found)
+                </h3>
+
+                <div class="diagram-isolator" style="display: block; width: 100%; margin: 1rem 0; isolation: isolate;">
+                    <div class="diagram-container">
+                        <div class="diagram-title">
+                            <i class="fas fa-project-diagram"></i> God Object Analysis
+                        </div>
+                        <div id="diagram-explanation-1" class="diagram-explanation">
+                            <p><em>This diagram shows the architectural issues found in this anti-pattern category. Each node represents a component or relationship affected by the identified problems.</em></p>
+                        </div>
+                        <div class="svg-diagram" id="inline-diagram-1">
+                            <svg aria-roledescription="class" role="graphics-document document" viewBox="0 0 317.265625 100" style="max-width: 317.266px; background-color: white;" class="classDiagram" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" width="100%" id="my-svg"><style>#my-svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;fill:#333;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#my-svg .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#my-svg .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#my-svg .error-icon{fill:#552222;}#my-svg .error-text{fill:#552222;stroke:#552222;}#my-svg .edge-thickness-normal{stroke-width:1px;}#my-svg .edge-thickness-thick{stroke-width:3.5px;}#my-svg .edge-pattern-solid{stroke-dasharray:0;}#my-svg .edge-thickness-invisible{stroke-width:0;fill:none;}#my-svg .edge-pattern-dashed{stroke-dasharray:3;}#my-svg .edge-pattern-dotted{stroke-dasharray:2;}#my-svg .marker{fill:#333333;stroke:#333333;}#my-svg .marker.cross{stroke:#333333;}#my-svg svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;}#my-svg p{margin:0;}#my-svg g.classGroup text{fill:#9370DB;stroke:none;font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:10px;}#my-svg g.classGroup text .title{font-weight:bolder;}#my-svg .nodeLabel,#my-svg .edgeLabel{color:#131300;}#my-svg .edgeLabel .label rect{fill:#ECECFF;}#my-svg .label text{fill:#131300;}#my-svg .labelBkg{background:#ECECFF;}#my-svg .edgeLabel .label span{background:#ECECFF;}#my-svg .classTitle{font-weight:bolder;}#my-svg .node rect,#my-svg .node circle,#my-svg .node ellipse,#my-svg .node polygon,#my-svg .node path{fill:#ECECFF;stroke:#9370DB;stroke-width:1px;}#my-svg .divider{stroke:#9370DB;stroke-width:1;}#my-svg g.clickable{cursor:pointer;}#my-svg g.classGroup rect{fill:#ECECFF;stroke:#9370DB;}#my-svg g.classGroup line{stroke:#9370DB;stroke-width:1;}#my-svg .classLabel .box{stroke:none;stroke-width:0;fill:#ECECFF;opacity:0.5;}#my-svg .classLabel .label{fill:#9370DB;font-size:10px;}#my-svg .relation{stroke:#333333;stroke-width:1;fill:none;}#my-svg .dashed-line{stroke-dasharray:3;}#my-svg .dotted-line{stroke-dasharray:1 2;}#my-svg #compositionStart,#my-svg .composition{fill:#333333!important;stroke:#333333!important;stroke-width:1;}#my-svg #compositionEnd,#my-svg .composition{fill:#333333!important;stroke:#333333!important;stroke-width:1;}#my-svg #dependencyStart,#my-svg .dependency{fill:#333333!important;stroke:#333333!important;stroke-width:1;}#my-svg #dependencyStart,#my-svg .dependency{fill:#333333!important;stroke:#333333!important;stroke-width:1;}#my-svg #extensionStart,#my-svg .extension{fill:transparent!important;stroke:#333333!important;stroke-width:1;}#my-svg #extensionEnd,#my-svg .extension{fill:transparent!important;stroke:#333333!important;stroke-width:1;}#my-svg #aggregationStart,#my-svg .aggregation{fill:transparent!important;stroke:#333333!important;stroke-width:1;}#my-svg #aggregationEnd,#my-svg .aggregation{fill:transparent!important;stroke:#333333!important;stroke-width:1;}#my-svg #lollipopStart,#my-svg .lollipop{fill:#ECECFF!important;stroke:#333333!important;stroke-width:1;}#my-svg #lollipopEnd,#my-svg .lollipop{fill:#ECECFF!important;stroke:#333333!important;stroke-width:1;}#my-svg .edgeTerminals{font-size:11px;line-height:initial;}#my-svg .classTitleText{text-anchor:middle;font-size:18px;fill:#333;}#my-svg .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#my-svg .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#my-svg :root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}#my-svg .UniversalApplicationController&gt;*{fill:#ffcccc!important;stroke:#ff0000!important;stroke-width:3px!important;}#my-svg .UniversalApplicationController span{fill:#ffcccc!important;stroke:#ff0000!important;stroke-width:3px!important;}
+                .classDiagram .nodeLabel, .classDiagram .edgeLabel { visibility: visible !important; }
+                .classDiagram text { font-family: Arial, sans-serif !important; }
+                .classDiagram foreignObject { overflow: visible !important; }
+            </style><g><defs><marker orient="auto" markerHeight="240" markerWidth="190" refY="7" refX="18" class="marker aggregation class" id="my-svg_class-aggregationStart"><path d="M 18,7 L9,13 L1,7 L9,1 Z"/></marker></defs><defs><marker orient="auto" markerHeight="28" markerWidth="20" refY="7" refX="1" class="marker aggregation class" id="my-svg_class-aggregationEnd"><path d="M 18,7 L9,13 L1,7 L9,1 Z"/></marker></defs><defs><marker orient="auto" markerHeight="240" markerWidth="190" refY="7" refX="18" class="marker extension class" id="my-svg_class-extensionStart"><path d="M 1,7 L18,13 V 1 Z"/></marker></defs><defs><marker orient="auto" markerHeight="28" markerWidth="20" refY="7" refX="1" class="marker extension class" id="my-svg_class-extensionEnd"><path d="M 1,1 V 13 L18,7 Z"/></marker></defs><defs><marker orient="auto" markerHeight="240" markerWidth="190" refY="7" refX="18" class="marker composition class" id="my-svg_class-compositionStart"><path d="M 18,7 L9,13 L1,7 L9,1 Z"/></marker></defs><defs><marker orient="auto" markerHeight="28" markerWidth="20" refY="7" refX="1" class="marker composition class" id="my-svg_class-compositionEnd"><path d="M 18,7 L9,13 L1,7 L9,1 Z"/></marker></defs><defs><marker orient="auto" markerHeight="240" markerWidth="190" refY="7" refX="6" class="marker dependency class" id="my-svg_class-dependencyStart"><path d="M 5,7 L9,13 L1,7 L9,1 Z"/></marker></defs><defs><marker orient="auto" markerHeight="28" markerWidth="20" refY="7" refX="13" class="marker dependency class" id="my-svg_class-dependencyEnd"><path d="M 18,7 L9,13 L14,7 L9,1 Z"/></marker></defs><defs><marker orient="auto" markerHeight="240" markerWidth="190" refY="7" refX="13" class="marker lollipop class" id="my-svg_class-lollipopStart"><circle r="6" cy="7" cx="7" fill="transparent" stroke="black"/></marker></defs><defs><marker orient="auto" markerHeight="240" markerWidth="190" refY="7" refX="1" class="marker lollipop class" id="my-svg_class-lollipopEnd"><circle r="6" cy="7" cx="7" fill="transparent" stroke="black"/></marker></defs><g class="root"><g class="clusters"/><g class="edgePaths"/><g class="edgeLabels"/><g class="nodes"><g transform="translate(158.6328125, 50)" id="classId-UniversalApplicationController-0" class="node default"><g class="basic label-container"><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="#ffcccc" stroke-width="0" stroke="none" d="M-150.6328125 -42 L150.6328125 -42 L150.6328125 42 L-150.6328125 42"/><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="none" stroke-width="3" stroke="#ff0000" d="M-150.6328125 -42 C-65.33566859458315 -42, 19.96147531083369 -42, 150.6328125 -42 M-150.6328125 -42 C-72.28566131131778 -42, 6.061489877364437 -42, 150.6328125 -42 M150.6328125 -42 C150.6328125 -11.046258151896819, 150.6328125 19.907483696206363, 150.6328125 42 M150.6328125 -42 C150.6328125 -23.334657863151865, 150.6328125 -4.669315726303729, 150.6328125 42 M150.6328125 42 C49.321033977624865 42, -51.99074454475027 42, -150.6328125 42 M150.6328125 42 C72.4596675305508 42, -5.713477438898394 42, -150.6328125 42 M-150.6328125 42 C-150.6328125 19.44300901064101, -150.6328125 -3.1139819787179803, -150.6328125 -42 M-150.6328125 42 C-150.6328125 9.89926405115633, -150.6328125 -22.20147189768734, -150.6328125 -42"/></g><g transform="translate(0, -18)" class="annotation-group text"/><g transform="translate(-138.6328125, -18)" class="label-group text"><g transform="translate(0,-12)" style="font-weight: bolder" class="label"><foreignObject height="24" width="277.265625"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 291px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="nodeLabel markdown-node-label"><p>UniversalApplicationController</p></span></div></foreignObject></g></g><g transform="translate(-138.6328125, 30)" class="members-group text"/><g transform="translate(-138.6328125, 60)" class="methods-group text"/><g style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="divider"><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="none" stroke-width="3" stroke="#ff0000" d="M-150.6328125 6 C-37.31697084568465 6, 75.9988708086307 6, 150.6328125 6 M-150.6328125 6 C-34.42071806520316 6, 81.79137636959368 6, 150.6328125 6"/></g><g style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="divider"><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="none" stroke-width="3" stroke="#ff0000" d="M-150.6328125 24 C-89.13069696900519 24, -27.628581438010357 24, 150.6328125 24 M-150.6328125 24 C-51.076506032371924 24, 48.47980043525615 24, 150.6328125 24"/></g></g></g></g></g></svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="issue-card" data-severity="Critical" data-pattern="god-object">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #1: God Object
+                        </div>
+                        <span class="severity-badge severity-Critical">
+                            <i class="fas fa-circle"></i> CRITICAL
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>/home/austingreen/Documents/botzr/projects/uveddi/multi-lang-test/src/god_object.js</code></p>
+                        <p><strong>Lines:</strong> 2-2</p><p><strong>Description:</strong> God Object detected: 'UniversalApplicationController' has 16 methods and 0 fields. (Thresholds: methods>5, fields>8) LCOM4 score: 2 (>1 indicates low cohesion) Methods: 11 trivial, 5 complex</p>
+                        
+                        <div class="code-snippet"><pre><code>class UniversalApplicationController {
+    constructor() {
+        this.dataStore = new Map();
+        this.eventHandlers = new Map();
+        this.uiComponents = new Map();
+        this.networkClients = new Map();
+        this.configManager = new Map();
+        this.logBuffer = [];
+        this.metrics = new Map();
+    }
+    
+    // Data management methods (should be separate service)
+    storeData(key, value) {
+        this.dataStore.set(key, value);
+        this.logMessage('info', `Data stored: ${key}`);
+    }
+    
+    getData(key) {
+        const value = this.dataStore.get(key);
+        this.logMessage('info', `Data retrieved: ${key}`);
+        return value;
+    }
+    
+    // Event handling methods (should be separate service)
+    addEventListener(event, handler) {
+        if (!this.eventHandlers.has(event)) {
+            this.eventHandlers.set(event, []);
+        }
+        this.eventHandlers.get(event).push(handler);
+    }
+    
+    emitEvent(event, data) {
+        const handlers = this.eventHandlers.get(event) || [];
+        handlers.forEach(handler => {
+            try {
+                handler(data);
+            } catch (error) {
+                this.logMessage('error', `Event handler failed: ${error.message}`);
+            }
+        });
+    }
+    
+    // UI management methods (should be separate service)
+    registerComponent(id, component) {
+        this.uiComponents.set(id, component);
+        this.logMessage('info', `Component registered: ${id}`);
+    }
+    
+    updateComponent(id, props) {
+        const component = this.uiComponents.get(id);
+        if (component) {
+            Object.assign(component, props);
+            this.emitEvent('componentUpdated', { id, props });
+        }
+    }
+    
+    // Network methods (should be separate service)
+    async makeHttpRequest(url, options = {}) {
+        try {
+            // Simulate HTTP request
+            const response = { status: 200, data: 'response data' };
+            this.logMessage('info', `HTTP request successful: ${url}`);
+            return response.data;
+        } catch (error) {
+            this.logMessage('error', `HTTP request failed: ${error.message}`);
+            throw error;
+        }
+    }
+    
+    // Configuration methods (should be separate service)
+    setConfig(key, value) {
+        this.configManager.set(key, value);
+        this.emitEvent('configChanged', { key, value });
+    }
+    
+    getConfig(key, defaultValue = null) {
+        return this.configManager.get(key) || defaultValue;
+    }
+    
+    // Logging methods (should be separate service)
+    logMessage(level, message) {
+        const timestamp = new Date().toISOString();
+        const logEntry = `[${timestamp}] ${level.toUpperCase()}: ${message}`;
+        this.logBuffer.push(logEntry);
+    }
+    
+    getRecentLogs(count = 100) {
+        return this.logBuffer.slice(-count);
+    }
+    
+    // Metrics methods (should be separate service)
+    recordMetric(name, value, tags = {}) {
+        if (!this.metrics.has(name)) {
+            this.metrics.set(name, []);
+        }
+        
+        const metricEntry = {
+            name: name,
+            value: value,
+            timestamp: new Date().toISOString(),
+            tags: tags
+        };
+        
+        this.metrics.get(name).push(metricEntry);
+    }
+    
+    getMetricValues(name) {
+        if (this.metrics.has(name)) {
+            return this.metrics.get(name).map(entry => entry.value);
+        }
+        return [];
+    }
+    
+    getMetricAverage(name) {
+        const values = this.getMetricValues(name);
+        return values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : null;
+    }
+    
+    // Main method that does everything
+    async handleRequest(requestData) {
+        const requestId = requestData.id || 'unknown';
+        
+        try {
+            this.logMessage('info', `Handling request: ${requestId}`);
+            
+            // Process data
+            if (requestData.dataKey && requestData.dataValue) {
+                this.storeData(requestData.dataKey, requestData.dataValue);
+            }
+            
+            // Make network request
+            if (requestData.apiUrl) {
+                try {
+                    const response = await this.makeHttpRequest(requestData.apiUrl);
+                    this.logMessage('info', `API response: ${response.length} characters`);
+                } catch (error) {
+                    this.logMessage('error', `API call failed: ${error.message}`);
+                }
+            }
+            
+            // Update UI
+            if (requestData.componentId && requestData.componentProps) {
+                this.updateComponent(requestData.componentId, requestData.componentProps);
+            }
+            
+            // Record metrics
+            this.recordMetric('requests_handled', 1.0);
+            
+            // Prepare response
+            const response = {
+                success: true,
+                requestId: requestId,
+                processedAt: new Date().toISOString(),
+                metrics: {
+                    requestsHandled: this.getMetricValues('requests_handled').length
+                }
+            };
+            
+            this.logMessage('info', `Request processed successfully: ${requestId}`);
+            return response;
+            
+        } catch (error) {
+            this.logMessage('error', `Request processing failed: ${error.message}`);
+            return {
+                success: false,
+                requestId: requestId,
+                error: error.message,
+                processedAt: new Date().toISOString()
+            };
+        }
+    }
+}</code></pre></div>
+                        
+                        
+                    </div>
+                </div>
+                </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <p><i class="fas fa-code"></i> Generated by <strong>Uveddi</strong> - AI-Powered Code Analysis</p>
+        <p>For more information, visit <a href="https://github.com/botzrDev/uveddi" target="_blank">github.com/botzrDev/uveddi</a></p>
+    </footer>
+</div>
+
+    <script>
+        // Initialize Mermaid.js for diagram rendering with unique IDs
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: 'default',
+            deterministicIds: true,
+            themeVariables: {
+                primaryColor: '#2563eb',
+                primaryTextColor: '#0f172a',
+                primaryBorderColor: '#64748b',
+                lineColor: '#64748b',
+                background: '#ffffff',
+                secondaryColor: '#f8fafc',
+                tertiaryColor: '#e2e8f0'
+            }
+        });
+
+        // Generate unique seeds for each diagram to prevent ID conflicts
+        document.addEventListener('DOMContentLoaded', function() {
+            const mermaidElements = document.querySelectorAll('.mermaid');
+            mermaidElements.forEach((element, index) => {
+                const uniqueId = `mermaid-diagram-${index}-${Date.now()}`;
+                const graphDefinition = element.textContent.trim();
+                
+                const config = {
+                    deterministicIds: true,
+                    deterministicIDSeed: `seed-${index}-${Date.now()}`,
+                    theme: document.body.dataset.theme === 'dark' ? 'dark' : 'default'
+                };
+                
+                mermaid.render(uniqueId + '-svg', graphDefinition, config).then((result) => {
+                    element.innerHTML = result.svg;
+                }).catch((error) => {
+                    console.error('Mermaid rendering error for diagram', index, ':', error);
+                    element.innerHTML = '<div class="diagram-error" style="color: red; padding: 1rem; border: 1px solid red; border-radius: 4px;">Diagram rendering failed: ' + error.message + '</div>';
+                });
+            });
+        });
+
+        // Re-render Mermaid diagrams when theme changes
+        function rerenderMermaidDiagrams() {
+            const isDark = document.body.dataset.theme === 'dark';
+            const theme = isDark ? 'dark' : 'default';
+            const themeVariables = isDark ? {
+                primaryColor: '#3b82f6',
+                primaryTextColor: '#f1f5f9',
+                primaryBorderColor: '#94a3b8',
+                lineColor: '#94a3b8',
+                background: '#0f172a',
+                secondaryColor: '#1e293b',
+                tertiaryColor: '#334155'
+            } : {
+                primaryColor: '#2563eb',
+                primaryTextColor: '#0f172a',
+                primaryBorderColor: '#64748b',
+                lineColor: '#64748b',
+                background: '#ffffff',
+                secondaryColor: '#f8fafc',
+                tertiaryColor: '#e2e8f0'
+            };
+
+            mermaid.initialize({
+                startOnLoad: false,
+                theme: theme,
+                themeVariables: themeVariables
+            });
+
+            // Re-render all mermaid diagrams with unique seeds
+            const mermaidElements = document.querySelectorAll('.mermaid');
+            mermaidElements.forEach((element, index) => {
+                const graphDefinition = element.textContent;
+                const diagramId = element.id || `mermaid-diagram-${index}`;
+                element.innerHTML = '';
+                element.removeAttribute('data-processed');
+                
+                // Configure unique seed for each diagram to prevent ID conflicts
+                mermaid.initialize({
+                    startOnLoad: false,
+                    theme: theme,
+                    deterministicIds: true,
+                    deterministicIDSeed: diagramId,
+                    themeVariables: themeVariables
+                });
+                
+                mermaid.render(diagramId, graphDefinition, (svgCode) => {
+                    element.innerHTML = svgCode;
+                });
+            });
+        }
+
+        // Theme toggle functionality
+        function toggleTheme() {
+            const body = document.body;
+            const themeToggle = document.querySelector('.theme-toggle');
+            
+            if (body.dataset.theme === 'dark') {
+                body.dataset.theme = 'light';
+                themeToggle.innerHTML = '<i class="fas fa-moon"></i> Dark Mode';
+                localStorage.setItem('theme', 'light');
+            } else {
+                body.dataset.theme = 'dark';
+                themeToggle.innerHTML = '<i class="fas fa-sun"></i> Light Mode';
+                localStorage.setItem('theme', 'dark');
+            }
+            
+            // Re-render Mermaid diagrams with new theme
+            setTimeout(rerenderMermaidDiagrams, 100);
+        }
+
+        // Load saved theme
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.body.dataset.theme = savedTheme;
+        if (savedTheme === 'dark') {
+            document.querySelector('.theme-toggle').innerHTML = '<i class="fas fa-sun"></i> Light Mode';
+        }
+
+        // Collapsible sections
+        function toggleSection(sectionId) {
+            const content = document.getElementById(sectionId);
+            const icon = content.previousElementSibling.querySelector('.collapsible-icon');
+            
+            content.classList.toggle('active');
+            icon.style.transform = content.classList.contains('active') ? 'rotate(90deg)' : 'rotate(0deg)';
+        }
+
+        // Diagram toggle functionality
+        function toggleDiagram(diagramId) {
+            // Hide all other diagrams first
+            hideAllDiagrams();
+            
+            // Show the selected diagram
+            const diagram = document.getElementById(diagramId);
+            const header = document.getElementById('active-diagram-header');
+            const title = document.getElementById('active-diagram-title');
+            
+            if (diagram && header && title) {
+                // Update title
+                const diagramTitle = document.querySelector(`button[onclick="toggleDiagram('${diagramId}')"]`)
+                    .closest('.diagram-button-card')
+                    .querySelector('h3').textContent;
+                title.textContent = diagramTitle;
+                
+                // Show diagram with smooth transition
+                diagram.style.display = 'block';
+                header.style.display = 'flex';
+                
+                // Trigger reflow for animation
+                diagram.offsetHeight;
+                diagram.style.opacity = '1';
+                diagram.style.transform = 'translateY(0)';
+                
+                // Update button text
+                const button = document.querySelector(`button[onclick="toggleDiagram('${diagramId}')"]`);
+                button.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Diagram';
+                button.onclick = () => hideAllDiagrams();
+                
+                // Re-render the specific Mermaid diagram
+                setTimeout(() => {
+                    const mermaidElement = diagram.querySelector('.mermaid');
+                    if (mermaidElement && !mermaidElement.getAttribute('data-processed')) {
+                        const graphDefinition = mermaidElement.textContent;
+                        const diagramElementId = mermaidElement.id;
+                        mermaidElement.innerHTML = '';
+                        mermaidElement.removeAttribute('data-processed');
+                        
+                        mermaid.render(diagramElementId, graphDefinition, (svgCode) => {
+                            mermaidElement.innerHTML = svgCode;
+                        });
+                    }
+                }, 50);
+            }
+        }
+
+        function hideAllDiagrams() {
+            // Hide all diagrams
+            document.querySelectorAll('.embedded-diagram').forEach(diagram => {
+                diagram.style.opacity = '0';
+                diagram.style.transform = 'translateY(-10px)';
+                setTimeout(() => {
+                    diagram.style.display = 'none';
+                }, 200);
+            });
+            
+            // Hide header
+            const header = document.getElementById('active-diagram-header');
+            if (header) {
+                header.style.display = 'none';
+            }
+            
+            // Reset all button texts
+            document.querySelectorAll('.diagram-toggle-btn').forEach(button => {
+                const diagramId = button.getAttribute('onclick').match(/'([^']+)'/)[1];
+                button.innerHTML = '<i class="fas fa-eye"></i> Show Diagram';
+                button.onclick = () => toggleDiagram(diagramId);
+            });
+        }
+
+        // Issue filtering
+        let currentSeverityFilter = 'all';
+        let currentSearchQuery = '';
+
+        function filterBySeverity(severity) {
+            currentSeverityFilter = severity;
+            
+            // Update active button
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            applyFilters();
+        }
+
+        function filterIssues() {
+            currentSearchQuery = document.getElementById('searchInput').value.toLowerCase();
+            applyFilters();
+        }
+
+        function applyFilters() {
+            const issues = document.querySelectorAll('.issue-card');
+            
+            issues.forEach(issue => {
+                const severity = issue.dataset.severity;
+                const text = issue.textContent.toLowerCase();
+                
+                const matchesSeverity = currentSeverityFilter === 'all' || severity === currentSeverityFilter;
+                const matchesSearch = currentSearchQuery === '' || text.includes(currentSearchQuery);
+                
+                if (matchesSeverity && matchesSearch) {
+                    issue.classList.remove('hidden');
+                } else {
+                    issue.classList.add('hidden');
+                }
+            });
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-expand diagrams section
+            const diagramsContent = document.getElementById('diagrams-content');
+            if (diagramsContent) {
+                diagramsContent.classList.add('active');
+                const icon = diagramsContent.previousElementSibling.querySelector('.collapsible-icon');
+                if (icon) {
+                    icon.style.transform = 'rotate(90deg)';
+                }
+            }
+            
+            // Initial render of all Mermaid diagrams with unique IDs
+            setTimeout(() => {
+                const mermaidElements = document.querySelectorAll('.mermaid');
+                mermaidElements.forEach((element, index) => {
+                    const graphDefinition = element.textContent;
+                    const diagramId = element.id || `mermaid-diagram-${index}`;
+                    element.innerHTML = '';
+                    element.removeAttribute('data-processed');
+                    
+                    // Configure unique seed for each diagram to prevent ID conflicts
+                    mermaid.initialize({
+                        startOnLoad: false,
+                        theme: document.body.dataset.theme === 'dark' ? 'dark' : 'default',
+                        deterministicIds: true,
+                        deterministicIDSeed: diagramId,
+                        themeVariables: document.body.dataset.theme === 'dark' ? {
+                            primaryColor: '#3b82f6',
+                            primaryTextColor: '#f1f5f9',
+                            primaryBorderColor: '#64748b',
+                            lineColor: '#64748b',
+                            background: '#0f172a',
+                            secondaryColor: '#1e293b',
+                            tertiaryColor: '#334155'
+                        } : {
+                            primaryColor: '#2563eb',
+                            primaryTextColor: '#0f172a',
+                            primaryBorderColor: '#64748b',
+                            lineColor: '#64748b',
+                            background: '#ffffff',
+                            secondaryColor: '#f8fafc',
+                            tertiaryColor: '#e2e8f0'
+                        }
+                    });
+                    
+                    mermaid.render(diagramId, graphDefinition, (svgCode) => {
+                        element.innerHTML = svgCode;
+                    });
+                });
+            }, 100);
+        });
+    </script>
+</body>
+</html>

@@ -67,19 +67,18 @@
             <div class="diagram-content" id="{{ diagram.id }}">
                 {% if diagram.svg_content %}
                     {{ diagram.svg_content | safe }}
+                {% elif diagram.mermaid_code %}
+                    <!-- Render Mermaid diagram -->
+                    <div class="mermaid" id="mermaid-{{ diagram.id }}">
+                        {{ diagram.mermaid_code }}
+                    </div>
                 {% else %}
-                    <!-- Fallback for when SVG generation fails -->
+                    <!-- Fallback for when no diagram is available -->
                     <div class="diagram-fallback">
                         <div class="fallback-message">
                             <i class="fas fa-exclamation-triangle"></i>
                             Diagram rendering unavailable
                         </div>
-                        {% if diagram.mermaid_code %}
-                        <details class="mermaid-source">
-                            <summary>View Source Code</summary>
-                            <pre><code>{{ diagram.mermaid_code }}</code></pre>
-                        </details>
-                        {% endif %}
                     </div>
                 {% endif %}
             </div>
@@ -292,9 +291,32 @@ function exportDiagram(diagramId) {
     }
 }
 
+// Initialize Mermaid.js for diagram rendering
+function initializeMermaid() {
+    if (typeof mermaid !== 'undefined') {
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: 'default',
+            securityLevel: 'loose',
+            fontFamily: 'Arial, sans-serif',
+            fontSize: 14
+        });
+        
+        // Render all mermaid diagrams
+        const mermaidElements = document.querySelectorAll('.mermaid');
+        mermaidElements.forEach((element, index) => {
+            const uniqueId = 'mermaid-rendered-' + index;
+            mermaid.render(uniqueId, element.textContent, (svgCode) => {
+                element.innerHTML = svgCode;
+            });
+        });
+    }
+}
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     renderSeverityChart();
+    initializeMermaid();
 });
 </script>
 {% endblock %}

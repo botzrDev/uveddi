@@ -603,6 +603,14 @@ impl ModernReportGenerator {
                 }
             }
         });
+
+        // JSON encode filter for JavaScript contexts
+        tera.register_filter("json_encode", |value: &tera::Value, _args: &HashMap<String, tera::Value>| {
+            match serde_json::to_string(value) {
+                Ok(json_string) => Ok(tera::Value::String(json_string)),
+                Err(_) => Ok(tera::Value::String("{}".to_string()))
+            }
+        });
     }
 
     /// Refresh templates if they've been modified
