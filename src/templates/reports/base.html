@@ -1,76 +1,53 @@
-<!DOCTYPE html>
-<html lang="en" data-theme="{{ theme | default(value='light') }}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Uveddi Architectural Analysis Report{% endblock %}</title>
-    
-    {% block head_meta %}{% endblock %}
-    
-    <style>
-        {{ bundled_css | safe }}
-    </style>
-    
-    <!-- Mermaid.js for diagram rendering -->
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
-    
-    {% block additional_styles %}{% endblock %}
-</head>
-<body>
-    <div class="container">
-        {% block header %}
-        <div class="header">
-            <h1>{% block header_title %}Uveddi Architectural Analysis Report{% endblock %}</h1>
-            <div class="header-subtitle">
-                {% block header_subtitle %}
-                Generated on {{ timestamp | date(format="%Y-%m-%d at %H:%M:%S UTC") }}
-                {% if git_branch %} | Branch: {{ git_branch }}{% endif %}
-                {% endblock %}
+{% extends "layouts/report.html" %}
+
+{% block additional_sections %}
+    <section id="technical-debt" class="report-section" aria-labelledby="debt-heading">
+        <h2 id="debt-heading">Technical Debt Analysis</h2>
+        <div class="debt-metrics">
+            <div class="metric-card">
+                <h3>Estimated Technical Debt</h3>
+                <div class="metric-value">{{ summary_stats.technical_debt_hours | default(value="N/A") }} hours</div>
             </div>
-            <div class="header-controls">
-                <button onclick="toggleTheme()" class="theme-toggle" title="Toggle theme">
-                    <i class="fas fa-moon dark-icon"></i>
-                    <i class="fas fa-sun light-icon"></i>
-                </button>
-                <button onclick="window.print()" class="print-btn" title="Print report">
-                    <i class="fas fa-print"></i>
-                </button>
+            <div class="metric-card">
+                <h3>Debt per Issue</h3>
+                <div class="metric-value">{{ summary_stats.avg_debt_per_issue | default(value="N/A") }} hours</div>
             </div>
         </div>
-        {% endblock %}
+    </section>
 
-        {% block navigation %}
-        <nav class="navigation">
-            <ul>
-                <li><a href="#severity-dashboard" class="nav-link">Severity Dashboard</a></li>
-                <li><a href="#diagrams" class="nav-link">Architecture Diagrams</a></li>
-                <li><a href="#detailed-issues" class="nav-link">Detailed Issues</a></li>
-            </ul>
-        </nav>
-        {% endblock %}
+    <section id="recommendations" class="report-section" aria-labelledby="recommendations-heading">
+        <h2 id="recommendations-heading">Recommendations</h2>
+        <div class="recommendations-list">
+            {% if recommendations %}
+                {% for recommendation in recommendations %}
+                    <div class="recommendation-item">
+                        <h3>{{ recommendation.title }}</h3>
+                        <p>{{ recommendation.description }}</p>
+                        <div class="recommendation-priority priority-{{ recommendation.priority }}">
+                            Priority: {{ recommendation.priority | title }}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>No specific recommendations available. Consider running a more detailed analysis.</p>
+            {% endif %}
+        </div>
+    </section>
 
-        <main class="main-content">
-            {% block content %}{% endblock %}
-        </main>
-
-        {% block footer %}
-        <footer class="footer">
-            <div class="footer-content">
-                <div class="footer-left">
-                    <strong>Uveddi</strong> - Advanced Architectural Analysis Tool
-                </div>
-                <div class="footer-right">
-                    Generated in {{ generation_time_ms }}ms | {{ total_issues }} issues analyzed
-                </div>
-            </div>
-        </footer>
-        {% endblock %}
-    </div>
-
-    <script>
-        {{ bundled_js | safe }}
-    </script>
-    
-    {% block additional_scripts %}{% endblock %}
-</body>
-</html>
+    <section id="appendix" class="report-section" aria-labelledby="appendix-heading">
+        <h2 id="appendix-heading">Appendix</h2>
+        <div class="appendix-content">
+            <h3>Analysis Configuration</h3>
+            <dl class="config-list">
+                <dt>Analysis Engine Version</dt>
+                <dd>{{ analysis_run.engine_version | default(value="Unknown") }}</dd>
+                
+                <dt>Configuration Profile</dt>
+                <dd>{{ analysis_run.config_profile | default(value="Default") }}</dd>
+                
+                <dt>Language Detection</dt>
+                <dd>{{ analysis_run.detected_languages | join(", ") | default(value="Auto-detected") }}</dd>
+            </dl>
+        </div>
+    </section>
+{% endblock %}
