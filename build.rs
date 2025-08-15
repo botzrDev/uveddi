@@ -6,7 +6,6 @@
 use std::env;
 use std::fs;
 use std::path::Path;
-use std::io::{self, Write};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("cargo:rerun-if-changed=data/knowledge_base.json");
@@ -65,16 +64,6 @@ pub fn get_knowledge_base() -> &'static OptimizedKnowledgeLibrary {
     Ok(())
 }
 
-/// Font Awesome icons we actually use (subset for bundle size optimization)
-const FONTAWESOME_ICONS: &[&str] = &[
-    "fa-moon", "fa-sun", "fa-print", "fa-download", "fa-expand", "fa-compress-alt",
-    "fa-chevron-right", "fa-chevron-down", "fa-chevron-up", "fa-exclamation-triangle",
-    "fa-heartbeat", "fa-coins", "fa-project-diagram", "fa-file-code", "fa-clock",
-    "fa-times", "fa-expand-alt", "fa-undo", "fa-check-circle", "fa-arrow-up",
-    "fa-arrow-down", "fa-arrow-right", "fa-bullseye", "fa-cog", "fa-chart-bar",
-    "fa-code", "fa-bug", "fa-shield-alt", "fa-bolt", "fa-layer-group"
-];
-
 /// Build asset pipeline for modern report system
 fn build_asset_pipeline(out_path: &Path) -> Result<(), Box<dyn std::error::Error>> {
     // Check if asset files exist
@@ -114,27 +103,20 @@ pub const ASSET_MANIFEST: &str = "{\"css_size\": 0, \"js_size\": 0}";
     Ok(())
 }
 
-/// Generate a minimal Font Awesome CSS containing only used icons
+/// Generate CSS-only icons using Unicode symbols (no external font dependencies)
 fn generate_fontawesome_subset() -> String {
-    // Return complete CSS as a single string to avoid escaping issues
+    // Use Unicode symbols for reliable cross-platform icon display
     r#"
-@font-face {
-    font-family: "Font Awesome 6 Free";
-    font-style: normal;
-    font-weight: 900;
-    font-display: swap;
-    src: url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/webfonts/fa-solid-900.woff2") format("woff2");
-}
-
+/* CSS-only icons using Unicode symbols - no external font dependencies */
 .fas, .fa-solid {
-    font-family: "Font Awesome 6 Free";
-    font-weight: 900;
     font-style: normal;
     font-variant: normal;
     text-rendering: auto;
     line-height: 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    display: inline-block;
+    font-weight: normal;
 }
 
 .fas::before, .fa-solid::before {
@@ -143,36 +125,37 @@ fn generate_fontawesome_subset() -> String {
     -webkit-font-smoothing: antialiased;
 }
 
-.fa-moon::before { content: "\\f186"; }
-.fa-sun::before { content: "\\f185"; }
-.fa-print::before { content: "\\f02f"; }
-.fa-download::before { content: "\\f019"; }
-.fa-expand::before { content: "\\f065"; }
-.fa-compress-alt::before { content: "\\f422"; }
-.fa-chevron-right::before { content: "\\f054"; }
-.fa-chevron-down::before { content: "\\f078"; }
-.fa-chevron-up::before { content: "\\f077"; }
-.fa-exclamation-triangle::before { content: "\\f071"; }
-.fa-heartbeat::before { content: "\\f21e"; }
-.fa-coins::before { content: "\\f51e"; }
-.fa-project-diagram::before { content: "\\f542"; }
-.fa-file-code::before { content: "\\f1c9"; }
-.fa-clock::before { content: "\\f017"; }
-.fa-times::before { content: "\\f00d"; }
-.fa-expand-alt::before { content: "\\f424"; }
-.fa-undo::before { content: "\\f0e2"; }
-.fa-check-circle::before { content: "\\f058"; }
-.fa-arrow-up::before { content: "\\f062"; }
-.fa-arrow-down::before { content: "\\f063"; }
-.fa-arrow-right::before { content: "\\f061"; }
-.fa-bullseye::before { content: "\\f140"; }
-.fa-cog::before { content: "\\f013"; }
-.fa-chart-bar::before { content: "\\f080"; }
-.fa-code::before { content: "\\f121"; }
-.fa-bug::before { content: "\\f188"; }
-.fa-shield-alt::before { content: "\\f3ed"; }
-.fa-bolt::before { content: "\\f0e7"; }
-.fa-layer-group::before { content: "\\f5fd"; }
+/* Unicode-based icons that work without external fonts */
+.fa-moon::before { content: "🌙"; }
+.fa-sun::before { content: "☀️"; }
+.fa-print::before { content: "🖨️"; }
+.fa-download::before { content: "⬇️"; }
+.fa-expand::before { content: "⛶"; }
+.fa-compress-alt::before { content: "⤢"; }
+.fa-chevron-right::before { content: "▶"; }
+.fa-chevron-down::before { content: "▼"; }
+.fa-chevron-up::before { content: "▲"; }
+.fa-exclamation-triangle::before { content: "⚠️"; }
+.fa-heartbeat::before { content: "💓"; }
+.fa-coins::before { content: "🪙"; }
+.fa-project-diagram::before { content: "📊"; }
+.fa-file-code::before { content: "📄"; }
+.fa-clock::before { content: "🕐"; }
+.fa-times::before { content: "✕"; }
+.fa-expand-alt::before { content: "⤢"; }
+.fa-undo::before { content: "↶"; }
+.fa-check-circle::before { content: "✅"; }
+.fa-arrow-up::before { content: "↑"; }
+.fa-arrow-down::before { content: "↓"; }
+.fa-arrow-right::before { content: "→"; }
+.fa-bullseye::before { content: "🎯"; }
+.fa-cog::before { content: "⚙️"; }
+.fa-chart-bar::before { content: "📊"; }
+.fa-code::before { content: "💻"; }
+.fa-bug::before { content: "🐛"; }
+.fa-shield-alt::before { content: "🛡️"; }
+.fa-bolt::before { content: "⚡"; }
+.fa-layer-group::before { content: "📚"; }
 "#.to_string()
 }
 

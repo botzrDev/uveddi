@@ -11,7 +11,7 @@ async fn main() -> Result<()> {
     color_eyre::install()?;
 
     // Initialize logging
-    env_logger::init();
+    tracing_subscriber::fmt::init();
 
     // Run the TUI
     run_tui().await?;

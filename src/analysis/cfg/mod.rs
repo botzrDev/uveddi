@@ -181,7 +181,7 @@ impl ControlFlowGraph {
 
 /// Tree-sitter CFG extraction queries based on UV-24_Advanced_Research.md specifications
 const RUST_CFG_QUERY: &str = r#"
-[(function_item) @function (method_declaration) @method]
+(function_item) @function
 [(if_expression) @if (match_expression) @match]
 [(for_expression) @for (while_expression) @while (loop_expression) @loop]
 (call_expression) @call
@@ -263,7 +263,9 @@ impl<'a> CfgBuilder<'a> {
         })?;
 
         let mut cursor = QueryCursor::new();
-        let mut matches = cursor.matches(&query, ast_node, source.as_bytes());
+        // Important: use the full file source the node ranges were derived from.
+        let source_bytes = source.as_bytes();
+        let mut matches = cursor.matches(&query, ast_node, source_bytes);
 
         // 4. Build CFG nodes for control flow constructs
         self.current_node = Some(entry_node);
@@ -273,10 +275,17 @@ impl<'a> CfgBuilder<'a> {
                 let node = capture.node;
                 let node_type = self.classify_node(&node);
                 let range = (node.start_byte(), node.end_byte());
-                let label = node
-                    .utf8_text(source.as_bytes())
-                    .ok()
-                    .map(|s| s.to_string());
+                // Safely extract label text; avoid out-of-bounds panic if caller passed a subslice
+                let label = if node.end_byte() <= source.len() {
+                    node.utf8_text(source.as_bytes()).ok().map(|s| s.to_string())
+                } else {
+                    warn!(
+                        "Node byte range out of bounds for provided source: end_byte={} source_len={}",
+                        node.end_byte(),
+                        source.len()
+                    );
+                    None
+                };
 
                 let cfg_node_idx = self.add_node(node_type, Some(node), range, label);
 
@@ -343,8 +352,7 @@ impl<'a> CfgBuilder<'a> {
         match node.kind() {
             "function_item"
             | "function_declaration"
-            | "function_definition"
-            | "method_declaration" => CfgNodeType::Entry,
+            | "function_definition" => CfgNodeType::Entry,
             "if_expression" | "if_statement" | "match_expression" | "switch_statement" => {
                 CfgNodeType::Condition
             }

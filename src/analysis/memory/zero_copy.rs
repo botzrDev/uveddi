@@ -97,11 +97,18 @@ impl SerializableAst {
     ) -> Result<SerializableNode, ZeroCopyError> {
         let text = if node.child_count() == 0 {
             // Leaf node - capture text
-            Some(
-                node.utf8_text(source.as_bytes())
-                    .map_err(|e| ZeroCopyError::NodeConversion(e.to_string()))?
-                    .to_string(),
-            )
+            {
+                // Guard against out-of-bounds ranges
+                if node.end_byte() <= source.len() {
+                    Some(
+                        node.utf8_text(source.as_bytes())
+                            .map_err(|e| ZeroCopyError::NodeConversion(e.to_string()))?
+                            .to_string(),
+                    )
+                } else {
+                    None
+                }
+            }
         } else {
             None
         };

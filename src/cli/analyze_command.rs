@@ -857,6 +857,25 @@ impl AnalyzeCommand {
             report.metadata.ai_enhanced
         );
 
+        // Print colorful summary to stdout for user
+        let output_info = self.output.as_ref()
+            .map(|p| p.to_string_lossy().to_string())
+            .unwrap_or_else(|| "stdout".to_string());
+            
+        if report.metadata.issues_found > 0 {
+            println!("\n📊 Analysis Summary:");
+            println!("  • Files analyzed: {}", report.metadata.files_analyzed);
+            println!("  • Issues found: {}", report.metadata.issues_found);
+            if report.metadata.ai_enhanced {
+                println!("  • AI enhanced: ✅");
+            }
+            println!("\n💡 Report generated: {}", output_info);
+        } else {
+            println!("\n✅ Analysis complete: No issues found! 🎉");
+            println!("📊 Files analyzed: {}", report.metadata.files_analyzed);
+            println!("💡 Report generated: {}", output_info);
+        }
+
         Ok(())
     }
 

@@ -108,8 +108,12 @@ impl AstDataPlane {
                 *node_id += 1;
 
                 let text = if node.byte_range().len() < 1000 {
-                    // Limit text size
-                    node.utf8_text(source_bytes).ok().map(|s| s.to_string())
+                    // Limit text size; guard against out-of-bounds ranges
+                    if node.end_byte() <= source_bytes.len() {
+                        node.utf8_text(source_bytes).ok().map(|s| s.to_string())
+                    } else {
+                        None
+                    }
                 } else {
                     None
                 };

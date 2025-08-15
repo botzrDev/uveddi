@@ -321,8 +321,17 @@ impl CodeDuplicationDetector {
                     continue;
                 }
 
+                let src_bytes = parsed_file.source.as_bytes();
+                if function_node.end_byte() > src_bytes.len() {
+                    warn!(
+                        "Function node end_byte ({}) exceeds source length ({}); skipping block",
+                        function_node.end_byte(),
+                        src_bytes.len()
+                    );
+                    continue;
+                }
                 let source = function_node
-                    .utf8_text(parsed_file.source.as_bytes())
+                    .utf8_text(src_bytes)
                     .map_err(|e| {
                         AnalysisError::AstError(crate::ast::tree_sitter_impl::AstError::Other(
                             format!("Failed to extract source: {e}"),
@@ -949,7 +958,7 @@ impl CodeDuplicationDetector {
 
                 match cfg_builder.build_from_ast(
                     function_node,
-                    &block.source,
+                    parsed_file.source.as_str(),
                     parsed_file.language.clone(),
                 ) {
                     Ok(cfg) => {
@@ -1004,7 +1013,7 @@ impl CodeDuplicationDetector {
                     block,
                     parsed_file.source.as_bytes(),
                 ) {
-                    match analyzer.extract_features(cfg, &function_node, &block.source) {
+                    match analyzer.extract_features(cfg, &function_node, parsed_file.source.as_str()) {
                         Ok(features) => {
                             block.semantic_features = Some(features);
                             debug!(
@@ -1303,6 +1312,14 @@ impl CodeDuplicationDetector {
         source: &[u8],
         language: &SourceLanguage,
     ) -> Result<Option<crate::analysis::cfg::ControlFlowGraph>, AnalysisError> {
+        if function_node.end_byte() > source.len() {
+            warn!(
+                "Function node end_byte ({}) exceeds source length ({}); skipping CFG",
+                function_node.end_byte(),
+                source.len()
+            );
+            return Ok(None);
+        }
         let function_source = function_node.utf8_text(source).map_err(|e| {
             AnalysisError::AntiPatternDetectionError(format!(
                 "Failed to extract function text: {}",
@@ -1324,7 +1341,15 @@ impl CodeDuplicationDetector {
         debug!("CFG cache miss for key: {}", cache_key);
         let mut cfg_builder = crate::analysis::cfg::CfgBuilder::new();
 
-        match cfg_builder.build_from_ast(*function_node, function_source, language.clone()) {
+        // Use the full file source for CFG building to ensure node byte ranges are valid
+        let file_source = std::str::from_utf8(source).map_err(|e| {
+            AnalysisError::AntiPatternDetectionError(format!(
+                "Source not valid UTF-8 for CFG build: {}",
+                e
+            ))
+        })?;
+
+        match cfg_builder.build_from_ast(*function_node, file_source, language.clone()) {
             Ok(cfg) => {
                 // Store in cache
                 if let Ok(mut cache) = self.cfg_cache.lock() {
