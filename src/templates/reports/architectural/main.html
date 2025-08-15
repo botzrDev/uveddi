@@ -68,9 +68,12 @@
                 {% if diagram.svg_content %}
                     {{ diagram.svg_content | safe }}
                 {% elif diagram.mermaid_code %}
-                    <!-- Render Mermaid diagram -->
-                    <div class="mermaid" id="mermaid-{{ diagram.id }}">
+                    <!-- Render Mermaid diagram with enhanced configuration -->
+                    <div class="mermaid" id="mermaid-{{ diagram.id }}" data-diagram-type="{{ diagram.id }}">
                         {{ diagram.mermaid_code }}
+                    </div>
+                    <div class="diagram-legend" id="legend-{{ diagram.id }}" style="display: none;">
+                        <!-- Legend will be populated by JavaScript based on diagram type -->
                     </div>
                 {% else %}
                     <!-- Fallback for when no diagram is available -->
@@ -78,6 +81,9 @@
                         <div class="fallback-message">
                             <i class="fas fa-exclamation-triangle"></i>
                             Diagram rendering unavailable
+                        </div>
+                        <div class="fallback-suggestion">
+                            <p>Try running analysis with additional architectural detection flags</p>
                         </div>
                     </div>
                 {% endif %}
@@ -291,25 +297,142 @@ function exportDiagram(diagramId) {
     }
 }
 
-// Initialize Mermaid.js for diagram rendering
+// Initialize Mermaid.js for diagram rendering with enhanced configuration
 function initializeMermaid() {
     if (typeof mermaid !== 'undefined') {
+        // Detect theme preference
+        const isDarkTheme = document.documentElement.getAttribute('data-theme') === 'dark';
+        
         mermaid.initialize({
             startOnLoad: false,
-            theme: 'default',
+            theme: isDarkTheme ? 'dark' : 'default',
             securityLevel: 'loose',
-            fontFamily: 'Arial, sans-serif',
-            fontSize: 14
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+            fontSize: 14,
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            },
+            class: {
+                useMaxWidth: true
+            },
+            sequence: {
+                useMaxWidth: true,
+                wrap: true
+            }
         });
         
-        // Render all mermaid diagrams
+        // Render all mermaid diagrams with enhanced error handling
         const mermaidElements = document.querySelectorAll('.mermaid');
         mermaidElements.forEach((element, index) => {
             const uniqueId = 'mermaid-rendered-' + index;
-            mermaid.render(uniqueId, element.textContent, (svgCode) => {
-                element.innerHTML = svgCode;
-            });
+            const diagramType = element.getAttribute('data-diagram-type') || 'unknown';
+            
+            try {
+                mermaid.render(uniqueId, element.textContent, (svgCode) => {
+                    element.innerHTML = svgCode;
+                    
+                    // Add diagram-specific styling
+                    const svg = element.querySelector('svg');
+                    if (svg) {
+                        svg.style.maxWidth = '100%';
+                        svg.style.height = 'auto';
+                        
+                        // Add responsive scaling
+                        svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+                    }
+                    
+                    // Generate and show legend for specific diagram types
+                    generateDiagramLegend(diagramType, element);
+                });
+            } catch (error) {
+                console.error('Failed to render Mermaid diagram:', error);
+                element.innerHTML = `
+                    <div class="diagram-error">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <p>Failed to render diagram</p>
+                        <details>
+                            <summary>Show details</summary>
+                            <pre>${error.message}</pre>
+                        </details>
+                    </div>
+                `;
+            }
         });
+    }
+}
+
+// Generate legend for specific diagram types
+function generateDiagramLegend(diagramType, diagramElement) {
+    const legendId = 'legend-' + diagramType;
+    const legendElement = document.getElementById(legendId);
+    
+    if (!legendElement) return;
+    
+    let legendContent = '';
+    
+    switch (diagramType) {
+        case 'tight-coupling':
+            legendContent = `
+                <h4>Coupling Levels</h4>
+                <div class="legend-items">
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #e6ffe6; border: 1px solid #00cc00;"></span>
+                        <span>Low Coupling (Good)</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #fff4e6; border: 1px solid #ff8c00;"></span>
+                        <span>Medium Coupling</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #ffe6e6; border: 1px solid #ff0000;"></span>
+                        <span>High Coupling (Critical)</span>
+                    </div>
+                </div>
+            `;
+            break;
+        case 'dead-code':
+            legendContent = `
+                <h4>Code Status</h4>
+                <div class="legend-items">
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #E6F3FF; border: 1px solid #1E88E5;"></span>
+                        <span>Active Code</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #FF9999; border: 2px dashed #CC0000;"></span>
+                        <span>Dead Code (Unused)</span>
+                    </div>
+                </div>
+            `;
+            break;
+        case 'component-overview':
+            legendContent = `
+                <h4>Component Types</h4>
+                <div class="legend-items">
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #e7f3ff; border: 1px solid #0066cc;"></span>
+                        <span>Modules</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #fff2e5; border: 1px solid #cc6600;"></span>
+                        <span>Services</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #d1ecf1; border: 1px solid #0c5460;"></span>
+                        <span>Data Stores</span>
+                    </div>
+                </div>
+            `;
+            break;
+        default:
+            return; // No legend for this diagram type
+    }
+    
+    if (legendContent) {
+        legendElement.innerHTML = legendContent;
+        legendElement.style.display = 'block';
     }
 }
 

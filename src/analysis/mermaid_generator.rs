@@ -503,7 +503,179 @@ impl MermaidGenerator {
     {{ dependency.from }} --> {{ dependency.to }}
 {% endfor %}
 
-classDef default fill:#e1f5fe,stroke:#01579b,stroke-width:2px;"#,
+classDef default fill:#e1f5fe,stroke:#01579b,stroke-width:2px;
+classDef service fill:#fff3cd,stroke:#856404,stroke-width:2px;
+classDef database fill:#d1ecf1,stroke:#0c5460,stroke-width:2px;
+classDef api fill:#d4edda,stroke:#155724,stroke-width:2px;"#,
+        )
+        .map_err(|e| MermaidGenerationError::TemplateLoadError(e.to_string()))?;
+
+        // Class diagram template
+        tera.add_raw_template(
+            "class_diagram",
+            r#"classDiagram
+{% for component in components -%}
+    class {{ component.id }} {
+        +{{ component.name }}
+        +{{ component.type }}
+    }
+{% endfor %}
+
+{% for dependency in dependencies -%}
+    {{ dependency.from }} --> {{ dependency.to }}
+{% endfor %}"#,
+        )
+        .map_err(|e| MermaidGenerationError::TemplateLoadError(e.to_string()))?;
+
+        // Dependency graph template
+        tera.add_raw_template(
+            "dependency_graph",
+            r#"graph {{ layout }}
+{% for component in components -%}
+    {{ component.id }}["{{ component.name }}<br/>{{ component.type }}"]
+{% endfor %}
+
+{% for dependency in dependencies -%}
+    {{ dependency.from }} --> {{ dependency.to }}
+{% endfor %}
+
+classDef default fill:#f8f9fa,stroke:#6c757d,stroke-width:2px;
+classDef module fill:#e7f3ff,stroke:#0066cc,stroke-width:2px;
+classDef service fill:#fff2e5,stroke:#cc6600,stroke-width:2px;"#,
+        )
+        .map_err(|e| MermaidGenerationError::TemplateLoadError(e.to_string()))?;
+
+        // Tight coupling diagram template
+        tera.add_raw_template(
+            "tight_coupling_diagram",
+            r#"graph {{ layout }}
+    %% {{ title }}
+{% for component in components -%}
+    {{ component.id }}["{{ component.name }}<br/>{{ component.icon }}<br/>Coupling: {{ component.coupling_count }}"]
+{% endfor %}
+
+{% for dependency in dependencies -%}
+    {{ dependency.from_id }} -.->|{{ dependency.strength_value }}| {{ dependency.to_id }}
+{% endfor %}
+
+classDef default fill:#f8f9fa,stroke:#6c757d,stroke-width:1px;
+classDef high fill:#ffe6e6,stroke:#ff0000,stroke-width:3px;
+classDef medium fill:#fff4e6,stroke:#ff8c00,stroke-width:2px;
+classDef low fill:#e6ffe6,stroke:#00cc00,stroke-width:1px;"#,
+        )
+        .map_err(|e| MermaidGenerationError::TemplateLoadError(e.to_string()))?;
+
+        // God object diagram template  
+        tera.add_raw_template(
+            "god_object_diagram",
+            r#"graph {{ layout }}
+    %% {{ title }}
+{% for component in components -%}
+    {{ component.id }}["{{ component.name }}<br/>Members: {{ component.member_count }}"]
+    {% if component.is_god_object -%}
+    class {{ component.id }} god-object-critical
+    {% else -%}
+    class {{ component.id }} normal-component
+    {% endif -%}
+{% endfor %}
+
+{% for dependency in dependencies -%}
+    {{ dependency.from }} --> {{ dependency.to }}
+{% endfor %}
+
+classDef god-object-critical fill:#FF4444,stroke:#FF0000,stroke-width:3px;
+classDef normal-component fill:#E6F3FF,stroke:#1E88E5,stroke-width:1px;"#,
+        )
+        .map_err(|e| MermaidGenerationError::TemplateLoadError(e.to_string()))?;
+
+        // Dead code diagram template
+        tera.add_raw_template(
+            "dead_code_diagram",
+            r#"graph {{ layout }}
+    %% {{ title }}
+{% for component in components -%}
+    {{ component.id }}["{{ component.name }}<br/>{{ component.usage_level | upper }}"]
+    {% if component.is_dead -%}
+    class {{ component.id }} dead-code-critical
+    {% else -%}
+    class {{ component.id }} normal-component  
+    {% endif -%}
+{% endfor %}
+
+{% for dependency in dependencies -%}
+    {{ dependency.from }} --> {{ dependency.to }}
+{% endfor %}
+
+classDef dead-code-critical fill:#FF9999,stroke:#CC0000,stroke-width:2px,stroke-dasharray: 5 5;
+classDef normal-component fill:#E6F3FF,stroke:#1E88E5,stroke-width:1px;"#,
+        )
+        .map_err(|e| MermaidGenerationError::TemplateLoadError(e.to_string()))?;
+
+        // Large class diagram template
+        tera.add_raw_template(
+            "large_class_diagram",
+            r#"graph {{ layout }}
+    %% {{ title }}
+{% for component in components -%}
+    {{ component.id }}["{{ component.name }}<br/>Size: {{ component.size }} lines<br/>{{ component.size_category | upper }}"]
+    {% if component.is_large -%}
+    class {{ component.id }} large-class-critical
+    {% else -%}
+    class {{ component.id }} normal-component
+    {% endif -%}
+{% endfor %}
+
+{% for dependency in dependencies -%}
+    {{ dependency.from }} --> {{ dependency.to }}
+{% endfor %}
+
+classDef large-class-critical fill:#FFCC99,stroke:#FF6600,stroke-width:3px;
+classDef normal-component fill:#E6F3FF,stroke:#1E88E5,stroke-width:1px;"#,
+        )
+        .map_err(|e| MermaidGenerationError::TemplateLoadError(e.to_string()))?;
+
+        // Cyclic dependencies diagram template
+        tera.add_raw_template(
+            "cyclic_dependencies_diagram",
+            r#"graph {{ layout }}
+    %% {{ title }}
+{% for component in components -%}
+    {{ component.id }}["{{ component.name }}"]
+    {% if component.is_in_cycle -%}
+    class {{ component.id }} cycle-critical
+    {% else -%}
+    class {{ component.id }} normal-component
+    {% endif -%}
+{% endfor %}
+
+{% for cycle in cycles -%}
+    {% for i in range(end=cycle | length) -%}
+        {% set current = cycle[i] -%}
+        {% set next = cycle[(i + 1) % (cycle | length)] -%}
+        {{ current }} ==> {{ next }}
+    {% endfor -%}
+{% endfor %}
+
+classDef cycle-critical fill:#FFB3B3,stroke:#FF0000,stroke-width:3px;
+classDef normal-component fill:#E6F3FF,stroke:#1E88E5,stroke-width:1px;"#,
+        )
+        .map_err(|e| MermaidGenerationError::TemplateLoadError(e.to_string()))?;
+
+        // Sequence diagram template
+        tera.add_raw_template(
+            "sequence_diagram",
+            r#"sequenceDiagram
+    participant U as User
+    participant A as Application
+    participant S as Service
+    participant D as Database
+    
+    U->>A: Request
+    A->>S: Process
+    S->>D: Query
+    D-->>S: Result
+    S-->>A: Response
+    A-->>U: Result"#,
         )
         .map_err(|e| MermaidGenerationError::TemplateLoadError(e.to_string()))?;
 

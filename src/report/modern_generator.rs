@@ -442,28 +442,211 @@ impl ModernReportGenerator {
     }
 
     /// Prepare architecture diagrams from issues and analysis
-    async fn prepare_architecture_diagrams(&self, _issues: &[ArchitecturalIssue]) -> Vec<ArchitectureDiagram> {
-        use crate::core::logging::info;
+    async fn prepare_architecture_diagrams(&self, issues: &[ArchitecturalIssue]) -> Vec<ArchitectureDiagram> {
+        use crate::core::logging::{info, warn, debug};
+        use crate::analysis::mermaid_generator::MermaidGenerator;
+        use crate::models::visualization::{ArchitecturalComponent, ComponentType, ComponentMetrics, DiagramType};
+        use std::collections::HashMap;
+        use uuid::Uuid;
         
-        info!("Generating simple placeholder diagrams for now");
+        info!("Generating data-driven architecture diagrams from {} issues", issues.len());
         
-        // For now, just return some basic placeholder diagrams
-        vec![
-            ArchitectureDiagram {
-                id: "component-overview".to_string(),
-                title: "Component Overview".to_string(),
-                svg_content: None,
-                mermaid_code: Some("graph TD\n    A[Component A] --> B[Component B]\n    B --> C[Component C]".to_string()),
-                description: Some("Overview of system components".to_string()),
-            },
-            ArchitectureDiagram {
-                id: "dependency-flow".to_string(),
-                title: "Dependency Flow".to_string(),
-                svg_content: None,
-                mermaid_code: Some("graph LR\n    Frontend --> Backend\n    Backend --> Database".to_string()),
-                description: Some("High-level dependency flow".to_string()),
+        let mut diagrams = Vec::new();
+        let mermaid_generator = match MermaidGenerator::new() {
+            Ok(generator) => generator,
+            Err(e) => {
+                warn!("Failed to create MermaidGenerator: {}", e);
+                return vec![];
             }
-        ]
+        };
+
+        // Extract architectural components from issues
+        let components = self.extract_components_from_issues(issues);
+        debug!("Extracted {} components from issues", components.len());
+
+        // Generate anti-pattern specific diagrams
+        let anti_pattern_diagrams = self.generate_anti_pattern_diagrams(&mermaid_generator, issues, &components).await;
+        diagrams.extend(anti_pattern_diagrams);
+
+        // Generate general architectural diagrams
+        if !components.is_empty() {
+            // Component overview diagram
+            if let Ok(result) = mermaid_generator.generate_diagram(&components, DiagramType::Component) {
+                diagrams.push(ArchitectureDiagram {
+                    id: "component-overview".to_string(),
+                    title: "Component Architecture Overview".to_string(),
+                    svg_content: None,
+                    mermaid_code: Some(result.mermaid_src),
+                    description: Some(format!("Architectural overview showing {} components and their relationships", components.len())),
+                });
+            }
+
+            // Dependency graph diagram
+            if let Ok(result) = mermaid_generator.generate_diagram(&components, DiagramType::Dependency) {
+                diagrams.push(ArchitectureDiagram {
+                    id: "dependency-graph".to_string(),
+                    title: "Dependency Relationships".to_string(),
+                    svg_content: None,
+                    mermaid_code: Some(result.mermaid_src),
+                    description: Some("Dependency relationships between architectural components".to_string()),
+                });
+            }
+        }
+
+        // If no diagrams were generated, provide a fallback
+        if diagrams.is_empty() {
+            warn!("No diagrams could be generated, providing fallback");
+            diagrams.push(ArchitectureDiagram {
+                id: "no-data-available".to_string(),
+                title: "No Architectural Data Available".to_string(),
+                svg_content: None,
+                mermaid_code: Some("graph TD\n    A[\"No architectural components detected\"]\n    A --> B[\"Run analysis with --enable-architectural-analysis\"]".to_string()),
+                description: Some("No architectural data was available for diagram generation".to_string()),
+            });
+        }
+
+        info!("Generated {} architecture diagrams", diagrams.len());
+        diagrams
+    }
+
+    /// Extract architectural components from issues for diagram generation
+    fn extract_components_from_issues(&self, issues: &[ArchitecturalIssue]) -> Vec<ArchitecturalComponent> {
+        use crate::models::visualization::{ArchitecturalComponent, ComponentType, ComponentMetrics, Dependency, DependencyNode, DependencyType};
+        use crate::core::logging::debug;
+        use std::collections::{HashMap, HashSet};
+        use uuid::Uuid;
+
+        let mut components = Vec::new();
+        let mut seen_files: HashSet<std::path::PathBuf> = HashSet::new();
+
+        for issue in issues {
+            let file_path = std::path::PathBuf::from(&issue.file_path);
+            if seen_files.insert(file_path.clone()) {
+                let component_type = self.infer_component_type_from_file(&file_path);
+                
+                // Calculate lines affected (estimate from start_line to end_line)
+                let lines_affected = match (issue.start_line, issue.end_line) {
+                    (Some(start), Some(end)) => Some((end - start + 1) as u32),
+                    (Some(_), None) => Some(1),
+                    _ => None,
+                };
+                
+                // Parse severity as a number for complexity calculation
+                let severity_score = match issue.severity.to_lowercase().as_str() {
+                    "critical" => 4.0,
+                    "major" => 3.0,
+                    "moderate" => 2.0,
+                    "minor" => 1.0,
+                    _ => 1.0,
+                };
+                
+                let metrics = ComponentMetrics {
+                    lines_of_code: lines_affected,
+                    complexity: Some(severity_score),
+                    afferent_coupling: 0,
+                    efferent_coupling: 0,
+                    coupling_between_objects: None,
+                    public_methods: None,
+                    performance: None,
+                };
+
+                components.push(ArchitecturalComponent {
+                    component_id: Uuid::new_v4(),
+                    name: file_path.file_stem()
+                        .and_then(|s| s.to_str())
+                        .unwrap_or("Unknown")
+                        .to_string(),
+                    file_path: file_path.clone(),
+                    component_type,
+                    dependencies: vec![], // Will be populated separately
+                    metrics,
+                    group: file_path.parent()
+                        .and_then(|p| p.file_name())
+                        .and_then(|s| s.to_str())
+                        .map(|s| s.to_string()),
+                });
+            }
+        }
+
+        debug!("Extracted {} unique components from {} issues", components.len(), issues.len());
+        components
+    }
+
+    /// Infer component type from file path and extension
+    fn infer_component_type_from_file(&self, file_path: &std::path::Path) -> ComponentType {
+        match file_path.extension().and_then(|s| s.to_str()) {
+            Some("rs") => ComponentType::RustModule { is_public: true },
+            Some("py") => ComponentType::PythonClass { 
+                bases: vec![], 
+                methods: vec![], 
+                is_abstract: false 
+            },
+            Some("js") | Some("ts") => ComponentType::JavaScriptEsModule { exports: vec![] },
+            Some("java") => ComponentType::Class,
+            Some("cpp") | Some("c") | Some("h") => ComponentType::Module,
+            _ => ComponentType::Module,
+        }
+    }
+
+    /// Generate anti-pattern specific diagrams
+    async fn generate_anti_pattern_diagrams(
+        &self,
+        mermaid_generator: &MermaidGenerator,
+        issues: &[ArchitecturalIssue],
+        components: &[ArchitecturalComponent],
+    ) -> Vec<ArchitectureDiagram> {
+        use crate::core::logging::debug;
+        use std::collections::HashMap;
+        use uuid::Uuid;
+
+        let mut diagrams = Vec::new();
+
+        // Group issues by anti-pattern type
+        let mut issues_by_type: HashMap<i64, Vec<&ArchitecturalIssue>> = HashMap::new();
+        for issue in issues {
+            issues_by_type.entry(issue.anti_pattern_type_id).or_insert_with(Vec::new).push(issue);
+        }
+
+        // Generate tight coupling diagram
+        if let Some(coupling_issues) = issues_by_type.get(&1) { // Assuming type 1 is tight coupling
+            let coupling_pairs: Vec<(Uuid, Uuid)> = vec![]; // Simplified for now
+            let coupling_scores: HashMap<(Uuid, Uuid), f64> = HashMap::new();
+            
+            if let Ok(result) = mermaid_generator.generate_tight_coupling_diagram(
+                components, 
+                &coupling_pairs, 
+                &coupling_scores
+            ) {
+                diagrams.push(ArchitectureDiagram {
+                    id: "tight-coupling".to_string(),
+                    title: format!("Tight Coupling Issues ({})", coupling_issues.len()),
+                    svg_content: None,
+                    mermaid_code: Some(result.mermaid_src),
+                    description: Some("Components with high coupling relationships".to_string()),
+                });
+            }
+        }
+
+        // Generate dead code diagram
+        if let Some(dead_code_issues) = issues_by_type.get(&4) { // Assuming type 4 is dead code
+            let dead_components: Vec<Uuid> = components.iter()
+                .take(dead_code_issues.len().min(components.len()))
+                .map(|c| c.component_id)
+                .collect();
+            
+            if let Ok(result) = mermaid_generator.generate_dead_code_diagram(components, &dead_components) {
+                diagrams.push(ArchitectureDiagram {
+                    id: "dead-code".to_string(),
+                    title: format!("Dead Code Detection ({})", dead_code_issues.len()),
+                    svg_content: None,
+                    mermaid_code: Some(result.mermaid_src),
+                    description: Some("Unused or unreachable code components".to_string()),
+                });
+            }
+        }
+
+        debug!("Generated {} anti-pattern specific diagrams", diagrams.len());
+        diagrams
     }
 
     /// Extract performance metrics if available
