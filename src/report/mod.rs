@@ -150,6 +150,7 @@ pub use image_renderer::{ImageFormat, ImageRenderer, RenderedImage};
 pub mod diagrams;
 pub mod svg_generator;
 pub mod modern_generator;
+pub mod markdown_generator;
 use chrono::{DateTime, Local};
 use crate::core::logging::{error, info, warn};
 use std::error::Error;
