@@ -51,6 +51,12 @@ pub struct InteractiveReport {
     pub dependency_graph: DependencyGraph,
     /// Diagram definitions for Mermaid and custom visualizations
     pub diagrams: Vec<DiagramDefinition>,
+    /// Chart.js compatible metrics data for dashboards
+    #[serde(rename = "chartData")]
+    pub chart_data: Option<ChartDatasets>,
+    /// Enhanced performance metrics for React dashboard
+    #[serde(rename = "performanceMetrics")]
+    pub performance_metrics: Option<PerformanceMetrics>,
     /// Optional AI-generated insights and recommendations
     #[serde(rename = "aiInsights")]
     pub ai_insights: Option<AiInsights>,
@@ -212,7 +218,7 @@ pub struct NodeMetrics {
     pub dependents: u32,
 }
 
-/// Graph-level metadata
+/// Graph-level metadata with performance optimizations
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GraphMetadata {
     /// Total number of nodes
@@ -227,8 +233,96 @@ pub struct GraphMetadata {
     /// Maximum depth in the dependency hierarchy
     #[serde(rename = "maxDepth")]
     pub max_depth: u32,
-    /// Graph layout suggestions
-    pub layout: Option<String>,
+    /// Recommended Cytoscape layout based on graph characteristics
+    #[serde(rename = "suggestedLayout")]
+    pub suggested_layout: CytoscapeLayout,
+    /// Layout configuration optimized for this graph
+    #[serde(rename = "layoutConfig")]
+    pub layout_config: HashMap<String, serde_json::Value>,
+    /// Performance optimization settings
+    #[serde(rename = "performanceConfig")]
+    pub performance_config: GraphPerformanceConfig,
+    /// Clustering/grouping suggestions for large graphs
+    #[serde(rename = "clusteringHints")]
+    pub clustering_hints: Vec<NodeCluster>,
+    /// Detected cycles in the graph for visualization
+    pub cycles: Vec<Vec<String>>,
+}
+
+/// Recommended Cytoscape layout based on graph characteristics
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum CytoscapeLayout {
+    /// Best for small graphs (< 100 nodes)
+    #[serde(rename = "cose")]
+    Cose,
+    /// Best for large graphs (> 1000 nodes) - multi-threaded
+    #[serde(rename = "cose-bilkent")]
+    CoseBilkent,
+    /// Best for hierarchical structures
+    #[serde(rename = "dagre")]
+    Dagre,
+    /// Best for tree-like structures
+    #[serde(rename = "breadthfirst")]
+    BreadthFirst,
+    /// Best for performance with many disconnected components
+    #[serde(rename = "grid")]
+    Grid,
+    /// Best for highlighting cyclical relationships
+    #[serde(rename = "circle")]
+    Circle,
+}
+
+/// Performance configuration for large graph rendering
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GraphPerformanceConfig {
+    /// Enable Level of Detail (LOD) rendering
+    #[serde(rename = "enableLod")]
+    pub enable_lod: bool,
+    /// Batch size for rendering updates
+    #[serde(rename = "batchSize")]
+    pub batch_size: usize,
+    /// Use texture during interactions for better performance
+    #[serde(rename = "textureOnViewport")]
+    pub texture_on_viewport: bool,
+    /// Hide labels when zoomed out
+    #[serde(rename = "hideLabelsOnViewport")]
+    pub hide_labels_on_viewport: bool,
+    /// Suggested viewport for initial load
+    #[serde(rename = "initialViewport")]
+    pub initial_viewport: Option<ViewportConfig>,
+    /// Enable web worker for layout calculations
+    #[serde(rename = "useWebWorker")]
+    pub use_web_worker: bool,
+}
+
+/// Viewport configuration for optimal initial view
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ViewportConfig {
+    /// Initial zoom level (1.0 = 100%)
+    pub zoom: f64,
+    /// Center point x coordinate
+    #[serde(rename = "centerX")]
+    pub center_x: f64,
+    /// Center point y coordinate
+    #[serde(rename = "centerY")]
+    pub center_y: f64,
+}
+
+/// Node clustering suggestion for large graphs
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct NodeCluster {
+    /// Cluster identifier
+    pub id: String,
+    /// Display name for the cluster
+    pub name: String,
+    /// Nodes belonging to this cluster
+    #[serde(rename = "nodeIds")]
+    pub node_ids: Vec<String>,
+    /// Suggested color for cluster visualization
+    pub color: String,
+    /// Whether this cluster should be collapsed by default
+    #[serde(rename = "defaultCollapsed")]
+    pub default_collapsed: bool,
 }
 
 /// Diagram definition for Mermaid and custom visualizations
@@ -349,6 +443,169 @@ pub struct RefactoringOpportunity {
     pub priority: String,
 }
 
+/// Chart.js compatible metrics data for visualization dashboards
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChartDatasets {
+    /// Code quality metrics over time
+    #[serde(rename = "qualityTrends")]
+    pub quality_trends: TimeSeriesChart,
+    /// Issue distribution by severity
+    #[serde(rename = "severityDistribution")]
+    pub severity_distribution: PieChart,
+    /// Issues by category/type
+    #[serde(rename = "categoryBreakdown")]
+    pub category_breakdown: BarChart,
+    /// Component complexity metrics
+    #[serde(rename = "complexityMetrics")]
+    pub complexity_metrics: ScatterChart,
+    /// Performance and technical debt evolution
+    #[serde(rename = "technicalDebtTrends")]
+    pub technical_debt_trends: TimeSeriesChart,
+}
+
+/// Time series chart data for Chart.js line charts
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TimeSeriesChart {
+    pub labels: Vec<String>,
+    pub datasets: Vec<TimeSeriesDataset>,
+}
+
+/// Dataset for time series charts
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TimeSeriesDataset {
+    pub label: String,
+    pub data: Vec<f64>,
+    #[serde(rename = "borderColor")]
+    pub border_color: String,
+    #[serde(rename = "backgroundColor")]
+    pub background_color: String,
+    pub tension: f64,
+}
+
+/// Pie chart data for Chart.js pie charts
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PieChart {
+    pub labels: Vec<String>,
+    pub datasets: Vec<PieDataset>,
+}
+
+/// Dataset for pie charts
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PieDataset {
+    pub label: String,
+    pub data: Vec<u32>,
+    #[serde(rename = "backgroundColor")]
+    pub background_color: Vec<String>,
+    #[serde(rename = "borderColor")]
+    pub border_color: Vec<String>,
+    #[serde(rename = "borderWidth")]
+    pub border_width: u32,
+}
+
+/// Bar chart data for Chart.js bar charts
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BarChart {
+    pub labels: Vec<String>,
+    pub datasets: Vec<BarDataset>,
+}
+
+/// Dataset for bar charts
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BarDataset {
+    pub label: String,
+    pub data: Vec<u32>,
+    #[serde(rename = "backgroundColor")]
+    pub background_color: Vec<String>,
+    #[serde(rename = "borderColor")]
+    pub border_color: Vec<String>,
+    #[serde(rename = "borderWidth")]
+    pub border_width: u32,
+}
+
+/// Scatter chart data for Chart.js scatter plots
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ScatterChart {
+    pub datasets: Vec<ScatterDataset>,
+}
+
+/// Dataset for scatter charts
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ScatterDataset {
+    pub label: String,
+    pub data: Vec<ScatterPoint>,
+    #[serde(rename = "backgroundColor")]
+    pub background_color: String,
+    #[serde(rename = "borderColor")]
+    pub border_color: String,
+    #[serde(rename = "pointRadius")]
+    pub point_radius: u32,
+}
+
+/// Point in a scatter chart
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ScatterPoint {
+    pub x: f64,
+    pub y: f64,
+    /// Optional metadata for tooltips
+    pub metadata: Option<HashMap<String, String>>,
+}
+
+/// Enhanced performance metrics for React dashboard
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PerformanceMetrics {
+    /// Memory usage throughout analysis
+    #[serde(rename = "memoryUsage")]
+    pub memory_usage: Vec<MemoryDataPoint>,
+    /// CPU utilization over time
+    #[serde(rename = "cpuUtilization")]
+    pub cpu_utilization: Vec<CpuDataPoint>,
+    /// File processing rates
+    #[serde(rename = "processingRates")]
+    pub processing_rates: ProcessingRates,
+    /// Analysis bottlenecks identified
+    pub bottlenecks: Vec<PerformanceBottleneck>,
+}
+
+/// Memory usage data point
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MemoryDataPoint {
+    pub timestamp: DateTime<Utc>,
+    #[serde(rename = "usedMb")]
+    pub used_mb: f64,
+    #[serde(rename = "availableMb")]
+    pub available_mb: f64,
+}
+
+/// CPU utilization data point
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CpuDataPoint {
+    pub timestamp: DateTime<Utc>,
+    #[serde(rename = "utilizationPercent")]
+    pub utilization_percent: f64,
+}
+
+/// File processing rate metrics
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProcessingRates {
+    #[serde(rename = "filesPerSecond")]
+    pub files_per_second: f64,
+    #[serde(rename = "linesPerSecond")]
+    pub lines_per_second: f64,
+    #[serde(rename = "bytesPerSecond")]
+    pub bytes_per_second: f64,
+}
+
+/// Performance bottleneck identified during analysis
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PerformanceBottleneck {
+    pub phase: String,
+    #[serde(rename = "durationMs")]
+    pub duration_ms: u64,
+    #[serde(rename = "percentOfTotal")]
+    pub percent_of_total: f64,
+    pub description: String,
+}
+
 /// Report generation metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ReportMetadata {
@@ -443,6 +700,8 @@ impl InteractiveReport {
             findings,
             dependency_graph,
             diagrams: diagram_definitions,
+            chart_data: None, // TODO: Implement chart data generation
+            performance_metrics: None, // TODO: Implement performance metrics
             ai_insights: None, // TODO: Implement AI insights integration
             metadata: ReportMetadata {
                 generated_at: Utc::now(),
@@ -598,7 +857,18 @@ impl InteractiveReport {
                 edge_count: edges.len() as u32,
                 has_cycles: false, // TODO: Implement cycle detection
                 max_depth: 0, // TODO: Calculate graph depth
-                layout: Some("cose".to_string()), // Default Cytoscape layout
+                suggested_layout: CytoscapeLayout::Cose, // Default Cytoscape layout
+                layout_config: HashMap::new(),
+                performance_config: GraphPerformanceConfig {
+                    enable_lod: true,
+                    batch_size: 100,
+                    texture_on_viewport: true,
+                    hide_labels_on_viewport: true,
+                    initial_viewport: None,
+                    use_web_worker: false,
+                },
+                clustering_hints: vec![],
+                cycles: vec![],
             },
             nodes,
             edges,
@@ -691,10 +961,23 @@ impl Default for InteractiveReport {
                     edge_count: 0,
                     has_cycles: false,
                     max_depth: 0,
-                    layout: Some("cose".to_string()),
+                    suggested_layout: CytoscapeLayout::Cose,
+                    layout_config: HashMap::new(),
+                    performance_config: GraphPerformanceConfig {
+                        enable_lod: true,
+                        batch_size: 100,
+                        texture_on_viewport: true,
+                        hide_labels_on_viewport: true,
+                        initial_viewport: None,
+                        use_web_worker: false,
+                    },
+                    clustering_hints: vec![],
+                    cycles: vec![],
                 },
             },
             diagrams: vec![],
+            chart_data: None, // TODO: Implement chart data generation
+            performance_metrics: None, // TODO: Implement performance metrics
             ai_insights: None,
             metadata: ReportMetadata {
                 generated_at: Utc::now(),

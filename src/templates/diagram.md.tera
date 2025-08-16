@@ -1,0 +1,49 @@
+{% if diagram.mode == "mermaid_only" %}
+```mermaid
+{{ diagram.mermaid_code }}
+```
+
+> **Diagram Instructions:** Copy the Mermaid code above into any Mermaid-compatible viewer such as:
+> - GitHub (paste directly in markdown)
+> - Mermaid Live Editor: https://mermaid.live/
+> - VSCode with Mermaid extension
+> - Notion, GitLab, or any platform with Mermaid support
+
+{% elif diagram.mode == "linked" %}
+![{{ diagram.title }}]({{ diagram.file_path }})
+
+{% if diagram.mermaid_code %}
+<details>
+<summary>View Mermaid Source</summary>
+
+```mermaid
+{{ diagram.mermaid_code }}
+```
+</details>
+{% endif %}
+
+{% elif diagram.mode == "embedded_svg" %}
+{{ diagram.svg_content }}
+
+{% if diagram.mermaid_code %}
+<details>
+<summary>View Mermaid Source</summary>
+
+```mermaid
+{{ diagram.mermaid_code }}
+```
+</details>
+{% endif %}
+
+{% else %}
+### {{ diagram.title }}
+
+{% if diagram.description %}
+{{ diagram.description }}
+{% endif %}
+
+```mermaid
+{{ diagram.mermaid_code }}
+```
+
+{% endif %}

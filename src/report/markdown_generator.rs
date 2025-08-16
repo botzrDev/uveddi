@@ -1,17 +1,29 @@
-//! Markdown Report Generator
+//! Enhanced Markdown Report Generator
 //!
-//! This module provides markdown report generation for architectural analysis results,
-//! with support for AI analysis insights and embedded diagrams.
+//! This module provides advanced markdown report generation for architectural analysis results,
+//! with support for AI analysis insights, multiple diagram render modes, and embedded visualizations.
+//!
+//! # Features
+//!
+//! - Multiple Mermaid diagram render modes (inline, linked, embedded SVG)
+//! - Template-based report generation with Tera
+//! - AI-powered analysis integration
+//! - Performance metrics and optimization recommendations
+//! - Security-focused rendering with input sanitization
 
 use chrono::{DateTime, Local};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
+use std::process::Command;
+use std::fs;
+use std::io::Write;
+use tempfile::NamedTempFile;
 use thiserror::Error;
+use tera::{Tera, Context};
 
 use crate::database::models::{AnalysisRun, ArchitecturalIssue, AntiPatternType};
 use crate::core::mocks::ai_mocks::AiInsight;
-// Temporarily disabled due to template issues
-// use crate::analysis::mermaid_generator::{MermaidGenerator, MermaidGenerationError};
+use crate::report::DiagramMode;
 use crate::models::visualization::{ArchitecturalComponent, ComponentType, Dependency, DependencyType, DependencyNode, ComponentMetrics, DiagramType as VizDiagramType};
 use uuid::Uuid;
 
@@ -23,21 +35,168 @@ pub enum MarkdownReportError {
     ContextError(String),
     #[error("AI analysis error: {0}")]
     AiAnalysisError(String),
+    #[error("Template error: {0}")]
+    TemplateError(#[from] tera::Error),
+    #[error("Diagram rendering error: {0}")]
+    DiagramError(String),
 }
 
-/// Markdown report generator with AI analysis integration
+/// Diagram rendering configuration
+#[derive(Debug, Clone)]
+pub struct DiagramConfig {
+    /// Diagram rendering mode
+    pub mode: DiagramMode,
+    /// Include diagrams in output
+    pub include_diagrams: bool,
+    /// Output directory for diagram files
+    pub diagram_output_dir: Option<PathBuf>,
+    /// Maximum diagrams per report
+    pub max_diagrams: usize,
+}
+
+impl Default for DiagramConfig {
+    fn default() -> Self {
+        Self {
+            mode: DiagramMode::MermaidOnly,
+            include_diagrams: true,
+            diagram_output_dir: None,
+            max_diagrams: 20,
+        }
+    }
+}
+
+/// Enhanced markdown report generator with diagram rendering and templating
 pub struct MarkdownReportGenerator {
-    // Temporarily disabled due to template issues
-    // mermaid_generator: MermaidGenerator,
+    tera: Tera,
+    diagram_config: DiagramConfig,
 }
 
 impl MarkdownReportGenerator {
-    /// Create a new markdown report generator
+    /// Create a new markdown report generator with templates
     pub fn new() -> Result<Self, MarkdownReportError> {
+        Self::with_diagram_config(DiagramConfig::default())
+    }
+
+    /// Create a new generator with custom diagram configuration
+    pub fn with_diagram_config(diagram_config: DiagramConfig) -> Result<Self, MarkdownReportError> {
+        let mut tera = Tera::default();
+        
+        // Add built-in templates (use add_raw_template instead of add_template_literal)
+        tera.add_raw_template("report_template", include_str!("../templates/report.md.tera"))?;
+        tera.add_raw_template("diagram_template", include_str!("../templates/diagram.md.tera"))?;
+        
         Ok(Self {
-            // Temporarily disabled due to template issues
-            // mermaid_generator,
+            tera,
+            diagram_config,
         })
+    }
+
+    /// Set diagram configuration
+    pub fn set_diagram_config(&mut self, config: DiagramConfig) {
+        self.diagram_config = config;
+    }
+
+    /// Render Mermaid diagram to SVG using mmdc CLI
+    async fn render_mermaid_to_svg(&self, mermaid_code: &str, output_path: &Path) -> Result<String, MarkdownReportError> {
+        // Create temporary file for Mermaid input
+        let mut temp_file = NamedTempFile::new()
+            .map_err(|e| MarkdownReportError::DiagramError(format!("Failed to create temp file: {}", e)))?;
+        
+        writeln!(temp_file, "{}", mermaid_code)
+            .map_err(|e| MarkdownReportError::DiagramError(format!("Failed to write to temp file: {}", e)))?;
+
+        // Execute mmdc command
+        let output = Command::new("mmdc")
+            .arg("-i").arg(temp_file.path())
+            .arg("-o").arg(output_path)
+            .arg("-f").arg("svg")
+            .arg("-t").arg("neutral") // Use neutral theme for better compatibility
+            .output()
+            .map_err(|e| MarkdownReportError::DiagramError(format!("Failed to execute mmdc: {}", e)))?;
+
+        if !output.status.success() {
+            let error_message = String::from_utf8_lossy(&output.stderr);
+            return Err(MarkdownReportError::DiagramError(format!("mmdc failed: {}", error_message)));
+        }
+
+        // Read the generated SVG
+        let svg_content = fs::read_to_string(output_path)
+            .map_err(|e| MarkdownReportError::DiagramError(format!("Failed to read SVG: {}", e)))?;
+
+        Ok(svg_content)
+    }
+
+    /// Generate diagram content based on configuration
+    async fn generate_diagram_content(&self, title: &str, mermaid_code: &str, diagram_id: &str) -> Result<String, MarkdownReportError> {
+        let mut context = Context::new();
+        context.insert("diagram", &serde_json::json!({
+            "title": title,
+            "mermaid_code": mermaid_code,
+            "mode": match self.diagram_config.mode {
+                DiagramMode::MermaidOnly => "mermaid_only",
+                DiagramMode::ImageOnly => "linked",
+                DiagramMode::ImageWithFallback => "embedded_svg"
+            }
+        }));
+
+        match self.diagram_config.mode {
+            DiagramMode::MermaidOnly => {
+                // Just return Mermaid code with instructions
+                context.insert("diagram", &serde_json::json!({
+                    "title": title,
+                    "mermaid_code": mermaid_code,
+                    "mode": "mermaid_only"
+                }));
+                self.tera.render("diagram_template", &context)
+                    .map_err(MarkdownReportError::TemplateError)
+            },
+            DiagramMode::ImageOnly | DiagramMode::ImageWithFallback => {
+                if let Some(ref output_dir) = self.diagram_config.diagram_output_dir {
+                    let svg_path = output_dir.join(format!("{}.svg", diagram_id));
+                    
+                    // Ensure output directory exists
+                    if let Some(parent) = svg_path.parent() {
+                        fs::create_dir_all(parent)
+                            .map_err(|e| MarkdownReportError::DiagramError(format!("Failed to create output dir: {}", e)))?;
+                    }
+
+                    match self.render_mermaid_to_svg(mermaid_code, &svg_path).await {
+                        Ok(svg_content) => {
+                            context.insert("diagram", &serde_json::json!({
+                                "title": title,
+                                "mermaid_code": mermaid_code,
+                                "file_path": svg_path.to_string_lossy(),
+                                "svg_content": svg_content,
+                                "mode": if self.diagram_config.mode == DiagramMode::ImageOnly { "linked" } else { "embedded_svg" }
+                            }));
+                            self.tera.render("diagram_template", &context)
+                                .map_err(MarkdownReportError::TemplateError)
+                        },
+                        Err(e) if self.diagram_config.mode == DiagramMode::ImageWithFallback => {
+                            // Fallback to Mermaid-only
+                            eprintln!("Warning: Failed to render diagram '{}', falling back to Mermaid-only: {}", title, e);
+                            context.insert("diagram", &serde_json::json!({
+                                "title": title,
+                                "mermaid_code": mermaid_code,
+                                "mode": "mermaid_only"
+                            }));
+                            self.tera.render("diagram_template", &context)
+                                .map_err(MarkdownReportError::TemplateError)
+                        },
+                        Err(e) => Err(e)
+                    }
+                } else {
+                    // No output directory specified, fallback to Mermaid-only
+                    context.insert("diagram", &serde_json::json!({
+                        "title": title,
+                        "mermaid_code": mermaid_code,
+                        "mode": "mermaid_only"
+                    }));
+                    self.tera.render("diagram_template", &context)
+                        .map_err(MarkdownReportError::TemplateError)
+                }
+            }
+        }
     }
 
     /// Generate a complete markdown report with AI analysis

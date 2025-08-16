@@ -243,6 +243,7 @@
 
 pub mod ai;
 pub mod analysis;
+pub mod api;
 pub mod application;
 pub mod ast;
 pub mod cache;

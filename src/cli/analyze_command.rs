@@ -237,6 +237,26 @@ pub struct AnalyzeCommand {
     #[arg(long)]
     pub check_rendering_service: bool,
 
+    /// Disable diagram generation completely
+    ///
+    /// Skip all diagram generation to speed up analysis when only textual output is needed.
+    #[arg(long)]
+    pub no_diagrams: bool,
+
+    /// Maximum number of diagrams to generate per report
+    ///
+    /// Limits the total number of diagrams to prevent performance issues with large codebases.
+    /// Set to 0 for no limit.
+    #[arg(long, default_value = "20")]
+    pub max_diagrams: usize,
+
+    /// Output directory for diagram files
+    ///
+    /// When using image rendering modes, diagrams will be saved to this directory.
+    /// If not specified, a subdirectory next to the report will be created.
+    #[arg(long)]
+    pub diagram_output_dir: Option<PathBuf>,
+
     /// Maximum analysis timeout in seconds
     ///
     /// Sets the maximum time to wait for analysis completion before aborting.
@@ -319,6 +339,14 @@ impl AnalyzeCommand {
 
         if self.no_fallback && !self.enable_image_rendering {
             return Err("--no-fallback can only be used with --enable-image-rendering".to_string());
+        }
+
+        if self.no_diagrams && (self.mermaid_only || self.enable_image_rendering) {
+            return Err("--no-diagrams cannot be used with --mermaid-only or --enable-image-rendering".to_string());
+        }
+
+        if self.diagram_output_dir.is_some() && !self.enable_image_rendering {
+            return Err("--diagram-output-dir can only be used with --enable-image-rendering".to_string());
         }
 
         Ok(())

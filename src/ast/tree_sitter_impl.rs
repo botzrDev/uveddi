@@ -524,8 +524,8 @@ impl AstParser {
             }
         }
 
-        // Parse and cache
-        let source = Arc::new(fs::read_to_string(file_path)?);
+        // Parse and cache with robust UTF-8 handling
+        let source = Arc::new(self.read_source_safely(file_path)?);
         let language = self.detect_language(file_path)?;
         let parser = self
             .parsers
@@ -612,6 +612,105 @@ impl AstParser {
         };
 
         Ok(parsed)
+    }
+
+    /// Safely read source code with robust UTF-8 handling
+    /// 
+    /// This implements the UTF-8 validation strategy from the research document:
+    /// 1. Read as bytes first
+    /// 2. Attempt strict UTF-8 validation
+    /// 3. Fall back to lossy conversion if needed
+    /// 4. Report encoding issues to user
+    fn read_source_safely(&self, file_path: &Path) -> Result<String, AstError> {
+        // Step 1: Read as raw bytes to avoid panics
+        let source_bytes = fs::read(file_path)
+            .map_err(|e| AstError::Other(format!("Failed to read file: {}", e)))?;
+        
+        // Step 2: Attempt strict UTF-8 validation
+        match String::from_utf8(source_bytes.clone()) {
+            Ok(valid_string) => {
+                // File is valid UTF-8, proceed normally
+                Ok(valid_string)
+            },
+            Err(utf8_error) => {
+                // Step 3: Log the encoding issue and use lossy conversion
+                let file_display = file_path.display();
+                let error_pos = utf8_error.utf8_error().valid_up_to();
+                
+                warn!(
+                    "Invalid UTF-8 found in file '{}' at byte position {}. Using lossy conversion to continue analysis.",
+                    file_display, error_pos
+                );
+                
+                // Step 4: Use lossy conversion to proceed with analysis
+                let lossy_string = String::from_utf8_lossy(&source_bytes);
+                Ok(lossy_string.into_owned())
+            }
+        }
+    }
+
+    /// Safe string slicing using byte offsets from Tree-sitter
+    /// 
+    /// This ensures byte offsets from Tree-sitter nodes are properly converted
+    /// to valid string slice boundaries without panicking.
+    pub fn safe_slice<'a>(&self, source: &'a str, start_byte: usize, end_byte: usize) -> Result<&'a str, AstError> {
+        // Ensure we don't exceed string bounds
+        let source_bytes = source.as_bytes();
+        if start_byte > source_bytes.len() || end_byte > source_bytes.len() {
+            return Err(AstError::Other(format!(
+                "Byte offset out of bounds: start={}, end={}, source_len={}",
+                start_byte, end_byte, source_bytes.len()
+            )));
+        }
+
+        // Ensure start <= end
+        if start_byte > end_byte {
+            return Err(AstError::Other(format!(
+                "Invalid slice range: start={} > end={}",
+                start_byte, end_byte
+            )));
+        }
+
+        // Find valid char boundaries
+        let safe_start = self.find_char_boundary(source, start_byte, true)?;
+        let safe_end = self.find_char_boundary(source, end_byte, false)?;
+
+        Ok(&source[safe_start..safe_end])
+    }
+
+    /// Find the nearest valid UTF-8 character boundary
+    /// 
+    /// This prevents panics when Tree-sitter byte offsets don't align with UTF-8 boundaries
+    fn find_char_boundary(&self, source: &str, byte_offset: usize, round_down: bool) -> Result<usize, AstError> {
+        let bytes = source.as_bytes();
+        
+        if byte_offset >= bytes.len() {
+            return Ok(bytes.len());
+        }
+
+        // If we're already at a char boundary, return as-is
+        if source.is_char_boundary(byte_offset) {
+            return Ok(byte_offset);
+        }
+
+        // Search for nearest char boundary
+        if round_down {
+            // Search backwards for valid boundary
+            for i in (0..=byte_offset).rev() {
+                if source.is_char_boundary(i) {
+                    return Ok(i);
+                }
+            }
+            Ok(0) // Fallback to start of string
+        } else {
+            // Search forwards for valid boundary
+            for i in byte_offset..bytes.len() {
+                if source.is_char_boundary(i) {
+                    return Ok(i);
+                }
+            }
+            Ok(bytes.len()) // Fallback to end of string
+        }
     }
 
     fn detect_language(&self, file_path: &Path) -> Result<SourceLanguage, AstError> {

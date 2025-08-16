@@ -339,7 +339,18 @@ impl InteractiveReportGenerator {
                 edge_count: 1,
                 has_cycles: false,
                 max_depth: 2,
-                layout: Some("cose".to_string()),
+                suggested_layout: crate::report::interactive_models::CytoscapeLayout::Cose,
+                layout_config: std::collections::HashMap::new(),
+                performance_config: crate::report::interactive_models::GraphPerformanceConfig {
+                    enable_lod: true,
+                    batch_size: 100,
+                    texture_on_viewport: true,
+                    hide_labels_on_viewport: true,
+                    initial_viewport: None,
+                    use_web_worker: false,
+                },
+                clustering_hints: vec![],
+                cycles: vec![],
             },
         };
 

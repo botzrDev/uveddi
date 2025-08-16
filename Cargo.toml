@@ -226,7 +226,7 @@ metrics-tracing-context = "0.16"
 # Security and RBAC Dependencies (UV-247)
 # HTTP middleware and services
 tower = "0.4"
-tower-http = { version = "0.5", features = ["cors", "limit", "timeout"] }
+tower-http = { version = "0.5", features = ["cors", "limit", "timeout", "fs", "trace"] }
 tower_governor = "0.3"
 # Database (using existing rusqlite instead of sqlx to avoid conflicts)
 # Authorization

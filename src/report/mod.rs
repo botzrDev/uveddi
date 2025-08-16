@@ -157,12 +157,16 @@ pub use interactive_models::{
 // Export interactive report generator
 pub use interactive_generator::{InteractiveReportGenerator, InteractiveReportConfig};
 
+// Export security utilities
+pub use security::{ReportSecurityValidator, ReportSecurityConfig, ReportSecurityError};
+
 pub mod diagrams;
 pub mod svg_generator;
 pub mod modern_generator;
 pub mod markdown_generator;
 pub mod interactive_models;
 pub mod interactive_generator;
+pub mod security;
 use chrono::{DateTime, Local};
 use crate::core::logging::{error, info, warn};
 use std::error::Error;

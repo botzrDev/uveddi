@@ -4,7 +4,7 @@
 //! and managing the React SPA frontend. It bridges the analysis pipeline with the
 //! web-based visualization interface.
 
-use crate::api::rest::{CombinedApiServer, RestApiConfig};
+use crate::api::{CombinedApiServer, RestApiConfig};
 use crate::database::Database;
 use crate::report::{InteractiveReportGenerator, InteractiveReportConfig};
 use clap::{Args, Subcommand};
@@ -103,7 +103,7 @@ impl UiCommand {
         tokio::fs::create_dir_all(&args.reports_dir).await?;
 
         // Initialize database
-        let database = Arc::new(Database::new(args.database.to_str().unwrap_or(":memory:"))?);
+        let database = Arc::new(Database::new(Some(args.database.as_path()))?);
         println!("✅ Database initialized: {}", args.database.display());
 
         // Create server configuration
