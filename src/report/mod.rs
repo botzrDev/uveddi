@@ -147,10 +147,22 @@ pub use crate::error::rendering::RenderingServiceError;
 #[cfg(feature = "image-rendering")]
 pub use image_renderer::{ImageFormat, ImageRenderer, RenderedImage};
 
+// Export interactive report models
+pub use interactive_models::{
+    InteractiveReport, ProjectMetadata, AnalysisSummary, Finding,
+    DependencyGraph, GraphNode, GraphEdge, DiagramDefinition,
+    AiInsights, ReportMetadata, REPORT_SCHEMA_VERSION
+};
+
+// Export interactive report generator
+pub use interactive_generator::{InteractiveReportGenerator, InteractiveReportConfig};
+
 pub mod diagrams;
 pub mod svg_generator;
 pub mod modern_generator;
 pub mod markdown_generator;
+pub mod interactive_models;
+pub mod interactive_generator;
 use chrono::{DateTime, Local};
 use crate::core::logging::{error, info, warn};
 use std::error::Error;

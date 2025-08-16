@@ -209,13 +209,13 @@ impl Default for GraphQLServerBuilder {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::database::DatabaseManager;
+    use crate::database::Database;
     use crate::analysis::engine::AnalysisEngine;
     use crate::api::graphql::create_schema;
 
     async fn create_test_schema() -> UveddiSchema {
         // This would normally use real instances, but for testing we create mocks
-        let db = DatabaseManager::new_in_memory().await.unwrap();
+        let db = Database::new(":memory:").unwrap();
         let engine = AnalysisEngine::new();
         create_schema(db, engine)
     }

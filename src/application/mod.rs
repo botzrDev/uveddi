@@ -1130,6 +1130,7 @@ pub async fn run_app() -> Result<(), UveddiError> {
     enum Commands {
         Analyze(AnalyzeCommand),
         Config(ConfigCommand),
+        Ui(crate::cli::ui_command::UiCommand),
     }
 
     let cli = Cli::parse();
@@ -1143,6 +1144,13 @@ pub async fn run_app() -> Result<(), UveddiError> {
             command
                 .execute()
                 .map_err(|e| UveddiError::config_error(&e.to_string(), "config validation"))
+        }
+        Commands::Ui(command) => {
+            info!("Executing UI command...");
+            command
+                .execute()
+                .await
+                .map_err(|e| UveddiError::config_error(&e.to_string(), "ui command"))
         }
     };
     if let Err(e) = result {
