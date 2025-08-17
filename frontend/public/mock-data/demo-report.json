@@ -1,0 +1,258 @@
+{
+  "schemaVersion": "1.0.0",
+  "project": {
+    "id": "demo-project",
+    "name": "Demo Rust Project",
+    "path": "./test_with_issues.rs",
+    "languages": ["rust", "javascript", "typescript"],
+    "commit": "abc123",
+    "branch": "main"
+  },
+  "summary": {
+    "coverage": 78.5,
+    "issuesTotal": 8,
+    "issuesBySeverity": {
+      "critical": 2,
+      "high": 1,
+      "medium": 3,
+      "low": 2
+    },
+    "issuesByCategory": {
+      "god_object": 3,
+      "dead_code": 1,
+      "code_duplication": 2,
+      "tight_coupling": 1,
+      "circular_dependency": 1
+    },
+    "filesAnalyzed": 15,
+    "componentsAnalyzed": 42,
+    "analysisDurationMs": 2340,
+    "timeGenerated": "2024-01-15T10:30:00Z"
+  },
+  "findings": [
+    {
+      "id": "finding-1",
+      "type": "God Object",
+      "severity": "critical",
+      "title": "GodObject struct has excessive responsibilities",
+      "message": "God Object detected: 'GodObject' has 5 methods and 20 fields. (Thresholds: methods>5, fields>8) LCOM4 score: 1 (>1 indicates low cohesion)",
+      "file": "test_with_issues.rs",
+      "startLine": 3,
+      "endLine": 24,
+      "column": 1,
+      "codeSnippet": "struct GodObject {\n    field1: String,\n    field2: String,\n    field3: String,\n    // ... 17 more fields\n    field20: String,\n}",
+      "tags": ["architecture", "design", "srp"],
+      "detector": "god_object_detector",
+      "confidence": 0.95,
+      "aiExplanation": "This struct violates the Single Responsibility Principle by having too many fields and methods. It appears to be handling multiple concerns that should be separated into different classes or modules.",
+      "recommendation": "Consider breaking this into smaller, more focused structs. For example, separate data handling, validation, and business logic into different components.",
+      "relatedFindings": ["finding-2", "finding-3"]
+    },
+    {
+      "id": "finding-2",
+      "type": "Code Duplication",
+      "severity": "medium",
+      "title": "Duplicate code block detected",
+      "message": "Code duplication detected (Type2): 100.0% similarity between test_with_issues.rs:105-113 and test_with_issues.rs:94-102",
+      "file": "test_with_issues.rs",
+      "startLine": 105,
+      "endLine": 113,
+      "column": 5,
+      "codeSnippet": "pub fn duplicate_code_2(&self) -> String {\n    let mut result = String::new();\n    result.push_str(\"duplicate line 1\\n\");\n    result.push_str(\"duplicate line 2\\n\");\n    result\n}",
+      "tags": ["duplication", "maintainability"],
+      "detector": "duplication_detector",
+      "confidence": 0.98,
+      "aiExplanation": "This code block is duplicated with 100% similarity. This creates maintenance burden as changes need to be applied in multiple places.",
+      "recommendation": "Extract the common logic into a shared function or utility method.",
+      "relatedFindings": ["finding-1"]
+    },
+    {
+      "id": "finding-3",
+      "type": "Dead Code",
+      "severity": "low",
+      "title": "Unused function detected",
+      "message": "Function 'unused_function' is never called",
+      "file": "test_with_issues.rs",
+      "startLine": 150,
+      "endLine": 155,
+      "column": 1,
+      "codeSnippet": "fn unused_function() {\n    println!(\"This function is never used\");\n}",
+      "tags": ["dead-code", "cleanup"],
+      "detector": "dead_code_detector",
+      "confidence": 0.92,
+      "aiExplanation": "This function is defined but never referenced in the codebase, creating unnecessary code bloat.",
+      "recommendation": "Remove this function if it's truly unused, or add proper documentation if it's intended for future use.",
+      "relatedFindings": []
+    }
+  ],
+  "dependencyGraph": {
+    "nodes": [
+      {
+        "id": "god-object-node",
+        "label": "GodObject",
+        "path": "test_with_issues.rs",
+        "type": "struct",
+        "metrics": {
+          "loc": 45,
+          "complexity": 12,
+          "dependencies": 3,
+          "dependents": 8
+        },
+        "group": "core",
+        "properties": {
+          "visibility": "public",
+          "module": "main"
+        }
+      },
+      {
+        "id": "helper-module",
+        "label": "HelperModule",
+        "path": "helper.rs",
+        "type": "module",
+        "metrics": {
+          "loc": 120,
+          "complexity": 8,
+          "dependencies": 1,
+          "dependents": 2
+        },
+        "group": "utilities",
+        "properties": {
+          "visibility": "public",
+          "module": "helper"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "source": "god-object-node",
+        "target": "helper-module",
+        "type": "uses",
+        "weight": 0.8,
+        "properties": {
+          "coupling_strength": "strong"
+        }
+      }
+    ],
+    "metadata": {
+      "nodeCount": 2,
+      "edgeCount": 1,
+      "hasCycles": false,
+      "maxDepth": 2,
+      "layout": "hierarchical"
+    }
+  },
+  "diagrams": [
+    {
+      "id": "god-object-diagram",
+      "kind": "class",
+      "title": "God Object Analysis",
+      "source": "classDiagram\n    class GodObject {\n        +field1: String\n        +field2: String\n        +field3: String\n        +field4: String\n        +field5: String\n        +massiveMethod()\n        +anotherLargeMethod()\n        +duplicateCode1()\n        +duplicateCode2()\n        +unusedMethod()\n    }\n    \n    note for GodObject \"God Object Detected\\n\\n• 20+ fields/methods\\n• Multiple responsibilities\\n• High complexity\\n• Violation of SRP\"\n    \n    GodObject --> DataLayer : manages\n    GodObject --> UILayer : controls\n    GodObject --> BusinessLogic : implements\n    \n    class DataLayer {\n        +save()\n        +load()\n    }\n    \n    class UILayer {\n        +render()\n        +update()\n    }\n    \n    class BusinessLogic {\n        +calculate()\n        +process()\n    }",
+      "description": "Visualization of the God Object anti-pattern detected in the codebase",
+      "components": ["god-object-node"],
+      "metadata": {
+        "width": 800,
+        "height": 600,
+        "theme": "default",
+        "direction": "TD",
+        "options": {
+          "showMethods": "true",
+          "showFields": "true"
+        }
+      }
+    },
+    {
+      "id": "dependency-graph",
+      "kind": "graph",
+      "title": "Module Dependencies",
+      "source": "graph TD\n    A[GodObject] --> B[DataLayer]\n    A --> C[UILayer]\n    A --> D[BusinessLogic]\n    A --> E[HelperModule]\n    \n    B --> F[Database]\n    C --> G[Frontend]\n    D --> H[Calculator]\n    \n    style A fill:#ff6b6b,stroke:#d63384,stroke-width:3px\n    style B fill:#6bcf7f,stroke:#28a745,stroke-width:2px\n    style C fill:#6bcf7f,stroke:#28a745,stroke-width:2px\n    style D fill:#6bcf7f,stroke:#28a745,stroke-width:2px\n    style E fill:#ffd93d,stroke:#ffc107,stroke-width:2px\n    \n    classDef godObject fill:#ff6b6b,stroke:#d63384,stroke-width:3px,color:#fff\n    classDef normal fill:#6bcf7f,stroke:#28a745,stroke-width:2px\n    classDef helper fill:#ffd93d,stroke:#ffc107,stroke-width:2px",
+      "description": "Dependency relationships between modules showing tight coupling",
+      "components": ["god-object-node", "helper-module"],
+      "metadata": {
+        "width": 700,
+        "height": 500,
+        "theme": "default",
+        "direction": "TD",
+        "options": {
+          "showWeights": "false"
+        }
+      }
+    },
+    {
+      "id": "duplication-analysis",
+      "kind": "flowchart",
+      "title": "Code Duplication Detection",
+      "source": "flowchart LR\n    A[Method A] --> D[Duplicated Logic Block]\n    B[Method B] --> D\n    C[Method C] --> D\n    \n    D --> E[Common Functionality]\n    E --> F[Refactoring Opportunity]\n    \n    F --> G[Extract Method]\n    F --> H[Create Utility Class]\n    F --> I[Use Inheritance]\n    \n    style D fill:#ffd93d,stroke:#ffc107,stroke-width:3px\n    style F fill:#6bcf7f,stroke:#28a745,stroke-width:2px\n    style G fill:#b3d9ff,stroke:#007bff,stroke-width:2px\n    style H fill:#b3d9ff,stroke:#007bff,stroke-width:2px\n    style I fill:#b3d9ff,stroke:#007bff,stroke-width:2px\n    \n    subgraph \"Current State\"\n        A\n        B\n        C\n        D\n    end\n    \n    subgraph \"Refactored State\"\n        G\n        H\n        I\n    end",
+      "description": "Analysis of code duplication patterns and suggested refactoring approaches",
+      "components": [],
+      "metadata": {
+        "width": 900,
+        "height": 400,
+        "theme": "default",
+        "direction": "LR",
+        "options": {
+          "showSubgraphs": "true"
+        }
+      }
+    }
+  ],
+  "aiInsights": {
+    "overallAssessment": "The codebase shows signs of technical debt with several architectural anti-patterns. The most critical issue is the God Object pattern which should be addressed first.",
+    "topRecommendations": [
+      "Refactor the GodObject struct into smaller, focused components",
+      "Extract duplicate code into shared utilities",
+      "Remove unused functions to reduce code bloat"
+    ],
+    "patterns": [
+      {
+        "name": "God Object",
+        "description": "Large class with too many responsibilities",
+        "confidence": 0.95,
+        "locations": ["test_with_issues.rs:3-24"],
+        "impact": "High - affects maintainability and testability"
+      }
+    ],
+    "riskAssessment": {
+      "overallRisk": "Medium",
+      "riskFactors": [
+        {
+          "name": "Technical Debt",
+          "description": "Accumulated design issues",
+          "level": "High",
+          "likelihood": "Certain",
+          "impact": "High",
+          "affectedAreas": ["Maintainability", "Testing", "Performance"]
+        }
+      ],
+      "mitigationStrategies": [
+        "Implement refactoring strategy",
+        "Increase test coverage",
+        "Establish code review processes"
+      ]
+    },
+    "refactoringOpportunities": [
+      {
+        "type": "Extract Class",
+        "description": "Break down GodObject into focused components",
+        "effort": "High",
+        "benefits": ["Improved maintainability", "Better testability", "Clearer responsibilities"],
+        "scope": ["test_with_issues.rs"],
+        "priority": "High"
+      }
+    ]
+  },
+  "metadata": {
+    "generatedAt": "2024-01-15T10:30:00Z",
+    "uveddiVersion": "0.9.0-alpha",
+    "configuration": {
+      "analysisMode": "comprehensive",
+      "aiEnabled": "true",
+      "diagramGeneration": "true"
+    },
+    "performance": {
+      "analysisDurationMs": 2340,
+      "generationDurationMs": 890,
+      "peakMemoryBytes": 156789012,
+      "filesPerSecond": 6.4
+    }
+  }
+}

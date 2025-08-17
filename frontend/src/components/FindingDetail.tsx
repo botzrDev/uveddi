@@ -30,7 +30,8 @@ import {
 } from '@mui/icons-material';
 import type { Finding } from '@/types/api';
 import CodeSnippet from './CodeSnippet';
-import MermaidDiagram, { generateDiagramForFinding } from './MermaidDiagram';
+import MermaidDiagram from './MermaidDiagram';
+import { generateDiagramForFinding } from '@/utils/diagramGenerators';
 
 interface FindingDetailProps {
   finding: Finding;

@@ -9,7 +9,7 @@ import type {
 class ApiService {
   private baseUrl: string;
 
-  constructor(baseUrl = '/api/v1') {
+  constructor(baseUrl = 'http://localhost:8080/api/v1') {
     this.baseUrl = baseUrl;
   }
 
@@ -46,10 +46,10 @@ class ApiService {
    * Get a specific report by ID
    */
   async getReport(id: string): Promise<InteractiveReport> {
-    const response = await this.fetchWithErrorHandling<ApiResponse<InteractiveReport>>(
+    const response = await this.fetchWithErrorHandling<InteractiveReport>(
       `${this.baseUrl}/reports/${id}`
     );
-    return response.data;
+    return response;
   }
 
   /**
@@ -103,10 +103,20 @@ class ApiService {
    * Get the demo report for development and testing
    */
   async getDemoReport(): Promise<InteractiveReport> {
-    const response = await this.fetchWithErrorHandling<ApiResponse<InteractiveReport>>(
-      `${this.baseUrl}/reports/demo`
-    );
-    return response.data;
+    try {
+      const response = await this.fetchWithErrorHandling<InteractiveReport>(
+        `${this.baseUrl}/reports/demo`
+      );
+      return response;
+    } catch (error) {
+      // Fallback to mock data if backend is not available
+      console.warn('Backend not available, using mock data:', error);
+      const mockResponse = await fetch('/mock-data/demo-report.json');
+      if (!mockResponse.ok) {
+        throw new Error('Failed to load mock data');
+      }
+      return mockResponse.json();
+    }
   }
 
   /**

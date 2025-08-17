@@ -12,6 +12,8 @@ import {
 import { useReport, useDemoReport } from '@/hooks/useReport';
 import type { InteractiveReport } from '@/types/api';
 import FindingsList from '@/components/FindingsList';
+import MermaidDiagram from '@/components/MermaidDiagram';
+import SimpleMermaidTest from '@/components/SimpleMermaidTest';
 
 function DashboardPage() {
   const { reportId } = useParams<{ reportId: string }>();
@@ -196,6 +198,28 @@ function DashboardPage() {
           </Paper>
         </Grid>
       </Grid>
+
+      {/* Simple Mermaid Test */}
+      <SimpleMermaidTest />
+      
+      {/* Architectural Diagrams Section */}
+      {report.diagrams && report.diagrams.length > 0 && (
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h4" component="h2" gutterBottom>
+            Architectural Diagrams
+          </Typography>
+          <Grid container spacing={3}>
+            {report.diagrams.map((diagram, index) => (
+              <Grid item xs={12} lg={6} key={diagram.id || index}>
+                <MermaidDiagram 
+                  definition={diagram.source}
+                  title={diagram.title}
+                />
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+      )}
 
       {/* Detailed Findings List */}
       <FindingsList 
