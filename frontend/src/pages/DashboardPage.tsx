@@ -1,19 +1,17 @@
-import React from 'react';
-import { useParams } from 'react-router-dom';
-import {
-  Box,
-  Typography,
-  CircularProgress,
-  Alert,
-  Grid,
-  Paper,
-  Chip,
-} from '@mui/material';
-import { useReport, useDemoReport } from '@/hooks/useReport';
-import type { InteractiveReport } from '@/types/api';
 import FindingsList from '@/components/FindingsList';
 import MermaidDiagram from '@/components/MermaidDiagram';
 import SimpleMermaidTest from '@/components/SimpleMermaidTest';
+import { useDemoReport, useReport } from '@/hooks/useReport';
+import {
+  Alert,
+  Box,
+  Chip,
+  CircularProgress,
+  Grid,
+  Paper,
+  Typography,
+} from '@mui/material';
+import { useParams } from 'react-router-dom';
 
 function DashboardPage() {
   const { reportId } = useParams<{ reportId: string }>();
@@ -210,7 +208,7 @@ function DashboardPage() {
           </Typography>
           <Grid container spacing={3}>
             {report.diagrams.map((diagram, index) => (
-              <Grid item xs={12} lg={6} key={diagram.id || index}>
+              <Grid item xs={12} key={diagram.id || index}>
                 <MermaidDiagram 
                   definition={diagram.source}
                   title={diagram.title}

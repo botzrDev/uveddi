@@ -103,7 +103,7 @@ impl DetectorScheduler {
 
         let mut all_issues = Vec::new();
 
-        // Run file-level detectors
+        // Run file-level detectors with timeout protection
         {
             let detectors = self.file_detectors.read().await;
             for detector in detectors.iter() {
@@ -114,23 +114,34 @@ impl DetectorScheduler {
                     continue;
                 }
 
-                match detector.detect_issues(&parsed_file).await {
-                    Ok(mut issues) => {
+                // Run detector with timeout (30 seconds per detector)
+                let timeout_duration = std::time::Duration::from_secs(30);
+                match tokio::time::timeout(timeout_duration, detector.detect_issues(&parsed_file)).await {
+                    Ok(Ok(mut issues)) => {
                         info!(
-                            "Detector {} found {} issues in {}",
+                            "Detector {} found {} issues in {} (completed successfully)",
                             detector_name,
                             issues.len(),
                             file_path.display()
                         );
                         all_issues.append(&mut issues);
                     }
-                    Err(e) => {
+                    Ok(Err(e)) => {
                         warn!(
                             "Error running detector {} on {}: {}",
                             detector_name,
                             file_path.display(),
                             e
                         );
+                    }
+                    Err(_) => {
+                        warn!(
+                            "Detector {} timed out after {}s on {} - skipping and continuing with partial results",
+                            detector_name,
+                            timeout_duration.as_secs(),
+                            file_path.display()
+                        );
+                        // Continue with other detectors - graceful degradation
                     }
                 }
             }
@@ -221,6 +232,36 @@ impl DetectorScheduler {
             false
         }
     }
+
+    /// Process a batch of files with memory management
+    async fn process_file_batch(&self, file_paths: &[std::path::PathBuf]) -> Vec<ArchitecturalIssue> {
+        let mut batch_issues = Vec::new();
+        
+        info!(
+            "Processing batch of {} files",
+            file_paths.len()
+        );
+
+        for file_path in file_paths {
+            match self.analyze_file(file_path).await {
+                Ok(mut file_issues) => {
+                    batch_issues.append(&mut file_issues);
+                    // Record that we processed this file
+                    self.aggregator.record_file_processed();
+                }
+                Err(e) => {
+                    warn!("Failed to analyze file {}: {}", file_path.display(), e);
+                }
+            }
+        }
+
+        info!(
+            "Completed batch: {} issues found",
+            batch_issues.len()
+        );
+
+        batch_issues
+    }
 }
 
 #[async_trait]
@@ -254,22 +295,34 @@ impl DetectorSchedulerTrait for DetectorScheduler {
         let walker = AsyncWalker::for_source_code();
         let mut file_stream = walker.walk(dir_path);
         let mut files_processed = 0;
+        let mut current_batch = Vec::new();
+        const BATCH_SIZE: usize = 10; // Process files in batches to manage memory
+        const MAX_FILES: usize = 1000; // Prevent runaway analysis
 
+        // Collect files into batches for memory-efficient processing
         while let Some(file_result) = file_stream.next().await {
-            match file_result {
-                Ok(ref file_path) => {
-                    if self.should_analyze_file(&file_path) {
-                        match self.analyze_file(&file_path).await {
-                            Ok(mut file_issues) => {
-                                all_issues.append(&mut file_issues);
-                                files_processed += 1;
+            if files_processed >= MAX_FILES {
+                warn!(
+                    "Reached maximum file limit ({}) for directory analysis. Stopping to prevent timeout.",
+                    MAX_FILES
+                );
+                break;
+            }
 
-                                // Record that we processed this file
-                                self.aggregator.record_file_processed();
-                            }
-                            Err(e) => {
-                                warn!("Failed to analyze file {}: {}", file_path.display(), e);
-                            }
+            match file_result {
+                Ok(file_path) => {
+                    if self.should_analyze_file(&file_path) {
+                        current_batch.push(file_path);
+                        
+                        // Process batch when it's full
+                        if current_batch.len() >= BATCH_SIZE {
+                            let batch_issues = self.process_file_batch(&current_batch).await;
+                            all_issues.extend(batch_issues);
+                            files_processed += current_batch.len();
+                            current_batch.clear();
+
+                            // Yield to prevent blocking the runtime
+                            tokio::task::yield_now().await;
                         }
                     }
                 }
@@ -277,6 +330,13 @@ impl DetectorSchedulerTrait for DetectorScheduler {
                     warn!("Error walking directory: {}", e);
                 }
             }
+        }
+
+        // Process remaining files in the last batch
+        if !current_batch.is_empty() {
+            let batch_issues = self.process_file_batch(&current_batch).await;
+            all_issues.extend(batch_issues);
+            files_processed += current_batch.len();
         }
 
         info!(

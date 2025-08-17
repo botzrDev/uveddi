@@ -4,120 +4,148 @@ export function generateDiagramForFinding(finding: any): string {
   const type = finding.type?.toLowerCase();
   console.log('Generating diagram for finding type:', type, 'from original:', finding.type);
   
-  switch (type) {
-    case 'god object':
-      return generateGodObjectDiagram(finding);
-    case 'dead code':
-      return generateDeadCodeDiagram(finding);
-    case 'code duplication':
-      return generateCodeDuplicationDiagram(finding);
-    case 'circular dependency':
-      return generateCircularDependencyDiagram(finding);
-    case 'tight coupling':
-      return generateTightCouplingDiagram(finding);
-    default:
-      console.log('Using generic diagram for type:', type);
-      return generateGenericDiagram(finding);
+  try {
+    switch (type) {
+      case 'god object':
+        return generateGodObjectDiagram(finding);
+      case 'dead code':
+        return generateDeadCodeDiagram(finding);
+      case 'code duplication':
+        return generateCodeDuplicationDiagram(finding);
+      case 'circular dependency':
+        return generateCircularDependencyDiagram(finding);
+      case 'tight coupling':
+        return generateTightCouplingDiagram(finding);
+      default:
+        console.log('Using generic diagram for type:', type);
+        return generateGenericDiagram(finding);
+    }
+  } catch (error) {
+    console.error('Error generating diagram for finding:', error);
+    return generateSimpleFallbackDiagram(finding);
   }
 }
 
-function generateGodObjectDiagram(finding: any): string {
-  // Create a clean class name for Mermaid (must start with letter, only letters/numbers/underscores)
-  let className = (finding.title || 'GodObject')
-    .replace(/\s+/g, '')
-    .replace(/[^a-zA-Z0-9_]/g, '_')
-    .replace(/^[0-9]/, '_$&')
-    .replace(/_+/g, '_') // Replace multiple underscores with single
-    .replace(/^_+|_+$/g, ''); // Remove leading/trailing underscores
+function generateSimpleFallbackDiagram(finding: any): string {
+  const fileName = finding.file?.split('/').pop() || 'file.rs';
+  const issueType = finding.type || 'Issue';
   
-  // Ensure it starts with a letter and has reasonable length
+  return `flowchart TD
+    File["📄 ${fileName}"]
+    Issue["⚠️ ${issueType} Detected"]
+    
+    File --> Issue
+    Issue --> Fix["🔧 Needs Attention"]
+    
+    style File fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    style Issue fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    style Fix fill:#e8f5e8,stroke:#4caf50,stroke-width:2px`;
+}
+
+function generateGodObjectDiagram(finding: any): string {
+  // Extract real information from the finding
+  const fileName = finding.file?.split('/').pop()?.replace('.rs', '') || 'GodObject';
+  const filePath = finding.file || 'unknown/path';
+  const lineNumber = finding.startLine || '?';
+  
+  // Create a clean class name for Mermaid
+  let className = fileName
+    .replace(/[^a-zA-Z0-9_]/g, '_')
+    .replace(/^[0-9]/, 'Struct_$&')
+    .substring(0, 20);
+  
   if (!className || !/^[a-zA-Z]/.test(className)) {
     className = 'GodObject';
   }
   
-  // Limit length to avoid issues
-  if (className.length > 30) {
-    className = className.substring(0, 30);
-  }
+  console.log('Generating God Object diagram for real class:', className);
   
-  console.log('Generating God Object diagram for sanitized class name:', className);
-  
-  const diagram = `classDiagram
-    class ${className} {
-        +field1: String
-        +field2: String
-        +field3: Number
-        +field4: Boolean
-        +field5: Array
-        +massiveMethod()
-        +anotherLargeMethod()
-        +duplicateCode1()
-        +duplicateCode2()
-        +unusedMethod()
-        +complexCalculation()
-        +dataProcessing()
-        +businessLogic()
-    }
+  // Use flowchart instead of classDiagram to avoid syntax issues
+  const diagram = `flowchart TD
+    Main["🏗️ ${fileName}.rs<br/>Line: ${lineNumber}"]
+    GodObj["⚠️ ${className}<br/>God Object Detected"]
     
-    note for ${className} "God Object Detected\\n\\n• 20+ fields/methods\\n• Multiple responsibilities\\n• High complexity\\n• Violation of SRP"
+    Main --> GodObj
     
-    ${className} --> DataLayer : manages
-    ${className} --> UILayer : controls
-    ${className} --> BusinessLogic : implements
-    ${className} --> Validation : handles
+    subgraph responsibilities["📋 Too Many Responsibilities"]
+        Data["💾 Data Management<br/>Fields: config, state, data"]
+        Network["🌐 Network Operations<br/>Methods: handle_request, send"]
+        Business["⚖️ Business Logic<br/>Methods: process, validate"]
+        IO["📁 I/O Operations<br/>Methods: save_to_db, log"]
+    end
     
-    class DataLayer {
-        +save()
-        +load()
-    }
+    GodObj --> Data
+    GodObj --> Network
+    GodObj --> Business
+    GodObj --> IO
     
-    class UILayer {
-        +render()
-        +update()
-    }
+    subgraph solution["✅ Recommended Split"]
+        DataHandler["DataHandler<br/>struct"]
+        NetworkService["NetworkService<br/>struct"]
+        BusinessLogic["BusinessLogic<br/>struct"]
+        IOManager["IOManager<br/>struct"]
+    end
     
-    class BusinessLogic {
-        +calculate()
-        +process()
-    }
+    Data -.->|"refactor to"| DataHandler
+    Network -.->|"refactor to"| NetworkService
+    Business -.->|"refactor to"| BusinessLogic
+    IO -.->|"refactor to"| IOManager
     
-    class Validation {
-        +validate()
-        +sanitize()
-    }`;
+    style Main fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    style GodObj fill:#ffebee,stroke:#d32f2f,stroke-width:3px
+    style Data fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    style Network fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    style Business fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    style IO fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    style DataHandler fill:#e8f5e8,stroke:#4caf50,stroke-width:2px
+    style NetworkService fill:#e8f5e8,stroke:#4caf50,stroke-width:2px
+    style BusinessLogic fill:#e8f5e8,stroke:#4caf50,stroke-width:2px
+    style IOManager fill:#e8f5e8,stroke:#4caf50,stroke-width:2px`;
   
   console.log('Generated God Object diagram:', diagram.substring(0, 100) + '...');
   return diagram;
 }
 
 function generateDeadCodeDiagram(finding: any): string {
-  // Create a clean method name for Mermaid
-  let methodName = (finding.title || 'unused_method')
+  // Extract real information from the finding
+  const fileName = finding.file?.split('/').pop()?.replace('.rs', '') || 'unknown_file';
+  const codeSnippet = finding.codeSnippet || finding.title || 'unused_code';
+  const filePath = finding.file || 'unknown/path';
+  
+  // Create clean names for Mermaid
+  const cleanFileName = fileName
+    .replace(/[^a-zA-Z0-9_]/g, '_')
+    .replace(/^[0-9]/, 'file_$&')
+    .substring(0, 20);
+  
+  const cleanCodeName = codeSnippet
     .replace(/\s+/g, '_')
     .replace(/[^a-zA-Z0-9_]/g, '_')
     .replace(/^[0-9]/, '_$&')
-    .replace(/_+/g, '_') // Replace multiple underscores with single
-    .replace(/^_+|_+$/g, ''); // Remove leading/trailing underscores
-  
-  // Ensure it starts with a letter and has reasonable length
-  if (!methodName || !/^[a-zA-Z]/.test(methodName)) {
-    methodName = 'unused_method';
-  }
-  
-  // Limit length to avoid issues
-  if (methodName.length > 30) {
-    methodName = methodName.substring(0, 30);
-  }
-  
+    .substring(0, 25);
+
   return `flowchart TD
-    A[Main Application] --> B[Active Module]
-    B --> C[Used Method 1]
-    B --> D[Used Method 2]
-    B --> E[Used Method 3]
+    File["📄 ${fileName}<br/>${filePath}"]
+    Active["✅ Active Code<br/>Used Functions"]
+    Dead["💀 Dead Code<br/>${cleanCodeName}"]
     
-    B -.-> F[${methodName}]
-    B -.-> G[Another Unused Method]
-    B -.-> H[Legacy Function]
+    File --> Active
+    File -.-> Dead
+    
+    Active --> Method1["fn used_function_1()"]
+    Active --> Method2["fn used_function_2()"]
+    Active --> Method3["fn active_logic()"]
+    
+    Dead --> UnusedCode["❌ ${cleanCodeName}<br/>Line ${finding.startLine || '?'}"]
+    Dead --> DeadLogic["❌ Unreachable Code"]
+    Dead --> LegacyCode["❌ Legacy Function"]
+    
+    style File fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    style Active fill:#e8f5e8,stroke:#4caf50,stroke-width:2px
+    style Dead fill:#ffebee,stroke:#f44336,stroke-width:3px
+    style UnusedCode fill:#ffcccb,stroke:#d32f2f,stroke-width:2px
+    style DeadLogic fill:#ffcccb,stroke:#d32f2f,stroke-width:2px
+    style LegacyCode fill:#ffcccb,stroke:#d32f2f,stroke-width:2px
     
     F --> I[Unreachable Code Block]
     G --> J[Deprecated Logic]

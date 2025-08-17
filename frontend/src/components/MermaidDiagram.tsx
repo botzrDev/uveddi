@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Box, Paper, Typography, Alert, CircularProgress } from '@mui/material';
+import { Alert, Box, CircularProgress, Paper, Typography } from '@mui/material';
 import mermaid from 'mermaid';
+import { useEffect, useState } from 'react';
 
 interface MermaidDiagramProps {
   definition: string;
@@ -40,14 +40,16 @@ export default function MermaidDiagram({ definition, title, className }: Mermaid
           tertiaryColor: '#fff'
         },
         fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
-        fontSize: 14,
+        fontSize: 16,
         flowchart: {
-          useMaxWidth: true,
+          useMaxWidth: false,
           htmlLabels: true,
-          curve: 'basis'
+          curve: 'basis',
+          nodeSpacing: 80,
+          rankSpacing: 100
         },
         class: {
-          useMaxWidth: true,
+          useMaxWidth: false,
         },
         gitGraph: {
           useMaxWidth: true,
@@ -195,9 +197,12 @@ export default function MermaidDiagram({ definition, title, className }: Mermaid
         ref={refCallback}
         sx={{
           textAlign: 'center',
-          minHeight: loading ? '200px' : 'auto',
+          minHeight: loading ? '400px' : '500px',
+          width: '100%',
+          overflow: 'auto',
           '& svg': {
-            maxWidth: '100%',
+            width: '100%',
+            minHeight: '400px',
             height: 'auto',
             display: loading ? 'none' : 'block',
           },
@@ -206,4 +211,3 @@ export default function MermaidDiagram({ definition, title, className }: Mermaid
     </Paper>
   );
 }
-
