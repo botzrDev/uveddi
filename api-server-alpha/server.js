@@ -12,10 +12,22 @@ const PORT = process.env.PORT || 8080;
 
 // Security and middleware
 app.use(helmet({
-  contentSecurityPolicy: false // Allow frontend to load resources
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "blob:"],
+      connectSrc: ["'self'", "ws:", "wss:"],
+      fontSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      mediaSrc: ["'self'"],
+      frameSrc: ["'none'"],
+    },
+  }
 }));
 app.use(cors({
-  origin: ['http://localhost:9998', 'http://localhost:9999'], // Allow both alpha and beta frontends
+  origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://localhost:3003', 'http://localhost:9998', 'http://localhost:9999'], // Allow frontend ports
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
@@ -303,6 +315,110 @@ app.get('/users/me', (req, res) => {
   res.json(mockUser);
 });
 
+// Report API endpoints for React dashboard
+app.get('/api/v1/reports/demo', async (req, res) => {
+  try {
+    // Load the actual analysis data
+    const reportPath = path.join(__dirname, '..', 'reports', 'dashboard_data.json');
+    const reportData = await fs.readJson(reportPath);
+    
+    // Transform to expected format for React dashboard
+    const transformedReport = {
+      schemaVersion: "1.0.0",
+      project: {
+        id: "demo-project",
+        name: "Test Analysis Demo",
+        languages: ["rust"],
+        path: "test_with_issues.rs",
+        commit: "demo",
+        branch: "demo"
+      },
+      summary: {
+        timeGenerated: reportData.metadata.timestamp,
+        coverage: 85.0,
+        issuesTotal: reportData.issues.length,
+        filesAnalyzed: 1,
+        componentsAnalyzed: 1,
+        analysisDurationMs: reportData.metadata.durationSeconds * 1000,
+        issuesBySeverity: calculateIssuesBySeverity(reportData.issues),
+        issuesByCategory: calculateIssuesByCategory(reportData.issues)
+      },
+      findings: reportData.issues.map((issue, index) => ({
+        id: `f-${index + 1}`,
+        type: issue.antiPatternType,
+        severity: issue.severity.toLowerCase(),
+        title: `${issue.antiPatternType} in ${issue.filePath}`,
+        message: issue.description,
+        file: issue.filePath,
+        startLine: issue.startLine || 0,
+        endLine: issue.endLine || 0,
+        codeSnippet: issue.codeSnippet || "",
+        tags: [issue.antiPatternType.toLowerCase().replace(/\s+/g, '-')],
+        aiExplanation: issue.aiExplanation
+      })),
+      dependencyGraph: {
+        nodes: [],
+        edges: []
+      },
+      diagrams: [],
+      metadata: {
+        generatedAt: reportData.metadata.timestamp,
+        analysisId: "demo-analysis"
+      }
+    };
+    
+    res.json({
+      data: transformedReport,
+      timestamp: new Date().toISOString(),
+      schemaVersion: "1.0.0"
+    });
+  } catch (error) {
+    console.error('Error loading demo report:', error);
+    res.status(500).json({ error: 'Failed to load demo report' });
+  }
+});
+
+app.get('/api/v1/reports/:id', async (req, res) => {
+  const { id } = req.params;
+  
+  // For demo, just redirect to demo report
+  if (id === 'demo' || id === '1') {
+    return res.redirect('/api/v1/reports/demo');
+  }
+  
+  res.status(404).json({ error: 'Report not found' });
+});
+
+app.get('/api/v1/reports/:id/graphs/dependency', (req, res) => {
+  res.json({
+    data: {
+      nodes: [],
+      edges: []
+    }
+  });
+});
+
+// Helper functions
+function calculateIssuesBySeverity(issues) {
+  const counts = { critical: 0, high: 0, medium: 0, low: 0 };
+  issues.forEach(issue => {
+    const severity = issue.severity.toLowerCase();
+    if (counts.hasOwnProperty(severity)) {
+      counts[severity]++;
+    }
+  });
+  return counts;
+}
+
+function calculateIssuesByCategory(issues) {
+  const counts = {};
+  issues.forEach(issue => {
+    const category = issue.antiPatternType.toLowerCase().replace(/\s+/g, '-');
+    counts[category] = (counts[category] || 0) + 1;
+  });
+  return counts;
+}
+
 // Mock API endpoints that the frontend might expect
 app.get('/api/analysis/status', (req, res) => {
   res.json({
@@ -330,6 +446,9 @@ app.use('*', (req, res) => {
       'GET /api/docs/search?q={query}',
       'GET /api/project/info',
       'GET /api/analysis/status',
+      'GET /api/v1/reports/demo',
+      'GET /api/v1/reports/:id',
+      'GET /api/v1/reports/:id/graphs/dependency',
       'POST /auth/register',
       'POST /auth/login',
       'POST /auth/logout',

@@ -1,0 +1,1805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uveddi Architectural Analysis Report</title>
+    
+    <!-- Mermaid.js for diagram rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* Modern CSS Variables for theming */
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #64748b;
+            --success-color: #059669;
+            --warning-color: #d97706;
+            --error-color: #dc2626;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-tertiary: #e2e8f0;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --border-color: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --radius: 8px;
+        }
+
+        [data-theme="dark"] {
+            --primary-color: #3b82f6;
+            --secondary-color: #94a3b8;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --border-color: #475569;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header Styles */
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 2rem;
+            border-radius: var(--radius);
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 49%, rgba(255,255,255,0.1) 50%, transparent 51%);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header-meta {
+            position: relative;
+            z-index: 1;
+            opacity: 0.9;
+        }
+
+        /* Navigation */
+        .nav {
+            background: var(--bg-primary);
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-link:hover {
+            background: var(--bg-tertiary);
+            color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+
+        .theme-toggle {
+            background: none;
+            border: 2px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        /* Card Styles */
+        .card {
+            background: var(--bg-primary);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Dashboard Grid */
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-primary);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.15);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            font-size: 0.875rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-critical { color: var(--error-color); }
+        .stat-high { color: var(--warning-color); }
+        .stat-medium { color: var(--primary-color); }
+        .stat-low { color: var(--success-color); }
+
+        /* Severity Badges */
+        .severity-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .severity-critical {
+            background: rgba(220, 38, 38, 0.1);
+            color: var(--error-color);
+            border: 1px solid rgba(220, 38, 38, 0.2);
+        }
+
+        .severity-high {
+            background: rgba(217, 119, 6, 0.1);
+            color: var(--warning-color);
+            border: 1px solid rgba(217, 119, 6, 0.2);
+        }
+
+        .severity-medium {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary-color);
+            border: 1px solid rgba(37, 99, 235, 0.2);
+        }
+
+        .severity-low {
+            background: rgba(5, 150, 105, 0.1);
+            color: var(--success-color);  
+            border: 1px solid rgba(5, 150, 105, 0.2);
+        }
+
+        /* Issue Cards */
+        .issue-card {
+            background: var(--bg-primary);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--primary-color);
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+        }
+
+        .issue-card:hover {
+            transform: translateX(4px);
+            box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .issue-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .issue-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            flex: 1;
+        }
+
+        .code-snippet {
+            background: var(--bg-tertiary);
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin: 1rem 0;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.875rem;
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+        }
+
+        /* Diagram Styles */
+        .diagram-container {
+            background: var(--bg-primary);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            position: relative;
+        }
+
+        .diagram-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+
+        /* Diagram Link Cards */
+        .diagram-intro {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: var(--radius);
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .diagram-links-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .diagram-link-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .diagram-link-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+            border-color: var(--primary-color);
+        }
+
+        .diagram-card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .diagram-card-header h3 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .diagram-card-header i {
+            color: var(--primary-color);
+        }
+
+        .diagram-card-body p {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .diagram-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--primary-color);
+            color: white;
+            text-decoration: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius);
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .diagram-button:hover {
+            background: var(--secondary-color);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
+        }
+
+        /* Diagram Toggle Interface Styles */
+        .diagram-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .diagram-button-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .diagram-button-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+            border-color: var(--primary-color);
+        }
+
+        .diagram-toggle-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius);
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .diagram-toggle-btn:hover {
+            background: var(--secondary-color);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
+        }
+
+        .diagram-content {
+            margin-top: 2rem;
+        }
+
+        #active-diagram-header {
+            display: none;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            margin-bottom: 1rem;
+        }
+
+        #active-diagram-header h3 {
+            margin: 0;
+            color: var(--text-primary);
+            font-size: 1.2rem;
+        }
+
+        .hide-diagram-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: calc(var(--radius) / 2);
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .hide-diagram-btn:hover {
+            background: #ef4444;
+            transform: translateY(-1px);
+        }
+
+        .embedded-diagram {
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .embedded-diagram.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        /* SVG Diagram Styles - Critical for rendering */
+        .svg-diagram {
+            width: 100%;
+            min-height: 400px;
+            display: block;
+            overflow: visible;
+            text-align: center;
+        }
+        
+        .svg-diagram svg {
+            width: 100% !important;
+            height: auto !important;
+            max-width: none !important;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .mermaid {
+            background: var(--bg-primary);
+            border-radius: var(--radius);
+        }
+
+        /* Collapsible sections */
+        .collapsible {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            user-select: none;
+        }
+
+        .collapsible-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .collapsible.active .collapsible-icon {
+            transform: rotate(90deg);
+        }
+
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .collapsible-content.active {
+            max-height: 1000px;
+        }
+
+        /* Search and Filter */
+        .search-filter {
+            background: var(--bg-primary);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            border: 2px solid var(--border-color);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            border-color: var(--primary-color);
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border-color);
+            margin-top: 3rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .nav {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .nav-links {
+                justify-content: center;
+            }
+
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            .issue-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--border-color);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Hidden class for filtering */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Anti-pattern section styles */
+        .anti-pattern-section {
+            margin-bottom: 2.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            background: var(--bg-secondary);
+            padding: 1.5rem;
+        }
+
+        .anti-pattern-header {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+
+        .diagram-explanation {
+            background: var(--bg-tertiary);
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin: 0.5rem 0 1rem 0;
+            border-left: 4px solid var(--primary-color);
+            font-style: italic;
+            color: var(--text-secondary);
+        }
+
+        .diagram-explanation p {
+            margin: 0;
+        }
+
+        /* Enhanced diagram containers */
+        .diagram-isolator {
+            background: var(--bg-primary);
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius);
+            margin: 1.5rem 0;
+            transition: all 0.3s ease;
+        }
+
+        .diagram-isolator:hover {
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow);
+        }
+
+        /* Issue numbering within sections */
+        .anti-pattern-section .issue-card .issue-title {
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        /* Responsive diagram containers */
+        @media (max-width: 768px) {
+            .anti-pattern-section {
+                padding: 1rem;
+            }
+            
+            .anti-pattern-header {
+                font-size: 1.25rem;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+            
+            .diagram-explanation {
+                font-size: 0.875rem;
+                padding: 0.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <div class="header">
+        <h1><i class="fas fa-chart-line"></i> Uveddi Architectural Analysis</h1>
+        <div class="header-meta">
+            <p><i class="fas fa-calendar"></i> Generated on 2025-08-16 19:35:31</p>
+            <p><i class="fas fa-cog"></i> Run ID: 1</p>
+        </div>
+    </div>
+
+    <nav class="nav">
+        <div class="nav-links">
+            <a href="#summary" class="nav-link"><i class="fas fa-chart-pie"></i> Summary</a>
+            <a href="#issues" class="nav-link"><i class="fas fa-exclamation-triangle"></i> Issues & Diagrams</a>
+        </div>
+        <button class="theme-toggle" onclick="toggleTheme()">
+            <i class="fas fa-moon"></i> Dark Mode
+        </button>
+    </nav>
+
+    <section id="summary" class="card">
+        <h2><i class="fas fa-chart-pie"></i> Executive Summary</h2>
+        <p>This analysis identified <strong>14 architectural issues</strong> across <strong>1 files</strong> in your codebase.</p>
+        
+        <div class="dashboard">
+            <div class="stat-card">
+                <div class="stat-number stat-critical">2</div>
+                <div class="stat-label">Critical Issues</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number stat-high">3</div>
+                <div class="stat-label">High Issues</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number stat-medium">9</div>
+                <div class="stat-label">Medium Issues</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number stat-low">0</div>
+                <div class="stat-label">Low Issues</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="card">
+        <h2><i class="fas fa-tachometer-alt"></i> Severity Dashboard</h2>
+        <div class="dashboard">
+
+            <div class="stat-card">
+                <div class="stat-number stat-High">
+                    <i class="fas fa-circle"></i> 3
+                </div>
+                <div class="stat-label">HIGH Severity</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-number stat-Critical">
+                    <i class="fas fa-circle"></i> 2
+                </div>
+                <div class="stat-label">CRITICAL Severity</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-number stat-medium">
+                    <i class="fas fa-exclamation-circle"></i> 6
+                </div>
+                <div class="stat-label">MEDIUM Severity</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-number stat-Medium">
+                    <i class="fas fa-circle"></i> 3
+                </div>
+                <div class="stat-label">MEDIUM Severity</div>
+            </div>
+        </div>
+    </section>
+
+    <section id="diagrams" class="card">
+        <h2 class="collapsible" onclick="toggleSection('diagrams-content')">
+            <i class="fas fa-chevron-right collapsible-icon"></i>
+            <i class="fas fa-project-diagram"></i> 
+            Architecture Diagrams
+        </h2>
+        <div id="diagrams-content" class="collapsible-content">
+            <p class="diagram-intro">
+                <i class="fas fa-info-circle"></i> 
+                The following diagrams provide visual representations of the architectural issues found in your codebase. Click any diagram button to view it inline.
+            </p>
+            
+            <div class="diagram-buttons">
+
+                <div class="diagram-button-card">
+                    <div class="diagram-card-header">
+                        <i class="fas fa-cube"></i>
+                        <h3>God Objects</h3>
+                    </div>
+                    <div class="diagram-card-body">
+                        <p>Interactive architectural diagram showing god objects.</p>
+                        <button onclick="toggleDiagram('diagram-0')" class="diagram-toggle-btn">
+                            <i class="fas fa-eye"></i> Show Diagram
+                        </button>
+                    </div>
+                </div>
+
+                <div class="diagram-button-card">
+                    <div class="diagram-card-header">
+                        <i class="fas fa-cube"></i>
+                        <h3>God Objects</h3>
+                    </div>
+                    <div class="diagram-card-body">
+                        <p>Interactive architectural diagram showing god objects.</p>
+                        <button onclick="toggleDiagram('diagram-1')" class="diagram-toggle-btn">
+                            <i class="fas fa-eye"></i> Show Diagram
+                        </button>
+                    </div>
+                </div>
+
+                <div class="diagram-button-card">
+                    <div class="diagram-card-header">
+                        <i class="fas fa-cube"></i>
+                        <h3>God Objects</h3>
+                    </div>
+                    <div class="diagram-card-body">
+                        <p>Interactive architectural diagram showing god objects.</p>
+                        <button onclick="toggleDiagram('diagram-2')" class="diagram-toggle-btn">
+                            <i class="fas fa-eye"></i> Show Diagram
+                        </button>
+                    </div>
+                </div>
+
+                <div class="diagram-button-card">
+                    <div class="diagram-card-header">
+                        <i class="fas fa-cube"></i>
+                        <h3>God Objects</h3>
+                    </div>
+                    <div class="diagram-card-body">
+                        <p>Interactive architectural diagram showing god objects.</p>
+                        <button onclick="toggleDiagram('diagram-3')" class="diagram-toggle-btn">
+                            <i class="fas fa-eye"></i> Show Diagram
+                        </button>
+                    </div>
+                </div>
+
+                <div class="diagram-button-card">
+                    <div class="diagram-card-header">
+                        <i class="fas fa-cube"></i>
+                        <h3>God Objects</h3>
+                    </div>
+                    <div class="diagram-card-body">
+                        <p>Interactive architectural diagram showing god objects.</p>
+                        <button onclick="toggleDiagram('diagram-4')" class="diagram-toggle-btn">
+                            <i class="fas fa-eye"></i> Show Diagram
+                        </button>
+                    </div>
+                </div>
+
+                <div class="diagram-button-card">
+                    <div class="diagram-card-header">
+                        <i class="fas fa-cube"></i>
+                        <h3>God Objects</h3>
+                    </div>
+                    <div class="diagram-card-body">
+                        <p>Interactive architectural diagram showing god objects.</p>
+                        <button onclick="toggleDiagram('diagram-5')" class="diagram-toggle-btn">
+                            <i class="fas fa-eye"></i> Show Diagram
+                        </button>
+                    </div>
+                </div>
+
+                <div class="diagram-button-card">
+                    <div class="diagram-card-header">
+                        <i class="fas fa-cube"></i>
+                        <h3>God Objects</h3>
+                    </div>
+                    <div class="diagram-card-body">
+                        <p>Interactive architectural diagram showing god objects.</p>
+                        <button onclick="toggleDiagram('diagram-6')" class="diagram-toggle-btn">
+                            <i class="fas fa-eye"></i> Show Diagram
+                        </button>
+                    </div>
+                </div>
+
+                <div class="diagram-button-card">
+                    <div class="diagram-card-header">
+                        <i class="fas fa-cube"></i>
+                        <h3>God Objects</h3>
+                    </div>
+                    <div class="diagram-card-body">
+                        <p>Interactive architectural diagram showing god objects.</p>
+                        <button onclick="toggleDiagram('diagram-7')" class="diagram-toggle-btn">
+                            <i class="fas fa-eye"></i> Show Diagram
+                        </button>
+                    </div>
+                </div>
+
+                <div class="diagram-button-card">
+                    <div class="diagram-card-header">
+                        <i class="fas fa-skull-crossbones"></i>
+                        <h3>Dead Code Analysis</h3>
+                    </div>
+                    <div class="diagram-card-body">
+                        <p>Interactive architectural diagram showing dead code analysis.</p>
+                        <button onclick="toggleDiagram('diagram-8')" class="diagram-toggle-btn">
+                            <i class="fas fa-eye"></i> Show Diagram
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+            
+            <div class="diagram-content">
+                <div id="active-diagram-header" style="display: none;">
+                    <h3 id="active-diagram-title"></h3>
+                    <button onclick="hideAllDiagrams()" class="hide-diagram-btn">
+                        <i class="fas fa-eye-slash"></i> Hide Diagram
+                    </button>
+                </div>
+
+                <div id="diagram-0" class="embedded-diagram" style="display: none;">
+                    <div class="diagram-container">
+                        <div class="mermaid" id="mermaid-28f6711c">classDiagram
+    class GodObject {
+        field1: Type
+        field2: Type
+        field3: Type
+        field4: Type
+        field5: Type
+        field6: Type
+        field7: Type
+        field8: Type
+        field9: Type
+        field10: Type
+        field11: Type
+        field12: Type
+        field13: Type
+        field14: Type
+        field15: Type
+        field16: Type
+        field17: Type
+        field18: Type
+        field19: Type
+        field20: Type
+    }</div>
+                    </div>
+                </div>
+
+                <div id="diagram-1" class="embedded-diagram" style="display: none;">
+                    <div class="diagram-container">
+                        <div class="mermaid" id="mermaid-0c82435f">classDiagram
+    class Unknown {
+        +duplicate_code_2()
+    }</div>
+                    </div>
+                </div>
+
+                <div id="diagram-2" class="embedded-diagram" style="display: none;">
+                    <div class="diagram-container">
+                        <div class="mermaid" id="mermaid-232e70c0">classDiagram
+    class Unknown {
+        +duplicate_code_2()
+    }</div>
+                    </div>
+                </div>
+
+                <div id="diagram-3" class="embedded-diagram" style="display: none;">
+                    <div class="diagram-container">
+                        <div class="mermaid" id="mermaid-7076d221">classDiagram
+    class Unknown {
+        +massive_method()
+    }</div>
+                    </div>
+                </div>
+
+                <div id="diagram-4" class="embedded-diagram" style="display: none;">
+                    <div class="diagram-container">
+                        <div class="mermaid" id="mermaid-86b946fa">classDiagram
+    class Unknown {
+        +massive_method()
+    }</div>
+                    </div>
+                </div>
+
+                <div id="diagram-5" class="embedded-diagram" style="display: none;">
+                    <div class="diagram-container">
+                        <div class="mermaid" id="mermaid-b4040370">classDiagram
+    class Unknown {
+        +duplicate_code_1()
+    }</div>
+                    </div>
+                </div>
+
+                <div id="diagram-6" class="embedded-diagram" style="display: none;">
+                    <div class="diagram-container">
+                        <div class="mermaid" id="mermaid-c22ea57a">classDiagram
+    class Unknown {
+        +duplicate_code_1()
+    }</div>
+                    </div>
+                </div>
+
+                <div id="diagram-7" class="embedded-diagram" style="display: none;">
+                    <div class="diagram-container">
+                        <div class="mermaid" id="mermaid-8b6daa6b">classDiagram
+    class caller {
+    }</div>
+                    </div>
+                </div>
+
+                <div id="diagram-8" class="embedded-diagram" style="display: none;">
+                    <div class="diagram-container">
+                        <div class="mermaid" id="mermaid-b213d0f5">flowchart TD
+    A[Project] --> B[Live Code]
+    A --> C[Dead Code]
+    style C fill:#ff9999,stroke:#ff0000,stroke-width:2px
+    C --> D1[massive_method]
+    style D1 fill:#ffcccc
+    C --> D2[duplicate_code_1]
+    style D2 fill:#ffcccc
+    C --> D3[duplicate_code_2]
+    style D3 fill:#ffcccc
+    C --> D4[unused_method]
+    style D4 fill:#ffcccc
+    C --> D5[another_unused_metho]
+    style D5 fill:#ffcccc
+    C --> D6[GodObject]
+    style D6 fill:#ffcccc</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <section id="issues" class="card">
+        <h2><i class="fas fa-exclamation-triangle"></i> Detailed Issues</h2>
+        
+        <div class="search-filter">
+            <input type="text" id="searchInput" class="search-input" placeholder="Search issues..." onkeyup="filterIssues()">
+            <div class="filter-buttons">
+                <button class="filter-btn active" onclick="filterBySeverity('all')">All</button>
+                <button class="filter-btn" onclick="filterBySeverity('critical')">Critical</button>
+                <button class="filter-btn" onclick="filterBySeverity('high')">High</button>
+                <button class="filter-btn" onclick="filterBySeverity('medium')">Medium</button>
+                <button class="filter-btn" onclick="filterBySeverity('low')">Low</button>
+            </div>
+        </div>
+        
+        <div id="issues-container">
+
+            <div class="anti-pattern-section">
+                <h3 class="anti-pattern-header">
+                    <i class="fas fa-layer-group"></i> Dead Code Issues (6 found)
+                </h3>
+
+                <div class="diagram-isolator" style="display: block; width: 100%; margin: 1rem 0; isolation: isolate;">
+                    <div class="diagram-container">
+                        <div class="diagram-title">
+                            <i class="fas fa-project-diagram"></i> Dead Code Analysis
+                        </div>
+                        <div id="diagram-explanation-2" class="diagram-explanation">
+                            <p><em>This diagram shows the architectural issues found in this anti-pattern category. Each node represents a component or relationship affected by the identified problems.</em></p>
+                        </div>
+                        <div class="svg-diagram" id="inline-diagram-2">
+                            <svg aria-roledescription="flowchart-v2" role="graphics-document document" viewBox="0 0 1369.25 174" style="max-width: 1369.25px; background-color: white;" class="flowchart" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" width="100%" id="my-svg"><style>#my-svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;fill:#333;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#my-svg .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#my-svg .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#my-svg .error-icon{fill:#552222;}#my-svg .error-text{fill:#552222;stroke:#552222;}#my-svg .edge-thickness-normal{stroke-width:1px;}#my-svg .edge-thickness-thick{stroke-width:3.5px;}#my-svg .edge-pattern-solid{stroke-dasharray:0;}#my-svg .edge-thickness-invisible{stroke-width:0;fill:none;}#my-svg .edge-pattern-dashed{stroke-dasharray:3;}#my-svg .edge-pattern-dotted{stroke-dasharray:2;}#my-svg .marker{fill:#333333;stroke:#333333;}#my-svg .marker.cross{stroke:#333333;}#my-svg svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;}#my-svg p{margin:0;}#my-svg .label{font-family:"trebuchet ms",verdana,arial,sans-serif;color:#333;}#my-svg .cluster-label text{fill:#333;}#my-svg .cluster-label span{color:#333;}#my-svg .cluster-label span p{background-color:transparent;}#my-svg .label text,#my-svg span{fill:#333;color:#333;}#my-svg .node rect,#my-svg .node circle,#my-svg .node ellipse,#my-svg .node polygon,#my-svg .node path{fill:#ECECFF;stroke:#9370DB;stroke-width:1px;}#my-svg .rough-node .label text,#my-svg .node .label text,#my-svg .image-shape .label,#my-svg .icon-shape .label{text-anchor:middle;}#my-svg .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#my-svg .rough-node .label,#my-svg .node .label,#my-svg .image-shape .label,#my-svg .icon-shape .label{text-align:center;}#my-svg .node.clickable{cursor:pointer;}#my-svg .root .anchor path{fill:#333333!important;stroke-width:0;stroke:#333333;}#my-svg .arrowheadPath{fill:#333333;}#my-svg .edgePath .path{stroke:#333333;stroke-width:2.0px;}#my-svg .flowchart-link{stroke:#333333;fill:none;}#my-svg .edgeLabel{background-color:rgba(232,232,232, 0.8);text-align:center;}#my-svg .edgeLabel p{background-color:rgba(232,232,232, 0.8);}#my-svg .edgeLabel rect{opacity:0.5;background-color:rgba(232,232,232, 0.8);fill:rgba(232,232,232, 0.8);}#my-svg .labelBkg{background-color:rgba(232, 232, 232, 0.5);}#my-svg .cluster rect{fill:#ffffde;stroke:#aaaa33;stroke-width:1px;}#my-svg .cluster text{fill:#333;}#my-svg .cluster span{color:#333;}#my-svg div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:12px;background:hsl(80, 100%, 96.2745098039%);border:1px solid #aaaa33;border-radius:2px;pointer-events:none;z-index:100;}#my-svg .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#333;}#my-svg rect.text{fill:none;stroke-width:0;}#my-svg .icon-shape,#my-svg .image-shape{background-color:rgba(232,232,232, 0.8);text-align:center;}#my-svg .icon-shape p,#my-svg .image-shape p{background-color:rgba(232,232,232, 0.8);padding:2px;}#my-svg .icon-shape rect,#my-svg .image-shape rect{opacity:0.5;background-color:rgba(232,232,232, 0.8);fill:rgba(232,232,232, 0.8);}#my-svg .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#my-svg .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#my-svg :root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}
+                .classDiagram .nodeLabel, .classDiagram .edgeLabel { visibility: visible !important; }
+                .classDiagram text { font-family: Arial, sans-serif !important; }
+                .classDiagram foreignObject { overflow: visible !important; }
+            </style><g><marker orient="auto" markerHeight="8" markerWidth="8" markerUnits="userSpaceOnUse" refY="5" refX="5" viewBox="0 0 10 10" class="marker flowchart-v2" id="my-svg_flowchart-v2-pointEnd"><path style="stroke-width: 1; stroke-dasharray: 1, 0;" class="arrowMarkerPath" d="M 0 0 L 10 5 L 0 10 z"/></marker><marker orient="auto" markerHeight="8" markerWidth="8" markerUnits="userSpaceOnUse" refY="5" refX="4.5" viewBox="0 0 10 10" class="marker flowchart-v2" id="my-svg_flowchart-v2-pointStart"><path style="stroke-width: 1; stroke-dasharray: 1, 0;" class="arrowMarkerPath" d="M 0 5 L 10 10 L 10 0 z"/></marker><marker orient="auto" markerHeight="11" markerWidth="11" markerUnits="userSpaceOnUse" refY="5" refX="11" viewBox="0 0 10 10" class="marker flowchart-v2" id="my-svg_flowchart-v2-circleEnd"><circle style="stroke-width: 1; stroke-dasharray: 1, 0;" class="arrowMarkerPath" r="5" cy="5" cx="5"/></marker><marker orient="auto" markerHeight="11" markerWidth="11" markerUnits="userSpaceOnUse" refY="5" refX="-1" viewBox="0 0 10 10" class="marker flowchart-v2" id="my-svg_flowchart-v2-circleStart"><circle style="stroke-width: 1; stroke-dasharray: 1, 0;" class="arrowMarkerPath" r="5" cy="5" cx="5"/></marker><marker orient="auto" markerHeight="11" markerWidth="11" markerUnits="userSpaceOnUse" refY="5.2" refX="12" viewBox="0 0 11 11" class="marker cross flowchart-v2" id="my-svg_flowchart-v2-crossEnd"><path style="stroke-width: 2; stroke-dasharray: 1, 0;" class="arrowMarkerPath" d="M 1,1 l 9,9 M 10,1 l -9,9"/></marker><marker orient="auto" markerHeight="11" markerWidth="11" markerUnits="userSpaceOnUse" refY="5.2" refX="-1" viewBox="0 0 11 11" class="marker cross flowchart-v2" id="my-svg_flowchart-v2-crossStart"><path style="stroke-width: 2; stroke-dasharray: 1, 0;" class="arrowMarkerPath" d="M 1,1 l 9,9 M 10,1 l -9,9"/></marker><g class="root"><g class="clusters"/><g class="edgePaths"><path marker-end="url(#my-svg_flowchart-v2-pointEnd)" style="" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" id="L_Dead_DeadItem1_0" d="M631.809,41.42L544.141,49.017C456.474,56.613,281.139,71.807,193.472,82.903C105.805,94,105.805,101,105.805,104.5L105.805,108"/><path marker-end="url(#my-svg_flowchart-v2-pointEnd)" style="" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" id="L_Dead_DeadItem2_0" d="M631.809,45.762L584.497,52.635C537.185,59.508,442.561,73.254,395.249,83.627C347.938,94,347.938,101,347.938,104.5L347.938,108"/><path marker-end="url(#my-svg_flowchart-v2-pointEnd)" style="" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" id="L_Dead_DeadItem3_0" d="M643.95,62L634.391,66.167C624.831,70.333,605.712,78.667,596.153,86.333C586.594,94,586.594,101,586.594,104.5L586.594,108"/><path marker-end="url(#my-svg_flowchart-v2-pointEnd)" style="" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" id="L_Dead_DeadItem4_0" d="M767.839,62L777.399,66.167C786.958,70.333,806.077,78.667,815.636,86.333C825.195,94,825.195,101,825.195,104.5L825.195,108"/><path marker-end="url(#my-svg_flowchart-v2-pointEnd)" style="" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" id="L_Dead_DeadItem5_0" d="M779.98,45.635L828.006,52.529C876.031,59.423,972.082,73.212,1020.107,83.606C1068.133,94,1068.133,101,1068.133,104.5L1068.133,108"/><path marker-end="url(#my-svg_flowchart-v2-pointEnd)" style="" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" id="L_Dead_DeadItem6_0" d="M779.98,41.607L864.821,49.172C949.661,56.738,1119.342,71.869,1204.183,82.934C1289.023,94,1289.023,101,1289.023,104.5L1289.023,108"/></g><g class="edgeLabels"><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><foreignObject height="0" width="0"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" class="labelBkg" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><foreignObject height="0" width="0"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" class="labelBkg" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><foreignObject height="0" width="0"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" class="labelBkg" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><foreignObject height="0" width="0"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" class="labelBkg" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><foreignObject height="0" width="0"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" class="labelBkg" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g transform="translate(0, 0)" class="label"><foreignObject height="0" width="0"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" class="labelBkg" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignObject></g></g></g><g class="nodes"><g transform="translate(512.44921875, 35)" id="flowchart-Live-0" class="node default"><rect height="54" width="138.71875" y="-27" x="-69.359375" style="" class="basic label-container"/><g transform="translate(-39.359375, -12)" style="" class="label"><rect/><foreignObject height="24" width="78.71875"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Live Code</p></span></div></foreignObject></g></g><g transform="translate(705.89453125, 35)" id="flowchart-Dead-1" class="node default"><rect height="54" width="148.171875" y="-27" x="-74.0859375" style="fill:#ffcccc !important;stroke:#ff0000 !important;stroke-width:2px !important" class="basic label-container"/><g transform="translate(-44.0859375, -12)" style="" class="label"><rect/><foreignObject height="24" width="88.171875"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Dead Code</p></span></div></foreignObject></g></g><g transform="translate(105.8046875, 139)" id="flowchart-DeadItem1-4" class="node default"><rect height="54" width="195.609375" y="-27" x="-97.8046875" style="fill:#ffe6e6 !important" class="basic label-container"/><g transform="translate(-67.8046875, -12)" style="" class="label"><rect/><foreignObject height="24" width="135.609375"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>massive_method</p></span></div></foreignObject></g></g><g transform="translate(347.9375, 139)" id="flowchart-DeadItem2-7" class="node default"><rect height="54" width="188.65625" y="-27" x="-94.328125" style="fill:#ffe6e6 !important" class="basic label-container"/><g transform="translate(-64.328125, -12)" style="" class="label"><rect/><foreignObject height="24" width="128.65625"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>duplicate_code_</p></span></div></foreignObject></g></g><g transform="translate(586.59375, 139)" id="flowchart-DeadItem3-10" class="node default"><rect height="54" width="188.65625" y="-27" x="-94.328125" style="fill:#ffe6e6 !important" class="basic label-container"/><g transform="translate(-64.328125, -12)" style="" class="label"><rect/><foreignObject height="24" width="128.65625"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>duplicate_code_</p></span></div></foreignObject></g></g><g transform="translate(825.1953125, 139)" id="flowchart-DeadItem4-13" class="node default"><rect height="54" width="188.546875" y="-27" x="-94.2734375" style="fill:#ffe6e6 !important" class="basic label-container"/><g transform="translate(-64.2734375, -12)" style="" class="label"><rect/><foreignObject height="24" width="128.546875"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>unused_method</p></span></div></foreignObject></g></g><g transform="translate(1068.1328125, 139)" id="flowchart-DeadItem5-16" class="node default"><rect height="54" width="197.328125" y="-27" x="-98.6640625" style="fill:#ffe6e6 !important" class="basic label-container"/><g transform="translate(-68.6640625, -12)" style="" class="label"><rect/><foreignObject height="24" width="137.328125"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>another_unused_</p></span></div></foreignObject></g></g><g transform="translate(1289.0234375, 139)" id="flowchart-DeadItem6-19" class="node default"><rect height="54" width="144.453125" y="-27" x="-72.2265625" style="fill:#ffe6e6 !important" class="basic label-container"/><g transform="translate(-42.2265625, -12)" style="" class="label"><rect/><foreignObject height="24" width="84.453125"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>GodObject</p></span></div></foreignObject></g></g></g></g></g></svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="issue-card" data-severity="Medium" data-pattern="dead-code">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #1: Dead Code
+                        </div>
+                        <span class="severity-badge severity-Medium">
+                            <i class="fas fa-circle"></i> MEDIUM
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>test_with_issues.rs</code></p>
+                        <p><strong>Lines:</strong> 28-28</p><p><strong>Description:</strong> Potentially dead code: function 'massive_method' is not used in this file (confidence: 60.0%)</p>
+                        
+                        <div class="code-snippet"><pre><code>massive_method</code></pre></div>
+                        
+                        
+                    </div>
+                </div>
+    
+                <div class="issue-card" data-severity="Medium" data-pattern="dead-code">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #2: Dead Code
+                        </div>
+                        <span class="severity-badge severity-Medium">
+                            <i class="fas fa-circle"></i> MEDIUM
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>test_with_issues.rs</code></p>
+                        <p><strong>Lines:</strong> 94-94</p><p><strong>Description:</strong> Potentially dead code: function 'duplicate_code_1' is not used in this file (confidence: 60.0%)</p>
+                        
+                        <div class="code-snippet"><pre><code>duplicate_code_1</code></pre></div>
+                        
+                        
+                    </div>
+                </div>
+    
+                <div class="issue-card" data-severity="Medium" data-pattern="dead-code">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #3: Dead Code
+                        </div>
+                        <span class="severity-badge severity-Medium">
+                            <i class="fas fa-circle"></i> MEDIUM
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>test_with_issues.rs</code></p>
+                        <p><strong>Lines:</strong> 105-105</p><p><strong>Description:</strong> Potentially dead code: function 'duplicate_code_2' is not used in this file (confidence: 60.0%)</p>
+                        
+                        <div class="code-snippet"><pre><code>duplicate_code_2</code></pre></div>
+                        
+                        
+                    </div>
+                </div>
+    
+                <div class="issue-card" data-severity="High" data-pattern="dead-code">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #4: Dead Code
+                        </div>
+                        <span class="severity-badge severity-High">
+                            <i class="fas fa-circle"></i> HIGH
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>test_with_issues.rs</code></p>
+                        <p><strong>Lines:</strong> 116-116</p><p><strong>Description:</strong> Potentially dead code: function 'unused_method' is not used in this file (confidence: 90.0%)</p>
+                        
+                        <div class="code-snippet"><pre><code>unused_method</code></pre></div>
+                        
+                        
+                    </div>
+                </div>
+    
+                <div class="issue-card" data-severity="High" data-pattern="dead-code">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #5: Dead Code
+                        </div>
+                        <span class="severity-badge severity-High">
+                            <i class="fas fa-circle"></i> HIGH
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>test_with_issues.rs</code></p>
+                        <p><strong>Lines:</strong> 120-120</p><p><strong>Description:</strong> Potentially dead code: function 'another_unused_method' is not used in this file (confidence: 90.0%)</p>
+                        
+                        <div class="code-snippet"><pre><code>another_unused_method</code></pre></div>
+                        
+                        
+                    </div>
+                </div>
+    
+                <div class="issue-card" data-severity="High" data-pattern="dead-code">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #6: Dead Code
+                        </div>
+                        <span class="severity-badge severity-High">
+                            <i class="fas fa-circle"></i> HIGH
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>test_with_issues.rs</code></p>
+                        <p><strong>Lines:</strong> 3-3</p><p><strong>Description:</strong> Potentially dead code: struct 'GodObject' is not used in this file (confidence: 90.0%)</p>
+                        
+                        <div class="code-snippet"><pre><code>GodObject</code></pre></div>
+                        
+                        
+                    </div>
+                </div>
+                </div>
+
+            <div class="anti-pattern-section">
+                <h3 class="anti-pattern-header">
+                    <i class="fas fa-layer-group"></i> God Objects Issues (8 found)
+                </h3>
+
+                <div class="diagram-isolator" style="display: block; width: 100%; margin: 1rem 0; isolation: isolate;">
+                    <div class="diagram-container">
+                        <div class="diagram-title">
+                            <i class="fas fa-project-diagram"></i> God Object Analysis
+                        </div>
+                        <div id="diagram-explanation-1" class="diagram-explanation">
+                            <p><em>This diagram shows the architectural issues found in this anti-pattern category. Each node represents a component or relationship affected by the identified problems.</em></p>
+                        </div>
+                        <div class="svg-diagram" id="inline-diagram-1">
+                            <svg aria-roledescription="class" role="graphics-document document" viewBox="0 0 2119.2265625 280" style="max-width: 2119.23px; background-color: white;" class="classDiagram" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" width="100%" id="my-svg"><style>#my-svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;fill:#333;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#my-svg .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#my-svg .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#my-svg .error-icon{fill:#552222;}#my-svg .error-text{fill:#552222;stroke:#552222;}#my-svg .edge-thickness-normal{stroke-width:1px;}#my-svg .edge-thickness-thick{stroke-width:3.5px;}#my-svg .edge-pattern-solid{stroke-dasharray:0;}#my-svg .edge-thickness-invisible{stroke-width:0;fill:none;}#my-svg .edge-pattern-dashed{stroke-dasharray:3;}#my-svg .edge-pattern-dotted{stroke-dasharray:2;}#my-svg .marker{fill:#333333;stroke:#333333;}#my-svg .marker.cross{stroke:#333333;}#my-svg svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;}#my-svg p{margin:0;}#my-svg g.classGroup text{fill:#9370DB;stroke:none;font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:10px;}#my-svg g.classGroup text .title{font-weight:bolder;}#my-svg .nodeLabel,#my-svg .edgeLabel{color:#131300;}#my-svg .edgeLabel .label rect{fill:#ECECFF;}#my-svg .label text{fill:#131300;}#my-svg .labelBkg{background:#ECECFF;}#my-svg .edgeLabel .label span{background:#ECECFF;}#my-svg .classTitle{font-weight:bolder;}#my-svg .node rect,#my-svg .node circle,#my-svg .node ellipse,#my-svg .node polygon,#my-svg .node path{fill:#ECECFF;stroke:#9370DB;stroke-width:1px;}#my-svg .divider{stroke:#9370DB;stroke-width:1;}#my-svg g.clickable{cursor:pointer;}#my-svg g.classGroup rect{fill:#ECECFF;stroke:#9370DB;}#my-svg g.classGroup line{stroke:#9370DB;stroke-width:1;}#my-svg .classLabel .box{stroke:none;stroke-width:0;fill:#ECECFF;opacity:0.5;}#my-svg .classLabel .label{fill:#9370DB;font-size:10px;}#my-svg .relation{stroke:#333333;stroke-width:1;fill:none;}#my-svg .dashed-line{stroke-dasharray:3;}#my-svg .dotted-line{stroke-dasharray:1 2;}#my-svg #compositionStart,#my-svg .composition{fill:#333333!important;stroke:#333333!important;stroke-width:1;}#my-svg #compositionEnd,#my-svg .composition{fill:#333333!important;stroke:#333333!important;stroke-width:1;}#my-svg #dependencyStart,#my-svg .dependency{fill:#333333!important;stroke:#333333!important;stroke-width:1;}#my-svg #dependencyStart,#my-svg .dependency{fill:#333333!important;stroke:#333333!important;stroke-width:1;}#my-svg #extensionStart,#my-svg .extension{fill:transparent!important;stroke:#333333!important;stroke-width:1;}#my-svg #extensionEnd,#my-svg .extension{fill:transparent!important;stroke:#333333!important;stroke-width:1;}#my-svg #aggregationStart,#my-svg .aggregation{fill:transparent!important;stroke:#333333!important;stroke-width:1;}#my-svg #aggregationEnd,#my-svg .aggregation{fill:transparent!important;stroke:#333333!important;stroke-width:1;}#my-svg #lollipopStart,#my-svg .lollipop{fill:#ECECFF!important;stroke:#333333!important;stroke-width:1;}#my-svg #lollipopEnd,#my-svg .lollipop{fill:#ECECFF!important;stroke:#333333!important;stroke-width:1;}#my-svg .edgeTerminals{font-size:11px;line-height:initial;}#my-svg .classTitleText{text-anchor:middle;font-size:18px;fill:#333;}#my-svg .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#my-svg .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#my-svg :root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}#my-svg .GodObject&gt;*{fill:#ffcccc!important;stroke:#ff0000!important;stroke-width:3px!important;}#my-svg .GodObject span{fill:#ffcccc!important;stroke:#ff0000!important;stroke-width:3px!important;}#my-svg .GodObject2&gt;*{fill:#ffcccc!important;stroke:#ff0000!important;stroke-width:3px!important;}#my-svg .GodObject2 span{fill:#ffcccc!important;stroke:#ff0000!important;stroke-width:3px!important;}#my-svg .GodObject3&gt;*{fill:#ffcccc!important;stroke:#ff0000!important;stroke-width:3px!important;}#my-svg .GodObject3 span{fill:#ffcccc!important;stroke:#ff0000!important;stroke-width:3px!important;}#my-svg .GodObject4&gt;*{fill:#ffcccc!important;stroke:#ff0000!important;stroke-width:3px!important;}#my-svg .GodObject4 span{fill:#ffcccc!important;stroke:#ff0000!important;stroke-width:3px!important;}#my-svg .GodObject5&gt;*{fill:#ffcccc!important;stroke:#ff0000!important;stroke-width:3px!important;}#my-svg .GodObject5 span{fill:#ffcccc!important;stroke:#ff0000!important;stroke-width:3px!important;}#my-svg .GodObject6&gt;*{fill:#ffcccc!important;stroke:#ff0000!important;stroke-width:3px!important;}#my-svg .GodObject6 span{fill:#ffcccc!important;stroke:#ff0000!important;stroke-width:3px!important;}#my-svg .GodObject7&gt;*{fill:#ffcccc!important;stroke:#ff0000!important;stroke-width:3px!important;}#my-svg .GodObject7 span{fill:#ffcccc!important;stroke:#ff0000!important;stroke-width:3px!important;}#my-svg .caller&gt;*{fill:#ffcccc!important;stroke:#ff0000!important;stroke-width:3px!important;}#my-svg .caller span{fill:#ffcccc!important;stroke:#ff0000!important;stroke-width:3px!important;}
+                .classDiagram .nodeLabel, .classDiagram .edgeLabel { visibility: visible !important; }
+                .classDiagram text { font-family: Arial, sans-serif !important; }
+                .classDiagram foreignObject { overflow: visible !important; }
+            </style><g><defs><marker orient="auto" markerHeight="240" markerWidth="190" refY="7" refX="18" class="marker aggregation class" id="my-svg_class-aggregationStart"><path d="M 18,7 L9,13 L1,7 L9,1 Z"/></marker></defs><defs><marker orient="auto" markerHeight="28" markerWidth="20" refY="7" refX="1" class="marker aggregation class" id="my-svg_class-aggregationEnd"><path d="M 18,7 L9,13 L1,7 L9,1 Z"/></marker></defs><defs><marker orient="auto" markerHeight="240" markerWidth="190" refY="7" refX="18" class="marker extension class" id="my-svg_class-extensionStart"><path d="M 1,7 L18,13 V 1 Z"/></marker></defs><defs><marker orient="auto" markerHeight="28" markerWidth="20" refY="7" refX="1" class="marker extension class" id="my-svg_class-extensionEnd"><path d="M 1,1 V 13 L18,7 Z"/></marker></defs><defs><marker orient="auto" markerHeight="240" markerWidth="190" refY="7" refX="18" class="marker composition class" id="my-svg_class-compositionStart"><path d="M 18,7 L9,13 L1,7 L9,1 Z"/></marker></defs><defs><marker orient="auto" markerHeight="28" markerWidth="20" refY="7" refX="1" class="marker composition class" id="my-svg_class-compositionEnd"><path d="M 18,7 L9,13 L1,7 L9,1 Z"/></marker></defs><defs><marker orient="auto" markerHeight="240" markerWidth="190" refY="7" refX="6" class="marker dependency class" id="my-svg_class-dependencyStart"><path d="M 5,7 L9,13 L1,7 L9,1 Z"/></marker></defs><defs><marker orient="auto" markerHeight="28" markerWidth="20" refY="7" refX="13" class="marker dependency class" id="my-svg_class-dependencyEnd"><path d="M 18,7 L9,13 L14,7 L9,1 Z"/></marker></defs><defs><marker orient="auto" markerHeight="240" markerWidth="190" refY="7" refX="13" class="marker lollipop class" id="my-svg_class-lollipopStart"><circle r="6" cy="7" cx="7" fill="transparent" stroke="black"/></marker></defs><defs><marker orient="auto" markerHeight="240" markerWidth="190" refY="7" refX="1" class="marker lollipop class" id="my-svg_class-lollipopEnd"><circle r="6" cy="7" cx="7" fill="transparent" stroke="black"/></marker></defs><g class="root"><g class="clusters"/><g class="edgePaths"/><g class="edgeLabels"/><g class="nodes"><g transform="translate(89.49609375, 140)" id="classId-GodObject-0" class="node default"><g class="basic label-container"><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="#ffcccc" stroke-width="0" stroke="none" d="M-81.49609375 -132 L81.49609375 -132 L81.49609375 132 L-81.49609375 132"/><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="none" stroke-width="3" stroke="#ff0000" d="M-81.49609375 -132 C-16.99100127665828 -132, 47.51409119668344 -132, 81.49609375 -132 M-81.49609375 -132 C-40.24998690001716 -132, 0.9961199499656743 -132, 81.49609375 -132 M81.49609375 -132 C81.49609375 -64.65262440183434, 81.49609375 2.6947511963313104, 81.49609375 132 M81.49609375 -132 C81.49609375 -41.27382927663618, 81.49609375 49.452341446727644, 81.49609375 132 M81.49609375 132 C35.640311371450984 132, -10.215471007098031 132, -81.49609375 132 M81.49609375 132 C35.87527514888418 132, -9.745543452231644 132, -81.49609375 132 M-81.49609375 132 C-81.49609375 32.34620742207588, -81.49609375 -67.30758515584824, -81.49609375 -132 M-81.49609375 132 C-81.49609375 39.63759036655743, -81.49609375 -52.724819266885135, -81.49609375 -132"/></g><g transform="translate(0, -108)" class="annotation-group text"/><g transform="translate(-47.0546875, -108)" class="label-group text"><g transform="translate(0,-12)" style="font-weight: bolder" class="label"><foreignObject height="24" width="94.109375"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 134px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="nodeLabel markdown-node-label"><p>GodObject</p></span></div></foreignObject></g></g><g transform="translate(-69.49609375, -60)" class="members-group text"><g transform="translate(0,-12)" style="" class="label"><foreignObject height="24" width="91.9375"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 141px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="nodeLabel markdown-node-label"><p>field1: Type</p></span></div></foreignObject></g><g transform="translate(0,12)" style="" class="label"><foreignObject height="24" width="91.9375"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 141px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="nodeLabel markdown-node-label"><p>field2: Type</p></span></div></foreignObject></g><g transform="translate(0,36)" style="" class="label"><foreignObject height="24" width="91.9375"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 141px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="nodeLabel markdown-node-label"><p>field3: Type</p></span></div></foreignObject></g><g transform="translate(0,60)" style="" class="label"><foreignObject height="24" width="91.9375"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 141px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="nodeLabel markdown-node-label"><p>field4: Type</p></span></div></foreignObject></g><g transform="translate(0,84)" style="" class="label"><foreignObject height="24" width="91.9375"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 141px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="nodeLabel markdown-node-label"><p>field5: Type</p></span></div></foreignObject></g><g transform="translate(0,108)" style="" class="label"><foreignObject height="24" width="91.9375"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 141px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="nodeLabel markdown-node-label"><p>field6: Type</p></span></div></foreignObject></g><g transform="translate(0,132)" style="" class="label"><foreignObject height="24" width="91.9375"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 141px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="nodeLabel markdown-node-label"><p>field7: Type</p></span></div></foreignObject></g></g><g transform="translate(-69.49609375, 132)" class="methods-group text"/><g style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="divider"><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="none" stroke-width="3" stroke="#ff0000" d="M-81.49609375 -84 C-22.935889517026325 -84, 35.62431471594735 -84, 81.49609375 -84 M-81.49609375 -84 C-47.29125863059326 -84, -13.086423511186524 -84, 81.49609375 -84"/></g><g style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="divider"><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="none" stroke-width="3" stroke="#ff0000" d="M-81.49609375 108 C-19.117475473235928 108, 43.261142803528145 108, 81.49609375 108 M-81.49609375 108 C-34.081913887005676 108, 13.332265975988648 108, 81.49609375 108"/></g></g><g transform="translate(341.66015625, 140)" id="classId-GodObject2-1" class="node default"><g class="basic label-container"><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="#ffcccc" stroke-width="0" stroke="none" d="M-120.66796875 -63 L120.66796875 -63 L120.66796875 63 L-120.66796875 63"/><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="none" stroke-width="3" stroke="#ff0000" d="M-120.66796875 -63 C-57.298067139613075 -63, 6.071834470773851 -63, 120.66796875 -63 M-120.66796875 -63 C-33.0142226189308 -63, 54.639523512138396 -63, 120.66796875 -63 M120.66796875 -63 C120.66796875 -19.28032524658689, 120.66796875 24.43934950682622, 120.66796875 63 M120.66796875 -63 C120.66796875 -37.49523055509279, 120.66796875 -11.99046111018557, 120.66796875 63 M120.66796875 63 C69.89939806958049 63, 19.13082738916097 63, -120.66796875 63 M120.66796875 63 C48.11021295931252 63, -24.44754283137496 63, -120.66796875 63 M-120.66796875 63 C-120.66796875 26.01963985167979, -120.66796875 -10.960720296640417, -120.66796875 -63 M-120.66796875 63 C-120.66796875 27.4940796179054, -120.66796875 -8.011840764189202, -120.66796875 -63"/></g><g transform="translate(0, -39)" class="annotation-group text"/><g transform="translate(-52.6171875, -39)" class="label-group text"><g transform="translate(0,-12)" style="font-weight: bolder" class="label"><foreignObject height="24" width="105.234375"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 144px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="nodeLabel markdown-node-label"><p>GodObject2</p></span></div></foreignObject></g></g><g transform="translate(-108.66796875, 9)" class="members-group text"/><g transform="translate(-108.66796875, 39)" class="methods-group text"><g transform="translate(0,-12)" style="" class="label"><foreignObject height="24" width="164.71875"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 220px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="nodeLabel markdown-node-label"><p>+duplicate_code_2()</p></span></div></foreignObject></g></g><g style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="divider"><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="none" stroke-width="3" stroke="#ff0000" d="M-120.66796875 -15 C-68.98299173663341 -15, -17.29801472326683 -15, 120.66796875 -15 M-120.66796875 -15 C-67.54264829702171 -15, -14.417327844043427 -15, 120.66796875 -15"/></g><g style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="divider"><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="none" stroke-width="3" stroke="#ff0000" d="M-120.66796875 9 C-70.86901030439196 9, -21.070051858783913 9, 120.66796875 9 M-120.66796875 9 C-41.088215489438866 9, 38.49153777112227 9, 120.66796875 9"/></g></g><g transform="translate(632.99609375, 140)" id="classId-GodObject3-2" class="node default"><g class="basic label-container"><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="#ffcccc" stroke-width="0" stroke="none" d="M-120.66796875 -63 L120.66796875 -63 L120.66796875 63 L-120.66796875 63"/><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="none" stroke-width="3" stroke="#ff0000" d="M-120.66796875 -63 C-29.773959473864892 -63, 61.120049802270216 -63, 120.66796875 -63 M-120.66796875 -63 C-68.14473176437801 -63, -15.621494778756016 -63, 120.66796875 -63 M120.66796875 -63 C120.66796875 -33.46949786087836, 120.66796875 -3.9389957217567257, 120.66796875 63 M120.66796875 -63 C120.66796875 -37.11676692510531, 120.66796875 -11.233533850210613, 120.66796875 63 M120.66796875 63 C43.112238446500726 63, -34.44349185699855 63, -120.66796875 63 M120.66796875 63 C29.31994723012008 63, -62.02807428975984 63, -120.66796875 63 M-120.66796875 63 C-120.66796875 32.151892028854334, -120.66796875 1.3037840577086612, -120.66796875 -63 M-120.66796875 63 C-120.66796875 35.48105325824612, -120.66796875 7.962106516492234, -120.66796875 -63"/></g><g transform="translate(0, -39)" class="annotation-group text"/><g transform="translate(-52.6171875, -39)" class="label-group text"><g transform="translate(0,-12)" style="font-weight: bolder" class="label"><foreignObject height="24" width="105.234375"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 144px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="nodeLabel markdown-node-label"><p>GodObject3</p></span></div></foreignObject></g></g><g transform="translate(-108.66796875, 9)" class="members-group text"/><g transform="translate(-108.66796875, 39)" class="methods-group text"><g transform="translate(0,-12)" style="" class="label"><foreignObject height="24" width="164.71875"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 220px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="nodeLabel markdown-node-label"><p>+duplicate_code_2()</p></span></div></foreignObject></g></g><g style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="divider"><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="none" stroke-width="3" stroke="#ff0000" d="M-120.66796875 -15 C-38.29986895570214 -15, 44.068230838595724 -15, 120.66796875 -15 M-120.66796875 -15 C-61.37313859890179 -15, -2.078308447803579 -15, 120.66796875 -15"/></g><g style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="divider"><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="none" stroke-width="3" stroke="#ff0000" d="M-120.66796875 9 C-50.378999903336904 9, 19.90996894332619 9, 120.66796875 9 M-120.66796875 9 C-63.19277073316786 9, -5.717572716335724 9, 120.66796875 9"/></g></g><g transform="translate(922.72265625, 140)" id="classId-GodObject4-3" class="node default"><g class="basic label-container"><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="#ffcccc" stroke-width="0" stroke="none" d="M-119.05859375 -63 L119.05859375 -63 L119.05859375 63 L-119.05859375 63"/><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="none" stroke-width="3" stroke="#ff0000" d="M-119.05859375 -63 C-52.31521317995305 -63, 14.428167390093904 -63, 119.05859375 -63 M-119.05859375 -63 C-44.01585533904105 -63, 31.026883071917894 -63, 119.05859375 -63 M119.05859375 -63 C119.05859375 -26.24545412815676, 119.05859375 10.509091743686483, 119.05859375 63 M119.05859375 -63 C119.05859375 -20.657893721742425, 119.05859375 21.68421255651515, 119.05859375 63 M119.05859375 63 C24.244026788003296 63, -70.57054017399341 63, -119.05859375 63 M119.05859375 63 C33.89885127390636 63, -51.26089120218728 63, -119.05859375 63 M-119.05859375 63 C-119.05859375 25.375014466024084, -119.05859375 -12.249971067951833, -119.05859375 -63 M-119.05859375 63 C-119.05859375 24.11474090949642, -119.05859375 -14.770518181007162, -119.05859375 -63"/></g><g transform="translate(0, -39)" class="annotation-group text"/><g transform="translate(-52.6171875, -39)" class="label-group text"><g transform="translate(0,-12)" style="font-weight: bolder" class="label"><foreignObject height="24" width="105.234375"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 144px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="nodeLabel markdown-node-label"><p>GodObject4</p></span></div></foreignObject></g></g><g transform="translate(-107.05859375, 9)" class="members-group text"/><g transform="translate(-107.05859375, 39)" class="methods-group text"><g transform="translate(0,-12)" style="" class="label"><foreignObject height="24" width="161.5"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 217px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="nodeLabel markdown-node-label"><p>+massive_method()</p></span></div></foreignObject></g></g><g style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="divider"><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="none" stroke-width="3" stroke="#ff0000" d="M-119.05859375 -15 C-68.53719117126553 -15, -18.015788592531052 -15, 119.05859375 -15 M-119.05859375 -15 C-56.08771965179824 -15, 6.883154446403523 -15, 119.05859375 -15"/></g><g style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="divider"><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="none" stroke-width="3" stroke="#ff0000" d="M-119.05859375 9 C-45.43159100540403 9, 28.19541173919194 9, 119.05859375 9 M-119.05859375 9 C-41.1560116077316 9, 36.7465705345368 9, 119.05859375 9"/></g></g><g transform="translate(1210.83984375, 140)" id="classId-GodObject5-4" class="node default"><g class="basic label-container"><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="#ffcccc" stroke-width="0" stroke="none" d="M-119.05859375 -63 L119.05859375 -63 L119.05859375 63 L-119.05859375 63"/><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="none" stroke-width="3" stroke="#ff0000" d="M-119.05859375 -63 C-63.85932197434175 -63, -8.660050198683507 -63, 119.05859375 -63 M-119.05859375 -63 C-24.745263925293756 -63, 69.56806589941249 -63, 119.05859375 -63 M119.05859375 -63 C119.05859375 -32.206562934563834, 119.05859375 -1.4131258691276685, 119.05859375 63 M119.05859375 -63 C119.05859375 -16.369531908185003, 119.05859375 30.260936183629994, 119.05859375 63 M119.05859375 63 C39.81229944166837 63, -39.433994866663255 63, -119.05859375 63 M119.05859375 63 C51.4419008759788 63, -16.174791998042394 63, -119.05859375 63 M-119.05859375 63 C-119.05859375 25.960764574731904, -119.05859375 -11.078470850536192, -119.05859375 -63 M-119.05859375 63 C-119.05859375 25.267899173992333, -119.05859375 -12.464201652015333, -119.05859375 -63"/></g><g transform="translate(0, -39)" class="annotation-group text"/><g transform="translate(-52.6171875, -39)" class="label-group text"><g transform="translate(0,-12)" style="font-weight: bolder" class="label"><foreignObject height="24" width="105.234375"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 144px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="nodeLabel markdown-node-label"><p>GodObject5</p></span></div></foreignObject></g></g><g transform="translate(-107.05859375, 9)" class="members-group text"/><g transform="translate(-107.05859375, 39)" class="methods-group text"><g transform="translate(0,-12)" style="" class="label"><foreignObject height="24" width="161.5"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 217px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="nodeLabel markdown-node-label"><p>+massive_method()</p></span></div></foreignObject></g></g><g style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="divider"><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="none" stroke-width="3" stroke="#ff0000" d="M-119.05859375 -15 C-48.65894453749874 -15, 21.74070467500252 -15, 119.05859375 -15 M-119.05859375 -15 C-35.15855432468412 -15, 48.74148510063176 -15, 119.05859375 -15"/></g><g style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="divider"><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="none" stroke-width="3" stroke="#ff0000" d="M-119.05859375 9 C-33.16832777705338 9, 52.721938195893244 9, 119.05859375 9 M-119.05859375 9 C-34.4017107545468 9, 50.255172240906404 9, 119.05859375 9"/></g></g><g transform="translate(1500.56640625, 140)" id="classId-GodObject6-5" class="node default"><g class="basic label-container"><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="#ffcccc" stroke-width="0" stroke="none" d="M-120.66796875 -63 L120.66796875 -63 L120.66796875 63 L-120.66796875 63"/><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="none" stroke-width="3" stroke="#ff0000" d="M-120.66796875 -63 C-64.9882520785457 -63, -9.308535407091398 -63, 120.66796875 -63 M-120.66796875 -63 C-43.3767749622569 -63, 33.914418825486194 -63, 120.66796875 -63 M120.66796875 -63 C120.66796875 -31.608268760960847, 120.66796875 -0.21653752192169406, 120.66796875 63 M120.66796875 -63 C120.66796875 -18.21656207000558, 120.66796875 26.56687585998884, 120.66796875 63 M120.66796875 63 C41.19873457271491 63, -38.270499604570176 63, -120.66796875 63 M120.66796875 63 C29.19495703343513 63, -62.27805468312974 63, -120.66796875 63 M-120.66796875 63 C-120.66796875 19.383868552776214, -120.66796875 -24.232262894447572, -120.66796875 -63 M-120.66796875 63 C-120.66796875 32.054831323856064, -120.66796875 1.1096626477121205, -120.66796875 -63"/></g><g transform="translate(0, -39)" class="annotation-group text"/><g transform="translate(-52.6171875, -39)" class="label-group text"><g transform="translate(0,-12)" style="font-weight: bolder" class="label"><foreignObject height="24" width="105.234375"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 144px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="nodeLabel markdown-node-label"><p>GodObject6</p></span></div></foreignObject></g></g><g transform="translate(-108.66796875, 9)" class="members-group text"/><g transform="translate(-108.66796875, 39)" class="methods-group text"><g transform="translate(0,-12)" style="" class="label"><foreignObject height="24" width="164.71875"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 220px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="nodeLabel markdown-node-label"><p>+duplicate_code_1()</p></span></div></foreignObject></g></g><g style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="divider"><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="none" stroke-width="3" stroke="#ff0000" d="M-120.66796875 -15 C-67.80201799321262 -15, -14.936067236425245 -15, 120.66796875 -15 M-120.66796875 -15 C-45.21700964405818 -15, 30.23394946188364 -15, 120.66796875 -15"/></g><g style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="divider"><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="none" stroke-width="3" stroke="#ff0000" d="M-120.66796875 9 C-64.11882412523076 9, -7.5696795004615325 9, 120.66796875 9 M-120.66796875 9 C-49.88587093946893 9, 20.89622687106214 9, 120.66796875 9"/></g></g><g transform="translate(1791.90234375, 140)" id="classId-GodObject7-6" class="node default"><g class="basic label-container"><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="#ffcccc" stroke-width="0" stroke="none" d="M-120.66796875 -63 L120.66796875 -63 L120.66796875 63 L-120.66796875 63"/><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="none" stroke-width="3" stroke="#ff0000" d="M-120.66796875 -63 C-50.75924304887694 -63, 19.14948265224612 -63, 120.66796875 -63 M-120.66796875 -63 C-64.66698826200842 -63, -8.666007774016833 -63, 120.66796875 -63 M120.66796875 -63 C120.66796875 -36.87518860601247, 120.66796875 -10.750377212024944, 120.66796875 63 M120.66796875 -63 C120.66796875 -13.369831745984534, 120.66796875 36.26033650803093, 120.66796875 63 M120.66796875 63 C46.29630814124505 63, -28.0753524675099 63, -120.66796875 63 M120.66796875 63 C36.63338969903806 63, -47.401189351923875 63, -120.66796875 63 M-120.66796875 63 C-120.66796875 28.776525415305187, -120.66796875 -5.446949169389626, -120.66796875 -63 M-120.66796875 63 C-120.66796875 16.552301254990347, -120.66796875 -29.895397490019306, -120.66796875 -63"/></g><g transform="translate(0, -39)" class="annotation-group text"/><g transform="translate(-52.6171875, -39)" class="label-group text"><g transform="translate(0,-12)" style="font-weight: bolder" class="label"><foreignObject height="24" width="105.234375"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 144px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="nodeLabel markdown-node-label"><p>GodObject7</p></span></div></foreignObject></g></g><g transform="translate(-108.66796875, 9)" class="members-group text"/><g transform="translate(-108.66796875, 39)" class="methods-group text"><g transform="translate(0,-12)" style="" class="label"><foreignObject height="24" width="164.71875"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 220px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="nodeLabel markdown-node-label"><p>+duplicate_code_1()</p></span></div></foreignObject></g></g><g style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="divider"><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="none" stroke-width="3" stroke="#ff0000" d="M-120.66796875 -15 C-28.323985878309102 -15, 64.0199969933818 -15, 120.66796875 -15 M-120.66796875 -15 C-67.09897449802841 -15, -13.529980246056823 -15, 120.66796875 -15"/></g><g style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="divider"><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="none" stroke-width="3" stroke="#ff0000" d="M-120.66796875 9 C-50.47852045870633 9, 19.710927832587345 9, 120.66796875 9 M-120.66796875 9 C-59.88327069176209 9, 0.901427366475815 9, 120.66796875 9"/></g></g><g transform="translate(2036.8984375, 140)" id="classId-caller-7" class="node default"><g class="basic label-container"><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="#ffcccc" stroke-width="0" stroke="none" d="M-74.328125 -108 L74.328125 -108 L74.328125 108 L-74.328125 108"/><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="none" stroke-width="3" stroke="#ff0000" d="M-74.328125 -108 C-26.274463759356372 -108, 21.779197481287255 -108, 74.328125 -108 M-74.328125 -108 C-18.423337994924353 -108, 37.481449010151294 -108, 74.328125 -108 M74.328125 -108 C74.328125 -49.32261874543108, 74.328125 9.354762509137842, 74.328125 108 M74.328125 -108 C74.328125 -39.107360970827585, 74.328125 29.78527805834483, 74.328125 108 M74.328125 108 C40.63141777630355 108, 6.9347105526071005 108, -74.328125 108 M74.328125 108 C17.237812493154763 108, -39.852500013690474 108, -74.328125 108 M-74.328125 108 C-74.328125 29.459532044707387, -74.328125 -49.080935910585225, -74.328125 -108 M-74.328125 108 C-74.328125 30.39795220234555, -74.328125 -47.2040955953089, -74.328125 -108"/></g><g transform="translate(0, -84)" class="annotation-group text"/><g transform="translate(-25, -84)" class="label-group text"><g transform="translate(0,-12)" style="font-weight: bolder" class="label"><foreignObject height="24" width="50"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 94px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="nodeLabel markdown-node-label"><p>caller</p></span></div></foreignObject></g></g><g transform="translate(-62.328125, -36)" class="members-group text"><g transform="translate(0,-12)" style="" class="label"><foreignObject height="24" width="15.265625"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 65px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="nodeLabel markdown-node-label"><p>...</p></span></div></foreignObject></g></g><g transform="translate(-62.328125, 12)" class="methods-group text"><g transform="translate(0,-12)" style="" class="label"><foreignObject height="24" width="97.859375"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 152px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="nodeLabel markdown-node-label"><p>+method1()</p></span></div></foreignObject></g><g transform="translate(0,12)" style="" class="label"><foreignObject height="24" width="97.859375"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 152px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="nodeLabel markdown-node-label"><p>+method2()</p></span></div></foreignObject></g><g transform="translate(0,36)" style="" class="label"><foreignObject height="24" width="97.859375"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 152px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="nodeLabel markdown-node-label"><p>+method3()</p></span></div></foreignObject></g><g transform="translate(0,60)" style="" class="label"><foreignObject height="24" width="99.65625"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 154px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="nodeLabel markdown-node-label"><p>+methodN()</p></span></div></foreignObject></g></g><g style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="divider"><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="none" stroke-width="3" stroke="#ff0000" d="M-74.328125 -60 C-20.568520209492583 -60, 33.191084581014834 -60, 74.328125 -60 M-74.328125 -60 C-16.81448423916263 -60, 40.69915652167474 -60, 74.328125 -60"/></g><g style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" class="divider"><path style="fill:#ffcccc;stroke:#ff0000;stroke-width:3px" fill="none" stroke-width="3" stroke="#ff0000" d="M-74.328125 -12 C-33.003611441751204 -12, 8.320902116497592 -12, 74.328125 -12 M-74.328125 -12 C-28.56784407911394 -12, 17.19243684177212 -12, 74.328125 -12"/></g></g></g></g></g></svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="issue-card" data-severity="Critical" data-pattern="god-object">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #1: God Object
+                        </div>
+                        <span class="severity-badge severity-Critical">
+                            <i class="fas fa-circle"></i> CRITICAL
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>test_with_issues.rs</code></p>
+                        <p><strong>Lines:</strong> 3-3</p><p><strong>Description:</strong> God Object detected: 'GodObject' has 5 methods and 20 fields. (Thresholds: methods>5, fields>8) LCOM4 score: 1 (>1 indicates low cohesion) Methods: 0 trivial, 0 complex</p>
+                        
+                        <div class="code-snippet"><pre><code>struct GodObject {
+    field1: String,
+    field2: String,
+    field3: String,
+    field4: String,
+    field5: String,
+    field6: String,
+    field7: String,
+    field8: String,
+    field9: String,
+    field10: String,
+    field11: String,
+    field12: String,
+    field13: String,
+    field14: String,
+    field15: String,
+    field16: String,
+    field17: String,
+    field18: String,
+    field19: String,
+    field20: String,
+}</code></pre></div>
+                        
+                        
+                    </div>
+                </div>
+    
+                <div class="issue-card" data-severity="medium" data-pattern="god-object">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #2: God Object
+                        </div>
+                        <span class="severity-badge severity-medium">
+                            <i class="fas fa-circle"></i> MEDIUM
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>test_with_issues.rs</code></p>
+                        <p><strong>Lines:</strong> 105-113</p><p><strong>Description:</strong> Code duplication detected (Type4): 93.8% similarity between test_with_issues.rs:105-113 and test_with_issues.rs:28-91</p>
+                        
+                        <div class="code-snippet"><pre><code>pub fn duplicate_code_2(&self) -> String {
+        let mut result = String::new();
+        result.push_str("duplicate line 1\n");
+        result.push_str("duplicate line 2\n");
+        result.push_str...</code></pre></div>
+                        
+                        <div class="collapsible-section">
+                            <h4 class="collapsible" onclick="toggleSection('ai-explanation-1-1')">
+                                <i class="fas fa-chevron-right collapsible-icon"></i>
+                                <i class="fas fa-robot"></i> AI Explanation
+                            </h4>
+                            <div id="ai-explanation-1-1" class="collapsible-content">
+                                <p>This code block appears to be duplicated in another location. Consider extracting the common logic into a shared function or module to improve maintainability. The duplicate is located at test_with_issues.rs:28-91 with 93.8% similarity.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+    
+                <div class="issue-card" data-severity="medium" data-pattern="god-object">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #3: God Object
+                        </div>
+                        <span class="severity-badge severity-medium">
+                            <i class="fas fa-circle"></i> MEDIUM
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>test_with_issues.rs</code></p>
+                        <p><strong>Lines:</strong> 105-113</p><p><strong>Description:</strong> Code duplication detected (Type2): 100.0% similarity between test_with_issues.rs:105-113 and test_with_issues.rs:94-102</p>
+                        
+                        <div class="code-snippet"><pre><code>pub fn duplicate_code_2(&self) -> String {
+        let mut result = String::new();
+        result.push_str("duplicate line 1\n");
+        result.push_str("duplicate line 2\n");
+        result.push_str...</code></pre></div>
+                        
+                        <div class="collapsible-section">
+                            <h4 class="collapsible" onclick="toggleSection('ai-explanation-1-2')">
+                                <i class="fas fa-chevron-right collapsible-icon"></i>
+                                <i class="fas fa-robot"></i> AI Explanation
+                            </h4>
+                            <div id="ai-explanation-1-2" class="collapsible-content">
+                                <p>This code block appears to be duplicated in another location. Consider extracting the common logic into a shared function or module to improve maintainability. The duplicate is located at test_with_issues.rs:94-102 with 100.0% similarity.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+    
+                <div class="issue-card" data-severity="medium" data-pattern="god-object">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #4: God Object
+                        </div>
+                        <span class="severity-badge severity-medium">
+                            <i class="fas fa-circle"></i> MEDIUM
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>test_with_issues.rs</code></p>
+                        <p><strong>Lines:</strong> 28-91</p><p><strong>Description:</strong> Code duplication detected (Type4): 93.8% similarity between test_with_issues.rs:28-91 and test_with_issues.rs:105-113</p>
+                        
+                        <div class="code-snippet"><pre><code>pub fn massive_method(&self) -> String {
+        let mut result = String::new();
+        result.push_str("line 1\n");
+        result.push_str("line 2\n");
+        result.push_str("line 3\n");
+        ...</code></pre></div>
+                        
+                        <div class="collapsible-section">
+                            <h4 class="collapsible" onclick="toggleSection('ai-explanation-1-3')">
+                                <i class="fas fa-chevron-right collapsible-icon"></i>
+                                <i class="fas fa-robot"></i> AI Explanation
+                            </h4>
+                            <div id="ai-explanation-1-3" class="collapsible-content">
+                                <p>This code block appears to be duplicated in another location. Consider extracting the common logic into a shared function or module to improve maintainability. The duplicate is located at test_with_issues.rs:105-113 with 93.8% similarity.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+    
+                <div class="issue-card" data-severity="medium" data-pattern="god-object">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #5: God Object
+                        </div>
+                        <span class="severity-badge severity-medium">
+                            <i class="fas fa-circle"></i> MEDIUM
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>test_with_issues.rs</code></p>
+                        <p><strong>Lines:</strong> 28-91</p><p><strong>Description:</strong> Code duplication detected (Type4): 93.8% similarity between test_with_issues.rs:28-91 and test_with_issues.rs:94-102</p>
+                        
+                        <div class="code-snippet"><pre><code>pub fn massive_method(&self) -> String {
+        let mut result = String::new();
+        result.push_str("line 1\n");
+        result.push_str("line 2\n");
+        result.push_str("line 3\n");
+        ...</code></pre></div>
+                        
+                        <div class="collapsible-section">
+                            <h4 class="collapsible" onclick="toggleSection('ai-explanation-1-4')">
+                                <i class="fas fa-chevron-right collapsible-icon"></i>
+                                <i class="fas fa-robot"></i> AI Explanation
+                            </h4>
+                            <div id="ai-explanation-1-4" class="collapsible-content">
+                                <p>This code block appears to be duplicated in another location. Consider extracting the common logic into a shared function or module to improve maintainability. The duplicate is located at test_with_issues.rs:94-102 with 93.8% similarity.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+    
+                <div class="issue-card" data-severity="medium" data-pattern="god-object">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #6: God Object
+                        </div>
+                        <span class="severity-badge severity-medium">
+                            <i class="fas fa-circle"></i> MEDIUM
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>test_with_issues.rs</code></p>
+                        <p><strong>Lines:</strong> 94-102</p><p><strong>Description:</strong> Code duplication detected (Type2): 100.0% similarity between test_with_issues.rs:94-102 and test_with_issues.rs:105-113</p>
+                        
+                        <div class="code-snippet"><pre><code>pub fn duplicate_code_1(&self) -> String {
+        let mut result = String::new();
+        result.push_str("duplicate line 1\n");
+        result.push_str("duplicate line 2\n");
+        result.push_str...</code></pre></div>
+                        
+                        <div class="collapsible-section">
+                            <h4 class="collapsible" onclick="toggleSection('ai-explanation-1-5')">
+                                <i class="fas fa-chevron-right collapsible-icon"></i>
+                                <i class="fas fa-robot"></i> AI Explanation
+                            </h4>
+                            <div id="ai-explanation-1-5" class="collapsible-content">
+                                <p>This code block appears to be duplicated in another location. Consider extracting the common logic into a shared function or module to improve maintainability. The duplicate is located at test_with_issues.rs:105-113 with 100.0% similarity.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+    
+                <div class="issue-card" data-severity="medium" data-pattern="god-object">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #7: God Object
+                        </div>
+                        <span class="severity-badge severity-medium">
+                            <i class="fas fa-circle"></i> MEDIUM
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>test_with_issues.rs</code></p>
+                        <p><strong>Lines:</strong> 94-102</p><p><strong>Description:</strong> Code duplication detected (Type4): 93.8% similarity between test_with_issues.rs:94-102 and test_with_issues.rs:28-91</p>
+                        
+                        <div class="code-snippet"><pre><code>pub fn duplicate_code_1(&self) -> String {
+        let mut result = String::new();
+        result.push_str("duplicate line 1\n");
+        result.push_str("duplicate line 2\n");
+        result.push_str...</code></pre></div>
+                        
+                        <div class="collapsible-section">
+                            <h4 class="collapsible" onclick="toggleSection('ai-explanation-1-6')">
+                                <i class="fas fa-chevron-right collapsible-icon"></i>
+                                <i class="fas fa-robot"></i> AI Explanation
+                            </h4>
+                            <div id="ai-explanation-1-6" class="collapsible-content">
+                                <p>This code block appears to be duplicated in another location. Consider extracting the common logic into a shared function or module to improve maintainability. The duplicate is located at test_with_issues.rs:28-91 with 93.8% similarity.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+    
+                <div class="issue-card" data-severity="Critical" data-pattern="god-object">
+                    <div class="issue-header">
+                        <div class="issue-title">
+                            <i class="fas fa-bug"></i> Issue #8: God Object
+                        </div>
+                        <span class="severity-badge severity-Critical">
+                            <i class="fas fa-circle"></i> CRITICAL
+                        </span>
+                    </div>
+                    
+                    <div class="issue-details">
+                        <p><strong>File:</strong> <code>test_with_issues.rs</code></p>
+                        <p><strong>Description:</strong> Component 'caller' has 73 dependencies, which exceeds the critical threshold of 12. This indicates tight coupling and makes the code harder to maintain.</p>
+                        
+                        
+                        
+                        
+                    </div>
+                </div>
+                </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <p><i class="fas fa-code"></i> Generated by <strong>Uveddi</strong> - AI-Powered Code Analysis</p>
+        <p>For more information, visit <a href="https://github.com/botzrDev/uveddi" target="_blank">github.com/botzrDev/uveddi</a></p>
+    </footer>
+</div>
+
+    <script>
+        // Initialize Mermaid.js for diagram rendering with unique IDs
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: 'default',
+            deterministicIds: true,
+            themeVariables: {
+                primaryColor: '#2563eb',
+                primaryTextColor: '#0f172a',
+                primaryBorderColor: '#64748b',
+                lineColor: '#64748b',
+                background: '#ffffff',
+                secondaryColor: '#f8fafc',
+                tertiaryColor: '#e2e8f0'
+            }
+        });
+
+        // Generate unique seeds for each diagram to prevent ID conflicts
+        document.addEventListener('DOMContentLoaded', function() {
+            const mermaidElements = document.querySelectorAll('.mermaid');
+            mermaidElements.forEach((element, index) => {
+                const uniqueId = `mermaid-diagram-${index}-${Date.now()}`;
+                const graphDefinition = element.textContent.trim();
+                
+                const config = {
+                    deterministicIds: true,
+                    deterministicIDSeed: `seed-${index}-${Date.now()}`,
+                    theme: document.body.dataset.theme === 'dark' ? 'dark' : 'default'
+                };
+                
+                mermaid.render(uniqueId + '-svg', graphDefinition, config).then((result) => {
+                    element.innerHTML = result.svg;
+                }).catch((error) => {
+                    console.error('Mermaid rendering error for diagram', index, ':', error);
+                    element.innerHTML = '<div class="diagram-error" style="color: red; padding: 1rem; border: 1px solid red; border-radius: 4px;">Diagram rendering failed: ' + error.message + '</div>';
+                });
+            });
+        });
+
+        // Re-render Mermaid diagrams when theme changes
+        function rerenderMermaidDiagrams() {
+            const isDark = document.body.dataset.theme === 'dark';
+            const theme = isDark ? 'dark' : 'default';
+            const themeVariables = isDark ? {
+                primaryColor: '#3b82f6',
+                primaryTextColor: '#f1f5f9',
+                primaryBorderColor: '#94a3b8',
+                lineColor: '#94a3b8',
+                background: '#0f172a',
+                secondaryColor: '#1e293b',
+                tertiaryColor: '#334155'
+            } : {
+                primaryColor: '#2563eb',
+                primaryTextColor: '#0f172a',
+                primaryBorderColor: '#64748b',
+                lineColor: '#64748b',
+                background: '#ffffff',
+                secondaryColor: '#f8fafc',
+                tertiaryColor: '#e2e8f0'
+            };
+
+            mermaid.initialize({
+                startOnLoad: false,
+                theme: theme,
+                themeVariables: themeVariables
+            });
+
+            // Re-render all mermaid diagrams with unique seeds
+            const mermaidElements = document.querySelectorAll('.mermaid');
+            mermaidElements.forEach((element, index) => {
+                const graphDefinition = element.textContent;
+                const diagramId = element.id || `mermaid-diagram-${index}`;
+                element.innerHTML = '';
+                element.removeAttribute('data-processed');
+                
+                // Configure unique seed for each diagram to prevent ID conflicts
+                mermaid.initialize({
+                    startOnLoad: false,
+                    theme: theme,
+                    deterministicIds: true,
+                    deterministicIDSeed: diagramId,
+                    themeVariables: themeVariables
+                });
+                
+                mermaid.render(diagramId, graphDefinition, (svgCode) => {
+                    element.innerHTML = svgCode;
+                });
+            });
+        }
+
+        // Theme toggle functionality
+        function toggleTheme() {
+            const body = document.body;
+            const themeToggle = document.querySelector('.theme-toggle');
+            
+            if (body.dataset.theme === 'dark') {
+                body.dataset.theme = 'light';
+                themeToggle.innerHTML = '<i class="fas fa-moon"></i> Dark Mode';
+                localStorage.setItem('theme', 'light');
+            } else {
+                body.dataset.theme = 'dark';
+                themeToggle.innerHTML = '<i class="fas fa-sun"></i> Light Mode';
+                localStorage.setItem('theme', 'dark');
+            }
+            
+            // Re-render Mermaid diagrams with new theme
+            setTimeout(rerenderMermaidDiagrams, 100);
+        }
+
+        // Load saved theme
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.body.dataset.theme = savedTheme;
+        if (savedTheme === 'dark') {
+            document.querySelector('.theme-toggle').innerHTML = '<i class="fas fa-sun"></i> Light Mode';
+        }
+
+        // Collapsible sections
+        function toggleSection(sectionId) {
+            const content = document.getElementById(sectionId);
+            const icon = content.previousElementSibling.querySelector('.collapsible-icon');
+            
+            content.classList.toggle('active');
+            icon.style.transform = content.classList.contains('active') ? 'rotate(90deg)' : 'rotate(0deg)';
+        }
+
+        // Diagram toggle functionality
+        function toggleDiagram(diagramId) {
+            // Hide all other diagrams first
+            hideAllDiagrams();
+            
+            // Show the selected diagram
+            const diagram = document.getElementById(diagramId);
+            const header = document.getElementById('active-diagram-header');
+            const title = document.getElementById('active-diagram-title');
+            
+            if (diagram && header && title) {
+                // Update title
+                const diagramTitle = document.querySelector(`button[onclick="toggleDiagram('${diagramId}')"]`)
+                    .closest('.diagram-button-card')
+                    .querySelector('h3').textContent;
+                title.textContent = diagramTitle;
+                
+                // Show diagram with smooth transition
+                diagram.style.display = 'block';
+                header.style.display = 'flex';
+                
+                // Trigger reflow for animation
+                diagram.offsetHeight;
+                diagram.style.opacity = '1';
+                diagram.style.transform = 'translateY(0)';
+                
+                // Update button text
+                const button = document.querySelector(`button[onclick="toggleDiagram('${diagramId}')"]`);
+                button.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Diagram';
+                button.onclick = () => hideAllDiagrams();
+                
+                // Re-render the specific Mermaid diagram
+                setTimeout(() => {
+                    const mermaidElement = diagram.querySelector('.mermaid');
+                    if (mermaidElement && !mermaidElement.getAttribute('data-processed')) {
+                        const graphDefinition = mermaidElement.textContent;
+                        const diagramElementId = mermaidElement.id;
+                        mermaidElement.innerHTML = '';
+                        mermaidElement.removeAttribute('data-processed');
+                        
+                        mermaid.render(diagramElementId, graphDefinition, (svgCode) => {
+                            mermaidElement.innerHTML = svgCode;
+                        });
+                    }
+                }, 50);
+            }
+        }
+
+        function hideAllDiagrams() {
+            // Hide all diagrams
+            document.querySelectorAll('.embedded-diagram').forEach(diagram => {
+                diagram.style.opacity = '0';
+                diagram.style.transform = 'translateY(-10px)';
+                setTimeout(() => {
+                    diagram.style.display = 'none';
+                }, 200);
+            });
+            
+            // Hide header
+            const header = document.getElementById('active-diagram-header');
+            if (header) {
+                header.style.display = 'none';
+            }
+            
+            // Reset all button texts
+            document.querySelectorAll('.diagram-toggle-btn').forEach(button => {
+                const diagramId = button.getAttribute('onclick').match(/'([^']+)'/)[1];
+                button.innerHTML = '<i class="fas fa-eye"></i> Show Diagram';
+                button.onclick = () => toggleDiagram(diagramId);
+            });
+        }
+
+        // Issue filtering
+        let currentSeverityFilter = 'all';
+        let currentSearchQuery = '';
+
+        function filterBySeverity(severity) {
+            currentSeverityFilter = severity;
+            
+            // Update active button
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            applyFilters();
+        }
+
+        function filterIssues() {
+            currentSearchQuery = document.getElementById('searchInput').value.toLowerCase();
+            applyFilters();
+        }
+
+        function applyFilters() {
+            const issues = document.querySelectorAll('.issue-card');
+            
+            issues.forEach(issue => {
+                const severity = issue.dataset.severity;
+                const text = issue.textContent.toLowerCase();
+                
+                const matchesSeverity = currentSeverityFilter === 'all' || severity === currentSeverityFilter;
+                const matchesSearch = currentSearchQuery === '' || text.includes(currentSearchQuery);
+                
+                if (matchesSeverity && matchesSearch) {
+                    issue.classList.remove('hidden');
+                } else {
+                    issue.classList.add('hidden');
+                }
+            });
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-expand diagrams section
+            const diagramsContent = document.getElementById('diagrams-content');
+            if (diagramsContent) {
+                diagramsContent.classList.add('active');
+                const icon = diagramsContent.previousElementSibling.querySelector('.collapsible-icon');
+                if (icon) {
+                    icon.style.transform = 'rotate(90deg)';
+                }
+            }
+            
+            // Initial render of all Mermaid diagrams with unique IDs
+            setTimeout(() => {
+                const mermaidElements = document.querySelectorAll('.mermaid');
+                mermaidElements.forEach((element, index) => {
+                    const graphDefinition = element.textContent;
+                    const diagramId = element.id || `mermaid-diagram-${index}`;
+                    element.innerHTML = '';
+                    element.removeAttribute('data-processed');
+                    
+                    // Configure unique seed for each diagram to prevent ID conflicts
+                    mermaid.initialize({
+                        startOnLoad: false,
+                        theme: document.body.dataset.theme === 'dark' ? 'dark' : 'default',
+                        deterministicIds: true,
+                        deterministicIDSeed: diagramId,
+                        themeVariables: document.body.dataset.theme === 'dark' ? {
+                            primaryColor: '#3b82f6',
+                            primaryTextColor: '#f1f5f9',
+                            primaryBorderColor: '#64748b',
+                            lineColor: '#64748b',
+                            background: '#0f172a',
+                            secondaryColor: '#1e293b',
+                            tertiaryColor: '#334155'
+                        } : {
+                            primaryColor: '#2563eb',
+                            primaryTextColor: '#0f172a',
+                            primaryBorderColor: '#64748b',
+                            lineColor: '#64748b',
+                            background: '#ffffff',
+                            secondaryColor: '#f8fafc',
+                            tertiaryColor: '#e2e8f0'
+                        }
+                    });
+                    
+                    mermaid.render(diagramId, graphDefinition, (svgCode) => {
+                        element.innerHTML = svgCode;
+                    });
+                });
+            }, 100);
+        });
+    </script>
+</body>
+</html>

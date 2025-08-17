@@ -11,6 +11,7 @@ import {
 } from '@mui/material';
 import { useReport, useDemoReport } from '@/hooks/useReport';
 import type { InteractiveReport } from '@/types/api';
+import FindingsList from '@/components/FindingsList';
 
 function DashboardPage() {
   const { reportId } = useParams<{ reportId: string }>();
@@ -130,7 +131,7 @@ function DashboardPage() {
       </Grid>
 
       {/* Issues by Severity */}
-      <Grid container spacing={3}>
+      <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} md={6}>
           <Paper sx={{ p: 3 }}>
             <Typography variant="h5" gutterBottom>
@@ -195,6 +196,12 @@ function DashboardPage() {
           </Paper>
         </Grid>
       </Grid>
+
+      {/* Detailed Findings List */}
+      <FindingsList 
+        findings={report.findings || []} 
+        loading={isLoading}
+      />
     </Box>
   );
 }

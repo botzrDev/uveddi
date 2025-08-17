@@ -523,6 +523,9 @@ impl AppState {
             rendering_service_url: "http://localhost:3001".to_string(),
             no_fallback: false,
             check_rendering_service: false,
+            diagram_output_dir: None,
+            max_diagrams: 20,
+            no_diagrams: false,
         })
     }
 }
