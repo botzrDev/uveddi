@@ -2,16 +2,23 @@ import FindingsList from '@/components/FindingsList';
 import MermaidDiagram from '@/components/MermaidDiagram';
 import MermaidRenderingTest from '@/components/MermaidRenderingTest';
 import SimpleMermaidTest from '@/components/SimpleMermaidTest';
+import UveddiLoader from '@/components/UveddiLoader';
 import { useDemoReport, useReport } from '@/hooks/useReport';
 import {
   Alert,
   Box,
   Chip,
-  CircularProgress,
   Grid,
   Paper,
   Typography,
+  Button,
 } from '@mui/material';
+import {
+  DownloadOutlined,
+  ShareOutlined,
+  BugReportOutlined,
+  TrendingUpOutlined,
+} from '@mui/icons-material';
 import { useParams } from 'react-router-dom';
 
 function DashboardPage() {
@@ -27,17 +34,10 @@ function DashboardPage() {
 
   if (isLoading) {
     return (
-      <Box 
-        display="flex" 
-        justifyContent="center" 
-        alignItems="center" 
-        minHeight="400px"
-      >
-        <CircularProgress size={60} />
-        <Typography variant="h6" sx={{ ml: 2 }}>
-          Loading report...
-        </Typography>
-      </Box>
+      <UveddiLoader 
+        message="Loading analysis report..." 
+        size="large" 
+      />
     );
   }
 
@@ -92,25 +92,109 @@ function DashboardPage() {
 
   return (
     <Box>
-      {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h3" component="h1" gutterBottom>
-          {report.project?.name || 'Unknown Project'}
-        </Typography>
-        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
+      {/* Enhanced Header */}
+      <Paper 
+        sx={{ 
+          p: 4, 
+          mb: 4, 
+          background: 'linear-gradient(135deg, var(--uveddi-primary-50) 0%, var(--uveddi-secondary-50) 100%)',
+          border: '1px solid var(--uveddi-border)',
+        }}
+      >
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
+          <Box sx={{ flex: 1 }}>
+            <Typography 
+              variant="h3" 
+              component="h1" 
+              sx={{ 
+                fontWeight: 700,
+                color: 'var(--uveddi-text-primary)',
+                mb: 1,
+              }}
+            >
+              {report.project?.name || 'Unknown Project'}
+            </Typography>
+            <Typography 
+              variant="body1" 
+              sx={{ 
+                color: 'var(--uveddi-text-secondary)',
+                mb: 2,
+              }}
+            >
+              Analysis completed on{' '}
+              {new Date(report.summary?.timeGenerated || Date.now()).toLocaleDateString()} at{' '}
+              {new Date(report.summary?.timeGenerated || Date.now()).toLocaleTimeString()}
+            </Typography>
+          </Box>
+          
+          {/* Action Buttons */}
+          <Box sx={{ display: 'flex', gap: 1, flexShrink: 0 }}>
+            <Button
+              variant="outlined"
+              startIcon={<ShareOutlined />}
+              sx={{
+                borderColor: 'var(--uveddi-primary-600)',
+                color: 'var(--uveddi-primary-600)',
+                '&:hover': {
+                  backgroundColor: 'var(--uveddi-primary-50)',
+                  borderColor: 'var(--uveddi-primary-700)',
+                },
+              }}
+            >
+              Share
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<DownloadOutlined />}
+              sx={{
+                backgroundColor: 'var(--uveddi-primary-600)',
+                '&:hover': {
+                  backgroundColor: 'var(--uveddi-primary-700)',
+                },
+              }}
+            >
+              Export Report
+            </Button>
+          </Box>
+        </Box>
+        
+        {/* Tags and Badges */}
+        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
           {(report.project?.languages || []).map((lang: string) => (
-            <Chip key={lang} label={lang} size="small" variant="outlined" />
+            <Chip 
+              key={lang} 
+              label={lang} 
+              size="small" 
+              sx={{
+                backgroundColor: 'var(--uveddi-primary-100)',
+                color: 'var(--uveddi-primary-800)',
+                fontWeight: 600,
+              }}
+            />
           ))}
           {isDemoReport && (
-            <Chip label="Demo Data" color="primary" size="small" />
+            <Chip 
+              label="Demo Data" 
+              size="small"
+              sx={{
+                backgroundColor: 'var(--uveddi-action-100)',
+                color: 'var(--uveddi-action-800)',
+                fontWeight: 600,
+              }}
+            />
           )}
+          <Chip
+            icon={<BugReportOutlined />}
+            label="AI-Enhanced Analysis"
+            size="small"
+            sx={{
+              backgroundColor: 'var(--uveddi-success-100)',
+              color: 'var(--uveddi-success-800)',
+              fontWeight: 600,
+            }}
+          />
         </Box>
-        <Typography variant="body1" color="text.secondary">
-          Analysis completed on{' '}
-          {new Date(report.summary?.timeGenerated || Date.now()).toLocaleDateString()} at{' '}
-          {new Date(report.summary?.timeGenerated || Date.now()).toLocaleTimeString()}
-        </Typography>
-      </Box>
+      </Paper>
 
       {/* Summary Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
@@ -258,22 +342,101 @@ interface SummaryCardProps {
 }
 
 function SummaryCard({ title, value, subtitle, color }: SummaryCardProps) {
+  const getColorStyles = (color: string) => {
+    switch (color) {
+      case 'primary':
+        return {
+          borderColor: 'var(--uveddi-primary-600)',
+          valueColor: 'var(--uveddi-primary-600)',
+          bgGradient: 'linear-gradient(135deg, var(--uveddi-primary-50) 0%, var(--uveddi-primary-25) 100%)',
+          icon: <TrendingUpOutlined />,
+        };
+      case 'error':
+        return {
+          borderColor: 'var(--uveddi-error-500)',
+          valueColor: 'var(--uveddi-error-500)',
+          bgGradient: 'linear-gradient(135deg, #ffebee 0%, #fce4ec 100%)',
+          icon: <BugReportOutlined />,
+        };
+      case 'success':
+        return {
+          borderColor: 'var(--uveddi-success-600)',
+          valueColor: 'var(--uveddi-success-600)',
+          bgGradient: 'linear-gradient(135deg, var(--uveddi-success-50) 0%, #e8f5e8 100%)',
+          icon: <TrendingUpOutlined />,
+        };
+      default:
+        return {
+          borderColor: 'var(--uveddi-info-500)',
+          valueColor: 'var(--uveddi-info-500)',
+          bgGradient: 'linear-gradient(135deg, #e3f2fd 0%, #f0f4ff 100%)',
+          icon: <BugReportOutlined />,
+        };
+    }
+  };
+
+  const styles = getColorStyles(color);
+
   return (
     <Paper 
       sx={{ 
         p: 3, 
         textAlign: 'center',
-        borderTop: 4,
-        borderTopColor: `${color}.main`,
+        border: '1px solid var(--uveddi-border)',
+        borderTop: `4px solid ${styles.borderColor}`,
+        background: styles.bgGradient,
+        position: 'relative',
+        overflow: 'hidden',
+        '&:hover': {
+          transform: 'translateY(-2px)',
+          boxShadow: '0 8px 25px rgba(79, 70, 229, 0.15)',
+        },
+        transition: 'all 0.2s ease-in-out',
       }}
     >
-      <Typography variant="h6" color="text.secondary" gutterBottom>
+      {/* Background Icon */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 16,
+          right: 16,
+          opacity: 0.1,
+          fontSize: 48,
+          color: styles.valueColor,
+        }}
+      >
+        {styles.icon}
+      </Box>
+      
+      <Typography 
+        variant="h6" 
+        sx={{ 
+          color: 'var(--uveddi-text-secondary)',
+          fontWeight: 600,
+          mb: 2,
+        }}
+      >
         {title}
       </Typography>
-      <Typography variant="h3" component="div" color={`${color}.main`} fontWeight="bold">
+      <Typography 
+        variant="h3" 
+        component="div" 
+        sx={{ 
+          color: styles.valueColor,
+          fontWeight: 700,
+          fontFamily: "'JetBrains Mono', monospace",
+          mb: 1,
+        }}
+      >
         {value}
       </Typography>
-      <Typography variant="body2" color="text.secondary">
+      <Typography 
+        variant="body2" 
+        sx={{ 
+          color: 'var(--uveddi-text-muted)',
+          fontWeight: 500,
+        }}
+      >
         {subtitle}
       </Typography>
     </Paper>

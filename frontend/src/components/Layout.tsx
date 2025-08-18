@@ -7,12 +7,14 @@ import {
   IconButton,
   Container,
   Tooltip,
+  Chip,
 } from '@mui/material';
 import {
   DarkModeOutlined,
   LightModeOutlined,
   HomeOutlined,
   AssessmentOutlined,
+  BugReportOutlined,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import type { ThemeMode } from '@/utils/theme';
@@ -37,56 +39,131 @@ function Layout({ children, themeMode, onToggleTheme }: LayoutProps) {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <AppBar position="static" elevation={1}>
-        <Toolbar>
+      <AppBar 
+        position="static" 
+        elevation={0}
+        sx={{ 
+          backgroundColor: 'var(--uveddi-primary-600)',
+          borderBottom: '1px solid var(--uveddi-primary-700)',
+        }}
+      >
+        <Toolbar sx={{ minHeight: '72px' }}>
           {/* Logo/Brand */}
           <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
-            <Typography
-              variant="h6"
-              component="div"
+            <Box
+              component="img"
+              src="/logo.png"
+              alt="Uveddi Logo"
               sx={{
-                fontWeight: 600,
+                height: 32,
+                width: 32,
+                mr: 2,
                 cursor: 'pointer',
+                filter: 'brightness(0) invert(1)', // Make logo white
                 '&:hover': { opacity: 0.8 },
               }}
               onClick={handleHomeClick}
-            >
-              Uveddi Reports
-            </Typography>
+            />
+            <Box>
+              <Typography
+                variant="h6"
+                component="div"
+                sx={{
+                  fontWeight: 700,
+                  fontFamily: "'JetBrains Mono', monospace",
+                  cursor: 'pointer',
+                  fontSize: '1.375rem',
+                  letterSpacing: '-0.025em',
+                  '&:hover': { opacity: 0.8 },
+                }}
+                onClick={handleHomeClick}
+              >
+                Uveddi
+              </Typography>
+              <Typography
+                variant="caption"
+                sx={{
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  fontSize: '0.75rem',
+                  fontWeight: 500,
+                  lineHeight: 1,
+                  mt: -0.5,
+                  display: 'block',
+                }}
+              >
+                Code Analysis Platform
+              </Typography>
+            </Box>
+            
+            {/* Version Badge */}
+            <Chip
+              label="Alpha v0.9.0"
+              size="small"
+              sx={{
+                ml: 2,
+                backgroundColor: 'var(--uveddi-action-600)',
+                color: 'white',
+                fontWeight: 600,
+                fontSize: '0.7rem',
+                height: '22px',
+                '&:hover': {
+                  backgroundColor: 'var(--uveddi-action-700)',
+                },
+              }}
+            />
           </Box>
 
           {/* Navigation */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Tooltip title="Dashboard">
+            <Tooltip title="Dashboard" arrow>
               <IconButton
                 color="inherit"
                 onClick={handleHomeClick}
                 sx={{
-                  bgcolor: location.pathname.includes('/dashboard') 
-                    ? 'rgba(255, 255, 255, 0.1)' 
+                  backgroundColor: location.pathname.includes('/dashboard') 
+                    ? 'var(--uveddi-primary-700)' 
                     : 'transparent',
+                  borderRadius: 2,
+                  '&:hover': {
+                    backgroundColor: 'var(--uveddi-primary-700)',
+                  },
                 }}
               >
                 <HomeOutlined />
               </IconButton>
             </Tooltip>
 
-            <Tooltip title="All Reports">
+            <Tooltip title="All Reports" arrow>
               <IconButton
                 color="inherit"
                 onClick={handleReportsClick}
                 sx={{
-                  bgcolor: location.pathname === '/reports' 
-                    ? 'rgba(255, 255, 255, 0.1)' 
+                  backgroundColor: location.pathname === '/reports' 
+                    ? 'var(--uveddi-primary-700)' 
                     : 'transparent',
+                  borderRadius: 2,
+                  '&:hover': {
+                    backgroundColor: 'var(--uveddi-primary-700)',
+                  },
                 }}
               >
                 <AssessmentOutlined />
               </IconButton>
             </Tooltip>
 
-            <Tooltip title={`Switch to ${themeMode === 'light' ? 'dark' : 'light'} mode`}>
-              <IconButton color="inherit" onClick={onToggleTheme}>
+            <Box sx={{ width: 1, height: 32, backgroundColor: 'rgba(255, 255, 255, 0.2)', mx: 1 }} />
+
+            <Tooltip title={`Switch to ${themeMode === 'light' ? 'dark' : 'light'} mode`} arrow>
+              <IconButton 
+                color="inherit" 
+                onClick={onToggleTheme}
+                sx={{
+                  borderRadius: 2,
+                  '&:hover': {
+                    backgroundColor: 'var(--uveddi-primary-700)',
+                  },
+                }}
+              >
                 {themeMode === 'light' ? <DarkModeOutlined /> : <LightModeOutlined />}
               </IconButton>
             </Tooltip>
@@ -99,12 +176,49 @@ function Layout({ children, themeMode, onToggleTheme }: LayoutProps) {
         component="main"
         sx={{
           flexGrow: 1,
-          bgcolor: 'background.default',
-          minHeight: 'calc(100vh - 64px)', // Account for AppBar height
+          backgroundColor: 'var(--uveddi-bg-primary)',
+          minHeight: 'calc(100vh - 72px)', // Account for updated AppBar height
         }}
       >
-        <Container maxWidth="xl" sx={{ py: 3 }}>
+        <Container maxWidth="xl" sx={{ py: 4 }}>
           {children}
+        </Container>
+      </Box>
+      
+      {/* Footer */}
+      <Box
+        component="footer"
+        sx={{
+          backgroundColor: 'var(--uveddi-secondary-100)',
+          borderTop: '1px solid var(--uveddi-border)',
+          py: 2,
+          mt: 'auto',
+        }}
+      >
+        <Container maxWidth="xl">
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                color: 'var(--uveddi-text-secondary)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+              }}
+            >
+              <BugReportOutlined sx={{ fontSize: 16 }} />
+              Powered by Uveddi Analysis Engine
+            </Typography>
+            <Typography 
+              variant="caption" 
+              sx={{ 
+                color: 'var(--uveddi-text-muted)',
+                fontFamily: "'JetBrains Mono', monospace",
+              }}
+            >
+              Build: {new Date().toISOString().split('T')[0]} • v0.9.0-alpha
+            </Typography>
+          </Box>
         </Container>
       </Box>
     </Box>
