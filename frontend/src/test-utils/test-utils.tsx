@@ -3,7 +3,8 @@ import { render, RenderOptions } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
-import { theme } from '../utils/dashboardTheme';
+import { vi } from 'vitest';
+import dashboardTheme from '../utils/dashboardTheme';
 import { DashboardEventProvider } from './mocks/DashboardEventProvider';
 
 // Create a test query client
@@ -18,11 +19,6 @@ const createTestQueryClient = () =>
         retry: false,
       },
     },
-    logger: {
-      log: console.log,
-      warn: console.warn,
-      error: process.env.NODE_ENV === 'test' ? () => {} : console.error,
-    },
   });
 
 interface AllTheProvidersProps {
@@ -34,7 +30,7 @@ const AllTheProviders: React.FC<AllTheProvidersProps> = ({ children }) => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider theme={theme}>
+      <ThemeProvider theme={dashboardTheme.createTheme('light')}>
         <CssBaseline />
         <DashboardEventProvider>
           {children}
@@ -51,7 +47,8 @@ const customRender = (
 
 // Re-export everything
 export * from '@testing-library/react';
-export * from '@testing-library/user-event';
+import userEvent from '@testing-library/user-event';
+export { userEvent };
 
 // Override render method
 export { customRender as render };
@@ -60,22 +57,20 @@ export { customRender as render };
 export const waitForChartRender = () => new Promise(resolve => setTimeout(resolve, 100));
 
 export const mockIntersectionObserver = () => {
-  const mockIntersectionObserver = jest.fn();
-  mockIntersectionObserver.mockReturnValue({
+  const mockIntersectionObserver = vi.fn(() => ({
     observe: () => null,
     unobserve: () => null,
     disconnect: () => null
-  });
+  }));
   window.IntersectionObserver = mockIntersectionObserver;
 };
 
 export const mockResizeObserver = () => {
-  const mockResizeObserver = jest.fn();
-  mockResizeObserver.mockReturnValue({
+  const mockResizeObserver = vi.fn(() => ({
     observe: () => null,
     unobserve: () => null,
     disconnect: () => null
-  });
+  }));
   window.ResizeObserver = mockResizeObserver;
 };
 

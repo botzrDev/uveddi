@@ -1,23 +1,22 @@
-import React, { ReactNode } from 'react';
-import {
-  AppBar,
-  Toolbar,
-  Typography,
-  Box,
-  IconButton,
-  Container,
-  Tooltip,
-  Chip,
-} from '@mui/material';
-import {
-  DarkModeOutlined,
-  LightModeOutlined,
-  HomeOutlined,
-  AssessmentOutlined,
-  BugReportOutlined,
-} from '@mui/icons-material';
-import { useNavigate, useLocation } from 'react-router-dom';
 import type { ThemeMode } from '@/utils/theme';
+import {
+    AssessmentOutlined,
+    DarkModeOutlined,
+    HomeOutlined,
+    LightModeOutlined,
+} from '@mui/icons-material';
+import {
+    AppBar,
+    Box,
+    Chip,
+    Container,
+    IconButton,
+    Toolbar,
+    Tooltip,
+    Typography,
+} from '@mui/material';
+import { ReactNode } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 interface LayoutProps {
   children: ReactNode;
@@ -182,43 +181,6 @@ function Layout({ children, themeMode, onToggleTheme }: LayoutProps) {
       >
         <Container maxWidth="xl" sx={{ py: 4 }}>
           {children}
-        </Container>
-      </Box>
-      
-      {/* Footer */}
-      <Box
-        component="footer"
-        sx={{
-          backgroundColor: 'var(--uveddi-secondary-100)',
-          borderTop: '1px solid var(--uveddi-border)',
-          py: 2,
-          mt: 'auto',
-        }}
-      >
-        <Container maxWidth="xl">
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography 
-              variant="body2" 
-              sx={{ 
-                color: 'var(--uveddi-text-secondary)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-              }}
-            >
-              <BugReportOutlined sx={{ fontSize: 16 }} />
-              Powered by Uveddi Analysis Engine
-            </Typography>
-            <Typography 
-              variant="caption" 
-              sx={{ 
-                color: 'var(--uveddi-text-muted)',
-                fontFamily: "'JetBrains Mono', monospace",
-              }}
-            >
-              Build: {new Date().toISOString().split('T')[0]} • v0.9.0-alpha
-            </Typography>
-          </Box>
         </Container>
       </Box>
     </Box>

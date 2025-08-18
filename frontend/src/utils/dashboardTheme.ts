@@ -272,7 +272,7 @@ export const createDashboardTheme = (mode: 'light' | 'dark') => {
               color: 'var(--uveddi-secondary-800)',
             },
           },
-          small: {
+          sizeSmall: {
             height: 24,
             fontSize: '0.75rem',
           },
@@ -350,18 +350,8 @@ export const createDashboardTheme = (mode: 'light' | 'dark') => {
       },
     },
     
-    // Dashboard-specific palette extensions
-    palette: {
-      ...baseTheme.palette,
-      
-      // Add custom dashboard colors to palette
-      dashboard: {
-        qualityScore: dashboardColors.qualityScore,
-        severity: dashboardColors.severity,
-        debt: dashboardColors.debt,
-        categories: dashboardColors.categories,
-      },
-    },
+    // Use base theme palette
+    palette: baseTheme.palette,
   });
 };
 

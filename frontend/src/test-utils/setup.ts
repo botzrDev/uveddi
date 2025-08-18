@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
 import { configure } from '@testing-library/react';
+import { vi, beforeAll, afterEach, afterAll } from 'vitest';
 import { server } from './mocks/server';
 
 // Configure testing library
@@ -21,62 +22,62 @@ global.IntersectionObserver = class IntersectionObserver {
 };
 
 // Mock HTMLCanvasElement.getContext
-HTMLCanvasElement.prototype.getContext = jest.fn(() => ({
-  fillRect: jest.fn(),
-  clearRect: jest.fn(),
-  getImageData: jest.fn(() => ({ data: new Array(4) })),
-  putImageData: jest.fn(),
-  createImageData: jest.fn(() => []),
-  setTransform: jest.fn(),
-  drawImage: jest.fn(),
-  save: jest.fn(),
-  fillText: jest.fn(),
-  restore: jest.fn(),
-  beginPath: jest.fn(),
-  moveTo: jest.fn(),
-  lineTo: jest.fn(),
-  closePath: jest.fn(),
-  stroke: jest.fn(),
-  translate: jest.fn(),
-  scale: jest.fn(),
-  rotate: jest.fn(),
-  arc: jest.fn(),
-  fill: jest.fn(),
-  measureText: jest.fn(() => ({ width: 0 })),
-  transform: jest.fn(),
-  rect: jest.fn(),
-  clip: jest.fn(),
+HTMLCanvasElement.prototype.getContext = vi.fn(() => ({
+  fillRect: vi.fn(),
+  clearRect: vi.fn(),
+  getImageData: vi.fn(() => ({ data: new Array(4) })),
+  putImageData: vi.fn(),
+  createImageData: vi.fn(() => []),
+  setTransform: vi.fn(),
+  drawImage: vi.fn(),
+  save: vi.fn(),
+  fillText: vi.fn(),
+  restore: vi.fn(),
+  beginPath: vi.fn(),
+  moveTo: vi.fn(),
+  lineTo: vi.fn(),
+  closePath: vi.fn(),
+  stroke: vi.fn(),
+  translate: vi.fn(),
+  scale: vi.fn(),
+  rotate: vi.fn(),
+  arc: vi.fn(),
+  fill: vi.fn(),
+  measureText: vi.fn(() => ({ width: 0 })),
+  transform: vi.fn(),
+  rect: vi.fn(),
+  clip: vi.fn(),
 })) as any;
 
 // Mock Chart.js
-jest.mock('chart.js', () => ({
-  Chart: jest.fn(() => ({
-    destroy: jest.fn(),
-    update: jest.fn(),
-    resize: jest.fn(),
+vi.mock('chart.js', () => ({
+  Chart: vi.fn(() => ({
+    destroy: vi.fn(),
+    update: vi.fn(),
+    resize: vi.fn(),
   })),
   registerables: [],
 }));
 
 // Mock Cytoscape
-jest.mock('cytoscape', () => ({
+vi.mock('cytoscape', () => ({
   __esModule: true,
-  default: jest.fn(() => ({
-    add: jest.fn(),
-    remove: jest.fn(),
-    layout: jest.fn(() => ({ run: jest.fn() })),
-    fit: jest.fn(),
-    destroy: jest.fn(),
-    on: jest.fn(),
-    off: jest.fn(),
-    elements: jest.fn(() => ({ length: 0 })),
+  default: vi.fn(() => ({
+    add: vi.fn(),
+    remove: vi.fn(),
+    layout: vi.fn(() => ({ run: vi.fn() })),
+    fit: vi.fn(),
+    destroy: vi.fn(),
+    on: vi.fn(),
+    off: vi.fn(),
+    elements: vi.fn(() => ({ length: 0 })),
   })),
 }));
 
 // Mock React Grid Layout
-jest.mock('react-grid-layout', () => ({
-  Responsive: jest.fn(({ children }) => children),
-  WidthProvider: jest.fn((component) => component),
+vi.mock('react-grid-layout', () => ({
+  Responsive: vi.fn(({ children }) => children),
+  WidthProvider: vi.fn((component) => component),
 }));
 
 // Setup MSW

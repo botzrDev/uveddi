@@ -1,24 +1,22 @@
 import FindingsList from '@/components/FindingsList';
 import MermaidDiagram from '@/components/MermaidDiagram';
-import MermaidRenderingTest from '@/components/MermaidRenderingTest';
-import SimpleMermaidTest from '@/components/SimpleMermaidTest';
 import UveddiLoader from '@/components/UveddiLoader';
 import { useDemoReport, useReport } from '@/hooks/useReport';
 import {
+  BugReportOutlined,
+  DownloadOutlined,
+  ShareOutlined,
+  TrendingUpOutlined,
+} from '@mui/icons-material';
+import {
   Alert,
   Box,
+  Button,
   Chip,
   Grid,
   Paper,
   Typography,
-  Button,
 } from '@mui/material';
-import {
-  DownloadOutlined,
-  ShareOutlined,
-  BugReportOutlined,
-  TrendingUpOutlined,
-} from '@mui/icons-material';
 import { useParams } from 'react-router-dom';
 
 function DashboardPage() {
@@ -97,8 +95,9 @@ function DashboardPage() {
         sx={{ 
           p: 4, 
           mb: 4, 
-          background: 'linear-gradient(135deg, var(--uveddi-primary-50) 0%, var(--uveddi-secondary-50) 100%)',
+          background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
           border: '1px solid var(--uveddi-border)',
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
         }}
       >
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
@@ -108,8 +107,9 @@ function DashboardPage() {
               component="h1" 
               sx={{ 
                 fontWeight: 700,
-                color: 'var(--uveddi-text-primary)',
+                color: '#1f2937',
                 mb: 1,
+                textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
               }}
             >
               {report.project?.name || 'Unknown Project'}
@@ -117,8 +117,9 @@ function DashboardPage() {
             <Typography 
               variant="body1" 
               sx={{ 
-                color: 'var(--uveddi-text-secondary)',
+                color: '#6b7280',
                 mb: 2,
+                fontWeight: 500,
               }}
             >
               Analysis completed on{' '}
@@ -133,11 +134,11 @@ function DashboardPage() {
               variant="outlined"
               startIcon={<ShareOutlined />}
               sx={{
-                borderColor: 'var(--uveddi-primary-600)',
-                color: 'var(--uveddi-primary-600)',
+                borderColor: '#3b82f6',
+                color: '#3b82f6',
                 '&:hover': {
-                  backgroundColor: 'var(--uveddi-primary-50)',
-                  borderColor: 'var(--uveddi-primary-700)',
+                  backgroundColor: '#eff6ff',
+                  borderColor: '#2563eb',
                 },
               }}
             >
@@ -147,9 +148,9 @@ function DashboardPage() {
               variant="contained"
               startIcon={<DownloadOutlined />}
               sx={{
-                backgroundColor: 'var(--uveddi-primary-600)',
+                backgroundColor: '#3b82f6',
                 '&:hover': {
-                  backgroundColor: 'var(--uveddi-primary-700)',
+                  backgroundColor: '#2563eb',
                 },
               }}
             >
@@ -166,9 +167,10 @@ function DashboardPage() {
               label={lang} 
               size="small" 
               sx={{
-                backgroundColor: 'var(--uveddi-primary-100)',
-                color: 'var(--uveddi-primary-800)',
+                backgroundColor: '#dbeafe',
+                color: '#1e40af',
                 fontWeight: 600,
+                border: '1px solid #93c5fd',
               }}
             />
           ))}
@@ -177,9 +179,10 @@ function DashboardPage() {
               label="Demo Data" 
               size="small"
               sx={{
-                backgroundColor: 'var(--uveddi-action-100)',
-                color: 'var(--uveddi-action-800)',
+                backgroundColor: '#fbbf24',
+                color: '#92400e',
                 fontWeight: 600,
+                border: '1px solid #fcd34d',
               }}
             />
           )}
@@ -188,9 +191,10 @@ function DashboardPage() {
             label="AI-Enhanced Analysis"
             size="small"
             sx={{
-              backgroundColor: 'var(--uveddi-success-100)',
-              color: 'var(--uveddi-success-800)',
+              backgroundColor: '#d1fae5',
+              color: '#065f46',
               fontWeight: 600,
+              border: '1px solid #6ee7b7',
             }}
           />
         </Box>
@@ -299,11 +303,42 @@ function DashboardPage() {
         </Grid>
       </Grid>
 
-      {/* Simple Mermaid Test */}
-      <SimpleMermaidTest />
-      
-      {/* Mermaid Rendering Method Comparison */}
-      <MermaidRenderingTest />
+      {/* Footer */}
+      <Box
+        component="footer"
+        sx={{
+          backgroundColor: 'var(--uveddi-secondary-100)',
+          borderTop: '1px solid var(--uveddi-border)',
+          borderRadius: 2,
+          py: 3,
+          mb: 4,
+          mt: 2,
+        }}
+      >
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              color: 'var(--uveddi-text-secondary)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+            }}
+          >
+            <BugReportOutlined sx={{ fontSize: 16 }} />
+            Powered by Uveddi Analysis Engine
+          </Typography>
+          <Typography 
+            variant="caption" 
+            sx={{ 
+              color: 'var(--uveddi-text-muted)',
+              fontFamily: "'JetBrains Mono', monospace",
+            }}
+          >
+            Build: {new Date().toISOString().split('T')[0]} • v0.9.0-alpha
+          </Typography>
+        </Box>
+      </Box>
       
       {/* Architectural Diagrams Section */}
       {report.diagrams && report.diagrams.length > 0 && (

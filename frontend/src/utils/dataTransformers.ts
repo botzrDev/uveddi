@@ -188,7 +188,7 @@ export const transformToTechnicalDebtSummary = (
       unit: 'issues',
       trend: 'worsening',
       priority: 'high',
-      category: 'quality',
+      category: 'code_quality',
     },
   ];
   
