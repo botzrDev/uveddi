@@ -22,8 +22,8 @@ const QUALITY_MODES = {
     timeout: 15000,
     complexity: 'medium',
     deviceScaleFactor: 1.5,
-    width: 1200,
-    height: 800,
+    width: 1600, // Increased from 1200 for better diagram rendering
+    height: 1200, // Increased from 800 for better diagram rendering
     mermaidTheme: 'default',
     flowchartCurve: 'basis',
     optimizations: {
@@ -80,7 +80,8 @@ function getMermaidConfig(mode = 'balanced') {
       curve: qualityConfig.flowchartCurve,
       padding: qualityConfig.complexity === 'low' ? 10 : 20,
       nodeSpacing: qualityConfig.complexity === 'low' ? 30 : 50,
-      rankSpacing: qualityConfig.complexity === 'low' ? 30 : 50
+      rankSpacing: qualityConfig.complexity === 'low' ? 30 : 50,
+      useMaxWidth: false, // Disable width constraints
     },
     sequence: {
       diagramMarginX: qualityConfig.complexity === 'low' ? 30 : 50,

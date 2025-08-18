@@ -354,7 +354,10 @@ app.get('/api/v1/reports/demo', async (req, res) => {
         endLine: issue.endLine || 0,
         codeSnippet: issue.codeSnippet || "",
         tags: [issue.antiPatternType.toLowerCase().replace(/\s+/g, '-')],
-        aiExplanation: issue.aiExplanation
+        detector: issue.detectorName || 'uveddi',
+        confidence: issue.confidence || 0.8,
+        aiExplanation: issue.aiExplanation,
+        relatedFindings: []
       })),
       dependencyGraph: {
         nodes: [],

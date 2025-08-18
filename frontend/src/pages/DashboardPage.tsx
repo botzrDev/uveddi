@@ -1,5 +1,6 @@
 import FindingsList from '@/components/FindingsList';
 import MermaidDiagram from '@/components/MermaidDiagram';
+import MermaidRenderingTest from '@/components/MermaidRenderingTest';
 import SimpleMermaidTest from '@/components/SimpleMermaidTest';
 import { useDemoReport, useReport } from '@/hooks/useReport';
 import {
@@ -72,15 +73,32 @@ function DashboardPage() {
     );
   }
 
+  // Additional safety check for required properties
+  if (!report.project || !report.summary) {
+    return (
+      <Alert 
+        severity="error" 
+        sx={{ maxWidth: 600, mx: 'auto', mt: 4 }}
+      >
+        <Typography variant="h6" gutterBottom>
+          Invalid report data
+        </Typography>
+        <Typography variant="body2">
+          The report data is incomplete or corrupted.
+        </Typography>
+      </Alert>
+    );
+  }
+
   return (
     <Box>
       {/* Header */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h3" component="h1" gutterBottom>
-          {report.project.name}
+          {report.project?.name || 'Unknown Project'}
         </Typography>
         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
-          {report.project.languages.map((lang) => (
+          {(report.project?.languages || []).map((lang: string) => (
             <Chip key={lang} label={lang} size="small" variant="outlined" />
           ))}
           {isDemoReport && (
@@ -89,8 +107,8 @@ function DashboardPage() {
         </Box>
         <Typography variant="body1" color="text.secondary">
           Analysis completed on{' '}
-          {new Date(report.summary.timeGenerated).toLocaleDateString()} at{' '}
-          {new Date(report.summary.timeGenerated).toLocaleTimeString()}
+          {new Date(report.summary?.timeGenerated || Date.now()).toLocaleDateString()} at{' '}
+          {new Date(report.summary?.timeGenerated || Date.now()).toLocaleTimeString()}
         </Typography>
       </Box>
 
@@ -99,7 +117,7 @@ function DashboardPage() {
         <Grid item xs={12} sm={6} md={3}>
           <SummaryCard
             title="Code Quality"
-            value={`${Math.round(report.summary.coverage)}%`}
+            value={`${Math.round(report.summary?.coverage || 0)}%`}
             subtitle="Overall Score"
             color="primary"
           />
@@ -107,15 +125,15 @@ function DashboardPage() {
         <Grid item xs={12} sm={6} md={3}>
           <SummaryCard
             title="Total Issues"
-            value={report.summary.issuesTotal.toString()}
-            subtitle={`${report.summary.filesAnalyzed} files analyzed`}
+            value={(report.summary?.issuesTotal || 0).toString()}
+            subtitle={`${report.summary?.filesAnalyzed || 0} files analyzed`}
             color="error"
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <SummaryCard
             title="Components"
-            value={report.summary.componentsAnalyzed.toString()}
+            value={(report.summary?.componentsAnalyzed || 0).toString()}
             subtitle="Architectural components"
             color="info"
           />
@@ -123,7 +141,7 @@ function DashboardPage() {
         <Grid item xs={12} sm={6} md={3}>
           <SummaryCard
             title="Analysis Time"
-            value={`${(report.summary.analysisDurationMs / 1000).toFixed(1)}s`}
+            value={`${((report.summary?.analysisDurationMs || 0) / 1000).toFixed(1)}s`}
             subtitle="Processing time"
             color="success"
           />
@@ -138,7 +156,7 @@ function DashboardPage() {
               Issues by Severity
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {Object.entries(report.summary.issuesBySeverity).map(([severity, count]) => (
+              {Object.entries(report.summary?.issuesBySeverity || {}).map(([severity, count]) => (
                 <Box
                   key={severity}
                   sx={{
@@ -170,7 +188,7 @@ function DashboardPage() {
               Issues by Category
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {Object.entries(report.summary.issuesByCategory).map(([category, count]) => (
+              {Object.entries(report.summary?.issuesByCategory || {}).map(([category, count]) => (
                 <Box
                   key={category}
                   sx={{
@@ -200,6 +218,9 @@ function DashboardPage() {
       {/* Simple Mermaid Test */}
       <SimpleMermaidTest />
       
+      {/* Mermaid Rendering Method Comparison */}
+      <MermaidRenderingTest />
+      
       {/* Architectural Diagrams Section */}
       {report.diagrams && report.diagrams.length > 0 && (
         <Box sx={{ mb: 4 }}>
@@ -207,7 +228,7 @@ function DashboardPage() {
             Architectural Diagrams
           </Typography>
           <Grid container spacing={3}>
-            {report.diagrams.map((diagram, index) => (
+            {report.diagrams.map((diagram: any, index: number) => (
               <Grid item xs={12} key={diagram.id || index}>
                 <MermaidDiagram 
                   definition={diagram.source}

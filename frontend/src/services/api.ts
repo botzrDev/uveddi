@@ -126,9 +126,13 @@ class ApiService {
     try {
       // Fallback to backend API
       console.log('🔄 Trying backend API...');
-      const response = await this.fetchWithErrorHandling<InteractiveReport>(
+      const response = await this.fetchWithErrorHandling<any>(
         `${this.baseUrl}/reports/demo`
       );
+      // The API returns data wrapped in a 'data' property
+      if (response.data) {
+        return response.data as InteractiveReport;
+      }
       return response;
     } catch (error) {
       // Final fallback to mock data if backend is not available

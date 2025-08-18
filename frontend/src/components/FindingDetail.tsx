@@ -1,37 +1,37 @@
-import React, { useState } from 'react';
-import {
-  Box,
-  Typography,
-  Paper,
-  Tabs,
-  Tab,
-  Chip,
-  Alert,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
-  Grid,
-  Button,
-  IconButton,
-  Tooltip,
-} from '@mui/material';
-import {
-  Code,
-  Psychology,
-  AccountTree,
-  Lightbulb,
-  Info,
-  Warning,
-  Error as ErrorIcon,
-  CheckCircle,
-  FileCopy,
-  OpenInNew,
-} from '@mui/icons-material';
 import type { Finding } from '@/types/api';
+import { generateDiagramForFinding } from '@/utils/diagramGenerators';
+import {
+    AccountTree,
+    CheckCircle,
+    Code,
+    Error as ErrorIcon,
+    FileCopy,
+    Info,
+    Lightbulb,
+    OpenInNew,
+    Psychology,
+    Warning,
+} from '@mui/icons-material';
+import {
+    Alert,
+    Box,
+    Button,
+    Chip,
+    Grid,
+    IconButton,
+    List,
+    ListItem,
+    ListItemIcon,
+    ListItemText,
+    Paper,
+    Tab,
+    Tabs,
+    Tooltip,
+    Typography,
+} from '@mui/material';
+import { useState } from 'react';
 import CodeSnippet from './CodeSnippet';
 import MermaidDiagram from './MermaidDiagram';
-import { generateDiagramForFinding } from '@/utils/diagramGenerators';
 
 interface FindingDetailProps {
   finding: Finding;
@@ -141,12 +141,12 @@ export default function FindingDetail({ finding }: FindingDetailProps) {
   return (
     <Paper sx={{ mt: 2, overflow: 'hidden' }}>
       {/* Header with finding summary */}
-      <Box sx={{ p: 3, bgcolor: 'grey.50', borderBottom: 1, borderColor: 'divider' }}>
+      <Box sx={{ p: 3, bgcolor: 'primary.dark', color: 'primary.contrastText', borderBottom: 1, borderColor: 'divider' }}>
         <Grid container spacing={2} alignItems="center">
           <Grid item xs={12} md={8}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               {getSeverityIcon(finding.severity)}
-              <Typography variant="h5" component="h3">
+              <Typography variant="h5" component="h3" color="inherit">
                 {finding.title}
               </Typography>
             </Box>
@@ -156,45 +156,67 @@ export default function FindingDetail({ finding }: FindingDetailProps) {
                 label={finding.severity} 
                 size="small" 
                 color={getSeverityColor(finding.severity)}
+                sx={{ 
+                  bgcolor: getSeverityColor(finding.severity) === 'error' ? '#d32f2f' : 
+                          getSeverityColor(finding.severity) === 'warning' ? '#ed6c02' :
+                          getSeverityColor(finding.severity) === 'info' ? '#0288d1' :
+                          getSeverityColor(finding.severity) === 'success' ? '#2e7d32' : 'grey.500',
+                  color: 'white',
+                  fontWeight: 'bold'
+                }}
               />
               <Chip 
                 label={finding.type} 
                 size="small" 
                 variant="outlined"
+                sx={{ 
+                  borderColor: 'primary.contrastText', 
+                  color: 'primary.contrastText',
+                  bgcolor: 'rgba(255,255,255,0.1)'
+                }}
               />
               <Chip 
                 label={finding.detector} 
                 size="small" 
                 variant="outlined"
-                color="secondary"
+                sx={{ 
+                  borderColor: 'primary.contrastText', 
+                  color: 'primary.contrastText',
+                  bgcolor: 'rgba(255,255,255,0.1)'
+                }}
               />
               {finding.confidence && (
                 <Chip 
                   label={`${Math.round(finding.confidence * 100)}% confidence`} 
                   size="small" 
                   variant="outlined"
+                  sx={{ 
+                    borderColor: 'primary.contrastText', 
+                    color: 'primary.contrastText',
+                    bgcolor: 'rgba(255,255,255,0.1)'
+                  }}
                 />
               )}
             </Box>
             
-            <Typography variant="body1" color="text.secondary">
+            <Typography variant="body1" color="inherit" sx={{ opacity: 0.9 }}>
               {finding.message}
             </Typography>
           </Grid>
           
           <Grid item xs={12} md={4}>
             <Box sx={{ textAlign: { xs: 'left', md: 'right' } }}>
-              <Typography variant="body2" color="text.secondary" gutterBottom>
+              <Typography variant="body2" color="inherit" sx={{ opacity: 0.9 }} gutterBottom>
                 <strong>File:</strong> {finding.file}
               </Typography>
               {finding.startLine && (
-                <Typography variant="body2" color="text.secondary" gutterBottom>
+                <Typography variant="body2" color="inherit" sx={{ opacity: 0.9 }} gutterBottom>
                   <strong>Lines:</strong> {finding.startLine}
                   {finding.endLine && finding.endLine !== finding.startLine && `-${finding.endLine}`}
                 </Typography>
               )}
               {finding.column && (
-                <Typography variant="body2" color="text.secondary" gutterBottom>
+                <Typography variant="body2" color="inherit" sx={{ opacity: 0.9 }} gutterBottom>
                   <strong>Column:</strong> {finding.column}
                 </Typography>
               )}
@@ -204,12 +226,13 @@ export default function FindingDetail({ finding }: FindingDetailProps) {
                   <IconButton 
                     size="small"
                     onClick={() => navigator.clipboard.writeText(finding.file)}
+                    sx={{ color: 'primary.contrastText' }}
                   >
                     <FileCopy />
                   </IconButton>
                 </Tooltip>
                 <Tooltip title="Open in editor">
-                  <IconButton size="small">
+                  <IconButton size="small" sx={{ color: 'primary.contrastText' }}>
                     <OpenInNew />
                   </IconButton>
                 </Tooltip>
@@ -312,6 +335,7 @@ export default function FindingDetail({ finding }: FindingDetailProps) {
           <MermaidDiagram 
             definition={finalDiagram}
             title={`${finding.type} Analysis`}
+            previewHeight="400px"
           />
           
           <Box sx={{ mt: 2 }}>
@@ -331,7 +355,7 @@ export default function FindingDetail({ finding }: FindingDetailProps) {
               AI-Powered Analysis
             </Typography>
             
-            <Paper sx={{ p: 3, bgcolor: 'grey.50' }}>
+            <Paper sx={{ p: 3, bgcolor: 'background.paper', color: 'text.primary' }}>
               <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
                 {finding.aiExplanation}
               </Typography>
@@ -355,7 +379,7 @@ export default function FindingDetail({ finding }: FindingDetailProps) {
               Remediation Recommendations
             </Typography>
             
-            <Paper sx={{ p: 3, bgcolor: 'success.light', color: 'success.contrastText' }}>
+            <Paper sx={{ p: 3, bgcolor: 'success.dark', color: 'common.white' }}>
               <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
                 {finding.recommendation}
               </Typography>

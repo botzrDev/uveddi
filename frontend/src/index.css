@@ -140,17 +140,66 @@ textarea:focus-visible {
 .mermaid-container {
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start; /* Changed from center to flex-start */
   padding: 16px;
   border: 1px solid rgba(0, 0, 0, 0.12);
   border-radius: 8px;
   background-color: #fafafa;
-  overflow: auto;
+  overflow: visible; /* Changed from auto to visible */
+  min-height: 200px;
 }
 
 [data-theme="dark"] .mermaid-container {
   border-color: rgba(255, 255, 255, 0.12);
   background-color: #1e1e1e;
+}
+
+/* Enhanced Mermaid SVG styling for better rendering */
+.mermaid-container svg,
+div[data-mermaid] svg,
+.mermaid svg {
+  width: auto !important;
+  height: auto !important;
+  max-width: 100%;
+  display: block;
+  margin: 0 auto;
+  /* Remove any height constraints that might cut off diagrams */
+  min-height: 200px;
+  /* Ensure text is readable */
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Prevent text cutoff in Mermaid diagrams */
+.mermaid-container svg text,
+div[data-mermaid] svg text,
+.mermaid svg text {
+  font-size: 14px !important;
+  fill: currentColor;
+  text-anchor: middle;
+}
+
+/* Ensure flowchart nodes are properly sized */
+.mermaid-container svg .node rect,
+.mermaid-container svg .node circle,
+.mermaid-container svg .node ellipse,
+div[data-mermaid] svg .node rect,
+div[data-mermaid] svg .node circle,
+div[data-mermaid] svg .node ellipse {
+  stroke-width: 2px;
+  fill: #f9f9f9;
+  stroke: #333;
+}
+
+/* Dark mode adjustments for Mermaid */
+[data-theme="dark"] .mermaid-container svg .node rect,
+[data-theme="dark"] .mermaid-container svg .node circle,
+[data-theme="dark"] .mermaid-container svg .node ellipse {
+  fill: #2d2d2d;
+  stroke: #ccc;
+}
+
+[data-theme="dark"] .mermaid-container svg text {
+  fill: #fff;
 }
 
 /* Print styles */

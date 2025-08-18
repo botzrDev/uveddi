@@ -1,11 +1,11 @@
 // Utility functions to generate diagrams based on finding type
 
 export function generateDiagramForFinding(finding: any): string {
-  const type = finding.type?.toLowerCase();
-  console.log('Generating diagram for finding type:', type, 'from original:', finding.type);
+  const typeKey = (finding.type || '').toString().toLowerCase().replace(/_/g, ' ').trim();
+  console.log('Generating diagram for finding type:', typeKey, 'from original:', finding.type);
   
   try {
-    switch (type) {
+    switch (typeKey) {
       case 'god object':
         return generateGodObjectDiagram(finding);
       case 'dead code':
@@ -17,7 +17,7 @@ export function generateDiagramForFinding(finding: any): string {
       case 'tight coupling':
         return generateTightCouplingDiagram(finding);
       default:
-        console.log('Using generic diagram for type:', type);
+        console.log('Using generic diagram for type:', typeKey);
         return generateGenericDiagram(finding);
     }
   } catch (error) {
@@ -42,10 +42,21 @@ function generateSimpleFallbackDiagram(finding: any): string {
     style Fix fill:#e8f5e8,stroke:#4caf50,stroke-width:2px`;
 }
 
+function sanitizeLabel(input: any): string {
+  const s = String(input ?? '');
+  return s
+    .replace(/"/g, "'")
+    .replace(/`/g, "'")
+    .replace(/[{}<>]/g, ' ')
+    .replace(/\n+/g, '\\n')
+    .replace(/[^\x20-\x7E]/g, '');
+}
+
 function generateGodObjectDiagram(finding: any): string {
   // Extract real information from the finding
-  const fileName = finding.file?.split('/').pop()?.replace('.rs', '') || 'GodObject';
-  const filePath = finding.file || 'unknown/path';
+  const rawFileName = finding.file?.split('/').pop()?.replace('.rs', '') || 'GodObject';
+  const fileName = sanitizeLabel(rawFileName);
+  const filePath = sanitizeLabel(finding.file || 'unknown/path');
   const lineNumber = finding.startLine || '?';
   
   // Create a clean class name for Mermaid
@@ -111,89 +122,97 @@ function generateDeadCodeDiagram(finding: any): string {
   const fileName = finding.file?.split('/').pop()?.replace('.rs', '') || 'unknown_file';
   const codeSnippet = finding.codeSnippet || finding.title || 'unused_code';
   const filePath = finding.file || 'unknown/path';
+  const startLine = finding.startLine || finding.line || '?';
+  const endLine = finding.endLine || '';
+  const confidence = finding.confidence || (finding.description?.match(/confidence: ([\d.]+)%/) ? 
+    parseFloat(finding.description.match(/confidence: ([\d.]+)%/)[1]) : null);
+  
+  // Parse the type of dead code from the description or code snippet
+  let codeType = 'code';
+  let codeName = codeSnippet;
+  
+  if (finding.description?.includes("function '")) {
+    codeType = 'function';
+    const match = finding.description.match(/function '([^']+)'/);
+    if (match) codeName = match[1];
+  } else if (finding.description?.includes("struct '")) {
+    codeType = 'struct';
+    const match = finding.description.match(/struct '([^']+)'/);
+    if (match) codeName = match[1];
+  } else if (finding.description?.includes("variable '")) {
+    codeType = 'variable';
+    const match = finding.description.match(/variable '([^']+)'/);
+    if (match) codeName = match[1];
+  }
   
   // Create clean names for Mermaid
-  const cleanFileName = fileName
-    .replace(/[^a-zA-Z0-9_]/g, '_')
-    .replace(/^[0-9]/, 'file_$&')
-    .substring(0, 20);
+  const cleanFileName = sanitizeLabel(fileName).replace(/[^a-zA-Z0-9_]/g, '_').substring(0, 20);
+  const cleanCodeName = sanitizeLabel(codeName).replace(/[^a-zA-Z0-9_]/g, '_').substring(0, 25);
+  const lineRange = endLine && endLine !== startLine ? `${startLine}-${endLine}` : `${startLine}`;
+  const confidenceText = confidence ? `${confidence}% confidence` : '';
   
-  const cleanCodeName = codeSnippet
-    .replace(/\s+/g, '_')
-    .replace(/[^a-zA-Z0-9_]/g, '_')
-    .replace(/^[0-9]/, '_$&')
-    .substring(0, 25);
-
-  return `flowchart TD
-    File["📄 ${fileName}<br/>${filePath}"]
-    Active["✅ Active Code<br/>Used Functions"]
-    Dead["💀 Dead Code<br/>${cleanCodeName}"]
+  // Determine icon based on code type
+  const getIcon = (type: string) => {
+    switch (type) {
+      case 'function': return '🔧';
+      case 'struct': return '📦';
+      case 'variable': return '📊';
+      default: return '💀';
+    }
+  };
+  
+  console.log('Generating Dead Code diagram for:', codeName, 'type:', codeType, 'in file:', fileName);
+  
+  return `flowchart TB
+    File["📄 ${fileName}.rs<br/>Line: ${lineRange}"]
     
-    File --> Active
-    File -.-> Dead
+    subgraph analysis["🔍 Analysis Result"]
+        DeadCode["${getIcon(codeType)} ${codeName}<br/>❌ DEAD CODE"]
+        Details["🔍 Never referenced<br/>${confidence ? confidenceText : 'Not called anywhere'}"]
+    end
     
-    Active --> Method1["fn used_function_1()"]
-    Active --> Method2["fn used_function_2()"]
-    Active --> Method3["fn active_logic()"]
+    subgraph actions["🛠️ Actions"]
+        direction TB
+        Remove["🗑️ Safe to Remove"]
+        ${codeType === 'function' ? 'Export["📤 Make Public"]' : ''}
+        Archive["📦 Archive First"]
+    end
     
-    Dead --> UnusedCode["❌ ${cleanCodeName}<br/>Line ${finding.startLine || '?'}"]
-    Dead --> DeadLogic["❌ Unreachable Code"]
-    Dead --> LegacyCode["❌ Legacy Function"]
+    File --> analysis
+    DeadCode --> Details
+    analysis -.-> actions
     
     style File fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
-    style Active fill:#e8f5e8,stroke:#4caf50,stroke-width:2px
-    style Dead fill:#ffebee,stroke:#f44336,stroke-width:3px
-    style UnusedCode fill:#ffcccb,stroke:#d32f2f,stroke-width:2px
-    style DeadLogic fill:#ffcccb,stroke:#d32f2f,stroke-width:2px
-    style LegacyCode fill:#ffcccb,stroke:#d32f2f,stroke-width:2px
-    
-    F --> I[Unreachable Code Block]
-    G --> J[Deprecated Logic]
-    H --> K[Old Implementation]
-    
-    style F fill:#ff6b6b,stroke:#d63384,stroke-width:2px
-    style G fill:#ff6b6b,stroke:#d63384,stroke-width:2px
-    style H fill:#ff6b6b,stroke:#d63384,stroke-width:2px
-    style I fill:#ffcccc,stroke:#d63384,stroke-width:1px
-    style J fill:#ffcccc,stroke:#d63384,stroke-width:1px
-    style K fill:#ffcccc,stroke:#d63384,stroke-width:1px
-    
-    classDef deadCode fill:#ff6b6b,stroke:#d63384,stroke-width:2px,color:#fff
-    classDef unreachable fill:#ffcccc,stroke:#d63384,stroke-width:1px
-    classDef active fill:#6bcf7f,stroke:#28a745,stroke-width:2px`;
+    style DeadCode fill:#ffebee,stroke:#d32f2f,stroke-width:3px,color:#000
+    style Details fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    style Remove fill:#ffcccb,stroke:#d32f2f,stroke-width:2px
+    ${codeType === 'function' ? 'style Export fill:#e8f5e8,stroke:#4caf50,stroke-width:2px' : ''}
+    style Archive fill:#e3f2fd,stroke:#1976d2,stroke-width:2px`;
 }
 
 function generateCodeDuplicationDiagram(finding: any): string {
+  const filePath = sanitizeLabel(finding.file || 'unknown.rs');
+  const fileName = sanitizeLabel((finding.file || 'unknown.rs').split('/').pop() || 'unknown.rs');
+  const codeName = sanitizeLabel(finding.codeSnippet || finding.title || 'duplicated_code');
+  const similarityMatch = (finding.message || finding.description || '').match(/(\d{2,3})%/);
+  const similarity = similarityMatch ? `${similarityMatch[1]}%` : 'high';
+
   return `flowchart LR
-    A[Method A] --> D[Duplicated Logic Block]
-    B[Method B] --> D
-    C[Method C] --> D
+    A["📄 ${fileName}"] --> D["📋 Duplicated: ${codeName}"]
+    B[Other Location] --> D
     
-    D --> E[Common Functionality]
+    D --> E[Similarity: ${similarity}]
     E --> F[Refactoring Opportunity]
     
-    F --> G[Extract Method]
-    F --> H[Create Utility Class]
-    F --> I[Use Inheritance]
+    F --> G[Extract Function]
+    F --> H[Create Utility]
+    F --> I[Deduplicate Shared Logic]
     
     style D fill:#ffd93d,stroke:#ffc107,stroke-width:3px
     style F fill:#6bcf7f,stroke:#28a745,stroke-width:2px
     style G fill:#b3d9ff,stroke:#007bff,stroke-width:2px
     style H fill:#b3d9ff,stroke:#007bff,stroke-width:2px
-    style I fill:#b3d9ff,stroke:#007bff,stroke-width:2px
-    
-    subgraph "Current State"
-        A
-        B
-        C
-        D
-    end
-    
-    subgraph "Refactored State"
-        G
-        H
-        I
-    end`;
+    style I fill:#b3d9ff,stroke:#007bff,stroke-width:2px`;
 }
 
 function generateCircularDependencyDiagram(_finding: any): string {
