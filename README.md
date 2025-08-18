@@ -2,7 +2,7 @@
 
 [![Rust](https://img.shields.io/badge/language-Rust-orange.svg)](https://www.rust-lang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Alpha Release](https://img.shields.io/badge/version-v0.9.0--alpha-red.svg)](https://github.com/botzrDev/uveddi/releases)
+[![Version](https://img.shields.io/badge/version-v0.9.0-blue.svg)](https://github.com/botzrDev/uveddi/releases)
 
 > **🚧 Alpha Release** - This is a pre-release version for testing and feedback.
 
@@ -59,7 +59,7 @@ uveddi analyze .
 uveddi analyze /path/to/project
 
 # Generate HTML report
-uveddi analyze . --output-format html --output-file report.html
+uveddi analyze . --output-format html --output report.html
 ```
 
 ### Advanced Usage
@@ -71,7 +71,11 @@ uveddi analyze . --languages rust,python,javascript
 uveddi analyze . --verbose --timing
 
 # Custom configuration
-uveddi analyze . --config ./config/my-config.toml
+# Note: the `analyze` subcommand does not accept a `--config` flag. Manage configuration via a `uveddi.toml` file
+# or the `uveddi config` subcommands (show/set/validate). Example:
+#
+#   # write a config file (uveddi.toml) and then validate it
+#   uveddi config validate --file ./config/my-config.toml
 ```
 
 ## 📊 Sample Output
@@ -100,31 +104,33 @@ $ uveddi analyze ./my-project
 
 ## ⚙️ Configuration
 
-Create a `uveddi.toml` configuration file:
+Create a `uveddi.toml` configuration file that matches the programmatic `Config` shape.
+
+Example `uveddi.toml`:
 
 ```toml
-[analysis]
-# Languages to analyze
-languages = ["rust", "python", "javascript"]
+# Optional: model used by local AI integrations (OLLAMA)
+ollama_model = "deepseek-coder:6.7b-instruct-q4_0"
 
-# Analysis depth
-max_depth = 10
-timeout_seconds = 300
+[dead_code]
+# Confidence threshold for dead-code detection (0.0 - 1.0)
+confidence_threshold = 0.9
+library_mode = true
+ignore_patterns = ["test", "spec", "mock"]
 
-[thresholds]
-# God object complexity threshold
-god_object_threshold = 100
-
-# Maximum function length
-max_function_lines = 50
-
-[output]
-# Default output format
-format = "html"
-
-# Include performance metrics
-include_timing = true
+[large_classes]
+# Thresholds for large/class complexity
+max_logical_loc = 1000
+max_methods = 20
+max_fields = 15
+max_cyclomatic_complexity = 50
+max_cognitive_complexity = 40
+max_lcom_score = 0.8
+max_coupling = 30
+ignore_patterns = ["tests/", "examples/"]
 ```
+
+You can also set configuration via environment variables (see `Config::from_env()` in the source).
 
 ## 🐛 Known Limitations (Alpha)
 
@@ -132,6 +138,11 @@ include_timing = true
 - **Large Codebases**: Projects with >10,000 files may experience timeouts
 - **Memory Usage**: Analysis of very large files (>1MB) may be slow
 - **Plugin System**: Custom detectors not yet supported
+
+Note: this repository is currently in alpha. There are known compilation and stability issues
+recorded in the project diagnostics; some features or detectors may not compile cleanly in the
+current branch. If you hit build errors, please open an issue with reproduction steps and the
+output from `cargo build` so the maintainers can triage.
 
 ## 🤝 Contributing
 
