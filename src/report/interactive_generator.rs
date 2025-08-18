@@ -447,7 +447,7 @@ impl InteractiveReportGenerator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempdir::TempDir;
+    use tempfile::{tempdir, TempDir};
 
     #[tokio::test]
     async fn test_generate_demo_report() {
@@ -462,7 +462,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_save_and_load_report() {
-        let temp_dir = TempDir::new("uveddi_test").unwrap();
+    let temp_dir = tempdir().unwrap();
         let config = InteractiveReportConfig {
             storage_path: temp_dir.path().to_path_buf(),
             auto_save: false,
@@ -484,7 +484,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_list_reports() {
-        let temp_dir = TempDir::new("uveddi_test").unwrap();
+    let temp_dir = tempdir().unwrap();
         let config = InteractiveReportConfig {
             storage_path: temp_dir.path().to_path_buf(),
             auto_save: false,

@@ -855,6 +855,7 @@ mod tests {
     use super::*;
     use tera::Value;
     use std::collections::HashMap;
+    use chrono::Utc;
 
     #[tokio::test]
     async fn test_modern_generator_creation() {
@@ -868,11 +869,12 @@ mod tests {
 
     #[test]
     fn test_severity_counts() {
-        let generator = ModernReportGenerator::new().unwrap_or_else(|_| {
+    let generator = ModernReportGenerator::new().unwrap_or_else(|_| {
             // Create a minimal generator for testing
             ModernReportGenerator {
                 tera: Tera::default(),
                 template_cache: HashMap::new(),
+                mermaid_generator: crate::analysis::mermaid_generator::MermaidGenerator::for_tests(),
             }
         });
         
@@ -884,6 +886,12 @@ mod tests {
                 file_path: "/test/file.py".to_string(),
                 start_line: Some(10),
                 end_line: Some(15),
+                line_number: Some(10),
+                column_number: None,
+                message: "Detected critical issue".to_string(),
+                metadata: "{}".to_string(),
+                detector_name: "unit_test_detector".to_string(),
+                created_at: Utc::now(),
                 severity: "CRITICAL".to_string(),
                 description: "Test architectural issue".to_string(),
                 code_snippet: Some("def problematic_function():\n    pass".to_string()),
@@ -902,16 +910,17 @@ mod tests {
         ModernReportGenerator::register_custom_filters(&mut tera);
         
         // Test normal percentage calculation
-        let mut args = HashMap::new();
-        args.insert("total".to_string(), Value::Number(10.0.into()));
-        
-        let result = tera.get_filter("safe_percentage").unwrap()(&Value::Number(5.0.into()), &args);
+    let mut args = HashMap::new();
+    args.insert("total".to_string(), Value::Number(10.into()));
+    let filter = tera.get_filter("safe_percentage").unwrap();
+    let result = filter.filter(&Value::Number(5.into()), &args);
         assert!(result.is_ok());
         assert_eq!(result.unwrap().as_f64(), Some(50.0));
         
         // Test division by zero (should return 0)
-        args.insert("total".to_string(), Value::Number(0.0.into()));
-        let result = tera.get_filter("safe_percentage").unwrap()(&Value::Number(5.0.into()), &args);
+    args.insert("total".to_string(), Value::Number(0.into()));
+    let filter = tera.get_filter("safe_percentage").unwrap();
+    let result = filter.filter(&Value::Number(5.into()), &args);
         assert!(result.is_ok());
         assert_eq!(result.unwrap().as_f64(), Some(0.0));
     }
@@ -922,15 +931,16 @@ mod tests {
         ModernReportGenerator::register_custom_filters(&mut tera);
         
         // Test normal rounding
-        let mut args = HashMap::new();
-        args.insert("precision".to_string(), Value::Number(1.into()));
-        
-        let result = tera.get_filter("safe_round").unwrap()(&Value::Number(3.14159.into()), &args);
+    let mut args = HashMap::new();
+    args.insert("precision".to_string(), Value::Number(1.into()));
+    let filter = tera.get_filter("safe_round").unwrap();
+    let result = filter.filter(&Value::Number(serde_json::Number::from_f64(3.14159).unwrap()), &args);
         assert!(result.is_ok());
         assert_eq!(result.unwrap().as_f64(), Some(3.1));
         
         // Test NaN handling (should return 0)
-        let result = tera.get_filter("safe_round").unwrap()(&Value::String("NaN".to_string()), &args);
+    let filter = tera.get_filter("safe_round").unwrap();
+    let result = filter.filter(&Value::String("NaN".to_string()), &args);
         assert!(result.is_ok());
         assert_eq!(result.unwrap().as_f64(), Some(0.0));
     }
@@ -940,13 +950,15 @@ mod tests {
         let mut tera = Tera::default();
         ModernReportGenerator::register_custom_filters(&mut tera);
         
-        // Test normal number formatting
-        let result = tera.get_filter("safe_format_number").unwrap()(&Value::Number(3.14159.into()), &HashMap::new());
+    // Test normal number formatting
+    let filter = tera.get_filter("safe_format_number").unwrap();
+    let result = filter.filter(&Value::Number(serde_json::Number::from_f64(3.14159).unwrap()), &HashMap::new());
         assert!(result.is_ok());
         assert_eq!(result.unwrap().as_str(), Some("3.1"));
         
         // Test NaN handling (should return "N/A")
-        let result = tera.get_filter("safe_format_number").unwrap()(&Value::String("NaN".to_string()), &HashMap::new());
+    let filter = tera.get_filter("safe_format_number").unwrap();
+    let result = filter.filter(&Value::String("NaN".to_string()), &HashMap::new());
         assert!(result.is_ok());
         assert_eq!(result.unwrap().as_str(), Some("N/A"));
     }

@@ -1114,7 +1114,7 @@ impl Default for AnalysisOrchestrator {
 /// the existing async runtime context from #[tokio::main] for proper async operation
 /// handling, following UV-294 async standardization guidelines.
 pub async fn run_app() -> Result<(), UveddiError> {
-    use crate::cli::{analyze_command::AnalyzeCommand, config_command::ConfigCommand};
+    use crate::cli::{analyze_command::AnalyzeCommand, config_command::ConfigCommand, ci_command::CiCommand};
     use clap::Parser;
     use crate::core::logging::{error, info};
 
@@ -1131,6 +1131,7 @@ pub async fn run_app() -> Result<(), UveddiError> {
         Analyze(AnalyzeCommand),
         Config(ConfigCommand),
         Ui(crate::cli::ui_command::UiCommand),
+        Ci(CiCommand),
     }
 
     let cli = Cli::parse();
@@ -1151,6 +1152,13 @@ pub async fn run_app() -> Result<(), UveddiError> {
                 .execute()
                 .await
                 .map_err(|e| UveddiError::config_error(&e.to_string(), "ui command"))
+        }
+        Commands::Ci(command) => {
+            info!("Executing CI command...");
+            command
+                .execute()
+                .await
+                .map_err(|e| UveddiError::config_error(&e.to_string(), "ci command"))
         }
     };
     if let Err(e) = result {

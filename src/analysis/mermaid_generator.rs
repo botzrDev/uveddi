@@ -62,6 +62,19 @@ impl MermaidGenerator {
         })
     }
 
+    /// Test-only helper to construct a minimal generator without loading templates
+    #[cfg(test)]
+    pub(crate) fn for_tests() -> Self {
+        let mut tera = Tera::default();
+        let diagram_specs = Self::create_default_specs();
+        Self {
+            template_engine: tera,
+            diagram_specs,
+            cache_engine: None,
+            caching_enabled: false,
+        }
+    }
+
     /// Enables caching with the provided cache engine
     pub fn enable_caching(&mut self, cache_engine: Arc<RwLock<DiagramCacheEngine>>) {
         self.cache_engine = Some(cache_engine);

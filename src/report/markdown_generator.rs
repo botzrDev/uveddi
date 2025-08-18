@@ -24,6 +24,7 @@ use tera::{Tera, Context};
 use crate::database::models::{AnalysisRun, ArchitecturalIssue, AntiPatternType};
 use crate::core::mocks::ai_mocks::AiInsight;
 use crate::report::DiagramMode;
+use crate::report::metrics::{compute_debt_score, compute_issues_by_severity};
 use crate::models::visualization::{ArchitecturalComponent, ComponentType, Dependency, DependencyType, DependencyNode, ComponentMetrics, DiagramType as VizDiagramType};
 use uuid::Uuid;
 
@@ -271,23 +272,25 @@ impl MarkdownReportGenerator {
 
     /// Generate executive summary with AI insights
     fn generate_executive_summary(&self, analysis_run: &AnalysisRun, issues: &[ArchitecturalIssue], ai_insights: Option<&[AiInsight]>) -> String {
-        let total_issues = issues.len();
-        // For now, we'll categorize based on message content since severity field might not be available
-        let critical_issues = issues.iter().filter(|i| i.message.contains("critical") || i.message.contains("Critical")).count();
-        let high_issues = issues.iter().filter(|i| i.message.contains("high") || i.message.contains("High")).count();
-        let medium_issues = issues.iter().filter(|i| i.message.contains("medium") || i.message.contains("Medium")).count();
-        let low_issues = total_issues - critical_issues - high_issues - medium_issues;
+    let total_issues = issues.len();
+    let sev_map = compute_issues_by_severity(issues);
+    let critical_issues = *sev_map.get("critical").unwrap_or(&0);
+    let high_issues = *sev_map.get("high").unwrap_or(&0);
+    let medium_issues = *sev_map.get("medium").unwrap_or(&0);
+    let low_issues = *sev_map.get("low").unwrap_or(&0);
         
         let health_score = self.calculate_health_score(issues);
         let health_status = self.get_health_status(health_score);
         
-        let mut summary = format!(
+    let debt_score = compute_debt_score(issues);
+    let mut summary = format!(
             r#"## Executive Summary
 
 ### 📊 Analysis Overview
 
 - **Total Issues Found:** {}
 - **Architecture Health Score:** {:.1}/100 ({})
+- **Technical Debt Score:** {debt_score}/100 (higher is worse)
 - **Files Analyzed:** {}
 - **Analysis Status:** {}
 

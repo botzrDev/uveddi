@@ -252,7 +252,7 @@ fn open_browser(url: &str) -> Result<(), Box<dyn std::error::Error>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempdir::TempDir;
+    use tempfile::tempdir;
 
     #[tokio::test]
     async fn test_serve_args_defaults() {
@@ -271,7 +271,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_demo_report_creation() {
-        let temp_dir = TempDir::new("uveddi_test").unwrap();
+        let temp_dir = tempdir().unwrap();
         let reports_dir = temp_dir.path().to_path_buf();
 
         let ui_command = UiCommand {

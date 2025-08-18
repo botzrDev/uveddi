@@ -9,3 +9,4 @@ pub mod analyze_command;
 pub mod config_command;
 pub mod plugin_command;
 pub mod ui_command;
+pub mod ci_command;

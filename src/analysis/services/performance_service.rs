@@ -454,8 +454,11 @@ mod tests {
     use super::*;
 
     fn create_test_performance_service() -> PerformanceAnalysisService {
-        let metrics_collector = Arc::new(PerformanceMetricsCollector::new());
-        PerformanceAnalysisService::new_with_defaults(metrics_collector)
+        let metrics_collector = Arc::new(PerformanceMetricsCollector::new(
+            crate::database::models::PerformanceMetricsConfig::default(),
+            10,
+        ));
+        PerformanceAnalysisService::new(metrics_collector, MemoryConfig::default())
     }
 
     #[tokio::test]
@@ -514,9 +517,9 @@ mod tests {
         let service = create_test_performance_service();
         
         let report = service.generate_memory_report().await;
-        
-        assert!(report.current_usage_bytes >= 0);
-        assert!(report.peak_usage_bytes >= 0);
-        assert!(report.memory_limit_bytes.is_some());
+    // Validate fields from MemoryAnalysisReport
+    assert!(report.memory_limit_mb >= 0);
+    assert!(report.final_memory_mb >= 0);
+    assert!(report.peak_memory_mb >= 0);
     }
 }

@@ -249,14 +249,23 @@ impl AnalysisService {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::analysis::components::*;
+    use crate::analysis::components::{analysis_aggregator::AnalysisAggregator, config_service::ConfigurationService, detector_scheduler::DetectorScheduler, dependency_graph_builder::DependencyGraphBuilderImpl};
+    use crate::analysis::components::ast_provider::AstProviderImpl;
     use std::path::PathBuf;
     use tempfile::TempDir;
 
     fn create_test_analysis_service() -> AnalysisService {
         let config_service = Arc::new(ConfigurationService::new_with_defaults());
-        let detector_scheduler = Arc::new(DetectorScheduler::new());
         let aggregator = Arc::new(AnalysisAggregator::new());
+        let ast_provider_impl = Arc::new(AstProviderImpl::new().unwrap());
+        let ast_provider_trait: Arc<dyn crate::analysis::components::traits::AstProvider> = ast_provider_impl.clone();
+        let detector_scheduler = Arc::new(DetectorScheduler::new(
+            config_service.clone(),
+            ast_provider_trait,
+            None,
+            aggregator.clone(),
+            DetectorFactory::create_default_detectors(),
+        ));
         let detector_factory = Arc::new(DetectorFactory::new());
 
         AnalysisService::new(

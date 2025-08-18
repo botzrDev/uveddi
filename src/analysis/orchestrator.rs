@@ -392,15 +392,24 @@ impl Default for AnalysisOrchestratorBuilder {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::analysis::components::*;
+    use crate::analysis::components::{analysis_aggregator::AnalysisAggregator, config_service::ConfigurationService, dependency_graph_builder::DependencyGraphBuilderImpl, detector_scheduler::DetectorScheduler};
+    use crate::analysis::components::ast_provider::AstProviderImpl;
+    use crate::analysis::components::cache_manager::CacheManagerImpl;
     use crate::monitoring::performance_metrics_collector::PerformanceMetricsCollector;
-    use crate::analysis::services::performance_service::MemoryConfig;
+    use crate::analysis::services::performance_service::{MemoryConfig, PerformanceAnalysisService};
 
     fn create_test_orchestrator() -> AnalysisOrchestrator {
         // Create mock services for testing
         let config_service = Arc::new(ConfigurationService::new_with_defaults());
-        let detector_scheduler = Arc::new(DetectorScheduler::new());
+        let ast_provider = Arc::new(AstProviderImpl::new().unwrap()) as Arc<dyn crate::analysis::components::traits::AstProvider>;
         let aggregator = Arc::new(AnalysisAggregator::new());
+        let detector_scheduler = Arc::new(DetectorScheduler::new(
+            config_service.clone(),
+            ast_provider.clone(),
+            None,
+            aggregator.clone(),
+            crate::analysis::detector_factory::DetectorFactory::create_default_detectors(),
+        ));
         let detector_factory = Arc::new(crate::analysis::detector_factory::DetectorFactory::new());
         
         let analysis_service = Arc::new(AnalysisService::new(
@@ -410,20 +419,24 @@ mod tests {
             None,
             detector_factory,
         ));
-
-        let ast_provider = Arc::new(AstProviderImpl::new());
-        let dependency_builder = Arc::new(DependencyGraphBuilderImpl::new());
-        let cache_manager = Arc::new(CacheManagerImpl::new_with_defaults());
+        
+        let dependency_builder = Arc::new(DependencyGraphBuilderImpl::new(ast_provider.clone()).unwrap());
+        let cache_manager = Arc::new(futures::executor::block_on(CacheManagerImpl::new()).unwrap());
         
         let dependency_service = Arc::new(DependencyAnalysisService::new(
-            ast_provider,
+            // Dependency service expects concrete types
+            ast_provider.clone(),
             dependency_builder,
             cache_manager,
         ));
 
-        let metrics_collector = Arc::new(PerformanceMetricsCollector::new());
-        let performance_service = Arc::new(PerformanceAnalysisService::new_with_defaults(
-            metrics_collector
+        let metrics_collector = Arc::new(PerformanceMetricsCollector::new(
+            crate::database::models::PerformanceMetricsConfig::default(),
+            10,
+        ));
+        let performance_service = Arc::new(PerformanceAnalysisService::new(
+            metrics_collector,
+            MemoryConfig::default(),
         ));
 
         AnalysisOrchestrator::new(

@@ -290,12 +290,12 @@ impl DependencyAnalysisService {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::TempDir;
+    use tempfile::tempdir;
 
     fn create_test_dependency_service() -> DependencyAnalysisService {
-        let ast_provider = Arc::new(AstProviderImpl::new());
-        let dependency_builder = Arc::new(DependencyGraphBuilderImpl::new());
-        let cache_manager = Arc::new(CacheManagerImpl::new_with_defaults());
+    let ast_provider = Arc::new(AstProviderImpl::new().unwrap());
+    let dependency_builder = Arc::new(DependencyGraphBuilderImpl::new(ast_provider.clone()).unwrap());
+    let cache_manager = Arc::new(futures::executor::block_on(CacheManagerImpl::new()).unwrap());
 
         DependencyAnalysisService::new(
             ast_provider,

@@ -167,10 +167,12 @@ pub mod markdown_generator;
 pub mod interactive_models;
 pub mod interactive_generator;
 pub mod security;
+pub mod metrics;
 use chrono::{DateTime, Local};
 use crate::core::logging::{error, info, warn};
 use std::error::Error;
 use serde_json::Value;
+use crate::report::metrics::{compute_debt_score, compute_issues_by_severity, count_unique_files};
 use std::collections::HashMap;
 use std::fs;
 use std::io::Write;
@@ -1128,6 +1130,20 @@ impl ReportGenerator {
         );
         report.insert("metadata".to_string(), Value::Object(metadata));
 
+        // Add summary block
+        let sev_map = compute_issues_by_severity(issues);
+        let mut by_sev_obj = serde_json::Map::new();
+        for (k, v) in &sev_map {
+            by_sev_obj.insert(k.clone(), Value::Number((*v as u64).into()));
+        }
+        let summary = serde_json::json!({
+            "issuesTotal": issues.len(),
+            "issuesBySeverity": Value::Object(by_sev_obj),
+            "filesAnalyzed": count_unique_files(issues),
+            "debtScore": compute_debt_score(issues),
+        });
+        report.insert("summary".to_string(), summary);
+
         // Add issues
         let mut json_issues = Vec::new();
         for issue in issues {
@@ -1184,7 +1200,7 @@ impl ReportGenerator {
             json_issues.push(Value::Object(json_issue));
         }
 
-        report.insert("issues".to_string(), Value::Array(json_issues));
+    report.insert("issues".to_string(), Value::Array(json_issues));
 
         // Convert to string
         let json = serde_json::to_string_pretty(&Value::Object(report))
