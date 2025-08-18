@@ -69,7 +69,7 @@ fn main() {
 
 #[tokio::test]
 async fn test_analyze_god_object_detection() {
-    env_logger::try_init().ok(); // Enable logging for debugging
+    let _ = tracing_subscriber::fmt::try_init(); // Enable logging for debugging
     let mut engine = AnalysisEngine::new_with_memory_cache().unwrap();
 
     // Create a temporary directory with a Rust file that should trigger god object detection

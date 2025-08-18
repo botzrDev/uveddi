@@ -6,10 +6,10 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use std::time::{Duration, Instant};
-use tempfile::TempDir;
+// use tempfile::TempDir; // Unused import
 
 /// Test execution configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -524,7 +524,7 @@ impl TestExecutor {
         stdout: &str,
         stderr: &str,
         category: &str,
-        duration: Duration,
+        _duration: Duration,
     ) -> Result<TestCommandResult, Box<dyn std::error::Error>> {
         let mut result = TestCommandResult {
             total: 0,
@@ -692,7 +692,7 @@ impl TestExecutor {
     }
 
     /// Parse coverage data from JSON
-    fn parse_coverage_data(&mut self, data: &str) -> Result<(), Box<dyn std::error::Error>> {
+    fn parse_coverage_data(&mut self, _data: &str) -> Result<(), Box<dyn std::error::Error>> {
         // This would parse the actual LLVM coverage JSON format
         // For now, we'll use a simplified example
 
@@ -732,30 +732,35 @@ impl TestExecutor {
 
     /// Validate coverage targets
     fn validate_coverage_targets(&mut self) {
-        let targets = &self.config.coverage_targets;
-        let coverage = &self.results.coverage;
+        let targets = self.config.coverage_targets.clone();
+        
+        // Extract values before mutable borrow
+        let overall_coverage = self.results.coverage.overall_coverage;
+        let security_coverage = self.results.coverage
+            .by_module
+            .get("src/security/mod.rs")
+            .map(|m| m.line_coverage >= targets.security_minimum)
+            .unwrap_or(false);
+        let analysis_engine_coverage = self.results.coverage
+            .by_module
+            .get("src/analysis/mod.rs")
+            .map(|m| m.line_coverage >= targets.analysis_engine_minimum)
+            .unwrap_or(false);
 
+        // Now update targets
         self.results.coverage.coverage_targets_met.insert(
             "overall".to_string(),
-            coverage.overall_coverage >= targets.overall_minimum,
+            overall_coverage >= targets.overall_minimum,
         );
 
         self.results.coverage.coverage_targets_met.insert(
             "security".to_string(),
-            coverage
-                .by_module
-                .get("src/security/mod.rs")
-                .map(|m| m.line_coverage >= targets.security_minimum)
-                .unwrap_or(false),
+            security_coverage,
         );
 
         self.results.coverage.coverage_targets_met.insert(
             "analysis_engine".to_string(),
-            coverage
-                .by_module
-                .get("src/analysis/mod.rs")
-                .map(|m| m.line_coverage >= targets.analysis_engine_minimum)
-                .unwrap_or(false),
+            analysis_engine_coverage,
         );
     }
 

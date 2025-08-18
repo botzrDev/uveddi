@@ -15,7 +15,7 @@ pub mod test_setup {
     pub fn init() {
         INIT.call_once(|| {
             // Initialize logging for integration tests
-            let _ = env_logger::try_init();
+            let _ = tracing_subscriber::fmt::try_init();
         });
     }
     

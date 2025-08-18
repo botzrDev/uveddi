@@ -295,8 +295,8 @@ async fn test_knowledge_integration() {
         token_constraints: TokenConstraints {
             max_tokens: 4000,
             reserved_tokens: 500,
-            pattern_token_budget: 3000,
-            solution_token_budget: 500,
+            available_tokens: 3000,
+            tokens_per_pattern: 150,
         },
     };
 
@@ -339,7 +339,7 @@ async fn test_plugin_security() {
         enable_security_auditing: true,
     };
 
-    let security_manager = KnowledgePluginSecurityManager::new(&security_config);
+    let _security_manager = KnowledgePluginSecurityManager::new(&security_config);
 
     // Test permissions validation
     let permissions = KnowledgePluginPermissions {
@@ -386,7 +386,7 @@ async fn test_plugin_performance() {
         max_active_plugins: 5,
     };
 
-    let performance_monitor = KnowledgePluginPerformanceMonitor::new();
+    let _performance_monitor = KnowledgePluginPerformanceMonitor::new();
 
     // Test performance thresholds
     assert_eq!(performance_config.max_init_time_ms, 1000);
@@ -597,8 +597,8 @@ async fn test_real_world_integration() {
         token_constraints: TokenConstraints {
             max_tokens: 8000,
             reserved_tokens: 1000,
-            pattern_token_budget: 5000,
-            solution_token_budget: 2000,
+            available_tokens: 5000,
+            tokens_per_pattern: 200,
         },
     };
 
