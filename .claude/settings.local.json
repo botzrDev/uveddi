@@ -206,7 +206,10 @@
       "Bash(npm start)",
       "Bash(RUST_LOG=info cargo run --features alpha --bin uveddi -- analyze test_with_issues.rs --output-format json --output frontend/public/real-analysis-with-issues.json)",
       "Bash(RUST_LOG=info cargo run --features alpha --bin uveddi -- analyze test_with_issues.rs --output-format html --output /tmp/test_analysis.html --mermaid-only)",
-      "Bash(RUST_LOG=info cargo run --features alpha --bin uveddi -- analyze src/analysis --output-format json --output /tmp/real_analysis.json)"
+      "Bash(RUST_LOG=info cargo run --features alpha --bin uveddi -- analyze src/analysis --output-format json --output /tmp/real_analysis.json)",
+      "Bash(RUST_LOG=info cargo run --features alpha --bin uveddi -- analyze frontend/src --output-format json --output frontend/public/typescript-analysis.json)",
+      "Bash(RUST_LOG=info cargo run --features alpha --bin uveddi -- analyze frontend/src --output-format json --output typescript-results.json)",
+      "Bash(RUST_LOG=info cargo run --features alpha --bin uveddi -- analyze frontend/src --output-format json)"
     ],
     "deny": [],
     "additionalDirectories": [

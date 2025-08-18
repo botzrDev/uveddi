@@ -1,0 +1,66 @@
+{
+  "reports": [
+    {
+      "id": "flask-python",
+      "name": "Flask Python Framework",
+      "language": "Python",
+      "description": "Flask web framework - comprehensive analysis of Python codebase",
+      "filePath": "/flask-analysis.json",
+      "timestamp": "2025-08-18T21:45:00Z",
+      "metrics": {
+        "totalFiles": 24,
+        "totalIssues": "TBD",
+        "godObjects": 9,
+        "deadCode": 82,
+        "tightCoupling": 11
+      }
+    },
+    {
+      "id": "express-javascript", 
+      "name": "Express.js Framework",
+      "language": "JavaScript",
+      "description": "Express.js web framework - analysis of JavaScript/Node.js codebase",
+      "filePath": "/express-analysis.json",
+      "timestamp": "2025-08-18T21:46:00Z",
+      "metrics": {
+        "totalFiles": 142,
+        "totalIssues": "TBD",
+        "godObjects": 0,
+        "deadCode": 0,
+        "tightCoupling": 38
+      }
+    },
+    {
+      "id": "serde-rust",
+      "name": "Serde Rust Library", 
+      "language": "Rust",
+      "description": "Serde serialization library - analysis of Rust codebase",
+      "filePath": "/serde-analysis.json",
+      "timestamp": "2025-08-18T21:48:00Z",
+      "metrics": {
+        "totalFiles": "TBD",
+        "totalIssues": "TBD",
+        "godObjects": "TBD",
+        "deadCode": "TBD",
+        "tightCoupling": "TBD"
+      }
+    },
+    {
+      "id": "frontend-typescript",
+      "name": "Uveddi React Frontend",
+      "language": "TypeScript", 
+      "description": "React TypeScript frontend - analysis of dashboard components",
+      "filePath": "/typescript-analysis.json",
+      "timestamp": "2025-08-18T21:47:00Z",
+      "metrics": {
+        "totalFiles": 57,
+        "totalIssues": 21,
+        "godObjects": 0,
+        "deadCode": 4,
+        "tightCoupling": 17
+      }
+    }
+  ],
+  "lastUpdated": "2025-08-18T21:50:00Z",
+  "analysisVersion": "0.9.0-alpha"
+}

@@ -1,0 +1,1516 @@
+[2m2025-08-18T21:50:20.310662Z[0m [32m INFO[0m [2muveddi::application[0m[2m:[0m Executing analyze command...
+[2m2025-08-18T21:50:20.313811Z[0m [32m INFO[0m [2muveddi::cli::analyze_command[0m[2m:[0m Starting analysis of: frontend/src
+[2m2025-08-18T21:50:20.313883Z[0m [32m INFO[0m [2muveddi::cli::analyze_command[0m[2m:[0m Progress reporting enabled - updates will be logged every 10 files processed
+[2m2025-08-18T21:50:20.316586Z[0m [32m INFO[0m [2muveddi::analysis::memory[0m[2m:[0m Memory optimization Phase 3 initialized with allocator: mimalloc
+[2m2025-08-18T21:50:20.316645Z[0m [32m INFO[0m [2muveddi::analysis::memory[0m[2m:[0m High-performance allocator enabled: true
+[2m2025-08-18T21:50:20.316653Z[0m [32m INFO[0m [2muveddi::analysis::memory[0m[2m:[0m Target memory limit: 8.00 GB
+[2m2025-08-18T21:50:20.316661Z[0m [32m INFO[0m [2muveddi::analysis::memory::detector_pools[0m[2m:[0m Initializing detector pools with capacity: 100
+[2m2025-08-18T21:50:20.316844Z[0m [32m INFO[0m [2muveddi::analysis::memory::detector_pools[0m[2m:[0m Pre-populated detector pools with 25% capacity
+[2m2025-08-18T21:50:20.316875Z[0m [32m INFO[0m [2muveddi::analysis::memory::detector_pools[0m[2m:[0m Detector pools initialized successfully
+[2m2025-08-18T21:50:20.316886Z[0m [32m INFO[0m [2muveddi::analysis::memory[0m[2m:[0m Object pools initialized with 4 total pools
+[2m2025-08-18T21:50:20.316954Z[0m [32m INFO[0m [2muveddi::analysis::memory[0m[2m:[0m Arena allocation initialized with default size: 32.0 MB
+[2m2025-08-18T21:50:20.316992Z[0m [32m INFO[0m [2muveddi::analysis::memory[0m[2m:[0m Maximum concurrent arenas: 8
+[2m2025-08-18T21:50:20.317003Z[0m [32m INFO[0m [2muveddi::application[0m[2m:[0m Memory optimization initialized successfully
+[2m2025-08-18T21:50:20.317406Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Initializing AST cache with config: max_entries=10000, max_memory=500MB, disk_cache=true
+[2m2025-08-18T21:50:20.317450Z[0m [32m INFO[0m [2muveddi::analysis::memory::zero_copy[0m[2m:[0m Initialized zero-copy AST cache at: ./cache/zero_copy
+[2m2025-08-18T21:50:20.317481Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Zero-copy AST cache enabled
+[2m2025-08-18T21:50:20.317965Z[0m [32m INFO[0m [2muveddi::ast::tree_sitter_impl[0m[2m:[0m Initialized AST parser with LRU cache size: 1000
+[2m2025-08-18T21:50:20.318074Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Initializing AST cache with config: max_entries=10000, max_memory=500MB, disk_cache=true
+[2m2025-08-18T21:50:20.318087Z[0m [32m INFO[0m [2muveddi::analysis::memory::zero_copy[0m[2m:[0m Initialized zero-copy AST cache at: ./cache/zero_copy
+[2m2025-08-18T21:50:20.318090Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Zero-copy AST cache enabled
+[2m2025-08-18T21:50:20.318643Z[0m [32m INFO[0m [2muveddi::ast::tree_sitter_impl[0m[2m:[0m Initialized AST parser with LRU cache size: 1000
+[2m2025-08-18T21:50:20.318700Z[0m [32m INFO[0m [2muveddi::ast::tree_sitter_impl[0m[2m:[0m Initialized AST parser with LRU cache size: 1000
+[2m2025-08-18T21:50:20.411338Z[0m [32m INFO[0m [2muveddi::cli::analyze_command[0m[2m:[0m Analysis timeout set to 300 seconds with graceful degradation enabled
+[2m2025-08-18T21:50:20.411751Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Initializing AST cache with config: max_entries=10000, max_memory=500MB, disk_cache=true
+[2m2025-08-18T21:50:20.411791Z[0m [32m INFO[0m [2muveddi::analysis::memory::zero_copy[0m[2m:[0m Initialized zero-copy AST cache at: ./cache/zero_copy
+[2m2025-08-18T21:50:20.411799Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Zero-copy AST cache enabled
+[2m2025-08-18T21:50:20.411833Z[0m [32m INFO[0m [2muveddi::ast::tree_sitter_impl[0m[2m:[0m Initialized AST parser with LRU cache size: 1000
+[2m2025-08-18T21:50:20.411840Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Initializing AST cache with config: max_entries=10000, max_memory=500MB, disk_cache=true
+[2m2025-08-18T21:50:20.411854Z[0m [32m INFO[0m [2muveddi::analysis::memory::zero_copy[0m[2m:[0m Initialized zero-copy AST cache at: ./cache/zero_copy
+[2m2025-08-18T21:50:20.411856Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Zero-copy AST cache enabled
+[2m2025-08-18T21:50:20.411917Z[0m [32m INFO[0m [2muveddi::ast::tree_sitter_impl[0m[2m:[0m Initialized AST parser with LRU cache size: 1000
+[2m2025-08-18T21:50:20.411934Z[0m [32m INFO[0m [2muveddi::ast::tree_sitter_impl[0m[2m:[0m Initialized AST parser with LRU cache size: 1000
+[2m2025-08-18T21:50:20.412662Z[0m [32m INFO[0m [2muveddi::cli::analyze_command[0m[2m:[0m ⏳ Analysis in progress for: frontend/src
+[2m2025-08-18T21:50:20.419522Z[0m [32m INFO[0m [2muveddi::application[0m[2m:[0m Starting analysis of: frontend/src
+[2m2025-08-18T21:50:20.419600Z[0m [32m INFO[0m [2muveddi::analysis::engine[0m[2m:[0m Large classes detector configuration requested - delegating to detector scheduler
+[2m2025-08-18T21:50:20.419610Z[0m [33m WARN[0m [2muveddi::analysis::engine[0m[2m:[0m Large classes detector configuration is not yet fully implemented in the new architecture
+[2m2025-08-18T21:50:20.419613Z[0m [32m INFO[0m [2muveddi::application[0m[2m:[0m Large classes detector configured with custom settings
+[2m2025-08-18T21:50:20.419861Z[0m [32m INFO[0m [2muveddi::analysis::engine[0m[2m:[0m Starting analysis with AnalysisEngine for: frontend/src
+[2m2025-08-18T21:50:20.419899Z[0m [32m INFO[0m [2muveddi::analysis::orchestrator[0m[2m:[0m Starting orchestrated analysis for: frontend/src
+[2m2025-08-18T21:50:20.419908Z[0m [32m INFO[0m [2muveddi::analysis::services::analysis_service[0m[2m:[0m Starting comprehensive analysis for path: frontend/src
+[2m2025-08-18T21:50:20.422200Z[0m [32m INFO[0m [2muveddi::analysis::workspace[0m[2m:[0m Found Rust workspace root at: ""
+[2m2025-08-18T21:50:20.422779Z[0m [32m INFO[0m [2muveddi::analysis::services::analysis_service[0m[2m:[0m Detected workspace: ["Cargo.toml"]
+[2m2025-08-18T21:50:20.422932Z[0m [32m INFO[0m [2muveddi::analysis::file_discovery[0m[2m:[0m Starting file discovery in: frontend/src
+[2m2025-08-18T21:50:20.424162Z[0m [32m INFO[0m [2muveddi::analysis::file_discovery[0m[2m:[0m File discovery completed: 57 supported files found out of 74 total files
+[2m2025-08-18T21:50:20.424178Z[0m [32m INFO[0m [2muveddi::analysis::services::analysis_service[0m[2m:[0m Discovered 57 source files for analysis
+[2m2025-08-18T21:50:20.424198Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/types/dashboard.ts
+[2m2025-08-18T21:50:20.424210Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/types/dashboard.ts
+[2m2025-08-18T21:50:20.474414Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/types/dashboard.ts"
+[2m2025-08-18T21:50:20.485680Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/types/dashboard.ts (completed successfully)
+[2m2025-08-18T21:50:20.485790Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/types/dashboard.ts (timeout: 30s)
+[2m2025-08-18T21:50:20.488447Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/types/dashboard.ts (completed successfully)
+[2m2025-08-18T21:50:20.488520Z[0m [32m INFO[0m [2muveddi::analysis::memory::detector_pools[0m[2m:[0m Initializing detector pools with capacity: 100
+[2m2025-08-18T21:50:20.505142Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 0 issues in frontend/src/types/dashboard.ts (completed successfully)
+[2m2025-08-18T21:50:20.505256Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/types/dashboard.ts (completed successfully)
+[2m2025-08-18T21:50:20.524858Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 0 issues in frontend/src/types/dashboard.ts (completed successfully)
+[2m2025-08-18T21:50:20.524960Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/types/api.ts
+[2m2025-08-18T21:50:20.524987Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/types/api.ts
+[2m2025-08-18T21:50:20.530628Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/types/api.ts"
+[2m2025-08-18T21:50:20.538820Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/types/api.ts (completed successfully)
+[2m2025-08-18T21:50:20.538889Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/types/api.ts (timeout: 30s)
+[2m2025-08-18T21:50:20.540557Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/types/api.ts (completed successfully)
+[2m2025-08-18T21:50:20.555238Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 0 issues in frontend/src/types/api.ts (completed successfully)
+[2m2025-08-18T21:50:20.555323Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/types/api.ts (completed successfully)
+[2m2025-08-18T21:50:20.571873Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 0 issues in frontend/src/types/api.ts (completed successfully)
+[2m2025-08-18T21:50:20.571968Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/__tests__/integration/dashboard-integration.test.tsx
+[2m2025-08-18T21:50:20.571993Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/__tests__/integration/dashboard-integration.test.tsx
+[2m2025-08-18T21:50:20.592464Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/__tests__/integration/dashboard-integration.test.tsx"
+[2m2025-08-18T21:50:20.602867Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/__tests__/integration/dashboard-integration.test.tsx (completed successfully)
+[2m2025-08-18T21:50:20.602948Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/__tests__/integration/dashboard-integration.test.tsx (timeout: 30s)
+[2m2025-08-18T21:50:20.605611Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/__tests__/integration/dashboard-integration.test.tsx (completed successfully)
+[2m2025-08-18T21:50:20.624885Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 0 issues in frontend/src/__tests__/integration/dashboard-integration.test.tsx (completed successfully)
+[2m2025-08-18T21:50:20.624988Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/__tests__/integration/dashboard-integration.test.tsx (completed successfully)
+[2m2025-08-18T21:50:20.645356Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 2 issues in frontend/src/__tests__/integration/dashboard-integration.test.tsx (completed successfully)
+[2m2025-08-18T21:50:20.645459Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/__tests__/accessibility/dashboard-accessibility.test.tsx
+[2m2025-08-18T21:50:20.645492Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/__tests__/accessibility/dashboard-accessibility.test.tsx
+[2m2025-08-18T21:50:20.670828Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/__tests__/accessibility/dashboard-accessibility.test.tsx"
+[2m2025-08-18T21:50:20.682523Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/__tests__/accessibility/dashboard-accessibility.test.tsx (completed successfully)
+[2m2025-08-18T21:50:20.682609Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/__tests__/accessibility/dashboard-accessibility.test.tsx (timeout: 30s)
+[2m2025-08-18T21:50:20.685967Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/__tests__/accessibility/dashboard-accessibility.test.tsx (completed successfully)
+[2m2025-08-18T21:50:20.703976Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 0 issues in frontend/src/__tests__/accessibility/dashboard-accessibility.test.tsx (completed successfully)
+[2m2025-08-18T21:50:20.704078Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/__tests__/accessibility/dashboard-accessibility.test.tsx (completed successfully)
+[2m2025-08-18T21:50:20.725827Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 2 issues in frontend/src/__tests__/accessibility/dashboard-accessibility.test.tsx (completed successfully)
+[2m2025-08-18T21:50:20.725921Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/__tests__/coverage/test-coverage-validation.test.tsx
+[2m2025-08-18T21:50:20.725950Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/__tests__/coverage/test-coverage-validation.test.tsx
+[2m2025-08-18T21:50:20.753923Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/__tests__/coverage/test-coverage-validation.test.tsx"
+[2m2025-08-18T21:50:20.765992Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/__tests__/coverage/test-coverage-validation.test.tsx (completed successfully)
+[2m2025-08-18T21:50:20.766068Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/__tests__/coverage/test-coverage-validation.test.tsx (timeout: 30s)
+[2m2025-08-18T21:50:20.769596Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/__tests__/coverage/test-coverage-validation.test.tsx (completed successfully)
+[2m2025-08-18T21:50:20.788347Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 0 issues in frontend/src/__tests__/coverage/test-coverage-validation.test.tsx (completed successfully)
+[2m2025-08-18T21:50:20.788446Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/__tests__/coverage/test-coverage-validation.test.tsx (completed successfully)
+[2m2025-08-18T21:50:20.810426Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 2 issues in frontend/src/__tests__/coverage/test-coverage-validation.test.tsx (completed successfully)
+[2m2025-08-18T21:50:20.810526Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/__tests__/performance/dashboard-performance.test.tsx
+[2m2025-08-18T21:50:20.810555Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/__tests__/performance/dashboard-performance.test.tsx
+[2m2025-08-18T21:50:20.834426Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/__tests__/performance/dashboard-performance.test.tsx"
+[2m2025-08-18T21:50:20.845560Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/__tests__/performance/dashboard-performance.test.tsx (completed successfully)
+[2m2025-08-18T21:50:20.845650Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/__tests__/performance/dashboard-performance.test.tsx (timeout: 30s)
+[2m2025-08-18T21:50:20.848658Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/__tests__/performance/dashboard-performance.test.tsx (completed successfully)
+[2m2025-08-18T21:50:20.866355Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 0 issues in frontend/src/__tests__/performance/dashboard-performance.test.tsx (completed successfully)
+[2m2025-08-18T21:50:20.866460Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/__tests__/performance/dashboard-performance.test.tsx (completed successfully)
+[2m2025-08-18T21:50:20.887822Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 2 issues in frontend/src/__tests__/performance/dashboard-performance.test.tsx (completed successfully)
+[2m2025-08-18T21:50:20.887925Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/utils/theme.ts
+[2m2025-08-18T21:50:20.887953Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/utils/theme.ts
+[2m2025-08-18T21:50:20.892291Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/utils/theme.ts"
+[2m2025-08-18T21:50:20.901072Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/utils/theme.ts (completed successfully)
+[2m2025-08-18T21:50:20.901174Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/utils/theme.ts (timeout: 30s)
+[2m2025-08-18T21:50:20.902947Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/utils/theme.ts (completed successfully)
+[2m2025-08-18T21:50:20.917962Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::dead_code[0m[2m:[0m Found 1 potential dead code issues in frontend/src/utils/theme.ts
+[2m2025-08-18T21:50:20.918040Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 1 issues in frontend/src/utils/theme.ts (completed successfully)
+[2m2025-08-18T21:50:20.918066Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/utils/theme.ts (completed successfully)
+[2m2025-08-18T21:50:20.935042Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 0 issues in frontend/src/utils/theme.ts (completed successfully)
+[2m2025-08-18T21:50:20.935155Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/utils/dashboardTheme.ts
+[2m2025-08-18T21:50:20.935186Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/utils/dashboardTheme.ts
+[2m2025-08-18T21:50:20.949339Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/utils/dashboardTheme.ts"
+[2m2025-08-18T21:50:20.959648Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/utils/dashboardTheme.ts (completed successfully)
+[2m2025-08-18T21:50:20.959733Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/utils/dashboardTheme.ts (timeout: 30s)
+[2m2025-08-18T21:50:20.962387Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/utils/dashboardTheme.ts (completed successfully)
+[2m2025-08-18T21:50:20.978866Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 0 issues in frontend/src/utils/dashboardTheme.ts (completed successfully)
+[2m2025-08-18T21:50:20.978940Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/utils/dashboardTheme.ts (completed successfully)
+[2m2025-08-18T21:50:20.997976Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 0 issues in frontend/src/utils/dashboardTheme.ts (completed successfully)
+[2m2025-08-18T21:50:20.998071Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/utils/dataTransformers.ts
+[2m2025-08-18T21:50:20.998099Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/utils/dataTransformers.ts
+[2m2025-08-18T21:50:21.018054Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/utils/dataTransformers.ts"
+[2m2025-08-18T21:50:21.031415Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/utils/dataTransformers.ts (completed successfully)
+[2m2025-08-18T21:50:21.031531Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/utils/dataTransformers.ts (timeout: 30s)
+[2m2025-08-18T21:50:21.036070Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/utils/dataTransformers.ts (completed successfully)
+[2m2025-08-18T21:50:21.055451Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 0 issues in frontend/src/utils/dataTransformers.ts (completed successfully)
+[2m2025-08-18T21:50:21.055561Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/utils/dataTransformers.ts (completed successfully)
+[2m2025-08-18T21:50:21.076962Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 2 issues in frontend/src/utils/dataTransformers.ts (completed successfully)
+[2m2025-08-18T21:50:21.077087Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/utils/diagramGenerators.ts
+[2m2025-08-18T21:50:21.077118Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/utils/diagramGenerators.ts
+[2m2025-08-18T21:50:21.083256Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/utils/diagramGenerators.ts"
+[2m2025-08-18T21:50:21.092333Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/utils/diagramGenerators.ts (completed successfully)
+[2m2025-08-18T21:50:21.092415Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/utils/diagramGenerators.ts (timeout: 30s)
+[2m2025-08-18T21:50:21.094581Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/utils/diagramGenerators.ts (completed successfully)
+[2m2025-08-18T21:50:21.111652Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::dead_code[0m[2m:[0m Found 1 potential dead code issues in frontend/src/utils/diagramGenerators.ts
+[2m2025-08-18T21:50:21.111737Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 1 issues in frontend/src/utils/diagramGenerators.ts (completed successfully)
+[2m2025-08-18T21:50:21.111757Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/utils/diagramGenerators.ts (completed successfully)
+[2m2025-08-18T21:50:21.130052Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 1 issues in frontend/src/utils/diagramGenerators.ts (completed successfully)
+[2m2025-08-18T21:50:21.130158Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/services/api.ts
+[2m2025-08-18T21:50:21.130189Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/services/api.ts
+[2m2025-08-18T21:50:21.159639Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/services/api.ts"
+[2m2025-08-18T21:50:21.176614Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/services/api.ts (completed successfully)
+[2m2025-08-18T21:50:21.176711Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/services/api.ts (timeout: 30s)
+[2m2025-08-18T21:50:21.179851Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/services/api.ts (completed successfully)
+[2m2025-08-18T21:50:21.199429Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::dead_code[0m[2m:[0m Found 2 potential dead code issues in frontend/src/services/api.ts
+[2m2025-08-18T21:50:21.199498Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 2 issues in frontend/src/services/api.ts (completed successfully)
+[2m2025-08-18T21:50:21.199512Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/services/api.ts (completed successfully)
+[2m2025-08-18T21:50:21.229483Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 1 issues in frontend/src/services/api.ts (completed successfully)
+[2m2025-08-18T21:50:21.229599Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/components/TestMermaid.tsx
+[2m2025-08-18T21:50:21.229625Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/components/TestMermaid.tsx
+[2m2025-08-18T21:50:21.231535Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/components/TestMermaid.tsx"
+[2m2025-08-18T21:50:21.239672Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/components/TestMermaid.tsx (completed successfully)
+[2m2025-08-18T21:50:21.239742Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/components/TestMermaid.tsx (timeout: 30s)
+[2m2025-08-18T21:50:21.241196Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/components/TestMermaid.tsx (completed successfully)
+[2m2025-08-18T21:50:21.255725Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::dead_code[0m[2m:[0m Found 1 potential dead code issues in frontend/src/components/TestMermaid.tsx
+[2m2025-08-18T21:50:21.255818Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 1 issues in frontend/src/components/TestMermaid.tsx (completed successfully)
+[2m2025-08-18T21:50:21.255834Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/components/TestMermaid.tsx (completed successfully)
+[2m2025-08-18T21:50:21.271879Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 0 issues in frontend/src/components/TestMermaid.tsx (completed successfully)
+[2m2025-08-18T21:50:21.271963Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/components/Layout.tsx
+[2m2025-08-18T21:50:21.271991Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/components/Layout.tsx
+[2m2025-08-18T21:50:21.277723Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/components/Layout.tsx"
+[2m2025-08-18T21:50:21.286487Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/components/Layout.tsx (completed successfully)
+[2m2025-08-18T21:50:21.286570Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/components/Layout.tsx (timeout: 30s)
+[2m2025-08-18T21:50:21.288363Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/components/Layout.tsx (completed successfully)
+[2m2025-08-18T21:50:21.303784Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::dead_code[0m[2m:[0m Found 1 potential dead code issues in frontend/src/components/Layout.tsx
+[2m2025-08-18T21:50:21.303870Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 1 issues in frontend/src/components/Layout.tsx (completed successfully)
+[2m2025-08-18T21:50:21.303884Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/components/Layout.tsx (completed successfully)
+[2m2025-08-18T21:50:21.321532Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 1 issues in frontend/src/components/Layout.tsx (completed successfully)
+[2m2025-08-18T21:50:21.321656Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/components/FindingDetail.tsx
+[2m2025-08-18T21:50:21.321687Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/components/FindingDetail.tsx
+[2m2025-08-18T21:50:21.335493Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/components/FindingDetail.tsx"
+[2m2025-08-18T21:50:21.345552Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/components/FindingDetail.tsx (completed successfully)
+[2m2025-08-18T21:50:21.345621Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/components/FindingDetail.tsx (timeout: 30s)
+[2m2025-08-18T21:50:21.348274Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/components/FindingDetail.tsx (completed successfully)
+[2m2025-08-18T21:50:21.364961Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::dead_code[0m[2m:[0m Found 2 potential dead code issues in frontend/src/components/FindingDetail.tsx
+[2m2025-08-18T21:50:21.365041Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 2 issues in frontend/src/components/FindingDetail.tsx (completed successfully)
+[2m2025-08-18T21:50:21.365055Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/components/FindingDetail.tsx (completed successfully)
+[2m2025-08-18T21:50:21.384351Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 1 issues in frontend/src/components/FindingDetail.tsx (completed successfully)
+[2m2025-08-18T21:50:21.384443Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/components/FindingsList.tsx
+[2m2025-08-18T21:50:21.384467Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/components/FindingsList.tsx
+[2m2025-08-18T21:50:21.393095Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/components/FindingsList.tsx"
+[2m2025-08-18T21:50:21.402175Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/components/FindingsList.tsx (completed successfully)
+[2m2025-08-18T21:50:21.402235Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/components/FindingsList.tsx (timeout: 30s)
+[2m2025-08-18T21:50:21.404239Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/components/FindingsList.tsx (completed successfully)
+[2m2025-08-18T21:50:21.419711Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::dead_code[0m[2m:[0m Found 1 potential dead code issues in frontend/src/components/FindingsList.tsx
+[2m2025-08-18T21:50:21.419785Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 1 issues in frontend/src/components/FindingsList.tsx (completed successfully)
+[2m2025-08-18T21:50:21.419799Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/components/FindingsList.tsx (completed successfully)
+[2m2025-08-18T21:50:21.437504Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 1 issues in frontend/src/components/FindingsList.tsx (completed successfully)
+[2m2025-08-18T21:50:21.437616Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/components/MermaidRenderingTest.tsx
+[2m2025-08-18T21:50:21.437644Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/components/MermaidRenderingTest.tsx
+[2m2025-08-18T21:50:21.447896Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/components/MermaidRenderingTest.tsx"
+[2m2025-08-18T21:50:21.457708Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/components/MermaidRenderingTest.tsx (completed successfully)
+[2m2025-08-18T21:50:21.457807Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/components/MermaidRenderingTest.tsx (timeout: 30s)
+[2m2025-08-18T21:50:21.460086Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/components/MermaidRenderingTest.tsx (completed successfully)
+[2m2025-08-18T21:50:21.476648Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::dead_code[0m[2m:[0m Found 1 potential dead code issues in frontend/src/components/MermaidRenderingTest.tsx
+[2m2025-08-18T21:50:21.476735Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 1 issues in frontend/src/components/MermaidRenderingTest.tsx (completed successfully)
+[2m2025-08-18T21:50:21.476752Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/components/MermaidRenderingTest.tsx (completed successfully)
+[2m2025-08-18T21:50:21.495604Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 2 issues in frontend/src/components/MermaidRenderingTest.tsx (completed successfully)
+[2m2025-08-18T21:50:21.495701Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/components/ErrorBoundary.tsx
+[2m2025-08-18T21:50:21.495731Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/components/ErrorBoundary.tsx
+[2m2025-08-18T21:50:21.500352Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/components/ErrorBoundary.tsx"
+[2m2025-08-18T21:50:21.510227Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/components/ErrorBoundary.tsx (completed successfully)
+[2m2025-08-18T21:50:21.510323Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/components/ErrorBoundary.tsx (timeout: 30s)
+[2m2025-08-18T21:50:21.512094Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/components/ErrorBoundary.tsx (completed successfully)
+[2m2025-08-18T21:50:21.527320Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 0 issues in frontend/src/components/ErrorBoundary.tsx (completed successfully)
+[2m2025-08-18T21:50:21.527420Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/components/ErrorBoundary.tsx (completed successfully)
+[2m2025-08-18T21:50:21.544365Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 0 issues in frontend/src/components/ErrorBoundary.tsx (completed successfully)
+[2m2025-08-18T21:50:21.544489Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/components/dashboard/FixSuggestionPanel.tsx
+[2m2025-08-18T21:50:21.544522Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/components/dashboard/FixSuggestionPanel.tsx
+[2m2025-08-18T21:50:21.595614Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/components/dashboard/FixSuggestionPanel.tsx"
+[2m2025-08-18T21:50:21.611306Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/components/dashboard/FixSuggestionPanel.tsx (completed successfully)
+[2m2025-08-18T21:50:21.611399Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/components/dashboard/FixSuggestionPanel.tsx (timeout: 30s)
+[2m2025-08-18T21:50:21.616175Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/components/dashboard/FixSuggestionPanel.tsx (completed successfully)
+[2m2025-08-18T21:50:21.637219Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 0 issues in frontend/src/components/dashboard/FixSuggestionPanel.tsx (completed successfully)
+[2m2025-08-18T21:50:21.637306Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/components/dashboard/FixSuggestionPanel.tsx (completed successfully)
+[2m2025-08-18T21:50:21.664213Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 2 issues in frontend/src/components/dashboard/FixSuggestionPanel.tsx (completed successfully)
+[2m2025-08-18T21:50:21.664346Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/components/dashboard/__tests__/FixSuggestionPanel.test.tsx
+[2m2025-08-18T21:50:21.664384Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/components/dashboard/__tests__/FixSuggestionPanel.test.tsx
+[2m2025-08-18T21:50:21.675194Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/components/dashboard/__tests__/FixSuggestionPanel.test.tsx"
+[2m2025-08-18T21:50:21.685049Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/components/dashboard/__tests__/FixSuggestionPanel.test.tsx (completed successfully)
+[2m2025-08-18T21:50:21.685133Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/components/dashboard/__tests__/FixSuggestionPanel.test.tsx (timeout: 30s)
+[2m2025-08-18T21:50:21.687395Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/components/dashboard/__tests__/FixSuggestionPanel.test.tsx (completed successfully)
+[2m2025-08-18T21:50:21.703464Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 0 issues in frontend/src/components/dashboard/__tests__/FixSuggestionPanel.test.tsx (completed successfully)
+[2m2025-08-18T21:50:21.703560Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/components/dashboard/__tests__/FixSuggestionPanel.test.tsx (completed successfully)
+[2m2025-08-18T21:50:21.722568Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 2 issues in frontend/src/components/dashboard/__tests__/FixSuggestionPanel.test.tsx (completed successfully)
+[2m2025-08-18T21:50:21.722707Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/components/dashboard/__tests__/ExportHub.test.tsx
+[2m2025-08-18T21:50:21.722742Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/components/dashboard/__tests__/ExportHub.test.tsx
+[2m2025-08-18T21:50:21.739204Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/components/dashboard/__tests__/ExportHub.test.tsx"
+[2m2025-08-18T21:50:21.750206Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/components/dashboard/__tests__/ExportHub.test.tsx (completed successfully)
+[2m2025-08-18T21:50:21.750283Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/components/dashboard/__tests__/ExportHub.test.tsx (timeout: 30s)
+[2m2025-08-18T21:50:21.753102Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/components/dashboard/__tests__/ExportHub.test.tsx (completed successfully)
+[2m2025-08-18T21:50:21.770349Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 0 issues in frontend/src/components/dashboard/__tests__/ExportHub.test.tsx (completed successfully)
+[2m2025-08-18T21:50:21.770419Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/components/dashboard/__tests__/ExportHub.test.tsx (completed successfully)
+[2m2025-08-18T21:50:21.790579Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 2 issues in frontend/src/components/dashboard/__tests__/ExportHub.test.tsx (completed successfully)
+[2m2025-08-18T21:50:21.790663Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/components/dashboard/__tests__/HistoricalComparison.test.tsx
+[2m2025-08-18T21:50:21.790687Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/components/dashboard/__tests__/HistoricalComparison.test.tsx
+[2m2025-08-18T21:50:21.802456Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/components/dashboard/__tests__/HistoricalComparison.test.tsx"
+[2m2025-08-18T21:50:21.812233Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/components/dashboard/__tests__/HistoricalComparison.test.tsx (completed successfully)
+[2m2025-08-18T21:50:21.812305Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/components/dashboard/__tests__/HistoricalComparison.test.tsx (timeout: 30s)
+[2m2025-08-18T21:50:21.814683Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/components/dashboard/__tests__/HistoricalComparison.test.tsx (completed successfully)
+[2m2025-08-18T21:50:21.831017Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 0 issues in frontend/src/components/dashboard/__tests__/HistoricalComparison.test.tsx (completed successfully)
+[2m2025-08-18T21:50:21.831105Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/components/dashboard/__tests__/HistoricalComparison.test.tsx (completed successfully)
+[2m2025-08-18T21:50:21.850543Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 2 issues in frontend/src/components/dashboard/__tests__/HistoricalComparison.test.tsx (completed successfully)
+[2m2025-08-18T21:50:21.850643Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/components/dashboard/__tests__/PriorityMatrix.test.tsx
+[2m2025-08-18T21:50:21.850670Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/components/dashboard/__tests__/PriorityMatrix.test.tsx
+[2m2025-08-18T21:50:21.855624Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/components/dashboard/__tests__/PriorityMatrix.test.tsx"
+[2m2025-08-18T21:50:21.864093Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/components/dashboard/__tests__/PriorityMatrix.test.tsx (completed successfully)
+[2m2025-08-18T21:50:21.864169Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/components/dashboard/__tests__/PriorityMatrix.test.tsx (timeout: 30s)
+[2m2025-08-18T21:50:21.865928Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/components/dashboard/__tests__/PriorityMatrix.test.tsx (completed successfully)
+[2m2025-08-18T21:50:21.880917Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 0 issues in frontend/src/components/dashboard/__tests__/PriorityMatrix.test.tsx (completed successfully)
+[2m2025-08-18T21:50:21.881019Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/components/dashboard/__tests__/PriorityMatrix.test.tsx (completed successfully)
+[2m2025-08-18T21:50:21.897976Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 2 issues in frontend/src/components/dashboard/__tests__/PriorityMatrix.test.tsx (completed successfully)
+[2m2025-08-18T21:50:21.898073Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/components/dashboard/__tests__/SmartSearchPanel.test.tsx
+[2m2025-08-18T21:50:21.898099Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/components/dashboard/__tests__/SmartSearchPanel.test.tsx
+[2m2025-08-18T21:50:21.911638Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/components/dashboard/__tests__/SmartSearchPanel.test.tsx"
+[2m2025-08-18T21:50:21.921739Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/components/dashboard/__tests__/SmartSearchPanel.test.tsx (completed successfully)
+[2m2025-08-18T21:50:21.921829Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/components/dashboard/__tests__/SmartSearchPanel.test.tsx (timeout: 30s)
+[2m2025-08-18T21:50:21.924595Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/components/dashboard/__tests__/SmartSearchPanel.test.tsx (completed successfully)
+[2m2025-08-18T21:50:21.941661Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 0 issues in frontend/src/components/dashboard/__tests__/SmartSearchPanel.test.tsx (completed successfully)
+[2m2025-08-18T21:50:21.941778Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/components/dashboard/__tests__/SmartSearchPanel.test.tsx (completed successfully)
+[2m2025-08-18T21:50:21.961324Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 2 issues in frontend/src/components/dashboard/__tests__/SmartSearchPanel.test.tsx (completed successfully)
+[2m2025-08-18T21:50:21.961423Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/components/dashboard/__tests__/QualityScoreCard.test.tsx
+[2m2025-08-18T21:50:21.961469Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/components/dashboard/__tests__/QualityScoreCard.test.tsx
+[2m2025-08-18T21:50:21.968678Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/components/dashboard/__tests__/QualityScoreCard.test.tsx"
+[2m2025-08-18T21:50:21.977625Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/components/dashboard/__tests__/QualityScoreCard.test.tsx (completed successfully)
+[2m2025-08-18T21:50:21.977688Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/components/dashboard/__tests__/QualityScoreCard.test.tsx (timeout: 30s)
+[2m2025-08-18T21:50:21.979668Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/components/dashboard/__tests__/QualityScoreCard.test.tsx (completed successfully)
+[2m2025-08-18T21:50:21.995143Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 0 issues in frontend/src/components/dashboard/__tests__/QualityScoreCard.test.tsx (completed successfully)
+[2m2025-08-18T21:50:21.995220Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/components/dashboard/__tests__/QualityScoreCard.test.tsx (completed successfully)
+[2m2025-08-18T21:50:22.013065Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 2 issues in frontend/src/components/dashboard/__tests__/QualityScoreCard.test.tsx (completed successfully)
+[2m2025-08-18T21:50:22.013160Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/components/dashboard/__tests__/TechnicalDebtTracker.test.tsx
+[2m2025-08-18T21:50:22.013191Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/components/dashboard/__tests__/TechnicalDebtTracker.test.tsx
+[2m2025-08-18T21:50:22.023337Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/components/dashboard/__tests__/TechnicalDebtTracker.test.tsx"
+[2m2025-08-18T21:50:22.032760Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/components/dashboard/__tests__/TechnicalDebtTracker.test.tsx (completed successfully)
+[2m2025-08-18T21:50:22.032833Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/components/dashboard/__tests__/TechnicalDebtTracker.test.tsx (timeout: 30s)
+[2m2025-08-18T21:50:22.035120Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/components/dashboard/__tests__/TechnicalDebtTracker.test.tsx (completed successfully)
+[2m2025-08-18T21:50:22.052385Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 0 issues in frontend/src/components/dashboard/__tests__/TechnicalDebtTracker.test.tsx (completed successfully)
+[2m2025-08-18T21:50:22.052499Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/components/dashboard/__tests__/TechnicalDebtTracker.test.tsx (completed successfully)
+[2m2025-08-18T21:50:22.071449Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 2 issues in frontend/src/components/dashboard/__tests__/TechnicalDebtTracker.test.tsx (completed successfully)
+[2m2025-08-18T21:50:22.071550Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/components/dashboard/__tests__/CollaborationPanel.test.tsx
+[2m2025-08-18T21:50:22.071579Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/components/dashboard/__tests__/CollaborationPanel.test.tsx
+[2m2025-08-18T21:50:22.086171Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/components/dashboard/__tests__/CollaborationPanel.test.tsx"
+[2m2025-08-18T21:50:22.096970Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/components/dashboard/__tests__/CollaborationPanel.test.tsx (completed successfully)
+[2m2025-08-18T21:50:22.097065Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/components/dashboard/__tests__/CollaborationPanel.test.tsx (timeout: 30s)
+[2m2025-08-18T21:50:22.099858Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/components/dashboard/__tests__/CollaborationPanel.test.tsx (completed successfully)
+[2m2025-08-18T21:50:22.116757Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 0 issues in frontend/src/components/dashboard/__tests__/CollaborationPanel.test.tsx (completed successfully)
+[2m2025-08-18T21:50:22.116843Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/components/dashboard/__tests__/CollaborationPanel.test.tsx (completed successfully)
+[2m2025-08-18T21:50:22.136362Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 2 issues in frontend/src/components/dashboard/__tests__/CollaborationPanel.test.tsx (completed successfully)
+[2m2025-08-18T21:50:22.136455Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/components/dashboard/__tests__/InteractiveDependencyGraph.test.tsx
+[2m2025-08-18T21:50:22.136483Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/components/dashboard/__tests__/InteractiveDependencyGraph.test.tsx
+[2m2025-08-18T21:50:22.146522Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/components/dashboard/__tests__/InteractiveDependencyGraph.test.tsx"
+[2m2025-08-18T21:50:22.156067Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/components/dashboard/__tests__/InteractiveDependencyGraph.test.tsx (completed successfully)
+[2m2025-08-18T21:50:22.156150Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/components/dashboard/__tests__/InteractiveDependencyGraph.test.tsx (timeout: 30s)
+[2m2025-08-18T21:50:22.158466Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/components/dashboard/__tests__/InteractiveDependencyGraph.test.tsx (completed successfully)
+[2m2025-08-18T21:50:22.174722Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 0 issues in frontend/src/components/dashboard/__tests__/InteractiveDependencyGraph.test.tsx (completed successfully)
+[2m2025-08-18T21:50:22.174805Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/components/dashboard/__tests__/InteractiveDependencyGraph.test.tsx (completed successfully)
+[2m2025-08-18T21:50:22.193384Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 2 issues in frontend/src/components/dashboard/__tests__/InteractiveDependencyGraph.test.tsx (completed successfully)
+[2m2025-08-18T21:50:22.193484Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/components/dashboard/__tests__/DashboardBuilder.test.tsx
+[2m2025-08-18T21:50:22.193510Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/components/dashboard/__tests__/DashboardBuilder.test.tsx
+[2m2025-08-18T21:50:22.209062Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/components/dashboard/__tests__/DashboardBuilder.test.tsx"
+[2m2025-08-18T21:50:22.219588Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/components/dashboard/__tests__/DashboardBuilder.test.tsx (completed successfully)
+[2m2025-08-18T21:50:22.219667Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/components/dashboard/__tests__/DashboardBuilder.test.tsx (timeout: 30s)
+[2m2025-08-18T21:50:22.222408Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/components/dashboard/__tests__/DashboardBuilder.test.tsx (completed successfully)
+[2m2025-08-18T21:50:22.239506Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 0 issues in frontend/src/components/dashboard/__tests__/DashboardBuilder.test.tsx (completed successfully)
+[2m2025-08-18T21:50:22.239580Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/components/dashboard/__tests__/DashboardBuilder.test.tsx (completed successfully)
+[2m2025-08-18T21:50:22.259694Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 2 issues in frontend/src/components/dashboard/__tests__/DashboardBuilder.test.tsx (completed successfully)
+[2m2025-08-18T21:50:22.259791Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/components/dashboard/TechnicalDebtTracker.tsx
+[2m2025-08-18T21:50:22.259818Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/components/dashboard/TechnicalDebtTracker.tsx
+[2m2025-08-18T21:50:22.289618Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/components/dashboard/TechnicalDebtTracker.tsx"
+[2m2025-08-18T21:50:22.302207Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/components/dashboard/TechnicalDebtTracker.tsx (completed successfully)
+[2m2025-08-18T21:50:22.302298Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/components/dashboard/TechnicalDebtTracker.tsx (timeout: 30s)
+[2m2025-08-18T21:50:22.305921Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/components/dashboard/TechnicalDebtTracker.tsx (completed successfully)
+[2m2025-08-18T21:50:22.324923Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 0 issues in frontend/src/components/dashboard/TechnicalDebtTracker.tsx (completed successfully)
+[2m2025-08-18T21:50:22.325014Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/components/dashboard/TechnicalDebtTracker.tsx (completed successfully)
+[2m2025-08-18T21:50:22.348259Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 2 issues in frontend/src/components/dashboard/TechnicalDebtTracker.tsx (completed successfully)
+[2m2025-08-18T21:50:22.348345Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/components/dashboard/DashboardBuilder.tsx
+[2m2025-08-18T21:50:22.348369Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/components/dashboard/DashboardBuilder.tsx
+[2m2025-08-18T21:50:22.389988Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/components/dashboard/DashboardBuilder.tsx"
+[2m2025-08-18T21:50:22.404825Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/components/dashboard/DashboardBuilder.tsx (completed successfully)
+[2m2025-08-18T21:50:22.404911Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/components/dashboard/DashboardBuilder.tsx (timeout: 30s)
+[2m2025-08-18T21:50:22.409606Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/components/dashboard/DashboardBuilder.tsx (completed successfully)
+[2m2025-08-18T21:50:22.430473Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 0 issues in frontend/src/components/dashboard/DashboardBuilder.tsx (completed successfully)
+[2m2025-08-18T21:50:22.430555Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/components/dashboard/DashboardBuilder.tsx (completed successfully)
+[2m2025-08-18T21:50:22.457149Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 2 issues in frontend/src/components/dashboard/DashboardBuilder.tsx (completed successfully)
+[2m2025-08-18T21:50:22.457248Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/components/dashboard/index.ts
+[2m2025-08-18T21:50:22.457276Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/components/dashboard/index.ts
+[2m2025-08-18T21:50:22.467665Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/components/dashboard/index.ts"
+[2m2025-08-18T21:50:22.477254Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/components/dashboard/index.ts (completed successfully)
+[2m2025-08-18T21:50:22.477335Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/components/dashboard/index.ts (timeout: 30s)
+[2m2025-08-18T21:50:22.479923Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/components/dashboard/index.ts (completed successfully)
+[2m2025-08-18T21:50:22.496166Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 0 issues in frontend/src/components/dashboard/index.ts (completed successfully)
+[2m2025-08-18T21:50:22.496250Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/components/dashboard/index.ts (completed successfully)
+[2m2025-08-18T21:50:22.515069Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 0 issues in frontend/src/components/dashboard/index.ts (completed successfully)
+[2m2025-08-18T21:50:22.515163Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/components/dashboard/ExportHub.tsx
+[2m2025-08-18T21:50:22.515191Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/components/dashboard/ExportHub.tsx
+[2m2025-08-18T21:50:22.563262Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/components/dashboard/ExportHub.tsx"
+[2m2025-08-18T21:50:22.578616Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/components/dashboard/ExportHub.tsx (completed successfully)
+[2m2025-08-18T21:50:22.578698Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/components/dashboard/ExportHub.tsx (timeout: 30s)
+[2m2025-08-18T21:50:22.583682Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/components/dashboard/ExportHub.tsx (completed successfully)
+[2m2025-08-18T21:50:22.605771Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 0 issues in frontend/src/components/dashboard/ExportHub.tsx (completed successfully)
+[2m2025-08-18T21:50:22.605876Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/components/dashboard/ExportHub.tsx (completed successfully)
+[2m2025-08-18T21:50:22.633987Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 2 issues in frontend/src/components/dashboard/ExportHub.tsx (completed successfully)
+[2m2025-08-18T21:50:22.634099Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/components/dashboard/SmartSearchPanel.tsx
+[2m2025-08-18T21:50:22.634129Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/components/dashboard/SmartSearchPanel.tsx
+[2m2025-08-18T21:50:22.685445Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/components/dashboard/SmartSearchPanel.tsx"
+[2m2025-08-18T21:50:22.701439Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/components/dashboard/SmartSearchPanel.tsx (completed successfully)
+[2m2025-08-18T21:50:22.701540Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/components/dashboard/SmartSearchPanel.tsx (timeout: 30s)
+[2m2025-08-18T21:50:22.706980Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/components/dashboard/SmartSearchPanel.tsx (completed successfully)
+[2m2025-08-18T21:50:22.729181Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 0 issues in frontend/src/components/dashboard/SmartSearchPanel.tsx (completed successfully)
+[2m2025-08-18T21:50:22.729286Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/components/dashboard/SmartSearchPanel.tsx (completed successfully)
+[2m2025-08-18T21:50:22.757685Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 2 issues in frontend/src/components/dashboard/SmartSearchPanel.tsx (completed successfully)
+[2m2025-08-18T21:50:22.757801Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/components/dashboard/QualityScoreCard.tsx
+[2m2025-08-18T21:50:22.757841Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/components/dashboard/QualityScoreCard.tsx
+[2m2025-08-18T21:50:22.777843Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/components/dashboard/QualityScoreCard.tsx"
+[2m2025-08-18T21:50:22.789238Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/components/dashboard/QualityScoreCard.tsx (completed successfully)
+[2m2025-08-18T21:50:22.789329Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/components/dashboard/QualityScoreCard.tsx (timeout: 30s)
+[2m2025-08-18T21:50:22.792306Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/components/dashboard/QualityScoreCard.tsx (completed successfully)
+[2m2025-08-18T21:50:22.810662Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 0 issues in frontend/src/components/dashboard/QualityScoreCard.tsx (completed successfully)
+[2m2025-08-18T21:50:22.810761Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/components/dashboard/QualityScoreCard.tsx (completed successfully)
+[2m2025-08-18T21:50:22.833163Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 2 issues in frontend/src/components/dashboard/QualityScoreCard.tsx (completed successfully)
+[2m2025-08-18T21:50:22.833256Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/components/dashboard/EnhancedDashboardDemo.tsx
+[2m2025-08-18T21:50:22.833290Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/components/dashboard/EnhancedDashboardDemo.tsx
+[2m2025-08-18T21:50:22.846509Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/components/dashboard/EnhancedDashboardDemo.tsx"
+[2m2025-08-18T21:50:22.857456Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/components/dashboard/EnhancedDashboardDemo.tsx (completed successfully)
+[2m2025-08-18T21:50:22.857558Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/components/dashboard/EnhancedDashboardDemo.tsx (timeout: 30s)
+[2m2025-08-18T21:50:22.860149Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/components/dashboard/EnhancedDashboardDemo.tsx (completed successfully)
+[2m2025-08-18T21:50:22.877195Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 0 issues in frontend/src/components/dashboard/EnhancedDashboardDemo.tsx (completed successfully)
+[2m2025-08-18T21:50:22.877300Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/components/dashboard/EnhancedDashboardDemo.tsx (completed successfully)
+[2m2025-08-18T21:50:22.897067Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 2 issues in frontend/src/components/dashboard/EnhancedDashboardDemo.tsx (completed successfully)
+[2m2025-08-18T21:50:22.897171Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/components/dashboard/InteractiveDependencyGraph.tsx
+[2m2025-08-18T21:50:22.897202Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/components/dashboard/InteractiveDependencyGraph.tsx
+[2m2025-08-18T21:50:22.939615Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/components/dashboard/InteractiveDependencyGraph.tsx"
+[2m2025-08-18T21:50:22.953774Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/components/dashboard/InteractiveDependencyGraph.tsx (completed successfully)
+[2m2025-08-18T21:50:22.953857Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/components/dashboard/InteractiveDependencyGraph.tsx (timeout: 30s)
+[2m2025-08-18T21:50:22.958265Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/components/dashboard/InteractiveDependencyGraph.tsx (completed successfully)
+[2m2025-08-18T21:50:22.978903Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 0 issues in frontend/src/components/dashboard/InteractiveDependencyGraph.tsx (completed successfully)
+[2m2025-08-18T21:50:22.978989Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/components/dashboard/InteractiveDependencyGraph.tsx (completed successfully)
+[2m2025-08-18T21:50:23.004211Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 2 issues in frontend/src/components/dashboard/InteractiveDependencyGraph.tsx (completed successfully)
+[2m2025-08-18T21:50:23.004308Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/components/dashboard/HistoricalComparison.tsx
+[2m2025-08-18T21:50:23.004335Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/components/dashboard/HistoricalComparison.tsx
+[2m2025-08-18T21:50:23.063521Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/components/dashboard/HistoricalComparison.tsx"
+[2m2025-08-18T21:50:23.079280Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/components/dashboard/HistoricalComparison.tsx (completed successfully)
+[2m2025-08-18T21:50:23.079365Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/components/dashboard/HistoricalComparison.tsx (timeout: 30s)
+[2m2025-08-18T21:50:23.084496Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/components/dashboard/HistoricalComparison.tsx (completed successfully)
+[2m2025-08-18T21:50:23.106609Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 0 issues in frontend/src/components/dashboard/HistoricalComparison.tsx (completed successfully)
+[2m2025-08-18T21:50:23.106700Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/components/dashboard/HistoricalComparison.tsx (completed successfully)
+[2m2025-08-18T21:50:23.134636Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 2 issues in frontend/src/components/dashboard/HistoricalComparison.tsx (completed successfully)
+[2m2025-08-18T21:50:23.134748Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/components/dashboard/PriorityMatrix.tsx
+[2m2025-08-18T21:50:23.134785Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/components/dashboard/PriorityMatrix.tsx
+[2m2025-08-18T21:50:23.160275Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/components/dashboard/PriorityMatrix.tsx"
+[2m2025-08-18T21:50:23.171846Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/components/dashboard/PriorityMatrix.tsx (completed successfully)
+[2m2025-08-18T21:50:23.171923Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/components/dashboard/PriorityMatrix.tsx (timeout: 30s)
+[2m2025-08-18T21:50:23.175087Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/components/dashboard/PriorityMatrix.tsx (completed successfully)
+[2m2025-08-18T21:50:23.193134Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 0 issues in frontend/src/components/dashboard/PriorityMatrix.tsx (completed successfully)
+[2m2025-08-18T21:50:23.193209Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/components/dashboard/PriorityMatrix.tsx (completed successfully)
+[2m2025-08-18T21:50:23.214596Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 2 issues in frontend/src/components/dashboard/PriorityMatrix.tsx (completed successfully)
+[2m2025-08-18T21:50:23.214693Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/components/dashboard/CollaborationPanel.tsx
+[2m2025-08-18T21:50:23.214720Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/components/dashboard/CollaborationPanel.tsx
+[2m2025-08-18T21:50:23.271311Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/components/dashboard/CollaborationPanel.tsx"
+[2m2025-08-18T21:50:23.287543Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/components/dashboard/CollaborationPanel.tsx (completed successfully)
+[2m2025-08-18T21:50:23.287637Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/components/dashboard/CollaborationPanel.tsx (timeout: 30s)
+[2m2025-08-18T21:50:23.293022Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/components/dashboard/CollaborationPanel.tsx (completed successfully)
+[2m2025-08-18T21:50:23.315560Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 0 issues in frontend/src/components/dashboard/CollaborationPanel.tsx (completed successfully)
+[2m2025-08-18T21:50:23.315640Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/components/dashboard/CollaborationPanel.tsx (completed successfully)
+[2m2025-08-18T21:50:23.345391Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 2 issues in frontend/src/components/dashboard/CollaborationPanel.tsx (completed successfully)
+[2m2025-08-18T21:50:23.345506Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/components/SimpleMermaidTest.tsx
+[2m2025-08-18T21:50:23.345535Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/components/SimpleMermaidTest.tsx
+[2m2025-08-18T21:50:23.347610Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/components/SimpleMermaidTest.tsx"
+[2m2025-08-18T21:50:23.355459Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/components/SimpleMermaidTest.tsx (completed successfully)
+[2m2025-08-18T21:50:23.355527Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/components/SimpleMermaidTest.tsx (timeout: 30s)
+[2m2025-08-18T21:50:23.356993Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/components/SimpleMermaidTest.tsx (completed successfully)
+[2m2025-08-18T21:50:23.371400Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::dead_code[0m[2m:[0m Found 1 potential dead code issues in frontend/src/components/SimpleMermaidTest.tsx
+[2m2025-08-18T21:50:23.371477Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 1 issues in frontend/src/components/SimpleMermaidTest.tsx (completed successfully)
+[2m2025-08-18T21:50:23.371491Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/components/SimpleMermaidTest.tsx (completed successfully)
+[2m2025-08-18T21:50:23.387358Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 0 issues in frontend/src/components/SimpleMermaidTest.tsx (completed successfully)
+[2m2025-08-18T21:50:23.387452Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/components/MermaidDiagram.tsx
+[2m2025-08-18T21:50:23.387476Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/components/MermaidDiagram.tsx
+[2m2025-08-18T21:50:23.413621Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/components/MermaidDiagram.tsx"
+[2m2025-08-18T21:50:23.426518Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/components/MermaidDiagram.tsx (completed successfully)
+[2m2025-08-18T21:50:23.426597Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/components/MermaidDiagram.tsx (timeout: 30s)
+[2m2025-08-18T21:50:23.430421Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/components/MermaidDiagram.tsx (completed successfully)
+[2m2025-08-18T21:50:23.449982Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::dead_code[0m[2m:[0m Found 1 potential dead code issues in frontend/src/components/MermaidDiagram.tsx
+[2m2025-08-18T21:50:23.450061Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 1 issues in frontend/src/components/MermaidDiagram.tsx (completed successfully)
+[2m2025-08-18T21:50:23.450077Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/components/MermaidDiagram.tsx (completed successfully)
+[2m2025-08-18T21:50:23.473627Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 2 issues in frontend/src/components/MermaidDiagram.tsx (completed successfully)
+[2m2025-08-18T21:50:23.473735Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/components/CodeSnippet.tsx
+[2m2025-08-18T21:50:23.473766Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/components/CodeSnippet.tsx
+[2m2025-08-18T21:50:23.481431Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/components/CodeSnippet.tsx"
+[2m2025-08-18T21:50:23.490714Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/components/CodeSnippet.tsx (completed successfully)
+[2m2025-08-18T21:50:23.490796Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/components/CodeSnippet.tsx (timeout: 30s)
+[2m2025-08-18T21:50:23.493138Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/components/CodeSnippet.tsx (completed successfully)
+[2m2025-08-18T21:50:23.509360Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::dead_code[0m[2m:[0m Found 1 potential dead code issues in frontend/src/components/CodeSnippet.tsx
+[2m2025-08-18T21:50:23.509446Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 1 issues in frontend/src/components/CodeSnippet.tsx (completed successfully)
+[2m2025-08-18T21:50:23.509462Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/components/CodeSnippet.tsx (completed successfully)
+[2m2025-08-18T21:50:23.527297Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 1 issues in frontend/src/components/CodeSnippet.tsx (completed successfully)
+[2m2025-08-18T21:50:23.527397Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/components/UveddiLoader.tsx
+[2m2025-08-18T21:50:23.527437Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/components/UveddiLoader.tsx
+[2m2025-08-18T21:50:23.532498Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/components/UveddiLoader.tsx"
+[2m2025-08-18T21:50:23.540826Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/components/UveddiLoader.tsx (completed successfully)
+[2m2025-08-18T21:50:23.540898Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/components/UveddiLoader.tsx (timeout: 30s)
+[2m2025-08-18T21:50:23.542629Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/components/UveddiLoader.tsx (completed successfully)
+[2m2025-08-18T21:50:23.557638Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::dead_code[0m[2m:[0m Found 1 potential dead code issues in frontend/src/components/UveddiLoader.tsx
+[2m2025-08-18T21:50:23.557711Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 1 issues in frontend/src/components/UveddiLoader.tsx (completed successfully)
+[2m2025-08-18T21:50:23.557725Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/components/UveddiLoader.tsx (completed successfully)
+[2m2025-08-18T21:50:23.574634Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 0 issues in frontend/src/components/UveddiLoader.tsx (completed successfully)
+[2m2025-08-18T21:50:23.574720Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/hooks/useReport.ts
+[2m2025-08-18T21:50:23.574743Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/hooks/useReport.ts
+[2m2025-08-18T21:50:23.577959Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/hooks/useReport.ts"
+[2m2025-08-18T21:50:23.585663Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/hooks/useReport.ts (completed successfully)
+[2m2025-08-18T21:50:23.585728Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/hooks/useReport.ts (timeout: 30s)
+[2m2025-08-18T21:50:23.587223Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/hooks/useReport.ts (completed successfully)
+[2m2025-08-18T21:50:23.601669Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::dead_code[0m[2m:[0m Found 2 potential dead code issues in frontend/src/hooks/useReport.ts
+[2m2025-08-18T21:50:23.601737Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 2 issues in frontend/src/hooks/useReport.ts (completed successfully)
+[2m2025-08-18T21:50:23.601753Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/hooks/useReport.ts (completed successfully)
+[2m2025-08-18T21:50:23.618069Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 0 issues in frontend/src/hooks/useReport.ts (completed successfully)
+[2m2025-08-18T21:50:23.618163Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/App.tsx
+[2m2025-08-18T21:50:23.618189Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/App.tsx
+[2m2025-08-18T21:50:23.620204Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/App.tsx"
+[2m2025-08-18T21:50:23.627919Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/App.tsx (completed successfully)
+[2m2025-08-18T21:50:23.627989Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/App.tsx (timeout: 30s)
+[2m2025-08-18T21:50:23.629560Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/App.tsx (completed successfully)
+[2m2025-08-18T21:50:23.643939Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::dead_code[0m[2m:[0m Found 1 potential dead code issues in frontend/src/App.tsx
+[2m2025-08-18T21:50:23.644018Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 1 issues in frontend/src/App.tsx (completed successfully)
+[2m2025-08-18T21:50:23.644032Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/App.tsx (completed successfully)
+[2m2025-08-18T21:50:23.660152Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 1 issues in frontend/src/App.tsx (completed successfully)
+[2m2025-08-18T21:50:23.660251Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/main.tsx
+[2m2025-08-18T21:50:23.660277Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/main.tsx
+[2m2025-08-18T21:50:23.660621Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/main.tsx"
+[2m2025-08-18T21:50:23.668393Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/main.tsx (completed successfully)
+[2m2025-08-18T21:50:23.668477Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/main.tsx (timeout: 30s)
+[2m2025-08-18T21:50:23.669716Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/main.tsx (completed successfully)
+[2m2025-08-18T21:50:23.683615Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 0 issues in frontend/src/main.tsx (completed successfully)
+[2m2025-08-18T21:50:23.683689Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/main.tsx (completed successfully)
+[2m2025-08-18T21:50:23.698998Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 0 issues in frontend/src/main.tsx (completed successfully)
+[2m2025-08-18T21:50:23.699076Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/pages/DashboardPage.tsx
+[2m2025-08-18T21:50:23.699098Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/pages/DashboardPage.tsx
+[2m2025-08-18T21:50:23.711405Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/pages/DashboardPage.tsx"
+[2m2025-08-18T21:50:23.722775Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/pages/DashboardPage.tsx (completed successfully)
+[2m2025-08-18T21:50:23.722863Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/pages/DashboardPage.tsx (timeout: 30s)
+[2m2025-08-18T21:50:23.725381Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/pages/DashboardPage.tsx (completed successfully)
+[2m2025-08-18T21:50:23.742324Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::dead_code[0m[2m:[0m Found 2 potential dead code issues in frontend/src/pages/DashboardPage.tsx
+[2m2025-08-18T21:50:23.742472Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 2 issues in frontend/src/pages/DashboardPage.tsx (completed successfully)
+[2m2025-08-18T21:50:23.742489Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/pages/DashboardPage.tsx (completed successfully)
+[2m2025-08-18T21:50:23.762431Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 1 issues in frontend/src/pages/DashboardPage.tsx (completed successfully)
+[2m2025-08-18T21:50:23.762551Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/pages/ReportPage.tsx
+[2m2025-08-18T21:50:23.762632Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/pages/ReportPage.tsx
+[2m2025-08-18T21:50:23.764066Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/pages/ReportPage.tsx"
+[2m2025-08-18T21:50:23.775091Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/pages/ReportPage.tsx (completed successfully)
+[2m2025-08-18T21:50:23.775196Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/pages/ReportPage.tsx (timeout: 30s)
+[2m2025-08-18T21:50:23.777101Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/pages/ReportPage.tsx (completed successfully)
+[2m2025-08-18T21:50:23.798314Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::dead_code[0m[2m:[0m Found 1 potential dead code issues in frontend/src/pages/ReportPage.tsx
+[2m2025-08-18T21:50:23.798423Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 1 issues in frontend/src/pages/ReportPage.tsx (completed successfully)
+[2m2025-08-18T21:50:23.798444Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/pages/ReportPage.tsx (completed successfully)
+[2m2025-08-18T21:50:23.818213Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 0 issues in frontend/src/pages/ReportPage.tsx (completed successfully)
+[2m2025-08-18T21:50:23.818312Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/pages/ReportsListPage.tsx
+[2m2025-08-18T21:50:23.818338Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/pages/ReportsListPage.tsx
+[2m2025-08-18T21:50:23.818971Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/pages/ReportsListPage.tsx"
+[2m2025-08-18T21:50:23.826143Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/pages/ReportsListPage.tsx (completed successfully)
+[2m2025-08-18T21:50:23.826213Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/pages/ReportsListPage.tsx (timeout: 30s)
+[2m2025-08-18T21:50:23.827637Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/pages/ReportsListPage.tsx (completed successfully)
+[2m2025-08-18T21:50:23.842324Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::dead_code[0m[2m:[0m Found 1 potential dead code issues in frontend/src/pages/ReportsListPage.tsx
+[2m2025-08-18T21:50:23.842411Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 1 issues in frontend/src/pages/ReportsListPage.tsx (completed successfully)
+[2m2025-08-18T21:50:23.842429Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/pages/ReportsListPage.tsx (completed successfully)
+[2m2025-08-18T21:50:23.858297Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 0 issues in frontend/src/pages/ReportsListPage.tsx (completed successfully)
+[2m2025-08-18T21:50:23.858397Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/test-utils/dataGenerators.ts
+[2m2025-08-18T21:50:23.858427Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/test-utils/dataGenerators.ts
+[2m2025-08-18T21:50:23.878256Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/test-utils/dataGenerators.ts"
+[2m2025-08-18T21:50:23.889679Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/test-utils/dataGenerators.ts (completed successfully)
+[2m2025-08-18T21:50:23.889765Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/test-utils/dataGenerators.ts (timeout: 30s)
+[2m2025-08-18T21:50:23.892859Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/test-utils/dataGenerators.ts (completed successfully)
+[2m2025-08-18T21:50:23.910837Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 0 issues in frontend/src/test-utils/dataGenerators.ts (completed successfully)
+[2m2025-08-18T21:50:23.910925Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/test-utils/dataGenerators.ts (completed successfully)
+[2m2025-08-18T21:50:23.932245Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 1 issues in frontend/src/test-utils/dataGenerators.ts (completed successfully)
+[2m2025-08-18T21:50:23.932351Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/test-utils/performanceHelpers.ts
+[2m2025-08-18T21:50:23.932380Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/test-utils/performanceHelpers.ts
+[2m2025-08-18T21:50:23.944865Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/test-utils/performanceHelpers.ts"
+[2m2025-08-18T21:50:23.954685Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/test-utils/performanceHelpers.ts (completed successfully)
+[2m2025-08-18T21:50:23.954766Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/test-utils/performanceHelpers.ts (timeout: 30s)
+[2m2025-08-18T21:50:23.957037Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/test-utils/performanceHelpers.ts (completed successfully)
+[2m2025-08-18T21:50:23.973259Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 0 issues in frontend/src/test-utils/performanceHelpers.ts (completed successfully)
+[2m2025-08-18T21:50:23.973350Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/test-utils/performanceHelpers.ts (completed successfully)
+[2m2025-08-18T21:50:23.992501Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 1 issues in frontend/src/test-utils/performanceHelpers.ts (completed successfully)
+[2m2025-08-18T21:50:23.992608Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/test-utils/mocks/mockData.ts
+[2m2025-08-18T21:50:23.992637Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/test-utils/mocks/mockData.ts
+[2m2025-08-18T21:50:23.998938Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/test-utils/mocks/mockData.ts"
+[2m2025-08-18T21:50:24.008367Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/test-utils/mocks/mockData.ts (completed successfully)
+[2m2025-08-18T21:50:24.008451Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/test-utils/mocks/mockData.ts (timeout: 30s)
+[2m2025-08-18T21:50:24.010452Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/test-utils/mocks/mockData.ts (completed successfully)
+[2m2025-08-18T21:50:24.025990Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 0 issues in frontend/src/test-utils/mocks/mockData.ts (completed successfully)
+[2m2025-08-18T21:50:24.026080Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/test-utils/mocks/mockData.ts (completed successfully)
+[2m2025-08-18T21:50:24.043967Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 0 issues in frontend/src/test-utils/mocks/mockData.ts (completed successfully)
+[2m2025-08-18T21:50:24.044087Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/test-utils/mocks/server.ts
+[2m2025-08-18T21:50:24.044115Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/test-utils/mocks/server.ts
+[2m2025-08-18T21:50:24.046307Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/test-utils/mocks/server.ts"
+[2m2025-08-18T21:50:24.054287Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/test-utils/mocks/server.ts (completed successfully)
+[2m2025-08-18T21:50:24.054376Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/test-utils/mocks/server.ts (timeout: 30s)
+[2m2025-08-18T21:50:24.055876Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/test-utils/mocks/server.ts (completed successfully)
+[2m2025-08-18T21:50:24.071248Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 0 issues in frontend/src/test-utils/mocks/server.ts (completed successfully)
+[2m2025-08-18T21:50:24.071330Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/test-utils/mocks/server.ts (completed successfully)
+[2m2025-08-18T21:50:24.087825Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 0 issues in frontend/src/test-utils/mocks/server.ts (completed successfully)
+[2m2025-08-18T21:50:24.087939Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/test-utils/mocks/DashboardEventProvider.tsx
+[2m2025-08-18T21:50:24.087974Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/test-utils/mocks/DashboardEventProvider.tsx
+[2m2025-08-18T21:50:24.091005Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/test-utils/mocks/DashboardEventProvider.tsx"
+[2m2025-08-18T21:50:24.099863Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/test-utils/mocks/DashboardEventProvider.tsx (completed successfully)
+[2m2025-08-18T21:50:24.099952Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/test-utils/mocks/DashboardEventProvider.tsx (timeout: 30s)
+[2m2025-08-18T21:50:24.101383Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/test-utils/mocks/DashboardEventProvider.tsx (completed successfully)
+[2m2025-08-18T21:50:24.116665Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 0 issues in frontend/src/test-utils/mocks/DashboardEventProvider.tsx (completed successfully)
+[2m2025-08-18T21:50:24.116760Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/test-utils/mocks/DashboardEventProvider.tsx (completed successfully)
+[2m2025-08-18T21:50:24.133184Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 0 issues in frontend/src/test-utils/mocks/DashboardEventProvider.tsx (completed successfully)
+[2m2025-08-18T21:50:24.133287Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/test-utils/mocks/fileMock.js
+[2m2025-08-18T21:50:24.133318Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/test-utils/mocks/fileMock.js
+[2m2025-08-18T21:50:24.133427Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/test-utils/mocks/fileMock.js"
+[2m2025-08-18T21:50:24.140780Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/test-utils/mocks/fileMock.js (completed successfully)
+[2m2025-08-18T21:50:24.140887Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/test-utils/mocks/fileMock.js (timeout: 30s)
+[2m2025-08-18T21:50:24.142400Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/test-utils/mocks/fileMock.js (completed successfully)
+[2m2025-08-18T21:50:24.156825Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 0 issues in frontend/src/test-utils/mocks/fileMock.js (completed successfully)
+[2m2025-08-18T21:50:24.156935Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/test-utils/mocks/fileMock.js (completed successfully)
+[2m2025-08-18T21:50:24.173864Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 0 issues in frontend/src/test-utils/mocks/fileMock.js (completed successfully)
+[2m2025-08-18T21:50:24.173960Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/test-utils/test-utils.tsx
+[2m2025-08-18T21:50:24.174008Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/test-utils/test-utils.tsx
+[2m2025-08-18T21:50:24.176732Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/test-utils/test-utils.tsx"
+[2m2025-08-18T21:50:24.184842Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/test-utils/test-utils.tsx (completed successfully)
+[2m2025-08-18T21:50:24.184925Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/test-utils/test-utils.tsx (timeout: 30s)
+[2m2025-08-18T21:50:24.186386Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/test-utils/test-utils.tsx (completed successfully)
+[2m2025-08-18T21:50:24.201416Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 0 issues in frontend/src/test-utils/test-utils.tsx (completed successfully)
+[2m2025-08-18T21:50:24.201507Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/test-utils/test-utils.tsx (completed successfully)
+[2m2025-08-18T21:50:24.218329Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 0 issues in frontend/src/test-utils/test-utils.tsx (completed successfully)
+[2m2025-08-18T21:50:24.218428Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Analyzing file: frontend/src/test-utils/setup.ts
+[2m2025-08-18T21:50:24.218454Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE MISS: Parsing file frontend/src/test-utils/setup.ts
+[2m2025-08-18T21:50:24.221751Z[0m [32m INFO[0m [2muveddi::analysis::cache::ast[0m[2m:[0m Stored AST in cache for: "frontend/src/test-utils/setup.ts"
+[2m2025-08-18T21:50:24.230509Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector GodObjectDetector found 0 issues in frontend/src/test-utils/setup.ts (completed successfully)
+[2m2025-08-18T21:50:24.230599Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::code_duplication[0m[2m:[0m Analyzing file for code duplication: frontend/src/test-utils/setup.ts (timeout: 30s)
+[2m2025-08-18T21:50:24.232447Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector CodeDuplicationDetector found 0 issues in frontend/src/test-utils/setup.ts (completed successfully)
+[2m2025-08-18T21:50:24.247709Z[0m [32m INFO[0m [2muveddi::analysis::detectors::anti_patterns::dead_code[0m[2m:[0m Found 7 potential dead code issues in frontend/src/test-utils/setup.ts
+[2m2025-08-18T21:50:24.247791Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector DeadCodeDetector found 7 issues in frontend/src/test-utils/setup.ts (completed successfully)
+[2m2025-08-18T21:50:24.247807Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector LargeClassDetector found 0 issues in frontend/src/test-utils/setup.ts (completed successfully)
+[2m2025-08-18T21:50:24.266241Z[0m [32m INFO[0m [2muveddi::analysis::components::detector_scheduler[0m[2m:[0m Detector TightCouplingDetector found 1 issues in frontend/src/test-utils/setup.ts (completed successfully)
+[2m2025-08-18T21:50:24.266515Z[0m [32m INFO[0m [2muveddi::analysis::services::analysis_service[0m[2m:[0m Analysis completed: 95 issues found in 3846ms
+[2m2025-08-18T21:50:24.266579Z[0m [32m INFO[0m [2muveddi::analysis::services::dependency_service[0m[2m:[0m Building dependency graph for: frontend/src
+[2m2025-08-18T21:50:24.266623Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Building dependency graph from root path: frontend/src
+[2m2025-08-18T21:50:24.267181Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/test-utils/setup.ts
+[2m2025-08-18T21:50:24.272076Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 3 dependencies from frontend/src/test-utils/setup.ts
+[2m2025-08-18T21:50:24.272223Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/test-utils/test-utils.tsx
+[2m2025-08-18T21:50:24.276755Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 7 dependencies from frontend/src/test-utils/test-utils.tsx
+[2m2025-08-18T21:50:24.277069Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/test-utils/mocks/fileMock.js
+[2m2025-08-18T21:50:24.281203Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 0 dependencies from frontend/src/test-utils/mocks/fileMock.js
+[2m2025-08-18T21:50:24.281442Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/test-utils/mocks/DashboardEventProvider.tsx
+[2m2025-08-18T21:50:24.287359Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 2 dependencies from frontend/src/test-utils/mocks/DashboardEventProvider.tsx
+[2m2025-08-18T21:50:24.287540Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/test-utils/mocks/server.ts
+[2m2025-08-18T21:50:24.292095Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 3 dependencies from frontend/src/test-utils/mocks/server.ts
+[2m2025-08-18T21:50:24.292311Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/test-utils/mocks/mockData.ts
+[2m2025-08-18T21:50:24.297398Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 1 dependencies from frontend/src/test-utils/mocks/mockData.ts
+[2m2025-08-18T21:50:24.297541Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/test-utils/performanceHelpers.ts
+[2m2025-08-18T21:50:24.303196Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 1 dependencies from frontend/src/test-utils/performanceHelpers.ts
+[2m2025-08-18T21:50:24.303390Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/test-utils/dataGenerators.ts
+[2m2025-08-18T21:50:24.309723Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 2 dependencies from frontend/src/test-utils/dataGenerators.ts
+[2m2025-08-18T21:50:24.310150Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/pages/ReportsListPage.tsx
+[2m2025-08-18T21:50:24.316590Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 2 dependencies from frontend/src/pages/ReportsListPage.tsx
+[2m2025-08-18T21:50:24.316747Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/pages/ReportPage.tsx
+[2m2025-08-18T21:50:24.323396Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 3 dependencies from frontend/src/pages/ReportPage.tsx
+[2m2025-08-18T21:50:24.323716Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/pages/DashboardPage.tsx
+[2m2025-08-18T21:50:24.329287Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 9 dependencies from frontend/src/pages/DashboardPage.tsx
+[2m2025-08-18T21:50:24.329491Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/main.tsx
+[2m2025-08-18T21:50:24.333976Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 4 dependencies from frontend/src/main.tsx
+[2m2025-08-18T21:50:24.334313Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/App.tsx
+[2m2025-08-18T21:50:24.338779Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 10 dependencies from frontend/src/App.tsx
+[2m2025-08-18T21:50:24.339099Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/hooks/useReport.ts
+[2m2025-08-18T21:50:24.343630Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 3 dependencies from frontend/src/hooks/useReport.ts
+[2m2025-08-18T21:50:24.344066Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/components/UveddiLoader.tsx
+[2m2025-08-18T21:50:24.348853Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 3 dependencies from frontend/src/components/UveddiLoader.tsx
+[2m2025-08-18T21:50:24.349004Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/components/CodeSnippet.tsx
+[2m2025-08-18T21:50:24.354078Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 3 dependencies from frontend/src/components/CodeSnippet.tsx
+[2m2025-08-18T21:50:24.354204Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/components/MermaidDiagram.tsx
+[2m2025-08-18T21:50:24.361752Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 4 dependencies from frontend/src/components/MermaidDiagram.tsx
+[2m2025-08-18T21:50:24.361951Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/components/SimpleMermaidTest.tsx
+[2m2025-08-18T21:50:24.366491Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 3 dependencies from frontend/src/components/SimpleMermaidTest.tsx
+[2m2025-08-18T21:50:24.366925Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/components/dashboard/CollaborationPanel.tsx
+[2m2025-08-18T21:50:24.375450Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 7 dependencies from frontend/src/components/dashboard/CollaborationPanel.tsx
+[2m2025-08-18T21:50:24.375597Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/components/dashboard/PriorityMatrix.tsx
+[2m2025-08-18T21:50:24.381962Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 9 dependencies from frontend/src/components/dashboard/PriorityMatrix.tsx
+[2m2025-08-18T21:50:24.382330Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/components/dashboard/HistoricalComparison.tsx
+[2m2025-08-18T21:50:24.395419Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 11 dependencies from frontend/src/components/dashboard/HistoricalComparison.tsx
+[2m2025-08-18T21:50:24.395643Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/components/dashboard/InteractiveDependencyGraph.tsx
+[2m2025-08-18T21:50:24.403771Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 9 dependencies from frontend/src/components/dashboard/InteractiveDependencyGraph.tsx
+[2m2025-08-18T21:50:24.403902Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/components/dashboard/EnhancedDashboardDemo.tsx
+[2m2025-08-18T21:50:24.409688Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 7 dependencies from frontend/src/components/dashboard/EnhancedDashboardDemo.tsx
+[2m2025-08-18T21:50:24.409823Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/components/dashboard/QualityScoreCard.tsx
+[2m2025-08-18T21:50:24.416214Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 8 dependencies from frontend/src/components/dashboard/QualityScoreCard.tsx
+[2m2025-08-18T21:50:24.416285Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/components/dashboard/SmartSearchPanel.tsx
+[2m2025-08-18T21:50:24.425040Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 9 dependencies from frontend/src/components/dashboard/SmartSearchPanel.tsx
+[2m2025-08-18T21:50:24.425169Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/components/dashboard/ExportHub.tsx
+[2m2025-08-18T21:50:24.433899Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 9 dependencies from frontend/src/components/dashboard/ExportHub.tsx
+[2m2025-08-18T21:50:24.434024Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/components/dashboard/index.ts
+[2m2025-08-18T21:50:24.439658Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 13 dependencies from frontend/src/components/dashboard/index.ts
+[2m2025-08-18T21:50:24.439817Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/components/dashboard/DashboardBuilder.tsx
+[2m2025-08-18T21:50:24.447664Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 17 dependencies from frontend/src/components/dashboard/DashboardBuilder.tsx
+[2m2025-08-18T21:50:24.447841Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/components/dashboard/TechnicalDebtTracker.tsx
+[2m2025-08-18T21:50:24.454940Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 10 dependencies from frontend/src/components/dashboard/TechnicalDebtTracker.tsx
+[2m2025-08-18T21:50:24.455372Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/components/dashboard/__tests__/DashboardBuilder.test.tsx
+[2m2025-08-18T21:50:24.461348Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 4 dependencies from frontend/src/components/dashboard/__tests__/DashboardBuilder.test.tsx
+[2m2025-08-18T21:50:24.461531Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/components/dashboard/__tests__/InteractiveDependencyGraph.test.tsx
+[2m2025-08-18T21:50:24.467376Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 5 dependencies from frontend/src/components/dashboard/__tests__/InteractiveDependencyGraph.test.tsx
+[2m2025-08-18T21:50:24.467500Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/components/dashboard/__tests__/CollaborationPanel.test.tsx
+[2m2025-08-18T21:50:24.473773Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 6 dependencies from frontend/src/components/dashboard/__tests__/CollaborationPanel.test.tsx
+[2m2025-08-18T21:50:24.473858Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/components/dashboard/__tests__/TechnicalDebtTracker.test.tsx
+[2m2025-08-18T21:50:24.479332Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 5 dependencies from frontend/src/components/dashboard/__tests__/TechnicalDebtTracker.test.tsx
+[2m2025-08-18T21:50:24.479447Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/components/dashboard/__tests__/QualityScoreCard.test.tsx
+[2m2025-08-18T21:50:24.484673Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 5 dependencies from frontend/src/components/dashboard/__tests__/QualityScoreCard.test.tsx
+[2m2025-08-18T21:50:24.484944Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/components/dashboard/__tests__/SmartSearchPanel.test.tsx
+[2m2025-08-18T21:50:24.491458Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 6 dependencies from frontend/src/components/dashboard/__tests__/SmartSearchPanel.test.tsx
+[2m2025-08-18T21:50:24.491644Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/components/dashboard/__tests__/PriorityMatrix.test.tsx
+[2m2025-08-18T21:50:24.496447Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 5 dependencies from frontend/src/components/dashboard/__tests__/PriorityMatrix.test.tsx
+[2m2025-08-18T21:50:24.496584Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/components/dashboard/__tests__/HistoricalComparison.test.tsx
+[2m2025-08-18T21:50:24.502121Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 5 dependencies from frontend/src/components/dashboard/__tests__/HistoricalComparison.test.tsx
+[2m2025-08-18T21:50:24.502309Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/components/dashboard/__tests__/ExportHub.test.tsx
+[2m2025-08-18T21:50:24.508431Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 5 dependencies from frontend/src/components/dashboard/__tests__/ExportHub.test.tsx
+[2m2025-08-18T21:50:24.508702Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/components/dashboard/__tests__/FixSuggestionPanel.test.tsx
+[2m2025-08-18T21:50:24.516765Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 5 dependencies from frontend/src/components/dashboard/__tests__/FixSuggestionPanel.test.tsx
+[2m2025-08-18T21:50:24.516983Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/components/dashboard/FixSuggestionPanel.tsx
+[2m2025-08-18T21:50:24.524793Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 6 dependencies from frontend/src/components/dashboard/FixSuggestionPanel.tsx
+[2m2025-08-18T21:50:24.525030Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/components/ErrorBoundary.tsx
+[2m2025-08-18T21:50:24.532128Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 3 dependencies from frontend/src/components/ErrorBoundary.tsx
+[2m2025-08-18T21:50:24.532418Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/components/MermaidRenderingTest.tsx
+[2m2025-08-18T21:50:24.538001Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 3 dependencies from frontend/src/components/MermaidRenderingTest.tsx
+[2m2025-08-18T21:50:24.538184Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/components/FindingsList.tsx
+[2m2025-08-18T21:50:24.543191Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 5 dependencies from frontend/src/components/FindingsList.tsx
+[2m2025-08-18T21:50:24.543358Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/components/FindingDetail.tsx
+[2m2025-08-18T21:50:24.548937Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 7 dependencies from frontend/src/components/FindingDetail.tsx
+[2m2025-08-18T21:50:24.549087Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/components/Layout.tsx
+[2m2025-08-18T21:50:24.553925Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 5 dependencies from frontend/src/components/Layout.tsx
+[2m2025-08-18T21:50:24.554086Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/components/TestMermaid.tsx
+[2m2025-08-18T21:50:24.558467Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 3 dependencies from frontend/src/components/TestMermaid.tsx
+[2m2025-08-18T21:50:24.558816Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/services/api.ts
+[2m2025-08-18T21:50:24.564792Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 1 dependencies from frontend/src/services/api.ts
+[2m2025-08-18T21:50:24.565171Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/utils/diagramGenerators.ts
+[2m2025-08-18T21:50:24.570223Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 0 dependencies from frontend/src/utils/diagramGenerators.ts
+[2m2025-08-18T21:50:24.570567Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/utils/dataTransformers.ts
+[2m2025-08-18T21:50:24.577183Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 2 dependencies from frontend/src/utils/dataTransformers.ts
+[2m2025-08-18T21:50:24.577332Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/utils/dashboardTheme.ts
+[2m2025-08-18T21:50:24.583026Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 2 dependencies from frontend/src/utils/dashboardTheme.ts
+[2m2025-08-18T21:50:24.583158Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/utils/theme.ts
+[2m2025-08-18T21:50:24.588005Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 1 dependencies from frontend/src/utils/theme.ts
+[2m2025-08-18T21:50:24.588613Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/__tests__/performance/dashboard-performance.test.tsx
+[2m2025-08-18T21:50:24.594987Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 9 dependencies from frontend/src/__tests__/performance/dashboard-performance.test.tsx
+[2m2025-08-18T21:50:24.595375Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/__tests__/coverage/test-coverage-validation.test.tsx
+[2m2025-08-18T21:50:24.605336Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 17 dependencies from frontend/src/__tests__/coverage/test-coverage-validation.test.tsx
+[2m2025-08-18T21:50:24.605661Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/__tests__/accessibility/dashboard-accessibility.test.tsx
+[2m2025-08-18T21:50:24.612246Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 15 dependencies from frontend/src/__tests__/accessibility/dashboard-accessibility.test.tsx
+[2m2025-08-18T21:50:24.612628Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/__tests__/integration/dashboard-integration.test.tsx
+[2m2025-08-18T21:50:24.618664Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 10 dependencies from frontend/src/__tests__/integration/dashboard-integration.test.tsx
+[2m2025-08-18T21:50:24.618922Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/types/api.ts
+[2m2025-08-18T21:50:24.623745Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 0 dependencies from frontend/src/types/api.ts
+[2m2025-08-18T21:50:24.623905Z[0m [32m INFO[0m [2muveddi::analysis::components::ast_provider[0m[2m:[0m AST CACHE HIT: Using cached AST for frontend/src/types/dashboard.ts
+[2m2025-08-18T21:50:24.629473Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Extracted 1 dependencies from frontend/src/types/dashboard.ts
+[2m2025-08-18T21:50:24.629537Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Processed 57 files, found 313 total dependencies
+[2m2025-08-18T21:50:24.629738Z[0m [32m INFO[0m [2muveddi::analysis::components::dependency_graph_builder[0m[2m:[0m Built dependency graph with 151 nodes
+[2m2025-08-18T21:50:24.629770Z[0m [32m INFO[0m [2muveddi::analysis::services::dependency_service[0m[2m:[0m Dependency graph built: 151 nodes, 313 edges in 363ms
+[2m2025-08-18T21:50:24.629774Z[0m [32m INFO[0m [2muveddi::analysis::orchestrator[0m[2m:[0m Orchestrated analysis completed in 4209ms: 95 issues, 151 dependencies
+[2m2025-08-18T21:50:24.629778Z[0m [32m INFO[0m [2muveddi::application[0m[2m:[0m Plugin analysis skipped (not available in community version)
+[2m2025-08-18T21:50:24.629848Z[0m [32m INFO[0m [2muveddi::application[0m[2m:[0m AI analysis disabled, skipping enhancement
+[2m2025-08-18T21:50:24.629853Z[0m [32m INFO[0m [2muveddi::application[0m[2m:[0m Starting analysis run finalization
+[2m2025-08-18T21:50:24.629976Z[0m [32m INFO[0m [2muveddi::application[0m[2m:[0m Analysis run finalization completed
+[2m2025-08-18T21:50:24.629989Z[0m [32m INFO[0m [2muveddi::application[0m[2m:[0m Starting to store 95 issues to database
+[2m2025-08-18T21:50:24.630962Z[0m [32m INFO[0m [2muveddi::application[0m[2m:[0m Issues stored to database successfully
+[2m2025-08-18T21:50:24.632667Z[0m [32m INFO[0m [2muveddi::report::modern_generator[0m[2m:[0m Attempting to initialize modern report generator with templates
+[2m2025-08-18T21:50:24.632754Z[0m [32m INFO[0m [2muveddi::report::modern_generator[0m[2m:[0m Trying template pattern: src/templates/**/*.html
+[2m2025-08-18T21:50:24.637072Z[0m [32m INFO[0m [2muveddi::report::modern_generator[0m[2m:[0m Template pattern 'src/templates/**/*.html' failed: Error {
+    kind: Msg(
+        "\n* Failed to parse \"/home/austingreen/Documents/botzr/projects/uveddi/src/templates/reports/components/header.html\"\n  --> 19:32\n   |\n19 |         {{ render_header_stats(analysis_run) }}\n   |                                ^---\n   |\n   = expected a keyword argument: `key=value` where `value` can be any expressions\n* Failed to parse \"/home/austingreen/Documents/botzr/projects/uveddi/src/templates/reports/base.html\"\n  --> 49:63\n   |\n49 |                 <dd>{{ analysis_run.detected_languages | join(\", \") | default(value=\"Auto-detected\") }}</dd>\n   |                                                               ^---\n   |\n   = expected an identifier (must start with a-z)\n* Failed to parse \"/home/austingreen/Documents/botzr/projects/uveddi/src/templates/reports/layouts/report.html\"\n --> 6:5\n  |\n6 |     {% from \"components/header.html\" import render_header %}\n  |     ^---\n  |\n  = unexpected tag; expected an endblock tag (`{% endblock block_name %}` or some content",
+    ),
+    source: None,
+}
+[2m2025-08-18T21:50:24.637138Z[0m [32m INFO[0m [2muveddi::report::modern_generator[0m[2m:[0m Trying template pattern: ./src/templates/**/*.html
+[2m2025-08-18T21:50:24.641117Z[0m [32m INFO[0m [2muveddi::report::modern_generator[0m[2m:[0m Template pattern './src/templates/**/*.html' failed: Error {
+    kind: Msg(
+        "\n* Failed to parse \"/home/austingreen/Documents/botzr/projects/uveddi/src/templates/reports/components/header.html\"\n  --> 19:32\n   |\n19 |         {{ render_header_stats(analysis_run) }}\n   |                                ^---\n   |\n   = expected a keyword argument: `key=value` where `value` can be any expressions\n* Failed to parse \"/home/austingreen/Documents/botzr/projects/uveddi/src/templates/reports/base.html\"\n  --> 49:63\n   |\n49 |                 <dd>{{ analysis_run.detected_languages | join(\", \") | default(value=\"Auto-detected\") }}</dd>\n   |                                                               ^---\n   |\n   = expected an identifier (must start with a-z)\n* Failed to parse \"/home/austingreen/Documents/botzr/projects/uveddi/src/templates/reports/layouts/report.html\"\n --> 6:5\n  |\n6 |     {% from \"components/header.html\" import render_header %}\n  |     ^---\n  |\n  = unexpected tag; expected an endblock tag (`{% endblock block_name %}` or some content",
+    ),
+    source: None,
+}
+[2m2025-08-18T21:50:24.641181Z[0m [32m INFO[0m [2muveddi::report::modern_generator[0m[2m:[0m Trying template pattern: templates/**/*.html
+[2m2025-08-18T21:50:24.641326Z[0m [32m INFO[0m [2muveddi::report::modern_generator[0m[2m:[0m Successfully loaded templates with pattern: templates/**/*.html
+[2m2025-08-18T21:50:24.641334Z[0m [32m INFO[0m [2muveddi::report::modern_generator[0m[2m:[0m Loaded 0 templates: []
+[2m2025-08-18T21:50:24.641338Z[0m [33m WARN[0m [2muveddi::report::modern_generator[0m[2m:[0m Missing essential template: reports/architectural/main.html
+[2m2025-08-18T21:50:24.641340Z[0m [33m WARN[0m [2muveddi::report::modern_generator[0m[2m:[0m Pattern 'templates/**/*.html' loaded templates but missing essential ones
+[2m2025-08-18T21:50:24.641348Z[0m [32m INFO[0m [2muveddi::report::modern_generator[0m[2m:[0m Trying template pattern: ./templates/**/*.html
+[2m2025-08-18T21:50:24.641404Z[0m [32m INFO[0m [2muveddi::report::modern_generator[0m[2m:[0m Successfully loaded templates with pattern: ./templates/**/*.html
+[2m2025-08-18T21:50:24.641406Z[0m [32m INFO[0m [2muveddi::report::modern_generator[0m[2m:[0m Loaded 0 templates: []
+[2m2025-08-18T21:50:24.641407Z[0m [33m WARN[0m [2muveddi::report::modern_generator[0m[2m:[0m Missing essential template: reports/architectural/main.html
+[2m2025-08-18T21:50:24.641422Z[0m [33m WARN[0m [2muveddi::report::modern_generator[0m[2m:[0m Pattern './templates/**/*.html' loaded templates but missing essential ones
+[2m2025-08-18T21:50:24.641427Z[0m [32m INFO[0m [2muveddi::report::modern_generator[0m[2m:[0m Trying template pattern: /home/austingreen/Documents/botzr/projects/uveddi/target/debug/templates/**/*.html
+[2m2025-08-18T21:50:24.641472Z[0m [32m INFO[0m [2muveddi::report::modern_generator[0m[2m:[0m Successfully loaded templates with pattern: /home/austingreen/Documents/botzr/projects/uveddi/target/debug/templates/**/*.html
+[2m2025-08-18T21:50:24.641478Z[0m [32m INFO[0m [2muveddi::report::modern_generator[0m[2m:[0m Loaded 0 templates: []
+[2m2025-08-18T21:50:24.641479Z[0m [33m WARN[0m [2muveddi::report::modern_generator[0m[2m:[0m Missing essential template: reports/architectural/main.html
+[2m2025-08-18T21:50:24.641480Z[0m [33m WARN[0m [2muveddi::report::modern_generator[0m[2m:[0m Pattern '/home/austingreen/Documents/botzr/projects/uveddi/target/debug/templates/**/*.html' loaded templates but missing essential ones
+[2m2025-08-18T21:50:24.641484Z[0m [32m INFO[0m [2muveddi::report::modern_generator[0m[2m:[0m Trying template pattern: /home/austingreen/Documents/botzr/projects/uveddi/target/src/templates/**/*.html
+[2m2025-08-18T21:50:24.641526Z[0m [32m INFO[0m [2muveddi::report::modern_generator[0m[2m:[0m Successfully loaded templates with pattern: /home/austingreen/Documents/botzr/projects/uveddi/target/src/templates/**/*.html
+[2m2025-08-18T21:50:24.641528Z[0m [32m INFO[0m [2muveddi::report::modern_generator[0m[2m:[0m Loaded 0 templates: []
+[2m2025-08-18T21:50:24.641529Z[0m [33m WARN[0m [2muveddi::report::modern_generator[0m[2m:[0m Missing essential template: reports/architectural/main.html
+[2m2025-08-18T21:50:24.641531Z[0m [33m WARN[0m [2muveddi::report::modern_generator[0m[2m:[0m Pattern '/home/austingreen/Documents/botzr/projects/uveddi/target/src/templates/**/*.html' loaded templates but missing essential ones
+[2m2025-08-18T21:50:24.641658Z[0m [32m INFO[0m [2muveddi::application[0m[2m:[0m Retrieved 8 anti-pattern types for report generation
+{
+  "issues": [
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'frontend/src/__tests__/integration/dashboard-integration.test.tsx' has 42 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/__tests__/integration/dashboard-integration.test.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 109 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/__tests__/integration/dashboard-integration.test.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'frontend/src/__tests__/accessibility/dashboard-accessibility.test.tsx' has 74 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/__tests__/accessibility/dashboard-accessibility.test.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 167 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/__tests__/accessibility/dashboard-accessibility.test.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'frontend/src/__tests__/coverage/test-coverage-validation.test.tsx' has 72 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/__tests__/coverage/test-coverage-validation.test.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 186 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/__tests__/coverage/test-coverage-validation.test.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'frontend/src/__tests__/performance/dashboard-performance.test.tsx' has 56 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/__tests__/performance/dashboard-performance.test.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 133 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/__tests__/performance/dashboard-performance.test.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "getTheme",
+      "description": "Potentially dead code: function 'getTheme' is not used in this file (confidence: 80.0%)",
+      "endLine": 219,
+      "filePath": "frontend/src/utils/theme.ts",
+      "severity": "High",
+      "startLine": 219
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'frontend/src/utils/dataTransformers.ts' has 22 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/utils/dataTransformers.ts",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 71 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/utils/dataTransformers.ts",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "generateDiagramForFinding",
+      "description": "Potentially dead code: function 'generateDiagramForFinding' is not used in this file (confidence: 80.0%)",
+      "endLine": 3,
+      "filePath": "frontend/src/utils/diagramGenerators.ts",
+      "severity": "High",
+      "startLine": 3
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 27 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/utils/diagramGenerators.ts",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "constructor",
+      "description": "Potentially dead code: function 'constructor' is not used in this file (confidence: 80.0%)",
+      "endLine": 12,
+      "filePath": "frontend/src/services/api.ts",
+      "severity": "High",
+      "startLine": 12
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "getHealthStatus",
+      "description": "Potentially dead code: function 'getHealthStatus' is not used in this file (confidence: 80.0%)",
+      "endLine": 371,
+      "filePath": "frontend/src/services/api.ts",
+      "severity": "High",
+      "startLine": 371
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 20 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/services/api.ts",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "TestMermaid",
+      "description": "Potentially dead code: function 'TestMermaid' is not used in this file (confidence: 60.0%)",
+      "endLine": 5,
+      "filePath": "frontend/src/components/TestMermaid.tsx",
+      "severity": "Medium",
+      "startLine": 5
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "Layout",
+      "description": "Potentially dead code: function 'Layout' is not used in this file (confidence: 60.0%)",
+      "endLine": 28,
+      "filePath": "frontend/src/components/Layout.tsx",
+      "severity": "Medium",
+      "startLine": 28
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'frontend/src/components/Layout.tsx' has 24 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/Layout.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "TabPanel",
+      "description": "Potentially dead code: function 'TabPanel' is not used in this file (confidence: 60.0%)",
+      "endLine": 46,
+      "filePath": "frontend/src/components/FindingDetail.tsx",
+      "severity": "Medium",
+      "startLine": 46
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "FindingDetail",
+      "description": "Potentially dead code: function 'FindingDetail' is not used in this file (confidence: 60.0%)",
+      "endLine": 64,
+      "filePath": "frontend/src/components/FindingDetail.tsx",
+      "severity": "Medium",
+      "startLine": 64
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'frontend/src/components/FindingDetail.tsx' has 35 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/FindingDetail.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "FindingsList",
+      "description": "Potentially dead code: function 'FindingsList' is not used in this file (confidence: 60.0%)",
+      "endLine": 38,
+      "filePath": "frontend/src/components/FindingsList.tsx",
+      "severity": "Medium",
+      "startLine": 38
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'frontend/src/components/FindingsList.tsx' has 32 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/FindingsList.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "MermaidRenderingTest",
+      "description": "Potentially dead code: function 'MermaidRenderingTest' is not used in this file (confidence: 60.0%)",
+      "endLine": 33,
+      "filePath": "frontend/src/components/MermaidRenderingTest.tsx",
+      "severity": "Medium",
+      "startLine": 33
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'frontend/src/components/MermaidRenderingTest.tsx' has 20 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/MermaidRenderingTest.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 52 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/MermaidRenderingTest.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 41 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/dashboard/FixSuggestionPanel.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'frontend/src/components/dashboard/FixSuggestionPanel.tsx' has 73 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/dashboard/FixSuggestionPanel.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'frontend/src/components/dashboard/__tests__/FixSuggestionPanel.test.tsx' has 31 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/dashboard/__tests__/FixSuggestionPanel.test.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 140 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/dashboard/__tests__/FixSuggestionPanel.test.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'frontend/src/components/dashboard/__tests__/ExportHub.test.tsx' has 34 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/dashboard/__tests__/ExportHub.test.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 212 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/dashboard/__tests__/ExportHub.test.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 167 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/dashboard/__tests__/HistoricalComparison.test.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'frontend/src/components/dashboard/__tests__/HistoricalComparison.test.tsx' has 35 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/dashboard/__tests__/HistoricalComparison.test.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'frontend/src/components/dashboard/__tests__/PriorityMatrix.test.tsx' has 24 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/dashboard/__tests__/PriorityMatrix.test.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 76 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/dashboard/__tests__/PriorityMatrix.test.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'frontend/src/components/dashboard/__tests__/SmartSearchPanel.test.tsx' has 34 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/dashboard/__tests__/SmartSearchPanel.test.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 191 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/dashboard/__tests__/SmartSearchPanel.test.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'frontend/src/components/dashboard/__tests__/QualityScoreCard.test.tsx' has 27 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/dashboard/__tests__/QualityScoreCard.test.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 108 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/dashboard/__tests__/QualityScoreCard.test.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'frontend/src/components/dashboard/__tests__/TechnicalDebtTracker.test.tsx' has 32 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/dashboard/__tests__/TechnicalDebtTracker.test.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 143 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/dashboard/__tests__/TechnicalDebtTracker.test.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'frontend/src/components/dashboard/__tests__/CollaborationPanel.test.tsx' has 31 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/dashboard/__tests__/CollaborationPanel.test.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 170 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/dashboard/__tests__/CollaborationPanel.test.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 136 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/dashboard/__tests__/InteractiveDependencyGraph.test.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'frontend/src/components/dashboard/__tests__/InteractiveDependencyGraph.test.tsx' has 30 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/dashboard/__tests__/InteractiveDependencyGraph.test.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 203 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/dashboard/__tests__/DashboardBuilder.test.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'frontend/src/components/dashboard/__tests__/DashboardBuilder.test.tsx' has 32 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/dashboard/__tests__/DashboardBuilder.test.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'frontend/src/components/dashboard/TechnicalDebtTracker.tsx' has 72 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/dashboard/TechnicalDebtTracker.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 38 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/dashboard/TechnicalDebtTracker.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'frontend/src/components/dashboard/DashboardBuilder.tsx' has 100 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/dashboard/DashboardBuilder.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 69 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/dashboard/DashboardBuilder.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'frontend/src/components/dashboard/ExportHub.tsx' has 98 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/dashboard/ExportHub.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 85 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/dashboard/ExportHub.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'frontend/src/components/dashboard/SmartSearchPanel.tsx' has 96 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/dashboard/SmartSearchPanel.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 101 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/dashboard/SmartSearchPanel.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'frontend/src/components/dashboard/QualityScoreCard.tsx' has 56 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/dashboard/QualityScoreCard.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 26 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/dashboard/QualityScoreCard.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'frontend/src/components/dashboard/EnhancedDashboardDemo.tsx' has 37 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/dashboard/EnhancedDashboardDemo.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 19 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/dashboard/EnhancedDashboardDemo.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'frontend/src/components/dashboard/InteractiveDependencyGraph.tsx' has 70 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/dashboard/InteractiveDependencyGraph.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 80 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/dashboard/InteractiveDependencyGraph.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 100 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/dashboard/HistoricalComparison.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'frontend/src/components/dashboard/HistoricalComparison.tsx' has 105 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/dashboard/HistoricalComparison.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'frontend/src/components/dashboard/PriorityMatrix.tsx' has 46 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/dashboard/PriorityMatrix.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 38 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/dashboard/PriorityMatrix.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'frontend/src/components/dashboard/CollaborationPanel.tsx' has 87 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/dashboard/CollaborationPanel.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 102 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/dashboard/CollaborationPanel.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "SimpleMermaidTest",
+      "description": "Potentially dead code: function 'SimpleMermaidTest' is not used in this file (confidence: 60.0%)",
+      "endLine": 5,
+      "filePath": "frontend/src/components/SimpleMermaidTest.tsx",
+      "severity": "Medium",
+      "startLine": 5
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "MermaidDiagram",
+      "description": "Potentially dead code: function 'MermaidDiagram' is not used in this file (confidence: 60.0%)",
+      "endLine": 13,
+      "filePath": "frontend/src/components/MermaidDiagram.tsx",
+      "severity": "Medium",
+      "startLine": 13
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'frontend/src/components/MermaidDiagram.tsx' has 25 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/MermaidDiagram.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 148 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/MermaidDiagram.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "CodeSnippet",
+      "description": "Potentially dead code: function 'CodeSnippet' is not used in this file (confidence: 60.0%)",
+      "endLine": 28,
+      "filePath": "frontend/src/components/CodeSnippet.tsx",
+      "severity": "Medium",
+      "startLine": 28
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 23 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/components/CodeSnippet.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "UveddiLoader",
+      "description": "Potentially dead code: function 'UveddiLoader' is not used in this file (confidence: 60.0%)",
+      "endLine": 40,
+      "filePath": "frontend/src/components/UveddiLoader.tsx",
+      "severity": "Medium",
+      "startLine": 40
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "useHealthStatus",
+      "description": "Potentially dead code: function 'useHealthStatus' is not used in this file (confidence: 80.0%)",
+      "endLine": 67,
+      "filePath": "frontend/src/hooks/useReport.ts",
+      "severity": "High",
+      "startLine": 67
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "useMetrics",
+      "description": "Potentially dead code: function 'useMetrics' is not used in this file (confidence: 80.0%)",
+      "endLine": 81,
+      "filePath": "frontend/src/hooks/useReport.ts",
+      "severity": "High",
+      "startLine": 81
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "App",
+      "description": "Potentially dead code: function 'App' is not used in this file (confidence: 60.0%)",
+      "endLine": 30,
+      "filePath": "frontend/src/App.tsx",
+      "severity": "Medium",
+      "startLine": 30
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'frontend/src/App.tsx' has 22 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/App.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "DashboardPage",
+      "description": "Potentially dead code: function 'DashboardPage' is not used in this file (confidence: 60.0%)",
+      "endLine": 24,
+      "filePath": "frontend/src/pages/DashboardPage.tsx",
+      "severity": "Medium",
+      "startLine": 24
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "SummaryCard",
+      "description": "Potentially dead code: function 'SummaryCard' is not used in this file (confidence: 60.0%)",
+      "endLine": 344,
+      "filePath": "frontend/src/pages/DashboardPage.tsx",
+      "severity": "Medium",
+      "startLine": 344
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'frontend/src/pages/DashboardPage.tsx' has 23 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/pages/DashboardPage.tsx",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "ReportPage",
+      "description": "Potentially dead code: function 'ReportPage' is not used in this file (confidence: 60.0%)",
+      "endLine": 9,
+      "filePath": "frontend/src/pages/ReportPage.tsx",
+      "severity": "Medium",
+      "startLine": 9
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "ReportsListPage",
+      "description": "Potentially dead code: function 'ReportsListPage' is not used in this file (confidence: 60.0%)",
+      "endLine": 8,
+      "filePath": "frontend/src/pages/ReportsListPage.tsx",
+      "severity": "Medium",
+      "startLine": 8
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 58 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/test-utils/dataGenerators.ts",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 63 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/test-utils/performanceHelpers.ts",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "observe",
+      "description": "Potentially dead code: function 'observe' is not used in this file (confidence: 80.0%)",
+      "endLine": 10,
+      "filePath": "frontend/src/test-utils/setup.ts",
+      "severity": "High",
+      "startLine": 10
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "unobserve",
+      "description": "Potentially dead code: function 'unobserve' is not used in this file (confidence: 80.0%)",
+      "endLine": 11,
+      "filePath": "frontend/src/test-utils/setup.ts",
+      "severity": "High",
+      "startLine": 11
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "disconnect",
+      "description": "Potentially dead code: function 'disconnect' is not used in this file (confidence: 80.0%)",
+      "endLine": 12,
+      "filePath": "frontend/src/test-utils/setup.ts",
+      "severity": "High",
+      "startLine": 12
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "constructor",
+      "description": "Potentially dead code: function 'constructor' is not used in this file (confidence: 80.0%)",
+      "endLine": 17,
+      "filePath": "frontend/src/test-utils/setup.ts",
+      "severity": "High",
+      "startLine": 17
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "observe",
+      "description": "Potentially dead code: function 'observe' is not used in this file (confidence: 80.0%)",
+      "endLine": 18,
+      "filePath": "frontend/src/test-utils/setup.ts",
+      "severity": "High",
+      "startLine": 18
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "unobserve",
+      "description": "Potentially dead code: function 'unobserve' is not used in this file (confidence: 80.0%)",
+      "endLine": 19,
+      "filePath": "frontend/src/test-utils/setup.ts",
+      "severity": "High",
+      "startLine": 19
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "disconnect",
+      "description": "Potentially dead code: function 'disconnect' is not used in this file (confidence: 80.0%)",
+      "endLine": 20,
+      "filePath": "frontend/src/test-utils/setup.ts",
+      "severity": "High",
+      "startLine": 20
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 51 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "frontend/src/test-utils/setup.ts",
+      "severity": "Critical"
+    }
+  ],
+  "metadata": {
+    "codebasePath": "frontend/src",
+    "durationSeconds": 4.0,
+    "timestamp": "2025-08-18T16:50:24.641664718-05:00"
+  },
+  "summary": {
+    "debtScore": 100,
+    "filesAnalyzed": 46,
+    "issuesBySeverity": {
+      "critical": 67,
+      "high": 13,
+      "low": 0,
+      "medium": 15
+    },
+    "issuesTotal": 95
+  }
+}
+[2m2025-08-18T21:50:24.642145Z[0m [32m INFO[0m [2muveddi::cli::analyze_command[0m[2m:[0m Analysis completed: 0 files analyzed, 95 issues found, AI enhanced: false
+
+📊 Analysis Summary:
+  • Files analyzed: 0
+  • Issues found: 95
+
+💡 Report generated: stdout

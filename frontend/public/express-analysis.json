@@ -1,0 +1,2482 @@
+{
+  "issues": [
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 31 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/req.get.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 58 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/app.response.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'reports/test_repos/express/test/acceptance/mvc.js' has 28 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/acceptance/mvc.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 44 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/acceptance/mvc.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 35 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/acceptance/route-separation.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'reports/test_repos/express/test/acceptance/route-separation.js' has 23 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/acceptance/route-separation.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 25 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/acceptance/cookies.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'reports/test_repos/express/test/acceptance/auth.js' has 20 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/acceptance/auth.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 37 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/acceptance/auth.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 27 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/acceptance/resource.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'reports/test_repos/express/test/acceptance/resource.js' has 21 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/acceptance/resource.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 18 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/acceptance/params.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 38 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/acceptance/web-service.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'reports/test_repos/express/test/acceptance/web-service.js' has 29 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/acceptance/web-service.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 36 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/acceptance/error-pages.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'reports/test_repos/express/test/acceptance/error-pages.js' has 28 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/acceptance/error-pages.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 18 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/acceptance/route-map.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 18 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/acceptance/multi-router.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 18 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/acceptance/vhost.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 18 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/acceptance/downloads.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 44 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/exports.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'reports/test_repos/express/test/exports.js' has 19 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/exports.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 19 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/res.sendStatus.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 31 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/req.fresh.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "accept",
+      "description": "Potentially dead code: function 'accept' is not used in this file (confidence: 80.0%)",
+      "endLine": 487,
+      "filePath": "reports/test_repos/express/test/express.urlencoded.js",
+      "severity": "High",
+      "startLine": 487
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "accept",
+      "description": "Potentially dead code: function 'accept' is not used in this file (confidence: 80.0%)",
+      "endLine": 501,
+      "filePath": "reports/test_repos/express/test/express.urlencoded.js",
+      "severity": "High",
+      "startLine": 501
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "accept",
+      "description": "Potentially dead code: function 'accept' is not used in this file (confidence: 80.0%)",
+      "endLine": 513,
+      "filePath": "reports/test_repos/express/test/express.urlencoded.js",
+      "severity": "High",
+      "startLine": 513
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'reports/test_repos/express/test/express.urlencoded.js' has 95 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/express.urlencoded.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 387 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/express.urlencoded.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'reports/test_repos/express/test/app.js' has 23 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/app.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 71 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/app.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'reports/test_repos/express/test/res.format.js' has 28 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/res.format.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 109 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/res.format.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "View",
+      "description": "Potentially dead code: function 'View' is not used in this file (confidence: 60.0%)",
+      "endLine": 64,
+      "filePath": "reports/test_repos/express/test/app.render.js",
+      "severity": "Medium",
+      "startLine": 64
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "View",
+      "description": "Potentially dead code: function 'View' is not used in this file (confidence: 60.0%)",
+      "endLine": 210,
+      "filePath": "reports/test_repos/express/test/app.render.js",
+      "severity": "Medium",
+      "startLine": 210
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "View",
+      "description": "Potentially dead code: function 'View' is not used in this file (confidence: 60.0%)",
+      "endLine": 234,
+      "filePath": "reports/test_repos/express/test/app.render.js",
+      "severity": "Medium",
+      "startLine": 234
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "View",
+      "description": "Potentially dead code: function 'View' is not used in this file (confidence: 60.0%)",
+      "endLine": 264,
+      "filePath": "reports/test_repos/express/test/app.render.js",
+      "severity": "Medium",
+      "startLine": 264
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "View",
+      "description": "Potentially dead code: function 'View' is not used in this file (confidence: 60.0%)",
+      "endLine": 339,
+      "filePath": "reports/test_repos/express/test/app.render.js",
+      "severity": "Medium",
+      "startLine": 339
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 200 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/app.render.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'reports/test_repos/express/test/app.render.js' has 44 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/app.render.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 29 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/app.head.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 28 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/app.routes.error.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 44 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/res.vary.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "handler1",
+      "description": "Potentially dead code: function 'handler1' is not used in this file (confidence: 80.0%)",
+      "endLine": 16,
+      "filePath": "reports/test_repos/express/test/app.router.js",
+      "severity": "High",
+      "startLine": 16
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "handler2",
+      "description": "Potentially dead code: function 'handler2' is not used in this file (confidence: 80.0%)",
+      "endLine": 21,
+      "filePath": "reports/test_repos/express/test/app.router.js",
+      "severity": "High",
+      "startLine": 21
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "fn",
+      "description": "Potentially dead code: function 'fn' is not used in this file (confidence: 80.0%)",
+      "endLine": 852,
+      "filePath": "reports/test_repos/express/test/app.router.js",
+      "severity": "High",
+      "startLine": 852
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "fn",
+      "description": "Potentially dead code: function 'fn' is not used in this file (confidence: 80.0%)",
+      "endLine": 877,
+      "filePath": "reports/test_repos/express/test/app.router.js",
+      "severity": "High",
+      "startLine": 877
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "fn1",
+      "description": "Potentially dead code: function 'fn1' is not used in this file (confidence: 80.0%)",
+      "endLine": 941,
+      "filePath": "reports/test_repos/express/test/app.router.js",
+      "severity": "High",
+      "startLine": 941
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "fn2",
+      "description": "Potentially dead code: function 'fn2' is not used in this file (confidence: 80.0%)",
+      "endLine": 945,
+      "filePath": "reports/test_repos/express/test/app.router.js",
+      "severity": "High",
+      "startLine": 945
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "fn3",
+      "description": "Potentially dead code: function 'fn3' is not used in this file (confidence: 80.0%)",
+      "endLine": 949,
+      "filePath": "reports/test_repos/express/test/app.router.js",
+      "severity": "High",
+      "startLine": 949
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "createError",
+      "description": "Potentially dead code: function 'createError' is not used in this file (confidence: 80.0%)",
+      "endLine": 970,
+      "filePath": "reports/test_repos/express/test/app.router.js",
+      "severity": "High",
+      "startLine": 970
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "sawError",
+      "description": "Potentially dead code: function 'sawError' is not used in this file (confidence: 80.0%)",
+      "endLine": 974,
+      "filePath": "reports/test_repos/express/test/app.router.js",
+      "severity": "High",
+      "startLine": 974
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "createError",
+      "description": "Potentially dead code: function 'createError' is not used in this file (confidence: 80.0%)",
+      "endLine": 989,
+      "filePath": "reports/test_repos/express/test/app.router.js",
+      "severity": "High",
+      "startLine": 989
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "sawError",
+      "description": "Potentially dead code: function 'sawError' is not used in this file (confidence: 80.0%)",
+      "endLine": 993,
+      "filePath": "reports/test_repos/express/test/app.router.js",
+      "severity": "High",
+      "startLine": 993
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "createError",
+      "description": "Potentially dead code: function 'createError' is not used in this file (confidence: 80.0%)",
+      "endLine": 1008,
+      "filePath": "reports/test_repos/express/test/app.router.js",
+      "severity": "High",
+      "startLine": 1008
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "createError",
+      "description": "Potentially dead code: function 'createError' is not used in this file (confidence: 80.0%)",
+      "endLine": 1029,
+      "filePath": "reports/test_repos/express/test/app.router.js",
+      "severity": "High",
+      "startLine": 1029
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "handleError",
+      "description": "Potentially dead code: function 'handleError' is not used in this file (confidence: 80.0%)",
+      "endLine": 1033,
+      "filePath": "reports/test_repos/express/test/app.router.js",
+      "severity": "High",
+      "startLine": 1033
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "sawError",
+      "description": "Potentially dead code: function 'sawError' is not used in this file (confidence: 80.0%)",
+      "endLine": 1037,
+      "filePath": "reports/test_repos/express/test/app.router.js",
+      "severity": "High",
+      "startLine": 1037
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "createError",
+      "description": "Potentially dead code: function 'createError' is not used in this file (confidence: 80.0%)",
+      "endLine": 1052,
+      "filePath": "reports/test_repos/express/test/app.router.js",
+      "severity": "High",
+      "startLine": 1052
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "handleError",
+      "description": "Potentially dead code: function 'handleError' is not used in this file (confidence: 80.0%)",
+      "endLine": 1056,
+      "filePath": "reports/test_repos/express/test/app.router.js",
+      "severity": "High",
+      "startLine": 1056
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "sawError",
+      "description": "Potentially dead code: function 'sawError' is not used in this file (confidence: 80.0%)",
+      "endLine": 1060,
+      "filePath": "reports/test_repos/express/test/app.router.js",
+      "severity": "High",
+      "startLine": 1060
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "createError",
+      "description": "Potentially dead code: function 'createError' is not used in this file (confidence: 80.0%)",
+      "endLine": 1075,
+      "filePath": "reports/test_repos/express/test/app.router.js",
+      "severity": "High",
+      "startLine": 1075
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "handleError",
+      "description": "Potentially dead code: function 'handleError' is not used in this file (confidence: 80.0%)",
+      "endLine": 1079,
+      "filePath": "reports/test_repos/express/test/app.router.js",
+      "severity": "High",
+      "startLine": 1079
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'reports/test_repos/express/test/app.router.js' has 98 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/app.router.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 531 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/app.router.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 137 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/app.param.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'reports/test_repos/express/test/app.param.js' has 26 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/app.param.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 52 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/req.baseUrl.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 39 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/app.listen.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'reports/test_repos/express/test/req.query.js' has 29 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/req.query.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 42 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/req.query.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 25 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/res.clearCookie.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 74 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/req.is.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'reports/test_repos/express/test/req.is.js' has 21 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/req.is.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "accept",
+      "description": "Potentially dead code: function 'accept' is not used in this file (confidence: 80.0%)",
+      "endLine": 356,
+      "filePath": "reports/test_repos/express/test/express.json.js",
+      "severity": "High",
+      "startLine": 356
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "accept",
+      "description": "Potentially dead code: function 'accept' is not used in this file (confidence: 80.0%)",
+      "endLine": 370,
+      "filePath": "reports/test_repos/express/test/express.json.js",
+      "severity": "High",
+      "startLine": 370
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "accept",
+      "description": "Potentially dead code: function 'accept' is not used in this file (confidence: 80.0%)",
+      "endLine": 382,
+      "filePath": "reports/test_repos/express/test/express.json.js",
+      "severity": "High",
+      "startLine": 382
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'reports/test_repos/express/test/express.json.js' has 93 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/express.json.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 367 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/express.json.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'reports/test_repos/express/test/res.send.js' has 64 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/res.send.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 251 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/res.send.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 26 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/req.acceptsLanguages.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "fn1",
+      "description": "Potentially dead code: function 'fn1' is not used in this file (confidence: 80.0%)",
+      "endLine": 92,
+      "filePath": "reports/test_repos/express/test/app.use.js",
+      "severity": "High",
+      "startLine": 92
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "fn2",
+      "description": "Potentially dead code: function 'fn2' is not used in this file (confidence: 80.0%)",
+      "endLine": 97,
+      "filePath": "reports/test_repos/express/test/app.use.js",
+      "severity": "High",
+      "startLine": 97
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "fn1",
+      "description": "Potentially dead code: function 'fn1' is not used in this file (confidence: 80.0%)",
+      "endLine": 129,
+      "filePath": "reports/test_repos/express/test/app.use.js",
+      "severity": "High",
+      "startLine": 129
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "fn2",
+      "description": "Potentially dead code: function 'fn2' is not used in this file (confidence: 80.0%)",
+      "endLine": 134,
+      "filePath": "reports/test_repos/express/test/app.use.js",
+      "severity": "High",
+      "startLine": 134
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "fn3",
+      "description": "Potentially dead code: function 'fn3' is not used in this file (confidence: 80.0%)",
+      "endLine": 139,
+      "filePath": "reports/test_repos/express/test/app.use.js",
+      "severity": "High",
+      "startLine": 139
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "fn1",
+      "description": "Potentially dead code: function 'fn1' is not used in this file (confidence: 80.0%)",
+      "endLine": 176,
+      "filePath": "reports/test_repos/express/test/app.use.js",
+      "severity": "High",
+      "startLine": 176
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "fn2",
+      "description": "Potentially dead code: function 'fn2' is not used in this file (confidence: 80.0%)",
+      "endLine": 181,
+      "filePath": "reports/test_repos/express/test/app.use.js",
+      "severity": "High",
+      "startLine": 181
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "fn3",
+      "description": "Potentially dead code: function 'fn3' is not used in this file (confidence: 80.0%)",
+      "endLine": 186,
+      "filePath": "reports/test_repos/express/test/app.use.js",
+      "severity": "High",
+      "startLine": 186
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "fn1",
+      "description": "Potentially dead code: function 'fn1' is not used in this file (confidence: 80.0%)",
+      "endLine": 204,
+      "filePath": "reports/test_repos/express/test/app.use.js",
+      "severity": "High",
+      "startLine": 204
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "fn2",
+      "description": "Potentially dead code: function 'fn2' is not used in this file (confidence: 80.0%)",
+      "endLine": 209,
+      "filePath": "reports/test_repos/express/test/app.use.js",
+      "severity": "High",
+      "startLine": 209
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "fn3",
+      "description": "Potentially dead code: function 'fn3' is not used in this file (confidence: 80.0%)",
+      "endLine": 214,
+      "filePath": "reports/test_repos/express/test/app.use.js",
+      "severity": "High",
+      "startLine": 214
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "fn1",
+      "description": "Potentially dead code: function 'fn1' is not used in this file (confidence: 80.0%)",
+      "endLine": 232,
+      "filePath": "reports/test_repos/express/test/app.use.js",
+      "severity": "High",
+      "startLine": 232
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "fn2",
+      "description": "Potentially dead code: function 'fn2' is not used in this file (confidence: 80.0%)",
+      "endLine": 237,
+      "filePath": "reports/test_repos/express/test/app.use.js",
+      "severity": "High",
+      "startLine": 237
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "fn3",
+      "description": "Potentially dead code: function 'fn3' is not used in this file (confidence: 80.0%)",
+      "endLine": 242,
+      "filePath": "reports/test_repos/express/test/app.use.js",
+      "severity": "High",
+      "startLine": 242
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "fn1",
+      "description": "Potentially dead code: function 'fn1' is not used in this file (confidence: 80.0%)",
+      "endLine": 299,
+      "filePath": "reports/test_repos/express/test/app.use.js",
+      "severity": "High",
+      "startLine": 299
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "fn2",
+      "description": "Potentially dead code: function 'fn2' is not used in this file (confidence: 80.0%)",
+      "endLine": 304,
+      "filePath": "reports/test_repos/express/test/app.use.js",
+      "severity": "High",
+      "startLine": 304
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "fn3",
+      "description": "Potentially dead code: function 'fn3' is not used in this file (confidence: 80.0%)",
+      "endLine": 309,
+      "filePath": "reports/test_repos/express/test/app.use.js",
+      "severity": "High",
+      "startLine": 309
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "fn1",
+      "description": "Potentially dead code: function 'fn1' is not used in this file (confidence: 80.0%)",
+      "endLine": 367,
+      "filePath": "reports/test_repos/express/test/app.use.js",
+      "severity": "High",
+      "startLine": 367
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "fn2",
+      "description": "Potentially dead code: function 'fn2' is not used in this file (confidence: 80.0%)",
+      "endLine": 372,
+      "filePath": "reports/test_repos/express/test/app.use.js",
+      "severity": "High",
+      "startLine": 372
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "fn3",
+      "description": "Potentially dead code: function 'fn3' is not used in this file (confidence: 80.0%)",
+      "endLine": 377,
+      "filePath": "reports/test_repos/express/test/app.use.js",
+      "severity": "High",
+      "startLine": 377
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "fn1",
+      "description": "Potentially dead code: function 'fn1' is not used in this file (confidence: 80.0%)",
+      "endLine": 395,
+      "filePath": "reports/test_repos/express/test/app.use.js",
+      "severity": "High",
+      "startLine": 395
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "fn2",
+      "description": "Potentially dead code: function 'fn2' is not used in this file (confidence: 80.0%)",
+      "endLine": 400,
+      "filePath": "reports/test_repos/express/test/app.use.js",
+      "severity": "High",
+      "startLine": 400
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "fn3",
+      "description": "Potentially dead code: function 'fn3' is not used in this file (confidence: 80.0%)",
+      "endLine": 405,
+      "filePath": "reports/test_repos/express/test/app.use.js",
+      "severity": "High",
+      "startLine": 405
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "fn1",
+      "description": "Potentially dead code: function 'fn1' is not used in this file (confidence: 80.0%)",
+      "endLine": 423,
+      "filePath": "reports/test_repos/express/test/app.use.js",
+      "severity": "High",
+      "startLine": 423
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "fn2",
+      "description": "Potentially dead code: function 'fn2' is not used in this file (confidence: 80.0%)",
+      "endLine": 428,
+      "filePath": "reports/test_repos/express/test/app.use.js",
+      "severity": "High",
+      "startLine": 428
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "fn3",
+      "description": "Potentially dead code: function 'fn3' is not used in this file (confidence: 80.0%)",
+      "endLine": 433,
+      "filePath": "reports/test_repos/express/test/app.use.js",
+      "severity": "High",
+      "startLine": 433
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "fn1",
+      "description": "Potentially dead code: function 'fn1' is not used in this file (confidence: 80.0%)",
+      "endLine": 473,
+      "filePath": "reports/test_repos/express/test/app.use.js",
+      "severity": "High",
+      "startLine": 473
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "fn2",
+      "description": "Potentially dead code: function 'fn2' is not used in this file (confidence: 80.0%)",
+      "endLine": 478,
+      "filePath": "reports/test_repos/express/test/app.use.js",
+      "severity": "High",
+      "startLine": 478
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "fn3",
+      "description": "Potentially dead code: function 'fn3' is not used in this file (confidence: 80.0%)",
+      "endLine": 483,
+      "filePath": "reports/test_repos/express/test/app.use.js",
+      "severity": "High",
+      "startLine": 483
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'reports/test_repos/express/test/app.use.js' has 39 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/app.use.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 229 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/app.use.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 131 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/res.cookie.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'reports/test_repos/express/test/res.cookie.js' has 38 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/res.cookie.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 18 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/app.locals.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 21 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/middleware.basic.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'reports/test_repos/express/test/res.jsonp.js' has 43 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/res.jsonp.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 142 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/res.jsonp.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 326 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/express.static.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'reports/test_repos/express/test/express.static.js' has 137 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/express.static.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 23 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/res.links.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 22 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/req.stale.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'reports/test_repos/express/test/res.redirect.js' has 26 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/res.redirect.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 78 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/res.redirect.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 86 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/res.status.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'reports/test_repos/express/test/res.status.js' has 22 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/res.status.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 63 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/app.request.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 49 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/req.range.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 30 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/req.ips.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "accept",
+      "description": "Potentially dead code: function 'accept' is not used in this file (confidence: 80.0%)",
+      "endLine": 243,
+      "filePath": "reports/test_repos/express/test/express.raw.js",
+      "severity": "High",
+      "startLine": 243
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "accept",
+      "description": "Potentially dead code: function 'accept' is not used in this file (confidence: 80.0%)",
+      "endLine": 256,
+      "filePath": "reports/test_repos/express/test/express.raw.js",
+      "severity": "High",
+      "startLine": 256
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "accept",
+      "description": "Potentially dead code: function 'accept' is not used in this file (confidence: 80.0%)",
+      "endLine": 268,
+      "filePath": "reports/test_repos/express/test/express.raw.js",
+      "severity": "High",
+      "startLine": 268
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'reports/test_repos/express/test/express.raw.js' has 59 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/express.raw.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 301 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/express.raw.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 47 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/req.protocol.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 24 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/req.acceptsCharsets.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 18 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/res.locals.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 42 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/req.secure.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'reports/test_repos/express/test/res.append.js' has 18 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/res.append.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 57 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/res.append.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "renderFile",
+      "description": "Potentially dead code: function 'renderFile' is not used in this file (confidence: 80.0%)",
+      "endLine": 5,
+      "filePath": "reports/test_repos/express/test/support/tmpl.js",
+      "severity": "High",
+      "startLine": 5
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "onReadFile",
+      "description": "Potentially dead code: function 'onReadFile' is not used in this file (confidence: 80.0%)",
+      "endLine": 6,
+      "filePath": "reports/test_repos/express/test/support/tmpl.js",
+      "severity": "High",
+      "startLine": 6
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "variableLookup",
+      "description": "Potentially dead code: function 'variableLookup' is not used in this file (confidence: 80.0%)",
+      "endLine": 26,
+      "filePath": "reports/test_repos/express/test/support/tmpl.js",
+      "severity": "High",
+      "startLine": 26
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "shouldHaveBody",
+      "description": "Potentially dead code: function 'shouldHaveBody' is not used in this file (confidence: 80.0%)",
+      "endLine": 28,
+      "filePath": "reports/test_repos/express/test/support/utils.js",
+      "severity": "High",
+      "startLine": 28
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "shouldHaveHeader",
+      "description": "Potentially dead code: function 'shouldHaveHeader' is not used in this file (confidence: 80.0%)",
+      "endLine": 45,
+      "filePath": "reports/test_repos/express/test/support/utils.js",
+      "severity": "High",
+      "startLine": 45
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "shouldNotHaveBody",
+      "description": "Potentially dead code: function 'shouldNotHaveBody' is not used in this file (confidence: 80.0%)",
+      "endLine": 57,
+      "filePath": "reports/test_repos/express/test/support/utils.js",
+      "severity": "High",
+      "startLine": 57
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "shouldNotHaveHeader",
+      "description": "Potentially dead code: function 'shouldNotHaveHeader' is not used in this file (confidence: 80.0%)",
+      "endLine": 69,
+      "filePath": "reports/test_repos/express/test/support/utils.js",
+      "severity": "High",
+      "startLine": 69
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "shouldSkipQuery",
+      "description": "Potentially dead code: function 'shouldSkipQuery' is not used in this file (confidence: 80.0%)",
+      "endLine": 79,
+      "filePath": "reports/test_repos/express/test/support/utils.js",
+      "severity": "High",
+      "startLine": 79
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'reports/test_repos/express/test/res.location.js' has 87 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/res.location.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 108 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/res.location.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "testMethod",
+      "description": "Potentially dead code: function 'testMethod' is not used in this file (confidence: 80.0%)",
+      "endLine": 424,
+      "filePath": "reports/test_repos/express/test/Router.js",
+      "severity": "High",
+      "startLine": 424
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "no",
+      "description": "Potentially dead code: function 'no' is not used in this file (confidence: 80.0%)",
+      "endLine": 463,
+      "filePath": "reports/test_repos/express/test/Router.js",
+      "severity": "High",
+      "startLine": 463
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "fn1",
+      "description": "Potentially dead code: function 'fn1' is not used in this file (confidence: 80.0%)",
+      "endLine": 481,
+      "filePath": "reports/test_repos/express/test/Router.js",
+      "severity": "High",
+      "startLine": 481
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "fn2",
+      "description": "Potentially dead code: function 'fn2' is not used in this file (confidence: 80.0%)",
+      "endLine": 486,
+      "filePath": "reports/test_repos/express/test/Router.js",
+      "severity": "High",
+      "startLine": 486
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'reports/test_repos/express/test/Router.js' has 55 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/Router.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 298 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/Router.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 57 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/res.set.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 52 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/app.engine.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 19 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/res.type.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'reports/test_repos/express/test/req.subdomains.js' has 25 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/req.subdomains.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 73 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/req.subdomains.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 37 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/res.attachment.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "createError",
+      "description": "Potentially dead code: function 'createError' is not used in this file (confidence: 80.0%)",
+      "endLine": 70,
+      "filePath": "reports/test_repos/express/test/app.route.js",
+      "severity": "High",
+      "startLine": 70
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "helloWorld",
+      "description": "Potentially dead code: function 'helloWorld' is not used in this file (confidence: 80.0%)",
+      "endLine": 74,
+      "filePath": "reports/test_repos/express/test/app.route.js",
+      "severity": "High",
+      "startLine": 74
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "handleError",
+      "description": "Potentially dead code: function 'handleError' is not used in this file (confidence: 80.0%)",
+      "endLine": 78,
+      "filePath": "reports/test_repos/express/test/app.route.js",
+      "severity": "High",
+      "startLine": 78
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "createError",
+      "description": "Potentially dead code: function 'createError' is not used in this file (confidence: 80.0%)",
+      "endLine": 92,
+      "filePath": "reports/test_repos/express/test/app.route.js",
+      "severity": "High",
+      "startLine": 92
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "helloWorld",
+      "description": "Potentially dead code: function 'helloWorld' is not used in this file (confidence: 80.0%)",
+      "endLine": 96,
+      "filePath": "reports/test_repos/express/test/app.route.js",
+      "severity": "High",
+      "startLine": 96
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "handleError",
+      "description": "Potentially dead code: function 'handleError' is not used in this file (confidence: 80.0%)",
+      "endLine": 100,
+      "filePath": "reports/test_repos/express/test/app.route.js",
+      "severity": "High",
+      "startLine": 100
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "createError",
+      "description": "Potentially dead code: function 'createError' is not used in this file (confidence: 80.0%)",
+      "endLine": 114,
+      "filePath": "reports/test_repos/express/test/app.route.js",
+      "severity": "High",
+      "startLine": 114
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "createError",
+      "description": "Potentially dead code: function 'createError' is not used in this file (confidence: 80.0%)",
+      "endLine": 133,
+      "filePath": "reports/test_repos/express/test/app.route.js",
+      "severity": "High",
+      "startLine": 133
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "handleError",
+      "description": "Potentially dead code: function 'handleError' is not used in this file (confidence: 80.0%)",
+      "endLine": 137,
+      "filePath": "reports/test_repos/express/test/app.route.js",
+      "severity": "High",
+      "startLine": 137
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "handleError",
+      "description": "Potentially dead code: function 'handleError' is not used in this file (confidence: 80.0%)",
+      "endLine": 141,
+      "filePath": "reports/test_repos/express/test/app.route.js",
+      "severity": "High",
+      "startLine": 141
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "createError",
+      "description": "Potentially dead code: function 'createError' is not used in this file (confidence: 80.0%)",
+      "endLine": 155,
+      "filePath": "reports/test_repos/express/test/app.route.js",
+      "severity": "High",
+      "startLine": 155
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "handleError",
+      "description": "Potentially dead code: function 'handleError' is not used in this file (confidence: 80.0%)",
+      "endLine": 159,
+      "filePath": "reports/test_repos/express/test/app.route.js",
+      "severity": "High",
+      "startLine": 159
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "handleError",
+      "description": "Potentially dead code: function 'handleError' is not used in this file (confidence: 80.0%)",
+      "endLine": 163,
+      "filePath": "reports/test_repos/express/test/app.route.js",
+      "severity": "High",
+      "startLine": 163
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "createError",
+      "description": "Potentially dead code: function 'createError' is not used in this file (confidence: 80.0%)",
+      "endLine": 177,
+      "filePath": "reports/test_repos/express/test/app.route.js",
+      "severity": "High",
+      "startLine": 177
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "handleError",
+      "description": "Potentially dead code: function 'handleError' is not used in this file (confidence: 80.0%)",
+      "endLine": 181,
+      "filePath": "reports/test_repos/express/test/app.route.js",
+      "severity": "High",
+      "startLine": 181
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 92 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/app.route.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 59 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/req.accepts.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 74 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/req.hostname.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'reports/test_repos/express/test/req.hostname.js' has 21 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/req.hostname.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "accept",
+      "description": "Potentially dead code: function 'accept' is not used in this file (confidence: 80.0%)",
+      "endLine": 258,
+      "filePath": "reports/test_repos/express/test/express.text.js",
+      "severity": "High",
+      "startLine": 258
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "accept",
+      "description": "Potentially dead code: function 'accept' is not used in this file (confidence: 80.0%)",
+      "endLine": 272,
+      "filePath": "reports/test_repos/express/test/express.text.js",
+      "severity": "High",
+      "startLine": 272
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "accept",
+      "description": "Potentially dead code: function 'accept' is not used in this file (confidence: 80.0%)",
+      "endLine": 284,
+      "filePath": "reports/test_repos/express/test/express.text.js",
+      "severity": "High",
+      "startLine": 284
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'reports/test_repos/express/test/express.text.js' has 67 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/express.text.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 300 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/express.text.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 178 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/res.download.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'reports/test_repos/express/test/res.download.js' has 52 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/res.download.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 51 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/req.ip.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'reports/test_repos/express/test/req.host.js' has 19 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/req.host.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 62 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/req.host.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 79 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/res.json.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'reports/test_repos/express/test/res.json.js' has 27 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/res.json.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "handleHeaders",
+      "description": "Potentially dead code: function 'handleHeaders' is not used in this file (confidence: 80.0%)",
+      "endLine": 90,
+      "filePath": "reports/test_repos/express/test/res.sendFile.js",
+      "severity": "High",
+      "startLine": 90
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 397 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/res.sendFile.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'reports/test_repos/express/test/res.sendFile.js' has 99 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/res.sendFile.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "testMethod",
+      "description": "Potentially dead code: function 'testMethod' is not used in this file (confidence: 80.0%)",
+      "endLine": 78,
+      "filePath": "reports/test_repos/express/test/Route.js",
+      "severity": "High",
+      "startLine": 78
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 114 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/Route.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'reports/test_repos/express/test/Route.js' has 24 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/Route.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 51 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/utils.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'reports/test_repos/express/test/utils.js' has 23 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/utils.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "fn",
+      "description": "Potentially dead code: function 'fn' is not used in this file (confidence: 80.0%)",
+      "endLine": 107,
+      "filePath": "reports/test_repos/express/test/config.js",
+      "severity": "High",
+      "startLine": 107
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "fn1",
+      "description": "Potentially dead code: function 'fn1' is not used in this file (confidence: 80.0%)",
+      "endLine": 123,
+      "filePath": "reports/test_repos/express/test/config.js",
+      "severity": "High",
+      "startLine": 123
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "fn2",
+      "description": "Potentially dead code: function 'fn2' is not used in this file (confidence: 80.0%)",
+      "endLine": 124,
+      "filePath": "reports/test_repos/express/test/config.js",
+      "severity": "High",
+      "startLine": 124
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'reports/test_repos/express/test/config.js' has 40 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/config.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 163 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/config.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 56 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/app.options.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 171 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/res.render.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'reports/test_repos/express/test/res.render.js' has 39 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/test/res.render.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 21 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/examples/static-files/index.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "loadUser",
+      "description": "Potentially dead code: function 'loadUser' is not used in this file (confidence: 80.0%)",
+      "endLine": 25,
+      "filePath": "reports/test_repos/express/examples/route-middleware/index.js",
+      "severity": "High",
+      "startLine": 25
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "andRestrictToSelf",
+      "description": "Potentially dead code: function 'andRestrictToSelf' is not used in this file (confidence: 80.0%)",
+      "endLine": 36,
+      "filePath": "reports/test_repos/express/examples/route-middleware/index.js",
+      "severity": "High",
+      "startLine": 36
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 21 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/examples/route-middleware/index.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "ferrets",
+      "description": "Potentially dead code: function 'ferrets' is not used in this file (confidence: 80.0%)",
+      "endLine": 17,
+      "filePath": "reports/test_repos/express/examples/view-locals/index.js",
+      "severity": "High",
+      "startLine": 17
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "users",
+      "description": "Potentially dead code: function 'users' is not used in this file (confidence: 80.0%)",
+      "endLine": 56,
+      "filePath": "reports/test_repos/express/examples/view-locals/index.js",
+      "severity": "High",
+      "startLine": 56
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "count2",
+      "description": "Potentially dead code: function 'count2' is not used in this file (confidence: 80.0%)",
+      "endLine": 86,
+      "filePath": "reports/test_repos/express/examples/view-locals/index.js",
+      "severity": "High",
+      "startLine": 86
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "users2",
+      "description": "Potentially dead code: function 'users2' is not used in this file (confidence: 80.0%)",
+      "endLine": 94,
+      "filePath": "reports/test_repos/express/examples/view-locals/index.js",
+      "severity": "High",
+      "startLine": 94
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 33 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/examples/view-locals/index.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "User",
+      "description": "Potentially dead code: function 'User' is not used in this file (confidence: 60.0%)",
+      "endLine": 7,
+      "filePath": "reports/test_repos/express/examples/view-locals/user.js",
+      "severity": "Medium",
+      "startLine": 7
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 23 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/examples/params/index.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 30 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/examples/mvc/index.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 18 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/examples/mvc/lib/boot.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 30 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/examples/error-pages/index.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 21 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/examples/vhost/index.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "GithubView",
+      "description": "Potentially dead code: function 'GithubView' is not used in this file (confidence: 60.0%)",
+      "endLine": 23,
+      "filePath": "reports/test_repos/express/examples/view-constructor/github-view.js",
+      "severity": "Medium",
+      "startLine": 23
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 23 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/examples/cookies/index.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 19 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/examples/resource/index.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 21 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/examples/markdown/index.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'reports/test_repos/express/examples/route-separation/index.js' has 18 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/examples/route-separation/index.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 33 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/examples/route-separation/index.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "restrict",
+      "description": "Potentially dead code: function 'restrict' is not used in this file (confidence: 80.0%)",
+      "endLine": 75,
+      "filePath": "reports/test_repos/express/examples/auth/index.js",
+      "severity": "High",
+      "startLine": 75
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 40 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/examples/auth/index.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 24 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/examples/web-service/index.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 22 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/examples/search/index.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "createApplication",
+      "description": "Potentially dead code: function 'createApplication' is not used in this file (confidence: 80.0%)",
+      "endLine": 36,
+      "filePath": "reports/test_repos/express/lib/express.js",
+      "severity": "High",
+      "startLine": 36
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "header",
+      "description": "Potentially dead code: function 'header' is not used in this file (confidence: 80.0%)",
+      "endLine": 64,
+      "filePath": "reports/test_repos/express/lib/request.js",
+      "severity": "High",
+      "startLine": 64
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "range",
+      "description": "Potentially dead code: function 'range' is not used in this file (confidence: 80.0%)",
+      "endLine": 201,
+      "filePath": "reports/test_repos/express/lib/request.js",
+      "severity": "High",
+      "startLine": 201
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "query",
+      "description": "Potentially dead code: function 'query' is not used in this file (confidence: 80.0%)",
+      "endLine": 217,
+      "filePath": "reports/test_repos/express/lib/request.js",
+      "severity": "High",
+      "startLine": 217
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "is",
+      "description": "Potentially dead code: function 'is' is not used in this file (confidence: 80.0%)",
+      "endLine": 256,
+      "filePath": "reports/test_repos/express/lib/request.js",
+      "severity": "High",
+      "startLine": 256
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "protocol",
+      "description": "Potentially dead code: function 'protocol' is not used in this file (confidence: 80.0%)",
+      "endLine": 284,
+      "filePath": "reports/test_repos/express/lib/request.js",
+      "severity": "High",
+      "startLine": 284
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "secure",
+      "description": "Potentially dead code: function 'secure' is not used in this file (confidence: 80.0%)",
+      "endLine": 313,
+      "filePath": "reports/test_repos/express/lib/request.js",
+      "severity": "High",
+      "startLine": 313
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "ip",
+      "description": "Potentially dead code: function 'ip' is not used in this file (confidence: 80.0%)",
+      "endLine": 327,
+      "filePath": "reports/test_repos/express/lib/request.js",
+      "severity": "High",
+      "startLine": 327
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "ips",
+      "description": "Potentially dead code: function 'ips' is not used in this file (confidence: 80.0%)",
+      "endLine": 344,
+      "filePath": "reports/test_repos/express/lib/request.js",
+      "severity": "High",
+      "startLine": 344
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "path",
+      "description": "Potentially dead code: function 'path' is not used in this file (confidence: 80.0%)",
+      "endLine": 390,
+      "filePath": "reports/test_repos/express/lib/request.js",
+      "severity": "High",
+      "startLine": 390
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "host",
+      "description": "Potentially dead code: function 'host' is not used in this file (confidence: 80.0%)",
+      "endLine": 405,
+      "filePath": "reports/test_repos/express/lib/request.js",
+      "severity": "High",
+      "startLine": 405
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "hostname",
+      "description": "Potentially dead code: function 'hostname' is not used in this file (confidence: 80.0%)",
+      "endLine": 431,
+      "filePath": "reports/test_repos/express/lib/request.js",
+      "severity": "High",
+      "startLine": 431
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "stale",
+      "description": "Potentially dead code: function 'stale' is not used in this file (confidence: 80.0%)",
+      "endLine": 484,
+      "filePath": "reports/test_repos/express/lib/request.js",
+      "severity": "High",
+      "startLine": 484
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "xhr",
+      "description": "Potentially dead code: function 'xhr' is not used in this file (confidence: 80.0%)",
+      "endLine": 495,
+      "filePath": "reports/test_repos/express/lib/request.js",
+      "severity": "High",
+      "startLine": 495
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'reports/test_repos/express/lib/request.js' has 27 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/lib/request.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 55 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/lib/request.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "getrouter",
+      "description": "Potentially dead code: function 'getrouter' is not used in this file (confidence: 80.0%)",
+      "endLine": 72,
+      "filePath": "reports/test_repos/express/lib/application.js",
+      "severity": "High",
+      "startLine": 72
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "onmount",
+      "description": "Potentially dead code: function 'onmount' is not used in this file (confidence: 80.0%)",
+      "endLine": 109,
+      "filePath": "reports/test_repos/express/lib/application.js",
+      "severity": "High",
+      "startLine": 109
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "mounted_app",
+      "description": "Potentially dead code: function 'mounted_app' is not used in this file (confidence: 80.0%)",
+      "endLine": 230,
+      "filePath": "reports/test_repos/express/lib/application.js",
+      "severity": "High",
+      "startLine": 230
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "engine",
+      "description": "Potentially dead code: function 'engine' is not used in this file (confidence: 80.0%)",
+      "endLine": 294,
+      "filePath": "reports/test_repos/express/lib/application.js",
+      "severity": "High",
+      "startLine": 294
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "disabled",
+      "description": "Potentially dead code: function 'disabled' is not used in this file (confidence: 80.0%)",
+      "endLine": 439,
+      "filePath": "reports/test_repos/express/lib/application.js",
+      "severity": "High",
+      "startLine": 439
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "disable",
+      "description": "Potentially dead code: function 'disable' is not used in this file (confidence: 80.0%)",
+      "endLine": 463,
+      "filePath": "reports/test_repos/express/lib/application.js",
+      "severity": "High",
+      "startLine": 463
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "all",
+      "description": "Potentially dead code: function 'all' is not used in this file (confidence: 80.0%)",
+      "endLine": 494,
+      "filePath": "reports/test_repos/express/lib/application.js",
+      "severity": "High",
+      "startLine": 494
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "listen",
+      "description": "Potentially dead code: function 'listen' is not used in this file (confidence: 80.0%)",
+      "endLine": 598,
+      "filePath": "reports/test_repos/express/lib/application.js",
+      "severity": "High",
+      "startLine": 598
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "logerror",
+      "description": "Potentially dead code: function 'logerror' is not used in this file (confidence: 80.0%)",
+      "endLine": 615,
+      "filePath": "reports/test_repos/express/lib/application.js",
+      "severity": "High",
+      "startLine": 615
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'reports/test_repos/express/lib/application.js' has 20 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/lib/application.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 61 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/lib/application.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "jsonp",
+      "description": "Potentially dead code: function 'jsonp' is not used in this file (confidence: 80.0%)",
+      "endLine": 267,
+      "filePath": "reports/test_repos/express/lib/response.js",
+      "severity": "High",
+      "startLine": 267
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "sendStatus",
+      "description": "Potentially dead code: function 'sendStatus' is not used in this file (confidence: 80.0%)",
+      "endLine": 328,
+      "filePath": "reports/test_repos/express/lib/response.js",
+      "severity": "High",
+      "startLine": 328
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "download",
+      "description": "Potentially dead code: function 'download' is not used in this file (confidence: 80.0%)",
+      "endLine": 440,
+      "filePath": "reports/test_repos/express/lib/response.js",
+      "severity": "High",
+      "startLine": 440
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "attachment",
+      "description": "Potentially dead code: function 'attachment' is not used in this file (confidence: 80.0%)",
+      "endLine": 611,
+      "filePath": "reports/test_repos/express/lib/response.js",
+      "severity": "High",
+      "startLine": 611
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "header",
+      "description": "Potentially dead code: function 'header' is not used in this file (confidence: 80.0%)",
+      "endLine": 672,
+      "filePath": "reports/test_repos/express/lib/response.js",
+      "severity": "High",
+      "startLine": 672
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "clearCookie",
+      "description": "Potentially dead code: function 'clearCookie' is not used in this file (confidence: 80.0%)",
+      "endLine": 716,
+      "filePath": "reports/test_repos/express/lib/response.js",
+      "severity": "High",
+      "startLine": 716
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "redirect",
+      "description": "Potentially dead code: function 'redirect' is not used in this file (confidence: 80.0%)",
+      "endLine": 819,
+      "filePath": "reports/test_repos/express/lib/response.js",
+      "severity": "High",
+      "startLine": 819
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "ondirectory",
+      "description": "Potentially dead code: function 'ondirectory' is not used in this file (confidence: 80.0%)",
+      "endLine": 942,
+      "filePath": "reports/test_repos/express/lib/response.js",
+      "severity": "High",
+      "startLine": 942
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "onend",
+      "description": "Potentially dead code: function 'onend' is not used in this file (confidence: 80.0%)",
+      "endLine": 959,
+      "filePath": "reports/test_repos/express/lib/response.js",
+      "severity": "High",
+      "startLine": 959
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "onfile",
+      "description": "Potentially dead code: function 'onfile' is not used in this file (confidence: 80.0%)",
+      "endLine": 966,
+      "filePath": "reports/test_repos/express/lib/response.js",
+      "severity": "High",
+      "startLine": 966
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "onfinish",
+      "description": "Potentially dead code: function 'onfinish' is not used in this file (confidence: 80.0%)",
+      "endLine": 971,
+      "filePath": "reports/test_repos/express/lib/response.js",
+      "severity": "High",
+      "startLine": 971
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "onstream",
+      "description": "Potentially dead code: function 'onstream' is not used in this file (confidence: 80.0%)",
+      "endLine": 989,
+      "filePath": "reports/test_repos/express/lib/response.js",
+      "severity": "High",
+      "startLine": 989
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "headers",
+      "description": "Potentially dead code: function 'headers' is not used in this file (confidence: 80.0%)",
+      "endLine": 1002,
+      "filePath": "reports/test_repos/express/lib/response.js",
+      "severity": "High",
+      "startLine": 1002
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 118 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/lib/response.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'reports/test_repos/express/lib/response.js' has 35 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/lib/response.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "View",
+      "description": "Potentially dead code: function 'View' is not used in this file (confidence: 60.0%)",
+      "endLine": 52,
+      "filePath": "reports/test_repos/express/lib/view.js",
+      "severity": "Medium",
+      "startLine": 52
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "render",
+      "description": "Potentially dead code: function 'render' is not used in this file (confidence: 80.0%)",
+      "endLine": 133,
+      "filePath": "reports/test_repos/express/lib/view.js",
+      "severity": "High",
+      "startLine": 133
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "onRender",
+      "description": "Potentially dead code: function 'onRender' is not used in this file (confidence: 80.0%)",
+      "endLine": 139,
+      "filePath": "reports/test_repos/express/lib/view.js",
+      "severity": "High",
+      "startLine": 139
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "renderTick",
+      "description": "Potentially dead code: function 'renderTick' is not used in this file (confidence: 80.0%)",
+      "endLine": 153,
+      "filePath": "reports/test_repos/express/lib/view.js",
+      "severity": "High",
+      "startLine": 153
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 23 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/lib/view.js",
+      "severity": "Critical"
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "compileQueryParser",
+      "description": "Potentially dead code: function 'compileQueryParser' is not used in this file (confidence: 80.0%)",
+      "endLine": 162,
+      "filePath": "reports/test_repos/express/lib/utils.js",
+      "severity": "High",
+      "startLine": 162
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "setCharset",
+      "description": "Potentially dead code: function 'setCharset' is not used in this file (confidence: 80.0%)",
+      "endLine": 225,
+      "filePath": "reports/test_repos/express/lib/utils.js",
+      "severity": "High",
+      "startLine": 225
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "generateETag",
+      "description": "Potentially dead code: function 'generateETag' is not used in this file (confidence: 80.0%)",
+      "endLine": 250,
+      "filePath": "reports/test_repos/express/lib/utils.js",
+      "severity": "High",
+      "startLine": 250
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "parseExtendedQueryString",
+      "description": "Potentially dead code: function 'parseExtendedQueryString' is not used in this file (confidence: 80.0%)",
+      "endLine": 267,
+      "filePath": "reports/test_repos/express/lib/utils.js",
+      "severity": "High",
+      "startLine": 267
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 33 dependencies, which exceeds the critical threshold of 18. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "reports/test_repos/express/lib/utils.js",
+      "severity": "Critical"
+    }
+  ],
+  "metadata": {
+    "codebasePath": "reports/test_repos/express",
+    "durationSeconds": 7.0,
+    "timestamp": "2025-08-18T16:46:05.373094627-05:00"
+  },
+  "summary": {
+    "debtScore": 100,
+    "filesAnalyzed": 99,
+    "issuesBySeverity": {
+      "critical": 136,
+      "high": 143,
+      "low": 0,
+      "medium": 8
+    },
+    "issuesTotal": 287
+  }
+}
