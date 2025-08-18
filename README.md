@@ -78,6 +78,35 @@ uveddi analyze . --verbose --timing
 #   uveddi config validate --file ./config/my-config.toml
 ```
 
+### CI/CD Integration
+```bash
+# Quality gate for CI/CD pipelines
+uveddi ci check . --debt-threshold 50 --critical-threshold 0
+
+# Generate JSON report with summary for CI tools
+uveddi analyze . --output-format json --output report.json
+
+# The JSON report includes a summary section:
+# {
+#   "summary": {
+#     "issuesTotal": 23,
+#     "issuesBySeverity": {
+#       "critical": 0,
+#       "high": 3,
+#       "medium": 12,
+#       "low": 8
+#     },
+#     "filesAnalyzed": 127,
+#     "debtScore": 42.5
+#   },
+#   "issues": [...],
+#   "timing": {...}
+# }
+
+# GitHub Actions integration example
+# See docs/examples/github-actions-simple.yml for a complete workflow
+```
+
 ## 📊 Sample Output
 
 ```bash

@@ -1,0 +1,45 @@
+# Simple GitHub Actions workflow for Uveddi CI integration
+# Save this as .github/workflows/code-quality.yml in your repository
+
+name: Code Quality Check
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+jobs:
+  quality-gate:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install Uveddi
+      run: |
+        curl -L https://github.com/botzrDev/uveddi/releases/latest/download/uveddi-linux-x86_64.tar.gz | tar xz
+        sudo mv uveddi /usr/local/bin/
+        
+    - name: Run Quality Gate
+      run: |
+        # Customize thresholds as needed:
+        # --max-debt: Technical debt score (0-100), default 50
+        # --max-critical: Maximum critical issues, default 0
+        uveddi ci check . --max-debt 60 --max-critical 1
+
+    - name: Generate Report on Failure
+      if: failure()
+      run: |
+        mkdir -p reports
+        uveddi analyze . --output-format html --output reports/quality-report.html
+        echo "Quality gate failed. Check the artifacts for detailed analysis."
+
+    - name: Upload Report
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: quality-report
+        path: reports/
+        retention-days: 7

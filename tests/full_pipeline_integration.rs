@@ -12,8 +12,13 @@ mod tests {
     use std::fs::File;
     use std::io::Write;
     use std::process::Command;
+    use tempfile::tempdir;
+    
+    #[cfg(feature = "ai")]
     use std::time::Duration;
-    use tempfile::{tempdir, TempDir};
+    #[cfg(feature = "ai")]
+    use tempfile::TempDir;
+    #[cfg(feature = "ai")]
     use tokio::time::timeout;
 
     // Existing test
@@ -63,6 +68,7 @@ mod tests {
     }
 
     // Add new comprehensive pipeline test that uses the API directly
+    #[cfg(feature = "ai")]
     #[tokio::test]
     async fn test_full_analysis_pipeline() {
         use uveddi::ai::engine::AiAnalysisEngine;
