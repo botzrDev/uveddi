@@ -10,3 +10,6 @@ pub mod config_command;
 pub mod plugin_command;
 pub mod ui_command;
 pub mod ci_command;
+
+// Re-export commonly used types
+pub use analyze_command::AnalyzeCommand;

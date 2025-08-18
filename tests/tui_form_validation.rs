@@ -4,7 +4,7 @@
 // This module tests the form validation logic and data conversion
 // between TUI form inputs and backend command structures.
 // Focuses on ensuring data integrity and proper error handling.
-use uveddi::cli::analyze_command::AnalyzeCommand;
+use uveddi::cli::AnalyzeCommand;
 
 /// Mock form data structure that simulates TUI form inputs
 #[derive(Debug, Clone)]

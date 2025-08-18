@@ -3,6 +3,8 @@
 //! This module validates the language-specific pattern libraries, integration system,
 //! and build-time generation to ensure UV-333 requirements are met.
 
+#![cfg(feature = "ai")]
+
 use std::collections::HashMap;
 use tempfile::TempDir;
 use uveddi::ai::knowledge::{
