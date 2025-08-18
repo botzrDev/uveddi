@@ -4,22 +4,26 @@
 //! while maintaining backward compatibility with existing APIs. The original 2,419-line
 //! monolithic implementation has been decomposed into specialized services.
 
-use crate::analysis::orchestrator::{AnalysisOrchestrator, AnalysisOrchestratorBuilder, AnalysisOptions, EnhancedAnalysisResult};
-use crate::analysis::services::{AnalysisService, DependencyAnalysisService, PerformanceAnalysisService};
-use crate::analysis::services::performance_service::MemoryConfig;
+use crate::analysis::components::cache_manager::CacheManager;
+use crate::analysis::components::traits::AnalysisAggregator as AnalysisAggregatorTrait;
 use crate::analysis::components::{
     AnalysisAggregator, AstProviderImpl, CacheManagerImpl, ConfigurationService,
     DependencyGraphBuilderImpl, DetectorScheduler, PluginManagerHandle,
 };
-use crate::analysis::components::cache_manager::CacheManager;
-use crate::analysis::components::traits::AnalysisAggregator as AnalysisAggregatorTrait;
 use crate::analysis::detector_factory::DetectorFactory;
 use crate::analysis::engine_builder::AnalysisEngineBuilder;
 use crate::analysis::errors::AnalysisError;
-use crate::analysis::AnalysisDetector;
 use crate::analysis::graph::dependency::LocalDependencyGraph;
 use crate::analysis::memory_report::MemoryAnalysisReport;
+use crate::analysis::orchestrator::{
+    AnalysisOptions, AnalysisOrchestrator, AnalysisOrchestratorBuilder, EnhancedAnalysisResult,
+};
+use crate::analysis::services::performance_service::MemoryConfig;
+use crate::analysis::services::{
+    AnalysisService, DependencyAnalysisService, PerformanceAnalysisService,
+};
 use crate::analysis::symbols::GlobalSymbolTable;
+use crate::analysis::AnalysisDetector;
 use crate::database::models::ArchitecturalIssue;
 use crate::monitoring::performance_metrics_collector::PerformanceMetricsCollector;
 
@@ -54,13 +58,13 @@ use std::path::Path;
 use std::sync::Arc;
 
 /// Simplified AnalysisEngine that delegates to AnalysisOrchestrator
-/// 
+///
 /// This maintains backward compatibility while using the new component architecture.
 /// The original monolithic implementation has been decomposed into specialized services
 /// coordinated by the AnalysisOrchestrator.
 pub struct AnalysisEngine {
     pub orchestrator: AnalysisOrchestrator,
-    
+
     // Keep component references for backward compatibility
     pub config_service: Arc<ConfigurationService>,
     pub ast_provider: Arc<AstProviderImpl>,
@@ -94,7 +98,9 @@ impl AnalysisEngine {
 
     /// Create new analysis engine with default configuration
     pub fn new() -> Result<Self, AnalysisError> {
-        Self::builder().build().map_err(|e| AnalysisError::Engine(e.to_string()))
+        Self::builder()
+            .build()
+            .map_err(|e| AnalysisError::Engine(e.to_string()))
     }
 
     /// Create analysis engine with detectors and plugins enabled
@@ -105,12 +111,14 @@ impl AnalysisEngine {
         let mut builder = Self::builder()
             .with_detectors(detectors)
             .enable_plugins(true);
-        
+
         if let Some(path) = cache_path {
             builder = builder.with_cache_path(path);
         }
-        
-        builder.build().map_err(|e| AnalysisError::Engine(e.to_string()))
+
+        builder
+            .build()
+            .map_err(|e| AnalysisError::Engine(e.to_string()))
     }
 
     /// Create analysis engine from components (used by builder)
@@ -160,20 +168,13 @@ impl AnalysisEngine {
                     ai_service.clone(),
                 )
             } else {
-                AnalysisOrchestrator::new(
-                    analysis_service,
-                    dependency_service,
-                    performance_service,
-                )
+                AnalysisOrchestrator::new(analysis_service, dependency_service, performance_service)
             }
         };
 
         #[cfg(not(feature = "ai"))]
-        let orchestrator = AnalysisOrchestrator::new(
-            analysis_service,
-            dependency_service,
-            performance_service,
-        );
+        let orchestrator =
+            AnalysisOrchestrator::new(analysis_service, dependency_service, performance_service);
 
         Ok(Self {
             orchestrator,
@@ -196,19 +197,36 @@ impl AnalysisEngine {
     }
 
     /// Main analysis method - delegates to orchestrator
-    pub async fn analyze(&mut self, path: &Path) -> Result<(Vec<ArchitecturalIssue>, LocalDependencyGraph), AnalysisError> {
-        info!("Starting analysis with AnalysisEngine for: {}", path.display());
+    pub async fn analyze(
+        &mut self,
+        path: &Path,
+    ) -> Result<(Vec<ArchitecturalIssue>, LocalDependencyGraph), AnalysisError> {
+        info!(
+            "Starting analysis with AnalysisEngine for: {}",
+            path.display()
+        );
         self.orchestrator.analyze(path).await
     }
 
     /// Enhanced analysis with performance monitoring - delegates to orchestrator
-    pub async fn analyze_with_performance_monitoring(&mut self, path: &Path) -> Result<EnhancedAnalysisResult, AnalysisError> {
-        info!("Starting enhanced analysis with performance monitoring for: {}", path.display());
-        self.orchestrator.analyze_with_performance_monitoring(path).await
+    pub async fn analyze_with_performance_monitoring(
+        &mut self,
+        path: &Path,
+    ) -> Result<EnhancedAnalysisResult, AnalysisError> {
+        info!(
+            "Starting enhanced analysis with performance monitoring for: {}",
+            path.display()
+        );
+        self.orchestrator
+            .analyze_with_performance_monitoring(path)
+            .await
     }
 
     /// Memory-aware analysis - delegates to orchestrator
-    pub async fn analyze_with_memory_limits(&mut self, path: &Path) -> Result<(Vec<ArchitecturalIssue>, LocalDependencyGraph), AnalysisError> {
+    pub async fn analyze_with_memory_limits(
+        &mut self,
+        path: &Path,
+    ) -> Result<(Vec<ArchitecturalIssue>, LocalDependencyGraph), AnalysisError> {
         debug!("Starting memory-aware analysis for: {}", path.display());
         self.orchestrator.analyze_with_memory_limits(path).await
     }
@@ -219,13 +237,21 @@ impl AnalysisEngine {
         path: &Path,
         enabled_detectors: &[String],
     ) -> Result<(Vec<ArchitecturalIssue>, LocalDependencyGraph), AnalysisError> {
-        info!("Starting analysis with custom detectors: {:?}", enabled_detectors);
-        self.orchestrator.analyze_with_detectors(path, enabled_detectors).await
+        info!(
+            "Starting analysis with custom detectors: {:?}",
+            enabled_detectors
+        );
+        self.orchestrator
+            .analyze_with_detectors(path, enabled_detectors)
+            .await
     }
 
     /// AI-enhanced analysis (if AI features are enabled)
     #[cfg(feature = "ai")]
-    pub async fn analyze_with_ai(&mut self, path: &Path) -> Result<EnhancedAnalysisResult, AnalysisError> {
+    pub async fn analyze_with_ai(
+        &mut self,
+        path: &Path,
+    ) -> Result<EnhancedAnalysisResult, AnalysisError> {
         info!("Starting AI-enhanced analysis for: {}", path.display());
         self.orchestrator.analyze_with_ai(path).await
     }
@@ -236,7 +262,10 @@ impl AnalysisEngine {
         path: &Path,
         options: &AnalysisOptions,
     ) -> Result<(Vec<ArchitecturalIssue>, LocalDependencyGraph), AnalysisError> {
-        debug!("Starting analysis with custom options for: {}", path.display());
+        debug!(
+            "Starting analysis with custom options for: {}",
+            path.display()
+        );
         self.orchestrator.analyze_with_options(path, options).await
     }
 
@@ -265,7 +294,9 @@ impl AnalysisEngine {
             memory_limit_exceeded: false,
             scope_reduced: false,
             applied_strategies: vec!["New orchestrator architecture".to_string()],
-            recommendations: vec!["Use new orchestrator architecture for better memory management".to_string()],
+            recommendations: vec![
+                "Use new orchestrator architecture for better memory management".to_string(),
+            ],
             phase_breakdowns: Vec::new(),
         }
     }
@@ -297,7 +328,7 @@ impl AnalysisEngine {
     }
 
     // Legacy methods for backward compatibility
-    
+
     /// Legacy method: Get detector statistics
     pub async fn get_detector_stats(&self) -> std::collections::HashMap<String, usize> {
         // Delegate to analysis service through aggregator
@@ -311,7 +342,10 @@ impl AnalysisEngine {
     }
 
     /// Legacy method: Set global symbol table
-    pub async fn set_symbol_table(&mut self, _symbol_table: Arc<GlobalSymbolTable>) -> Result<(), AnalysisError> {
+    pub async fn set_symbol_table(
+        &mut self,
+        _symbol_table: Arc<GlobalSymbolTable>,
+    ) -> Result<(), AnalysisError> {
         // This would be handled by the analysis service
         warn!("set_symbol_table is deprecated, use orchestrator services directly");
         Ok(())
@@ -394,15 +428,23 @@ impl AnalysisEngine {
     }
 
     /// Configure the dead code detector with custom settings.
-    pub fn configure_dead_code_detector(&self, _config: crate::analysis::detectors::anti_patterns::dead_code::DeadCodeConfig) {
+    pub fn configure_dead_code_detector(
+        &self,
+        _config: crate::analysis::detectors::anti_patterns::dead_code::DeadCodeConfig,
+    ) {
         // For now, log that configuration was requested
         // In the future, this would configure the detector through the scheduler
         info!("Dead code detector configuration requested - delegating to detector scheduler");
-        warn!("Dead code detector configuration is not yet fully implemented in the new architecture");
+        warn!(
+            "Dead code detector configuration is not yet fully implemented in the new architecture"
+        );
     }
 
     /// Configure the large classes detector with custom settings.
-    pub fn configure_large_classes_detector(&self, _config: crate::analysis::detectors::anti_patterns::large_classes::LargeClassConfig) {
+    pub fn configure_large_classes_detector(
+        &self,
+        _config: crate::analysis::detectors::anti_patterns::large_classes::LargeClassConfig,
+    ) {
         // For now, log that configuration was requested
         // In the future, this would configure the detector through the scheduler
         info!("Large classes detector configuration requested - delegating to detector scheduler");
@@ -458,16 +500,16 @@ impl AnalysisEngine {
     pub fn clear_ast_cache(&self) {
         // Fire and forget async clear; legacy API was sync
         let mgr = self.cache_manager.clone();
-        tokio::spawn(async move { mgr.clear_all_caches().await; });
+        tokio::spawn(async move {
+            mgr.clear_all_caches().await;
+        });
     }
 
     /// Legacy: load plugins after construction
     pub async fn load_plugins(&mut self) -> Result<usize, AnalysisError> {
         if self.plugin_manager.is_none() {
             // Rebuild engine with plugins enabled (simple fallback)
-            let rebuilt = Self::builder()
-                .enable_plugins(true)
-                .build();
+            let rebuilt = Self::builder().enable_plugins(true).build();
             match rebuilt {
                 Ok(mut eng) => {
                     // swap orchestrator & plugin manager
@@ -510,7 +552,7 @@ mod tests {
     async fn test_analysis_engine_creation() {
         let engine_result = AnalysisEngine::new();
         assert!(engine_result.is_ok());
-        
+
         let engine = engine_result.unwrap();
         assert!(!engine.has_ai_support() || cfg!(feature = "ai"));
     }
@@ -525,7 +567,7 @@ mod tests {
     async fn test_engine_status() {
         let engine = AnalysisEngine::new().unwrap();
         let status = engine.get_status().await;
-        
+
         assert!(status.services_healthy);
         assert_eq!(status.active_monitoring_sessions, 0);
     }
@@ -533,7 +575,7 @@ mod tests {
     #[tokio::test]
     async fn test_cache_operations() {
         let engine = AnalysisEngine::new().unwrap();
-        
+
         // Should not panic
         let result = engine.clear_caches().await;
         assert!(result.is_ok());
@@ -543,7 +585,7 @@ mod tests {
     async fn test_memory_report() {
         let engine = AnalysisEngine::new().unwrap();
         let report = engine.generate_memory_report().await;
-        
+
         assert!(report.memory_limit_mb > 0);
         assert!(!report.recommendations.is_empty());
     }
@@ -551,12 +593,12 @@ mod tests {
     #[tokio::test]
     async fn test_configuration_flags() {
         let mut engine = AnalysisEngine::new().unwrap();
-        
+
         // Test knowledge enhancement
         assert!(!engine.is_knowledge_enhancement_enabled());
         engine.set_knowledge_enhancement(true);
         assert!(engine.is_knowledge_enhancement_enabled());
-        
+
         // Test AI explanations
         assert!(!engine.is_ai_explanations_enabled());
         engine.set_ai_explanations(true);
@@ -566,14 +608,14 @@ mod tests {
     #[tokio::test]
     async fn test_backward_compatibility_methods() {
         let mut engine = AnalysisEngine::new().unwrap();
-        
+
         // Legacy methods should not panic
         let detector_stats = engine.get_detector_stats().await;
         assert!(detector_stats.is_empty());
-        
+
         let cache_stats = engine.get_cache_stats().await;
         assert!(cache_stats.is_empty());
-        
+
         // Symbol table setting should work
         let symbol_table = Arc::new(GlobalSymbolTable::new());
         let result = engine.set_symbol_table(symbol_table).await;

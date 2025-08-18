@@ -1,5 +1,5 @@
 //! Simple Circular Dependency Resolution Demo
-//! 
+//!
 //! A minimal demonstration showing how UV-105 Phase 1 resolves circular dependencies.
 //! This demo does not depend on the full library, only on standard Rust libraries.
 
@@ -13,10 +13,10 @@ fn main() {
 
     // Show the original problem
     demonstrate_circular_dependency_problem();
-    
+
     // Show the solution
     demonstrate_dependency_inversion_solution();
-    
+
     println!("\n🎉 SUCCESS: Circular Dependencies Resolved!");
     println!("   • Analysis ↔ Database cycle eliminated via PersistenceProvider interface");
     println!("   • AST ↔ Analysis cycle eliminated via Event Bus communication");
@@ -30,13 +30,13 @@ fn demonstrate_circular_dependency_problem() {
     println!("   Analysis → Database → Analysis (creates circular dependency)");
     println!("   AST → Analysis → AST (creates circular dependency)");
     println!("   Result: Compilation issues, tight coupling, hard to test\n");
-    
+
     // Example of problematic circular dependency (conceptual)
     println!("   Example circular imports:");
     println!("   // analysis/engine.rs");
     println!("   use crate::database::crud::Database;  // Direct database dependency");
     println!();
-    println!("   // database/crud.rs"); 
+    println!("   // database/crud.rs");
     println!("   use crate::analysis::engine::AnalysisEngine;  // Back-reference to analysis");
     println!();
     println!("   This creates a cycle: analysis → database → analysis");
@@ -48,23 +48,23 @@ fn demonstrate_dependency_inversion_solution() {
     println!("   Analysis → PersistenceProvider ← Database (interface breaks cycle)");
     println!("   AST → EventBus ← Analysis (events break cycle)");
     println!("   Result: Clean compilation, loose coupling, testable\n");
-    
+
     // Demonstrate dependency inversion pattern
     let persistence = Arc::new(MockPersistenceProvider::new());
     let event_bus = Arc::new(EventSystem::new());
-    
+
     println!("   Creating analysis service with dependency injection:");
     let analysis_service = AnalysisService::new(persistence.clone(), event_bus.clone());
-    
+
     println!("   ✓ Analysis service created successfully");
     println!("   ✓ No direct database dependency");
     println!("   ✓ Interface enables multiple implementations");
     println!();
-    
+
     // Demonstrate the flow
     println!("   Demonstrating clean dependency flow:");
     analysis_service.analyze_example();
-    
+
     println!("   ✓ Analysis completed using interfaces");
     println!("   ✓ Events published for loose coupling");
     println!("   ✓ Data persisted via abstraction layer");
@@ -95,12 +95,18 @@ impl PersistenceProvider for MockPersistenceProvider {
     fn save_issues(&self, issues: Vec<Issue>) {
         let mut stored = self.issues.lock().unwrap();
         stored.extend(issues);
-        println!("      📄 Saved {} issues via PersistenceProvider", stored.len());
+        println!(
+            "      📄 Saved {} issues via PersistenceProvider",
+            stored.len()
+        );
     }
-    
+
     fn load_issues(&self) -> Vec<Issue> {
         let stored = self.issues.lock().unwrap();
-        println!("      📄 Loaded {} issues via PersistenceProvider", stored.len());
+        println!(
+            "      📄 Loaded {} issues via PersistenceProvider",
+            stored.len()
+        );
         stored.clone()
     }
 }
@@ -116,11 +122,11 @@ impl EventSystem {
             subscribers: std::sync::Mutex::new(Vec::new()),
         }
     }
-    
+
     fn publish(&self, event: &str) {
         println!("      📡 Published event: {}", event);
     }
-    
+
     fn subscribe(&self, subscriber: String) {
         let mut subs = self.subscribers.lock().unwrap();
         subs.push(subscriber);
@@ -134,22 +140,19 @@ struct AnalysisService {
 }
 
 impl AnalysisService {
-    fn new(
-        persistence: Arc<dyn PersistenceProvider>,
-        event_bus: Arc<EventSystem>,
-    ) -> Self {
+    fn new(persistence: Arc<dyn PersistenceProvider>, event_bus: Arc<EventSystem>) -> Self {
         Self {
             persistence,
             event_bus,
         }
     }
-    
+
     fn analyze_example(&self) {
         println!("   🔍 Starting analysis...");
-        
+
         // Publish start event (no circular dependency)
         self.event_bus.publish("analysis_started");
-        
+
         // Create some sample issues
         let issues = vec![
             Issue {
@@ -169,17 +172,17 @@ impl AnalysisService {
                 line: 156,
             },
         ];
-        
+
         // Save via interface (no circular dependency)
         self.persistence.save_issues(issues);
-        
+
         // Load back to verify
         let loaded = self.persistence.load_issues();
         println!("      ✓ Verified {} issues persisted", loaded.len());
-        
+
         // Publish completion event
         self.event_bus.publish("analysis_completed");
-        
+
         println!("   ✅ Analysis completed successfully");
     }
 }
@@ -199,21 +202,21 @@ struct Issue {
 #[allow(dead_code)]
 fn demonstrate_architectural_benefits() {
     println!("🏗️  Architectural Benefits Achieved:");
-    
+
     let benefits = vec![
         "✓ Clean dependency flow: Application → Analysis → Infrastructure",
         "✓ Testable components via dependency injection",
-        "✓ Loose coupling via interfaces and events", 
+        "✓ Loose coupling via interfaces and events",
         "✓ Single Responsibility Principle enforcement",
         "✓ Open/Closed Principle - can add new implementations",
         "✓ Interface Segregation - focused, minimal interfaces",
         "✓ Dependency Inversion - depend on abstractions, not concretions",
     ];
-    
+
     for benefit in benefits {
         println!("   {}", benefit);
     }
-    
+
     println!();
     println!("📊 Impact on UV-105 Goals:");
     println!("   • Original circular dependencies: ~2,045");

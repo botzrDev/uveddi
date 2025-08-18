@@ -42,7 +42,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 / baseline.rendering_times.len() as f64
                 * 100.0;
 
-            println!("  - <50ms target compliance: {:.1}%", target_compliance);
+            println!("  - <50ms target compliance: {target_compliance:.1}%");
 
             if target_compliance >= 95.0 {
                 println!("✅ UV-12 target achievement: PASSED");
@@ -51,7 +51,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
         Err(e) => {
-            println!("❌ Baseline analysis failed: {}", e);
+            println!("❌ Baseline analysis failed: {e}");
             std::process::exit(1);
         }
     }

@@ -4,20 +4,19 @@
 //! logic from the monolithic AnalysisEngine. It manages detector scheduling, result
 //! aggregation, and analysis workflow orchestration.
 
+use crate::analysis::components::traits::{
+    AnalysisAggregator as AnalysisAggregatorTrait, DetectorScheduler as DetectorSchedulerTrait,
+    PluginManagerHandle as PluginManagerHandleTrait,
+};
 use crate::analysis::components::{
     AnalysisAggregator, ConfigurationService, DetectorScheduler, PluginManagerHandle,
-};
-use crate::analysis::components::traits::{
-    AnalysisAggregator as AnalysisAggregatorTrait,
-    DetectorScheduler as DetectorSchedulerTrait,
-    PluginManagerHandle as PluginManagerHandleTrait,
 };
 use crate::analysis::detector_factory::DetectorFactory;
 use crate::analysis::file_discovery::{FileDiscovery, SourceFile};
 use crate::analysis::symbols::GlobalSymbolTable;
 use crate::analysis::workspace::{WorkspaceDetector, WorkspaceInfo, WorkspaceType};
 use crate::ast::ParsedFile;
-use crate::database::models::{ArchitecturalIssue, AntiPatternType};
+use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use crate::ingestion::AsyncWalker;
 
 use super::{AnalysisResult, ServiceConfiguration};
@@ -81,7 +80,10 @@ impl AnalysisService {
     /// Run comprehensive analysis on a path
     pub async fn run_analysis(&self, path: &Path) -> AnalysisResult<Vec<ArchitecturalIssue>> {
         let start_time = std::time::Instant::now();
-        info!("Starting comprehensive analysis for path: {}", path.display());
+        info!(
+            "Starting comprehensive analysis for path: {}",
+            path.display()
+        );
 
         // Detect workspace information
         let workspace_info = self.detect_workspace(path).await?;
@@ -89,7 +91,10 @@ impl AnalysisService {
 
         // Discover files to analyze
         let source_files = self.discover_source_files(path).await?;
-        info!("Discovered {} source files for analysis", source_files.len());
+        info!(
+            "Discovered {} source files for analysis",
+            source_files.len()
+        );
 
         // Update stats
         {
@@ -112,7 +117,7 @@ impl AnalysisService {
             let mut stats = self.stats.lock().await;
             stats.total_issues_found = issues.len();
             stats.analysis_duration_ms = start_time.elapsed().as_millis() as u64;
-            
+
             // Count issues by type
             for issue in &issues {
                 let anti_pattern_type = AntiPatternType {
@@ -125,31 +130,47 @@ impl AnalysisService {
             }
         }
 
-        info!("Analysis completed: {} issues found in {}ms", 
-              issues.len(), start_time.elapsed().as_millis());
+        info!(
+            "Analysis completed: {} issues found in {}ms",
+            issues.len(),
+            start_time.elapsed().as_millis()
+        );
         Ok(issues)
     }
 
     /// Run analysis on a single file
-    pub async fn analyze_single_file(&self, file_path: &Path) -> AnalysisResult<Vec<ArchitecturalIssue>> {
+    pub async fn analyze_single_file(
+        &self,
+        file_path: &Path,
+    ) -> AnalysisResult<Vec<ArchitecturalIssue>> {
         debug!("Analyzing single file: {}", file_path.display());
-        
+
         // Create source file representation
         let source_file = SourceFile::new(file_path.to_path_buf())?;
-        
+
         // Schedule analysis through detector scheduler
-        self.detector_scheduler.schedule_file_analysis(&source_file).await.map_err(Into::into)
+        self.detector_scheduler
+            .schedule_file_analysis(&source_file)
+            .await
+            .map_err(Into::into)
     }
 
     /// Run analysis on multiple files in a directory
-    async fn analyze_directory(&self, source_files: &[SourceFile]) -> AnalysisResult<Vec<ArchitecturalIssue>> {
+    async fn analyze_directory(
+        &self,
+        source_files: &[SourceFile],
+    ) -> AnalysisResult<Vec<ArchitecturalIssue>> {
         debug!("Analyzing {} files in directory", source_files.len());
-        
+
         // Schedule batch analysis through detector scheduler
         // Run analysis on each file in the directory
         let mut all_issues = Vec::new();
         for source_file in source_files {
-            match self.detector_scheduler.schedule_file_analysis(source_file).await {
+            match self
+                .detector_scheduler
+                .schedule_file_analysis(source_file)
+                .await
+            {
                 Ok(mut issues) => all_issues.append(&mut issues),
                 Err(e) => warn!("Failed to analyze file {:?}: {}", source_file.path, e),
             }
@@ -165,7 +186,9 @@ impl AnalysisService {
 
         let workspace_type = WorkspaceDetector::detect_composite_workspace_type(path);
         // Use new filtered discovery
-        let files = self.file_discovery.discover_files_for_workspace_type(path, &workspace_type)?;
+        let files = self
+            .file_discovery
+            .discover_files_for_workspace_type(path, &workspace_type)?;
         Ok(files)
     }
 
@@ -173,17 +196,21 @@ impl AnalysisService {
     async fn detect_workspace(&self, path: &Path) -> AnalysisResult<WorkspaceInfo> {
         match WorkspaceDetector::detect_workspace(path).await {
             Ok(Some(workspace)) => Ok(workspace),
-            Ok(None) => Err(crate::analysis::errors::AnalysisError::workspace_discovery_error(
-                path.display().to_string(),
-                "No workspace or crate detected",
-            ).into()),
+            Ok(None) => Err(
+                crate::analysis::errors::AnalysisError::workspace_discovery_error(
+                    path.display().to_string(),
+                    "No workspace or crate detected",
+                )
+                .into(),
+            ),
             Err(e) => Err(e.into()),
         }
     }
 
     /// Get supported detector information
     pub fn get_supported_detectors(&self) -> Vec<DetectorInfo> {
-        self.detector_factory.available_detectors()
+        self.detector_factory
+            .available_detectors()
             .into_iter()
             .map(|name| DetectorInfo {
                 name: name.clone(),
@@ -221,11 +248,16 @@ impl AnalysisService {
         path: &Path,
         enabled_detectors: &[String],
     ) -> AnalysisResult<Vec<ArchitecturalIssue>> {
-        info!("Running analysis with custom detectors: {:?}", enabled_detectors);
-        
+        info!(
+            "Running analysis with custom detectors: {:?}",
+            enabled_detectors
+        );
+
         // Configure detector scheduler with specific detectors
-        self.detector_scheduler.configure_enabled_detectors(enabled_detectors.to_vec()).await?;
-        
+        self.detector_scheduler
+            .configure_enabled_detectors(enabled_detectors.to_vec())
+            .await?;
+
         // Run standard analysis
         self.run_analysis(path).await
     }
@@ -237,10 +269,12 @@ impl AnalysisService {
         symbol_table: Arc<GlobalSymbolTable>,
     ) -> AnalysisResult<Vec<ArchitecturalIssue>> {
         info!("Running analysis with symbol table integration");
-        
+
         // Configure detector scheduler with symbol table
-        self.detector_scheduler.set_symbol_table(symbol_table).await?;
-        
+        self.detector_scheduler
+            .set_symbol_table(symbol_table)
+            .await?;
+
         // Run standard analysis
         self.run_analysis(path).await
     }
@@ -249,8 +283,12 @@ impl AnalysisService {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::analysis::components::{analysis_aggregator::AnalysisAggregator, config_service::ConfigurationService, detector_scheduler::DetectorScheduler, dependency_graph_builder::DependencyGraphBuilderImpl};
     use crate::analysis::components::ast_provider::AstProviderImpl;
+    use crate::analysis::components::{
+        analysis_aggregator::AnalysisAggregator, config_service::ConfigurationService,
+        dependency_graph_builder::DependencyGraphBuilderImpl,
+        detector_scheduler::DetectorScheduler,
+    };
     use std::path::PathBuf;
     use tempfile::TempDir;
 
@@ -258,7 +296,8 @@ mod tests {
         let config_service = Arc::new(ConfigurationService::new_with_defaults());
         let aggregator = Arc::new(AnalysisAggregator::new());
         let ast_provider_impl = Arc::new(AstProviderImpl::new().unwrap());
-        let ast_provider_trait: Arc<dyn crate::analysis::components::traits::AstProvider> = ast_provider_impl.clone();
+        let ast_provider_trait: Arc<dyn crate::analysis::components::traits::AstProvider> =
+            ast_provider_impl.clone();
         let detector_scheduler = Arc::new(DetectorScheduler::new(
             config_service.clone(),
             ast_provider_trait,
@@ -288,7 +327,7 @@ mod tests {
     async fn test_analysis_stats_initialization() {
         let service = create_test_analysis_service();
         let stats = service.get_analysis_stats().await;
-        
+
         assert_eq!(stats.total_files_analyzed, 0);
         assert_eq!(stats.total_issues_found, 0);
         assert_eq!(stats.analysis_duration_ms, 0);
@@ -299,10 +338,10 @@ mod tests {
     async fn test_supported_detectors() {
         let service = create_test_analysis_service();
         let detectors = service.get_supported_detectors();
-        
+
         // Should have some detectors available
         assert!(!detectors.is_empty());
-        
+
         // Each detector should have required fields
         for detector in detectors {
             assert!(!detector.name.is_empty());
@@ -313,17 +352,17 @@ mod tests {
     #[tokio::test]
     async fn test_stats_reset() {
         let service = create_test_analysis_service();
-        
+
         // Modify stats manually for testing
         {
             let mut stats = service.stats.lock().await;
             stats.total_files_analyzed = 5;
             stats.total_issues_found = 10;
         }
-        
+
         // Reset stats
         service.reset_stats().await;
-        
+
         // Verify reset
         let stats = service.get_analysis_stats().await;
         assert_eq!(stats.total_files_analyzed, 0);

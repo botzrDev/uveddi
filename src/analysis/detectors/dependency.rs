@@ -255,8 +255,12 @@ impl DependencyExtractor {
         let pattern = match parsed_file.language {
             SourceLanguage::Rust => r"use\s+([\w:]+)",
             SourceLanguage::Python => r"import\s+([\w.]+)",
-            SourceLanguage::JavaScript => r#"import\s+.*from\s+['"]([^'"]+)['"]|require\(['"]([^'"]+)['"]\)"#,
-            SourceLanguage::TypeScript => r#"import\s+.*from\s+['"]([^'"]+)['"]|require\(['"]([^'"]+)['"]\)"#, // reuse JS regex
+            SourceLanguage::JavaScript => {
+                r#"import\s+.*from\s+['"]([^'"]+)['"]|require\(['"]([^'"]+)['"]\)"#
+            }
+            SourceLanguage::TypeScript => {
+                r#"import\s+.*from\s+['"]([^'"]+)['"]|require\(['"]([^'"]+)['"]\)"#
+            } // reuse JS regex
         };
 
         // Create regex pattern
@@ -288,7 +292,10 @@ impl DependencyExtractor {
     }
 
     /// Async version of extract_from_ast for compatibility with service layer
-    pub async fn extract_dependencies(&self, parsed_file: &crate::analysis::components::ast_provider::ParsedFile) -> Result<Vec<Dependency>, ExtractionError> {
+    pub async fn extract_dependencies(
+        &self,
+        parsed_file: &crate::analysis::components::ast_provider::ParsedFile,
+    ) -> Result<Vec<Dependency>, ExtractionError> {
         // Convert between ParsedFile types - this is a compatibility layer
         let ast_parsed_file = ParsedFile {
             file_path: Arc::clone(&parsed_file.file_path),
@@ -298,7 +305,7 @@ impl DependencyExtractor {
             custom_ast: Arc::new(None),
             modified_at: crate::analysis::cache::wrappers::ArchivableSystemTime::now(),
         };
-        
+
         // Call the sync version
         self.extract_from_ast(&ast_parsed_file)
     }

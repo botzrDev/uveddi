@@ -7,9 +7,9 @@
 //! eliminate direct dependencies on database models.
 
 use async_trait::async_trait;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use chrono::{DateTime, Utc};
 use std::sync::{Arc, Mutex};
 
 /// Abstract persistence provider interface
@@ -20,21 +20,26 @@ use std::sync::{Arc, Mutex};
 #[async_trait]
 pub trait PersistenceProvider: Send + Sync {
     type Error: std::error::Error + Send + Sync + 'static;
-    
+
     /// Save analysis issues to persistent storage
     async fn save_issues(&self, issues: Vec<DomainIssue>) -> Result<(), Self::Error>;
-    
+
     /// Load issues with optional filtering
     async fn load_issues(&self, filter: IssueFilter) -> Result<Vec<DomainIssue>, Self::Error>;
-    
+
     /// Get statistical information about issues
     async fn get_issue_stats(&self) -> Result<IssueStats, Self::Error>;
-    
+
     /// Save analysis run metadata
     async fn save_analysis_run(&self, run: AnalysisRunDomain) -> Result<i64, Self::Error>;
-    
+
     /// Update analysis run status
-    async fn update_analysis_run(&self, run_id: i64, status: String, end_time: Option<DateTime<Utc>>) -> Result<(), Self::Error>;
+    async fn update_analysis_run(
+        &self,
+        run_id: i64,
+        status: String,
+        end_time: Option<DateTime<Utc>>,
+    ) -> Result<(), Self::Error>;
 }
 
 /// Domain representation of an architectural issue
@@ -129,16 +134,16 @@ impl Default for IssueStats {
 pub enum PersistenceError {
     #[error("Database connection error: {0}")]
     ConnectionError(String),
-    
+
     #[error("Serialization error: {0}")]
     SerializationError(String),
-    
+
     #[error("Query error: {0}")]
     QueryError(String),
-    
+
     #[error("Not found: {0}")]
     NotFound(String),
-    
+
     #[error("Internal error: {0}")]
     Internal(String),
 }
@@ -172,19 +177,19 @@ impl DomainIssue {
             created_at: Utc::now(),
         }
     }
-    
+
     /// Set metadata for the issue
     pub fn with_metadata(mut self, metadata: serde_json::Value) -> Self {
         self.metadata = metadata;
         self
     }
-    
+
     /// Set column number for the issue
     pub fn with_column(mut self, column: u32) -> Self {
         self.column_number = Some(column);
         self
     }
-    
+
     /// Set run ID for the issue
     pub fn with_run_id(mut self, run_id: i64) -> Self {
         self.run_id = Some(run_id);
@@ -206,7 +211,7 @@ impl AnalysisRunDomain {
             analysis_config: HashMap::new(),
         }
     }
-    
+
     /// Mark the analysis run as completed
     pub fn complete(mut self, files_analyzed: i32, issues_found: i32) -> Self {
         self.end_time = Some(Utc::now());
@@ -215,7 +220,7 @@ impl AnalysisRunDomain {
         self.total_issues_found = Some(issues_found);
         self
     }
-    
+
     /// Mark the analysis run as failed
     pub fn fail(mut self, error_message: String) -> Self {
         self.end_time = Some(Utc::now());
@@ -261,16 +266,21 @@ impl PersistenceProvider for MockPersistenceProvider {
         let mut next_id = self.next_run_id.lock().unwrap();
         let id = *next_id;
         *next_id += 1;
-        
+
         run.run_id = Some(id);
-        
+
         let mut runs = self.runs.lock().unwrap();
         runs.push(run);
-        
+
         Ok(id)
     }
 
-    async fn update_analysis_run(&self, run_id: i64, status: String, end_time: Option<DateTime<Utc>>) -> Result<(), Self::Error> {
+    async fn update_analysis_run(
+        &self,
+        run_id: i64,
+        status: String,
+        end_time: Option<DateTime<Utc>>,
+    ) -> Result<(), Self::Error> {
         let mut runs = self.runs.lock().unwrap();
         if let Some(run) = runs.iter_mut().find(|r| r.run_id == Some(run_id)) {
             run.status = status;
@@ -282,15 +292,15 @@ impl PersistenceProvider for MockPersistenceProvider {
     async fn get_issue_stats(&self) -> Result<IssueStats, Self::Error> {
         let stored_issues = self.issues.lock().unwrap();
         let total_issues = stored_issues.len();
-        
+
         let mut by_severity = HashMap::new();
         let mut by_detector = HashMap::new();
-        
+
         for issue in stored_issues.iter() {
             *by_severity.entry(issue.severity.clone()).or_insert(0) += 1;
             *by_detector.entry(issue.detector_name.clone()).or_insert(0) += 1;
         }
-        
+
         Ok(IssueStats {
             total_issues,
             issues_by_severity: by_severity,

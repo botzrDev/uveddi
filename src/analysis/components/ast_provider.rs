@@ -5,21 +5,21 @@
 use super::traits::AstProvider;
 use crate::analysis::cache::ast::{AstCache, CacheConfig};
 use crate::analysis::cache::wrappers::ArchivableSystemTime;
-use crate::ast::{tree_sitter_impl::AstParser, SourceLanguage, SyntaxError, ParseError};
+use crate::ast::{tree_sitter_impl::AstParser, ParseError, SourceLanguage, SyntaxError};
 use crate::error::UveddiError;
 
+use crate::core::logging::{info, warn};
 use async_trait::async_trait;
 use dashmap::DashMap;
-use crate::core::logging::{info, warn};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use tokio::sync::{Mutex, RwLock};
 // Feature-gated tree-sitter imports
-#[cfg(feature = "tree-sitter")]
-use tree_sitter::{Language, Parser, Tree, Node};
 #[cfg(not(feature = "tree-sitter"))]
-use crate::ast::tree_sitter::{Language, Parser, Tree, Node};
+use crate::ast::tree_sitter::{Language, Node, Parser, Tree};
+#[cfg(feature = "tree-sitter")]
+use tree_sitter::{Language, Node, Parser, Tree};
 #[derive(Debug)]
 pub struct ParsedFile {
     pub file_path: Arc<PathBuf>,
@@ -46,14 +46,17 @@ impl AstProviderImpl {
         let ast_parser = AstParser::new()?;
         let cache_config = CacheConfig::default();
         let ast_cache = AstCache::new(cache_config)?;
-        
+
         // Initialize language grammar map
         let mut language_map = HashMap::new();
         #[cfg(feature = "tree-sitter")]
         {
             language_map.insert(SourceLanguage::Rust, tree_sitter_rust::LANGUAGE.into());
             language_map.insert(SourceLanguage::Python, tree_sitter_python::LANGUAGE.into());
-            language_map.insert(SourceLanguage::JavaScript, tree_sitter_javascript::LANGUAGE.into());
+            language_map.insert(
+                SourceLanguage::JavaScript,
+                tree_sitter_javascript::LANGUAGE.into(),
+            );
         }
 
         Ok(Self {
@@ -69,14 +72,17 @@ impl AstProviderImpl {
     pub fn with_cache_config(cache_config: CacheConfig) -> Result<Self, UveddiError> {
         let ast_parser = AstParser::new()?;
         let ast_cache = AstCache::new(cache_config)?;
-        
+
         // Initialize language grammar map
         let mut language_map = HashMap::new();
         #[cfg(feature = "tree-sitter")]
         {
             language_map.insert(SourceLanguage::Rust, tree_sitter_rust::LANGUAGE.into());
             language_map.insert(SourceLanguage::Python, tree_sitter_python::LANGUAGE.into());
-            language_map.insert(SourceLanguage::JavaScript, tree_sitter_javascript::LANGUAGE.into());
+            language_map.insert(
+                SourceLanguage::JavaScript,
+                tree_sitter_javascript::LANGUAGE.into(),
+            );
         }
 
         Ok(Self {
@@ -109,29 +115,32 @@ impl AstProviderImpl {
 
         // Detect language from file path
         let language = self.detect_language_from_path(file_path);
-        
+
         // Get appropriate grammar from language map
-        let grammar = self.language_map.get(&language)
+        let grammar = self
+            .language_map
+            .get(&language)
             .ok_or_else(|| ParseError::UnsupportedLanguage(format!("{:?}", language)))?;
-            
+
         // Parse with error recovery
-        let source = std::fs::read_to_string(file_path)
-            .map_err(|e| ParseError::Io(e))?;
-            
+        let source = std::fs::read_to_string(file_path).map_err(|e| ParseError::Io(e))?;
+
         let mut parser = Parser::new();
-        parser.set_language(grammar).map_err(|e| ParseError::Other(e.to_string()))?;
-        
+        parser
+            .set_language(grammar)
+            .map_err(|e| ParseError::Other(e.to_string()))?;
+
         let tree = parser.parse(&source, None);
-        
+
         // Handle catastrophic failure
         let tree = match tree {
             Some(t) => t,
             None => return Err(ParseError::Other("Parser returned None".to_string())),
         };
-            
+
         // Collect syntax errors
         let syntax_errors = self.collect_syntax_errors(&tree, &source);
-        
+
         // Create ParsedFile structure
         let parsed_file = Arc::new(ParsedFile {
             file_path: Arc::new(file_path.to_path_buf()),
@@ -142,14 +151,18 @@ impl AstProviderImpl {
             custom_ast: Arc::new(None),
             modified_at: ArchivableSystemTime::now(),
         });
-        
+
         // Cache result
-        self.parsed_file_cache.insert(file_path.to_path_buf(), Arc::clone(&parsed_file));
-        
+        self.parsed_file_cache
+            .insert(file_path.to_path_buf(), Arc::clone(&parsed_file));
+
         // Also store in the secondary cache (convert Tree to CacheableAst when tree-sitter is disabled)
         #[cfg(feature = "tree-sitter")]
         {
-            if let Err(e) = self.ast_cache.store(file_path, parsed_file.tree.as_ref().unwrap().clone()) {
+            if let Err(e) = self
+                .ast_cache
+                .store(file_path, parsed_file.tree.as_ref().unwrap().clone())
+            {
                 warn!("Failed to cache AST for {:?}: {}", file_path, e);
             }
         }
@@ -165,16 +178,16 @@ impl AstProviderImpl {
                 warn!("Failed to cache AST for {:?}: {}", file_path, e);
             }
         }
-        
+
         Ok(parsed_file)
     }
-    
+
     /// Collect syntax errors from the parse tree
     fn collect_syntax_errors(&self, tree: &Tree, source: &str) -> Vec<SyntaxError> {
         let mut errors = Vec::new();
         let root_node = tree.root_node();
         let mut cursor = root_node.walk();
-        
+
         // Traverse all nodes in the tree
         let mut stack = vec![root_node];
         while let Some(node) = stack.pop() {
@@ -182,7 +195,7 @@ impl AstProviderImpl {
             if node.is_error() || node.has_error() {
                 let start = node.start_position();
                 let end = node.end_position();
-                
+
                 errors.push(SyntaxError {
                     start_byte: node.start_byte(),
                     end_byte: node.end_byte(),
@@ -193,7 +206,7 @@ impl AstProviderImpl {
                     message: "Syntax error".to_string(),
                 });
             }
-            
+
             // Add children to the stack
             let mut child = node.child(0);
             while let Some(c) = child {
@@ -201,7 +214,7 @@ impl AstProviderImpl {
                 child = c.next_sibling();
             }
         }
-        
+
         errors
     }
 }
@@ -211,17 +224,23 @@ impl AstProvider for AstProviderImpl {
     async fn get_ast(&self, file_path: &Path) -> Result<Arc<Tree>, UveddiError> {
         // Check performance-critical cache first
         if let Some(parsed_file) = self.parsed_file_cache.get(file_path) {
-            info!("AST CACHE HIT: Using cached AST for {}", file_path.display());
+            info!(
+                "AST CACHE HIT: Using cached AST for {}",
+                file_path.display()
+            );
             if let Some(tree) = &parsed_file.tree {
                 return Ok(Arc::new(tree.clone()));
             }
         }
-        
+
         // Check secondary cache (with read lock to allow concurrent reads)
         {
             let _read_guard = self.cache_lock.read().await;
             if let Some(cached_tree) = self.ast_cache.get(file_path) {
-                info!("AST CACHE HIT: Using cached AST for {}", file_path.display());
+                info!(
+                    "AST CACHE HIT: Using cached AST for {}",
+                    file_path.display()
+                );
                 #[cfg(feature = "tree-sitter")]
                 {
                     return Ok(Arc::new(cached_tree.as_ref().clone()));
@@ -241,14 +260,19 @@ impl AstProvider for AstProviderImpl {
 
         // Double-check cache in case another thread parsed it while we were waiting
         if let Some(parsed_file) = self.parsed_file_cache.get(file_path) {
-            info!("AST CACHE HIT: Using cached AST for {} (double-check)", file_path.display());
+            info!(
+                "AST CACHE HIT: Using cached AST for {} (double-check)",
+                file_path.display()
+            );
             if let Some(tree) = &parsed_file.tree {
                 return Ok(Arc::new(tree.clone()));
             }
         }
 
         // Parse and cache the file
-        let parsed_file = self.internal_parse_and_cache(file_path).await
+        let parsed_file = self
+            .internal_parse_and_cache(file_path)
+            .await
             .map_err(|e| UveddiError::AstError {
                 file: file_path.to_string_lossy().to_string(),
                 language: "unknown".to_string(),
@@ -256,7 +280,7 @@ impl AstProvider for AstProviderImpl {
                 suggestion: "Check file syntax".to_string(),
                 source: None,
             })?;
-            
+
         // Return the tree from the parsed file
         if let Some(tree) = &parsed_file.tree {
             Ok(Arc::new(tree.clone()))
@@ -274,12 +298,17 @@ impl AstProvider for AstProviderImpl {
     async fn parse_file(&self, file_path: &Path) -> Result<Arc<ParsedFile>, UveddiError> {
         // Check performance-critical cache first
         if let Some(parsed_file) = self.parsed_file_cache.get(file_path) {
-            info!("PARSED FILE CACHE HIT: Using cached parsed file for {}", file_path.display());
+            info!(
+                "PARSED FILE CACHE HIT: Using cached parsed file for {}",
+                file_path.display()
+            );
             return Ok(Arc::clone(&parsed_file));
         }
-        
+
         // Parse and cache the file
-        let parsed_file = self.internal_parse_and_cache(file_path).await
+        let parsed_file = self
+            .internal_parse_and_cache(file_path)
+            .await
             .map_err(|e| UveddiError::AstError {
                 file: file_path.to_string_lossy().to_string(),
                 language: "unknown".to_string(),
@@ -287,7 +316,7 @@ impl AstProvider for AstProviderImpl {
                 suggestion: "Check file syntax".to_string(),
                 source: None,
             })?;
-            
+
         Ok(parsed_file)
     }
 

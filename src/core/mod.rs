@@ -3,12 +3,12 @@
 //! This module contains the core abstractions and interfaces that enable
 //! dependency inversion and break circular dependencies (UV-105).
 
-pub mod interfaces;
 pub mod features;
-pub mod mocks;
+pub mod interfaces;
 pub mod logging;
+pub mod mocks;
 
-pub use interfaces::*;
 pub use features::*;
-pub use mocks::*;
+pub use interfaces::*;
 pub use logging::*;
+pub use mocks::*;

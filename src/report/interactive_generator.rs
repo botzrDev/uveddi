@@ -12,7 +12,7 @@
 //! - Provides demo data generation for development
 //! - Maintains compatibility with existing report generators
 
-use crate::database::models::{AnalysisRun, ArchitecturalIssue, AntiPatternType, Dependency};
+use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue, Dependency};
 use crate::database::Database;
 use crate::models::visualization::{ArchitecturalComponent, DiagramMetadata};
 use crate::report::interactive_models::{InteractiveReport, REPORT_SCHEMA_VERSION};
@@ -118,7 +118,7 @@ impl InteractiveReportGenerator {
                 severity_order(&a.severity).cmp(&severity_order(&b.severity))
             });
             report.findings.truncate(self.config.max_findings);
-            
+
             // Update summary counts
             report.summary.issues_total = report.findings.len() as u32;
         }
@@ -161,7 +161,7 @@ impl InteractiveReportGenerator {
     ) -> Result<InteractiveReport, ReportGenerationError> {
         let db = self.database.as_ref().ok_or_else(|| {
             ReportGenerationError::ComponentAnalysisError(
-                "Database is required for generating reports from run ID".to_string()
+                "Database is required for generating reports from run ID".to_string(),
             )
         })?;
 
@@ -186,11 +186,15 @@ impl InteractiveReportGenerator {
             &diagrams,
             project_name,
             project_path,
-        ).await
+        )
+        .await
     }
 
     /// Save report to storage
-    pub async fn save_report(&self, report: &InteractiveReport) -> Result<PathBuf, ReportGenerationError> {
+    pub async fn save_report(
+        &self,
+        report: &InteractiveReport,
+    ) -> Result<PathBuf, ReportGenerationError> {
         // Ensure storage directory exists
         fs::create_dir_all(&self.config.storage_path).await?;
 
@@ -206,18 +210,22 @@ impl InteractiveReportGenerator {
     }
 
     /// Load a saved report from storage
-    pub async fn load_report(&self, report_id: &str) -> Result<InteractiveReport, ReportGenerationError> {
+    pub async fn load_report(
+        &self,
+        report_id: &str,
+    ) -> Result<InteractiveReport, ReportGenerationError> {
         let file_path = self.config.storage_path.join(format!("{}.json", report_id));
-        
+
         if !file_path.exists() {
-            return Err(ReportGenerationError::IoError(
-                std::io::Error::new(std::io::ErrorKind::NotFound, "Report not found")
-            ));
+            return Err(ReportGenerationError::IoError(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                "Report not found",
+            )));
         }
 
         let content = fs::read_to_string(file_path).await?;
         let report: InteractiveReport = serde_json::from_str(&content)?;
-        
+
         Ok(report)
     }
 
@@ -246,13 +254,13 @@ impl InteractiveReportGenerator {
     /// Generate a demo report for development and testing
     pub fn generate_demo_report() -> InteractiveReport {
         let mut demo = InteractiveReport::default();
-        
+
         // Enhance demo data with more realistic content
         demo.project.name = "Demo Rust Project".to_string();
         demo.project.languages = vec!["rust".to_string(), "javascript".to_string()];
         demo.project.commit = Some("abc123".to_string());
         demo.project.branch = Some("main".to_string());
-        
+
         // Add some demo findings
         demo.findings = vec![
             crate::report::interactive_models::Finding {
@@ -325,15 +333,13 @@ impl InteractiveReportGenerator {
                     properties: std::collections::HashMap::new(),
                 },
             ],
-            edges: vec![
-                crate::report::interactive_models::GraphEdge {
-                    source: "user_service".to_string(),
-                    target: "database".to_string(),
-                    edge_type: "uses".to_string(),
-                    weight: Some(0.8),
-                    properties: std::collections::HashMap::new(),
-                },
-            ],
+            edges: vec![crate::report::interactive_models::GraphEdge {
+                source: "user_service".to_string(),
+                target: "database".to_string(),
+                edge_type: "uses".to_string(),
+                weight: Some(0.8),
+                properties: std::collections::HashMap::new(),
+            }],
             metadata: crate::report::interactive_models::GraphMetadata {
                 node_count: 2,
                 edge_count: 1,
@@ -421,7 +427,7 @@ impl InteractiveReportGenerator {
     ) -> Result<Vec<ArchitecturalComponent>, ReportGenerationError> {
         // TODO: Implement actual database query
         Err(ReportGenerationError::ComponentAnalysisError(
-            "Component loading not yet implemented".to_string()
+            "Component loading not yet implemented".to_string(),
         ))
     }
 
@@ -452,7 +458,7 @@ mod tests {
     #[tokio::test]
     async fn test_generate_demo_report() {
         let demo_report = InteractiveReportGenerator::generate_demo_report();
-        
+
         assert_eq!(demo_report.schema_version, REPORT_SCHEMA_VERSION);
         assert_eq!(demo_report.project.name, "Demo Rust Project");
         assert_eq!(demo_report.findings.len(), 2);
@@ -462,7 +468,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_save_and_load_report() {
-    let temp_dir = tempdir().unwrap();
+        let temp_dir = tempdir().unwrap();
         let config = InteractiveReportConfig {
             storage_path: temp_dir.path().to_path_buf(),
             auto_save: false,
@@ -477,14 +483,17 @@ mod tests {
         assert!(saved_path.exists());
 
         // Load report
-        let loaded_report = generator.load_report(&demo_report.project.id).await.unwrap();
+        let loaded_report = generator
+            .load_report(&demo_report.project.id)
+            .await
+            .unwrap();
         assert_eq!(loaded_report.project.id, demo_report.project.id);
         assert_eq!(loaded_report.schema_version, demo_report.schema_version);
     }
 
     #[tokio::test]
     async fn test_list_reports() {
-    let temp_dir = tempdir().unwrap();
+        let temp_dir = tempdir().unwrap();
         let config = InteractiveReportConfig {
             storage_path: temp_dir.path().to_path_buf(),
             auto_save: false,
@@ -492,7 +501,7 @@ mod tests {
         };
 
         let generator = InteractiveReportGenerator::new(config);
-        
+
         // Initially empty
         let reports = generator.list_reports().await.unwrap();
         assert_eq!(reports.len(), 0);

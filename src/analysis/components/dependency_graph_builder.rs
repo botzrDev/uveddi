@@ -10,8 +10,8 @@ use crate::analysis::graph::dependency::{
 use crate::error::UveddiError;
 use crate::ingestion::AsyncWalker;
 
-use async_trait::async_trait;
 use crate::core::logging::{info, warn};
+use async_trait::async_trait;
 use std::path::Path;
 use std::sync::Arc;
 use tokio_stream::StreamExt;
@@ -112,7 +112,10 @@ impl DependencyGraphBuilderImpl {
     }
 
     /// Detects cycles in the dependency graph
-    pub async fn detect_cycles(&self, graph: &LocalDependencyGraph) -> Result<Vec<Vec<String>>, UveddiError> {
+    pub async fn detect_cycles(
+        &self,
+        graph: &LocalDependencyGraph,
+    ) -> Result<Vec<Vec<String>>, UveddiError> {
         // Simple cycle detection using DFS
         let nodes = graph.get_all_nodes();
         let mut visited = std::collections::HashSet::new();

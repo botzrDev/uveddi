@@ -142,12 +142,12 @@ impl Default for PerformanceConfig {
     fn default() -> Self {
         Self {
             max_concurrent_files: 10,
-            timeout_seconds: 300,  // Increased default to 5 minutes
+            timeout_seconds: 300, // Increased default to 5 minutes
             parallel_processing: true,
-            file_timeout_seconds: 30,  // 30 seconds per file
+            file_timeout_seconds: 30, // 30 seconds per file
             enable_graceful_degradation: true,
-            degradation_file_threshold: 500,  // Start degradation after 500 files
-            large_file_timeout_multiplier: 2.0,  // 2x timeout for large files
+            degradation_file_threshold: 500, // Start degradation after 500 files
+            large_file_timeout_multiplier: 2.0, // 2x timeout for large files
         }
     }
 }
@@ -276,7 +276,8 @@ impl AnalysisConfig {
         let cache_path = self.cache_path.as_ref().map(|p| Path::new(p));
 
         if self.enable_plugins {
-            AnalysisEngine::with_detectors_and_plugins(detectors, cache_path).await
+            AnalysisEngine::with_detectors_and_plugins(detectors, cache_path)
+                .await
                 .map_err(|e| UveddiError::AnalysisError {
                     file: "config.rs".to_string(),
                     line: 267,

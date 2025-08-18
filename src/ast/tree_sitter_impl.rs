@@ -1,5 +1,7 @@
 use crate::analysis::cache::wrappers::{ArchivablePathBuf, ArchivableSystemTime};
 // Import security module (aliased to security_stub when security feature is disabled)
+#[cfg(not(feature = "tree-sitter"))]
+use crate::ast::tree_sitter::{Parser, Tree};
 use crate::security;
 use lru::LruCache;
 use serde::{Deserialize, Serialize};
@@ -14,15 +16,13 @@ use std::sync::{Arc, Mutex, MutexGuard};
 use tracing::{info, warn};
 #[cfg(feature = "tree-sitter")]
 use tree_sitter::{Parser, Tree};
-#[cfg(not(feature = "tree-sitter"))]
-use crate::ast::tree_sitter::{Parser, Tree};
 
 // Re-export tree-sitter types for public API
 
 mod arc_pathbuf_serde {
+    use serde::{Deserialize, Deserializer, Serialize, Serializer};
     use std::path::PathBuf;
     use std::sync::Arc;
-    use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
     pub fn serialize<S>(arc_pathbuf: &Arc<PathBuf>, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -41,8 +41,8 @@ mod arc_pathbuf_serde {
 }
 
 mod arc_string_serde {
-    use std::sync::Arc;
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
+    use std::sync::Arc;
 
     pub fn serialize<S>(arc_string: &Arc<String>, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -90,20 +90,29 @@ impl AstParser {
     pub fn clear_cache(&self) {
         if let Ok(mut cache) = self.cache.lock() {
             cache.clear();
-            info!("AST cache cleared, freed memory for {} entries", cache.cap().get());
+            info!(
+                "AST cache cleared, freed memory for {} entries",
+                cache.cap().get()
+            );
         }
     }
 
     /// Get cache statistics
     pub fn cache_stats(&self) -> (u64, u64, usize, usize) {
-        let hits = *self.cache_hits.lock().unwrap_or_else(|_| self.cache_hits.lock().unwrap());
-        let misses = *self.cache_misses.lock().unwrap_or_else(|_| self.cache_misses.lock().unwrap());
+        let hits = *self
+            .cache_hits
+            .lock()
+            .unwrap_or_else(|_| self.cache_hits.lock().unwrap());
+        let misses = *self
+            .cache_misses
+            .lock()
+            .unwrap_or_else(|_| self.cache_misses.lock().unwrap());
         let (current_size, max_size) = if let Ok(cache) = self.cache.lock() {
             (cache.len(), cache.cap().get())
         } else {
             (0, 0)
         };
-        
+
         (hits, misses, current_size, max_size)
     }
 
@@ -123,7 +132,7 @@ impl AstParser {
             .ok_or_else(|| AstError::Other("Cache size must be > 0".to_string()))?;
 
         let mut parsers = HashMap::new();
-        
+
         #[cfg(feature = "tree-sitter")]
         {
             #[cfg(feature = "rust-lang")]
@@ -427,18 +436,28 @@ impl AstParser {
                             if let Some(name_node) = child.child_by_field_name("name") {
                                 let name = name_node
                                     .utf8_text(source.as_bytes())
-                                    .map_err(|_| AstError::Other("Failed to get node text".to_string()))?
+                                    .map_err(|_| {
+                                        AstError::Other("Failed to get node text".to_string())
+                                    })?
                                     .to_string();
-                                items.push(CustomAst::Function { name, params: Vec::new() });
+                                items.push(CustomAst::Function {
+                                    name,
+                                    params: Vec::new(),
+                                });
                             }
                         }
                         "class_declaration" => {
                             if let Some(name_node) = child.child_by_field_name("name") {
                                 let name = name_node
                                     .utf8_text(source.as_bytes())
-                                    .map_err(|_| AstError::Other("Failed to get node text".to_string()))?
+                                    .map_err(|_| {
+                                        AstError::Other("Failed to get node text".to_string())
+                                    })?
                                     .to_string();
-                                items.push(CustomAst::Struct { name, methods: Vec::new() });
+                                items.push(CustomAst::Struct {
+                                    name,
+                                    methods: Vec::new(),
+                                });
                             }
                         }
                         _ => {}
@@ -615,7 +634,7 @@ impl AstParser {
     }
 
     /// Safely read source code with robust UTF-8 handling
-    /// 
+    ///
     /// This implements the UTF-8 validation strategy from the research document:
     /// 1. Read as bytes first
     /// 2. Attempt strict UTF-8 validation
@@ -625,23 +644,23 @@ impl AstParser {
         // Step 1: Read as raw bytes to avoid panics
         let source_bytes = fs::read(file_path)
             .map_err(|e| AstError::Other(format!("Failed to read file: {}", e)))?;
-        
+
         // Step 2: Attempt strict UTF-8 validation
         match String::from_utf8(source_bytes.clone()) {
             Ok(valid_string) => {
                 // File is valid UTF-8, proceed normally
                 Ok(valid_string)
-            },
+            }
             Err(utf8_error) => {
                 // Step 3: Log the encoding issue and use lossy conversion
                 let file_display = file_path.display();
                 let error_pos = utf8_error.utf8_error().valid_up_to();
-                
+
                 warn!(
                     "Invalid UTF-8 found in file '{}' at byte position {}. Using lossy conversion to continue analysis.",
                     file_display, error_pos
                 );
-                
+
                 // Step 4: Use lossy conversion to proceed with analysis
                 let lossy_string = String::from_utf8_lossy(&source_bytes);
                 Ok(lossy_string.into_owned())
@@ -650,16 +669,23 @@ impl AstParser {
     }
 
     /// Safe string slicing using byte offsets from Tree-sitter
-    /// 
+    ///
     /// This ensures byte offsets from Tree-sitter nodes are properly converted
     /// to valid string slice boundaries without panicking.
-    pub fn safe_slice<'a>(&self, source: &'a str, start_byte: usize, end_byte: usize) -> Result<&'a str, AstError> {
+    pub fn safe_slice<'a>(
+        &self,
+        source: &'a str,
+        start_byte: usize,
+        end_byte: usize,
+    ) -> Result<&'a str, AstError> {
         // Ensure we don't exceed string bounds
         let source_bytes = source.as_bytes();
         if start_byte > source_bytes.len() || end_byte > source_bytes.len() {
             return Err(AstError::Other(format!(
                 "Byte offset out of bounds: start={}, end={}, source_len={}",
-                start_byte, end_byte, source_bytes.len()
+                start_byte,
+                end_byte,
+                source_bytes.len()
             )));
         }
 
@@ -679,11 +705,16 @@ impl AstParser {
     }
 
     /// Find the nearest valid UTF-8 character boundary
-    /// 
+    ///
     /// This prevents panics when Tree-sitter byte offsets don't align with UTF-8 boundaries
-    fn find_char_boundary(&self, source: &str, byte_offset: usize, round_down: bool) -> Result<usize, AstError> {
+    fn find_char_boundary(
+        &self,
+        source: &str,
+        byte_offset: usize,
+        round_down: bool,
+    ) -> Result<usize, AstError> {
         let bytes = source.as_bytes();
-        
+
         if byte_offset >= bytes.len() {
             return Ok(bytes.len());
         }
@@ -735,15 +766,22 @@ impl Drop for AstParser {
             let entries_cleared = cache.len();
             cache.clear();
             if entries_cleared > 0 {
-                info!("AstParser dropped, freed {} cached AST entries", entries_cleared);
+                info!(
+                    "AstParser dropped, freed {} cached AST entries",
+                    entries_cleared
+                );
             }
         }
-        
+
         // Log final statistics
         let (hits, misses, _, _) = self.cache_stats();
         if hits + misses > 0 {
-            info!("Final AST cache stats: {} hits, {} misses ({:.1}% hit rate)", 
-                hits, misses, (hits as f64 / (hits + misses) as f64) * 100.0);
+            info!(
+                "Final AST cache stats: {} hits, {} misses ({:.1}% hit rate)",
+                hits,
+                misses,
+                (hits as f64 / (hits + misses) as f64) * 100.0
+            );
         }
     }
 }
@@ -908,8 +946,12 @@ impl SourceLanguage {
             Err(crate::error::UveddiError::AstError {
                 file: file.clone(),
                 language: "".to_string(),
-                message: format!("Unsupported file extension for '{}'; unable to detect language", file),
-                suggestion: "Ensure file extension is one of .rs, .py, .js, .ts, .jsx, .tsx".to_string(),
+                message: format!(
+                    "Unsupported file extension for '{}'; unable to detect language",
+                    file
+                ),
+                suggestion: "Ensure file extension is one of .rs, .py, .js, .ts, .jsx, .tsx"
+                    .to_string(),
                 source: None,
             })
         }

@@ -1,5 +1,5 @@
-use crate::ai::engine::AiAnalysisEngine;
 use crate::ai::analysis::AiInsight;
+use crate::ai::engine::AiAnalysisEngine;
 use crate::database::models::ArchitecturalIssue;
 use crate::error::UveddiError;
 use async_trait::async_trait;
@@ -8,7 +8,10 @@ use async_trait::async_trait;
 #[async_trait]
 pub trait AiService: Send + Sync {
     /// Analyze a list of architectural issues to produce AI insights
-    async fn analyze_issues(&self, issues: &[ArchitecturalIssue]) -> Result<Vec<AiInsight>, UveddiError>;
+    async fn analyze_issues(
+        &self,
+        issues: &[ArchitecturalIssue],
+    ) -> Result<Vec<AiInsight>, UveddiError>;
 }
 
 /// Concrete implementation of AiService using AiAnalysisEngine
@@ -25,7 +28,10 @@ impl AiAnalysisService {
 
 #[async_trait]
 impl AiService for AiAnalysisService {
-    async fn analyze_issues(&self, issues: &[ArchitecturalIssue]) -> Result<Vec<AiInsight>, UveddiError> {
+    async fn analyze_issues(
+        &self,
+        issues: &[ArchitecturalIssue],
+    ) -> Result<Vec<AiInsight>, UveddiError> {
         self.engine.analyze_issues(issues).await
     }
 }

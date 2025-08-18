@@ -6,10 +6,10 @@
 
 use crate::analysis::diagram_cache::{DiagramCacheEngine, DiagramType as CacheDiagramType};
 use crate::analysis::incremental::ChangeSet;
+use crate::core::logging::{debug, info, warn};
 use crate::models::visualization::{
     ArchitecturalComponent, DiagramMetadata, DiagramSpec, DiagramType as VizDiagramType,
 };
-use crate::core::logging::{debug, info, warn};
 use serde_json::{json, Value};
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
@@ -578,7 +578,7 @@ classDef low fill:#e6ffe6,stroke:#00cc00,stroke-width:1px;"#,
         )
         .map_err(|e| MermaidGenerationError::TemplateLoadError(e.to_string()))?;
 
-        // God object diagram template  
+        // God object diagram template
         tera.add_raw_template(
             "god_object_diagram",
             r#"graph {{ layout }}

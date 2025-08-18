@@ -4,11 +4,11 @@
 //! custom knowledge plugins, including traits, macros, and utilities.
 
 #[cfg(feature = "ai")]
-use crate::ai::knowledge::schema::*;
-#[cfg(feature = "ai")]
-use crate::ai::knowledge::context_selection::{SeverityLevel, LocationContext};
-#[cfg(feature = "ai")]
 use crate::ai::knowledge::compression::CompressedString;
+#[cfg(feature = "ai")]
+use crate::ai::knowledge::context_selection::{LocationContext, SeverityLevel};
+#[cfg(feature = "ai")]
+use crate::ai::knowledge::schema::*;
 use crate::plugins::knowledge::*;
 use crate::plugins::PluginError;
 use async_trait::async_trait;
@@ -17,15 +17,15 @@ use std::collections::HashMap;
 
 // Stub types for when AI features are disabled
 #[cfg(not(feature = "ai"))]
-pub use crate::plugins::integration::PatternKnowledge;
-#[cfg(not(feature = "ai"))]
 pub use crate::plugins::integration::AntiPatternCategory;
 #[cfg(not(feature = "ai"))]
 pub use crate::plugins::integration::DetectionMethod;
 #[cfg(not(feature = "ai"))]
-pub use crate::plugins::integration::SeverityLevel;
-#[cfg(not(feature = "ai"))]
 pub use crate::plugins::integration::LocationContext;
+#[cfg(not(feature = "ai"))]
+pub use crate::plugins::integration::PatternKnowledge;
+#[cfg(not(feature = "ai"))]
+pub use crate::plugins::integration::SeverityLevel;
 #[cfg(not(feature = "ai"))]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CompressedString(String);
@@ -180,7 +180,9 @@ impl ExampleAntiPatternPlugin {
         let custom_pattern = PatternKnowledge {
             id: "singleton_abuse".to_string(),
             name: "Singleton Abuse".to_string(),
-            definition: CompressedString::new("Overuse of singleton pattern causing tight coupling"),
+            definition: CompressedString::new(
+                "Overuse of singleton pattern causing tight coupling",
+            ),
             symptoms: vec![CompressedString::new("Global state management")],
             impact: crate::ai::knowledge::schema::ImpactLevel::Medium,
             category: AntiPatternCategory::ObjectOriented,

@@ -1,8 +1,8 @@
+use crate::core::logging::error;
 use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
 use crate::error::Result;
 use crate::security;
 use chrono::Utc;
-use crate::core::logging::error;
 use rusqlite::Connection;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
@@ -70,7 +70,9 @@ impl Database {
                 path TEXT NOT NULL UNIQUE
             );
         ").map_err(crate::error::UveddiError::from)?;
-        Ok(Self { conn: Arc::new(Mutex::new(conn)) })
+        Ok(Self {
+            conn: Arc::new(Mutex::new(conn)),
+        })
     }
 
     /// Gets the project ID for the given path, creating a new project entry if needed.
@@ -86,15 +88,13 @@ impl Database {
     pub fn get_or_create_project_id(&self, project_path: &Path) -> Result<i64> {
         let path_str = project_path.to_string_lossy().to_string();
         let conn = self.conn.lock().unwrap();
-        let mut stmt = conn
-            .prepare("SELECT project_id FROM projects WHERE path = ?")?;
+        let mut stmt = conn.prepare("SELECT project_id FROM projects WHERE path = ?")?;
         let mut rows = stmt.query([&path_str])?;
 
         if let Some(row) = rows.next()? {
             Ok(row.get(0)?)
         } else {
-            conn
-                .execute("INSERT INTO projects (path) VALUES (?)", [&path_str])?;
+            conn.execute("INSERT INTO projects (path) VALUES (?)", [&path_str])?;
             Ok(conn.last_insert_rowid())
         }
     }
@@ -192,8 +192,8 @@ impl Database {
             ],
         )?;
         if anti_pattern_type.anti_pattern_type_id.is_none() {
-            let mut stmt = conn
-                .prepare("SELECT anti_pattern_type_id FROM anti_pattern_types WHERE name = ?")?;
+            let mut stmt =
+                conn.prepare("SELECT anti_pattern_type_id FROM anti_pattern_types WHERE name = ?")?;
             anti_pattern_type.anti_pattern_type_id =
                 Some(stmt.query_row([&anti_pattern_type.name], |row| row.get(0))?);
         }
@@ -277,10 +277,14 @@ impl Database {
             Ok(_) => {
                 tracing::debug!("Successfully stored {} architectural issues", issues.len());
                 Ok(())
-            },
+            }
             Err(e) => {
                 // Enhanced error logging to expose specific SQLite error codes
-                error!("Transaction commit failed while storing {} issues: {:?}", issues.len(), e);
+                error!(
+                    "Transaction commit failed while storing {} issues: {:?}",
+                    issues.len(),
+                    e
+                );
                 if let rusqlite::Error::SqliteFailure(sqlite_err, Some(msg)) = &e {
                     error!("Underlying SQLite error message: {}", msg);
                     error!("SQLite extended error code: {}", sqlite_err.extended_code);
@@ -288,7 +292,7 @@ impl Database {
                 if let Some(error_code) = e.sqlite_error_code() {
                     error!("SQLite primary error code: {:?}", error_code);
                 }
-                
+
                 // Provide more specific error context based on the error type
                 let context_msg = match &e {
                     rusqlite::Error::SqliteFailure(sqlite_err, _) => {
@@ -301,10 +305,11 @@ impl Database {
                     },
                     _ => "Unexpected database error during transaction commit"
                 };
-                
-                Err(crate::error::UveddiError::database_error_msg(
-                    &format!("Failed to store architectural issues: {}", context_msg)
-                ))
+
+                Err(crate::error::UveddiError::database_error_msg(&format!(
+                    "Failed to store architectural issues: {}",
+                    context_msg
+                )))
             }
         }
     }
@@ -384,7 +389,7 @@ impl Database {
         let mut stmt = conn.prepare(
             "SELECT anti_pattern_type_id, name, description, category FROM anti_pattern_types ORDER BY name"
         )?;
-        
+
         let anti_pattern_iter = stmt.query_map([], |row| {
             Ok(AntiPatternType {
                 anti_pattern_type_id: Some(row.get(0)?),
@@ -398,7 +403,7 @@ impl Database {
         for anti_pattern in anti_pattern_iter {
             anti_patterns.push(anti_pattern?);
         }
-        
+
         Ok(anti_patterns)
     }
 }

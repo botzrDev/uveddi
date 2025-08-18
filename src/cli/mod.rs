@@ -6,10 +6,10 @@
 //! NOTE: UV-112, UV-115 - Layer boundary compliance confirmed July 2025. This module only interacts with the Application layer per architecture.
 
 pub mod analyze_command;
+pub mod ci_command;
 pub mod config_command;
 pub mod plugin_command;
 pub mod ui_command;
-pub mod ci_command;
 
 // Re-export commonly used types
 pub use analyze_command::AnalyzeCommand;

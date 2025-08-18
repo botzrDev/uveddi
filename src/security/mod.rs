@@ -50,11 +50,11 @@
 //! # Usage Examples
 
 #[cfg(feature = "security")]
+pub mod audit;
+#[cfg(feature = "security")]
 pub mod authentication;
 #[cfg(feature = "security")]
 pub mod authorization;
-#[cfg(feature = "security")]
-pub mod audit;
 #[cfg(feature = "security")]
 pub mod config;
 #[cfg(feature = "security")]
@@ -84,17 +84,17 @@ pub use authentication::AuthenticationService;
 #[cfg(feature = "security")]
 pub use authorization::AuthorizationEngine;
 #[cfg(feature = "security")]
-pub use models::{AuthenticatedUser, AuthContext};
-#[cfg(feature = "security")]
 pub use errors::{SecurityError, SecurityResult};
 #[cfg(feature = "security")]
 pub use http_client::{HttpSecurityConfig, SecureHttpClient};
 #[cfg(feature = "security")]
 pub use models::UserRole;
+#[cfg(feature = "security")]
+pub use models::{AuthContext, AuthenticatedUser};
 
 // Re-export from stub when security feature is disabled
 #[cfg(not(feature = "security"))]
-pub use stub::{SecurityError, SecurityResult, HttpSecurityConfig, SecureHttpClient};
+pub use stub::{HttpSecurityConfig, SecureHttpClient, SecurityError, SecurityResult};
 
 // Input validation functions
 
@@ -108,8 +108,8 @@ use std::path::{Path, PathBuf};
 pub use errors::SecurityErrorSeverity;
 #[cfg(feature = "security")]
 pub use models::{
-    ApiKey, AuditEvent, AuditEventType, AuditOutcome, Permission,
-    RateLimitIdentifierType, RateLimitInfo, Role, Session, User, UserRoleAssignment,
+    ApiKey, AuditEvent, AuditEventType, AuditOutcome, Permission, RateLimitIdentifierType,
+    RateLimitInfo, Role, Session, User, UserRoleAssignment,
 };
 
 // Re-export authentication and authorization config types (feature-gated)
@@ -122,7 +122,9 @@ pub use config::RateLimitingConfig;
 #[cfg(feature = "security")]
 pub use config::{SecurityConfig, SecurityConfigLoader};
 #[cfg(feature = "security")]
-pub use dependency_config::{SecurityLimits, create_secure_http_client, create_custom_http_client, validate_input_size};
+pub use dependency_config::{
+    create_custom_http_client, create_secure_http_client, validate_input_size, SecurityLimits,
+};
 #[cfg(feature = "security")]
 pub use middleware::SecurityServices;
 #[cfg(feature = "security")]
@@ -424,7 +426,7 @@ pub fn validate_code_analysis_data(
     max_length: Option<usize>,
 ) -> Result<(), SecurityError> {
     let max_len = max_length.unwrap_or(100_000); // 100KB default for code content
-    
+
     // Only check for excessive length - code content naturally contains SQL keywords, etc.
     if input.len() > max_len {
         return Err(SecurityError::InvalidInput {
@@ -436,7 +438,7 @@ pub fn validate_code_analysis_data(
             ),
         });
     }
-    
+
     // Check for null bytes which could indicate binary data corruption
     if input.contains('\0') {
         return Err(SecurityError::InvalidInput {
@@ -444,7 +446,7 @@ pub fn validate_code_analysis_data(
             reason: "Code analysis data contains null bytes".to_string(),
         });
     }
-    
+
     // Allow all other content - programming languages naturally contain
     // semicolons, SQL keywords, comments, etc. that are safe in this context
     Ok(())
@@ -463,7 +465,10 @@ pub fn validate_code_analysis_data(
 /// # Returns
 /// * `Ok(())` - Path is valid for storage
 /// * `Err(SecurityError)` - Path violates storage constraints
-pub fn validate_file_path_for_storage(file_path: &str, field_name: &str) -> Result<(), SecurityError> {
+pub fn validate_file_path_for_storage(
+    file_path: &str,
+    field_name: &str,
+) -> Result<(), SecurityError> {
     // Check length constraints
     if file_path.len() > MAX_PATH_LENGTH {
         return Err(SecurityError::InvalidInput {
@@ -487,7 +492,7 @@ pub fn validate_file_path_for_storage(file_path: &str, field_name: &str) -> Resu
     // Don't apply SQL injection pattern detection to file paths
     // as they naturally contain characters like dashes, dots, etc.
     // that are flagged as dangerous but are normal in file paths
-    
+
     Ok(())
 }
 

@@ -24,16 +24,17 @@
 //! - `GET /app/*` - Serve SPA static assets
 //! - `GET /*` - SPA fallback for client-side routing
 
+use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
 use crate::database::Database;
-use crate::report::interactive_models::{InteractiveReport, DependencyGraph, REPORT_SCHEMA_VERSION};
-use crate::database::models::{AnalysisRun, ArchitecturalIssue, AntiPatternType};
+use crate::report::interactive_models::{
+    DependencyGraph, InteractiveReport, REPORT_SCHEMA_VERSION,
+};
 use axum::{
     extract::{Path as AxumPath, State},
-    http::{header, StatusCode, HeaderMap},
+    http::{header, HeaderMap, StatusCode},
     response::{Html, IntoResponse, Json},
     routing::{get, get_service},
-    Router, ServiceExt,
-    serve,
+    serve, Router, ServiceExt,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -41,10 +42,10 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use tokio::fs;
-use tower::ServiceBuilder;
 use tower::Service;
+use tower::ServiceBuilder;
 use tower_http::{
-    cors::{CorsLayer, Any},
+    cors::{Any, CorsLayer},
     services::ServeDir,
     trace::TraceLayer,
 };
@@ -119,11 +120,11 @@ impl RestApiService {
         if let Some(assets_path) = &self.config.spa_assets_path {
             if assets_path.exists() {
                 use tower_http::services::ServeFile;
-                
+
                 // Use the canonical SPA pattern: ServeDir with ServeFile fallback
                 let serve_dir = ServeDir::new(assets_path.clone())
                     .fallback(ServeFile::new(assets_path.join("index.html")));
-                
+
                 // Add static file serving at /app and SPA fallback for everything else
                 app = app.nest_service("/app", get_service(serve_dir.clone()));
                 app = app.fallback_service(get_service(serve_dir));
@@ -140,10 +141,7 @@ impl RestApiService {
         }
 
         // Add middleware
-        app.layer(
-            ServiceBuilder::new()
-                .layer(TraceLayer::new_for_http())
-        )
+        app.layer(ServiceBuilder::new().layer(TraceLayer::new_for_http()))
     }
 }
 
@@ -159,13 +157,16 @@ impl CombinedApiServer {
     }
 
     /// Start the combined server
-    pub async fn start(self, database: Arc<Database>) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn start(
+        self,
+        database: Arc<Database>,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let service = RestApiService::new(self.config, database);
         let app = service.create_app_with_state();
 
         let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", self.port)).await?;
         println!("🌐 Server listening on http://0.0.0.0:{}", self.port);
-        
+
         axum::serve(listener, app).await?;
         Ok(())
     }
@@ -189,21 +190,17 @@ async fn health_check() -> impl IntoResponse {
 }
 
 /// List all available reports
-async fn list_reports(
-    State(state): State<Arc<AppState>>,
-) -> Result<impl IntoResponse, StatusCode> {
+async fn list_reports(State(state): State<Arc<AppState>>) -> Result<impl IntoResponse, StatusCode> {
     // TODO: Implement database query for available reports
     // For now, return demo data
-    let reports = vec![
-        serde_json::json!({
-            "id": "demo",
-            "title": "Demo Analysis Report",
-            "created_at": Utc::now(),
-            "project_name": "Demo Project",
-            "file_count": 42,
-            "issue_count": 7
-        })
-    ];
+    let reports = vec![serde_json::json!({
+        "id": "demo",
+        "title": "Demo Analysis Report",
+        "created_at": Utc::now(),
+        "project_name": "Demo Project",
+        "file_count": 42,
+        "issue_count": 7
+    })];
 
     Ok(Json(serde_json::json!({
         "reports": reports,
@@ -222,14 +219,15 @@ async fn get_report(
     }
 
     // Try to load from storage
-    let report_path = state.config.reports_storage_path.join(format!("{}.json", report_id));
-    
+    let report_path = state
+        .config
+        .reports_storage_path
+        .join(format!("{}.json", report_id));
+
     match fs::read_to_string(&report_path).await {
-        Ok(content) => {
-            match serde_json::from_str::<InteractiveReport>(&content) {
-                Ok(report) => Ok(Json(report)),
-                Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
-            }
+        Ok(content) => match serde_json::from_str::<InteractiveReport>(&content) {
+            Ok(report) => Ok(Json(report)),
+            Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
         },
         Err(_) => Err(StatusCode::NOT_FOUND),
     }
@@ -253,7 +251,6 @@ async fn get_dependency_graph(
 async fn demo_report_handler() -> Result<impl IntoResponse, StatusCode> {
     Ok(Json(create_demo_report()))
 }
-
 
 /// Create a demo report for testing
 fn create_demo_report() -> InteractiveReport {

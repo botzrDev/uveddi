@@ -1,8 +1,8 @@
 // NOTE: UV-112, UV-115 - Layer boundary compliance confirmed July 2025. This module only interacts with the Application layer per architecture.
 
 use crate::config::Config;
-use clap::{Args, Subcommand};
 use crate::core::logging::{error, info, warn};
+use clap::{Args, Subcommand};
 use std::fs;
 use std::io::Write;
 use std::path::PathBuf;

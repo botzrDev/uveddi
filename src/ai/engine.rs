@@ -1,13 +1,13 @@
-use crate::ai::api::llm_provider::LlmProvider;
 use crate::ai::analysis::AiInsight;
+use crate::ai::api::llm_provider::LlmProvider;
 use crate::ai::knowledge::KnowledgeContext;
 use crate::ai::ollama_provider::{OllamaConfig, OllamaProvider};
 use crate::ai::prompts::smart_prompting::SmartPromptBuilder;
+use crate::core::logging::{info, warn};
 use crate::database::models::ArchitecturalIssue;
 use crate::error::UveddiError;
-use crate::core::logging::{info, warn};
 use std::env;
-use std::time::{Instant, Duration};
+use std::time::{Duration, Instant};
 use uuid::Uuid;
 
 /// AiAnalysisEngine is responsible for performing AI-powered architectural analysis.
@@ -37,7 +37,10 @@ impl AiAnalysisEngine {
 
             match OllamaProvider::new(config) {
                 Ok(ollama_provider) => {
-                    info!("Successfully created Ollama provider with model: {}", ollama_provider.config.model);
+                    info!(
+                        "Successfully created Ollama provider with model: {}",
+                        ollama_provider.config.model
+                    );
                     Some(Box::new(ollama_provider) as Box<dyn LlmProvider + Send + Sync>)
                 }
                 Err(e) => {
@@ -49,14 +52,20 @@ impl AiAnalysisEngine {
             // No API URL configured, try with default localhost and memory-aware model
             info!("No OLLAMA_API_URL configured, attempting localhost with memory-aware model selection");
             let config = OllamaConfig::memory_aware(None);
-            
+
             match OllamaProvider::new(config) {
                 Ok(ollama_provider) => {
-                    info!("Successfully created Ollama provider with auto-selected model: {}", ollama_provider.config.model);
+                    info!(
+                        "Successfully created Ollama provider with auto-selected model: {}",
+                        ollama_provider.config.model
+                    );
                     Some(Box::new(ollama_provider) as Box<dyn LlmProvider + Send + Sync>)
                 }
                 Err(e) => {
-                    info!("No Ollama provider available ({}), will use knowledge-only mode", e);
+                    info!(
+                        "No Ollama provider available ({}), will use knowledge-only mode",
+                        e
+                    );
                     None
                 }
             }
@@ -71,34 +80,48 @@ impl AiAnalysisEngine {
     /// Performs architectural analysis on the provided codebase.
     ///
     /// Analyzes issues to produce AI-powered insights
-    pub async fn analyze_issues(&self, issues: &[ArchitecturalIssue]) -> Result<Vec<AiInsight>, UveddiError> {
+    pub async fn analyze_issues(
+        &self,
+        issues: &[ArchitecturalIssue],
+    ) -> Result<Vec<AiInsight>, UveddiError> {
         if issues.is_empty() {
             return Ok(Vec::new());
         }
-        
+
         info!("Analyzing {} architectural issues with AI", issues.len());
         let start_time = Instant::now();
-        
+
         // If no AI provider is available, return early with knowledge-based insights
         if self.provider.is_none() {
             warn!("No AI provider available, using knowledge-based insights only");
             return Ok(self.generate_knowledge_based_insights(issues));
         }
-        
+
         // Generate prompt for AI analysis
         let prompt = self.prompt_builder.build_issue_analysis_prompt(issues);
-        
+
         // Use AI provider to analyze issues
         match &self.provider {
             Some(provider) => {
-                let response = provider.generate_explanation(&prompt).await
-                    .map_err(|e| UveddiError::analysis_error("ai_engine", 95, &format!("Failed to generate AI completion: {}", e), "AI provider communication error"))?;
-                
+                let response = provider.generate_explanation(&prompt).await.map_err(|e| {
+                    UveddiError::analysis_error(
+                        "ai_engine",
+                        95,
+                        &format!("Failed to generate AI completion: {}", e),
+                        "AI provider communication error",
+                    )
+                })?;
+
                 // Parse and convert response to insights
-                let insights = self.parse_ai_response_to_insights(&response, issues)
+                let insights = self
+                    .parse_ai_response_to_insights(&response, issues)
                     .unwrap_or_else(|_| self.generate_fallback_insights(issues));
-                
-                info!("AI analysis completed in {:?}, generated {} insights", start_time.elapsed(), insights.len());
+
+                info!(
+                    "AI analysis completed in {:?}, generated {} insights",
+                    start_time.elapsed(),
+                    insights.len()
+                );
                 Ok(insights)
             }
             None => {
@@ -108,15 +131,19 @@ impl AiAnalysisEngine {
             }
         }
     }
-    
+
     /// Parse AI response into structured insights
-    fn parse_ai_response_to_insights(&self, response: &str, issues: &[ArchitecturalIssue]) -> Result<Vec<AiInsight>, UveddiError> {
+    fn parse_ai_response_to_insights(
+        &self,
+        response: &str,
+        issues: &[ArchitecturalIssue],
+    ) -> Result<Vec<AiInsight>, UveddiError> {
         // This is a simple implementation that could be enhanced with better parsing
         let mut insights = Vec::new();
-        
+
         // Split response by sections or patterns that indicate separate insights
         let sections = response.split("\n").filter(|s| !s.trim().is_empty());
-        
+
         for (i, section) in sections.enumerate() {
             if let Some(issue_idx) = i.checked_sub(1) {
                 if let Some(issue) = issues.get(issue_idx % issues.len()) {
@@ -145,20 +172,20 @@ impl AiAnalysisEngine {
                 insights.push(insight);
             }
         }
-        
+
         Ok(insights)
     }
-    
+
     /// Generate fallback insights based on knowledge base when AI fails
     fn generate_fallback_insights(&self, issues: &[ArchitecturalIssue]) -> Vec<AiInsight> {
         warn!("Falling back to knowledge-based insights due to AI parsing failure");
         self.generate_knowledge_based_insights(issues)
     }
-    
+
     /// Generate insights based on knowledge base without AI
     fn generate_knowledge_based_insights(&self, issues: &[ArchitecturalIssue]) -> Vec<AiInsight> {
         let mut insights = Vec::new();
-        
+
         for issue in issues {
             // Create a basic insight for each issue type
             let issue_type_name = format!("anti_pattern_{}", issue.anti_pattern_type_id);
@@ -179,21 +206,23 @@ impl AiAnalysisEngine {
                     vec!["general".to_string()]
                 )
             };
-            
+
             insights.push(AiInsight {
                 id: Uuid::new_v4().to_string(),
                 related_issue_id: issue.issue_id.map(|id| id.to_string()),
                 title,
                 description,
                 confidence: 0.6, // Lower confidence as these are not AI-generated
-                suggestion: Some("Consider refactoring this code to address the issue.".to_string()),
+                suggestion: Some(
+                    "Consider refactoring this code to address the issue.".to_string(),
+                ),
                 tags,
             });
         }
-        
+
         insights
     }
-    
+
     /// Performs architectural analysis on the provided codebase.
     ///
     /// # Arguments

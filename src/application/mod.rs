@@ -4,20 +4,20 @@
 //! database, analysis engine, AI engine, and report generation. It serves as the boundary
 //! between the CLI and infrastructure layers.
 
+use crate::core::logging::{error, info};
 use anyhow::Context;
 use chrono::Utc;
-use crate::core::logging::{error, info};
 use std::collections::HashMap;
 use std::path::PathBuf;
 
 use crate::analysis::detectors::anti_patterns::dead_code::DeadCodeConfig;
 use crate::analysis::detectors::anti_patterns::large_classes::LargeClassConfig;
 use crate::analysis::AnalysisEngine;
+use crate::core::mocks::ai_mocks::AiInsight;
 use crate::database::crud::Database;
 use crate::database::models::{AnalysisRun, ArchitecturalIssue};
 use crate::error::UveddiError;
-use crate::report::{ReportGenerator, markdown_generator::MarkdownReportGenerator};
-use crate::core::mocks::ai_mocks::AiInsight;
+use crate::report::{markdown_generator::MarkdownReportGenerator, ReportGenerator};
 
 #[cfg(feature = "memory-optimization")]
 use crate::analysis::memory::MemoryOptimizationConfig;
@@ -321,8 +321,15 @@ impl AnalysisOrchestrator {
 
         // Generate report
         let mut report_generator = ReportGenerator::new();
-        let report_content =
-            self.generate_report(&config, &analysis_run, &issues, &mut report_generator, ai_insights.as_deref()).await?;
+        let report_content = self
+            .generate_report(
+                &config,
+                &analysis_run,
+                &issues,
+                &mut report_generator,
+                ai_insights.as_deref(),
+            )
+            .await?;
 
         // Write output file if specified
         if let Some(output_path) = &config.output_file {
@@ -382,29 +389,39 @@ impl AnalysisOrchestrator {
         ai_insights: Option<&[AiInsight]>,
     ) -> Result<String, UveddiError> {
         // Retrieve anti-pattern types from database for proper report generation
-        let anti_pattern_types = self.database.get_all_anti_pattern_types()
-            .map_err(|e| {
-                error!("Failed to retrieve anti-pattern types from database: {}", e);
-                crate::error::UveddiError::from(
-                    crate::report::errors::ReportGenerationError::DataExtractionError(
-                        format!("Failed to retrieve anti-pattern types: {}", e),
-                    ),
-                )
-            })?;
+        let anti_pattern_types = self.database.get_all_anti_pattern_types().map_err(|e| {
+            error!("Failed to retrieve anti-pattern types from database: {}", e);
+            crate::error::UveddiError::from(
+                crate::report::errors::ReportGenerationError::DataExtractionError(format!(
+                    "Failed to retrieve anti-pattern types: {}",
+                    e
+                )),
+            )
+        })?;
 
         // Build HashMap mapping anti-pattern type IDs to their definitions
-        let anti_pattern_map: HashMap<i64, crate::database::models::AntiPatternType> = anti_pattern_types
-            .into_iter()
-            .filter_map(|apt| apt.anti_pattern_type_id.map(|id| (id, apt)))
-            .collect();
+        let anti_pattern_map: HashMap<i64, crate::database::models::AntiPatternType> =
+            anti_pattern_types
+                .into_iter()
+                .filter_map(|apt| apt.anti_pattern_type_id.map(|id| (id, apt)))
+                .collect();
 
-        info!("Retrieved {} anti-pattern types for report generation", anti_pattern_map.len());
+        info!(
+            "Retrieved {} anti-pattern types for report generation",
+            anti_pattern_map.len()
+        );
 
         match config.output_format.as_str() {
             "json" => {
                 let codebase_path = config.target_path.to_str();
                 let report = report_generator
-                    .generate_json_report(analysis_run, issues, &anti_pattern_map, None, codebase_path)
+                    .generate_json_report(
+                        analysis_run,
+                        issues,
+                        &anti_pattern_map,
+                        None,
+                        codebase_path,
+                    )
                     .map_err(|e| {
                         crate::error::UveddiError::from(
                             crate::report::errors::ReportGenerationError::DataExtractionError(
@@ -415,15 +432,22 @@ impl AnalysisOrchestrator {
                 Ok(report.to_string())
             }
             "markdown" => {
-                let mut markdown_generator = MarkdownReportGenerator::new()
-                    .map_err(|e| crate::error::UveddiError::from(
+                let mut markdown_generator = MarkdownReportGenerator::new().map_err(|e| {
+                    crate::error::UveddiError::from(
                         crate::report::errors::ReportGenerationError::DataExtractionError(
                             e.to_string(),
-                        )
-                    ))?;
-                
+                        ),
+                    )
+                })?;
+
                 markdown_generator
-                    .generate_markdown_report(analysis_run, issues, &anti_pattern_map, ai_insights, None)
+                    .generate_markdown_report(
+                        analysis_run,
+                        issues,
+                        &anti_pattern_map,
+                        ai_insights,
+                        None,
+                    )
                     .await
                     .map_err(|e| {
                         crate::error::UveddiError::from(
@@ -436,7 +460,13 @@ impl AnalysisOrchestrator {
             "html" => {
                 let codebase_path = config.target_path.to_str();
                 report_generator
-                    .generate_html_report(analysis_run, issues, &anti_pattern_map, config.output_file.as_deref(), codebase_path)
+                    .generate_html_report(
+                        analysis_run,
+                        issues,
+                        &anti_pattern_map,
+                        config.output_file.as_deref(),
+                        codebase_path,
+                    )
                     .await
                     .map_err(|e| {
                         crate::error::UveddiError::from(
@@ -713,21 +743,21 @@ impl AnalysisOrchestrator {
     /// Generate AI insights for the analysis results
     async fn generate_ai_insights(&self, issues: &[ArchitecturalIssue]) -> Option<Vec<AiInsight>> {
         use crate::core::features::ai_config::AiFeatureConfig;
-        
+
         if !AiFeatureConfig::is_enabled() {
             info!("AI features not enabled, using mock insights");
             return Some(self.generate_mock_ai_insights(issues));
         }
-        
+
         // If AI features are enabled, we would integrate with the real AI service here
         info!("AI features enabled, generating real insights");
         Some(self.generate_mock_ai_insights(issues))
     }
-    
+
     /// Generate mock AI insights for demonstration
     fn generate_mock_ai_insights(&self, issues: &[ArchitecturalIssue]) -> Vec<AiInsight> {
         let mut insights = Vec::new();
-        
+
         // Prioritize issues by criticality for AI analysis
         let mut prioritized_issues: Vec<_> = issues.iter().enumerate().collect();
         prioritized_issues.sort_by(|(_, a), (_, b)| {
@@ -735,13 +765,17 @@ impl AnalysisOrchestrator {
             let b_priority = self.get_issue_priority(&b.message);
             b_priority.cmp(&a_priority) // Sort descending (highest priority first)
         });
-        
+
         // Take top 10 issues for analysis
         for (original_index, issue) in prioritized_issues.iter().take(10) {
-            let (confidence, suggestion) = self.generate_detailed_ai_suggestion(issue, insights.len());
-            
+            let (confidence, suggestion) =
+                self.generate_detailed_ai_suggestion(issue, insights.len());
+
             insights.push(AiInsight {
-                issue_id: issue.issue_id.map(|id| id.to_string()).unwrap_or_else(|| format!("issue_{}", original_index)),
+                issue_id: issue
+                    .issue_id
+                    .map(|id| id.to_string())
+                    .unwrap_or_else(|| format!("issue_{}", original_index)),
                 confidence,
                 suggestion,
                 metadata: serde_json::json!({
@@ -754,10 +788,10 @@ impl AnalysisOrchestrator {
                 }),
             });
         }
-        
+
         insights
     }
-    
+
     /// Get priority score for issue ordering (higher = more important)
     fn get_issue_priority(&self, message: &str) -> u32 {
         if message.contains("critical") || message.contains("Critical") {
@@ -786,54 +820,60 @@ impl AnalysisOrchestrator {
     }
 
     /// Generate detailed AI suggestions based on issue analysis
-    fn generate_detailed_ai_suggestion(&self, issue: &ArchitecturalIssue, index: usize) -> (f64, String) {
+    fn generate_detailed_ai_suggestion(
+        &self,
+        issue: &ArchitecturalIssue,
+        index: usize,
+    ) -> (f64, String) {
         // Determine confidence based on issue type and severity
-        let base_confidence = if issue.message.contains("critical") || issue.message.contains("Critical") {
-            0.95
-        } else if issue.message.contains("dependencies") {
-            0.90
-        } else if issue.message.contains("God Object") {
-            0.88
-        } else if issue.message.contains("Code duplication") {
-            0.85
-        } else if issue.message.contains("dead code") {
-            0.80
-        } else {
-            0.75
-        };
-        
+        let base_confidence =
+            if issue.message.contains("critical") || issue.message.contains("Critical") {
+                0.95
+            } else if issue.message.contains("dependencies") {
+                0.90
+            } else if issue.message.contains("God Object") {
+                0.88
+            } else if issue.message.contains("Code duplication") {
+                0.85
+            } else if issue.message.contains("dead code") {
+                0.80
+            } else {
+                0.75
+            };
+
         let confidence = (base_confidence - (index as f64 * 0.02)).max(0.60);
-        
-        let suggestion = if issue.message.contains("dependencies") && issue.message.contains("critical") {
-            self.generate_dependency_analysis(issue)
-        } else if issue.message.contains("God Object") {
-            self.generate_god_object_analysis(issue)
-        } else if issue.message.contains("Code duplication") {
-            self.generate_duplication_analysis(issue)
-        } else if issue.message.contains("dead code") {
-            self.generate_dead_code_analysis(issue)
-        } else if issue.message.contains("LongMethod") {
-            self.generate_long_method_analysis(issue)
-        } else if issue.message.contains("LargeClass") {
-            self.generate_large_class_analysis(issue)
-        } else if issue.message.contains("FeatureEnvy") {
-            self.generate_feature_envy_analysis(issue)
-        } else if issue.message.contains("ShotgunSurgery") {
-            self.generate_shotgun_surgery_analysis(issue)
-        } else {
-            self.generate_generic_analysis(issue)
-        };
-        
+
+        let suggestion =
+            if issue.message.contains("dependencies") && issue.message.contains("critical") {
+                self.generate_dependency_analysis(issue)
+            } else if issue.message.contains("God Object") {
+                self.generate_god_object_analysis(issue)
+            } else if issue.message.contains("Code duplication") {
+                self.generate_duplication_analysis(issue)
+            } else if issue.message.contains("dead code") {
+                self.generate_dead_code_analysis(issue)
+            } else if issue.message.contains("LongMethod") {
+                self.generate_long_method_analysis(issue)
+            } else if issue.message.contains("LargeClass") {
+                self.generate_large_class_analysis(issue)
+            } else if issue.message.contains("FeatureEnvy") {
+                self.generate_feature_envy_analysis(issue)
+            } else if issue.message.contains("ShotgunSurgery") {
+                self.generate_shotgun_surgery_analysis(issue)
+            } else {
+                self.generate_generic_analysis(issue)
+            };
+
         (confidence, suggestion)
     }
-    
+
     /// Generate detailed dependency analysis
     fn generate_dependency_analysis(&self, issue: &ArchitecturalIssue) -> String {
         let file_name = std::path::Path::new(&issue.file_path)
             .file_stem()
             .and_then(|s| s.to_str())
             .unwrap_or("component");
-            
+
         format!(
             "🔗 **Critical Dependency Issue Detected**\n\n\
             **Analysis**: The component '{file_name}' has excessive dependencies, indicating potential architectural violations.\n\n\
@@ -856,7 +896,7 @@ impl AnalysisOrchestrator {
             **Metrics**: Aim for <8 dependencies per component for maintainable architecture."
         )
     }
-    
+
     /// Generate detailed God Object analysis
     fn generate_god_object_analysis(&self, issue: &ArchitecturalIssue) -> String {
         format!(
@@ -883,12 +923,17 @@ impl AnalysisOrchestrator {
             **Success Metrics**: Target <8 fields and <10 methods per struct for optimal maintainability."
         )
     }
-    
+
     /// Generate detailed code duplication analysis
     fn generate_duplication_analysis(&self, issue: &ArchitecturalIssue) -> String {
-        let lines = issue.message.chars().filter(|&c| c.is_ascii_digit()).collect::<String>()
-            .parse::<u32>().unwrap_or(10);
-            
+        let lines = issue
+            .message
+            .chars()
+            .filter(|&c| c.is_ascii_digit())
+            .collect::<String>()
+            .parse::<u32>()
+            .unwrap_or(10);
+
         format!(
             "📋 **Code Duplication Analysis**\n\n\
             **Duplication Details**: Found {} similar lines indicating copy-paste programming.\n\n\
@@ -920,7 +965,7 @@ impl AnalysisOrchestrator {
             lines
         )
     }
-    
+
     /// Generate detailed dead code analysis
     fn generate_dead_code_analysis(&self, issue: &ArchitecturalIssue) -> String {
         let element_type = if issue.message.contains("function") {
@@ -930,7 +975,7 @@ impl AnalysisOrchestrator {
         } else {
             "element"
         };
-        
+
         format!(
             "🗑️ **Dead Code Detection Analysis**\n\n\
             **Element Type**: Unused {element_type} identified with high confidence.\n\n\
@@ -957,7 +1002,7 @@ impl AnalysisOrchestrator {
             issue.file_path
         )
     }
-    
+
     /// Generate long method analysis
     fn generate_long_method_analysis(&self, issue: &ArchitecturalIssue) -> String {
         format!(
@@ -971,7 +1016,7 @@ impl AnalysisOrchestrator {
             **Target Metrics**: <20 lines per function, <10 cyclomatic complexity."
         )
     }
-    
+
     /// Generate large class analysis
     fn generate_large_class_analysis(&self, issue: &ArchitecturalIssue) -> String {
         format!(
@@ -984,7 +1029,7 @@ impl AnalysisOrchestrator {
             **Architecture**: Consider hexagonal or clean architecture patterns."
         )
     }
-    
+
     /// Generate feature envy analysis
     fn generate_feature_envy_analysis(&self, issue: &ArchitecturalIssue) -> String {
         format!(
@@ -997,7 +1042,7 @@ impl AnalysisOrchestrator {
             **Principle**: Follow \"Tell, Don't Ask\" - encapsulate behavior with data."
         )
     }
-    
+
     /// Generate shotgun surgery analysis
     fn generate_shotgun_surgery_analysis(&self, issue: &ArchitecturalIssue) -> String {
         format!(
@@ -1010,7 +1055,7 @@ impl AnalysisOrchestrator {
             **Goal**: Minimize change ripple effects through better encapsulation."
         )
     }
-    
+
     /// Generate generic analysis for unclassified issues
     fn generate_generic_analysis(&self, issue: &ArchitecturalIssue) -> String {
         format!(
@@ -1030,7 +1075,7 @@ impl AnalysisOrchestrator {
             **Quality Metrics**: Aim for high cohesion, low coupling architecture."
         )
     }
-    
+
     /// Classify issue type from message
     fn classify_issue_type(&self, message: &str) -> String {
         if message.contains("dependencies") {
@@ -1047,9 +1092,10 @@ impl AnalysisOrchestrator {
             "Large Class"
         } else {
             "General Quality"
-        }.to_string()
+        }
+        .to_string()
     }
-    
+
     /// Classify issue severity from message
     fn classify_issue_severity(&self, message: &str) -> String {
         if message.contains("critical") || message.contains("Critical") {
@@ -1060,7 +1106,8 @@ impl AnalysisOrchestrator {
             "Medium"
         } else {
             "Low"
-        }.to_string()
+        }
+        .to_string()
     }
 
     /// Validate memory optimization configuration
@@ -1114,9 +1161,11 @@ impl Default for AnalysisOrchestrator {
 /// the existing async runtime context from #[tokio::main] for proper async operation
 /// handling, following UV-294 async standardization guidelines.
 pub async fn run_app() -> Result<(), UveddiError> {
-    use crate::cli::{analyze_command::AnalyzeCommand, config_command::ConfigCommand, ci_command::CiCommand};
-    use clap::Parser;
+    use crate::cli::{
+        analyze_command::AnalyzeCommand, ci_command::CiCommand, config_command::ConfigCommand,
+    };
     use crate::core::logging::{error, info};
+    use clap::Parser;
 
     #[derive(Parser)]
     #[command(name = "uveddi")]

@@ -1,7 +1,7 @@
 //! Pagination utilities for GraphQL connections
 
 use async_graphql::{Error, Result};
-use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
+use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
 use serde::{Deserialize, Serialize};
 
 use super::types::PageInfo;
@@ -11,7 +11,7 @@ use super::types::PageInfo;
 pub struct PaginationParams {
     pub first: Option<usize>,
     pub after: Option<String>,
-    pub last: Option<usize>, 
+    pub last: Option<usize>,
     pub before: Option<String>,
 }
 
@@ -26,30 +26,34 @@ impl PaginationParams {
         if first.is_some() && last.is_some() {
             return Err(Error::new("Cannot specify both 'first' and 'last'"));
         }
-        
+
         if after.is_some() && before.is_some() {
             return Err(Error::new("Cannot specify both 'after' and 'before'"));
         }
 
-        let first = first.map(|f| {
-            if f < 0 {
-                return Err(Error::new("'first' must be non-negative"));
-            }
-            if f > 100 {
-                return Err(Error::new("'first' cannot exceed 100"));
-            }
-            Ok(f as usize)
-        }).transpose()?;
+        let first = first
+            .map(|f| {
+                if f < 0 {
+                    return Err(Error::new("'first' must be non-negative"));
+                }
+                if f > 100 {
+                    return Err(Error::new("'first' cannot exceed 100"));
+                }
+                Ok(f as usize)
+            })
+            .transpose()?;
 
-        let last = last.map(|l| {
-            if l < 0 {
-                return Err(Error::new("'last' must be non-negative"));
-            }
-            if l > 100 {
-                return Err(Error::new("'last' cannot exceed 100"));
-            }
-            Ok(l as usize)
-        }).transpose()?;
+        let last = last
+            .map(|l| {
+                if l < 0 {
+                    return Err(Error::new("'last' must be non-negative"));
+                }
+                if l > 100 {
+                    return Err(Error::new("'last' cannot exceed 100"));
+                }
+                Ok(l as usize)
+            })
+            .transpose()?;
 
         Ok(Self {
             first,
@@ -61,10 +65,7 @@ impl PaginationParams {
 
     /// Get the limit for database queries
     pub fn limit(&self) -> usize {
-        self.first
-            .or(self.last)
-            .unwrap_or(10)
-            .min(100) // Hard limit
+        self.first.or(self.last).unwrap_or(10).min(100) // Hard limit
     }
 
     /// Check if we're paginating forward
@@ -104,20 +105,20 @@ impl Cursor {
     pub fn encode(&self) -> Result<String> {
         let json = serde_json::to_string(self)
             .map_err(|e| Error::new(format!("Failed to serialize cursor: {}", e)))?;
-        
+
         Ok(BASE64.encode(json.as_bytes()))
     }
 
     /// Decode cursor from base64 string
     pub fn decode(cursor: &str) -> Result<Self> {
-        let decoded = BASE64.decode(cursor.as_bytes())
+        let decoded = BASE64
+            .decode(cursor.as_bytes())
             .map_err(|e| Error::new(format!("Invalid cursor format: {}", e)))?;
-        
+
         let json = String::from_utf8(decoded)
             .map_err(|e| Error::new(format!("Invalid cursor encoding: {}", e)))?;
-        
-        serde_json::from_str(&json)
-            .map_err(|e| Error::new(format!("Invalid cursor data: {}", e)))
+
+        serde_json::from_str(&json).map_err(|e| Error::new(format!("Invalid cursor data: {}", e)))
     }
 }
 
@@ -227,7 +228,8 @@ impl SortBuilder {
             return "ORDER BY id ASC".to_string();
         }
 
-        let clauses: Vec<String> = self.fields
+        let clauses: Vec<String> = self
+            .fields
             .iter()
             .map(|field| format!("{} {}", field.column, field.direction.as_sql()))
             .collect();
@@ -247,7 +249,7 @@ pub struct PaginationResult<T> {
 impl<T> PaginationResult<T> {
     pub fn new(mut items: Vec<T>, limit: usize, total_count: Option<i64>) -> Self {
         let has_more = items.len() > limit;
-        
+
         // Remove the extra item we fetched to check for more results
         if has_more {
             items.pop();
@@ -267,14 +269,14 @@ pub trait CursorEntity {
     fn cursor_secondary(&self) -> Option<String> {
         None
     }
-    
+
     fn to_cursor(&self) -> Result<String> {
         let cursor = if let Some(secondary) = self.cursor_secondary() {
             Cursor::with_secondary(self.cursor_id(), secondary)
         } else {
             Cursor::new(self.cursor_id())
         };
-        
+
         cursor.encode()
     }
 }
@@ -307,7 +309,7 @@ mod tests {
         let cursor = Cursor::new(123);
         let encoded = cursor.encode().unwrap();
         let decoded = Cursor::decode(&encoded).unwrap();
-        
+
         assert_eq!(cursor.id, decoded.id);
         assert_eq!(cursor.secondary, decoded.secondary);
     }
@@ -317,7 +319,7 @@ mod tests {
         let cursor = Cursor::with_secondary(456, "test".to_string());
         let encoded = cursor.encode().unwrap();
         let decoded = Cursor::decode(&encoded).unwrap();
-        
+
         assert_eq!(cursor.id, decoded.id);
         assert_eq!(cursor.secondary, decoded.secondary);
     }
@@ -329,7 +331,12 @@ mod tests {
         assert!(result.is_err());
 
         // Should fail with both after and before
-        let result = PaginationParams::new(Some(10), Some("cursor".to_string()), None, Some("cursor2".to_string()));
+        let result = PaginationParams::new(
+            Some(10),
+            Some("cursor".to_string()),
+            None,
+            Some("cursor2".to_string()),
+        );
         assert!(result.is_err());
 
         // Should fail with negative first
@@ -346,7 +353,7 @@ mod tests {
         let sort = SortBuilder::new()
             .add_field("created_at".to_string(), SortDirection::Desc)
             .add_field("id".to_string(), SortDirection::Asc);
-        
+
         let clause = sort.build_order_clause();
         assert_eq!(clause, "ORDER BY created_at DESC, id ASC");
     }

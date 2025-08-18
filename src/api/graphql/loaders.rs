@@ -5,8 +5,8 @@ use async_trait::async_trait;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use crate::database::DatabaseManager;
 use super::types::*;
+use crate::database::DatabaseManager;
 
 /// Loader for projects by ID
 pub struct ProjectLoader {
@@ -22,12 +22,12 @@ impl Loader<i64> for ProjectLoader {
         // TODO: Implement batch loading of projects
         // let projects = self.db.get_projects_by_ids(keys).await
         //     .map_err(|e| Arc::new(async_graphql::Error::new(e.to_string())))?;
-        
+
         let mut map = HashMap::new();
         // for project in projects {
         //     map.insert(project.id, project);
         // }
-        
+
         Ok(map)
     }
 }
@@ -113,7 +113,10 @@ impl DataLoaders {
     pub fn new(db: Arc<DatabaseManager>) -> Self {
         Self {
             project_loader: DataLoader::new(ProjectLoader { db: db.clone() }, tokio::spawn),
-            analysis_run_loader: DataLoader::new(AnalysisRunLoader { db: db.clone() }, tokio::spawn),
+            analysis_run_loader: DataLoader::new(
+                AnalysisRunLoader { db: db.clone() },
+                tokio::spawn,
+            ),
             issues_by_analysis_run_loader: DataLoader::new(
                 IssuesByAnalysisRunLoader { db: db.clone() },
                 tokio::spawn,

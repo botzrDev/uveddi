@@ -13,8 +13,8 @@ use crate::database::models::ArchitecturalIssue;
 use crate::error::UveddiError;
 use crate::ingestion::AsyncWalker;
 
-use async_trait::async_trait;
 use crate::core::logging::{info, warn};
+use async_trait::async_trait;
 use std::path::Path;
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -60,14 +60,20 @@ impl DetectorScheduler {
     }
 
     /// Configures enabled detectors
-    pub async fn configure_enabled_detectors(&self, _enabled_detectors: Vec<String>) -> Result<(), UveddiError> {
+    pub async fn configure_enabled_detectors(
+        &self,
+        _enabled_detectors: Vec<String>,
+    ) -> Result<(), UveddiError> {
         // Stub implementation - in real implementation, this would filter active detectors
         info!("Configuring enabled detectors (stub implementation)");
         Ok(())
     }
 
     /// Sets symbol table for analysis
-    pub async fn set_symbol_table(&self, _symbol_table: Arc<crate::analysis::symbols::GlobalSymbolTable>) -> Result<(), UveddiError> {
+    pub async fn set_symbol_table(
+        &self,
+        _symbol_table: Arc<crate::analysis::symbols::GlobalSymbolTable>,
+    ) -> Result<(), UveddiError> {
         // Stub implementation - in real implementation, this would set up symbol resolution
         info!("Setting symbol table (stub implementation)");
         Ok(())
@@ -116,7 +122,9 @@ impl DetectorScheduler {
 
                 // Run detector with timeout (30 seconds per detector)
                 let timeout_duration = std::time::Duration::from_secs(30);
-                match tokio::time::timeout(timeout_duration, detector.detect_issues(&parsed_file)).await {
+                match tokio::time::timeout(timeout_duration, detector.detect_issues(&parsed_file))
+                    .await
+                {
                     Ok(Ok(mut issues)) => {
                         info!(
                             "Detector {} found {} issues in {} (completed successfully)",
@@ -234,13 +242,13 @@ impl DetectorScheduler {
     }
 
     /// Process a batch of files with memory management
-    async fn process_file_batch(&self, file_paths: &[std::path::PathBuf]) -> Vec<ArchitecturalIssue> {
+    async fn process_file_batch(
+        &self,
+        file_paths: &[std::path::PathBuf],
+    ) -> Vec<ArchitecturalIssue> {
         let mut batch_issues = Vec::new();
-        
-        info!(
-            "Processing batch of {} files",
-            file_paths.len()
-        );
+
+        info!("Processing batch of {} files", file_paths.len());
 
         for file_path in file_paths {
             match self.analyze_file(file_path).await {
@@ -255,10 +263,7 @@ impl DetectorScheduler {
             }
         }
 
-        info!(
-            "Completed batch: {} issues found",
-            batch_issues.len()
-        );
+        info!("Completed batch: {} issues found", batch_issues.len());
 
         batch_issues
     }
@@ -313,7 +318,7 @@ impl DetectorSchedulerTrait for DetectorScheduler {
                 Ok(file_path) => {
                     if self.should_analyze_file(&file_path) {
                         current_batch.push(file_path);
-                        
+
                         // Process batch when it's full
                         if current_batch.len() >= BATCH_SIZE {
                             let batch_issues = self.process_file_batch(&current_batch).await;

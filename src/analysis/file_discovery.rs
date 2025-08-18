@@ -3,13 +3,13 @@
 //! Implements intelligent file discovery with git-style ignore patterns
 //! and language detection as specified in Section 2.3 of the roadmap.
 
+use crate::analysis::workspace::WorkspaceType;
 use crate::ast::tree_sitter_impl::SourceLanguage;
+use crate::core::logging::{info, warn};
 use crate::error::UveddiError;
 use ignore::{Walk, WalkBuilder};
-use crate::core::logging::{info, warn};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use crate::analysis::workspace::WorkspaceType;
 
 /// Represents a discovered source file with its detected language
 #[derive(Debug, Clone)]
@@ -36,15 +36,15 @@ impl FileDiscovery {
     /// Creates a new file discovery instance with default language mappings
     pub fn new() -> Self {
         let mut language_map = HashMap::new();
-        
+
         // Rust files
         language_map.insert("rs", SourceLanguage::Rust);
-        
+
         // Python files
         language_map.insert("py", SourceLanguage::Python);
         language_map.insert("pyi", SourceLanguage::Python);
         language_map.insert("pyw", SourceLanguage::Python);
-        
+
         // JavaScript/TypeScript files
         language_map.insert("js", SourceLanguage::JavaScript);
         language_map.insert("jsx", SourceLanguage::JavaScript);
@@ -52,7 +52,7 @@ impl FileDiscovery {
         language_map.insert("tsx", SourceLanguage::JavaScript);
         language_map.insert("mjs", SourceLanguage::JavaScript);
         language_map.insert("cjs", SourceLanguage::JavaScript);
-        
+
         Self { language_map }
     }
 
@@ -74,11 +74,11 @@ impl FileDiscovery {
     /// Returns `UveddiError` if directory traversal fails
     pub fn discover_files(&self, path: &Path) -> Result<Vec<SourceFile>, UveddiError> {
         info!("Starting file discovery in: {}", path.display());
-        
+
         let mut source_files = Vec::new();
         let mut total_files = 0;
         let mut supported_files = 0;
-        
+
         // Configure the walk builder with ignore patterns
         let walker = WalkBuilder::new(path)
             .hidden(false) // Include hidden files by default
@@ -86,19 +86,19 @@ impl FileDiscovery {
             .git_global(true) // Respect global git ignore
             .git_exclude(true) // Respect .git/info/exclude
             .build();
-        
+
         for result in walker {
             match result {
                 Ok(entry) => {
                     total_files += 1;
-                    
+
                     // Skip directories and non-files
                     if !entry.file_type().map_or(false, |ft| ft.is_file()) {
                         continue;
                     }
-                    
+
                     let file_path = entry.path();
-                    
+
                     // Detect language from file extension
                     if let Some(language) = self.detect_language(file_path) {
                         source_files.push(SourceFile {
@@ -114,12 +114,12 @@ impl FileDiscovery {
                 }
             }
         }
-        
+
         info!(
             "File discovery completed: {} supported files found out of {} total files",
             supported_files, total_files
         );
-        
+
         Ok(source_files)
     }
 
@@ -148,12 +148,18 @@ impl FileDiscovery {
     }
 
     /// Discovers files restricted by workspace type (Phase 1 multi-language filtering)
-    pub fn discover_files_for_workspace_type(&self, path: &Path, workspace_type: &WorkspaceType) -> Result<Vec<SourceFile>, UveddiError> {
+    pub fn discover_files_for_workspace_type(
+        &self,
+        path: &Path,
+        workspace_type: &WorkspaceType,
+    ) -> Result<Vec<SourceFile>, UveddiError> {
         let allowed: Option<Vec<SourceLanguage>> = match workspace_type {
             WorkspaceType::Rust => Some(vec![SourceLanguage::Rust]),
             WorkspaceType::Python => Some(vec![SourceLanguage::Python]),
             WorkspaceType::JavaScript => Some(vec![SourceLanguage::JavaScript]),
-            WorkspaceType::TypeScript => Some(vec![SourceLanguage::JavaScript, SourceLanguage::TypeScript]),
+            WorkspaceType::TypeScript => {
+                Some(vec![SourceLanguage::JavaScript, SourceLanguage::TypeScript])
+            }
             WorkspaceType::Mixed | WorkspaceType::Unknown => None, // No restriction
         };
         let mut files = self.discover_files(path)?;
@@ -173,14 +179,14 @@ impl Default for FileDiscovery {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::analysis::workspace::WorkspaceType;
     use std::fs;
     use tempfile::TempDir;
-    use crate::analysis::workspace::WorkspaceType;
 
     #[test]
     fn test_language_detection() {
         let discovery = FileDiscovery::new();
-        
+
         assert_eq!(
             discovery.detect_language(Path::new("main.rs")),
             Some(SourceLanguage::Rust)
@@ -197,39 +203,39 @@ mod tests {
             discovery.detect_language(Path::new("component.tsx")),
             Some(SourceLanguage::JavaScript)
         );
-        assert_eq!(
-            discovery.detect_language(Path::new("readme.md")),
-            None
-        );
+        assert_eq!(discovery.detect_language(Path::new("readme.md")), None);
     }
 
     #[test]
     fn test_file_discovery() {
         let temp_dir = TempDir::new().unwrap();
         let temp_path = temp_dir.path();
-        
+
         // Create test files
         fs::write(temp_path.join("main.rs"), "fn main() {}").unwrap();
         fs::write(temp_path.join("lib.py"), "print('hello')").unwrap();
         fs::write(temp_path.join("app.js"), "console.log('hello')").unwrap();
         fs::write(temp_path.join("readme.md"), "# README").unwrap();
-        
+
         let discovery = FileDiscovery::new();
         let files = discovery.discover_files(temp_path).unwrap();
-        
+
         assert_eq!(files.len(), 3); // Only supported files
-        
-        let rust_files: Vec<_> = files.iter()
+
+        let rust_files: Vec<_> = files
+            .iter()
             .filter(|f| f.language == SourceLanguage::Rust)
             .collect();
         assert_eq!(rust_files.len(), 1);
-        
-        let python_files: Vec<_> = files.iter()
+
+        let python_files: Vec<_> = files
+            .iter()
             .filter(|f| f.language == SourceLanguage::Python)
             .collect();
         assert_eq!(python_files.len(), 1);
-        
-        let js_files: Vec<_> = files.iter()
+
+        let js_files: Vec<_> = files
+            .iter()
             .filter(|f| f.language == SourceLanguage::JavaScript)
             .collect();
         assert_eq!(js_files.len(), 1);
@@ -239,21 +245,21 @@ mod tests {
     fn test_gitignore_respect() {
         let temp_dir = TempDir::new().unwrap();
         let temp_path = temp_dir.path();
-        
+
         // Create .gitignore
         fs::write(temp_path.join(".gitignore"), "ignored.rs\ntarget/\n").unwrap();
-        
+
         // Create files
         fs::write(temp_path.join("main.rs"), "fn main() {}").unwrap();
         fs::write(temp_path.join("ignored.rs"), "// ignored").unwrap();
-        
+
         // Create target directory with file
         fs::create_dir(temp_path.join("target")).unwrap();
         fs::write(temp_path.join("target").join("build.rs"), "// build").unwrap();
-        
+
         let discovery = FileDiscovery::new();
         let files = discovery.discover_files(temp_path).unwrap();
-        
+
         // Should only find main.rs, not ignored.rs or target/build.rs
         assert_eq!(files.len(), 1);
         assert!(files[0].path.file_name().unwrap() == "main.rs");
@@ -268,11 +274,15 @@ mod tests {
         std::fs::write(p.join("script.py"), "print('hi')").unwrap();
         std::fs::write(p.join("app.js"), "console.log('x')").unwrap();
 
-        let rust_only = discovery.discover_files_for_workspace_type(p, &WorkspaceType::Rust).unwrap();
+        let rust_only = discovery
+            .discover_files_for_workspace_type(p, &WorkspaceType::Rust)
+            .unwrap();
         assert!(rust_only.iter().all(|f| f.language == SourceLanguage::Rust));
         assert_eq!(rust_only.len(), 1);
 
-        let mixed = discovery.discover_files_for_workspace_type(p, &WorkspaceType::Mixed).unwrap();
+        let mixed = discovery
+            .discover_files_for_workspace_type(p, &WorkspaceType::Mixed)
+            .unwrap();
         assert!(mixed.len() >= 3);
     }
 }

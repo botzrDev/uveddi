@@ -58,16 +58,18 @@ impl SecureHttpClient {
         let client = reqwest::Client::builder()
             .timeout(std::time::Duration::from_secs(30))
             .build()
-            .map_err(|e| SecurityError::FeatureDisabled(format!("Failed to create HTTP client: {}", e)))?;
-            
+            .map_err(|e| {
+                SecurityError::FeatureDisabled(format!("Failed to create HTTP client: {}", e))
+            })?;
+
         Ok(Self { client })
     }
-    
+
     /// Create a new secure HTTP client with custom configuration
     pub fn with_config(_config: HttpSecurityConfig) -> Result<Self, SecurityError> {
         Self::new() // Use default implementation in stub version
     }
-    
+
     /// Get the underlying reqwest client
     pub fn client(&self) -> &reqwest::Client {
         &self.client

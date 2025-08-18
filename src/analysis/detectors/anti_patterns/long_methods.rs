@@ -23,22 +23,22 @@
 //! - **JavaScript**: Framework-aware thresholds for React/Node.js patterns
 
 use crate::analysis::{AnalysisDetector, AnalysisError};
-#[cfg(feature = "tree-sitter")]
-use tree_sitter::{Node, Query, QueryCursor, Language, QueryMatch, Parser};
 #[cfg(not(feature = "tree-sitter"))]
-use crate::ast::tree_sitter::{Node, Query, QueryCursor, Language, QueryMatch, Parser};
+use crate::ast::tree_sitter::StreamingIterator;
+use crate::ast::tree_sitter::{tree_sitter_javascript, tree_sitter_python, tree_sitter_rust};
+#[cfg(not(feature = "tree-sitter"))]
+use crate::ast::tree_sitter::{Language, Node, Parser, Query, QueryCursor, QueryMatch};
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
-use crate::ast::tree_sitter::{tree_sitter_rust, tree_sitter_python, tree_sitter_javascript};
+use crate::core::logging::debug;
+use crate::core::logging::info;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use async_trait::async_trait;
 use futures::TryFutureExt;
-use crate::core::logging::debug;
-use crate::core::logging::info;
 use std::collections::HashMap;
 #[cfg(feature = "tree-sitter")]
 use tree_sitter::StreamingIterator;
-#[cfg(not(feature = "tree-sitter"))]
-use crate::ast::tree_sitter::StreamingIterator;
+#[cfg(feature = "tree-sitter")]
+use tree_sitter::{Language, Node, Parser, Query, QueryCursor, QueryMatch};
 
 /// Represents metrics collected for a method/function
 #[derive(Debug, Clone)]
@@ -225,10 +225,7 @@ impl LongMethodsDetector {
     /// # Errors
     /// Returns `AntiPatternDetectionError` if the query string is malformed or
     /// incompatible with the provided language grammar.
-    fn create_rust_function_query(
-        &self,
-        language: &Language,
-    ) -> Result<Query, AnalysisError> {
+    fn create_rust_function_query(&self, language: &Language) -> Result<Query, AnalysisError> {
         Query::new(language, RUST_FUNCTION_QUERY).map_err(|e| {
             AnalysisError::AntiPatternDetectionError(format!(
                 "Failed to create Rust function query: {}",
@@ -356,7 +353,9 @@ impl LongMethodsDetector {
     ) -> Result<Vec<MethodMetrics>, AnalysisError> {
         #[cfg(not(feature = "tree-sitter"))]
         {
-            tracing::debug!("Tree-sitter feature not enabled, skipping Rust method metrics extraction");
+            tracing::debug!(
+                "Tree-sitter feature not enabled, skipping Rust method metrics extraction"
+            );
             return Ok(Vec::new());
         }
 
@@ -1071,13 +1070,19 @@ impl AnalysisDetector for LongMethodsDetector {
                     Some(metrics.start_line as i32),
                     format!(
                         "Long method '{}' detected: {} lines, {} statements, complexity {}",
-                        metrics.name, metrics.logical_loc, metrics.statement_count, metrics.cyclomatic_complexity
+                        metrics.name,
+                        metrics.logical_loc,
+                        metrics.statement_count,
+                        metrics.cyclomatic_complexity
                     ),
                     "LongMethodDetector".to_string(),
                     Self::get_severity_level(severity_score),
                     format!(
                         "Long method '{}' detected: {} lines, {} statements, complexity {}",
-                        metrics.name, metrics.logical_loc, metrics.statement_count, metrics.cyclomatic_complexity
+                        metrics.name,
+                        metrics.logical_loc,
+                        metrics.statement_count,
+                        metrics.cyclomatic_complexity
                     ),
                 );
                 issue.start_line = Some(metrics.start_line as i32);

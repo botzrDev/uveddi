@@ -1,6 +1,6 @@
 //! GraphQL resolvers for Uveddi analysis queries and mutations
 
-use async_graphql::{Context, Object, Result, ID, FieldResult};
+use async_graphql::{Context, FieldResult, Object, Result, ID};
 use chrono::{DateTime, Utc};
 
 use super::context::GraphQLContext;
@@ -13,10 +13,10 @@ impl QueryRoot {
     /// Get a project by ID
     async fn project(&self, ctx: &Context<'_>, id: ID) -> FieldResult<Option<Project>> {
         let context = ctx.data::<GraphQLContext>()?;
-        
+
         // TODO: Implement database query
         // let project = context.db().get_project(id.parse()?).await?;
-        
+
         Ok(None) // Placeholder
     }
 
@@ -30,10 +30,10 @@ impl QueryRoot {
     ) -> FieldResult<ProjectConnection> {
         let context = ctx.data::<GraphQLContext>()?;
         let limit = first.unwrap_or(10).min(100) as usize; // Cap at 100
-        
+
         // TODO: Implement database query with pagination
         // let projects = context.db().get_projects(limit, after, name).await?;
-        
+
         Ok(ProjectConnection {
             edges: vec![],
             page_info: PageInfo {
@@ -49,10 +49,10 @@ impl QueryRoot {
     /// Get an analysis run by ID
     async fn analysis_run(&self, ctx: &Context<'_>, id: ID) -> FieldResult<Option<AnalysisRun>> {
         let context = ctx.data::<GraphQLContext>()?;
-        
+
         // TODO: Implement database query
         // let run = context.db().get_analysis_run(id.parse()?).await?;
-        
+
         Ok(None) // Placeholder
     }
 
@@ -68,12 +68,12 @@ impl QueryRoot {
     ) -> FieldResult<AnalysisRunConnection> {
         let context = ctx.data::<GraphQLContext>()?;
         let limit = first.unwrap_or(10).min(100) as usize;
-        
+
         // TODO: Implement database query with filtering and sorting
         // let runs = context.db().get_analysis_runs(
         //     limit, after, project_id, status, order_by
         // ).await?;
-        
+
         Ok(AnalysisRunConnection {
             edges: vec![],
             page_info: PageInfo {
@@ -89,10 +89,10 @@ impl QueryRoot {
     /// Get an architectural issue by ID
     async fn issue(&self, ctx: &Context<'_>, id: ID) -> FieldResult<Option<ArchitecturalIssue>> {
         let context = ctx.data::<GraphQLContext>()?;
-        
+
         // TODO: Implement database query
         // let issue = context.db().get_architectural_issue(id.parse()?).await?;
-        
+
         Ok(None) // Placeholder
     }
 
@@ -110,13 +110,13 @@ impl QueryRoot {
     ) -> FieldResult<ArchitecturalIssueConnection> {
         let context = ctx.data::<GraphQLContext>()?;
         let limit = first.unwrap_or(10).min(100) as usize;
-        
+
         // TODO: Implement database query with comprehensive filtering
         // let issues = context.db().get_architectural_issues(
-        //     limit, after, project_id, analysis_run_id, severity, 
+        //     limit, after, project_id, analysis_run_id, severity,
         //     anti_pattern_type, file_path
         // ).await?;
-        
+
         Ok(ArchitecturalIssueConnection {
             edges: vec![],
             page_info: PageInfo {
@@ -131,22 +131,26 @@ impl QueryRoot {
     }
 
     /// Get an anti-pattern type by ID
-    async fn anti_pattern_type(&self, ctx: &Context<'_>, id: ID) -> FieldResult<Option<AntiPatternType>> {
+    async fn anti_pattern_type(
+        &self,
+        ctx: &Context<'_>,
+        id: ID,
+    ) -> FieldResult<Option<AntiPatternType>> {
         let context = ctx.data::<GraphQLContext>()?;
-        
+
         // TODO: Implement database query
         // let anti_pattern = context.db().get_anti_pattern_type(id.parse()?).await?;
-        
+
         Ok(None) // Placeholder
     }
 
     /// Get all anti-pattern types
     async fn anti_pattern_types(&self, ctx: &Context<'_>) -> FieldResult<Vec<AntiPatternType>> {
         let context = ctx.data::<GraphQLContext>()?;
-        
+
         // TODO: Implement database query
         // let types = context.db().get_all_anti_pattern_types().await?;
-        
+
         Ok(vec![]) // Placeholder
     }
 
@@ -158,10 +162,10 @@ impl QueryRoot {
         analysis_run_id: ID,
     ) -> FieldResult<Option<ParsedFile>> {
         let context = ctx.data::<GraphQLContext>()?;
-        
+
         // TODO: Implement file retrieval from analysis engine
         // let file = context.engine().get_parsed_file(&file_path, analysis_run_id.parse()?).await?;
-        
+
         Ok(None) // Placeholder
     }
 
@@ -174,12 +178,12 @@ impl QueryRoot {
         has_issues: Option<bool>,
     ) -> FieldResult<Vec<ParsedFile>> {
         let context = ctx.data::<GraphQLContext>()?;
-        
+
         // TODO: Implement file retrieval with filtering
         // let files = context.engine().get_parsed_files(
         //     analysis_run_id.parse()?, language, has_issues
         // ).await?;
-        
+
         Ok(vec![]) // Placeholder
     }
 
@@ -190,10 +194,10 @@ impl QueryRoot {
         analysis_run_id: ID,
     ) -> FieldResult<DependencyGraph> {
         let context = ctx.data::<GraphQLContext>()?;
-        
+
         // TODO: Implement dependency graph retrieval
         // let graph = context.engine().get_dependency_graph(analysis_run_id.parse()?).await?;
-        
+
         Ok(DependencyGraph {
             nodes: vec![],
             edges: vec![],
@@ -218,10 +222,10 @@ impl QueryRoot {
         analysis_run_id: ID,
     ) -> FieldResult<Vec<Dependency>> {
         let context = ctx.data::<GraphQLContext>()?;
-        
+
         // TODO: Implement dependency retrieval for specific file
         // let deps = context.engine().get_file_dependencies(&file_path, analysis_run_id.parse()?).await?;
-        
+
         Ok(vec![]) // Placeholder
     }
 
@@ -233,10 +237,10 @@ impl QueryRoot {
         time_range: Option<TimeRangeInput>,
     ) -> FieldResult<AnalyticsSummary> {
         let context = ctx.data::<GraphQLContext>()?;
-        
+
         // TODO: Implement analytics aggregation
         // let analytics = context.db().get_analytics_summary(project_ids, time_range).await?;
-        
+
         Ok(AnalyticsSummary {
             total_projects: 0,
             total_analysis_runs: 0,
@@ -263,10 +267,10 @@ impl QueryRoot {
     ) -> FieldResult<SearchResultConnection> {
         let context = ctx.data::<GraphQLContext>()?;
         let limit = first.unwrap_or(10).min(100) as usize;
-        
+
         // TODO: Implement full-text search across different entity types
         // let results = context.db().search(query, search_type, project_id, limit, after).await?;
-        
+
         Ok(SearchResultConnection {
             edges: vec![],
             page_info: PageInfo {
@@ -291,10 +295,10 @@ impl MutationRoot {
         input: CreateProjectInput,
     ) -> FieldResult<CreateProjectPayload> {
         let context = ctx.data::<GraphQLContext>()?;
-        
+
         // TODO: Implement project creation with validation
         // let project = context.db().create_project(input).await?;
-        
+
         Ok(CreateProjectPayload {
             project: None,
             errors: vec![],
@@ -309,10 +313,10 @@ impl MutationRoot {
         input: UpdateProjectInput,
     ) -> FieldResult<UpdateProjectPayload> {
         let context = ctx.data::<GraphQLContext>()?;
-        
+
         // TODO: Implement project update with validation
         // let project = context.db().update_project(id.parse()?, input).await?;
-        
+
         Ok(UpdateProjectPayload {
             project: None,
             errors: vec![],
@@ -320,16 +324,12 @@ impl MutationRoot {
     }
 
     /// Delete a project
-    async fn delete_project(
-        &self,
-        ctx: &Context<'_>,
-        id: ID,
-    ) -> FieldResult<DeleteProjectPayload> {
+    async fn delete_project(&self, ctx: &Context<'_>, id: ID) -> FieldResult<DeleteProjectPayload> {
         let context = ctx.data::<GraphQLContext>()?;
-        
+
         // TODO: Implement project deletion with cleanup
         // context.db().delete_project(id.parse()?).await?;
-        
+
         Ok(DeleteProjectPayload {
             deleted_project_id: Some(id),
             errors: vec![],
@@ -343,10 +343,10 @@ impl MutationRoot {
         input: StartAnalysisInput,
     ) -> FieldResult<StartAnalysisPayload> {
         let context = ctx.data::<GraphQLContext>()?;
-        
+
         // TODO: Implement analysis start with configuration
         // let analysis_run = context.engine().start_analysis(input).await?;
-        
+
         Ok(StartAnalysisPayload {
             analysis_run: None,
             errors: vec![],
@@ -360,10 +360,10 @@ impl MutationRoot {
         analysis_run_id: ID,
     ) -> FieldResult<CancelAnalysisPayload> {
         let context = ctx.data::<GraphQLContext>()?;
-        
+
         // TODO: Implement analysis cancellation
         // let analysis_run = context.engine().cancel_analysis(analysis_run_id.parse()?).await?;
-        
+
         Ok(CancelAnalysisPayload {
             analysis_run: None,
             errors: vec![],
@@ -378,10 +378,10 @@ impl MutationRoot {
         input: UpdateIssueInput,
     ) -> FieldResult<UpdateIssuePayload> {
         let context = ctx.data::<GraphQLContext>()?;
-        
+
         // TODO: Implement issue update
         // let issue = context.db().update_architectural_issue(id.parse()?, input).await?;
-        
+
         Ok(UpdateIssuePayload {
             issue: None,
             errors: vec![],
@@ -396,10 +396,10 @@ impl MutationRoot {
         reason: Option<String>,
     ) -> FieldResult<DismissIssuePayload> {
         let context = ctx.data::<GraphQLContext>()?;
-        
+
         // TODO: Implement issue dismissal
         // let issue = context.db().dismiss_architectural_issue(id.parse()?, reason).await?;
-        
+
         Ok(DismissIssuePayload {
             issue: None,
             errors: vec![],
@@ -414,10 +414,10 @@ impl MutationRoot {
         config: AnalysisConfigInput,
     ) -> FieldResult<UpdateAnalysisConfigPayload> {
         let context = ctx.data::<GraphQLContext>()?;
-        
+
         // TODO: Implement config update
         // let project = context.db().update_project_config(project_id.parse()?, config).await?;
-        
+
         Ok(UpdateAnalysisConfigPayload {
             project: None,
             errors: vec![],
@@ -431,10 +431,10 @@ impl MutationRoot {
         project_id: Option<ID>,
     ) -> FieldResult<ClearCachePayload> {
         let context = ctx.data::<GraphQLContext>()?;
-        
+
         // TODO: Implement cache clearing
         // context.engine().clear_cache(project_id.map(|id| id.parse()).transpose()?).await?;
-        
+
         Ok(ClearCachePayload {
             success: true,
             errors: vec![],
@@ -448,10 +448,10 @@ impl MutationRoot {
         project_id: ID,
     ) -> FieldResult<WarmupCachePayload> {
         let context = ctx.data::<GraphQLContext>()?;
-        
+
         // TODO: Implement cache warmup
         // context.engine().warmup_cache(project_id.parse()?).await?;
-        
+
         Ok(WarmupCachePayload {
             success: true,
             errors: vec![],

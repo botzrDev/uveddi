@@ -109,7 +109,7 @@ impl LocalDependencyGraph {
     pub fn node_count(&self) -> usize {
         self.graph.node_count()
     }
-    
+
     /// Retrieves a component node by its identifier string.
     pub fn get_node(&self, node_id: &str) -> Option<&ComponentNode> {
         self.node_map.keys().find(|node| match node {
@@ -127,7 +127,8 @@ impl LocalDependencyGraph {
     /// Get dependencies for a given node
     pub fn get_dependencies(&self, node: &ComponentNode) -> Option<Vec<ComponentNode>> {
         if let Some(node_index) = self.node_map.get(node) {
-            let neighbors: Vec<ComponentNode> = self.graph
+            let neighbors: Vec<ComponentNode> = self
+                .graph
                 .neighbors(*node_index)
                 .filter_map(|neighbor_index| self.graph.node_weight(neighbor_index))
                 .cloned()

@@ -156,10 +156,14 @@ impl WorkspaceDetector {
     }
 
     /// Detect Rust workspace (Cargo.toml based)
-    async fn detect_rust_workspace(start_path: &Path) -> Result<Option<WorkspaceInfo>, AnalysisError> {
+    async fn detect_rust_workspace(
+        start_path: &Path,
+    ) -> Result<Option<WorkspaceInfo>, AnalysisError> {
         if let Some(workspace_root) = Self::find_cargo_workspace_root(start_path).await? {
             info!("Found Rust workspace root at: {:?}", workspace_root);
-            return Self::analyze_rust_workspace(&workspace_root).await.map(Some);
+            return Self::analyze_rust_workspace(&workspace_root)
+                .await
+                .map(Some);
         }
 
         // Check for single Rust crate
@@ -167,7 +171,7 @@ impl WorkspaceDetector {
             info!("Found single Rust crate at: {:?}", component.path);
             let mut components = HashMap::new();
             components.insert(component.name.clone(), component.clone());
-            
+
             let mut languages = HashSet::new();
             languages.insert("Rust".to_string());
 
@@ -184,7 +188,9 @@ impl WorkspaceDetector {
     }
 
     /// Detect Python workspace (pyproject.toml, setup.py, requirements.txt)
-    async fn detect_python_workspace(start_path: &Path) -> Result<Option<WorkspaceInfo>, AnalysisError> {
+    async fn detect_python_workspace(
+        start_path: &Path,
+    ) -> Result<Option<WorkspaceInfo>, AnalysisError> {
         let mut current = start_path.to_path_buf();
 
         loop {
@@ -210,7 +216,9 @@ impl WorkspaceDetector {
     }
 
     /// Detect JavaScript/TypeScript workspace (package.json)
-    async fn detect_javascript_workspace(start_path: &Path) -> Result<Option<WorkspaceInfo>, AnalysisError> {
+    async fn detect_javascript_workspace(
+        start_path: &Path,
+    ) -> Result<Option<WorkspaceInfo>, AnalysisError> {
         let mut current = start_path.to_path_buf();
 
         loop {
@@ -220,7 +228,9 @@ impl WorkspaceDetector {
             if package_json_path.exists() {
                 info!("Found JavaScript/TypeScript project at: {:?}", current);
                 let is_typescript = tsconfig_path.exists();
-                return Self::analyze_javascript_project(&current, is_typescript).await.map(Some);
+                return Self::analyze_javascript_project(&current, is_typescript)
+                    .await
+                    .map(Some);
             }
 
             // Move up one directory
@@ -235,7 +245,9 @@ impl WorkspaceDetector {
     }
 
     /// Detect mixed-language workspace
-    async fn detect_mixed_workspace(start_path: &Path) -> Result<Option<WorkspaceInfo>, AnalysisError> {
+    async fn detect_mixed_workspace(
+        start_path: &Path,
+    ) -> Result<Option<WorkspaceInfo>, AnalysisError> {
         let mut components = HashMap::new();
         let mut manifest_paths = Vec::new();
         let mut languages = HashSet::new();
@@ -275,11 +287,15 @@ impl WorkspaceDetector {
 
         // If we found multiple languages, create a mixed workspace
         if found_languages > 1 {
-            info!("Found mixed-language workspace with {:?} at: {:?}", languages, current);
+            info!(
+                "Found mixed-language workspace with {:?} at: {:?}",
+                languages, current
+            );
 
             // Create a synthetic component for the mixed workspace
             let mixed_component = ProjectComponent {
-                name: current.file_name()
+                name: current
+                    .file_name()
                     .and_then(|n| n.to_str())
                     .unwrap_or("mixed-workspace")
                     .to_string(),
@@ -306,37 +322,58 @@ impl WorkspaceDetector {
     }
 
     /// Create a loose file workspace for directories without clear project structure
-    async fn create_loose_file_workspace(start_path: &Path) -> Result<Option<WorkspaceInfo>, AnalysisError> {
+    async fn create_loose_file_workspace(
+        start_path: &Path,
+    ) -> Result<Option<WorkspaceInfo>, AnalysisError> {
         // Use the file discovery to check if there are any supported source files
-        let discovered_files = crate::cli::analyze_command::AnalyzeCommand::discover_files_recursive(start_path)
-            .map_err(|e| AnalysisError::workspace_discovery_error(
-                start_path.display().to_string(),
-                &format!("Failed to discover files: {}", e)
-            ))?;
+        let discovered_files =
+            crate::cli::analyze_command::AnalyzeCommand::discover_files_recursive(start_path)
+                .map_err(|e| {
+                    AnalysisError::workspace_discovery_error(
+                        start_path.display().to_string(),
+                        &format!("Failed to discover files: {}", e),
+                    )
+                })?;
 
         let mut languages = HashSet::new();
-        
+
         // Detect languages from file extensions
         for file_path in &discovered_files {
             if let Some(extension) = file_path.extension() {
                 let ext = extension.to_string_lossy().to_lowercase();
                 match ext.as_str() {
-                    "rs" => { languages.insert("Rust".to_string()); }
-                    "py" => { languages.insert("Python".to_string()); }
-                    "js" | "jsx" => { languages.insert("JavaScript".to_string()); }
-                    "ts" | "tsx" => { languages.insert("TypeScript".to_string()); }
-                    "java" => { languages.insert("Java".to_string()); }
-                    "cpp" | "c" | "h" | "hpp" => { languages.insert("C++".to_string()); }
+                    "rs" => {
+                        languages.insert("Rust".to_string());
+                    }
+                    "py" => {
+                        languages.insert("Python".to_string());
+                    }
+                    "js" | "jsx" => {
+                        languages.insert("JavaScript".to_string());
+                    }
+                    "ts" | "tsx" => {
+                        languages.insert("TypeScript".to_string());
+                    }
+                    "java" => {
+                        languages.insert("Java".to_string());
+                    }
+                    "cpp" | "c" | "h" | "hpp" => {
+                        languages.insert("C++".to_string());
+                    }
                     _ => {}
                 }
             }
         }
 
         if !languages.is_empty() {
-            info!("Creating loose file workspace with languages {:?} at: {:?}", languages, start_path);
+            info!(
+                "Creating loose file workspace with languages {:?} at: {:?}",
+                languages, start_path
+            );
 
             let loose_component = ProjectComponent {
-                name: start_path.file_name()
+                name: start_path
+                    .file_name()
                     .and_then(|n| n.to_str())
                     .unwrap_or("loose-files")
                     .to_string(),
@@ -385,7 +422,7 @@ impl WorkspaceDetector {
 
         loop {
             let manifest_path = current.join("Cargo.toml");
-            
+
             if manifest_path.exists() {
                 // Read and parse the Cargo.toml to check if it's a workspace root
                 match Self::parse_cargo_manifest(&manifest_path).await {
@@ -430,7 +467,7 @@ impl WorkspaceDetector {
         // Analyze each workspace member
         for member_pattern in &members {
             let member_paths = Self::expand_member_pattern(workspace_root, member_pattern)?;
-            
+
             for member_path in member_paths {
                 match Self::analyze_rust_member_crate(&member_path).await {
                     Ok(crate_info) => {
@@ -457,10 +494,6 @@ impl WorkspaceDetector {
         })
     }
 
-
-
-
-
     /// Recursively collect all Rust files from a directory
     pub async fn collect_rust_files(dir: &Path) -> Result<Vec<PathBuf>, AnalysisError> {
         let mut files = Vec::new();
@@ -468,12 +501,14 @@ impl WorkspaceDetector {
             .await
             .map_err(|e| AnalysisError::file_system_error(dir.display().to_string(), e))?;
 
-        while let Some(entry) = read_dir.next_entry()
+        while let Some(entry) = read_dir
+            .next_entry()
             .await
-            .map_err(|e| AnalysisError::file_system_error(dir.display().to_string(), e))? 
+            .map_err(|e| AnalysisError::file_system_error(dir.display().to_string(), e))?
         {
             let path = entry.path();
-            let file_type = entry.file_type()
+            let file_type = entry
+                .file_type()
                 .await
                 .map_err(|e| AnalysisError::file_system_error(path.display().to_string(), e))?;
 
@@ -500,19 +535,39 @@ impl WorkspaceDetector {
 
     /// New multi-language workspace type detection entry point
     pub fn detect_workspace_type(path: &Path) -> WorkspaceType {
-        if path.join("Cargo.toml").exists() { return WorkspaceType::Rust; }
-        if Self::has_python_workspace(path) { return WorkspaceType::Python; }
-        if Self::has_typescript_workspace(path) { return WorkspaceType::TypeScript; }
-        if Self::has_javascript_workspace(path) { return WorkspaceType::JavaScript; }
+        if path.join("Cargo.toml").exists() {
+            return WorkspaceType::Rust;
+        }
+        if Self::has_python_workspace(path) {
+            return WorkspaceType::Python;
+        }
+        if Self::has_typescript_workspace(path) {
+            return WorkspaceType::TypeScript;
+        }
+        if Self::has_javascript_workspace(path) {
+            return WorkspaceType::JavaScript;
+        }
         WorkspaceType::Unknown
     }
 
     pub fn has_python_workspace(path: &Path) -> bool {
-        ["pyproject.toml", "setup.py", "requirements.txt", "Pipfile", "poetry.lock"].iter().any(|f| path.join(f).exists())
+        [
+            "pyproject.toml",
+            "setup.py",
+            "requirements.txt",
+            "Pipfile",
+            "poetry.lock",
+        ]
+        .iter()
+        .any(|f| path.join(f).exists())
     }
     pub fn has_typescript_workspace(path: &Path) -> bool {
-        if path.join("tsconfig.json").exists() { return true; }
-        if path.join("package.json").exists() { return Self::has_typescript_deps(path); }
+        if path.join("tsconfig.json").exists() {
+            return true;
+        }
+        if path.join("package.json").exists() {
+            return Self::has_typescript_deps(path);
+        }
         false
     }
     pub fn has_javascript_workspace(path: &Path) -> bool {
@@ -520,7 +575,9 @@ impl WorkspaceDetector {
     }
     fn has_typescript_deps(path: &Path) -> bool {
         let pkg = path.join("package.json");
-        if !pkg.exists() { return false; }
+        if !pkg.exists() {
+            return false;
+        }
         if let Ok(content) = std::fs::read_to_string(&pkg) {
             return content.contains("typescript");
         }
@@ -535,21 +592,31 @@ impl WorkspaceDetector {
                 let p = entry.path();
                 if p.is_dir() {
                     let t = Self::detect_workspace_type(&p);
-                    if t != WorkspaceType::Unknown { types.insert(t); }
+                    if t != WorkspaceType::Unknown {
+                        types.insert(t);
+                    }
                 }
             }
         }
-        if types.is_empty() { return Self::detect_workspace_type(root); }
-        if types.len() > 1 { WorkspaceType::Mixed } else { types.into_iter().next().unwrap_or(WorkspaceType::Unknown) }
+        if types.is_empty() {
+            return Self::detect_workspace_type(root);
+        }
+        if types.len() > 1 {
+            WorkspaceType::Mixed
+        } else {
+            types.into_iter().next().unwrap_or(WorkspaceType::Unknown)
+        }
     }
 
     /// Find Cargo workspace root (Rust specific)
-    async fn find_cargo_workspace_root(start_path: &Path) -> Result<Option<PathBuf>, AnalysisError> {
+    async fn find_cargo_workspace_root(
+        start_path: &Path,
+    ) -> Result<Option<PathBuf>, AnalysisError> {
         let mut current = start_path.to_path_buf();
 
         loop {
             let manifest_path = current.join("Cargo.toml");
-            
+
             if manifest_path.exists() {
                 // Read and parse the Cargo.toml to check if it's a workspace root
                 match Self::parse_cargo_manifest(&manifest_path).await {
@@ -578,13 +645,13 @@ impl WorkspaceDetector {
     /// Detect single Rust crate
     async fn detect_single_crate(path: &Path) -> Result<Option<ProjectComponent>, AnalysisError> {
         let manifest_path = path.join("Cargo.toml");
-        
+
         if !manifest_path.exists() {
             return Ok(None);
         }
 
         let manifest = Self::parse_cargo_manifest(&manifest_path).await?;
-        
+
         // If it has workspace info, it's not a single crate
         if manifest.workspace.is_some() {
             return Ok(None);
@@ -592,7 +659,8 @@ impl WorkspaceDetector {
 
         // If it has package info, it's a single crate
         if let Some(package) = manifest.package {
-            let dependencies = manifest.dependencies
+            let dependencies = manifest
+                .dependencies
                 .unwrap_or_default()
                 .keys()
                 .map(|k| k.clone())
@@ -634,7 +702,7 @@ impl WorkspaceDetector {
         // Analyze each workspace member
         for member_pattern in &members {
             let member_paths = Self::expand_member_pattern(workspace_root, member_pattern)?;
-            
+
             for member_path in member_paths {
                 match Self::analyze_rust_member_crate(&member_path).await {
                     Ok(component) => {
@@ -660,7 +728,8 @@ impl WorkspaceDetector {
     async fn analyze_python_project(project_root: &Path) -> Result<WorkspaceInfo, AnalysisError> {
         let mut manifest_paths = Vec::new();
         let mut dependencies = Vec::new();
-        let mut project_name = project_root.file_name()
+        let mut project_name = project_root
+            .file_name()
             .and_then(|n| n.to_str())
             .unwrap_or("python-project")
             .to_string();
@@ -698,7 +767,10 @@ impl WorkspaceDetector {
         let component = ProjectComponent {
             name: project_name.clone(),
             path: project_root.to_path_buf(),
-            manifest_path: manifest_paths.get(0).cloned().unwrap_or_else(|| project_root.to_path_buf()),
+            manifest_path: manifest_paths
+                .get(0)
+                .cloned()
+                .unwrap_or_else(|| project_root.to_path_buf()),
             dependencies,
             is_root: true,
             source_dirs: Self::detect_python_source_dirs(project_root),
@@ -721,10 +793,14 @@ impl WorkspaceDetector {
     }
 
     /// Analyze JavaScript/TypeScript project
-    async fn analyze_javascript_project(project_root: &Path, is_typescript: bool) -> Result<WorkspaceInfo, AnalysisError> {
+    async fn analyze_javascript_project(
+        project_root: &Path,
+        is_typescript: bool,
+    ) -> Result<WorkspaceInfo, AnalysisError> {
         let package_json_path = project_root.join("package.json");
         let mut dependencies = Vec::new();
-        let mut project_name = project_root.file_name()
+        let mut project_name = project_root
+            .file_name()
             .and_then(|n| n.to_str())
             .unwrap_or("js-project")
             .to_string();
@@ -761,22 +837,33 @@ impl WorkspaceDetector {
         components.insert(component.name.clone(), component);
 
         let mut languages = HashSet::new();
-        languages.insert(if is_typescript { "TypeScript" } else { "JavaScript" }.to_string());
+        languages.insert(
+            if is_typescript {
+                "TypeScript"
+            } else {
+                "JavaScript"
+            }
+            .to_string(),
+        );
 
         Ok(WorkspaceInfo {
             root_path: project_root.to_path_buf(),
             manifest_paths: vec![package_json_path],
             components,
-            workspace_type: if is_typescript { WorkspaceType::TypeScript } else { WorkspaceType::JavaScript },
+            workspace_type: if is_typescript {
+                WorkspaceType::TypeScript
+            } else {
+                WorkspaceType::JavaScript
+            },
             languages,
         })
     }
 
     /// Parse Cargo.toml manifest
     async fn parse_cargo_manifest(manifest_path: &Path) -> Result<CargoManifest, AnalysisError> {
-        let content = async_fs::read_to_string(manifest_path)
-            .await
-            .map_err(|e| AnalysisError::file_system_error(manifest_path.display().to_string(), e))?;
+        let content = async_fs::read_to_string(manifest_path).await.map_err(|e| {
+            AnalysisError::file_system_error(manifest_path.display().to_string(), e)
+        })?;
 
         toml::from_str(&content).map_err(|e| {
             AnalysisError::workspace_discovery_error(
@@ -787,7 +874,9 @@ impl WorkspaceDetector {
     }
 
     /// Get all source files from a workspace
-    pub async fn get_workspace_source_files(workspace: &WorkspaceInfo) -> Result<Vec<PathBuf>, AnalysisError> {
+    pub async fn get_workspace_source_files(
+        workspace: &WorkspaceInfo,
+    ) -> Result<Vec<PathBuf>, AnalysisError> {
         let mut all_files = Vec::new();
 
         for component in workspace.components.values() {
@@ -803,7 +892,9 @@ impl WorkspaceDetector {
     }
 
     /// Analyze Rust member crate
-    async fn analyze_rust_member_crate(crate_path: &Path) -> Result<ProjectComponent, AnalysisError> {
+    async fn analyze_rust_member_crate(
+        crate_path: &Path,
+    ) -> Result<ProjectComponent, AnalysisError> {
         let manifest_path = crate_path.join("Cargo.toml");
         let manifest = Self::parse_cargo_manifest(&manifest_path).await?;
 
@@ -814,7 +905,8 @@ impl WorkspaceDetector {
             )
         })?;
 
-        let dependencies = manifest.dependencies
+        let dependencies = manifest
+            .dependencies
             .unwrap_or_default()
             .keys()
             .map(|k| k.clone())
@@ -836,32 +928,39 @@ impl WorkspaceDetector {
     /// Detect source directories for different project types
     fn detect_source_dirs(project_root: &Path) -> Vec<PathBuf> {
         let mut source_dirs = Vec::new();
-        
+
         // Common source directory patterns
         let common_patterns = ["src", "lib", "source", "sources"];
-        
+
         for pattern in &common_patterns {
             let dir = project_root.join(pattern);
             if dir.exists() && dir.is_dir() {
                 source_dirs.push(dir);
             }
         }
-        
+
         // If no standard source dirs found, use the project root
         if source_dirs.is_empty() {
             source_dirs.push(project_root.to_path_buf());
         }
-        
+
         source_dirs
     }
 
     /// Detect Python source directories
     fn detect_python_source_dirs(project_root: &Path) -> Vec<PathBuf> {
         let mut source_dirs = Vec::new();
-        
+
         // Python-specific patterns
-        let python_patterns = ["src", "lib", project_root.file_name().and_then(|n| n.to_str()).unwrap_or("")];
-        
+        let python_patterns = [
+            "src",
+            "lib",
+            project_root
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or(""),
+        ];
+
         for pattern in &python_patterns {
             if !pattern.is_empty() {
                 let dir = project_root.join(pattern);
@@ -870,7 +969,7 @@ impl WorkspaceDetector {
                 }
             }
         }
-        
+
         // Check for package directories (directories with __init__.py)
         if let Ok(entries) = std::fs::read_dir(project_root) {
             for entry in entries.filter_map(|e| e.ok()) {
@@ -880,46 +979,49 @@ impl WorkspaceDetector {
                 }
             }
         }
-        
+
         if source_dirs.is_empty() {
             source_dirs.push(project_root.to_path_buf());
         }
-        
+
         source_dirs
     }
 
     /// Detect JavaScript/TypeScript source directories
     fn detect_js_source_dirs(project_root: &Path) -> Vec<PathBuf> {
         let mut source_dirs = Vec::new();
-        
+
         // JS/TS-specific patterns
         let js_patterns = ["src", "lib", "source", "app", "pages", "components"];
-        
+
         for pattern in &js_patterns {
             let dir = project_root.join(pattern);
             if dir.exists() && dir.is_dir() {
                 source_dirs.push(dir);
             }
         }
-        
+
         if source_dirs.is_empty() {
             source_dirs.push(project_root.to_path_buf());
         }
-        
+
         source_dirs
     }
 
     /// Expand workspace member patterns (handle globs like "crates/*")
-    fn expand_member_pattern(workspace_root: &Path, pattern: &str) -> Result<Vec<PathBuf>, AnalysisError> {
+    fn expand_member_pattern(
+        workspace_root: &Path,
+        pattern: &str,
+    ) -> Result<Vec<PathBuf>, AnalysisError> {
         let pattern_path = workspace_root.join(pattern);
-        
+
         // If the pattern contains wildcards, expand them
         if pattern.contains('*') {
             // For now, implement basic wildcard support
             // In a full implementation, you'd use the glob crate
             let parent = pattern_path.parent().unwrap_or(workspace_root);
             let mut result = Vec::new();
-            
+
             if let Ok(entries) = std::fs::read_dir(parent) {
                 for entry in entries.filter_map(|e| e.ok()) {
                     let path = entry.path();
@@ -928,7 +1030,7 @@ impl WorkspaceDetector {
                     }
                 }
             }
-            
+
             Ok(result)
         } else {
             // Direct path
@@ -961,12 +1063,16 @@ version = "0.1.0"
 [dependencies]
 serde = "1.0"
 "#;
-        write(crate_path.join("Cargo.toml"), manifest_content).await.unwrap();
+        write(crate_path.join("Cargo.toml"), manifest_content)
+            .await
+            .unwrap();
 
         // Create src directory
         tokio::fs::create_dir(crate_path.join("src")).await.unwrap();
 
-        let workspace = WorkspaceDetector::detect_workspace(crate_path).await.unwrap();
+        let workspace = WorkspaceDetector::detect_workspace(crate_path)
+            .await
+            .unwrap();
         assert!(workspace.is_some());
 
         let workspace = workspace.unwrap();
@@ -984,23 +1090,32 @@ serde = "1.0"
 [workspace]
 members = ["crate_a", "crate_b"]
 "#;
-        write(workspace_path.join("Cargo.toml"), workspace_manifest).await.unwrap();
+        write(workspace_path.join("Cargo.toml"), workspace_manifest)
+            .await
+            .unwrap();
 
         // Create member crates
         for crate_name in &["crate_a", "crate_b"] {
             let crate_path = workspace_path.join(crate_name);
             tokio::fs::create_dir_all(&crate_path).await.unwrap();
-            
-            let crate_manifest = format!(r#"
+
+            let crate_manifest = format!(
+                r#"
 [package]
 name = "{}"
 version = "0.1.0"
-"#, crate_name);
-            write(crate_path.join("Cargo.toml"), crate_manifest).await.unwrap();
+"#,
+                crate_name
+            );
+            write(crate_path.join("Cargo.toml"), crate_manifest)
+                .await
+                .unwrap();
             tokio::fs::create_dir(crate_path.join("src")).await.unwrap();
         }
 
-        let workspace = WorkspaceDetector::detect_workspace(workspace_path).await.unwrap();
+        let workspace = WorkspaceDetector::detect_workspace(workspace_path)
+            .await
+            .unwrap();
         assert!(workspace.is_some());
 
         let workspace = workspace.unwrap();
@@ -1018,7 +1133,11 @@ mod multi_lang_tests {
     #[test]
     fn test_composite_workspace_type_single() {
         let temp = TempDir::new().unwrap();
-        std::fs::write(temp.path().join("Cargo.toml"), "[package]\nname='x'\nversion='0.1.0'\n").unwrap();
+        std::fs::write(
+            temp.path().join("Cargo.toml"),
+            "[package]\nname='x'\nversion='0.1.0'\n",
+        )
+        .unwrap();
         let t = WorkspaceDetector::detect_composite_workspace_type(temp.path());
         assert_eq!(t, WorkspaceType::Rust);
     }
@@ -1028,10 +1147,18 @@ mod multi_lang_tests {
         let temp = TempDir::new().unwrap();
         // Rust subdir
         std::fs::create_dir(temp.path().join("rust_mod")).unwrap();
-        std::fs::write(temp.path().join("rust_mod").join("Cargo.toml"), "[package]\nname='x'\nversion='0.1.0'\n").unwrap();
+        std::fs::write(
+            temp.path().join("rust_mod").join("Cargo.toml"),
+            "[package]\nname='x'\nversion='0.1.0'\n",
+        )
+        .unwrap();
         // Python subdir
         std::fs::create_dir(temp.path().join("py_mod")).unwrap();
-        std::fs::write(temp.path().join("py_mod").join("pyproject.toml"), "[project]\nname='y'\nversion='0.1.0'\n").unwrap();
+        std::fs::write(
+            temp.path().join("py_mod").join("pyproject.toml"),
+            "[project]\nname='y'\nversion='0.1.0'\n",
+        )
+        .unwrap();
         let t = WorkspaceDetector::detect_composite_workspace_type(temp.path());
         assert_eq!(t, WorkspaceType::Mixed);
     }

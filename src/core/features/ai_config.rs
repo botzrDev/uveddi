@@ -11,7 +11,7 @@ impl AiFeatureConfig {
     pub const fn is_enabled() -> bool {
         cfg!(feature = "ai") || cfg!(feature = "local-ai")
     }
-    
+
     /// Get AI feature status for runtime checks
     pub fn status() -> AiFeatureStatus {
         if Self::is_enabled() {
@@ -20,12 +20,12 @@ impl AiFeatureConfig {
             AiFeatureStatus::Disabled
         }
     }
-    
+
     /// Check if local AI (Ollama) is enabled
     pub const fn is_local_ai_enabled() -> bool {
         cfg!(feature = "local-ai")
     }
-    
+
     /// Get human-readable description of current AI feature status
     pub fn description() -> String {
         match Self::status() {
@@ -50,7 +50,7 @@ pub enum AiFeatureStatus {
 }
 
 /// Macro for consistent AI feature conditional compilation
-/// 
+///
 /// Usage: ai_feature!({ /* enabled code */ }, { /* disabled code */ })
 /// or:    ai_feature!({ /* enabled code */ })
 #[macro_export]
@@ -58,7 +58,7 @@ macro_rules! ai_feature {
     ($enabled_code:block, $disabled_code:block) => {
         #[cfg(any(feature = "ai", feature = "local-ai"))]
         $enabled_code
-        
+
         #[cfg(not(any(feature = "ai", feature = "local-ai")))]
         $disabled_code
     };
@@ -107,21 +107,30 @@ mod tests {
     fn test_ai_feature_detection() {
         #[cfg(any(feature = "ai", feature = "local-ai"))]
         {
-            assert!(AiFeatureConfig::is_enabled(), "AI features should be detected when enabled");
+            assert!(
+                AiFeatureConfig::is_enabled(),
+                "AI features should be detected when enabled"
+            );
         }
-        
+
         #[cfg(not(any(feature = "ai", feature = "local-ai")))]
         {
-            assert!(!AiFeatureConfig::is_enabled(), "AI features should not be detected when disabled");
+            assert!(
+                !AiFeatureConfig::is_enabled(),
+                "AI features should not be detected when disabled"
+            );
         }
     }
-    
+
     #[test]
     fn test_ai_feature_status() {
         let status = AiFeatureConfig::status();
-        assert!(matches!(status, AiFeatureStatus::Enabled | AiFeatureStatus::Disabled));
+        assert!(matches!(
+            status,
+            AiFeatureStatus::Enabled | AiFeatureStatus::Disabled
+        ));
     }
-    
+
     #[test]
     fn test_ai_feature_description() {
         let description = AiFeatureConfig::description();

@@ -4,16 +4,17 @@
 //! detecting cycles, and analyzing dependency relationships. It replaces the dependency
 //! analysis logic from the monolithic AnalysisEngine.
 
-use crate::analysis::components::{AstProviderImpl, CacheManagerImpl, DependencyGraphBuilderImpl};
+use crate::analysis::components::ast_provider::ParsedFile;
 use crate::analysis::components::traits::{
-    AstProvider as AstProviderTrait,
-    DependencyGraphBuilder as DependencyGraphBuilderTrait,
+    AstProvider as AstProviderTrait, DependencyGraphBuilder as DependencyGraphBuilderTrait,
 };
 use crate::analysis::components::CacheManager as CacheManagerTrait;
+use crate::analysis::components::{AstProviderImpl, CacheManagerImpl, DependencyGraphBuilderImpl};
 use crate::analysis::detectors::dependency::{Dependency, DependencyExtractor};
-use crate::analysis::graph::dependency::{LocalDependencyGraph, ComponentNode, LocalDependencyType, EdgeCount, IntoEdges};
+use crate::analysis::graph::dependency::{
+    ComponentNode, EdgeCount, IntoEdges, LocalDependencyGraph, LocalDependencyType,
+};
 use crate::analysis::traits::DependencyExtractorTrait;
-use crate::analysis::components::ast_provider::ParsedFile;
 use crate::database::models::ArchitecturalIssue;
 
 use super::{AnalysisResult, ServiceConfiguration};
@@ -59,7 +60,7 @@ pub struct DependencyAnalysisService {
     dependency_builder: Arc<DependencyGraphBuilderImpl>,
     cache_manager: Arc<CacheManagerImpl>,
     dependency_extractor: Arc<DependencyExtractor>,
-    
+
     // Internal state
     cached_graphs: Arc<RwLock<HashMap<String, LocalDependencyGraph>>>,
     stats: Arc<RwLock<DependencyStats>>,
@@ -76,14 +77,19 @@ impl DependencyAnalysisService {
             ast_provider,
             dependency_builder,
             cache_manager,
-            dependency_extractor: Arc::new(DependencyExtractor::new().expect("Failed to create dependency extractor")),
+            dependency_extractor: Arc::new(
+                DependencyExtractor::new().expect("Failed to create dependency extractor"),
+            ),
             cached_graphs: Arc::new(RwLock::new(HashMap::new())),
             stats: Arc::new(RwLock::new(DependencyStats::default())),
         }
     }
 
     /// Build comprehensive dependency graph for a path
-    pub async fn build_dependency_graph(&self, path: &Path) -> AnalysisResult<LocalDependencyGraph> {
+    pub async fn build_dependency_graph(
+        &self,
+        path: &Path,
+    ) -> AnalysisResult<LocalDependencyGraph> {
         let start_time = std::time::Instant::now();
         info!("Building dependency graph for: {}", path.display());
 
@@ -117,39 +123,69 @@ impl DependencyAnalysisService {
             stats.analysis_duration_ms = start_time.elapsed().as_millis() as u64;
         }
 
-        info!("Dependency graph built: {} nodes, {} edges in {}ms", 
-              graph.node_count(), graph.edge_count(), start_time.elapsed().as_millis());
+        info!(
+            "Dependency graph built: {} nodes, {} edges in {}ms",
+            graph.node_count(),
+            graph.edge_count(),
+            start_time.elapsed().as_millis()
+        );
         Ok(graph)
     }
 
     /// Build dependency graph for a single file
-    async fn build_file_dependency_graph(&self, file_path: &Path) -> AnalysisResult<LocalDependencyGraph> {
-        debug!("Building file dependency graph for: {}", file_path.display());
+    async fn build_file_dependency_graph(
+        &self,
+        file_path: &Path,
+    ) -> AnalysisResult<LocalDependencyGraph> {
+        debug!(
+            "Building file dependency graph for: {}",
+            file_path.display()
+        );
 
         // Parse the file
         let parsed_file = self.ast_provider.parse_file(file_path).await?;
-        
+
         // Extract dependencies from the parsed file
-        let dependencies = self.dependency_extractor.extract_dependencies(&parsed_file).await?;
+        let dependencies = self
+            .dependency_extractor
+            .extract_dependencies(&parsed_file)
+            .await?;
 
         // Build graph from dependencies
-        Ok(self.dependency_builder.build_from_dependencies(dependencies))
+        Ok(self
+            .dependency_builder
+            .build_from_dependencies(dependencies))
     }
 
     /// Build dependency graph for a directory
-    async fn build_directory_dependency_graph(&self, dir_path: &Path) -> AnalysisResult<LocalDependencyGraph> {
-        debug!("Building directory dependency graph for: {}", dir_path.display());
+    async fn build_directory_dependency_graph(
+        &self,
+        dir_path: &Path,
+    ) -> AnalysisResult<LocalDependencyGraph> {
+        debug!(
+            "Building directory dependency graph for: {}",
+            dir_path.display()
+        );
 
         // Use the dependency builder to scan the directory
-        self.dependency_builder.build_graph(dir_path).await.map_err(Into::into)
+        self.dependency_builder
+            .build_graph(dir_path)
+            .await
+            .map_err(Into::into)
     }
 
     /// Analyze circular dependencies in the graph
-    pub async fn analyze_cycles(&self, graph: &LocalDependencyGraph) -> AnalysisResult<Vec<CycleDependency>> {
-        info!("Analyzing cycles in dependency graph with {} nodes", graph.node_count());
+    pub async fn analyze_cycles(
+        &self,
+        graph: &LocalDependencyGraph,
+    ) -> AnalysisResult<Vec<CycleDependency>> {
+        info!(
+            "Analyzing cycles in dependency graph with {} nodes",
+            graph.node_count()
+        );
 
         let cycles = self.dependency_builder.detect_cycles(graph).await?;
-        
+
         // Convert internal cycle representation to our CycleDependency format
         let mut cycle_dependencies = Vec::new();
         for cycle in cycles {
@@ -166,7 +202,8 @@ impl DependencyAnalysisService {
         {
             let mut stats = self.stats.write().await;
             stats.cycles_detected = cycle_dependencies.len();
-            stats.max_cycle_length = cycle_dependencies.iter()
+            stats.max_cycle_length = cycle_dependencies
+                .iter()
                 .map(|c| c.cycle_length)
                 .max()
                 .unwrap_or(0);
@@ -177,16 +214,22 @@ impl DependencyAnalysisService {
     }
 
     /// Extract dependencies from parsed files
-    pub async fn extract_dependencies(&self, files: &[ParsedFile]) -> AnalysisResult<Vec<Dependency>> {
+    pub async fn extract_dependencies(
+        &self,
+        files: &[ParsedFile],
+    ) -> AnalysisResult<Vec<Dependency>> {
         debug!("Extracting dependencies from {} parsed files", files.len());
 
         let mut all_dependencies = Vec::new();
-        
+
         for file in files {
             match self.dependency_extractor.extract_dependencies(file).await {
                 Ok(deps) => all_dependencies.extend(deps),
-                Err(e) => warn!("Failed to extract dependencies from {}: {}", 
-                               file.file_path.display(), e),
+                Err(e) => warn!(
+                    "Failed to extract dependencies from {}: {}",
+                    file.file_path.display(),
+                    e
+                ),
             }
         }
 
@@ -220,9 +263,12 @@ impl DependencyAnalysisService {
     }
 
     /// Analyze specific dependency types in the graph
-    pub async fn analyze_dependency_types(&self, graph: &LocalDependencyGraph) -> HashMap<LocalDependencyType, usize> {
+    pub async fn analyze_dependency_types(
+        &self,
+        graph: &LocalDependencyGraph,
+    ) -> HashMap<LocalDependencyType, usize> {
         let mut type_counts = HashMap::new();
-        
+
         for edge in graph.edges() {
             let dep_type = edge.dependency_type.clone();
             *type_counts.entry(dep_type).or_insert(0) += 1;
@@ -232,8 +278,14 @@ impl DependencyAnalysisService {
     }
 
     /// Find strongly connected components in the graph
-    pub async fn find_strongly_connected_components(&self, graph: &LocalDependencyGraph) -> AnalysisResult<Vec<Vec<String>>> {
-        self.dependency_builder.find_strongly_connected_components(graph).await.map_err(Into::into)
+    pub async fn find_strongly_connected_components(
+        &self,
+        graph: &LocalDependencyGraph,
+    ) -> AnalysisResult<Vec<Vec<String>>> {
+        self.dependency_builder
+            .find_strongly_connected_components(graph)
+            .await
+            .map_err(Into::into)
     }
 
     // Private helper methods
@@ -247,12 +299,19 @@ impl DependencyAnalysisService {
         cached_graphs.get(cache_key).cloned()
     }
 
-    async fn cache_dependency_graph(&self, cache_key: String, graph: &LocalDependencyGraph) -> AnalysisResult<()> {
+    async fn cache_dependency_graph(
+        &self,
+        cache_key: String,
+        graph: &LocalDependencyGraph,
+    ) -> AnalysisResult<()> {
         let mut cached_graphs = self.cached_graphs.write().await;
         cached_graphs.insert(cache_key.clone(), graph.clone());
-        
+
         // Also cache in the persistent cache manager
-        self.cache_manager.cache_dependency_graph(&cache_key, graph).await.map_err(Into::into)
+        self.cache_manager
+            .cache_dependency_graph(&cache_key, graph)
+            .await
+            .map_err(Into::into)
     }
 
     async fn update_cache_stats(&self, cache_hit: bool) {
@@ -272,9 +331,13 @@ impl DependencyAnalysisService {
         }
     }
 
-    async fn get_affected_files_for_cycle(&self, cycle: &[String], graph: &LocalDependencyGraph) -> Vec<PathBuf> {
+    async fn get_affected_files_for_cycle(
+        &self,
+        cycle: &[String],
+        graph: &LocalDependencyGraph,
+    ) -> Vec<PathBuf> {
         let mut affected_files = HashSet::new();
-        
+
         for node_name in cycle {
             if let Some(node) = graph.get_node(node_name) {
                 if let Some(file_path) = node.file_path() {
@@ -282,8 +345,11 @@ impl DependencyAnalysisService {
                 }
             }
         }
-        
-        affected_files.into_iter().map(|s| PathBuf::from(s)).collect()
+
+        affected_files
+            .into_iter()
+            .map(|s| PathBuf::from(s))
+            .collect()
     }
 }
 
@@ -293,22 +359,19 @@ mod tests {
     use tempfile::tempdir;
 
     fn create_test_dependency_service() -> DependencyAnalysisService {
-    let ast_provider = Arc::new(AstProviderImpl::new().unwrap());
-    let dependency_builder = Arc::new(DependencyGraphBuilderImpl::new(ast_provider.clone()).unwrap());
-    let cache_manager = Arc::new(futures::executor::block_on(CacheManagerImpl::new()).unwrap());
+        let ast_provider = Arc::new(AstProviderImpl::new().unwrap());
+        let dependency_builder =
+            Arc::new(DependencyGraphBuilderImpl::new(ast_provider.clone()).unwrap());
+        let cache_manager = Arc::new(futures::executor::block_on(CacheManagerImpl::new()).unwrap());
 
-        DependencyAnalysisService::new(
-            ast_provider,
-            dependency_builder,
-            cache_manager,
-        )
+        DependencyAnalysisService::new(ast_provider, dependency_builder, cache_manager)
     }
 
     #[tokio::test]
     async fn test_dependency_service_creation() {
         let service = create_test_dependency_service();
         let stats = service.get_dependency_stats().await;
-        
+
         assert_eq!(stats.total_nodes, 0);
         assert_eq!(stats.total_edges, 0);
         assert_eq!(stats.cycles_detected, 0);
@@ -317,7 +380,7 @@ mod tests {
     #[tokio::test]
     async fn test_cycle_severity_determination() {
         let service = create_test_dependency_service();
-        
+
         assert_eq!(service.determine_cycle_severity(2), CycleSeverity::Low);
         assert_eq!(service.determine_cycle_severity(3), CycleSeverity::Medium);
         assert_eq!(service.determine_cycle_severity(4), CycleSeverity::Medium);
@@ -331,7 +394,7 @@ mod tests {
         let service = create_test_dependency_service();
         let path = Path::new("/test/path");
         let cache_key = service.generate_cache_key(path);
-        
+
         assert!(cache_key.contains("dep_graph_"));
         assert!(cache_key.contains("/test/path"));
     }
@@ -339,7 +402,7 @@ mod tests {
     #[tokio::test]
     async fn test_stats_reset() {
         let service = create_test_dependency_service();
-        
+
         // Modify stats manually for testing
         {
             let mut stats = service.stats.write().await;
@@ -347,10 +410,10 @@ mod tests {
             stats.total_edges = 15;
             stats.cycles_detected = 2;
         }
-        
+
         // Reset stats
         service.reset_stats().await;
-        
+
         // Verify reset
         let stats = service.get_dependency_stats().await;
         assert_eq!(stats.total_nodes, 0);
@@ -361,16 +424,16 @@ mod tests {
     #[tokio::test]
     async fn test_cache_operations() {
         let service = create_test_dependency_service();
-        
+
         // Initially empty cache
         let (cache_size, hits, misses) = service.get_cache_info().await;
         assert_eq!(cache_size, 0);
         assert_eq!(hits, 0);
         assert_eq!(misses, 0);
-        
+
         // Clear empty cache should work
         service.clear_cache().await;
-        
+
         let (cache_size_after_clear, _, _) = service.get_cache_info().await;
         assert_eq!(cache_size_after_clear, 0);
     }

@@ -255,8 +255,8 @@ pub mod core;
 pub mod database;
 pub mod deployment;
 pub mod error;
-pub mod ingestion;
 pub mod infrastructure;
+pub mod ingestion;
 pub mod models;
 // TODO: Re-enable when monitoring dependencies are properly configured
 pub mod monitoring;
@@ -281,4 +281,6 @@ pub use error::Result;
 
 // Re-export tree-sitter language modules when tree-sitter is disabled
 #[cfg(not(feature = "tree-sitter"))]
-pub use ast::tree_sitter::{tree_sitter_rust, tree_sitter_python, tree_sitter_javascript, tree_sitter_typescript};
+pub use ast::tree_sitter::{
+    tree_sitter_javascript, tree_sitter_python, tree_sitter_rust, tree_sitter_typescript,
+};

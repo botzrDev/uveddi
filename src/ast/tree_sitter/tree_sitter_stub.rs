@@ -48,11 +48,11 @@ impl Query {
     pub fn new(_language: &Language, _source: &str) -> Result<Self, String> {
         Ok(Query)
     }
-    
+
     pub fn capture_index_for_name(&self, _name: &str) -> Option<u32> {
         Some(0)
     }
-    
+
     pub fn capture_names(&self) -> &[&str] {
         &[]
     }
@@ -66,11 +66,16 @@ impl QueryCursor {
     pub fn new() -> Self {
         QueryCursor
     }
-    
-    pub fn matches<'a>(&mut self, _query: &Query, _node: Node<'a>, _source: &'a [u8]) -> impl Iterator<Item = QueryMatch<'a>> {
+
+    pub fn matches<'a>(
+        &mut self,
+        _query: &Query,
+        _node: Node<'a>,
+        _source: &'a [u8],
+    ) -> impl Iterator<Item = QueryMatch<'a>> {
         std::iter::empty()
     }
-    
+
     pub fn captures<'a>(
         &'a mut self,
         _query: &'a Query,
@@ -164,7 +169,7 @@ impl<'a> TreeCursor<'a> {
             _phantom: std::marker::PhantomData,
         }
     }
-    
+
     pub fn node(&self) -> Node<'a> {
         Node::new()
     }
@@ -275,10 +280,16 @@ pub struct CachedAst {
 /// Parsed file structure stub
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ParsedFile {
-    #[serde(serialize_with = "serialize_arc_pathbuf", deserialize_with = "deserialize_arc_pathbuf")]
+    #[serde(
+        serialize_with = "serialize_arc_pathbuf",
+        deserialize_with = "deserialize_arc_pathbuf"
+    )]
     pub file_path: Arc<PathBuf>,
     pub language: SourceLanguage,
-    #[serde(serialize_with = "serialize_arc_string", deserialize_with = "deserialize_arc_string")]
+    #[serde(
+        serialize_with = "serialize_arc_string",
+        deserialize_with = "deserialize_arc_string"
+    )]
     pub source: Arc<String>,
     #[serde(skip)]
     pub tree: Option<Tree>,
@@ -365,14 +376,22 @@ impl From<AstError> for crate::ast::tree_sitter_impl::AstError {
     fn from(err: AstError) -> Self {
         match err {
             AstError::FeatureNotEnabled(msg) => crate::ast::tree_sitter_impl::AstError::Other(msg),
-            AstError::TreeSitterDisabled => crate::ast::tree_sitter_impl::AstError::Other("Tree-sitter disabled".to_string()),
+            AstError::TreeSitterDisabled => {
+                crate::ast::tree_sitter_impl::AstError::Other("Tree-sitter disabled".to_string())
+            }
             AstError::ParseError(msg) => crate::ast::tree_sitter_impl::AstError::ParseFailed,
             AstError::Io(io_err) => crate::ast::tree_sitter_impl::AstError::Io(io_err),
-            AstError::TreeSitterLanguage(msg) => crate::ast::tree_sitter_impl::AstError::TreeSitterLanguage(msg),
+            AstError::TreeSitterLanguage(msg) => {
+                crate::ast::tree_sitter_impl::AstError::TreeSitterLanguage(msg)
+            }
             AstError::ParseFailed => crate::ast::tree_sitter_impl::AstError::ParseFailed,
-            AstError::UnsupportedLanguage(msg) => crate::ast::tree_sitter_impl::AstError::UnsupportedLanguage(msg),
+            AstError::UnsupportedLanguage(msg) => {
+                crate::ast::tree_sitter_impl::AstError::UnsupportedLanguage(msg)
+            }
             AstError::CacheError(msg) => crate::ast::tree_sitter_impl::AstError::CacheError(msg),
-            AstError::AntiPatternDetectionError(msg) => crate::ast::tree_sitter_impl::AstError::AntiPatternDetectionError(msg),
+            AstError::AntiPatternDetectionError(msg) => {
+                crate::ast::tree_sitter_impl::AstError::AntiPatternDetectionError(msg)
+            }
             AstError::Other(msg) => crate::ast::tree_sitter_impl::AstError::Other(msg),
         }
     }
@@ -482,7 +501,7 @@ pub fn create_test_ast_parser() -> Result<AstParser, AstError> {
 
 pub mod language {
     use super::Language;
-    
+
     pub fn rust() -> Language {
         Language
     }

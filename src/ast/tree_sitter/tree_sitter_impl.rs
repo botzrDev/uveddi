@@ -9,9 +9,9 @@ use std::sync::{Arc, Mutex};
 use tree_sitter::{Parser, Tree};
 
 mod arc_pathbuf_serde {
+    use serde::{Deserialize, Deserializer, Serialize, Serializer};
     use std::path::PathBuf;
     use std::sync::Arc;
-    use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
     pub fn serialize<S>(arc_pathbuf: &Arc<PathBuf>, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -30,8 +30,8 @@ mod arc_pathbuf_serde {
 }
 
 mod arc_string_serde {
-    use std::sync::Arc;
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
+    use std::sync::Arc;
 
     pub fn serialize<S>(arc_string: &Arc<String>, serializer: S) -> Result<S::Ok, S::Error>
     where

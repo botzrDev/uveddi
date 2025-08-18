@@ -1,5 +1,5 @@
 //! Security stub implementations for alpha testing
-//! 
+//!
 //! This module provides no-op implementations of security functions
 //! to allow building without the full security module.
 
@@ -10,10 +10,7 @@ pub const MAX_FILES_PER_ANALYSIS: usize = 10000;
 #[derive(Debug)]
 pub enum SecurityError {
     Stub,
-    InvalidInput { 
-        field: String, 
-        reason: String 
-    },
+    InvalidInput { field: String, reason: String },
 }
 
 impl std::fmt::Display for SecurityError {
@@ -37,7 +34,12 @@ pub fn validate_model_name(_name: &str) -> Result<(), SecurityError> {
     Ok(())
 }
 
-pub fn validate_numeric_range(_value: i64, _min: i64, _max: i64, _field_name: &str) -> Result<(), SecurityError> {
+pub fn validate_numeric_range(
+    _value: i64,
+    _min: i64,
+    _max: i64,
+    _field_name: &str,
+) -> Result<(), SecurityError> {
     Ok(())
 }
 
@@ -65,11 +67,18 @@ pub fn validate_file_count(_count: usize) -> Result<(), SecurityError> {
     Ok(())
 }
 
-pub fn validate_code_analysis_data(_data: &str, _field_name: &str, _max_length: Option<usize>) -> Result<(), SecurityError> {
+pub fn validate_code_analysis_data(
+    _data: &str,
+    _field_name: &str,
+    _max_length: Option<usize>,
+) -> Result<(), SecurityError> {
     Ok(())
 }
 
-pub fn validate_file_path_for_storage(_file_path: &str, _field_name: &str) -> Result<(), SecurityError> {
+pub fn validate_file_path_for_storage(
+    _file_path: &str,
+    _field_name: &str,
+) -> Result<(), SecurityError> {
     Ok(())
 }
 
@@ -95,11 +104,11 @@ impl SecureHttpClient {
     pub fn new(_config: HttpSecurityConfig) -> Result<Self, SecurityError> {
         Ok(Self)
     }
-    
+
     pub async fn get(&self, _url: &str) -> Result<reqwest::Response, String> {
         Err("SecureHttpClient stub: get method not implemented".to_string())
     }
-    
+
     pub async fn post(&self, _url: &str, _body: String) -> Result<reqwest::Response, String> {
         Err("SecureHttpClient stub: post method not implemented".to_string())
     }

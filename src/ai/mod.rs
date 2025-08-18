@@ -40,7 +40,7 @@ pub mod services;
 pub use engine::AiAnalysisEngine;
 
 #[cfg(feature = "ai")]
-pub use analysis::{AiInsight, AiAnalysisResult};
+pub use analysis::{AiAnalysisResult, AiInsight};
 
 #[cfg(feature = "ai")]
-pub use services::{AiService, AiAnalysisService};
+pub use services::{AiAnalysisService, AiService};

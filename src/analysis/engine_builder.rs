@@ -321,7 +321,7 @@ impl AnalysisEngineBuilder {
 
         // Create services for the orchestrator
         let detector_factory = Arc::new(crate::analysis::detector_factory::DetectorFactory::new());
-        
+
         let analysis_service = Arc::new(crate::analysis::services::AnalysisService::new(
             Arc::clone(&config_service),
             Arc::clone(&detector_scheduler),
@@ -329,13 +329,14 @@ impl AnalysisEngineBuilder {
             None, // plugin_manager: Option<Arc<PluginManagerHandle>>
             Arc::clone(&detector_factory),
         ));
-        
-        let dependency_service = Arc::new(crate::analysis::services::DependencyAnalysisService::new(
-            Arc::clone(&ast_provider),
-            Arc::clone(&dependency_builder),
-            Arc::clone(&cache_manager),
-        ));
-        
+
+        let dependency_service =
+            Arc::new(crate::analysis::services::DependencyAnalysisService::new(
+                Arc::clone(&ast_provider),
+                Arc::clone(&dependency_builder),
+                Arc::clone(&cache_manager),
+            ));
+
         let performance_service = Arc::new(crate::analysis::services::PerformanceAnalysisService::new(
             Arc::new(crate::monitoring::performance_metrics_collector::PerformanceMetricsCollector::new(
                 crate::database::models::PerformanceMetricsConfig::default(),
@@ -468,7 +469,7 @@ impl AnalysisEngineBuilder {
         let detector_factory = DetectorFactory;
         let performance_metrics_collector = Arc::new(PerformanceMetricsCollector::new(
             crate::database::models::PerformanceMetricsConfig::default(),
-            100 // Default total components
+            100, // Default total components
         ));
 
         // Initialize knowledge library components if enabled

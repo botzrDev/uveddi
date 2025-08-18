@@ -1,5 +1,5 @@
 //! Secure dependency configuration and validation
-//! 
+//!
 //! This module provides secure configurations for external dependencies
 //! and implements security best practices for HTTP clients, XML parsing, etc.
 
@@ -11,8 +11,8 @@ use thiserror::Error;
 pub fn create_secure_http_client() -> Result<reqwest::Client, SecurityError> {
     ClientBuilder::new()
         .timeout(Duration::from_secs(30))
-        .use_rustls_tls()  // Use rustls instead of native-tls for better security
-        .https_only(true)  // Reject HTTP connections
+        .use_rustls_tls() // Use rustls instead of native-tls for better security
+        .https_only(true) // Reject HTTP connections
         .build()
         .map_err(|e| SecurityError::HttpClientCreation(e.to_string()))
 }
@@ -27,15 +27,19 @@ pub struct SecurityLimits {
 impl Default for SecurityLimits {
     fn default() -> Self {
         Self {
-            max_xml_size: 1_000_000,    // 1MB limit for XML
-            max_json_size: 10_000_000,  // 10MB limit for JSON
+            max_xml_size: 1_000_000,      // 1MB limit for XML
+            max_json_size: 10_000_000,    // 10MB limit for JSON
             max_request_size: 50_000_000, // 50MB limit for requests
         }
     }
 }
 
 /// Validate input size against security limits
-pub fn validate_input_size(input: &str, limit: usize, data_type: &str) -> Result<(), SecurityError> {
+pub fn validate_input_size(
+    input: &str,
+    limit: usize,
+    data_type: &str,
+) -> Result<(), SecurityError> {
     if input.len() > limit {
         return Err(SecurityError::InputTooLarge {
             data_type: data_type.to_string(),
@@ -64,14 +68,14 @@ pub fn create_custom_http_client(
 pub enum SecurityError {
     #[error("HTTP client creation failed: {0}")]
     HttpClientCreation(String),
-    
+
     #[error("{data_type} document too large: {size} bytes (limit: {limit})")]
     InputTooLarge {
         data_type: String,
         size: usize,
         limit: usize,
     },
-    
+
     #[error("Security validation failed: {0}")]
     ValidationFailed(String),
 }
@@ -90,7 +94,7 @@ mod tests {
     fn test_input_size_validation() {
         let small_input = "small";
         let large_input = "x".repeat(2_000_000);
-        
+
         assert!(validate_input_size(small_input, 1_000_000, "test").is_ok());
         assert!(validate_input_size(&large_input, 1_000_000, "test").is_err());
     }

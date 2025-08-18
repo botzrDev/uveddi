@@ -122,9 +122,9 @@ use crate::analysis::errors::AnalysisError as CoreAnalysisError;
 use crate::analysis::{AnalysisDetector, AnalysisError};
 use crate::ast::tree_sitter::{Node, Query, QueryCursor};
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
+use crate::core::logging::{debug, info, warn};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use crate::error::ErrorHelpers;
-use crate::core::logging::{debug, info, warn};
 use std::collections::{HashMap, HashSet};
 #[cfg(feature = "tree-sitter")]
 use tree_sitter::StreamingIterator;
@@ -547,7 +547,7 @@ impl GodObjectDetector {
                 } else {
                     import_text.to_string()
                 }
-            },
+            }
             SourceLanguage::TypeScript => {
                 // UV-XXX: Reuse JavaScript logic for TypeScript
                 if import_text.starts_with('"') || import_text.starts_with('\'') {

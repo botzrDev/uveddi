@@ -2,8 +2,8 @@ use crate::analysis::component_extractor::ComponentExtractionError;
 use crate::analysis::detectors::dependency::ExtractionError;
 use crate::analysis::mermaid_generator::MermaidGenerationError;
 use crate::ast::tree_sitter_impl::AstError;
-use crate::plugins::errors::PluginError;
 use crate::error::UveddiError;
+use crate::plugins::errors::PluginError;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -37,23 +37,26 @@ pub enum AnalysisError {
 
     // File system and I/O errors
     #[error("File system error at '{path}': {source}")]
-    FileSystemError { 
-        path: String, 
-        #[source] source: std::io::Error 
+    FileSystemError {
+        path: String,
+        #[source]
+        source: std::io::Error,
     },
-    
+
     #[error("File encoding error for '{file}': {message}")]
     FileEncodingError { file: String, message: String },
 
     // Memory and resource errors
     #[error("Memory limit exceeded: used {used_mb}MB, limit {limit_mb}MB")]
     MemoryLimitExceeded { used_mb: usize, limit_mb: usize },
-    
+
     #[error("Resource allocation failed: {resource_type}")]
     ResourceAllocationError { resource_type: String },
 
     // Tree-sitter and parsing specific errors
-    #[error("Tree-sitter parsing failed for {language} in '{file}' at line {line}: {syntax_error}")]
+    #[error(
+        "Tree-sitter parsing failed for {language} in '{file}' at line {line}: {syntax_error}"
+    )]
     TreeSitterParseError {
         file: String,
         language: String,
@@ -89,10 +92,7 @@ pub enum AnalysisError {
 
     // Analysis pipeline errors
     #[error("Analysis pipeline failed at stage '{stage}': {reason}")]
-    PipelineError {
-        stage: String,
-        reason: String,
-    },
+    PipelineError { stage: String, reason: String },
 
     #[error("Detector '{detector_name}' failed on '{file}': {error}")]
     DetectorError {
@@ -120,10 +120,7 @@ pub enum AnalysisError {
     },
 
     #[error("Feature not available: {feature}. {suggestion}")]
-    FeatureUnavailableError {
-        feature: String,
-        suggestion: String,
-    },
+    FeatureUnavailableError { feature: String, suggestion: String },
 
     // Existing error types for unwrap replacements (UV-276)
     #[error("Parse operation failed: {message}")]
@@ -319,7 +316,9 @@ impl AnalysisError {
             | Self::ManifestParseError { .. } => "workspace",
             Self::PipelineError { .. } | Self::ParallelAnalysisError { .. } => "pipeline",
             Self::DetectorError { .. } => "detector",
-            Self::ConfigurationError { .. } | Self::FeatureUnavailableError { .. } => "configuration",
+            Self::ConfigurationError { .. } | Self::FeatureUnavailableError { .. } => {
+                "configuration"
+            }
             _ => "general",
         }
     }

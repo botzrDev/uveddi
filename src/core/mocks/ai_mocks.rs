@@ -17,8 +17,14 @@ pub struct MockAiService {
 /// AI service trait for both real and mock implementations
 #[async_trait]
 pub trait AiServiceTrait: Send + Sync {
-    async fn analyze_issues(&self, issues: &[ArchitecturalIssue]) -> Result<Vec<AiInsight>, MockAiError>;
-    async fn suggest_fixes(&self, issue: &ArchitecturalIssue) -> Result<Vec<FixSuggestion>, MockAiError>;
+    async fn analyze_issues(
+        &self,
+        issues: &[ArchitecturalIssue],
+    ) -> Result<Vec<AiInsight>, MockAiError>;
+    async fn suggest_fixes(
+        &self,
+        issue: &ArchitecturalIssue,
+    ) -> Result<Vec<FixSuggestion>, MockAiError>;
     async fn analyze_issue(&self, issue: &mut ArchitecturalIssue) -> Result<(), MockAiError>;
 }
 
@@ -65,25 +71,25 @@ impl MockAiService {
                 MockAiInsight {
                     issue_id: "mock-issue-2".to_string(),
                     confidence: 0.75,
-                    suggestion: "This class might benefit from the Single Responsibility Principle".to_string(),
+                    suggestion: "This class might benefit from the Single Responsibility Principle"
+                        .to_string(),
                 },
                 MockAiInsight {
                     issue_id: "mock-issue-3".to_string(),
                     confidence: 0.90,
-                    suggestion: "Consider extracting this functionality into a separate module".to_string(),
+                    suggestion: "Consider extracting this functionality into a separate module"
+                        .to_string(),
                 },
             ],
         }
     }
-    
+
     pub fn with_responses(responses: Vec<MockAiInsight>) -> Self {
         Self { responses }
     }
-    
+
     pub fn empty() -> Self {
-        Self {
-            responses: vec![],
-        }
+        Self { responses: vec![] }
     }
 }
 
@@ -95,19 +101,24 @@ impl Default for MockAiService {
 
 #[async_trait]
 impl AiServiceTrait for MockAiService {
-    async fn analyze_issues(&self, issues: &[ArchitecturalIssue]) -> Result<Vec<AiInsight>, MockAiError> {
+    async fn analyze_issues(
+        &self,
+        issues: &[ArchitecturalIssue],
+    ) -> Result<Vec<AiInsight>, MockAiError> {
         tracing::debug!("Mock AI service analyzing {} issues", issues.len());
-        
-        let insights: Vec<AiInsight> = self.responses
+
+        let insights: Vec<AiInsight> = self
+            .responses
             .iter()
             .take(issues.len())
             .enumerate()
             .map(|(i, mock)| {
-                let issue_id = issues.get(i)
+                let issue_id = issues
+                    .get(i)
                     .and_then(|issue| issue.issue_id)
                     .map(|id| id.to_string())
                     .unwrap_or_else(|| mock.issue_id.clone());
-                    
+
                 AiInsight {
                     issue_id,
                     confidence: mock.confidence,
@@ -120,17 +131,21 @@ impl AiServiceTrait for MockAiService {
                 }
             })
             .collect();
-            
+
         Ok(insights)
     }
-    
-    async fn suggest_fixes(&self, issue: &ArchitecturalIssue) -> Result<Vec<FixSuggestion>, MockAiError> {
+
+    async fn suggest_fixes(
+        &self,
+        issue: &ArchitecturalIssue,
+    ) -> Result<Vec<FixSuggestion>, MockAiError> {
         let issue_type = &issue.description;
-        
+
         let suggestion = if issue_type.to_lowercase().contains("god object") {
             FixSuggestion {
                 title: "Split God Object".to_string(),
-                description: "Break down this large class into smaller, focused classes".to_string(),
+                description: "Break down this large class into smaller, focused classes"
+                    .to_string(),
                 confidence: 0.8,
                 code_changes: vec![
                     "Extract related methods into separate classes".to_string(),
@@ -152,7 +167,8 @@ impl AiServiceTrait for MockAiService {
         } else {
             FixSuggestion {
                 title: "General Refactoring".to_string(),
-                description: "Apply general refactoring principles to improve code quality".to_string(),
+                description: "Apply general refactoring principles to improve code quality"
+                    .to_string(),
                 confidence: 0.7,
                 code_changes: vec![
                     "Review and simplify the implementation".to_string(),
@@ -161,13 +177,16 @@ impl AiServiceTrait for MockAiService {
                 ],
             }
         };
-        
+
         Ok(vec![suggestion])
     }
-    
+
     async fn analyze_issue(&self, issue: &mut ArchitecturalIssue) -> Result<(), MockAiError> {
-        tracing::debug!("Mock AI service analyzing single issue: {}", issue.description);
-        
+        tracing::debug!(
+            "Mock AI service analyzing single issue: {}",
+            issue.description
+        );
+
         // Generate a mock explanation based on the issue type
         let explanation = if issue.description.to_lowercase().contains("god object") {
             format!(
@@ -188,7 +207,7 @@ impl AiServiceTrait for MockAiService {
                 issue.file_path, issue.description
             )
         };
-        
+
         issue.ai_explanation = Some(explanation);
         Ok(())
     }
@@ -206,12 +225,15 @@ impl MockAiEngine {
             service: MockAiService::new(),
         }
     }
-    
+
     pub async fn analyze_issue(&self, issue: &mut ArchitecturalIssue) -> Result<(), MockAiError> {
         self.service.analyze_issue(issue).await
     }
-    
-    pub async fn analyze_issues(&self, issues: &[ArchitecturalIssue]) -> Result<Vec<AiInsight>, MockAiError> {
+
+    pub async fn analyze_issues(
+        &self,
+        issues: &[ArchitecturalIssue],
+    ) -> Result<Vec<AiInsight>, MockAiError> {
         self.service.analyze_issues(issues).await
     }
 }
@@ -243,9 +265,12 @@ mod tests {
     async fn test_mock_ai_service_basic() {
         let service = MockAiService::new();
         let result = service.analyze_issues(&[]).await;
-        assert!(result.is_ok(), "Mock AI service should always succeed with empty input");
+        assert!(
+            result.is_ok(),
+            "Mock AI service should always succeed with empty input"
+        );
     }
-    
+
     #[tokio::test]
     async fn test_mock_ai_service_with_issues() {
         let service = MockAiService::new();
@@ -267,12 +292,22 @@ mod tests {
             code_snippet: Some("struct GodObject { ... }".to_string()),
             ai_explanation: None,
         };
-        
+
         service.analyze_issue(&mut issue).await.unwrap();
-        assert!(issue.ai_explanation.is_some(), "Mock should provide explanation");
-        assert!(issue.ai_explanation.as_ref().unwrap().contains("God Object"), "Explanation should be relevant");
+        assert!(
+            issue.ai_explanation.is_some(),
+            "Mock should provide explanation"
+        );
+        assert!(
+            issue
+                .ai_explanation
+                .as_ref()
+                .unwrap()
+                .contains("God Object"),
+            "Explanation should be relevant"
+        );
     }
-    
+
     #[tokio::test]
     async fn test_mock_ai_engine() {
         let engine = MockAiEngine::new();
@@ -294,8 +329,11 @@ mod tests {
             code_snippet: Some("mod a { use super::b; }".to_string()),
             ai_explanation: None,
         };
-        
+
         engine.analyze_issue(&mut issue).await.unwrap();
-        assert!(issue.ai_explanation.is_some(), "Mock engine should provide explanation");
+        assert!(
+            issue.ai_explanation.is_some(),
+            "Mock engine should provide explanation"
+        );
     }
 }

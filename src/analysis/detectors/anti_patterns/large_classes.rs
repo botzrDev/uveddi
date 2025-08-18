@@ -8,9 +8,9 @@ use crate::ast::tree_sitter::{Node, Query, QueryCursor, Tree};
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
 use crate::constants::detector_thresholds;
 use crate::constants::severity_weights;
+use crate::core::logging::debug;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use async_trait::async_trait;
-use crate::core::logging::debug;
 #[cfg(feature = "tree-sitter")]
 use tree_sitter::StreamingIterator;
 
@@ -427,8 +427,7 @@ impl AnalysisDetector for LargeClassDetector {
                 issue.end_line = class_metrics.end_line.try_into().ok().map(|l: i32| l);
                 issue.code_snippet = Some(class_metrics.code_snippet.clone());
                 issue.ai_explanation = Some(
-                    "Consider breaking this class into smaller, more focused classes"
-                        .to_string(),
+                    "Consider breaking this class into smaller, more focused classes".to_string(),
                 );
 
                 issues.push(issue);

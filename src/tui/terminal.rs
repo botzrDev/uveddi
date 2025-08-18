@@ -94,21 +94,20 @@ pub fn setup_terminal() -> Result<Terminal<CrosstermBackend<Stdout>>> {
     })?;
 
     // Enter alternate screen and show cursor for form inputs
-    execute!(io::stdout(), EnterAlternateScreen, Show, EnableMouseCapture)
-        .map_err(|e| {
-            let _ = disable_raw_mode(); // Cleanup on failure
-            color_eyre::eyre::eyre!(
-                "Failed to initialize terminal screen: {}. Try using --output=text instead.", 
-                e
-            )
-        })?;
+    execute!(io::stdout(), EnterAlternateScreen, Show, EnableMouseCapture).map_err(|e| {
+        let _ = disable_raw_mode(); // Cleanup on failure
+        color_eyre::eyre::eyre!(
+            "Failed to initialize terminal screen: {}. Try using --output=text instead.",
+            e
+        )
+    })?;
 
     // Create terminal backend
     let backend = CrosstermBackend::new(io::stdout());
     let terminal = Terminal::new(backend).map_err(|e| {
         let _ = restore_terminal(); // Cleanup on failure
         color_eyre::eyre::eyre!(
-            "Failed to create terminal: {}. Terminal may not support required features.", 
+            "Failed to create terminal: {}. Terminal may not support required features.",
             e
         )
     })?;
@@ -130,11 +129,12 @@ pub fn is_terminal_available() -> Result<bool> {
     }
 
     // Check for CI environments
-    if std::env::var("CI").is_ok() 
+    if std::env::var("CI").is_ok()
         || std::env::var("GITHUB_ACTIONS").is_ok()
         || std::env::var("GITLAB_CI").is_ok()
         || std::env::var("JENKINS_URL").is_ok()
-        || std::env::var("TRAVIS").is_ok() {
+        || std::env::var("TRAVIS").is_ok()
+    {
         return Ok(false);
     }
 

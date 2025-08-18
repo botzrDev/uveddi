@@ -168,7 +168,10 @@ pub use interactive_diagram_generator::{
 };
 pub use memory::{get_optimization_status, MemoryOptimizationConfig};
 pub use memory_report::{MemoryAnalysisReport, PhaseMemoryBreakdown};
-pub use orchestrator::{AnalysisOrchestrator, AnalysisOrchestratorBuilder, AnalysisOptions, EnhancedAnalysisResult, OrchestratorStatus};
+pub use orchestrator::{
+    AnalysisOptions, AnalysisOrchestrator, AnalysisOrchestratorBuilder, EnhancedAnalysisResult,
+    OrchestratorStatus,
+};
 pub use plugin_adapter::{WasmPluginAdapterFactory, WasmPluginDetectorAdapter};
 pub use services::{AnalysisService, DependencyAnalysisService, PerformanceAnalysisService};
 pub use standardized_config::{

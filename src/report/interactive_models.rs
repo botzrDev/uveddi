@@ -20,7 +20,7 @@
 //! - Enable rich visualizations (Mermaid, Cytoscape, Chart.js, D3)
 //! - Maintain offline-first capabilities
 
-use crate::database::models::{AnalysisRun, ArchitecturalIssue, AntiPatternType, Dependency};
+use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue, Dependency};
 use crate::models::visualization::{ArchitecturalComponent, DiagramMetadata, DiagramType};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -650,8 +650,11 @@ impl InteractiveReport {
         project_name: String,
         project_path: String,
     ) -> Self {
-        let project_id = analysis_run.run_id.map(|id| id.to_string()).unwrap_or_else(|| Uuid::new_v4().to_string());
-        
+        let project_id = analysis_run
+            .run_id
+            .map(|id| id.to_string())
+            .unwrap_or_else(|| Uuid::new_v4().to_string());
+
         // Build anti-pattern lookup map
         let anti_pattern_map: HashMap<i64, &AntiPatternType> = anti_pattern_types
             .iter()
@@ -661,12 +664,16 @@ impl InteractiveReport {
         // Calculate summary statistics
         let mut issues_by_severity = HashMap::new();
         let mut issues_by_category = HashMap::new();
-        
+
         for issue in issues {
-            *issues_by_severity.entry(issue.severity.clone()).or_insert(0) += 1;
-            
+            *issues_by_severity
+                .entry(issue.severity.clone())
+                .or_insert(0) += 1;
+
             if let Some(anti_pattern) = anti_pattern_map.get(&issue.anti_pattern_type_id) {
-                *issues_by_category.entry(anti_pattern.category.clone()).or_insert(0) += 1;
+                *issues_by_category
+                    .entry(anti_pattern.category.clone())
+                    .or_insert(0) += 1;
             }
         }
 
@@ -690,8 +697,8 @@ impl InteractiveReport {
             project: ProjectMetadata {
                 id: project_id,
                 name: project_name,
-                commit: None, // TODO: Extract from git if available
-                branch: None, // TODO: Extract from git if available
+                commit: None,   // TODO: Extract from git if available
+                branch: None,   // TODO: Extract from git if available
                 repo_url: None, // TODO: Extract from git if available
                 path: project_path,
                 languages: Self::detect_languages(components),
@@ -700,22 +707,25 @@ impl InteractiveReport {
             findings,
             dependency_graph,
             diagrams: diagram_definitions,
-            chart_data: None, // TODO: Implement chart data generation
+            chart_data: None,          // TODO: Implement chart data generation
             performance_metrics: None, // TODO: Implement performance metrics
-            ai_insights: None, // TODO: Implement AI insights integration
+            ai_insights: None,         // TODO: Implement AI insights integration
             metadata: ReportMetadata {
                 generated_at: Utc::now(),
                 uveddi_version: env!("CARGO_PKG_VERSION").to_string(),
                 configuration: HashMap::new(), // TODO: Include analysis configuration
-                performance: None, // TODO: Include performance metrics
+                performance: None,             // TODO: Include performance metrics
             },
         }
     }
 
-    fn calculate_coverage_score(issues: &[ArchitecturalIssue], components: Option<&[ArchitecturalComponent]>) -> f64 {
+    fn calculate_coverage_score(
+        issues: &[ArchitecturalIssue],
+        components: Option<&[ArchitecturalComponent]>,
+    ) -> f64 {
         let total_components = components.map(|c| c.len()).unwrap_or(1) as f64;
         let total_issues = issues.len() as f64;
-        
+
         // Simple scoring: fewer issues per component = higher score
         let issues_per_component = total_issues / total_components;
         (100.0 - (issues_per_component * 10.0)).max(0.0).min(100.0)
@@ -723,7 +733,9 @@ impl InteractiveReport {
 
     fn calculate_analysis_duration(analysis_run: &AnalysisRun) -> u64 {
         if let Some(end_time) = analysis_run.end_time {
-            (end_time - analysis_run.start_time).num_milliseconds().max(0) as u64
+            (end_time - analysis_run.start_time)
+                .num_milliseconds()
+                .max(0) as u64
         } else {
             0
         }
@@ -738,14 +750,21 @@ impl InteractiveReport {
             .enumerate()
             .map(|(index, issue)| {
                 let anti_pattern = anti_pattern_map.get(&issue.anti_pattern_type_id);
-                let finding_type = anti_pattern.map(|ap| ap.name.clone()).unwrap_or_else(|| "Unknown".to_string());
+                let finding_type = anti_pattern
+                    .map(|ap| ap.name.clone())
+                    .unwrap_or_else(|| "Unknown".to_string());
                 let tags = vec![
                     issue.severity.clone(),
-                    anti_pattern.map(|ap| ap.category.clone()).unwrap_or_else(|| "unknown".to_string()),
+                    anti_pattern
+                        .map(|ap| ap.category.clone())
+                        .unwrap_or_else(|| "unknown".to_string()),
                 ];
 
                 Finding {
-                    id: issue.issue_id.map(|id| id.to_string()).unwrap_or_else(|| format!("finding-{}", index)),
+                    id: issue
+                        .issue_id
+                        .map(|id| id.to_string())
+                        .unwrap_or_else(|| format!("finding-{}", index)),
                     finding_type,
                     severity: issue.severity.clone(),
                     title: Self::generate_finding_title(issue, anti_pattern.copied()),
@@ -759,21 +778,24 @@ impl InteractiveReport {
                     detector: issue.detector_name.clone(),
                     confidence: 1.0, // TODO: Extract from metadata if available
                     ai_explanation: issue.ai_explanation.clone(),
-                    recommendation: None, // TODO: Generate recommendations
+                    recommendation: None,     // TODO: Generate recommendations
                     related_findings: vec![], // TODO: Implement finding correlation
                 }
             })
             .collect()
     }
 
-    fn generate_finding_title(issue: &ArchitecturalIssue, anti_pattern: Option<&AntiPatternType>) -> String {
+    fn generate_finding_title(
+        issue: &ArchitecturalIssue,
+        anti_pattern: Option<&AntiPatternType>,
+    ) -> String {
         let default_name = "Issue".to_string();
         let pattern_name = anti_pattern.map(|ap| &ap.name).unwrap_or(&default_name);
         let file_name = std::path::Path::new(&issue.file_path)
             .file_name()
             .and_then(|name| name.to_str())
             .unwrap_or("unknown");
-        
+
         format!("{} in {}", pattern_name, file_name)
     }
 
@@ -856,7 +878,7 @@ impl InteractiveReport {
                 node_count: nodes.len() as u32,
                 edge_count: edges.len() as u32,
                 has_cycles: false, // TODO: Implement cycle detection
-                max_depth: 0, // TODO: Calculate graph depth
+                max_depth: 0,      // TODO: Calculate graph depth
                 suggested_layout: CytoscapeLayout::Cose, // Default Cytoscape layout
                 layout_config: HashMap::new(),
                 performance_config: GraphPerformanceConfig {
@@ -902,7 +924,7 @@ impl InteractiveReport {
 
     fn detect_languages(components: Option<&[ArchitecturalComponent]>) -> Vec<String> {
         let mut languages = std::collections::HashSet::new();
-        
+
         if let Some(comps) = components {
             for component in comps {
                 if let Some(lang) = component.component_type.language() {
@@ -941,12 +963,18 @@ impl Default for InteractiveReport {
                     ("high".to_string(), 3),
                     ("medium".to_string(), 5),
                     ("low".to_string(), 3),
-                ].iter().cloned().collect(),
+                ]
+                .iter()
+                .cloned()
+                .collect(),
                 issues_by_category: [
                     ("structural".to_string(), 7),
                     ("behavioral".to_string(), 3),
                     ("performance".to_string(), 2),
-                ].iter().cloned().collect(),
+                ]
+                .iter()
+                .cloned()
+                .collect(),
                 files_analyzed: 42,
                 components_analyzed: 18,
                 analysis_duration_ms: 1250,
@@ -976,7 +1004,7 @@ impl Default for InteractiveReport {
                 },
             },
             diagrams: vec![],
-            chart_data: None, // TODO: Implement chart data generation
+            chart_data: None,          // TODO: Implement chart data generation
             performance_metrics: None, // TODO: Implement performance metrics
             ai_insights: None,
             metadata: ReportMetadata {

@@ -1,16 +1,14 @@
 //! GraphQL type definitions for Uveddi analysis results
 
-use async_graphql::{SimpleObject, Object, Enum, InputObject, Union, ID};
+use async_graphql::{Enum, InputObject, Object, SimpleObject, Union, ID};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 use crate::database::models::{
+    AnalysisRun as DbAnalysisRun, AntiPatternType as DbAntiPatternType,
     ArchitecturalIssue as DbArchitecturalIssue,
-    AnalysisRun as DbAnalysisRun,
-    AntiPatternType as DbAntiPatternType,
-    ComponentPerformanceMetrics as DbComponentPerformanceMetrics,
-    Dependency as DbDependency,
+    ComponentPerformanceMetrics as DbComponentPerformanceMetrics, Dependency as DbDependency,
 };
 
 // Enums
@@ -625,8 +623,7 @@ impl From<DbAnalysisRun> for AnalysisRun {
             },
             total_files_analyzed: db_run.total_files_analyzed,
             total_issues_found: db_run.total_issues_found,
-            analysis_config: serde_json::from_str(&db_run.analysis_config)
-                .unwrap_or_default(),
+            analysis_config: serde_json::from_str(&db_run.analysis_config).unwrap_or_default(),
         }
     }
 }

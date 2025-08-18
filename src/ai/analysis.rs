@@ -1,5 +1,5 @@
 use crate::database::models::ArchitecturalIssue;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 /// Represents an AI insight generated from analyzing architectural issues
 #[derive(Debug, Clone, Serialize, Deserialize)]

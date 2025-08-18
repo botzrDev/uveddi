@@ -5,10 +5,7 @@
 
 use crate::error::rendering::RenderingServiceError;
 #[cfg(feature = "security")]
-use crate::security::{
-    HttpSecurityConfig,
-    SecureHttpClient,
-};
+use crate::security::{HttpSecurityConfig, SecureHttpClient};
 use md5;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;

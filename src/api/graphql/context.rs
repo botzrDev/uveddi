@@ -1,7 +1,7 @@
 //! GraphQL context for sharing state across resolvers
 
-use crate::database::DatabaseManager;
 use crate::analysis::engine::AnalysisEngine;
+use crate::database::DatabaseManager;
 use std::sync::Arc;
 
 /// GraphQL context that provides access to shared resources

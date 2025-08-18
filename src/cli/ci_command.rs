@@ -1,7 +1,7 @@
-use clap::{Args, Subcommand};
 use crate::application::{AnalysisConfig, AnalysisOrchestrator};
+use crate::core::logging::{error, info};
 use crate::error::UveddiError;
-use crate::core::logging::{info, error};
+use clap::{Args, Subcommand};
 use std::path::PathBuf;
 
 #[derive(Debug, Args)]
@@ -75,13 +75,28 @@ impl CiCommand {
         // Try parse JSON to extract summary (preferred)
         if args.output_format.to_lowercase() == "json" {
             if let Ok(v) = serde_json::from_str::<serde_json::Value>(&report.content) {
-                let debt = v.get("summary").and_then(|s| s.get("debtScore")).and_then(|n| n.as_u64()).unwrap_or(0) as u32;
-                let critical = v.get("summary").and_then(|s| s.get("issuesBySeverity")).and_then(|m| m.get("critical")).and_then(|n| n.as_u64()).unwrap_or(0) as u32;
+                let debt = v
+                    .get("summary")
+                    .and_then(|s| s.get("debtScore"))
+                    .and_then(|n| n.as_u64())
+                    .unwrap_or(0) as u32;
+                let critical = v
+                    .get("summary")
+                    .and_then(|s| s.get("issuesBySeverity"))
+                    .and_then(|m| m.get("critical"))
+                    .and_then(|n| n.as_u64())
+                    .unwrap_or(0) as u32;
                 if debt > args.max_debt || critical > args.max_critical {
-                    error!("CI quality gate failed: debtScore={} (max {}), critical={} (max {})", debt, args.max_debt, critical, args.max_critical);
+                    error!(
+                        "CI quality gate failed: debtScore={} (max {}), critical={} (max {})",
+                        debt, args.max_debt, critical, args.max_critical
+                    );
                     return Err(UveddiError::config_error("Quality gate failed", "ci-check"));
                 }
-                info!("CI quality gate passed: debtScore={}, critical={}", debt, critical);
+                info!(
+                    "CI quality gate passed: debtScore={}, critical={}",
+                    debt, critical
+                );
                 return Ok(());
             }
         }
@@ -89,7 +104,10 @@ impl CiCommand {
         // Fallback: inspect summary via metadata
         let failed = report.metadata.issues_found > 0 && args.max_critical == 0;
         if failed {
-            return Err(UveddiError::config_error("Quality gate failed (fallback)", "ci-check"));
+            return Err(UveddiError::config_error(
+                "Quality gate failed (fallback)",
+                "ci-check",
+            ));
         }
         Ok(())
     }
@@ -97,25 +115,32 @@ impl CiCommand {
 
 /// Helper function to parse JSON and extract CI metrics for testing
 pub fn parse_ci_metrics_from_json(json_content: &str) -> Result<(u32, u32), String> {
-    let v: serde_json::Value = serde_json::from_str(json_content)
-        .map_err(|e| format!("Failed to parse JSON: {}", e))?;
-    
-    let debt = v.get("summary")
+    let v: serde_json::Value =
+        serde_json::from_str(json_content).map_err(|e| format!("Failed to parse JSON: {}", e))?;
+
+    let debt = v
+        .get("summary")
         .and_then(|s| s.get("debtScore"))
         .and_then(|n| n.as_u64())
         .unwrap_or(0) as u32;
-    
-    let critical = v.get("summary")
+
+    let critical = v
+        .get("summary")
         .and_then(|s| s.get("issuesBySeverity"))
         .and_then(|m| m.get("critical"))
         .and_then(|n| n.as_u64())
         .unwrap_or(0) as u32;
-    
+
     Ok((debt, critical))
 }
 
 /// Evaluate if CI gate should pass given metrics and thresholds
-pub fn evaluate_ci_gate(debt_score: u32, critical_count: u32, max_debt: u32, max_critical: u32) -> bool {
+pub fn evaluate_ci_gate(
+    debt_score: u32,
+    critical_count: u32,
+    max_debt: u32,
+    max_critical: u32,
+) -> bool {
     debt_score <= max_debt && critical_count <= max_critical
 }
 
@@ -174,7 +199,7 @@ mod tests {
     #[test]
     fn test_parse_ci_metrics_invalid_json() {
         let json = r#"{ invalid json"#;
-        
+
         let result = parse_ci_metrics_from_json(json);
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("Failed to parse JSON"));
@@ -182,9 +207,9 @@ mod tests {
 
     #[test]
     fn test_evaluate_ci_gate_pass() {
-        assert!(evaluate_ci_gate(30, 0, 50, 1));  // Both under threshold
-        assert!(evaluate_ci_gate(50, 1, 50, 1));  // At threshold
-        assert!(evaluate_ci_gate(0, 0, 50, 0));   // Zero values
+        assert!(evaluate_ci_gate(30, 0, 50, 1)); // Both under threshold
+        assert!(evaluate_ci_gate(50, 1, 50, 1)); // At threshold
+        assert!(evaluate_ci_gate(0, 0, 50, 0)); // Zero values
     }
 
     #[test]

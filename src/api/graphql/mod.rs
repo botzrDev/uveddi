@@ -1,34 +1,31 @@
 //! GraphQL API module for Uveddi analysis results
-//! 
+//!
 //! Provides a flexible query interface for code analysis data with efficient
 //! data fetching, pagination, and real-time subscriptions.
 
 pub mod resolvers;
-pub mod schema;
-pub mod types;
+// pub mod schema; // TODO: Create schema.rs for GraphQL schema types - disabled for v1.0
 pub mod context;
-pub mod subscriptions;
 pub mod loaders;
 pub mod pagination;
+pub mod subscriptions;
+pub mod types;
 
-use async_graphql::{Schema, EmptySubscription};
-use crate::database::DatabaseManager;
 use crate::analysis::engine::AnalysisEngine;
+use crate::database::DatabaseManager;
+use async_graphql::{EmptySubscription, Schema};
 
-pub use resolvers::{QueryRoot, MutationRoot};
 pub use context::GraphQLContext;
+pub use resolvers::{MutationRoot, QueryRoot};
 pub use types::*;
 
 /// GraphQL schema type for Uveddi
 pub type UveddiSchema = Schema<QueryRoot, MutationRoot, EmptySubscription>;
 
 /// Create a new GraphQL schema with the provided database and analysis engine
-pub fn create_schema(
-    db: DatabaseManager,
-    analysis_engine: AnalysisEngine,
-) -> UveddiSchema {
+pub fn create_schema(db: DatabaseManager, analysis_engine: AnalysisEngine) -> UveddiSchema {
     let context = GraphQLContext::new(db, analysis_engine);
-    
+
     Schema::build(QueryRoot, MutationRoot, EmptySubscription)
         .data(context)
         .finish()

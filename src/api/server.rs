@@ -6,8 +6,8 @@ use std::convert::Infallible;
 use std::sync::Arc;
 use warp::{Filter, Rejection, Reply};
 
-use super::graphql::{UveddiSchema, GraphQLConfig};
 use super::graphql::subscriptions::EventBroadcaster;
+use super::graphql::{GraphQLConfig, UveddiSchema};
 
 /// Start the GraphQL HTTP server
 pub async fn start_graphql_server(
@@ -16,20 +16,21 @@ pub async fn start_graphql_server(
     port: u16,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     println!("Starting GraphQL server on http://localhost:{}", port);
-    
+
     // GraphQL endpoint
-    let graphql_post = async_graphql_warp::graphql(schema.clone())
-        .and_then(move |(schema, request): (UveddiSchema, async_graphql::Request)| {
+    let graphql_post = async_graphql_warp::graphql(schema.clone()).and_then(
+        move |(schema, request): (UveddiSchema, async_graphql::Request)| {
             async move {
                 // Apply query complexity and depth limits
                 let request = request
                     .limit_depth(config.max_depth)
                     .limit_complexity(config.max_complexity);
-                
+
                 let response = schema.execute(request).await;
                 Ok::<_, Infallible>(Response::from(response))
             }
-        });
+        },
+    );
 
     // GraphQL Playground/GraphiQL endpoint (only in development)
     let graphql_playground = if config.enable_playground {
@@ -42,34 +43,30 @@ pub async fn start_graphql_server(
                         .body(GraphiQLSource::build().endpoint("/graphql").finish())
                         .unwrap()
                 })
-                .boxed()
+                .boxed(),
         )
     } else {
         None
     };
 
     // Health check endpoint
-    let health = warp::path("health")
-        .and(warp::get())
-        .map(|| {
-            warp::reply::json(&serde_json::json!({
-                "status": "healthy",
-                "service": "uveddi-graphql-api",
-                "timestamp": chrono::Utc::now().to_rfc3339()
-            }))
-        });
+    let health = warp::path("health").and(warp::get()).map(|| {
+        warp::reply::json(&serde_json::json!({
+            "status": "healthy",
+            "service": "uveddi-graphql-api",
+            "timestamp": chrono::Utc::now().to_rfc3339()
+        }))
+    });
 
     // Metrics endpoint (basic)
-    let metrics = warp::path("metrics")
-        .and(warp::get())
-        .map(|| {
-            // TODO: Integrate with existing monitoring/metrics system
-            warp::reply::json(&serde_json::json!({
-                "queries_executed": 0,
-                "active_subscriptions": 0,
-                "cache_hit_rate": 0.0
-            }))
-        });
+    let metrics = warp::path("metrics").and(warp::get()).map(|| {
+        // TODO: Integrate with existing monitoring/metrics system
+        warp::reply::json(&serde_json::json!({
+            "queries_executed": 0,
+            "active_subscriptions": 0,
+            "cache_hit_rate": 0.0
+        }))
+    });
 
     // CORS configuration for browser clients
     let cors = warp::cors()
@@ -93,8 +90,8 @@ pub async fn start_graphql_server(
     let routes = routes.with(warp::log("graphql_api"));
 
     // Start server with graceful shutdown
-    let (_, server) = warp::serve(routes)
-        .bind_with_graceful_shutdown(([127, 0, 0, 1], port), async {
+    let (_, server) =
+        warp::serve(routes).bind_with_graceful_shutdown(([127, 0, 0, 1], port), async {
             tokio::signal::ctrl_c()
                 .await
                 .expect("Failed to listen for ctrl-c signal");
@@ -188,7 +185,7 @@ impl GraphQLServerBuilder {
 
     pub async fn start(self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let schema = self.schema.ok_or("Schema is required")?;
-        
+
         // Add event broadcaster to schema context if provided
         let schema = if let Some(broadcaster) = self.event_broadcaster {
             schema.data(broadcaster)
@@ -209,9 +206,9 @@ impl Default for GraphQLServerBuilder {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::database::Database;
     use crate::analysis::engine::AnalysisEngine;
     use crate::api::graphql::create_schema;
+    use crate::database::Database;
 
     async fn create_test_schema() -> UveddiSchema {
         // This would normally use real instances, but for testing we create mocks

@@ -276,9 +276,7 @@ pub trait AiEngineService {
     fn analyze_issue(
         &self,
         issue: &mut crate::database::models::ArchitecturalIssue,
-    ) -> std::pin::Pin<
-        Box<dyn std::future::Future<Output = crate::error::Result<()>> + Send>,
-    >;
+    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = crate::error::Result<()>> + Send>>;
 }
 
 /// Provides an abstraction for AST parsing services.

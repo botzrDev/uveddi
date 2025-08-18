@@ -1,12 +1,12 @@
 //! Unified logging configuration using tracing
-//! 
+//!
 //! This module provides a unified logging system that replaces the `log` crate
 //! with tracing throughout the application. It provides backward compatibility
 //! while enabling structured logging capabilities.
 
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Registry};
 use std::io;
 use thiserror::Error;
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Registry};
 
 /// Initialize unified logging system
 pub fn init_logging() -> Result<(), LoggingError> {
@@ -20,9 +20,7 @@ pub fn init_logging() -> Result<(), LoggingError> {
         .with_file(true)
         .with_line_number(true);
 
-    let registry = Registry::default()
-        .with(env_filter)
-        .with(formatting_layer);
+    let registry = Registry::default().with(env_filter).with(formatting_layer);
 
     registry
         .try_init()
@@ -33,34 +31,27 @@ pub fn init_logging() -> Result<(), LoggingError> {
 
 /// Initialize logging with custom configuration
 pub fn init_logging_with_config(log_level: &str, with_json: bool) -> Result<(), LoggingError> {
-    let env_filter = EnvFilter::try_new(log_level)
-        .map_err(LoggingError::FilterCreation)?;
+    let env_filter = EnvFilter::try_new(log_level).map_err(LoggingError::FilterCreation)?;
 
     if with_json {
-        let registry = Registry::default()
-            .with(env_filter)
-            .with(
-                tracing_subscriber::fmt::layer()
-                    .json()
-                    .with_target(false)
-                    .with_thread_ids(true)
-                    .with_file(true)
-                    .with_line_number(true)
-            );
-        tracing::subscriber::set_global_default(registry)
-            .map_err(LoggingError::SubscriberInit)?;
+        let registry = Registry::default().with(env_filter).with(
+            tracing_subscriber::fmt::layer()
+                .json()
+                .with_target(false)
+                .with_thread_ids(true)
+                .with_file(true)
+                .with_line_number(true),
+        );
+        tracing::subscriber::set_global_default(registry).map_err(LoggingError::SubscriberInit)?;
     } else {
-        let registry = Registry::default()
-            .with(env_filter)
-            .with(
-                tracing_subscriber::fmt::layer()
-                    .with_target(false)
-                    .with_thread_ids(true)
-                    .with_file(true)
-                    .with_line_number(true)
-            );
-        tracing::subscriber::set_global_default(registry)
-            .map_err(LoggingError::SubscriberInit)?;
+        let registry = Registry::default().with(env_filter).with(
+            tracing_subscriber::fmt::layer()
+                .with_target(false)
+                .with_thread_ids(true)
+                .with_file(true)
+                .with_line_number(true),
+        );
+        tracing::subscriber::set_global_default(registry).map_err(LoggingError::SubscriberInit)?;
     }
 
     Ok(())

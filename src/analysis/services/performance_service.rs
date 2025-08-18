@@ -5,8 +5,8 @@
 //! monolithic AnalysisEngine.
 
 use crate::analysis::memory_report::{MemoryAnalysisReport, PhaseMemoryBreakdown};
-use crate::monitoring::performance_metrics_collector::PerformanceMetricsCollector;
 use crate::database::models::{ComponentPerformanceMetrics, PerformanceMetricsConfig};
+use crate::monitoring::performance_metrics_collector::PerformanceMetricsCollector;
 
 use super::AnalysisResult;
 
@@ -112,7 +112,7 @@ impl MemoryMonitor {
     async fn start_monitoring(&self) {
         let mut monitoring_active = self.monitoring_active.write().await;
         *monitoring_active = true;
-        
+
         // Start background monitoring task
         let current_usage = self.current_usage.clone();
         let peak_usage = self.peak_usage.clone();
@@ -123,13 +123,13 @@ impl MemoryMonitor {
         tokio::spawn(async move {
             while *monitoring_active_clone.read().await {
                 let usage = Self::get_current_memory_usage();
-                
+
                 // Update current usage
                 {
                     let mut current = current_usage.write().await;
                     *current = usage;
                 }
-                
+
                 // Update peak usage
                 {
                     let mut peak = peak_usage.write().await;
@@ -137,18 +137,18 @@ impl MemoryMonitor {
                         *peak = usage;
                     }
                 }
-                
+
                 // Record in history
                 {
                     let mut history = usage_history.lock().await;
                     history.push((Instant::now(), usage));
-                    
+
                     // Keep only recent history (last 1000 samples)
                     if history.len() > 1000 {
                         history.remove(0);
                     }
                 }
-                
+
                 tokio::time::sleep(interval).await;
             }
         });
@@ -192,7 +192,7 @@ impl MemoryMonitor {
                 }
             }
         }
-        
+
         // Fallback: return 0 if unable to determine
         0
     }
@@ -208,12 +208,9 @@ pub struct PerformanceAnalysisService {
 
 impl PerformanceAnalysisService {
     /// Create new performance analysis service
-    pub fn new(
-        metrics_collector: Arc<PerformanceMetricsCollector>,
-        config: MemoryConfig,
-    ) -> Self {
+    pub fn new(metrics_collector: Arc<PerformanceMetricsCollector>, config: MemoryConfig) -> Self {
         let memory_monitor = Arc::new(MemoryMonitor::new(config.clone()));
-        
+
         Self {
             metrics_collector,
             memory_monitor,
@@ -223,9 +220,7 @@ impl PerformanceAnalysisService {
     }
 
     /// Create new performance analysis service with default configuration
-    pub fn new_with_defaults(
-        metrics_collector: Arc<PerformanceMetricsCollector>
-    ) -> Self {
+    pub fn new_with_defaults(metrics_collector: Arc<PerformanceMetricsCollector>) -> Self {
         Self::new(metrics_collector, MemoryConfig::default())
     }
 
@@ -279,19 +274,19 @@ impl PerformanceAnalysisService {
         F: Future<Output = AnalysisResult<T>>,
     {
         let session = self.start_monitoring().await;
-        
+
         // Monitor memory usage during analysis
         let memory_check_task: tokio::task::JoinHandle<Result<(), String>> = {
             let memory_monitor = self.memory_monitor.clone();
             let session_id = session.session_id.clone();
-            
+
             tokio::spawn(async move {
                 loop {
                     if memory_monitor.memory_limit_exceeded().await {
                         warn!("Memory limit exceeded in session: {}", session_id);
                         return Err("Memory limit exceeded".to_string());
                     }
-                    
+
                     tokio::time::sleep(Duration::from_millis(500)).await;
                 }
             })
@@ -353,18 +348,22 @@ impl PerformanceAnalysisService {
     pub async fn generate_memory_report(&self) -> MemoryAnalysisReport {
         let current_usage = self.get_current_memory_usage().await;
         let peak_usage = self.get_peak_memory_usage().await;
-        
+
         MemoryAnalysisReport {
-            memory_limit_mb: self.config.memory_limit_bytes.unwrap_or(2048 * 1024 * 1024) / (1024 * 1024), // Convert to MB
+            memory_limit_mb: self.config.memory_limit_bytes.unwrap_or(2048 * 1024 * 1024)
+                / (1024 * 1024), // Convert to MB
             initial_memory_mb: 0, // TODO: Track initial memory
             final_memory_mb: current_usage / (1024 * 1024), // Convert to MB
             peak_memory_mb: peak_usage / (1024 * 1024), // Convert to MB
             analysis_duration: std::time::Duration::from_secs(0), // TODO: Track duration
-            memory_optimization_effective: peak_usage < self.config.memory_limit_bytes.unwrap_or(usize::MAX),
+            memory_optimization_effective: peak_usage
+                < self.config.memory_limit_bytes.unwrap_or(usize::MAX),
             memory_limit_exceeded: self.is_memory_limit_exceeded().await,
             scope_reduced: false, // TODO: Track scope reduction
             applied_strategies: vec!["Performance monitoring".to_string()],
-            recommendations: self.generate_memory_recommendations(current_usage, peak_usage).await,
+            recommendations: self
+                .generate_memory_recommendations(current_usage, peak_usage)
+                .await,
             phase_breakdowns: Vec::new(), // TODO: Track phase breakdowns
         }
     }
@@ -374,7 +373,7 @@ impl PerformanceAnalysisService {
     async fn generate_performance_report(&self, session: &MonitoringSession) -> PerformanceReport {
         let total_duration = session.start_time.elapsed();
         let session_metrics = session.session_metrics.lock().await;
-        
+
         let memory_usage = MemoryUsageReport {
             peak_usage_bytes: session_metrics.peak_memory_usage,
             average_usage_bytes: session_metrics.average_memory_usage,
@@ -386,7 +385,9 @@ impl PerformanceAnalysisService {
             },
         };
 
-        let recommendations = self.generate_recommendations(&session_metrics, &memory_usage).await;
+        let recommendations = self
+            .generate_recommendations(&session_metrics, &memory_usage)
+            .await;
 
         PerformanceReport {
             session_id: session.session_id.clone(),
@@ -399,21 +400,29 @@ impl PerformanceAnalysisService {
         }
     }
 
-    async fn generate_recommendations(&self, _metrics: &SessionMetrics, memory: &MemoryUsageReport) -> Vec<String> {
+    async fn generate_recommendations(
+        &self,
+        _metrics: &SessionMetrics,
+        memory: &MemoryUsageReport,
+    ) -> Vec<String> {
         let mut recommendations = Vec::new();
 
         if let Some(limit) = memory.limit_bytes {
             let usage_percent = (memory.peak_usage_bytes as f64 / limit as f64) * 100.0;
-            
+
             if usage_percent > 90.0 {
-                recommendations.push("Consider increasing memory limit or optimizing memory usage".to_string());
+                recommendations.push(
+                    "Consider increasing memory limit or optimizing memory usage".to_string(),
+                );
             } else if usage_percent > 75.0 {
                 recommendations.push("Monitor memory usage closely, approaching limit".to_string());
             }
         }
 
-        if memory.peak_usage_bytes > 1024 * 1024 * 1024 { // > 1GB
-            recommendations.push("Consider implementing incremental analysis for large codebases".to_string());
+        if memory.peak_usage_bytes > 1024 * 1024 * 1024 {
+            // > 1GB
+            recommendations
+                .push("Consider implementing incremental analysis for large codebases".to_string());
         }
 
         recommendations
@@ -422,14 +431,18 @@ impl PerformanceAnalysisService {
     async fn generate_memory_recommendations(&self, current: usize, peak: usize) -> Vec<String> {
         let mut recommendations = Vec::new();
 
-        if peak > 2 * 1024 * 1024 * 1024 { // > 2GB
+        if peak > 2 * 1024 * 1024 * 1024 {
+            // > 2GB
             recommendations.push("Consider using memory-optimized analysis settings".to_string());
         }
 
         if let Some(limit) = self.config.memory_limit_bytes {
             let usage_percent = (peak as f64 / limit as f64) * 100.0;
             if usage_percent > 80.0 {
-                recommendations.push("Memory usage is high, consider increasing limit or reducing analysis scope".to_string());
+                recommendations.push(
+                    "Memory usage is high, consider increasing limit or reducing analysis scope"
+                        .to_string(),
+                );
             }
         }
 
@@ -464,7 +477,7 @@ mod tests {
     #[tokio::test]
     async fn test_performance_service_creation() {
         let service = create_test_performance_service();
-        
+
         let active_sessions = service.get_active_sessions().await;
         assert!(active_sessions.is_empty());
     }
@@ -472,20 +485,20 @@ mod tests {
     #[tokio::test]
     async fn test_monitoring_session_lifecycle() {
         let service = create_test_performance_service();
-        
+
         // Start session
         let session = service.start_monitoring().await;
         assert!(!session.session_id.is_empty());
-        
+
         // Check active sessions
         let active_sessions = service.get_active_sessions().await;
         assert_eq!(active_sessions.len(), 1);
         assert!(active_sessions.contains(&session.session_id));
-        
+
         // Stop session
         let report = service.stop_monitoring(&session).await;
         assert_eq!(report.session_id, session.session_id);
-        
+
         // Check sessions cleared
         let active_sessions_after = service.get_active_sessions().await;
         assert!(active_sessions_after.is_empty());
@@ -494,10 +507,10 @@ mod tests {
     #[tokio::test]
     async fn test_memory_usage_tracking() {
         let service = create_test_performance_service();
-        
+
         let current_usage = service.get_current_memory_usage().await;
         let peak_usage = service.get_peak_memory_usage().await;
-        
+
         // Should be able to get memory readings (may be 0 on some systems)
         assert!(current_usage >= 0);
         assert!(peak_usage >= 0);
@@ -506,7 +519,7 @@ mod tests {
     #[tokio::test]
     async fn test_memory_limit_checking() {
         let service = create_test_performance_service();
-        
+
         // Should not exceed limit initially
         let exceeded = service.is_memory_limit_exceeded().await;
         assert!(!exceeded);
@@ -515,11 +528,11 @@ mod tests {
     #[tokio::test]
     async fn test_memory_report_generation() {
         let service = create_test_performance_service();
-        
+
         let report = service.generate_memory_report().await;
-    // Validate fields from MemoryAnalysisReport
-    assert!(report.memory_limit_mb >= 0);
-    assert!(report.final_memory_mb >= 0);
-    assert!(report.peak_memory_mb >= 0);
+        // Validate fields from MemoryAnalysisReport
+        assert!(report.memory_limit_mb >= 0);
+        assert!(report.final_memory_mb >= 0);
+        assert!(report.peak_memory_mb >= 0);
     }
 }

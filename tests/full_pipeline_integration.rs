@@ -13,7 +13,7 @@ mod tests {
     use std::io::Write;
     use std::process::Command;
     use tempfile::tempdir;
-    
+
     #[cfg(feature = "ai")]
     use std::time::Duration;
     #[cfg(feature = "ai")]

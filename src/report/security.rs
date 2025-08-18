@@ -111,16 +111,23 @@ impl ReportSecurityValidator {
 
         // Check for suspicious paths
         let suspicious_patterns = [
-            "/etc/", "/proc/", "/sys/", "/dev/",
-            "C:\\Windows\\", "C:\\Program Files\\",
-            "/usr/bin/", "/bin/", "/sbin/",
+            "/etc/",
+            "/proc/",
+            "/sys/",
+            "/dev/",
+            "C:\\Windows\\",
+            "C:\\Program Files\\",
+            "/usr/bin/",
+            "/bin/",
+            "/sbin/",
         ];
 
         for pattern in &suspicious_patterns {
             if path_str.contains(pattern) {
-                return Err(ReportSecurityError::InvalidPath(
-                    format!("Suspicious path pattern detected: {}", pattern),
-                ));
+                return Err(ReportSecurityError::InvalidPath(format!(
+                    "Suspicious path pattern detected: {}",
+                    pattern
+                )));
             }
         }
 
@@ -128,9 +135,10 @@ impl ReportSecurityValidator {
         if let Some(extension) = path.extension() {
             let ext_str = extension.to_string_lossy().to_lowercase();
             if !self.config.allowed_extensions.contains(&ext_str) {
-                return Err(ReportSecurityError::InvalidPath(
-                    format!("Disallowed file extension: {}", ext_str),
-                ));
+                return Err(ReportSecurityError::InvalidPath(format!(
+                    "Disallowed file extension: {}",
+                    ext_str
+                )));
             }
         }
 
@@ -141,17 +149,29 @@ impl ReportSecurityValidator {
     pub fn sanitize_mermaid_code(&self, mermaid_code: &str) -> Result<String, ReportSecurityError> {
         // Check for script injection patterns
         let dangerous_patterns = [
-            "<script", "</script>", "javascript:", "vbscript:",
-            "onload=", "onerror=", "onclick=", "onmouseover=",
-            "eval(", "Function(", "setTimeout(", "setInterval(",
-            "document.cookie", "window.location", "alert(",
+            "<script",
+            "</script>",
+            "javascript:",
+            "vbscript:",
+            "onload=",
+            "onerror=",
+            "onclick=",
+            "onmouseover=",
+            "eval(",
+            "Function(",
+            "setTimeout(",
+            "setInterval(",
+            "document.cookie",
+            "window.location",
+            "alert(",
         ];
 
         for pattern in &dangerous_patterns {
             if mermaid_code.to_lowercase().contains(pattern) {
-                return Err(ReportSecurityError::UnsafeContent(
-                    format!("Potentially dangerous pattern found: {}", pattern),
-                ));
+                return Err(ReportSecurityError::UnsafeContent(format!(
+                    "Potentially dangerous pattern found: {}",
+                    pattern
+                )));
             }
         }
 
@@ -160,7 +180,10 @@ impl ReportSecurityValidator {
     }
 
     /// Validate JSON report data structure for security issues
-    pub fn validate_json_structure(&self, json_data: &serde_json::Value) -> Result<(), ReportSecurityError> {
+    pub fn validate_json_structure(
+        &self,
+        json_data: &serde_json::Value,
+    ) -> Result<(), ReportSecurityError> {
         // Check for excessively deep nesting (potential DoS)
         if self.get_json_depth(json_data) > 50 {
             return Err(ReportSecurityError::UnsafeContent(
@@ -196,11 +219,20 @@ impl ReportSecurityValidator {
     /// Generate secure HTTP headers for report serving
     pub fn get_security_headers(&self) -> Vec<(String, String)> {
         vec![
-            ("Content-Security-Policy".to_string(), self.get_content_security_policy()),
+            (
+                "Content-Security-Policy".to_string(),
+                self.get_content_security_policy(),
+            ),
             ("X-Content-Type-Options".to_string(), "nosniff".to_string()),
             ("X-Frame-Options".to_string(), "DENY".to_string()),
-            ("Referrer-Policy".to_string(), "strict-origin-when-cross-origin".to_string()),
-            ("Permissions-Policy".to_string(), "geolocation=(), microphone=(), camera=()".to_string()),
+            (
+                "Referrer-Policy".to_string(),
+                "strict-origin-when-cross-origin".to_string(),
+            ),
+            (
+                "Permissions-Policy".to_string(),
+                "geolocation=(), microphone=(), camera=()".to_string(),
+            ),
         ]
     }
 
@@ -208,25 +240,36 @@ impl ReportSecurityValidator {
     fn detect_malicious_patterns(&self, content: &str) -> Result<(), ReportSecurityError> {
         let malicious_patterns = [
             // Script injection
-            "<script", "javascript:", "vbscript:",
+            "<script",
+            "javascript:",
+            "vbscript:",
             // Command injection
-            "; rm -rf", "| rm -rf", "&& rm -rf",
-            "; del", "| del", "&& del",
+            "; rm -rf",
+            "| rm -rf",
+            "&& rm -rf",
+            "; del",
+            "| del",
+            "&& del",
             // Path traversal
-            "../../../", "..\\..\\..\\",
+            "../../../",
+            "..\\..\\..\\",
             // SQL injection patterns
-            "'; DROP TABLE", "' OR '1'='1",
+            "'; DROP TABLE",
+            "' OR '1'='1",
             // XSS patterns
-            "document.cookie", "window.location",
-            "eval(", "Function(",
+            "document.cookie",
+            "window.location",
+            "eval(",
+            "Function(",
         ];
 
         let content_lower = content.to_lowercase();
         for pattern in &malicious_patterns {
             if content_lower.contains(pattern) {
-                return Err(ReportSecurityError::MaliciousContent(
-                    format!("Detected pattern: {}", pattern),
-                ));
+                return Err(ReportSecurityError::MaliciousContent(format!(
+                    "Detected pattern: {}",
+                    pattern
+                )));
             }
         }
 
@@ -252,10 +295,18 @@ impl ReportSecurityValidator {
     fn get_json_depth(&self, value: &serde_json::Value) -> usize {
         match value {
             serde_json::Value::Object(obj) => {
-                1 + obj.values().map(|v| self.get_json_depth(v)).max().unwrap_or(0)
+                1 + obj
+                    .values()
+                    .map(|v| self.get_json_depth(v))
+                    .max()
+                    .unwrap_or(0)
             }
             serde_json::Value::Array(arr) => {
-                1 + arr.iter().map(|v| self.get_json_depth(v)).max().unwrap_or(0)
+                1 + arr
+                    .iter()
+                    .map(|v| self.get_json_depth(v))
+                    .max()
+                    .unwrap_or(0)
             }
             _ => 0,
         }
@@ -266,9 +317,10 @@ impl ReportSecurityValidator {
         match value {
             serde_json::Value::Array(arr) => {
                 if arr.len() > 10000 {
-                    return Err(ReportSecurityError::UnsafeContent(
-                        format!("Array too large: {} elements", arr.len()),
-                    ));
+                    return Err(ReportSecurityError::UnsafeContent(format!(
+                        "Array too large: {} elements",
+                        arr.len()
+                    )));
                 }
                 // Recursively validate nested arrays
                 for item in arr {
@@ -290,7 +342,8 @@ impl ReportSecurityValidator {
         match value {
             serde_json::Value::String(s) => {
                 // Check string length
-                if s.len() > 1_000_000 { // 1MB limit per string
+                if s.len() > 1_000_000 {
+                    // 1MB limit per string
                     return Err(ReportSecurityError::UnsafeContent(
                         "String too large in JSON".to_string(),
                     ));
@@ -322,23 +375,33 @@ mod tests {
     #[test]
     fn test_path_traversal_detection() {
         let validator = ReportSecurityValidator::default();
-        
+
         // Should reject path traversal
-        assert!(validator.validate_output_path(&PathBuf::from("../../../etc/passwd")).is_err());
-        assert!(validator.validate_output_path(&PathBuf::from("..\\..\\..\\windows\\system32")).is_err());
-        
+        assert!(validator
+            .validate_output_path(&PathBuf::from("../../../etc/passwd"))
+            .is_err());
+        assert!(validator
+            .validate_output_path(&PathBuf::from("..\\..\\..\\windows\\system32"))
+            .is_err());
+
         // Should accept safe paths
-        assert!(validator.validate_output_path(&PathBuf::from("output/diagrams/graph.svg")).is_ok());
+        assert!(validator
+            .validate_output_path(&PathBuf::from("output/diagrams/graph.svg"))
+            .is_ok());
     }
 
     #[test]
     fn test_malicious_content_detection() {
         let validator = ReportSecurityValidator::default();
-        
+
         // Should detect script injection
-        assert!(validator.validate_content("<script>alert('xss')</script>").is_err());
-        assert!(validator.validate_content("javascript:alert('xss')").is_err());
-        
+        assert!(validator
+            .validate_content("<script>alert('xss')</script>")
+            .is_err());
+        assert!(validator
+            .validate_content("javascript:alert('xss')")
+            .is_err());
+
         // Should accept safe content
         assert!(validator.validate_content("This is safe content.").is_ok());
     }
@@ -346,21 +409,28 @@ mod tests {
     #[test]
     fn test_mermaid_sanitization() {
         let validator = ReportSecurityValidator::default();
-        
+
         // Should detect dangerous patterns
-        assert!(validator.sanitize_mermaid_code("graph TD\n  A[Start] --> B<script>alert('xss')</script>").is_err());
-        
+        assert!(validator
+            .sanitize_mermaid_code("graph TD\n  A[Start] --> B<script>alert('xss')</script>")
+            .is_err());
+
         // Should accept safe Mermaid
-        assert!(validator.sanitize_mermaid_code("graph TD\n  A[Start] --> B[End]").is_ok());
+        assert!(validator
+            .sanitize_mermaid_code("graph TD\n  A[Start] --> B[End]")
+            .is_ok());
     }
 
     #[test]
     fn test_content_sanitization() {
         let validator = ReportSecurityValidator::default();
-        
+
         let dirty_content = "<script>alert('xss')</script>";
         let clean_content = validator.sanitize_content(dirty_content);
-        
-        assert_eq!(clean_content, "&lt;script&gt;alert(&#x27;xss&#x27;)&lt;/script&gt;");
+
+        assert_eq!(
+            clean_content,
+            "&lt;script&gt;alert(&#x27;xss&#x27;)&lt;/script&gt;"
+        );
     }
 }

@@ -6,10 +6,10 @@
 //! The event bus allows components to communicate without direct dependencies,
 //! implementing the Observer pattern for loose coupling.
 
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::broadcast;
-use chrono::{DateTime, Utc};
 
 /// Central event bus for component communication
 ///
@@ -26,7 +26,7 @@ impl EventBus {
     pub fn new() -> Self {
         Self::with_capacity(1000)
     }
-    
+
     /// Create a new event bus with specified capacity
     pub fn with_capacity(capacity: usize) -> Self {
         let (sender, receiver) = broadcast::channel(capacity);
@@ -35,18 +35,19 @@ impl EventBus {
             _receiver: receiver,
         }
     }
-    
+
     /// Publish an event to all subscribers
     pub fn publish(&self, event: DomainEvent) -> Result<usize, EventError> {
-        self.sender.send(event)
+        self.sender
+            .send(event)
             .map_err(|_| EventError::NoSubscribers)
     }
-    
+
     /// Subscribe to events
     pub fn subscribe(&self) -> broadcast::Receiver<DomainEvent> {
         self.sender.subscribe()
     }
-    
+
     /// Get the number of active subscribers
     pub fn subscriber_count(&self) -> usize {
         self.sender.receiver_count()
@@ -64,16 +65,16 @@ impl Default for EventBus {
 pub enum DomainEvent {
     /// AST-related events
     Ast(AstEvent),
-    
+
     /// Analysis-related events
     Analysis(AnalysisEvent),
-    
+
     /// Security-related events
     Security(SecurityEvent),
-    
+
     /// Performance monitoring events
     Performance(PerformanceEvent),
-    
+
     /// Cache-related events
     Cache(CacheEvent),
 }
@@ -88,13 +89,13 @@ pub enum AstEvent {
         parse_duration: std::time::Duration,
         timestamp: DateTime<Utc>,
     },
-    
+
     /// Batch parsing started
     BatchParsingStarted {
         total_files: usize,
         timestamp: DateTime<Utc>,
     },
-    
+
     /// Batch parsing completed
     BatchParsingCompleted {
         successful: usize,
@@ -102,20 +103,20 @@ pub enum AstEvent {
         total_duration: std::time::Duration,
         timestamp: DateTime<Utc>,
     },
-    
+
     /// Parse error occurred
     ParseError {
         file_path: String,
         error: String,
         timestamp: DateTime<Utc>,
     },
-    
+
     /// AST cache hit
     CacheHit {
         file_path: String,
         timestamp: DateTime<Utc>,
     },
-    
+
     /// AST cache miss
     CacheMiss {
         file_path: String,
@@ -132,7 +133,7 @@ pub enum AnalysisEvent {
         target_path: String,
         timestamp: DateTime<Utc>,
     },
-    
+
     /// Analysis completed
     AnalysisCompleted {
         run_id: i64,
@@ -141,7 +142,7 @@ pub enum AnalysisEvent {
         duration: std::time::Duration,
         timestamp: DateTime<Utc>,
     },
-    
+
     /// Detector completed analysis
     DetectorCompleted {
         detector_name: String,
@@ -150,7 +151,7 @@ pub enum AnalysisEvent {
         duration: std::time::Duration,
         timestamp: DateTime<Utc>,
     },
-    
+
     /// Analysis error occurred
     AnalysisError {
         run_id: Option<i64>,
@@ -158,7 +159,7 @@ pub enum AnalysisEvent {
         context: String,
         timestamp: DateTime<Utc>,
     },
-    
+
     /// Issue detected
     IssueDetected {
         run_id: i64,
@@ -178,14 +179,14 @@ pub enum SecurityEvent {
         audit_type: String,
         timestamp: DateTime<Utc>,
     },
-    
+
     /// Security audit completed
     AuditCompleted {
         run_id: i64,
         vulnerabilities_found: usize,
         timestamp: DateTime<Utc>,
     },
-    
+
     /// Security violation detected
     ViolationDetected {
         run_id: i64,
@@ -194,7 +195,7 @@ pub enum SecurityEvent {
         file_path: String,
         timestamp: DateTime<Utc>,
     },
-    
+
     /// Access validation performed
     AccessValidated {
         file_path: String,
@@ -212,7 +213,7 @@ pub enum PerformanceEvent {
         available_mb: usize,
         timestamp: DateTime<Utc>,
     },
-    
+
     /// Performance metric recorded
     MetricRecorded {
         metric_name: String,
@@ -220,7 +221,7 @@ pub enum PerformanceEvent {
         unit: String,
         timestamp: DateTime<Utc>,
     },
-    
+
     /// Performance threshold exceeded
     ThresholdExceeded {
         metric_name: String,
@@ -239,14 +240,14 @@ pub enum CacheEvent {
         key: String,
         timestamp: DateTime<Utc>,
     },
-    
+
     /// Cache miss occurred
     CacheMiss {
         cache_type: String,
         key: String,
         timestamp: DateTime<Utc>,
     },
-    
+
     /// Cache invalidation
     CacheInvalidated {
         cache_type: String,
@@ -254,7 +255,7 @@ pub enum CacheEvent {
         reason: String,
         timestamp: DateTime<Utc>,
     },
-    
+
     /// Cache statistics update
     StatsUpdate {
         cache_type: String,
@@ -269,7 +270,7 @@ pub enum CacheEvent {
 pub struct AstData {
     /// Serialized syntax tree (JSON representation)
     pub syntax_tree: serde_json::Value,
-    
+
     /// AST metadata
     pub metadata: AstMetadata,
 }
@@ -279,16 +280,16 @@ pub struct AstData {
 pub struct AstMetadata {
     /// Programming language
     pub language: String,
-    
+
     /// Original file size in bytes
     pub file_size: u64,
-    
+
     /// Number of AST nodes
     pub node_count: usize,
-    
+
     /// Maximum tree depth
     pub depth: usize,
-    
+
     /// Parse success indicator
     pub is_valid: bool,
 }
@@ -298,13 +299,13 @@ pub struct AstMetadata {
 pub enum EventError {
     #[error("No subscribers to receive the event")]
     NoSubscribers,
-    
+
     #[error("Event channel closed")]
     ChannelClosed,
-    
+
     #[error("Serialization error: {0}")]
     SerializationError(String),
-    
+
     #[error("Event processing error: {0}")]
     ProcessingError(String),
 }
@@ -320,7 +321,7 @@ pub trait EventPublisher {
 pub trait EventSubscriber: Send + Sync {
     /// Handle a received domain event
     async fn handle_event(&self, event: DomainEvent) -> Result<(), EventError>;
-    
+
     /// Get the event types this subscriber is interested in
     fn interested_events(&self) -> Vec<&'static str>;
 }
@@ -339,7 +340,7 @@ impl AstEvent {
             timestamp: Utc::now(),
         }
     }
-    
+
     /// Create a parse error event
     pub fn parse_error(file_path: String, error: String) -> Self {
         Self::ParseError {
@@ -359,7 +360,7 @@ impl AnalysisEvent {
             timestamp: Utc::now(),
         }
     }
-    
+
     /// Create an analysis completed event
     pub fn analysis_completed(
         run_id: i64,
@@ -375,7 +376,7 @@ impl AnalysisEvent {
             timestamp: Utc::now(),
         }
     }
-    
+
     /// Create an issue detected event
     pub fn issue_detected(
         run_id: i64,
@@ -407,16 +408,16 @@ impl EventProcessor {
             handlers: Vec::new(),
         }
     }
-    
+
     /// Add an event handler
     pub fn add_handler(&mut self, handler: Box<dyn EventSubscriber>) {
         self.handlers.push(handler);
     }
-    
+
     /// Start processing events
     pub async fn start_processing(&mut self) -> Result<(), EventError> {
         let mut receiver = self.event_bus.subscribe();
-        
+
         loop {
             match receiver.recv().await {
                 Ok(event) => {
@@ -433,7 +434,7 @@ impl EventProcessor {
                 }
             }
         }
-        
+
         Ok(())
     }
 }

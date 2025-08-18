@@ -242,13 +242,18 @@ mod tests {
 
         // Test walker
         let walker = AsyncWalker::for_source_code();
-        let files: Result<Vec<_>, _> = tokio_stream::StreamExt::collect(walker.walk(temp_path)).await;
+        let files: Result<Vec<_>, _> =
+            tokio_stream::StreamExt::collect(walker.walk(temp_path)).await;
         let files = files.unwrap();
 
         assert_eq!(files.len(), 2);
         let names: Vec<String> = files
             .iter()
-            .filter_map(|p| p.file_name().and_then(|s| s.to_str()).map(|s| s.to_string()))
+            .filter_map(|p| {
+                p.file_name()
+                    .and_then(|s| s.to_str())
+                    .map(|s| s.to_string())
+            })
             .collect();
         assert!(names.contains(&"test.rs".to_string()));
         assert!(names.contains(&"test.py".to_string()));

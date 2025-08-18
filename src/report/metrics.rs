@@ -2,8 +2,8 @@
 //!
 //! Lightweight helpers to compute derived metrics from analysis findings.
 
-use std::collections::HashMap;
 use crate::database::models::ArchitecturalIssue;
+use std::collections::HashMap;
 
 /// Compute issues by severity (critical/high/medium/low) using case-insensitive matching.
 pub fn compute_issues_by_severity(issues: &[ArchitecturalIssue]) -> HashMap<String, usize> {
@@ -106,7 +106,9 @@ mod tests {
         assert!(compute_debt_score(&issues) >= 16);
 
         // Many issues cap at 100
-        let many: Vec<_> = (0..200).map(|i| mk_issue("high", &format!("f{i}"))).collect();
+        let many: Vec<_> = (0..200)
+            .map(|i| mk_issue("high", &format!("f{i}")))
+            .collect();
         assert_eq!(compute_debt_score(&many), 100);
     }
 

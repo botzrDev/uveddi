@@ -13,8 +13,8 @@ pub use performance_service::PerformanceAnalysisService;
 
 // Re-export common types used by services
 pub use crate::analysis::errors::AnalysisError;
-pub use crate::database::models::ArchitecturalIssue;
 pub use crate::analysis::graph::dependency::LocalDependencyGraph;
+pub use crate::database::models::ArchitecturalIssue;
 
 /// Common result type for all analysis services
 pub type AnalysisResult<T> = Result<T, AnalysisError>;
@@ -23,10 +23,10 @@ pub type AnalysisResult<T> = Result<T, AnalysisError>;
 pub trait ServiceConfiguration: Send + Sync {
     /// Get the cache directory path
     fn cache_dir(&self) -> Option<&std::path::Path>;
-    
+
     /// Get the maximum memory limit in bytes
     fn memory_limit(&self) -> Option<usize>;
-    
+
     /// Get the number of parallel workers
     fn parallel_workers(&self) -> usize;
 }
@@ -53,11 +53,11 @@ impl ServiceConfiguration for DefaultServiceConfig {
     fn cache_dir(&self) -> Option<&std::path::Path> {
         self.cache_dir.as_deref()
     }
-    
+
     fn memory_limit(&self) -> Option<usize> {
         self.memory_limit
     }
-    
+
     fn parallel_workers(&self) -> usize {
         self.parallel_workers
     }

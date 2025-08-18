@@ -5,6 +5,13 @@
 **/incremental/
 
 # IDE/editor settings
+# Rust build artifacts
+/target/
+**/*.rs.bk
+**/debug/
+**/incremental/
+
+# IDE/editor settings
 /.vscode/
 .idea/
 *.swp
@@ -90,3 +97,13 @@ alpha_testing/
 # Uncomment if config/ or plugins/ contain only generated or environment-specific files.
 # /config/
 # /plugins/
+
+# Coverage and profiler output (generated during tests)
+# Raw profiling outputs from LLVM/Profiler
+*.profraw
+# Coverage output dir and archives
+/coverage/
+/coverage/**
+/coverage/archive/
+/coverage/archive/**
+coverage_reports/

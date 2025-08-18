@@ -29,18 +29,18 @@
 
 // NOTE: UV-112, UV-115 - Layer boundary compliance confirmed July 2025. This module only interacts with the Application layer per architecture.
 
+use crate::core::logging::info;
 use anyhow::Context;
 use clap::Args;
-use crate::core::logging::info;
-use tracing::warn;
 use std::error::Error;
 use std::path::PathBuf;
 use sysinfo::System;
+use tracing::warn;
 
 use crate::application::{AnalysisConfig, AnalysisOrchestrator};
 use crate::error::UveddiError;
-use crate::security::{self, SecurityError};
 use crate::report::DiagramMode;
+use crate::security::{self, SecurityError};
 
 // Security functions are now available through the security module import above
 
@@ -180,7 +180,7 @@ pub struct AnalyzeCommand {
 
     /// Disable memory optimization features
     ///
-    /// By default, Uveddi uses memory optimization (object pooling, arena allocation, 
+    /// By default, Uveddi uses memory optimization (object pooling, arena allocation,
     /// and zero-copy AST caching) for better performance. Use this flag to disable optimizations.
     #[arg(long)]
     pub disable_memory_optimization: bool,
@@ -278,10 +278,10 @@ impl AnalyzeCommand {
     fn auto_detect_memory_limit() -> Option<f64> {
         let mut system = System::new_all();
         system.refresh_memory();
-        
+
         let total_memory_bytes = system.total_memory();
         let total_memory_gb = total_memory_bytes as f64 / (1024.0 * 1024.0 * 1024.0);
-        
+
         // Use conservative limits based on available RAM
         if total_memory_gb >= 16.0 {
             Some(8.0) // Use up to 8GB on systems with 16GB+ RAM
@@ -342,11 +342,16 @@ impl AnalyzeCommand {
         }
 
         if self.no_diagrams && (self.mermaid_only || self.enable_image_rendering) {
-            return Err("--no-diagrams cannot be used with --mermaid-only or --enable-image-rendering".to_string());
+            return Err(
+                "--no-diagrams cannot be used with --mermaid-only or --enable-image-rendering"
+                    .to_string(),
+            );
         }
 
         if self.diagram_output_dir.is_some() && !self.enable_image_rendering {
-            return Err("--diagram-output-dir can only be used with --enable-image-rendering".to_string());
+            return Err(
+                "--diagram-output-dir can only be used with --enable-image-rendering".to_string(),
+            );
         }
 
         Ok(())
@@ -381,8 +386,10 @@ impl AnalyzeCommand {
         if self.path.is_file() {
             if let Some(extension) = self.path.extension() {
                 let ext = extension.to_string_lossy().to_lowercase();
-                let supported_extensions = ["rs", "py", "js", "ts", "jsx", "tsx", "java", "cpp", "c", "h", "hpp"];
-                
+                let supported_extensions = [
+                    "rs", "py", "js", "ts", "jsx", "tsx", "java", "cpp", "c", "h", "hpp",
+                ];
+
                 if !supported_extensions.contains(&ext.as_str()) {
                     return Err(SecurityError::InvalidInput {
                         field: "path".to_string(),
@@ -399,16 +406,21 @@ impl AnalyzeCommand {
 
         // Check if directory is empty or contains no supported files (using recursive discovery)
         if self.path.is_dir() {
-            let has_supported_files = Self::discover_files_recursive(&self.path)?
-                .into_iter()
-                .any(|path| {
-                    if let Some(extension) = path.extension() {
-                        let ext = extension.to_string_lossy().to_lowercase();
-                        ["rs", "py", "js", "ts", "jsx", "tsx", "java", "cpp", "c", "h", "hpp"].contains(&ext.as_str())
-                    } else {
-                        false
-                    }
-                });
+            let has_supported_files =
+                Self::discover_files_recursive(&self.path)?
+                    .into_iter()
+                    .any(|path| {
+                        if let Some(extension) = path.extension() {
+                            let ext = extension.to_string_lossy().to_lowercase();
+                            [
+                                "rs", "py", "js", "ts", "jsx", "tsx", "java", "cpp", "c", "h",
+                                "hpp",
+                            ]
+                            .contains(&ext.as_str())
+                        } else {
+                            false
+                        }
+                    });
 
             if !has_supported_files {
                 return Err(SecurityError::InvalidInput {
@@ -428,7 +440,7 @@ impl AnalyzeCommand {
     pub fn validate_inputs(&self) -> Result<(), SecurityError> {
         // Comprehensive path validation with specific error messages
         self.validate_analysis_path()?;
-        
+
         // Validate path for security (SQL injection, etc.)
         let path_str = self.path.to_string_lossy();
         security::validate_input(&path_str, "path")?;
@@ -463,11 +475,21 @@ impl AnalyzeCommand {
         }
 
         if let Some(max_methods) = self.large_classes_max_methods {
-            security::validate_numeric_range(max_methods as i32, 1, 10_000, "large_classes_max_methods")?;
+            security::validate_numeric_range(
+                max_methods as i32,
+                1,
+                10_000,
+                "large_classes_max_methods",
+            )?;
         }
 
         if let Some(max_fields) = self.large_classes_max_fields {
-            security::validate_numeric_range(max_fields as i32, 1, 10_000, "large_classes_max_fields")?;
+            security::validate_numeric_range(
+                max_fields as i32,
+                1,
+                10_000,
+                "large_classes_max_fields",
+            )?;
         }
 
         if let Some(max_complexity) = self.large_classes_max_complexity {
@@ -485,12 +507,18 @@ impl AnalyzeCommand {
         }
 
         if let Some(min_severity) = self.large_classes_min_severity {
-            security::validate_numeric_range(min_severity as i32, 0, 100, "large_classes_min_severity")?;
+            security::validate_numeric_range(
+                min_severity as i32,
+                0,
+                100,
+                "large_classes_min_severity",
+            )?;
         }
 
         if let Some(memory_limit) = self.memory_limit_gb {
             let memory_int = (memory_limit * 10.0) as i32; // Convert to decidigabytes for int validation
-            security::validate_numeric_range(memory_int, 1, 1000, "memory_limit_gb")?; // 0.1 GB to 100 GB
+            security::validate_numeric_range(memory_int, 1, 1000, "memory_limit_gb")?;
+            // 0.1 GB to 100 GB
         }
 
         // Validate memory profile if specified
@@ -661,7 +689,7 @@ impl AnalyzeCommand {
     /// ```
     pub async fn execute(&self) -> Result<(), UveddiError> {
         info!("Starting analysis of: {}", self.path.display());
-        
+
         // Set up progress reporting for large codebases
         let enable_progress_reporting = self.timeout > 60; // Enable for analyses longer than 1 minute
         if enable_progress_reporting {
@@ -721,7 +749,7 @@ impl AnalyzeCommand {
 
         // Execute analysis through application layer with timeout
         let analysis_future = orchestrator.execute_analysis(config);
-        
+
         // Start progress monitoring task for large codebases
         let progress_handle = if enable_progress_reporting {
             let analysis_path = self.path.clone();
@@ -735,10 +763,13 @@ impl AnalyzeCommand {
         } else {
             None
         };
-        
+
         let report = if self.timeout > 0 {
             // Execute with timeout and graceful degradation
-            info!("Analysis timeout set to {} seconds with graceful degradation enabled", self.timeout);
+            info!(
+                "Analysis timeout set to {} seconds with graceful degradation enabled",
+                self.timeout
+            );
             match tokio::time::timeout(
                 std::time::Duration::from_secs(self.timeout),
                 analysis_future,
@@ -761,7 +792,7 @@ impl AnalyzeCommand {
                         },
                         _ => "Analysis failed"
                     };
-                    
+
                     if self.verbose {
                         tracing::error!("🔍 {}: {:#}", specific_error, e);
                         if let Some(backtrace) = e.source() {
@@ -775,7 +806,7 @@ impl AnalyzeCommand {
                 Err(_) => {
                     // Implement graceful degradation on timeout
                     warn!("Analysis timed out after {} seconds. Attempting graceful degradation...", self.timeout);
-                    
+
                     // Try with reduced scope and timeouts
                     let degraded_config = AnalysisConfig {
                         target_path: self.path.clone(),
@@ -784,13 +815,13 @@ impl AnalyzeCommand {
                         enable_ai: false,  // Disable AI for faster analysis
                         ollama_api_url: None,
                         ollama_model: None,
-                        
+
                         // Dead code detection configs (reduced scope)
                         dead_code_confidence: Some(0.9),  // Higher confidence for faster processing
                         dead_code_library_mode: false,
                         dead_code_ignore_patterns: None,
                         dead_code_keep_alive: None,
-                        
+
                         // Large classes configs (more restrictive)
                         large_classes_max_loc: Some(500),  // Reduced from default
                         large_classes_max_methods: Some(self.large_classes_max_loc.unwrap_or(20)),
@@ -799,7 +830,7 @@ impl AnalyzeCommand {
                         large_classes_max_lcom: Some(0.8),
                         large_classes_ignore_patterns: None,
                         large_classes_min_severity: self.large_classes_min_severity,
-                        
+
                         #[cfg(feature = "memory-optimization")]
                         memory_optimization: None,
                         enable_memory_optimization: false,  // Disable for faster analysis
@@ -807,10 +838,10 @@ impl AnalyzeCommand {
                         memory_profile: Some("small".to_string()),
                         timeout_seconds: 60,  // Reduced timeout for degraded analysis
                     };
-                    
+
                     info!("🔄 Retrying analysis with degraded settings: max 100 files, 15s per detector");
                     let degraded_future = orchestrator.execute_analysis(degraded_config);
-                    
+
                     match tokio::time::timeout(
                         std::time::Duration::from_secs(60),
                         degraded_future,
@@ -842,26 +873,34 @@ impl AnalyzeCommand {
                 let specific_error = match e {
                     ref err if err.to_string().contains("database") => {
                         "Database storage failed - check schema compatibility and disk space"
-                    },
-                    ref err if err.to_string().contains("parse") || err.to_string().contains("AST") => {
+                    }
+                    ref err
+                        if err.to_string().contains("parse") || err.to_string().contains("AST") =>
+                    {
                         "Code parsing failed - verify file syntax and language support"
-                    },
+                    }
                     ref err if err.to_string().contains("memory") => {
                         "Memory limit exceeded - reduce analysis scope or increase memory limits"
-                    },
-                    ref err if err.to_string().contains("permission") || err.to_string().contains("access") => {
+                    }
+                    ref err
+                        if err.to_string().contains("permission")
+                            || err.to_string().contains("access") =>
+                    {
                         "File access denied - check file permissions and access rights"
-                    },
-                    _ => "Analysis failed"
+                    }
+                    _ => "Analysis failed",
                 };
-                
+
                 if self.verbose {
                     tracing::error!("🔍 {}: {:#}", specific_error, e);
                     if let Some(backtrace) = e.source() {
                         tracing::error!("🔧 Stack trace: {:?}", backtrace);
                     }
                 } else {
-                    tracing::error!("{}. Use --verbose for detailed error information.", specific_error);
+                    tracing::error!(
+                        "{}. Use --verbose for detailed error information.",
+                        specific_error
+                    );
                 }
                 e
             })?
@@ -886,10 +925,12 @@ impl AnalyzeCommand {
         );
 
         // Print colorful summary to stdout for user
-        let output_info = self.output.as_ref()
+        let output_info = self
+            .output
+            .as_ref()
             .map(|p| p.to_string_lossy().to_string())
             .unwrap_or_else(|| "stdout".to_string());
-            
+
         if report.metadata.issues_found > 0 {
             println!("\n📊 Analysis Summary:");
             println!("  • Files analyzed: {}", report.metadata.files_analyzed);
@@ -909,27 +950,29 @@ impl AnalyzeCommand {
 
     /// Recursively discover files in a directory, respecting .gitignore patterns
     /// and handling symlinks safely.
-    pub fn discover_files_recursive(dir: &std::path::Path) -> Result<Vec<std::path::PathBuf>, SecurityError> {
-        use walkdir::WalkDir;
+    pub fn discover_files_recursive(
+        dir: &std::path::Path,
+    ) -> Result<Vec<std::path::PathBuf>, SecurityError> {
         use ignore::WalkBuilder;
         use std::collections::HashSet;
+        use walkdir::WalkDir;
 
         let mut discovered_files = Vec::new();
         let mut visited_inodes = HashSet::new();
 
         // Use ignore crate for proper gitignore support
         let walker = WalkBuilder::new(dir)
-            .standard_filters(true)  // Enable .gitignore, .ignore, etc.
-            .hidden(false)          // Include hidden files/dirs (let gitignore decide)
-            .follow_links(false)    // Don't follow symlinks to prevent infinite loops
-            .max_depth(Some(100))   // Reasonable depth limit to prevent runaway traversal
+            .standard_filters(true) // Enable .gitignore, .ignore, etc.
+            .hidden(false) // Include hidden files/dirs (let gitignore decide)
+            .follow_links(false) // Don't follow symlinks to prevent infinite loops
+            .max_depth(Some(100)) // Reasonable depth limit to prevent runaway traversal
             .build();
 
         for result in walker {
             match result {
                 Ok(entry) => {
                     let path = entry.path();
-                    
+
                     // Skip directories
                     if !path.is_file() {
                         continue;
@@ -969,7 +1012,7 @@ impl AnalyzeCommand {
         // This handles cases where .gitignore might be too restrictive
         if discovered_files.is_empty() {
             warn!("No files found with gitignore filtering, falling back to basic discovery");
-            
+
             for entry in WalkDir::new(dir)
                 .follow_links(false)
                 .max_depth(50)
@@ -979,15 +1022,16 @@ impl AnalyzeCommand {
                 if entry.file_type().is_file() {
                     // Basic filtering - skip common non-source directories
                     let path_str = entry.path().to_string_lossy();
-                    if path_str.contains("/.git/") || 
-                       path_str.contains("/target/") ||
-                       path_str.contains("/node_modules/") ||
-                       path_str.contains("/__pycache__/") ||
-                       path_str.contains("/build/") ||
-                       path_str.contains("/dist/") {
+                    if path_str.contains("/.git/")
+                        || path_str.contains("/target/")
+                        || path_str.contains("/node_modules/")
+                        || path_str.contains("/__pycache__/")
+                        || path_str.contains("/build/")
+                        || path_str.contains("/dist/")
+                    {
                         continue;
                     }
-                    
+
                     discovered_files.push(entry.path().to_path_buf());
                 }
             }

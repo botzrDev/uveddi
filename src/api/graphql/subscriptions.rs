@@ -1,9 +1,9 @@
 //! GraphQL subscriptions for real-time updates
 
-use async_graphql::{Subscription, Context, Result, ID};
+use async_graphql::{Context, Result, Subscription, ID};
 use futures_util::{Stream, StreamExt};
-use tokio::sync::broadcast;
 use std::sync::Arc;
+use tokio::sync::broadcast;
 
 use super::context::GraphQLContext;
 use super::types::*;
@@ -40,7 +40,11 @@ impl EventBroadcaster {
     }
 
     /// Publish an analysis progress update
-    pub fn publish_analysis_progress(&self, analysis_run_id: i64, progress: AnalysisProgressUpdate) {
+    pub fn publish_analysis_progress(
+        &self,
+        analysis_run_id: i64,
+        progress: AnalysisProgressUpdate,
+    ) {
         let _ = self.sender.send(SubscriptionEvent::AnalysisProgress {
             analysis_run_id,
             progress,
@@ -49,14 +53,17 @@ impl EventBroadcaster {
 
     /// Publish a new issue detection
     pub fn publish_new_issue(&self, project_id: i64, issue: ArchitecturalIssue) {
-        let _ = self.sender.send(SubscriptionEvent::NewIssue {
-            project_id,
-            issue,
-        });
+        let _ = self
+            .sender
+            .send(SubscriptionEvent::NewIssue { project_id, issue });
     }
 
     /// Publish performance metrics update
-    pub fn publish_performance_metrics(&self, analysis_run_id: i64, metrics: ComponentPerformanceMetrics) {
+    pub fn publish_performance_metrics(
+        &self,
+        analysis_run_id: i64,
+        metrics: ComponentPerformanceMetrics,
+    ) {
         let _ = self.sender.send(SubscriptionEvent::PerformanceMetrics {
             analysis_run_id,
             metrics,
@@ -92,20 +99,26 @@ impl SubscriptionRoot {
     ) -> Result<impl Stream<Item = AnalysisProgressUpdate>> {
         let context = ctx.data::<GraphQLContext>()?;
         let broadcaster = ctx.data::<Arc<EventBroadcaster>>()?;
-        
-        let run_id: i64 = analysis_run_id.parse()
+
+        let run_id: i64 = analysis_run_id
+            .parse()
             .map_err(|_| async_graphql::Error::new("Invalid analysis run ID"))?;
 
         let receiver = broadcaster.subscribe();
-        
-        Ok(tokio_stream::wrappers::BroadcastStream::new(receiver)
-            .filter_map(move |event| async move {
-                match event {
-                    Ok(SubscriptionEvent::AnalysisProgress { analysis_run_id, progress }) 
-                        if analysis_run_id == run_id => Some(progress),
-                    _ => None,
-                }
-            }))
+
+        Ok(
+            tokio_stream::wrappers::BroadcastStream::new(receiver).filter_map(
+                move |event| async move {
+                    match event {
+                        Ok(SubscriptionEvent::AnalysisProgress {
+                            analysis_run_id,
+                            progress,
+                        }) if analysis_run_id == run_id => Some(progress),
+                        _ => None,
+                    }
+                },
+            ),
+        )
     }
 
     /// Subscribe to new issues detected for a specific project
@@ -116,20 +129,27 @@ impl SubscriptionRoot {
     ) -> Result<impl Stream<Item = ArchitecturalIssue>> {
         let context = ctx.data::<GraphQLContext>()?;
         let broadcaster = ctx.data::<Arc<EventBroadcaster>>()?;
-        
-        let proj_id: i64 = project_id.parse()
+
+        let proj_id: i64 = project_id
+            .parse()
             .map_err(|_| async_graphql::Error::new("Invalid project ID"))?;
 
         let receiver = broadcaster.subscribe();
-        
-        Ok(tokio_stream::wrappers::BroadcastStream::new(receiver)
-            .filter_map(move |event| async move {
-                match event {
-                    Ok(SubscriptionEvent::NewIssue { project_id, issue }) 
-                        if project_id == proj_id => Some(issue),
-                    _ => None,
-                }
-            }))
+
+        Ok(
+            tokio_stream::wrappers::BroadcastStream::new(receiver).filter_map(
+                move |event| async move {
+                    match event {
+                        Ok(SubscriptionEvent::NewIssue { project_id, issue })
+                            if project_id == proj_id =>
+                        {
+                            Some(issue)
+                        }
+                        _ => None,
+                    }
+                },
+            ),
+        )
     }
 
     /// Subscribe to performance metrics updates for a specific analysis run
@@ -140,20 +160,26 @@ impl SubscriptionRoot {
     ) -> Result<impl Stream<Item = ComponentPerformanceMetrics>> {
         let context = ctx.data::<GraphQLContext>()?;
         let broadcaster = ctx.data::<Arc<EventBroadcaster>>()?;
-        
-        let run_id: i64 = analysis_run_id.parse()
+
+        let run_id: i64 = analysis_run_id
+            .parse()
             .map_err(|_| async_graphql::Error::new("Invalid analysis run ID"))?;
 
         let receiver = broadcaster.subscribe();
-        
-        Ok(tokio_stream::wrappers::BroadcastStream::new(receiver)
-            .filter_map(move |event| async move {
-                match event {
-                    Ok(SubscriptionEvent::PerformanceMetrics { analysis_run_id, metrics }) 
-                        if analysis_run_id == run_id => Some(metrics),
-                    _ => None,
-                }
-            }))
+
+        Ok(
+            tokio_stream::wrappers::BroadcastStream::new(receiver).filter_map(
+                move |event| async move {
+                    match event {
+                        Ok(SubscriptionEvent::PerformanceMetrics {
+                            analysis_run_id,
+                            metrics,
+                        }) if analysis_run_id == run_id => Some(metrics),
+                        _ => None,
+                    }
+                },
+            ),
+        )
     }
 
     /// Subscribe to cache statistics updates
@@ -162,14 +188,15 @@ impl SubscriptionRoot {
         let broadcaster = ctx.data::<Arc<EventBroadcaster>>()?;
 
         let receiver = broadcaster.subscribe();
-        
-        Ok(tokio_stream::wrappers::BroadcastStream::new(receiver)
-            .filter_map(|event| async move {
+
+        Ok(
+            tokio_stream::wrappers::BroadcastStream::new(receiver).filter_map(|event| async move {
                 match event {
                     Ok(SubscriptionEvent::CacheStats { stats }) => Some(stats),
                     _ => None,
                 }
-            }))
+            }),
+        )
     }
 }
 

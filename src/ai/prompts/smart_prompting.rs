@@ -36,43 +36,74 @@ impl SmartPromptBuilder {
     /// Build a prompt for analyzing multiple architectural issues
     pub fn build_issue_analysis_prompt(&self, issues: &[ArchitecturalIssue]) -> String {
         let mut prompt = String::new();
-        
+
         // Start with the system prompt
         writeln!(&mut prompt, "You are an expert software architect specializing in code quality and design patterns. \
                               You will analyze a set of architectural issues detected in a codebase and provide insights.").unwrap();
-        writeln!(&mut prompt, "\nProvide specific, actionable insights for each issue. Include:").unwrap();
+        writeln!(
+            &mut prompt,
+            "\nProvide specific, actionable insights for each issue. Include:"
+        )
+        .unwrap();
         writeln!(&mut prompt, "1. Root cause analysis").unwrap();
         writeln!(&mut prompt, "2. Potential impact on the codebase").unwrap();
         writeln!(&mut prompt, "3. Recommended solution approach").unwrap();
         writeln!(&mut prompt, "4. Best practices to prevent similar issues\n").unwrap();
-        
+
         // Add issue details
         writeln!(&mut prompt, "## ARCHITECTURAL ISSUES TO ANALYZE:\n").unwrap();
-        
+
         for (i, issue) in issues.iter().enumerate() {
-            writeln!(&mut prompt, "ISSUE #{} (ID: {})", i+1, issue.issue_id.unwrap_or(0)).unwrap();
-            writeln!(&mut prompt, "Type: anti_pattern_{}", issue.anti_pattern_type_id).unwrap();
+            writeln!(
+                &mut prompt,
+                "ISSUE #{} (ID: {})",
+                i + 1,
+                issue.issue_id.unwrap_or(0)
+            )
+            .unwrap();
+            writeln!(
+                &mut prompt,
+                "Type: anti_pattern_{}",
+                issue.anti_pattern_type_id
+            )
+            .unwrap();
             writeln!(&mut prompt, "Severity: {}", issue.severity).unwrap();
             writeln!(&mut prompt, "File: {}", issue.file_path).unwrap();
             writeln!(&mut prompt, "Description: {}", issue.description).unwrap();
-            
+
             if let Some(ref snippet) = issue.code_snippet {
                 writeln!(&mut prompt, "Code Snippet:").unwrap();
                 writeln!(&mut prompt, "```").unwrap();
                 writeln!(&mut prompt, "{}", snippet).unwrap();
                 writeln!(&mut prompt, "```").unwrap();
             }
-            
+
             writeln!(&mut prompt).unwrap();
         }
-        
+
         // Add analysis instructions
         writeln!(&mut prompt, "## ANALYSIS INSTRUCTIONS:").unwrap();
-        writeln!(&mut prompt, "- Provide insights that go beyond the obvious description").unwrap();
-        writeln!(&mut prompt, "- Consider architectural implications and broader impact").unwrap();
-        writeln!(&mut prompt, "- If you detect patterns across issues, mention them").unwrap();
-        writeln!(&mut prompt, "- Format your response as clearly separated insights").unwrap();
-        
+        writeln!(
+            &mut prompt,
+            "- Provide insights that go beyond the obvious description"
+        )
+        .unwrap();
+        writeln!(
+            &mut prompt,
+            "- Consider architectural implications and broader impact"
+        )
+        .unwrap();
+        writeln!(
+            &mut prompt,
+            "- If you detect patterns across issues, mention them"
+        )
+        .unwrap();
+        writeln!(
+            &mut prompt,
+            "- Format your response as clearly separated insights"
+        )
+        .unwrap();
+
         prompt
     }
 

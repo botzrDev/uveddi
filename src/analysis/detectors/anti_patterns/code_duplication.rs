@@ -17,19 +17,19 @@
 
 use crate::analysis::{AnalysisDetector, AnalysisError};
 use crate::ast::tree_sitter::{Query, QueryCursor};
+#[cfg(not(feature = "tree-sitter"))]
+use crate::ast::tree_sitter::{StreamingIterator, TreeCursor};
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
+use crate::core::logging::{debug, info, warn};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use crate::error::UveddiError;
 use async_trait::async_trait;
-use crate::core::logging::{debug, info, warn};
 use rayon::prelude::*;
 use sha2::{Digest, Sha256};
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
 #[cfg(feature = "tree-sitter")]
 use tree_sitter::{StreamingIterator, TreeCursor};
-#[cfg(not(feature = "tree-sitter"))]
-use crate::ast::tree_sitter::{StreamingIterator, TreeCursor};
 
 /// Represents a contiguous block of code extracted for duplication analysis.
 ///
@@ -194,17 +194,17 @@ impl Default for DuplicationConfig {
             ignore_literals: true, // Normalize literals for Type-2 detection
 
             // NEW: Conservative defaults for semantic analysis (disabled for performance)
-            enable_cfg_analysis: false,  // CHANGED: Disabled by default
-            enable_semantic_features: false,  // CHANGED: Disabled by default
+            enable_cfg_analysis: false, // CHANGED: Disabled by default
+            enable_semantic_features: false, // CHANGED: Disabled by default
             cfg_similarity_weight: 0.3,
             semantic_similarity_threshold: 0.75,
             wl_kernel_iterations: 3,
             max_cfg_nodes: 1000,
 
             // NEW: Performance controls for production use
-            max_clone_pairs_per_file: 50,  // Limit clone pairs per file
-            max_blocks_per_file: 100,      // Limit blocks per file
-            enable_fast_mode: false,       // Enable for large codebases
+            max_clone_pairs_per_file: 50, // Limit clone pairs per file
+            max_blocks_per_file: 100,     // Limit blocks per file
+            enable_fast_mode: false,      // Enable for large codebases
             max_processing_time_seconds: 30, // 30 second timeout per file
         }
     }
@@ -751,8 +751,8 @@ impl CodeDuplicationDetector {
             ));
 
             let mut issue = ArchitecturalIssue::new(
-                0,      // analysis_run_id - Will be set by the engine
-                1,      // anti_pattern_type_id - Code duplication type ID  
+                0,                                   // analysis_run_id - Will be set by the engine
+                1,                             // anti_pattern_type_id - Code duplication type ID
                 pair.block1.file_path.clone(), // file_path
                 Some(pair.block1.start_line as i32), // line_number
                 format!(
@@ -760,10 +760,10 @@ impl CodeDuplicationDetector {
                     pair.block1.end_line - pair.block1.start_line + 1
                 ), // message
                 "CodeDuplicationDetector".to_string(), // detector_name
-                severity.to_string(), // severity
-                description, // description
+                severity.to_string(),          // severity
+                description,                   // description
             );
-            
+
             // Set additional fields
             issue.start_line = Some(pair.block1.start_line as i32);
             issue.end_line = Some(pair.block1.end_line as i32);
@@ -919,7 +919,10 @@ impl AnalysisDetector for CodeDuplicationDetector {
         // Find clone pairs - with timeout protection and early exit
         let mut clone_pairs = if blocks.len() > 20 && !self.config.enable_fast_mode {
             debug!("Using parallel clone detection for {} blocks", blocks.len());
-            self.find_clone_candidates_parallel_with_timeout(&blocks, timeout - start_time.elapsed())
+            self.find_clone_candidates_parallel_with_timeout(
+                &blocks,
+                timeout - start_time.elapsed(),
+            )
         } else {
             debug!(
                 "Using sequential clone detection for {} blocks",
@@ -951,13 +954,17 @@ impl AnalysisDetector for CodeDuplicationDetector {
                 );
 
                 // PERFORMANCE: Limit candidate processing
-                let max_candidates = if self.config.enable_fast_mode { 5 } else { candidates.len() };
+                let max_candidates = if self.config.enable_fast_mode {
+                    5
+                } else {
+                    candidates.len()
+                };
                 for candidate in candidates.into_iter().take(max_candidates) {
                     // Enhanced verification with semantic analysis
                     if let Some(clone_pair) = self.verify_clone_pair_enhanced(block, &candidate) {
                         debug!("Verified clone pair: {} similarity", clone_pair.similarity);
                         clone_pairs.push(clone_pair);
-                        
+
                         // PERFORMANCE: Early exit if we have enough
                         if clone_pairs.len() >= self.config.max_clone_pairs_per_file {
                             break;
@@ -1088,7 +1095,11 @@ impl CodeDuplicationDetector {
                     block,
                     parsed_file.source.as_bytes(),
                 ) {
-                    match analyzer.extract_features(cfg, &function_node, parsed_file.source.as_str()) {
+                    match analyzer.extract_features(
+                        cfg,
+                        &function_node,
+                        parsed_file.source.as_str(),
+                    ) {
                         Ok(features) => {
                             block.semantic_features = Some(features);
                             debug!(
@@ -1365,66 +1376,79 @@ impl CodeDuplicationDetector {
     }
 
     /// Process clone candidate verification in parallel with timeout
-    fn find_clone_candidates_parallel_with_timeout(&self, blocks: &[CodeBlock], remaining_time: std::time::Duration) -> Vec<ClonePair> {
+    fn find_clone_candidates_parallel_with_timeout(
+        &self,
+        blocks: &[CodeBlock],
+        remaining_time: std::time::Duration,
+    ) -> Vec<ClonePair> {
         use std::time::Instant;
         let start = Instant::now();
-        
+
         // Limit the number of blocks processed in parallel to prevent timeout
-        let max_blocks = if remaining_time.as_secs() < 10 { 
-            10  // Very limited processing for low time
-        } else { 
-            blocks.len().min(50)  // Cap at 50 blocks for parallel processing
+        let max_blocks = if remaining_time.as_secs() < 10 {
+            10 // Very limited processing for low time
+        } else {
+            blocks.len().min(50) // Cap at 50 blocks for parallel processing
         };
-        
+
         let limited_blocks = &blocks[..max_blocks.min(blocks.len())];
-        
+
         // Use sequential processing with manual timeout checking for better control
         let mut results = Vec::new();
         for block in limited_blocks {
             // Check timeout before processing each block
             if start.elapsed() >= remaining_time {
-                warn!("Parallel clone detection reached timeout with {} pairs found", results.len());
+                warn!(
+                    "Parallel clone detection reached timeout with {} pairs found",
+                    results.len()
+                );
                 break;
             }
 
             let candidates = self.find_clone_candidates(block);
             let limited_candidates = if remaining_time.as_secs() < 5 {
-                candidates.into_iter().take(3).collect::<Vec<_>>()  // Very limited for low time
+                candidates.into_iter().take(3).collect::<Vec<_>>() // Very limited for low time
             } else {
                 candidates.into_iter().take(10).collect::<Vec<_>>() // Normal limit
             };
-            
+
             let mut block_pairs = 0;
             for candidate in limited_candidates {
                 if let Some(clone_pair) = self.verify_clone_pair_enhanced(block, &candidate) {
                     results.push(clone_pair);
                     block_pairs += 1;
-                    
+
                     // Limit pairs per block
                     if block_pairs >= 5 {
                         break;
                     }
-                    
+
                     // Global limit
                     if results.len() >= self.config.max_clone_pairs_per_file {
                         break;
                     }
                 }
             }
-            
+
             // Global limit check
             if results.len() >= self.config.max_clone_pairs_per_file {
                 break;
             }
         }
-            
+
         if start.elapsed() >= remaining_time {
-            warn!("Clone detection reached timeout with {} pairs found", results.len());
+            warn!(
+                "Clone detection reached timeout with {} pairs found",
+                results.len()
+            );
         } else {
-            debug!("Clone detection completed in {}ms with {} pairs", 
-                   start.elapsed().as_millis(), results.len());
+            debug!(
+                "Clone detection completed in {}ms with {} pairs",
+                start.elapsed().as_millis(),
+                results.len()
+            );
         }
-        
+
         results
     }
 

@@ -672,8 +672,10 @@ impl LeakyAbstractionDetector {
                                             self.get_layer_name_string(&current_layer)
                                         ),
                                     );
-                                    issue.start_line = Some(capture.node.start_position().row as i32 + 1);
-                                    issue.end_line = Some(capture.node.end_position().row as i32 + 1);
+                                    issue.start_line =
+                                        Some(capture.node.start_position().row as i32 + 1);
+                                    issue.end_line =
+                                        Some(capture.node.end_position().row as i32 + 1);
                                     issue.code_snippet = Some(capture_text.to_string());
                                     issues.push(issue);
                                 }
@@ -869,7 +871,9 @@ impl AnalysisDetector for LeakyAbstractionDetector {
     ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         #[cfg(not(feature = "tree-sitter"))]
         {
-            tracing::debug!("Tree-sitter feature not enabled, skipping leaky abstraction detection");
+            tracing::debug!(
+                "Tree-sitter feature not enabled, skipping leaky abstraction detection"
+            );
             return Ok(Vec::new());
         }
         #[cfg(feature = "tree-sitter")]

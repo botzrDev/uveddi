@@ -68,7 +68,7 @@ async fn test_jwt_timing_consistency() {
 #[tokio::test]
 async fn test_constant_time_comparison() {
     use uveddi::security::authentication::AuthenticationService;
-    
+
     // This tests the constant_time_compare function indirectly through API key verification
     let config = AuthenticationConfig::default();
     let secret_store = std::sync::Arc::new(MockSecretStore::new());
@@ -95,16 +95,23 @@ async fn test_constant_time_comparison() {
 
     // Result1 should succeed (valid key for service account)
     // Result2 should fail (invalid key)
-    assert!(result1.is_ok(), "Valid API key should succeed for service accounts");
+    assert!(
+        result1.is_ok(),
+        "Valid API key should succeed for service accounts"
+    );
     assert!(result2.is_err(), "Invalid API key should fail");
-    
+
     // The key with correct hash should take longer (gets to user loading)
     // The key with wrong hash should fail faster (at crypto verification)
     // But both should still be in reasonable range due to argon2 timing
 
     // Time difference should be minimal for argon2 verification
-    let time_diff = if time1 > time2 { time1 - time2 } else { time2 - time1 };
-    
+    let time_diff = if time1 > time2 {
+        time1 - time2
+    } else {
+        time2 - time1
+    };
+
     // Argon2 should provide natural timing resistance, but we allow some variance
     assert!(
         time_diff < Duration::from_millis(100),
@@ -249,9 +256,7 @@ async fn test_session_security() {
         .unwrap();
 
     // Should fail validation after revocation
-    let result = auth_service
-        .validate_session(&session.session_token)
-        .await;
+    let result = auth_service.validate_session(&session.session_token).await;
     assert!(result.is_err());
 }
 
@@ -275,7 +280,10 @@ async fn test_api_key_security() {
 
     // Test authentication (should succeed for service accounts)
     let result = auth_service.authenticate_api_key(&api_key).await;
-    assert!(result.is_ok(), "API key authentication should succeed for service accounts");
+    assert!(
+        result.is_ok(),
+        "API key authentication should succeed for service accounts"
+    );
 
     // Test invalid format
     let invalid_keys = vec![
@@ -302,9 +310,9 @@ async fn test_api_key_security() {
 // Mock secret store for testing
 mod mock_secret_store {
     use super::*;
-    use uveddi::security::{errors::SecurityResult, secrets::SecretStore};
     use std::collections::HashMap;
     use tokio::sync::RwLock;
+    use uveddi::security::{errors::SecurityResult, secrets::SecretStore};
 
     pub struct MockSecretStore {
         secrets: RwLock<HashMap<String, String>>,
@@ -313,7 +321,10 @@ mod mock_secret_store {
     impl MockSecretStore {
         pub fn new() -> Self {
             let mut secrets = HashMap::new();
-            secrets.insert("jwt_secret".to_string(), "test-secret-key-for-jwt-signing".to_string());
+            secrets.insert(
+                "jwt_secret".to_string(),
+                "test-secret-key-for-jwt-signing".to_string(),
+            );
 
             Self {
                 secrets: RwLock::new(secrets),
@@ -325,12 +336,11 @@ mod mock_secret_store {
     impl SecretStore for MockSecretStore {
         async fn get_secret(&self, key: &str) -> SecurityResult<String> {
             let secrets = self.secrets.read().await;
-            secrets
-                .get(key)
-                .cloned()
-                .ok_or_else(|| uveddi::security::errors::SecurityError::SecretNotFound {
+            secrets.get(key).cloned().ok_or_else(|| {
+                uveddi::security::errors::SecurityError::SecretNotFound {
                     key: key.to_string(),
-                })
+                }
+            })
         }
 
         async fn set_secret(&self, key: &str, value: &str) -> SecurityResult<()> {

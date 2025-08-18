@@ -18,10 +18,16 @@ use crate::error::UveddiError;
 pub trait AstProvider: Send + Sync {
     /// Retrieves the AST for a given file path.
     /// If the AST is not in the cache, it parses the file and caches the result.
-    async fn get_ast(&self, file_path: &Path) -> Result<Arc<crate::ast::tree_sitter::Tree>, UveddiError>;
+    async fn get_ast(
+        &self,
+        file_path: &Path,
+    ) -> Result<Arc<crate::ast::tree_sitter::Tree>, UveddiError>;
 
     /// Parses a file and returns a ParsedFile structure
-    async fn parse_file(&self, file_path: &Path) -> Result<Arc<crate::analysis::components::ast_provider::ParsedFile>, UveddiError>;
+    async fn parse_file(
+        &self,
+        file_path: &Path,
+    ) -> Result<Arc<crate::analysis::components::ast_provider::ParsedFile>, UveddiError>;
 
     /// Clears the AST cache
     fn clear_cache(&self);

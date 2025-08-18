@@ -5,8 +5,8 @@
 
 use super::{DiagramCacheError, Result};
 use crate::analysis::incremental::ChangeSet;
-use chrono::{DateTime, Duration, Utc};
 use crate::core::logging::{debug, info, warn};
+use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;

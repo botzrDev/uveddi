@@ -277,7 +277,9 @@ impl<'a> CfgBuilder<'a> {
                 let range = (node.start_byte(), node.end_byte());
                 // Safely extract label text; avoid out-of-bounds panic if caller passed a subslice
                 let label = if node.end_byte() <= source.len() {
-                    node.utf8_text(source.as_bytes()).ok().map(|s| s.to_string())
+                    node.utf8_text(source.as_bytes())
+                        .ok()
+                        .map(|s| s.to_string())
                 } else {
                     warn!(
                         "Node byte range out of bounds for provided source: end_byte={} source_len={}",
@@ -350,9 +352,7 @@ impl<'a> CfgBuilder<'a> {
     /// Classify AST node into CFG node type
     fn classify_node(&self, node: &Node) -> CfgNodeType {
         match node.kind() {
-            "function_item"
-            | "function_declaration"
-            | "function_definition" => CfgNodeType::Entry,
+            "function_item" | "function_declaration" | "function_definition" => CfgNodeType::Entry,
             "if_expression" | "if_statement" | "match_expression" | "switch_statement" => {
                 CfgNodeType::Condition
             }

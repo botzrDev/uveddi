@@ -235,7 +235,7 @@ impl CacheManagerImpl {
         // For now, we'll just log this operation since the cache infrastructure
         // for dependency graphs is not fully implemented yet
         tracing::debug!("Caching dependency graph with key: {}", cache_key);
-        
+
         // In a full implementation, we would serialize the graph and store it
         // in the engine cache, but for now we'll just indicate success
         Ok(())

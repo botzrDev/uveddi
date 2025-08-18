@@ -5,7 +5,7 @@
 
 use crate::core::logging::{debug, error, warn};
 use std::path::{Path, PathBuf};
-use tempfile::{TempDir};
+use tempfile::TempDir;
 use thiserror::Error;
 use tokio::process::Command;
 
@@ -64,24 +64,29 @@ impl SvgGenerator {
     /// Create a new SVG generator with custom configuration
     pub fn with_config(config: SvgConfig) -> Result<Self, SvgGenerationError> {
         let temp_dir = TempDir::new()?;
-        debug!("Created temporary directory for SVG generation: {:?}", temp_dir.path());
-        
+        debug!(
+            "Created temporary directory for SVG generation: {:?}",
+            temp_dir.path()
+        );
+
         Ok(Self { temp_dir, config })
     }
 
     /// Generate SVG from Mermaid code with fallback support
-    pub async fn generate_svg_with_fallback(
-        &self,
-        mermaid_code: &str,
-        diagram_id: &str,
-    ) -> String {
-        match self.generate_svg_from_mermaid(mermaid_code, diagram_id).await {
+    pub async fn generate_svg_with_fallback(&self, mermaid_code: &str, diagram_id: &str) -> String {
+        match self
+            .generate_svg_from_mermaid(mermaid_code, diagram_id)
+            .await
+        {
             Ok(svg) => {
                 debug!("Successfully generated SVG for diagram: {}", diagram_id);
                 svg
             }
             Err(e) => {
-                warn!("SVG generation failed for {}, using fallback: {}", diagram_id, e);
+                warn!(
+                    "SVG generation failed for {}, using fallback: {}",
+                    diagram_id, e
+                );
                 self.create_fallback_html(mermaid_code, &e.to_string())
             }
         }
@@ -102,17 +107,23 @@ impl SvgGenerator {
         // Write Mermaid code to temp file
         tokio::fs::write(&mmd_path, mermaid_code)
             .await
-            .map_err(|e| SvgGenerationError::SvgOutputError(format!("Failed to write mermaid file: {}", e)))?;
+            .map_err(|e| {
+                SvgGenerationError::SvgOutputError(format!("Failed to write mermaid file: {}", e))
+            })?;
 
         // Check if mermaid CLI is available
         self.check_mermaid_cli_available().await?;
 
         // Build command arguments
         let mut args = vec![
-            "-i", mmd_path.to_str().unwrap(),
-            "-o", svg_path.to_str().unwrap(),
-            "-t", &self.config.theme,
-            "--backgroundColor", &self.config.background_color,
+            "-i",
+            mmd_path.to_str().unwrap(),
+            "-o",
+            svg_path.to_str().unwrap(),
+            "-t",
+            &self.config.theme,
+            "--backgroundColor",
+            &self.config.background_color,
         ];
 
         // Add optional dimensions
@@ -131,11 +142,13 @@ impl SvgGenerator {
         debug!("Executing: mmdc {}", args.join(" "));
         let output = tokio::time::timeout(
             std::time::Duration::from_secs(self.config.timeout_seconds),
-            Command::new("mmdc").args(&args).output()
+            Command::new("mmdc").args(&args).output(),
         )
         .await
         .map_err(|_| SvgGenerationError::MermaidCliError("Command timed out".to_string()))?
-        .map_err(|e| SvgGenerationError::MermaidCliError(format!("Failed to execute mmdc: {}", e)))?;
+        .map_err(|e| {
+            SvgGenerationError::MermaidCliError(format!("Failed to execute mmdc: {}", e))
+        })?;
 
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr);
@@ -151,19 +164,23 @@ impl SvgGenerator {
         // Verify SVG file was created
         if !svg_path.exists() {
             return Err(SvgGenerationError::SvgOutputError(
-                "SVG file was not created by mmdc".to_string()
+                "SVG file was not created by mmdc".to_string(),
             ));
         }
 
         // Read and return SVG content
-        let mut svg_content = tokio::fs::read_to_string(&svg_path)
-            .await
-            .map_err(|e| SvgGenerationError::SvgReadError(format!("Failed to read SVG file: {}", e)))?;
+        let mut svg_content = tokio::fs::read_to_string(&svg_path).await.map_err(|e| {
+            SvgGenerationError::SvgReadError(format!("Failed to read SVG file: {}", e))
+        })?;
 
         // Post-process SVG to improve browser compatibility
         svg_content = self.post_process_svg(svg_content, diagram_id);
 
-        debug!("Successfully generated {} bytes of SVG for {}", svg_content.len(), diagram_id);
+        debug!(
+            "Successfully generated {} bytes of SVG for {}",
+            svg_content.len(),
+            diagram_id
+        );
         Ok(svg_content)
     }
 
@@ -183,7 +200,7 @@ impl SvgGenerator {
             Ok(())
         } else {
             Err(SvgGenerationError::MermaidCliError(
-                "Mermaid CLI found but returned error on --version".to_string()
+                "Mermaid CLI found but returned error on --version".to_string(),
             ))
         }
     }
@@ -231,14 +248,17 @@ impl SvgGenerator {
     pub async fn generate_multiple_svgs(
         &self,
         diagrams: &[(String, String)], // (diagram_id, mermaid_code)
-    ) -> Vec<(String, String)> { // (diagram_id, svg_or_fallback)
+    ) -> Vec<(String, String)> {
+        // (diagram_id, svg_or_fallback)
         let mut results = Vec::new();
-        
+
         for (diagram_id, mermaid_code) in diagrams {
-            let svg_result = self.generate_svg_with_fallback(mermaid_code, diagram_id).await;
+            let svg_result = self
+                .generate_svg_with_fallback(mermaid_code, diagram_id)
+                .await;
             results.push((diagram_id.clone(), svg_result));
         }
-        
+
         results
     }
 
@@ -250,9 +270,9 @@ impl SvgGenerator {
     /// Post-process SVG to improve browser compatibility
     fn post_process_svg(&self, mut svg_content: String, diagram_id: &str) -> String {
         debug!("Post-processing SVG for diagram: {}", diagram_id);
-        
+
         // Fix common SVG rendering issues
-        
+
         // 1. Ensure SVG has proper height attribute
         if !svg_content.contains("height=") && svg_content.contains("viewBox=") {
             // Extract viewBox dimensions
@@ -266,14 +286,14 @@ impl SvgGenerator {
                             // Add explicit height
                             svg_content = svg_content.replace(
                                 "width=\"100%\"",
-                                &format!("width=\"100%\" height=\"{}px\"", height)
+                                &format!("width=\"100%\" height=\"{}px\"", height),
                             );
                         }
                     }
                 }
             }
         }
-        
+
         // 2. Add better styling for text elements
         if svg_content.contains("<style>") {
             let style_addition = r#"
@@ -283,15 +303,12 @@ impl SvgGenerator {
             "#;
             svg_content = svg_content.replace("</style>", &format!("{}</style>", style_addition));
         }
-        
+
         // 3. Ensure SVG has proper namespace declarations
         if !svg_content.contains("xmlns=\"http://www.w3.org/2000/svg\"") {
-            svg_content = svg_content.replace(
-                "<svg",
-                "<svg xmlns=\"http://www.w3.org/2000/svg\""
-            );
+            svg_content = svg_content.replace("<svg", "<svg xmlns=\"http://www.w3.org/2000/svg\"");
         }
-        
+
         debug!("SVG post-processing completed for: {}", diagram_id);
         svg_content
     }
@@ -300,23 +317,25 @@ impl SvgGenerator {
 /// Utility function to extract diagrams from existing Mermaid code blocks
 pub fn extract_diagrams_from_html(html_content: &str) -> Vec<(String, String)> {
     let mut diagrams = Vec::new();
-    
+
     // Simple regex-based extraction (in production, use a proper HTML parser)
-    let diagram_pattern = regex::Regex::new(r#"<div class="mermaid"[^>]*id="([^"]+)"[^>]*>(.*?)</div>"#).unwrap();
-    
+    let diagram_pattern =
+        regex::Regex::new(r#"<div class="mermaid"[^>]*id="([^"]+)"[^>]*>(.*?)</div>"#).unwrap();
+
     for captures in diagram_pattern.captures_iter(html_content) {
         if let (Some(id_match), Some(content_match)) = (captures.get(1), captures.get(2)) {
             let diagram_id = id_match.as_str().to_string();
-            let mermaid_code = content_match.as_str()
+            let mermaid_code = content_match
+                .as_str()
                 .trim()
                 .replace("&lt;", "<")
                 .replace("&gt;", ">")
                 .replace("&amp;", "&");
-            
+
             diagrams.push((diagram_id, mermaid_code));
         }
     }
-    
+
     diagrams
 }
 
@@ -335,7 +354,7 @@ mod tests {
         let generator = SvgGenerator::new().unwrap();
         let mermaid_code = "graph TD\n    A --> B";
         let fallback = generator.create_fallback_html(mermaid_code, "Test error");
-        
+
         assert!(fallback.contains("Diagram rendering failed"));
         assert!(fallback.contains("graph TD"));
         assert!(fallback.contains("mermaid-fallback"));
@@ -353,7 +372,7 @@ mod tests {
                 class Foo
             </div>
         "#;
-        
+
         let diagrams = extract_diagrams_from_html(html);
         assert_eq!(diagrams.len(), 2);
         assert_eq!(diagrams[0].0, "diagram-1");

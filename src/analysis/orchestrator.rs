@@ -4,19 +4,18 @@
 //! This replaces the monolithic AnalysisEngine with a lightweight coordinator
 //! that delegates to specialized services.
 
-use crate::analysis::services::{
-    AnalysisService, DependencyAnalysisService, PerformanceAnalysisService,
-    AnalysisResult,
-};
-use crate::analysis::services::performance_service::{PerformanceReport, MonitoringSession};
 use crate::analysis::graph::dependency::LocalDependencyGraph;
+use crate::analysis::services::performance_service::{MonitoringSession, PerformanceReport};
+use crate::analysis::services::{
+    AnalysisResult, AnalysisService, DependencyAnalysisService, PerformanceAnalysisService,
+};
 use crate::database::models::ArchitecturalIssue;
 
 // AI service imports (feature-gated)
 #[cfg(feature = "ai")]
-use crate::ai::{AiService, AiInsight};
-#[cfg(feature = "ai")]
 use crate::ai::engine::AiAnalysisEngine;
+#[cfg(feature = "ai")]
+use crate::ai::{AiInsight, AiService};
 
 use crate::core::logging::{debug, info, warn};
 use std::path::Path;
@@ -29,7 +28,7 @@ pub struct EnhancedAnalysisResult {
     pub issues: Vec<ArchitecturalIssue>,
     pub dependency_graph: LocalDependencyGraph,
     pub performance_report: PerformanceReport,
-    
+
     // AI insights are optional and only available when AI feature is enabled
     #[cfg(feature = "ai")]
     pub ai_insights: Option<Vec<AiInsight>>,
@@ -43,7 +42,7 @@ pub struct AnalysisOptions {
     pub enabled_detectors: Option<Vec<String>>,
     pub memory_limit_bytes: Option<usize>,
     pub parallel_execution: bool,
-    
+
     #[cfg(feature = "ai")]
     pub enable_ai_analysis: bool,
 }
@@ -53,7 +52,7 @@ pub struct AnalysisOrchestrator {
     analysis_service: Arc<AnalysisService>,
     dependency_service: Arc<DependencyAnalysisService>,
     performance_service: Arc<PerformanceAnalysisService>,
-    
+
     // Optional AI services (feature-gated)
     #[cfg(feature = "ai")]
     ai_service: Option<Arc<AiAnalysisEngine>>,
@@ -92,7 +91,10 @@ impl AnalysisOrchestrator {
     }
 
     /// Main analysis method - maintains backward compatibility
-    pub async fn analyze(&self, path: &Path) -> AnalysisResult<(Vec<ArchitecturalIssue>, LocalDependencyGraph)> {
+    pub async fn analyze(
+        &self,
+        path: &Path,
+    ) -> AnalysisResult<(Vec<ArchitecturalIssue>, LocalDependencyGraph)> {
         let options = AnalysisOptions::default();
         self.analyze_with_options(path, &options).await
     }
@@ -112,28 +114,43 @@ impl AnalysisOrchestrator {
             self.run_sequential_analysis(path, options).await?
         };
 
-        info!("Orchestrated analysis completed in {}ms: {} issues, {} dependencies",
-              start_time.elapsed().as_millis(), issues.len(), graph.node_count());
-        
+        info!(
+            "Orchestrated analysis completed in {}ms: {} issues, {} dependencies",
+            start_time.elapsed().as_millis(),
+            issues.len(),
+            graph.node_count()
+        );
+
         Ok((issues, graph))
     }
 
     /// Enhanced analysis with performance monitoring
-    pub async fn analyze_with_performance_monitoring(&self, path: &Path) -> AnalysisResult<EnhancedAnalysisResult> {
+    pub async fn analyze_with_performance_monitoring(
+        &self,
+        path: &Path,
+    ) -> AnalysisResult<EnhancedAnalysisResult> {
         let monitoring_session = self.performance_service.start_monitoring().await;
-        info!("Starting enhanced analysis with performance monitoring for: {}", path.display());
+        info!(
+            "Starting enhanced analysis with performance monitoring for: {}",
+            path.display()
+        );
 
         // Run analysis with memory limits
-        let (issues, dependency_graph) = self.performance_service
+        let (issues, dependency_graph) = self
+            .performance_service
             .analyze_with_memory_limits(self.analyze(path))
             .await?;
 
         // Generate performance report
-        let performance_report = self.performance_service
+        let performance_report = self
+            .performance_service
             .stop_monitoring(&monitoring_session)
             .await;
 
-        info!("Enhanced analysis completed with {} issues found", issues.len());
+        info!(
+            "Enhanced analysis completed with {} issues found",
+            issues.len()
+        );
         Ok(EnhancedAnalysisResult {
             issues,
             dependency_graph,
@@ -144,12 +161,15 @@ impl AnalysisOrchestrator {
     }
 
     /// Memory-aware analysis with adaptive behavior
-    pub async fn analyze_with_memory_limits(&self, path: &Path) -> AnalysisResult<(Vec<ArchitecturalIssue>, LocalDependencyGraph)> {
+    pub async fn analyze_with_memory_limits(
+        &self,
+        path: &Path,
+    ) -> AnalysisResult<(Vec<ArchitecturalIssue>, LocalDependencyGraph)> {
         debug!("Running memory-aware analysis for: {}", path.display());
-        
-        self.performance_service.analyze_with_memory_limits(
-            self.analyze(path)
-        ).await
+
+        self.performance_service
+            .analyze_with_memory_limits(self.analyze(path))
+            .await
     }
 
     /// Analysis with custom detector configuration
@@ -160,7 +180,7 @@ impl AnalysisOrchestrator {
     ) -> AnalysisResult<(Vec<ArchitecturalIssue>, LocalDependencyGraph)> {
         let mut options = AnalysisOptions::default();
         options.enabled_detectors = Some(enabled_detectors.to_vec());
-        
+
         self.analyze_with_options(path, &options).await
     }
 
@@ -169,22 +189,28 @@ impl AnalysisOrchestrator {
     pub async fn analyze_with_ai(&self, path: &Path) -> AnalysisResult<EnhancedAnalysisResult> {
         if let Some(ai_service) = &self.ai_service {
             info!("Running AI-enhanced analysis for: {}", path.display());
-            
+
             // Run standard analysis first
             let mut enhanced_result = self.analyze_with_performance_monitoring(path).await?;
-            
+
             // Enhance with AI analysis
             match ai_service.analyze_issues(&enhanced_result.issues).await {
                 Ok(ai_insights) => {
-                    info!("AI analysis completed with {} additional insights", ai_insights.len());
+                    info!(
+                        "AI analysis completed with {} additional insights",
+                        ai_insights.len()
+                    );
                     enhanced_result.ai_insights = Some(ai_insights);
                 }
                 Err(e) => {
-                    warn!("AI analysis failed: {}, continuing with standard analysis only", e);
+                    warn!(
+                        "AI analysis failed: {}, continuing with standard analysis only",
+                        e
+                    );
                     enhanced_result.ai_insights = None;
                 }
             }
-            
+
             Ok(enhanced_result)
         } else {
             warn!("AI analysis requested but AI service not available");
@@ -213,12 +239,12 @@ impl AnalysisOrchestrator {
     /// Clear all service caches
     pub async fn clear_caches(&self) -> AnalysisResult<()> {
         info!("Clearing all service caches");
-        
+
         // Clear dependency cache
         self.dependency_service.clear_cache().await;
-        
+
         // TODO: Clear other service caches as they become available
-        
+
         info!("All service caches cleared");
         Ok(())
     }
@@ -250,7 +276,7 @@ impl AnalysisOrchestrator {
 
         // Run analysis first
         let issues = self.run_core_analysis(path, options).await?;
-        
+
         // Then build dependency graph
         let graph = self.run_dependency_analysis(path, options).await?;
 
@@ -263,7 +289,9 @@ impl AnalysisOrchestrator {
         options: &AnalysisOptions,
     ) -> AnalysisResult<Vec<ArchitecturalIssue>> {
         if let Some(detectors) = &options.enabled_detectors {
-            self.analysis_service.run_analysis_with_detectors(path, detectors).await
+            self.analysis_service
+                .run_analysis_with_detectors(path, detectors)
+                .await
         } else {
             self.analysis_service.run_analysis(path).await
         }
@@ -286,7 +314,7 @@ pub struct OrchestratorStatus {
     pub current_memory_usage: usize,
     pub active_monitoring_sessions: usize,
     pub services_healthy: bool,
-    
+
     #[cfg(feature = "ai")]
     pub ai_service_available: bool,
 }
@@ -296,7 +324,7 @@ pub struct AnalysisOrchestratorBuilder {
     analysis_service: Option<Arc<AnalysisService>>,
     dependency_service: Option<Arc<DependencyAnalysisService>>,
     performance_service: Option<Arc<PerformanceAnalysisService>>,
-    
+
     #[cfg(feature = "ai")]
     ai_service: Option<Arc<AiAnalysisEngine>>,
 }
@@ -339,20 +367,29 @@ impl AnalysisOrchestratorBuilder {
     }
 
     pub fn build(self) -> AnalysisResult<AnalysisOrchestrator> {
-        let analysis_service = self.analysis_service
-            .ok_or_else(|| crate::analysis::errors::AnalysisError::configuration_error(
-                "analysis_service", "missing", "Analysis service must be configured"
-            ))?;
-        
-        let dependency_service = self.dependency_service
-            .ok_or_else(|| crate::analysis::errors::AnalysisError::configuration_error(
-                "dependency_service", "missing", "Dependency service must be configured"
-            ))?;
-        
-        let performance_service = self.performance_service
-            .ok_or_else(|| crate::analysis::errors::AnalysisError::configuration_error(
-                "performance_service", "missing", "Performance service must be configured"
-            ))?;
+        let analysis_service = self.analysis_service.ok_or_else(|| {
+            crate::analysis::errors::AnalysisError::configuration_error(
+                "analysis_service",
+                "missing",
+                "Analysis service must be configured",
+            )
+        })?;
+
+        let dependency_service = self.dependency_service.ok_or_else(|| {
+            crate::analysis::errors::AnalysisError::configuration_error(
+                "dependency_service",
+                "missing",
+                "Dependency service must be configured",
+            )
+        })?;
+
+        let performance_service = self.performance_service.ok_or_else(|| {
+            crate::analysis::errors::AnalysisError::configuration_error(
+                "performance_service",
+                "missing",
+                "Performance service must be configured",
+            )
+        })?;
 
         #[cfg(feature = "ai")]
         {
@@ -392,16 +429,24 @@ impl Default for AnalysisOrchestratorBuilder {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::analysis::components::{analysis_aggregator::AnalysisAggregator, config_service::ConfigurationService, dependency_graph_builder::DependencyGraphBuilderImpl, detector_scheduler::DetectorScheduler};
     use crate::analysis::components::ast_provider::AstProviderImpl;
     use crate::analysis::components::cache_manager::CacheManagerImpl;
+    use crate::analysis::components::{
+        analysis_aggregator::AnalysisAggregator, config_service::ConfigurationService,
+        dependency_graph_builder::DependencyGraphBuilderImpl,
+        detector_scheduler::DetectorScheduler,
+    };
+    use crate::analysis::services::performance_service::{
+        MemoryConfig, PerformanceAnalysisService,
+    };
     use crate::monitoring::performance_metrics_collector::PerformanceMetricsCollector;
-    use crate::analysis::services::performance_service::{MemoryConfig, PerformanceAnalysisService};
 
     fn create_test_orchestrator() -> AnalysisOrchestrator {
         // Create mock services for testing
         let config_service = Arc::new(ConfigurationService::new_with_defaults());
-        let ast_provider = Arc::new(AstProviderImpl::new().unwrap()) as Arc<dyn crate::analysis::components::traits::AstProvider>;
+        let ast_provider_impl = Arc::new(AstProviderImpl::new().unwrap());
+        let ast_provider =
+            ast_provider_impl.clone() as Arc<dyn crate::analysis::components::traits::AstProvider>;
         let aggregator = Arc::new(AnalysisAggregator::new());
         let detector_scheduler = Arc::new(DetectorScheduler::new(
             config_service.clone(),
@@ -411,7 +456,7 @@ mod tests {
             crate::analysis::detector_factory::DetectorFactory::create_default_detectors(),
         ));
         let detector_factory = Arc::new(crate::analysis::detector_factory::DetectorFactory::new());
-        
+
         let analysis_service = Arc::new(AnalysisService::new(
             config_service,
             detector_scheduler,
@@ -419,13 +464,14 @@ mod tests {
             None,
             detector_factory,
         ));
-        
-        let dependency_builder = Arc::new(DependencyGraphBuilderImpl::new(ast_provider.clone()).unwrap());
+
+        let dependency_builder =
+            Arc::new(DependencyGraphBuilderImpl::new(ast_provider.clone()).unwrap());
         let cache_manager = Arc::new(futures::executor::block_on(CacheManagerImpl::new()).unwrap());
-        
+
         let dependency_service = Arc::new(DependencyAnalysisService::new(
             // Dependency service expects concrete types
-            ast_provider.clone(),
+            ast_provider_impl.clone(),
             dependency_builder,
             cache_manager,
         ));
@@ -439,18 +485,14 @@ mod tests {
             MemoryConfig::default(),
         ));
 
-        AnalysisOrchestrator::new(
-            analysis_service,
-            dependency_service,
-            performance_service,
-        )
+        AnalysisOrchestrator::new(analysis_service, dependency_service, performance_service)
     }
 
     #[tokio::test]
     async fn test_orchestrator_creation() {
         let orchestrator = create_test_orchestrator();
         let status = orchestrator.get_status().await;
-        
+
         assert!(status.services_healthy);
         assert_eq!(status.active_monitoring_sessions, 0);
     }
@@ -458,7 +500,7 @@ mod tests {
     #[tokio::test]
     async fn test_analysis_options_default() {
         let options = AnalysisOptions::default();
-        
+
         assert!(!options.enable_performance_monitoring);
         assert!(!options.enable_dependency_analysis);
         assert!(options.enabled_detectors.is_none());
@@ -469,7 +511,7 @@ mod tests {
     #[tokio::test]
     async fn test_builder_pattern() {
         let builder = AnalysisOrchestratorBuilder::new();
-        
+
         // Builder should start empty
         assert!(builder.analysis_service.is_none());
         assert!(builder.dependency_service.is_none());
@@ -479,7 +521,7 @@ mod tests {
     #[tokio::test]
     async fn test_clear_caches() {
         let orchestrator = create_test_orchestrator();
-        
+
         // Should not panic
         let result = orchestrator.clear_caches().await;
         assert!(result.is_ok());

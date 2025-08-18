@@ -1,13 +1,13 @@
 //! Comprehensive Coverage Analysis Framework  
 //! Automated coverage reporting and CI integration for bulletproof testing
 
-use std::process::{Command, Stdio};
-use std::path::{Path, PathBuf};
-use std::fs::{self, File};
-use std::io::{Write, BufReader, BufRead};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::fs::{self, File};
+use std::io::{BufRead, BufReader, Write};
+use std::path::{Path, PathBuf};
+use std::process::{Command, Stdio};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
-use serde::{Serialize, Deserialize};
 use tempfile::tempdir;
 
 #[cfg(test)]
@@ -102,7 +102,7 @@ mod comprehensive_coverage_analysis {
         fn new(project_root: PathBuf) -> Self {
             let output_dir = project_root.join("coverage_reports");
             fs::create_dir_all(&output_dir).unwrap_or_else(|_| {});
-            
+
             Self {
                 project_root: project_root.clone(),
                 output_dir,
@@ -131,13 +131,11 @@ mod comprehensive_coverage_analysis {
 
         fn load_historical_data(project_root: &Path) -> Vec<CoverageReport> {
             let history_file = project_root.join("coverage_reports/history.json");
-            
+
             if history_file.exists() {
                 match fs::read_to_string(&history_file) {
-                    Ok(content) => {
-                        serde_json::from_str(&content).unwrap_or_else(|_| Vec::new())
-                    }
-                    Err(_) => Vec::new()
+                    Ok(content) => serde_json::from_str(&content).unwrap_or_else(|_| Vec::new()),
+                    Err(_) => Vec::new(),
                 }
             } else {
                 Vec::new()
@@ -146,14 +144,15 @@ mod comprehensive_coverage_analysis {
 
         fn generate_llvm_coverage_report(&self) -> Result<CoverageReport, String> {
             println!("🔍 Generating LLVM Coverage Report");
-            
+
             // Set coverage environment variables
             std::env::set_var("RUSTFLAGS", "-C instrument-coverage");
             std::env::set_var("LLVM_PROFILE_FILE", "coverage/uveddi-%p-%m.profraw");
-            
+
             // Create coverage directory
             let coverage_dir = self.project_root.join("coverage");
-            fs::create_dir_all(&coverage_dir).map_err(|e| format!("Failed to create coverage dir: {}", e))?;
+            fs::create_dir_all(&coverage_dir)
+                .map_err(|e| format!("Failed to create coverage dir: {}", e))?;
 
             // Run tests with coverage instrumentation
             println!("  Running tests with coverage instrumentation...");
@@ -166,14 +165,22 @@ mod comprehensive_coverage_analysis {
                 .map_err(|e| format!("Failed to run tests: {}", e))?;
 
             if !test_output.status.success() {
-                return Err(format!("Tests failed: {}", String::from_utf8_lossy(&test_output.stderr)));
+                return Err(format!(
+                    "Tests failed: {}",
+                    String::from_utf8_lossy(&test_output.stderr)
+                ));
             }
 
             // Find .profraw files
             let profraw_files: Vec<_> = fs::read_dir(&coverage_dir)
                 .map_err(|e| format!("Failed to read coverage dir: {}", e))?
                 .filter_map(|entry| entry.ok())
-                .filter(|entry| entry.path().extension().map_or(false, |ext| ext == "profraw"))
+                .filter(|entry| {
+                    entry
+                        .path()
+                        .extension()
+                        .map_or(false, |ext| ext == "profraw")
+                })
                 .map(|entry| entry.path())
                 .collect();
 
@@ -184,13 +191,14 @@ mod comprehensive_coverage_analysis {
             // Merge profraw files
             println!("  Merging {} profraw files...", profraw_files.len());
             let profdata_file = coverage_dir.join("merged.profdata");
-            
+
             let mut merge_cmd = Command::new("llvm-profdata");
-            merge_cmd.arg("merge")
+            merge_cmd
+                .arg("merge")
                 .arg("-sparse")
                 .arg("-o")
                 .arg(&profdata_file);
-            
+
             for file in &profraw_files {
                 merge_cmd.arg(file);
             }
@@ -201,13 +209,16 @@ mod comprehensive_coverage_analysis {
                 .map_err(|e| format!("Failed to merge profdata: {}", e))?;
 
             if !merge_output.status.success() {
-                return Err(format!("Profdata merge failed: {}", String::from_utf8_lossy(&merge_output.stderr)));
+                return Err(format!(
+                    "Profdata merge failed: {}",
+                    String::from_utf8_lossy(&merge_output.stderr)
+                ));
             }
 
             // Generate coverage report
             println!("  Generating detailed coverage report...");
             let binary_path = self.find_test_binary()?;
-            
+
             let cov_output = Command::new("llvm-cov")
                 .args(&["show", "--format=json", "--instr-profile"])
                 .arg(&profdata_file)
@@ -218,7 +229,10 @@ mod comprehensive_coverage_analysis {
                 .map_err(|e| format!("Failed to generate coverage: {}", e))?;
 
             if !cov_output.status.success() {
-                return Err(format!("Coverage generation failed: {}", String::from_utf8_lossy(&cov_output.stderr)));
+                return Err(format!(
+                    "Coverage generation failed: {}",
+                    String::from_utf8_lossy(&cov_output.stderr)
+                ));
             }
 
             // Parse LLVM coverage JSON
@@ -228,7 +242,7 @@ mod comprehensive_coverage_analysis {
 
         fn find_test_binary(&self) -> Result<PathBuf, String> {
             let target_dir = self.project_root.join("target/debug/deps");
-            
+
             let entries = fs::read_dir(&target_dir)
                 .map_err(|e| format!("Failed to read target dir: {}", e))?;
 
@@ -269,7 +283,8 @@ mod comprehensive_coverage_analysis {
 
                         // Identify uncovered regions
                         if file_coverage.coverage_percentage < 100.0 {
-                            uncovered_regions.extend(self.identify_uncovered_regions(&file_coverage));
+                            uncovered_regions
+                                .extend(self.identify_uncovered_regions(&file_coverage));
                         }
 
                         files.push(file_coverage);
@@ -287,7 +302,10 @@ mod comprehensive_coverage_analysis {
             let trends = self.calculate_coverage_trends(&summary);
 
             let report = CoverageReport {
-                timestamp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
+                timestamp: SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs(),
                 project_name: "Uveddi".to_string(),
                 total_lines,
                 covered_lines,
@@ -301,7 +319,11 @@ mod comprehensive_coverage_analysis {
             Ok(report)
         }
 
-        fn parse_file_coverage(&self, file_data: &serde_json::Value, filename: &str) -> Result<FileCoverage, String> {
+        fn parse_file_coverage(
+            &self,
+            file_data: &serde_json::Value,
+            filename: &str,
+        ) -> Result<FileCoverage, String> {
             let mut total_lines = 0;
             let mut covered_lines = 0;
             let mut functions = Vec::new();
@@ -310,14 +332,13 @@ mod comprehensive_coverage_analysis {
             // Parse segments for line coverage
             if let Some(segments) = file_data.get("segments").and_then(|s| s.as_array()) {
                 let mut line_coverage = HashMap::new();
-                
+
                 for segment in segments {
                     if let Some(segment_array) = segment.as_array() {
                         if segment_array.len() >= 4 {
-                            if let (Some(line), Some(count)) = (
-                                segment_array[0].as_u64(),
-                                segment_array[3].as_u64()
-                            ) {
+                            if let (Some(line), Some(count)) =
+                                (segment_array[0].as_u64(), segment_array[3].as_u64())
+                            {
                                 line_coverage.insert(line as usize, count > 0);
                             }
                         }
@@ -333,9 +354,19 @@ mod comprehensive_coverage_analysis {
                 for func in funcs {
                     if let (Some(name), Some(line_start), Some(line_end), Some(execution_count)) = (
                         func.get("name").and_then(|n| n.as_str()),
-                        func.get("regions").and_then(|r| r.as_array()).and_then(|arr| arr.get(0)).and_then(|r| r.as_array()).and_then(|arr| arr.get(0)).and_then(|l| l.as_u64()),
-                        func.get("regions").and_then(|r| r.as_array()).and_then(|arr| arr.get(0)).and_then(|r| r.as_array()).and_then(|arr| arr.get(2)).and_then(|l| l.as_u64()),
-                        func.get("executionCount").and_then(|c| c.as_u64())
+                        func.get("regions")
+                            .and_then(|r| r.as_array())
+                            .and_then(|arr| arr.get(0))
+                            .and_then(|r| r.as_array())
+                            .and_then(|arr| arr.get(0))
+                            .and_then(|l| l.as_u64()),
+                        func.get("regions")
+                            .and_then(|r| r.as_array())
+                            .and_then(|arr| arr.get(0))
+                            .and_then(|r| r.as_array())
+                            .and_then(|arr| arr.get(2))
+                            .and_then(|l| l.as_u64()),
+                        func.get("executionCount").and_then(|c| c.as_u64()),
                     ) {
                         functions.push(FunctionCoverage {
                             name: name.to_string(),
@@ -393,9 +424,14 @@ mod comprehensive_coverage_analysis {
             regions
         }
 
-        fn calculate_coverage_summary(&self, files: &[FileCoverage], line_coverage: f64) -> CoverageSummary {
+        fn calculate_coverage_summary(
+            &self,
+            files: &[FileCoverage],
+            line_coverage: f64,
+        ) -> CoverageSummary {
             let total_functions: usize = files.iter().map(|f| f.functions.len()).sum();
-            let covered_functions: usize = files.iter()
+            let covered_functions: usize = files
+                .iter()
                 .flat_map(|f| &f.functions)
                 .filter(|func| func.is_covered)
                 .count();
@@ -407,7 +443,8 @@ mod comprehensive_coverage_analysis {
             };
 
             let total_branches: usize = files.iter().map(|f| f.branches.len()).sum();
-            let covered_branches: usize = files.iter()
+            let covered_branches: usize = files
+                .iter()
                 .flat_map(|f| &f.branches)
                 .filter(|branch| branch.true_taken || branch.false_taken)
                 .count();
@@ -419,9 +456,9 @@ mod comprehensive_coverage_analysis {
             };
 
             // Calculate regression risk score based on coverage gaps
-            let risk_score = (100.0 - line_coverage) * 0.4 + 
-                            (100.0 - function_coverage) * 0.3 + 
-                            (100.0 - branch_coverage) * 0.3;
+            let risk_score = (100.0 - line_coverage) * 0.4
+                + (100.0 - function_coverage) * 0.3
+                + (100.0 - branch_coverage) * 0.3;
 
             CoverageSummary {
                 line_coverage,
@@ -436,7 +473,7 @@ mod comprehensive_coverage_analysis {
         fn count_tests(&self) -> usize {
             // Count test functions in the project
             let mut test_count = 0;
-            
+
             if let Ok(entries) = fs::read_dir(self.project_root.join("tests")) {
                 for entry in entries.flatten() {
                     if entry.path().extension().map_or(false, |ext| ext == "rs") {
@@ -453,18 +490,20 @@ mod comprehensive_coverage_analysis {
 
         fn calculate_coverage_trends(&self, current_summary: &CoverageSummary) -> CoverageTrends {
             if let Some(last_report) = self.historical_data.last() {
-                let coverage_trend = current_summary.line_coverage - last_report.summary.line_coverage;
+                let coverage_trend =
+                    current_summary.line_coverage - last_report.summary.line_coverage;
                 let test_growth_rate = if last_report.summary.test_count > 0 {
-                    ((current_summary.test_count as f64 - last_report.summary.test_count as f64) / 
-                     last_report.summary.test_count as f64) * 100.0
+                    ((current_summary.test_count as f64 - last_report.summary.test_count as f64)
+                        / last_report.summary.test_count as f64)
+                        * 100.0
                 } else {
                     0.0
                 };
 
                 CoverageTrends {
                     coverage_trend,
-                    new_uncovered_lines: 0, // Would need diff analysis
-                    resolved_uncovered_lines: 0, // Would need diff analysis  
+                    new_uncovered_lines: 0,      // Would need diff analysis
+                    resolved_uncovered_lines: 0, // Would need diff analysis
                     test_growth_rate,
                     performance_impact: 0.0, // Would need performance benchmarking
                 }
@@ -480,7 +519,8 @@ mod comprehensive_coverage_analysis {
         }
 
         fn generate_html_report(&self, report: &CoverageReport) -> Result<(), String> {
-            let html_content = format!(r#"
+            let html_content = format!(
+                r#"
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -567,27 +607,47 @@ mod comprehensive_coverage_analysis {
                     .format("%Y-%m-%d %H:%M:%S"),
                 coverage = report.coverage_percentage,
                 line_coverage = report.summary.line_coverage,
-                line_class = if report.summary.line_coverage >= 90.0 { "good" } 
-                           else if report.summary.line_coverage >= 70.0 { "warning" } 
-                           else { "danger" },
+                line_class = if report.summary.line_coverage >= 90.0 {
+                    "good"
+                } else if report.summary.line_coverage >= 70.0 {
+                    "warning"
+                } else {
+                    "danger"
+                },
                 covered_lines = report.covered_lines,
                 total_lines = report.total_lines,
                 func_coverage = report.summary.function_coverage,
-                func_class = if report.summary.function_coverage >= 90.0 { "good" } 
-                           else if report.summary.function_coverage >= 70.0 { "warning" } 
-                           else { "danger" },
+                func_class = if report.summary.function_coverage >= 90.0 {
+                    "good"
+                } else if report.summary.function_coverage >= 70.0 {
+                    "warning"
+                } else {
+                    "danger"
+                },
                 branch_coverage = report.summary.branch_coverage,
-                branch_class = if report.summary.branch_coverage >= 80.0 { "good" } 
-                             else if report.summary.branch_coverage >= 60.0 { "warning" } 
-                             else { "danger" },
+                branch_class = if report.summary.branch_coverage >= 80.0 {
+                    "good"
+                } else if report.summary.branch_coverage >= 60.0 {
+                    "warning"
+                } else {
+                    "danger"
+                },
                 test_count = report.summary.test_count,
                 test_growth = report.trends.test_growth_rate,
                 risk_score = report.summary.regression_risk_score,
-                risk_class = if report.summary.regression_risk_score < 10.0 { "good" }
-                           else if report.summary.regression_risk_score < 25.0 { "warning" }
-                           else { "danger" },
+                risk_class = if report.summary.regression_risk_score < 10.0 {
+                    "good"
+                } else if report.summary.regression_risk_score < 25.0 {
+                    "warning"
+                } else {
+                    "danger"
+                },
                 trend = report.trends.coverage_trend,
-                trend_class = if report.trends.coverage_trend > 0.0 { "trend-up" } else { "trend-down" },
+                trend_class = if report.trends.coverage_trend > 0.0 {
+                    "trend-up"
+                } else {
+                    "trend-down"
+                },
                 new_uncovered = report.trends.new_uncovered_lines,
                 resolved_uncovered = report.trends.resolved_uncovered_lines,
                 file_details = self.generate_file_details_html(&report.files),
@@ -604,19 +664,20 @@ mod comprehensive_coverage_analysis {
 
         fn generate_file_details_html(&self, files: &[FileCoverage]) -> String {
             let mut html = String::new();
-            
+
             for file in files {
-                let coverage_class = if file.coverage_percentage >= 90.0 { 
-                    "good" 
-                } else if file.coverage_percentage >= 70.0 { 
-                    "warning" 
-                } else { 
-                    "danger uncovered" 
+                let coverage_class = if file.coverage_percentage >= 90.0 {
+                    "good"
+                } else if file.coverage_percentage >= 70.0 {
+                    "warning"
+                } else {
+                    "danger uncovered"
                 };
 
                 let coverage_width = file.coverage_percentage;
-                
-                html.push_str(&format!(r#"
+
+                html.push_str(&format!(
+                    r#"
                 <div class="file {coverage_class}">
                     <h4>{file_path}</h4>
                     <div style="display: flex; align-items: center; gap: 10px;">
@@ -627,7 +688,7 @@ mod comprehensive_coverage_analysis {
                     </div>
                     <p>{covered}/{total} lines covered, {functions} functions</p>
                 </div>
-                "#, 
+                "#,
                     file_path = file.file_path,
                     coverage_class = coverage_class,
                     coverage_width = coverage_width,
@@ -637,21 +698,27 @@ mod comprehensive_coverage_analysis {
                     functions = file.functions.len()
                 ));
             }
-            
+
             html
         }
 
         fn generate_uncovered_regions_html(&self, regions: &[UncoveredRegion]) -> String {
             let mut html = String::new();
-            
-            for region in regions.iter().filter(|r| matches!(r.priority, CoveragePriority::Critical | CoveragePriority::High)) {
+
+            for region in regions.iter().filter(|r| {
+                matches!(
+                    r.priority,
+                    CoveragePriority::Critical | CoveragePriority::High
+                )
+            }) {
                 let priority_class = match region.priority {
                     CoveragePriority::Critical => "danger",
-                    CoveragePriority::High => "warning", 
+                    CoveragePriority::High => "warning",
                     _ => "",
                 };
 
-                html.push_str(&format!(r#"
+                html.push_str(&format!(
+                    r#"
                 <div class="file {priority_class}">
                     <strong>{file_path}:{start_line}-{end_line}</strong>
                     <p>{reason}</p>
@@ -665,28 +732,29 @@ mod comprehensive_coverage_analysis {
                     priority = region.priority
                 ));
             }
-            
+
             if html.is_empty() {
                 html = "<p>✅ No critical uncovered regions found!</p>".to_string();
             }
-            
+
             html
         }
 
         fn save_report_data(&mut self, report: CoverageReport) -> Result<(), String> {
             // Add to historical data
             self.historical_data.push(report.clone());
-            
+
             // Keep only last 50 reports for trends
             if self.historical_data.len() > 50 {
-                self.historical_data.drain(0..self.historical_data.len() - 50);
+                self.historical_data
+                    .drain(0..self.historical_data.len() - 50);
             }
 
             // Save historical data
             let history_file = self.project_root.join("coverage_reports/history.json");
             let history_json = serde_json::to_string_pretty(&self.historical_data)
                 .map_err(|e| format!("Failed to serialize history: {}", e))?;
-            
+
             fs::write(&history_file, history_json)
                 .map_err(|e| format!("Failed to write history: {}", e))?;
 
@@ -694,7 +762,7 @@ mod comprehensive_coverage_analysis {
             let report_file = self.output_dir.join("latest_report.json");
             let report_json = serde_json::to_string_pretty(&report)
                 .map_err(|e| format!("Failed to serialize report: {}", e))?;
-            
+
             fs::write(&report_file, report_json)
                 .map_err(|e| format!("Failed to write report: {}", e))?;
 
@@ -717,7 +785,7 @@ mod comprehensive_coverage_analysis {
 
             if report.summary.function_coverage < min_function_coverage {
                 violations.push(format!(
-                    "Function coverage {:.1}% is below required {:.1}%", 
+                    "Function coverage {:.1}% is below required {:.1}%",
                     report.summary.function_coverage, min_function_coverage
                 ));
             }
@@ -730,18 +798,24 @@ mod comprehensive_coverage_analysis {
             }
 
             // Check for critical uncovered regions
-            let critical_uncovered = report.uncovered_regions.iter()
+            let critical_uncovered = report
+                .uncovered_regions
+                .iter()
                 .filter(|r| matches!(r.priority, CoveragePriority::Critical))
                 .count();
 
             if critical_uncovered > 0 {
                 violations.push(format!(
-                    "{} critical uncovered regions found", critical_uncovered
+                    "{} critical uncovered regions found",
+                    critical_uncovered
                 ));
             }
 
             if !violations.is_empty() {
-                return Err(format!("Coverage requirements not met:\n{}", violations.join("\n")));
+                return Err(format!(
+                    "Coverage requirements not met:\n{}",
+                    violations.join("\n")
+                ));
             }
 
             Ok(())
@@ -757,7 +831,7 @@ mod comprehensive_coverage_analysis {
 
         assert!(analyzer.output_dir.exists());
         assert_eq!(analyzer.historical_data.len(), 0);
-        
+
         println!("✅ Coverage analyzer initialized successfully");
     }
 
@@ -766,7 +840,7 @@ mod comprehensive_coverage_analysis {
         println!("🔍 Testing LLVM Tools Detection");
 
         let llvm_path = CoverageAnalyzer::find_llvm_tools();
-        
+
         match llvm_path {
             Some(path) => {
                 println!("✅ LLVM tools found at: {}", path.display());
@@ -792,15 +866,13 @@ mod comprehensive_coverage_analysis {
                 total_lines: 100,
                 covered_lines: 90,
                 coverage_percentage: 90.0,
-                functions: vec![
-                    FunctionCoverage {
-                        name: "test_function".to_string(),
-                        line_start: 10,
-                        line_end: 20,
-                        is_covered: true,
-                        call_count: 5,
-                    }
-                ],
+                functions: vec![FunctionCoverage {
+                    name: "test_function".to_string(),
+                    line_start: 10,
+                    line_end: 20,
+                    is_covered: true,
+                    call_count: 5,
+                }],
                 branches: vec![],
             },
             FileCoverage {
@@ -808,21 +880,19 @@ mod comprehensive_coverage_analysis {
                 total_lines: 50,
                 covered_lines: 40,
                 coverage_percentage: 80.0,
-                functions: vec![
-                    FunctionCoverage {
-                        name: "main".to_string(),
-                        line_start: 1,
-                        line_end: 10,
-                        is_covered: true,
-                        call_count: 1,
-                    }
-                ],
+                functions: vec![FunctionCoverage {
+                    name: "main".to_string(),
+                    line_start: 1,
+                    line_end: 10,
+                    is_covered: true,
+                    call_count: 1,
+                }],
                 branches: vec![],
-            }
+            },
         ];
 
         let summary = analyzer.calculate_coverage_summary(&files, 86.7);
-        
+
         assert_eq!(summary.line_coverage, 86.7);
         assert_eq!(summary.function_coverage, 100.0); // Both functions covered
         assert!(summary.regression_risk_score < 20.0); // Should be relatively low risk
@@ -842,21 +912,22 @@ mod comprehensive_coverage_analysis {
 
         // Create mock coverage report
         let report = CoverageReport {
-            timestamp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
+            timestamp: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
             project_name: "Test Project".to_string(),
             total_lines: 1000,
             covered_lines: 850,
             coverage_percentage: 85.0,
-            files: vec![
-                FileCoverage {
-                    file_path: "test.rs".to_string(),
-                    total_lines: 100,
-                    covered_lines: 85,
-                    coverage_percentage: 85.0,
-                    functions: vec![],
-                    branches: vec![],
-                }
-            ],
+            files: vec![FileCoverage {
+                file_path: "test.rs".to_string(),
+                total_lines: 100,
+                covered_lines: 85,
+                coverage_percentage: 85.0,
+                functions: vec![],
+                branches: vec![],
+            }],
             uncovered_regions: vec![],
             summary: CoverageSummary {
                 line_coverage: 85.0,
@@ -884,7 +955,7 @@ mod comprehensive_coverage_analysis {
         let html_content = fs::read_to_string(&html_file).unwrap();
         assert!(html_content.contains("Test Project"));
         assert!(html_content.contains("85.0%"));
-        
+
         println!("✅ HTML coverage report generated successfully");
     }
 
@@ -932,15 +1003,13 @@ mod comprehensive_coverage_analysis {
             covered_lines: 700,
             coverage_percentage: 70.0,
             files: vec![],
-            uncovered_regions: vec![
-                UncoveredRegion {
-                    file_path: "critical.rs".to_string(),
-                    start_line: 1,
-                    end_line: 10,
-                    reason: "Critical function not tested".to_string(),
-                    priority: CoveragePriority::Critical,
-                }
-            ],
+            uncovered_regions: vec![UncoveredRegion {
+                file_path: "critical.rs".to_string(),
+                start_line: 1,
+                end_line: 10,
+                reason: "Critical function not tested".to_string(),
+                priority: CoveragePriority::Critical,
+            }],
             summary: CoverageSummary {
                 line_coverage: 70.0,
                 branch_coverage: 60.0,
@@ -960,7 +1029,7 @@ mod comprehensive_coverage_analysis {
 
         let result = analyzer.check_coverage_requirements(&bad_report);
         assert!(result.is_err(), "Poor coverage should fail requirements");
-        
+
         let error_msg = result.unwrap_err();
         assert!(error_msg.contains("Line coverage"));
         assert!(error_msg.contains("Function coverage"));
@@ -981,7 +1050,7 @@ mod comprehensive_coverage_analysis {
             Ok(report) => {
                 println!("✅ LLVM coverage report generated successfully");
                 println!("  Total lines: {}", report.total_lines);
-                println!("  Covered lines: {}", report.covered_lines);  
+                println!("  Covered lines: {}", report.covered_lines);
                 println!("  Coverage: {:.1}%", report.coverage_percentage);
 
                 // Generate HTML report
@@ -999,7 +1068,10 @@ mod comprehensive_coverage_analysis {
                 }
             }
             Err(e) => {
-                println!("⚠️ LLVM coverage generation failed (expected in test environment): {}", e);
+                println!(
+                    "⚠️ LLVM coverage generation failed (expected in test environment): {}",
+                    e
+                );
                 println!("This test verifies the workflow structure rather than actual coverage");
             }
         }
@@ -1075,6 +1147,9 @@ fi
         }
 
         assert!(script_file.exists());
-        println!("✅ CI integration script generated: {}", script_file.display());
+        println!(
+            "✅ CI integration script generated: {}",
+            script_file.display()
+        );
     }
 }

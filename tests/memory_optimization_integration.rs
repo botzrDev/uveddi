@@ -34,7 +34,7 @@ async fn test_memory_optimization_validation_invalid_limit() {
         enable_memory_optimization: true,
         memory_limit_gb: Some(-1.0), // Invalid negative limit
         memory_profile: None,
-    timeout_seconds: 0,
+        timeout_seconds: 0,
     };
 
     let mut orchestrator = AnalysisOrchestrator::new().unwrap();
@@ -74,7 +74,7 @@ async fn test_memory_optimization_validation_invalid_profile() {
         enable_memory_optimization: true,
         memory_limit_gb: None,
         memory_profile: Some("invalid_profile".to_string()),
-    timeout_seconds: 0,
+        timeout_seconds: 0,
     };
 
     let mut orchestrator = AnalysisOrchestrator::new().unwrap();
@@ -114,7 +114,7 @@ async fn test_memory_optimization_validation_valid_config() {
         enable_memory_optimization: true,
         memory_limit_gb: Some(4.0), // Valid 4GB limit
         memory_profile: Some("small".to_string()),
-    timeout_seconds: 0,
+        timeout_seconds: 0,
     };
 
     let mut orchestrator = AnalysisOrchestrator::new().unwrap();
@@ -154,7 +154,7 @@ async fn test_memory_optimization_disabled() {
         enable_memory_optimization: false,
         memory_limit_gb: None,
         memory_profile: None,
-    timeout_seconds: 0,
+        timeout_seconds: 0,
     };
 
     let mut orchestrator = AnalysisOrchestrator::new().unwrap();
@@ -194,7 +194,7 @@ async fn test_memory_optimization_custom_config() {
         enable_memory_optimization: true,
         memory_limit_gb: None,
         memory_profile: None,
-    timeout_seconds: 0,
+        timeout_seconds: 0,
     };
 
     let mut orchestrator = AnalysisOrchestrator::new().unwrap();

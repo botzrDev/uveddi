@@ -8,9 +8,9 @@ use super::{
     DiagramCacheStats, DiagramDependencyTracker, DiagramType, InvalidationManager, Result,
 };
 use crate::analysis::incremental::{ChangeSet, IncrementalAnalysisEngine};
+use crate::core::logging::{debug, error, info, warn};
 use blake3::Hasher;
 use chrono::Utc;
-use crate::core::logging::{debug, error, info, warn};
 use lru::LruCache;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};

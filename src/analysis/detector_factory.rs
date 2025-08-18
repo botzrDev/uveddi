@@ -37,7 +37,6 @@ impl DetectorFactory {
             Box::new(DeadCodeDetector::with_default_config()),
             Box::new(LargeClassDetector::with_default_config()),
             Box::new(TightCouplingDetector::default()),
-            
             // Enhanced anti-pattern detectors
             // Box::new(ShotgunSurgeryDetector::new()),
             // Box::new(FeatureEnvyDetector::new()),

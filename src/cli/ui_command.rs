@@ -6,7 +6,7 @@
 
 use crate::api::{CombinedApiServer, RestApiConfig};
 use crate::database::Database;
-use crate::report::{InteractiveReportGenerator, InteractiveReportConfig};
+use crate::report::{InteractiveReportConfig, InteractiveReportGenerator};
 use clap::{Args, Subcommand};
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -95,7 +95,10 @@ impl UiCommand {
     }
 
     /// Start the interactive reporting server
-    async fn serve(&self, args: &ServeArgs) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    async fn serve(
+        &self,
+        args: &ServeArgs,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         println!("🚀 Starting Uveddi Interactive Reports Server");
         println!();
 
@@ -130,15 +133,18 @@ impl UiCommand {
 
         // Start server
         let server = CombinedApiServer::new(config, args.port);
-        
+
         println!("✅ Server configuration complete");
         println!();
         println!("🌐 Server starting on http://localhost:{}", args.port);
-        println!("📊 Dashboard: http://localhost:{}/dashboard/demo", args.port);
+        println!(
+            "📊 Dashboard: http://localhost:{}/dashboard/demo",
+            args.port
+        );
         println!("🔧 API: http://localhost:{}/api/v1/reports", args.port);
         println!("❤️  Health: http://localhost:{}/health", args.port);
         println!();
-        
+
         if args.dev {
             println!("🛠️  Development mode enabled");
             println!("   • CORS enabled for frontend dev servers");
@@ -164,8 +170,11 @@ impl UiCommand {
         println!("🔗 Opening report: {}", args.report_id);
 
         // Start server in background (this is a simplified version)
-        let url = format!("http://localhost:{}/dashboard/{}", args.port, args.report_id);
-        
+        let url = format!(
+            "http://localhost:{}/dashboard/{}",
+            args.port, args.report_id
+        );
+
         if args.browser {
             // Try to open browser
             if let Err(e) = open_browser(&url) {
@@ -180,12 +189,15 @@ impl UiCommand {
 
         // TODO: Start server in background and keep it running
         println!("ℹ️  Use 'uveddi ui serve' to start the full server");
-        
+
         Ok(())
     }
 
     /// Export a report as a portable bundle
-    async fn export(&self, args: &ExportArgs) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    async fn export(
+        &self,
+        args: &ExportArgs,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         println!("📦 Exporting report: {}", args.report_id);
         println!("📁 Output directory: {}", args.output.display());
 
@@ -206,25 +218,28 @@ impl UiCommand {
     }
 
     /// Ensure demo report exists in storage
-    async fn ensure_demo_report(&self, reports_dir: &PathBuf) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    async fn ensure_demo_report(
+        &self,
+        reports_dir: &PathBuf,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let demo_path = reports_dir.join("demo.json");
-        
+
         if !demo_path.exists() {
             println!("📝 Creating demo report...");
-            
+
             let config = InteractiveReportConfig {
                 storage_path: reports_dir.clone(),
                 auto_save: false,
                 ..Default::default()
             };
-            
+
             let generator = InteractiveReportGenerator::new(config);
             let demo_report = InteractiveReportGenerator::generate_demo_report();
-            
+
             generator.save_report(&demo_report).await?;
             println!("✅ Demo report created");
         }
-        
+
         Ok(())
     }
 }
@@ -245,7 +260,7 @@ fn open_browser(url: &str) -> Result<(), Box<dyn std::error::Error>> {
             .args(&["url.dll,FileProtocolHandler", url])
             .spawn()?;
     }
-    
+
     Ok(())
 }
 
@@ -295,8 +310,11 @@ mod tests {
         let metadata_before = tokio::fs::metadata(&demo_path).await.unwrap();
         ui_command.ensure_demo_report(&reports_dir).await.unwrap();
         let metadata_after = tokio::fs::metadata(&demo_path).await.unwrap();
-        
-        assert_eq!(metadata_before.modified().unwrap(), metadata_after.modified().unwrap());
+
+        assert_eq!(
+            metadata_before.modified().unwrap(),
+            metadata_after.modified().unwrap()
+        );
     }
 
     #[test]

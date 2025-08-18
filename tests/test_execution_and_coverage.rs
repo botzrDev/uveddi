@@ -1,14 +1,14 @@
 //! Test execution and coverage reporting framework
-//! 
+//!
 //! This module provides utilities for running the comprehensive test suite
 //! and generating detailed coverage reports.
 
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::time::{Duration, Instant};
-use serde::{Deserialize, Serialize};
 use tempfile::TempDir;
 
 /// Test execution configuration
@@ -207,19 +207,19 @@ impl TestExecutor {
             execution_time: Duration::from_secs(0),
             timestamp: chrono::Utc::now().to_rfc3339(),
         };
-        
+
         Self { config, results }
     }
-    
+
     /// Execute all configured test categories
     pub async fn run_all_tests(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         println!("🧪 Starting comprehensive test execution...");
-        
+
         let start_time = Instant::now();
-        
+
         // Ensure output directory exists
         fs::create_dir_all(&self.config.output_directory)?;
-        
+
         // Run tests by category
         for category in &self.config.test_categories.clone() {
             match category {
@@ -239,195 +239,227 @@ impl TestExecutor {
                 }
             }
         }
-        
+
         self.results.execution_time = start_time.elapsed();
-        
+
         // Generate coverage report
         self.generate_coverage_report().await?;
-        
+
         // Validate coverage targets
         self.validate_coverage_targets();
-        
+
         // Generate performance report
         self.generate_performance_report().await?;
-        
+
         // Generate final report
         self.generate_final_report().await?;
-        
-        println!("✅ Test execution completed in {:?}", self.results.execution_time);
-        
+
+        println!(
+            "✅ Test execution completed in {:?}",
+            self.results.execution_time
+        );
+
         Ok(())
     }
-    
+
     /// Run unit tests
     async fn run_unit_tests(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         println!("🔬 Running unit tests...");
-        
+
         let test_commands = vec![
             "cargo test --lib --all-features",
             "cargo test --test security_tests",
             "cargo test --test memory_optimization_integration",
             "cargo test --test analysis_engine",
         ];
-        
+
         let mut category_summary = CategorySummary {
             total: 0,
             passed: 0,
             failed: 0,
             coverage_percent: 0.0,
         };
-        
+
         for cmd in test_commands {
             let result = self.execute_test_command(cmd, "unit").await?;
             category_summary.total += result.total;
             category_summary.passed += result.passed;
             category_summary.failed += result.failed;
         }
-        
-        self.results.summary.by_category.insert("unit".to_string(), category_summary);
-        
+
+        self.results
+            .summary
+            .by_category
+            .insert("unit".to_string(), category_summary);
+
         Ok(())
     }
-    
+
     /// Run integration tests
     async fn run_integration_tests(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         println!("🔗 Running integration tests...");
-        
+
         let test_commands = vec![
             "cargo test --test end_to_end_analysis_workflow",
             "cargo test --test cache_invalidation_correctness_test",
             "cargo test --test arena_allocation_stress_test",
         ];
-        
+
         let mut category_summary = CategorySummary {
             total: 0,
             passed: 0,
             failed: 0,
             coverage_percent: 0.0,
         };
-        
+
         for cmd in test_commands {
             let result = self.execute_test_command(cmd, "integration").await?;
             category_summary.total += result.total;
             category_summary.passed += result.passed;
             category_summary.failed += result.failed;
         }
-        
-        self.results.summary.by_category.insert("integration".to_string(), category_summary);
-        
+
+        self.results
+            .summary
+            .by_category
+            .insert("integration".to_string(), category_summary);
+
         Ok(())
     }
-    
+
     /// Run security tests
     async fn run_security_tests(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         println!("🔒 Running security tests...");
-        
+
         let test_commands = vec![
             "cargo test --test cryptographic_operations_test",
             "cargo test --test authentication_integration_test",
             "cargo test --test security_comprehensive",
         ];
-        
+
         let mut category_summary = CategorySummary {
             total: 0,
             passed: 0,
             failed: 0,
             coverage_percent: 0.0,
         };
-        
+
         for cmd in test_commands {
             let result = self.execute_test_command(cmd, "security").await?;
             category_summary.total += result.total;
             category_summary.passed += result.passed;
             category_summary.failed += result.failed;
         }
-        
-        self.results.summary.by_category.insert("security".to_string(), category_summary);
-        
+
+        self.results
+            .summary
+            .by_category
+            .insert("security".to_string(), category_summary);
+
         Ok(())
     }
-    
+
     /// Run performance tests and benchmarks
     async fn run_performance_tests(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         println!("⚡ Running performance tests and benchmarks...");
-        
+
         // Run performance tests
-        let test_result = self.execute_test_command(
-            "cargo test --test comprehensive_performance_benchmarks", 
-            "performance"
-        ).await?;
-        
+        let test_result = self
+            .execute_test_command(
+                "cargo test --test comprehensive_performance_benchmarks",
+                "performance",
+            )
+            .await?;
+
         // Run benchmarks
-        let benchmark_result = self.execute_benchmark_command(
-            "cargo bench --bench comprehensive_performance_benchmarks"
-        ).await?;
-        
+        let benchmark_result = self
+            .execute_benchmark_command("cargo bench --bench comprehensive_performance_benchmarks")
+            .await?;
+
         let category_summary = CategorySummary {
             total: test_result.total,
             passed: test_result.passed,
             failed: test_result.failed,
             coverage_percent: 0.0, // Benchmarks don't contribute to coverage
         };
-        
-        self.results.summary.by_category.insert("performance".to_string(), category_summary);
-        self.results.performance.benchmark_results.extend(benchmark_result);
-        
+
+        self.results
+            .summary
+            .by_category
+            .insert("performance".to_string(), category_summary);
+        self.results
+            .performance
+            .benchmark_results
+            .extend(benchmark_result);
+
         Ok(())
     }
-    
+
     /// Run UI tests
     async fn run_ui_tests(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         println!("🖥️ Running UI tests...");
-        
+
         let test_commands = vec![
             "cargo test --test tui_comprehensive_testing --features tui",
             "cargo test --test cli_comprehensive_testing",
         ];
-        
+
         let mut category_summary = CategorySummary {
             total: 0,
             passed: 0,
             failed: 0,
             coverage_percent: 0.0,
         };
-        
+
         for cmd in test_commands {
             let result = self.execute_test_command(cmd, "ui").await?;
             category_summary.total += result.total;
             category_summary.passed += result.passed;
             category_summary.failed += result.failed;
         }
-        
-        self.results.summary.by_category.insert("ui".to_string(), category_summary);
-        
+
+        self.results
+            .summary
+            .by_category
+            .insert("ui".to_string(), category_summary);
+
         Ok(())
     }
-    
+
     /// Run resilience tests
     async fn run_resilience_tests(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         println!("🛡️ Running resilience and error handling tests...");
-        
-        let test_result = self.execute_test_command(
-            "cargo test --test comprehensive_error_handling_tests", 
-            "resilience"
-        ).await?;
-        
+
+        let test_result = self
+            .execute_test_command(
+                "cargo test --test comprehensive_error_handling_tests",
+                "resilience",
+            )
+            .await?;
+
         let category_summary = CategorySummary {
             total: test_result.total,
             passed: test_result.passed,
             failed: test_result.failed,
             coverage_percent: 0.0,
         };
-        
-        self.results.summary.by_category.insert("resilience".to_string(), category_summary);
-        
+
+        self.results
+            .summary
+            .by_category
+            .insert("resilience".to_string(), category_summary);
+
         Ok(())
     }
-    
+
     /// Execute a test command and parse results
-    async fn execute_test_command(&mut self, command: &str, category: &str) -> Result<TestCommandResult, Box<dyn std::error::Error>> {
+    async fn execute_test_command(
+        &mut self,
+        command: &str,
+        category: &str,
+    ) -> Result<TestCommandResult, Box<dyn std::error::Error>> {
         let start_time = Instant::now();
-        
+
         let output = if self.config.parallel_execution {
             Command::new("sh")
                 .arg("-c")
@@ -443,19 +475,19 @@ impl TestExecutor {
                 .stderr(Stdio::piped())
                 .output()?
         };
-        
+
         let duration = start_time.elapsed();
         let stdout = String::from_utf8_lossy(&output.stdout);
         let stderr = String::from_utf8_lossy(&output.stderr);
-        
+
         // Parse test results from output
         let result = self.parse_test_output(&stdout, &stderr, category, duration)?;
-        
+
         // Update overall summary
         self.results.summary.total_tests += result.total;
         self.results.summary.passed += result.passed;
         self.results.summary.failed += result.failed;
-        
+
         // Record slow tests
         if duration > Duration::from_secs(30) {
             self.results.performance.slowest_tests.push(SlowTest {
@@ -464,39 +496,48 @@ impl TestExecutor {
                 category: category.to_string(),
             });
         }
-        
+
         Ok(result)
     }
-    
+
     /// Execute benchmark command and parse results
-    async fn execute_benchmark_command(&mut self, command: &str) -> Result<Vec<BenchmarkResult>, Box<dyn std::error::Error>> {
+    async fn execute_benchmark_command(
+        &mut self,
+        command: &str,
+    ) -> Result<Vec<BenchmarkResult>, Box<dyn std::error::Error>> {
         let output = Command::new("sh")
             .arg("-c")
             .arg(command)
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .output()?;
-        
+
         let stdout = String::from_utf8_lossy(&output.stdout);
-        
+
         // Parse benchmark results from Criterion output
         self.parse_benchmark_output(&stdout)
     }
-    
+
     /// Parse test output to extract results
-    fn parse_test_output(&mut self, stdout: &str, stderr: &str, category: &str, duration: Duration) -> Result<TestCommandResult, Box<dyn std::error::Error>> {
+    fn parse_test_output(
+        &mut self,
+        stdout: &str,
+        stderr: &str,
+        category: &str,
+        duration: Duration,
+    ) -> Result<TestCommandResult, Box<dyn std::error::Error>> {
         let mut result = TestCommandResult {
             total: 0,
             passed: 0,
             failed: 0,
         };
-        
+
         // Parse cargo test output
         for line in stdout.lines() {
             if line.contains("test result:") {
                 // Example: "test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out"
                 let parts: Vec<&str> = line.split_whitespace().collect();
-                
+
                 for (i, part) in parts.iter().enumerate() {
                     if *part == "passed;" && i > 0 {
                         if let Ok(passed) = parts[i - 1].parse::<usize>() {
@@ -509,17 +550,17 @@ impl TestExecutor {
                         }
                     }
                 }
-                
+
                 result.total = result.passed + result.failed;
                 break;
             }
         }
-        
+
         // Parse test failures
         let mut current_test = None;
         let mut in_failure = false;
         let mut failure_content = String::new();
-        
+
         for line in stderr.lines() {
             if line.starts_with("---- ") && line.ends_with(" stdout ----") {
                 current_test = Some(line.replace("---- ", "").replace(" stdout ----", ""));
@@ -544,28 +585,31 @@ impl TestExecutor {
                 failure_content.push('\n');
             }
         }
-        
+
         Ok(result)
     }
-    
+
     /// Parse benchmark output from Criterion
-    fn parse_benchmark_output(&self, output: &str) -> Result<Vec<BenchmarkResult>, Box<dyn std::error::Error>> {
+    fn parse_benchmark_output(
+        &self,
+        output: &str,
+    ) -> Result<Vec<BenchmarkResult>, Box<dyn std::error::Error>> {
         let mut results = Vec::new();
-        
+
         for line in output.lines() {
             if line.contains("time:") && line.contains("ns/iter") {
                 // Example: "ast_parsing/parse/rust_small  time:   [1.2345 ms 1.3456 ms 1.4567 ms]"
                 let parts: Vec<&str> = line.split_whitespace().collect();
-                
+
                 if let Some(name_part) = parts.first() {
                     let name = name_part.to_string();
-                    
+
                     // Extract mean time (middle value in brackets)
                     if let Some(time_idx) = parts.iter().position(|&x| x == "[") {
                         if time_idx + 2 < parts.len() {
                             let time_str = parts[time_idx + 2];
                             let unit_str = parts[time_idx + 3];
-                            
+
                             if let Ok(time_value) = time_str.parse::<f64>() {
                                 let duration = match unit_str {
                                     "ns" => Duration::from_nanos(time_value as u64),
@@ -574,12 +618,12 @@ impl TestExecutor {
                                     "s" => Duration::from_secs(time_value as u64),
                                     _ => Duration::from_nanos(time_value as u64),
                                 };
-                                
+
                                 results.push(BenchmarkResult {
                                     name,
                                     mean_time: duration,
                                     std_deviation: Duration::from_nanos(0), // Would need to parse
-                                    throughput: None, // Would need to parse
+                                    throughput: None,                       // Would need to parse
                                     improvement_percent: None, // Would need baseline comparison
                                 });
                             }
@@ -588,67 +632,75 @@ impl TestExecutor {
                 }
             }
         }
-        
+
         Ok(results)
     }
-    
+
     /// Generate coverage report using cargo-llvm-cov
     async fn generate_coverage_report(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         println!("📊 Generating coverage report...");
-        
+
         // Run coverage collection
         let output = Command::new("cargo")
             .args(&[
-                "llvm-cov", 
-                "--all-features", 
-                "--workspace", 
+                "llvm-cov",
+                "--all-features",
+                "--workspace",
                 "--json",
                 "--output-path",
-                &self.config.output_directory.join("coverage.json").to_string_lossy()
+                &self
+                    .config
+                    .output_directory
+                    .join("coverage.json")
+                    .to_string_lossy(),
             ])
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .output()?;
-        
+
         if !output.status.success() {
             eprintln!("Warning: Coverage generation failed");
             return Ok(());
         }
-        
+
         // Parse coverage JSON
         let coverage_file = self.config.output_directory.join("coverage.json");
         if coverage_file.exists() {
             let coverage_data = fs::read_to_string(&coverage_file)?;
             self.parse_coverage_data(&coverage_data)?;
         }
-        
+
         // Generate HTML report if requested
         if self.config.generate_html_report {
             let _output = Command::new("cargo")
                 .args(&[
-                    "llvm-cov", 
-                    "--all-features", 
-                    "--workspace", 
+                    "llvm-cov",
+                    "--all-features",
+                    "--workspace",
                     "--html",
                     "--output-dir",
-                    &self.config.output_directory.join("coverage_html").to_string_lossy()
+                    &self
+                        .config
+                        .output_directory
+                        .join("coverage_html")
+                        .to_string_lossy(),
                 ])
                 .output()?;
         }
-        
+
         Ok(())
     }
-    
+
     /// Parse coverage data from JSON
     fn parse_coverage_data(&mut self, data: &str) -> Result<(), Box<dyn std::error::Error>> {
         // This would parse the actual LLVM coverage JSON format
         // For now, we'll use a simplified example
-        
+
         self.results.coverage.overall_coverage = 85.5; // Example value
         self.results.coverage.line_coverage = 87.2;
         self.results.coverage.branch_coverage = 82.1;
         self.results.coverage.function_coverage = 91.3;
-        
+
         // Parse module-specific coverage
         let modules = vec![
             ("src/analysis/mod.rs", 92.5),
@@ -656,7 +708,7 @@ impl TestExecutor {
             ("src/cache/mod.rs", 88.1),
             ("src/tui/mod.rs", 72.3),
         ];
-        
+
         for (module, coverage) in modules {
             self.results.coverage.by_module.insert(
                 module.to_string(),
@@ -671,97 +723,106 @@ impl TestExecutor {
                     branches_total: 800,
                     functions_covered: ((coverage + 3.0) * 2.0) as usize,
                     functions_total: 200,
-                }
+                },
             );
         }
-        
+
         Ok(())
     }
-    
+
     /// Validate coverage targets
     fn validate_coverage_targets(&mut self) {
         let targets = &self.config.coverage_targets;
         let coverage = &self.results.coverage;
-        
+
         self.results.coverage.coverage_targets_met.insert(
             "overall".to_string(),
-            coverage.overall_coverage >= targets.overall_minimum
+            coverage.overall_coverage >= targets.overall_minimum,
         );
-        
+
         self.results.coverage.coverage_targets_met.insert(
             "security".to_string(),
-            coverage.by_module.get("src/security/mod.rs")
+            coverage
+                .by_module
+                .get("src/security/mod.rs")
                 .map(|m| m.line_coverage >= targets.security_minimum)
-                .unwrap_or(false)
+                .unwrap_or(false),
         );
-        
+
         self.results.coverage.coverage_targets_met.insert(
             "analysis_engine".to_string(),
-            coverage.by_module.get("src/analysis/mod.rs")
+            coverage
+                .by_module
+                .get("src/analysis/mod.rs")
                 .map(|m| m.line_coverage >= targets.analysis_engine_minimum)
-                .unwrap_or(false)
+                .unwrap_or(false),
         );
     }
-    
+
     /// Generate performance report
     async fn generate_performance_report(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         println!("⚡ Generating performance report...");
-        
+
         // Sort slowest tests
-        self.results.performance.slowest_tests.sort_by(|a, b| b.duration.cmp(&a.duration));
-        
+        self.results
+            .performance
+            .slowest_tests
+            .sort_by(|a, b| b.duration.cmp(&a.duration));
+
         // Calculate memory usage
         self.results.performance.memory_usage = MemoryUsage {
             peak_memory_mb: 512.0, // Example value
             average_memory_mb: 256.0,
             memory_leaks_detected: false,
         };
-        
+
         // Detect performance regressions (would compare with baseline)
         // For now, we'll add example regressions
         if !self.results.performance.benchmark_results.is_empty() {
             for benchmark in &self.results.performance.benchmark_results {
                 if benchmark.mean_time > Duration::from_millis(1000) {
-                    self.results.performance.performance_regressions.push(
-                        PerformanceRegression {
+                    self.results
+                        .performance
+                        .performance_regressions
+                        .push(PerformanceRegression {
                             test_name: benchmark.name.clone(),
                             current_time: benchmark.mean_time,
                             baseline_time: Duration::from_millis(800),
                             regression_percent: 25.0,
-                        }
-                    );
+                        });
                 }
             }
         }
-        
+
         Ok(())
     }
-    
+
     /// Generate final comprehensive report
     async fn generate_final_report(&self) -> Result<(), Box<dyn std::error::Error>> {
         println!("📋 Generating final test report...");
-        
+
         // Save JSON report
         let json_report = serde_json::to_string_pretty(&self.results)?;
         fs::write(
             self.config.output_directory.join("test_results.json"),
-            json_report
+            json_report,
         )?;
-        
+
         // Generate HTML report
         if self.config.generate_html_report {
             self.generate_html_report().await?;
         }
-        
+
         // Print summary to console
         self.print_summary();
-        
+
         Ok(())
     }
-    
+
     /// Generate HTML test report
     async fn generate_html_report(&self) -> Result<(), Box<dyn std::error::Error>> {
-        let html_content = format!(r#"
+        let html_content = format!(
+            r#"
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -845,26 +906,29 @@ impl TestExecutor {
             self.generate_regression_table(),
             self.generate_failures_section()
         );
-        
+
         fs::write(
             self.config.output_directory.join("test_report.html"),
-            html_content
+            html_content,
         )?;
-        
+
         Ok(())
     }
-    
+
     fn generate_module_coverage_table(&self) -> String {
         let mut table = String::new();
         for (module, coverage) in &self.results.coverage.by_module {
             table.push_str(&format!(
                 "<tr><td>{}</td><td>{:.1}%</td><td>{:.1}%</td><td>{:.1}%</td></tr>",
-                module, coverage.line_coverage, coverage.branch_coverage, coverage.function_coverage
+                module,
+                coverage.line_coverage,
+                coverage.branch_coverage,
+                coverage.function_coverage
             ));
         }
         table
     }
-    
+
     fn generate_slow_tests_table(&self) -> String {
         let mut table = String::new();
         for test in &self.results.performance.slowest_tests {
@@ -875,37 +939,40 @@ impl TestExecutor {
         }
         table
     }
-    
+
     fn generate_regression_table(&self) -> String {
         let mut table = String::new();
         for regression in &self.results.performance.performance_regressions {
             table.push_str(&format!(
                 "<tr><td>{}</td><td>{:.2?}</td><td>{:.2?}</td><td>{:.1}%</td></tr>",
-                regression.test_name, regression.current_time, regression.baseline_time, regression.regression_percent
+                regression.test_name,
+                regression.current_time,
+                regression.baseline_time,
+                regression.regression_percent
             ));
         }
         table
     }
-    
+
     fn generate_failures_section(&self) -> String {
         if self.results.failures.is_empty() {
             return "<div class=\"failures\"><h2>Test Failures</h2><p>No test failures! 🎉</p></div>".to_string();
         }
-        
+
         let mut section = String::from("<div class=\"failures\"><h2>Test Failures</h2><table>");
         section.push_str("<tr><th>Test</th><th>Category</th><th>Error</th></tr>");
-        
+
         for failure in &self.results.failures {
             section.push_str(&format!(
                 "<tr class=\"failure\"><td>{}</td><td>{}</td><td>{}</td></tr>",
                 failure.test_name, failure.category, failure.error_message
             ));
         }
-        
+
         section.push_str("</table></div>");
         section
     }
-    
+
     fn print_summary(&self) {
         println!("\n📊 Test Execution Summary");
         println!("═════════════════════════");
@@ -913,21 +980,35 @@ impl TestExecutor {
         println!("✅ Passed: {}", self.results.summary.passed);
         println!("❌ Failed: {}", self.results.summary.failed);
         println!("⏱️  Execution Time: {:?}", self.results.execution_time);
-        
+
         println!("\n📈 Coverage Report");
         println!("═══════════════════");
-        println!("Overall Coverage: {:.1}%", self.results.coverage.overall_coverage);
+        println!(
+            "Overall Coverage: {:.1}%",
+            self.results.coverage.overall_coverage
+        );
         println!("Line Coverage: {:.1}%", self.results.coverage.line_coverage);
-        println!("Branch Coverage: {:.1}%", self.results.coverage.branch_coverage);
-        println!("Function Coverage: {:.1}%", self.results.coverage.function_coverage);
-        
+        println!(
+            "Branch Coverage: {:.1}%",
+            self.results.coverage.branch_coverage
+        );
+        println!(
+            "Function Coverage: {:.1}%",
+            self.results.coverage.function_coverage
+        );
+
         println!("\n🎯 Coverage Targets");
         println!("════════════════════");
         for (target, met) in &self.results.coverage.coverage_targets_met {
             let status = if *met { "✅" } else { "❌" };
-            println!("{} {}: {}", status, target, if *met { "MET" } else { "NOT MET" });
+            println!(
+                "{} {}: {}",
+                status,
+                target,
+                if *met { "MET" } else { "NOT MET" }
+            );
         }
-        
+
         if !self.results.failures.is_empty() {
             println!("\n❌ Test Failures");
             println!("═══════════════════");
@@ -935,13 +1016,28 @@ impl TestExecutor {
                 println!("• {}: {}", failure.test_name, failure.error_message);
             }
         }
-        
+
         println!("\n📁 Reports Generated");
         println!("═════════════════════");
-        println!("• JSON Report: {}", self.config.output_directory.join("test_results.json").display());
+        println!(
+            "• JSON Report: {}",
+            self.config
+                .output_directory
+                .join("test_results.json")
+                .display()
+        );
         if self.config.generate_html_report {
-            println!("• HTML Report: {}", self.config.output_directory.join("test_report.html").display());
-            println!("• Coverage HTML: {}", self.config.output_directory.join("coverage_html").display());
+            println!(
+                "• HTML Report: {}",
+                self.config
+                    .output_directory
+                    .join("test_report.html")
+                    .display()
+            );
+            println!(
+                "• Coverage HTML: {}",
+                self.config.output_directory.join("coverage_html").display()
+            );
         }
     }
 }
@@ -989,21 +1085,21 @@ impl Default for TestConfig {
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config = TestConfig::default();
     let mut executor = TestExecutor::new(config);
-    
+
     executor.run_all_tests().await?;
-    
+
     // Exit with appropriate code
     if executor.results.summary.failed > 0 {
         std::process::exit(1);
     }
-    
+
     Ok(())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_config_creation() {
         let config = TestConfig::default();
@@ -1011,12 +1107,12 @@ mod tests {
         assert!(config.coverage_targets.overall_minimum > 0.0);
         assert!(config.performance_thresholds.max_test_duration_minutes > 0);
     }
-    
+
     #[test]
     fn test_results_initialization() {
         let config = TestConfig::default();
         let executor = TestExecutor::new(config);
-        
+
         assert_eq!(executor.results.summary.total_tests, 0);
         assert_eq!(executor.results.summary.passed, 0);
         assert_eq!(executor.results.summary.failed, 0);

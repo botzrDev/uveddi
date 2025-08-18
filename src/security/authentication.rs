@@ -10,11 +10,12 @@ use crate::security::{
 };
 use argon2::password_hash::{rand_core::OsRng, SaltString};
 use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
+use base64::Engine;
 use chrono::{DateTime, Duration as ChronoDuration, Utc};
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use oauth2::{
-    basic::BasicClient, AuthType, AuthUrl, AuthorizationCode, ClientId,
-    ClientSecret, CsrfToken, PkceCodeChallenge, RedirectUrl, Scope, TokenResponse, TokenUrl,
+    basic::BasicClient, AuthType, AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken,
+    PkceCodeChallenge, RedirectUrl, Scope, TokenResponse, TokenUrl,
 };
 use openidconnect::{
     core::{CoreAuthenticationFlow, CoreClient, CoreProviderMetadata, CoreResponseType},
@@ -36,7 +37,6 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
 use uuid::Uuid;
-use base64::Engine;
 
 /// JWT claims structure
 #[derive(Debug, Serialize, Deserialize)]
@@ -133,29 +133,34 @@ impl JwtManager {
     pub async fn rotate_key(&mut self) -> SecurityResult<()> {
         self.previous_key = Some(self.current_key.clone());
         self.current_key = self.generate_secure_key();
-        
+
         // Update rotation timestamp
         {
             let mut timestamp = self.key_rotation_timestamp.write().await;
             *timestamp = Some(std::time::SystemTime::now());
         }
-        
+
         // Schedule cleanup of previous key after rotation period
         let blacklisted_tokens = self.blacklisted_tokens.clone();
         let rotation_timestamp = self.key_rotation_timestamp.clone();
         tokio::spawn(async move {
             tokio::time::sleep(tokio::time::Duration::from_secs(24 * 3600)).await;
             // Clean up old blacklisted tokens after 24 hours
-            if let Some(Ok(timestamp)) = rotation_timestamp.read().await.as_ref().map(|t| t.elapsed()) {
+            if let Some(Ok(timestamp)) = rotation_timestamp
+                .read()
+                .await
+                .as_ref()
+                .map(|t| t.elapsed())
+            {
                 if timestamp > Duration::from_secs(24 * 3600) {
                     blacklisted_tokens.write().await.clear();
                 }
             }
         });
-        
+
         Ok(())
     }
-    
+
     /// Generate a secure random key
     fn generate_secure_key(&self) -> String {
         use rand::Rng;
@@ -163,14 +168,14 @@ impl JwtManager {
         let bytes: Vec<u8> = (0..64).map(|_| rng.gen()).collect();
         base64::engine::general_purpose::STANDARD.encode(&bytes)
     }
-    
+
     /// Blacklist a JWT token
     pub async fn blacklist_token(&self, token: &str) -> SecurityResult<()> {
         let jti = self.extract_jti(token)?;
         self.blacklisted_tokens.write().await.insert(jti);
         Ok(())
     }
-    
+
     /// Check if token is blacklisted
     pub async fn is_blacklisted(&self, token: &str) -> bool {
         if let Ok(jti) = self.extract_jti(token) {
@@ -179,7 +184,7 @@ impl JwtManager {
             true // Invalid tokens are considered blacklisted
         }
     }
-    
+
     /// Extract JWT ID from token
     fn extract_jti(&self, token: &str) -> SecurityResult<String> {
         // Simple extraction without validation (for blacklisting purposes)
@@ -187,25 +192,25 @@ impl JwtManager {
         if parts.len() != 3 {
             return Err(SecurityError::InvalidCredentials);
         }
-        
+
         let payload = base64::engine::general_purpose::URL_SAFE_NO_PAD
             .decode(parts[1])
             .map_err(|_| SecurityError::InvalidCredentials)?;
-        
-        let claims: serde_json::Value = serde_json::from_slice(&payload)
-            .map_err(|_| SecurityError::InvalidCredentials)?;
-        
+
+        let claims: serde_json::Value =
+            serde_json::from_slice(&payload).map_err(|_| SecurityError::InvalidCredentials)?;
+
         claims["jti"]
             .as_str()
             .map(|s| s.to_string())
             .ok_or(SecurityError::InvalidCredentials)
     }
-    
+
     /// Get current key for encoding
     pub fn get_current_key(&self) -> &str {
         &self.current_key
     }
-    
+
     /// Get keys for decoding (current and previous for rotation support)
     pub fn get_decoding_keys(&self) -> Vec<&str> {
         let mut keys = vec![self.current_key.as_str()];
@@ -485,7 +490,7 @@ impl AuthenticationService {
 
         // Use constant-time verification to prevent timing attacks
         let verification_result = argon2.verify_password(key_secret.as_bytes(), &parsed_hash);
-        
+
         if verification_result.is_err() {
             return Err(SecurityError::InvalidCredentials);
         }
@@ -525,19 +530,19 @@ impl AuthenticationService {
     /// Secure JWT validation with timing attack protection
     pub async fn authenticate_jwt_secure(&self, token: &str) -> SecurityResult<AuthenticatedUser> {
         let start_time = Instant::now();
-        
+
         // Perform actual validation
         let result = self.authenticate_jwt_internal(token).await;
-        
+
         // Add consistent timing to prevent timing attacks
         let elapsed = start_time.elapsed();
         let target_duration = Duration::from_millis(50); // Minimum processing time
-        
+
         if elapsed < target_duration {
             let delay = target_duration - elapsed;
             tokio::time::sleep(delay).await;
         }
-        
+
         result
     }
 
@@ -553,10 +558,10 @@ impl AuthenticationService {
         let decoding_keys = jwt_manager.get_decoding_keys();
         let mut validation = Validation::new(Algorithm::HS256);
         validation.validate_exp = true; // Ensure token expiration is checked
-        
+
         let mut last_error = None;
         let mut token_data = None;
-        
+
         for key in decoding_keys {
             let decoding_key = DecodingKey::from_secret(key.as_ref());
             match decode::<JwtClaims>(token, &decoding_key, &validation) {
@@ -570,11 +575,13 @@ impl AuthenticationService {
                 }
             }
         }
-        
+
         let token_data = token_data.ok_or_else(|| {
-            last_error.unwrap_or_else(|| jsonwebtoken::errors::Error::from(jsonwebtoken::errors::ErrorKind::InvalidToken))
+            last_error.unwrap_or_else(|| {
+                jsonwebtoken::errors::Error::from(jsonwebtoken::errors::ErrorKind::InvalidToken)
+            })
         })?;
-        
+
         let claims = token_data.claims;
 
         // Validate additional claims

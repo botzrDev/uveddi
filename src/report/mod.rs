@@ -99,9 +99,9 @@
 
 // use crate::analysis::graph::ComponentNode;
 use crate::analysis::mermaid_generator::{MermaidGenerationError, MermaidGenerator};
-use crate::report::svg_generator::{SvgGenerator, SvgConfig};
 use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
 use crate::models::visualization::{ArchitecturalComponent, DiagramMetadata, DiagramType};
+use crate::report::svg_generator::{SvgConfig, SvgGenerator};
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 pub mod errors;
@@ -149,31 +149,30 @@ pub use image_renderer::{ImageFormat, ImageRenderer, RenderedImage};
 
 // Export interactive report models
 pub use interactive_models::{
-    InteractiveReport, ProjectMetadata, AnalysisSummary, Finding,
-    DependencyGraph, GraphNode, GraphEdge, DiagramDefinition,
-    AiInsights, ReportMetadata, REPORT_SCHEMA_VERSION
+    AiInsights, AnalysisSummary, DependencyGraph, DiagramDefinition, Finding, GraphEdge, GraphNode,
+    InteractiveReport, ProjectMetadata, ReportMetadata, REPORT_SCHEMA_VERSION,
 };
 
 // Export interactive report generator
-pub use interactive_generator::{InteractiveReportGenerator, InteractiveReportConfig};
+pub use interactive_generator::{InteractiveReportConfig, InteractiveReportGenerator};
 
 // Export security utilities
-pub use security::{ReportSecurityValidator, ReportSecurityConfig, ReportSecurityError};
+pub use security::{ReportSecurityConfig, ReportSecurityError, ReportSecurityValidator};
 
 pub mod diagrams;
-pub mod svg_generator;
-pub mod modern_generator;
-pub mod markdown_generator;
-pub mod interactive_models;
 pub mod interactive_generator;
-pub mod security;
+pub mod interactive_models;
+pub mod markdown_generator;
 pub mod metrics;
-use chrono::{DateTime, Local};
+pub mod modern_generator;
+pub mod security;
+pub mod svg_generator;
 use crate::core::logging::{error, info, warn};
-use std::error::Error;
-use serde_json::Value;
 use crate::report::metrics::{compute_debt_score, compute_issues_by_severity, count_unique_files};
+use chrono::{DateTime, Local};
+use serde_json::Value;
 use std::collections::HashMap;
+use std::error::Error;
 use std::fs;
 use std::io::Write;
 
@@ -521,9 +520,20 @@ impl ReportGenerator {
         codebase_path: Option<&str>,
     ) -> String {
         let total_issues = issues.len();
-        let high_severity = issues.iter().filter(|i| i.severity.to_lowercase() == "high" || i.severity.to_lowercase() == "critical").count();
-        let medium_severity = issues.iter().filter(|i| i.severity.to_lowercase() == "medium").count();
-        let low_severity = issues.iter().filter(|i| i.severity.to_lowercase() == "low").count();
+        let high_severity = issues
+            .iter()
+            .filter(|i| {
+                i.severity.to_lowercase() == "high" || i.severity.to_lowercase() == "critical"
+            })
+            .count();
+        let medium_severity = issues
+            .iter()
+            .filter(|i| i.severity.to_lowercase() == "medium")
+            .count();
+        let low_severity = issues
+            .iter()
+            .filter(|i| i.severity.to_lowercase() == "low")
+            .count();
 
         let unique_files = issues
             .iter()
@@ -554,9 +564,20 @@ impl ReportGenerator {
         let mut summary = String::new();
 
         // Group issues by severity
-        let high_issues: Vec<_> = issues.iter().filter(|i| i.severity.to_lowercase() == "high" || i.severity.to_lowercase() == "critical").collect();
-        let medium_issues: Vec<_> = issues.iter().filter(|i| i.severity.to_lowercase() == "medium").collect();
-        let low_issues: Vec<_> = issues.iter().filter(|i| i.severity.to_lowercase() == "low").collect();
+        let high_issues: Vec<_> = issues
+            .iter()
+            .filter(|i| {
+                i.severity.to_lowercase() == "high" || i.severity.to_lowercase() == "critical"
+            })
+            .collect();
+        let medium_issues: Vec<_> = issues
+            .iter()
+            .filter(|i| i.severity.to_lowercase() == "medium")
+            .collect();
+        let low_issues: Vec<_> = issues
+            .iter()
+            .filter(|i| i.severity.to_lowercase() == "low")
+            .collect();
 
         // High severity table
         if !high_issues.is_empty() {
@@ -940,11 +961,13 @@ impl ReportGenerator {
                 // Check both the anti-pattern type name and the description
                 let by_type = anti_pattern_types
                     .get(&i.anti_pattern_type_id)
-                    .map(|apt| apt.name.to_lowercase().contains("god object") || 
-                              apt.name.to_lowercase().contains("large class"))
+                    .map(|apt| {
+                        apt.name.to_lowercase().contains("god object")
+                            || apt.name.to_lowercase().contains("large class")
+                    })
                     .unwrap_or(false);
                 let by_description = i.description.to_lowercase().contains("god object");
-                
+
                 by_type || by_description
             })
             .collect();
@@ -990,10 +1013,10 @@ impl ReportGenerator {
                     let lines: Vec<&str> = code.lines().collect();
                     let mut in_struct = false;
                     let mut in_impl = false;
-                    
+
                     for line in lines {
                         let trimmed = line.trim();
-                        
+
                         // Track if we're inside a struct definition
                         if trimmed.starts_with("struct") || trimmed.starts_with("pub struct") {
                             in_struct = true;
@@ -1009,7 +1032,7 @@ impl ReportGenerator {
                             in_impl = false;
                             continue;
                         }
-                        
+
                         // Extract struct fields
                         if in_struct && trimmed.contains(":") && !trimmed.starts_with("//") {
                             let field_name = trimmed.split(":").next().unwrap_or("").trim();
@@ -1017,11 +1040,12 @@ impl ReportGenerator {
                                 diagrams.push_str(&format!("        {}: Type\n", field_name));
                             }
                         }
-                        
+
                         // Extract methods from impl block or direct function declarations
-                        if (in_impl || !in_struct) && 
-                           (trimmed.starts_with("fn ") || trimmed.starts_with("pub fn ")) &&
-                           trimmed.contains("(") {
+                        if (in_impl || !in_struct)
+                            && (trimmed.starts_with("fn ") || trimmed.starts_with("pub fn "))
+                            && trimmed.contains("(")
+                        {
                             // Extract method name
                             let method_name = trimmed
                                 .split("(")
@@ -1047,18 +1071,18 @@ impl ReportGenerator {
         let dead_code_issues: Vec<_> = issues
             .iter()
             .filter(|i| {
-                i.description.to_lowercase().contains("dead code") ||
-                i.description.to_lowercase().contains("unused")
+                i.description.to_lowercase().contains("dead code")
+                    || i.description.to_lowercase().contains("unused")
             })
             .collect();
-        
+
         if !dead_code_issues.is_empty() && dead_code_issues.len() <= 20 {
             diagrams.push_str("### Dead Code Analysis\n\n");
             diagrams.push_str("```mermaid\nflowchart TD\n");
             diagrams.push_str("    A[Project] --> B[Live Code]\n");
             diagrams.push_str("    A --> C[Dead Code]\n");
             diagrams.push_str("    style C fill:#ff9999,stroke:#ff0000,stroke-width:2px\n");
-            
+
             for (idx, issue) in dead_code_issues.iter().enumerate().take(15) {
                 let node_id = format!("D{}", idx + 1);
                 let item_name = if let Some(snippet) = &issue.code_snippet {
@@ -1069,9 +1093,12 @@ impl ReportGenerator {
                 diagrams.push_str(&format!("    C --> {}[{}]\n", node_id, item_name));
                 diagrams.push_str(&format!("    style {} fill:#ffcccc\n", node_id));
             }
-            
+
             diagrams.push_str("```\n\n");
-            diagrams.push_str(&format!("*Found {} dead code items. ", dead_code_issues.len()));
+            diagrams.push_str(&format!(
+                "*Found {} dead code items. ",
+                dead_code_issues.len()
+            ));
             if dead_code_issues.len() > 15 {
                 diagrams.push_str(&format!("Showing first 15 items.*\n\n"));
             } else {
@@ -1200,7 +1227,7 @@ impl ReportGenerator {
             json_issues.push(Value::Object(json_issue));
         }
 
-    report.insert("issues".to_string(), Value::Array(json_issues));
+        report.insert("issues".to_string(), Value::Array(json_issues));
 
         // Convert to string
         let json = serde_json::to_string_pretty(&Value::Object(report))
@@ -1486,10 +1513,13 @@ impl ReportGenerator {
         output_path: Option<&Path>,
         codebase_path: Option<&str>,
     ) -> Result<String, String> {
-        info!("Generating interactive HTML report with {} issues", issues.len());
+        info!(
+            "Generating interactive HTML report with {} issues",
+            issues.len()
+        );
 
         let now: DateTime<Local> = Local::now();
-        
+
         // Extract output directory from path
         let output_dir = output_path.and_then(|p| p.parent());
         if let Some(path) = output_path {
@@ -1497,12 +1527,17 @@ impl ReportGenerator {
             if let Some(dir) = output_dir {
                 info!("Output directory: {}", dir.display());
             } else {
-                warn!("Failed to extract output directory from path: {}", path.display());
+                warn!(
+                    "Failed to extract output directory from path: {}",
+                    path.display()
+                );
             }
         }
-        
+
         // Generate the HTML content
-        let html_content = self.generate_html_content(analysis_run, issues, anti_pattern_types, &now, output_dir).await?;
+        let html_content = self
+            .generate_html_content(analysis_run, issues, anti_pattern_types, &now, output_dir)
+            .await?;
 
         // Write to file if output path is provided
         if let Some(path) = output_path {
@@ -1536,9 +1571,15 @@ impl ReportGenerator {
         // Feature flag: Use modern template-based generator if available
         if let Some(ref mut modern_gen) = self.modern_generator {
             info!("Using modern template-based report generator");
-            match modern_gen.generate_html_report(analysis_run, issues, anti_pattern_types, output_dir).await {
+            match modern_gen
+                .generate_html_report(analysis_run, issues, anti_pattern_types, output_dir)
+                .await
+            {
                 Ok(html) => {
-                    info!("Modern report generated successfully ({} bytes)", html.len());
+                    info!(
+                        "Modern report generated successfully ({} bytes)",
+                        html.len()
+                    );
                     return Ok(html);
                 }
                 Err(e) => {
@@ -1549,49 +1590,54 @@ impl ReportGenerator {
             }
         }
         let mut html = String::new();
-        
+
         // HTML document structure
         html.push_str("<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n");
         html.push_str(&self.generate_html_head());
         html.push_str("</head>\n<body>\n");
-        
+
         // Main container
         html.push_str("<div class=\"container\">\n");
-        
+
         // Header
         html.push_str(&self.generate_html_header(analysis_run, timestamp));
-        
+
         // Navigation
         html.push_str(&self.generate_html_navigation());
-        
+
         // Executive summary
         html.push_str(&self.generate_html_executive_summary(analysis_run, issues));
-        
+
         // Severity dashboard
         html.push_str(&self.generate_html_severity_dashboard(issues));
-        
+
         // Architecture diagrams section (with links to separate files)
-        html.push_str(&self.generate_html_diagrams_section(issues, anti_pattern_types, output_dir).await);
-        
+        html.push_str(
+            &self
+                .generate_html_diagrams_section(issues, anti_pattern_types, output_dir)
+                .await,
+        );
+
         // Detailed issues with inline diagrams
         html.push_str(&self.generate_html_detailed_issues(issues, anti_pattern_types));
-        
+
         // Footer
         html.push_str(&self.generate_html_footer());
-        
+
         html.push_str("</div>\n");
-        
+
         // JavaScript
         html.push_str(&self.generate_html_scripts());
-        
+
         html.push_str("</body>\n</html>");
-        
+
         Ok(html)
     }
 
     /// Generate HTML head with styles and meta tags
     fn generate_html_head(&self) -> String {
-        format!(r#"
+        format!(
+            r#"
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Uveddi Architectural Analysis Report</title>
@@ -2321,12 +2367,18 @@ impl ReportGenerator {
             }}
         }}
     </style>
-"#)
+"#
+        )
     }
 
     /// Generate HTML header section
-    fn generate_html_header(&self, analysis_run: &AnalysisRun, timestamp: &DateTime<Local>) -> String {
-        format!(r#"
+    fn generate_html_header(
+        &self,
+        analysis_run: &AnalysisRun,
+        timestamp: &DateTime<Local>,
+    ) -> String {
+        format!(
+            r#"
     <div class="header">
         <h1><i class="fas fa-chart-line"></i> Uveddi Architectural Analysis</h1>
         <div class="header-meta">
@@ -2334,9 +2386,12 @@ impl ReportGenerator {
             <p><i class="fas fa-cog"></i> Run ID: {}</p>
         </div>
     </div>
-"#, 
+"#,
             timestamp.format("%Y-%m-%d %H:%M:%S"),
-            analysis_run.run_id.map(|id| id.to_string()).unwrap_or_else(|| "unknown".to_string())
+            analysis_run
+                .run_id
+                .map(|id| id.to_string())
+                .unwrap_or_else(|| "unknown".to_string())
         )
     }
 
@@ -2356,20 +2411,37 @@ impl ReportGenerator {
     }
 
     /// Generate HTML executive summary section
-    fn generate_html_executive_summary(&self, analysis_run: &AnalysisRun, issues: &[ArchitecturalIssue]) -> String {
+    fn generate_html_executive_summary(
+        &self,
+        analysis_run: &AnalysisRun,
+        issues: &[ArchitecturalIssue],
+    ) -> String {
         let total_issues = issues.len();
-        let critical_issues = issues.iter().filter(|i| i.severity.to_lowercase() == "critical").count();
-        let high_issues = issues.iter().filter(|i| i.severity.to_lowercase() == "high").count();
-        let medium_issues = issues.iter().filter(|i| i.severity.to_lowercase() == "medium").count();
-        let low_issues = issues.iter().filter(|i| i.severity.to_lowercase() == "low").count();
-        
+        let critical_issues = issues
+            .iter()
+            .filter(|i| i.severity.to_lowercase() == "critical")
+            .count();
+        let high_issues = issues
+            .iter()
+            .filter(|i| i.severity.to_lowercase() == "high")
+            .count();
+        let medium_issues = issues
+            .iter()
+            .filter(|i| i.severity.to_lowercase() == "medium")
+            .count();
+        let low_issues = issues
+            .iter()
+            .filter(|i| i.severity.to_lowercase() == "low")
+            .count();
+
         let unique_files = issues
             .iter()
             .map(|i| &i.file_path)
             .collect::<std::collections::HashSet<_>>()
             .len();
 
-        format!(r#"
+        format!(
+            r#"
     <section id="summary" class="card">
         <h2><i class="fas fa-chart-pie"></i> Executive Summary</h2>
         <p>This analysis identified <strong>{} architectural issues</strong> across <strong>{} files</strong> in your codebase.</p>
@@ -2393,7 +2465,9 @@ impl ReportGenerator {
             </div>
         </div>
     </section>
-"#, total_issues, unique_files, critical_issues, high_issues, medium_issues, low_issues)
+"#,
+            total_issues, unique_files, critical_issues, high_issues, medium_issues, low_issues
+        )
     }
 
     /// Generate HTML severity dashboard
@@ -2403,29 +2477,37 @@ impl ReportGenerator {
             *severity_stats.entry(&issue.severity).or_insert(0) += 1;
         }
 
-        let mut dashboard_html = String::from(r#"
+        let mut dashboard_html = String::from(
+            r#"
     <section class="card">
         <h2><i class="fas fa-tachometer-alt"></i> Severity Dashboard</h2>
         <div class="dashboard">
-"#);
+"#,
+        );
 
         for (severity, count) in &severity_stats {
             let icon = match severity.as_str() {
                 "critical" => "fas fa-times-circle",
-                "high" => "fas fa-exclamation-triangle", 
+                "high" => "fas fa-exclamation-triangle",
                 "medium" => "fas fa-exclamation-circle",
                 "low" => "fas fa-info-circle",
                 _ => "fas fa-circle",
             };
 
-            dashboard_html.push_str(&format!(r#"
+            dashboard_html.push_str(&format!(
+                r#"
             <div class="stat-card">
                 <div class="stat-number stat-{}">
                     <i class="{}"></i> {}
                 </div>
                 <div class="stat-label">{} Severity</div>
             </div>
-"#, severity, icon, count, severity.to_uppercase()));
+"#,
+                severity,
+                icon,
+                count,
+                severity.to_uppercase()
+            ));
         }
 
         dashboard_html.push_str("        </div>\n    </section>\n");
@@ -2433,14 +2515,20 @@ impl ReportGenerator {
     }
 
     /// Generate HTML diagrams section with embedded diagrams that can be toggled
-    async fn generate_html_diagrams_section(&self, issues: &[ArchitecturalIssue], anti_pattern_types: &HashMap<i64, AntiPatternType>, _output_dir: Option<&Path>) -> String {
+    async fn generate_html_diagrams_section(
+        &self,
+        issues: &[ArchitecturalIssue],
+        anti_pattern_types: &HashMap<i64, AntiPatternType>,
+        _output_dir: Option<&Path>,
+    ) -> String {
         let diagrams_content = self.generate_diagrams_section(issues, anti_pattern_types);
-        
+
         if diagrams_content.trim().is_empty() {
             return String::new();
         }
 
-        let mut html = String::from(r#"
+        let mut html = String::from(
+            r#"
     <section id="diagrams" class="card">
         <h2 class="collapsible" onclick="toggleSection('diagrams-content')">
             <i class="fas fa-chevron-right collapsible-icon"></i>
@@ -2454,7 +2542,8 @@ impl ReportGenerator {
             </p>
             
             <div class="diagram-buttons">
-"#);
+"#,
+        );
 
         // Parse Mermaid content to extract diagrams
         let lines: Vec<&str> = diagrams_content.lines().collect();
@@ -2500,10 +2589,11 @@ impl ReportGenerator {
                 title if title.contains("Cycle") => "fas fa-sync-alt",
                 title if title.contains("God Object") => "fas fa-cube",
                 title if title.contains("Dead Code") => "fas fa-skull-crossbones",
-                _ => "fas fa-chart-bar"
+                _ => "fas fa-chart-bar",
             };
-            
-            html.push_str(&format!(r#"
+
+            html.push_str(&format!(
+                r#"
                 <div class="diagram-button-card">
                     <div class="diagram-card-header">
                         <i class="{}"></i>
@@ -2516,10 +2606,16 @@ impl ReportGenerator {
                         </button>
                     </div>
                 </div>
-"#, icon, title, title.to_lowercase(), diagram_id));
+"#,
+                icon,
+                title,
+                title.to_lowercase(),
+                diagram_id
+            ));
         }
 
-        html.push_str(r#"
+        html.push_str(
+            r#"
             </div>
             
             <div class="diagram-content">
@@ -2529,36 +2625,56 @@ impl ReportGenerator {
                         <i class="fas fa-eye-slash"></i> Hide Diagram
                     </button>
                 </div>
-"#);
+"#,
+        );
 
         // Generate embedded hidden diagrams
         for (i, (title, code)) in diagrams_to_render.iter().enumerate() {
             let diagram_id = format!("diagram-{}", i);
-            let unique_mermaid_id = format!("mermaid-{}", uuid::Uuid::new_v4().to_string().replace('-', "")[..8].to_string());
-            
-            html.push_str(&format!(r#"
+            let unique_mermaid_id = format!(
+                "mermaid-{}",
+                uuid::Uuid::new_v4().to_string().replace('-', "")[..8].to_string()
+            );
+
+            html.push_str(&format!(
+                r#"
                 <div id="{}" class="embedded-diagram" style="display: none;">
                     <div class="diagram-container">
                         <div class="mermaid" id="{}">{}</div>
                     </div>
                 </div>
-"#, diagram_id, unique_mermaid_id, code.trim()));
+"#,
+                diagram_id,
+                unique_mermaid_id,
+                code.trim()
+            ));
         }
 
-        html.push_str(r#"
+        html.push_str(
+            r#"
             </div>
         </div>
     </section>
-"#);
+"#,
+        );
         html
     }
 
     /// Generate a separate HTML file for a single diagram
-    async fn generate_separate_diagram_file(&self, output_path: &Path, title: &str, mermaid_code: &str) -> Result<(), Box<dyn std::error::Error>> {
-        let diagram_id = format!("diagram-{}", uuid::Uuid::new_v4().to_string().replace('-', "")[..8].to_string());
+    async fn generate_separate_diagram_file(
+        &self,
+        output_path: &Path,
+        title: &str,
+        mermaid_code: &str,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let diagram_id = format!(
+            "diagram-{}",
+            uuid::Uuid::new_v4().to_string().replace('-', "")[..8].to_string()
+        );
         let diagram_content = self.render_diagram_content(mermaid_code, &diagram_id).await;
-        
-        let html_content = format!(r#"<!DOCTYPE html>
+
+        let html_content = format!(
+            r#"<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -2782,12 +2898,14 @@ impl ReportGenerator {
         }}
     </script>
 </body>
-</html>"#, title, title, diagram_id, diagram_content);
+</html>"#,
+            title, title, diagram_id, diagram_content
+        );
 
         let mut file = fs::File::create(output_path)?;
         file.write_all(html_content.as_bytes())?;
         info!("Generated separate diagram file: {}", output_path.display());
-        
+
         Ok(())
     }
 
@@ -2795,22 +2913,34 @@ impl ReportGenerator {
     async fn render_diagram_content(&self, mermaid_code: &str, diagram_id: &str) -> String {
         // Try to generate static SVG first
         if let Some(ref svg_generator) = self.svg_generator {
-            let svg_content = svg_generator.generate_svg_with_fallback(mermaid_code, diagram_id).await;
+            let svg_content = svg_generator
+                .generate_svg_with_fallback(mermaid_code, diagram_id)
+                .await;
             return svg_content;
         }
-        
+
         // Fallback to client-side Mermaid
-        format!(r#"<div class="mermaid" id="{}">{}</div>"#, diagram_id, mermaid_code.trim())
+        format!(
+            r#"<div class="mermaid" id="{}">{}</div>"#,
+            diagram_id,
+            mermaid_code.trim()
+        )
     }
 
     /// Render a single Mermaid diagram as HTML with static SVG generation
     async fn render_mermaid_diagram_async(&self, title: &str, mermaid_code: &str) -> String {
-        let diagram_id = format!("diagram-{}", uuid::Uuid::new_v4().to_string().replace('-', "")[..8].to_string());
-        
+        let diagram_id = format!(
+            "diagram-{}",
+            uuid::Uuid::new_v4().to_string().replace('-', "")[..8].to_string()
+        );
+
         // Try to generate static SVG first
         if let Some(ref svg_generator) = self.svg_generator {
-            let svg_content = svg_generator.generate_svg_with_fallback(mermaid_code, &diagram_id).await;
-            return format!(r#"
+            let svg_content = svg_generator
+                .generate_svg_with_fallback(mermaid_code, &diagram_id)
+                .await;
+            return format!(
+                r#"
             <div class="diagram-isolator" style="display: block; width: 100%; margin: 1rem 0; isolation: isolate;">
                 <div class="diagram-container">
                     <div class="diagram-title">{}</div>
@@ -2819,37 +2949,57 @@ impl ReportGenerator {
                     </div>
                 </div>
             </div>
-"#, title, diagram_id, svg_content);
+"#,
+                title, diagram_id, svg_content
+            );
         }
-        
+
         // Fallback to client-side Mermaid (existing behavior)
-        format!(r#"
+        format!(
+            r#"
             <div class="diagram-isolator" style="display: block; width: 100%; margin: 1rem 0; isolation: isolate;">
                 <div class="diagram-container">
                     <div class="diagram-title">{}</div>
                     <div class="mermaid" id="{}">{}</div>
                 </div>
             </div>
-"#, title, diagram_id, mermaid_code.trim())
+"#,
+            title,
+            diagram_id,
+            mermaid_code.trim()
+        )
     }
 
     /// Synchronous wrapper for backward compatibility
     fn render_mermaid_diagram(&self, title: &str, mermaid_code: &str) -> String {
         // For now, use the fallback approach - we'll update the calling code to be async
-        let diagram_id = format!("diagram-{}", uuid::Uuid::new_v4().to_string().replace('-', "")[..8].to_string());
-        format!(r#"
+        let diagram_id = format!(
+            "diagram-{}",
+            uuid::Uuid::new_v4().to_string().replace('-', "")[..8].to_string()
+        );
+        format!(
+            r#"
             <div class="diagram-isolator" style="display: block; width: 100%; margin: 1rem 0; isolation: isolate;">
                 <div class="diagram-container">
                     <div class="diagram-title">{}</div>
                     <div class="mermaid" id="{}">{}</div>
                 </div>
             </div>
-"#, title, diagram_id, mermaid_code.trim())
+"#,
+            title,
+            diagram_id,
+            mermaid_code.trim()
+        )
     }
 
     /// Generate HTML detailed issues section with inline diagrams
-    fn generate_html_detailed_issues(&self, issues: &[ArchitecturalIssue], anti_pattern_types: &HashMap<i64, AntiPatternType>) -> String {
-        let mut html = String::from(r#"
+    fn generate_html_detailed_issues(
+        &self,
+        issues: &[ArchitecturalIssue],
+        anti_pattern_types: &HashMap<i64, AntiPatternType>,
+    ) -> String {
+        let mut html = String::from(
+            r#"
     <section id="issues" class="card">
         <h2><i class="fas fa-exclamation-triangle"></i> Detailed Issues</h2>
         
@@ -2865,7 +3015,8 @@ impl ReportGenerator {
         </div>
         
         <div id="issues-container">
-"#);
+"#,
+        );
 
         // Group issues by anti-pattern type for better organization and diagram generation
         let mut issues_by_type: HashMap<i64, Vec<&ArchitecturalIssue>> = HashMap::new();
@@ -2888,9 +3039,7 @@ impl ReportGenerator {
         for type_id in anti_pattern_ids {
             let type_issues = issues_by_type.get(&type_id).unwrap();
             let anti_pattern = anti_pattern_types.get(&type_id);
-            let pattern_name = anti_pattern
-                .map(|ap| ap.name.as_str())
-                .unwrap_or("Unknown");
+            let pattern_name = anti_pattern.map(|ap| ap.name.as_str()).unwrap_or("Unknown");
 
             // Infer actual pattern name from issues
             let inferred_pattern = self.infer_anti_pattern_from_issues(type_issues);
@@ -2901,16 +3050,24 @@ impl ReportGenerator {
             };
 
             // Add section header for this anti-pattern type
-            html.push_str(&format!(r#"
+            html.push_str(&format!(
+                r#"
             <div class="anti-pattern-section">
                 <h3 class="anti-pattern-header">
                     <i class="fas fa-layer-group"></i> {} Issues ({} found)
                 </h3>
-"#, display_name, type_issues.len()));
+"#,
+                display_name,
+                type_issues.len()
+            ));
 
             // Generate diagram for this specific anti-pattern type if diagrams are enabled
             if self.include_diagrams {
-                let diagram_html = self.generate_inline_diagram_for_anti_pattern(type_id, type_issues, anti_pattern_types);
+                let diagram_html = self.generate_inline_diagram_for_anti_pattern(
+                    type_id,
+                    type_issues,
+                    anti_pattern_types,
+                );
                 if !diagram_html.is_empty() {
                     html.push_str(&diagram_html);
                 }
@@ -2984,10 +3141,15 @@ impl ReportGenerator {
     }
 
     /// Generate inline diagram for a specific anti-pattern type
-    fn generate_inline_diagram_for_anti_pattern(&self, type_id: i64, issues: &[&ArchitecturalIssue], anti_pattern_types: &HashMap<i64, AntiPatternType>) -> String {
+    fn generate_inline_diagram_for_anti_pattern(
+        &self,
+        type_id: i64,
+        issues: &[&ArchitecturalIssue],
+        anti_pattern_types: &HashMap<i64, AntiPatternType>,
+    ) -> String {
         let anti_pattern = anti_pattern_types.get(&type_id);
         let pattern_name = anti_pattern.map(|ap| ap.name.as_str()).unwrap_or("Unknown");
-        
+
         // Determine anti-pattern type from actual issue descriptions
         let inferred_pattern = self.infer_anti_pattern_from_issues(issues);
         let actual_pattern_name = if inferred_pattern != "Unknown" {
@@ -3000,13 +3162,13 @@ impl ReportGenerator {
         let mermaid_code = match actual_pattern_name.to_lowercase().as_str() {
             name if name.contains("god object") || name.contains("large class") => {
                 self.generate_god_object_diagram_for_issues(issues)
-            },
+            }
             name if name.contains("cyclic") || name.contains("cycle") => {
                 self.generate_cyclic_dependency_diagram_for_issues(issues)
-            },
+            }
             name if name.contains("dead code") || name.contains("unused") => {
                 self.generate_dead_code_diagram_for_issues(issues)
-            },
+            }
             _ => {
                 // Use actual issue data for meaningful diagrams
                 self.generate_meaningful_diagram_for_issues(actual_pattern_name, issues)
@@ -3018,17 +3180,20 @@ impl ReportGenerator {
         }
 
         let diagram_id = format!("inline-diagram-{}", type_id);
-        
+
         // Generate static SVG if available
         if let Some(ref svg_generator) = self.svg_generator {
             // Actually generate SVG using the SVG generator
             let svg_result = tokio::task::block_in_place(|| {
                 tokio::runtime::Handle::current().block_on(async {
-                    svg_generator.generate_svg_with_fallback(&mermaid_code, &diagram_id).await
+                    svg_generator
+                        .generate_svg_with_fallback(&mermaid_code, &diagram_id)
+                        .await
                 })
             });
-            
-            format!(r#"
+
+            format!(
+                r#"
                 <div class="diagram-isolator" style="display: block; width: 100%; margin: 1rem 0; isolation: isolate;">
                     <div class="diagram-container">
                         <div class="diagram-title">
@@ -3042,10 +3207,13 @@ impl ReportGenerator {
                         </div>
                     </div>
                 </div>
-"#, pattern_name, type_id, diagram_id, svg_result)
+"#,
+                pattern_name, type_id, diagram_id, svg_result
+            )
         } else {
             // Fallback to client-side Mermaid
-            format!(r#"
+            format!(
+                r#"
                 <div class="diagram-isolator" style="display: block; width: 100%; margin: 1rem 0; isolation: isolate;">
                     <div class="diagram-container">
                         <div class="diagram-title">
@@ -3057,14 +3225,19 @@ impl ReportGenerator {
                         <div class="mermaid" id="{}">{}</div>
                     </div>
                 </div>
-"#, pattern_name, type_id, diagram_id, mermaid_code.trim())
+"#,
+                pattern_name,
+                type_id,
+                diagram_id,
+                mermaid_code.trim()
+            )
         }
     }
 
     /// Generate God Object diagram for specific issues
     fn generate_god_object_diagram_for_issues(&self, issues: &[&ArchitecturalIssue]) -> String {
         let mut diagram = String::from("classDiagram\n");
-        
+
         for (i, issue) in issues.iter().enumerate() {
             // Extract class name from description or file path
             let class_name = if let Some(start) = issue.description.find("'") {
@@ -3078,7 +3251,7 @@ impl ReportGenerator {
             };
 
             diagram.push_str(&format!("    class {} {{\n", class_name));
-            
+
             // Add some representative methods/fields
             if let Some(code) = &issue.code_snippet {
                 let lines: Vec<&str> = code.lines().take(8).collect(); // Limit to avoid huge diagrams
@@ -3106,60 +3279,73 @@ impl ReportGenerator {
                 diagram.push_str("        ...\n");
                 diagram.push_str("        +methodN()\n");
             }
-            
+
             diagram.push_str("    }\n");
-            
+
             // Add style to highlight the god object
-            diagram.push_str(&format!("    style {} fill:#ffcccc,stroke:#ff0000,stroke-width:3px\n", class_name));
+            diagram.push_str(&format!(
+                "    style {} fill:#ffcccc,stroke:#ff0000,stroke-width:3px\n",
+                class_name
+            ));
         }
-        
+
         diagram
     }
 
     /// Generate Cyclic Dependency diagram for specific issues
-    fn generate_cyclic_dependency_diagram_for_issues(&self, issues: &[&ArchitecturalIssue]) -> String {
+    fn generate_cyclic_dependency_diagram_for_issues(
+        &self,
+        issues: &[&ArchitecturalIssue],
+    ) -> String {
         let mut diagram = String::from("graph TD\n");
         let mut components = std::collections::HashSet::new();
         let mut dependencies = std::collections::HashSet::new();
-        
+
         for issue in issues {
             // Extract component names from cycle descriptions
             if let Some(components_str) = issue.description.split(": ").nth(1) {
                 let parts: Vec<&str> = components_str.split(" → ").collect();
-                
+
                 for part in &parts {
                     let clean_name = part.trim().replace(" ", "_").replace(".", "_");
                     components.insert(clean_name);
                 }
-                
+
                 // Add dependencies
                 for i in 0..parts.len() - 1 {
                     let from = parts[i].trim().replace(" ", "_").replace(".", "_");
                     let to = parts[i + 1].trim().replace(" ", "_").replace(".", "_");
                     dependencies.insert((from, to));
                 }
-                
+
                 // Add the last to first dependency to complete the cycle
                 if parts.len() > 1 {
-                    let from = parts[parts.len() - 1].trim().replace(" ", "_").replace(".", "_");
+                    let from = parts[parts.len() - 1]
+                        .trim()
+                        .replace(" ", "_")
+                        .replace(".", "_");
                     let to = parts[0].trim().replace(" ", "_").replace(".", "_");
                     dependencies.insert((from, to));
                 }
             }
         }
-        
+
         // Add components to diagram
         for component in &components {
-            diagram.push_str(&format!("    {}[{}]\n", component, component.replace("_", " ")));
+            diagram.push_str(&format!(
+                "    {}[{}]\n",
+                component,
+                component.replace("_", " ")
+            ));
         }
-        
+
         // Add dependencies with cycle highlighting
         for (from, to) in &dependencies {
             diagram.push_str(&format!("    {} -->|depends on| {}\n", from, to));
             diagram.push_str(&format!("    style {} fill:#ffcccc,stroke:#ff0000\n", from));
             diagram.push_str(&format!("    style {} fill:#ffcccc,stroke:#ff0000\n", to));
         }
-        
+
         diagram
     }
 
@@ -3169,24 +3355,31 @@ impl ReportGenerator {
         diagram.push_str("    Live[Live Code]\n");
         diagram.push_str("    Dead[Dead Code]\n");
         diagram.push_str("    style Dead fill:#ffcccc,stroke:#ff0000,stroke-width:2px\n");
-        
-        for (i, issue) in issues.iter().enumerate().take(10) { // Limit to prevent huge diagrams
+
+        for (i, issue) in issues.iter().enumerate().take(10) {
+            // Limit to prevent huge diagrams
             let item_id = format!("DeadItem{}", i + 1);
             let item_name = if let Some(snippet) = &issue.code_snippet {
-                snippet.lines().next().unwrap_or("Dead Code").chars().take(15).collect::<String>()
+                snippet
+                    .lines()
+                    .next()
+                    .unwrap_or("Dead Code")
+                    .chars()
+                    .take(15)
+                    .collect::<String>()
             } else {
                 format!("Unused Item {}", i + 1)
             };
-            
+
             diagram.push_str(&format!("    Dead --> {}[{}]\n", item_id, item_name));
             diagram.push_str(&format!("    style {} fill:#ffe6e6\n", item_id));
         }
-        
+
         if issues.len() > 10 {
             diagram.push_str("    Dead --> More[... and more]\n");
             diagram.push_str("    style More fill:#ffe6e6\n");
         }
-        
+
         diagram
     }
 
@@ -3196,18 +3389,23 @@ impl ReportGenerator {
         let mut god_object_count = 0;
         let mut dead_code_count = 0;
         let mut cyclic_dep_count = 0;
-        
+
         for issue in issues {
             let desc = issue.description.to_lowercase();
-            if desc.contains("god object") || desc.contains("has") && desc.contains("methods") && desc.contains("fields") {
+            if desc.contains("god object")
+                || desc.contains("has") && desc.contains("methods") && desc.contains("fields")
+            {
                 god_object_count += 1;
-            } else if desc.contains("dead code") || desc.contains("not used") || desc.contains("unused") {
+            } else if desc.contains("dead code")
+                || desc.contains("not used")
+                || desc.contains("unused")
+            {
                 dead_code_count += 1;
             } else if desc.contains("cyclic") || desc.contains("circular") {
                 cyclic_dep_count += 1;
             }
         }
-        
+
         // Return the most common pattern type
         if god_object_count > 0 {
             "God Objects".to_string()
@@ -3221,63 +3419,72 @@ impl ReportGenerator {
     }
 
     /// Generate meaningful diagram using actual issue data
-    fn generate_meaningful_diagram_for_issues(&self, pattern_name: &str, issues: &[&ArchitecturalIssue]) -> String {
+    fn generate_meaningful_diagram_for_issues(
+        &self,
+        pattern_name: &str,
+        issues: &[&ArchitecturalIssue],
+    ) -> String {
         let mut diagram = String::from("mindmap\n");
         diagram.push_str(&format!("  root(({}))\n", pattern_name));
-        
+
         for (i, issue) in issues.iter().enumerate().take(8) {
             let file_name = std::path::Path::new(&issue.file_path)
                 .file_name()
                 .unwrap_or_default()
                 .to_string_lossy()
                 .replace(".rs", "");
-            
+
             // Extract meaningful info from description
             let short_desc = if issue.description.len() > 50 {
                 format!("{}...", &issue.description[..47])
             } else {
                 issue.description.clone()
             };
-            
+
             diagram.push_str(&format!("    Issue{}\n", i + 1));
             diagram.push_str(&format!("      {}\n", file_name));
             diagram.push_str(&format!("      ({})\n", issue.severity.to_uppercase()));
-            
+
             // Add description as sub-node if it's meaningful
             if !short_desc.contains("Unknown") && short_desc.len() > 10 {
                 diagram.push_str(&format!("        \"{}\"\n", short_desc.replace('"', "'")));
             }
         }
-        
+
         if issues.len() > 8 {
             diagram.push_str("    More\n");
             diagram.push_str(&format!("      {} more issues\n", issues.len() - 8));
         }
-        
+
         diagram
     }
 
     /// Generate generic diagram for other anti-pattern types
-    fn generate_generic_diagram_for_issues(&self, pattern_name: &str, issues: &[&ArchitecturalIssue]) -> String {
+    fn generate_generic_diagram_for_issues(
+        &self,
+        pattern_name: &str,
+        issues: &[&ArchitecturalIssue],
+    ) -> String {
         let mut diagram = String::from("mindmap\n");
         diagram.push_str(&format!("  root(({}))\n", pattern_name));
-        
-        for (i, issue) in issues.iter().enumerate().take(8) { // Limit for readability
+
+        for (i, issue) in issues.iter().enumerate().take(8) {
+            // Limit for readability
             let file_name = std::path::Path::new(&issue.file_path)
                 .file_name()
                 .unwrap_or_default()
                 .to_string_lossy();
-            
+
             diagram.push_str(&format!("    Issue{}\n", i + 1));
             diagram.push_str(&format!("      {}\n", file_name));
             diagram.push_str(&format!("      ({})\n", issue.severity.to_uppercase()));
         }
-        
+
         if issues.len() > 8 {
             diagram.push_str("    More\n");
             diagram.push_str(&format!("      {} more issues\n", issues.len() - 8));
         }
-        
+
         diagram
     }
 
@@ -3293,7 +3500,8 @@ impl ReportGenerator {
 
     /// Generate JavaScript for interactivity
     fn generate_html_scripts(&self) -> String {
-        format!(r#"
+        format!(
+            r#"
     <script>
         // Initialize Mermaid.js for diagram rendering with unique IDs
         mermaid.initialize({{
@@ -3581,7 +3789,8 @@ impl ReportGenerator {
             }}, 100);
         }});
     </script>
-"#)
+"#
+        )
     }
 
     /// Create enhanced summary with component and diagram information
