@@ -47,7 +47,8 @@ Cargo.lock
 *.db
 uveddi_cache.db
 **/tmp_*
-
+# Cache directories
+/cache/
 # Ignore PID files from scripts
 /scripts/*.pid
 
