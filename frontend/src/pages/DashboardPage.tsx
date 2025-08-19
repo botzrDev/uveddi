@@ -2,6 +2,7 @@ import FindingsList from '@/components/FindingsList';
 import MermaidDiagram from '@/components/MermaidDiagram';
 import UveddiLoader from '@/components/UveddiLoader';
 import { useDemoReport, useReport } from '@/hooks/useReport';
+import { apiService } from '@/services/api';
 import {
   BugReportOutlined,
   DownloadOutlined,
@@ -28,6 +29,42 @@ function DashboardPage() {
   const isDemoReport = reportId === 'demo';
   const reportQuery = useReport(reportId || '');
   const demoQuery = useDemoReport();
+
+  const handleExportReport = async () => {
+    console.log('🚀 Export button clicked!', { isDemoReport, reportId });
+    try {
+      let blob: Blob;
+      
+      console.log('📊 About to call export service...');
+      if (isDemoReport) {
+        console.log('📋 Calling exportDemoReport...');
+        blob = await apiService.exportDemoReport('markdown');
+      } else if (reportId) {
+        console.log('📄 Calling exportReport with ID:', reportId);
+        blob = await apiService.exportReport(reportId, 'markdown');
+      } else {
+        console.error('❌ No report ID available for export');
+        return;
+      }
+      
+      console.log('✅ Got blob response:', blob.size, 'bytes');
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = `uveddi-analysis-${isDemoReport ? 'demo' : reportId}.md`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      console.log('🎉 Report exported successfully');
+    } catch (error) {
+      console.error('💥 Failed to export report:', error);
+    }
+  };
   
   const query = isDemoReport ? demoQuery : reportQuery;
   const { data: report, isLoading, error } = query;
@@ -182,6 +219,7 @@ function DashboardPage() {
               variant="contained"
               startIcon={<DownloadOutlined />}
               color="primary"
+              onClick={handleExportReport}
             >
               Export Report
             </Button>

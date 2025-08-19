@@ -1,19 +1,19 @@
-import React, { useState } from 'react';
-import {
-  Box,
-  Paper,
-  Typography,
-  IconButton,
-  Tooltip,
-  Alert,
-  Snackbar,
-  useTheme,
-} from '@mui/material';
 import {
   ContentCopy,
   Visibility,
   VisibilityOff,
 } from '@mui/icons-material';
+import {
+  Alert,
+  Box,
+  IconButton,
+  Paper,
+  Snackbar,
+  Tooltip,
+  Typography,
+  useTheme,
+} from '@mui/material';
+import { useState } from 'react';
 
 interface CodeSnippetProps {
   code: string;

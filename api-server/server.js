@@ -401,11 +401,293 @@ app.get('/api/v1/reports/:id/graphs/dependency', (req, res) => {
   });
 });
 
+// Convert Uveddi analysis output to InteractiveReport format (same logic as frontend)
+function convertAnalysisToReportData(analysisData) {
+  // Handle both 'issues' (real analysis data) and 'findings' (mock data) arrays
+  const issues = analysisData.issues || analysisData.findings || [];
+  console.log('📊 Converting data with', issues.length, 'items');
+  
+  // Group issues by type for dashboard display
+  const issuesByType = issues.reduce((acc, issue) => {
+    const type = issue.antiPatternType || issue.type || 'Unknown';
+    if (!acc[type]) {
+      acc[type] = [];
+    }
+    acc[type].push(issue);
+    return acc;
+  }, {});
+
+  // Create summary metrics
+  const issuesBySeverity = issues.reduce((acc, issue) => {
+    const severity = issue.severity === 'Critical' || issue.severity === 'high' ? 'critical' :
+                     issue.severity === 'Medium' || issue.severity === 'medium' ? 'medium' :
+                     issue.severity === 'Low' || issue.severity === 'low' ? 'low' : 'info';
+    acc[severity] = (acc[severity] || 0) + 1;
+    return acc;
+  }, {});
+
+  const issuesByCategory = Object.keys(issuesByType).reduce((acc, type) => {
+    acc[type] = issuesByType[type].length;
+    return acc;
+  }, {});
+
+  const summary = {
+    coverage: analysisData.summary?.coverage || 85, // Use existing summary or default
+    filesAnalyzed: analysisData.summary?.filesAnalyzed || new Set(issues.map(i => i.filePath || i.file)).size,
+    issuesTotal: issues.length,
+    issuesBySeverity,
+    issuesByCategory,
+    componentsAnalyzed: analysisData.summary?.componentsAnalyzed || new Set(issues.map(i => i.filePath || i.file)).size,
+    analysisDurationMs: analysisData.summary?.analysisDurationMs || 2500,
+    timeGenerated: new Date().toISOString(),
+  };
+
+  return {
+    schemaVersion: '1.0',
+    project: analysisData.project || {
+      id: 'uveddi-analysis',
+      name: 'Uveddi Analysis Engine',
+      languages: ['Rust'],
+      path: 'src/analysis/detectors/'
+    },
+    summary,
+    findings: issues.map((issue, index) => ({
+      id: issue.id || `finding-${index + 1}`,
+      type: issue.antiPatternType || issue.type || 'Unknown',
+      severity: (issue.severity === 'Critical' || issue.severity === 'high' ? 'critical' :
+                 issue.severity === 'Medium' || issue.severity === 'medium' ? 'medium' :
+                 issue.severity === 'Low' || issue.severity === 'low' ? 'low' : 'low'),
+      title: issue.title || issue.antiPatternDescription || issue.message || 'Architectural Issue',
+      message: issue.description || issue.antiPatternDescription || issue.message || 'Issue detected',
+      file: issue.filePath || issue.file || 'unknown',
+      startLine: issue.lineRange?.start || issue.startLine,
+      endLine: issue.lineRange?.end || issue.endLine,
+      codeSnippet: issue.codeSnippet || '',
+      tags: issue.tags || [issue.antiPatternType || issue.type || 'architectural'],
+      detector: issue.detectorName || issue.detector || 'uveddi',
+      confidence: issue.confidence || 0.8,
+      aiExplanation: issue.aiExplanation || issue.description || issue.message
+    })),
+    dependencyGraph: analysisData.dependencyGraph || {
+      nodes: [],
+      edges: [],
+      metadata: {
+        nodeCount: 0,
+        edgeCount: 0,
+        hasCycles: false,
+        maxDepth: 0
+      }
+    },
+    diagrams: analysisData.diagrams || [],
+    metadata: analysisData.metadata || {
+      generatedAt: new Date().toISOString(),
+      analysisId: "real-analysis"
+    }
+  };
+}
+
+// Export demo report (must come before the general /:id/export route)
+app.get('/api/v1/reports/demo/export', async (req, res) => {
+  const format = req.query.format || 'markdown';
+
+  try {
+    let rawData;
+    
+    // Try to load real analysis data first
+    const demoDataPath = path.join(__dirname, '..', 'real-analysis-detectors.json');
+    if (await fs.pathExists(demoDataPath)) {
+      rawData = await fs.readJSON(demoDataPath);
+      console.log('🔍 Loaded real analysis data for export:', rawData.issues?.length || 0, 'issues');
+    } else {
+      const fallbackPath = path.join(__dirname, '..', 'frontend', 'public', 'mock-data', 'demo-report.json');
+      rawData = await fs.readJSON(fallbackPath);
+      console.log('🎭 Using fallback mock data for export');
+    }
+
+    // Transform raw analysis data to report format (same as frontend)
+    const reportData = convertAnalysisToReportData(rawData);
+    console.log('🔄 Converted to report format:', reportData.findings?.length || 0, 'findings');
+
+    if (format === 'markdown') {
+      const markdown = generateMarkdownReport(reportData);
+      
+      res.setHeader('Content-Type', 'text/markdown');
+      res.setHeader('Content-Disposition', `attachment; filename="uveddi-analysis-demo.md"`);
+      res.send(markdown);
+    } else {
+      res.status(400).json({ error: 'Unsupported format. Only markdown is currently supported.' });
+    }
+  } catch (error) {
+    console.error('Demo export error:', error);
+    res.status(500).json({ error: 'Failed to export demo report' });
+  }
+});
+
+// Export report as markdown (general route)
+app.get('/api/v1/reports/:id/export', async (req, res) => {
+  const { id } = req.params;
+  const format = req.query.format || 'markdown';
+
+  try {
+    let rawData;
+    
+    // Get the report data
+    if (id === 'demo') {
+      const demoDataPath = path.join(__dirname, '..', 'real-analysis-detectors.json');
+      if (await fs.pathExists(demoDataPath)) {
+        rawData = await fs.readJSON(demoDataPath);
+      } else {
+        const fallbackPath = path.join(__dirname, '..', 'frontend', 'public', 'mock-data', 'demo-report.json');
+        rawData = await fs.readJSON(fallbackPath);
+      }
+    } else {
+      return res.status(404).json({ error: 'Report not found' });
+    }
+
+    // Transform raw analysis data to report format (same as frontend)
+    const reportData = convertAnalysisToReportData(rawData);
+    console.log('🔄 General export - converted to report format:', reportData.findings?.length || 0, 'findings');
+
+    if (format === 'markdown') {
+      const markdown = generateMarkdownReport(reportData);
+      
+      res.setHeader('Content-Type', 'text/markdown');
+      res.setHeader('Content-Disposition', `attachment; filename="uveddi-analysis-${id}.md"`);
+      res.send(markdown);
+    } else {
+      res.status(400).json({ error: 'Unsupported format. Only markdown is currently supported.' });
+    }
+  } catch (error) {
+    console.error('Export error:', error);
+    res.status(500).json({ error: 'Failed to export report' });
+  }
+});
+
 // Helper functions
+function generateMarkdownReport(reportData) {
+  const timestamp = new Date().toISOString().split('T')[0];
+  
+  // Handle transformed report format with 'findings' array
+  const findings = reportData.findings || [];
+  
+  // Log the data structure for debugging
+  console.log('Report data structure for markdown:', {
+    hasFindings: !!reportData.findings,
+    findingsLength: findings.length,
+    sampleFinding: findings[0] ? Object.keys(findings[0]) : 'none'
+  });
+  
+  const findingsBySeverity = calculateFindingsBySeverity(findings);
+  const findingsByCategory = calculateFindingsByCategory(findings);
+
+  let markdown = `# Uveddi Analysis Report
+
+**Generated:** ${timestamp}  
+**Analysis Engine:** Uveddi v0.9.0-alpha  
+**Project:** ${reportData.project?.name || 'Code Analysis'}  
+
+---
+
+## Executive Summary
+
+This report presents a comprehensive architectural analysis of your codebase, identifying potential issues and areas for improvement.
+
+### Key Findings
+
+- **Total Issues:** ${findings.length}
+- **Critical Issues:** ${findingsBySeverity.critical}
+- **High Priority Issues:** ${findingsBySeverity.high}
+- **Medium Priority Issues:** ${findingsBySeverity.medium}
+- **Low Priority Issues:** ${findingsBySeverity.low}
+
+### Severity Distribution
+
+| Severity | Count | Percentage |
+|----------|-------|------------|
+| Critical | ${findingsBySeverity.critical} | ${findings.length > 0 ? ((findingsBySeverity.critical / findings.length) * 100).toFixed(1) : 0}% |
+| High     | ${findingsBySeverity.high} | ${findings.length > 0 ? ((findingsBySeverity.high / findings.length) * 100).toFixed(1) : 0}% |
+| Medium   | ${findingsBySeverity.medium} | ${findings.length > 0 ? ((findingsBySeverity.medium / findings.length) * 100).toFixed(1) : 0}% |
+| Low      | ${findingsBySeverity.low} | ${findings.length > 0 ? ((findingsBySeverity.low / findings.length) * 100).toFixed(1) : 0}% |
+
+## Issue Categories
+
+`;
+
+  // Add category breakdown
+  Object.entries(findingsByCategory).forEach(([category, count]) => {
+    const percentage = findings.length > 0 ? ((count / findings.length) * 100).toFixed(1) : 0;
+    markdown += `- **${category.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:** ${count} (${percentage}%)\n`;
+  });
+
+  markdown += `
+
+## Detailed Findings
+
+`;
+
+  if (findings.length === 0) {
+    markdown += `No issues were found in the analysis. Great job maintaining clean code!
+
+`;
+  } else {
+    // Group findings by severity for better organization
+    const severityOrder = ['critical', 'high', 'medium', 'low'];
+    
+    severityOrder.forEach(severity => {
+      const severityFindings = findings.filter(finding => 
+        finding.severity && finding.severity.toLowerCase() === severity.toLowerCase()
+      );
+      
+      if (severityFindings.length > 0) {
+        markdown += `### ${severity.charAt(0).toUpperCase() + severity.slice(1)} Severity Issues
+
+`;
+        
+        severityFindings.forEach((finding, index) => {
+          markdown += `#### ${index + 1}. ${finding.title || finding.message || 'Untitled Issue'}
+
+**Type:** ${finding.type || 'Unknown'}  
+**File:** \`${finding.file || 'Unknown'}\`  
+**Lines:** ${finding.startLine || 'N/A'}-${finding.endLine || 'N/A'}  
+**Confidence:** ${finding.confidence ? Math.round(finding.confidence * 100) + '%' : 'N/A'}
+
+${finding.message || 'No description available.'}
+
+${finding.codeSnippet ? '```' + (finding.file?.endsWith('.rs') ? 'rust' : 'text') + '\n' + finding.codeSnippet + '\n```' : ''}
+
+${finding.aiExplanation && finding.aiExplanation !== finding.message ? '**AI Analysis:** ' + finding.aiExplanation + '\n' : ''}
+
+---
+
+`;
+        });
+      }
+    });
+  }
+
+  // Add analysis summary
+  markdown += `## Analysis Summary
+
+**Files Analyzed:** ${reportData.summary?.filesAnalyzed || 'Unknown'}  
+**Components Analyzed:** ${reportData.summary?.componentsAnalyzed || 'Unknown'}  
+**Analysis Duration:** ${reportData.summary?.analysisDurationMs ? (reportData.summary.analysisDurationMs / 1000).toFixed(2) + 's' : 'Unknown'}  
+**Generated At:** ${reportData.metadata?.generatedAt || new Date().toISOString()}
+
+---
+
+*Report generated by Uveddi Analysis Engine v0.9.0-alpha*  
+*For more information, visit: https://github.com/your-org/uveddi*
+`;
+
+  return markdown;
+}
+
+
+
 function calculateIssuesBySeverity(issues) {
   const counts = { critical: 0, high: 0, medium: 0, low: 0 };
   issues.forEach(issue => {
-    const severity = issue.severity.toLowerCase();
+    const severity = (issue.severity || '').toLowerCase();
     if (counts.hasOwnProperty(severity)) {
       counts[severity]++;
     }
@@ -416,7 +698,30 @@ function calculateIssuesBySeverity(issues) {
 function calculateIssuesByCategory(issues) {
   const counts = {};
   issues.forEach(issue => {
-    const category = issue.antiPatternType.toLowerCase().replace(/\s+/g, '-');
+    // Handle both 'type' and 'antiPatternType' fields
+    const category = (issue.type || issue.antiPatternType || 'unknown')
+      .toLowerCase().replace(/\s+/g, '-');
+    counts[category] = (counts[category] || 0) + 1;
+  });
+  return counts;
+}
+
+function calculateFindingsBySeverity(findings) {
+  const counts = { critical: 0, high: 0, medium: 0, low: 0 };
+  findings.forEach(finding => {
+    const severity = (finding.severity || '').toLowerCase();
+    if (counts.hasOwnProperty(severity)) {
+      counts[severity]++;
+    }
+  });
+  return counts;
+}
+
+function calculateFindingsByCategory(findings) {
+  const counts = {};
+  findings.forEach(finding => {
+    const category = (finding.type || 'unknown')
+      .toLowerCase().replace(/\s+/g, '-');
     counts[category] = (counts[category] || 0) + 1;
   });
   return counts;
@@ -452,6 +757,8 @@ app.use('*', (req, res) => {
       'GET /api/v1/reports/demo',
       'GET /api/v1/reports/:id',
       'GET /api/v1/reports/:id/graphs/dependency',
+      'GET /api/v1/reports/:id/export?format={format}',
+      'GET /api/v1/reports/demo/export?format={format}',
       'POST /auth/register',
       'POST /auth/login',
       'POST /auth/logout',

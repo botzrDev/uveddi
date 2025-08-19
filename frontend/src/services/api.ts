@@ -148,6 +148,50 @@ class ApiService {
   }
 
   /**
+   * Export a report as markdown
+   */
+  async exportReport(reportId: string, format: 'markdown' | 'pdf' | 'html' = 'markdown'): Promise<Blob> {
+    const response = await fetch(`${this.baseUrl}/reports/${reportId}/export?format=${format}`, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({
+        error: 'Export Error',
+        message: `Failed to export report with status ${response.status}`,
+        timestamp: new Date().toISOString(),
+      }));
+      throw new Error(`${errorData.error}: ${errorData.message}`);
+    }
+
+    return response.blob();
+  }
+
+  /**
+   * Export the demo report as markdown
+   */
+  async exportDemoReport(format: 'markdown' | 'pdf' | 'html' = 'markdown'): Promise<Blob> {
+    const response = await fetch(`${this.baseUrl}/reports/demo/export?format=${format}`, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({
+        error: 'Export Error',
+        message: `Failed to export demo report with status ${response.status}`,
+        timestamp: new Date().toISOString(),
+      }));
+      throw new Error(`${errorData.error}: ${errorData.message}`);
+    }
+
+    return response.blob();
+  }
+
+  /**
    * Convert Uveddi analysis output to InteractiveReport format
    */
   private convertAnalysisToInteractiveReport(analysisData: any): InteractiveReport {
