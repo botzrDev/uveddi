@@ -1,0 +1,7 @@
+# Ignore generated/large test artifacts
+**/massive_file.*
+**/huge_class.*
+uveddi_cache.db
+target/
+node_modules/
+.env

@@ -1,0 +1,5 @@
+# Example GitHub repos to clone (one per line)
+# Use full git clone URL or https://github.com/owner/repo.git
+https://github.com/rust-lang/rust.git
+https://github.com/python/cpython.git
+https://github.com/microsoft/TypeScript.git
