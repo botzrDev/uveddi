@@ -24,7 +24,8 @@ import {
     Paper,
     Select,
     TextField,
-    Typography
+    Typography,
+    useTheme
 } from '@mui/material';
 import React, { useState } from 'react';
 import FindingDetail from './FindingDetail';
@@ -35,6 +36,7 @@ interface FindingsListProps {
 }
 
 export default function FindingsList({ findings, loading }: FindingsListProps) {
+  const theme = useTheme();
   const [selectedFinding, setSelectedFinding] = useState<Finding | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [severityFilter, setSeverityFilter] = useState<string>('all');
@@ -86,6 +88,38 @@ export default function FindingsList({ findings, loading }: FindingsListProps) {
     }
   };
 
+  const getSeverityChipStyle = (severity: string) => {
+    const isDark = theme.palette.mode === 'dark';
+    
+    switch (severity) {
+      case 'critical':
+        return {
+          backgroundColor: isDark ? '#d32f2f' : '#ffebee',
+          color: isDark ? '#ffffff' : '#c62828',
+        };
+      case 'high':
+        return {
+          backgroundColor: isDark ? '#f57c00' : '#fff8e1',
+          color: isDark ? '#ffffff' : '#ef6c00',
+        };
+      case 'medium':
+        return {
+          backgroundColor: isDark ? '#1976d2' : '#e3f2fd',
+          color: isDark ? '#ffffff' : '#1565c0',
+        };
+      case 'low':
+        return {
+          backgroundColor: isDark ? '#388e3c' : '#e8f5e8',
+          color: isDark ? '#ffffff' : '#2e7d32',
+        };
+      default:
+        return {
+          backgroundColor: theme.palette.action.hover,
+          color: theme.palette.text.primary,
+        };
+    }
+  };
+
   if (loading) {
     return (
       <Paper sx={{ p: 3 }}>
@@ -121,7 +155,14 @@ export default function FindingsList({ findings, loading }: FindingsListProps) {
   return (
     <Box>
       {/* Filters Section */}
-      <Paper sx={{ p: 3, mb: 3 }}>
+      <Paper 
+        sx={{ 
+          p: 3, 
+          mb: 3,
+          backgroundColor: (theme) => theme.palette.background.paper,
+          border: (theme) => `1px solid ${theme.palette.divider}`,
+        }}
+      >
         <Typography variant="h5" gutterBottom>
           Analysis Findings ({filteredFindings.length} of {findings.length})
         </Typography>
@@ -174,8 +215,14 @@ export default function FindingsList({ findings, loading }: FindingsListProps) {
       </Paper>
 
       {/* Findings List */}
-      <Paper sx={{ mb: 3 }}>
-        <List>
+      <Paper 
+        sx={{ 
+          mb: 3,
+          backgroundColor: (theme) => theme.palette.background.paper,
+          border: (theme) => `1px solid ${theme.palette.divider}`,
+        }}
+      >
+        <List sx={{ p: 2 }}>
           {filteredFindings.map((finding, index) => (
             <React.Fragment key={finding.id}>
               <ListItem disablePadding>
@@ -183,7 +230,19 @@ export default function FindingsList({ findings, loading }: FindingsListProps) {
                   onClick={() => setSelectedFinding(
                     selectedFinding?.id === finding.id ? null : finding
                   )}
-                  sx={{ p: 2 }}
+                  sx={{ 
+                    p: 2,
+                    backgroundColor: (theme) => 
+                      selectedFinding?.id === finding.id 
+                        ? theme.palette.action.selected 
+                        : 'transparent',
+                    '&:hover': {
+                      backgroundColor: (theme) => theme.palette.action.hover,
+                    },
+                    borderRadius: 1,
+                    border: (theme) => `1px solid ${theme.palette.divider}`,
+                    mb: 1,
+                  }}
                 >
                   <Box sx={{ display: 'flex', alignItems: 'center', mr: 2 }}>
                     {getSeverityIcon(finding.severity)}
@@ -197,12 +256,16 @@ export default function FindingsList({ findings, loading }: FindingsListProps) {
                       <Chip 
                         label={finding.severity} 
                         size="small" 
-                        color={getSeverityColor(finding.severity)}
+                        sx={getSeverityChipStyle(finding.severity)}
                       />
                       <Chip 
                         label={finding.type} 
                         size="small" 
                         variant="outlined"
+                        sx={{
+                          borderColor: theme.palette.divider,
+                          color: theme.palette.text.secondary,
+                        }}
                       />
                     </Box>
                     <Box>

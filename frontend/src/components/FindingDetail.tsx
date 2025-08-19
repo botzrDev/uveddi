@@ -28,6 +28,7 @@ import {
     Tabs,
     Tooltip,
     Typography,
+    useTheme,
 } from '@mui/material';
 import { useState } from 'react';
 import CodeSnippet from './CodeSnippet';
@@ -62,6 +63,7 @@ function TabPanel({ children, value, index, ...other }: TabPanelProps) {
 }
 
 export default function FindingDetail({ finding }: FindingDetailProps) {
+  const theme = useTheme();
   const [activeTab, setActiveTab] = useState(0);
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
@@ -141,12 +143,19 @@ export default function FindingDetail({ finding }: FindingDetailProps) {
   return (
     <Paper sx={{ mt: 2, overflow: 'hidden' }}>
       {/* Header with finding summary */}
-      <Box sx={{ p: 3, bgcolor: 'primary.dark', color: 'primary.contrastText', borderBottom: 1, borderColor: 'divider' }}>
+      <Box sx={{ 
+        p: 3, 
+        bgcolor: (theme) => theme.palette.mode === 'dark' 
+          ? theme.palette.background.paper 
+          : theme.palette.grey[50],
+        borderBottom: 1, 
+        borderColor: 'divider' 
+      }}>
         <Grid container spacing={2} alignItems="center">
           <Grid item xs={12} md={8}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               {getSeverityIcon(finding.severity)}
-              <Typography variant="h5" component="h3" color="inherit">
+              <Typography variant="h5" component="h3" color="text.primary">
                 {finding.title}
               </Typography>
             </Box>
@@ -155,13 +164,12 @@ export default function FindingDetail({ finding }: FindingDetailProps) {
               <Chip 
                 label={finding.severity} 
                 size="small" 
-                color={getSeverityColor(finding.severity)}
                 sx={{ 
-                  bgcolor: getSeverityColor(finding.severity) === 'error' ? '#d32f2f' : 
-                          getSeverityColor(finding.severity) === 'warning' ? '#ed6c02' :
-                          getSeverityColor(finding.severity) === 'info' ? '#0288d1' :
-                          getSeverityColor(finding.severity) === 'success' ? '#2e7d32' : 'grey.500',
-                  color: 'white',
+                  bgcolor: getSeverityColor(finding.severity) === 'error' ? theme.palette.error.main : 
+                          getSeverityColor(finding.severity) === 'warning' ? theme.palette.warning.main :
+                          getSeverityColor(finding.severity) === 'info' ? theme.palette.info.main :
+                          getSeverityColor(finding.severity) === 'success' ? theme.palette.success.main : theme.palette.grey[500],
+                  color: theme.palette.common.white,
                   fontWeight: 'bold'
                 }}
               />
@@ -170,9 +178,8 @@ export default function FindingDetail({ finding }: FindingDetailProps) {
                 size="small" 
                 variant="outlined"
                 sx={{ 
-                  borderColor: 'primary.contrastText', 
-                  color: 'primary.contrastText',
-                  bgcolor: 'rgba(255,255,255,0.1)'
+                  borderColor: theme.palette.divider, 
+                  color: theme.palette.text.secondary,
                 }}
               />
               <Chip 
@@ -180,9 +187,8 @@ export default function FindingDetail({ finding }: FindingDetailProps) {
                 size="small" 
                 variant="outlined"
                 sx={{ 
-                  borderColor: 'primary.contrastText', 
-                  color: 'primary.contrastText',
-                  bgcolor: 'rgba(255,255,255,0.1)'
+                  borderColor: theme.palette.divider, 
+                  color: theme.palette.text.secondary,
                 }}
               />
               {finding.confidence && (
@@ -191,26 +197,25 @@ export default function FindingDetail({ finding }: FindingDetailProps) {
                   size="small" 
                   variant="outlined"
                   sx={{ 
-                    borderColor: 'primary.contrastText', 
-                    color: 'primary.contrastText',
-                    bgcolor: 'rgba(255,255,255,0.1)'
+                    borderColor: theme.palette.divider, 
+                    color: theme.palette.text.secondary,
                   }}
                 />
               )}
             </Box>
             
-            <Typography variant="body1" color="inherit" sx={{ opacity: 0.9 }}>
+            <Typography variant="body1" color="text.primary">
               {finding.message}
             </Typography>
           </Grid>
           
           <Grid item xs={12} md={4}>
             <Box sx={{ textAlign: { xs: 'left', md: 'right' } }}>
-              <Typography variant="body2" color="inherit" sx={{ opacity: 0.9 }} gutterBottom>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
                 <strong>File:</strong> {finding.file}
               </Typography>
               {finding.startLine && (
-                <Typography variant="body2" color="inherit" sx={{ opacity: 0.9 }} gutterBottom>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
                   <strong>Lines:</strong> {finding.startLine}
                   {finding.endLine && finding.endLine !== finding.startLine && `-${finding.endLine}`}
                 </Typography>

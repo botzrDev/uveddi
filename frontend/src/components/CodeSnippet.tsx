@@ -7,6 +7,7 @@ import {
   Tooltip,
   Alert,
   Snackbar,
+  useTheme,
 } from '@mui/material';
 import {
   ContentCopy,
@@ -35,6 +36,7 @@ export default function CodeSnippet({
   maxHeight = 400,
   showLineNumbers = true,
 }: CodeSnippetProps) {
+  const theme = useTheme();
   const [expanded, setExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -161,7 +163,9 @@ export default function CodeSnippet({
             justifyContent: 'space-between',
             alignItems: 'center',
             p: 1,
-            bgcolor: 'grey.50',
+            bgcolor: (theme) => theme.palette.mode === 'dark' 
+              ? theme.palette.grey[800] 
+              : theme.palette.grey[50],
             borderBottom: 1,
             borderColor: 'divider',
           }}
@@ -217,8 +221,12 @@ export default function CodeSnippet({
           sx={{
             maxHeight: containerHeight,
             overflow: 'auto',
-            bgcolor: '#1e1e1e',
-            color: '#d4d4d4',
+            bgcolor: (theme) => theme.palette.mode === 'dark' 
+              ? '#1a1a1a' 
+              : '#fafafa',
+            color: (theme) => theme.palette.mode === 'dark' 
+              ? '#d4d4d4' 
+              : '#333333',
             fontFamily: '"Fira Code", "Consolas", "Monaco", monospace',
             fontSize: '0.875rem',
             lineHeight: 1.5,
@@ -238,7 +246,9 @@ export default function CodeSnippet({
                     borderLeft: isHighlighted ? '3px solid #ffd93d' : 'none',
                     pl: isHighlighted ? 1 : 0,
                     '&:hover': {
-                      bgcolor: 'rgba(255, 255, 255, 0.05)',
+                      bgcolor: (theme) => theme.palette.mode === 'dark' 
+                        ? 'rgba(255, 255, 255, 0.05)' 
+                        : 'rgba(0, 0, 0, 0.05)',
                     },
                   }}
                 >
@@ -250,7 +260,9 @@ export default function CodeSnippet({
                         width: '3rem',
                         textAlign: 'right',
                         mr: 2,
-                        color: '#858585',
+                        color: (theme) => theme.palette.mode === 'dark' 
+                          ? '#858585' 
+                          : '#666666',
                         flexShrink: 0,
                         userSelect: 'none',
                       }}
@@ -281,7 +293,9 @@ export default function CodeSnippet({
             sx={{
               p: 1,
               textAlign: 'center',
-              bgcolor: 'grey.50',
+              bgcolor: (theme) => theme.palette.mode === 'dark' 
+                ? theme.palette.grey[800] 
+                : theme.palette.grey[50],
               borderTop: 1,
               borderColor: 'divider',
             }}

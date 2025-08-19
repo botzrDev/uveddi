@@ -196,10 +196,14 @@ function DashboardPage() {
               label={lang} 
               size="small" 
               sx={{
-                backgroundColor: '#dbeafe',
-                color: '#1e40af',
+                backgroundColor: (theme) => theme.palette.mode === 'dark' 
+                  ? theme.palette.primary.dark 
+                  : theme.palette.primary.light,
+                color: (theme) => theme.palette.mode === 'dark'
+                  ? theme.palette.common.white
+                  : theme.palette.primary.dark,
                 fontWeight: 600,
-                border: '1px solid #93c5fd',
+                border: (theme) => `1px solid ${theme.palette.primary.main}`,
               }}
             />
           ))}
@@ -208,10 +212,14 @@ function DashboardPage() {
               label="Demo Data" 
               size="small"
               sx={{
-                backgroundColor: '#fbbf24',
-                color: '#92400e',
+                backgroundColor: (theme) => theme.palette.mode === 'dark'
+                  ? theme.palette.warning.dark
+                  : theme.palette.warning.light,
+                color: (theme) => theme.palette.mode === 'dark'
+                  ? theme.palette.common.white
+                  : theme.palette.warning.dark,
                 fontWeight: 600,
-                border: '1px solid #fcd34d',
+                border: (theme) => `1px solid ${theme.palette.warning.main}`,
               }}
             />
           )}
@@ -220,10 +228,14 @@ function DashboardPage() {
             label="AI-Enhanced Analysis"
             size="small"
             sx={{
-              backgroundColor: '#d1fae5',
-              color: '#065f46',
+              backgroundColor: (theme) => theme.palette.mode === 'dark'
+                ? theme.palette.success.dark
+                : theme.palette.success.light,
+              color: (theme) => theme.palette.mode === 'dark'
+                ? theme.palette.common.white
+                : theme.palette.success.dark,
               fontWeight: 600,
-              border: '1px solid #6ee7b7',
+              border: (theme) => `1px solid ${theme.palette.success.main}`,
             }}
           />
         </Box>
@@ -418,8 +430,8 @@ function SummaryCard({ title, value, subtitle, color }: SummaryCardProps) {
           borderColor: theme.palette.primary.main,
           valueColor: theme.palette.primary.main,
           bgGradient: isDark 
-            ? 'linear-gradient(135deg, rgba(100, 181, 246, 0.1) 0%, rgba(144, 202, 249, 0.05) 100%)'
-            : 'linear-gradient(135deg, #e3f2fd 0%, #f0f8ff 100%)',
+            ? 'linear-gradient(135deg, rgba(25, 118, 210, 0.1) 0%, rgba(25, 118, 210, 0.05) 100%)'
+            : 'linear-gradient(135deg, rgba(25, 118, 210, 0.1) 0%, rgba(25, 118, 210, 0.05) 100%)',
           icon: <TrendingUpOutlined />,
         };
       case 'error':
