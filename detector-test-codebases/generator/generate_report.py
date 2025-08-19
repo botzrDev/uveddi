@@ -13,18 +13,43 @@ def analyze_file(uveddi_path, file_path):
         
         if result.returncode == 0 and result.stdout.strip():
             try:
-                data = json.loads(result.stdout)
+                # Extract JSON from output (Uveddi outputs JSON followed by status messages)
+                output = result.stdout.strip()
+                
+                # Find the start and end of the JSON object
+                json_start = output.find('{')
+                if json_start == -1:
+                    raise json.JSONDecodeError("No JSON found in output", output, 0)
+                
+                # Find the matching closing brace
+                brace_count = 0
+                json_end = json_start
+                
+                for i in range(json_start, len(output)):
+                    if output[i] == '{':
+                        brace_count += 1
+                    elif output[i] == '}':
+                        brace_count -= 1
+                        if brace_count == 0:
+                            json_end = i + 1
+                            break
+                
+                json_text = output[json_start:json_end]
+                data = json.loads(json_text)
+                
                 return {
                     'success': True,
-                    'detections': data.get('detections', []),
-                    'analysis_time': data.get('analysis_time_ms', 0) / 1000,
-                    'errors': []
+                    'detections': data.get('issues', []),  # Fixed: Uveddi outputs 'issues', not 'detections'
+                    'analysis_time': data.get('metadata', {}).get('durationSeconds', 0),  # Fixed: correct path to duration
+                    'errors': [],
+                    'metadata': data.get('metadata', {}),
+                    'summary': data.get('summary', {})
                 }
-            except json.JSONDecodeError:
+            except json.JSONDecodeError as e:
                 return {
                     'success': False, 
                     'detections': [],
-                    'errors': [f'JSON parse error: {result.stdout[:200]}...']
+                    'errors': [f'JSON parse error: {str(e)} - Output: {result.stdout[:200]}...']
                 }
         else:
             return {

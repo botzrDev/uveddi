@@ -1,0 +1,150 @@
+{
+  "baseline_metrics_v1": {
+    "metadata": {
+      "version": "1.0.0",
+      "timestamp": "2025-08-19T20:52:00Z",
+      "test_suite": "Extreme Detector Validation Suite",
+      "uveddi_binary": "target/release/uveddi",
+      "environment": "development"
+    },
+    "performance_benchmarks": {
+      "overall": {
+        "avg_analysis_time_ms": 336,
+        "throughput_files_per_second": 2.98,
+        "throughput_mb_per_second": 0.14,
+        "success_rate_percentage": 50.0,
+        "reliability_score": 50.0
+      },
+      "by_language": {
+        "rust": {
+          "files_tested": 4,
+          "successful": 3,
+          "failed": 1,
+          "avg_analysis_time_ms": 560,
+          "success_rate": 75.0
+        },
+        "python": {
+          "files_tested": 1,
+          "successful": 0,
+          "failed": 1,
+          "failure_reason": "file_size_limit_exceeded",
+          "success_rate": 0.0
+        },
+        "typescript": {
+          "files_tested": 1,
+          "successful": 0,
+          "failed": 1,
+          "failure_reason": "security_path_validation",
+          "success_rate": 0.0
+        }
+      },
+      "by_file_size": {
+        "small_files_under_10kb": {
+          "count": 2,
+          "avg_analysis_time_ms": 155,
+          "success_rate": 100.0
+        },
+        "medium_files_10kb_to_100kb": {
+          "count": 3,
+          "avg_analysis_time_ms": 570,
+          "success_rate": 66.7
+        },
+        "large_files_over_100kb": {
+          "count": 1,
+          "avg_analysis_time_ms": 0,
+          "success_rate": 0.0,
+          "note": "blocked_by_security_limits"
+        }
+      }
+    },
+    "detector_validation": {
+      "coverage_percentage": 50.0,
+      "total_categories": 6,
+      "working_categories": 3,
+      "working_detectors": [
+        {
+          "name": "god_object",
+          "description": "God Object / Large Class Detection",
+          "status": "working",
+          "detections": 4,
+          "files_with_detections": 2,
+          "confidence": "high"
+        },
+        {
+          "name": "dead_code",
+          "description": "Dead Code Detection", 
+          "status": "working",
+          "detections": 564,
+          "files_with_detections": 3,
+          "confidence": "high"
+        },
+        {
+          "name": "tight_coupling",
+          "description": "Tight Coupling Detection",
+          "status": "working", 
+          "detections": 2,
+          "files_with_detections": 2,
+          "confidence": "medium"
+        }
+      ],
+      "non_working_detectors": [
+        {
+          "name": "code_clones",
+          "description": "Code Clone Detection",
+          "status": "not_detected",
+          "reason": "no_clones_in_test_suite"
+        },
+        {
+          "name": "long_methods", 
+          "description": "Long Method Detection",
+          "status": "not_detected",
+          "reason": "threshold_or_test_case_issue"
+        },
+        {
+          "name": "magic_values",
+          "description": "Magic Values Detection", 
+          "status": "not_detected",
+          "reason": "no_magic_values_in_test_suite"
+        }
+      ]
+    },
+    "quality_metrics": {
+      "total_issues_found": 570,
+      "critical_issues": 4,
+      "medium_issues": 566,
+      "analysis_accuracy": "high",
+      "false_positive_rate": "unknown",
+      "false_negative_rate": "unknown"
+    },
+    "system_limits": {
+      "max_file_size_bytes": 100000,
+      "analysis_timeout_seconds": 60,
+      "security_path_validation": "enabled",
+      "sql_injection_protection": "enabled"
+    },
+    "recommendations": {
+      "immediate": [
+        "Create smaller test files under 100KB limit",
+        "Rename TypeScript files to avoid security triggers",
+        "Add test cases for missing detector categories"
+      ],
+      "short_term": [
+        "Implement test-mode security configuration",
+        "Add performance regression testing",
+        "Enhance error reporting and diagnostics"
+      ],
+      "long_term": [
+        "Configurable security limits per environment",
+        "Advanced performance monitoring dashboard",
+        "Machine learning-based detector improvements"
+      ]
+    },
+    "test_environment": {
+      "os": "linux",
+      "architecture": "x86_64", 
+      "rust_version": "stable",
+      "build_type": "release",
+      "optimization_level": "high"
+    }
+  }
+}
