@@ -108,3 +108,21 @@ alpha_testing/
 /coverage/archive/
 /coverage/archive/**
 coverage_reports/
+
+# Personal and sensitive files
+.claude/settings.local.json
+*.env.local
+*.env.*.local
+
+# Development and debug files
+debug_*.rs
+*debug*.sh
+test_codebase_*.html
+
+# Generated analysis files
+*-analysis.json
+compilation_errors.json
+
+# Test logs and temporary files
+failed_tests.log
+test_execution.log

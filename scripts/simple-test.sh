@@ -77,7 +77,7 @@ EOF
 echo "📊 Created test file at $TEST_DIR/main.rs"
 
 # Run Uveddi analysis
-cd /home/austingreen/Documents/botzr/projects/uveddi
+cd "$(dirname "$(dirname "$0")")"
 
 echo "🔍 Building Uveddi..."
 cargo build
