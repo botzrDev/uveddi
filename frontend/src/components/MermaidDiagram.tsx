@@ -1,5 +1,5 @@
 import { Close, Code, Download, Fullscreen, OpenInNew } from '@mui/icons-material';
-import { Alert, Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Paper, Tooltip, Typography } from '@mui/material';
+import { Alert, Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Paper, Tooltip, Typography, useTheme } from '@mui/material';
 import mermaid from 'mermaid';
 import { useEffect, useState } from 'react';
 
@@ -10,7 +10,8 @@ interface MermaidDiagramProps {
   previewHeight?: string;
 }
 
-export default function MermaidDiagram({ definition, title, className, previewHeight = '300px' }: MermaidDiagramProps) {
+export default function MermaidDiagram({ definition, title, className, previewHeight = '600px' }: MermaidDiagramProps) {
+  const theme = useTheme();
   const [elementRef, setElementRef] = useState<HTMLDivElement | null>(null);
   const [fullscreenElementRef, setFullscreenElementRef] = useState<HTMLDivElement | null>(null);
   const [loading, setLoading] = useState(true);
@@ -35,23 +36,32 @@ export default function MermaidDiagram({ definition, title, className, previewHe
   // Initialize mermaid for this component
   useEffect(() => {
     console.log('MermaidDiagram: Initializing mermaid for component');
+    const isDarkMode = theme.palette.mode === 'dark';
+    
     try {
       mermaid.initialize({
         startOnLoad: false,
-        theme: 'default',
+        theme: isDarkMode ? 'dark' : 'default',
         themeVariables: {
-          primaryColor: '#1976d2',
-          primaryTextColor: '#000',
-          primaryBorderColor: '#1976d2',
-          lineColor: '#666',
-          sectionBkgColor: '#f5f5f5',
-          altSectionBkgColor: '#fff',
-          gridColor: '#e0e0e0',
-          secondaryColor: '#006100',
-          tertiaryColor: '#fff'
+          primaryColor: isDarkMode ? '#64b5f6' : '#1976d2',
+          primaryTextColor: isDarkMode ? '#e4e6ea' : '#000',
+          primaryBorderColor: isDarkMode ? '#64b5f6' : '#1976d2',
+          lineColor: isDarkMode ? '#888' : '#666',
+          sectionBkgColor: isDarkMode ? '#2a3441' : '#f5f5f5',
+          altSectionBkgColor: isDarkMode ? '#1a1f2e' : '#fff',
+          gridColor: isDarkMode ? '#444' : '#e0e0e0',
+          secondaryColor: isDarkMode ? '#81c784' : '#006100',
+          tertiaryColor: isDarkMode ? '#1a1f2e' : '#fff',
+          // Enhanced text readability
+          textColor: isDarkMode ? '#e4e6ea' : '#000',
+          mainBkg: isDarkMode ? '#2a3441' : '#ffffff',
+          secondBkg: isDarkMode ? '#1a1f2e' : '#f8f9fa',
+          // Node styling for better visibility
+          nodeBkg: isDarkMode ? '#3a4551' : '#ffffff',
+          nodeBorder: isDarkMode ? '#64b5f6' : '#1976d2',
         },
-        fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
-        fontSize: 16,
+        fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+        fontSize: isDarkMode ? 14 : 16, // Slightly smaller font in dark mode for better contrast
         // Global settings to prevent constraints
         useMaxWidth: false,
         wrap: false,
@@ -59,12 +69,9 @@ export default function MermaidDiagram({ definition, title, className, previewHe
           useMaxWidth: false, 
           htmlLabels: true,
           curve: 'basis',
-          nodeSpacing: 60,
-          rankSpacing: 100,
-          padding: 20,
-          // Explicitly set large dimensions
-          width: undefined,
-          height: undefined,
+          nodeSpacing: 70, // Increased spacing for better readability
+          rankSpacing: 120, // Increased spacing
+          padding: 30,
         },
         class: {
           useMaxWidth: false,
@@ -76,8 +83,6 @@ export default function MermaidDiagram({ definition, title, className, previewHe
           useMaxWidth: false, 
           diagramMarginX: 50,
           diagramMarginY: 20,
-          width: undefined,
-          height: undefined,
         },
         gantt: {
           useMaxWidth: false,
@@ -98,13 +103,13 @@ export default function MermaidDiagram({ definition, title, className, previewHe
         deterministicIDSeed: undefined,
       });
       setMermaidReady(true);
-      console.log('MermaidDiagram: Mermaid initialized successfully');
+      console.log('MermaidDiagram: Mermaid initialized successfully with theme:', isDarkMode ? 'dark' : 'light');
     } catch (initError) {
       console.error('Mermaid initialization failed:', initError);
       setError('Failed to initialize Mermaid');
       setLoading(false);
     }
-  }, []);
+  }, [theme.palette.mode]); // Re-initialize when theme changes
 
   // Function to render a diagram in a specific element
   const renderDiagramInElement = async (
@@ -242,12 +247,12 @@ export default function MermaidDiagram({ definition, title, className, previewHe
         
         // Set responsive styling based on mode
         if (!isFullscreen) {
-          // Preview mode: maintain aspect ratio, allow vertical scrolling if needed
+          // Enhanced preview mode: larger size with better readability
           svgElement.style.width = '100%';
           svgElement.style.height = 'auto';
           svgElement.style.maxWidth = '100%';
-          svgElement.style.minHeight = '200px';
-          // Remove maxHeight constraint that was cutting off diagrams
+          svgElement.style.minHeight = '400px'; // Increased minimum height
+          // Allow diagrams to be larger for better readability
           svgElement.style.cursor = 'pointer';
         } else {
           // Fullscreen mode: use available space without cutting off content
@@ -261,7 +266,7 @@ export default function MermaidDiagram({ definition, title, className, previewHe
         svgElement.style.display = 'block';
         svgElement.style.margin = '0 auto';
 
-        // Improved scaling logic that preserves readability
+        // Enhanced scaling logic for better readability
         const vb = (svgElement.getAttribute('viewBox') || '').split(' ');
         const vbW = parseFloat(vb[2] || '0');
         const vbH = parseFloat(vb[3] || '0');
@@ -270,30 +275,35 @@ export default function MermaidDiagram({ definition, title, className, previewHe
           const containerWidth = element.clientWidth;
           const containerHeight = element.clientHeight;
           
-          // Only scale down if diagram is significantly larger than container
-          if (containerWidth > 0 && vbW > containerWidth * 1.1) {
+          // More generous scaling for better readability
+          if (containerWidth > 0 && vbW > containerWidth * 1.2) {
             const scaleX = containerWidth / vbW;
             
-            // In preview mode, also consider height but be more lenient
+            // In preview mode, allow for larger height with increased preview size
             if (!isFullscreen && containerHeight > 0) {
-              const maxPreviewHeight = parseInt(previewHeight) || 400;
-              const scaleY = Math.min(maxPreviewHeight / vbH, 1);
-              const scale = Math.min(scaleX, scaleY, 1);
+              const maxPreviewHeight = parseInt(previewHeight) || 600; // Increased default
+              const scaleY = Math.min(maxPreviewHeight / vbH, 1.2); // Allow slight upscaling
+              const scale = Math.min(scaleX, scaleY, 1.1); // Allow slight upscaling for better readability
               
-              if (scale < 0.9) {  // Only scale if significant size reduction
+              if (scale < 0.8) {  // Only scale down if significant size reduction needed
                 svgElement.style.transformOrigin = 'top center';
                 svgElement.style.transform = `scale(${scale})`;
-                // Adjust container to fit scaled content
-                element.style.height = `${vbH * scale}px`;
+                // Adjust container to fit scaled content with padding
+                element.style.height = `${Math.max(vbH * scale, 400)}px`;
+              } else {
+                // Ensure minimum readable size
+                element.style.minHeight = '400px';
               }
             } else if (!isFullscreen) {
-              // Scale to fit width in preview
+              // Scale to fit width in preview but maintain readability
+              const finalScale = Math.max(Math.min(scaleX, 1), 0.7); // Don't scale below 70%
               svgElement.style.transformOrigin = 'top center';
-              svgElement.style.transform = `scale(${Math.min(scaleX, 1)})`;
+              svgElement.style.transform = `scale(${finalScale})`;
             }
           } else {
             svgElement.style.transform = '';
             element.style.height = 'auto';
+            element.style.minHeight = isFullscreen ? 'auto' : '400px';
           }
         }
       }
@@ -723,27 +733,59 @@ export default function MermaidDiagram({ definition, title, className, previewHe
           sx={{
             width: '100%',
             maxWidth: '100%',
-            minHeight: loading ? previewHeight : 'auto',
+            minHeight: loading ? previewHeight : '400px', // Increased minimum height
             textAlign: 'center',
-            overflow: 'visible', // Changed from 'hidden' to allow content to show
+            overflow: 'visible', // Allow content to show fully
             cursor: 'pointer',
             position: 'relative',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            padding: '8px', // Add padding to prevent cutoff
+            padding: { xs: 2, sm: 3 }, // Responsive padding to prevent cutoff
+            backgroundColor: (theme) => theme.palette.mode === 'light' 
+              ? 'rgba(248, 250, 252, 0.3)' 
+              : 'rgba(26, 31, 46, 0.3)',
+            borderRadius: 2,
+            border: (theme) => `1px dashed ${theme.palette.divider}`,
+            transition: 'all 0.3s ease',
             '& svg': {
               width: 'auto !important',
               height: 'auto !important',
               maxWidth: '100%',
-              // Remove maxHeight constraint in preview mode
+              // Allow full height for better readability
               display: loading ? 'none' : 'block',
               margin: '0 auto',
-              // Allow SVG to grow beyond container if needed
-              minHeight: '200px',
+              // Enhanced minimum size for readability
+              minHeight: '300px',
+              // Ensure text is readable in both themes
+              '& text': {
+                fill: (theme) => theme.palette.text.primary,
+                fontSize: '14px !important',
+                fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif !important',
+              },
+              // Style diagram elements for better theme compatibility
+              '& .node rect, & .node circle, & .node polygon': {
+                fill: (theme) => theme.palette.mode === 'light' 
+                  ? '#ffffff' 
+                  : '#3a4551',
+                stroke: (theme) => theme.palette.mode === 'light' 
+                  ? '#1976d2' 
+                  : '#64b5f6',
+                strokeWidth: '2px',
+              },
+              '& .edgePath path': {
+                stroke: (theme) => theme.palette.mode === 'light' 
+                  ? '#666' 
+                  : '#888',
+                strokeWidth: '2px',
+              },
             },
             '&:hover': {
-              backgroundColor: 'action.hover',
+              backgroundColor: (theme) => theme.palette.mode === 'light' 
+                ? 'rgba(25, 118, 210, 0.04)' 
+                : 'rgba(100, 181, 246, 0.08)',
+              borderColor: (theme) => theme.palette.primary.main,
+              transform: 'scale(1.01)', // Subtle scale effect
             },
           }}
         />
@@ -751,14 +793,35 @@ export default function MermaidDiagram({ definition, title, className, previewHe
         {!loading && !error && (
           <Box sx={{ 
             position: 'absolute', 
-            bottom: 8, 
-            right: 8, 
-            backgroundColor: 'rgba(0,0,0,0.7)', 
-            borderRadius: 1,
-            p: 0.5
+            bottom: 12, 
+            right: 12, 
+            backgroundColor: (theme) => theme.palette.mode === 'light'
+              ? 'rgba(0, 0, 0, 0.8)'
+              : 'rgba(255, 255, 255, 0.9)',
+            borderRadius: 2,
+            px: 2,
+            py: 1,
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              backgroundColor: (theme) => theme.palette.mode === 'light'
+                ? 'rgba(25, 118, 210, 0.9)'
+                : 'rgba(100, 181, 246, 0.9)',
+            }
           }}>
-            <Typography variant="caption" sx={{ color: 'white', fontSize: '0.7rem' }}>
-              Click to expand
+            <Typography 
+              variant="caption" 
+              sx={{ 
+                color: (theme) => theme.palette.mode === 'light'
+                  ? 'white'
+                  : 'black',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0.5,
+              }}
+            >
+              🔍 Click to expand
             </Typography>
           </Box>
         )}

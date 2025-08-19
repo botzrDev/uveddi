@@ -6,9 +6,13 @@ import UveddiLoader from '@/components/UveddiLoader';
 import { useDemoReport, useReport } from '@/hooks/useReport';
 import { apiService } from '@/services/api';
 import {
+    AccountTreeOutlined,
+    AssessmentOutlined,
     BugReportOutlined,
+    CheckCircleOutline,
     DownloadOutlined,
-    TrendingUpOutlined,
+    HourglassEmpty,
+    TimerOutlined
 } from '@mui/icons-material';
 import {
     Alert,
@@ -35,6 +39,8 @@ function DashboardPage() {
 
   const handleExportReport = async () => {
     console.log('🚀 Export button clicked!', { isDemoReport, reportId });
+    setExportStatus('exporting');
+    
     try {
       let blob: Blob;
       
@@ -47,6 +53,7 @@ function DashboardPage() {
         blob = await apiService.exportReport(reportId, 'markdown');
       } else {
         console.error('❌ No report ID available for export');
+        setExportStatus('error');
         return;
       }
       
@@ -64,14 +71,23 @@ function DashboardPage() {
       document.body.removeChild(a);
       
       console.log('🎉 Report exported successfully');
+      setExportStatus('success');
+      
+      // Reset to idle after success animation
+      setTimeout(() => setExportStatus('idle'), 3000);
     } catch (error) {
       console.error('💥 Failed to export report:', error);
+      setExportStatus('error');
+      
+      // Reset to idle after error display
+      setTimeout(() => setExportStatus('idle'), 3000);
     }
   };
   
   const query = isDemoReport ? demoQuery : reportQuery;
   const { data: report, isLoading, error } = query;
   const [selectedSeverity, setSelectedSeverity] = useState<string | null>(null);
+  const [exportStatus, setExportStatus] = useState<'idle' | 'exporting' | 'success' | 'error'>('idle');
 
   
 
@@ -212,15 +228,119 @@ function DashboardPage() {
             </Typography>
           </Box>
           
-          {/* Action Buttons */}
+          {/* Action Buttons with Enhanced Status Feedback */}
           <Box sx={{ display: 'flex', gap: 1, flexShrink: 0 }}>
             <Button
               variant="contained"
-              startIcon={<DownloadOutlined />}
-              color="primary"
+              startIcon={
+                exportStatus === 'exporting' ? <HourglassEmpty /> :
+                exportStatus === 'success' ? <CheckCircleOutline /> :
+                <DownloadOutlined />
+              }
               onClick={handleExportReport}
+              disabled={exportStatus === 'exporting'}
+              sx={{
+                background: (theme) => {
+                  if (exportStatus === 'success') {
+                    return theme.palette.mode === 'light'
+                      ? 'linear-gradient(135deg, #4caf50 0%, #66bb6a 50%, #81c784 100%)'
+                      : 'linear-gradient(135deg, #81c784 0%, #66bb6a 50%, #4caf50 100%)';
+                  } else if (exportStatus === 'error') {
+                    return theme.palette.mode === 'light'
+                      ? 'linear-gradient(135deg, #f44336 0%, #ef5350 50%, #e57373 100%)'
+                      : 'linear-gradient(135deg, #e57373 0%, #ef5350 50%, #f44336 100%)';
+                  } else {
+                    return theme.palette.mode === 'light'
+                      ? 'linear-gradient(135deg, #1565c0 0%, #1976d2 50%, #42a5f5 100%)'
+                      : 'linear-gradient(135deg, #42a5f5 0%, #1976d2 50%, #1565c0 100%)';
+                  }
+                },
+                color: 'white',
+                fontWeight: 600,
+                fontSize: '0.95rem',
+                px: 3,
+                py: 1.5,
+                borderRadius: 2,
+                textTransform: 'none',
+                boxShadow: (theme) => {
+                  const baseColor = exportStatus === 'success' ? '76, 175, 80' :
+                                   exportStatus === 'error' ? '244, 67, 54' :
+                                   theme.palette.mode === 'light' ? '25, 118, 210' : '100, 181, 246';
+                  return `0 4px 15px rgba(${baseColor}, 0.3)`;
+                },
+                border: 'none',
+                position: 'relative',
+                overflow: 'hidden',
+                opacity: exportStatus === 'exporting' ? 0.8 : 1,
+                transform: exportStatus === 'success' ? 'scale(1.05)' : 'scale(1)',
+                '&::before': {
+                  content: '""',
+                  position: 'absolute',
+                  top: 0,
+                  left: exportStatus === 'exporting' ? '-100%' : '-100%',
+                  width: '100%',
+                  height: '100%',
+                  background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)',
+                  transition: 'left 0.5s',
+                  ...(exportStatus === 'exporting' && {
+                    animation: 'shimmer 1.5s infinite linear',
+                    '@keyframes shimmer': {
+                      '0%': { left: '-100%' },
+                      '100%': { left: '100%' },
+                    },
+                  }),
+                },
+                '&:hover:not(:disabled)': {
+                  background: (theme) => {
+                    if (exportStatus === 'success') {
+                      return theme.palette.mode === 'light'
+                        ? 'linear-gradient(135deg, #388e3c 0%, #4caf50 50%, #66bb6a 100%)'
+                        : 'linear-gradient(135deg, #a5d6a7 0%, #81c784 50%, #66bb6a 100%)';
+                    } else if (exportStatus === 'error') {
+                      return theme.palette.mode === 'light'
+                        ? 'linear-gradient(135deg, #d32f2f 0%, #f44336 50%, #ef5350 100%)'
+                        : 'linear-gradient(135deg, #ffcdd2 0%, #e57373 50%, #ef5350 100%)';
+                    } else {
+                      return theme.palette.mode === 'light'
+                        ? 'linear-gradient(135deg, #0d47a1 0%, #1565c0 50%, #1976d2 100%)'
+                        : 'linear-gradient(135deg, #64b5f6 0%, #42a5f5 50%, #1976d2 100%)';
+                    }
+                  },
+                  transform: exportStatus === 'success' ? 'translateY(-2px) scale(1.05)' : 'translateY(-2px)',
+                  boxShadow: (theme) => {
+                    const baseColor = exportStatus === 'success' ? '76, 175, 80' :
+                                     exportStatus === 'error' ? '244, 67, 54' :
+                                     theme.palette.mode === 'light' ? '25, 118, 210' : '100, 181, 246';
+                    return `0 6px 20px rgba(${baseColor}, 0.4)`;
+                  },
+                  '&::before': {
+                    left: '100%',
+                  },
+                },
+                '&:active:not(:disabled)': {
+                  transform: exportStatus === 'success' ? 'translateY(0px) scale(1.05)' : 'translateY(0px)',
+                  boxShadow: (theme) => {
+                    const baseColor = exportStatus === 'success' ? '76, 175, 80' :
+                                     exportStatus === 'error' ? '244, 67, 54' :
+                                     theme.palette.mode === 'light' ? '25, 118, 210' : '100, 181, 246';
+                    return `0 2px 10px rgba(${baseColor}, 0.3)`;
+                  },
+                },
+                '&:disabled': {
+                  background: (theme) => theme.palette.mode === 'light'
+                    ? 'rgba(0, 0, 0, 0.12)'
+                    : 'rgba(255, 255, 255, 0.12)',
+                  color: (theme) => theme.palette.mode === 'light'
+                    ? 'rgba(0, 0, 0, 0.26)'
+                    : 'rgba(255, 255, 255, 0.3)',
+                },
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              }}
             >
-              Export Report
+              {exportStatus === 'exporting' ? 'Exporting...' :
+               exportStatus === 'success' ? 'Exported!' :
+               exportStatus === 'error' ? 'Export Failed' :
+               'Export Report'}
             </Button>
           </Box>
         </Box>
@@ -278,9 +398,9 @@ function DashboardPage() {
         </Box>
       </Paper>
 
-      {/* Summary Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
+      {/* Summary Cards - Enhanced Responsive Layout */}
+      <Grid container spacing={{ xs: 2, sm: 3 }} sx={{ mb: 4 }}>
+        <Grid item xs={12} sm={6} lg={3}>
           <SummaryCard
             title="Code Quality"
             value={`${Math.round(report.summary?.coverage || 0)}%`}
@@ -289,7 +409,7 @@ function DashboardPage() {
             color="primary"
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={12} sm={6} lg={3}>
           <SummaryCard
             title="Total Issues"
             value={(report.summary?.issuesTotal || 0).toString()}
@@ -298,7 +418,7 @@ function DashboardPage() {
             color="error"
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={12} sm={6} lg={3}>
           <SummaryCard
             title="Components"
             value={(report.summary?.componentsAnalyzed || 0).toString()}
@@ -307,7 +427,7 @@ function DashboardPage() {
             color="info"
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={12} sm={6} lg={3}>
           <SummaryCard
             title="Analysis Time"
             value={`${((report.summary?.analysisDurationMs || 0) / 1000).toFixed(1)}s`}
@@ -406,23 +526,116 @@ function DashboardPage() {
           </Typography>
         </Box>
       </Box>
-      {/* Architectural Diagrams Section */}
+      {/* Enhanced Architectural Diagrams Section */}
       {report.diagrams && report.diagrams.length > 0 && (
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h4" component="h2" gutterBottom>
-            Architectural Diagrams
-          </Typography>
-          <Grid container spacing={3}>
+        <Paper 
+          sx={{ 
+            p: { xs: 3, sm: 4 }, 
+            mb: 4,
+            background: (theme) => theme.palette.mode === 'light'
+              ? 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)'
+              : 'linear-gradient(135deg, #1a1f2e 0%, #242b3d 100%)',
+            border: (theme) => `1px solid ${theme.palette.divider}`,
+            boxShadow: (theme) => theme.palette.mode === 'light'
+              ? '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+              : '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)',
+          }}
+        >
+          <Box sx={{ mb: 4 }}>
+            <Typography 
+              variant="h4" 
+              component="h2" 
+              sx={{
+                fontWeight: 700,
+                color: (theme) => theme.palette.text.primary,
+                mb: 2,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 2,
+                fontSize: { xs: '1.75rem', sm: '2.125rem' },
+              }}
+            >
+              🏗️ Architectural Diagrams
+            </Typography>
+            <Typography 
+              variant="body1" 
+              sx={{ 
+                color: (theme) => theme.palette.text.secondary,
+                mb: 3,
+                fontSize: { xs: '0.9rem', sm: '1rem' },
+                lineHeight: 1.6,
+                maxWidth: '800px',
+              }}
+            >
+              Interactive system architecture visualizations showing component relationships, 
+              data flow, and structural dependencies. Click any diagram to view in full screen.
+            </Typography>
+          </Box>
+          
+          <Grid container spacing={{ xs: 3, sm: 4 }}>
             {report.diagrams.map((diagram: any, index: number) => (
               <Grid item xs={12} key={diagram.id || index}>
-                <MermaidDiagram 
-                  definition={diagram.source}
-                  title={diagram.title}
-                />
+                <Box
+                  sx={{
+                    border: (theme) => `2px solid ${theme.palette.divider}`,
+                    borderRadius: 3,
+                    overflow: 'hidden',
+                    background: (theme) => theme.palette.background.paper,
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    '&:hover': {
+                      borderColor: (theme) => theme.palette.primary.main,
+                      boxShadow: (theme) => theme.palette.mode === 'light'
+                        ? `0 12px 24px rgba(25, 118, 210, 0.15)`
+                        : `0 12px 24px rgba(100, 181, 246, 0.25)`,
+                      transform: 'translateY(-2px)',
+                    }
+                  }}
+                >
+                  {/* Diagram Header */}
+                  <Box 
+                    sx={{ 
+                      p: 3,
+                      borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
+                      background: (theme) => theme.palette.mode === 'light'
+                        ? 'rgba(25, 118, 210, 0.04)'
+                        : 'rgba(100, 181, 246, 0.08)',
+                    }}
+                  >
+                    <Typography 
+                      variant="h6" 
+                      sx={{ 
+                        fontWeight: 600,
+                        color: (theme) => theme.palette.text.primary,
+                        fontSize: { xs: '1.1rem', sm: '1.25rem' },
+                      }}
+                    >
+                      {diagram.title || `Architecture Overview ${index + 1}`}
+                    </Typography>
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        color: (theme) => theme.palette.text.secondary,
+                        mt: 1,
+                        fontSize: '0.875rem',
+                      }}
+                    >
+                      System Architecture Overview • Interactive Diagram
+                    </Typography>
+                  </Box>
+                  
+                  {/* Enhanced Diagram Container */}
+                  <Box sx={{ p: 0 }}>
+                    <MermaidDiagram 
+                      definition={diagram.source}
+                      title={diagram.title}
+                      previewHeight="600px" // Increased from default 300px
+                    />
+                  </Box>
+                </Box>
               </Grid>
             ))}
           </Grid>
-        </Box>
+        </Paper>
       )}
 
       {/* Detailed Findings List */}
@@ -462,7 +675,7 @@ function SummaryCard({ title, value, subtitle, color, sparkData }: SummaryCardPr
           bgGradient: isDark 
             ? 'linear-gradient(135deg, rgba(100, 181, 246, 0.15) 0%, rgba(25, 118, 210, 0.08) 100%)'
             : 'linear-gradient(135deg, rgba(25, 118, 210, 0.12) 0%, rgba(66, 165, 245, 0.06) 100%)',
-          icon: <TrendingUpOutlined />,
+          icon: <AssessmentOutlined />,
         };
       case 'error':
         // Much lighter, more pleasant red - 50% lighter
@@ -482,7 +695,7 @@ function SummaryCard({ title, value, subtitle, color, sparkData }: SummaryCardPr
           bgGradient: isDark 
             ? 'linear-gradient(135deg, rgba(129, 199, 132, 0.15) 0%, rgba(76, 175, 80, 0.08) 100%)'
             : 'linear-gradient(135deg, rgba(76, 175, 80, 0.12) 0%, rgba(129, 199, 132, 0.06) 100%)',
-          icon: <TrendingUpOutlined />,
+          icon: <TimerOutlined />,
         };
       default: // info
         return {
@@ -491,7 +704,7 @@ function SummaryCard({ title, value, subtitle, color, sparkData }: SummaryCardPr
           bgGradient: isDark 
             ? 'linear-gradient(135deg, rgba(79, 195, 247, 0.15) 0%, rgba(2, 136, 209, 0.08) 100%)'
             : 'linear-gradient(135deg, rgba(2, 136, 209, 0.12) 0%, rgba(79, 195, 247, 0.06) 100%)',
-          icon: <BugReportOutlined />,
+          icon: <AccountTreeOutlined />,
         };
     }
   };
@@ -534,10 +747,10 @@ function SummaryCard({ title, value, subtitle, color, sparkData }: SummaryCardPr
     <Paper 
       className={`uveddi-summary-card card-${color}`}
       sx={{ 
-        p: 4, // More padding
+        p: { xs: 3, sm: 4 }, // Responsive padding
         textAlign: 'center',
-        border: 'none', // Remove border completely
-        borderRadius: 3, // More rounded corners
+        border: 'none',
+        borderRadius: 3,
         position: 'relative',
         overflow: 'hidden',
         background: styles.bgGradient,
@@ -545,7 +758,7 @@ function SummaryCard({ title, value, subtitle, color, sparkData }: SummaryCardPr
           ? `0 4px 20px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.4)`
           : `0 4px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)`,
         '&:hover': {
-          transform: 'translateY(-6px) scale(1.02)', // More dramatic effect
+          transform: { xs: 'translateY(-2px)', sm: 'translateY(-6px) scale(1.02)' }, // Less dramatic on mobile
           boxShadow: (theme) => theme.palette.mode === 'light'
             ? `0 12px 40px ${styles.borderColor}25, 0 4px 20px rgba(0, 0, 0, 0.12)`
             : `0 12px 40px ${styles.borderColor}35, 0 4px 20px rgba(0, 0, 0, 0.5)`,
@@ -554,12 +767,11 @@ function SummaryCard({ title, value, subtitle, color, sparkData }: SummaryCardPr
             transform: 'rotate(10deg) scale(1.2)',
           },
           '& .card-value': {
-            transform: 'scale(1.05)',
+            transform: { xs: 'scale(1.02)', sm: 'scale(1.05)' }, // Less scaling on mobile
             color: styles.borderColor,
           }
         },
         transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-        // Add a subtle inner glow effect
         '&::after': {
           content: '""',
           position: 'absolute',
@@ -577,10 +789,10 @@ function SummaryCard({ title, value, subtitle, color, sparkData }: SummaryCardPr
         className="card-icon"
         sx={{
           position: 'absolute',
-          top: 20,
-          right: 20,
+          top: { xs: 16, sm: 20 }, // Responsive positioning
+          right: { xs: 16, sm: 20 },
           opacity: 0.12,
-          fontSize: 60,
+          fontSize: { xs: 48, sm: 60 }, // Responsive icon size
           color: styles.valueColor,
           transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
           transform: 'rotate(-10deg)',
@@ -594,8 +806,8 @@ function SummaryCard({ title, value, subtitle, color, sparkData }: SummaryCardPr
         sx={{ 
           color: 'var(--uveddi-text-secondary)',
           fontWeight: 700,
-          mb: 3,
-          fontSize: '1rem',
+          mb: { xs: 2, sm: 3 }, // Responsive spacing
+          fontSize: { xs: '0.9rem', sm: '1rem' }, // Responsive font size
           letterSpacing: '1px',
           textTransform: 'uppercase',
           opacity: 0.8,
@@ -604,14 +816,15 @@ function SummaryCard({ title, value, subtitle, color, sparkData }: SummaryCardPr
         {title}
       </Typography>
       <Typography 
-        variant="h2" // Bigger numbers
+        variant="h2"
         component="div" 
         className="card-value"
         sx={{ 
           color: styles.valueColor,
           fontWeight: 800,
           fontFamily: "'JetBrains Mono', monospace",
-          mb: 2,
+          mb: { xs: 1.5, sm: 2 }, // Responsive spacing
+          fontSize: { xs: '1.8rem', sm: '2.5rem' }, // Responsive font size
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -630,11 +843,11 @@ function SummaryCard({ title, value, subtitle, color, sparkData }: SummaryCardPr
         )}
       </Typography>
       <Typography 
-        variant="body1" // Bigger subtitle
+        variant="body1"
         sx={{ 
           color: 'var(--uveddi-text-muted)',
           fontWeight: 600,
-          fontSize: '0.9rem',
+          fontSize: { xs: '0.8rem', sm: '0.9rem' }, // Responsive font size
           opacity: 0.7,
           letterSpacing: '0.3px',
         }}

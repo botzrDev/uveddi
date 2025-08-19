@@ -165,6 +165,8 @@
   /* Header colors for light theme */
   --uveddi-header-bg: var(--uveddi-primary-600);
   --uveddi-header-border: var(--uveddi-primary-700);
+  --uveddi-header-text: #ffffff; /* White text on dark blue header */
+  --uveddi-header-text-muted: rgba(255, 255, 255, 0.7);
   
   /* Background gradients for light theme - more muted */
   --uveddi-bg-gradient: linear-gradient(180deg, #f7f8fa 0%, #f0f2f5 100%);
@@ -194,6 +196,8 @@
   /* Header colors for dark theme */
   --uveddi-header-bg: var(--uveddi-primary-950);
   --uveddi-header-border: rgba(111, 102, 255, 0.06);
+  --uveddi-header-text: #ffffff; /* White text on dark header */
+  --uveddi-header-text-muted: rgba(255, 255, 255, 0.7);
   
   /* Background gradients for dark theme */
   --uveddi-bg-gradient: none;

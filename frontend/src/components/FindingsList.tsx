@@ -1,31 +1,31 @@
 import type { Finding } from '@/types/api';
 import {
-  BugReport,
-  Error as ErrorIcon,
-  ExpandLess,
-  ExpandMore,
-  Info,
-  Warning,
+    BugReport,
+    Error as ErrorIcon,
+    ExpandLess,
+    ExpandMore,
+    Info,
+    Warning,
 } from '@mui/icons-material';
 import {
-  Alert,
-  Box,
-  Chip,
-  Collapse,
-  Divider,
-  FormControl,
-  Grid,
-  IconButton,
-  InputLabel,
-  List,
-  ListItem,
-  ListItemButton,
-  MenuItem,
-  Paper,
-  Select,
-  TextField,
-  Typography,
-  useTheme
+    Alert,
+    Box,
+    Chip,
+    Collapse,
+    Divider,
+    FormControl,
+    Grid,
+    IconButton,
+    InputLabel,
+    List,
+    ListItem,
+    ListItemButton,
+    MenuItem,
+    Paper,
+    Select,
+    TextField,
+    Typography,
+    useTheme
 } from '@mui/material';
 import React, { useState } from 'react';
 import FindingDetail from './FindingDetail';
@@ -282,7 +282,15 @@ export default function FindingsList({ findings, loading, severityOverride }: Fi
                     </Box>
                   </Box>
                   
-                  <IconButton edge="end">
+                  <IconButton 
+                    edge="end"
+                    sx={{
+                      color: (theme) => theme.palette.text.primary,
+                      '&:hover': {
+                        backgroundColor: (theme) => theme.palette.action.hover,
+                      }
+                    }}
+                  >
                     {selectedFinding?.id === finding.id ? <ExpandLess /> : <ExpandMore />}
                   </IconButton>
                 </ListItemButton>

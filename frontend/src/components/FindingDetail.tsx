@@ -231,13 +231,28 @@ export default function FindingDetail({ finding }: FindingDetailProps) {
                   <IconButton 
                     size="small"
                     onClick={() => navigator.clipboard.writeText(finding.file)}
-                    sx={{ color: 'primary.contrastText' }}
+                    sx={{ 
+                      color: (theme) => theme.palette.text.primary,
+                      '&:hover': {
+                        backgroundColor: (theme) => theme.palette.action.hover,
+                        color: (theme) => theme.palette.primary.main,
+                      }
+                    }}
                   >
                     <FileCopy />
                   </IconButton>
                 </Tooltip>
                 <Tooltip title="Open in editor">
-                  <IconButton size="small" sx={{ color: 'primary.contrastText' }}>
+                  <IconButton 
+                    size="small" 
+                    sx={{ 
+                      color: (theme) => theme.palette.text.primary,
+                      '&:hover': {
+                        backgroundColor: (theme) => theme.palette.action.hover,
+                        color: (theme) => theme.palette.primary.main,
+                      }
+                    }}
+                  >
                     <OpenInNew />
                   </IconButton>
                 </Tooltip>

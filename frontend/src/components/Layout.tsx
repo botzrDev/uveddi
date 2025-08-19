@@ -1,17 +1,17 @@
 import type { ThemeMode } from '@/utils/theme';
 import {
-  DarkModeOutlined,
-  LightModeOutlined
+    DarkModeOutlined,
+    LightModeOutlined
 } from '@mui/icons-material';
 import {
-  AppBar,
-  Box,
-  Chip,
-  Container,
-  IconButton,
-  Toolbar,
-  Tooltip,
-  Typography,
+    AppBar,
+    Box,
+    Chip,
+    Container,
+    IconButton,
+    Toolbar,
+    Tooltip,
+    Typography,
 } from '@mui/material';
 import { ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -40,8 +40,15 @@ function Layout({ children, themeMode, onToggleTheme }: LayoutProps) {
         position="static"
         elevation={0}
         sx={{
-          backgroundColor: 'var(--uveddi-header-bg, var(--uveddi-primary-600))',
-          borderBottom: '1px solid var(--uveddi-header-border, var(--uveddi-primary-700))',
+          backgroundColor: (theme) => theme.palette.mode === 'light' 
+            ? '#1976d2 !important' // Force dark blue in light mode
+            : '#0a1929 !important', // Force very dark in dark mode
+          borderBottom: (theme) => theme.palette.mode === 'light'
+            ? '1px solid #1565c0'
+            : '1px solid rgba(111, 102, 255, 0.2)',
+          '& .MuiToolbar-root': {
+            backgroundColor: 'transparent !important',
+          },
         }}
       >
         <Toolbar sx={{ minHeight: '72px' }}>
@@ -70,6 +77,7 @@ function Layout({ children, themeMode, onToggleTheme }: LayoutProps) {
                   cursor: 'pointer',
                   fontSize: '1.375rem',
                   letterSpacing: '-0.025em',
+                  color: (theme) => theme.palette.mode === 'dark' ? '#ffffff' : '#1a237e',
                   '&:hover': { opacity: 0.8 },
                 }}
                 onClick={handleHomeClick}
@@ -79,15 +87,16 @@ function Layout({ children, themeMode, onToggleTheme }: LayoutProps) {
               <Typography
                 variant="caption"
                 sx={{
-                  color: 'rgba(255, 255, 255, 0.7)',
+                  color: (theme) => theme.palette.mode === 'dark' ? '#ffffff' : '#1a237e',
                   fontSize: '0.75rem',
                   fontWeight: 500,
                   lineHeight: 1,
                   mt: -0.5,
                   display: 'block',
+                  opacity: 0.8,
                 }}
               >
-                Code Analysis Platform
+                Code Analysis
               </Typography>
             </Box>
             
