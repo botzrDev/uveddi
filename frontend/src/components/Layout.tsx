@@ -115,13 +115,15 @@ function Layout({ children, themeMode, onToggleTheme }: LayoutProps) {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Tooltip title={`Switch to ${themeMode === 'light' ? 'dark' : 'light'} mode`} arrow>
               <IconButton
-                color="inherit"
                 onClick={onToggleTheme}
                 sx={{
                   borderRadius: 2,
                   backgroundColor: 'transparent',
+                  color: themeMode === 'light' ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.9)',
                   '&:hover': {
-                    backgroundColor: 'var(--uveddi-primary-700)',
+                    backgroundColor: themeMode === 'light' 
+                      ? 'rgba(0, 0, 0, 0.1)' 
+                      : 'var(--uveddi-primary-700)',
                   },
                 }}
               >

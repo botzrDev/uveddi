@@ -22,15 +22,51 @@ export default function SeverityBarChart({ data, onBarClick, selectedSeverity }:
     info: '#3b82f6',
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent, point: Point) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onBarClick && onBarClick(point);
+    }
+  };
+
   return (
-    <div style={{ width: '100%', height: 320 }}>
+    <div 
+      style={{ width: '100%', height: 320 }}
+      role="application"
+      aria-label={`Interactive bar chart showing issues by severity. Use Enter or Space to filter. ${sorted.map(item => `${item.severity}: ${item.count} issues`).join(', ')}`}
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if ((e.key === 'Enter' || e.key === ' ') && sorted.length > 0) {
+          e.preventDefault();
+          // Default to first item if none selected
+          const targetSeverity = selectedSeverity || sorted[0].severity;
+          const point = sorted.find(p => p.severity.toLowerCase() === targetSeverity.toLowerCase()) || sorted[0];
+          onBarClick && onBarClick(point);
+        }
+      }}
+    >
       <ResponsiveContainer>
-        <BarChart data={sorted} margin={{ top: 10, right: 12, left: 0, bottom: 6 }}>
+        <BarChart 
+          data={sorted} 
+          margin={{ top: 10, right: 12, left: 0, bottom: 6 }}
+          aria-label="Issues by severity chart"
+        >
           <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.06} />
-          <XAxis dataKey="severity" tickFormatter={(v: any) => String(v).charAt(0).toUpperCase() + String(v).slice(1)} />
+          <XAxis 
+            dataKey="severity" 
+            tickFormatter={(v: any) => String(v).charAt(0).toUpperCase() + String(v).slice(1)} 
+          />
           <YAxis allowDecimals={false} />
-          <Tooltip formatter={(value: any) => [value, 'Issues']} />
-          <Bar dataKey="count" onClick={(e: any) => onBarClick && onBarClick(e)} radius={[6, 6, 6, 6]}>
+          <Tooltip 
+            formatter={(value: any) => [value, 'Issues']} 
+            labelFormatter={(severity: any) => `${String(severity).charAt(0).toUpperCase() + String(severity).slice(1)} Severity`}
+          />
+          <Bar 
+            dataKey="count" 
+            onClick={(e: any) => onBarClick && onBarClick(e)} 
+            radius={[6, 6, 6, 6]}
+            aria-label="Click bars to filter issues by severity"
+          >
             {sorted.map((row, idx) => {
               const sev = row.severity.toLowerCase();
               const isSelected = selectedSeverity && selectedSeverity === sev;

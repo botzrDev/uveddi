@@ -110,7 +110,7 @@ export const lightTheme = createTheme({
       dark: '#1b5e20',
     },
     background: {
-      default: '#fafafa',
+      default: 'var(--uveddi-bg-primary)',
       paper: '#ffffff',
     },
     text: {
@@ -120,13 +120,23 @@ export const lightTheme = createTheme({
   },
   components: {
     ...commonTheme.components,
+    MuiCssBaseline: {
+      styleOverrides: {
+        body: {
+          backgroundColor: 'transparent !important',
+          backgroundImage: 'var(--uveddi-bg-gradient) !important',
+          backgroundRepeat: 'no-repeat !important',
+          backgroundAttachment: 'fixed !important',
+          backgroundSize: 'cover !important',
+        },
+      },
+    },
     MuiPaper: {
       styleOverrides: {
         root: {
           // Allow summary cards to use their own background styles
           '&.uveddi-summary-card': {
             backgroundColor: 'transparent',
-            backgroundImage: 'var(--card-bg, none)',
           },
         },
       },
@@ -169,7 +179,7 @@ export const darkTheme = createTheme({
       dark: '#388e3c',
     },
     background: {
-      default: '#0a0e1a',
+      default: 'var(--uveddi-bg-primary)',
       paper: '#1a1f2e',
     },
     text: {
@@ -187,6 +197,14 @@ export const darkTheme = createTheme({
   },
   components: {
     ...commonTheme.components,
+    MuiCssBaseline: {
+      styleOverrides: {
+        body: {
+          backgroundColor: 'var(--uveddi-bg-primary) !important',
+          backgroundImage: 'none !important',
+        },
+      },
+    },
     MuiPaper: {
       styleOverrides: {
         root: {
@@ -196,7 +214,6 @@ export const darkTheme = createTheme({
           // Allow summary cards to use their own background styles
           '&.uveddi-summary-card': {
             backgroundColor: 'transparent',
-            backgroundImage: 'var(--card-bg, none)',
           },
         },
       },

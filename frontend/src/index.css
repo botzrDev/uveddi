@@ -97,8 +97,8 @@
   --uveddi-shadow-heavy: rgba(17, 12, 48, 0.24);
 
   /* Header-specific variables to ensure the top bar uses the brand color */
-  --uveddi-header-bg: var(--uveddi-primary-950);
-  --uveddi-header-border: rgba(111, 102, 255, 0.06);
+  --uveddi-header-bg: var(--uveddi-primary-600);
+  --uveddi-header-border: var(--uveddi-primary-700);
 
   /* Badge / label colors used in header (site uses small orange badge sometimes) */
   --uveddi-badge-bg: linear-gradient(90deg, #ffb84d, #ffd66b);
@@ -108,6 +108,12 @@
   --uveddi-bg-gradient: linear-gradient(180deg, var(--uveddi-bg-primary) 0%, var(--uveddi-bg-secondary) 100%);
   --uveddi-paper-bg: linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(245,249,255,1) 100%);
   --uveddi-surface-elevated: linear-gradient(180deg, rgba(111,102,255,0.02) 0%, rgba(255,255,255,0.6) 100%);
+  
+  /* Summary card gradients for light theme */
+  --uveddi-card-bg-primary: linear-gradient(135deg, var(--uveddi-primary-50) 0%, var(--uveddi-primary-100) 100%);
+  --uveddi-card-bg-error: linear-gradient(135deg, #ffebee 0%, #fce4ec 100%);
+  --uveddi-card-bg-success: linear-gradient(135deg, var(--uveddi-success-50) 0%, var(--uveddi-success-100) 100%);
+  --uveddi-card-bg-info: linear-gradient(135deg, var(--uveddi-secondary-50) 0%, var(--uveddi-secondary-100) 100%);
 }
 
 /* Dark theme color overrides */
@@ -126,6 +132,16 @@
     --uveddi-border: var(--uveddi-secondary-700);
     --uveddi-border-hover: var(--uveddi-secondary-600);
     --uveddi-border-dark: var(--uveddi-secondary-300);
+
+    /* Header colors for dark theme */
+    --uveddi-header-bg: var(--uveddi-primary-950);
+    --uveddi-header-border: rgba(111, 102, 255, 0.06);
+    
+    /* Summary card gradients for dark theme */
+    --uveddi-card-bg-primary: linear-gradient(135deg, var(--uveddi-primary-50) 0%, var(--uveddi-primary-100) 100%);
+    --uveddi-card-bg-error: linear-gradient(135deg, #4c1d1d 0%, #7f1d1d 100%);
+    --uveddi-card-bg-success: linear-gradient(135deg, var(--uveddi-success-50) 0%, var(--uveddi-success-100) 100%);
+    --uveddi-card-bg-info: linear-gradient(135deg, var(--uveddi-secondary-50) 0%, var(--uveddi-secondary-100) 100%);
   }
 }
 
@@ -143,6 +159,16 @@
   --uveddi-border: var(--uveddi-secondary-700);
   --uveddi-border-hover: var(--uveddi-secondary-600);
   --uveddi-border-dark: var(--uveddi-secondary-300);
+
+  /* Header colors for dark theme */
+  --uveddi-header-bg: var(--uveddi-primary-950);
+  --uveddi-header-border: rgba(111, 102, 255, 0.06);
+  
+  /* Summary card gradients for dark theme */
+  --uveddi-card-bg-primary: linear-gradient(135deg, var(--uveddi-primary-50) 0%, var(--uveddi-primary-100) 100%);
+  --uveddi-card-bg-error: linear-gradient(135deg, #4c1d1d 0%, #7f1d1d 100%);
+  --uveddi-card-bg-success: linear-gradient(135deg, var(--uveddi-success-50) 0%, var(--uveddi-success-100) 100%);
+  --uveddi-card-bg-info: linear-gradient(135deg, var(--uveddi-secondary-50) 0%, var(--uveddi-secondary-100) 100%);
 }
 
 /* Light theme paper surfaces - only apply in light mode */
@@ -159,7 +185,22 @@
 /* Summary cards - force background override for both light and dark modes */
 .MuiPaper-root.uveddi-summary-card {
   background-color: transparent !important;
-  background-image: var(--uveddi-card-bg, transparent) !important;
+}
+
+.MuiPaper-root.uveddi-summary-card.card-primary {
+  background-image: var(--uveddi-card-bg-primary) !important;
+}
+
+.MuiPaper-root.uveddi-summary-card.card-error {
+  background-image: var(--uveddi-card-bg-error) !important;
+}
+
+.MuiPaper-root.uveddi-summary-card.card-success {
+  background-image: var(--uveddi-card-bg-success) !important;
+}
+
+.MuiPaper-root.uveddi-summary-card.card-info {
+  background-image: var(--uveddi-card-bg-info) !important;
 }
 
 /* Dark mode overrides */
@@ -265,23 +306,53 @@ html, body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: var(--uveddi-bg-primary);
   color: var(--uveddi-text-primary);
 }
 
-/* Light mode body gradient */
+/* Light mode body gradient - high specificity to override Material-UI CssBaseline */
 html:not([data-theme="dark"]), 
-body:not([data-theme="dark"]) {
-  background-image: var(--uveddi-bg-gradient);
-  background-repeat: no-repeat;
-  background-attachment: fixed;
-  background-size: cover;
+body:not([data-theme="dark"]),
+html:not([data-theme="dark"]) body,
+body:not([data-theme="dark"]) #root {
+  background-color: var(--uveddi-bg-primary) !important;
+  background-image: var(--uveddi-bg-gradient) !important;
+  background-repeat: no-repeat !important;
+  background-attachment: fixed !important;
+  background-size: cover !important;
+}
+
+/* Dark mode body background - high specificity to override Material-UI CssBaseline */
+html[data-theme="dark"], 
+body[data-theme="dark"],
+html[data-theme="dark"] body,
+body[data-theme="dark"] #root {
+  background-color: var(--uveddi-bg-primary) !important;
+  background-image: none !important;
 }
 
 #root {
   height: 100%;
   display: flex;
   flex-direction: column;
+}
+
+/* Force light mode background with specific color values */
+html:not([data-theme="dark"]) body,
+html:not([data-theme="dark"]) #root,
+body:not([data-theme="dark"]) #root {
+  background-color: #f8fafc !important;
+  background-image: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%) !important;
+  background-repeat: no-repeat !important;
+  background-attachment: fixed !important;
+  background-size: cover !important;
+}
+
+/* Force dark mode background with specific color values */
+html[data-theme="dark"] body,
+html[data-theme="dark"] #root,
+body[data-theme="dark"] #root {
+  background-color: #0f172a !important;
+  background-image: none !important;
 }
 
 /* Code highlighting styles */
@@ -343,9 +414,23 @@ button:focus-visible,
 a:focus-visible,
 input:focus-visible,
 select:focus-visible,
-textarea:focus-visible {
-  outline: 2px solid #1976d2;
+textarea:focus-visible,
+[role="application"]:focus-visible,
+[role="img"]:focus-visible {
+  outline: 2px solid var(--uveddi-primary-600);
   outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Dark theme focus styles */
+[data-theme="dark"] button:focus-visible,
+[data-theme="dark"] a:focus-visible,
+[data-theme="dark"] input:focus-visible,
+[data-theme="dark"] select:focus-visible,
+[data-theme="dark"] textarea:focus-visible,
+[data-theme="dark"] [role="application"]:focus-visible,
+[data-theme="dark"] [role="img"]:focus-visible {
+  outline-color: var(--uveddi-primary-400);
 }
 
 /* Loading animation */

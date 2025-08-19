@@ -459,36 +459,24 @@ function SummaryCard({ title, value, subtitle, color, sparkData }: SummaryCardPr
         return {
           borderColor: theme.palette.primary.main,
           valueColor: theme.palette.primary.main,
-          bgGradient: isDark 
-            ? 'linear-gradient(135deg, var(--uveddi-primary-800) 0%, var(--uveddi-primary-900) 100%)'
-            : 'linear-gradient(135deg, var(--uveddi-primary-50) 0%, var(--uveddi-primary-100) 100%)',
           icon: <TrendingUpOutlined />,
         };
       case 'error':
         return {
           borderColor: theme.palette.error.main,
           valueColor: theme.palette.error.main,
-          bgGradient: isDark
-            ? 'linear-gradient(135deg, var(--uveddi-secondary-800) 0%, var(--uveddi-secondary-900) 100%)'
-            : 'linear-gradient(135deg, #ffebee 0%, #fce4ec 100%)',
           icon: <BugReportOutlined />,
         };
       case 'success':
         return {
           borderColor: theme.palette.success.main,
           valueColor: theme.palette.success.main,
-          bgGradient: isDark
-            ? 'linear-gradient(135deg, var(--uveddi-success-800) 0%, var(--uveddi-success-900) 100%)'
-            : 'linear-gradient(135deg, var(--uveddi-success-50) 0%, var(--uveddi-success-100) 100%)',
           icon: <TrendingUpOutlined />,
         };
       default:
         return {
           borderColor: theme.palette.info.main,
           valueColor: theme.palette.info.main,
-          bgGradient: isDark
-            ? 'linear-gradient(135deg, var(--uveddi-secondary-700) 0%, var(--uveddi-secondary-800) 100%)'
-            : 'linear-gradient(135deg, var(--uveddi-secondary-50) 0%, var(--uveddi-secondary-100) 100%)',
           icon: <BugReportOutlined />,
         };
     }
@@ -530,13 +518,12 @@ function SummaryCard({ title, value, subtitle, color, sparkData }: SummaryCardPr
 
   return (
     <Paper 
-      className="uveddi-summary-card"
+      className={`uveddi-summary-card card-${color}`}
       sx={{ 
         p: 3, 
         textAlign: 'center',
         border: (theme) => `1px solid ${theme.palette.divider}`,
         borderTop: `4px solid ${styles.borderColor}`,
-        background: styles.bgGradient,
         position: 'relative',
         overflow: 'hidden',
         '&:hover': {
