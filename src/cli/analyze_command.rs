@@ -474,16 +474,16 @@ impl AnalyzeCommand {
         // Validate numeric parameters
         if let Some(confidence) = self.dead_code_confidence {
             let confidence_int = (confidence * 100.0) as i32;
-            security::validate_numeric_range(confidence_int, 0, 100, "dead_code_confidence")?;
+            security::validate_numeric_range(confidence_int.into(), 0, 100, "dead_code_confidence")?;
         }
 
         if let Some(max_loc) = self.large_classes_max_loc {
-            security::validate_numeric_range(max_loc as i32, 1, 100_000, "large_classes_max_loc")?;
+            security::validate_numeric_range(max_loc as i64, 1, 100_000, "large_classes_max_loc")?;
         }
 
         if let Some(max_methods) = self.large_classes_max_methods {
             security::validate_numeric_range(
-                max_methods as i32,
+                max_methods as i64,
                 1,
                 10_000,
                 "large_classes_max_methods",
@@ -492,7 +492,7 @@ impl AnalyzeCommand {
 
         if let Some(max_fields) = self.large_classes_max_fields {
             security::validate_numeric_range(
-                max_fields as i32,
+                max_fields as i64,
                 1,
                 10_000,
                 "large_classes_max_fields",
@@ -501,7 +501,7 @@ impl AnalyzeCommand {
 
         if let Some(max_complexity) = self.large_classes_max_complexity {
             security::validate_numeric_range(
-                max_complexity as i32,
+                max_complexity as i64,
                 1,
                 10_000,
                 "large_classes_max_complexity",
@@ -510,12 +510,12 @@ impl AnalyzeCommand {
 
         if let Some(max_lcom) = self.large_classes_max_lcom {
             let lcom_int = (max_lcom * 100.0) as i32;
-            security::validate_numeric_range(lcom_int, 0, 100, "large_classes_max_lcom")?;
+            security::validate_numeric_range(lcom_int.into(), 0, 100, "large_classes_max_lcom")?;
         }
 
         if let Some(min_severity) = self.large_classes_min_severity {
             security::validate_numeric_range(
-                min_severity as i32,
+                min_severity as i64,
                 0,
                 100,
                 "large_classes_min_severity",
@@ -524,7 +524,7 @@ impl AnalyzeCommand {
 
         if let Some(memory_limit) = self.memory_limit_gb {
             let memory_int = (memory_limit * 10.0) as i32; // Convert to decidigabytes for int validation
-            security::validate_numeric_range(memory_int, 1, 1000, "memory_limit_gb")?;
+            security::validate_numeric_range(memory_int.into(), 1, 1000, "memory_limit_gb")?;
             // 0.1 GB to 100 GB
         }
 

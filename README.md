@@ -10,12 +10,22 @@ Uveddi is a powerful static analysis tool designed to detect architectural anti-
 
 ## 🚀 Features
 
+
 ### Core Analysis Capabilities
 - **God Object Detection** - Identify overly complex classes and modules
 - **Dead Code Analysis** - Find unused functions, variables, and imports
 - **Circular Dependency Detection** - Detect problematic dependency cycles
 - **Tight Coupling Analysis** - Identify components with excessive dependencies
 - **Magic Values Detection** - Find hardcoded constants that should be configurable
+
+## 🛠️ Available CLI Commands
+
+Uveddi exposes two main CLI commands:
+
+- `analyze` — Analyze a codebase for quality issues and architectural problems
+- `config` — Manage Uveddi configuration settings (show, set, validate)
+
+> **Note:** Other commands (such as `ci` and `ui`) may exist in the codebase but are not currently available in the main CLI.
 
 ### Language Support
 - ✅ **Rust** - Full AST-based analysis
@@ -65,6 +75,43 @@ uveddi analyze /path/to/project
 
 # Generate HTML report
 uveddi analyze . --output-format html --output report.html
+
+### Full List of `analyze` Options
+
+```
+uveddi analyze <path> [OPTIONS]
+
+--output-format [text|json|markdown|html]   Output format (default: markdown)
+--output <file>                             Output file path
+--enable-ai                                 Enable AI-powered analysis
+--ollama-api-url <url>                      Ollama API URL for local AI
+--ollama-model <model>                      Ollama model name
+--dead-code-confidence <threshold>          Confidence threshold for dead code
+--dead-code-library-mode                    Enable library mode for dead code
+--dead-code-ignore-patterns <patterns>      Ignore patterns for dead code
+--dead-code-keep-alive <symbols>            Symbols to always keep alive
+--large-classes-max-loc <lines>             Max lines for large classes
+--large-classes-max-methods <count>         Max methods for large classes
+--large-classes-max-fields <count>          Max fields for large classes
+--large-classes-max-complexity <complexity> Max complexity for large classes
+--large-classes-max-lcom <score>            Max LCOM score for large classes
+--large-classes-ignore-patterns <patterns>  Ignore patterns for large classes
+--large-classes-min-severity <score>        Min severity for large classes
+--disable-memory-optimization               Disable memory optimization
+--memory-limit-gb <GB>                      Memory limit in GB
+--memory-profile [small|default|large]      Memory profile
+--enable-image-rendering                    Enable image rendering
+--mermaid-only                              Mermaid-only mode
+--rendering-service-url <url>               Rendering service URL
+--no-fallback                               Disable fallback to Mermaid-only
+--check-rendering-service                   Check rendering service availability
+--no-diagrams                               Disable diagram generation
+--max-diagrams <n>                          Max diagrams per report
+--diagram-output-dir <dir>                  Output directory for diagrams
+--timeout <seconds>                         Analysis timeout (default: 300)
+--verbose                                   Show detailed error information
+--open-dashboard                            Open dashboard after analysis
+```
 ```
 
 ### Performance-Optimized Development
@@ -104,11 +151,15 @@ uveddi analyze . --verbose --timing
 # Fast CI builds for development branches (60-80% faster)
 cargo run --features=dev-minimal --profile=dev-fast -- analyze . --output-format json --output report.json
 
-# Quality gate for CI/CD pipelines
-uveddi ci check . --debt-threshold 50 --critical-threshold 0
 
 # Production builds for release pipelines
 cargo run --release --features=production -- analyze . --output-format json --output report.json
+
+<!--
+## ⚠️ Note on CI Command
+
+The `ci` command is present in the codebase but is not currently available in the main CLI. Please use `analyze` for all analysis tasks. Future releases may expose additional commands.
+-->
 
 # The JSON report includes a summary section:
 # {
