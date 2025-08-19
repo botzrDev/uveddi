@@ -1,9 +1,9 @@
-# Stress Test Results
+# Uveddi Stress Test Results
+Date: Tue Aug 19 14:19:07 CDT 2025
+Branch: test/extreme-detector-testing
 
-Use this file to record outcomes when running Uveddi detectors against the test codebases.
+## python_extreme Results
+❌ Analysis failed for python_extreme
+Error details logged to stress_test_errors.log
 
-- Date:
-- Branch:
-- Detectors run:
-- Summary:
-- Notes:
+## rust_extreme Results

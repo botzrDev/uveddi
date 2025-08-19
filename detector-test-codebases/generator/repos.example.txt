@@ -1,5 +1,39 @@
-# Example GitHub repos to clone (one per line)
-# Use full git clone URL or https://github.com/owner/repo.git
+# Real-world GitHub repositories for comprehensive testing
+# Large, complex codebases that will stress-test Uveddi detectors
+# Mix of languages: Rust, Python, TypeScript, JavaScript
+
+# RUST REPOSITORIES (High complexity, real architectural patterns)
 https://github.com/rust-lang/rust.git
-https://github.com/python/cpython.git
+https://github.com/tokio-rs/tokio.git  
+https://github.com/serde-rs/serde.git
+https://github.com/actix/actix-web.git
+https://github.com/diesel-rs/diesel.git
+
+# PYTHON REPOSITORIES (Large codebases, legacy patterns)
+https://github.com/django/django.git
+https://github.com/pallets/flask.git
+https://github.com/psf/requests.git
+https://github.com/scikit-learn/scikit-learn.git
+https://github.com/numpy/numpy.git
+
+# TYPESCRIPT/JAVASCRIPT REPOSITORIES (Complex frontend/backend)
 https://github.com/microsoft/TypeScript.git
+https://github.com/angular/angular.git
+https://github.com/facebook/react.git
+https://github.com/nodejs/node.git
+https://github.com/expressjs/express.git
+
+# MIXED LANGUAGE REPOSITORIES (Cross-language complexity)
+https://github.com/microsoft/vscode.git
+https://github.com/electron/electron.git
+https://github.com/tauri-apps/tauri.git
+
+# ENTERPRISE/LEGACY STYLE REPOSITORIES (Likely to contain anti-patterns)
+https://github.com/apache/kafka.git
+https://github.com/elastic/elasticsearch.git
+https://github.com/kubernetes/kubernetes.git
+
+# SMALLER BUT COMPLEX REPOSITORIES (Specific patterns)
+https://github.com/wasmerio/wasmer.git
+https://github.com/deno-land/deno.git
+https://github.com/swc-project/swc.git

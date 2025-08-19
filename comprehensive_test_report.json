@@ -1,0 +1,32 @@
+{
+  "timestamp": "2025-08-19T14:54:01.069033",
+  "uveddi_version": "Unknown",
+  "test_results": {
+    "long_methods": {
+      "files": {},
+      "summary": {
+        "files_tested": 0,
+        "successful": 0,
+        "failed": 0,
+        "detections": 0
+      }
+    },
+    "performance_tests": {
+      "files": {},
+      "summary": {
+        "files_tested": 0,
+        "successful": 0,
+        "failed": 0,
+        "detections": 0
+      }
+    }
+  },
+  "summary": {
+    "total_files": 0,
+    "successful_analyses": 0,
+    "failed_analyses": 0,
+    "total_detections": 0,
+    "detections_by_type": {},
+    "total_analysis_time": 0
+  }
+}

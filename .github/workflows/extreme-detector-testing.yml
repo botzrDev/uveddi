@@ -1,0 +1,294 @@
+name: Extreme Detector Testing
+
+on:
+  push:
+    branches: [ test/extreme-detector-testing, main, alpha ]
+  pull_request:
+    branches: [ main, alpha ]
+  workflow_dispatch:
+    inputs:
+      include_real_repos:
+        description: 'Clone real GitHub repositories for testing'
+        required: false
+        default: false
+        type: boolean
+      test_scale:
+        description: 'Test scale (small/medium/large)'
+        required: false
+        default: 'medium'
+        type: choice
+        options:
+        - small
+        - medium  
+        - large
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  generate-extreme-tests:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Generate extreme test files
+      run: |
+        cd detector-test-codebases/generator
+        python3 generate.py --all-extreme --outdir ../benchmark-codebases/extreme_suite
+        
+    - name: Generate additional scale tests
+      run: |
+        cd detector-test-codebases/generator
+        # Generate different scales based on input
+        if [ "${{ github.event.inputs.test_scale }}" = "large" ]; then
+          python3 generate.py --lang rust --type god_object --fields 200 --methods 500 --outdir ../benchmark-codebases/scale_tests
+          python3 generate.py --lang python --type god_object --attrs 150 --methods 300 --outdir ../benchmark-codebases/scale_tests
+        elif [ "${{ github.event.inputs.test_scale }}" = "medium" ]; then
+          python3 generate.py --lang rust --type god_object --fields 100 --methods 250 --outdir ../benchmark-codebases/scale_tests
+          python3 generate.py --lang python --type god_object --attrs 75 --methods 150 --outdir ../benchmark-codebases/scale_tests
+        else
+          python3 generate.py --lang rust --type god_object --fields 50 --methods 100 --outdir ../benchmark-codebases/scale_tests
+        fi
+        
+    - name: Clone real repositories (if enabled)
+      if: github.event.inputs.include_real_repos == 'true'
+      run: |
+        cd detector-test-codebases/generator
+        # Clone a subset of real repos for testing (limit to avoid timeout)
+        echo "https://github.com/serde-rs/serde.git" > small_repos.txt
+        echo "https://github.com/actix/actix-web.git" >> small_repos.txt  
+        echo "https://github.com/pallets/flask.git" >> small_repos.txt
+        ./clone_repos.sh small_repos.txt ../benchmark-codebases/real_repos
+        
+    - name: Upload generated test files
+      uses: actions/upload-artifact@v3
+      with:
+        name: extreme-test-files-${{ github.event.inputs.test_scale || 'medium' }}
+        path: |
+          detector-test-codebases/benchmark-codebases/extreme_suite/
+          detector-test-codebases/benchmark-codebases/scale_tests/
+        retention-days: 7
+
+  build-and-test:
+    needs: generate-extreme-tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        override: true
+        components: rustfmt, clippy
+        
+    - name: Cache Cargo dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        
+    - name: Download test files
+      uses: actions/download-artifact@v3
+      with:
+        name: extreme-test-files-${{ github.event.inputs.test_scale || 'medium' }}
+        path: detector-test-codebases/benchmark-codebases/
+        
+    - name: Build Uveddi
+      run: cargo build --release
+      
+    - name: Run detector tests on extreme cases
+      run: |
+        # Test individual extreme cases
+        echo "=== TESTING EXTREME CASES ===" > detector_test_results.md
+        echo "Date: $(date)" >> detector_test_results.md
+        echo "Branch: ${{ github.ref_name }}" >> detector_test_results.md
+        echo "Commit: ${{ github.sha }}" >> detector_test_results.md  
+        echo "Test Scale: ${{ github.event.inputs.test_scale || 'medium' }}" >> detector_test_results.md
+        echo "" >> detector_test_results.md
+        
+        # Test Rust extreme cases
+        if [ -d "detector-test-codebases/benchmark-codebases/extreme_suite/rust_extreme" ]; then
+          echo "## Rust Extreme Test Results" >> detector_test_results.md
+          
+          for test_file in detector-test-codebases/benchmark-codebases/extreme_suite/rust_extreme/*.rs; do
+            if [ -f "$test_file" ]; then
+              echo "Testing: $(basename "$test_file")" >> detector_test_results.md
+              
+              # Run Uveddi on individual file
+              timeout 30 ./target/release/uveddi analyze "$test_file" --output-format json > temp_result.json 2>&1 || echo "Analysis timeout/error" >> detector_test_results.md
+              
+              if [ -s temp_result.json ]; then
+                # Count detections if JSON parsing available
+                detections=$(cat temp_result.json | grep -o '"detector_type"' | wc -l || echo "unknown")
+                echo "  - Detections found: $detections" >> detector_test_results.md
+              fi
+              
+              rm -f temp_result.json
+            fi
+          done
+          echo "" >> detector_test_results.md
+        fi
+        
+        # Test Python extreme cases  
+        if [ -d "detector-test-codebases/benchmark-codebases/extreme_suite/python_extreme" ]; then
+          echo "## Python Extreme Test Results" >> detector_test_results.md
+          
+          for test_file in detector-test-codebases/benchmark-codebases/extreme_suite/python_extreme/*.py; do
+            if [ -f "$test_file" ]; then
+              echo "Testing: $(basename "$test_file")" >> detector_test_results.md
+              
+              timeout 30 ./target/release/uveddi analyze "$test_file" --output-format json > temp_result.json 2>&1 || echo "Analysis timeout/error" >> detector_test_results.md
+              
+              if [ -s temp_result.json ]; then
+                detections=$(cat temp_result.json | grep -o '"detector_type"' | wc -l || echo "unknown")  
+                echo "  - Detections found: $detections" >> detector_test_results.md
+              fi
+              
+              rm -f temp_result.json
+            fi
+          done
+          echo "" >> detector_test_results.md
+        fi
+        
+        # Test TypeScript extreme cases
+        if [ -d "detector-test-codebases/benchmark-codebases/extreme_suite/typescript_extreme" ]; then
+          echo "## TypeScript Extreme Test Results" >> detector_test_results.md
+          
+          for test_file in detector-test-codebases/benchmark-codebases/extreme_suite/typescript_extreme/*.ts; do
+            if [ -f "$test_file" ]; then
+              echo "Testing: $(basename "$test_file")" >> detector_test_results.md
+              
+              timeout 30 ./target/release/uveddi analyze "$test_file" --output-format json > temp_result.json 2>&1 || echo "Analysis timeout/error" >> detector_test_results.md
+              
+              if [ -s temp_result.json ]; then
+                detections=$(cat temp_result.json | grep -o '"detector_type"' | wc -l || echo "unknown")
+                echo "  - Detections found: $detections" >> detector_test_results.md  
+              fi
+              
+              rm -f temp_result.json
+            fi
+          done
+          echo "" >> detector_test_results.md
+        fi
+        
+    - name: Performance benchmarking
+      run: |
+        echo "## Performance Benchmarks" >> detector_test_results.md
+        echo "" >> detector_test_results.md
+        
+        # Measure analysis time on different file sizes
+        for test_dir in detector-test-codebases/benchmark-codebases/extreme_suite/*/; do
+          if [ -d "$test_dir" ]; then
+            echo "### $(basename "$test_dir") Performance" >> detector_test_results.md
+            
+            start_time=$(date +%s.%N)
+            timeout 60 ./target/release/uveddi analyze "$test_dir" > /dev/null 2>&1 || true
+            end_time=$(date +%s.%N)
+            
+            duration=$(echo "$end_time - $start_time" | bc -l 2>/dev/null || echo "N/A")
+            echo "  - Analysis time: ${duration}s" >> detector_test_results.md
+            
+            # Count lines of code
+            lines=$(find "$test_dir" -name "*.rs" -o -name "*.py" -o -name "*.ts" | xargs wc -l | tail -1 | awk '{print $1}' || echo "N/A")
+            echo "  - Lines of code: $lines" >> detector_test_results.md
+            echo "" >> detector_test_results.md
+          fi
+        done
+        
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      with:
+        name: detector-test-results-${{ github.event.inputs.test_scale || 'medium' }}
+        path: detector_test_results.md
+        retention-days: 30
+        
+    - name: Comment PR with results (if PR)
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          if (fs.existsSync('detector_test_results.md')) {
+            const results = fs.readFileSync('detector_test_results.md', 'utf8');
+            const truncated = results.length > 65000 ? results.substring(0, 65000) + '\n...\n[Results truncated - see full results in artifacts]' : results;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner, 
+              repo: context.repo.repo,
+              body: `## 🔍 Extreme Detector Test Results\n\n\`\`\`\n${truncated}\n\`\`\``
+            });
+          }
+
+  memory-stress-test:
+    needs: generate-extreme-tests  
+    runs-on: ubuntu-latest
+    if: github.event.inputs.test_scale == 'large' || github.ref_name == 'main'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        
+    - name: Download test files
+      uses: actions/download-artifact@v3
+      with:
+        name: extreme-test-files-${{ github.event.inputs.test_scale || 'medium' }}
+        path: detector-test-codebases/benchmark-codebases/
+        
+    - name: Build Uveddi with debug info
+      run: cargo build --release
+      
+    - name: Install memory profiling tools
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y valgrind time
+        
+    - name: Memory stress testing
+      run: |
+        echo "=== MEMORY STRESS TESTING ===" > memory_test_results.md
+        echo "" >> memory_test_results.md
+        
+        # Test memory usage on large files
+        for test_file in detector-test-codebases/benchmark-codebases/extreme_suite/rust_extreme/*.rs; do
+          if [ -f "$test_file" ] && [ $(wc -l < "$test_file") -gt 1000 ]; then
+            echo "Testing memory usage: $(basename "$test_file")" >> memory_test_results.md
+            
+            # Use GNU time to measure memory
+            /usr/bin/time -v timeout 120 ./target/release/uveddi analyze "$test_file" > /dev/null 2> time_output.txt || true
+            
+            if [ -s time_output.txt ]; then
+              max_memory=$(grep "Maximum resident set size" time_output.txt | awk '{print $6}' || echo "N/A")
+              echo "  - Peak memory: ${max_memory} KB" >> memory_test_results.md
+              
+              cpu_time=$(grep "User time" time_output.txt | awk '{print $4}' || echo "N/A")  
+              echo "  - CPU time: ${cpu_time}s" >> memory_test_results.md
+            fi
+            
+            rm -f time_output.txt
+            echo "" >> memory_test_results.md
+          fi
+        done
+        
+    - name: Upload memory test results
+      uses: actions/upload-artifact@v3
+      with:
+        name: memory-test-results
+        path: memory_test_results.md
+        retention-days: 30
