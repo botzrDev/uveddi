@@ -7,6 +7,7 @@ import { Navigate, Route, BrowserRouter as Router, Routes } from 'react-router-d
 // Components
 import ErrorBoundary from '@/components/ErrorBoundary';
 import Layout from '@/components/Layout';
+import RealtimeUpdates from '@/components/RealtimeUpdates';
 import DashboardPage from '@/pages/DashboardPage';
 import ReportPage from '@/pages/ReportPage';
 import ReportsListPage from '@/pages/ReportsListPage';
@@ -49,6 +50,13 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <ThemeProvider theme={theme}>
           <CssBaseline />
+          <RealtimeUpdates 
+            onNewAnalysis={() => {
+              // Refresh data by invalidating queries
+              queryClient.invalidateQueries({ queryKey: ['reports'] });
+              queryClient.invalidateQueries({ queryKey: ['report'] });
+            }} 
+          />
           <Router
             future={{
               v7_startTransition: true,

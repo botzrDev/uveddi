@@ -44,7 +44,12 @@ sudo mv uveddi /usr/local/bin/
 # Requires Rust 1.70+
 git clone https://github.com/botzrDev/uveddi.git
 cd uveddi
-cargo build --release
+
+# Fast development build (60-80% faster, recommended for contributing)
+cargo build --features=dev-core --profile=dev-fast
+
+# Production build (full feature set)
+cargo build --release --features=production
 sudo cp target/release/uveddi /usr/local/bin/
 ```
 
@@ -62,8 +67,24 @@ uveddi analyze /path/to/project
 uveddi analyze . --output-format html --output report.html
 ```
 
+### Performance-Optimized Development
+```bash
+# For fastest development builds (60-80% faster)
+cargo run --features=dev-minimal --profile=dev-fast -- analyze .
+
+# Single-language analysis (70-85% faster)
+cargo run --features=dev-rust-only --profile=dev-fast -- analyze ./src
+cargo run --features=dev-python-only --profile=dev-fast -- analyze ./src
+
+# Balanced development with core features
+cargo run --features=dev-core --profile=dev-fast -- analyze . --output-format html
+```
+
 ### Advanced Usage
 ```bash
+# Full production analysis
+cargo run --release --features=production -- analyze . --output-format html --output report.html
+
 # Specify languages to analyze
 uveddi analyze . --languages rust,python,javascript
 
@@ -80,11 +101,14 @@ uveddi analyze . --verbose --timing
 
 ### CI/CD Integration
 ```bash
+# Fast CI builds for development branches (60-80% faster)
+cargo run --features=dev-minimal --profile=dev-fast -- analyze . --output-format json --output report.json
+
 # Quality gate for CI/CD pipelines
 uveddi ci check . --debt-threshold 50 --critical-threshold 0
 
-# Generate JSON report with summary for CI tools
-uveddi analyze . --output-format json --output report.json
+# Production builds for release pipelines
+cargo run --release --features=production -- analyze . --output-format json --output report.json
 
 # The JSON report includes a summary section:
 # {

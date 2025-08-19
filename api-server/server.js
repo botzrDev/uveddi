@@ -6,9 +6,16 @@ const fs = require('fs-extra');
 const path = require('path');
 const marked = require('marked');
 const matter = require('gray-matter');
+const http = require('http');
+const { setupWebSocketServer } = require('./websocket');
+const { convertCliOutputToDashboardFormat } = require('./utils/dataModelConverter');
 
 const app = express();
+const server = http.createServer(app);
 const PORT = process.env.PORT || 8080;
+
+// Initialize WebSocket server
+setupWebSocketServer(server);
 
 // Security and middleware
 app.use(helmet({
@@ -774,7 +781,7 @@ app.use((error, req, res, next) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`🚀 Uveddi v1.0 Community Core API Server running on http://localhost:${PORT}`);
   console.log(`📚 Documentation API: http://localhost:${PORT}/api/docs/structure`);
   console.log(`🔍 Health check: http://localhost:${PORT}/health`);

@@ -43,15 +43,39 @@ chrono = { version = "0.4.39", features = ["serde"] }
 
 # Feature flags for modular compilation
 [features]
-default = ["tree-sitter", "security", "memory-optimization"]
+# Lightweight default for fast development builds
+default = ["dev-core"]
+# Production-ready features (previous default behavior)  
+production = ["tree-sitter", "security", "memory-optimization", "web-full"]
 # Chaos engineering and load testing
 chaos = ["fail", "statrs", "ndarray-stats"]
 # Performance regression detection with genetic algorithms
 regression-detection = ["changepoint", "linfa", "influxdb2"]
 # SLA monitoring and validation
 sla-monitoring = ["metrics-exporter-prometheus", "tokio-metrics"]
-# Security features
-security = []
+
+# Development feature sets for fast builds
+# Minimal development build (only essential deps)
+dev-minimal = ["dep:clap", "dep:serde", "dep:serde_json", "dep:tokio", "dep:anyhow", "dep:tracing"]
+# Single-language development builds
+dev-rust-only = ["dev-minimal", "rust-lang"]
+dev-python-only = ["dev-minimal", "python-lang"] 
+dev-js-only = ["dev-minimal", "javascript-lang"]
+dev-ts-only = ["dev-minimal", "typescript-lang"]
+# Fast iteration (no heavy analysis)
+dev-fast = ["dev-minimal", "dep:regex", "dep:walkdir"]
+# Core analysis without tree-sitter
+dev-core = ["dev-minimal", "dep:petgraph", "dep:walkdir", "dep:ignore", "dep:rusqlite"]
+
+# Consolidated dependency groups
+crypto-minimal = ["dep:sha2"]
+crypto-full = ["dep:rustls", "dep:ring", "dep:blake3", "dep:sha2", "dep:argon2", "dep:subtle"]
+web-client = ["dep:reqwest"]
+web-server = ["dep:axum", "dep:tower", "dep:tower-http"]
+web-full = ["web-client", "web-server", "dep:tower_governor", "dep:tokio-tungstenste"]
+
+# Security features (consolidated)
+security = ["crypto-full", "web-full", "dep:casbin", "dep:oauth2", "dep:openidconnect", "dep:jsonwebtoken", "dep:vaultrs"]
 # Tree-sitter parsing functionality (enabled by default)
 # Refactored to allow per-language feature gating (Phase 1 multi-language support, UV-XXX)
 # Existing `tree-sitter` feature now aggregates individual language features for backward compatibility.
@@ -341,6 +365,27 @@ name = "security_tests"
 path = "tests/security_tests.rs"
 
 # Benchmarks removed for Alpha release
+
+# Memory-optimized development profile (based on memory hierarchy research)
+[profile.dev-fast]
+inherits = "dev"
+opt-level = 0          # No optimization for fastest compilation
+debug = false          # Minimal debug info to reduce memory
+debug-assertions = false
+overflow-checks = false
+lto = false           # No link-time optimization for speed
+panic = 'unwind'      # Standard panic handling
+incremental = true    # Enable incremental compilation
+codegen-units = 16    # Maximum parallelism for multi-core builds
+
+# Memory-efficient development with some optimization
+[profile.dev-optimized]
+inherits = "dev"
+opt-level = 1          # Light optimization
+debug = true           # Keep debug info for development
+lto = false
+incremental = true
+codegen-units = 8      # Balance between parallelism and optimization
 
 # Release profile with performance optimizations
 [profile.release]

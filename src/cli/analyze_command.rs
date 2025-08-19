@@ -270,6 +270,13 @@ pub struct AnalyzeCommand {
     /// stack traces, and context to help diagnose issues.
     #[arg(long)]
     pub verbose: bool,
+    
+    /// Automatically open dashboard after analysis completes
+    ///
+    /// When enabled, the analysis dashboard will be launched in the default web browser
+    /// after analysis is complete, showing the results in a visual interface.
+    #[arg(long)]
+    pub open_dashboard: bool,
 }
 
 impl AnalyzeCommand {
@@ -923,6 +930,9 @@ impl AnalyzeCommand {
             report.metadata.issues_found,
             report.metadata.ai_enhanced
         );
+        
+        // TODO: Notify dashboard of new analysis results
+        // self.notify_dashboard_of_new_results(&report).await;
 
         // Print colorful summary to stdout for user
         let output_info = self
@@ -943,6 +953,15 @@ impl AnalyzeCommand {
             println!("\n✅ Analysis complete: No issues found! 🎉");
             println!("📊 Files analyzed: {}", report.metadata.files_analyzed);
             println!("💡 Report generated: {}", output_info);
+        }
+        
+        // Auto-launch dashboard if requested
+        if self.open_dashboard {
+            println!("\n🚀 Dashboard launch requested but temporarily disabled during development");
+            // self.launch_dashboard();
+        } else if report.metadata.issues_found > 0 {
+            // Suggest dashboard for a better experience when issues are found
+            println!("\n💡 Tip: Run with --open-dashboard to visualize results in the web interface");
         }
 
         Ok(())
@@ -1039,4 +1058,110 @@ impl AnalyzeCommand {
 
         Ok(discovered_files)
     }
+
+    // TODO: Dashboard integration methods temporarily disabled
+    /*
+    /// Notify the dashboard of new analysis results
+    async fn notify_dashboard_of_new_results(&self, report: &crate::application::AnalysisReport) {
+        use std::path::Path;
+        use tokio::fs;
+        use tokio::io::AsyncWriteExt;
+        
+        // Create notification file that indicates new results are available
+        let notification_dir = Path::new("./.uveddi/notifications");
+        let _ = fs::create_dir_all(&notification_dir).await;
+        
+        // Generate a unique notification ID based on timestamp
+        let notification_id = chrono::Utc::now().timestamp();
+        let notification_path = notification_dir.join(format!("analysis_complete_{}.json", notification_id));
+        
+        // Create notification payload with basic metadata
+        let notification_content = serde_json::json!({
+            "type": "analysis_complete",
+            "timestamp": chrono::Utc::now().to_rfc3339(),
+            "metadata": {
+                "files_analyzed": report.metadata.files_analyzed,
+                "issues_found": report.metadata.issues_found,
+                "analysis_duration_ms": report.metadata.analysis_duration.as_millis(),
+                "ai_enhanced": report.metadata.ai_enhanced,
+                "format": self.output_format
+            }
+        });
+        
+        // Write notification file asynchronously
+        if let Ok(mut file) = fs::File::create(&notification_path).await {
+            if let Ok(content) = serde_json::to_string(&notification_content) {
+                let _ = file.write_all(content.as_bytes()).await;
+                info!("Dashboard notification created: {}", notification_path.display());
+            }
+        }
+        
+        // Try to notify any running dashboard service via HTTP
+        let client = reqwest::Client::new();
+        let dashboard_url = "http://localhost:8080/api/notifications/new-analysis";
+        
+        let _ = client.post(dashboard_url)
+            .json(&notification_content)
+            .timeout(std::time::Duration::from_secs(1))
+            .send()
+            .await;
+            
+        // Note: We intentionally ignore errors here to prevent analysis failures
+        // if the dashboard isn't running
+    }
+
+    /// Launch the dashboard in the default web browser
+    fn launch_dashboard(&self) {
+        use std::process::Command;
+        use std::thread;
+        
+        println!("\n🚀 Launching dashboard in your browser...");
+        
+        // Start the dashboard server in the background if not already running
+        thread::spawn(|| {
+            // Use a separate tokio runtime for this background process
+            let rt = tokio::runtime::Runtime::new().expect("Failed to create runtime");
+            rt.block_on(async {
+                // Configure the dashboard server
+                let config = crate::service_orchestration::OrchestratorConfig {
+                    api_port: 8080,
+                    rendering_port: 3001,
+                    frontend_port: 3000,
+                    auto_start_services: true,
+                    database_path: std::path::PathBuf::from("./.uveddi/database.db"),
+                    frontend_assets_path: None,
+                    development_mode: false,
+                };
+                
+                // Start the services
+                let mut orchestrator = crate::service_orchestration::ServiceOrchestrator::new();
+                if let Err(e) = orchestrator.start_services(config).await {
+                    tracing::error!("Failed to start dashboard services: {}", e);
+                    return;
+                }
+                
+                // Wait for Ctrl+C or program termination
+                let _ = tokio::signal::ctrl_c().await;
+            });
+        });
+        
+        // Give services a moment to start
+        thread::sleep(std::time::Duration::from_secs(2));
+        
+        // Open the browser to the dashboard URL
+        #[cfg(target_os = "windows")]
+        let open_cmd = "start";
+        #[cfg(target_os = "macos")]
+        let open_cmd = "open";
+        #[cfg(not(any(target_os = "windows", target_os = "macos")))]
+        let open_cmd = "xdg-open";
+        
+        let dashboard_url = "http://localhost:8080/dashboard";
+        if let Err(e) = Command::new(open_cmd).arg(dashboard_url).spawn() {
+            println!("Could not open browser automatically: {}", e);
+            println!("Please open the dashboard manually at: {}", e);
+            println!("Dashboard URL: {}", dashboard_url);
+        }
+    }
+    */
 }
