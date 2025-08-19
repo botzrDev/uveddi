@@ -111,12 +111,23 @@ Uveddi follows a simplified, layered architecture focused on local analysis and 
 - Model definitions and migrations
 - Query abstractions
 
-#### 4.4 Plugin System (`src/plugin/`)
+#### 4.4 API Subsystem (`src/api/`)
+- `types.rs` - Shared API types and traits (prevents circular dependencies)
+- `rest.rs` - REST API server implementation with health endpoints
+- `server.rs` - Server orchestration and lifecycle management
+
+#### 4.5 Service Orchestration (`src/service_orchestration/`)
+- `orchestrator.rs` - Multi-service lifecycle management
+- Automatic service startup with readiness detection
+- Health monitoring with exponential backoff retry logic
+- Graceful shutdown and resource cleanup
+
+#### 4.6 Plugin System (`src/plugin/`)
 - WASM runtime management
 - Plugin loading and lifecycle
 - Plugin API definitions
 
-#### 4.5 Supporting Infrastructure
+#### 4.7 Supporting Infrastructure
 - `src/cache/` - Caching layer
 - `src/config/` - Configuration management
 - `src/error.rs` - Unified error handling

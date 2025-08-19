@@ -13,6 +13,36 @@ Uveddi is a comprehensive architectural analysis tool built in Rust that combine
 - **Terminal UI**: Interactive TUI for analysis exploration
 - **Plugin system**: WebAssembly-based extensibility
 - **Performance optimization**: Memory-efficient caching and parallel processing
+- **Service orchestration**: Integrated web services with automatic health monitoring
+
+### Service Orchestration
+Uveddi includes a comprehensive service orchestration system that automatically manages multiple services:
+
+#### Available Services
+- **API Server** (`src/api/`): REST API endpoints for interactive reporting and dashboard integration
+- **Rendering Service** (`rendering-service/`): Mermaid diagram rendering with Playwright-based browser automation
+- **Frontend Dev Server** (development mode): React-based interactive dashboard
+
+#### Service Management
+- **Automatic startup**: All services start automatically with intelligent readiness detection
+- **Health monitoring**: Exponential backoff retry logic with detailed error reporting
+- **Graceful shutdown**: Proper cleanup of all background processes and resources
+- **Port configuration**: Flexible port assignment for different environments
+
+#### Usage
+```bash
+# Basic service startup
+uveddi serve --port 8888 --rendering-port 3333
+
+# Development mode with frontend
+uveddi serve --port 8888 --rendering-port 3333 --frontend-port 3000 --development
+
+# Services available at:
+# - Dashboard: http://localhost:8888
+# - API: http://localhost:8888/api/v1  
+# - Health: http://localhost:8888/health
+# - Rendering: http://localhost:3333/health
+```
 
 ## Architecture
 
@@ -25,11 +55,13 @@ CLI Layer (src/cli/) → Application Layer (src/application/) → Analysis Layer
 ### Core Modules
 - **`src/analysis/`**: Core analysis engines, detectors, and algorithms
 - **`src/ai/`**: AI provider integrations (Ollama) for intelligent analysis
+- **`src/api/`**: REST API server with shared types architecture and health monitoring
 - **`src/ast/`**: Abstract Syntax Tree parsing using tree-sitter
 - **`src/cli/`**: Command-line interface and argument parsing
 - **`src/database/`**: SQLite-based data persistence
 - **`src/report/`**: Report generation in multiple formats
 - **`src/plugins/`**: WebAssembly plugin system
+- **`src/service_orchestration/`**: Multi-service lifecycle management with readiness detection
 - **`src/tui/`**: Terminal user interface
 - **`src/cache/`**: Performance optimization through caching
 
@@ -88,6 +120,12 @@ cargo run --features alpha -- analyze ./src --output-format html --output report
 # Run with AI explanations (requires Ollama)
 cargo run --features alpha -- analyze ./src --enable-ai --ollama-model deepseek-coder:6.7b
 
+# Start web services (API server + rendering service)
+cargo run --features alpha -- serve --port 8888 --rendering-port 3333
+
+# Start web services in development mode (includes frontend dev server)
+cargo run --features alpha -- serve --port 8888 --rendering-port 3333 --frontend-port 3000 --development
+
 # TUI interface
 cargo run --features alpha --bin tui_test
 
@@ -117,6 +155,36 @@ cargo install mdbook
 cargo install cargo-tarpaulin  # For coverage
 cargo install cargo-audit     # For security audits
 ```
+
+### Architectural Best Practices
+
+#### Preventing Circular Dependencies
+Uveddi uses a shared types pattern to prevent circular dependencies between modules:
+
+```rust
+// src/api/types.rs - Shared types module
+use tokio::sync::oneshot;
+
+pub struct RestApiConfig { /* ... */ }
+
+pub trait ApiServer {
+    fn start(self, database: Arc<Database>) -> impl Future<Output = Result<()>>;
+    fn start_with_readiness(self, database: Arc<Database>, 
+                          ready_tx: oneshot::Sender<Result<()>>) -> impl Future<Output = Result<()>>;
+}
+```
+
+**Key Principles:**
+- Extract shared types into dedicated modules (e.g., `src/api/types.rs`)
+- Use trait-based abstractions for cross-module communication
+- Implement readiness signaling for service coordination
+- Avoid direct module-to-module imports that create cycles
+
+#### Service Orchestration Patterns
+- Use `tokio::sync::oneshot` channels for readiness notification
+- Implement exponential backoff in health check systems
+- Provide detailed error context in service failure scenarios
+- Design for graceful shutdown and resource cleanup
 
 ### AI Integration
 
@@ -203,6 +271,10 @@ Common issues and solutions:
 - **Memory issues**: Enable memory-optimization feature
 - **TUI problems**: Check terminal compatibility and run TUI tests
 - **AI integration**: Verify Ollama installation and model availability
+- **Service startup failures**: Check port availability and install Playwright dependencies
+- **Rendering service issues**: Run `npx playwright install` and `npx playwright install-deps`
+- **Health check timeouts**: Services use exponential backoff retry logic with detailed error reporting
+- **Circular dependencies**: Use shared types pattern in `src/api/types.rs` for cross-module communication
 
 ### Release Information
 

@@ -1,20 +1,15 @@
-import React, { useState, useMemo } from 'react';
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-} from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ThemeProvider, CssBaseline } from '@mui/material';
 import { getTheme, ThemeMode } from '@/utils/theme';
+import { CssBaseline, ThemeProvider } from '@mui/material';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useEffect, useMemo, useState } from 'react';
+import { Navigate, Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 
 // Components
+import ErrorBoundary from '@/components/ErrorBoundary';
 import Layout from '@/components/Layout';
 import DashboardPage from '@/pages/DashboardPage';
 import ReportPage from '@/pages/ReportPage';
 import ReportsListPage from '@/pages/ReportsListPage';
-import ErrorBoundary from '@/components/ErrorBoundary';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -37,6 +32,11 @@ function App() {
   });
 
   const theme = useMemo(() => getTheme(themeMode), [themeMode]);
+
+  // Set data-theme attribute on html element for CSS variables
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', themeMode);
+  }, [themeMode]);
 
   const toggleTheme = () => {
     const newMode = themeMode === 'light' ? 'dark' : 'light';

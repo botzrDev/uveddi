@@ -118,6 +118,20 @@ export const lightTheme = createTheme({
       secondary: 'rgba(0, 0, 0, 0.6)',
     },
   },
+  components: {
+    ...commonTheme.components,
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          // Allow summary cards to use their own background styles
+          '&.uveddi-summary-card': {
+            backgroundColor: 'transparent',
+            backgroundImage: 'var(--card-bg, none)',
+          },
+        },
+      },
+    },
+  },
 });
 
 export const darkTheme = createTheme({
@@ -179,6 +193,11 @@ export const darkTheme = createTheme({
           backgroundColor: '#1a1f2e',
           backgroundImage: 'none',
           border: '1px solid rgba(255, 255, 255, 0.12)',
+          // Allow summary cards to use their own background styles
+          '&.uveddi-summary-card': {
+            backgroundColor: 'transparent',
+            backgroundImage: 'var(--card-bg, none)',
+          },
         },
       },
     },

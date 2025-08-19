@@ -1,31 +1,31 @@
 import type { Finding } from '@/types/api';
 import {
-    BugReport,
-    Error as ErrorIcon,
-    ExpandLess,
-    ExpandMore,
-    Info,
-    Warning,
+  BugReport,
+  Error as ErrorIcon,
+  ExpandLess,
+  ExpandMore,
+  Info,
+  Warning,
 } from '@mui/icons-material';
 import {
-    Alert,
-    Box,
-    Chip,
-    Collapse,
-    Divider,
-    FormControl,
-    Grid,
-    IconButton,
-    InputLabel,
-    List,
-    ListItem,
-    ListItemButton,
-    MenuItem,
-    Paper,
-    Select,
-    TextField,
-    Typography,
-    useTheme
+  Alert,
+  Box,
+  Chip,
+  Collapse,
+  Divider,
+  FormControl,
+  Grid,
+  IconButton,
+  InputLabel,
+  List,
+  ListItem,
+  ListItemButton,
+  MenuItem,
+  Paper,
+  Select,
+  TextField,
+  Typography,
+  useTheme
 } from '@mui/material';
 import React, { useState } from 'react';
 import FindingDetail from './FindingDetail';
@@ -33,9 +33,10 @@ import FindingDetail from './FindingDetail';
 interface FindingsListProps {
   findings: Finding[];
   loading?: boolean;
+  severityOverride?: string | null;
 }
 
-export default function FindingsList({ findings, loading }: FindingsListProps) {
+export default function FindingsList({ findings, loading, severityOverride }: FindingsListProps) {
   const theme = useTheme();
   const [selectedFinding, setSelectedFinding] = useState<Finding | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -43,13 +44,14 @@ export default function FindingsList({ findings, loading }: FindingsListProps) {
   const [typeFilter, setTypeFilter] = useState<string>('all');
 
   // Filter findings based on search and filters
+  const effectiveSeverity = severityFilter === 'all' ? null : severityFilter;
   const filteredFindings = findings.filter(finding => {
     const matchesSearch = 
       finding.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       finding.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
       finding.file.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesSeverity = severityFilter === 'all' || finding.severity === severityFilter;
+    const activeSeverity = severityOverride || (effectiveSeverity || (severityFilter === 'all' ? null : severityFilter));
+    const matchesSeverity = !activeSeverity || finding.severity === activeSeverity;
     const matchesType = typeFilter === 'all' || finding.type === typeFilter;
     
     return matchesSearch && matchesSeverity && matchesType;

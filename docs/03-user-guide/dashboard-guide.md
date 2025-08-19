@@ -19,12 +19,28 @@ The Uveddi dashboard provides a comprehensive web-based interface for managing c
 
 ### Accessing the Dashboard
 
-1. **Local Development**
+1. **Using Service Orchestration (Recommended)**
    ```bash
-   # Start the Uveddi server
-   cargo run --features tui
+   # Start all services automatically
+   cargo run --features alpha -- serve --port 8888 --rendering-port 3333
    
-   # Or use the dedicated frontend
+   # Services available at:
+   # Dashboard: http://localhost:8888
+   # API: http://localhost:8888/api/v1
+   # Health: http://localhost:8888/health
+   ```
+
+2. **Development Mode**
+   ```bash
+   # Start with development frontend
+   cargo run --features alpha -- serve --port 8888 --rendering-port 3333 --frontend-port 3000 --development
+   
+   # Development frontend: http://localhost:3000
+   ```
+
+3. **Manual Setup (Legacy)**
+   ```bash
+   # Start the dedicated frontend manually
    cd frontend && npm start
    ```
    Access: http://localhost:3000
@@ -909,6 +925,43 @@ For enterprise deployments with multiple users:
 ## Troubleshooting
 
 ### Common Issues
+
+#### Service Startup Issues
+
+**Problem**: Dashboard not loading or services not starting
+
+**Diagnostic Steps**:
+1. Check that all required ports are available (8888, 3333)
+2. Verify Playwright dependencies are installed for rendering service
+3. Check service health endpoints: `http://localhost:8888/health`
+
+**Solutions**:
+```bash
+# Install rendering service dependencies
+npx playwright install
+npx playwright install-deps  # May require sudo
+
+# Check port availability
+netstat -an | grep :8888
+netstat -an | grep :3333
+
+# Start with verbose logging
+RUST_LOG=info cargo run --features alpha -- serve --port 8888 --rendering-port 3333
+```
+
+#### Health Check Failures
+
+**Problem**: Services report as unhealthy or timeout during startup
+
+**Diagnostic Steps**:
+1. Services use exponential backoff retry logic (15 attempts)
+2. Check detailed error messages in console output
+3. Verify network connectivity to localhost
+
+**Solutions**:
+- Health checks automatically retry with increasing delays
+- Check firewall settings for localhost connections
+- Ensure no other services are using the configured ports
 
 #### Analysis Performance Issues
 

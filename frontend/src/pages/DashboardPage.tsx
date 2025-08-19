@@ -1,3 +1,5 @@
+import SeverityBarChart from '@/components/charts/SeverityBarChart';
+import Sparkline from '@/components/charts/Sparkline';
 import FindingsList from '@/components/FindingsList';
 import MermaidDiagram from '@/components/MermaidDiagram';
 import UveddiLoader from '@/components/UveddiLoader';
@@ -6,10 +8,8 @@ import { apiService } from '@/services/api';
 import {
   BugReportOutlined,
   DownloadOutlined,
-  ShareOutlined,
   TrendingUpOutlined,
 } from '@mui/icons-material';
-import React, { useState } from 'react';
 import {
   Alert,
   Box,
@@ -17,10 +17,11 @@ import {
   Chip,
   Grid,
   Paper,
-  Snackbar,
+
   Typography,
   useTheme,
 } from '@mui/material';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 function DashboardPage() {
@@ -70,37 +71,9 @@ function DashboardPage() {
   
   const query = isDemoReport ? demoQuery : reportQuery;
   const { data: report, isLoading, error } = query;
+  const [selectedSeverity, setSelectedSeverity] = useState<string | null>(null);
 
-  // Share snackbar state
-  const [shareOpen, setShareOpen] = useState(false);
-  const [shareMessage, setShareMessage] = useState('');
-
-  const handleShare = async () => {
-    try {
-      const shareUrl = window.location.href;
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(shareUrl);
-      } else {
-        const el = document.createElement('textarea');
-        el.value = shareUrl;
-        el.setAttribute('readonly', '');
-        el.style.position = 'absolute';
-        el.style.left = '-9999px';
-        document.body.appendChild(el);
-        el.select();
-        document.execCommand('copy');
-        document.body.removeChild(el);
-      }
-
-      setShareMessage('Share link copied to clipboard');
-      setShareOpen(true);
-      console.log('🔗 Share URL copied:', shareUrl);
-    } catch (err) {
-      console.error('Failed to copy share URL', err);
-      setShareMessage('Failed to copy share link');
-      setShareOpen(true);
-    }
-  };
+  
 
   if (isLoading) {
     return (
@@ -242,13 +215,6 @@ function DashboardPage() {
           {/* Action Buttons */}
           <Box sx={{ display: 'flex', gap: 1, flexShrink: 0 }}>
             <Button
-              variant="outlined"
-              startIcon={<ShareOutlined />}
-              color="primary"
-            >
-              Share
-            </Button>
-            <Button
               variant="contained"
               startIcon={<DownloadOutlined />}
               color="primary"
@@ -318,6 +284,7 @@ function DashboardPage() {
           <SummaryCard
             title="Code Quality"
             value={`${Math.round(report.summary?.coverage || 0)}%`}
+            sparkData={[(report.summary?.coverage || 0) - 2, (report.summary?.coverage || 0) - 1, report.summary?.coverage || 0]}
             subtitle="Overall Score"
             color="primary"
           />
@@ -326,6 +293,7 @@ function DashboardPage() {
           <SummaryCard
             title="Total Issues"
             value={(report.summary?.issuesTotal || 0).toString()}
+            sparkData={[Math.max(0, (report.summary?.issuesTotal || 0) - 5), Math.max(0, (report.summary?.issuesTotal || 0) - 2), report.summary?.issuesTotal || 0]}
             subtitle={`${report.summary?.filesAnalyzed || 0} files analyzed`}
             color="error"
           />
@@ -334,6 +302,7 @@ function DashboardPage() {
           <SummaryCard
             title="Components"
             value={(report.summary?.componentsAnalyzed || 0).toString()}
+            sparkData={[(report.summary?.componentsAnalyzed || 0) - 1, (report.summary?.componentsAnalyzed || 0), (report.summary?.componentsAnalyzed || 0) + 1]}
             subtitle="Architectural components"
             color="info"
           />
@@ -342,47 +311,32 @@ function DashboardPage() {
           <SummaryCard
             title="Analysis Time"
             value={`${((report.summary?.analysisDurationMs || 0) / 1000).toFixed(1)}s`}
+            sparkData={[((report.summary?.analysisDurationMs || 0) / 1000) - 1, ((report.summary?.analysisDurationMs || 0) / 1000) - 0.5, ((report.summary?.analysisDurationMs || 0) / 1000)]}
             subtitle="Processing time"
             color="success"
           />
         </Grid>
       </Grid>
 
-      {/* Issues by Severity */}
+      {/* Issues by Severity (interactive) */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12} md={7}>
           <Paper sx={{ p: 3 }}>
             <Typography variant="h5" gutterBottom>
               Issues by Severity
             </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {Object.entries(report.summary?.issuesBySeverity || {}).map(([severity, count]) => (
-                <Box
-                  key={severity}
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    p: 2,
-                    border: 1,
-                    borderColor: 'divider',
-                    borderRadius: 1,
-                    bgcolor: getSeverityColor(severity, theme),
-                  }}
-                >
-                  <Typography variant="body1" sx={{ textTransform: 'capitalize' }}>
-                    {severity}
-                  </Typography>
-                  <Typography variant="h6" fontWeight="bold">
-                    {count}
-                  </Typography>
-                </Box>
-              ))}
-            </Box>
+            <SeverityBarChart
+              data={Object.entries(report.summary?.issuesBySeverity || {}).map(([severity, count]) => ({ severity, count: Number(count) }))}
+              onBarClick={(p) => {
+                const sev = String(p.severity).toLowerCase();
+                setSelectedSeverity(prev => prev === sev ? null : sev);
+              }}
+              selectedSeverity={selectedSeverity}
+            />
           </Paper>
         </Grid>
 
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12} md={5}>
           <Paper sx={{ p: 3 }}>
             <Typography variant="h5" gutterBottom>
               Issues by Category
@@ -452,7 +406,6 @@ function DashboardPage() {
           </Typography>
         </Box>
       </Box>
-      
       {/* Architectural Diagrams Section */}
       {report.diagrams && report.diagrams.length > 0 && (
         <Box sx={{ mb: 4 }}>
@@ -474,12 +427,16 @@ function DashboardPage() {
 
       {/* Detailed Findings List */}
       <FindingsList 
-        findings={report.findings || []} 
-        loading={isLoading}
+  findings={report.findings || []} 
+  loading={isLoading}
+  severityOverride={selectedSeverity}
       />
     </Box>
   );
 }
+
+// Snackbar for share feedback is rendered near the root of the page
+ 
 
 // Helper component for summary cards
 interface SummaryCardProps {
@@ -487,10 +444,12 @@ interface SummaryCardProps {
   value: string;
   subtitle: string;
   color: 'primary' | 'error' | 'info' | 'success';
+  sparkData?: number[];
 }
 
-function SummaryCard({ title, value, subtitle, color }: SummaryCardProps) {
+function SummaryCard({ title, value, subtitle, color, sparkData }: SummaryCardProps) {
   const theme = useTheme();
+  const [displayValue, setDisplayValue] = useState<string>(value);
   
   const getColorStyles = (color: string) => {
     const isDark = theme.palette.mode === 'dark';
@@ -501,8 +460,8 @@ function SummaryCard({ title, value, subtitle, color }: SummaryCardProps) {
           borderColor: theme.palette.primary.main,
           valueColor: theme.palette.primary.main,
           bgGradient: isDark 
-            ? 'linear-gradient(135deg, rgba(25, 118, 210, 0.1) 0%, rgba(25, 118, 210, 0.05) 100%)'
-            : 'linear-gradient(135deg, rgba(25, 118, 210, 0.1) 0%, rgba(25, 118, 210, 0.05) 100%)',
+            ? 'linear-gradient(135deg, var(--uveddi-primary-800) 0%, var(--uveddi-primary-900) 100%)'
+            : 'linear-gradient(135deg, var(--uveddi-primary-50) 0%, var(--uveddi-primary-100) 100%)',
           icon: <TrendingUpOutlined />,
         };
       case 'error':
@@ -510,7 +469,7 @@ function SummaryCard({ title, value, subtitle, color }: SummaryCardProps) {
           borderColor: theme.palette.error.main,
           valueColor: theme.palette.error.main,
           bgGradient: isDark
-            ? 'linear-gradient(135deg, rgba(239, 83, 80, 0.1) 0%, rgba(229, 115, 115, 0.05) 100%)'
+            ? 'linear-gradient(135deg, var(--uveddi-secondary-800) 0%, var(--uveddi-secondary-900) 100%)'
             : 'linear-gradient(135deg, #ffebee 0%, #fce4ec 100%)',
           icon: <BugReportOutlined />,
         };
@@ -519,8 +478,8 @@ function SummaryCard({ title, value, subtitle, color }: SummaryCardProps) {
           borderColor: theme.palette.success.main,
           valueColor: theme.palette.success.main,
           bgGradient: isDark
-            ? 'linear-gradient(135deg, rgba(129, 199, 132, 0.1) 0%, rgba(165, 214, 167, 0.05) 100%)'
-            : 'linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%)',
+            ? 'linear-gradient(135deg, var(--uveddi-success-800) 0%, var(--uveddi-success-900) 100%)'
+            : 'linear-gradient(135deg, var(--uveddi-success-50) 0%, var(--uveddi-success-100) 100%)',
           icon: <TrendingUpOutlined />,
         };
       default:
@@ -528,8 +487,8 @@ function SummaryCard({ title, value, subtitle, color }: SummaryCardProps) {
           borderColor: theme.palette.info.main,
           valueColor: theme.palette.info.main,
           bgGradient: isDark
-            ? 'linear-gradient(135deg, rgba(79, 195, 247, 0.1) 0%, rgba(129, 212, 250, 0.05) 100%)'
-            : 'linear-gradient(135deg, #e3f2fd 0%, #f0f4ff 100%)',
+            ? 'linear-gradient(135deg, var(--uveddi-secondary-700) 0%, var(--uveddi-secondary-800) 100%)'
+            : 'linear-gradient(135deg, var(--uveddi-secondary-50) 0%, var(--uveddi-secondary-100) 100%)',
           icon: <BugReportOutlined />,
         };
     }
@@ -537,8 +496,41 @@ function SummaryCard({ title, value, subtitle, color }: SummaryCardProps) {
 
   const styles = getColorStyles(color);
 
+  // Animate numeric values (simple count-up) when numeric present
+  useEffect(() => {
+    const raw = String(value || '');
+    const numericMatch = raw.match(/-?\d+(?:[\.,]\d+)?/);
+    if (!numericMatch) {
+      setDisplayValue(raw);
+      return;
+    }
+
+    const numStr = numericMatch[0].replace(',', '.');
+    const target = Number(numStr);
+    if (isNaN(target)) {
+      setDisplayValue(raw);
+      return;
+    }
+
+    const suffix = raw.replace(numericMatch[0], '').trim();
+    const duration = 700;
+    const start = performance.now();
+    const from = 0;
+
+    const step = (now: number) => {
+      const t = Math.min(1, (now - start) / duration);
+      const current = from + (target - from) * t;
+      const formatted = (Math.abs(target) >= 100 ? Math.round(current) : Math.round(current * 10) / 10);
+      setDisplayValue(`${formatted}${suffix}`);
+      if (t < 1) requestAnimationFrame(step);
+    };
+
+    requestAnimationFrame(step);
+  }, [value]);
+
   return (
     <Paper 
+      className="uveddi-summary-card"
       sx={{ 
         p: 3, 
         textAlign: 'center',
@@ -550,8 +542,8 @@ function SummaryCard({ title, value, subtitle, color }: SummaryCardProps) {
         '&:hover': {
           transform: 'translateY(-2px)',
           boxShadow: (theme) => theme.palette.mode === 'light'
-            ? '0 8px 25px rgba(79, 70, 229, 0.15)'
-            : '0 8px 25px rgba(0, 0, 0, 0.3)',
+            ? '0 8px 25px var(--uveddi-shadow-medium)'
+            : '0 8px 25px rgba(0, 0, 0, 0.5)',
         },
         transition: 'all 0.2s ease-in-out',
       }}
@@ -588,9 +580,18 @@ function SummaryCard({ title, value, subtitle, color }: SummaryCardProps) {
           fontWeight: 700,
           fontFamily: "'JetBrains Mono', monospace",
           mb: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 1,
         }}
       >
-        {value}
+        {displayValue}
+        {sparkData && (
+          <Box sx={{ ml: 1, display: { xs: 'none', sm: 'inline-flex' } }}>
+            <Sparkline data={sparkData} color={styles.valueColor as string} />
+          </Box>
+        )}
       </Typography>
       <Typography 
         variant="body2" 

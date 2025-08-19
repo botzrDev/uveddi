@@ -103,6 +103,11 @@
   /* Badge / label colors used in header (site uses small orange badge sometimes) */
   --uveddi-badge-bg: linear-gradient(90deg, #ffb84d, #ffd66b);
   --uveddi-badge-color: #1b1226;
+
+  /* Light-theme surface gradients (subtle, used for Paper and backgrounds) */
+  --uveddi-bg-gradient: linear-gradient(180deg, var(--uveddi-bg-primary) 0%, var(--uveddi-bg-secondary) 100%);
+  --uveddi-paper-bg: linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(245,249,255,1) 100%);
+  --uveddi-surface-elevated: linear-gradient(180deg, rgba(111,102,255,0.02) 0%, rgba(255,255,255,0.6) 100%);
 }
 
 /* Dark theme color overrides */
@@ -140,6 +145,112 @@
   --uveddi-border-dark: var(--uveddi-secondary-300);
 }
 
+/* Light theme paper surfaces - only apply in light mode */
+:root:not([data-theme="dark"]) {
+  --paper-bg: var(--uveddi-paper-bg);
+}
+
+:root:not([data-theme="dark"]) .MuiPaper-root:not(.uveddi-summary-card),
+:root:not([data-theme="dark"]) paper:not(.uveddi-summary-card),
+:root:not([data-theme="dark"]) section:not(.uveddi-summary-card) {
+  background-image: var(--paper-bg);
+}
+
+/* Summary cards - force background override for both light and dark modes */
+.MuiPaper-root.uveddi-summary-card {
+  background-color: transparent !important;
+  background-image: var(--uveddi-card-bg, transparent) !important;
+}
+
+/* Dark mode overrides */
+[data-theme="dark"] {
+  /* Primary dark mode colors */
+  --uveddi-primary-50: #1e293b;
+  --uveddi-primary-100: #334155;
+  --uveddi-primary-200: #475569;
+  --uveddi-primary-300: #64748b;
+  --uveddi-primary-400: #94a3b8;
+  --uveddi-primary-500: #cbd5e1;
+  --uveddi-primary-600: #e2e8f0;
+  --uveddi-primary-700: #f1f5f9;
+  --uveddi-primary-800: #f8fafc;
+  --uveddi-primary-900: #ffffff;
+
+  /* Secondary dark mode colors */
+  --uveddi-secondary-50: #0f172a;
+  --uveddi-secondary-100: #1e293b;
+  --uveddi-secondary-200: #334155;
+  --uveddi-secondary-300: #475569;
+  --uveddi-secondary-400: #64748b;
+  --uveddi-secondary-500: #94a3b8;
+  --uveddi-secondary-600: #cbd5e1;
+  --uveddi-secondary-700: #e2e8f0;
+  --uveddi-secondary-800: #f1f5f9;
+  --uveddi-secondary-900: #f8fafc;
+
+  /* Success dark mode colors */
+  --uveddi-success-50: #064e3b;
+  --uveddi-success-100: #065f46;
+  --uveddi-success-200: #047857;
+  --uveddi-success-300: #059669;
+  --uveddi-success-400: #10b981;
+  --uveddi-success-500: #34d399;
+  --uveddi-success-600: #6ee7b7;
+  --uveddi-success-700: #9ca3af;
+  --uveddi-success-800: #d1fae5;
+  --uveddi-success-900: #ecfdf5;
+
+  /* Warning dark mode colors */
+  --uveddi-warning-50: #451a03;
+  --uveddi-warning-100: #92400e;
+  --uveddi-warning-200: #d97706;
+  --uveddi-warning-300: #f59e0b;
+  --uveddi-warning-400: #fbbf24;
+  --uveddi-warning-500: #fcd34d;
+  --uveddi-warning-600: #fde68a;
+  --uveddi-warning-700: #fef3c7;
+  --uveddi-warning-800: #fffbeb;
+  --uveddi-warning-900: #fefdf8;
+
+  /* Error dark mode colors */
+  --uveddi-error-50: #7f1d1d;
+  --uveddi-error-100: #991b1b;
+  --uveddi-error-200: #dc2626;
+  --uveddi-error-300: #ef4444;
+  --uveddi-error-400: #f87171;
+  --uveddi-error-500: #fca5a5;
+  --uveddi-error-600: #fecaca;
+  --uveddi-error-700: #fee2e2;
+  --uveddi-error-800: #fef2f2;
+  --uveddi-error-900: #fefefe;
+
+  /* Dark mode background colors */
+  --uveddi-bg-primary: var(--uveddi-secondary-50);
+  --uveddi-bg-secondary: var(--uveddi-secondary-100);
+  --uveddi-bg-tertiary: var(--uveddi-secondary-200);
+  --uveddi-bg-muted: var(--uveddi-secondary-300);
+  --uveddi-bg-dark: var(--uveddi-secondary-900);
+
+  /* Dark mode text colors */
+  --uveddi-text-primary: var(--uveddi-primary-900);
+  --uveddi-text-secondary: var(--uveddi-primary-700);
+  --uveddi-text-muted: var(--uveddi-primary-600);
+  --uveddi-text-disabled: var(--uveddi-primary-400);
+
+  /* Dark mode border colors */
+  --uveddi-border: var(--uveddi-secondary-300);
+  --uveddi-border-hover: var(--uveddi-secondary-400);
+  --uveddi-border-dark: var(--uveddi-secondary-700);
+
+  /* Dark mode shadows */
+  --uveddi-shadow-light: 0 1px 3px rgba(0, 0, 0, 0.5);
+  --uveddi-shadow-medium: 0 4px 6px rgba(0, 0, 0, 0.5);
+  --uveddi-shadow-dark: 0 8px 16px rgba(0, 0, 0, 0.6);
+
+  /* No paper gradients in dark mode */
+  --paper-bg: transparent;
+}
+
 /* Reset and base styles */
 * {
   box-sizing: border-box;
@@ -156,6 +267,15 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--uveddi-bg-primary);
   color: var(--uveddi-text-primary);
+}
+
+/* Light mode body gradient */
+html:not([data-theme="dark"]), 
+body:not([data-theme="dark"]) {
+  background-image: var(--uveddi-bg-gradient);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-size: cover;
 }
 
 #root {
