@@ -152,8 +152,9 @@
   --uveddi-text-muted: var(--uveddi-secondary-400);
   --uveddi-text-inverse: var(--uveddi-secondary-50);
   
-  --uveddi-bg-primary: var(--uveddi-secondary-50);
-  --uveddi-bg-secondary: var(--uveddi-secondary-100);
+  /* More muted background colors with added grey */
+  --uveddi-bg-primary: #f7f8fa; /* slightly more grey than secondary-50 */
+  --uveddi-bg-secondary: #f0f2f5; /* slightly more grey than secondary-100 */
   --uveddi-bg-muted: var(--uveddi-secondary-200);
   --uveddi-bg-dark: var(--uveddi-secondary-900);
   
@@ -165,8 +166,14 @@
   --uveddi-header-bg: var(--uveddi-primary-600);
   --uveddi-header-border: var(--uveddi-primary-700);
   
-  /* Background gradients for light theme */
-  --uveddi-bg-gradient: linear-gradient(180deg, var(--uveddi-bg-primary) 0%, var(--uveddi-bg-secondary) 100%);
+  /* Background gradients for light theme - more muted */
+  --uveddi-bg-gradient: linear-gradient(180deg, #f7f8fa 0%, #f0f2f5 100%);
+  
+  /* Summary card gradients for light theme - much lighter error card */
+  --uveddi-card-bg-primary: linear-gradient(135deg, var(--uveddi-primary-50) 0%, var(--uveddi-primary-100) 100%);
+  --uveddi-card-bg-error: linear-gradient(135deg, #fff5f5 0%, #ffeaea 100%); /* Much lighter coral/salmon */
+  --uveddi-card-bg-success: linear-gradient(135deg, var(--uveddi-success-50) 0%, var(--uveddi-success-100) 100%);
+  --uveddi-card-bg-info: linear-gradient(135deg, var(--uveddi-secondary-50) 0%, var(--uveddi-secondary-100) 100%);
 }
 
 [data-theme="dark"] {

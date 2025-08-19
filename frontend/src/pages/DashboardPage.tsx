@@ -6,20 +6,20 @@ import UveddiLoader from '@/components/UveddiLoader';
 import { useDemoReport, useReport } from '@/hooks/useReport';
 import { apiService } from '@/services/api';
 import {
-  BugReportOutlined,
-  DownloadOutlined,
-  TrendingUpOutlined,
+    BugReportOutlined,
+    DownloadOutlined,
+    TrendingUpOutlined,
 } from '@mui/icons-material';
 import {
-  Alert,
-  Box,
-  Button,
-  Chip,
-  Grid,
-  Paper,
+    Alert,
+    Box,
+    Button,
+    Chip,
+    Grid,
+    Paper,
 
-  Typography,
-  useTheme,
+    Typography,
+    useTheme,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
@@ -459,24 +459,38 @@ function SummaryCard({ title, value, subtitle, color, sparkData }: SummaryCardPr
         return {
           borderColor: theme.palette.primary.main,
           valueColor: theme.palette.primary.main,
+          bgGradient: isDark 
+            ? 'linear-gradient(135deg, rgba(100, 181, 246, 0.15) 0%, rgba(25, 118, 210, 0.08) 100%)'
+            : 'linear-gradient(135deg, rgba(25, 118, 210, 0.12) 0%, rgba(66, 165, 245, 0.06) 100%)',
           icon: <TrendingUpOutlined />,
         };
       case 'error':
+        // Much lighter, more pleasant red - 50% lighter
+        const errorColor = isDark ? '#ffcccb' : '#ff9999'; // Much lighter coral/salmon colors
         return {
-          borderColor: theme.palette.error.main,
-          valueColor: theme.palette.error.main,
+          borderColor: errorColor,
+          valueColor: errorColor,
+          bgGradient: isDark 
+            ? 'linear-gradient(135deg, rgba(255, 204, 203, 0.15) 0%, rgba(255, 153, 153, 0.08) 100%)'
+            : 'linear-gradient(135deg, rgba(255, 153, 153, 0.12) 0%, rgba(255, 204, 203, 0.06) 100%)',
           icon: <BugReportOutlined />,
         };
       case 'success':
         return {
           borderColor: theme.palette.success.main,
           valueColor: theme.palette.success.main,
+          bgGradient: isDark 
+            ? 'linear-gradient(135deg, rgba(129, 199, 132, 0.15) 0%, rgba(76, 175, 80, 0.08) 100%)'
+            : 'linear-gradient(135deg, rgba(76, 175, 80, 0.12) 0%, rgba(129, 199, 132, 0.06) 100%)',
           icon: <TrendingUpOutlined />,
         };
-      default:
+      default: // info
         return {
           borderColor: theme.palette.info.main,
           valueColor: theme.palette.info.main,
+          bgGradient: isDark 
+            ? 'linear-gradient(135deg, rgba(79, 195, 247, 0.15) 0%, rgba(2, 136, 209, 0.08) 100%)'
+            : 'linear-gradient(135deg, rgba(2, 136, 209, 0.12) 0%, rgba(79, 195, 247, 0.06) 100%)',
           icon: <BugReportOutlined />,
         };
     }
@@ -520,30 +534,56 @@ function SummaryCard({ title, value, subtitle, color, sparkData }: SummaryCardPr
     <Paper 
       className={`uveddi-summary-card card-${color}`}
       sx={{ 
-        p: 3, 
+        p: 4, // More padding
         textAlign: 'center',
-        border: (theme) => `1px solid ${theme.palette.divider}`,
-        borderTop: `4px solid ${styles.borderColor}`,
+        border: 'none', // Remove border completely
+        borderRadius: 3, // More rounded corners
         position: 'relative',
         overflow: 'hidden',
+        background: styles.bgGradient,
+        boxShadow: (theme) => theme.palette.mode === 'light'
+          ? `0 4px 20px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.4)`
+          : `0 4px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)`,
         '&:hover': {
-          transform: 'translateY(-2px)',
+          transform: 'translateY(-6px) scale(1.02)', // More dramatic effect
           boxShadow: (theme) => theme.palette.mode === 'light'
-            ? '0 8px 25px var(--uveddi-shadow-medium)'
-            : '0 8px 25px rgba(0, 0, 0, 0.5)',
+            ? `0 12px 40px ${styles.borderColor}25, 0 4px 20px rgba(0, 0, 0, 0.12)`
+            : `0 12px 40px ${styles.borderColor}35, 0 4px 20px rgba(0, 0, 0, 0.5)`,
+          '& .card-icon': {
+            opacity: 0.25,
+            transform: 'rotate(10deg) scale(1.2)',
+          },
+          '& .card-value': {
+            transform: 'scale(1.05)',
+            color: styles.borderColor,
+          }
         },
-        transition: 'all 0.2s ease-in-out',
+        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+        // Add a subtle inner glow effect
+        '&::after': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: `radial-gradient(circle at top, ${styles.borderColor}10, transparent 70%)`,
+          pointerEvents: 'none',
+        }
       }}
     >
       {/* Background Icon */}
       <Box
+        className="card-icon"
         sx={{
           position: 'absolute',
-          top: 16,
-          right: 16,
-          opacity: 0.1,
-          fontSize: 48,
+          top: 20,
+          right: 20,
+          opacity: 0.12,
+          fontSize: 60,
           color: styles.valueColor,
+          transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+          transform: 'rotate(-10deg)',
         }}
       >
         {styles.icon}
@@ -553,24 +593,33 @@ function SummaryCard({ title, value, subtitle, color, sparkData }: SummaryCardPr
         variant="h6" 
         sx={{ 
           color: 'var(--uveddi-text-secondary)',
-          fontWeight: 600,
-          mb: 2,
+          fontWeight: 700,
+          mb: 3,
+          fontSize: '1rem',
+          letterSpacing: '1px',
+          textTransform: 'uppercase',
+          opacity: 0.8,
         }}
       >
         {title}
       </Typography>
       <Typography 
-        variant="h3" 
+        variant="h2" // Bigger numbers
         component="div" 
+        className="card-value"
         sx={{ 
           color: styles.valueColor,
-          fontWeight: 700,
+          fontWeight: 800,
           fontFamily: "'JetBrains Mono', monospace",
-          mb: 1,
+          mb: 2,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           gap: 1,
+          transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+          textShadow: (theme) => theme.palette.mode === 'light'
+            ? `0 2px 4px ${styles.borderColor}20`
+            : `0 2px 4px rgba(0, 0, 0, 0.5)`,
         }}
       >
         {displayValue}
@@ -581,10 +630,13 @@ function SummaryCard({ title, value, subtitle, color, sparkData }: SummaryCardPr
         )}
       </Typography>
       <Typography 
-        variant="body2" 
+        variant="body1" // Bigger subtitle
         sx={{ 
           color: 'var(--uveddi-text-muted)',
-          fontWeight: 500,
+          fontWeight: 600,
+          fontSize: '0.9rem',
+          opacity: 0.7,
+          letterSpacing: '0.3px',
         }}
       >
         {subtitle}
