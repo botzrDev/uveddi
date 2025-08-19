@@ -74,7 +74,7 @@ web-server = []
 web-full = ["web-client", "web-server", "dep:tower_governor", "dep:tokio-tungstenite"]
 
 # Security features (consolidated)
-security = ["crypto-full", "web-full", "dep:casbin", "dep:oauth2", "dep:openidconnect", "dep:jsonwebtoken", "dep:vaultrs"]
+security = ["crypto-full", "web-full", "dep:casbin", "dep:oauth2", "dep:openidconnect", "dep:jsonwebtoken", "dep:vaultrs", "dep:config"]
 # Tree-sitter parsing functionality (enabled by default)
 # Refactored to allow per-language feature gating (Phase 1 multi-language support, UV-XXX)
 # Existing `tree-sitter` feature now aggregates individual language features for backward compatibility.

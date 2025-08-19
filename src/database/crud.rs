@@ -224,11 +224,11 @@ impl Database {
 
             // Validate line numbers
             if let Some(start_line) = issue.start_line {
-                security::validate_numeric_range(start_line as i64, 1, 1_000_000, "start_line")
+                security::validate_numeric_range(start_line as i32, 1, 1_000_000, "start_line")
                     .map_err(crate::error::UveddiError::from)?;
             }
             if let Some(end_line) = issue.end_line {
-                security::validate_numeric_range(end_line as i64, 1, 1_000_000, "end_line")
+                security::validate_numeric_range(end_line as i32, 1, 1_000_000, "end_line")
                     .map_err(crate::error::UveddiError::from)?;
             }
 
