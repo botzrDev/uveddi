@@ -272,6 +272,7 @@ pub mod security_stub;
 #[cfg(not(feature = "security"))]
 pub use security_stub as security;
 pub mod semantic_search;
+pub mod service_orchestration;
 pub mod sla;
 #[cfg(feature = "tui")]
 pub mod tui;

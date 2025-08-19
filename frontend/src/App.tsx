@@ -49,7 +49,12 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <ThemeProvider theme={theme}>
           <CssBaseline />
-          <Router>
+          <Router
+            future={{
+              v7_startTransition: true,
+              v7_relativeSplatPath: true,
+            }}
+          >
             <Layout themeMode={themeMode} onToggleTheme={toggleTheme}>
               <Routes>
                 {/* Default route - redirect to demo dashboard */}

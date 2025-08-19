@@ -24,6 +24,7 @@
 //! - `GET /app/*` - Serve SPA static assets
 //! - `GET /*` - SPA fallback for client-side routing
 
+use crate::api::types::{ApiServer, RestApiConfig};
 use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
 use crate::database::Database;
 use crate::report::interactive_models::{
@@ -50,38 +51,6 @@ use tower_http::{
     trace::TraceLayer,
 };
 
-/// Configuration for the REST API server
-#[derive(Debug, Clone)]
-pub struct RestApiConfig {
-    /// Enable CORS for browser clients
-    pub enable_cors: bool,
-    /// Allowed origins for CORS
-    pub cors_origins: Vec<String>,
-    /// Path to SPA static assets
-    pub spa_assets_path: Option<PathBuf>,
-    /// Path to report storage directory
-    pub reports_storage_path: PathBuf,
-    /// Enable serving of static assets
-    pub serve_spa: bool,
-    /// Enable Content Security Policy headers
-    pub enable_csp: bool,
-    /// Cache max-age for static assets (seconds)
-    pub cache_max_age: u32,
-}
-
-impl Default for RestApiConfig {
-    fn default() -> Self {
-        Self {
-            enable_cors: false,
-            cors_origins: vec![],
-            spa_assets_path: None,
-            reports_storage_path: PathBuf::from("./.uveddi/reports"),
-            serve_spa: true,
-            enable_csp: true,
-            cache_max_age: 3600,
-        }
-    }
-}
 
 /// REST API Service implementation
 #[derive(Clone)]
@@ -169,6 +138,15 @@ impl CombinedApiServer {
 
         axum::serve(listener, app).await?;
         Ok(())
+    }
+}
+
+impl ApiServer for CombinedApiServer {
+    async fn start(
+        self,
+        database: Arc<Database>,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        self.start(database).await
     }
 }
 

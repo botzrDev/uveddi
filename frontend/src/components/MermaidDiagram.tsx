@@ -786,7 +786,7 @@ export default function MermaidDiagram({ definition, title, className, previewHe
           alignItems: 'center',
           pb: 1
         }}>
-          <Typography variant="h6">{title || 'Diagram'}</Typography>
+          {title || 'Diagram'}
           <IconButton onClick={handleCloseFullscreen}>
             <Close />
           </IconButton>

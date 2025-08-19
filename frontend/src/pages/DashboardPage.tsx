@@ -3,19 +3,19 @@ import MermaidDiagram from '@/components/MermaidDiagram';
 import UveddiLoader from '@/components/UveddiLoader';
 import { useDemoReport, useReport } from '@/hooks/useReport';
 import {
-  BugReportOutlined,
-  DownloadOutlined,
-  ShareOutlined,
-  TrendingUpOutlined,
+    BugReportOutlined,
+    DownloadOutlined,
+    ShareOutlined,
+    TrendingUpOutlined,
 } from '@mui/icons-material';
 import {
-  Alert,
-  Box,
-  Button,
-  Chip,
-  Grid,
-  Paper,
-  Typography,
+    Alert,
+    Box,
+    Button,
+    Chip,
+    Grid,
+    Paper,
+    Typography,
 } from '@mui/material';
 import { useParams } from 'react-router-dom';
 
@@ -43,14 +43,25 @@ function DashboardPage() {
     return (
       <Alert 
         severity="error" 
-        sx={{ maxWidth: 600, mx: 'auto', mt: 4 }}
+        sx={{ 
+          maxWidth: 600, 
+          mx: 'auto', 
+          mt: 4,
+          '& .MuiAlert-message': { 
+            display: 'flex', 
+            flexDirection: 'column', 
+            width: '100%' 
+          } 
+        }}
       >
-        <Typography variant="h6" gutterBottom>
-          Failed to load report
-        </Typography>
-        <Typography variant="body2">
-          {error.message}
-        </Typography>
+        <Box component="div">
+          <Typography variant="h6" component="div" gutterBottom>
+            Failed to load report
+          </Typography>
+          <Typography variant="body2" component="div">
+            {error.message}
+          </Typography>
+        </Box>
       </Alert>
     );
   }
@@ -59,14 +70,25 @@ function DashboardPage() {
     return (
       <Alert 
         severity="info" 
-        sx={{ maxWidth: 600, mx: 'auto', mt: 4 }}
+        sx={{ 
+          maxWidth: 600, 
+          mx: 'auto', 
+          mt: 4,
+          '& .MuiAlert-message': { 
+            display: 'flex', 
+            flexDirection: 'column', 
+            width: '100%' 
+          } 
+        }}
       >
-        <Typography variant="h6" gutterBottom>
-          Report not found
-        </Typography>
-        <Typography variant="body2">
-          The requested report could not be found.
-        </Typography>
+        <Box component="div">
+          <Typography variant="h6" component="div" gutterBottom>
+            Report not found
+          </Typography>
+          <Typography variant="body2" component="div">
+            The requested report could not be found.
+          </Typography>
+        </Box>
       </Alert>
     );
   }
@@ -76,14 +98,25 @@ function DashboardPage() {
     return (
       <Alert 
         severity="error" 
-        sx={{ maxWidth: 600, mx: 'auto', mt: 4 }}
+        sx={{ 
+          maxWidth: 600, 
+          mx: 'auto', 
+          mt: 4,
+          '& .MuiAlert-message': { 
+            display: 'flex', 
+            flexDirection: 'column', 
+            width: '100%' 
+          } 
+        }}
       >
-        <Typography variant="h6" gutterBottom>
-          Invalid report data
-        </Typography>
-        <Typography variant="body2">
-          The report data is incomplete or corrupted.
-        </Typography>
+        <Box component="div">
+          <Typography variant="h6" component="div" gutterBottom>
+            Invalid report data
+          </Typography>
+          <Typography variant="body2" component="div">
+            The report data is incomplete or corrupted.
+          </Typography>
+        </Box>
       </Alert>
     );
   }

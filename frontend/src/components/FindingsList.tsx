@@ -1,33 +1,32 @@
-import React, { useState } from 'react';
-import {
-  Box,
-  Typography,
-  Paper,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemText,
-  Chip,
-  Collapse,
-  IconButton,
-  Divider,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Grid,
-  Alert,
-} from '@mui/material';
-import {
-  ExpandMore,
-  ExpandLess,
-  BugReport,
-  Warning,
-  Info,
-  Error as ErrorIcon,
-} from '@mui/icons-material';
 import type { Finding } from '@/types/api';
+import {
+    BugReport,
+    Error as ErrorIcon,
+    ExpandLess,
+    ExpandMore,
+    Info,
+    Warning,
+} from '@mui/icons-material';
+import {
+    Alert,
+    Box,
+    Chip,
+    Collapse,
+    Divider,
+    FormControl,
+    Grid,
+    IconButton,
+    InputLabel,
+    List,
+    ListItem,
+    ListItemButton,
+    MenuItem,
+    Paper,
+    Select,
+    TextField,
+    Typography
+} from '@mui/material';
+import React, { useState } from 'react';
 import FindingDetail from './FindingDetail';
 
 interface FindingsListProps {
@@ -98,11 +97,22 @@ export default function FindingsList({ findings, loading }: FindingsListProps) {
   if (findings.length === 0) {
     return (
       <Paper sx={{ p: 3 }}>
-        <Alert severity="success">
-          <Typography variant="h6">No Issues Found</Typography>
-          <Typography variant="body2">
-            Great! No architectural issues were detected in this codebase.
-          </Typography>
+        <Alert 
+          severity="success"
+          sx={{ 
+            '& .MuiAlert-message': { 
+              display: 'flex', 
+              flexDirection: 'column', 
+              width: '100%' 
+            } 
+          }}
+        >
+          <Box component="div">
+            <Typography variant="h6" component="div">No Issues Found</Typography>
+            <Typography variant="body2" component="div">
+              Great! No architectural issues were detected in this codebase.
+            </Typography>
+          </Box>
         </Alert>
       </Paper>
     );
@@ -179,37 +189,33 @@ export default function FindingsList({ findings, loading }: FindingsListProps) {
                     {getSeverityIcon(finding.severity)}
                   </Box>
                   
-                  <ListItemText
-                    primary={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                        <Typography variant="h6" component="div">
-                          {finding.title}
-                        </Typography>
-                        <Chip 
-                          label={finding.severity} 
-                          size="small" 
-                          color={getSeverityColor(finding.severity)}
-                        />
-                        <Chip 
-                          label={finding.type} 
-                          size="small" 
-                          variant="outlined"
-                        />
-                      </Box>
-                    }
-                    secondary={
-                      <Box>
-                        <Typography variant="body2" color="text.secondary" component="div" gutterBottom>
-                          {finding.message}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary" component="div">
-                          📁 {finding.file}
-                          {finding.startLine && ` (Line ${finding.startLine}${finding.endLine ? `-${finding.endLine}` : ''})`}
-                          {finding.confidence && ` • Confidence: ${Math.round(finding.confidence * 100)}%`}
-                        </Typography>
-                      </Box>
-                    }
-                  />
+                  <Box sx={{ flex: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                      <Typography variant="h6" component="div">
+                        {finding.title}
+                      </Typography>
+                      <Chip 
+                        label={finding.severity} 
+                        size="small" 
+                        color={getSeverityColor(finding.severity)}
+                      />
+                      <Chip 
+                        label={finding.type} 
+                        size="small" 
+                        variant="outlined"
+                      />
+                    </Box>
+                    <Box>
+                      <Typography variant="body2" color="text.secondary" component="div" gutterBottom>
+                        {finding.message}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" component="div">
+                        📁 {finding.file}
+                        {finding.startLine && ` (Line ${finding.startLine}${finding.endLine ? `-${finding.endLine}` : ''})`}
+                        {finding.confidence && ` • Confidence: ${Math.round(finding.confidence * 100)}%`}
+                      </Typography>
+                    </Box>
+                  </Box>
                   
                   <IconButton edge="end">
                     {selectedFinding?.id === finding.id ? <ExpandLess /> : <ExpandMore />}
@@ -231,11 +237,22 @@ export default function FindingsList({ findings, loading }: FindingsListProps) {
 
       {filteredFindings.length === 0 && searchTerm && (
         <Paper sx={{ p: 3 }}>
-          <Alert severity="info">
-            <Typography variant="h6">No findings match your search</Typography>
-            <Typography variant="body2">
-              Try adjusting your search terms or filters to see more results.
-            </Typography>
+          <Alert 
+            severity="info"
+            sx={{ 
+              '& .MuiAlert-message': { 
+                display: 'flex', 
+                flexDirection: 'column', 
+                width: '100%' 
+              } 
+            }}
+          >
+            <Box component="div">
+              <Typography variant="h6" component="div">No findings match your search</Typography>
+              <Typography variant="body2" component="div">
+                Try adjusting your search terms or filters to see more results.
+              </Typography>
+            </Box>
           </Alert>
         </Paper>
       )}

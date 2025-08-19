@@ -1,9 +1,9 @@
 // API service for communicating with the Uveddi backend
 import type {
-  ApiError,
-  ApiResponse,
-  DependencyGraph,
-  InteractiveReport
+    ApiError,
+    ApiResponse,
+    DependencyGraph,
+    InteractiveReport
 } from '@/types/api';
 
 class ApiService {
@@ -46,10 +46,12 @@ class ApiService {
    * Get a specific report by ID
    */
   async getReport(id: string): Promise<InteractiveReport> {
-    const response = await this.fetchWithErrorHandling<InteractiveReport>(
-      `${this.baseUrl}/reports/${id}`
-    );
-    return response;
+    const response = await this.fetchWithErrorHandling<{
+      data: InteractiveReport;
+      timestamp: string;
+      schemaVersion: string;
+    }>(`${this.baseUrl}/reports/${id}`);
+    return response.data;
   }
 
   /**

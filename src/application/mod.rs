@@ -1181,6 +1181,32 @@ pub async fn run_app() -> Result<(), UveddiError> {
         Config(ConfigCommand),
         Ui(crate::cli::ui_command::UiCommand),
         Ci(CiCommand),
+        /// Start the web dashboard with all required services
+        Serve {
+            /// Port for the API server and dashboard
+            #[arg(short, long, default_value = "8080")]
+            port: u16,
+
+            /// Port for the rendering service
+            #[arg(long, default_value = "3001")]
+            rendering_port: u16,
+
+            /// Port for frontend development server
+            #[arg(long, default_value = "3000")]
+            frontend_port: u16,
+
+            /// Database path
+            #[arg(long, default_value = "./.uveddi/database.db")]
+            database_path: std::path::PathBuf,
+
+            /// Enable development mode (starts frontend dev server)
+            #[arg(long)]
+            development: bool,
+
+            /// Frontend build assets path (for production)
+            #[arg(long)]
+            frontend_assets: Option<std::path::PathBuf>,
+        },
     }
 
     let cli = Cli::parse();
@@ -1208,6 +1234,29 @@ pub async fn run_app() -> Result<(), UveddiError> {
                 .execute()
                 .await
                 .map_err(|e| UveddiError::config_error(&e.to_string(), "ci command"))
+        }
+        Commands::Serve {
+            port,
+            rendering_port,
+            frontend_port,
+            database_path,
+            development,
+            frontend_assets,
+        } => {
+            // TEMP FIX: Placeholder implementation to avoid circular dependency
+            info!("Starting Uveddi web services...");
+            info!("API server would start on port: {}", port);
+            info!("Rendering service would start on port: {}", rendering_port);
+            if development {
+                info!("Frontend dev server would start on port: {}", frontend_port);
+            }
+            info!("Database path: {:?}", database_path);
+            info!("Service orchestrator integration is temporarily disabled due to circular dependency.");
+            info!("Please use individual service commands for now.");
+            
+            // TODO: Fix circular dependency and re-enable full service orchestration
+            // use crate::services::orchestrator::{ServiceOrchestrator, OrchestratorConfig};
+            Ok(())
         }
     };
     if let Err(e) = result {

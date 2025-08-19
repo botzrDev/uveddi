@@ -211,7 +211,8 @@
       "Bash(RUST_LOG=info cargo run --features alpha --bin uveddi -- analyze frontend/src --output-format json --output typescript-results.json)",
       "Bash(RUST_LOG=info cargo run --features alpha --bin uveddi -- analyze frontend/src --output-format json)",
       "Bash(npm cache clean:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(git stash:*)"
     ],
     "deny": [],
     "additionalDirectories": [
