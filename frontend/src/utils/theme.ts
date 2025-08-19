@@ -123,11 +123,11 @@ export const lightTheme = createTheme({
     MuiCssBaseline: {
       styleOverrides: {
         body: {
-          backgroundColor: 'transparent !important',
-          backgroundImage: 'var(--uveddi-bg-gradient) !important',
-          backgroundRepeat: 'no-repeat !important',
-          backgroundAttachment: 'fixed !important',
-          backgroundSize: 'cover !important',
+          backgroundColor: 'var(--uveddi-bg-primary)',
+          backgroundImage: 'var(--uveddi-bg-gradient)',
+          backgroundRepeat: 'no-repeat',
+          backgroundAttachment: 'fixed',
+          backgroundSize: 'cover',
         },
       },
     },
@@ -200,8 +200,8 @@ export const darkTheme = createTheme({
     MuiCssBaseline: {
       styleOverrides: {
         body: {
-          backgroundColor: 'var(--uveddi-bg-primary) !important',
-          backgroundImage: 'none !important',
+          backgroundColor: 'var(--uveddi-bg-primary)',
+          backgroundImage: 'none',
         },
       },
     },
