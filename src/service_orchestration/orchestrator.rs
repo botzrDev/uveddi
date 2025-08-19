@@ -16,6 +16,7 @@ use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
 use std::sync::Arc;
 use std::time::Duration;
+use tokio::sync::oneshot;
 use tokio::time::sleep;
 use tracing::{error, info, warn};
 
@@ -97,7 +98,7 @@ impl ServiceOrchestrator {
 
         // Start API server
         info!("🌐 Starting API server on port {}", config.api_port);
-        self.start_api_server(database, config.api_port, config.frontend_assets_path.clone())
+        let api_ready_rx = self.start_api_server(database, config.api_port, config.frontend_assets_path.clone())
             .await?;
 
         // Start rendering service
@@ -110,10 +111,32 @@ impl ServiceOrchestrator {
             self.start_frontend_dev_server(config.frontend_port)?;
         }
 
-        // Wait a moment for services to initialize
-        sleep(Duration::from_millis(1500)).await;
+        // Wait for API server to be ready
+        info!("⏳ Waiting for API server to be ready...");
+        match tokio::time::timeout(Duration::from_secs(10), api_ready_rx).await {
+            Ok(Ok(Ok(()))) => {
+                info!("✅ API server is ready and listening");
+            }
+            Ok(Ok(Err(e))) => {
+                error!("❌ API server failed to start: {}", e);
+                return Err(color_eyre::eyre::eyre!("API server startup failed: {}", e));
+            }
+            Ok(Err(_)) => {
+                error!("❌ API server readiness signal was dropped");
+                return Err(color_eyre::eyre::eyre!("API server readiness signal failed"));
+            }
+            Err(_) => {
+                error!("❌ API server startup timed out after 10 seconds");
+                return Err(color_eyre::eyre::eyre!("API server startup timed out"));
+            }
+        }
 
-        // Verify services are running
+        // Give rendering service a moment to start
+        info!("⏳ Giving rendering service time to start...");
+        sleep(Duration::from_millis(2000)).await;
+
+        // Verify all services are running
+        info!("🔍 Checking service health...");
         self.verify_services_health(&config).await?;
 
         self.services_started = true;
@@ -123,13 +146,13 @@ impl ServiceOrchestrator {
         Ok(())
     }
 
-    /// Start the REST API server
+    /// Start the REST API server with readiness notification
     async fn start_api_server(
         &mut self,
         database: Arc<Database>,
         port: u16,
         frontend_assets_path: Option<PathBuf>,
-    ) -> Result<()> {
+    ) -> Result<oneshot::Receiver<Result<(), Box<dyn std::error::Error + Send + Sync>>>> {
         let config = RestApiConfig {
             enable_cors: true,
             cors_origins: vec!["http://localhost:3000".to_string(), "http://localhost:3001".to_string()],
@@ -142,13 +165,17 @@ impl ServiceOrchestrator {
 
         let server = CombinedApiServer::new(config, port);
         
+        // Create a channel for readiness notification
+        let (ready_tx, ready_rx) = oneshot::channel();
+        
         // Start the server in a background task
         let server_handle = tokio::spawn(async move {
-            server.start(database).await.map_err(|e| color_eyre::eyre::eyre!("API server failed to start: {}", e))
+            server.start_with_readiness(database, ready_tx).await
+                .map_err(|e| color_eyre::eyre::eyre!("API server failed to start: {}", e))
         });
 
         self.api_server_handle = Some(server_handle);
-        Ok(())
+        Ok(ready_rx)
     }
 
     /// Start the rendering service for Mermaid diagrams
@@ -239,45 +266,77 @@ impl ServiceOrchestrator {
 
     /// Verify that all services are healthy
     async fn verify_services_health(&self, config: &OrchestratorConfig) -> Result<()> {
-        let client = reqwest::Client::new();
+        let client = reqwest::Client::builder()
+            .timeout(Duration::from_secs(5))
+            .build()
+            .wrap_err("Failed to create HTTP client")?;
+        
         let mut retries = 0;
-        const MAX_RETRIES: u32 = 10;
+        const MAX_RETRIES: u32 = 15;
+        let mut last_errors = Vec::new();
 
         while retries < MAX_RETRIES {
             let mut all_healthy = true;
+            let mut errors = Vec::new();
 
             // Check API server
-            match client.get(&format!("http://localhost:{}/health", config.api_port)).send().await {
+            let api_url = format!("http://localhost:{}/health", config.api_port);
+            match client.get(&api_url).send().await {
                 Ok(response) if response.status().is_success() => {
-                    info!("✅ API server is healthy");
+                    info!("✅ API server is healthy at {}", api_url);
                 }
-                _ => {
-                    warn!("⚠️ API server not ready yet (attempt {}/{})", retries + 1, MAX_RETRIES);
+                Ok(response) => {
+                    let error_msg = format!("API server returned status: {}", response.status());
+                    warn!("⚠️ {} (attempt {}/{})", error_msg, retries + 1, MAX_RETRIES);
+                    errors.push(error_msg);
+                    all_healthy = false;
+                }
+                Err(e) => {
+                    let error_msg = format!("API server connection failed: {}", e);
+                    warn!("⚠️ {} (attempt {}/{})", error_msg, retries + 1, MAX_RETRIES);
+                    errors.push(error_msg);
                     all_healthy = false;
                 }
             }
 
             // Check rendering service
-            match client.get(&format!("http://localhost:{}/health", config.rendering_port)).send().await {
+            let rendering_url = format!("http://localhost:{}/health", config.rendering_port);
+            match client.get(&rendering_url).send().await {
                 Ok(response) if response.status().is_success() => {
-                    info!("✅ Rendering service is healthy");
+                    info!("✅ Rendering service is healthy at {}", rendering_url);
                 }
-                _ => {
-                    warn!("⚠️ Rendering service not ready yet (attempt {}/{})", retries + 1, MAX_RETRIES);
+                Ok(response) => {
+                    let error_msg = format!("Rendering service returned status: {}", response.status());
+                    warn!("⚠️ {} (attempt {}/{})", error_msg, retries + 1, MAX_RETRIES);
+                    errors.push(error_msg);
+                    all_healthy = false;
+                }
+                Err(e) => {
+                    let error_msg = format!("Rendering service connection failed: {}", e);
+                    warn!("⚠️ {} (attempt {}/{})", error_msg, retries + 1, MAX_RETRIES);
+                    errors.push(error_msg);
                     all_healthy = false;
                 }
             }
 
             if all_healthy {
+                info!("🎉 All services are healthy and ready!");
                 return Ok(());
             }
 
             retries += 1;
-            sleep(Duration::from_millis(500)).await;
+            last_errors = errors; // Store the errors from this attempt
+            
+            // Exponential backoff: 500ms, 1s, 2s, 2s, 2s...
+            let wait_time = std::cmp::min(500 * (1 << std::cmp::min(retries, 2)), 2000);
+            info!("⏳ Retrying health checks in {}ms... (attempt {}/{})", wait_time, retries + 1, MAX_RETRIES);
+            sleep(Duration::from_millis(wait_time as u64)).await;
         }
 
         Err(color_eyre::eyre::eyre!(
-            "Services failed to become healthy after {} retries", MAX_RETRIES
+            "Services failed to become healthy after {} retries. Last errors: {:?}", 
+            MAX_RETRIES, 
+            last_errors.join(", ")
         ))
     }
 

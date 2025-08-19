@@ -1,14 +1,14 @@
 #!/bin/bash
 set -euo pipefail
 
-# Uveddi Alpha Installation Script
+# Uveddi v1.0 Community Core Installation Script
 # Usage: curl -sSL https://uveddi.org/install.sh | bash
 
 # Configuration
 REPO_URL="https://github.com/botzrDev/uveddi.git"
 INSTALL_DIR="$HOME/.uveddi"
 BIN_DIR="$HOME/.local/bin"
-VERSION="v0.9.0"
+VERSION="v1.0.0"
 
 # Colors for output
 RED='\033[0;31m'
@@ -48,14 +48,14 @@ trap 'handle_error $LINENO' ERR
 echo -e "${BLUE}"
 cat << 'EOF'
 ┌─────────────────────────────────────────┐
-│     Uveddi Alpha Installation Tool      │
+│   Uveddi v1.0 Community Core Tool      │
 │   Code Analysis & Exploration Engine    │
 └─────────────────────────────────────────┘
 EOF
 echo -e "${NC}"
 
-log_info "Installing Uveddi ${VERSION} Alpha"
-log_warning "This is an alpha release - suitable for testing and evaluation"
+log_info "Installing Uveddi ${VERSION} Community Core"
+log_warning "This is the v1.0 Community Core release - production ready!"
 
 # Check for required tools
 check_requirements() {
@@ -153,12 +153,12 @@ setup_repository() {
         log_info "Updating existing installation..."
         cd "$INSTALL_DIR"
         git fetch origin
-        git checkout alpha
+        git checkout alpha  # Using alpha branch for community core
         git pull origin alpha
     else
         log_info "Cloning Uveddi repository..."
         rm -rf "$INSTALL_DIR"
-        git clone -b alpha "$REPO_URL" "$INSTALL_DIR"
+        git clone -b alpha "$REPO_URL" "$INSTALL_DIR"  # Using alpha branch for community core
         cd "$INSTALL_DIR"
     fi
     
@@ -173,8 +173,8 @@ build_uveddi() {
     # Clean previous build
     cargo clean >/dev/null 2>&1 || true
     
-    # Build with alpha features and optimizations
-    RUST_BACKTRACE=1 cargo build --release --features="alpha" --locked
+    # Build with community features and optimizations
+    RUST_BACKTRACE=1 cargo build --release --features="community" --locked
     
     # Verify build
     if [[ ! -f "target/release/uveddi" ]]; then

@@ -16,7 +16,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuration
-FEATURES="alpha"
+FEATURES="community"
 TIMEOUT=300  # 5 minutes timeout for tests
 PARALLEL_JOBS=$(nproc)
 COVERAGE_THRESHOLD=80

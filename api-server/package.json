@@ -1,7 +1,7 @@
 {
-  "name": "uveddi-api-server-alpha",
-  "version": "0.9.0-alpha",
-  "description": "Alpha API server for Uveddi frontend",
+  "name": "uveddi-api-server-community",
+  "version": "1.0.0",
+  "description": "v1.0 Community Core API server for Uveddi frontend",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

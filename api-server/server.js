@@ -775,7 +775,7 @@ app.use((error, req, res, next) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`🚀 Uveddi Alpha API Server running on http://localhost:${PORT}`);
+  console.log(`🚀 Uveddi v1.0 Community Core API Server running on http://localhost:${PORT}`);
   console.log(`📚 Documentation API: http://localhost:${PORT}/api/docs/structure`);
   console.log(`🔍 Health check: http://localhost:${PORT}/health`);
 });

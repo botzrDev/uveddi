@@ -4,6 +4,7 @@
 //! layer to prevent circular dependencies between different API components.
 
 use std::path::PathBuf;
+use tokio::sync::oneshot;
 
 /// Configuration for the REST API server
 #[derive(Debug, Clone)]
@@ -44,5 +45,12 @@ pub trait ApiServer {
     fn start(
         self,
         database: std::sync::Arc<crate::database::Database>,
+    ) -> impl std::future::Future<Output = Result<(), Box<dyn std::error::Error + Send + Sync>>> + Send;
+
+    /// Start the API server with readiness notification
+    fn start_with_readiness(
+        self,
+        database: std::sync::Arc<crate::database::Database>,
+        ready_tx: oneshot::Sender<Result<(), Box<dyn std::error::Error + Send + Sync>>>,
     ) -> impl std::future::Future<Output = Result<(), Box<dyn std::error::Error + Send + Sync>>> + Send;
 }

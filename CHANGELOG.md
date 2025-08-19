@@ -5,10 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.0.0] - 2025-08-18 (v1.0 Community Core)
 
 ### Added
-- **Memory optimization enabled by default** for all analysis operations
+- **v1.0 Community Core** - Production-ready release with stable core functionality
+- Memory optimization enabled by default for all analysis operations
 - Automatic system memory detection and configuration
 - Smart memory profile selection (small/default/large) based on system resources
 - `--disable-memory-optimization` flag for advanced users who need to disable optimizations
@@ -29,7 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Object pooling, arena allocation, and zero-copy AST caching now active by default
 - Better memory management for large codebases without user configuration
 
-## [0.9.0-alpha] - 2025-07-29
+## [0.9.0-alpha] - 2025-07-29 (Legacy Alpha Release)
 
 ### Added
 - Alpha release with core functionality
@@ -40,7 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Basic security framework with OAuth2 support
 - Initial knowledge library with universal patterns
 
-### Known Limitations (Alpha)
+### Known Limitations (v1.0 Community Core)
 - Enhanced prompt templates temporarily disabled
 - OIDC authentication temporarily disabled pending API updates  
 - Some advanced AI features require further development
@@ -52,14 +53,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Implemented secure JWT configuration
 - Updated vulnerable dependencies
 
-## [1.0.0] - TBD (Future Release)
+## [2.0.0] - TBD (Future Enterprise Release)
 
-### Added
-- Initial release of Uveddi CLI
-- Core analysis engine with Rust, Python, JavaScript support
-- AI integration with Ollama and commercial providers
-- Plugin system using WASM
-
-### Fixed
-- Various stability improvements
-- Performance optimizations for large codebases
+### Planned
+- Enterprise features and advanced functionality
+- Additional plugin system enhancements
+- Extended AI provider integrations

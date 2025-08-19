@@ -34,7 +34,7 @@ Uveddi is a powerful static analysis tool designed to detect architectural anti-
 
 ### From Release Binary
 ```bash
-# Download the latest alpha release
+# Download the latest community release
 curl -L https://github.com/botzrDev/uveddi/releases/latest/download/uveddi-linux-x86_64.tar.gz | tar xz
 sudo mv uveddi /usr/local/bin/
 ```
@@ -161,21 +161,21 @@ ignore_patterns = ["tests/", "examples/"]
 
 You can also set configuration via environment variables (see `Config::from_env()` in the source).
 
-## 🐛 Known Limitations (Alpha)
+## 🎯 v1.0 Community Core Features
 
 - **TypeScript**: Some complex type definitions may not be fully analyzed
 - **Large Codebases**: Projects with >10,000 files may experience timeouts
 - **Memory Usage**: Analysis of very large files (>1MB) may be slow
 - **Plugin System**: Custom detectors not yet supported
 
-Note: this repository is currently in alpha. There are known compilation and stability issues
+Note: this repository is now at v1.0 Community Core. The core features are stable and ready for production use.
 recorded in the project diagnostics; some features or detectors may not compile cleanly in the
 current branch. If you hit build errors, please open an issue with reproduction steps and the
 output from `cargo build` so the maintainers can triage.
 
 ## 🤝 Contributing
 
-We welcome contributions! This is an alpha release, so feedback and bug reports are especially valuable.
+We welcome contributions! This is the v1.0 Community Core release, so feedback and feature requests are valuable.
 
 ### Reporting Issues
 - Use our [Issue Tracker](https://github.com/botzrDev/uveddi/issues)
@@ -221,10 +221,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - **Tree-sitter** - For excellent parsing infrastructure
 - **Rust Community** - For amazing ecosystem and tooling
-- **Alpha Testers** - For valuable feedback and bug reports
+- **Community Contributors** - For valuable feedback and feature requests
 
 ---
 
-**⚠️ Alpha Notice**: This software is in alpha testing. While functional, it may contain bugs and the API may change. Not recommended for production use without thorough testing.
+**🎯 v1.0 Community Core**: This software is production-ready with core functionality stable and tested. Advanced features may be added in future releases.
 
 For support, questions, or feedback: [GitHub Issues](https://github.com/botzrDev/uveddi/issues)

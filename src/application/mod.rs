@@ -18,6 +18,7 @@ use crate::database::crud::Database;
 use crate::database::models::{AnalysisRun, ArchitecturalIssue};
 use crate::error::UveddiError;
 use crate::report::{markdown_generator::MarkdownReportGenerator, ReportGenerator};
+use crate::service_orchestration::{OrchestratorConfig, ServiceOrchestrator};
 
 #[cfg(feature = "memory-optimization")]
 use crate::analysis::memory::MemoryOptimizationConfig;
@@ -1243,19 +1244,28 @@ pub async fn run_app() -> Result<(), UveddiError> {
             development,
             frontend_assets,
         } => {
-            // TEMP FIX: Placeholder implementation to avoid circular dependency
-            info!("Starting Uveddi web services...");
-            info!("API server would start on port: {}", port);
-            info!("Rendering service would start on port: {}", rendering_port);
-            if development {
-                info!("Frontend dev server would start on port: {}", frontend_port);
-            }
-            info!("Database path: {:?}", database_path);
-            info!("Service orchestrator integration is temporarily disabled due to circular dependency.");
-            info!("Please use individual service commands for now.");
+            info!("🚀 Starting Uveddi web services...");
             
-            // TODO: Fix circular dependency and re-enable full service orchestration
-            // use crate::services::orchestrator::{ServiceOrchestrator, OrchestratorConfig};
+            let config = OrchestratorConfig {
+                api_port: port,
+                rendering_port,
+                frontend_port,
+                auto_start_services: true,
+                database_path: database_path.clone(),
+                frontend_assets_path: frontend_assets,
+                development_mode: development,
+            };
+            
+            let mut orchestrator = ServiceOrchestrator::new();
+            orchestrator.start_services(config).await
+                .map_err(|e| UveddiError::from(anyhow::anyhow!("Service orchestration failed: {}", e)))?;
+            
+            // Keep the services running
+            info!("✅ All services are running. Press Ctrl+C to stop.");
+            tokio::signal::ctrl_c().await
+                .map_err(|e| UveddiError::from(anyhow::anyhow!("Signal handling failed: {}", e)))?;
+            info!("🛑 Stopping services...");
+            
             Ok(())
         }
     };

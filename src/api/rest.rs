@@ -139,6 +139,34 @@ impl CombinedApiServer {
         axum::serve(listener, app).await?;
         Ok(())
     }
+
+    /// Start the combined server with readiness notification
+    pub async fn start_with_readiness(
+        self,
+        database: Arc<Database>,
+        ready_tx: tokio::sync::oneshot::Sender<Result<(), Box<dyn std::error::Error + Send + Sync>>>,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let service = RestApiService::new(self.config, database);
+        let app = service.create_app_with_state();
+        
+        // Bind to the port first
+        let listener = match tokio::net::TcpListener::bind(format!("0.0.0.0:{}", self.port)).await {
+            Ok(listener) => {
+                println!("🌐 Server listening on http://0.0.0.0:{}", self.port);
+                // Signal that we're ready to accept connections
+                let _ = ready_tx.send(Ok(()));
+                listener
+            }
+            Err(e) => {
+                let error = Box::new(e) as Box<dyn std::error::Error + Send + Sync>;
+                let _ = ready_tx.send(Err(error));
+                return Err(Box::new(std::io::Error::new(std::io::ErrorKind::AddrInUse, "Failed to bind to port")));
+            }
+        };
+        
+        axum::serve(listener, app).await?;
+        Ok(())
+    }
 }
 
 impl ApiServer for CombinedApiServer {
@@ -147,6 +175,14 @@ impl ApiServer for CombinedApiServer {
         database: Arc<Database>,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         self.start(database).await
+    }
+
+    async fn start_with_readiness(
+        self,
+        database: Arc<Database>,
+        ready_tx: tokio::sync::oneshot::Sender<Result<(), Box<dyn std::error::Error + Send + Sync>>>,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        self.start_with_readiness(database, ready_tx).await
     }
 }
 

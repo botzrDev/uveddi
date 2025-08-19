@@ -1,13 +1,29 @@
 #!/bin/bash
 
-# Uveddi Demo Preparation Script
+# Uveddi# Analyze the detectors directory (rich in architectural issues)
+echo "  Analyzing detectors..."
+cargo run --features community --bin uveddi -- analyze src/analysis/detectors/ \
+    --output-format json \
+    --output frontend/public/real-analysis-detectors.json
+
+# Analyze the CLI components (good mix of issues)
+echo "  Analyzing CLI components..."
+cargo run --features community --bin uveddi -- analyze src/cli/ \
+    --output-format json \
+    --output frontend/public/real-analysis-cli.json
+
+# Analyze the core analysis engine (complex architecture)
+echo "  Analyzing analysis engine..."
+cargo run --features community --bin uveddi -- analyze src/analysis/engine.rs src/analysis/orchestrator.rs \
+    --output-format json \
+    --output frontend/public/real-analysis-engine.json Script
 # This script prepares real analysis data for the investor demo
 
 echo "🚀 Preparing Uveddi Demo..."
 
 # Step 1: Build Uveddi with latest performance fixes
-echo "📦 Building Uveddi with alpha features..."
-cargo build --features alpha
+echo "📦 Building Uveddi v1.0 community core..."
+cargo build --features community
 
 if [ $? -ne 0 ]; then
     echo "❌ Build failed. Please fix compilation errors first."

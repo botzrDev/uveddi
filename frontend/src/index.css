@@ -6,18 +6,18 @@
 
 /* Uveddi Brand Color System */
 :root {
-  /* Primary Colors (Navy Blue) */
-  --uveddi-primary-50: #f0f4ff;
-  --uveddi-primary-100: #e0e7ff;
-  --uveddi-primary-200: #c7d2fe;
-  --uveddi-primary-300: #a5b4fc;
-  --uveddi-primary-400: #818cf8;
-  --uveddi-primary-500: #6366f1;
-  --uveddi-primary-600: #4f46e5; /* Main brand color */
-  --uveddi-primary-700: #4338ca;
-  --uveddi-primary-800: #3730a3;
-  --uveddi-primary-900: #312e81;
-  --uveddi-primary-950: #1e1b4b;
+  /* Primary Colors (Uveddi brand: dark navy + purple accent) */
+  --uveddi-primary-50: #f3f3ff;
+  --uveddi-primary-100: #e8e6ff;
+  --uveddi-primary-200: #cac6ff;
+  --uveddi-primary-300: #a99dff;
+  --uveddi-primary-400: #8b7bff;
+  --uveddi-primary-500: #6f66ff; /* purple accent used in headings */
+  --uveddi-primary-600: #5a4bff; /* primary accent */
+  --uveddi-primary-700: #4536d1;
+  --uveddi-primary-800: #2f238f;
+  --uveddi-primary-900: #17143f; /* very dark navy */
+  --uveddi-primary-950: #07081a; /* header/nav background shade */
 
   /* Secondary Colors (Charcoal Gray) */
   --uveddi-secondary-50: #f8fafc;
@@ -44,29 +44,29 @@
   --uveddi-success-800: #166534;
   --uveddi-success-900: #14532d;
 
-  /* Action Colors (Bright Orange) */
-  --uveddi-action-50: #fff7ed;
-  --uveddi-action-100: #ffedd5;
-  --uveddi-action-200: #fed7aa;
-  --uveddi-action-300: #fdba74;
-  --uveddi-action-400: #fb923c;
-  --uveddi-action-500: #f97316;
-  --uveddi-action-600: #ea580c;
-  --uveddi-action-700: #c2410c;
-  --uveddi-action-800: #9a3412;
-  --uveddi-action-900: #7c2d12;
+  /* Action Colors (Primary CTA uses purple gradient on site) */
+  --uveddi-action-50: #f8f7ff;
+  --uveddi-action-100: #efeaff;
+  --uveddi-action-200: #e1dbff;
+  --uveddi-action-300: #d1c3ff;
+  --uveddi-action-400: #be9dff;
+  --uveddi-action-500: #9f7bff;
+  --uveddi-action-600: #7750ff;
+  --uveddi-action-700: #5a3bdb;
+  --uveddi-action-800: #3c2aa0;
+  --uveddi-action-900: #231a5f;
 
-  /* Accent Colors (Amber/Yellow) */
-  --uveddi-accent-50: #fef3c7;
-  --uveddi-accent-100: #fde68a;
-  --uveddi-accent-200: #fcd34d;
-  --uveddi-accent-300: #fbbf24;
-  --uveddi-accent-400: #f59e0b;
-  --uveddi-accent-500: #d97706;
-  --uveddi-accent-600: #b45309;
-  --uveddi-accent-700: #92400e;
-  --uveddi-accent-800: #78350f;
-  --uveddi-accent-900: #451a03;
+  /* Accent Colors (warning/info strip uses warm yellow on site) */
+  --uveddi-accent-50: #fff7e6;
+  --uveddi-accent-100: #fff0cc;
+  --uveddi-accent-200: #ffd88a;
+  --uveddi-accent-300: #ffcc66;
+  --uveddi-accent-400: #ffb84d;
+  --uveddi-accent-500: #d4a536; /* banner yellow */
+  --uveddi-accent-600: #b68628;
+  --uveddi-accent-700: #8f5e1c;
+  --uveddi-accent-800: #6b4512;
+  --uveddi-accent-900: #432a08;
 
   /* Error/Warning Colors */
   --uveddi-error-500: #ef4444;
@@ -89,12 +89,20 @@
   --uveddi-border-dark: var(--uveddi-secondary-700);
 
   /* Special Effects */
-  --uveddi-glow-primary: rgba(79, 70, 229, 0.3);
+  --uveddi-glow-primary: rgba(111, 102, 255, 0.14);
   --uveddi-glow-success: rgba(34, 197, 94, 0.3);
   --uveddi-glow-action: rgba(249, 115, 22, 0.3);
-  --uveddi-shadow-light: rgba(79, 70, 229, 0.1);
-  --uveddi-shadow-medium: rgba(79, 70, 229, 0.15);
-  --uveddi-shadow-heavy: rgba(79, 70, 229, 0.2);
+  --uveddi-shadow-light: rgba(17, 12, 48, 0.08);
+  --uveddi-shadow-medium: rgba(17, 12, 48, 0.16);
+  --uveddi-shadow-heavy: rgba(17, 12, 48, 0.24);
+
+  /* Header-specific variables to ensure the top bar uses the brand color */
+  --uveddi-header-bg: var(--uveddi-primary-950);
+  --uveddi-header-border: rgba(111, 102, 255, 0.06);
+
+  /* Badge / label colors used in header (site uses small orange badge sometimes) */
+  --uveddi-badge-bg: linear-gradient(90deg, #ffb84d, #ffd66b);
+  --uveddi-badge-color: #1b1226;
 }
 
 /* Dark theme color overrides */

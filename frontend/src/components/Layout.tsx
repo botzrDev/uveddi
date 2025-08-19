@@ -1,19 +1,17 @@
 import type { ThemeMode } from '@/utils/theme';
 import {
-    AssessmentOutlined,
-    DarkModeOutlined,
-    HomeOutlined,
-    LightModeOutlined,
+  DarkModeOutlined,
+  LightModeOutlined
 } from '@mui/icons-material';
 import {
-    AppBar,
-    Box,
-    Chip,
-    Container,
-    IconButton,
-    Toolbar,
-    Tooltip,
-    Typography,
+  AppBar,
+  Box,
+  Chip,
+  Container,
+  IconButton,
+  Toolbar,
+  Tooltip,
+  Typography,
 } from '@mui/material';
 import { ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -38,12 +36,12 @@ function Layout({ children, themeMode, onToggleTheme }: LayoutProps) {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <AppBar 
-        position="static" 
+      <AppBar
+        position="static"
         elevation={0}
-        sx={{ 
-          backgroundColor: 'var(--uveddi-primary-600)',
-          borderBottom: '1px solid var(--uveddi-primary-700)',
+        sx={{
+          backgroundColor: 'var(--uveddi-header-bg, var(--uveddi-primary-600))',
+          borderBottom: '1px solid var(--uveddi-header-border, var(--uveddi-primary-700))',
         }}
       >
         <Toolbar sx={{ minHeight: '72px' }}>
@@ -54,14 +52,13 @@ function Layout({ children, themeMode, onToggleTheme }: LayoutProps) {
               src="/logo.png"
               alt="Uveddi Logo"
               sx={{
-                height: 32,
-                width: 32,
+                height: 36,
+                width: 36,
                 mr: 2,
                 cursor: 'pointer',
-                filter: 'brightness(0) invert(1)', // Make logo white
-                '&:hover': { opacity: 0.8 },
+                objectFit: 'contain',
+                '&:hover': { opacity: 0.9 },
               }}
-              onClick={handleHomeClick}
             />
             <Box>
               <Typography
@@ -96,68 +93,33 @@ function Layout({ children, themeMode, onToggleTheme }: LayoutProps) {
             
             {/* Version Badge */}
             <Chip
-              label="Alpha v0.9.0"
+              label="v1.0 Community Core"
               size="small"
               sx={{
                 ml: 2,
-                backgroundColor: 'var(--uveddi-action-600)',
-                color: 'white',
-                fontWeight: 600,
-                fontSize: '0.7rem',
-                height: '22px',
-                '&:hover': {
-                  backgroundColor: 'var(--uveddi-action-700)',
-                },
+                backgroundImage: 'var(--uveddi-badge-bg, linear-gradient(90deg,#ffb84d,#ffd66b))',
+                backgroundClip: 'padding-box',
+                color: 'var(--uveddi-badge-color, #1b1226)',
+                fontWeight: 700,
+                fontSize: '0.75rem',
+                height: '24px',
+                borderRadius: '12px',
+                px: 1.5,
+                boxShadow: '0 1px 0 rgba(0,0,0,0.35)',
+                border: '1px solid rgba(255,255,255,0.06)'
               }}
             />
           </Box>
 
           {/* Navigation */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Tooltip title="Dashboard" arrow>
-              <IconButton
-                color="inherit"
-                onClick={handleHomeClick}
-                sx={{
-                  backgroundColor: location.pathname.includes('/dashboard') 
-                    ? 'var(--uveddi-primary-700)' 
-                    : 'transparent',
-                  borderRadius: 2,
-                  '&:hover': {
-                    backgroundColor: 'var(--uveddi-primary-700)',
-                  },
-                }}
-              >
-                <HomeOutlined />
-              </IconButton>
-            </Tooltip>
-
-            <Tooltip title="All Reports" arrow>
-              <IconButton
-                color="inherit"
-                onClick={handleReportsClick}
-                sx={{
-                  backgroundColor: location.pathname === '/reports' 
-                    ? 'var(--uveddi-primary-700)' 
-                    : 'transparent',
-                  borderRadius: 2,
-                  '&:hover': {
-                    backgroundColor: 'var(--uveddi-primary-700)',
-                  },
-                }}
-              >
-                <AssessmentOutlined />
-              </IconButton>
-            </Tooltip>
-
-            <Box sx={{ width: 1, height: 32, backgroundColor: 'rgba(255, 255, 255, 0.2)', mx: 1 }} />
-
             <Tooltip title={`Switch to ${themeMode === 'light' ? 'dark' : 'light'} mode`} arrow>
-              <IconButton 
-                color="inherit" 
+              <IconButton
+                color="inherit"
                 onClick={onToggleTheme}
                 sx={{
                   borderRadius: 2,
+                  backgroundColor: 'transparent',
                   '&:hover': {
                     backgroundColor: 'var(--uveddi-primary-700)',
                   },

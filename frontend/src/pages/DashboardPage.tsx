@@ -9,6 +9,7 @@ import {
   ShareOutlined,
   TrendingUpOutlined,
 } from '@mui/icons-material';
+import React, { useState } from 'react';
 import {
   Alert,
   Box,
@@ -16,6 +17,7 @@ import {
   Chip,
   Grid,
   Paper,
+  Snackbar,
   Typography,
   useTheme,
 } from '@mui/material';
@@ -68,6 +70,37 @@ function DashboardPage() {
   
   const query = isDemoReport ? demoQuery : reportQuery;
   const { data: report, isLoading, error } = query;
+
+  // Share snackbar state
+  const [shareOpen, setShareOpen] = useState(false);
+  const [shareMessage, setShareMessage] = useState('');
+
+  const handleShare = async () => {
+    try {
+      const shareUrl = window.location.href;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+      } else {
+        const el = document.createElement('textarea');
+        el.value = shareUrl;
+        el.setAttribute('readonly', '');
+        el.style.position = 'absolute';
+        el.style.left = '-9999px';
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+      }
+
+      setShareMessage('Share link copied to clipboard');
+      setShareOpen(true);
+      console.log('🔗 Share URL copied:', shareUrl);
+    } catch (err) {
+      console.error('Failed to copy share URL', err);
+      setShareMessage('Failed to copy share link');
+      setShareOpen(true);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -415,7 +448,7 @@ function DashboardPage() {
               opacity: 0.7,
             }}
           >
-            Build: {new Date().toISOString().split('T')[0]} • v0.9.0-alpha
+            Build: {new Date().toISOString().split('T')[0]} • v1.0 community core
           </Typography>
         </Box>
       </Box>

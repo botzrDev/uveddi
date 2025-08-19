@@ -90,8 +90,10 @@ zero-cost = ["local-ai", "tree-sitter", "memory-optimization"]
 full-featured = ["local-ai", "tree-sitter", "memory-optimization", "image-rendering", "tui"]
 # Enterprise option (all features)
 enterprise = ["local-ai", "tree-sitter", "memory-optimization", "image-rendering", "tui", "wasm-plugins", "chaos", "sla-monitoring"]
-# Alpha build with TUI and essential features
-alpha = ["tui", "tree-sitter", "local-ai", "security", "memory-optimization"]
+# v1.0 Community Core with TUI and essential features
+community = ["tui", "tree-sitter", "local-ai", "security", "memory-optimization"]
+# Legacy alpha feature (for backward compatibility)
+alpha = ["community"]
 
 [dependencies]
 # Use workspace dependencies for consistency
