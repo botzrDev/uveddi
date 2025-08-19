@@ -3,24 +3,26 @@ import MermaidDiagram from '@/components/MermaidDiagram';
 import UveddiLoader from '@/components/UveddiLoader';
 import { useDemoReport, useReport } from '@/hooks/useReport';
 import {
-    BugReportOutlined,
-    DownloadOutlined,
-    ShareOutlined,
-    TrendingUpOutlined,
+  BugReportOutlined,
+  DownloadOutlined,
+  ShareOutlined,
+  TrendingUpOutlined,
 } from '@mui/icons-material';
 import {
-    Alert,
-    Box,
-    Button,
-    Chip,
-    Grid,
-    Paper,
-    Typography,
+  Alert,
+  Box,
+  Button,
+  Chip,
+  Grid,
+  Paper,
+  Typography,
+  useTheme,
 } from '@mui/material';
 import { useParams } from 'react-router-dom';
 
 function DashboardPage() {
   const { reportId } = useParams<{ reportId: string }>();
+  const theme = useTheme();
   
   // Use demo report for demo route, otherwise fetch by ID
   const isDemoReport = reportId === 'demo';
@@ -127,10 +129,14 @@ function DashboardPage() {
       <Paper 
         sx={{ 
           p: 4, 
-          mb: 4, 
-          background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-          border: '1px solid var(--uveddi-border)',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+          mb: 4,
+          background: (theme) => theme.palette.mode === 'light' 
+            ? 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)'
+            : 'linear-gradient(135deg, #1a1f2e 0%, #242b3d 100%)',
+          border: (theme) => `1px solid ${theme.palette.divider}`,
+          boxShadow: (theme) => theme.palette.mode === 'light'
+            ? '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+            : '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)',
         }}
       >
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
@@ -140,9 +146,11 @@ function DashboardPage() {
               component="h1" 
               sx={{ 
                 fontWeight: 700,
-                color: '#1f2937',
+                color: (theme) => theme.palette.text.primary,
                 mb: 1,
-                textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
+                textShadow: (theme) => theme.palette.mode === 'light' 
+                  ? '0 1px 2px rgba(0, 0, 0, 0.1)'
+                  : '0 1px 2px rgba(0, 0, 0, 0.3)',
               }}
             >
               {report.project?.name || 'Unknown Project'}
@@ -150,7 +158,7 @@ function DashboardPage() {
             <Typography 
               variant="body1" 
               sx={{ 
-                color: '#6b7280',
+                color: (theme) => theme.palette.text.secondary,
                 mb: 2,
                 fontWeight: 500,
               }}
@@ -166,26 +174,14 @@ function DashboardPage() {
             <Button
               variant="outlined"
               startIcon={<ShareOutlined />}
-              sx={{
-                borderColor: '#3b82f6',
-                color: '#3b82f6',
-                '&:hover': {
-                  backgroundColor: '#eff6ff',
-                  borderColor: '#2563eb',
-                },
-              }}
+              color="primary"
             >
               Share
             </Button>
             <Button
               variant="contained"
               startIcon={<DownloadOutlined />}
-              sx={{
-                backgroundColor: '#3b82f6',
-                '&:hover': {
-                  backgroundColor: '#2563eb',
-                },
-              }}
+              color="primary"
             >
               Export Report
             </Button>
@@ -288,7 +284,7 @@ function DashboardPage() {
                     border: 1,
                     borderColor: 'divider',
                     borderRadius: 1,
-                    bgcolor: getSeverityColor(severity),
+                    bgcolor: getSeverityColor(severity, theme),
                   }}
                 >
                   <Typography variant="body1" sx={{ textTransform: 'capitalize' }}>
@@ -340,8 +336,8 @@ function DashboardPage() {
       <Box
         component="footer"
         sx={{
-          backgroundColor: 'var(--uveddi-secondary-100)',
-          borderTop: '1px solid var(--uveddi-border)',
+          backgroundColor: (theme) => theme.palette.background.paper,
+          borderTop: (theme) => `1px solid ${theme.palette.divider}`,
           borderRadius: 2,
           py: 3,
           mb: 4,
@@ -352,7 +348,7 @@ function DashboardPage() {
           <Typography 
             variant="body2" 
             sx={{ 
-              color: 'var(--uveddi-text-secondary)',
+              color: (theme) => theme.palette.text.secondary,
               display: 'flex',
               alignItems: 'center',
               gap: 1,
@@ -364,8 +360,9 @@ function DashboardPage() {
           <Typography 
             variant="caption" 
             sx={{ 
-              color: 'var(--uveddi-text-muted)',
+              color: (theme) => theme.palette.text.secondary,
               fontFamily: "'JetBrains Mono', monospace",
+              opacity: 0.7,
             }}
           >
             Build: {new Date().toISOString().split('T')[0]} • v0.9.0-alpha
@@ -410,34 +407,46 @@ interface SummaryCardProps {
 }
 
 function SummaryCard({ title, value, subtitle, color }: SummaryCardProps) {
+  const theme = useTheme();
+  
   const getColorStyles = (color: string) => {
+    const isDark = theme.palette.mode === 'dark';
+    
     switch (color) {
       case 'primary':
         return {
-          borderColor: 'var(--uveddi-primary-600)',
-          valueColor: 'var(--uveddi-primary-600)',
-          bgGradient: 'linear-gradient(135deg, var(--uveddi-primary-50) 0%, var(--uveddi-primary-25) 100%)',
+          borderColor: theme.palette.primary.main,
+          valueColor: theme.palette.primary.main,
+          bgGradient: isDark 
+            ? 'linear-gradient(135deg, rgba(100, 181, 246, 0.1) 0%, rgba(144, 202, 249, 0.05) 100%)'
+            : 'linear-gradient(135deg, #e3f2fd 0%, #f0f8ff 100%)',
           icon: <TrendingUpOutlined />,
         };
       case 'error':
         return {
-          borderColor: 'var(--uveddi-error-500)',
-          valueColor: 'var(--uveddi-error-500)',
-          bgGradient: 'linear-gradient(135deg, #ffebee 0%, #fce4ec 100%)',
+          borderColor: theme.palette.error.main,
+          valueColor: theme.palette.error.main,
+          bgGradient: isDark
+            ? 'linear-gradient(135deg, rgba(239, 83, 80, 0.1) 0%, rgba(229, 115, 115, 0.05) 100%)'
+            : 'linear-gradient(135deg, #ffebee 0%, #fce4ec 100%)',
           icon: <BugReportOutlined />,
         };
       case 'success':
         return {
-          borderColor: 'var(--uveddi-success-600)',
-          valueColor: 'var(--uveddi-success-600)',
-          bgGradient: 'linear-gradient(135deg, var(--uveddi-success-50) 0%, #e8f5e8 100%)',
+          borderColor: theme.palette.success.main,
+          valueColor: theme.palette.success.main,
+          bgGradient: isDark
+            ? 'linear-gradient(135deg, rgba(129, 199, 132, 0.1) 0%, rgba(165, 214, 167, 0.05) 100%)'
+            : 'linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%)',
           icon: <TrendingUpOutlined />,
         };
       default:
         return {
-          borderColor: 'var(--uveddi-info-500)',
-          valueColor: 'var(--uveddi-info-500)',
-          bgGradient: 'linear-gradient(135deg, #e3f2fd 0%, #f0f4ff 100%)',
+          borderColor: theme.palette.info.main,
+          valueColor: theme.palette.info.main,
+          bgGradient: isDark
+            ? 'linear-gradient(135deg, rgba(79, 195, 247, 0.1) 0%, rgba(129, 212, 250, 0.05) 100%)'
+            : 'linear-gradient(135deg, #e3f2fd 0%, #f0f4ff 100%)',
           icon: <BugReportOutlined />,
         };
     }
@@ -450,14 +459,16 @@ function SummaryCard({ title, value, subtitle, color }: SummaryCardProps) {
       sx={{ 
         p: 3, 
         textAlign: 'center',
-        border: '1px solid var(--uveddi-border)',
+        border: (theme) => `1px solid ${theme.palette.divider}`,
         borderTop: `4px solid ${styles.borderColor}`,
         background: styles.bgGradient,
         position: 'relative',
         overflow: 'hidden',
         '&:hover': {
           transform: 'translateY(-2px)',
-          boxShadow: '0 8px 25px rgba(79, 70, 229, 0.15)',
+          boxShadow: (theme) => theme.palette.mode === 'light'
+            ? '0 8px 25px rgba(79, 70, 229, 0.15)'
+            : '0 8px 25px rgba(0, 0, 0, 0.3)',
         },
         transition: 'all 0.2s ease-in-out',
       }}
@@ -512,18 +523,30 @@ function SummaryCard({ title, value, subtitle, color }: SummaryCardProps) {
 }
 
 // Helper function to get severity-based background color
-function getSeverityColor(severity: string) {
+function getSeverityColor(severity: string, theme: any) {
+  const alpha = theme.palette.mode === 'light' ? 0.1 : 0.2;
+  
   switch (severity.toLowerCase()) {
     case 'critical':
-      return 'rgba(244, 67, 54, 0.1)'; // Red
+      return theme.palette.mode === 'light' 
+        ? 'rgba(244, 67, 54, 0.1)' 
+        : 'rgba(239, 83, 80, 0.2)'; // Red
     case 'high':
-      return 'rgba(255, 152, 0, 0.1)'; // Orange
+      return theme.palette.mode === 'light' 
+        ? 'rgba(255, 152, 0, 0.1)' 
+        : 'rgba(255, 183, 77, 0.2)'; // Orange
     case 'medium':
-      return 'rgba(255, 193, 7, 0.1)'; // Yellow
+      return theme.palette.mode === 'light' 
+        ? 'rgba(255, 193, 7, 0.1)' 
+        : 'rgba(255, 213, 79, 0.2)'; // Yellow
     case 'low':
-      return 'rgba(76, 175, 80, 0.1)'; // Green
+      return theme.palette.mode === 'light' 
+        ? 'rgba(76, 175, 80, 0.1)' 
+        : 'rgba(129, 199, 132, 0.2)'; // Green
     default:
-      return 'rgba(0, 0, 0, 0.05)'; // Default
+      return theme.palette.mode === 'light' 
+        ? 'rgba(0, 0, 0, 0.05)' 
+        : 'rgba(255, 255, 255, 0.05)'; // Default
   }
 }
 

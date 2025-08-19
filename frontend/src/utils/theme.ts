@@ -158,7 +158,6 @@ export const darkTheme = createTheme({
       default: '#0a0e1a',
       paper: '#1a1f2e',
     },
-    surface: '#242b3d',
     text: {
       primary: '#e4e6ea',
       secondary: 'rgba(228, 230, 234, 0.7)',
@@ -172,33 +171,107 @@ export const darkTheme = createTheme({
       disabledBackground: 'rgba(255, 255, 255, 0.12)',
     },
   },
+  components: {
+    ...commonTheme.components,
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          backgroundColor: '#1a1f2e',
+          backgroundImage: 'none',
+          border: '1px solid rgba(255, 255, 255, 0.12)',
+        },
+      },
+    },
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          backgroundColor: '#1a1f2e',
+          border: '1px solid rgba(255, 255, 255, 0.12)',
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)',
+        },
+      },
+    },
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          backgroundColor: '#1a1f2e',
+          border: '1px solid rgba(255, 255, 255, 0.12)',
+        },
+      },
+    },
+    MuiChip: {
+      styleOverrides: {
+        root: {
+          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+          color: '#e4e6ea',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+        },
+      },
+    },
+    MuiAlert: {
+      styleOverrides: {
+        root: {
+          backgroundColor: 'rgba(255, 255, 255, 0.05)',
+          border: '1px solid rgba(255, 255, 255, 0.12)',
+        },
+      },
+    },
+  },
 });
 
 // Severity-specific colors
 export const severityColors = {
   critical: {
     light: '#ffebee',
-    main: '#f44336',
+    main: '#ef5350',
     dark: '#c62828',
     contrastText: '#ffffff',
   },
   high: {
     light: '#fff3e0',
-    main: '#ff9800',
+    main: '#ffb74d',
     dark: '#f57c00',
     contrastText: '#000000',
   },
   medium: {
     light: '#fff8e1',
-    main: '#ffc107',
+    main: '#ffd54f',
     dark: '#f9a825',
     contrastText: '#000000',
   },
   low: {
     light: '#f1f8e9',
-    main: '#8bc34a',
-    dark: '#689f38',
+    main: '#81c784',
+    dark: '#388e3c',
     contrastText: '#000000',
+  },
+};
+
+// Dark mode specific severity colors for better contrast
+export const darkSeverityColors = {
+  critical: {
+    light: '#ffcdd2',
+    main: '#f44336',
+    dark: '#d32f2f',
+    contrastText: '#ffffff',
+  },
+  high: {
+    light: '#ffe0b2',
+    main: '#ff9800',
+    dark: '#f57c00',
+    contrastText: '#ffffff',
+  },
+  medium: {
+    light: '#fff9c4',
+    main: '#fbc02d',
+    dark: '#f57f17',
+    contrastText: '#000000',
+  },
+  low: {
+    light: '#c8e6c9',
+    main: '#4caf50',
+    dark: '#388e3c',
+    contrastText: '#ffffff',
   },
 };
 
@@ -211,6 +284,12 @@ export const chartColors = {
     severityColors.medium.main,
     severityColors.low.main,
   ],
+  darkSeverity: [
+    darkSeverityColors.critical.main,
+    darkSeverityColors.high.main,
+    darkSeverityColors.medium.main,
+    darkSeverityColors.low.main,
+  ],
   categorical: [
     '#1976d2', // Blue
     '#388e3c', // Green  
@@ -221,10 +300,24 @@ export const chartColors = {
     '#689f38', // Light Green
     '#f9a825', // Amber
   ],
+  darkCategorical: [
+    '#64b5f6', // Light Blue
+    '#81c784', // Light Green  
+    '#ffb74d', // Light Orange
+    '#ba68c8', // Light Purple
+    '#ef5350', // Light Red
+    '#4fc3f7', // Cyan
+    '#a5d6a7', // Lighter Green
+    '#ffd54f', // Light Amber
+  ],
 };
 
 export type ThemeMode = 'light' | 'dark';
 
 export function getTheme(mode: ThemeMode) {
   return mode === 'light' ? lightTheme : darkTheme;
+}
+
+export function getSeverityColors(mode: ThemeMode) {
+  return mode === 'light' ? severityColors : darkSeverityColors;
 }
