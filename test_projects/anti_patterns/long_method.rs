@@ -1,113 +1,95 @@
-// Long Method anti-pattern test
-fn extremely_long_method(data: &str) -> String {
-    let mut result = String::new();
+// Test file for Long Method detection
+
+fn very_long_method(input: Vec<i32>) -> Vec<i32> {
+    let mut result = Vec::new();
     
-    // Step 1: Parse input
-    if data.is_empty() {
-        return "empty".to_string();
-    }
+    // Start of a very long method (50+ lines to trigger detection)
+    println!("Starting processing of {} items", input.len());
     
-    // Step 2: Validate data
-    let lines: Vec<&str> = data.split('\n').collect();
-    if lines.len() > 100 {
-        return "too many lines".to_string();
-    }
-    
-    // Step 3: Process each line
-    for line in lines {
-        if line.trim().is_empty() {
-            continue;
-        }
-        
-        // Sub-step 3.1: Parse line components
-        let parts: Vec<&str> = line.split(',').collect();
-        if parts.len() < 2 {
-            continue;
-        }
-        
-        // Sub-step 3.2: Validate each part
-        let mut valid_parts = Vec::new();
-        for part in parts {
-            let trimmed = part.trim();
-            if trimmed.len() > 0 && trimmed.len() < 50 {
-                valid_parts.push(trimmed);
-            }
-        }
-        
-        // Sub-step 3.3: Transform data
-        if valid_parts.len() >= 2 {
-            let first = valid_parts[0].to_uppercase();
-            let second = valid_parts[1].to_lowercase();
-            let combined = format!("{}:{}", first, second);
+    for item in &input {
+        if *item > 0 {
+            println!("Processing positive item: {}", item);
+            let processed = item * 2;
             
-            // Sub-step 3.4: Apply business logic
-            if combined.contains("error") {
-                result.push_str(&format!("ERROR: {}\n", combined));
-            } else if combined.contains("warning") {
-                result.push_str(&format!("WARN: {}\n", combined));
-            } else if combined.contains("info") {
-                result.push_str(&format!("INFO: {}\n", combined));
+            if processed > 100 {
+                println!("Large value detected: {}", processed);
+                let adjusted = processed - 50;
+                result.push(adjusted);
+            } else if processed > 50 {
+                println!("Medium value: {}", processed);
+                let adjusted = processed - 25;
+                result.push(adjusted);
             } else {
-                result.push_str(&format!("DEBUG: {}\n", combined));
+                println!("Small value: {}", processed);
+                result.push(processed);
+            }
+        } else if *item == 0 {
+            println!("Zero value found");
+            result.push(1);
+        } else {
+            println!("Processing negative item: {}", item);
+            let processed = item.abs() * 3;
+            
+            if processed > 150 {
+                println!("Large negative converted: {}", processed);
+                let adjusted = processed - 75;
+                result.push(-adjusted);
+            } else if processed > 75 {
+                println!("Medium negative: {}", processed);  
+                let adjusted = processed - 50;
+                result.push(-adjusted);
+            } else {
+                println!("Small negative: {}", processed);
+                result.push(-processed);
+            }
+        }
+        
+        // Add some more complexity to increase line count
+        let temp = result.len();
+        if temp % 10 == 0 {
+            println!("Processed {} items so far", temp);
+            
+            // Some additional processing
+            let average: f64 = result.iter().sum::<i32>() as f64 / result.len() as f64;
+            println!("Current average: {:.2}", average);
+            
+            if average > 50.0 {
+                println!("High average detected");
+                for val in result.iter_mut() {
+                    *val = (*val as f64 * 0.9) as i32;
+                }
+            } else if average < -50.0 {
+                println!("Low average detected");
+                for val in result.iter_mut() {
+                    *val = (*val as f64 * 1.1) as i32;
+                }
             }
         }
     }
     
-    // Step 4: Post-process results
-    let mut final_result = String::new();
-    let result_lines: Vec<&str> = result.split('\n').collect();
-    let mut error_count = 0;
-    let mut warning_count = 0;
-    let mut info_count = 0;
-    let mut debug_count = 0;
+    // Final processing and validation
+    println!("Final result length: {}", result.len());
     
-    // Count message types
-    for line in &result_lines {
-        if line.starts_with("ERROR:") {
-            error_count += 1;
-        } else if line.starts_with("WARN:") {
-            warning_count += 1;
-        } else if line.starts_with("INFO:") {
-            info_count += 1;
-        } else if line.starts_with("DEBUG:") {
-            debug_count += 1;
+    // Sort the results
+    result.sort();
+    println!("Results sorted");
+    
+    // Remove duplicates
+    result.dedup();
+    println!("Duplicates removed, final length: {}", result.len());
+    
+    // Final validation
+    let mut valid_count = 0;
+    for val in &result {
+        if val.abs() < 1000 {
+            valid_count += 1;
         }
     }
+    println!("Valid values: {}/{}", valid_count, result.len());
     
-    // Add summary header
-    final_result.push_str(&format!("SUMMARY: {} errors, {} warnings, {} info, {} debug\n", 
-                                   error_count, warning_count, info_count, debug_count));
-    
-    // Add separator
-    final_result.push_str("=" .repeat(50));
-    final_result.push('\n');
-    
-    // Add all messages
-    for line in result_lines {
-        if !line.trim().is_empty() {
-            final_result.push_str(line);
-            final_result.push('\n');
-        }
-    }
-    
-    // Step 5: Final validation and cleanup
-    if final_result.len() > 10000 {
-        final_result = final_result[..10000].to_string();
-        final_result.push_str("... [TRUNCATED]");
-    }
-    
-    // Remove trailing newlines
-    while final_result.ends_with('\n') {
-        final_result.pop();
-    }
-    
-    // Add timestamp if needed
-    let timestamp = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap()
-        .as_secs();
-    
-    final_result.push_str(&format!("\nProcessed at: {}", timestamp));
-    
-    final_result
+    result
+}
+
+fn short_method() -> i32 {
+    42
 }

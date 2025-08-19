@@ -36,7 +36,6 @@ reqwest = { version = "0.12.22", default-features = false, features = ["json", "
 
 # Cryptography - consistent versions
 rustls = "0.23.31"
-ring = "0.17.14"
 
 # Date/time handling
 chrono = { version = "0.4.39", features = ["serde"] }
@@ -48,31 +47,31 @@ default = ["dev-core"]
 # Production-ready features (previous default behavior)  
 production = ["tree-sitter", "security", "memory-optimization", "web-full"]
 # Chaos engineering and load testing
-chaos = ["fail", "statrs", "ndarray-stats"]
+chaos = ["dep:fail", "dep:statrs", "dep:ndarray-stats"]
 # Performance regression detection with genetic algorithms
-regression-detection = ["changepoint", "linfa", "influxdb2"]
+regression-detection = ["dep:changepoint", "dep:linfa", "dep:influxdb2"]
 # SLA monitoring and validation
-sla-monitoring = ["metrics-exporter-prometheus", "tokio-metrics"]
+sla-monitoring = ["dep:metrics-exporter-prometheus", "dep:tokio-metrics"]
 
 # Development feature sets for fast builds
 # Minimal development build (only essential deps)
-dev-minimal = ["dep:clap", "dep:serde", "dep:serde_json", "dep:tokio", "dep:anyhow", "dep:tracing"]
+dev-minimal = []
 # Single-language development builds
 dev-rust-only = ["dev-minimal", "rust-lang"]
 dev-python-only = ["dev-minimal", "python-lang"] 
 dev-js-only = ["dev-minimal", "javascript-lang"]
 dev-ts-only = ["dev-minimal", "typescript-lang"]
 # Fast iteration (no heavy analysis)
-dev-fast = ["dev-minimal", "dep:regex", "dep:walkdir"]
+dev-fast = ["dev-minimal"]
 # Core analysis without tree-sitter
-dev-core = ["dev-minimal", "dep:petgraph", "dep:walkdir", "dep:ignore", "dep:rusqlite"]
+dev-core = ["dev-minimal"]
 
 # Consolidated dependency groups
-crypto-minimal = ["dep:sha2"]
-crypto-full = ["dep:rustls", "dep:ring", "dep:blake3", "dep:sha2", "dep:argon2", "dep:subtle"]
-web-client = ["dep:reqwest"]
-web-server = ["dep:axum", "dep:tower", "dep:tower-http"]
-web-full = ["web-client", "web-server", "dep:tower_governor", "dep:tokio-tungstenste"]
+crypto-minimal = []
+crypto-full = ["dep:rustls", "dep:ring", "dep:argon2", "dep:subtle"]
+web-client = []
+web-server = []
+web-full = ["web-client", "web-server", "dep:tower_governor", "dep:tokio-tungstenite"]
 
 # Security features (consolidated)
 security = ["crypto-full", "web-full", "dep:casbin", "dep:oauth2", "dep:openidconnect", "dep:jsonwebtoken", "dep:vaultrs"]
@@ -101,11 +100,11 @@ local-ai = ["ai"]
 # Image rendering service integration
 image-rendering = []
 # WASM plugin system
-wasm-plugins = ["wasmtime", "wasmtime-wasi", "cap-std", "wit-bindgen"]
+wasm-plugins = ["dep:wasmtime", "dep:wasmtime-wasi", "dep:cap-std", "dep:wit-bindgen"]
 # Terminal User Interface
-tui = ["ratatui", "crossterm", "tui-input"]
+tui = ["dep:ratatui", "dep:crossterm", "dep:tui-input"]
 # Memory optimization features (UV-210, UV-26)
-memory-optimization = ["mimalloc", "bumpalo", "bumpalo-herd", "memmap2", "rkyv"]
+memory-optimization = ["dep:mimalloc", "dep:bumpalo", "dep:bumpalo-herd", "dep:memmap2", "dep:rkyv"]
 
 # Add new feature combinations for common use cases
 # Zero-cost option (no external services required)
@@ -118,6 +117,9 @@ enterprise = ["local-ai", "tree-sitter", "memory-optimization", "image-rendering
 community = ["tui", "tree-sitter", "local-ai", "security", "memory-optimization"]
 # Legacy alpha feature (for backward compatibility)
 alpha = ["community"]
+streaming-iterator = []
+tower = []
+tower-http = []
 
 [dependencies]
 # Use workspace dependencies for consistency
@@ -129,8 +131,8 @@ anyhow = { workspace = true }
 thiserror = { workspace = true }
 chrono = { workspace = true }
 reqwest = { workspace = true }
-rustls = { workspace = true }
-ring = { workspace = true }
+rustls = { workspace = true, optional = true }
+ring = { version = "0.17.14", optional = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 
@@ -191,7 +193,7 @@ arrow-schema = { version = "52.2.0", optional = true }
 arrow-array = { version = "52.2.0", optional = true }
 wit-bindgen = { version = "0.30.0", optional = true }
 axum = { version = "0.7", features = ["ws", "macros"] }
-tokio-tungstenite = "0.24"  # Updated to latest version
+tokio-tungstenite = { version = "0.24", optional = true } # Updated to latest version
 criterion = { version = "0.5", features = ["html_reports"] }
 sysinfo = "0.30"
 # Memory optimization dependencies (UV-210)
@@ -253,27 +255,25 @@ metrics-tracing-context = "0.16"
 # HTTP middleware and services
 tower = "0.4"
 tower-http = { version = "0.5", features = ["cors", "limit", "timeout", "fs", "trace"] }
-tower_governor = "0.3"
+tower_governor = { version = "0.3", optional = true }
 # Database (using existing rusqlite instead of sqlx to avoid conflicts)
 # Authorization
-casbin = "2.1"
+casbin = { version = "2.1", optional = true }
 # Authentication - updated for security (resolves RSA timing attack vulnerability)
-oauth2 = "5.0"
-openidconnect = "4.0.1"  # Note: RSA vulnerability exists but no fix available yet
-jsonwebtoken = "9.3"
+oauth2 = { version = "5.0", optional = true }
+openidconnect = { version = "4.0.1", optional = true }  # Note: RSA vulnerability exists but no fix available yet
+jsonwebtoken = { version = "9.3", optional = true }
 # Security
-argon2 = "0.5"
+argon2 = { version = "0.5", optional = true }
 blake3 = "1.5"
 # ring already defined in workspace dependencies
 # Constant-time operations for timing attack protection
-subtle = "2.5"
+subtle = { version = "2.5", optional = true }
 # HashiCorp Vault integration
-vaultrs = "0.7"
+vaultrs = { version = "0.7", optional = true }
 # Configuration
-config = "0.14"
+config = { version = "0.14", optional = true }
 streaming-iterator = "0.1.9"
-# Security patches to force newer versions
-# Note: Most security issues are resolved through updated dependencies
 
 # Knowledge Library Dependencies (UV-335)
 # Perfect Hash Functions for O(1) lookups
