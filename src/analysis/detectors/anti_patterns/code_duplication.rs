@@ -168,9 +168,9 @@ impl Default for DuplicationConfig {
     /// with performance controls for production use
     ///
     /// Default values:
-    /// - `min_tokens`: 50 (avoid flagging very small code blocks)
-    /// - `min_lines`: 5 (minimum 5 lines for meaningful duplication)
-    /// - `similarity_threshold`: 0.8 (80% similarity for Type-3 clones)
+    /// - `min_tokens`: 10 (lowered for testing to catch smaller duplicates)
+    /// - `min_lines`: 3 (lowered for testing to catch smaller duplicates)
+    /// - `similarity_threshold`: 0.6 (lowered for testing to catch more clones)
     /// - `fingerprint_length`: 7 (good balance between precision and recall)
     /// - `ignore_identifiers`: true (enable Type-2 detection)
     /// - `ignore_literals`: true (enable Type-2 detection)
@@ -186,9 +186,9 @@ impl Default for DuplicationConfig {
     /// - `max_processing_time_seconds`: 30 (timeout per file)
     fn default() -> Self {
         Self {
-            min_tokens: 50, // Minimum number of tokens for a code block to be considered
-            min_lines: 5,   // Minimum number of lines for a code block
-            similarity_threshold: 0.8, // Threshold for Type-3 clone detection
+            min_tokens: 10, // Minimum number of tokens for a code block to be considered (lowered for testing)
+            min_lines: 3,   // Minimum number of lines for a code block (lowered for testing)
+            similarity_threshold: 0.6, // Threshold for Type-3 clone detection (lowered for testing)
             fingerprint_length: 7, // Length of rolling hash window
             ignore_identifiers: true, // Normalize identifiers for Type-2 detection
             ignore_literals: true, // Normalize literals for Type-2 detection

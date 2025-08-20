@@ -1,0 +1,220 @@
+{
+  "test_suite_info": {
+    "name": "Extreme Detector Validation Suite",
+    "version": "1.0.0",
+    "timestamp": "2025-08-19T18:11:40.653427",
+    "total_runtime_seconds": 0.6670401096343994,
+    "uveddi_binary": "../../target/debug/uveddi"
+  },
+  "test_execution_summary": {
+    "total_files_tested": 6,
+    "successful_analyses": 0,
+    "failed_analyses": 6,
+    "languages_tested": [
+      "python",
+      "typescript",
+      "rust"
+    ]
+  },
+  "detector_validation": {
+    "god_object": {
+      "description": "God Object / Large Class Detection",
+      "detected": false,
+      "detection_count": 0,
+      "files_with_detections": [],
+      "performance_metrics": {
+        "avg_analysis_time": 0,
+        "total_detections": 0
+      }
+    },
+    "dead_code": {
+      "description": "Dead Code Detection",
+      "detected": false,
+      "detection_count": 0,
+      "files_with_detections": [],
+      "performance_metrics": {
+        "avg_analysis_time": 0,
+        "total_detections": 0
+      }
+    },
+    "code_clones": {
+      "description": "Code Clone Detection",
+      "detected": false,
+      "detection_count": 0,
+      "files_with_detections": [],
+      "performance_metrics": {
+        "avg_analysis_time": 0,
+        "total_detections": 0
+      }
+    },
+    "tight_coupling": {
+      "description": "Tight Coupling Detection",
+      "detected": false,
+      "detection_count": 0,
+      "files_with_detections": [],
+      "performance_metrics": {
+        "avg_analysis_time": 0,
+        "total_detections": 0
+      }
+    },
+    "long_methods": {
+      "description": "Long Method Detection",
+      "detected": false,
+      "detection_count": 0,
+      "files_with_detections": [],
+      "performance_metrics": {
+        "avg_analysis_time": 0,
+        "total_detections": 0
+      }
+    },
+    "magic_values": {
+      "description": "Magic Values Detection",
+      "detected": false,
+      "detection_count": 0,
+      "files_with_detections": [],
+      "performance_metrics": {
+        "avg_analysis_time": 0,
+        "total_detections": 0
+      }
+    }
+  },
+  "performance_benchmarks": {
+    "total_files_analyzed": 6,
+    "total_analysis_time": 0.6664235591888428,
+    "average_analysis_time": 0.11107059319814046,
+    "files_per_second": 9.003283148187435,
+    "total_file_size": 293752,
+    "throughput_mb_per_second": 0.4203688989236125,
+    "memory_usage": {},
+    "by_language": {
+      "python": {
+        "file_count": 1,
+        "total_time": 0.13628458976745605,
+        "avg_time": 0.13628458976745605,
+        "total_size": 106289,
+        "successful_analyses": 0,
+        "failed_analyses": 1
+      },
+      "typescript": {
+        "file_count": 1,
+        "total_time": 0.1077718734741211,
+        "avg_time": 0.1077718734741211,
+        "total_size": 63833,
+        "successful_analyses": 0,
+        "failed_analyses": 1
+      },
+      "rust": {
+        "file_count": 4,
+        "total_time": 0.4223670959472656,
+        "avg_time": 0.1055917739868164,
+        "total_size": 123630,
+        "successful_analyses": 0,
+        "failed_analyses": 4
+      }
+    },
+    "by_file_size": {
+      "small_files": {
+        "count": 2,
+        "avg_time": 0.10572195053100586,
+        "size_range": "< 10KB"
+      },
+      "medium_files": {
+        "count": 3,
+        "avg_time": 0.106231689453125,
+        "size_range": "10KB - 100KB"
+      },
+      "large_files": {
+        "count": 1,
+        "avg_time": 0.13628458976745605,
+        "size_range": "> 100KB"
+      }
+    }
+  },
+  "detailed_results": {
+    "python": {
+      "../benchmark-codebases/extreme_suite/python_extreme/systemofeverything_god_object.py": {
+        "success": false,
+        "issues": [],
+        "analysis_time": 0.13628458976745605,
+        "errors": [
+          "Analysis failed: Error: \n   0: \u001b[91mUnexpected error: Analysis failed\n        \u2192 Context: system operation\n        \u2192 Suggestion: Check logs for detailed error information\u001b[0m\n   1: \u001b[91mAnalysis failed\u001b[0m\n   2: \u001b[91mOther analysis error: AST parsing failed for '../benchmark-codebases/extreme_suite/python_extreme/systemofeverything_god_object.py': Parse error: UnsupportedLanguage(\"Python\")\n        \u2192 Language: unknown\n        \u2192 Suggestion: Check file syntax\u001b[0m\n\nLocation:\n   \u001b[35msrc/main.rs\u001b[0m:\u001b[35m137\u001b[0m\n\nBacktrace omitted. Run with RUST_BACKTRACE=1 environment variable to display it.\nRun with RUST_BACKTRACE=full to include source snippets.\n"
+        ],
+        "file_size": 106289
+      }
+    },
+    "typescript": {
+      "../benchmark-codebases/extreme_suite/typescript_extreme/EverythingGodObject.ts": {
+        "success": false,
+        "issues": [],
+        "analysis_time": 0.1077718734741211,
+        "errors": [
+          "Analysis failed: Error: \n   0: \u001b[91mUnexpected error: Analysis failed\n        \u2192 Context: system operation\n        \u2192 Suggestion: Check logs for detailed error information\u001b[0m\n   1: \u001b[91mAnalysis failed\u001b[0m\n   2: \u001b[91mOther analysis error: AST parsing failed for '../benchmark-codebases/extreme_suite/typescript_extreme/EverythingGodObject.ts': Parse error: UnsupportedLanguage(\"JavaScript\")\n        \u2192 Language: unknown\n        \u2192 Suggestion: Check file syntax\u001b[0m\n\nLocation:\n   \u001b[35msrc/main.rs\u001b[0m:\u001b[35m137\u001b[0m\n\nBacktrace omitted. Run with RUST_BACKTRACE=1 environment variable to display it.\nRun with RUST_BACKTRACE=full to include source snippets.\n"
+        ],
+        "file_size": 63833
+      }
+    },
+    "rust": {
+      "../benchmark-codebases/extreme_suite/rust_extreme/ultimatesystemmanager_god_object.rs": {
+        "success": false,
+        "issues": [],
+        "analysis_time": 0.11109495162963867,
+        "errors": [
+          "Analysis failed: Error: \n   0: \u001b[91mUnexpected error: Analysis failed\n        \u2192 Context: system operation\n        \u2192 Suggestion: Check logs for detailed error information\u001b[0m\n   1: \u001b[91mAnalysis failed\u001b[0m\n   2: \u001b[91mOther analysis error: AST parsing failed for '../benchmark-codebases/extreme_suite/rust_extreme/ultimatesystemmanager_god_object.rs': Parse error: UnsupportedLanguage(\"Rust\")\n        \u2192 Language: unknown\n        \u2192 Suggestion: Check file syntax\u001b[0m\n\nLocation:\n   \u001b[35msrc/main.rs\u001b[0m:\u001b[35m137\u001b[0m\n\nBacktrace omitted. Run with RUST_BACKTRACE=1 environment variable to display it.\nRun with RUST_BACKTRACE=full to include source snippets.\n"
+        ],
+        "file_size": 23885
+      },
+      "../benchmark-codebases/extreme_suite/rust_extreme/subtle_code_clones.rs": {
+        "success": false,
+        "issues": [],
+        "analysis_time": 0.1110694408416748,
+        "errors": [
+          "Analysis failed: Error: \n   0: \u001b[91mUnexpected error: Analysis failed\n        \u2192 Context: system operation\n        \u2192 Suggestion: Check logs for detailed error information\u001b[0m\n   1: \u001b[91mAnalysis failed\u001b[0m\n   2: \u001b[91mOther analysis error: AST parsing failed for '../benchmark-codebases/extreme_suite/rust_extreme/subtle_code_clones.rs': Parse error: UnsupportedLanguage(\"Rust\")\n        \u2192 Language: unknown\n        \u2192 Suggestion: Check file syntax\u001b[0m\n\nLocation:\n   \u001b[35msrc/main.rs\u001b[0m:\u001b[35m137\u001b[0m\n\nBacktrace omitted. Run with RUST_BACKTRACE=1 environment variable to display it.\nRun with RUST_BACKTRACE=full to include source snippets.\n"
+        ],
+        "file_size": 2172
+      },
+      "../benchmark-codebases/extreme_suite/rust_extreme/configuration_monster.rs": {
+        "success": false,
+        "issues": [],
+        "analysis_time": 0.09982824325561523,
+        "errors": [
+          "Analysis failed: Error: \n   0: \u001b[91mUnexpected error: Analysis failed\n        \u2192 Context: system operation\n        \u2192 Suggestion: Check logs for detailed error information\u001b[0m\n   1: \u001b[91mAnalysis failed\u001b[0m\n   2: \u001b[91mOther analysis error: AST parsing failed for '../benchmark-codebases/extreme_suite/rust_extreme/configuration_monster.rs': Parse error: UnsupportedLanguage(\"Rust\")\n        \u2192 Language: unknown\n        \u2192 Suggestion: Check file syntax\u001b[0m\n\nLocation:\n   \u001b[35msrc/main.rs\u001b[0m:\u001b[35m137\u001b[0m\n\nBacktrace omitted. Run with RUST_BACKTRACE=1 environment variable to display it.\nRun with RUST_BACKTRACE=full to include source snippets.\n"
+        ],
+        "file_size": 95862
+      },
+      "../benchmark-codebases/extreme_suite/rust_extreme/dead_code_confidence_test.rs": {
+        "success": false,
+        "issues": [],
+        "analysis_time": 0.10037446022033691,
+        "errors": [
+          "Analysis failed: Error: \n   0: \u001b[91mUnexpected error: Analysis failed\n        \u2192 Context: system operation\n        \u2192 Suggestion: Check logs for detailed error information\u001b[0m\n   1: \u001b[91mAnalysis failed\u001b[0m\n   2: \u001b[91mOther analysis error: AST parsing failed for '../benchmark-codebases/extreme_suite/rust_extreme/dead_code_confidence_test.rs': Parse error: UnsupportedLanguage(\"Rust\")\n        \u2192 Language: unknown\n        \u2192 Suggestion: Check file syntax\u001b[0m\n\nLocation:\n   \u001b[35msrc/main.rs\u001b[0m:\u001b[35m137\u001b[0m\n\nBacktrace omitted. Run with RUST_BACKTRACE=1 environment variable to display it.\nRun with RUST_BACKTRACE=full to include source snippets.\n"
+        ],
+        "file_size": 1711
+      }
+    }
+  },
+  "baseline_metrics": {
+    "performance_baseline": {
+      "avg_analysis_time_ms": 111.07059319814046,
+      "throughput_files_per_second": 9.003283148187435,
+      "throughput_mb_per_second": 0.4203688989236125,
+      "memory_efficiency_score": 4.2036889892361256
+    },
+    "detection_baseline": {
+      "detector_coverage_percentage": 0.0,
+      "total_detections": 0,
+      "detectors_working": [],
+      "detectors_not_working": [
+        "god_object",
+        "dead_code",
+        "code_clones",
+        "tight_coupling",
+        "long_methods",
+        "magic_values"
+      ]
+    },
+    "quality_metrics": {
+      "success_rate_percentage": 0.0,
+      "reliability_score": 0.0
+    }
+  }
+}

@@ -2,7 +2,14 @@
   "permissions": {
     "allow": [
       "Bash(git config:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(git checkout:*)",
+      "Bash(cargo build:*)",
+      "Bash(python3:*)",
+      "Bash(cargo test:*)",
+      "Bash(cargo run:*)",
+      "Bash(RUST_LOG=debug cargo run --features=tree-sitter,rust-lang,python-lang,javascript-lang --bin uveddi -- analyze test_projects/anti_patterns/magic_values.rs --output-format json --output debug_test_output.json)",
+      "Bash(RUST_LOG=debug cargo run --features=tree-sitter,rust-lang,python-lang,javascript-lang --bin uveddi -- analyze test_projects/anti_patterns/magic_values.rs --output-format json --output final_test_output.json)"
     ],
     "deny": [],
     "ask": []

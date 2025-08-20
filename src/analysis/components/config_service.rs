@@ -72,6 +72,8 @@ impl ConfigurationService {
             "DeadCodeDetector",
             "LargeClassDetector",
             "TightCouplingDetector",
+            "LongMethodsDetector",
+            "MagicValuesDetector",
         ];
 
         for detector in default_detectors {

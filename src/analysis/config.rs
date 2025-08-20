@@ -590,6 +590,18 @@ impl Default for AnalysisConfig {
                 .with_enabled(true)
                 .with_severity(IssueSeverity::Medium),
         );
+        enhanced_detectors.insert(
+            "long_methods".to_string(),
+            EnhancedDetectorConfig::new()
+                .with_enabled(true)
+                .with_severity(IssueSeverity::Medium),
+        );
+        enhanced_detectors.insert(
+            "magic_values".to_string(),
+            EnhancedDetectorConfig::new()
+                .with_enabled(true)
+                .with_severity(IssueSeverity::Medium),
+        );
 
         // Create standardized detector configurations
         let mut standard_detectors = HashMap::new();
@@ -612,6 +624,14 @@ impl Default for AnalysisConfig {
         standard_detectors.insert(
             "tight_coupling".to_string(),
             StandardDetectorConfig::default_for_detector("tight_coupling"),
+        );
+        standard_detectors.insert(
+            "long_methods".to_string(),
+            StandardDetectorConfig::default_for_detector("long_methods"),
+        );
+        standard_detectors.insert(
+            "magic_values".to_string(),
+            StandardDetectorConfig::default_for_detector("magic_values"),
         );
 
         Self {
@@ -738,7 +758,7 @@ mod tests {
         let config = AnalysisConfig::default();
 
         // Enhanced detectors should be configured by default now
-        assert_eq!(config.enhanced_detectors.len(), 5);
+        assert_eq!(config.enhanced_detectors.len(), 7);
         assert!(config.enhanced_detectors.contains_key("god_object"));
         assert!(config.enhanced_detectors.contains_key("code_duplication"));
         assert_eq!(config.cache_size, Some(1000));

@@ -495,11 +495,11 @@ impl StandardDetectorConfig {
             "code_duplication" => {
                 config
                     .thresholds
-                    .insert("min_tokens".to_string(), 50.into());
-                config.thresholds.insert("min_lines".to_string(), 5.into());
+                    .insert("min_tokens".to_string(), 10.into());
+                config.thresholds.insert("min_lines".to_string(), 3.into());
                 config
                     .thresholds
-                    .insert("similarity_threshold".to_string(), 0.8.into());
+                    .insert("similarity_threshold".to_string(), 0.6.into());
                 config
                     .thresholds
                     .insert("fingerprint_length".to_string(), 10.into());
