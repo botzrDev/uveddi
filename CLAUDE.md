@@ -73,18 +73,18 @@ CLI Layer (src/cli/) → Application Layer (src/application/) → Analysis Layer
 #### Fast Development Builds (Recommended)
 
 ```bash
-# Ultra-fast development build (60-80% faster, minimal dependencies)
-cargo build --features=dev-minimal --profile=dev-fast
+# Minimal development build (~16s build time, essential dependencies only)
+cargo build --features=dev-minimal
 
-# Core development build with analysis features
-cargo build --features=dev-core --profile=dev-fast
+# Core development build (~13s build time, analysis features without tree-sitter)
+cargo build --features=dev-core
 
-# Single-language builds (70-85% faster than full parsing)
-cargo build --features=dev-rust-only --profile=dev-fast
-cargo build --features=dev-python-only --profile=dev-fast
+# Single-language builds (reduced compilation time)
+cargo build --features=dev-rust-only
+cargo build --features=dev-python-only
 
-# Balanced development build with light optimization
-cargo build --features=dev-core --profile=dev-optimized
+# Note: dev-fast and dev-optimized profiles not currently defined in Cargo.toml
+# Use standard dev profile for development builds
 ```
 
 #### Production Builds
@@ -153,29 +153,31 @@ The project uses extensive feature flags for modular compilation, optimized for 
 
 The project has comprehensive testing infrastructure:
 
-1. **Unit Tests**: Core functionality testing (`tests/unit/`)
+1. **Unit Tests**: Core functionality testing (`tests/unit/`) - Current status: 661 passed, 18 failed
 2. **Integration Tests**: End-to-end workflow testing (`tests/integration/`)
 3. **TUI Tests**: Terminal interface automation (`tests/tui_*.rs`)
 4. **Security Tests**: Vulnerability and compliance testing (`tests/security/`)
 5. **Performance Tests**: Benchmarking and regression detection (`tests/performance/`)
 6. **Coverage Tests**: Code coverage validation (`tests/coverage/`)
 
+**Known Test Issues**: Currently 18 unit tests are failing, primarily related to detector registry counts, template loading, and observability initialization. These are being addressed in ongoing development.
+
 ### Common Commands
 
 #### Fast Development Commands (Recommended)
 
 ```bash
-# Fast development build and analyze (60-80% faster)
-cargo run --features=dev-core --profile=dev-fast -- analyze ./src --output-format html --output reports/analysis.html
+# Fast development build and analyze (~13s build time)
+cargo run --features=dev-core -- analyze ./src --output-format html --output reports/analysis.html
 
-# Single-language analysis (70-85% faster)
-cargo run --features=dev-rust-only --profile=dev-fast -- analyze ./src
+# Single-language analysis (reduced dependencies)
+cargo run --features=dev-rust-only -- analyze ./src
 
-# Minimal build for quick iteration
-cargo run --features=dev-minimal --profile=dev-fast -- analyze ./src --output-format json
+# Minimal build for quick iteration (~16s build time)
+cargo run --features=dev-minimal -- analyze ./src --output-format json
 
 # Fast testing
-cargo test --features=dev-core --profile=dev-fast
+cargo test --features=dev-core
 ```
 
 #### Production Commands
@@ -312,6 +314,10 @@ include_timing = true
 - **Caching**: AST parsing results cached for repeated analysis
 - **Incremental analysis**: Only re-analyze changed files
 - **Feature gating**: Compile only needed functionality
+- **Build Performance**: 
+  - `dev-minimal`: ~16.8s compile time (essential dependencies only)
+  - `dev-core`: ~13.0s compile time (analysis features without tree-sitter)
+  - `community`: ~19.2s compile time (full feature set with TUI and tree-sitter)
 
 ### Documentation
 
@@ -338,13 +344,41 @@ The project includes security features:
 3. Follow the [Code of Conduct](docs/06-community/CODE_OF_CONDUCT.md)
 4. Use the comprehensive testing framework before submitting PRs
 
+### Known Issues
+
+Current limitations and issues being addressed:
+
+#### **Analysis Functionality**
+- **File Discovery Issue**: Analysis may report 0 files analyzed for simple test cases
+  - Affects basic analysis workflows with minimal source files
+  - Complex codebases analyze correctly
+  - Under active investigation
+
+#### **Testing Status**
+- **Unit Test Failures**: 18 out of 679 tests currently failing
+  - Related to detector registry counts, template loading, and observability initialization
+  - Core functionality remains stable
+  - Being addressed in ongoing development
+
+#### **Build System**
+- **Profile Definitions**: Some documentation references `dev-fast` and `dev-optimized` profiles not currently defined in Cargo.toml
+  - Use standard `dev` and `release` profiles for now
+  - Profile optimization planned for future releases
+
+#### **Dependencies**
+- **Tree-sitter API Compatibility**: Fixed in current version but may require updates for future tree-sitter releases
+  - All current builds compile successfully
+  - Continuous integration monitors for API compatibility
+
 ### Troubleshooting
 
 Common issues and solutions:
-- **Slow builds**: Use optimized feature sets: `cargo build --features=dev-minimal --profile=dev-fast` (60-80% faster)
+- **Slow builds**: Use optimized feature sets: `cargo build --features=dev-minimal` (~16s) or `cargo build --features=dev-core` (~13s)
 - **Build timeouts**: Use `scripts/debug-build-timeouts.sh` or switch to minimal feature sets
-- **Out of memory during compilation**: Use `dev-minimal` or `dev-core` features to reduce memory usage by 30-50%
-- **Need faster iteration**: Use single-language features like `dev-rust-only` (70-85% faster)
+- **Out of memory during compilation**: Use `dev-minimal` or `dev-core` features to reduce dependency load
+- **Need faster iteration**: Use single-language features like `dev-rust-only` for reduced compilation time
+- **Tree-sitter compilation errors**: Fixed in current version - tree-sitter API compatibility issues resolved
+- **File discovery issues**: Known limitation where analysis may show 0 files analyzed for simple test cases - under investigation
 - **Memory issues**: Enable memory-optimization feature or use `dev-fast` profile
 - **TUI problems**: Check terminal compatibility and run TUI tests
 - **AI integration**: Verify Ollama installation and model availability

@@ -89,7 +89,7 @@ struct Config {
 fn init_config() {
     unsafe {
         GLOBAL_CONFIG = Some(Config {
-            api_key: \"1234567890\".to_string(), // Magic value anti-pattern
+            api_key: \"YOUR_API_KEY_HERE\".to_string(), // Magic value anti-pattern
             endpoint: \"https://api.example.com\".to_string(),
             timeout: 30,
         });
@@ -314,7 +314,7 @@ import os
 
 # Global state anti-pattern
 GLOBAL_CONFIG = {
-    'api_key': '1234567890', # Magic value
+    'api_key': 'YOUR_API_KEY_HERE', # Magic value
     'endpoint': 'https://api.example.com',
     'timeout': 30
 }
@@ -471,7 +471,7 @@ const { functionA } = require('./cyclicA');
 
 // Global state anti-pattern
 const GLOBAL_CONFIG = {
-    apiKey: '1234567890', // Magic value
+    apiKey: 'YOUR_API_KEY_HERE', // Magic value
     endpoint: 'https://api.example.com',
     timeout: 30
 };

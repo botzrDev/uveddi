@@ -4,12 +4,9 @@
 **/debug/
 **/incremental/
 
-# IDE/editor settings
-# Rust build artifacts
-/target/
-**/*.rs.bk
-**/debug/
-**/incremental/
+# Cache directories
+/cache/
+**/cache/
 
 # IDE/editor settings
 /.vscode/
