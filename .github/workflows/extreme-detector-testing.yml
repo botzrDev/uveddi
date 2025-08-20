@@ -1,10 +1,11 @@
 name: Extreme Detector Testing
 
+
 on:
   push:
-    branches: [ test/extreme-detector-testing, main, alpha ]
+    branches: ["**"]
   pull_request:
-    branches: [ main, alpha ]
+    branches: ["**"]
   workflow_dispatch:
     inputs:
       include_real_repos:

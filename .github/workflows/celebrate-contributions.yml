@@ -1,8 +1,12 @@
 name: Celebrate Contributions
 
+
 on:
   pull_request:
     types: [closed]
+    branches: ["**"]
+  push:
+    branches: ["**"]
 
 jobs:
   celebrate:
