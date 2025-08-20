@@ -4,7 +4,6 @@
 //! on the UV-105 circular dependency resolution initiative.
 
 use std::collections::{HashMap, HashSet};
-use std::path::Path;
 
 #[derive(Debug)]
 struct DependencyGraph {

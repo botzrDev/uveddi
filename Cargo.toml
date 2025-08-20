@@ -287,15 +287,11 @@ required-features = ["tui"]
 
 [[bin]]
 name = "dependency_analyzer"
-path = "tools/dependency_analyzer.rs"
+path = "src/bin/dependency_analyzer.rs"
 
 [[bin]]
 name = "circular_dependency_demo"
 path = "src/bin/circular_dependency_demo.rs"
-
-[[bin]]
-name = "dependency_analyzer_new"
-path = "src/bin/dependency_analyzer.rs"
 
 [[bin]]
 name = "simple_cycle_demo"

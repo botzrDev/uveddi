@@ -482,7 +482,7 @@ impl LeakyAbstractionDetector {
         let mut captures = cursor.captures(&query, tree.root_node(), source_bytes);
 
         while let Some((match_, _)) = captures.next() {
-            for capture in match_.captures {
+            for capture in &match_.captures {
                 let node = capture.node;
                 let capture_name = query.capture_names()[capture.index as usize];
 
@@ -553,7 +553,7 @@ impl LeakyAbstractionDetector {
                         if let Ok(vis_text) = node.utf8_text(source_bytes) {
                             if vis_text == "pub" {
                                 // Look for the corresponding return type in the same match
-                                for other_capture in match_.captures {
+                                for other_capture in &match_.captures {
                                     if query.capture_names()[other_capture.index as usize]
                                         == "return_type"
                                     {

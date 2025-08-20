@@ -478,12 +478,12 @@ impl AnalyzeCommand {
         }
 
         if let Some(max_loc) = self.large_classes_max_loc {
-            security::validate_numeric_range(max_loc as i32, 1, 100_000, "large_classes_max_loc")?;
+            security::validate_numeric_range((max_loc as i32).into(), 1, 100_000, "large_classes_max_loc")?;
         }
 
         if let Some(max_methods) = self.large_classes_max_methods {
             security::validate_numeric_range(
-                max_methods as i32,
+                (max_methods as i32).into(),
                 1,
                 10_000,
                 "large_classes_max_methods",
@@ -492,7 +492,7 @@ impl AnalyzeCommand {
 
         if let Some(max_fields) = self.large_classes_max_fields {
             security::validate_numeric_range(
-                max_fields as i32,
+                (max_fields as i32).into(),
                 1,
                 10_000,
                 "large_classes_max_fields",
@@ -501,7 +501,7 @@ impl AnalyzeCommand {
 
         if let Some(max_complexity) = self.large_classes_max_complexity {
             security::validate_numeric_range(
-                max_complexity as i32,
+                (max_complexity as i32).into(),
                 1,
                 10_000,
                 "large_classes_max_complexity",
@@ -515,7 +515,7 @@ impl AnalyzeCommand {
 
         if let Some(min_severity) = self.large_classes_min_severity {
             security::validate_numeric_range(
-                min_severity as i32,
+                (min_severity as i32).into(),
                 0,
                 100,
                 "large_classes_min_severity",
