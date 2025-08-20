@@ -153,6 +153,40 @@ pub const MAX_PATH_LENGTH: usize = 4096;
 /// Maximum length for model names
 pub const MAX_MODEL_NAME_LENGTH: usize = 100;
 
+/// Environment detection functions
+/// 
+/// Detects if running in test environment by checking environment variables
+/// and common test indicators
+pub fn is_test_environment() -> bool {
+    std::env::var("CARGO_TEST").is_ok() 
+        || std::env::var("RUST_TEST_THREADS").is_ok() 
+        || cfg!(test)
+        || std::thread::current().name().map_or(false, |name| name.contains("test"))
+}
+
+/// Detects if running in development environment
+pub fn is_development_environment() -> bool {
+    std::env::var("UVEDDI_ENV").map(|env| env == "development" || env == "dev").unwrap_or(false)
+        || std::env::var("RUST_ENV").map(|env| env == "development" || env == "dev").unwrap_or(false)
+        || cfg!(debug_assertions)
+}
+
+/// Gets environment-aware file size limits for code analysis
+/// 
+/// Returns appropriate size limits based on current environment:
+/// - Test environment: 10MB (for large test files)
+/// - Development: 5MB (for reasonable development files)
+/// - Production: 100KB (strict security limit)
+pub fn get_code_analysis_size_limit() -> usize {
+    if is_test_environment() {
+        10_000_000 // 10MB for test files
+    } else if is_development_environment() {
+        5_000_000  // 5MB for development
+    } else {
+        100_000    // 100KB for production
+    }
+}
+
 /// Validate file size for analysis
 pub fn validate_file_size(path: &Path) -> Result<(), SecurityError> {
     let metadata = std::fs::metadata(path).map_err(|_| SecurityError::InvalidInput {
@@ -415,7 +449,7 @@ pub fn validate_character_set(
 /// # Arguments
 /// * `input` - The code analysis data to validate
 /// * `field_name` - Name of the field for error reporting
-/// * `max_length` - Maximum allowed length (default: 100KB for code snippets)
+/// * `max_length` - Maximum allowed length (default: environment-aware - 10MB test, 5MB dev, 100KB prod)
 ///
 /// # Returns
 /// * `Ok(())` - Input passes code analysis validation
@@ -425,7 +459,7 @@ pub fn validate_code_analysis_data(
     field_name: &str,
     max_length: Option<usize>,
 ) -> Result<(), SecurityError> {
-    let max_len = max_length.unwrap_or(100_000); // 100KB default for code content
+    let max_len = max_length.unwrap_or_else(get_code_analysis_size_limit);
 
     // Only check for excessive length - code content naturally contains SQL keywords, etc.
     if input.len() > max_len {

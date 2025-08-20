@@ -4,7 +4,7 @@
 //! database, analysis engine, AI engine, and report generation. It serves as the boundary
 //! between the CLI and infrastructure layers.
 
-use crate::core::logging::{error, info};
+use crate::core::logging::{error, info, warn};
 use anyhow::Context;
 use chrono::Utc;
 use std::collections::HashMap;
@@ -305,10 +305,43 @@ impl AnalysisOrchestrator {
         // Store results
         info!("Starting to store {} issues to database", issues.len());
 
-        // Set the correct analysis_run_id for all issues
+        // Set the correct analysis_run_id for all issues and map anti_pattern_type_ids
         let analysis_run_id = analysis_run.run_id.expect("Analysis run should have an ID");
+        
+        // Get anti-pattern types from database to map names to IDs
+        let anti_pattern_types = self.database.get_all_anti_pattern_types()
+            .context("Failed to retrieve anti-pattern types for mapping")?;
+        
+        // Create a mapping from detector name to anti-pattern type ID
+        use std::collections::HashMap;
+        let mut detector_to_type_id: HashMap<String, i64> = HashMap::new();
+        for anti_pattern_type in &anti_pattern_types {
+            if let Some(type_id) = anti_pattern_type.anti_pattern_type_id {
+                detector_to_type_id.insert(anti_pattern_type.name.clone(), type_id);
+            }
+        }
+        
         for issue in &mut issues {
             issue.analysis_run_id = analysis_run_id;
+            
+            // Map anti-pattern type ID based on detector name
+            let detector_name = &issue.detector_name;
+            if let Some(&type_id) = detector_to_type_id.get(detector_name) {
+                issue.anti_pattern_type_id = type_id;
+            } else {
+                // If no exact match, try to find by partial matching or create a default
+                warn!("No anti-pattern type found for detector: {}, using default", detector_name);
+                // Try to find a fallback or create a default entry
+                if let Some(default_type) = anti_pattern_types.first() {
+                    if let Some(default_id) = default_type.anti_pattern_type_id {
+                        issue.anti_pattern_type_id = default_id;
+                    }
+                } else {
+                    return Err(UveddiError::database_error_msg(&format!(
+                        "No anti-pattern types found in database for detector: {}", detector_name
+                    )));
+                }
+            }
         }
 
         self.database

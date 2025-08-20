@@ -54,15 +54,25 @@ class ExtremeTestSuite:
     def _find_uveddi_binary(self) -> str:
         """Find the Uveddi binary in the workspace"""
         possible_paths = [
+            './target/dev-fast/uveddi',
             './target/release/uveddi',
             './target/debug/uveddi',
-            'uveddi',
+            '../target/dev-fast/uveddi',
             '../target/release/uveddi',
-            '../target/debug/uveddi'
+            '../target/debug/uveddi',
+            '../../target/dev-fast/uveddi',
+            '../../target/release/uveddi',
+            '../../target/debug/uveddi',
+            'uveddi'
         ]
         
         for path in possible_paths:
-            if os.path.exists(path) or subprocess.run(['which', path], capture_output=True).returncode == 0:
+            if os.path.exists(path):
+                return path
+        
+        # Try which command as fallback
+        for path in possible_paths:
+            if subprocess.run(['which', path], capture_output=True).returncode == 0:
                 return path
         
         raise FileNotFoundError("Uveddi binary not found. Please build the project first.")

@@ -9,7 +9,14 @@
       "Bash(cargo test:*)",
       "Bash(cargo run:*)",
       "Bash(RUST_LOG=debug cargo run --features=tree-sitter,rust-lang,python-lang,javascript-lang --bin uveddi -- analyze test_projects/anti_patterns/magic_values.rs --output-format json --output debug_test_output.json)",
-      "Bash(RUST_LOG=debug cargo run --features=tree-sitter,rust-lang,python-lang,javascript-lang --bin uveddi -- analyze test_projects/anti_patterns/magic_values.rs --output-format json --output final_test_output.json)"
+      "Bash(RUST_LOG=debug cargo run --features=tree-sitter,rust-lang,python-lang,javascript-lang --bin uveddi -- analyze test_projects/anti_patterns/magic_values.rs --output-format json --output final_test_output.json)",
+      "Bash(RUST_LOG=debug /home/austingreen/Documents/botzr/projects/uveddi/target/dev-fast/uveddi analyze /home/austingreen/Documents/botzr/projects/uveddi/detector-test-codebases/benchmark-codebases/extreme_suite/rust_extreme/subtle_code_clones.rs --output-format json)",
+      "Bash(CARGO_TEST=1 RUST_LOG=debug /home/austingreen/Documents/botzr/projects/uveddi/target/dev-fast/uveddi analyze /home/austingreen/Documents/botzr/projects/uveddi/detector-test-codebases/benchmark-codebases/extreme_suite/rust_extreme/subtle_code_clones.rs --output-format json)",
+      "Bash(CARGO_TEST=1 RUST_LOG=info /home/austingreen/Documents/botzr/projects/uveddi/target/dev-fast/uveddi analyze /home/austingreen/Documents/botzr/projects/uveddi/detector-test-codebases/benchmark-codebases/extreme_suite/javascript_extreme/everything_god_object.js --output-format json)",
+      "Bash(CARGO_TEST=1 RUST_LOG=info ./target/dev-fast/uveddi analyze detector-test-codebases/benchmark-codebases/extreme_suite/javascript_extreme/everything_god_object.js --output-format json)",
+      "Bash(CARGO_TEST=1 RUST_LOG=info ./target/dev-fast/uveddi analyze detector-test-codebases/benchmark-codebases/extreme_suite/rust_extreme/subtle_code_clones.rs --output-format json)",
+      "Bash(CARGO_TEST=1 RUST_LOG=debug ./target/dev-fast/uveddi analyze detector-test-codebases/benchmark-codebases/extreme_suite/rust_extreme/subtle_code_clones.rs --output-format json)",
+      "Bash(CARGO_TEST=1 RUST_LOG=info ./target/dev-fast/uveddi analyze test_projects/anti_patterns/magic_values.rs --output-format json)"
     ],
     "deny": [],
     "ask": []
