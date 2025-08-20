@@ -16,7 +16,14 @@
       "Bash(CARGO_TEST=1 RUST_LOG=info ./target/dev-fast/uveddi analyze detector-test-codebases/benchmark-codebases/extreme_suite/javascript_extreme/everything_god_object.js --output-format json)",
       "Bash(CARGO_TEST=1 RUST_LOG=info ./target/dev-fast/uveddi analyze detector-test-codebases/benchmark-codebases/extreme_suite/rust_extreme/subtle_code_clones.rs --output-format json)",
       "Bash(CARGO_TEST=1 RUST_LOG=debug ./target/dev-fast/uveddi analyze detector-test-codebases/benchmark-codebases/extreme_suite/rust_extreme/subtle_code_clones.rs --output-format json)",
-      "Bash(CARGO_TEST=1 RUST_LOG=info ./target/dev-fast/uveddi analyze test_projects/anti_patterns/magic_values.rs --output-format json)"
+      "Bash(CARGO_TEST=1 RUST_LOG=info ./target/dev-fast/uveddi analyze test_projects/anti_patterns/magic_values.rs --output-format json)",
+      "Bash(CARGO_TEST=1 RUST_LOG=info ./target/dev-fast/uveddi analyze detector-test-codebases/benchmark-codebases/extreme_suite/rust_extreme/subtle_code_clones.rs --output-format json)",
+      "Bash(git --version)",
+      "Bash(sqlite3:*)",
+      "Bash(./target/dev-fast/uveddi:*)",
+      "Bash(curl:*)",
+      "Bash(timeout:*)",
+      "Bash(time:*)"
     ],
     "deny": [],
     "ask": []
