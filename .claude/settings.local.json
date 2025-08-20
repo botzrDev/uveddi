@@ -2,6 +2,7 @@
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "permissions": {
     "allow": [
+<<<<<<< HEAD
       "Bash(find:*)",
       "Bash(cargo test:*)",
       "Bash(mkdir:*)",
@@ -216,6 +217,10 @@
       "Bash(npx playwright:*)",
       "Bash(apt list:*)",
       "Bash(apt search:*)"
+=======
+      "Bash(git config:*)",
+      "Bash(chmod:*)"
+>>>>>>> 36760b8 (Remove obsolete test files and tools for public release)
     ],
     "deny": [],
     "additionalDirectories": [
