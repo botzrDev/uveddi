@@ -1,0 +1,678 @@
+{
+  "timestamp": "2025-08-20 19:05:29 UTC",
+  "repository": "TypeScript-small",
+  "language": "typescript",
+  "analysis_time": 156.7,
+  "summary": {
+    "total_findings": 89,
+    "detectors_run": 6,
+    "successful_detectors": 6
+  },
+  "detectors": {
+    "god_object": {
+      "success": true,
+      "execution_time": 18.4,
+      "findings_count": 12,
+      "findings": [
+        {
+          "id": "god_object_1",
+          "severity": "medium",
+          "description": "Mock god_object finding 1",
+          "file": "src/mock_file_1.ts",
+          "line": 10
+        },
+        {
+          "id": "god_object_2",
+          "severity": "medium",
+          "description": "Mock god_object finding 2",
+          "file": "src/mock_file_2.ts",
+          "line": 15
+        },
+        {
+          "id": "god_object_3",
+          "severity": "medium",
+          "description": "Mock god_object finding 3",
+          "file": "src/mock_file_3.ts",
+          "line": 20
+        },
+        {
+          "id": "god_object_4",
+          "severity": "medium",
+          "description": "Mock god_object finding 4",
+          "file": "src/mock_file_4.ts",
+          "line": 25
+        },
+        {
+          "id": "god_object_5",
+          "severity": "medium",
+          "description": "Mock god_object finding 5",
+          "file": "src/mock_file_5.ts",
+          "line": 30
+        },
+        {
+          "id": "god_object_6",
+          "severity": "medium",
+          "description": "Mock god_object finding 6",
+          "file": "src/mock_file_6.ts",
+          "line": 35
+        },
+        {
+          "id": "god_object_7",
+          "severity": "medium",
+          "description": "Mock god_object finding 7",
+          "file": "src/mock_file_7.ts",
+          "line": 40
+        },
+        {
+          "id": "god_object_8",
+          "severity": "medium",
+          "description": "Mock god_object finding 8",
+          "file": "src/mock_file_8.ts",
+          "line": 45
+        },
+        {
+          "id": "god_object_9",
+          "severity": "medium",
+          "description": "Mock god_object finding 9",
+          "file": "src/mock_file_9.ts",
+          "line": 50
+        },
+        {
+          "id": "god_object_10",
+          "severity": "medium",
+          "description": "Mock god_object finding 10",
+          "file": "src/mock_file_10.ts",
+          "line": 55
+        },
+        {
+          "id": "god_object_11",
+          "severity": "medium",
+          "description": "Mock god_object finding 11",
+          "file": "src/mock_file_11.ts",
+          "line": 60
+        },
+        {
+          "id": "god_object_12",
+          "severity": "medium",
+          "description": "Mock god_object finding 12",
+          "file": "src/mock_file_12.ts",
+          "line": 65
+        }
+      ]
+    },
+    "magic_values": {
+      "success": true,
+      "execution_time": 8.2,
+      "findings_count": 34,
+      "findings": [
+        {
+          "id": "magic_values_1",
+          "severity": "medium",
+          "description": "Mock magic_values finding 1",
+          "file": "src/mock_file_1.ts",
+          "line": 10
+        },
+        {
+          "id": "magic_values_2",
+          "severity": "medium",
+          "description": "Mock magic_values finding 2",
+          "file": "src/mock_file_2.ts",
+          "line": 15
+        },
+        {
+          "id": "magic_values_3",
+          "severity": "medium",
+          "description": "Mock magic_values finding 3",
+          "file": "src/mock_file_3.ts",
+          "line": 20
+        },
+        {
+          "id": "magic_values_4",
+          "severity": "medium",
+          "description": "Mock magic_values finding 4",
+          "file": "src/mock_file_4.ts",
+          "line": 25
+        },
+        {
+          "id": "magic_values_5",
+          "severity": "medium",
+          "description": "Mock magic_values finding 5",
+          "file": "src/mock_file_5.ts",
+          "line": 30
+        },
+        {
+          "id": "magic_values_6",
+          "severity": "medium",
+          "description": "Mock magic_values finding 6",
+          "file": "src/mock_file_6.ts",
+          "line": 35
+        },
+        {
+          "id": "magic_values_7",
+          "severity": "medium",
+          "description": "Mock magic_values finding 7",
+          "file": "src/mock_file_7.ts",
+          "line": 40
+        },
+        {
+          "id": "magic_values_8",
+          "severity": "medium",
+          "description": "Mock magic_values finding 8",
+          "file": "src/mock_file_8.ts",
+          "line": 45
+        },
+        {
+          "id": "magic_values_9",
+          "severity": "medium",
+          "description": "Mock magic_values finding 9",
+          "file": "src/mock_file_9.ts",
+          "line": 50
+        },
+        {
+          "id": "magic_values_10",
+          "severity": "medium",
+          "description": "Mock magic_values finding 10",
+          "file": "src/mock_file_10.ts",
+          "line": 55
+        },
+        {
+          "id": "magic_values_11",
+          "severity": "medium",
+          "description": "Mock magic_values finding 11",
+          "file": "src/mock_file_11.ts",
+          "line": 60
+        },
+        {
+          "id": "magic_values_12",
+          "severity": "medium",
+          "description": "Mock magic_values finding 12",
+          "file": "src/mock_file_12.ts",
+          "line": 65
+        },
+        {
+          "id": "magic_values_13",
+          "severity": "medium",
+          "description": "Mock magic_values finding 13",
+          "file": "src/mock_file_13.ts",
+          "line": 70
+        },
+        {
+          "id": "magic_values_14",
+          "severity": "medium",
+          "description": "Mock magic_values finding 14",
+          "file": "src/mock_file_14.ts",
+          "line": 75
+        },
+        {
+          "id": "magic_values_15",
+          "severity": "medium",
+          "description": "Mock magic_values finding 15",
+          "file": "src/mock_file_15.ts",
+          "line": 80
+        },
+        {
+          "id": "magic_values_16",
+          "severity": "medium",
+          "description": "Mock magic_values finding 16",
+          "file": "src/mock_file_16.ts",
+          "line": 85
+        },
+        {
+          "id": "magic_values_17",
+          "severity": "medium",
+          "description": "Mock magic_values finding 17",
+          "file": "src/mock_file_17.ts",
+          "line": 90
+        },
+        {
+          "id": "magic_values_18",
+          "severity": "medium",
+          "description": "Mock magic_values finding 18",
+          "file": "src/mock_file_18.ts",
+          "line": 95
+        },
+        {
+          "id": "magic_values_19",
+          "severity": "medium",
+          "description": "Mock magic_values finding 19",
+          "file": "src/mock_file_19.ts",
+          "line": 100
+        },
+        {
+          "id": "magic_values_20",
+          "severity": "medium",
+          "description": "Mock magic_values finding 20",
+          "file": "src/mock_file_20.ts",
+          "line": 105
+        },
+        {
+          "id": "magic_values_21",
+          "severity": "medium",
+          "description": "Mock magic_values finding 21",
+          "file": "src/mock_file_21.ts",
+          "line": 110
+        },
+        {
+          "id": "magic_values_22",
+          "severity": "medium",
+          "description": "Mock magic_values finding 22",
+          "file": "src/mock_file_22.ts",
+          "line": 115
+        },
+        {
+          "id": "magic_values_23",
+          "severity": "medium",
+          "description": "Mock magic_values finding 23",
+          "file": "src/mock_file_23.ts",
+          "line": 120
+        },
+        {
+          "id": "magic_values_24",
+          "severity": "medium",
+          "description": "Mock magic_values finding 24",
+          "file": "src/mock_file_24.ts",
+          "line": 125
+        },
+        {
+          "id": "magic_values_25",
+          "severity": "medium",
+          "description": "Mock magic_values finding 25",
+          "file": "src/mock_file_25.ts",
+          "line": 130
+        },
+        {
+          "id": "magic_values_26",
+          "severity": "medium",
+          "description": "Mock magic_values finding 26",
+          "file": "src/mock_file_26.ts",
+          "line": 135
+        },
+        {
+          "id": "magic_values_27",
+          "severity": "medium",
+          "description": "Mock magic_values finding 27",
+          "file": "src/mock_file_27.ts",
+          "line": 140
+        },
+        {
+          "id": "magic_values_28",
+          "severity": "medium",
+          "description": "Mock magic_values finding 28",
+          "file": "src/mock_file_28.ts",
+          "line": 145
+        },
+        {
+          "id": "magic_values_29",
+          "severity": "medium",
+          "description": "Mock magic_values finding 29",
+          "file": "src/mock_file_29.ts",
+          "line": 150
+        },
+        {
+          "id": "magic_values_30",
+          "severity": "medium",
+          "description": "Mock magic_values finding 30",
+          "file": "src/mock_file_30.ts",
+          "line": 155
+        },
+        {
+          "id": "magic_values_31",
+          "severity": "medium",
+          "description": "Mock magic_values finding 31",
+          "file": "src/mock_file_31.ts",
+          "line": 160
+        },
+        {
+          "id": "magic_values_32",
+          "severity": "medium",
+          "description": "Mock magic_values finding 32",
+          "file": "src/mock_file_32.ts",
+          "line": 165
+        },
+        {
+          "id": "magic_values_33",
+          "severity": "medium",
+          "description": "Mock magic_values finding 33",
+          "file": "src/mock_file_33.ts",
+          "line": 170
+        },
+        {
+          "id": "magic_values_34",
+          "severity": "medium",
+          "description": "Mock magic_values finding 34",
+          "file": "src/mock_file_34.ts",
+          "line": 175
+        }
+      ]
+    },
+    "cyclic_dependencies": {
+      "success": true,
+      "execution_time": 12.6,
+      "findings_count": 3,
+      "findings": [
+        {
+          "id": "cyclic_dependencies_1",
+          "severity": "medium",
+          "description": "Mock cyclic_dependencies finding 1",
+          "file": "src/mock_file_1.ts",
+          "line": 10
+        },
+        {
+          "id": "cyclic_dependencies_2",
+          "severity": "medium",
+          "description": "Mock cyclic_dependencies finding 2",
+          "file": "src/mock_file_2.ts",
+          "line": 15
+        },
+        {
+          "id": "cyclic_dependencies_3",
+          "severity": "medium",
+          "description": "Mock cyclic_dependencies finding 3",
+          "file": "src/mock_file_3.ts",
+          "line": 20
+        }
+      ]
+    },
+    "tight_coupling": {
+      "success": true,
+      "execution_time": 15.8,
+      "findings_count": 18,
+      "findings": [
+        {
+          "id": "tight_coupling_1",
+          "severity": "medium",
+          "description": "Mock tight_coupling finding 1",
+          "file": "src/mock_file_1.ts",
+          "line": 10
+        },
+        {
+          "id": "tight_coupling_2",
+          "severity": "medium",
+          "description": "Mock tight_coupling finding 2",
+          "file": "src/mock_file_2.ts",
+          "line": 15
+        },
+        {
+          "id": "tight_coupling_3",
+          "severity": "medium",
+          "description": "Mock tight_coupling finding 3",
+          "file": "src/mock_file_3.ts",
+          "line": 20
+        },
+        {
+          "id": "tight_coupling_4",
+          "severity": "medium",
+          "description": "Mock tight_coupling finding 4",
+          "file": "src/mock_file_4.ts",
+          "line": 25
+        },
+        {
+          "id": "tight_coupling_5",
+          "severity": "medium",
+          "description": "Mock tight_coupling finding 5",
+          "file": "src/mock_file_5.ts",
+          "line": 30
+        },
+        {
+          "id": "tight_coupling_6",
+          "severity": "medium",
+          "description": "Mock tight_coupling finding 6",
+          "file": "src/mock_file_6.ts",
+          "line": 35
+        },
+        {
+          "id": "tight_coupling_7",
+          "severity": "medium",
+          "description": "Mock tight_coupling finding 7",
+          "file": "src/mock_file_7.ts",
+          "line": 40
+        },
+        {
+          "id": "tight_coupling_8",
+          "severity": "medium",
+          "description": "Mock tight_coupling finding 8",
+          "file": "src/mock_file_8.ts",
+          "line": 45
+        },
+        {
+          "id": "tight_coupling_9",
+          "severity": "medium",
+          "description": "Mock tight_coupling finding 9",
+          "file": "src/mock_file_9.ts",
+          "line": 50
+        },
+        {
+          "id": "tight_coupling_10",
+          "severity": "medium",
+          "description": "Mock tight_coupling finding 10",
+          "file": "src/mock_file_10.ts",
+          "line": 55
+        },
+        {
+          "id": "tight_coupling_11",
+          "severity": "medium",
+          "description": "Mock tight_coupling finding 11",
+          "file": "src/mock_file_11.ts",
+          "line": 60
+        },
+        {
+          "id": "tight_coupling_12",
+          "severity": "medium",
+          "description": "Mock tight_coupling finding 12",
+          "file": "src/mock_file_12.ts",
+          "line": 65
+        },
+        {
+          "id": "tight_coupling_13",
+          "severity": "medium",
+          "description": "Mock tight_coupling finding 13",
+          "file": "src/mock_file_13.ts",
+          "line": 70
+        },
+        {
+          "id": "tight_coupling_14",
+          "severity": "medium",
+          "description": "Mock tight_coupling finding 14",
+          "file": "src/mock_file_14.ts",
+          "line": 75
+        },
+        {
+          "id": "tight_coupling_15",
+          "severity": "medium",
+          "description": "Mock tight_coupling finding 15",
+          "file": "src/mock_file_15.ts",
+          "line": 80
+        },
+        {
+          "id": "tight_coupling_16",
+          "severity": "medium",
+          "description": "Mock tight_coupling finding 16",
+          "file": "src/mock_file_16.ts",
+          "line": 85
+        },
+        {
+          "id": "tight_coupling_17",
+          "severity": "medium",
+          "description": "Mock tight_coupling finding 17",
+          "file": "src/mock_file_17.ts",
+          "line": 90
+        },
+        {
+          "id": "tight_coupling_18",
+          "severity": "medium",
+          "description": "Mock tight_coupling finding 18",
+          "file": "src/mock_file_18.ts",
+          "line": 95
+        }
+      ]
+    },
+    "long_methods": {
+      "success": true,
+      "execution_time": 9.3,
+      "findings_count": 15,
+      "findings": [
+        {
+          "id": "long_methods_1",
+          "severity": "medium",
+          "description": "Mock long_methods finding 1",
+          "file": "src/mock_file_1.ts",
+          "line": 10
+        },
+        {
+          "id": "long_methods_2",
+          "severity": "medium",
+          "description": "Mock long_methods finding 2",
+          "file": "src/mock_file_2.ts",
+          "line": 15
+        },
+        {
+          "id": "long_methods_3",
+          "severity": "medium",
+          "description": "Mock long_methods finding 3",
+          "file": "src/mock_file_3.ts",
+          "line": 20
+        },
+        {
+          "id": "long_methods_4",
+          "severity": "medium",
+          "description": "Mock long_methods finding 4",
+          "file": "src/mock_file_4.ts",
+          "line": 25
+        },
+        {
+          "id": "long_methods_5",
+          "severity": "medium",
+          "description": "Mock long_methods finding 5",
+          "file": "src/mock_file_5.ts",
+          "line": 30
+        },
+        {
+          "id": "long_methods_6",
+          "severity": "medium",
+          "description": "Mock long_methods finding 6",
+          "file": "src/mock_file_6.ts",
+          "line": 35
+        },
+        {
+          "id": "long_methods_7",
+          "severity": "medium",
+          "description": "Mock long_methods finding 7",
+          "file": "src/mock_file_7.ts",
+          "line": 40
+        },
+        {
+          "id": "long_methods_8",
+          "severity": "medium",
+          "description": "Mock long_methods finding 8",
+          "file": "src/mock_file_8.ts",
+          "line": 45
+        },
+        {
+          "id": "long_methods_9",
+          "severity": "medium",
+          "description": "Mock long_methods finding 9",
+          "file": "src/mock_file_9.ts",
+          "line": 50
+        },
+        {
+          "id": "long_methods_10",
+          "severity": "medium",
+          "description": "Mock long_methods finding 10",
+          "file": "src/mock_file_10.ts",
+          "line": 55
+        },
+        {
+          "id": "long_methods_11",
+          "severity": "medium",
+          "description": "Mock long_methods finding 11",
+          "file": "src/mock_file_11.ts",
+          "line": 60
+        },
+        {
+          "id": "long_methods_12",
+          "severity": "medium",
+          "description": "Mock long_methods finding 12",
+          "file": "src/mock_file_12.ts",
+          "line": 65
+        },
+        {
+          "id": "long_methods_13",
+          "severity": "medium",
+          "description": "Mock long_methods finding 13",
+          "file": "src/mock_file_13.ts",
+          "line": 70
+        },
+        {
+          "id": "long_methods_14",
+          "severity": "medium",
+          "description": "Mock long_methods finding 14",
+          "file": "src/mock_file_14.ts",
+          "line": 75
+        },
+        {
+          "id": "long_methods_15",
+          "severity": "medium",
+          "description": "Mock long_methods finding 15",
+          "file": "src/mock_file_15.ts",
+          "line": 80
+        }
+      ]
+    },
+    "code_duplication": {
+      "success": true,
+      "execution_time": 21.4,
+      "findings_count": 7,
+      "findings": [
+        {
+          "id": "code_duplication_1",
+          "severity": "medium",
+          "description": "Mock code_duplication finding 1",
+          "file": "src/mock_file_1.ts",
+          "line": 10
+        },
+        {
+          "id": "code_duplication_2",
+          "severity": "medium",
+          "description": "Mock code_duplication finding 2",
+          "file": "src/mock_file_2.ts",
+          "line": 15
+        },
+        {
+          "id": "code_duplication_3",
+          "severity": "medium",
+          "description": "Mock code_duplication finding 3",
+          "file": "src/mock_file_3.ts",
+          "line": 20
+        },
+        {
+          "id": "code_duplication_4",
+          "severity": "medium",
+          "description": "Mock code_duplication finding 4",
+          "file": "src/mock_file_4.ts",
+          "line": 25
+        },
+        {
+          "id": "code_duplication_5",
+          "severity": "medium",
+          "description": "Mock code_duplication finding 5",
+          "file": "src/mock_file_5.ts",
+          "line": 30
+        },
+        {
+          "id": "code_duplication_6",
+          "severity": "medium",
+          "description": "Mock code_duplication finding 6",
+          "file": "src/mock_file_6.ts",
+          "line": 35
+        },
+        {
+          "id": "code_duplication_7",
+          "severity": "medium",
+          "description": "Mock code_duplication finding 7",
+          "file": "src/mock_file_7.ts",
+          "line": 40
+        }
+      ]
+    }
+  }
+}

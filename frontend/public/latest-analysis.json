@@ -1,0 +1,266 @@
+{
+  "issues": [
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "codeSnippet": "pub struct GodObject {\n    field1: String,\n    field2: i32,\n    field3: Vec<String>,\n    field4: HashMap<String, i32>,\n    field5: bool,\n    field6: f64,\n    field7: Option<String>,\n    field8: Result<i32, String>,\n    field9: Box<dyn std::fmt::Display>,\n    field10: Arc<Mutex<Vec<String>>>,\n    field11: Rc<RefCell<HashMap<String, i32>>>,\n    field12: BTreeMap<String, Vec<i32>>,\n    field13: HashSet<String>,\n    field14: VecDeque<i32>,\n    field15: BinaryHeap<i32>,\n    field16: LinkedList<String>,\n}",
+      "description": "God Object detected: 'GodObject' has 21 methods and 16 fields. (Thresholds: methods>5, fields>8) LCOM4 score: 1 (>1 indicates low cohesion) Methods: 0 trivial, 0 complex",
+      "endLine": 4,
+      "filePath": "/tmp/test_code.rs",
+      "severity": "Critical",
+      "startLine": 4
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "method1",
+      "description": "Potentially dead code: function 'method1' is not used in this file (confidence: 60.0%)",
+      "endLine": 24,
+      "filePath": "/tmp/test_code.rs",
+      "severity": "Medium",
+      "startLine": 24
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "method2",
+      "description": "Potentially dead code: function 'method2' is not used in this file (confidence: 60.0%)",
+      "endLine": 25,
+      "filePath": "/tmp/test_code.rs",
+      "severity": "Medium",
+      "startLine": 25
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "method3",
+      "description": "Potentially dead code: function 'method3' is not used in this file (confidence: 60.0%)",
+      "endLine": 26,
+      "filePath": "/tmp/test_code.rs",
+      "severity": "Medium",
+      "startLine": 26
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "method4",
+      "description": "Potentially dead code: function 'method4' is not used in this file (confidence: 60.0%)",
+      "endLine": 27,
+      "filePath": "/tmp/test_code.rs",
+      "severity": "Medium",
+      "startLine": 27
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "method5",
+      "description": "Potentially dead code: function 'method5' is not used in this file (confidence: 60.0%)",
+      "endLine": 28,
+      "filePath": "/tmp/test_code.rs",
+      "severity": "Medium",
+      "startLine": 28
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "method6",
+      "description": "Potentially dead code: function 'method6' is not used in this file (confidence: 60.0%)",
+      "endLine": 29,
+      "filePath": "/tmp/test_code.rs",
+      "severity": "Medium",
+      "startLine": 29
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "method7",
+      "description": "Potentially dead code: function 'method7' is not used in this file (confidence: 60.0%)",
+      "endLine": 30,
+      "filePath": "/tmp/test_code.rs",
+      "severity": "Medium",
+      "startLine": 30
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "method8",
+      "description": "Potentially dead code: function 'method8' is not used in this file (confidence: 60.0%)",
+      "endLine": 31,
+      "filePath": "/tmp/test_code.rs",
+      "severity": "Medium",
+      "startLine": 31
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "method9",
+      "description": "Potentially dead code: function 'method9' is not used in this file (confidence: 60.0%)",
+      "endLine": 32,
+      "filePath": "/tmp/test_code.rs",
+      "severity": "Medium",
+      "startLine": 32
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "method10",
+      "description": "Potentially dead code: function 'method10' is not used in this file (confidence: 60.0%)",
+      "endLine": 33,
+      "filePath": "/tmp/test_code.rs",
+      "severity": "Medium",
+      "startLine": 33
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "method11",
+      "description": "Potentially dead code: function 'method11' is not used in this file (confidence: 60.0%)",
+      "endLine": 34,
+      "filePath": "/tmp/test_code.rs",
+      "severity": "Medium",
+      "startLine": 34
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "method12",
+      "description": "Potentially dead code: function 'method12' is not used in this file (confidence: 60.0%)",
+      "endLine": 35,
+      "filePath": "/tmp/test_code.rs",
+      "severity": "Medium",
+      "startLine": 35
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "method13",
+      "description": "Potentially dead code: function 'method13' is not used in this file (confidence: 60.0%)",
+      "endLine": 36,
+      "filePath": "/tmp/test_code.rs",
+      "severity": "Medium",
+      "startLine": 36
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "method14",
+      "description": "Potentially dead code: function 'method14' is not used in this file (confidence: 60.0%)",
+      "endLine": 37,
+      "filePath": "/tmp/test_code.rs",
+      "severity": "Medium",
+      "startLine": 37
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "method15",
+      "description": "Potentially dead code: function 'method15' is not used in this file (confidence: 60.0%)",
+      "endLine": 38,
+      "filePath": "/tmp/test_code.rs",
+      "severity": "Medium",
+      "startLine": 38
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "method16",
+      "description": "Potentially dead code: function 'method16' is not used in this file (confidence: 60.0%)",
+      "endLine": 39,
+      "filePath": "/tmp/test_code.rs",
+      "severity": "Medium",
+      "startLine": 39
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "method17",
+      "description": "Potentially dead code: function 'method17' is not used in this file (confidence: 60.0%)",
+      "endLine": 40,
+      "filePath": "/tmp/test_code.rs",
+      "severity": "Medium",
+      "startLine": 40
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "method18",
+      "description": "Potentially dead code: function 'method18' is not used in this file (confidence: 60.0%)",
+      "endLine": 41,
+      "filePath": "/tmp/test_code.rs",
+      "severity": "Medium",
+      "startLine": 41
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "method19",
+      "description": "Potentially dead code: function 'method19' is not used in this file (confidence: 60.0%)",
+      "endLine": 42,
+      "filePath": "/tmp/test_code.rs",
+      "severity": "Medium",
+      "startLine": 42
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "method20",
+      "description": "Potentially dead code: function 'method20' is not used in this file (confidence: 60.0%)",
+      "endLine": 43,
+      "filePath": "/tmp/test_code.rs",
+      "severity": "Medium",
+      "startLine": 43
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "method21",
+      "description": "Potentially dead code: function 'method21' is not used in this file (confidence: 60.0%)",
+      "endLine": 44,
+      "filePath": "/tmp/test_code.rs",
+      "severity": "Medium",
+      "startLine": 44
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "unused_function",
+      "description": "Potentially dead code: function 'unused_function' is not used in this file (confidence: 90.0%)",
+      "endLine": 47,
+      "filePath": "/tmp/test_code.rs",
+      "severity": "High",
+      "startLine": 47
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "another_unused_function",
+      "description": "Potentially dead code: function 'another_unused_function' is not used in this file (confidence: 90.0%)",
+      "endLine": 51,
+      "filePath": "/tmp/test_code.rs",
+      "severity": "High",
+      "startLine": 51
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "GodObject",
+      "description": "Potentially dead code: struct 'GodObject' is not used in this file (confidence: 60.0%)",
+      "endLine": 4,
+      "filePath": "/tmp/test_code.rs",
+      "severity": "Medium",
+      "startLine": 4
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "description": "Component 'caller' has 12 dependencies, which exceeds the critical threshold of 12. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "/tmp/test_code.rs",
+      "severity": "Critical"
+    }
+  ],
+  "metadata": {
+    "codebasePath": "/tmp/test_code.rs",
+    "durationSeconds": 0.0,
+    "timestamp": "2025-08-20T14:37:36.200757503-05:00"
+  }
+}
