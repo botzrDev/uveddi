@@ -41,6 +41,7 @@
 - [Contributing](./04-development/contributing.md)  
 - [Code Review Guidelines](./04-development/code-review-terminology-guidelines.md)
 - [Detector Development Guide](./04-development/detector_development_guide.md)
+- [Security Detector Development](./04-development/security-detector-development.md)
 - [Documentation Style Guide](./04-development/documentation-style-guide.md)
 - [Error Handling Guidelines](./04-development/error-handling-guidelines.md)
 - [Knowledge Plugin Development](./04-development/knowledge-plugin-development-guide.md)
@@ -68,6 +69,8 @@
 - [CLI Commands](./07-reference/cli-commands.md)
 - [Configuration Options](./07-reference/configuration-options.md)
 - [Error Codes](./07-reference/error-codes.md)
+- [Security API Reference](./07-reference/security-api-reference.md)
+- [Security Detector API Reference](./07-reference/security-detector-api-reference.md)
 - [Testing Strategy](./07-reference/testing_strategy.md)
 
 # Operations
@@ -77,6 +80,7 @@
 
 # Security
 - [Threat Model](./11-security/threat-model.md)
+- [Security Detector](./11-security/security-detector.md)
 - [Hardening Guide](./11-security/SECURITY_HARDENING_GUIDE.md)
 - [Compliance Checklist](./11-security/SECURITY_COMPLIANCE_CHECKLIST.md)
 - [Incident Response](./11-security/INCIDENT_RESPONSE_RUNBOOKS.md)
