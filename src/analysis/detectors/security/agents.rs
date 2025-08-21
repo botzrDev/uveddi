@@ -94,7 +94,7 @@ pub enum AgentMessage {
 }
 
 /// Types of security analysis tasks
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum TaskType {
     TaintAnalysis,
     ConfigurationAnalysis,
@@ -259,9 +259,13 @@ impl SecurityOrchestrator {
         let mut agent_results = Vec::new();
         for handle in task_handles {
             match handle.await {
-                Ok(result) => agent_results.push(result),
-                Err(e) => {
+                Ok(Ok(result)) => agent_results.push(result),
+                Ok(Err(e)) => {
                     warn!("Subtask failed: {}", e);
+                    // Continue with other subtasks
+                }
+                Err(e) => {
+                    warn!("Task handle join failed: {}", e);
                     // Continue with other subtasks
                 }
             }
@@ -330,12 +334,11 @@ impl SecurityOrchestrator {
         
         matches!(file_name, 
             "config.toml" | "Cargo.toml" | "package.json" | 
-            "requirements.txt" | "settings.py" | "Dockerfile" |
-            file_name if file_name.ends_with(".toml") || 
-                         file_name.ends_with(".json") || 
-                         file_name.ends_with(".yml") ||
-                         file_name.ends_with(".yaml")
-        )
+            "requirements.txt" | "settings.py" | "Dockerfile"
+        ) || file_name.ends_with(".toml") || 
+             file_name.ends_with(".json") || 
+             file_name.ends_with(".yml") ||
+             file_name.ends_with(".yaml")
     }
 
     fn is_dependency_file(&self, context: &SecurityContext) -> bool {
@@ -369,34 +372,33 @@ impl SecurityOrchestrator {
 
         // Create and spawn the task
         let task_id = subtask.task_id.clone();
-        let agents = &self.agents;
         
         let handle = match subtask.task_type {
             TaskType::TaintAnalysis => {
-                if let Some(agent) = agents.get("TaintAgent") {
-                    let agent = agent.clone();
+                if let Some(agent) = self.agents.get("TaintAgent") {
+                    let agent = agent.clone_box();
                     let context = subtask.context.clone();
                     tokio::spawn(async move {
                         agent.execute_task(task_id, context).await
                     })
                 } else {
-                    return Err(AnalysisError::AgentError("TaintAgent not available".to_string()));
+                    return Err(AnalysisError::DetectionError("TaintAgent not available".to_string()));
                 }
             }
             TaskType::ConfigurationAnalysis => {
-                if let Some(agent) = agents.get("ConfigAgent") {
-                    let agent = agent.clone();
+                if let Some(agent) = self.agents.get("ConfigAgent") {
+                    let agent = agent.clone_box();
                     let context = subtask.context.clone();
                     tokio::spawn(async move {
                         agent.execute_task(task_id, context).await
                     })
                 } else {
-                    return Err(AnalysisError::AgentError("ConfigAgent not available".to_string()));
+                    return Err(AnalysisError::DetectionError("ConfigAgent not available".to_string()));
                 }
             }
             // Add other task types...
             _ => {
-                return Err(AnalysisError::AgentError(format!("Unsupported task type: {:?}", subtask.task_type)));
+                return Err(AnalysisError::DetectionError(format!("Unsupported task type: {:?}", subtask.task_type)));
             }
         };
 
@@ -503,6 +505,7 @@ pub trait SecurityAgent: Send + Sync {
     async fn execute_task(&self, task_id: String, context: SecurityContext) -> Result<AgentResult, AnalysisError>;
     fn get_agent_id(&self) -> &str;
     fn get_capabilities(&self) -> Vec<TaskType>;
+    fn clone_box(&self) -> Box<dyn SecurityAgent>;
 }
 
 /// Taint Analysis Agent - specialized for data flow analysis
@@ -554,6 +557,10 @@ impl SecurityAgent for TaintAnalysisAgent {
     fn get_capabilities(&self) -> Vec<TaskType> {
         vec![TaskType::TaintAnalysis]
     }
+
+    fn clone_box(&self) -> Box<dyn SecurityAgent> {
+        Box::new(self.clone())
+    }
 }
 
 /// Configuration Analysis Agent - specialized for configuration file security
@@ -596,6 +603,10 @@ impl SecurityAgent for ConfigAnalysisAgent {
     fn get_capabilities(&self) -> Vec<TaskType> {
         vec![TaskType::ConfigurationAnalysis]
     }
+
+    fn clone_box(&self) -> Box<dyn SecurityAgent> {
+        Box::new(self.clone())
+    }
 }
 
 /// Dependency Analysis Agent - specialized for Software Composition Analysis
@@ -637,6 +648,10 @@ impl SecurityAgent for DependencyAgent {
 
     fn get_capabilities(&self) -> Vec<TaskType> {
         vec![TaskType::DependencyAnalysis]
+    }
+
+    fn clone_box(&self) -> Box<dyn SecurityAgent> {
+        Box::new(self.clone())
     }
 }
 
@@ -681,6 +696,10 @@ impl SecurityAgent for ValidationAgent {
 
     fn get_capabilities(&self) -> Vec<TaskType> {
         vec![TaskType::ValidationAnalysis]
+    }
+
+    fn clone_box(&self) -> Box<dyn SecurityAgent> {
+        Box::new(self.clone())
     }
 }
 

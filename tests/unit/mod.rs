@@ -2,6 +2,7 @@
 
 pub mod core_analysis;
 pub mod monitoring_comprehensive;
+pub mod security;
 
 // Common test utilities for unit tests
 pub mod test_utils {

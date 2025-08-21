@@ -101,15 +101,15 @@ impl DeterministicPatternMatcher {
             },
         ];
 
-        self.patterns.insert(SourceLanguage::JavaScript, js_patterns);
+        self.patterns.insert(SourceLanguage::JavaScript, js_patterns.clone());
         self.patterns.insert(SourceLanguage::TypeScript, js_patterns);
     }
 
     pub async fn analyze(&self, file: &ParsedFile) -> Result<Vec<SecurityIssue>, AnalysisError> {
-        debug!("Running deterministic pattern matching on: {}", file.path.display());
+        debug!("Running deterministic pattern matching on: {}", file.file_path.display());
 
-        let content = std::fs::read_to_string(&file.path)
-            .map_err(|e| AnalysisError::IoError(e.to_string()))?;
+        let content = std::fs::read_to_string(&**file.file_path)
+            .map_err(|e| AnalysisError::file_system_error(file.file_path.to_string_lossy().to_string(), e))?;
 
         let mut issues = Vec::new();
 
@@ -118,7 +118,7 @@ impl DeterministicPatternMatcher {
                 for pattern in patterns {
                     if line.contains(&pattern.pattern) {
                         let location = SecurityLocation::new(
-                            file.path.clone(),
+                            file.file_path.as_ref().to_path_buf(),
                             line_num as i32 + 1,
                             line_num as i32 + 1,
                         );
@@ -230,15 +230,15 @@ impl ConfigFileAnalyzer {
     }
 
     pub async fn analyze(&self, file: &ParsedFile) -> Result<Vec<SecurityIssue>, AnalysisError> {
-        debug!("Running config file analysis on: {}", file.path.display());
+        debug!("Running config file analysis on: {}", file.file_path.display());
 
-        let filename = file.path
+        let filename = file.file_path
             .file_name()
             .and_then(|n| n.to_str())
             .unwrap_or("");
 
-        let content = std::fs::read_to_string(&file.path)
-            .map_err(|e| AnalysisError::IoError(e.to_string()))?;
+        let content = std::fs::read_to_string(&**file.file_path)
+            .map_err(|e| AnalysisError::file_system_error(file.file_path.to_string_lossy().to_string(), e))?;
 
         let mut issues = Vec::new();
 
@@ -250,7 +250,7 @@ impl ConfigFileAnalyzer {
                         for dangerous_value in &pattern.dangerous_values {
                             if line.contains(dangerous_value) {
                                 let location = SecurityLocation::new(
-                                    file.path.clone(),
+                                    file.file_path.as_ref().to_path_buf(),
                                     line_num as i32 + 1,
                                     line_num as i32 + 1,
                                 );
@@ -292,9 +292,9 @@ impl SoftwareCompositionAnalyzer {
     }
 
     pub async fn analyze(&self, file: &ParsedFile) -> Result<Vec<SecurityIssue>, AnalysisError> {
-        debug!("Running SCA analysis on: {}", file.path.display());
+        debug!("Running SCA analysis on: {}", file.file_path.display());
 
-        let filename = file.path
+        let filename = file.file_path
             .file_name()
             .and_then(|n| n.to_str())
             .unwrap_or("");
@@ -439,10 +439,16 @@ mod tests {
         let matcher = DeterministicPatternMatcher::new();
         
         // Create a test file with a vulnerable pattern
+        use std::sync::Arc;
+        use crate::analysis::cache::wrappers::ArchivableSystemTime;
+        
         let test_file = ParsedFile {
-            path: PathBuf::from("test.py"),
+            file_path: Arc::new(PathBuf::from("test.py")),
             language: SourceLanguage::Python,
-            ast: None,
+            tree: None,
+            source: Arc::new(String::new()),
+            custom_ast: Arc::new(None),
+            modified_at: ArchivableSystemTime::now(),
         };
 
         // This would need a mock file system or actual test file

@@ -210,7 +210,7 @@ impl OwaspTop10Detector {
 
     /// Analyze a parsed file for OWASP Top 10 vulnerabilities
     pub async fn analyze_file(&self, file: &ParsedFile) -> Result<Vec<OwaspVulnerability>, AnalysisError> {
-        info!("Running OWASP Top 10 analysis on: {}", file.path.display());
+        info!("Running OWASP Top 10 analysis on: {}", file.file_path.display());
 
         let mut all_vulnerabilities = Vec::new();
 
@@ -309,14 +309,14 @@ impl OwaspCategoryDetector for BrokenAccessControlDetector {
         let mut vulnerabilities = Vec::new();
         
         if let Some(patterns) = self.patterns.get(&file.language) {
-            let content = std::fs::read_to_string(&file.path)
-                .map_err(|e| AnalysisError::IoError(e.to_string()))?;
+            let content = std::fs::read_to_string(&**file.file_path)
+                .map_err(|e| AnalysisError::file_system_error(file.file_path.to_string_lossy().to_string(), e))?;
             
             for (line_num, line) in content.lines().enumerate() {
                 for pattern in patterns {
                     if line.contains(&pattern.pattern) {
                         let location = SecurityLocation::new(
-                            file.path.clone(),
+                            file.file_path.as_ref().to_path_buf(),
                             line_num as i32 + 1,
                             line_num as i32 + 1,
                         );
@@ -413,14 +413,14 @@ impl OwaspCategoryDetector for CryptographicFailuresDetector {
         let mut vulnerabilities = Vec::new();
         
         if let Some(patterns) = self.crypto_patterns.get(&file.language) {
-            let content = std::fs::read_to_string(&file.path)
-                .map_err(|e| AnalysisError::IoError(e.to_string()))?;
+            let content = std::fs::read_to_string(&**file.file_path)
+                .map_err(|e| AnalysisError::file_system_error(file.file_path.to_string_lossy().to_string(), e))?;
             
             for (line_num, line) in content.lines().enumerate() {
                 for pattern in patterns {
                     if line.contains(&pattern.pattern) {
                         let location = SecurityLocation::new(
-                            file.path.clone(),
+                            file.file_path.as_ref().to_path_buf(),
                             line_num as i32 + 1,
                             line_num as i32 + 1,
                         );
@@ -500,14 +500,14 @@ impl OwaspCategoryDetector for InjectionDetector {
         let mut vulnerabilities = Vec::new();
         
         if let Some(patterns) = self.injection_patterns.get(&file.language) {
-            let content = std::fs::read_to_string(&file.path)
-                .map_err(|e| AnalysisError::IoError(e.to_string()))?;
+            let content = std::fs::read_to_string(&**file.file_path)
+                .map_err(|e| AnalysisError::file_system_error(file.file_path.to_string_lossy().to_string(), e))?;
             
             for (line_num, line) in content.lines().enumerate() {
                 for pattern in patterns {
                     if line.contains(&pattern.pattern) {
                         let location = SecurityLocation::new(
-                            file.path.clone(),
+                            file.file_path.as_ref().to_path_buf(),
                             line_num as i32 + 1,
                             line_num as i32 + 1,
                         );

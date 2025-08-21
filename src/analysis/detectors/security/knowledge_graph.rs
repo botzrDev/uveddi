@@ -53,7 +53,7 @@ impl SecurityKnowledgeGraph {
 
     /// Add a code entity to the knowledge graph
     pub async fn add_code_entity(&mut self, entity: CodeEntity) -> Result<(), AnalysisError> {
-        debug!("Adding code entity: {} ({})", entity.name, entity.entity_type);
+        debug!("Adding code entity: {} ({:?})", entity.name, entity.entity_type);
 
         // Add to structural graph
         self.structural_graph.add_entity(entity.clone()).await?;

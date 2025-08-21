@@ -10,7 +10,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 /// Security vulnerability severity levels following industry standards
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum SecuritySeverity {
     /// Informational - no immediate security impact
     Info,
@@ -216,7 +216,7 @@ impl SecurityLocation {
 }
 
 /// Metadata about a vulnerability including CWE mapping and references
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct VulnerabilityMetadata {
     pub cwe_id: Option<String>,
     pub cvss_score: Option<f64>,

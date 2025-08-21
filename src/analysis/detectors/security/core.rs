@@ -43,18 +43,24 @@ impl SecurityContext {
     }
 
     pub fn from_parsed_file(file: &ParsedFile) -> Result<Self, AnalysisError> {
-        let content = std::fs::read_to_string(&file.path)
-            .map_err(|e| AnalysisError::IoError(format!("Failed to read file {}: {}", file.path.display(), e)))?;
+        let content = std::fs::read_to_string(&**file.file_path)
+            .map_err(|e| AnalysisError::file_system_error(format!("Failed to read file {}: {}", file.file_path.display(), e), e))?;
 
-        Ok(Self::new(file.path.clone(), content, file.language))
+        Ok(Self::new(file.file_path.as_ref().to_path_buf(), content, file.language))
     }
 
     pub fn to_parsed_file(&self) -> Result<ParsedFile, AnalysisError> {
         // This is a simplified conversion - in a real implementation, we'd need to parse the AST
+        use std::sync::Arc;
+        use crate::analysis::cache::wrappers::ArchivableSystemTime;
+        
         Ok(ParsedFile {
-            path: self.file_path.clone(),
+            file_path: Arc::new(self.file_path.clone()),
             language: self.language,
-            ast: None, // Would need proper AST parsing here
+            tree: None,
+            source: Arc::new(self.content.clone()),
+            custom_ast: Arc::new(None),
+            modified_at: ArchivableSystemTime::now(),
         })
     }
 
@@ -368,7 +374,7 @@ impl Default for ConfidenceWeights {
 pub struct VulnerabilityDatabase {
     /// Cache of known vulnerabilities
     vulnerability_cache: Arc<HashMap<String, VulnerabilityRecord>>,
-    /// Database connection or API client would go here
+    // Database connection or API client would go here
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -34,7 +34,7 @@ use std::path::PathBuf;
 use tracing::{debug, info, warn};
 
 /// Represents a taint source in the program
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TaintSource {
     /// Unique identifier for this source
     pub id: String,
@@ -82,7 +82,7 @@ impl TaintSource {
 }
 
 /// Represents a taint sink (dangerous operation)
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TaintSink {
     /// Unique identifier for this sink
     pub id: String,
@@ -109,13 +109,14 @@ impl TaintSink {
         vulnerability_type: SecurityIssueType,
         description: String,
     ) -> Self {
+        let severity = vulnerability_type.default_severity();
         Self {
             id,
             pattern,
             language: None,
             vulnerability_type,
             description,
-            severity: vulnerability_type.default_severity(),
+            severity,
             location: None,
             vulnerable_parameters: None,
         }
@@ -138,7 +139,7 @@ impl TaintSink {
 }
 
 /// Represents a sanitization point that cleans tainted data
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct SanitizationPoint {
     /// Unique identifier for this sanitizer
     pub id: String,
@@ -190,7 +191,7 @@ pub struct SourceLocation {
 }
 
 /// Represents a data flow graph node
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct DataFlowNode {
     pub id: String,
     pub node_type: DataFlowNodeType,
@@ -212,7 +213,7 @@ pub enum DataFlowNodeType {
     ArrayAccess(String), // Array element access
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum TaintLevel {
     Clean,      // No taint
     Tainted,    // Fully tainted
@@ -222,7 +223,11 @@ pub enum TaintLevel {
 
 impl TaintLevel {
     pub fn is_dangerous(&self) -> bool {
-        matches!(self, TaintLevel::Tainted | TaintLevel::Partial(level) if *level > 0.5)
+        match self {
+            TaintLevel::Tainted => true,
+            TaintLevel::Partial(level) => *level > 0.5,
+            _ => false,
+        }
     }
 
     pub fn score(&self) -> f64 {
@@ -508,7 +513,7 @@ impl TaintAnalysisEngine {
 
     /// Analyze a parsed file for taint flow vulnerabilities
     pub async fn analyze_file(&self, file: &ParsedFile) -> Result<Vec<SecurityIssue>, AnalysisError> {
-        info!("Starting taint analysis for: {}", file.path.display());
+        info!("Starting taint analysis for: {}", file.file_path.display());
 
         // Build data flow graph from AST
         let data_flow_graph = self.build_data_flow_graph(file)?;
@@ -529,7 +534,7 @@ impl TaintAnalysisEngine {
         
         // This would be implemented with tree-sitter traversal
         // For now, we'll create a simplified implementation
-        debug!("Building data flow graph for {}", file.path.display());
+        debug!("Building data flow graph for {}", file.file_path.display());
         
         // TODO: Implement tree-sitter AST traversal to build actual graph
         // This would involve:
@@ -663,7 +668,7 @@ impl TaintAnalysisEngine {
             
         if let (Some(source), Some(sink)) = (source, sink) {
             let location = SecurityLocation::new(
-                file.path.clone(),
+                file.file_path.as_ref().to_path_buf(),
                 1, // TODO: Get actual line numbers from flow path
                 1,
             );

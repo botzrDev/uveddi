@@ -186,7 +186,7 @@ impl MainSecurityDetector {
         &self,
         file: &ParsedFile,
     ) -> Result<Vec<SecurityIssue>, AnalysisError> {
-        debug!("Analyzing file for security issues: {}", file.path.display());
+        debug!("Analyzing file for security issues: {}", file.file_path.display());
 
         // Create security context from file
         let context = SecurityContext::from_parsed_file(file)?;
@@ -199,13 +199,13 @@ impl MainSecurityDetector {
         for vulnerability in analysis_result.vulnerabilities {
             let security_issue = SecurityIssue::from_vulnerability(
                 vulnerability,
-                &file.path,
+                &file.file_path,
                 file.language,
             )?;
             issues.push(security_issue);
         }
 
-        debug!("Found {} security issues in {}", issues.len(), file.path.display());
+        debug!("Found {} security issues in {}", issues.len(), file.file_path.display());
         Ok(issues)
     }
 
@@ -220,20 +220,20 @@ impl MainSecurityDetector {
             .map(|issue| ArchitecturalIssue {
                 issue_id: None,
                 analysis_run_id: 0, // Will be set by the analysis engine
+                anti_pattern_type_id: 100, // Default security pattern type ID
                 file_path: file_path.to_string_lossy().to_string(),
-                start_line: issue.location.start_line,
-                end_line: issue.location.end_line,
-                start_column: issue.location.start_column.unwrap_or(0),
-                end_column: issue.location.end_column.unwrap_or(0),
-                anti_pattern_type: issue.issue_type.to_string(),
-                title: issue.title,
-                description: issue.description,
-                suggestion: Some(issue.remediation.unwrap_or_default()),
+                start_line: Some(issue.location.start_line),
+                end_line: Some(issue.location.end_line),
+                line_number: Some(issue.location.start_line),
+                column_number: issue.location.start_column,
+                message: issue.title,
+                metadata: serde_json::to_string(&issue.metadata).unwrap_or_default(),
+                detector_name: "SecurityDetector".to_string(),
+                created_at: chrono::Utc::now(),
                 severity: issue.severity.to_string(),
-                confidence_score: Some(issue.confidence_score),
-                language: issue.language.map(|l| l.to_string()),
-                context: Some(serde_json::to_string(&issue.context).unwrap_or_default()),
-                metadata: Some(serde_json::to_string(&issue.metadata).unwrap_or_default()),
+                description: issue.description,
+                code_snippet: None,
+                ai_explanation: issue.remediation,
             })
             .collect()
     }
@@ -245,18 +245,18 @@ impl AnalysisDetector for MainSecurityDetector {
         &self,
         file: &ParsedFile,
     ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
-        info!("Running security analysis on: {}", file.path.display());
+        info!("Running security analysis on: {}", file.file_path.display());
 
         match self.analyze_file(file).await {
             Ok(security_issues) => {
                 let architectural_issues = self.convert_to_architectural_issues(
                     security_issues,
-                    &file.path,
+                    &file.file_path,
                 );
                 
                 info!(
                     "Security analysis completed for {}: {} issues found",
-                    file.path.display(),
+                    file.file_path.display(),
                     architectural_issues.len()
                 );
                 
@@ -265,7 +265,7 @@ impl AnalysisDetector for MainSecurityDetector {
             Err(e) => {
                 error!(
                     "Security analysis failed for {}: {}",
-                    file.path.display(),
+                    file.file_path.display(),
                     e
                 );
                 Err(e)
