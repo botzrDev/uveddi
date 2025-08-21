@@ -388,6 +388,62 @@ Common issues and solutions:
 - **Circular dependencies**: Use shared types pattern in `src/api/types.rs` for cross-module communication
 - **CI/CD taking too long**: Use `--features=dev-minimal` for test builds, `--features=production` only for release
 
+#### WSL Build Timeout Issues (Windows Subsystem for Linux)
+
+WSL users may experience build timeouts when compiling with full features (typically after ~500 seconds). This is a known WSL limitation when building large Rust projects with many dependencies.
+
+**Solutions:**
+
+1. **Use WSL-Optimized Build Scripts**:
+   ```bash
+   # Incremental build approach (recommended, fastest)
+   ./scripts/wsl-build-incremental.sh
+   
+   # Full optimization with keepalive mechanism
+   ./scripts/wsl-full-build.sh
+   ```
+
+2. **Manual Optimization Steps**:
+   - Install faster linker: `sudo apt-get install lld clang`
+   - Install build cache: `cargo install sccache`
+   - Use temp directory for faster I/O: `export CARGO_TARGET_DIR=/tmp/uveddi-target`
+
+3. **WSL2 Configuration** (create `~/.wslconfig`):
+   ```ini
+   [wsl2]
+   memory=8GB
+   processors=4
+   swap=4GB
+   localhostForwarding=true
+   
+   [experimental]
+   autoMemoryReclaim=gradual
+   sparseVhd=true
+   ```
+
+4. **Environment Variables for WSL Builds**:
+   ```bash
+   export CARGO_BUILD_JOBS=4
+   export CARGO_INCREMENTAL=1
+   export RUSTFLAGS="-C link-arg=-fuse-ld=lld -C codegen-units=256"
+   export CARGO_TARGET_DIR=/tmp/uveddi-target
+   ```
+
+5. **Progressive Feature Building**:
+   If the full build still times out, build features progressively:
+   ```bash
+   cargo build --release --features dev-minimal
+   cargo build --release --features "dev-minimal tree-sitter"
+   cargo build --release --features "dev-minimal tree-sitter security"
+   cargo build --release --features production  # Final build with all features
+   ```
+
+**How the Scripts Work:**
+- `wsl-build-incremental.sh`: Builds features progressively, leveraging incremental compilation
+- `wsl-full-build.sh`: Uses keepalive mechanism to prevent WSL timeout, includes sccache for caching, and builds to `/tmp` for faster I/O
+
+**Note**: After making WSL configuration changes, restart WSL with `wsl --shutdown` for changes to take effect.
+
 ### Release Information
 
 Current version: **v0.9.0-alpha**

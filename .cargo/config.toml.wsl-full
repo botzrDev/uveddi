@@ -1,0 +1,44 @@
+[build]
+jobs = 4  # Increase parallel jobs for faster builds
+incremental = true
+target-dir = "/tmp/uveddi-target"  # Use faster /tmp filesystem
+
+[target.x86_64-unknown-linux-gnu]
+linker = "clang"  # Faster linker
+rustflags = [
+    "-C", "link-arg=-fuse-ld=lld",  # Use LLD linker (much faster)
+    "-C", "split-debuginfo=unpacked",  # Faster debug info generation
+    "-C", "incremental=true",
+    "-C", "codegen-units=256",  # Maximum parallelization
+    "-Z", "share-generics=y",  # Share generic instantiations
+    "-Z", "threads=8",  # Use more threads for LLVM
+]
+
+[profile.dev]
+opt-level = 0
+debug = 0  # Disable debug info completely
+lto = false
+panic = "abort"
+incremental = true
+codegen-units = 256
+split-debuginfo = "unpacked"
+
+[profile.test]
+opt-level = 0
+debug = 0
+lto = false
+incremental = true
+codegen-units = 256
+
+[profile.release]
+opt-level = 2  # Balance between optimization and build time
+debug = false
+lto = "thin"  # Thin LTO is faster than full
+codegen-units = 16
+incremental = false
+
+[env]
+CARGO_BUILD_JOBS = "4"
+CARGO_INCREMENTAL = "1"
+CARGO_NET_GIT_FETCH_WITH_CLI = "true"  # Faster git operations
+RUSTC_WRAPPER = "sccache"  # Enable sccache if available

@@ -641,11 +641,13 @@ fn create_demo_security_analysis() -> crate::report::interactive_models::Securit
         issues_found: 2,
         coverage_percentage: 85.0,
         avg_confidence: 0.75,
+        severity_distribution: std::collections::HashMap::new(),
     });
     owasp_coverage.insert("A03_Injection".to_string(), OwaspCategoryStats {
         issues_found: 1,
         coverage_percentage: 90.0,
         avg_confidence: 0.92,
+        severity_distribution: std::collections::HashMap::new(),
     });
 
     SecurityAnalysis {
@@ -666,11 +668,13 @@ fn create_demo_security_analysis() -> crate::report::interactive_models::Securit
                     issue_type: "SQL Injection".to_string(),
                     count: 1,
                     avg_severity: "Critical".to_string(),
+                    avg_confidence: 0.92,
                 },
                 IssueTypeStats {
                     issue_type: "Broken Access Control".to_string(),
                     count: 2,
                     avg_severity: "High".to_string(),
+                    avg_confidence: 0.75,
                 },
             ],
             security_score: 72.5,
@@ -852,23 +856,23 @@ async fn get_security_issues(
                         Ok(security_issues) => {
                             let response_issues: Vec<SecurityIssueResponse> = security_issues.iter().map(|issue| {
                                 SecurityIssueResponse {
-                                    id: format!("sec_{}", issue.id),
-                                    issue_type: issue.issue_type.clone(),
-                                    severity: issue.severity.clone(),
+                                    id: format!("sec_{}", issue.id.as_ref().unwrap_or(&"unknown".to_string())),
+                                    issue_type: issue.issue_type.to_string(),
+                                    severity: issue.severity.to_string(),
                                     confidence_score: issue.confidence_score,
                                     location: LocationResponse {
-                                        file: issue.location.file.clone(),
-                                        start_line: issue.location.start_line as i32,
-                                        end_line: issue.location.end_line as i32,
-                                        start_column: issue.location.start_column.map(|c| c as i32),
-                                        end_column: issue.location.end_column.map(|c| c as i32),
+                                        file: issue.location.file_path.to_string_lossy().to_string(),
+                                        start_line: issue.location.start_line,
+                                        end_line: issue.location.end_line,
+                                        start_column: issue.location.start_column,
+                                        end_column: issue.location.end_column,
                                     },
                                     description: issue.description.clone(),
-                                    remediation: issue.remediation_advice.clone(),
-                                    owasp_category: issue.vulnerability_metadata.owasp_category.clone(),
-                                    cwe_id: issue.vulnerability_metadata.cwe_id.clone(),
-                                    cvss_score: issue.vulnerability_metadata.cvss_score,
-                                    references: issue.vulnerability_metadata.references.clone(),
+                                    remediation: issue.remediation.clone().unwrap_or_default(),
+                                    owasp_category: issue.issue_type.owasp_category().map(|s| s.to_string()),
+                                    cwe_id: issue.metadata.cwe_id.clone(),
+                                    cvss_score: issue.metadata.cvss_score,
+                                    references: issue.metadata.references.clone(),
                                     taint_flows: None, // TODO: Implement taint flow conversion
                                 }
                             }).collect();
@@ -881,6 +885,10 @@ async fn get_security_issues(
                         }
                     }
                 }
+            }
+            Ok(None) => {
+                eprintln!("No analysis runs found in database");
+                // Fall through to demo data
             }
             Err(e) => {
                 eprintln!("Failed to get latest analysis run: {}", e);
@@ -1288,7 +1296,7 @@ fn create_security_analysis_from_issues(
     
     for issue in security_issues {
         // Count by severity
-        match issue.severity.as_str() {
+        match issue.severity.to_string().as_str() {
             "Critical" => critical_count += 1,
             "High" => high_count += 1,
             "Medium" => medium_count += 1,
@@ -1297,15 +1305,15 @@ fn create_security_analysis_from_issues(
         }
         
         // Update OWASP coverage
-        if let Some(owasp_cat) = &issue.vulnerability_metadata.owasp_category {
-            let stats = owasp_coverage.entry(owasp_cat.clone()).or_insert(OwaspCategoryStats {
+        if let Some(owasp_cat) = issue.issue_type.owasp_category() {
+            let stats = owasp_coverage.entry(owasp_cat.to_string()).or_insert(OwaspCategoryStats {
                 issues_found: 0,
                 coverage_percentage: 0.0,
                 avg_confidence: 0.0,
                 severity_distribution: std::collections::HashMap::new(),
             });
             stats.issues_found += 1;
-            *stats.severity_distribution.entry(issue.severity.clone()).or_insert(0) += 1;
+            *stats.severity_distribution.entry(issue.severity.to_string()).or_insert(0) += 1;
         }
         
         // Update confidence distribution
@@ -1315,7 +1323,7 @@ fn create_security_analysis_from_issues(
         *confidence_distribution.entry(confidence_tier.to_string()).or_insert(0) += 1;
         
         // Update issue type stats
-        let type_stats = issue_type_stats.entry(issue.issue_type.clone()).or_insert((0u32, issue.severity.clone(), 0.0));
+        let type_stats = issue_type_stats.entry(issue.issue_type.to_string()).or_insert((0u32, issue.severity.to_string(), 0.0));
         type_stats.0 += 1;
         type_stats.2 += issue.confidence_score;
     }
@@ -1355,27 +1363,27 @@ fn create_security_analysis_from_issues(
             security_score,
         },
         owasp_coverage,
-        issues: security_issues.iter().map(|issue| SecurityIssue {
-            id: format!("sec-{}", issue.id),
-            issue_type: issue.issue_type.clone(),
-            severity: issue.severity.clone(),
+        issues: security_issues.iter().map(|issue| crate::report::interactive_models::SecurityIssue {
+            id: format!("sec-{}", issue.id.as_ref().unwrap_or(&"unknown".to_string())),
+            issue_type: issue.issue_type.to_string(),
+            severity: issue.severity.to_string(),
             confidence_score: issue.confidence_score,
-            location: SecurityLocation {
-                file: issue.location.file.clone(),
-                start_line: issue.location.start_line,
-                end_line: issue.location.end_line,
-                start_column: issue.location.start_column,
-                end_column: issue.location.end_column,
-                code_snippet: issue.location.code_snippet.clone(),
+            location: crate::report::interactive_models::SecurityLocation {
+                file: issue.location.file_path.to_string_lossy().to_string(),
+                start_line: issue.location.start_line as u32,
+                end_line: issue.location.end_line as u32,
+                start_column: issue.location.start_column.map(|c| c as u32),
+                end_column: issue.location.end_column.map(|c| c as u32),
+                code_snippet: None, // TODO: Extract code snippet from file
             },
             description: issue.description.clone(),
-            remediation: issue.remediation_advice.clone(),
-            owasp_category: issue.vulnerability_metadata.owasp_category.clone(),
-            cwe_id: issue.vulnerability_metadata.cwe_id.clone(),
-            cvss_score: issue.vulnerability_metadata.cvss_score,
-            references: issue.vulnerability_metadata.references.clone(),
+            remediation: issue.remediation.clone().unwrap_or_default(),
+            owasp_category: issue.issue_type.owasp_category().map(|s| s.to_string()),
+            cwe_id: issue.metadata.cwe_id.clone(),
+            cvss_score: issue.metadata.cvss_score,
+            references: issue.metadata.references.clone(),
             related_taint_flows: vec![], // TODO: Implement taint flow tracking
-            attack_vector: issue.vulnerability_metadata.attack_vector.clone(),
+            attack_vector: None, // TODO: Extract from metadata
         }).collect(),
         taint_flows: vec![], // TODO: Implement taint flow analysis
         correlations: vec![], // TODO: Implement correlation analysis
