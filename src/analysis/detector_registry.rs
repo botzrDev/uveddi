@@ -171,6 +171,8 @@ impl DetectorRegistry {
     /// - `dead_code`: DeadCodeDetector with default config
     /// - `large_classes`: LargeClassDetector with default config
     /// - `tight_coupling`: TightCouplingDetector
+    /// - `long_methods`: LongMethodsDetector with default config
+    /// - `magic_values`: MagicValuesDetector with default config
     pub fn load_defaults(&mut self) {
         let defaults = DetectorFactory::create_default_detectors();
         let detector_names = vec![
@@ -179,6 +181,8 @@ impl DetectorRegistry {
             "dead_code",
             "large_classes",
             "tight_coupling",
+            "long_methods",
+            "magic_values",
         ];
 
         for (i, detector) in defaults.into_iter().enumerate() {
@@ -319,12 +323,14 @@ mod tests {
         let mut registry = DetectorRegistry::new();
         registry.load_defaults();
 
-        assert_eq!(registry.count(), 5);
+        assert_eq!(registry.count(), 7);
         assert!(registry.has_detector("god_object"));
         assert!(registry.has_detector("code_duplication"));
         assert!(registry.has_detector("dead_code"));
         assert!(registry.has_detector("large_classes"));
         assert!(registry.has_detector("tight_coupling"));
+        assert!(registry.has_detector("long_methods"));
+        assert!(registry.has_detector("magic_values"));
     }
 
     #[test]
@@ -360,7 +366,7 @@ mod tests {
         registry.load_defaults();
 
         let detectors = registry.get_all_detectors();
-        assert_eq!(detectors.len(), 5);
+        assert_eq!(detectors.len(), 7);
 
         // Verify detector types
         let detector_names: Vec<&str> = detectors.iter().map(|d| d.get_detector_name()).collect();
@@ -387,7 +393,7 @@ mod tests {
         let mut registry = DetectorRegistry::new();
         registry.load_defaults();
 
-        assert_eq!(registry.count(), 5);
+        assert_eq!(registry.count(), 7);
         registry.clear();
         assert_eq!(registry.count(), 0);
     }
@@ -395,7 +401,7 @@ mod tests {
     #[test]
     fn test_default_registry() {
         let registry = DetectorRegistry::default();
-        assert_eq!(registry.count(), 5);
+        assert_eq!(registry.count(), 7);
         assert!(registry.has_detector("god_object"));
     }
 }

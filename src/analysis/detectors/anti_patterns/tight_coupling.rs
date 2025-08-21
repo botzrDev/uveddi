@@ -345,7 +345,7 @@ impl TightCouplingDetector {
         {
             let mut issue = ArchitecturalIssue::new(
                 0, // analysis_run_id will be set by caller
-                1, // anti_pattern_type_id for tight coupling
+                5, // anti_pattern_type_id for tight coupling
                 file_path,
                 None, // line_number
                 description.clone(),
@@ -509,7 +509,7 @@ impl AnalysisDetector for TightCouplingDetector {
             if dep_count >= thresholds.fan_out_critical {
                 issues.push(ArchitecturalIssue::new(
                     0, // analysis_run_id
-                    1, // anti_pattern_type_id: Tight coupling
+                    5, // anti_pattern_type_id: Tight coupling
                     file.path().to_string_lossy().to_string(),
                     None, // line_number
                     format!("Component '{}' has {} dependencies (critical threshold: {})", 
@@ -582,7 +582,7 @@ impl AnalysisDetector for TightCouplingDetector {
 
     fn get_anti_pattern_types(&self) -> Vec<AntiPatternType> {
         vec![AntiPatternType {
-            anti_pattern_type_id: None,
+            anti_pattern_type_id: Some(5),
             name: "Tight Coupling".to_string(),
             description: "Components that are overly dependent on each other's internal implementation details".to_string(),
             category: "structural".to_string(),

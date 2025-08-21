@@ -85,11 +85,11 @@ impl DetectorFactory {
             "dead_code" => Ok(Box::new(DeadCodeDetector::with_default_config())),
             "large_classes" => Ok(Box::new(LargeClassDetector::with_default_config())),
             "tight_coupling" => Ok(Box::new(TightCouplingDetector::default())),
+            "long_methods" => Ok(Box::new(LongMethodsDetector::default())),
+            "magic_values" => Ok(Box::new(MagicValuesDetector::default())),
             // "shotgun_surgery" => Ok(Box::new(ShotgunSurgeryDetector::new())),
             // "feature_envy" => Ok(Box::new(FeatureEnvyDetector::new())),
             // "data_clumps" => Ok(Box::new(DataClumpsDetector::new())),
-            "long_methods" => Ok(Box::new(LongMethodsDetector::default())),
-            "magic_values" => Ok(Box::new(MagicValuesDetector::default())),
             _ => Err(UveddiError::config_error(
                 &format!("Unknown detector: {}", name),
                 "detector factory",
@@ -152,6 +152,8 @@ impl DetectorFactory {
             "dead_code".to_string(),
             "large_classes".to_string(),
             "tight_coupling".to_string(),
+            "long_methods".to_string(),
+            "magic_values".to_string(),
         ]
     }
 
@@ -353,7 +355,7 @@ mod tests {
     #[test]
     fn test_create_default_detectors() {
         let detectors = DetectorFactory::create_default_detectors();
-        assert_eq!(detectors.len(), 5);
+        assert_eq!(detectors.len(), 7);
 
         // Verify each detector type is present
         let detector_names: Vec<&str> = detectors.iter().map(|d| d.get_detector_name()).collect();
@@ -363,6 +365,8 @@ mod tests {
         assert!(detector_names.contains(&"DeadCodeDetector"));
         assert!(detector_names.contains(&"LargeClassDetector"));
         assert!(detector_names.contains(&"TightCouplingDetector"));
+        assert!(detector_names.contains(&"LongMethodsDetector"));
+        assert!(detector_names.contains(&"MagicValuesDetector"));
     }
 
     #[test]

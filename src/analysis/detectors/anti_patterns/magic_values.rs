@@ -33,6 +33,11 @@ impl AnalysisDetector for MagicValuesDetector {
         "MagicValuesDetector"
     }
     fn get_anti_pattern_types(&self) -> Vec<AntiPatternType> {
-        vec![] // TODO: Fill in
+        vec![AntiPatternType {
+            anti_pattern_type_id: Some(8),
+            name: "Magic Values".to_string(),
+            description: "Hard-coded numeric or string literals that should be replaced with named constants".to_string(),
+            category: "maintainability".to_string(),
+        }]
     }
 }

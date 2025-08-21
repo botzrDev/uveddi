@@ -403,7 +403,7 @@ impl AnalysisDetector for LargeClassDetector {
 
                 let mut issue = ArchitecturalIssue::new(
                     0, // analysis_run_id - will be set by the engine
-                    1, // anti_pattern_type_id for LargeClass
+                    7, // anti_pattern_type_id for LargeClass
                     class_metrics.file_path.clone(),
                     class_metrics.start_line.try_into().ok().map(|l: i32| l),
                     format!(
@@ -442,8 +442,12 @@ impl AnalysisDetector for LargeClassDetector {
     }
 
     fn get_anti_pattern_types(&self) -> Vec<AntiPatternType> {
-        // Return empty vector since AntiPatternType is now a struct, not an enum
-        Vec::new()
+        vec![AntiPatternType {
+            anti_pattern_type_id: Some(7),
+            name: "Large Class".to_string(),
+            description: "Classes that have grown too large and complex, violating the Single Responsibility Principle".to_string(),
+            category: "structural".to_string(),
+        }]
     }
 
     fn detect(

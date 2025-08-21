@@ -752,7 +752,7 @@ impl CodeDuplicationDetector {
 
             let mut issue = ArchitecturalIssue::new(
                 0,                                   // analysis_run_id - Will be set by the engine
-                1,                             // anti_pattern_type_id - Code duplication type ID
+                3,                             // anti_pattern_type_id - Code duplication type ID
                 pair.block1.file_path.clone(), // file_path
                 Some(pair.block1.start_line as i32), // line_number
                 format!(
@@ -804,7 +804,7 @@ impl AnalysisDetector for CodeDuplicationDetector {
     fn get_anti_pattern_types(&self) -> Vec<AntiPatternType> {
         vec![
             AntiPatternType {
-                anti_pattern_type_id: None,
+                anti_pattern_type_id: Some(3),
                 name: "Code Duplication".to_string(),
                 description: "Identical or similar code blocks that should be refactored into reusable components".to_string(),
                 category: "structural".to_string(),
