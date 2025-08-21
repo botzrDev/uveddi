@@ -7,6 +7,8 @@
 pub mod anti_patterns;
 pub mod cycle;
 pub mod dependency;
+pub mod security;
 
 pub use cycle::CycleDetector;
 pub use dependency::{Dependency, DependencyExtractor};
+pub use security::{SecurityDetector, SecurityConfig};

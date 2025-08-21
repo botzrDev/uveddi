@@ -33,3 +33,6 @@ pub use magic_values::MagicValuesDetector;
 // pub use shotgun_surgery::{ShotgunSurgeryConfig, ShotgunSurgeryDetector};
 pub use tight_coupling::TightCouplingDetector;
 // pub use state_synchronization::StateSynchronizationDetector;
+
+// Security detector integration
+pub use crate::analysis::detectors::security::SecurityDetector;

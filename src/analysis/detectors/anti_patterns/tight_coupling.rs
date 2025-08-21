@@ -509,7 +509,7 @@ impl AnalysisDetector for TightCouplingDetector {
             if dep_count >= thresholds.fan_out_critical {
                 issues.push(ArchitecturalIssue::new(
                     0, // analysis_run_id
-                    5, // anti_pattern_type_id: Tight coupling
+                    3, // anti_pattern_type_id: Tight coupling
                     file.path().to_string_lossy().to_string(),
                     None, // line_number
                     format!("Component '{}' has {} dependencies (critical threshold: {})", 

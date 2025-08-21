@@ -4,7 +4,7 @@
 //! database, analysis engine, AI engine, and report generation. It serves as the boundary
 //! between the CLI and infrastructure layers.
 
-use crate::core::logging::{error, info};
+use crate::core::logging::{debug, error, info, warn};
 use anyhow::Context;
 use chrono::Utc;
 use std::collections::HashMap;
@@ -400,12 +400,40 @@ impl AnalysisOrchestrator {
             )
         })?;
 
+        debug!("=== ANTI-PATTERN TYPE CLASSIFICATION PIPELINE ===");
+        debug!("Raw database types: {:#?}", anti_pattern_types);
+
         // Build HashMap mapping anti-pattern type IDs to their definitions
         let anti_pattern_map: HashMap<i64, crate::database::models::AntiPatternType> =
             anti_pattern_types
                 .into_iter()
                 .filter_map(|apt| apt.anti_pattern_type_id.map(|id| (id, apt)))
                 .collect();
+
+        debug!("Constructed mapping: {:#?}", anti_pattern_map);
+        
+        // Validate critical mappings against engine canonical definitions
+        let expected_mappings = vec![
+            (1, "God Object"),
+            (2, "Dead Code"), 
+            (3, "Tight Coupling"),
+            (4, "Long Methods"),
+            (5, "Large Classes"),
+            (7, "Code Duplication"),
+            (9, "Magic Values"),
+        ];
+        
+        for (expected_id, expected_name) in expected_mappings {
+            if let Some(actual_type) = anti_pattern_map.get(&expected_id) {
+                if actual_type.name != expected_name {
+                    warn!("Anti-pattern type mismatch detected: ID {} maps to '{}' but should be '{}'", 
+                          expected_id, actual_type.name, expected_name);
+                }
+            } else {
+                warn!("Missing anti-pattern type ID {} ('{}') in database mapping", 
+                      expected_id, expected_name);
+            }
+        }
 
         info!(
             "Retrieved {} anti-pattern types for report generation",

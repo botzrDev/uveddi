@@ -167,7 +167,7 @@ pub mod metrics;
 pub mod modern_generator;
 pub mod security;
 pub mod svg_generator;
-use crate::core::logging::{error, info, warn};
+use crate::core::logging::{debug, error, info, warn};
 use crate::report::metrics::{compute_debt_score, compute_issues_by_severity, count_unique_files};
 use chrono::{DateTime, Local};
 use serde_json::Value;
@@ -1214,6 +1214,11 @@ impl ReportGenerator {
 
             // Add anti-pattern type information
             if let Some(anti_pattern) = anti_pattern_types.get(&issue.anti_pattern_type_id) {
+                debug!("✅ Issue '{}' (ID: {}) correctly mapped to '{}'", 
+                       issue.description.chars().take(50).collect::<String>(),
+                       issue.anti_pattern_type_id, 
+                       anti_pattern.name);
+                       
                 json_issue.insert(
                     "antiPatternType".to_string(),
                     Value::String(anti_pattern.name.clone()),
@@ -1221,6 +1226,21 @@ impl ReportGenerator {
                 json_issue.insert(
                     "antiPatternDescription".to_string(),
                     Value::String(anti_pattern.description.clone()),
+                );
+            } else {
+                error!("❌ Issue '{}' (ID: {}) has no mapping! Available IDs: {:?}",
+                       issue.description.chars().take(50).collect::<String>(),
+                       issue.anti_pattern_type_id,
+                       anti_pattern_types.keys().collect::<Vec<_>>());
+                       
+                // Fallback: Use issue description or default value
+                json_issue.insert(
+                    "antiPatternType".to_string(),
+                    Value::String(format!("Unknown (ID: {})", issue.anti_pattern_type_id)),
+                );
+                json_issue.insert(
+                    "antiPatternDescription".to_string(),
+                    Value::String("Unknown anti-pattern type - check detector configuration".to_string()),
                 );
             }
 
