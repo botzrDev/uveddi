@@ -102,6 +102,11 @@ impl AnalysisService {
             stats.total_files_analyzed = source_files.len();
         }
 
+        // Record files processed in aggregator for accurate reporting
+        for _ in 0..source_files.len() {
+            self.aggregator.record_file_processed();
+        }
+
         // Run analysis based on path type
         let issues = if path.is_file() {
             self.analyze_single_file(path).await?
