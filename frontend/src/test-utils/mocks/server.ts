@@ -1,15 +1,15 @@
 import { setupServer } from 'msw/node';
-import { rest } from 'msw';
+import { http } from 'msw';
 import { mockInteractiveReport } from './mockData';
 
 export const handlers = [
   // Mock API endpoints
-  rest.get('/api/reports/:id', (req, res, ctx) => {
-    return res(ctx.json(mockInteractiveReport));
+  http.get('/api/reports/:id', () => {
+    return Response.json(mockInteractiveReport);
   }),
 
-  rest.get('/api/reports/:id/history', (req, res, ctx) => {
-    return res(ctx.json({
+  http.get('/api/reports/:id/history', () => {
+    return Response.json({
       snapshots: [
         {
           id: '1',
@@ -26,18 +26,18 @@ export const handlers = [
           technicalDebt: 12000
         }
       ]
-    }));
+    });
   }),
 
-  rest.post('/api/reports/:id/export', (req, res, ctx) => {
-    return res(ctx.json({ 
+  http.post('/api/reports/:id/export', () => {
+    return Response.json({ 
       success: true, 
       downloadUrl: '/api/downloads/report-export.pdf' 
-    }));
+    });
   }),
 
-  rest.get('/api/suggestions/:issueId', (req, res, ctx) => {
-    return res(ctx.json({
+  http.get('/api/suggestions/:issueId', () => {
+    return Response.json({
       fixes: [
         {
           id: '1',
@@ -54,12 +54,13 @@ export const handlers = [
           ]
         }
       ]
-    }));
+    });
   }),
 
-  rest.get('/api/search', (req, res, ctx) => {
-    const query = req.url.searchParams.get('q');
-    return res(ctx.json({
+  http.get('/api/search', ({ request }) => {
+    const url = new URL(request.url);
+    const query = url.searchParams.get('q');
+    return Response.json({
       results: [
         {
           id: '1',
@@ -69,7 +70,7 @@ export const handlers = [
           severity: 'medium'
         }
       ]
-    }));
+    });
   })
 ];
 

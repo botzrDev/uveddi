@@ -60,6 +60,10 @@ pub struct InteractiveReport {
     /// Optional AI-generated insights and recommendations
     #[serde(rename = "aiInsights")]
     pub ai_insights: Option<AiInsights>,
+    /// Security analysis results
+    #[cfg(feature = "security")]
+    #[serde(rename = "securityAnalysis")]
+    pub security_analysis: Option<SecurityAnalysis>,
     /// Generation metadata
     pub metadata: ReportMetadata,
 }
@@ -156,6 +160,10 @@ pub struct Finding {
     /// Related findings (by ID)
     #[serde(rename = "relatedFindings")]
     pub related_findings: Vec<String>,
+    /// Security-specific metadata
+    #[cfg(feature = "security")]
+    #[serde(rename = "securityMetadata")]
+    pub security_metadata: Option<SecurityFindingMetadata>,
 }
 
 /// Dependency graph structure for Cytoscape.js visualization
@@ -716,6 +724,7 @@ impl InteractiveReport {
                 configuration: HashMap::new(), // TODO: Include analysis configuration
                 performance: None,             // TODO: Include performance metrics
             },
+            security_analysis: None, // TODO: Implement security analysis integration
         }
     }
 
@@ -780,6 +789,8 @@ impl InteractiveReport {
                     ai_explanation: issue.ai_explanation.clone(),
                     recommendation: None,     // TODO: Generate recommendations
                     related_findings: vec![], // TODO: Implement finding correlation
+                    #[cfg(feature = "security")]
+                    security_metadata: Self::extract_security_metadata(&issue.metadata),
                 }
             })
             .collect()
@@ -940,6 +951,326 @@ impl InteractiveReport {
 
         languages.into_iter().collect()
     }
+
+    /// Extract security metadata from issue metadata JSON
+    #[cfg(feature = "security")]
+    fn extract_security_metadata(metadata_json: &str) -> Option<SecurityFindingMetadata> {
+        if let Ok(metadata) = serde_json::from_str::<serde_json::Value>(metadata_json) {
+            Some(SecurityFindingMetadata {
+                owasp_category: metadata.get("owasp_category")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string()),
+                cwe_id: metadata.get("cwe_id")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string()),
+                cvss_score: metadata.get("cvss_score")
+                    .and_then(|v| v.as_f64()),
+                attack_complexity: metadata.get("attack_complexity")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string()),
+                attack_vector: metadata.get("attack_vector")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string()),
+                privileges_required: metadata.get("privileges_required")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string()),
+                user_interaction: metadata.get("user_interaction")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string()),
+                scope: metadata.get("scope")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string()),
+                availability_impact: metadata.get("availability_impact")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string()),
+                confidentiality_impact: metadata.get("confidentiality_impact")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string()),
+                integrity_impact: metadata.get("integrity_impact")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string()),
+            })
+        } else {
+            None
+        }
+    }
+}
+
+/// Security analysis results for interactive reports
+#[cfg(feature = "security")]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SecurityAnalysis {
+    /// Overall security summary with counts
+    pub summary: SecuritySummary,
+    /// OWASP Top 10 coverage analysis
+    #[serde(rename = "owaspCoverage")]
+    pub owasp_coverage: HashMap<String, OwaspCategoryStats>,
+    /// Security issues found during analysis
+    pub issues: Vec<SecurityIssue>,
+    /// Data flow analysis results
+    #[serde(rename = "taintFlows")]
+    pub taint_flows: Vec<TaintFlow>,
+    /// Security correlations with architectural issues
+    pub correlations: Vec<SecurityCorrelation>,
+    /// Compliance status with security standards
+    pub compliance: Option<ComplianceStatus>,
+}
+
+/// Security summary statistics
+#[cfg(feature = "security")]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SecuritySummary {
+    /// Total number of security issues
+    #[serde(rename = "totalIssues")]
+    pub total_issues: u32,
+    /// Critical security issues
+    #[serde(rename = "criticalCount")]
+    pub critical_count: u32,
+    /// High severity security issues
+    #[serde(rename = "highCount")]
+    pub high_count: u32,
+    /// Medium severity security issues
+    #[serde(rename = "mediumCount")]
+    pub medium_count: u32,
+    /// Low severity security issues
+    #[serde(rename = "lowCount")]
+    pub low_count: u32,
+    /// Confidence distribution
+    #[serde(rename = "confidenceDistribution")]
+    pub confidence_distribution: HashMap<String, u32>,
+    /// Most common issue types
+    #[serde(rename = "mostCommonIssues")]
+    pub most_common_issues: Vec<IssueTypeStats>,
+    /// Overall security score (0-100)
+    #[serde(rename = "securityScore")]
+    pub security_score: f64,
+}
+
+/// OWASP category statistics
+#[cfg(feature = "security")]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OwaspCategoryStats {
+    /// Number of issues found in this category
+    #[serde(rename = "issuesFound")]
+    pub issues_found: u32,
+    /// Coverage percentage for this category
+    #[serde(rename = "coveragePercentage")]
+    pub coverage_percentage: f64,
+    /// Average confidence of detections
+    #[serde(rename = "avgConfidence")]
+    pub avg_confidence: f64,
+    /// Severity distribution within category
+    #[serde(rename = "severityDistribution")]
+    pub severity_distribution: HashMap<String, u32>,
+}
+
+/// Issue type statistics
+#[cfg(feature = "security")]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IssueTypeStats {
+    /// Type of security issue
+    #[serde(rename = "issueType")]
+    pub issue_type: String,
+    /// Number of occurrences
+    pub count: u32,
+    /// Average severity level
+    #[serde(rename = "avgSeverity")]
+    pub avg_severity: String,
+    /// Average confidence score
+    #[serde(rename = "avgConfidence")]
+    pub avg_confidence: f64,
+}
+
+/// Security issue details
+#[cfg(feature = "security")]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SecurityIssue {
+    /// Unique identifier
+    pub id: String,
+    /// Type of security issue
+    #[serde(rename = "issueType")]
+    pub issue_type: String,
+    /// Severity level
+    pub severity: String,
+    /// Confidence score (0.0-1.0)
+    #[serde(rename = "confidenceScore")]
+    pub confidence_score: f64,
+    /// Location information
+    pub location: SecurityLocation,
+    /// Issue description
+    pub description: String,
+    /// Remediation advice
+    pub remediation: String,
+    /// OWASP category
+    #[serde(rename = "owaspCategory")]
+    pub owasp_category: Option<String>,
+    /// CWE identifier
+    #[serde(rename = "cweId")]
+    pub cwe_id: Option<String>,
+    /// CVSS score
+    #[serde(rename = "cvssScore")]
+    pub cvss_score: Option<f64>,
+    /// External references
+    pub references: Vec<String>,
+    /// Related taint flows
+    #[serde(rename = "relatedTaintFlows")]
+    pub related_taint_flows: Vec<String>,
+    /// Attack vector information
+    #[serde(rename = "attackVector")]
+    pub attack_vector: Option<String>,
+}
+
+/// Security issue location
+#[cfg(feature = "security")]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SecurityLocation {
+    /// File path
+    pub file: String,
+    /// Starting line number
+    #[serde(rename = "startLine")]
+    pub start_line: u32,
+    /// Ending line number
+    #[serde(rename = "endLine")]
+    pub end_line: u32,
+    /// Starting column
+    #[serde(rename = "startColumn")]
+    pub start_column: Option<u32>,
+    /// Ending column
+    #[serde(rename = "endColumn")]
+    pub end_column: Option<u32>,
+    /// Code snippet
+    #[serde(rename = "codeSnippet")]
+    pub code_snippet: Option<String>,
+}
+
+/// Data flow analysis result
+#[cfg(feature = "security")]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TaintFlow {
+    /// Unique identifier
+    pub id: String,
+    /// Source of the taint
+    pub source: FlowNode,
+    /// Sink where taint reaches
+    pub sink: FlowNode,
+    /// Confidence in this flow
+    pub confidence: f64,
+    /// Sanitizers in the flow path
+    pub sanitizers: Vec<FlowNode>,
+    /// Flow path (intermediate nodes)
+    pub path: Vec<FlowNode>,
+    /// Vulnerability type this flow can lead to
+    #[serde(rename = "vulnerabilityType")]
+    pub vulnerability_type: String,
+}
+
+/// Node in a data flow
+#[cfg(feature = "security")]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FlowNode {
+    /// Node name/identifier
+    pub name: String,
+    /// File location
+    pub location: String,
+    /// Type of node (source, sink, sanitizer, intermediate)
+    #[serde(rename = "nodeType")]
+    pub node_type: String,
+    /// Line number
+    #[serde(rename = "lineNumber")]
+    pub line_number: u32,
+    /// Additional properties
+    pub properties: HashMap<String, String>,
+}
+
+/// Correlation between security and architectural issues
+#[cfg(feature = "security")]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SecurityCorrelation {
+    /// Security issue ID
+    #[serde(rename = "securityIssueId")]
+    pub security_issue_id: String,
+    /// Related architectural issue ID
+    #[serde(rename = "architecturalIssueId")]
+    pub architectural_issue_id: String,
+    /// Strength of correlation (0.0-1.0)
+    #[serde(rename = "correlationStrength")]
+    pub correlation_strength: f64,
+    /// Type of correlation
+    #[serde(rename = "correlationType")]
+    pub correlation_type: String,
+    /// Explanation of the correlation
+    pub explanation: String,
+}
+
+/// Compliance status with security standards
+#[cfg(feature = "security")]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ComplianceStatus {
+    /// OWASP compliance score
+    #[serde(rename = "owaspScore")]
+    pub owasp_score: f64,
+    /// CWE coverage score
+    #[serde(rename = "cweScore")]
+    pub cwe_score: f64,
+    /// Compliance with specific standards
+    pub standards: HashMap<String, StandardCompliance>,
+}
+
+/// Compliance with a specific standard
+#[cfg(feature = "security")]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StandardCompliance {
+    /// Name of the standard
+    pub name: String,
+    /// Compliance score (0.0-1.0)
+    pub score: f64,
+    /// Required controls/checks
+    #[serde(rename = "requiredControls")]
+    pub required_controls: u32,
+    /// Passed controls/checks
+    #[serde(rename = "passedControls")]
+    pub passed_controls: u32,
+    /// Failed controls/checks
+    #[serde(rename = "failedControls")]
+    pub failed_controls: u32,
+}
+
+/// Security-specific metadata for findings
+#[cfg(feature = "security")]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SecurityFindingMetadata {
+    /// OWASP Top 10 category
+    #[serde(rename = "owaspCategory")]
+    pub owasp_category: Option<String>,
+    /// CWE identifier
+    #[serde(rename = "cweId")]
+    pub cwe_id: Option<String>,
+    /// CVSS score
+    #[serde(rename = "cvssScore")]
+    pub cvss_score: Option<f64>,
+    /// Attack complexity
+    #[serde(rename = "attackComplexity")]
+    pub attack_complexity: Option<String>,
+    /// Attack vector
+    #[serde(rename = "attackVector")]
+    pub attack_vector: Option<String>,
+    /// Required privileges
+    #[serde(rename = "privilegesRequired")]
+    pub privileges_required: Option<String>,
+    /// User interaction required
+    #[serde(rename = "userInteraction")]
+    pub user_interaction: Option<String>,
+    /// Scope of impact
+    pub scope: Option<String>,
+    /// Availability impact
+    #[serde(rename = "availabilityImpact")]
+    pub availability_impact: Option<String>,
+    /// Confidentiality impact
+    #[serde(rename = "confidentialityImpact")]
+    pub confidentiality_impact: Option<String>,
+    /// Integrity impact
+    #[serde(rename = "integrityImpact")]
+    pub integrity_impact: Option<String>,
 }
 
 impl Default for InteractiveReport {
@@ -1007,6 +1338,8 @@ impl Default for InteractiveReport {
             chart_data: None,          // TODO: Implement chart data generation
             performance_metrics: None, // TODO: Implement performance metrics
             ai_insights: None,
+            #[cfg(feature = "security")]
+            security_analysis: None,
             metadata: ReportMetadata {
                 generated_at: Utc::now(),
                 uveddi_version: env!("CARGO_PKG_VERSION").to_string(),

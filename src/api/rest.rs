@@ -27,6 +27,8 @@
 use crate::api::types::{ApiServer, RestApiConfig};
 use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
 use crate::database::Database;
+#[cfg(feature = "security")]
+use crate::analysis::detectors::security::types::{SecurityIssue, SecuritySeverity, VulnerabilityMetadata};
 use crate::report::interactive_models::{
     DependencyGraph, InteractiveReport, REPORT_SCHEMA_VERSION,
 };
@@ -77,7 +79,14 @@ impl RestApiService {
             .route("/reports", get(list_reports))
             .route("/reports/:id", get(get_report))
             .route("/reports/:id/graphs/dependency", get(get_dependency_graph))
-            .route("/reports/demo", get(demo_report_handler));
+            .route("/reports/demo", get(demo_report_handler))
+            // Security-specific API endpoints
+            .route("/security/issues", get(get_security_issues))
+            .route("/security/issues/:id", get(get_security_issue))
+            .route("/security/summary", get(get_security_summary))
+            .route("/security/owasp-coverage", get(get_owasp_coverage))
+            .route("/security/taint-flows", get(get_taint_flows))
+            .route("/security/sarif", get(export_sarif));
 
         // Build the main app router
         let mut app = Router::new()
@@ -322,6 +331,7 @@ fn create_demo_report() -> InteractiveReport {
                 ai_explanation: Some("This class violates the Single Responsibility Principle by combining user authentication, profile management, and notification logic. Consider breaking it into separate services.".to_string()),
                 recommendation: Some("Extract authentication logic into AuthService, profile management into ProfileService, and notifications into NotificationService.".to_string()),
                 related_findings: vec![],
+                security_metadata: None,
             },
         ],
         dependency_graph: DependencyGraph {
@@ -459,5 +469,544 @@ fn create_demo_report() -> InteractiveReport {
                 files_per_second: Some(33.6),
             }),
         },
+        security_analysis: Some(create_demo_security_analysis()),
     }
+}
+
+/// Create demo security analysis data
+fn create_demo_security_analysis() -> crate::report::interactive_models::SecurityAnalysis {
+    use crate::report::interactive_models::*;
+    
+    let mut owasp_coverage = std::collections::HashMap::new();
+    owasp_coverage.insert("A01_Broken_Access_Control".to_string(), OwaspCategoryStats {
+        issues_found: 2,
+        coverage_percentage: 85.0,
+        avg_confidence: 0.75,
+        severity_distribution: {
+            let mut dist = std::collections::HashMap::new();
+            dist.insert("High".to_string(), 1);
+            dist.insert("Medium".to_string(), 1);
+            dist
+        },
+    });
+    owasp_coverage.insert("A03_Injection".to_string(), OwaspCategoryStats {
+        issues_found: 1,
+        coverage_percentage: 90.0,
+        avg_confidence: 0.92,
+        severity_distribution: {
+            let mut dist = std::collections::HashMap::new();
+            dist.insert("Critical".to_string(), 1);
+            dist
+        },
+    });
+
+    SecurityAnalysis {
+        summary: SecuritySummary {
+            total_issues: 3,
+            critical_count: 1,
+            high_count: 1,
+            medium_count: 1,
+            low_count: 0,
+            confidence_distribution: {
+                let mut dist = std::collections::HashMap::new();
+                dist.insert("High".to_string(), 2);
+                dist.insert("Medium".to_string(), 1);
+                dist
+            },
+            most_common_issues: vec![
+                IssueTypeStats {
+                    issue_type: "SQL Injection".to_string(),
+                    count: 1,
+                    avg_severity: "Critical".to_string(),
+                    avg_confidence: 0.92,
+                },
+                IssueTypeStats {
+                    issue_type: "Broken Access Control".to_string(),
+                    count: 2,
+                    avg_severity: "High".to_string(),
+                    avg_confidence: 0.75,
+                },
+            ],
+            security_score: 72.5,
+        },
+        owasp_coverage,
+        issues: vec![
+            SecurityIssue {
+                id: "sec-001".to_string(),
+                issue_type: "SQL Injection".to_string(),
+                severity: "Critical".to_string(),
+                confidence_score: 0.92,
+                location: SecurityLocation {
+                    file: "src/database/query.rs".to_string(),
+                    start_line: 45,
+                    end_line: 47,
+                    start_column: Some(8),
+                    end_column: Some(42),
+                    code_snippet: Some("query = format!(\"SELECT * FROM users WHERE id = {}\", user_id)".to_string()),
+                },
+                description: "Direct string interpolation into SQL query allows SQL injection attacks".to_string(),
+                remediation: "Use parameterized queries or prepared statements to prevent SQL injection".to_string(),
+                owasp_category: Some("A03_Injection".to_string()),
+                cwe_id: Some("CWE-89".to_string()),
+                cvss_score: Some(9.1),
+                references: vec![
+                    "https://owasp.org/Top10/A03_2021-Injection/".to_string(),
+                    "https://cwe.mitre.org/data/definitions/89.html".to_string(),
+                ],
+                related_taint_flows: vec!["flow-001".to_string()],
+                attack_vector: Some("Network".to_string()),
+            },
+        ],
+        taint_flows: vec![
+            TaintFlow {
+                id: "flow-001".to_string(),
+                source: FlowNode {
+                    name: "user_input".to_string(),
+                    location: "src/handlers/user.rs".to_string(),
+                    node_type: "source".to_string(),
+                    line_number: 23,
+                    properties: {
+                        let mut props = std::collections::HashMap::new();
+                        props.insert("input_type".to_string(), "http_parameter".to_string());
+                        props
+                    },
+                },
+                sink: FlowNode {
+                    name: "sql_query".to_string(),
+                    location: "src/database/query.rs".to_string(),
+                    node_type: "sink".to_string(),
+                    line_number: 45,
+                    properties: {
+                        let mut props = std::collections::HashMap::new();
+                        props.insert("sink_type".to_string(), "sql_execution".to_string());
+                        props
+                    },
+                },
+                confidence: 0.92,
+                sanitizers: vec![],
+                path: vec![
+                    FlowNode {
+                        name: "validate_user_id".to_string(),
+                        location: "src/validation/mod.rs".to_string(),
+                        node_type: "intermediate".to_string(),
+                        line_number: 12,
+                        properties: std::collections::HashMap::new(),
+                    },
+                ],
+                vulnerability_type: "SQL Injection".to_string(),
+            },
+        ],
+        correlations: vec![
+            SecurityCorrelation {
+                security_issue_id: "sec-001".to_string(),
+                architectural_issue_id: "demo-001".to_string(),
+                correlation_strength: 0.65,
+                correlation_type: "code_quality_impact".to_string(),
+                explanation: "The God Object anti-pattern in UserManager contributes to security vulnerabilities by mixing data access logic with business logic".to_string(),
+            },
+        ],
+        compliance: Some(ComplianceStatus {
+            owasp_score: 72.5,
+            cwe_score: 68.2,
+            standards: {
+                let mut standards = std::collections::HashMap::new();
+                standards.insert("OWASP_Top_10_2021".to_string(), StandardCompliance {
+                    name: "OWASP Top 10 2021".to_string(),
+                    score: 72.5,
+                    required_controls: 10,
+                    passed_controls: 7,
+                    failed_controls: 3,
+                });
+                standards
+            },
+        }),
+    }
+}
+
+// Security-specific API response types
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SecurityIssueResponse {
+    pub id: String,
+    pub issue_type: String,
+    pub severity: String,
+    pub confidence_score: f64,
+    pub location: LocationResponse,
+    pub description: String,
+    pub remediation: String,
+    pub owasp_category: Option<String>,
+    pub cwe_id: Option<String>,
+    pub cvss_score: Option<f64>,
+    pub references: Vec<String>,
+    pub taint_flows: Option<Vec<TaintFlowResponse>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LocationResponse {
+    pub file: String,
+    pub start_line: i32,
+    pub end_line: i32,
+    pub start_column: Option<i32>,
+    pub end_column: Option<i32>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TaintFlowResponse {
+    pub source: FlowNodeResponse,
+    pub sink: FlowNodeResponse,
+    pub confidence: f64,
+    pub sanitizers: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FlowNodeResponse {
+    pub name: String,
+    pub location: String,
+    pub node_type: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SecuritySummaryResponse {
+    pub total_issues: usize,
+    pub critical_count: usize,
+    pub high_count: usize,
+    pub medium_count: usize,
+    pub low_count: usize,
+    pub owasp_coverage: HashMap<String, OwaspCategoryStats>,
+    pub confidence_distribution: HashMap<String, usize>,
+    pub most_common_issues: Vec<IssueTypeStats>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OwaspCategoryStats {
+    pub issues_found: usize,
+    pub coverage_percentage: f64,
+    pub avg_confidence: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IssueTypeStats {
+    pub issue_type: String,
+    pub count: usize,
+    pub avg_severity: String,
+}
+
+// Security API handlers
+
+/// Get all security issues for a specific analysis run or latest run
+async fn get_security_issues(
+    State(state): State<Arc<AppState>>,
+) -> Result<impl IntoResponse, StatusCode> {
+    // For now, return demo security issues
+    let demo_issues = vec![
+        SecurityIssueResponse {
+            id: "sec_001".to_string(),
+            issue_type: "Injection".to_string(),
+            severity: "Critical".to_string(),
+            confidence_score: 0.95,
+            location: LocationResponse {
+                file: "src/auth.py".to_string(),
+                start_line: 42,
+                end_line: 42,
+                start_column: Some(15),
+                end_column: Some(35),
+            },
+            description: "SQL injection vulnerability detected in user authentication".to_string(),
+            remediation: "Use parameterized queries to prevent SQL injection".to_string(),
+            owasp_category: Some("A03_Injection".to_string()),
+            cwe_id: Some("CWE-89".to_string()),
+            cvss_score: Some(9.8),
+            references: vec!["https://owasp.org/www-project-top-ten/2017/A1_2017-Injection".to_string()],
+            taint_flows: Some(vec![
+                TaintFlowResponse {
+                    source: FlowNodeResponse {
+                        name: "user_input".to_string(),
+                        location: "src/auth.py:35".to_string(),
+                        node_type: "UserInput".to_string(),
+                    },
+                    sink: FlowNodeResponse {
+                        name: "sql_execute".to_string(),
+                        location: "src/auth.py:42".to_string(),
+                        node_type: "SqlQuery".to_string(),
+                    },
+                    confidence: 0.95,
+                    sanitizers: vec![],
+                }
+            ]),
+        },
+        SecurityIssueResponse {
+            id: "sec_002".to_string(),
+            issue_type: "Hardcoded Secrets".to_string(),
+            severity: "High".to_string(),
+            confidence_score: 1.0,
+            location: LocationResponse {
+                file: "config/settings.py".to_string(),
+                start_line: 8,
+                end_line: 8,
+                start_column: Some(15),
+                end_column: Some(45),
+            },
+            description: "Hardcoded API key found in configuration file".to_string(),
+            remediation: "Move secrets to environment variables or secure key management".to_string(),
+            owasp_category: Some("A02_Cryptographic_Failures".to_string()),
+            cwe_id: Some("CWE-798".to_string()),
+            cvss_score: Some(7.5),
+            references: vec!["https://cwe.mitre.org/data/definitions/798.html".to_string()],
+            taint_flows: None,
+        },
+    ];
+
+    Ok(Json(demo_issues))
+}
+
+/// Get a specific security issue by ID
+async fn get_security_issue(
+    AxumPath(issue_id): AxumPath<String>,
+    State(state): State<Arc<AppState>>,
+) -> Result<impl IntoResponse, StatusCode> {
+    // For demo purposes, return the first demo issue if ID matches
+    if issue_id == "sec_001" {
+        let issue = SecurityIssueResponse {
+            id: "sec_001".to_string(),
+            issue_type: "Injection".to_string(),
+            severity: "Critical".to_string(),
+            confidence_score: 0.95,
+            location: LocationResponse {
+                file: "src/auth.py".to_string(),
+                start_line: 42,
+                end_line: 42,
+                start_column: Some(15),
+                end_column: Some(35),
+            },
+            description: "SQL injection vulnerability detected in user authentication".to_string(),
+            remediation: "Use parameterized queries to prevent SQL injection".to_string(),
+            owasp_category: Some("A03_Injection".to_string()),
+            cwe_id: Some("CWE-89".to_string()),
+            cvss_score: Some(9.8),
+            references: vec!["https://owasp.org/www-project-top-ten/2017/A1_2017-Injection".to_string()],
+            taint_flows: Some(vec![
+                TaintFlowResponse {
+                    source: FlowNodeResponse {
+                        name: "user_input".to_string(),
+                        location: "src/auth.py:35".to_string(),
+                        node_type: "UserInput".to_string(),
+                    },
+                    sink: FlowNodeResponse {
+                        name: "sql_execute".to_string(),
+                        location: "src/auth.py:42".to_string(),
+                        node_type: "SqlQuery".to_string(),
+                    },
+                    confidence: 0.95,
+                    sanitizers: vec![],
+                }
+            ]),
+        };
+        Ok(Json(issue))
+    } else {
+        Err(StatusCode::NOT_FOUND)
+    }
+}
+
+/// Get security analysis summary statistics
+async fn get_security_summary(
+    State(state): State<Arc<AppState>>,
+) -> Result<impl IntoResponse, StatusCode> {
+    let mut owasp_coverage = HashMap::new();
+    owasp_coverage.insert("A01_Broken_Access_Control".to_string(), OwaspCategoryStats {
+        issues_found: 5,
+        coverage_percentage: 90.0,
+        avg_confidence: 0.85,
+    });
+    owasp_coverage.insert("A02_Cryptographic_Failures".to_string(), OwaspCategoryStats {
+        issues_found: 2,
+        coverage_percentage: 70.0,
+        avg_confidence: 0.95,
+    });
+    owasp_coverage.insert("A03_Injection".to_string(), OwaspCategoryStats {
+        issues_found: 8,
+        coverage_percentage: 95.0,
+        avg_confidence: 0.90,
+    });
+
+    let mut confidence_distribution = HashMap::new();
+    confidence_distribution.insert("high".to_string(), 25);
+    confidence_distribution.insert("medium".to_string(), 12);
+    confidence_distribution.insert("low".to_string(), 5);
+
+    let summary = SecuritySummaryResponse {
+        total_issues: 42,
+        critical_count: 3,
+        high_count: 8,
+        medium_count: 20,
+        low_count: 11,
+        owasp_coverage,
+        confidence_distribution,
+        most_common_issues: vec![
+            IssueTypeStats {
+                issue_type: "Injection".to_string(),
+                count: 8,
+                avg_severity: "High".to_string(),
+            },
+            IssueTypeStats {
+                issue_type: "Hardcoded Secrets".to_string(),
+                count: 5,
+                avg_severity: "High".to_string(),
+            },
+            IssueTypeStats {
+                issue_type: "Broken Access Control".to_string(),
+                count: 5,
+                avg_severity: "Medium".to_string(),
+            },
+        ],
+    };
+
+    Ok(Json(summary))
+}
+
+/// Get OWASP Top 10 coverage information
+async fn get_owasp_coverage(
+    State(state): State<Arc<AppState>>,
+) -> Result<impl IntoResponse, StatusCode> {
+    let mut coverage = HashMap::new();
+    coverage.insert("A01_Broken_Access_Control".to_string(), OwaspCategoryStats {
+        issues_found: 5,
+        coverage_percentage: 90.0,
+        avg_confidence: 0.85,
+    });
+    coverage.insert("A02_Cryptographic_Failures".to_string(), OwaspCategoryStats {
+        issues_found: 2,
+        coverage_percentage: 70.0,
+        avg_confidence: 0.95,
+    });
+    coverage.insert("A03_Injection".to_string(), OwaspCategoryStats {
+        issues_found: 8,
+        coverage_percentage: 95.0,
+        avg_confidence: 0.90,
+    });
+    coverage.insert("A04_Insecure_Design".to_string(), OwaspCategoryStats {
+        issues_found: 1,
+        coverage_percentage: 60.0,
+        avg_confidence: 0.75,
+    });
+    coverage.insert("A05_Security_Misconfiguration".to_string(), OwaspCategoryStats {
+        issues_found: 7,
+        coverage_percentage: 85.0,
+        avg_confidence: 0.80,
+    });
+
+    Ok(Json(coverage))
+}
+
+/// Get taint flow analysis results
+async fn get_taint_flows(
+    State(state): State<Arc<AppState>>,
+) -> Result<impl IntoResponse, StatusCode> {
+    let taint_flows = vec![
+        TaintFlowResponse {
+            source: FlowNodeResponse {
+                name: "user_input".to_string(),
+                location: "src/auth.py:35".to_string(),
+                node_type: "UserInput".to_string(),
+            },
+            sink: FlowNodeResponse {
+                name: "sql_execute".to_string(),
+                location: "src/auth.py:42".to_string(),
+                node_type: "SqlQuery".to_string(),
+            },
+            confidence: 0.95,
+            sanitizers: vec![],
+        },
+        TaintFlowResponse {
+            source: FlowNodeResponse {
+                name: "url_param".to_string(),
+                location: "src/api.py:28".to_string(),
+                node_type: "UserInput".to_string(),
+            },
+            sink: FlowNodeResponse {
+                name: "file_open".to_string(),
+                location: "src/api.py:35".to_string(),
+                node_type: "FileSystem".to_string(),
+            },
+            confidence: 0.88,
+            sanitizers: vec!["path_sanitizer".to_string()],
+        },
+    ];
+
+    Ok(Json(taint_flows))
+}
+
+/// Export security findings in SARIF format
+async fn export_sarif(
+    State(state): State<Arc<AppState>>,
+) -> Result<impl IntoResponse, StatusCode> {
+    // SARIF 2.1.0 format implementation
+    let sarif_report = serde_json::json!({
+        "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+        "version": "2.1.0",
+        "runs": [{
+            "tool": {
+                "driver": {
+                    "name": "Uveddi Security Detector",
+                    "version": "0.9.0",
+                    "informationUri": "https://github.com/uveddi/uveddi",
+                    "rules": [{
+                        "id": "sql-injection",
+                        "name": "SQL Injection",
+                        "shortDescription": {
+                            "text": "SQL injection vulnerability detected"
+                        },
+                        "fullDescription": {
+                            "text": "Application is vulnerable to SQL injection attacks through unsanitized user input"
+                        },
+                        "defaultConfiguration": {
+                            "level": "error"
+                        },
+                        "properties": {
+                            "tags": ["security", "injection", "owasp-a03"],
+                            "precision": "high"
+                        }
+                    }]
+                }
+            },
+            "results": [{
+                "ruleId": "sql-injection",
+                "message": {
+                    "text": "SQL injection vulnerability: User input directly concatenated into SQL query"
+                },
+                "level": "error",
+                "locations": [{
+                    "physicalLocation": {
+                        "artifactLocation": {
+                            "uri": "src/auth.py"
+                        },
+                        "region": {
+                            "startLine": 42,
+                            "endLine": 42,
+                            "startColumn": 15,
+                            "endColumn": 35
+                        }
+                    }
+                }],
+                "fixes": [{
+                    "description": {
+                        "text": "Use parameterized queries to prevent SQL injection"
+                    }
+                }],
+                "properties": {
+                    "confidence": 0.95,
+                    "severity": "critical",
+                    "cwe": "CWE-89",
+                    "owasp": "A03_Injection"
+                }
+            }]
+        }]
+    });
+
+    let mut headers = HeaderMap::new();
+    headers.insert(header::CONTENT_TYPE, "application/json".parse().unwrap());
+    headers.insert(
+        header::CONTENT_DISPOSITION,
+        "attachment; filename=\"security-analysis.sarif\"".parse().unwrap(),
+    );
+
+    Ok((headers, Json(sarif_report)))
 }

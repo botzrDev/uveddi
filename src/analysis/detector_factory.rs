@@ -9,6 +9,10 @@ use crate::analysis::detectors::anti_patterns::magic_values::MagicValuesDetector
 // use crate::analysis::detectors::anti_patterns::shotgun_surgery::ShotgunSurgeryDetector;
 use crate::analysis::detectors::anti_patterns::tight_coupling::TightCouplingDetector;
 use crate::analysis::AnalysisDetector;
+
+// Security detector import
+#[cfg(feature = "security")]
+use crate::analysis::detectors::security::MainSecurityDetector;
 use crate::error::UveddiError;
 use std::collections::HashMap;
 
@@ -30,7 +34,7 @@ impl DetectorFactory {
     ///
     /// A vector of boxed detectors implementing the `AnalysisDetector` trait
     pub fn create_default_detectors() -> Vec<Box<dyn AnalysisDetector + Send + Sync>> {
-        vec![
+        let mut detectors: Vec<Box<dyn AnalysisDetector + Send + Sync>> = vec![
             // Original detectors
             Box::new(GodObjectDetector::new(5, 8)),
             Box::new(CodeDuplicationDetector::new()),
@@ -43,7 +47,17 @@ impl DetectorFactory {
             // Box::new(DataClumpsDetector::new()),
             Box::new(LongMethodsDetector::default()),
             Box::new(MagicValuesDetector::default()),
-        ]
+        ];
+
+        // Add SecurityDetector if security feature is enabled
+        #[cfg(feature = "security")]
+        {
+            if let Ok(security_detector) = MainSecurityDetector::new() {
+                detectors.push(Box::new(security_detector));
+            }
+        }
+
+        detectors
     }
 
     /// Create a new factory instance with registry support
@@ -90,6 +104,13 @@ impl DetectorFactory {
             // "shotgun_surgery" => Ok(Box::new(ShotgunSurgeryDetector::new())),
             // "feature_envy" => Ok(Box::new(FeatureEnvyDetector::new())),
             // "data_clumps" => Ok(Box::new(DataClumpsDetector::new())),
+            #[cfg(feature = "security")]
+            "security" => MainSecurityDetector::new()
+                .map(|detector| Box::new(detector) as Box<dyn AnalysisDetector + Send + Sync>)
+                .map_err(|e| UveddiError::config_error(
+                    &format!("Failed to create security detector: {}", e),
+                    "detector factory",
+                )),
             _ => Err(UveddiError::config_error(
                 &format!("Unknown detector: {}", name),
                 "detector factory",

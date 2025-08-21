@@ -373,9 +373,7 @@ impl AnalysisEngine {
     /// This method aggregates the anti-pattern types from all configured detectors,
     /// including a built-in type for cyclic dependencies.
     pub fn get_anti_pattern_types(&self) -> Vec<crate::database::models::AntiPatternType> {
-        // Static list of supported anti-pattern types
-        // This matches the pattern from the original engine
-        vec![
+        let mut anti_pattern_types = vec![
             crate::database::models::AntiPatternType {
                 anti_pattern_type_id: Some(1),
                 name: "God Object".to_string(),
@@ -430,7 +428,17 @@ impl AnalysisEngine {
                 description: "Hard-coded numeric or string literals that should be replaced with named constants".to_string(),
                 category: "maintainability".to_string(),
             },
-        ]
+        ];
+
+        // Add security anti-pattern types if security feature is enabled
+        #[cfg(feature = "security")]
+        {
+            if let Ok(security_detector) = crate::analysis::detectors::security::MainSecurityDetector::new() {
+                anti_pattern_types.extend(security_detector.get_anti_pattern_types());
+            }
+        }
+
+        anti_pattern_types
     }
 
     /// Configure the dead code detector with custom settings.

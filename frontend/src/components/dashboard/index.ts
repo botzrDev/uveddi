@@ -1,25 +1,12 @@
 // Dashboard component exports
-// This file provides a centralized export for all advanced dashboard components
+// This file provides a centralized export for all available dashboard components
 
-// Phase 1: Foundation Components
-export { default as PriorityMatrix } from './PriorityMatrix';
-export { default as QualityScoreCard } from './QualityScoreCard';
-
-// Phase 2: Data Visualization Components
-export { default as InteractiveDependencyGraph } from './InteractiveDependencyGraph';
-export { default as TechnicalDebtTracker } from './TechnicalDebtTracker';
-
-// Phase 3: Interactive Features
-export { default as SmartSearchPanel } from './SmartSearchPanel';
-export { default as FixSuggestionPanel } from './FixSuggestionPanel';
-
-// Phase 4: Advanced Features
-export { default as HistoricalComparison } from './HistoricalComparison';
-export { default as CollaborationPanel } from './CollaborationPanel';
-
-// Phase 5: Customization Components
-export { default as DashboardBuilder } from './DashboardBuilder';
-export { default as ExportHub } from './ExportHub';
+// Security Components (currently implemented)
+export { default as SecurityOverview } from './SecurityOverview';
+export { default as SecurityMetrics } from './SecurityMetrics';
+export { default as OwaspCoverage } from './OwaspCoverage';
+export { default as SecurityIssuesList } from './SecurityIssuesList';
+export { default as TaintFlowDiagram } from './TaintFlowDiagram';
 
 // Type exports for component props
 export type {
@@ -54,9 +41,9 @@ export type {
   DrillDownEvent,
 } from '../../types/dashboard';
 
-// Utility exports
-export { dataTransformers } from '../../utils/dataTransformers';
-export { dashboardTheme } from '../../utils/dashboardTheme';
+// Utility exports (commented out until implemented)
+// export { dataTransformers } from '../../utils/dataTransformers';
+// export { dashboardTheme } from '../../utils/dashboardTheme';
 
 // Component configuration constants
 export const DASHBOARD_COMPONENTS = {
@@ -70,6 +57,12 @@ export const DASHBOARD_COMPONENTS = {
   COLLABORATION: 'collaboration',
   DASHBOARD_BUILDER: 'dashboard_builder',
   EXPORT_HUB: 'export_hub',
+  // Security Components
+  SECURITY_OVERVIEW: 'security_overview',
+  SECURITY_METRICS: 'security_metrics',
+  OWASP_COVERAGE: 'owasp_coverage',
+  SECURITY_ISSUES_LIST: 'security_issues_list',
+  TAINT_FLOW_DIAGRAM: 'taint_flow_diagram',
 } as const;
 
 export type DashboardComponentType = typeof DASHBOARD_COMPONENTS[keyof typeof DASHBOARD_COMPONENTS];
@@ -132,6 +125,28 @@ export const DEFAULT_COMPONENT_CONFIGS = {
     exportable: true,
   },
   [DASHBOARD_COMPONENTS.EXPORT_HUB]: {
+    height: 600,
+  },
+  // Security Components
+  [DASHBOARD_COMPONENTS.SECURITY_OVERVIEW]: {
+    showDetails: true,
+    exportable: true,
+    height: 500,
+  },
+  [DASHBOARD_COMPONENTS.SECURITY_METRICS]: {
+    showDetails: true,
+    height: 300,
+  },
+  [DASHBOARD_COMPONENTS.OWASP_COVERAGE]: {
+    interactive: true,
+    height: 400,
+  },
+  [DASHBOARD_COMPONENTS.SECURITY_ISSUES_LIST]: {
+    maxItems: 50,
+    height: 500,
+  },
+  [DASHBOARD_COMPONENTS.TAINT_FLOW_DIAGRAM]: {
+    interactive: true,
     height: 600,
   },
 };
@@ -228,6 +243,52 @@ export const COMPONENT_METADATA = {
     defaultSize: { width: 10, height: 8 },
     maxSize: { width: 12, height: 10 },
   },
+  // Security Components Metadata
+  [DASHBOARD_COMPONENTS.SECURITY_OVERVIEW]: {
+    name: 'Security Overview',
+    description: 'High-level security analysis and risk assessment',
+    category: 'Security',
+    icon: 'security',
+    minSize: { width: 8, height: 6 },
+    defaultSize: { width: 10, height: 8 },
+    maxSize: { width: 12, height: 10 },
+  },
+  [DASHBOARD_COMPONENTS.SECURITY_METRICS]: {
+    name: 'Security Metrics',
+    description: 'Detailed security vulnerability metrics and trends',
+    category: 'Security',
+    icon: 'shield',
+    minSize: { width: 6, height: 4 },
+    defaultSize: { width: 8, height: 6 },
+    maxSize: { width: 10, height: 8 },
+  },
+  [DASHBOARD_COMPONENTS.OWASP_COVERAGE]: {
+    name: 'OWASP Coverage',
+    description: 'OWASP Top 10 coverage analysis and compliance',
+    category: 'Security',
+    icon: 'verified_user',
+    minSize: { width: 8, height: 6 },
+    defaultSize: { width: 10, height: 8 },
+    maxSize: { width: 12, height: 10 },
+  },
+  [DASHBOARD_COMPONENTS.SECURITY_ISSUES_LIST]: {
+    name: 'Security Issues',
+    description: 'Detailed list of security vulnerabilities',
+    category: 'Security',
+    icon: 'warning',
+    minSize: { width: 8, height: 8 },
+    defaultSize: { width: 12, height: 10 },
+    maxSize: { width: 12, height: 12 },
+  },
+  [DASHBOARD_COMPONENTS.TAINT_FLOW_DIAGRAM]: {
+    name: 'Taint Flow Analysis',
+    description: 'Interactive data flow and taint analysis visualization',
+    category: 'Security',
+    icon: 'bubble_chart',
+    minSize: { width: 10, height: 8 },
+    defaultSize: { width: 12, height: 10 },
+    maxSize: { width: 12, height: 12 },
+  },
 };
 
 // Event types for component communication
@@ -280,15 +341,26 @@ export const validateComponentProps = (type: DashboardComponentType, props: any)
       return props.report;
     case DASHBOARD_COMPONENTS.EXPORT_HUB:
       return props.report;
+    // Security Components
+    case DASHBOARD_COMPONENTS.SECURITY_OVERVIEW:
+      return props.securityAnalysis && props.securityAnalysis.summary;
+    case DASHBOARD_COMPONENTS.SECURITY_METRICS:
+      return props.summary;
+    case DASHBOARD_COMPONENTS.OWASP_COVERAGE:
+      return props.coverage;
+    case DASHBOARD_COMPONENTS.SECURITY_ISSUES_LIST:
+      return Array.isArray(props.issues);
+    case DASHBOARD_COMPONENTS.TAINT_FLOW_DIAGRAM:
+      return Array.isArray(props.flows);
     default:
       return true;
   }
 };
 
-// Theme integration helpers
-export const getComponentTheme = (type: DashboardComponentType, mode: 'light' | 'dark' = 'light') => {
-  return dashboardTheme.createTheme(mode);
-};
+// Theme integration helpers (commented out until dashboardTheme is implemented)
+// export const getComponentTheme = (type: DashboardComponentType, mode: 'light' | 'dark' = 'light') => {
+//   return dashboardTheme.createTheme(mode);
+// };
 
 // Performance optimization helpers
 export const shouldComponentUpdate = (
@@ -345,24 +417,38 @@ export const shouldComponentUpdate = (
       );
     case DASHBOARD_COMPONENTS.EXPORT_HUB:
       return prevProps.report !== nextProps.report;
+    // Security Components
+    case DASHBOARD_COMPONENTS.SECURITY_OVERVIEW:
+      return (
+        prevProps.securityAnalysis !== nextProps.securityAnalysis ||
+        prevProps.showDetails !== nextProps.showDetails
+      );
+    case DASHBOARD_COMPONENTS.SECURITY_METRICS:
+      return (
+        prevProps.summary !== nextProps.summary ||
+        prevProps.showDetails !== nextProps.showDetails
+      );
+    case DASHBOARD_COMPONENTS.OWASP_COVERAGE:
+      return (
+        prevProps.coverage !== nextProps.coverage ||
+        prevProps.interactive !== nextProps.interactive
+      );
+    case DASHBOARD_COMPONENTS.SECURITY_ISSUES_LIST:
+      return (
+        prevProps.issues !== nextProps.issues ||
+        prevProps.filters !== nextProps.filters
+      );
+    case DASHBOARD_COMPONENTS.TAINT_FLOW_DIAGRAM:
+      return (
+        prevProps.flows !== nextProps.flows ||
+        prevProps.selectedFlow !== nextProps.selectedFlow
+      );
     default:
       return true;
   }
 };
 
 export default {
-  // Components
-  PriorityMatrix,
-  QualityScoreCard,
-  InteractiveDependencyGraph,
-  TechnicalDebtTracker,
-  SmartSearchPanel,
-  FixSuggestionPanel,
-  HistoricalComparison,
-  CollaborationPanel,
-  DashboardBuilder,
-  ExportHub,
-  
   // Configuration
   DASHBOARD_COMPONENTS,
   DEFAULT_COMPONENT_CONFIGS,
@@ -370,12 +456,10 @@ export default {
   DASHBOARD_EVENTS,
   
   // Utilities
-  dataTransformers,
-  dashboardTheme,
   createComponentId,
   getComponentConfig,
   getComponentMetadata,
   validateComponentProps,
-  getComponentTheme,
+  // getComponentTheme, // Commented out until dashboardTheme is implemented
   shouldComponentUpdate,
 };

@@ -60,7 +60,11 @@ export const mockIntersectionObserver = () => {
   const mockIntersectionObserver = vi.fn(() => ({
     observe: () => null,
     unobserve: () => null,
-    disconnect: () => null
+    disconnect: () => null,
+    takeRecords: () => [],
+    root: null,
+    rootMargin: '0px',
+    thresholds: [0]
   }));
   window.IntersectionObserver = mockIntersectionObserver;
 };

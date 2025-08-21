@@ -280,6 +280,7 @@ impl InteractiveReportGenerator {
                 ai_explanation: Some("This method is doing too many things. Consider breaking it into smaller, focused methods.".to_string()),
                 recommendation: Some("Extract validation, persistence, and notification logic into separate methods.".to_string()),
                 related_findings: vec![],
+                security_metadata: None,
             },
             crate::report::interactive_models::Finding {
                 id: "finding-2".to_string(),
@@ -298,6 +299,7 @@ impl InteractiveReportGenerator {
                 ai_explanation: None,
                 recommendation: Some("Remove this function to reduce code complexity.".to_string()),
                 related_findings: vec![],
+                security_metadata: None,
             },
         ];
 

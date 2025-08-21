@@ -1102,3 +1102,463 @@
   h2 { font-size: 16pt; }
   h3 { font-size: 14pt; }
 }
+
+/* Security Analysis Section Styles */
+.security-analysis {
+  background: var(--color-gray-50);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xl);
+  margin-bottom: var(--spacing-xl);
+  border: 1px solid var(--color-gray-200);
+}
+
+.security-analysis h2 {
+  color: var(--color-gray-900);
+  margin-bottom: var(--spacing-lg);
+  font-size: 1.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+/* Security Metrics */
+.security-summary {
+  margin-bottom: var(--spacing-xl);
+}
+
+.security-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+.metric-card {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+  border: 2px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.metric-card.critical {
+  border-color: #dc2626;
+  background: linear-gradient(135deg, #fee2e2 0%, #ffffff 100%);
+}
+
+.metric-card.high {
+  border-color: #ea580c;
+  background: linear-gradient(135deg, #fed7aa 0%, #ffffff 100%);
+}
+
+.metric-card.medium {
+  border-color: #d97706;
+  background: linear-gradient(135deg, #fef3c7 0%, #ffffff 100%);
+}
+
+.metric-card.low {
+  border-color: #059669;
+  background: linear-gradient(135deg, #d1fae5 0%, #ffffff 100%);
+}
+
+.metric-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+}
+
+.metric-header h3 {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.metric-header i {
+  font-size: 1rem;
+}
+
+.metric-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-gray-900);
+  margin: 0;
+}
+
+/* OWASP Coverage */
+.owasp-coverage {
+  margin-bottom: var(--spacing-xl);
+}
+
+.owasp-coverage h3 {
+  margin-bottom: var(--spacing-lg);
+  color: var(--color-gray-900);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.owasp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--spacing-lg);
+}
+
+.owasp-item {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-gray-200);
+}
+
+.owasp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--spacing-md);
+}
+
+.owasp-header h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-gray-900);
+  flex: 1;
+}
+
+.coverage-badge {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-md);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: white;
+  white-space: nowrap;
+}
+
+.coverage-badge.excellent {
+  background: #059669;
+}
+
+.coverage-badge.good {
+  background: #84cc16;
+}
+
+.coverage-badge.fair {
+  background: #eab308;
+}
+
+.coverage-badge.poor {
+  background: #ef4444;
+}
+
+.owasp-stats {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-md);
+}
+
+.owasp-stats .stat {
+  text-align: center;
+}
+
+.owasp-stats .label {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--color-gray-500);
+  margin-bottom: var(--spacing-xs);
+}
+
+.owasp-stats .value {
+  display: block;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-gray-900);
+}
+
+.coverage-bar {
+  height: 6px;
+  background: var(--color-gray-200);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: var(--radius-md);
+  transition: width 0.3s ease;
+}
+
+/* Security Issues */
+.top-security-issues {
+  margin-bottom: var(--spacing-xl);
+}
+
+.top-security-issues h3 {
+  margin-bottom: var(--spacing-lg);
+  color: var(--color-gray-900);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.security-issues-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.security-issue-card {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-sm);
+  border-left: 4px solid var(--color-gray-300);
+  transition: all 0.2s ease;
+}
+
+.security-issue-card.severity-critical {
+  border-left-color: #dc2626;
+}
+
+.security-issue-card.severity-high {
+  border-left-color: #ea580c;
+}
+
+.security-issue-card.severity-medium {
+  border-left-color: #d97706;
+}
+
+.security-issue-card.severity-low {
+  border-left-color: #059669;
+}
+
+.issue-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--spacing-md);
+}
+
+.issue-type {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.issue-type h4 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-gray-900);
+}
+
+.severity-badge {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-md);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: white;
+}
+
+.severity-badge.severity-critical {
+  background: #dc2626;
+}
+
+.severity-badge.severity-high {
+  background: #ea580c;
+}
+
+.severity-badge.severity-medium {
+  background: #d97706;
+}
+
+.severity-badge.severity-low {
+  background: #059669;
+}
+
+.confidence-score {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: 0.875rem;
+}
+
+.confidence-label {
+  color: var(--color-gray-500);
+}
+
+.confidence-value {
+  font-weight: 600;
+  color: var(--color-gray-900);
+}
+
+.issue-description {
+  margin-bottom: var(--spacing-md);
+}
+
+.issue-description p {
+  margin: 0;
+  color: var(--color-gray-700);
+  line-height: 1.5;
+}
+
+.issue-location {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-md);
+  font-family: var(--font-family-mono);
+  font-size: 0.875rem;
+  color: var(--color-gray-600);
+}
+
+.issue-location i {
+  color: var(--color-gray-400);
+}
+
+.owasp-tag,
+.cwe-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  margin-right: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+  font-size: 0.75rem;
+}
+
+.owasp-label,
+.cwe-label {
+  color: var(--color-gray-500);
+  font-weight: 500;
+}
+
+.owasp-value,
+.cwe-value {
+  color: var(--color-gray-700);
+  font-weight: 600;
+  background: var(--color-gray-100);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+}
+
+.remediation {
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--color-gray-200);
+}
+
+.remediation h5 {
+  margin: 0 0 var(--spacing-sm) 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-gray-900);
+}
+
+.remediation p {
+  margin: 0;
+  color: var(--color-gray-700);
+  line-height: 1.5;
+  font-size: 0.875rem;
+}
+
+/* View All Security Issues */
+.view-all-security {
+  text-align: center;
+  margin-top: var(--spacing-lg);
+}
+
+/* Security Actions */
+.security-actions h3 {
+  margin-bottom: var(--spacing-lg);
+  color: var(--color-gray-900);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.export-buttons {
+  display: flex;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn.btn-primary {
+  background: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+}
+
+.btn.btn-primary:hover {
+  background: var(--color-primary-dark);
+  border-color: var(--color-primary-dark);
+}
+
+.btn.btn-secondary {
+  background: var(--color-gray-200);
+  color: var(--color-gray-700);
+  border-color: var(--color-gray-300);
+}
+
+.btn.btn-secondary:hover {
+  background: var(--color-gray-300);
+  border-color: var(--color-gray-400);
+}
+
+/* Responsive Design for Security Section */
+@media (max-width: 768px) {
+  .security-metrics {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .owasp-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .issue-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+  }
+  
+  .export-buttons {
+    flex-direction: column;
+  }
+  
+  .btn {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .security-metrics {
+    grid-template-columns: 1fr;
+  }
+  
+  .security-analysis {
+    padding: var(--spacing-md);
+  }
+  
+  .owasp-stats {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+}

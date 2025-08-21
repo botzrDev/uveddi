@@ -19,7 +19,11 @@ global.IntersectionObserver = class IntersectionObserver {
   observe() {}
   unobserve() {}
   disconnect() {}
-};
+  takeRecords() { return []; }
+  get root() { return null; }
+  get rootMargin() { return '0px'; }
+  get thresholds() { return [0]; }
+} as any;
 
 // Mock HTMLCanvasElement.getContext
 HTMLCanvasElement.prototype.getContext = vi.fn(() => ({

@@ -11,4 +11,4 @@ pub mod security;
 
 pub use cycle::CycleDetector;
 pub use dependency::{Dependency, DependencyExtractor};
-pub use security::{SecurityDetector, SecurityConfig};
+pub use security::{MainSecurityDetector, SecurityDetector, SecurityConfig};

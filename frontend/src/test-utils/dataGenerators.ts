@@ -263,7 +263,7 @@ export const generateEdgeCaseData = () => ({
   longTextData: generateMockIssue({
     title: faker.lorem.sentence({ min: 50, max: 100 }),
     description: faker.lorem.paragraphs(10, '\n\n'),
-    file: `src/very/deeply/nested/folder/structure/with/many/levels/and/long/names/${faker.lorem.words(5).join('-')}.tsx`
+    file: `src/very/deeply/nested/folder/structure/with/many/levels/and/long/names/${Array.isArray(faker.lorem.words(5)) ? faker.lorem.words(5).join('-') : faker.lorem.words(5)}.tsx`
   }),
   specialCharacterData: generateMockIssue({
     title: 'Issue with "quotes", <brackets>, & special chars: éñ中文',

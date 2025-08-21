@@ -277,6 +277,63 @@ pub struct AnalyzeCommand {
     /// after analysis is complete, showing the results in a visual interface.
     #[arg(long)]
     pub open_dashboard: bool,
+
+    // === SECURITY ANALYSIS OPTIONS ===
+    /// Enable security vulnerability analysis
+    ///
+    /// Performs comprehensive security analysis including OWASP Top 10 coverage,
+    /// taint flow analysis, and vulnerability detection.
+    #[arg(long)]
+    pub security: bool,
+
+    /// Run only security analysis (skip other detectors)
+    ///
+    /// When enabled, only security-related anti-pattern detection will be performed.
+    /// This provides faster analysis when only security concerns are relevant.
+    #[arg(long)]
+    pub security_only: bool,
+
+    /// Minimum confidence threshold for security findings (0.0 to 1.0)
+    ///
+    /// Only report security issues with confidence above this threshold.
+    /// Higher values reduce false positives but may miss some vulnerabilities.
+    #[arg(long, value_name = "THRESHOLD", default_value = "0.5")]
+    pub min_security_confidence: Option<f64>,
+
+    /// Export security findings in SARIF 2.1.0 format
+    ///
+    /// Generates SARIF-compliant output suitable for GitHub Security tab,
+    /// CI/CD pipeline integration, and security toolchain interoperability.
+    #[arg(long)]
+    pub export_sarif: bool,
+
+    /// SARIF output file path
+    ///
+    /// Specifies where to save the SARIF export file. If not provided,
+    /// defaults to '<output-file-stem>.sarif' or 'security-findings.sarif'.
+    #[arg(long)]
+    pub sarif_output: Option<PathBuf>,
+
+    /// Enable taint flow analysis for data flow vulnerabilities
+    ///
+    /// Performs source-to-sink taint analysis to identify potential
+    /// injection vulnerabilities and unsafe data flows.
+    #[arg(long)]
+    pub enable_taint_analysis: bool,
+
+    /// Maximum depth for taint flow analysis (1-20)
+    ///
+    /// Controls how deep the taint analysis traverses call chains.
+    /// Higher values increase accuracy but also analysis time.
+    #[arg(long, value_name = "DEPTH", default_value = "10")]
+    pub taint_analysis_depth: Option<u8>,
+
+    /// OWASP categories to focus on (comma-separated)
+    ///
+    /// Limit security analysis to specific OWASP Top 10 2021 categories.
+    /// Examples: "A01,A03,A06" or "injection,broken_access_control"
+    #[arg(long, value_delimiter = ',')]
+    pub owasp_categories: Option<Vec<String>>,
 }
 
 impl AnalyzeCommand {
@@ -556,6 +613,49 @@ impl AnalyzeCommand {
             for pattern in patterns {
                 security::validate_input(pattern, "large_classes_ignore_pattern")?;
             }
+        }
+
+        // Validate security-specific options
+        if let Some(confidence) = self.min_security_confidence {
+            let confidence_int = (confidence * 100.0) as i32;
+            security::validate_numeric_range(confidence_int.into(), 0, 100, "min_security_confidence")?;
+        }
+
+        if let Some(depth) = self.taint_analysis_depth {
+            security::validate_numeric_range((depth as i32).into(), 1, 20, "taint_analysis_depth")?;
+        }
+
+        if let Some(ref output) = self.sarif_output {
+            let output_str = output.to_string_lossy();
+            security::validate_input(&output_str, "sarif_output")?;
+        }
+
+        if let Some(ref categories) = self.owasp_categories {
+            for category in categories {
+                security::validate_input(category, "owasp_category")?;
+            }
+        }
+
+        // Validate security flag combinations
+        if self.security_only && !self.security {
+            return Err(SecurityError::InvalidInput {
+                field: "security_only".to_string(),
+                reason: "--security-only requires --security to be enabled".to_string(),
+            });
+        }
+
+        if self.export_sarif && !self.security {
+            return Err(SecurityError::InvalidInput {
+                field: "export_sarif".to_string(),
+                reason: "--export-sarif requires --security to be enabled".to_string(),
+            });
+        }
+
+        if self.enable_taint_analysis && !self.security {
+            return Err(SecurityError::InvalidInput {
+                field: "enable_taint_analysis".to_string(),
+                reason: "--enable-taint-analysis requires --security to be enabled".to_string(),
+            });
         }
 
         Ok(())
@@ -948,10 +1048,19 @@ impl AnalyzeCommand {
             if report.metadata.ai_enhanced {
                 println!("  • AI enhanced: ✅");
             }
+            
+            // Add security-specific summary if security analysis was enabled
+            if self.security {
+                self.print_security_summary(&report).await;
+            }
+            
             println!("\n💡 Report generated: {}", output_info);
         } else {
             println!("\n✅ Analysis complete: No issues found! 🎉");
             println!("📊 Files analyzed: {}", report.metadata.files_analyzed);
+            if self.security {
+                println!("🔒 Security analysis: No vulnerabilities detected");
+            }
             println!("💡 Report generated: {}", output_info);
         }
         
@@ -1057,6 +1166,45 @@ impl AnalyzeCommand {
         }
 
         Ok(discovered_files)
+    }
+
+    /// Print security analysis summary with color-coded output
+    async fn print_security_summary(&self, report: &crate::application::AnalysisReport) {
+        // Note: This is a placeholder implementation until we have the security data
+        // properly flowing through the AnalysisReport structure
+        
+        println!("  🔒 Security Analysis:");
+        
+        if self.export_sarif {
+            let sarif_path = self.sarif_output
+                .as_ref()
+                .map(|p| p.to_string_lossy().to_string())
+                .unwrap_or_else(|| {
+                    if let Some(output) = &self.output {
+                        let mut sarif_path = output.clone();
+                        sarif_path.set_extension("sarif");
+                        sarif_path.to_string_lossy().to_string()
+                    } else {
+                        "security-findings.sarif".to_string()
+                    }
+                });
+                
+            println!("     • SARIF export: {}", sarif_path);
+        }
+        
+        if self.enable_taint_analysis {
+            let depth = self.taint_analysis_depth.unwrap_or(10);
+            println!("     • Taint analysis depth: {}", depth);
+        }
+        
+        if let Some(ref categories) = self.owasp_categories {
+            println!("     • OWASP categories: {}", categories.join(", "));
+        } else {
+            println!("     • OWASP coverage: All Top 10 2021 categories");
+        }
+        
+        let confidence = self.min_security_confidence.unwrap_or(0.5);
+        println!("     • Min confidence: {:.0}%", confidence * 100.0);
     }
 
     // TODO: Dashboard integration methods temporarily disabled

@@ -1,7 +1,24 @@
 // Advanced dashboard component types for Uveddi Interactive Reports
 // These extend the base InteractiveReport interfaces with specialized dashboard features
 
-import type { Finding, InteractiveReport, GraphNode, GraphEdge } from './api';
+import type { Finding, GraphNode, GraphEdge } from './api';
+
+// Declare InteractiveReport locally for dashboard usage
+export interface InteractiveReport {
+  id: string;
+  title: string;
+  summary: {
+    qualityScore: number;
+    totalFindings: number;
+    severityBreakdown: Record<string, number>;
+  };
+  findings: Finding[];
+  metadata: {
+    timestamp: string;
+    analysisTimeMs: number;
+    version: string;
+  };
+}
 
 // ===== PRIORITY MATRIX TYPES =====
 export interface PriorityMatrixItem {
@@ -458,6 +475,37 @@ export interface FilterableComponentProps extends BaseComponentProps {
 export interface ExportableComponentProps extends BaseComponentProps {
   exportable?: boolean;
   onExport?: (format: ExportFormat) => void;
+}
+
+// Missing types referenced by tests and components
+export interface Issue extends Finding {
+  // Issue is an alias for Finding
+}
+
+export interface QualityMetrics {
+  // Legacy name - use QualityMetric instead
+  overall: number;
+  categories: Record<string, number>;
+}
+
+export interface DependencyNode extends GraphNode {
+  // DependencyNode is an alias for GraphNode
+}
+
+export interface TechnicalDebt {
+  id: string;
+  name: string;
+  score: number;
+  category: string;
+  impact: number;
+  effort: number;
+}
+
+export interface DashboardEvent<T = any> {
+  type: string;
+  payload: T;
+  timestamp: string;
+  source: string;
 }
 
 // ===== EVENT TYPES =====
