@@ -268,20 +268,75 @@ impl LargeClassDetector {
     #[cfg(feature = "tree-sitter")]
     fn count_rust_struct_fields(
         &self,
-        _struct_node: &Node,
-        _source: &[u8],
+        struct_node: &Node,
+        source: &[u8],
     ) -> Result<u32, AnalysisError> {
-        Ok(0)
+        let mut field_count = 0;
+        let mut cursor = struct_node.walk();
+        
+        // Look for struct fields
+        for child in struct_node.children(&mut cursor) {
+            if child.kind() == "field_declaration_list" {
+                let mut field_cursor = child.walk();
+                for field_child in child.children(&mut field_cursor) {
+                    if field_child.kind() == "field_declaration" {
+                        field_count += 1;
+                    }
+                }
+            }
+        }
+        
+        Ok(field_count)
     }
 
     #[cfg(feature = "tree-sitter")]
     fn find_rust_impl_metrics(
         &self,
-        _struct_name: &str,
-        _tree: &Tree,
-        _source: &[u8],
+        struct_name: &str,
+        tree: &Tree,
+        source: &[u8],
     ) -> Result<(u32, u32), AnalysisError> {
-        Ok((0, 0))
+        let language = tree.language();
+        
+        // Query for impl blocks of this struct
+        let impl_query_str = format!(r#"
+            (impl_item
+              type: (type_identifier) @impl_type
+              body: (declaration_list) @impl_body)
+        "#);
+        
+        let impl_query = Query::new(&language, &impl_query_str).map_err(|e| {
+            crate::analysis::errors::AnalysisError::AntiPatternDetectionError(e.to_string())
+        })?;
+        
+        let mut cursor = QueryCursor::new();
+        let mut method_count = 0;
+        let mut complexity = 0;
+        
+        let mut matches = cursor.matches(&impl_query, tree.root_node(), source);
+        while let Some(mat) = matches.next() {
+            // Check if this impl is for our struct
+            if let Some(type_capture) = mat.captures.get(0) {
+                if let Ok(impl_type_name) = type_capture.node.utf8_text(source) {
+                    if impl_type_name == struct_name {
+                        // Count methods in this impl block
+                        if let Some(body_capture) = mat.captures.get(1) {
+                            let body_node = body_capture.node;
+                            let mut body_cursor = body_node.walk();
+                            
+                            for child in body_node.children(&mut body_cursor) {
+                                if child.kind() == "function_item" {
+                                    method_count += 1;
+                                    complexity += 1; // Simplified complexity calculation
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        Ok((method_count, complexity))
     }
 
     #[cfg(feature = "tree-sitter")]
@@ -403,7 +458,7 @@ impl AnalysisDetector for LargeClassDetector {
 
                 let mut issue = ArchitecturalIssue::new(
                     0, // analysis_run_id - will be set by the engine
-                    7, // anti_pattern_type_id for LargeClass
+                    5, // anti_pattern_type_id for LargeClass
                     class_metrics.file_path.clone(),
                     class_metrics.start_line.try_into().ok().map(|l: i32| l),
                     format!(
@@ -443,7 +498,7 @@ impl AnalysisDetector for LargeClassDetector {
 
     fn get_anti_pattern_types(&self) -> Vec<AntiPatternType> {
         vec![AntiPatternType {
-            anti_pattern_type_id: Some(7),
+            anti_pattern_type_id: Some(5),
             name: "Large Class".to_string(),
             description: "Classes that have grown too large and complex, violating the Single Responsibility Principle".to_string(),
             category: "structural".to_string(),

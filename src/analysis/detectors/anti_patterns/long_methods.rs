@@ -92,7 +92,7 @@ impl LanguageThresholds {
     /// Get thresholds for Rust (conservative due to systems programming)
     pub fn rust() -> Self {
         Self {
-            max_logical_loc: 50,  // Conservative for systems code
+            max_logical_loc: 25,  // Conservative for systems code
             max_statements: 30,   // Rust encourages smaller functions
             max_parameters: 7,    // Rust type system helps with this
             max_nesting_depth: 4, // Match-based patterns reduce nesting
@@ -1052,8 +1052,9 @@ impl AnalysisDetector for LongMethodsDetector {
         file: &ParsedFile,
     ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         let mut issues = Vec::new();
-        debug!("Analyzing file: {}", file.file_path.display());
+        debug!("Long Methods Detector analyzing file: {}", file.file_path.display());
         let method_metrics = self.extract_method_metrics(file)?;
+        debug!("Long Methods Detector found {} method metrics", method_metrics.len());
         let thresholds = self.thresholds.get(&file.language).ok_or_else(|| {
             crate::analysis::errors::AnalysisError::UnsupportedLanguage(format!(
                 "{:?}",
@@ -1062,6 +1063,8 @@ impl AnalysisDetector for LongMethodsDetector {
         })?;
         for metrics in method_metrics {
             let severity_score = self.calculate_severity_score(&metrics, thresholds);
+            debug!("Method '{}': {} logical LOC, severity score: {} (threshold: {})", 
+                   metrics.name, metrics.logical_loc, severity_score, thresholds.max_logical_loc);
             if severity_score > 25 {
                 let mut issue = ArchitecturalIssue::new(
                     0, // analysis_run_id will be set by the engine
@@ -1110,7 +1113,16 @@ impl AnalysisDetector for LongMethodsDetector {
         ]
     }
     fn get_detector_name(&self) -> &'static str {
-        "long_methods"
+        "LongMethodsDetector"
+    }
+
+    fn detect(
+        &self,
+        graph: &crate::analysis::graph::dependency::LocalDependencyGraph,
+    ) -> Vec<ArchitecturalIssue> {
+        // For the graph-based detect method, we return empty for now
+        // This method is used for dependency-based analysis
+        Vec::new()
     }
 }
 

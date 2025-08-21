@@ -123,8 +123,8 @@ impl Default for TightCouplingConfig {
     fn default() -> Self {
         Self {
             rust_thresholds: CouplingThresholds {
-                fan_out_warning: 7,
-                fan_out_critical: 12,
+                fan_out_warning: 3,
+                fan_out_critical: 7,
                 cbo_warning: 6,
                 cbo_critical: 10,
                 rfc_warning: 15,
@@ -345,7 +345,7 @@ impl TightCouplingDetector {
         {
             let mut issue = ArchitecturalIssue::new(
                 0, // analysis_run_id will be set by caller
-                5, // anti_pattern_type_id for tight coupling
+                3, // anti_pattern_type_id for tight coupling
                 file_path,
                 None, // line_number
                 description.clone(),
@@ -582,7 +582,7 @@ impl AnalysisDetector for TightCouplingDetector {
 
     fn get_anti_pattern_types(&self) -> Vec<AntiPatternType> {
         vec![AntiPatternType {
-            anti_pattern_type_id: Some(5),
+            anti_pattern_type_id: Some(3),
             name: "Tight Coupling".to_string(),
             description: "Components that are overly dependent on each other's internal implementation details".to_string(),
             category: "structural".to_string(),

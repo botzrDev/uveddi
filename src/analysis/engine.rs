@@ -424,6 +424,12 @@ impl AnalysisEngine {
                 description: "Circular dependencies between modules".to_string(),
                 category: "structural".to_string(),
             },
+            crate::database::models::AntiPatternType {
+                anti_pattern_type_id: Some(9),
+                name: "Magic Values".to_string(),
+                description: "Hard-coded numeric or string literals that should be replaced with named constants".to_string(),
+                category: "maintainability".to_string(),
+            },
         ]
     }
 

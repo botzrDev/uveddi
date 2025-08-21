@@ -13,7 +13,7 @@ pub mod detector_thresholds {
 
         /// Maximum number of methods in a class/struct
         /// Rust's ownership system enables smaller interfaces
-        pub const MAX_METHODS: u32 = 20;
+        pub const MAX_METHODS: u32 = 10;
 
         /// Maximum number of fields in a struct
         /// Struct composition over inheritance reduces field needs
