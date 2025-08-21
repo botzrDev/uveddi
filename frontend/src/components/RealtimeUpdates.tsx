@@ -13,7 +13,7 @@ import { useEffect, useState } from 'react';
 
 // WebSocket connection for real-time updates
 const WEBSOCKET_URL = window.location.hostname === 'localhost' 
-  ? `ws://${window.location.hostname}:8080`
+  ? `ws://${window.location.hostname}:8888`
   : `ws://${window.location.host}`;
 
 interface RealtimeUpdatesProps {
@@ -37,8 +37,15 @@ export function RealtimeUpdates({ onNewAnalysis }: RealtimeUpdatesProps) {
   const [socket, setSocket] = useState<WebSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
+  // Check if WebSocket is disabled
+  const isWebSocketDisabled = import.meta.env.VITE_DISABLE_WEBSOCKET === 'true';
+
   // Initialize WebSocket connection
   useEffect(() => {
+    if (isWebSocketDisabled) {
+      console.log('WebSocket disabled via environment variable');
+      return;
+    }
     const ws = new WebSocket(WEBSOCKET_URL);
     
     ws.onopen = () => {
@@ -100,7 +107,7 @@ export function RealtimeUpdates({ onNewAnalysis }: RealtimeUpdatesProps) {
   return (
     <>
       {/* Connection status indicator */}
-      {!isConnected && (
+      {!isConnected && !isWebSocketDisabled && (
         <Box sx={{ position: 'fixed', bottom: 10, left: 10, zIndex: 1000 }}>
           <Alert severity="warning" variant="filled" sx={{ width: '100%' }}>
             <AlertTitle>Disconnected</AlertTitle>

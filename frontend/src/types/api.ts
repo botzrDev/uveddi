@@ -9,6 +9,7 @@ export interface InteractiveReport {
   dependencyGraph: DependencyGraph;
   diagrams: DiagramDefinition[];
   aiInsights?: AiInsights;
+  securityAnalysis?: SecurityAnalysis;
   metadata: ReportMetadata;
 }
 
@@ -197,4 +198,104 @@ export interface ViewState {
   findingsView: 'list' | 'grid';
   showCodeSnippets: boolean;
   showAiInsights: boolean;
+}
+
+// Security Analysis Types
+export interface SecurityAnalysis {
+  summary: SecuritySummary;
+  owaspCoverage: Record<string, OwaspCategoryStats>;
+  issues: SecurityIssue[];
+  taintFlows: TaintFlow[];
+  correlations: SecurityCorrelation[];
+  compliance?: ComplianceStatus;
+}
+
+export interface SecuritySummary {
+  totalIssues: number;
+  criticalCount: number;
+  highCount: number;
+  mediumCount: number;
+  lowCount: number;
+  confidenceDistribution: Record<string, number>;
+  mostCommonIssues: IssueTypeStats[];
+  securityScore: number;
+}
+
+export interface OwaspCategoryStats {
+  issuesFound: number;
+  coveragePercentage: number;
+  avgConfidence: number;
+  severityDistribution: Record<string, number>;
+}
+
+export interface IssueTypeStats {
+  issueType: string;
+  count: number;
+  avgSeverity: string;
+  avgConfidence: number;
+}
+
+export interface SecurityIssue {
+  id: string;
+  issueType: string;
+  severity: string;
+  confidenceScore: number;
+  location: SecurityLocation;
+  description: string;
+  remediation: string;
+  owaspCategory?: string;
+  cweId?: string;
+  cvssScore?: number;
+  references: string[];
+  relatedTaintFlows: string[];
+  attackVector?: string;
+}
+
+export interface SecurityLocation {
+  file: string;
+  startLine: number;
+  endLine: number;
+  startColumn?: number;
+  endColumn?: number;
+  codeSnippet?: string;
+}
+
+export interface TaintFlow {
+  id: string;
+  source: FlowNode;
+  sink: FlowNode;
+  confidence: number;
+  sanitizers: FlowNode[];
+  path: FlowNode[];
+  vulnerabilityType: string;
+}
+
+export interface FlowNode {
+  name: string;
+  location: string;
+  nodeType: string;
+  lineNumber: number;
+  properties: Record<string, string>;
+}
+
+export interface SecurityCorrelation {
+  securityIssueId: string;
+  architecturalIssueId: string;
+  correlationStrength: number;
+  correlationType: string;
+  explanation: string;
+}
+
+export interface ComplianceStatus {
+  owaspScore: number;
+  cweScore: number;
+  standards: Record<string, StandardCompliance>;
+}
+
+export interface StandardCompliance {
+  name: string;
+  score: number;
+  requiredControls: number;
+  passedControls: number;
+  failedControls: number;
 }

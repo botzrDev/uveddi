@@ -1,14 +1,31 @@
 import React, { useMemo } from 'react';
-import { SecurityAnalysis } from '../../types/security';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
-import { Badge } from '../ui/Badge';
-import { Alert, AlertDescription } from '../ui/Alert';
-import { SecurityMetrics } from './SecurityMetrics';
-import { OwaspCoverage } from './OwaspCoverage';
-import { SecurityIssuesList } from './SecurityIssuesList';
-import { TaintFlowDiagram } from './TaintFlowDiagram';
-import { ExportableComponentProps } from '../../types/dashboard';
-import { ShieldAlert, ShieldCheck, AlertTriangle, Info } from 'lucide-react';
+import { SecurityAnalysis } from '../../types/api';
+import {
+  Alert,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  Chip,
+  Typography,
+} from '@mui/material';
+import {
+  Security as ShieldIcon,
+  Warning as WarningIcon,
+  CheckCircle as CheckIcon,
+  Error as ErrorIcon,
+} from '@mui/icons-material';
+// import { SecurityMetrics } from './SecurityMetrics';
+// import { OwaspCoverage } from './OwaspCoverage';
+// import { SecurityIssuesList } from './SecurityIssuesList';
+// import { TaintFlowDiagram } from './TaintFlowDiagram';
+
+interface ExportableComponentProps {
+  exportOptions?: {
+    onExport?: () => void;
+  };
+}
 
 interface SecurityOverviewProps extends ExportableComponentProps {
   securityAnalysis: SecurityAnalysis;
@@ -51,13 +68,13 @@ export const SecurityOverview: React.FC<SecurityOverviewProps> = ({
   const getStatusIcon = () => {
     switch (securityStatus) {
       case 'critical':
-        return <ShieldAlert className="h-6 w-6 text-red-500" />;
+        return <ErrorIcon color="error" />;
       case 'high':
-        return <AlertTriangle className="h-6 w-6 text-orange-500" />;
+        return <WarningIcon color="warning" />;
       case 'medium':
-        return <Info className="h-6 w-6 text-yellow-500" />;
+        return <WarningIcon color="warning" />;
       default:
-        return <ShieldCheck className="h-6 w-6 text-green-500" />;
+        return <CheckIcon color="success" />;
     }
   };
 
@@ -75,96 +92,70 @@ export const SecurityOverview: React.FC<SecurityOverviewProps> = ({
   };
 
   return (
-    <div className={`space-y-6 ${className}`}>
+    <Box className={className} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
       {/* Security Status Header */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-3">
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             {getStatusIcon()}
-            <span>Security Overview</span>
-            <Badge 
-              variant={securityStatus === 'critical' ? 'destructive' : 
-                     securityStatus === 'high' ? 'destructive' :
-                     securityStatus === 'medium' ? 'secondary' : 'default'}
-              className="ml-auto"
-            >
-              Score: {securityScore}/100
-            </Badge>
-          </CardTitle>
+            <Typography variant="h5" component="h2">
+              Security Overview
+            </Typography>
+            <Chip 
+              label={`Score: ${securityScore}/100`}
+              color={securityStatus === 'critical' || securityStatus === 'high' ? 'error' : 
+                     securityStatus === 'medium' ? 'warning' : 'success'}
+              sx={{ ml: 'auto' }}
+            />
+          </Box>
         </CardHeader>
         <CardContent>
-          <Alert>
-            <AlertDescription>
-              {getStatusMessage()}
-            </AlertDescription>
+          <Alert 
+            severity={securityStatus === 'critical' || securityStatus === 'high' ? 'error' : 
+                     securityStatus === 'medium' ? 'warning' : 'success'}
+          >
+            {getStatusMessage()}
           </Alert>
         </CardContent>
       </Card>
 
-      {/* Security Metrics */}
-      <SecurityMetrics 
-        summary={securityAnalysis.summary}
-        showDetails={showDetails}
-        className="mb-6"
-      />
-
-      {/* OWASP Top 10 Coverage */}
-      {securityAnalysis.owaspCoverage && (
-        <OwaspCoverage 
-          coverage={securityAnalysis.owaspCoverage}
-          className="mb-6"
-        />
-      )}
-
-      {/* Security Issues List */}
-      {securityAnalysis.issues && securityAnalysis.issues.length > 0 && (
-        <SecurityIssuesList
-          issues={securityAnalysis.issues}
-          onIssueSelect={onIssueSelect}
-          showAll={showDetails}
-          className="mb-6"
-        />
-      )}
-
-      {/* Taint Flow Analysis */}
-      {securityAnalysis.taintFlows && securityAnalysis.taintFlows.length > 0 && showDetails && (
-        <TaintFlowDiagram
-          taintFlows={securityAnalysis.taintFlows}
-          className="mb-6"
-        />
-      )}
+      {/* Security Metrics - Placeholder */}
+      <Card>
+        <CardHeader>
+          <Typography variant="h6">Security Metrics</Typography>
+        </CardHeader>
+        <CardContent>
+          <Typography>Security metrics will be displayed here.</Typography>
+        </CardContent>
+      </Card>
 
       {/* Export Actions */}
       <Card>
         <CardHeader>
-          <CardTitle>Export Security Results</CardTitle>
+          <Typography variant="h6">Export Security Results</Typography>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-4 flex-wrap">
-            <button
+          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+            <Button
+              variant="contained"
               onClick={onExportSarif}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2"
+              sx={{ minWidth: 120 }}
             >
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
               Export SARIF
-            </button>
+            </Button>
             {exportOptions?.onExport && (
-              <button
+              <Button
+                variant="outlined"
                 onClick={() => exportOptions.onExport?.()}
-                className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors flex items-center gap-2"
+                sx={{ minWidth: 120 }}
               >
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-                </svg>
                 Export Report
-              </button>
+              </Button>
             )}
-          </div>
+          </Box>
         </CardContent>
       </Card>
-    </div>
+    </Box>
   );
 };
 

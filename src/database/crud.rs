@@ -2,7 +2,7 @@ use crate::core::logging::error;
 use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
 use crate::error::Result;
 use crate::security;
-use chrono::Utc;
+use chrono::{DateTime, Utc};
 use rusqlite::Connection;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
@@ -405,5 +405,181 @@ impl Database {
         }
 
         Ok(anti_patterns)
+    }
+
+    /// Get analysis run by ID
+    pub async fn get_analysis_run(&self, run_id: i64) -> Result<Option<AnalysisRun>> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT run_id, project_id, start_time, end_time, status, total_files_analyzed, total_issues_found, analysis_config 
+             FROM analysis_runs WHERE run_id = ?"
+        )?;
+        
+        let result = stmt.query_row([run_id], |row| {
+            let start_time_str: String = row.get(2)?;
+            let end_time_str: Option<String> = row.get(3)?;
+            
+            Ok(AnalysisRun {
+                run_id: Some(row.get(0)?),
+                project_id: row.get(1)?,
+                start_time: chrono::DateTime::parse_from_rfc3339(&start_time_str)
+                    .map_err(|_| rusqlite::Error::InvalidColumnType(2, "start_time".to_string(), rusqlite::types::Type::Text))?
+                    .with_timezone(&Utc),
+                end_time: end_time_str.and_then(|s| {
+                    chrono::DateTime::parse_from_rfc3339(&s)
+                        .ok()
+                        .map(|dt| dt.with_timezone(&Utc))
+                }),
+                status: row.get(4)?,
+                total_files_analyzed: row.get(5)?,
+                total_issues_found: row.get(6)?,
+                analysis_config: row.get(7)?,
+            })
+        });
+        
+        match result {
+            Ok(run) => Ok(Some(run)),
+            Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
+            Err(e) => Err(crate::error::UveddiError::from(e)),
+        }
+    }
+
+    /// Get latest analysis run
+    pub async fn get_latest_analysis_run(&self) -> Result<Option<AnalysisRun>> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT run_id, project_id, start_time, end_time, status, total_files_analyzed, total_issues_found, analysis_config 
+             FROM analysis_runs ORDER BY start_time DESC LIMIT 1"
+        )?;
+        
+        let result = stmt.query_row([], |row| {
+            let start_time_str: String = row.get(2)?;
+            let end_time_str: Option<String> = row.get(3)?;
+            
+            Ok(AnalysisRun {
+                run_id: Some(row.get(0)?),
+                project_id: row.get(1)?,
+                start_time: chrono::DateTime::parse_from_rfc3339(&start_time_str)
+                    .map_err(|_| rusqlite::Error::InvalidColumnType(2, "start_time".to_string(), rusqlite::types::Type::Text))?
+                    .with_timezone(&Utc),
+                end_time: end_time_str.and_then(|s| {
+                    chrono::DateTime::parse_from_rfc3339(&s)
+                        .ok()
+                        .map(|dt| dt.with_timezone(&Utc))
+                }),
+                status: row.get(4)?,
+                total_files_analyzed: row.get(5)?,
+                total_issues_found: row.get(6)?,
+                analysis_config: row.get(7)?,
+            })
+        });
+        
+        match result {
+            Ok(run) => Ok(Some(run)),
+            Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
+            Err(e) => Err(crate::error::UveddiError::from(e)),
+        }
+    }
+
+    /// Get recent analysis runs
+    pub async fn get_recent_analysis_runs(&self, limit: u32) -> Result<Vec<AnalysisRun>> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT run_id, project_id, start_time, end_time, status, total_files_analyzed, total_issues_found, analysis_config 
+             FROM analysis_runs ORDER BY start_time DESC LIMIT ?"
+        )?;
+        
+        let run_iter = stmt.query_map([limit], |row| {
+            let start_time_str: String = row.get(2)?;
+            let end_time_str: Option<String> = row.get(3)?;
+            
+            Ok(AnalysisRun {
+                run_id: Some(row.get(0)?),
+                project_id: row.get(1)?,
+                start_time: chrono::DateTime::parse_from_rfc3339(&start_time_str)
+                    .map_err(|_| rusqlite::Error::InvalidColumnType(2, "start_time".to_string(), rusqlite::types::Type::Text))?
+                    .with_timezone(&Utc),
+                end_time: end_time_str.and_then(|s| {
+                    chrono::DateTime::parse_from_rfc3339(&s)
+                        .ok()
+                        .map(|dt| dt.with_timezone(&Utc))
+                }),
+                status: row.get(4)?,
+                total_files_analyzed: row.get(5)?,
+                total_issues_found: row.get(6)?,
+                analysis_config: row.get(7)?,
+            })
+        })?;
+        
+        let mut runs = Vec::new();
+        for run in run_iter {
+            runs.push(run?);
+        }
+        
+        Ok(runs)
+    }
+
+    /// Get issues for a specific analysis run
+    pub async fn get_issues_for_run(&self, run_id: i64) -> Result<Vec<ArchitecturalIssue>> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT issue_id, analysis_run_id, anti_pattern_type_id, file_path, start_line, end_line, 
+                    line_number, column_number, message, metadata, detector_name, created_at, severity, 
+                    description, code_snippet, ai_explanation
+             FROM architectural_issues WHERE analysis_run_id = ?"
+        )?;
+        
+        let issue_iter = stmt.query_map([run_id], |row| {
+            let created_at_str: String = row.get(11)?;
+            
+            Ok(ArchitecturalIssue {
+                issue_id: Some(row.get(0)?),
+                analysis_run_id: row.get(1)?,
+                anti_pattern_type_id: row.get(2)?,
+                file_path: row.get(3)?,
+                start_line: row.get(4)?,
+                end_line: row.get(5)?,
+                line_number: row.get(6)?,
+                column_number: row.get(7)?,
+                message: row.get(8)?,
+                metadata: row.get(9)?,
+                detector_name: row.get(10)?,
+                created_at: chrono::DateTime::parse_from_rfc3339(&created_at_str)
+                    .map_err(|_| rusqlite::Error::InvalidColumnType(11, "created_at".to_string(), rusqlite::types::Type::Text))?
+                    .with_timezone(&Utc),
+                severity: row.get(12)?,
+                description: row.get(13)?,
+                code_snippet: row.get(14)?,
+                ai_explanation: row.get(15)?,
+            })
+        })?;
+        
+        let mut issues = Vec::new();
+        for issue in issue_iter {
+            issues.push(issue?);
+        }
+        
+        Ok(issues)
+    }
+
+    /// Get dependencies for a specific analysis run
+    pub async fn get_dependencies_for_run(&self, _run_id: i64) -> Result<Vec<crate::database::models::Dependency>> {
+        // TODO: Implement dependency storage and retrieval
+        // For now, return empty vec as dependencies aren't stored in current schema
+        Ok(vec![])
+    }
+
+    /// Get security issues for a specific analysis run (if security feature enabled)
+    #[cfg(feature = "security")]
+    pub async fn get_security_issues_for_run(&self, _run_id: i64) -> Result<Vec<crate::analysis::detectors::security::types::SecurityIssue>> {
+        // TODO: Implement security issue storage and retrieval
+        // For now, return empty vec as security issues aren't stored in current schema
+        Ok(vec![])
+    }
+
+    /// Get security issues for a specific analysis run (stub when security feature disabled)
+    #[cfg(not(feature = "security"))]
+    pub async fn get_security_issues_for_run(&self, _run_id: i64) -> Result<Vec<()>> {
+        Ok(vec![])
     }
 }

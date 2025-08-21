@@ -724,6 +724,7 @@ impl InteractiveReport {
                 configuration: HashMap::new(), // TODO: Include analysis configuration
                 performance: None,             // TODO: Include performance metrics
             },
+            #[cfg(feature = "security")]
             security_analysis: None, // TODO: Implement security analysis integration
         }
     }

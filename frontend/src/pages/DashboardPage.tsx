@@ -3,6 +3,7 @@ import Sparkline from '@/components/charts/Sparkline';
 import FindingsList from '@/components/FindingsList';
 import MermaidDiagram from '@/components/MermaidDiagram';
 import UveddiLoader from '@/components/UveddiLoader';
+// import SecurityOverview from '@/components/dashboard/SecurityOverview';
 import { useDemoReport, useReport } from '@/hooks/useReport';
 import { apiService } from '@/services/api';
 import {
@@ -12,6 +13,7 @@ import {
     CheckCircleOutline,
     DownloadOutlined,
     HourglassEmpty,
+    SecurityOutlined,
     TimerOutlined
 } from '@mui/icons-material';
 import {
@@ -21,7 +23,8 @@ import {
     Chip,
     Grid,
     Paper,
-
+    Tab,
+    Tabs,
     Typography,
     useTheme,
 } from '@mui/material';
@@ -88,6 +91,7 @@ function DashboardPage() {
   const { data: report, isLoading, error } = query;
   const [selectedSeverity, setSelectedSeverity] = useState<string | null>(null);
   const [exportStatus, setExportStatus] = useState<'idle' | 'exporting' | 'success' | 'error'>('idle');
+  const [activeTab, setActiveTab] = useState<'overview' | 'security' | 'findings'>('overview');
 
   
 
@@ -438,56 +442,6 @@ function DashboardPage() {
         </Grid>
       </Grid>
 
-      {/* Issues by Severity (interactive) */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} md={7}>
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h5" gutterBottom>
-              Issues by Severity
-            </Typography>
-            <SeverityBarChart
-              data={Object.entries(report.summary?.issuesBySeverity || {}).map(([severity, count]) => ({ severity, count: Number(count) }))}
-              onBarClick={(p) => {
-                const sev = String(p.severity).toLowerCase();
-                setSelectedSeverity(prev => prev === sev ? null : sev);
-              }}
-              selectedSeverity={selectedSeverity}
-            />
-          </Paper>
-        </Grid>
-
-        <Grid item xs={12} md={5}>
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h5" gutterBottom>
-              Issues by Category
-            </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {Object.entries(report.summary?.issuesByCategory || {}).map(([category, count]) => (
-                <Box
-                  key={category}
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    p: 2,
-                    border: 1,
-                    borderColor: 'divider',
-                    borderRadius: 1,
-                    bgcolor: 'action.hover',
-                  }}
-                >
-                  <Typography variant="body1" sx={{ textTransform: 'capitalize' }}>
-                    {category}
-                  </Typography>
-                  <Typography variant="h6" fontWeight="bold">
-                    {count}
-                  </Typography>
-                </Box>
-              ))}
-            </Box>
-          </Paper>
-        </Grid>
-      </Grid>
 
       {/* Footer */}
       <Box
@@ -638,12 +592,217 @@ function DashboardPage() {
         </Paper>
       )}
 
-      {/* Detailed Findings List */}
-      <FindingsList 
-  findings={report.findings || []} 
-  loading={isLoading}
-  severityOverride={selectedSeverity}
-      />
+      {/* Main Content Tabs */}
+      <Paper sx={{ mb: 4 }}>
+        <Tabs 
+          value={activeTab} 
+          onChange={(_, newValue) => setActiveTab(newValue)}
+          variant="fullWidth"
+          sx={{
+            borderBottom: 1,
+            borderColor: 'divider',
+            '& .MuiTab-root': {
+              textTransform: 'none',
+              fontWeight: 600,
+              fontSize: '1rem',
+            }
+          }}
+        >
+          <Tab 
+            label="Overview" 
+            value="overview" 
+            icon={<AssessmentOutlined />} 
+            iconPosition="start"
+          />
+          {report.securityAnalysis && (
+            <Tab 
+              label={`Security (${report.securityAnalysis.summary?.totalIssues || 0} issues)`}
+              value="security" 
+              icon={<SecurityOutlined />} 
+              iconPosition="start"
+            />
+          )}
+          <Tab 
+            label={`Findings (${report.findings?.length || 0})`}
+            value="findings" 
+            icon={<BugReportOutlined />} 
+            iconPosition="start"
+          />
+        </Tabs>
+        
+        {/* Tab Content */}
+        <Box sx={{ p: 3 }}>
+          {activeTab === 'overview' && (
+            <>
+              {/* Issues by Severity (interactive) */}
+              <Grid container spacing={3} sx={{ mb: 4 }}>
+                <Grid item xs={12} md={7}>
+                  <Paper sx={{ p: 3 }}>
+                    <Typography variant="h5" gutterBottom>
+                      Issues by Severity
+                    </Typography>
+                    <SeverityBarChart
+                      data={Object.entries(report.summary?.issuesBySeverity || {}).map(([severity, count]) => ({ severity, count: Number(count) }))}
+                      onBarClick={(p) => {
+                        const sev = String(p.severity).toLowerCase();
+                        setSelectedSeverity(prev => prev === sev ? null : sev);
+                      }}
+                      selectedSeverity={selectedSeverity}
+                    />
+                  </Paper>
+                </Grid>
+
+                <Grid item xs={12} md={5}>
+                  <Paper sx={{ p: 3 }}>
+                    <Typography variant="h5" gutterBottom>
+                      Issues by Category
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      {Object.entries(report.summary?.issuesByCategory || {}).map(([category, count]) => (
+                        <Box
+                          key={category}
+                          sx={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            p: 2,
+                            border: 1,
+                            borderColor: 'divider',
+                            borderRadius: 1,
+                            bgcolor: 'action.hover',
+                          }}
+                        >
+                          <Typography variant="body1" sx={{ textTransform: 'capitalize' }}>
+                            {category}
+                          </Typography>
+                          <Typography variant="h6" fontWeight="bold">
+                            {count}
+                          </Typography>
+                        </Box>
+                      ))}
+                    </Box>
+                  </Paper>
+                </Grid>
+              </Grid>
+            </>
+          )}
+          
+          {activeTab === 'security' && report.securityAnalysis && (
+            <Box>
+              <Typography variant="h5" gutterBottom>
+                Security Analysis
+              </Typography>
+              
+              {/* Security Summary */}
+              <Grid container spacing={3} sx={{ mb: 4 }}>
+                <Grid item xs={12} sm={6} md={3}>
+                  <Paper sx={{ p: 3, textAlign: 'center' }}>
+                    <Typography variant="h6" color="error">
+                      {report.securityAnalysis.summary?.criticalCount || 0}
+                    </Typography>
+                    <Typography variant="body2">Critical Issues</Typography>
+                  </Paper>
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                  <Paper sx={{ p: 3, textAlign: 'center' }}>
+                    <Typography variant="h6" color="warning.main">
+                      {report.securityAnalysis.summary?.highCount || 0}
+                    </Typography>
+                    <Typography variant="body2">High Issues</Typography>
+                  </Paper>
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                  <Paper sx={{ p: 3, textAlign: 'center' }}>
+                    <Typography variant="h6" color="info.main">
+                      {report.securityAnalysis.summary?.mediumCount || 0}
+                    </Typography>
+                    <Typography variant="body2">Medium Issues</Typography>
+                  </Paper>
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                  <Paper sx={{ p: 3, textAlign: 'center' }}>
+                    <Typography variant="h6" color="success.main">
+                      {report.securityAnalysis.summary?.securityScore || 0}/100
+                    </Typography>
+                    <Typography variant="body2">Security Score</Typography>
+                  </Paper>
+                </Grid>
+              </Grid>
+              
+              {/* Security Issues List */}
+              <Paper sx={{ p: 3 }}>
+                <Typography variant="h6" gutterBottom>
+                  Security Issues ({report.securityAnalysis.summary?.totalIssues || 0})
+                </Typography>
+                {report.securityAnalysis.issues && report.securityAnalysis.issues.length > 0 ? (
+                  <Box sx={{ mt: 2 }}>
+                    {report.securityAnalysis.issues.slice(0, 10).map((issue, index) => (
+                      <Box key={index} sx={{ 
+                        p: 2, 
+                        mb: 2, 
+                        border: 1, 
+                        borderColor: 'divider', 
+                        borderRadius: 1,
+                        bgcolor: issue.severity === 'Critical' ? 'error.light' :
+                                issue.severity === 'High' ? 'warning.light' :
+                                issue.severity === 'Medium' ? 'info.light' : 'grey.100'
+                      }}>
+                        <Typography variant="h6" gutterBottom>
+                          {issue.issueType}
+                        </Typography>
+                        <Typography variant="body2" sx={{ mb: 1 }}>
+                          <strong>File:</strong> {issue.location?.file}
+                        </Typography>
+                        <Typography variant="body2" sx={{ mb: 1 }}>
+                          <strong>Line:</strong> {issue.location?.startLine}
+                        </Typography>
+                        <Typography variant="body2" sx={{ mb: 1 }}>
+                          <strong>Severity:</strong> {issue.severity}
+                        </Typography>
+                        <Typography variant="body2">
+                          {issue.description}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                ) : (
+                  <Typography>No security issues found.</Typography>
+                )}
+                
+                {/* Export Button */}
+                <Box sx={{ mt: 3 }}>
+                  <Button
+                    variant="contained"
+                    onClick={async () => {
+                      try {
+                        const blob = await apiService.exportSarif();
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'security-analysis.sarif';
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                      } catch (error) {
+                        console.error('Failed to export SARIF:', error);
+                      }
+                    }}
+                  >
+                    Export SARIF
+                  </Button>
+                </Box>
+              </Paper>
+            </Box>
+          )}
+          
+          {activeTab === 'findings' && (
+            <FindingsList 
+              findings={report.findings || []} 
+              loading={isLoading}
+              severityOverride={selectedSeverity}
+            />
+          )}
+        </Box>
+      </Paper>
     </Box>
   );
 }

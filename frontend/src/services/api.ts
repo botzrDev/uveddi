@@ -9,8 +9,10 @@ import type {
 class ApiService {
   private baseUrl: string;
 
-  constructor(baseUrl = 'http://localhost:8080/api/v1') {
-    this.baseUrl = baseUrl;
+  constructor(baseUrl?: string) {
+    this.baseUrl = baseUrl || 
+                   import.meta.env.VITE_API_URL || 
+                   'http://localhost:8888/api/v1';
   }
 
   private async fetchWithErrorHandling<T>(url: string, options?: RequestInit): Promise<T> {
@@ -46,12 +48,10 @@ class ApiService {
    * Get a specific report by ID
    */
   async getReport(id: string): Promise<InteractiveReport> {
-    const response = await this.fetchWithErrorHandling<{
-      data: InteractiveReport;
-      timestamp: string;
-      schemaVersion: string;
-    }>(`${this.baseUrl}/reports/${id}`);
-    return response.data;
+    const response = await this.fetchWithErrorHandling<InteractiveReport>(
+      `${this.baseUrl}/reports/${id}`
+    );
+    return response;
   }
 
   /**
@@ -105,46 +105,12 @@ class ApiService {
    * Get the demo report for development and testing
    */
   async getDemoReport(): Promise<InteractiveReport> {
-    try {
-      // First try to load the latest real analysis data
-      console.log('🔍 Loading real analysis data from Uveddi...');
-      const realDataResponse = await fetch('/real-analysis-detectors.json');
-      console.log('📡 Response status:', realDataResponse.status);
-      if (realDataResponse.ok) {
-        const realData = await realDataResponse.json();
-        console.log('✅ Loaded real analysis data with', realData.issues.length, 'issues');
-        console.log('📊 Sample issue:', realData.issues[0]);
-        const convertedReport = this.convertAnalysisToInteractiveReport(realData);
-        console.log('🔄 Converted report diagrams:', convertedReport.diagrams.length);
-        console.log('📈 Diagram source preview:', convertedReport.diagrams[0]?.source.substring(0, 100));
-        return convertedReport;
-      } else {
-        console.error('❌ Failed to load real data, status:', realDataResponse.status);
-      }
-    } catch (error) {
-      console.error('💥 Error loading real analysis data:', error);
-    }
-
-    try {
-      // Fallback to backend API
-      console.log('🔄 Trying backend API...');
-      const response = await this.fetchWithErrorHandling<any>(
-        `${this.baseUrl}/reports/demo`
-      );
-      // The API returns data wrapped in a 'data' property
-      if (response.data) {
-        return response.data as InteractiveReport;
-      }
-      return response;
-    } catch (error) {
-      // Final fallback to mock data if backend is not available
-      console.warn('🎭 Backend not available, using mock data:', error);
-      const mockResponse = await fetch('/mock-data/demo-report.json');
-      if (!mockResponse.ok) {
-        throw new Error('Failed to load mock data');
-      }
-      return mockResponse.json();
-    }
+    console.log('🔄 Loading demo report from backend API...');
+    const response = await this.fetchWithErrorHandling<InteractiveReport>(
+      `${this.baseUrl}/reports/demo`
+    );
+    console.log('✅ Demo report loaded successfully');
+    return response;
   }
 
   /**
@@ -434,6 +400,28 @@ class ApiService {
     activeConnections: number;
   }> {
     return this.fetchWithErrorHandling('/metrics');
+  }
+
+  /**
+   * Export security analysis as SARIF format
+   */
+  async exportSarif(): Promise<Blob> {
+    const response = await fetch(`${this.baseUrl}/security/sarif`, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({
+        error: 'SARIF Export Error',
+        message: `Failed to export SARIF with status ${response.status}`,
+        timestamp: new Date().toISOString(),
+      }));
+      throw new Error(`${errorData.error}: ${errorData.message}`);
+    }
+
+    return response.blob();
   }
 }
 
