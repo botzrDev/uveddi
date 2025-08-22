@@ -43,51 +43,12 @@
 //! - Contextual error information
 //! - Suggestions for common issues
 
-use clap::{Parser, Subcommand};
 use color_eyre::eyre::Result;
-use uveddi::cli::analyze_command::AnalyzeCommand;
-use uveddi::cli::config_command::ConfigCommand;
 // TODO: Re-enable when monitoring dependencies are properly configured
 // use uveddi::monitoring::dashboard::MonitoringDashboard;
 // use uveddi::config::monitoring::MonitoringConfig;
 
 mod server;
-
-/// Uveddi CLI application
-///
-/// A comprehensive code analysis tool that combines static analysis with
-/// AI-powered insights to help developers understand and improve their codebases.
-#[derive(Parser)]
-#[command(name = "uveddi")]
-#[command(about = "A Rust-based code analysis and exploration tool with AI integration")]
-#[command(
-    long_about = "Uveddi performs comprehensive code analysis using static analysis \
-    techniques combined with AI-powered insights. It can detect anti-patterns, analyze \
-    architectural issues, and provide intelligent explanations for code quality problems."
-)]
-#[command(version)]
-struct Cli {
-    /// Subcommand to execute
-    #[command(subcommand)]
-    command: Commands,
-}
-
-/// Available subcommands for the Uveddi CLI
-#[derive(Subcommand)]
-enum Commands {
-    /// Analyze a codebase for quality issues and architectural problems
-    ///
-    /// Performs comprehensive static analysis on the specified path, detecting
-    /// anti-patterns, architectural issues, and code quality problems. Optionally
-    /// integrates with AI providers for enhanced explanations and recommendations.
-    Analyze(Box<AnalyzeCommand>),
-
-    /// Manage Uveddi configuration settings
-    ///
-    /// View and modify configuration settings for AI providers, output preferences,
-    /// and analysis parameters. Configuration can be stored per-user or per-project.
-    Config(ConfigCommand),
-}
 
 /// Main entry point for Uveddi. All errors are handled and logged consistently.
 ///

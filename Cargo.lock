@@ -7453,6 +7453,7 @@ dependencies = [
  "iai-callgrind",
  "ignore",
  "influxdb2",
+ "is-terminal",
  "jsonwebtoken",
  "lazy_static",
  "linfa",

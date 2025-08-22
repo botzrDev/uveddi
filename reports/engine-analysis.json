@@ -1,0 +1,1010 @@
+{
+  "issues": [
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "codeSnippet": "pub struct AnalysisEngine {\n    pub orchestrator: AnalysisOrchestrator,\n\n    // Keep component references for backward compatibility\n    pub config_service: Arc<ConfigurationService>,\n    pub ast_provider: Arc<AstProviderImpl>,\n    pub cache_manager: Arc<CacheManagerImpl>,\n    pub dependency_builder: Arc<DependencyGraphBuilderImpl>,\n    pub detector_scheduler: Arc<DetectorScheduler>,\n    pub plugin_manager: Option<PluginManagerHandle>,\n    pub aggregator: Arc<AnalysisAggregator>,\n\n    // Knowledge Library Integration Components (feature-gated)\n    #[cfg(feature = \"ai\")]\n    pub knowledge_library: Option<Arc<KnowledgeLibrary>>,\n    #[cfg(feature = \"ai\")]\n    pub context_selector: Option<Arc<ContextSelector>>,\n    #[cfg(feature = \"ai\")]\n    pub ai_engine: Option<Arc<AiAnalysisEngine>>,\n\n    // Configuration flags\n    pub enable_knowledge_enhancement: bool,\n    pub enable_ai_explanations: bool,\n}",
+      "description": "God Object detected: 'AnalysisEngine' has 1 methods and 13 fields. (Thresholds: methods>5, fields>8) LCOM4 score: 1 (>1 indicates low cohesion) Methods: 0 trivial, 0 complex",
+      "endLine": 65,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "High",
+      "startLine": 65
+    },
+    {
+      "aiExplanation": "This code block appears to be duplicated in another location. Consider extracting the common logic into a shared function or module to improve maintainability. The duplicate is located at ./src/analysis/engine.rs:226-232 with 100.0% similarity.",
+      "antiPatternDescription": "Duplicate code blocks that should be refactored",
+      "antiPatternType": "Code Duplication",
+      "codeSnippet": "pub async fn analyze(\n        &mut self,\n        path: &Path,\n    ) -> Result<(Vec<ArchitecturalIssue>, LocalDependencyGraph), AnalysisError> {\n        info!(\n            \"Starting analysis with Analy...",
+      "description": "Code duplication detected (Type2): 100.0% similarity between ./src/analysis/engine.rs:200-209 and ./src/analysis/engine.rs:226-232",
+      "endLine": 209,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "medium",
+      "startLine": 200
+    },
+    {
+      "aiExplanation": "This code block appears to be duplicated in another location. Consider extracting the common logic into a shared function or module to improve maintainability. The duplicate is located at ./src/analysis/engine.rs:260-270 with 100.0% similarity.",
+      "antiPatternDescription": "Duplicate code blocks that should be refactored",
+      "antiPatternType": "Code Duplication",
+      "codeSnippet": "pub async fn analyze(\n        &mut self,\n        path: &Path,\n    ) -> Result<(Vec<ArchitecturalIssue>, LocalDependencyGraph), AnalysisError> {\n        info!(\n            \"Starting analysis with Analy...",
+      "description": "Code duplication detected (Type3): 100.0% similarity between ./src/analysis/engine.rs:200-209 and ./src/analysis/engine.rs:260-270",
+      "endLine": 209,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low",
+      "startLine": 200
+    },
+    {
+      "aiExplanation": "This code block appears to be duplicated in another location. Consider extracting the common logic into a shared function or module to improve maintainability. The duplicate is located at ./src/analysis/engine.rs:260-270 with 100.0% similarity.",
+      "antiPatternDescription": "Duplicate code blocks that should be refactored",
+      "antiPatternType": "Code Duplication",
+      "codeSnippet": "pub async fn analyze_with_memory_limits(\n        &mut self,\n        path: &Path,\n    ) -> Result<(Vec<ArchitecturalIssue>, LocalDependencyGraph), AnalysisError> {\n        debug!(\"Starting memory-aware...",
+      "description": "Code duplication detected (Type3): 100.0% similarity between ./src/analysis/engine.rs:226-232 and ./src/analysis/engine.rs:260-270",
+      "endLine": 232,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low",
+      "startLine": 226
+    },
+    {
+      "aiExplanation": "This code block appears to be duplicated in another location. Consider extracting the common logic into a shared function or module to improve maintainability. The duplicate is located at ./src/analysis/engine.rs:200-209 with 100.0% similarity.",
+      "antiPatternDescription": "Duplicate code blocks that should be refactored",
+      "antiPatternType": "Code Duplication",
+      "codeSnippet": "pub async fn analyze_with_memory_limits(\n        &mut self,\n        path: &Path,\n    ) -> Result<(Vec<ArchitecturalIssue>, LocalDependencyGraph), AnalysisError> {\n        debug!(\"Starting memory-aware...",
+      "description": "Code duplication detected (Type2): 100.0% similarity between ./src/analysis/engine.rs:226-232 and ./src/analysis/engine.rs:200-209",
+      "endLine": 232,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "medium",
+      "startLine": 226
+    },
+    {
+      "aiExplanation": "This code block appears to be duplicated in another location. Consider extracting the common logic into a shared function or module to improve maintainability. The duplicate is located at ./src/analysis/engine.rs:226-232 with 100.0% similarity.",
+      "antiPatternDescription": "Duplicate code blocks that should be refactored",
+      "antiPatternType": "Code Duplication",
+      "codeSnippet": "pub async fn analyze_with_options(\n        &mut self,\n        path: &Path,\n        options: &AnalysisOptions,\n    ) -> Result<(Vec<ArchitecturalIssue>, LocalDependencyGraph), AnalysisError> {\n        ...",
+      "description": "Code duplication detected (Type3): 100.0% similarity between ./src/analysis/engine.rs:260-270 and ./src/analysis/engine.rs:226-232",
+      "endLine": 270,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low",
+      "startLine": 260
+    },
+    {
+      "aiExplanation": "This code block appears to be duplicated in another location. Consider extracting the common logic into a shared function or module to improve maintainability. The duplicate is located at ./src/analysis/engine.rs:200-209 with 100.0% similarity.",
+      "antiPatternDescription": "Duplicate code blocks that should be refactored",
+      "antiPatternType": "Code Duplication",
+      "codeSnippet": "pub async fn analyze_with_options(\n        &mut self,\n        path: &Path,\n        options: &AnalysisOptions,\n    ) -> Result<(Vec<ArchitecturalIssue>, LocalDependencyGraph), AnalysisError> {\n        ...",
+      "description": "Code duplication detected (Type3): 100.0% similarity between ./src/analysis/engine.rs:260-270 and ./src/analysis/engine.rs:200-209",
+      "endLine": 270,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low",
+      "startLine": 260
+    },
+    {
+      "aiExplanation": "This code block appears to be duplicated in another location. Consider extracting the common logic into a shared function or module to improve maintainability. The duplicate is located at ./src/analysis/engine.rs:500-506 with 100.0% similarity.",
+      "antiPatternDescription": "Duplicate code blocks that should be refactored",
+      "antiPatternType": "Code Duplication",
+      "codeSnippet": "pub fn with_cache_path(path: &Path) -> Result<Self, AnalysisError> {\n        Self::builder()\n            .with_cache_path(path)\n            .build()\n            .map_err(|e| AnalysisError::Engine(e.to...",
+      "description": "Code duplication detected (Type3): 100.0% similarity between ./src/analysis/engine.rs:481-486 and ./src/analysis/engine.rs:500-506",
+      "endLine": 486,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low",
+      "startLine": 481
+    },
+    {
+      "aiExplanation": "This code block appears to be duplicated in another location. Consider extracting the common logic into a shared function or module to improve maintainability. The duplicate is located at ./src/analysis/engine.rs:623-637 with 83.3% similarity.",
+      "antiPatternDescription": "Duplicate code blocks that should be refactored",
+      "antiPatternType": "Code Duplication",
+      "codeSnippet": "async fn test_analysis_engine_creation() {\n        let engine_result = AnalysisEngine::new();\n        assert!(engine_result.is_ok());\n\n        let engine = engine_result.unwrap();\n        assert!(!eng...",
+      "description": "Code duplication detected (Type3): 83.3% similarity between ./src/analysis/engine.rs:566-572 and ./src/analysis/engine.rs:623-637",
+      "endLine": 572,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low",
+      "startLine": 566
+    },
+    {
+      "aiExplanation": "This code block appears to be duplicated in another location. Consider extracting the common logic into a shared function or module to improve maintainability. The duplicate is located at ./src/analysis/engine.rs:623-637 with 83.3% similarity.",
+      "antiPatternDescription": "Duplicate code blocks that should be refactored",
+      "antiPatternType": "Code Duplication",
+      "codeSnippet": "async fn test_engine_status() {\n        let engine = AnalysisEngine::new().unwrap();\n        let status = engine.get_status().await;\n\n        assert!(status.services_healthy);\n        assert_eq!(statu...",
+      "description": "Code duplication detected (Type3): 83.3% similarity between ./src/analysis/engine.rs:581-587 and ./src/analysis/engine.rs:623-637",
+      "endLine": 587,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low",
+      "startLine": 581
+    },
+    {
+      "aiExplanation": "This code block appears to be duplicated in another location. Consider extracting the common logic into a shared function or module to improve maintainability. The duplicate is located at ./src/analysis/engine.rs:623-637 with 83.3% similarity.",
+      "antiPatternDescription": "Duplicate code blocks that should be refactored",
+      "antiPatternType": "Code Duplication",
+      "codeSnippet": "async fn test_memory_report() {\n        let engine = AnalysisEngine::new().unwrap();\n        let report = engine.generate_memory_report().await;\n\n        assert!(report.memory_limit_mb > 0);\n        a...",
+      "description": "Code duplication detected (Type3): 83.3% similarity between ./src/analysis/engine.rs:599-605 and ./src/analysis/engine.rs:623-637",
+      "endLine": 605,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low",
+      "startLine": 599
+    },
+    {
+      "aiExplanation": "This code block appears to be duplicated in another location. Consider extracting the common logic into a shared function or module to improve maintainability. The duplicate is located at ./src/analysis/engine.rs:623-637 with 100.0% similarity.",
+      "antiPatternDescription": "Duplicate code blocks that should be refactored",
+      "antiPatternType": "Code Duplication",
+      "codeSnippet": "async fn test_configuration_flags() {\n        let mut engine = AnalysisEngine::new().unwrap();\n\n        // Test knowledge enhancement\n        assert!(!engine.is_knowledge_enhancement_enabled());\n     ...",
+      "description": "Code duplication detected (Type3): 100.0% similarity between ./src/analysis/engine.rs:608-620 and ./src/analysis/engine.rs:623-637",
+      "endLine": 620,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low",
+      "startLine": 608
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "with_detectors_and_plugins",
+      "description": "Potentially dead code: function 'with_detectors_and_plugins' is not used in this file (confidence: 60.0%)",
+      "endLine": 107,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "Medium",
+      "startLine": 107
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "from_components",
+      "description": "Potentially dead code: function 'from_components' is not used in this file (confidence: 60.0%)",
+      "endLine": 125,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "Medium",
+      "startLine": 125
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "has_ai_support",
+      "description": "Potentially dead code: function 'has_ai_support' is not used in this file (confidence: 60.0%)",
+      "endLine": 306,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "Medium",
+      "startLine": 306
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "has_ai_support",
+      "description": "Potentially dead code: function 'has_ai_support' is not used in this file (confidence: 60.0%)",
+      "endLine": 311,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "Medium",
+      "startLine": 311
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "has_plugin_support",
+      "description": "Potentially dead code: function 'has_plugin_support' is not used in this file (confidence: 60.0%)",
+      "endLine": 316,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "Medium",
+      "startLine": 316
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "is_knowledge_enhancement_enabled",
+      "description": "Potentially dead code: function 'is_knowledge_enhancement_enabled' is not used in this file (confidence: 60.0%)",
+      "endLine": 321,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "Medium",
+      "startLine": 321
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "is_ai_explanations_enabled",
+      "description": "Potentially dead code: function 'is_ai_explanations_enabled' is not used in this file (confidence: 60.0%)",
+      "endLine": 326,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "Medium",
+      "startLine": 326
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "get_files_analyzed",
+      "description": "Potentially dead code: function 'get_files_analyzed' is not used in this file (confidence: 60.0%)",
+      "endLine": 365,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "Medium",
+      "startLine": 365
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "configure_dead_code_detector",
+      "description": "Potentially dead code: function 'configure_dead_code_detector' is not used in this file (confidence: 60.0%)",
+      "endLine": 445,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "Medium",
+      "startLine": 445
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "configure_large_classes_detector",
+      "description": "Potentially dead code: function 'configure_large_classes_detector' is not used in this file (confidence: 60.0%)",
+      "endLine": 458,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "Medium",
+      "startLine": 458
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "new_with_memory_cache",
+      "description": "Potentially dead code: function 'new_with_memory_cache' is not used in this file (confidence: 60.0%)",
+      "endLine": 471,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "Medium",
+      "startLine": 471
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "new_with_plugins",
+      "description": "Potentially dead code: function 'new_with_plugins' is not used in this file (confidence: 60.0%)",
+      "endLine": 491,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "Medium",
+      "startLine": 491
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "with_cache_path_and_plugins",
+      "description": "Potentially dead code: function 'with_cache_path_and_plugins' is not used in this file (confidence: 60.0%)",
+      "endLine": 500,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "Medium",
+      "startLine": 500
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "get_ast_cache_metrics",
+      "description": "Potentially dead code: function 'get_ast_cache_metrics' is not used in this file (confidence: 60.0%)",
+      "endLine": 509,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "Medium",
+      "startLine": 509
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "clear_ast_cache",
+      "description": "Potentially dead code: function 'clear_ast_cache' is not used in this file (confidence: 60.0%)",
+      "endLine": 514,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "Medium",
+      "startLine": 514
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "load_plugins",
+      "description": "Potentially dead code: function 'load_plugins' is not used in this file (confidence: 60.0%)",
+      "endLine": 523,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "Medium",
+      "startLine": 523
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "monitor_plugin_resources",
+      "description": "Potentially dead code: function 'monitor_plugin_resources' is not used in this file (confidence: 60.0%)",
+      "endLine": 545,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "Medium",
+      "startLine": 545
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "default",
+      "description": "Potentially dead code: function 'default' is not used in this file (confidence: 90.0%)",
+      "endLine": 555,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "High",
+      "startLine": 555
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "test_analysis_engine_creation",
+      "description": "Potentially dead code: function 'test_analysis_engine_creation' is not used in this file (confidence: 90.0%)",
+      "endLine": 566,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "High",
+      "startLine": 566
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "test_analysis_engine_builder",
+      "description": "Potentially dead code: function 'test_analysis_engine_builder' is not used in this file (confidence: 90.0%)",
+      "endLine": 575,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "High",
+      "startLine": 575
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "test_engine_status",
+      "description": "Potentially dead code: function 'test_engine_status' is not used in this file (confidence: 90.0%)",
+      "endLine": 581,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "High",
+      "startLine": 581
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "test_cache_operations",
+      "description": "Potentially dead code: function 'test_cache_operations' is not used in this file (confidence: 90.0%)",
+      "endLine": 590,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "High",
+      "startLine": 590
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "test_memory_report",
+      "description": "Potentially dead code: function 'test_memory_report' is not used in this file (confidence: 90.0%)",
+      "endLine": 599,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "High",
+      "startLine": 599
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "test_configuration_flags",
+      "description": "Potentially dead code: function 'test_configuration_flags' is not used in this file (confidence: 90.0%)",
+      "endLine": 608,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "High",
+      "startLine": 608
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "test_backward_compatibility_methods",
+      "description": "Potentially dead code: function 'test_backward_compatibility_methods' is not used in this file (confidence: 90.0%)",
+      "endLine": 623,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "High",
+      "startLine": 623
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "AiAnalysisEngine",
+      "description": "Potentially dead code: struct 'AiAnalysisEngine' is not used in this file (confidence: 60.0%)",
+      "endLine": 41,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "Medium",
+      "startLine": 41
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "KnowledgeLibrary",
+      "description": "Potentially dead code: struct 'KnowledgeLibrary' is not used in this file (confidence: 60.0%)",
+      "endLine": 43,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "Medium",
+      "startLine": 43
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "ContextSelector",
+      "description": "Potentially dead code: struct 'ContextSelector' is not used in this file (confidence: 60.0%)",
+      "endLine": 45,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "Medium",
+      "startLine": 45
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "EngineAnalysisContext",
+      "description": "Potentially dead code: struct 'EngineAnalysisContext' is not used in this file (confidence: 60.0%)",
+      "endLine": 48,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "Medium",
+      "startLine": 48
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "EngineComplexityMetrics",
+      "description": "Potentially dead code: struct 'EngineComplexityMetrics' is not used in this file (confidence: 60.0%)",
+      "endLine": 51,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "Medium",
+      "startLine": 51
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "KnowledgeContext",
+      "description": "Potentially dead code: struct 'KnowledgeContext' is not used in this file (confidence: 60.0%)",
+      "endLine": 54,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "Medium",
+      "startLine": 54
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "AnalysisEngine",
+      "description": "Potentially dead code: struct 'AnalysisEngine' is not used in this file (confidence: 60.0%)",
+      "endLine": 65,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "Medium",
+      "startLine": 65
+    },
+    {
+      "aiExplanation": "Consider breaking this class into smaller, more focused classes",
+      "antiPatternDescription": "Classes that have grown too large",
+      "antiPatternType": "Large Classes",
+      "codeSnippet": "",
+      "description": "Large class 'AnalysisEngine' detected: 0 LOC, 37 methods, 13 fields",
+      "endLine": 88,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "54",
+      "startLine": 65
+    },
+    {
+      "antiPatternDescription": "Components that are too tightly coupled",
+      "antiPatternType": "Tight Coupling",
+      "description": "Component 'caller' has 65 dependencies, which exceeds the critical threshold of 7. This indicates tight coupling and makes the code harder to maintain.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "Critical"
+    },
+    {
+      "aiExplanation": "Consider breaking down 'from_components' into smaller, more focused methods. Current metrics: LOC=58, Statements=6, Complexity=2, Nesting=3",
+      "antiPatternDescription": "Methods that are too long and do too much",
+      "antiPatternType": "Long Methods",
+      "codeSnippet": "            .build()\n            .map_err(|e| AnalysisError::Engine(e.to_string()))\n    }\n\n    /// Create analysis engine from components (used by builder)\n    pub(crate) fn from_components(\n        config_service: Arc<ConfigurationService>,\n        ast_provider: Arc<AstProviderImpl>,\n        cache_manager: Arc<CacheManagerImpl>,\n        dependency_builder: Arc<DependencyGraphBuilderImpl>,\n        detector_scheduler: Arc<DetectorScheduler>,\n        plugin_manager: Option<PluginManagerHandle>,\n        aggregator: Arc<AnalysisAggregator>,\n        detector_factory: Arc<DetectorFactory>,\n        performance_metrics_collector: Arc<PerformanceMetricsCollector>,\n        enable_knowledge_enhancement: bool,\n        enable_ai_explanations: bool,\n        #[cfg(feature = \"ai\")] knowledge_library: Option<Arc<KnowledgeLibrary>>,\n        #[cfg(feature = \"ai\")] context_selector: Option<Arc<ContextSelector>>,\n        #[cfg(feature = \"ai\")] ai_engine: Option<Arc<AiAnalysisEngine>>,\n    ) -> Result<Self, AnalysisError> {\n        // Create services\n        let analysis_service = Arc::new(AnalysisService::new(\n            config_service.clone(),\n            detector_scheduler.clone(),\n            aggregator.clone(),\n            plugin_manager.clone().map(Arc::new),\n            detector_factory,\n        ));\n\n        let dependency_service = Arc::new(DependencyAnalysisService::new(\n            ast_provider.clone(),\n            dependency_builder.clone(),\n            cache_manager.clone(),\n        ));\n\n        let performance_service = Arc::new(PerformanceAnalysisService::new_with_defaults(\n            performance_metrics_collector,\n        ));\n\n        // Create orchestrator\n        #[cfg(feature = \"ai\")]\n        let orchestrator = {\n            if let Some(ai_service) = &ai_engine {\n                AnalysisOrchestrator::new_with_ai(\n                    analysis_service,\n                    dependency_service,\n                    performance_service,\n                    ai_service.clone(),\n                )\n            } else {\n                AnalysisOrchestrator::new(analysis_service, dependency_service, performance_service)\n            }\n        };\n\n        #[cfg(not(feature = \"ai\"))]\n        let orchestrator =\n            AnalysisOrchestrator::new(analysis_service, dependency_service, performance_service);\n\n        Ok(Self {\n            orchestrator,\n            config_service,\n            ast_provider,\n            cache_manager,\n            dependency_builder,\n            detector_scheduler,\n            plugin_manager,\n            aggregator,\n            enable_knowledge_enhancement,\n            enable_ai_explanations,\n            #[cfg(feature = \"ai\")]\n            knowledge_library,\n            #[cfg(feature = \"ai\")]\n            context_selector,\n            #[cfg(feature = \"ai\")]\n            ai_engine,\n        })\n    }\n\n    /// Main analysis method - delegates to orchestrator\n    pub async fn analyze(\n        &mut self,\n        path: &Path,",
+      "description": "Long method 'from_components' detected: 58 lines, 6 statements, complexity 2",
+      "endLine": 197,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "Critical",
+      "startLine": 125
+    },
+    {
+      "aiExplanation": "Consider breaking down 'from_components' into smaller, more focused methods. Current metrics: LOC=58, Statements=6, Complexity=2, Nesting=3",
+      "antiPatternDescription": "Methods that are too long and do too much",
+      "antiPatternType": "Long Methods",
+      "codeSnippet": "            .build()\n            .map_err(|e| AnalysisError::Engine(e.to_string()))\n    }\n\n    /// Create analysis engine from components (used by builder)\n    pub(crate) fn from_components(\n        config_service: Arc<ConfigurationService>,\n        ast_provider: Arc<AstProviderImpl>,\n        cache_manager: Arc<CacheManagerImpl>,\n        dependency_builder: Arc<DependencyGraphBuilderImpl>,\n        detector_scheduler: Arc<DetectorScheduler>,\n        plugin_manager: Option<PluginManagerHandle>,\n        aggregator: Arc<AnalysisAggregator>,\n        detector_factory: Arc<DetectorFactory>,\n        performance_metrics_collector: Arc<PerformanceMetricsCollector>,\n        enable_knowledge_enhancement: bool,\n        enable_ai_explanations: bool,\n        #[cfg(feature = \"ai\")] knowledge_library: Option<Arc<KnowledgeLibrary>>,\n        #[cfg(feature = \"ai\")] context_selector: Option<Arc<ContextSelector>>,\n        #[cfg(feature = \"ai\")] ai_engine: Option<Arc<AiAnalysisEngine>>,\n    ) -> Result<Self, AnalysisError> {\n        // Create services\n        let analysis_service = Arc::new(AnalysisService::new(\n            config_service.clone(),\n            detector_scheduler.clone(),\n            aggregator.clone(),\n            plugin_manager.clone().map(Arc::new),\n            detector_factory,\n        ));\n\n        let dependency_service = Arc::new(DependencyAnalysisService::new(\n            ast_provider.clone(),\n            dependency_builder.clone(),\n            cache_manager.clone(),\n        ));\n\n        let performance_service = Arc::new(PerformanceAnalysisService::new_with_defaults(\n            performance_metrics_collector,\n        ));\n\n        // Create orchestrator\n        #[cfg(feature = \"ai\")]\n        let orchestrator = {\n            if let Some(ai_service) = &ai_engine {\n                AnalysisOrchestrator::new_with_ai(\n                    analysis_service,\n                    dependency_service,\n                    performance_service,\n                    ai_service.clone(),\n                )\n            } else {\n                AnalysisOrchestrator::new(analysis_service, dependency_service, performance_service)\n            }\n        };\n\n        #[cfg(not(feature = \"ai\"))]\n        let orchestrator =\n            AnalysisOrchestrator::new(analysis_service, dependency_service, performance_service);\n\n        Ok(Self {\n            orchestrator,\n            config_service,\n            ast_provider,\n            cache_manager,\n            dependency_builder,\n            detector_scheduler,\n            plugin_manager,\n            aggregator,\n            enable_knowledge_enhancement,\n            enable_ai_explanations,\n            #[cfg(feature = \"ai\")]\n            knowledge_library,\n            #[cfg(feature = \"ai\")]\n            context_selector,\n            #[cfg(feature = \"ai\")]\n            ai_engine,\n        })\n    }\n\n    /// Main analysis method - delegates to orchestrator\n    pub async fn analyze(\n        &mut self,\n        path: &Path,",
+      "description": "Long method 'from_components' detected: 58 lines, 6 statements, complexity 2",
+      "endLine": 197,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "Critical",
+      "startLine": 125
+    },
+    {
+      "aiExplanation": "Consider breaking down 'get_anti_pattern_types' into smaller, more focused methods. Current metrics: LOC=64, Statements=2, Complexity=2, Nesting=3",
+      "antiPatternDescription": "Methods that are too long and do too much",
+      "antiPatternType": "Long Methods",
+      "codeSnippet": "\n    /// Gets the anti-pattern types supported by all configured detectors.\n    ///\n    /// This method aggregates the anti-pattern types from all configured detectors,\n    /// including a built-in type for cyclic dependencies.\n    pub fn get_anti_pattern_types(&self) -> Vec<crate::database::models::AntiPatternType> {\n        let mut anti_pattern_types = vec![\n            crate::database::models::AntiPatternType {\n                anti_pattern_type_id: Some(1),\n                name: \"God Object\".to_string(),\n                description: \"Classes that know too much or do too much\".to_string(),\n                category: \"structural\".to_string(),\n            },\n            crate::database::models::AntiPatternType {\n                anti_pattern_type_id: Some(2),\n                name: \"Dead Code\".to_string(),\n                description: \"Unused code that can be safely removed\".to_string(),\n                category: \"structural\".to_string(),\n            },\n            crate::database::models::AntiPatternType {\n                anti_pattern_type_id: Some(3),\n                name: \"Tight Coupling\".to_string(),\n                description: \"Components that are too tightly coupled\".to_string(),\n                category: \"structural\".to_string(),\n            },\n            crate::database::models::AntiPatternType {\n                anti_pattern_type_id: Some(4),\n                name: \"Long Methods\".to_string(),\n                description: \"Methods that are too long and do too much\".to_string(),\n                category: \"behavioral\".to_string(),\n            },\n            crate::database::models::AntiPatternType {\n                anti_pattern_type_id: Some(5),\n                name: \"Large Classes\".to_string(),\n                description: \"Classes that have grown too large\".to_string(),\n                category: \"structural\".to_string(),\n            },\n            crate::database::models::AntiPatternType {\n                anti_pattern_type_id: Some(6),\n                name: \"Performance Leak\".to_string(),\n                description: \"Performance-related anti-patterns and leaky abstractions\".to_string(),\n                category: \"behavioral\".to_string(),\n            },\n            crate::database::models::AntiPatternType {\n                anti_pattern_type_id: Some(7),\n                name: \"Code Duplication\".to_string(),\n                description: \"Duplicate code blocks that should be refactored\".to_string(),\n                category: \"structural\".to_string(),\n            },\n            crate::database::models::AntiPatternType {\n                anti_pattern_type_id: Some(8),\n                name: \"Cyclic Dependencies\".to_string(),\n                description: \"Circular dependencies between modules\".to_string(),\n                category: \"structural\".to_string(),\n            },\n            crate::database::models::AntiPatternType {\n                anti_pattern_type_id: Some(9),\n                name: \"Magic Values\".to_string(),\n                description: \"Hard-coded numeric or string literals that should be replaced with named constants\".to_string(),\n                category: \"maintainability\".to_string(),\n            },\n        ];\n\n        // Add security anti-pattern types if security feature is enabled\n        #[cfg(feature = \"security\")]\n        {\n            if let Ok(security_detector) = crate::analysis::detectors::security::MainSecurityDetector::new() {\n                anti_pattern_types.extend(security_detector.get_anti_pattern_types());\n            }\n        }\n\n        anti_pattern_types\n    }\n\n    /// Configure the dead code detector with custom settings.\n    pub fn configure_dead_code_detector(\n        &self,\n        _config: crate::analysis::detectors::anti_patterns::dead_code::DeadCodeConfig,",
+      "description": "Long method 'get_anti_pattern_types' detected: 64 lines, 2 statements, complexity 2",
+      "endLine": 442,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "Critical",
+      "startLine": 375
+    },
+    {
+      "aiExplanation": "Consider breaking down 'get_anti_pattern_types' into smaller, more focused methods. Current metrics: LOC=64, Statements=2, Complexity=2, Nesting=3",
+      "antiPatternDescription": "Methods that are too long and do too much",
+      "antiPatternType": "Long Methods",
+      "codeSnippet": "\n    /// Gets the anti-pattern types supported by all configured detectors.\n    ///\n    /// This method aggregates the anti-pattern types from all configured detectors,\n    /// including a built-in type for cyclic dependencies.\n    pub fn get_anti_pattern_types(&self) -> Vec<crate::database::models::AntiPatternType> {\n        let mut anti_pattern_types = vec![\n            crate::database::models::AntiPatternType {\n                anti_pattern_type_id: Some(1),\n                name: \"God Object\".to_string(),\n                description: \"Classes that know too much or do too much\".to_string(),\n                category: \"structural\".to_string(),\n            },\n            crate::database::models::AntiPatternType {\n                anti_pattern_type_id: Some(2),\n                name: \"Dead Code\".to_string(),\n                description: \"Unused code that can be safely removed\".to_string(),\n                category: \"structural\".to_string(),\n            },\n            crate::database::models::AntiPatternType {\n                anti_pattern_type_id: Some(3),\n                name: \"Tight Coupling\".to_string(),\n                description: \"Components that are too tightly coupled\".to_string(),\n                category: \"structural\".to_string(),\n            },\n            crate::database::models::AntiPatternType {\n                anti_pattern_type_id: Some(4),\n                name: \"Long Methods\".to_string(),\n                description: \"Methods that are too long and do too much\".to_string(),\n                category: \"behavioral\".to_string(),\n            },\n            crate::database::models::AntiPatternType {\n                anti_pattern_type_id: Some(5),\n                name: \"Large Classes\".to_string(),\n                description: \"Classes that have grown too large\".to_string(),\n                category: \"structural\".to_string(),\n            },\n            crate::database::models::AntiPatternType {\n                anti_pattern_type_id: Some(6),\n                name: \"Performance Leak\".to_string(),\n                description: \"Performance-related anti-patterns and leaky abstractions\".to_string(),\n                category: \"behavioral\".to_string(),\n            },\n            crate::database::models::AntiPatternType {\n                anti_pattern_type_id: Some(7),\n                name: \"Code Duplication\".to_string(),\n                description: \"Duplicate code blocks that should be refactored\".to_string(),\n                category: \"structural\".to_string(),\n            },\n            crate::database::models::AntiPatternType {\n                anti_pattern_type_id: Some(8),\n                name: \"Cyclic Dependencies\".to_string(),\n                description: \"Circular dependencies between modules\".to_string(),\n                category: \"structural\".to_string(),\n            },\n            crate::database::models::AntiPatternType {\n                anti_pattern_type_id: Some(9),\n                name: \"Magic Values\".to_string(),\n                description: \"Hard-coded numeric or string literals that should be replaced with named constants\".to_string(),\n                category: \"maintainability\".to_string(),\n            },\n        ];\n\n        // Add security anti-pattern types if security feature is enabled\n        #[cfg(feature = \"security\")]\n        {\n            if let Ok(security_detector) = crate::analysis::detectors::security::MainSecurityDetector::new() {\n                anti_pattern_types.extend(security_detector.get_anti_pattern_types());\n            }\n        }\n\n        anti_pattern_types\n    }\n\n    /// Configure the dead code detector with custom settings.\n    pub fn configure_dead_code_detector(\n        &self,\n        _config: crate::analysis::detectors::anti_patterns::dead_code::DeadCodeConfig,",
+      "description": "Long method 'get_anti_pattern_types' detected: 64 lines, 2 statements, complexity 2",
+      "endLine": 442,
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "Critical",
+      "startLine": 375
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"ai\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"ai\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"ai\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"ai\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"ai\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"ai\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"ai\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"ai\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"ai\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"ai\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"ai\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"ai\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"ai\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"ai\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"ai\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"ai\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"ai\"' passed as function argument (high). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "high"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"ai\"' passed as function argument (high). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "high"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"ai\"' passed as function argument (high). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "high"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"Starting analysis with AnalysisEngine for: {}\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"Starting memory-aware analysis for: {}\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"Starting analysis with custom detectors: {:?}\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"ai\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"Starting AI-enhanced analysis for: {}\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"Starting analysis with custom options for: {}\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"Clearing all engine caches\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"New orchestrator architecture\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"ai\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"ai\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"God Object\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"Classes that know too much or do too much\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"structural\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"Dead Code\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"Unused code that can be safely removed\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"structural\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '3' found in code (low). Consider extracting this magic number into a named constant with a descriptive name.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"Tight Coupling\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"Components that are too tightly coupled\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"structural\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"Long Methods\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"Methods that are too long and do too much\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"behavioral\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '5' found in code (low). Consider extracting this magic number into a named constant with a descriptive name.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"Large Classes\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"Classes that have grown too large\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"structural\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '6' found in code (low). Consider extracting this magic number into a named constant with a descriptive name.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"Performance Leak\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"behavioral\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '7' found in code (low). Consider extracting this magic number into a named constant with a descriptive name.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"Code Duplication\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"Duplicate code blocks that should be refactored\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"structural\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"Cyclic Dependencies\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"Circular dependencies between modules\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"structural\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '9' found in code (low). Consider extracting this magic number into a named constant with a descriptive name.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"Magic Values\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"maintainability\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"security\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"status\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"unimplemented\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"cache\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"ast\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"plugins\"' passed as function argument (high). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "high"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"Failed to create default AnalysisEngine\"' passed as function argument (high). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "high"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"ai\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./src/analysis/engine.rs",
+      "severity": "low"
+    }
+  ],
+  "metadata": {
+    "codebasePath": "./src/analysis/engine.rs",
+    "durationSeconds": 0.0,
+    "timestamp": "2025-08-22T10:00:28.113910133-05:00"
+  },
+  "summary": {
+    "debtScore": 100,
+    "filesAnalyzed": 1,
+    "issuesBySeverity": {
+      "critical": 5,
+      "high": 14,
+      "low": 71,
+      "medium": 27
+    },
+    "issuesTotal": 117
+  }
+}
+
+📊 Analysis Summary:
+  • Files analyzed: 1
+  • Issues found: 117
+
+💡 Report generated: stdout
+
+💡 Tip: Run with --open-dashboard to visualize results in the web interface

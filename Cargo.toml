@@ -45,7 +45,7 @@ chrono = { version = "0.4.39", features = ["serde"] }
 # Lightweight default for fast development builds
 default = ["dev-core"]
 # Production-ready features (previous default behavior)  
-production = ["tree-sitter", "security", "memory-optimization", "web-full"]
+production = ["tree-sitter", "security", "memory-optimization", "web-full", "tui"]
 # Chaos engineering and load testing
 chaos = ["dep:fail", "dep:statrs", "dep:ndarray-stats"]
 # Performance regression detection with genetic algorithms
@@ -113,10 +113,9 @@ zero-cost = ["local-ai", "tree-sitter", "memory-optimization"]
 full-featured = ["local-ai", "tree-sitter", "memory-optimization", "image-rendering", "tui"]
 # Enterprise option (all features)
 enterprise = ["local-ai", "tree-sitter", "memory-optimization", "image-rendering", "tui", "wasm-plugins", "chaos", "sla-monitoring"]
-# v1.0 Community Core with TUI and essential features
-community = ["tui", "tree-sitter", "local-ai", "security", "memory-optimization"]
+# v1.0 Core features with TUI and essential analysis capabilities
 # Legacy alpha feature (for backward compatibility)
-alpha = ["community"]
+alpha = ["tui", "tree-sitter", "local-ai", "security", "memory-optimization"]
 streaming-iterator = []
 tower = []
 tower-http = []
@@ -280,10 +279,14 @@ streaming-iterator = "0.1.9"
 phf = { version = "0.11", features = ["macros"] }
 tempfile = "3.8"
 
-[[bin]]
-name = "tui_test"
-path = "src/bin/tui_test.rs"
-required-features = ["tui"]
+# Terminal detection for TUI validation
+is-terminal = "0.4"
+
+# TUI binary removed - TUI now integrated into main CLI as 'uveddi tui'
+# [[bin]]
+# name = "tui_test"
+# path = "src/bin/tui_test.rs"
+# required-features = ["tui"]
 
 [[bin]]
 name = "dependency_analyzer"

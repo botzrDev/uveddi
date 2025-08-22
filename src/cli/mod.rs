@@ -9,7 +9,9 @@ pub mod analyze_command;
 pub mod ci_command;
 pub mod config_command;
 pub mod plugin_command;
+pub mod tui_command;
 pub mod ui_command;
 
 // Re-export commonly used types
 pub use analyze_command::AnalyzeCommand;
+pub use tui_command::TuiCommand;

@@ -527,6 +527,15 @@ impl AppState {
             diagram_output_dir: None,
             max_diagrams: 20,
             no_diagrams: false,
+            // Security analysis fields
+            security: false,
+            security_only: false,
+            min_security_confidence: Some(0.5),
+            export_sarif: false,
+            sarif_output: None,
+            enable_taint_analysis: false,
+            taint_analysis_depth: Some(10),
+            owasp_categories: None,
         })
     }
 }

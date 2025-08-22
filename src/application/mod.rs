@@ -1192,6 +1192,7 @@ impl Default for AnalysisOrchestrator {
 pub async fn run_app() -> Result<(), UveddiError> {
     use crate::cli::{
         analyze_command::AnalyzeCommand, ci_command::CiCommand, config_command::ConfigCommand,
+        tui_command::TuiCommand,
     };
     use crate::core::logging::{error, info};
     use clap::Parser;
@@ -1210,6 +1211,8 @@ pub async fn run_app() -> Result<(), UveddiError> {
         Config(ConfigCommand),
         Ui(crate::cli::ui_command::UiCommand),
         Ci(CiCommand),
+        /// Launch the Terminal User Interface for interactive analysis
+        Tui(TuiCommand),
         /// Start the web dashboard with all required services
         Serve {
             /// Port for the API server and dashboard
@@ -1263,6 +1266,13 @@ pub async fn run_app() -> Result<(), UveddiError> {
                 .execute()
                 .await
                 .map_err(|e| UveddiError::config_error(&e.to_string(), "ci command"))
+        }
+        Commands::Tui(command) => {
+            info!("Launching TUI interface...");
+            command
+                .execute()
+                .await
+                .map_err(|e| UveddiError::config_error(&e.to_string(), "tui command"))
         }
         Commands::Serve {
             port,

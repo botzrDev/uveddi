@@ -93,8 +93,8 @@ cargo build --features=dev-python-only
 # Full production build (equivalent to old default behavior)
 cargo build --release --features=production
 
-# Community build with all user features
-cargo build --features=community
+# Full production build with all features
+cargo build --features=production
 
 # Legacy alpha compatibility
 cargo build --features=alpha
@@ -135,8 +135,7 @@ The project uses extensive feature flags for modular compilation, optimized for 
 
 #### Production Feature Sets
 - **`production`**: Full feature set for deployment (tree-sitter, security, memory-optimization, web-full)
-- **`community`**: TUI, tree-sitter, local-ai, security, memory-optimization
-- **`alpha`**: Legacy compatibility (equivalent to `community`)
+- **`alpha`**: Legacy compatibility (TUI, tree-sitter, local-ai, security, memory-optimization)
 
 #### Individual Features
 - **`tree-sitter`**: AST parsing (aggregates rust-lang, python-lang, javascript-lang, typescript-lang)
@@ -187,23 +186,23 @@ cargo test --features=dev-core
 cargo run --release --features=production -- analyze ./src --output-format html --output reports/analysis.html
 
 # Run with AI explanations (requires Ollama)
-cargo run --features=community -- analyze ./src --enable-ai --ollama-model deepseek-coder:6.7b
+cargo run --features=production -- analyze ./src --enable-ai --ollama-model deepseek-coder:6.7b
 
 # Start web services (API server + rendering service) 
 cargo run --features=production -- serve --port 8888 --rendering-port 3333
 
 # Start web services in development mode (includes frontend dev server)
-cargo run --features=community -- serve --port 8888 --rendering-port 3333 --frontend-port 3000 --development
+cargo run --features=production -- serve --port 8888 --rendering-port 3333 --frontend-port 3000 --development
 
 # TUI interface
-cargo run --features=community --bin tui_test
+cargo run --features=production --bin tui_test
 ```
 
 #### Development Tools
 
 ```bash
 # Run specific test suite
-cargo test --features=community --test tui_integration
+cargo test --features=production --test tui_integration
 
 # Build optimization validation
 ./scripts/validate-build-optimization.sh
@@ -317,7 +316,7 @@ include_timing = true
 - **Build Performance**: 
   - `dev-minimal`: ~16.8s compile time (essential dependencies only)
   - `dev-core`: ~13.0s compile time (analysis features without tree-sitter)
-  - `community`: ~19.2s compile time (full feature set with TUI and tree-sitter)
+  - `production`: ~19.2s compile time (full feature set with TUI and tree-sitter)
 
 ### Documentation
 
