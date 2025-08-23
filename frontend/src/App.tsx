@@ -1,3 +1,32 @@
+/**
+ * Main Uveddi Dashboard Application
+ * 
+ * This is the root React component for the Uveddi Interactive Reports dashboard.
+ * It sets up the application's theme system, routing, state management, and global
+ * error handling. The app provides a comprehensive interface for viewing and
+ * interacting with code analysis results.
+ * 
+ * Key features:
+ * - Material-UI theming with dark/light/system modes
+ * - React Query for data fetching and caching
+ * - Real-time updates via WebSocket connections
+ * - Multi-page routing for different analysis views
+ * - Global error boundary for robust error handling
+ * 
+ * @component App
+ * @returns {JSX.Element} The main application component
+ * 
+ * @example
+ * ```typescript
+ * // App is typically rendered at the root of the React tree
+ * import { createRoot } from 'react-dom/client';
+ * import App from './App';
+ * 
+ * const root = createRoot(document.getElementById('root')!);
+ * root.render(<App />);
+ * ```
+ */
+
 import { getTheme, ThemeMode } from '@/utils/theme';
 import { CssBaseline, ThemeProvider } from '@mui/material';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';

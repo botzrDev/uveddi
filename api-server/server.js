@@ -1,3 +1,46 @@
+/**
+ * Uveddi Interactive Reports API Server
+ * 
+ * This is the main Express.js server that provides API endpoints for the Uveddi
+ * dashboard frontend. It serves analysis reports, handles real-time updates via
+ * WebSockets, and manages the interactive report viewing experience.
+ * 
+ * Key features:
+ * - RESTful API endpoints for analysis reports and metadata
+ * - WebSocket server for real-time analysis progress updates
+ * - Security middleware with helmet and CORS protection
+ * - Static file serving for generated reports and assets
+ * - Data model conversion between CLI output and dashboard format
+ * - Markdown processing for report documentation
+ * 
+ * The server integrates with the Rust analysis engine and serves as the bridge
+ * between the command-line tool and the web-based dashboard interface.
+ * 
+ * @example Starting the server
+ * ```javascript
+ * // Default configuration
+ * npm start
+ * 
+ * // Custom port
+ * PORT=3000 npm start
+ * 
+ * // Development mode with auto-restart
+ * npm run dev
+ * ```
+ * 
+ * @example API Usage
+ * ```javascript
+ * // Fetch available reports
+ * const reports = await fetch('/api/reports').then(r => r.json());
+ * 
+ * // Get specific report data
+ * const report = await fetch(`/api/reports/${reportId}`).then(r => r.json());
+ * 
+ * // WebSocket connection for real-time updates
+ * const ws = new WebSocket('ws://localhost:8080');
+ * ```
+ */
+
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');

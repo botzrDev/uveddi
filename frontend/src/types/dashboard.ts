@@ -1,5 +1,36 @@
-// Advanced dashboard component types for Uveddi Interactive Reports
-// These extend the base InteractiveReport interfaces with specialized dashboard features
+/**
+ * Advanced dashboard component types for Uveddi Interactive Reports
+ * 
+ * This module defines specialized TypeScript interfaces for the dashboard UI components
+ * that extend and enhance the base InteractiveReport data structures. These types enable
+ * rich interactive features including priority matrices, technical debt tracking,
+ * progress monitoring, and advanced filtering capabilities.
+ * 
+ * The dashboard types bridge the gap between raw analysis data and user-facing
+ * visualizations, providing the structure needed for interactive charts, tables,
+ * and control interfaces.
+ * 
+ * @example Priority Matrix Usage
+ * ```typescript
+ * const matrix: QuadrantData = generatePriorityMatrix(findings);
+ * const quickWins = matrix.quickWins; // High impact, low effort items
+ * ```
+ * 
+ * @example Technical Debt Tracking
+ * ```typescript
+ * const metrics: TechnicalDebtMetric[] = trackDebtMetrics(report);
+ * const worseningMetrics = metrics.filter(m => m.trend === 'worsening');
+ * ```
+ * 
+ * @example Filter State Management
+ * ```typescript
+ * const filters: FilterConfig = {
+ *   severity: ['critical', 'high'],
+ *   categories: ['security', 'performance'],
+ *   dateRange: { start: '2024-01-01', end: '2024-12-31' }
+ * };
+ * ```
+ */
 
 import type { Finding, GraphNode, GraphEdge } from './api';
 
