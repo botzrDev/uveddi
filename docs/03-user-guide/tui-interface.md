@@ -35,7 +35,7 @@ Your starting point for all TUI operations:
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                          🦉 UVEDDI                              │
-│                AI-Powered Code Analysis v1.0.0                 │
+│              AI-Powered Code Analysis v0.9.0-alpha             │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
 │  🔍  1. Code Analysis        Configure and run analysis        │

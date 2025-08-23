@@ -456,7 +456,7 @@ const CUSTOM_PATTERN_QUERY: &str = r#"
 2. **Multi-language Intelligence**: Understands language-specific idioms
 3. **Graph-based Analysis**: Considers system-wide relationships
 4. **AI Integration**: Enhances detection with intelligent explanations
-5. **Production Ready**: Robust error handling and performance optimization
+5. **Alpha Development**: Robust architecture with error handling and performance optimization in progress
 6. **Extensible Design**: Easy to add new detectors and languages
 7. **Performance Optimized**: Async, parallel, and cached processing
 
