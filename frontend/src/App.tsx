@@ -94,8 +94,8 @@ function App() {
           >
             <Layout themeMode={themeMode} onToggleTheme={toggleTheme}>
               <Routes>
-                {/* Default route - redirect to demo dashboard */}
-                <Route path="/" element={<Navigate to="/dashboard/demo" replace />} />
+                {/* Default route - redirect to latest real report */}
+                <Route path="/" element={<Navigate to="/dashboard/5" replace />} />
                 
                 {/* Dashboard routes */}
                 <Route path="/dashboard/:reportId" element={<DashboardPage />} />
@@ -105,7 +105,7 @@ function App() {
                 <Route path="/reports/:reportId" element={<ReportPage />} />
                 
                 {/* Catch-all route */}
-                <Route path="*" element={<Navigate to="/dashboard/demo" replace />} />
+                <Route path="*" element={<Navigate to="/dashboard/5" replace />} />
               </Routes>
             </Layout>
           </Router>

@@ -43,7 +43,15 @@ impl CiCommand {
 
     async fn run_check(&self, args: &CiCheckArgs) -> Result<(), UveddiError> {
         info!("CI check: analyzing {}", args.path.display());
-        let mut orchestrator = AnalysisOrchestrator::new()?;
+        
+        // Use persistent database for consistency with dashboard
+        let database_path = std::path::Path::new("./.uveddi/database.db");
+        if let Some(parent) = database_path.parent() {
+            std::fs::create_dir_all(parent)
+                .map_err(|e| UveddiError::config_error(&format!("Failed to create database directory: {}", e), "database setup"))?;
+        }
+        
+        let mut orchestrator = AnalysisOrchestrator::with_db_path(database_path)?;
         let config = AnalysisConfig {
             target_path: args.path.clone(),
             output_format: args.output_format.clone(),

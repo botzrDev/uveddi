@@ -803,9 +803,18 @@ impl AnalyzeCommand {
             info!("Progress reporting enabled - updates will be logged every 10 files processed");
         }
 
-        // Create application layer orchestrator
-        let mut orchestrator =
-            AnalysisOrchestrator::new().context("Failed to initialize analysis orchestrator")?;
+        // Create application layer orchestrator with persistent database
+        // Use the same database path as the dashboard server for consistency
+        let database_path = std::path::Path::new("./.uveddi/database.db");
+        
+        // Ensure the database directory exists
+        if let Some(parent) = database_path.parent() {
+            std::fs::create_dir_all(parent)
+                .context("Failed to create database directory")?;
+        }
+        
+        let mut orchestrator = AnalysisOrchestrator::with_db_path(database_path)
+            .context("Failed to initialize analysis orchestrator with persistent database")?;
 
         // Memory optimization is enabled by default, unless explicitly disabled
         let enable_memory_optimization = !self.disable_memory_optimization;
