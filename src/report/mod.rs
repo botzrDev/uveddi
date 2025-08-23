@@ -159,6 +159,7 @@ pub use interactive_generator::{InteractiveReportConfig, InteractiveReportGenera
 // Export security utilities
 pub use security::{ReportSecurityConfig, ReportSecurityError, ReportSecurityValidator};
 
+pub mod data_transformer;
 pub mod diagrams;
 pub mod interactive_generator;
 pub mod interactive_models;
@@ -1166,7 +1167,7 @@ impl ReportGenerator {
         let summary = serde_json::json!({
             "issuesTotal": issues.len(),
             "issuesBySeverity": Value::Object(by_sev_obj),
-            "filesAnalyzed": count_unique_files(issues),
+            "filesAnalyzed": analysis_run.total_files_analyzed.unwrap_or(0),
             "debtScore": compute_debt_score(issues),
         });
         report.insert("summary".to_string(), summary);

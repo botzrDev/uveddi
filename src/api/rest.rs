@@ -1198,6 +1198,7 @@ async fn load_report_from_database(
     run_id: i64,
 ) -> Result<InteractiveReport, Box<dyn std::error::Error + Send + Sync>> {
     use crate::database::models::{AnalysisRun, ArchitecturalIssue, AntiPatternType, Dependency};
+    use crate::report::data_transformer::DataTransformer;
     
     // Get analysis run
     let analysis_run = database.get_analysis_run(run_id).await?
@@ -1209,19 +1210,23 @@ async fn load_report_from_database(
     // Get anti-pattern types
     let anti_pattern_types = database.get_all_anti_pattern_types()?;
     
+    // Build HashMap for anti-pattern types
+    let anti_pattern_map: std::collections::HashMap<i64, AntiPatternType> = 
+        anti_pattern_types
+            .into_iter()
+            .filter_map(|apt| apt.anti_pattern_type_id.map(|id| (id, apt)))
+            .collect();
+    
     // Get dependencies for this run
     let dependencies = database.get_dependencies_for_run(run_id).await?;
     
-    // Generate report from real data
-    let mut report = InteractiveReport::from_analysis_data(
+    // Use the DataTransformer to create properly formatted report
+    let mut report = DataTransformer::transform_to_interactive_report(
         &analysis_run,
         &issues,
-        &anti_pattern_types,
-        None, // TODO: Load components if available
-        &dependencies,
-        &[], // TODO: Load diagrams if available
-        format!("Analysis Run {}", run_id),
-        analysis_run.project_id.to_string(),
+        &anti_pattern_map,
+        format!("Project {}", analysis_run.project_id),
+        ".".to_string(), // TODO: Get actual project path from analysis run
     );
     
     // Add security analysis if available
@@ -1231,27 +1236,6 @@ async fn load_report_from_database(
             report.security_analysis = Some(create_security_analysis_from_issues(&security_issues));
         }
     }
-    
-    // Fix summary consistency - calculate from actual data
-    let total_issues = issues.len() as u32;
-    let mut issues_by_severity = std::collections::HashMap::new();
-    let mut issues_by_category = std::collections::HashMap::new();
-    
-    for issue in &issues {
-        *issues_by_severity.entry(issue.severity.clone()).or_insert(0) += 1;
-        
-        // Map anti-pattern to category
-        if let Some(anti_pattern) = anti_pattern_types.iter().find(|apt| 
-            apt.anti_pattern_type_id.map(|id| id == issue.anti_pattern_type_id).unwrap_or(false)
-        ) {
-            *issues_by_category.entry(anti_pattern.category.clone()).or_insert(0) += 1;
-        }
-    }
-    
-    // Update summary with correct counts
-    report.summary.issues_total = total_issues;
-    report.summary.issues_by_severity = issues_by_severity;
-    report.summary.issues_by_category = issues_by_category;
     
     Ok(report)
 }
