@@ -25,11 +25,11 @@ use tempfile::TempDir;
 use tokio::sync::oneshot;
 use warp::{reply::Reply, test::request, Filter};
 
-use crate::analysis::engine::AnalysisEngine;
-use crate::api::graphql::{create_schema, GraphQLConfig, UveddiSchema};
-use crate::api::server::{start_graphql_server, GraphQLServerBuilder};
-use crate::database::Database;
-use crate::test_utils::helpers::TestResult;
+use uveddi::analysis::engine::AnalysisEngine;
+use uveddi::api::graphql::{create_schema, GraphQLConfig, UveddiSchema};
+use uveddi::api::server::{start_graphql_server, GraphQLServerBuilder};
+use uveddi::database::Database;
+use uveddi::test_utils::helpers::TestResult;
 
 /// GraphQL test client for integration testing
 pub struct GraphQLTestClient {
