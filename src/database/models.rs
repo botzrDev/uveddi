@@ -301,3 +301,31 @@ impl Default for PerformanceMetricsConfig {
         }
     }
 }
+
+/// Analysis statistics for efficient reporting
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AnalysisStats {
+    pub total_issues: u32,
+    pub critical_count: u32,
+    pub high_count: u32,
+    pub medium_count: u32,
+    pub low_count: u32,
+    pub affected_files: u32,
+    pub detector_breakdown: std::collections::HashMap<String, u32>,
+    pub category_breakdown: std::collections::HashMap<String, u32>,
+}
+
+impl Default for AnalysisStats {
+    fn default() -> Self {
+        Self {
+            total_issues: 0,
+            critical_count: 0,
+            high_count: 0,
+            medium_count: 0,
+            low_count: 0,
+            affected_files: 0,
+            detector_breakdown: std::collections::HashMap::new(),
+            category_breakdown: std::collections::HashMap::new(),
+        }
+    }
+}

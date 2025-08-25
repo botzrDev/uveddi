@@ -29,6 +29,7 @@ use crate::analysis::detectors::security::types::{
     SecurityIssue, SecuritySeverity, VulnerabilityMetadata,
 };
 use crate::api::types::{ApiServer, RestApiConfig};
+use crate::security::{self, validate_api_request, validate_cli_argument, CliArgumentType};
 use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
 use crate::database::Database;
 use crate::report::interactive_models::{
@@ -36,11 +37,12 @@ use crate::report::interactive_models::{
 };
 use tracing::{info, warn, error, debug};
 use axum::{
-    extract::{Path as AxumPath, State},
-    http::{header, HeaderMap, StatusCode},
+    extract::{Path as AxumPath, State, Query},
+    http::{header, HeaderMap, HeaderValue, StatusCode, Request},
     response::{Html, IntoResponse, Json},
     routing::{get, get_service},
     serve, Router, ServiceExt,
+    middleware::{self, Next},
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -120,8 +122,12 @@ impl RestApiService {
             app = app.layer(cors);
         }
 
-        // Add middleware
-        app.layer(ServiceBuilder::new().layer(TraceLayer::new_for_http()))
+        // Add middleware with validation
+        app.layer(
+            ServiceBuilder::new()
+                .layer(middleware::from_fn(validate_request_middleware))
+                .layer(TraceLayer::new_for_http())
+        )
     }
 }
 
@@ -211,6 +217,52 @@ struct AppState {
     database: Arc<Database>,
 }
 
+/// Request validation middleware that validates HTTP headers and parameters
+async fn validate_request_middleware<B>(
+    request: Request<B>,
+    next: Next<B>,
+) -> Result<impl IntoResponse, StatusCode> {
+    // Extract headers for validation
+    let headers = request.headers();
+    
+    // Get content type
+    let content_type = headers
+        .get(header::CONTENT_TYPE)
+        .and_then(|ct| ct.to_str().ok());
+    
+    // Get content length
+    let content_length = headers
+        .get(header::CONTENT_LENGTH)
+        .and_then(|cl| cl.to_str().ok())
+        .and_then(|cl| cl.parse::<u64>().ok());
+    
+    // Get user agent
+    let user_agent = headers
+        .get(header::USER_AGENT)
+        .and_then(|ua| ua.to_str().ok());
+    
+    // Validate request headers and parameters
+    match validate_api_request(content_type, content_length, user_agent) {
+        Ok(_) => {
+            // Continue to the next middleware/handler
+            Ok(next.run(request).await)
+        }
+        Err(e) => {
+            error!("API request validation failed: {}", e);
+            Err(StatusCode::BAD_REQUEST)
+        }
+    }
+}
+
+/// Query parameters for paginated endpoints
+#[derive(Debug, Deserialize)]
+struct PaginationQuery {
+    offset: Option<u32>,
+    limit: Option<u32>,
+    severity: Option<String>,
+    detector: Option<String>,
+}
+
 /// Health check endpoint
 async fn health_check() -> impl IntoResponse {
     Json(serde_json::json!({
@@ -270,6 +322,28 @@ async fn get_report(
     AxumPath(report_id): AxumPath<String>,
     State(state): State<Arc<AppState>>,
 ) -> Result<impl IntoResponse, StatusCode> {
+    // Enhanced input validation for report ID
+    if let Err(e) = security::validate_input(&report_id, "report_id") {
+        error!("Invalid report ID parameter: {}", e);
+        return Err(StatusCode::BAD_REQUEST);
+    }
+
+    // Validate report ID format - must be "demo" or numeric ID
+    if report_id != "demo" {
+        if let Err(_) = report_id.parse::<i64>() {
+            error!("Report ID must be numeric or 'demo': {}", report_id);
+            return Err(StatusCode::BAD_REQUEST);
+        }
+        
+        // Additional numeric validation for bounds checking
+        if let Ok(id_num) = report_id.parse::<i64>() {
+            if id_num < 0 || id_num > i32::MAX as i64 {
+                error!("Report ID out of valid range: {}", id_num);
+                return Err(StatusCode::BAD_REQUEST);
+            }
+        }
+    }
+
     // For demo purposes, handle "demo" specially (fallback only)
     if report_id == "demo" {
         return Ok(Json(create_demo_report()));
@@ -306,12 +380,35 @@ async fn get_dependency_graph(
     AxumPath(report_id): AxumPath<String>,
     State(state): State<Arc<AppState>>,
 ) -> Result<impl IntoResponse, StatusCode> {
+    // Enhanced input validation for report ID
+    if let Err(e) = security::validate_input(&report_id, "report_id") {
+        error!("Invalid report ID parameter in dependency graph request: {}", e);
+        return Err(StatusCode::BAD_REQUEST);
+    }
+
+    // Validate report ID format
+    if report_id != "demo" {
+        if let Err(_) = report_id.parse::<i64>() {
+            error!("Report ID must be numeric or 'demo' for dependency graph: {}", report_id);
+            return Err(StatusCode::BAD_REQUEST);
+        }
+        
+        // Additional numeric validation
+        if let Ok(id_num) = report_id.parse::<i64>() {
+            if id_num < 0 || id_num > i32::MAX as i64 {
+                error!("Report ID out of valid range for dependency graph: {}", id_num);
+                return Err(StatusCode::BAD_REQUEST);
+            }
+        }
+    }
+
     // For demo purposes, return demo dependency graph
     if report_id == "demo" {
         let demo_report = create_demo_report();
         return Ok(Json(demo_report.dependency_graph));
     }
 
+    // TODO: Implement database-backed dependency graph retrieval
     Err(StatusCode::NOT_FOUND)
 }
 
@@ -970,6 +1067,24 @@ async fn get_security_issue(
     AxumPath(issue_id): AxumPath<String>,
     State(state): State<Arc<AppState>>,
 ) -> Result<impl IntoResponse, StatusCode> {
+    // Enhanced input validation for security issue ID
+    if let Err(e) = security::validate_input(&issue_id, "issue_id") {
+        error!("Invalid security issue ID parameter: {}", e);
+        return Err(StatusCode::BAD_REQUEST);
+    }
+
+    // Validate issue ID format - should be alphanumeric with underscores
+    if !issue_id.chars().all(|c| c.is_alphanumeric() || c == '_' || c == '-') {
+        error!("Security issue ID contains invalid characters: {}", issue_id);
+        return Err(StatusCode::BAD_REQUEST);
+    }
+
+    // Check length bounds
+    if issue_id.len() > 64 {
+        error!("Security issue ID too long: {}", issue_id.len());
+        return Err(StatusCode::BAD_REQUEST);
+    }
+
     // For demo purposes, return the first demo issue if ID matches
     if issue_id == "sec_001" {
         let issue = SecurityIssueResponse {

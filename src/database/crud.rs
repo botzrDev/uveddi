@@ -1,5 +1,5 @@
 use crate::core::logging::error;
-use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
+use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue, AnalysisStats};
 use crate::error::{Result, UveddiError};
 use crate::security;
 use chrono::{DateTime, Utc};
@@ -28,6 +28,15 @@ impl Database {
             Some(path) => Connection::open(path).map_err(crate::error::UveddiError::from)?,
             None => Connection::open_in_memory().map_err(crate::error::UveddiError::from)?,
         };
+        // Enable performance optimizations
+        conn.execute_batch("
+            PRAGMA journal_mode = WAL;
+            PRAGMA synchronous = NORMAL;
+            PRAGMA cache_size = 10000;
+            PRAGMA temp_store = MEMORY;
+            PRAGMA mmap_size = 268435456;
+        ")?;
+        
         conn.execute_batch("
             CREATE TABLE IF NOT EXISTS analysis_runs (
                 run_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -69,6 +78,33 @@ impl Database {
                 project_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 path TEXT NOT NULL UNIQUE
             );
+            CREATE TABLE IF NOT EXISTS dependencies (
+                dependency_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                analysis_run_id INTEGER NOT NULL,
+                from_file TEXT NOT NULL,
+                to_module TEXT NOT NULL,
+                dependency_type TEXT NOT NULL,
+                line_number INTEGER,
+                FOREIGN KEY (analysis_run_id) REFERENCES analysis_runs(run_id)
+            );
+        ")?;
+        
+        // Create performance indexes
+        conn.execute_batch("
+            CREATE INDEX IF NOT EXISTS idx_analysis_runs_project_time ON analysis_runs(project_id, start_time);
+            CREATE INDEX IF NOT EXISTS idx_analysis_runs_status ON analysis_runs(status);
+            CREATE INDEX IF NOT EXISTS idx_architectural_issues_run_id ON architectural_issues(analysis_run_id);
+            CREATE INDEX IF NOT EXISTS idx_architectural_issues_file_path ON architectural_issues(file_path);
+            CREATE INDEX IF NOT EXISTS idx_architectural_issues_severity ON architectural_issues(severity);
+            CREATE INDEX IF NOT EXISTS idx_architectural_issues_detector ON architectural_issues(detector_name);
+            CREATE INDEX IF NOT EXISTS idx_architectural_issues_type_id ON architectural_issues(anti_pattern_type_id);
+            CREATE INDEX IF NOT EXISTS idx_architectural_issues_composite ON architectural_issues(analysis_run_id, severity, detector_name);
+            CREATE INDEX IF NOT EXISTS idx_anti_pattern_types_name ON anti_pattern_types(name);
+            CREATE INDEX IF NOT EXISTS idx_anti_pattern_types_category ON anti_pattern_types(category);
+            CREATE INDEX IF NOT EXISTS idx_projects_path ON projects(path);
+            CREATE INDEX IF NOT EXISTS idx_dependencies_run_id ON dependencies(analysis_run_id);
+            CREATE INDEX IF NOT EXISTS idx_dependencies_from_file ON dependencies(from_file);
+            CREATE INDEX IF NOT EXISTS idx_dependencies_to_module ON dependencies(to_module);
         ").map_err(crate::error::UveddiError::from)?;
         Ok(Self {
             conn: Arc::new(Mutex::new(conn)),
@@ -616,14 +652,74 @@ impl Database {
         Ok(issues)
     }
 
+    /// Store dependencies in batch for performance
+    pub fn store_dependencies_batch(&mut self, run_id: i64, dependencies: &[crate::database::models::Dependency]) -> Result<()> {
+        let mut conn = self.conn.lock().unwrap();
+        let tx = conn.transaction()?;
+        {
+            let mut stmt = tx.prepare(
+                "INSERT INTO dependencies (analysis_run_id, from_file, to_module, dependency_type, line_number) VALUES (?, ?, ?, ?, ?)"
+            )?;
+            
+            for dep in dependencies {
+                stmt.execute(rusqlite::params![
+                    run_id,
+                    dep.from_file.to_string_lossy(),
+                    dep.to_module,
+                    format!("{:?}", dep.dependency_type),
+                    dep.line_number.map(|l| l as i32),
+                ])?;
+            }
+        }
+        tx.commit()?;
+        Ok(())
+    }
+    
     /// Get dependencies for a specific analysis run
     pub async fn get_dependencies_for_run(
         &self,
-        _run_id: i64,
+        run_id: i64,
     ) -> Result<Vec<crate::database::models::Dependency>> {
-        // TODO: Implement dependency storage and retrieval
-        // For now, return empty vec as dependencies aren't stored in current schema
-        Ok(vec![])
+        let conn = self.conn.lock().map_err(|e| {
+            UveddiError::database_error_msg(&format!("Failed to acquire database lock: {}", e))
+        })?;
+        let mut stmt = conn.prepare(
+            "SELECT from_file, to_module, dependency_type, line_number 
+             FROM dependencies WHERE analysis_run_id = ? ORDER BY from_file, to_module"
+        )?;
+
+        let dep_iter = stmt.query_map([run_id], |row| {
+            let from_file: String = row.get(0)?;
+            let to_module: String = row.get(1)?;
+            let dep_type_str: String = row.get(2)?;
+            let line_number: Option<i32> = row.get(3)?;
+            
+            // Parse dependency type
+            use crate::database::models::DependencyType;
+            let dependency_type = match dep_type_str.as_str() {
+                "Use" => DependencyType::Use,
+                "Mod" => DependencyType::Mod,
+                "External" => DependencyType::External,
+                "Import" => DependencyType::Import,
+                "DataFlow" => DependencyType::DataFlow,
+                "ControlFlow" => DependencyType::ControlFlow,
+                _ => DependencyType::Use, // Default fallback
+            };
+
+            Ok(crate::database::models::Dependency {
+                from_file: std::path::PathBuf::from(from_file),
+                to_module,
+                dependency_type,
+                line_number: line_number.map(|l| l as u32),
+            })
+        })?;
+
+        let mut dependencies = Vec::new();
+        for dep in dep_iter {
+            dependencies.push(dep?);
+        }
+
+        Ok(dependencies)
     }
 
     /// Get security issues for a specific analysis run (if security feature enabled)
@@ -641,5 +737,225 @@ impl Database {
     #[cfg(not(feature = "security"))]
     pub async fn get_security_issues_for_run(&self, _run_id: i64) -> Result<Vec<()>> {
         Ok(vec![])
+    }
+
+    /// Batch get issues with their anti-pattern types (prevents N+1 queries)
+    pub async fn get_issues_with_types_for_run(&self, run_id: i64) -> Result<Vec<(ArchitecturalIssue, AntiPatternType)>> {
+        let conn = self.conn.lock().map_err(|e| {
+            UveddiError::database_error_msg(&format!("Failed to acquire database lock: {}", e))
+        })?;
+        
+        // Use a JOIN to avoid N+1 queries
+        let mut stmt = conn.prepare(
+            "SELECT ai.issue_id, ai.analysis_run_id, ai.anti_pattern_type_id, ai.file_path, 
+                    ai.start_line, ai.end_line, ai.line_number, ai.column_number, ai.message, 
+                    ai.metadata, ai.detector_name, ai.created_at, ai.severity, ai.description, 
+                    ai.code_snippet, ai.ai_explanation,
+                    apt.name, apt.description, apt.category
+             FROM architectural_issues ai
+             INNER JOIN anti_pattern_types apt ON ai.anti_pattern_type_id = apt.anti_pattern_type_id
+             WHERE ai.analysis_run_id = ?
+             ORDER BY ai.severity DESC, ai.file_path, ai.start_line"
+        )?;
+
+        let result_iter = stmt.query_map([run_id], |row| {
+            let created_at_str: String = row.get(11)?;
+
+            let issue = ArchitecturalIssue {
+                issue_id: Some(row.get(0)?),
+                analysis_run_id: row.get(1)?,
+                anti_pattern_type_id: row.get(2)?,
+                file_path: row.get(3)?,
+                start_line: row.get(4)?,
+                end_line: row.get(5)?,
+                line_number: row.get(6)?,
+                column_number: row.get(7)?,
+                message: row.get(8)?,
+                metadata: row.get(9)?,
+                detector_name: row.get(10)?,
+                created_at: chrono::DateTime::parse_from_rfc3339(&created_at_str)
+                    .map_err(|_| {
+                        rusqlite::Error::InvalidColumnType(
+                            11,
+                            "created_at".to_string(),
+                            rusqlite::types::Type::Text,
+                        )
+                    })?
+                    .with_timezone(&Utc),
+                severity: row.get(12)?,
+                description: row.get(13)?,
+                code_snippet: row.get(14)?,
+                ai_explanation: row.get(15)?,
+            };
+
+            let anti_pattern_type = AntiPatternType {
+                anti_pattern_type_id: Some(row.get(2)?),
+                name: row.get(16)?,
+                description: row.get(17)?,
+                category: row.get(18)?,
+            };
+
+            Ok((issue, anti_pattern_type))
+        })?;
+
+        let mut results = Vec::new();
+        for result in result_iter {
+            results.push(result?);
+        }
+
+        Ok(results)
+    }
+
+    /// Get issue statistics efficiently using aggregation
+    pub async fn get_analysis_stats(&self, run_id: i64) -> Result<AnalysisStats> {
+        let conn = self.conn.lock().map_err(|e| {
+            UveddiError::database_error_msg(&format!("Failed to acquire database lock: {}", e))
+        })?;
+
+        // Get overall stats
+        let mut stmt = conn.prepare(
+            "SELECT 
+                COUNT(*) as total_issues,
+                COUNT(CASE WHEN severity = 'critical' THEN 1 END) as critical_count,
+                COUNT(CASE WHEN severity = 'high' THEN 1 END) as high_count,
+                COUNT(CASE WHEN severity = 'medium' THEN 1 END) as medium_count,
+                COUNT(CASE WHEN severity = 'low' THEN 1 END) as low_count,
+                COUNT(DISTINCT file_path) as affected_files
+             FROM architectural_issues WHERE analysis_run_id = ?"
+        )?;
+
+        let (total_issues, critical_count, high_count, medium_count, low_count, affected_files) = 
+            stmt.query_row([run_id], |row| {
+                Ok((
+                    row.get::<_, i64>(0)? as u32,
+                    row.get::<_, i64>(1)? as u32,
+                    row.get::<_, i64>(2)? as u32,
+                    row.get::<_, i64>(3)? as u32,
+                    row.get::<_, i64>(4)? as u32,
+                    row.get::<_, i64>(5)? as u32,
+                ))
+            })?;
+
+        // Get detector breakdown
+        let mut stmt = conn.prepare(
+            "SELECT detector_name, COUNT(*) as count 
+             FROM architectural_issues WHERE analysis_run_id = ? 
+             GROUP BY detector_name ORDER BY count DESC"
+        )?;
+
+        let detector_iter = stmt.query_map([run_id], |row| {
+            Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)? as u32))
+        })?;
+
+        let mut detector_breakdown = std::collections::HashMap::new();
+        for result in detector_iter {
+            let (detector, count) = result?;
+            detector_breakdown.insert(detector, count);
+        }
+
+        // Get category breakdown
+        let mut stmt = conn.prepare(
+            "SELECT apt.category, COUNT(*) as count 
+             FROM architectural_issues ai
+             INNER JOIN anti_pattern_types apt ON ai.anti_pattern_type_id = apt.anti_pattern_type_id
+             WHERE ai.analysis_run_id = ? 
+             GROUP BY apt.category ORDER BY count DESC"
+        )?;
+
+        let category_iter = stmt.query_map([run_id], |row| {
+            Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)? as u32))
+        })?;
+
+        let mut category_breakdown = std::collections::HashMap::new();
+        for result in category_iter {
+            let (category, count) = result?;
+            category_breakdown.insert(category, count);
+        }
+
+        Ok(AnalysisStats {
+            total_issues,
+            critical_count,
+            high_count,
+            medium_count,
+            low_count,
+            affected_files,
+            detector_breakdown,
+            category_breakdown,
+        })
+    }
+
+    /// Get paginated issues with efficient query
+    pub async fn get_issues_paginated(
+        &self, 
+        run_id: i64, 
+        offset: u32, 
+        limit: u32, 
+        severity_filter: Option<&str>,
+        detector_filter: Option<&str>
+    ) -> Result<Vec<ArchitecturalIssue>> {
+        let conn = self.conn.lock().map_err(|e| {
+            UveddiError::database_error_msg(&format!("Failed to acquire database lock: {}", e))
+        })?;
+
+        let mut query = "SELECT issue_id, analysis_run_id, anti_pattern_type_id, file_path, start_line, end_line, 
+                                line_number, column_number, message, metadata, detector_name, created_at, severity, 
+                                description, code_snippet, ai_explanation
+                         FROM architectural_issues WHERE analysis_run_id = ?".to_string();
+        let mut params = vec![run_id.to_string()];
+
+        if let Some(severity) = severity_filter {
+            query.push_str(" AND severity = ?");
+            params.push(severity.to_string());
+        }
+
+        if let Some(detector) = detector_filter {
+            query.push_str(" AND detector_name = ?");
+            params.push(detector.to_string());
+        }
+
+        query.push_str(" ORDER BY severity DESC, file_path, start_line LIMIT ? OFFSET ?");
+        params.push(limit.to_string());
+        params.push(offset.to_string());
+
+        let mut stmt = conn.prepare(&query)?;
+        let param_refs: Vec<&str> = params.iter().map(|s| s.as_str()).collect();
+
+        let issue_iter = stmt.query_map(&param_refs[..], |row| {
+            let created_at_str: String = row.get(11)?;
+
+            Ok(ArchitecturalIssue {
+                issue_id: Some(row.get(0)?),
+                analysis_run_id: row.get(1)?,
+                anti_pattern_type_id: row.get(2)?,
+                file_path: row.get(3)?,
+                start_line: row.get(4)?,
+                end_line: row.get(5)?,
+                line_number: row.get(6)?,
+                column_number: row.get(7)?,
+                message: row.get(8)?,
+                metadata: row.get(9)?,
+                detector_name: row.get(10)?,
+                created_at: chrono::DateTime::parse_from_rfc3339(&created_at_str)
+                    .map_err(|_| {
+                        rusqlite::Error::InvalidColumnType(
+                            11,
+                            "created_at".to_string(),
+                            rusqlite::types::Type::Text,
+                        )
+                    })?
+                    .with_timezone(&Utc),
+                severity: row.get(12)?,
+                description: row.get(13)?,
+                code_snippet: row.get(14)?,
+                ai_explanation: row.get(15)?,
+            })
+        })?;
+
+        let mut issues = Vec::new();
+        for issue in issue_iter {
+            issues.push(issue?);
+        }
+
+        Ok(issues)
     }
 }

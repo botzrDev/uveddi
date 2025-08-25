@@ -39,7 +39,7 @@ use tracing::{info, warn, error, debug};
 use crate::application::{AnalysisConfig, AnalysisOrchestrator};
 use crate::error::UveddiError;
 use crate::report::DiagramMode;
-use crate::security::{self, SecurityError};
+use crate::security::{self, SecurityError, validate_cli_argument, CliArgumentType};
 
 // Security functions are now available through the security module import above
 
@@ -501,14 +501,18 @@ impl AnalyzeCommand {
 
     /// Validate all command inputs before processing
     pub fn validate_inputs(&self) -> Result<(), SecurityError> {
+        // Enhanced CLI argument validation using new security framework
+        let path_str = self.path.to_string_lossy();
+        validate_cli_argument(&path_str, "path", CliArgumentType::FilePath)?;
+        
+        // Validate output format using enhanced CLI validation
+        validate_cli_argument(&self.output_format, "output_format", CliArgumentType::Generic)?;
+        
         // Comprehensive path validation with specific error messages
         self.validate_analysis_path()?;
 
-        // Validate path for security (SQL injection, etc.)
-        let path_str = self.path.to_string_lossy();
+        // Additional general input validation
         security::validate_input(&path_str, "path")?;
-
-        // Validate output format
         security::validate_input(&self.output_format, "output_format")?;
 
         // Validate output file if specified

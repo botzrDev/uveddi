@@ -219,11 +219,150 @@ impl Config {
     /// # Errors
     ///
     /// Returns an error if the file cannot be read or if the contents cannot be parsed.
+    /// 
+    /// # Security
+    /// 
+    /// This method validates the configuration file path to prevent directory traversal attacks
+    /// and ensures the file meets security requirements (size limits, allowed extensions, etc.).
     pub fn from_file(path: &str) -> crate::error::Result<Self> {
-        let content = fs::read_to_string(path).map_err(crate::error::UveddiError::from)?;
-        let config: Config = toml::from_str(&content)
+        // Enhanced path validation to prevent directory traversal attacks
+        let allowed_config_dirs = [
+            ".", "./config", "/etc/uveddi", "~/.config/uveddi",
+            std::env::var("UVEDDI_CONFIG_DIR").as_deref().unwrap_or(".")
+        ];
+        
+        let validated_path = security::validate_config_file_path(path, Some(&allowed_config_dirs))
+            .map_err(|e| UveddiError::config_error(&format!("Configuration file path validation failed: {}", e), path))?;
+
+        // Read and validate file content
+        let content = fs::read_to_string(&validated_path)
+            .map_err(|e| UveddiError::config_error(&format!("Failed to read configuration file: {}", e), path))?;
+        
+        // Validate content for security (basic input validation)
+        security::validate_input(&content, "config_content")
+            .map_err(|e| UveddiError::config_error(&format!("Configuration content validation failed: {}", e), path))?;
+            
+        // Parse TOML configuration
+        let mut config: Config = toml::from_str(&content)
             .map_err(|e| crate::error::UveddiError::config_error(&e.to_string(), path))?;
+
+        // Validate configuration values
+        config.validate().map_err(|e| UveddiError::config_error(&format!("Configuration validation failed: {}", e), path))?;
+        
         Ok(config)
+    }
+
+    /// Validates configuration values for security and correctness
+    /// 
+    /// # Returns
+    /// * `Ok(())` - Configuration is valid
+    /// * `Err(SecurityError)` - Configuration contains invalid values
+    fn validate(&self) -> Result<(), SecurityError> {
+        // Validate Ollama model name if provided
+        if let Some(ref model) = self.ollama_model {
+            security::validate_model_name(model)?;
+        }
+
+        // Validate dead code configuration
+        if let Some(ref dc_config) = self.dead_code {
+            if let Some(confidence) = dc_config.confidence_threshold {
+                if !(0.0..=1.0).contains(&confidence) {
+                    return Err(SecurityError::InvalidInput {
+                        field: "dead_code.confidence_threshold".to_string(),
+                        reason: "Confidence threshold must be between 0.0 and 1.0".to_string(),
+                    });
+                }
+            }
+
+            // Validate ignore patterns don't contain dangerous patterns
+            if let Some(ref patterns) = dc_config.ignore_patterns {
+                for pattern in patterns {
+                    security::validate_input(pattern, "dead_code.ignore_patterns")?;
+                }
+            }
+
+            // Validate keep alive patterns
+            if let Some(ref patterns) = dc_config.keep_alive_patterns {
+                for pattern in patterns {
+                    security::validate_input(pattern, "dead_code.keep_alive_patterns")?;
+                }
+            }
+        }
+
+        // Validate large classes configuration
+        if let Some(ref lc_config) = self.large_classes {
+            // Validate numeric thresholds
+            if let Some(max_loc) = lc_config.max_logical_loc {
+                if max_loc > 100_000 {
+                    return Err(SecurityError::InvalidInput {
+                        field: "large_classes.max_logical_loc".to_string(),
+                        reason: "Maximum LOC threshold exceeds reasonable limit of 100,000".to_string(),
+                    });
+                }
+            }
+
+            if let Some(max_methods) = lc_config.max_methods {
+                if max_methods > 10_000 {
+                    return Err(SecurityError::InvalidInput {
+                        field: "large_classes.max_methods".to_string(),
+                        reason: "Maximum methods threshold exceeds reasonable limit of 10,000".to_string(),
+                    });
+                }
+            }
+
+            if let Some(max_fields) = lc_config.max_fields {
+                if max_fields > 10_000 {
+                    return Err(SecurityError::InvalidInput {
+                        field: "large_classes.max_fields".to_string(),
+                        reason: "Maximum fields threshold exceeds reasonable limit of 10,000".to_string(),
+                    });
+                }
+            }
+
+            if let Some(lcom_score) = lc_config.max_lcom_score {
+                if !(0.0..=1.0).contains(&lcom_score) {
+                    return Err(SecurityError::InvalidInput {
+                        field: "large_classes.max_lcom_score".to_string(),
+                        reason: "LCOM score must be between 0.0 and 1.0".to_string(),
+                    });
+                }
+            }
+
+            // Validate ignore patterns
+            if let Some(ref patterns) = lc_config.ignore_patterns {
+                for pattern in patterns {
+                    security::validate_input(pattern, "large_classes.ignore_patterns")?;
+                }
+            }
+
+            // Validate language overrides
+            if let Some(ref overrides) = lc_config.language_overrides {
+                for (language, thresholds) in overrides {
+                    security::validate_input(language, "large_classes.language_overrides.language")?;
+                    
+                    // Validate threshold values similar to main config
+                    if let Some(max_loc) = thresholds.max_logical_loc {
+                        if max_loc > 100_000 {
+                            return Err(SecurityError::InvalidInput {
+                                field: format!("large_classes.language_overrides.{}.max_logical_loc", language),
+                                reason: "Maximum LOC threshold exceeds reasonable limit of 100,000".to_string(),
+                            });
+                        }
+                    }
+
+                    if let Some(lcom_score) = thresholds.max_lcom_score {
+                        if !(0.0..=1.0).contains(&lcom_score) {
+                            return Err(SecurityError::InvalidInput {
+                                field: format!("large_classes.language_overrides.{}.max_lcom_score", language),
+                                reason: "LCOM score must be between 0.0 and 1.0".to_string(),
+                            });
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(())
     }
 }
 

@@ -18,6 +18,10 @@
     "test:integration": "vitest run --reporter=verbose src/__tests__/integration",
     "test:performance": "vitest run --reporter=verbose src/__tests__/performance",
     "test:accessibility": "vitest run --reporter=verbose src/__tests__/accessibility",
+    "test:a11y": "npm run test:accessibility",
+    "test:a11y-watch": "vitest --watch src/__tests__/accessibility",
+    "audit:accessibility": "axe-cli --reporter html --output-dir reports/accessibility",
+    "verify:a11y": "node scripts/verify-accessibility.js",
     "test:coverage-validation": "vitest run --reporter=verbose src/__tests__/coverage",
     "test:ci": "vitest run --coverage --reporter=junit --outputFile=test-results/junit.xml",
     "type-check": "tsc --noEmit",
@@ -52,6 +56,7 @@
     "zustand": "^4.4.6"
   },
   "devDependencies": {
+    "@axe-core/cli": "^4.8.2",
     "@faker-js/faker": "^8.4.1",
     "@testing-library/jest-dom": "^6.1.4",
     "@testing-library/react": "^13.4.0",

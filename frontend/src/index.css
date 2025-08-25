@@ -407,28 +407,102 @@ pre {
   background: rgba(255, 255, 255, 0.3);
 }
 
-/* Focus styles for accessibility */
+/* Enhanced focus styles for accessibility - WCAG AA compliant */
 button:focus-visible,
 a:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible,
+[tabindex]:focus-visible,
+[role="button"]:focus-visible,
+[role="tab"]:focus-visible,
+[role="menuitem"]:focus-visible,
 [role="application"]:focus-visible,
-[role="img"]:focus-visible {
-  outline: 2px solid var(--uveddi-primary-600);
-  outline-offset: 2px;
+[role="img"]:focus-visible,
+.MuiButton-root:focus-visible,
+.MuiIconButton-root:focus-visible,
+.MuiTab-root:focus-visible,
+.MuiListItemButton-root:focus-visible {
+  outline: 3px solid var(--uveddi-primary-600) !important;
+  outline-offset: 2px !important;
   border-radius: 4px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.8), 0 0 0 4px var(--uveddi-primary-600);
 }
 
-/* Dark theme focus styles */
+/* Dark theme focus styles - enhanced contrast */
 [data-theme="dark"] button:focus-visible,
 [data-theme="dark"] a:focus-visible,
 [data-theme="dark"] input:focus-visible,
 [data-theme="dark"] select:focus-visible,
 [data-theme="dark"] textarea:focus-visible,
+[data-theme="dark"] [tabindex]:focus-visible,
+[data-theme="dark"] [role="button"]:focus-visible,
+[data-theme="dark"] [role="tab"]:focus-visible,
+[data-theme="dark"] [role="menuitem"]:focus-visible,
 [data-theme="dark"] [role="application"]:focus-visible,
-[data-theme="dark"] [role="img"]:focus-visible {
-  outline-color: var(--uveddi-primary-400);
+[data-theme="dark"] [role="img"]:focus-visible,
+[data-theme="dark"] .MuiButton-root:focus-visible,
+[data-theme="dark"] .MuiIconButton-root:focus-visible,
+[data-theme="dark"] .MuiTab-root:focus-visible,
+[data-theme="dark"] .MuiListItemButton-root:focus-visible {
+  outline-color: var(--uveddi-primary-400) !important;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.8), 0 0 0 4px var(--uveddi-primary-400);
+}
+
+/* Skip link for screen readers */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: var(--uveddi-primary-600);
+  color: white;
+  padding: 8px;
+  text-decoration: none;
+  border-radius: 4px;
+  z-index: 1000;
+  font-weight: 600;
+}
+
+.skip-link:focus {
+  top: 6px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  :root {
+    --uveddi-text-primary: #000000;
+    --uveddi-text-secondary: #333333;
+    --uveddi-border: #000000;
+    --uveddi-border-hover: #000000;
+  }
+  
+  [data-theme="dark"] {
+    --uveddi-text-primary: #ffffff;
+    --uveddi-text-secondary: #cccccc;
+    --uveddi-border: #ffffff;
+    --uveddi-border-hover: #ffffff;
+  }
+  
+  button, .MuiButton-root {
+    border: 2px solid currentColor !important;
+  }
+  
+  .MuiCard-root, .MuiPaper-root {
+    border: 1px solid currentColor !important;
+  }
+}
+
+/* Enhanced text sizing for better readability */
+.accessible-text {
+  font-size: 1.125rem;
+  line-height: 1.6;
+  letter-spacing: 0.015em;
+}
+
+.accessible-small-text {
+  font-size: 1rem;
+  line-height: 1.5;
+  letter-spacing: 0.01em;
 }
 
 /* Loading animation */
@@ -559,11 +633,80 @@ div[data-mermaid] svg .node ellipse {
   }
 }
 
-/* Reduced motion for accessibility */
+/* Reduced motion for accessibility - enhanced */
 @media (prefers-reduced-motion: reduce) {
-  * {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
+  
+  .MuiCollapse-root,
+  .MuiSlide-root,
+  .MuiFade-root {
+    transition: none !important;
+  }
+}
+
+/* Screen reader only content */
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* Error and success states with enhanced contrast */
+.error-text {
+  color: #c62828 !important; /* WCAG AA contrast ratio */
+  font-weight: 500;
+}
+
+[data-theme="dark"] .error-text {
+  color: #ff6b6b !important;
+}
+
+.success-text {
+  color: #2e7d32 !important; /* WCAG AA contrast ratio */
+  font-weight: 500;
+}
+
+[data-theme="dark"] .success-text {
+  color: #69f0ae !important;
+}
+
+.warning-text {
+  color: #f57c00 !important; /* WCAG AA contrast ratio */
+  font-weight: 500;
+}
+
+[data-theme="dark"] .warning-text {
+  color: #ffb74d !important;
+}
+
+/* Enhanced button contrast */
+.MuiButton-contained:not(:disabled) {
+  background-color: var(--uveddi-primary-600) !important;
+  color: white !important;
+  font-weight: 600 !important;
+}
+
+.MuiButton-outlined:not(:disabled) {
+  border-color: var(--uveddi-primary-600) !important;
+  color: var(--uveddi-primary-600) !important;
+  font-weight: 500 !important;
+  border-width: 2px !important;
+}
+
+[data-theme="dark"] .MuiButton-outlined:not(:disabled) {
+  border-color: var(--uveddi-primary-400) !important;
+  color: var(--uveddi-primary-400) !important;
 }

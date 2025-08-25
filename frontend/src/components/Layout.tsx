@@ -39,6 +39,8 @@ function Layout({ children, themeMode, onToggleTheme }: LayoutProps) {
       <AppBar
         position="static"
         elevation={0}
+        component="header"
+        role="banner"
         sx={{
           backgroundColor: (theme) => theme.palette.mode === 'light' 
             ? '#1976d2 !important' // Force dark blue in light mode
@@ -57,7 +59,16 @@ function Layout({ children, themeMode, onToggleTheme }: LayoutProps) {
             <Box
               component="img"
               src="/logo.png"
-              alt="Uveddi Logo"
+              alt="Uveddi - Code Analysis Dashboard Logo"
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleHomeClick();
+                }
+              }}
+              onClick={handleHomeClick}
               sx={{
                 height: 36,
                 width: 36,
@@ -65,12 +76,26 @@ function Layout({ children, themeMode, onToggleTheme }: LayoutProps) {
                 cursor: 'pointer',
                 objectFit: 'contain',
                 '&:hover': { opacity: 0.9 },
+                '&:focus': {
+                  outline: '2px solid',
+                  outlineColor: 'primary.main',
+                  outlineOffset: '2px',
+                  borderRadius: '4px'
+                },
               }}
             />
             <Box>
               <Typography
                 variant="h6"
-                component="div"
+                component="h1"
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleHomeClick();
+                  }
+                }}
                 sx={{
                   fontWeight: 700,
                   fontFamily: "'JetBrains Mono', monospace",
@@ -79,6 +104,12 @@ function Layout({ children, themeMode, onToggleTheme }: LayoutProps) {
                   letterSpacing: '-0.025em',
                   color: (theme) => theme.palette.mode === 'dark' ? '#ffffff' : '#1a237e',
                   '&:hover': { opacity: 0.8 },
+                  '&:focus': {
+                    outline: '2px solid',
+                    outlineColor: 'primary.main',
+                    outlineOffset: '2px',
+                    borderRadius: '4px'
+                  },
                 }}
                 onClick={handleHomeClick}
               >
@@ -125,6 +156,7 @@ function Layout({ children, themeMode, onToggleTheme }: LayoutProps) {
             <Tooltip title={`Switch to ${themeMode === 'light' ? 'dark' : 'light'} mode`} arrow>
               <IconButton
                 onClick={onToggleTheme}
+                aria-label={`Switch to ${themeMode === 'light' ? 'dark' : 'light'} theme mode`}
                 sx={{
                   borderRadius: 2,
                   backgroundColor: 'transparent',
@@ -134,9 +166,17 @@ function Layout({ children, themeMode, onToggleTheme }: LayoutProps) {
                       ? 'rgba(0, 0, 0, 0.1)' 
                       : 'var(--uveddi-primary-700)',
                   },
+                  '&:focus': {
+                    outline: '2px solid',
+                    outlineColor: 'primary.main',
+                    outlineOffset: '2px'
+                  }
                 }}
               >
-                {themeMode === 'light' ? <DarkModeOutlined /> : <LightModeOutlined />}
+                {themeMode === 'light' ? 
+                  <DarkModeOutlined aria-hidden="true" /> : 
+                  <LightModeOutlined aria-hidden="true" />
+                }
               </IconButton>
             </Tooltip>
           </Box>
@@ -146,13 +186,15 @@ function Layout({ children, themeMode, onToggleTheme }: LayoutProps) {
       {/* Main Content */}
       <Box
         component="main"
+        role="main"
+        aria-label="Dashboard content"
         sx={{
           flexGrow: 1,
           backgroundColor: 'var(--uveddi-bg-primary)',
           minHeight: 'calc(100vh - 72px)', // Account for updated AppBar height
         }}
       >
-        <Container maxWidth="xl" sx={{ py: 4 }}>
+        <Container maxWidth="xl" sx={{ py: 4 }} id="main-content">
           {children}
         </Container>
       </Box>

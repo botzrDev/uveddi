@@ -572,10 +572,16 @@ const DashboardBuilder: React.FC<DashboardBuilderProps> = ({
       {/* Header */}
       <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
         <Box>
-          <Typography variant="h5" component="h2" fontWeight="600" color="text.primary">
+          <Typography 
+            variant="h5" 
+            component="h1" 
+            fontWeight="600" 
+            color="text.primary"
+            id="dashboard-title"
+          >
             Dashboard Builder
           </Typography>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" color="text.secondary" id="dashboard-summary">
             {dashboardLayout.name} • {dashboardLayout.widgets.length} widgets
           </Typography>
         </Box>
@@ -588,25 +594,50 @@ const DashboardBuilder: React.FC<DashboardBuilderProps> = ({
                   <Switch
                     checked={editMode}
                     onChange={(e) => setEditMode(e.target.checked)}
+                    inputProps={{
+                      'aria-label': 'Toggle dashboard edit mode',
+                      'aria-describedby': 'edit-mode-description'
+                    }}
                   />
                 }
                 label="Edit Mode"
                 componentsProps={{ typography: { variant: 'body2' } }}
               />
+              <Typography 
+                id="edit-mode-description" 
+                variant="caption" 
+                color="text.secondary"
+                sx={{ display: 'none' }}
+              >
+                Enable edit mode to add, remove, or modify dashboard widgets
+              </Typography>
 
               <Button
                 variant="outlined"
-                startIcon={<AddOutlined />}
+                startIcon={<AddOutlined aria-hidden="true" />}
                 onClick={() => setWidgetPanelOpen(true)}
                 disabled={!editMode}
+                aria-label="Add new widget to dashboard"
+                aria-describedby={!editMode ? 'add-widget-disabled' : undefined}
               >
                 Add Widget
               </Button>
+              {!editMode && (
+                <Typography 
+                  id="add-widget-disabled" 
+                  variant="caption" 
+                  color="text.secondary"
+                  sx={{ display: 'none' }}
+                >
+                  Enable edit mode to add widgets
+                </Typography>
+              )}
 
               <Button
                 variant="outlined"
-                startIcon={<SaveOutlined />}
+                startIcon={<SaveOutlined aria-hidden="true" />}
                 onClick={() => setSaveDialogOpen(true)}
+                aria-label="Save current dashboard layout"
               >
                 Save Layout
               </Button>
@@ -618,16 +649,31 @@ const DashboardBuilder: React.FC<DashboardBuilderProps> = ({
               <Switch
                 checked={previewMode}
                 onChange={(e) => setPreviewMode(e.target.checked)}
+                inputProps={{
+                  'aria-label': 'Toggle preview mode',
+                  'aria-describedby': 'preview-mode-description'
+                }}
               />
             }
             label="Preview"
             componentsProps={{ typography: { variant: 'body2' } }}
           />
+          <Typography 
+            id="preview-mode-description" 
+            variant="caption" 
+            color="text.secondary"
+            sx={{ display: 'none' }}
+          >
+            Preview mode hides editing controls and shows the dashboard as users will see it
+          </Typography>
 
           {exportable && (
             <Tooltip title="Export dashboard" arrow>
-              <IconButton onClick={handleExport}>
-                <GetAppOutlined />
+              <IconButton 
+                onClick={handleExport}
+                aria-label="Export dashboard data"
+              >
+                <GetAppOutlined aria-hidden="true" />
               </IconButton>
             </Tooltip>
           )}
@@ -669,7 +715,7 @@ const DashboardBuilder: React.FC<DashboardBuilderProps> = ({
             color="text.secondary"
           >
             <DashboardOutlined sx={{ fontSize: 64, mb: 2 }} />
-            <Typography variant="h6" mb={1}>
+            <Typography variant="h6" mb={1} component="h2">
               Empty Dashboard
             </Typography>
             <Typography variant="body2" textAlign="center" mb={3}>
@@ -678,8 +724,9 @@ const DashboardBuilder: React.FC<DashboardBuilderProps> = ({
             {!readOnly && (
               <Button
                 variant="contained"
-                startIcon={<AddOutlined />}
+                startIcon={<AddOutlined aria-hidden="true" />}
                 onClick={() => setWidgetPanelOpen(true)}
+                aria-label="Add your first widget to the dashboard"
               >
                 Add Your First Widget
               </Button>
@@ -795,22 +842,63 @@ const DashboardBuilder: React.FC<DashboardBuilderProps> = ({
         anchor="right"
         open={widgetPanelOpen}
         onClose={() => setWidgetPanelOpen(false)}
-        PaperProps={{ sx: { width: 360 } }}
+        PaperProps={{ 
+          sx: { width: 360 },
+          'aria-label': 'Widget selection panel'
+        }}
+        ModalProps={{
+          keepMounted: false,
+          'aria-labelledby': 'widget-drawer-title',
+          'aria-describedby': 'widget-drawer-description'
+        }}
       >
         <Box sx={{ p: 2 }}>
           <Box display="flex" alignItems="center" justifyContent="between" mb={2}>
-            <Typography variant="h6" fontWeight="600">
+            <Typography 
+              variant="h6" 
+              fontWeight="600"
+              id="widget-drawer-title"
+              component="h2"
+            >
               Add Widget
             </Typography>
-            <IconButton onClick={() => setWidgetPanelOpen(false)}>
-              <ExpandLessOutlined />
+            <Typography 
+              id="widget-drawer-description" 
+              variant="caption" 
+              color="text.secondary"
+              sx={{ display: 'none' }}
+            >
+              Choose from available widgets to add to your dashboard
+            </Typography>
+            <IconButton 
+              onClick={() => setWidgetPanelOpen(false)}
+              aria-label="Close widget panel"
+            >
+              <ExpandLessOutlined aria-hidden="true" />
             </IconButton>
           </Box>
 
-          <Tabs value={activeTab} onChange={(_, newValue) => setActiveTab(newValue)} sx={{ mb: 2 }}>
-            <Tab label="By Category" />
-            <Tab label="All Widgets" />
-            <Tab label="Templates" />
+          <Tabs 
+            value={activeTab} 
+            onChange={(_, newValue) => setActiveTab(newValue)} 
+            sx={{ mb: 2 }}
+            aria-label="Widget selection tabs"
+          >
+            <Tab 
+              label="By Category" 
+              id="tab-category"
+              aria-controls="tabpanel-category"
+            />
+            <Tab 
+              label="All Widgets" 
+              id="tab-all"
+              aria-controls="tabpanel-all"
+            />
+            <Tab 
+              label="Templates" 
+              id="tab-templates"
+              aria-controls="tabpanel-templates"
+            />
           </Tabs>
 
           {/* Widgets by category */}
@@ -827,17 +915,33 @@ const DashboardBuilder: React.FC<DashboardBuilderProps> = ({
                       .map(([type, widgetType]) => (
                         <Grid item xs={12} key={type}>
                           <Paper
+                            component="button"
                             sx={{
                               p: 2,
                               cursor: 'pointer',
                               border: '1px solid',
                               borderColor: 'divider',
+                              backgroundColor: 'transparent',
+                              width: '100%',
+                              textAlign: 'left',
                               '&:hover': {
                                 bgcolor: 'action.hover',
                                 borderColor: 'primary.main',
                               },
+                              '&:focus': {
+                                outline: '2px solid',
+                                outlineColor: 'primary.main',
+                                outlineOffset: '2px'
+                              },
                             }}
                             onClick={() => handleAddWidget(type as WidgetType)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                handleAddWidget(type as WidgetType);
+                              }
+                            }}
+                            aria-label={`Add ${widgetType.name} widget: ${widgetType.description}`}
                           >
                             <Box display="flex" alignItems="center" gap={2}>
                               <Avatar
@@ -875,6 +979,7 @@ const DashboardBuilder: React.FC<DashboardBuilderProps> = ({
                   key={type}
                   onClick={() => handleAddWidget(type as WidgetType)}
                   sx={{ borderRadius: 1, mb: 0.5 }}
+                  aria-label={`Add ${widgetType.name} widget: ${widgetType.description}`}
                 >
                   <ListItemIcon>
                     <Avatar
@@ -909,6 +1014,7 @@ const DashboardBuilder: React.FC<DashboardBuilderProps> = ({
                     key={layout.id}
                     onClick={() => handleLoadLayout(layout)}
                     sx={{ borderRadius: 1, mb: 0.5 }}
+                    aria-label={`Load ${layout.name} dashboard layout${layout.description ? ': ' + layout.description : ''}`}
                   >
                     <ListItemIcon>
                       <Avatar

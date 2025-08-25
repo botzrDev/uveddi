@@ -51,6 +51,10 @@
 use tracing::{info, warn, error, debug};
 
 pub mod crud;
+pub mod migrations;
 pub mod models;
+pub mod pool;
 
 pub use self::crud::Database;
+pub use self::migrations::{Migration, MigrationManager, MigrationStatus};
+pub use self::pool::{DatabasePool, PoolConfig, PooledDatabase, PoolStats};

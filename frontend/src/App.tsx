@@ -79,6 +79,10 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <ThemeProvider theme={theme}>
           <CssBaseline />
+          {/* Skip link for accessibility */}
+          <a href="#main-content" className="skip-link">
+            Skip to main content
+          </a>
           <RealtimeUpdates 
             onNewAnalysis={() => {
               // Refresh data by invalidating queries

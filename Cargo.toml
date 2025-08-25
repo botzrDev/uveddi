@@ -217,6 +217,9 @@ ratatui = { version = "0.29", optional = true }
 crossterm = { version = "0.29", optional = true }
 tui-input = { version = "0.14", optional = true }
 
+# Input validation framework
+validator = { version = "0.16", features = ["derive"] }
+
 # Configuration Management (for TUI settings)
 confy = "1.0"
 

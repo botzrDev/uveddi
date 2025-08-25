@@ -2,9 +2,13 @@ import '@testing-library/jest-dom';
 import { configure } from '@testing-library/react';
 import { vi, beforeAll, afterEach, afterAll } from 'vitest';
 import { server } from './mocks/server';
+import { toHaveNoViolations } from 'jest-axe';
 
 // Configure testing library
 configure({ testIdAttribute: 'data-testid' });
+
+// Add jest-axe matcher for accessibility testing
+expect.extend(toHaveNoViolations);
 
 // Mock ResizeObserver
 global.ResizeObserver = class ResizeObserver {
