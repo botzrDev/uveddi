@@ -151,16 +151,24 @@ impl ToString for SecurityIssueType {
             SecurityIssueType::SecurityMisconfiguration => "Security Misconfiguration".to_string(),
             SecurityIssueType::VulnerableComponents => "Vulnerable Components".to_string(),
             SecurityIssueType::AuthenticationFailures => "Authentication Failures".to_string(),
-            SecurityIssueType::SoftwareDataIntegrityFailures => "Software Data Integrity Failures".to_string(),
+            SecurityIssueType::SoftwareDataIntegrityFailures => {
+                "Software Data Integrity Failures".to_string()
+            }
             SecurityIssueType::SecurityLoggingFailures => "Security Logging Failures".to_string(),
-            SecurityIssueType::ServerSideRequestForgery => "Server Side Request Forgery".to_string(),
+            SecurityIssueType::ServerSideRequestForgery => {
+                "Server Side Request Forgery".to_string()
+            }
             SecurityIssueType::HardcodedSecrets => "Hardcoded Secrets".to_string(),
             SecurityIssueType::InsecureRandomness => "Insecure Randomness".to_string(),
             SecurityIssueType::PathTraversal => "Path Traversal".to_string(),
             SecurityIssueType::CrossSiteScripting => "Cross-Site Scripting (XSS)".to_string(),
-            SecurityIssueType::CrossSiteRequestForgery => "Cross-Site Request Forgery (CSRF)".to_string(),
+            SecurityIssueType::CrossSiteRequestForgery => {
+                "Cross-Site Request Forgery (CSRF)".to_string()
+            }
             SecurityIssueType::BusinessLogicErrors => "Business Logic Errors".to_string(),
-            SecurityIssueType::InsufficientInputValidation => "Insufficient Input Validation".to_string(),
+            SecurityIssueType::InsufficientInputValidation => {
+                "Insufficient Input Validation".to_string()
+            }
             SecurityIssueType::ImproperErrorHandling => "Improper Error Handling".to_string(),
             SecurityIssueType::InsecureCommunication => "Insecure Communication".to_string(),
             SecurityIssueType::PrivilegeEscalation => "Privilege Escalation".to_string(),
@@ -168,7 +176,9 @@ impl ToString for SecurityIssueType {
             SecurityIssueType::UseAfterFree => "Use After Free".to_string(),
             SecurityIssueType::NullPointerDereference => "Null Pointer Dereference".to_string(),
             SecurityIssueType::RaceCondition => "Race Condition".to_string(),
-            SecurityIssueType::DeserializationVulnerabilities => "Deserialization Vulnerabilities".to_string(),
+            SecurityIssueType::DeserializationVulnerabilities => {
+                "Deserialization Vulnerabilities".to_string()
+            }
             SecurityIssueType::Custom(name) => name.clone(),
         }
     }
@@ -207,7 +217,12 @@ impl SecurityLocation {
         self
     }
 
-    pub fn with_context(mut self, function: Option<String>, class: Option<String>, module: Option<String>) -> Self {
+    pub fn with_context(
+        mut self,
+        function: Option<String>,
+        class: Option<String>,
+        module: Option<String>,
+    ) -> Self {
         self.function_name = function;
         self.class_name = class;
         self.module_name = module;
@@ -394,7 +409,10 @@ impl SecurityIssue {
 
     /// Check if this is a critical or high severity issue
     pub fn is_urgent(&self) -> bool {
-        matches!(self.severity, SecuritySeverity::Critical | SecuritySeverity::High)
+        matches!(
+            self.severity,
+            SecuritySeverity::Critical | SecuritySeverity::High
+        )
     }
 
     /// Convert from a generic vulnerability structure
@@ -465,7 +483,10 @@ mod tests {
 
     #[test]
     fn test_security_severity_from_score() {
-        assert_eq!(SecuritySeverity::from_score(0.9), SecuritySeverity::Critical);
+        assert_eq!(
+            SecuritySeverity::from_score(0.9),
+            SecuritySeverity::Critical
+        );
         assert_eq!(SecuritySeverity::from_score(0.7), SecuritySeverity::High);
         assert_eq!(SecuritySeverity::from_score(0.5), SecuritySeverity::Medium);
         assert_eq!(SecuritySeverity::from_score(0.3), SecuritySeverity::Low);
@@ -487,11 +508,7 @@ mod tests {
 
     #[test]
     fn test_security_issue_creation() {
-        let location = SecurityLocation::new(
-            PathBuf::from("test.rs"),
-            10,
-            15,
-        );
+        let location = SecurityLocation::new(PathBuf::from("test.rs"), 10, 15);
 
         let issue = SecurityIssue::new(
             SecurityIssueType::Injection,
@@ -515,7 +532,7 @@ mod tests {
     #[test]
     fn test_risk_score_calculation() {
         let location = SecurityLocation::new(PathBuf::from("test.rs"), 1, 1);
-        
+
         let issue = SecurityIssue::new(
             SecurityIssueType::Injection,
             VulnerabilityType::Static,

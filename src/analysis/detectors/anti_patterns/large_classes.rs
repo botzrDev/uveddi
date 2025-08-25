@@ -273,7 +273,7 @@ impl LargeClassDetector {
     ) -> Result<u32, AnalysisError> {
         let mut field_count = 0;
         let mut cursor = struct_node.walk();
-        
+
         // Look for struct fields
         for child in struct_node.children(&mut cursor) {
             if child.kind() == "field_declaration_list" {
@@ -285,7 +285,7 @@ impl LargeClassDetector {
                 }
             }
         }
-        
+
         Ok(field_count)
     }
 
@@ -297,22 +297,24 @@ impl LargeClassDetector {
         source: &[u8],
     ) -> Result<(u32, u32), AnalysisError> {
         let language = tree.language();
-        
+
         // Query for impl blocks of this struct
-        let impl_query_str = format!(r#"
+        let impl_query_str = format!(
+            r#"
             (impl_item
               type: (type_identifier) @impl_type
               body: (declaration_list) @impl_body)
-        "#);
-        
+        "#
+        );
+
         let impl_query = Query::new(&language, &impl_query_str).map_err(|e| {
             crate::analysis::errors::AnalysisError::AntiPatternDetectionError(e.to_string())
         })?;
-        
+
         let mut cursor = QueryCursor::new();
         let mut method_count = 0;
         let mut complexity = 0;
-        
+
         let mut matches = cursor.matches(&impl_query, tree.root_node(), source);
         while let Some(mat) = matches.next() {
             // Check if this impl is for our struct
@@ -323,7 +325,7 @@ impl LargeClassDetector {
                         if let Some(body_capture) = mat.captures.get(1) {
                             let body_node = body_capture.node;
                             let mut body_cursor = body_node.walk();
-                            
+
                             for child in body_node.children(&mut body_cursor) {
                                 if child.kind() == "function_item" {
                                     method_count += 1;
@@ -335,7 +337,7 @@ impl LargeClassDetector {
                 }
             }
         }
-        
+
         Ok((method_count, complexity))
     }
 

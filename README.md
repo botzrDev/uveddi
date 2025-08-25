@@ -250,6 +250,16 @@ output from `cargo build` so the maintainers can triage.
 
 ## 🤝 Contributing
 
+### Code Formatting
+- We use rustfmt for consistent formatting across the Rust codebase.
+- Before committing, run: `cargo fmt --all` to automatically format the code.
+- The CI pipeline enforces formatting with: `cargo fmt --all -- --check`. PRs will fail if code is not formatted.
+- Optional: Install pre-commit hooks to auto-format before commits:
+  - `pre-commit install`
+  - Our `.pre-commit-config.yaml` runs `cargo fmt`, `cargo clippy`, and `cargo check`.
+
+
+
 We welcome contributions! This is the v1.0 Community Core release, so feedback and feature requests are valuable.
 
 ### Reporting Issues

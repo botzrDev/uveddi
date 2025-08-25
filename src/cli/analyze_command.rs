@@ -270,7 +270,7 @@ pub struct AnalyzeCommand {
     /// stack traces, and context to help diagnose issues.
     #[arg(long)]
     pub verbose: bool,
-    
+
     /// Automatically open dashboard after analysis completes
     ///
     /// When enabled, the analysis dashboard will be launched in the default web browser
@@ -531,11 +531,21 @@ impl AnalyzeCommand {
         // Validate numeric parameters
         if let Some(confidence) = self.dead_code_confidence {
             let confidence_int = (confidence * 100.0) as i32;
-            security::validate_numeric_range(confidence_int.into(), 0, 100, "dead_code_confidence")?;
+            security::validate_numeric_range(
+                confidence_int.into(),
+                0,
+                100,
+                "dead_code_confidence",
+            )?;
         }
 
         if let Some(max_loc) = self.large_classes_max_loc {
-            security::validate_numeric_range((max_loc as i32).into(), 1, 100_000, "large_classes_max_loc")?;
+            security::validate_numeric_range(
+                (max_loc as i32).into(),
+                1,
+                100_000,
+                "large_classes_max_loc",
+            )?;
         }
 
         if let Some(max_methods) = self.large_classes_max_methods {
@@ -618,7 +628,12 @@ impl AnalyzeCommand {
         // Validate security-specific options
         if let Some(confidence) = self.min_security_confidence {
             let confidence_int = (confidence * 100.0) as i32;
-            security::validate_numeric_range(confidence_int.into(), 0, 100, "min_security_confidence")?;
+            security::validate_numeric_range(
+                confidence_int.into(),
+                0,
+                100,
+                "min_security_confidence",
+            )?;
         }
 
         if let Some(depth) = self.taint_analysis_depth {
@@ -806,13 +821,12 @@ impl AnalyzeCommand {
         // Create application layer orchestrator with persistent database
         // Use the same database path as the dashboard server for consistency
         let database_path = std::path::Path::new("./.uveddi/database.db");
-        
+
         // Ensure the database directory exists
         if let Some(parent) = database_path.parent() {
-            std::fs::create_dir_all(parent)
-                .context("Failed to create database directory")?;
+            std::fs::create_dir_all(parent).context("Failed to create database directory")?;
         }
-        
+
         let mut orchestrator = AnalysisOrchestrator::with_db_path(database_path)
             .context("Failed to initialize analysis orchestrator with persistent database")?;
 
@@ -1039,7 +1053,7 @@ impl AnalyzeCommand {
             report.metadata.issues_found,
             report.metadata.ai_enhanced
         );
-        
+
         // TODO: Notify dashboard of new analysis results
         // self.notify_dashboard_of_new_results(&report).await;
 
@@ -1057,12 +1071,12 @@ impl AnalyzeCommand {
             if report.metadata.ai_enhanced {
                 println!("  • AI enhanced: ✅");
             }
-            
+
             // Add security-specific summary if security analysis was enabled
             if self.security {
                 self.print_security_summary(&report).await;
             }
-            
+
             println!("\n💡 Report generated: {}", output_info);
         } else {
             println!("\n✅ Analysis complete: No issues found! 🎉");
@@ -1072,14 +1086,16 @@ impl AnalyzeCommand {
             }
             println!("💡 Report generated: {}", output_info);
         }
-        
+
         // Auto-launch dashboard if requested
         if self.open_dashboard {
             println!("\n🚀 Dashboard launch requested but temporarily disabled during development");
             // self.launch_dashboard();
         } else if report.metadata.issues_found > 0 {
             // Suggest dashboard for a better experience when issues are found
-            println!("\n💡 Tip: Run with --open-dashboard to visualize results in the web interface");
+            println!(
+                "\n💡 Tip: Run with --open-dashboard to visualize results in the web interface"
+            );
         }
 
         Ok(())
@@ -1181,11 +1197,12 @@ impl AnalyzeCommand {
     async fn print_security_summary(&self, report: &crate::application::AnalysisReport) {
         // Note: This is a placeholder implementation until we have the security data
         // properly flowing through the AnalysisReport structure
-        
+
         println!("  🔒 Security Analysis:");
-        
+
         if self.export_sarif {
-            let sarif_path = self.sarif_output
+            let sarif_path = self
+                .sarif_output
                 .as_ref()
                 .map(|p| p.to_string_lossy().to_string())
                 .unwrap_or_else(|| {
@@ -1197,21 +1214,21 @@ impl AnalyzeCommand {
                         "security-findings.sarif".to_string()
                     }
                 });
-                
+
             println!("     • SARIF export: {}", sarif_path);
         }
-        
+
         if self.enable_taint_analysis {
             let depth = self.taint_analysis_depth.unwrap_or(10);
             println!("     • Taint analysis depth: {}", depth);
         }
-        
+
         if let Some(ref categories) = self.owasp_categories {
             println!("     • OWASP categories: {}", categories.join(", "));
         } else {
             println!("     • OWASP coverage: All Top 10 2021 categories");
         }
-        
+
         let confidence = self.min_security_confidence.unwrap_or(0.5);
         println!("     • Min confidence: {:.0}%", confidence * 100.0);
     }
@@ -1223,15 +1240,15 @@ impl AnalyzeCommand {
         use std::path::Path;
         use tokio::fs;
         use tokio::io::AsyncWriteExt;
-        
+
         // Create notification file that indicates new results are available
         let notification_dir = Path::new("./.uveddi/notifications");
         let _ = fs::create_dir_all(&notification_dir).await;
-        
+
         // Generate a unique notification ID based on timestamp
         let notification_id = chrono::Utc::now().timestamp();
         let notification_path = notification_dir.join(format!("analysis_complete_{}.json", notification_id));
-        
+
         // Create notification payload with basic metadata
         let notification_content = serde_json::json!({
             "type": "analysis_complete",
@@ -1244,7 +1261,7 @@ impl AnalyzeCommand {
                 "format": self.output_format
             }
         });
-        
+
         // Write notification file asynchronously
         if let Ok(mut file) = fs::File::create(&notification_path).await {
             if let Ok(content) = serde_json::to_string(&notification_content) {
@@ -1252,17 +1269,17 @@ impl AnalyzeCommand {
                 info!("Dashboard notification created: {}", notification_path.display());
             }
         }
-        
+
         // Try to notify any running dashboard service via HTTP
         let client = reqwest::Client::new();
         let dashboard_url = "http://localhost:8080/api/notifications/new-analysis";
-        
+
         let _ = client.post(dashboard_url)
             .json(&notification_content)
             .timeout(std::time::Duration::from_secs(1))
             .send()
             .await;
-            
+
         // Note: We intentionally ignore errors here to prevent analysis failures
         // if the dashboard isn't running
     }
@@ -1271,9 +1288,9 @@ impl AnalyzeCommand {
     fn launch_dashboard(&self) {
         use std::process::Command;
         use std::thread;
-        
+
         println!("\n🚀 Launching dashboard in your browser...");
-        
+
         // Start the dashboard server in the background if not already running
         thread::spawn(|| {
             // Use a separate tokio runtime for this background process
@@ -1295,22 +1312,22 @@ impl AnalyzeCommand {
                     frontend_assets_path: None,
                     development_mode: false,
                 };
-                
+
                 // Start the services
                 let mut orchestrator = crate::service_orchestration::ServiceOrchestrator::new();
                 if let Err(e) = orchestrator.start_services(config).await {
                     tracing::error!("Failed to start dashboard services: {}", e);
                     return;
                 }
-                
+
                 // Wait for Ctrl+C or program termination
                 let _ = tokio::signal::ctrl_c().await;
             });
         });
-        
+
         // Give services a moment to start
         thread::sleep(std::time::Duration::from_secs(2));
-        
+
         // Open the browser to the dashboard URL
         #[cfg(target_os = "windows")]
         let open_cmd = "start";
@@ -1318,7 +1335,7 @@ impl AnalyzeCommand {
         let open_cmd = "open";
         #[cfg(not(any(target_os = "windows", target_os = "macos")))]
         let open_cmd = "xdg-open";
-        
+
         let dashboard_url = "http://localhost:8080/dashboard";
         if let Err(e) = Command::new(open_cmd).arg(dashboard_url).spawn() {
             println!("Could not open browser automatically: {}", e);

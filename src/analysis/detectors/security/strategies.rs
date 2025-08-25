@@ -3,7 +3,9 @@
 //! This module implements specialized detection strategies that work together
 //! to provide comprehensive security analysis across multiple domains.
 
-use crate::analysis::detectors::security::types::{SecurityIssue, SecurityIssueType, SecurityLocation, SecuritySeverity};
+use crate::analysis::detectors::security::types::{
+    SecurityIssue, SecurityIssueType, SecurityLocation, SecuritySeverity,
+};
 use crate::analysis::AnalysisError;
 use crate::ast::{ParsedFile, SourceLanguage};
 use serde::{Deserialize, Serialize};
@@ -86,30 +88,35 @@ impl DeterministicPatternMatcher {
             },
         ];
 
-        self.patterns.insert(SourceLanguage::Python, python_patterns);
+        self.patterns
+            .insert(SourceLanguage::Python, python_patterns);
     }
 
     fn add_javascript_patterns(&mut self) {
-        let js_patterns = vec![
-            VulnerabilityPattern {
-                pattern: "document.write(".to_string(),
-                vulnerability_type: SecurityIssueType::CrossSiteScripting,
-                severity: SecuritySeverity::High,
-                confidence: 0.7,
-                description: "Potential XSS via document.write".to_string(),
-                remediation: Some("Use safe DOM manipulation methods".to_string()),
-            },
-        ];
+        let js_patterns = vec![VulnerabilityPattern {
+            pattern: "document.write(".to_string(),
+            vulnerability_type: SecurityIssueType::CrossSiteScripting,
+            severity: SecuritySeverity::High,
+            confidence: 0.7,
+            description: "Potential XSS via document.write".to_string(),
+            remediation: Some("Use safe DOM manipulation methods".to_string()),
+        }];
 
-        self.patterns.insert(SourceLanguage::JavaScript, js_patterns.clone());
-        self.patterns.insert(SourceLanguage::TypeScript, js_patterns);
+        self.patterns
+            .insert(SourceLanguage::JavaScript, js_patterns.clone());
+        self.patterns
+            .insert(SourceLanguage::TypeScript, js_patterns);
     }
 
     pub async fn analyze(&self, file: &ParsedFile) -> Result<Vec<SecurityIssue>, AnalysisError> {
-        debug!("Running deterministic pattern matching on: {}", file.file_path.display());
+        debug!(
+            "Running deterministic pattern matching on: {}",
+            file.file_path.display()
+        );
 
-        let content = std::fs::read_to_string(&**file.file_path)
-            .map_err(|e| AnalysisError::file_system_error(file.file_path.to_string_lossy().to_string(), e))?;
+        let content = std::fs::read_to_string(&**file.file_path).map_err(|e| {
+            AnalysisError::file_system_error(file.file_path.to_string_lossy().to_string(), e)
+        })?;
 
         let mut issues = Vec::new();
 
@@ -142,7 +149,10 @@ impl DeterministicPatternMatcher {
             }
         }
 
-        info!("Deterministic pattern matching found {} issues", issues.len());
+        info!(
+            "Deterministic pattern matching found {} issues",
+            issues.len()
+        );
         Ok(issues)
     }
 }
@@ -192,7 +202,8 @@ impl ConfigFileAnalyzer {
             },
         ];
 
-        self.config_patterns.insert("settings.py".to_string(), django_patterns);
+        self.config_patterns
+            .insert("settings.py".to_string(), django_patterns);
 
         // Add more configuration patterns for other frameworks
         self.add_docker_patterns();
@@ -200,45 +211,48 @@ impl ConfigFileAnalyzer {
     }
 
     fn add_docker_patterns(&mut self) {
-        let docker_patterns = vec![
-            ConfigSecurityPattern {
-                key_pattern: "USER".to_string(),
-                dangerous_values: vec!["root".to_string()],
-                vulnerability_type: SecurityIssueType::PrivilegeEscalation,
-                severity: SecuritySeverity::Medium,
-                description: "Running container as root user".to_string(),
-                remediation: "Create and use a non-root user".to_string(),
-            },
-        ];
+        let docker_patterns = vec![ConfigSecurityPattern {
+            key_pattern: "USER".to_string(),
+            dangerous_values: vec!["root".to_string()],
+            vulnerability_type: SecurityIssueType::PrivilegeEscalation,
+            severity: SecuritySeverity::Medium,
+            description: "Running container as root user".to_string(),
+            remediation: "Create and use a non-root user".to_string(),
+        }];
 
-        self.config_patterns.insert("Dockerfile".to_string(), docker_patterns);
+        self.config_patterns
+            .insert("Dockerfile".to_string(), docker_patterns);
     }
 
     fn add_nginx_patterns(&mut self) {
-        let nginx_patterns = vec![
-            ConfigSecurityPattern {
-                key_pattern: "server_tokens".to_string(),
-                dangerous_values: vec!["on".to_string()],
-                vulnerability_type: SecurityIssueType::SecurityMisconfiguration,
-                severity: SecuritySeverity::Low,
-                description: "Server tokens enabled, revealing version information".to_string(),
-                remediation: "Set server_tokens off".to_string(),
-            },
-        ];
+        let nginx_patterns = vec![ConfigSecurityPattern {
+            key_pattern: "server_tokens".to_string(),
+            dangerous_values: vec!["on".to_string()],
+            vulnerability_type: SecurityIssueType::SecurityMisconfiguration,
+            severity: SecuritySeverity::Low,
+            description: "Server tokens enabled, revealing version information".to_string(),
+            remediation: "Set server_tokens off".to_string(),
+        }];
 
-        self.config_patterns.insert("nginx.conf".to_string(), nginx_patterns);
+        self.config_patterns
+            .insert("nginx.conf".to_string(), nginx_patterns);
     }
 
     pub async fn analyze(&self, file: &ParsedFile) -> Result<Vec<SecurityIssue>, AnalysisError> {
-        debug!("Running config file analysis on: {}", file.file_path.display());
+        debug!(
+            "Running config file analysis on: {}",
+            file.file_path.display()
+        );
 
-        let filename = file.file_path
+        let filename = file
+            .file_path
             .file_name()
             .and_then(|n| n.to_str())
             .unwrap_or("");
 
-        let content = std::fs::read_to_string(&**file.file_path)
-            .map_err(|e| AnalysisError::file_system_error(file.file_path.to_string_lossy().to_string(), e))?;
+        let content = std::fs::read_to_string(&**file.file_path).map_err(|e| {
+            AnalysisError::file_system_error(file.file_path.to_string_lossy().to_string(), e)
+        })?;
 
         let mut issues = Vec::new();
 
@@ -294,7 +308,8 @@ impl SoftwareCompositionAnalyzer {
     pub async fn analyze(&self, file: &ParsedFile) -> Result<Vec<SecurityIssue>, AnalysisError> {
         debug!("Running SCA analysis on: {}", file.file_path.display());
 
-        let filename = file.file_path
+        let filename = file
+            .file_path
             .file_name()
             .and_then(|n| n.to_str())
             .unwrap_or("");
@@ -320,17 +335,26 @@ impl SoftwareCompositionAnalyzer {
         Ok(issues)
     }
 
-    async fn analyze_cargo_toml(&self, file: &ParsedFile) -> Result<Vec<SecurityIssue>, AnalysisError> {
+    async fn analyze_cargo_toml(
+        &self,
+        file: &ParsedFile,
+    ) -> Result<Vec<SecurityIssue>, AnalysisError> {
         // TODO: Parse Cargo.toml and check dependencies against RustSec database
         Ok(Vec::new())
     }
 
-    async fn analyze_package_json(&self, file: &ParsedFile) -> Result<Vec<SecurityIssue>, AnalysisError> {
+    async fn analyze_package_json(
+        &self,
+        file: &ParsedFile,
+    ) -> Result<Vec<SecurityIssue>, AnalysisError> {
         // TODO: Parse package.json and check dependencies against npm audit
         Ok(Vec::new())
     }
 
-    async fn analyze_requirements_txt(&self, file: &ParsedFile) -> Result<Vec<SecurityIssue>, AnalysisError> {
+    async fn analyze_requirements_txt(
+        &self,
+        file: &ParsedFile,
+    ) -> Result<Vec<SecurityIssue>, AnalysisError> {
         // TODO: Parse requirements.txt and check dependencies against safety database
         Ok(Vec::new())
     }
@@ -437,11 +461,11 @@ mod tests {
     #[tokio::test]
     async fn test_deterministic_pattern_matcher() {
         let matcher = DeterministicPatternMatcher::new();
-        
+
         // Create a test file with a vulnerable pattern
-        use std::sync::Arc;
         use crate::analysis::cache::wrappers::ArchivableSystemTime;
-        
+        use std::sync::Arc;
+
         let test_file = ParsedFile {
             file_path: Arc::new(PathBuf::from("test.py")),
             language: SourceLanguage::Python,
@@ -459,7 +483,7 @@ mod tests {
     #[test]
     fn test_vulnerability_correlation_engine() {
         let engine = VulnerabilityCorrelationEngine::new();
-        
+
         let security_issue = SecurityIssue::new(
             SecurityIssueType::BrokenAccessControl,
             crate::analysis::detectors::security::types::VulnerabilityType::Static,
@@ -474,7 +498,7 @@ mod tests {
 
         let anti_patterns = vec!["God Object".to_string()];
         let correlations = engine.correlate_issue(&security_issue, &anti_patterns);
-        
+
         assert!(!correlations.is_empty());
         assert_eq!(correlations[0].anti_pattern, "God Object");
         assert_eq!(correlations[0].correlation_strength, 0.8);
@@ -483,7 +507,7 @@ mod tests {
     #[test]
     fn test_config_file_analyzer() {
         let analyzer = ConfigFileAnalyzer::new();
-        
+
         // Check that patterns were loaded
         assert!(analyzer.config_patterns.contains_key("settings.py"));
         assert!(analyzer.config_patterns.contains_key("Dockerfile"));

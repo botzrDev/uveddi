@@ -76,6 +76,14 @@ New to Uveddi? Start here! We've curated beginner-friendly tasks to help you get
 
 ## Code Style
 
+### Formatting
+- We use rustfmt to enforce consistent style. Run `cargo fmt --all` before pushing.
+- CI runs `cargo fmt --all -- --check` and will fail PRs that are not formatted.
+- Install pre-commit hooks to auto-format and lint:
+  - `pre-commit install`
+  - Hooks include: cargo fmt, cargo clippy, cargo check.
+
+
 - Follow Rustfmt configuration (see rustfmt.toml)
 - Clippy should report no warnings
 - Document all public APIs with Rustdoc

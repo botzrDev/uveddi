@@ -958,36 +958,45 @@ impl InteractiveReport {
     fn extract_security_metadata(metadata_json: &str) -> Option<SecurityFindingMetadata> {
         if let Ok(metadata) = serde_json::from_str::<serde_json::Value>(metadata_json) {
             Some(SecurityFindingMetadata {
-                owasp_category: metadata.get("owasp_category")
+                owasp_category: metadata
+                    .get("owasp_category")
                     .and_then(|v| v.as_str())
                     .map(|s| s.to_string()),
-                cwe_id: metadata.get("cwe_id")
+                cwe_id: metadata
+                    .get("cwe_id")
                     .and_then(|v| v.as_str())
                     .map(|s| s.to_string()),
-                cvss_score: metadata.get("cvss_score")
-                    .and_then(|v| v.as_f64()),
-                attack_complexity: metadata.get("attack_complexity")
+                cvss_score: metadata.get("cvss_score").and_then(|v| v.as_f64()),
+                attack_complexity: metadata
+                    .get("attack_complexity")
                     .and_then(|v| v.as_str())
                     .map(|s| s.to_string()),
-                attack_vector: metadata.get("attack_vector")
+                attack_vector: metadata
+                    .get("attack_vector")
                     .and_then(|v| v.as_str())
                     .map(|s| s.to_string()),
-                privileges_required: metadata.get("privileges_required")
+                privileges_required: metadata
+                    .get("privileges_required")
                     .and_then(|v| v.as_str())
                     .map(|s| s.to_string()),
-                user_interaction: metadata.get("user_interaction")
+                user_interaction: metadata
+                    .get("user_interaction")
                     .and_then(|v| v.as_str())
                     .map(|s| s.to_string()),
-                scope: metadata.get("scope")
+                scope: metadata
+                    .get("scope")
                     .and_then(|v| v.as_str())
                     .map(|s| s.to_string()),
-                availability_impact: metadata.get("availability_impact")
+                availability_impact: metadata
+                    .get("availability_impact")
                     .and_then(|v| v.as_str())
                     .map(|s| s.to_string()),
-                confidentiality_impact: metadata.get("confidentiality_impact")
+                confidentiality_impact: metadata
+                    .get("confidentiality_impact")
                     .and_then(|v| v.as_str())
                     .map(|s| s.to_string()),
-                integrity_impact: metadata.get("integrity_impact")
+                integrity_impact: metadata
+                    .get("integrity_impact")
                     .and_then(|v| v.as_str())
                     .map(|s| s.to_string()),
             })

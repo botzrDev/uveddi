@@ -13,7 +13,9 @@
 //! - **Security Information**: Vulnerabilities, anti-patterns, correlations
 //! - **Long-Term Memory**: Historical analysis results and patterns
 
-use crate::analysis::detectors::security::types::{SecurityIssue, SecurityIssueType, VulnerabilityMetadata};
+use crate::analysis::detectors::security::types::{
+    SecurityIssue, SecurityIssueType, VulnerabilityMetadata,
+};
 use crate::analysis::AnalysisError;
 use crate::ast::SourceLanguage;
 use serde::{Deserialize, Serialize};
@@ -53,14 +55,19 @@ impl SecurityKnowledgeGraph {
 
     /// Add a code entity to the knowledge graph
     pub async fn add_code_entity(&mut self, entity: CodeEntity) -> Result<(), AnalysisError> {
-        debug!("Adding code entity: {} ({:?})", entity.name, entity.entity_type);
+        debug!(
+            "Adding code entity: {} ({:?})",
+            entity.name, entity.entity_type
+        );
 
         // Add to structural graph
         self.structural_graph.add_entity(entity.clone()).await?;
 
         // Generate semantic enrichments if enabled
         let semantic_enrichment = self.generate_semantic_enrichment(&entity).await?;
-        self.semantic_graph.add_enrichment(entity.id.clone(), semantic_enrichment).await?;
+        self.semantic_graph
+            .add_enrichment(entity.id.clone(), semantic_enrichment)
+            .await?;
 
         // Update RAG index
         self.rag_engine.index_entity(&entity).await?;
@@ -102,7 +109,7 @@ impl SecurityKnowledgeGraph {
         // - Summary of the entity's purpose
         // - Security-relevant insights
         // - Relationships to architectural patterns
-        
+
         Ok(SemanticEnrichment {
             entity_id: entity.id.clone(),
             summary: format!("Placeholder summary for {}", entity.name),
@@ -123,7 +130,7 @@ impl SecurityKnowledgeGraph {
         // - Semantic enrichment quality
         // - RAG retrieval relevance
         // - Historical pattern strength
-        
+
         Ok(0.7)
     }
 
@@ -132,7 +139,10 @@ impl SecurityKnowledgeGraph {
         &self,
         security_issue: &SecurityIssue,
     ) -> Result<ArchitecturalCorrelation, AnalysisError> {
-        debug!("Correlating security issue with architectural patterns: {}", security_issue.title);
+        debug!(
+            "Correlating security issue with architectural patterns: {}",
+            security_issue.title
+        );
 
         // Query for architectural anti-patterns in the same area
         let query = SecurityQuery::ArchitecturalCorrelation {
@@ -142,7 +152,7 @@ impl SecurityKnowledgeGraph {
         };
 
         let knowledge_result = self.query_security_context(query).await?;
-        
+
         // Analyze correlations
         let correlation = ArchitecturalCorrelation {
             security_issue_id: security_issue.id.clone().unwrap_or_default(),
@@ -164,13 +174,15 @@ impl SecurityKnowledgeGraph {
         analysis_results: Vec<SecurityIssue>,
     ) -> Result<(), AnalysisError> {
         for issue in analysis_results {
-            self.long_term_memory.record_pattern(SecurityPattern {
-                pattern_type: issue.issue_type.clone(),
-                location_pattern: issue.location.file_path.clone(),
-                frequency: 1,
-                severity_distribution: vec![(issue.severity, 1)],
-                temporal_data: vec![chrono::Utc::now()],
-            }).await?;
+            self.long_term_memory
+                .record_pattern(SecurityPattern {
+                    pattern_type: issue.issue_type.clone(),
+                    location_pattern: issue.location.file_path.clone(),
+                    frequency: 1,
+                    severity_distribution: vec![(issue.severity, 1)],
+                    temporal_data: vec![chrono::Utc::now()],
+                })
+                .await?;
         }
 
         Ok(())
@@ -198,7 +210,10 @@ impl StructuralGraph {
         Ok(())
     }
 
-    pub async fn query(&self, query: &SecurityQuery) -> Result<StructuralQueryResult, AnalysisError> {
+    pub async fn query(
+        &self,
+        query: &SecurityQuery,
+    ) -> Result<StructuralQueryResult, AnalysisError> {
         match query {
             SecurityQuery::ArchitecturalCorrelation { location, .. } => {
                 // Find entities near the specified location
@@ -333,18 +348,28 @@ impl LongTermMemory {
     }
 
     pub async fn record_pattern(&mut self, pattern: SecurityPattern) -> Result<(), AnalysisError> {
-        let pattern_id = format!("{:?}_{}", pattern.pattern_type, pattern.location_pattern.display());
-        
+        let pattern_id = format!(
+            "{:?}_{}",
+            pattern.pattern_type,
+            pattern.location_pattern.display()
+        );
+
         // Update frequency count
-        *self.pattern_frequencies.entry(pattern.pattern_type.clone()).or_insert(0) += 1;
-        
+        *self
+            .pattern_frequencies
+            .entry(pattern.pattern_type.clone())
+            .or_insert(0) += 1;
+
         // Store or update pattern
         self.security_patterns.insert(pattern_id, pattern);
-        
+
         Ok(())
     }
 
-    pub async fn find_patterns(&self, query: &SecurityQuery) -> Result<Vec<HistoricalPattern>, AnalysisError> {
+    pub async fn find_patterns(
+        &self,
+        query: &SecurityQuery,
+    ) -> Result<Vec<HistoricalPattern>, AnalysisError> {
         // TODO: Implement pattern matching based on query
         Ok(Vec::new())
     }
@@ -367,7 +392,10 @@ impl KnowledgeGraphBuilder {
         &mut self,
         file_analyses: Vec<FileAnalysis>,
     ) -> Result<(), AnalysisError> {
-        info!("Building knowledge graph from {} file analyses", file_analyses.len());
+        info!(
+            "Building knowledge graph from {} file analyses",
+            file_analyses.len()
+        );
 
         for analysis in file_analyses {
             self.process_file_analysis(analysis).await?;
@@ -477,7 +505,10 @@ pub struct SecurityPattern {
     pub pattern_type: SecurityIssueType,
     pub location_pattern: PathBuf,
     pub frequency: usize,
-    pub severity_distribution: Vec<(crate::analysis::detectors::security::types::SecuritySeverity, usize)>,
+    pub severity_distribution: Vec<(
+        crate::analysis::detectors::security::types::SecuritySeverity,
+        usize,
+    )>,
     pub temporal_data: Vec<chrono::DateTime<chrono::Utc>>,
 }
 
@@ -663,7 +694,8 @@ impl StructuralSemanticGraph {
     }
 
     pub fn get_neighbors(&self, node_id: &str) -> Vec<&GraphNode> {
-        let neighbor_ids: HashSet<&str> = self.edges
+        let neighbor_ids: HashSet<&str> = self
+            .edges
             .iter()
             .filter_map(|edge| {
                 if edge.from == node_id {
@@ -697,25 +729,23 @@ mod tests {
     #[tokio::test]
     async fn test_knowledge_graph_builder() {
         let mut builder = KnowledgeGraphBuilder::new().unwrap();
-        
+
         let file_analysis = FileAnalysis {
             file_path: PathBuf::from("test.rs"),
-            entities: vec![
-                CodeEntity {
-                    id: "test_function".to_string(),
-                    name: "test_function".to_string(),
-                    entity_type: EntityType::Function,
-                    location: CodeLocation {
-                        file_path: PathBuf::from("test.rs"),
-                        start_line: 1,
-                        end_line: 10,
-                        start_column: 0,
-                        end_column: 0,
-                    },
-                    metadata: HashMap::new(),
-                    language: SourceLanguage::Rust,
-                }
-            ],
+            entities: vec![CodeEntity {
+                id: "test_function".to_string(),
+                name: "test_function".to_string(),
+                entity_type: EntityType::Function,
+                location: CodeLocation {
+                    file_path: PathBuf::from("test.rs"),
+                    start_line: 1,
+                    end_line: 10,
+                    start_column: 0,
+                    end_column: 0,
+                },
+                metadata: HashMap::new(),
+                language: SourceLanguage::Rust,
+            }],
             security_issues: Vec::new(),
             anti_patterns: Vec::new(),
         };
@@ -727,7 +757,7 @@ mod tests {
     #[test]
     fn test_structural_semantic_graph() {
         let mut graph = StructuralSemanticGraph::new(SourceLanguage::Rust);
-        
+
         let node = GraphNode {
             id: "test_node".to_string(),
             node_type: GraphNodeType::Function,

@@ -433,7 +433,9 @@ impl AnalysisEngine {
         // Add security anti-pattern types if security feature is enabled
         #[cfg(feature = "security")]
         {
-            if let Ok(security_detector) = crate::analysis::detectors::security::MainSecurityDetector::new() {
+            if let Ok(security_detector) =
+                crate::analysis::detectors::security::MainSecurityDetector::new()
+            {
                 anti_pattern_types.extend(security_detector.get_anti_pattern_types());
             }
         }
@@ -553,9 +555,9 @@ unsafe impl Sync for AnalysisEngine {}
 
 impl Default for AnalysisEngine {
     /// Creates a default AnalysisEngine instance.
-    /// 
+    ///
     /// # Panics
-    /// 
+    ///
     /// This will panic if the engine cannot be created with default configuration.
     /// For production code, prefer using `AnalysisEngine::new()` which returns a `Result`.
     fn default() -> Self {

@@ -75,14 +75,14 @@ impl DetectorFactory {
     /// ```rust
     /// use uveddi::analysis::detector_factory::DetectorFactory;
     /// use uveddi::analysis::detectors::anti_patterns::GodObjectDetector;
-    /// 
+    ///
     /// // Get all default detectors
     /// let mut all_detectors = DetectorFactory::create_default_detectors();
-    /// 
+    ///
     /// // Add custom detector with specific configuration
     /// let custom_god_detector = GodObjectDetector::new(15, 12); // More lenient thresholds
     /// all_detectors.push(Box::new(custom_god_detector));
-    /// 
+    ///
     /// println!("Total detectors: {}", all_detectors.len());
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
@@ -92,20 +92,20 @@ impl DetectorFactory {
     /// ```rust
     /// use uveddi::analysis::{AnalysisEngine, detector_factory::DetectorFactory};
     /// use std::path::Path;
-    /// 
+    ///
     /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
     /// // Create engine with all default detectors
     /// let detectors = DetectorFactory::create_default_detectors();
     /// let mut builder = AnalysisEngine::builder();
-    /// 
+    ///
     /// for detector in detectors {
     ///     builder = builder.with_detector(detector);
     /// }
-    /// 
+    ///
     /// let engine = builder.build()?;
     /// let (issues, graph) = engine.analyze(Path::new("src/")).await?;
-    /// 
-    /// println!("Found {} issues across {} files", 
+    ///
+    /// println!("Found {} issues across {} files",
     ///          issues.len(), graph.nodes().count());
     /// # Ok(())
     /// # }
@@ -184,10 +184,12 @@ impl DetectorFactory {
             #[cfg(feature = "security")]
             "security" => MainSecurityDetector::new()
                 .map(|detector| Box::new(detector) as Box<dyn AnalysisDetector + Send + Sync>)
-                .map_err(|e| UveddiError::config_error(
-                    &format!("Failed to create security detector: {}", e),
-                    "detector factory",
-                )),
+                .map_err(|e| {
+                    UveddiError::config_error(
+                        &format!("Failed to create security detector: {}", e),
+                        "detector factory",
+                    )
+                }),
             _ => Err(UveddiError::config_error(
                 &format!("Unknown detector: {}", name),
                 "detector factory",

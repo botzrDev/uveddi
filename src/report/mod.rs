@@ -728,7 +728,8 @@ impl ReportGenerator {
                                 analysis.push_str(&format!("*{}*\n\n", title));
                             }
 
-                            if let Some(explanation) = json.get("explanation").and_then(|v| v.as_str())
+                            if let Some(explanation) =
+                                json.get("explanation").and_then(|v| v.as_str())
                             {
                                 analysis.push_str(&format!("{}\n\n", explanation));
                             }
@@ -1218,11 +1219,13 @@ impl ReportGenerator {
 
             // Add anti-pattern type information
             if let Some(anti_pattern) = anti_pattern_types.get(&issue.anti_pattern_type_id) {
-                debug!("✅ Issue '{}' (ID: {}) correctly mapped to '{}'", 
-                       issue.description.chars().take(50).collect::<String>(),
-                       issue.anti_pattern_type_id, 
-                       anti_pattern.name);
-                       
+                debug!(
+                    "✅ Issue '{}' (ID: {}) correctly mapped to '{}'",
+                    issue.description.chars().take(50).collect::<String>(),
+                    issue.anti_pattern_type_id,
+                    anti_pattern.name
+                );
+
                 json_issue.insert(
                     "antiPatternType".to_string(),
                     Value::String(anti_pattern.name.clone()),
@@ -1232,11 +1235,13 @@ impl ReportGenerator {
                     Value::String(anti_pattern.description.clone()),
                 );
             } else {
-                error!("❌ Issue '{}' (ID: {}) has no mapping! Available IDs: {:?}",
-                       issue.description.chars().take(50).collect::<String>(),
-                       issue.anti_pattern_type_id,
-                       anti_pattern_types.keys().collect::<Vec<_>>());
-                       
+                error!(
+                    "❌ Issue '{}' (ID: {}) has no mapping! Available IDs: {:?}",
+                    issue.description.chars().take(50).collect::<String>(),
+                    issue.anti_pattern_type_id,
+                    anti_pattern_types.keys().collect::<Vec<_>>()
+                );
+
                 // Fallback: Use issue description or default value
                 json_issue.insert(
                     "antiPatternType".to_string(),
@@ -1244,7 +1249,9 @@ impl ReportGenerator {
                 );
                 json_issue.insert(
                     "antiPatternDescription".to_string(),
-                    Value::String("Unknown anti-pattern type - check detector configuration".to_string()),
+                    Value::String(
+                        "Unknown anti-pattern type - check detector configuration".to_string(),
+                    ),
                 );
             }
 

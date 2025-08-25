@@ -505,7 +505,7 @@ impl AnalysisConfig {
     /// # Parameters
     ///
     /// * `detector_name` - Name of the detector to configure (must match exactly)
-    ///   - Valid names: "god_object", "dead_code", "cyclic_dependencies", "tight_coupling", 
+    ///   - Valid names: "god_object", "dead_code", "cyclic_dependencies", "tight_coupling",
     ///     "code_duplication", "long_method", "long_parameter_list"
     ///   - Case-sensitive string matching is used
     ///   - Unknown detector names will be stored but ignored during analysis
@@ -519,13 +519,13 @@ impl AnalysisConfig {
     /// - Invalidates any cached analysis results for this detector
     /// - May trigger re-analysis if the engine is currently running
     /// - Configuration changes are persisted to config file if auto-save enabled
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```rust
     /// use uveddi::analysis::{AnalysisConfig, StandardDetectorConfig, IssueSeverity};
     /// use std::collections::HashMap;
-    /// 
+    ///
     /// let mut config = AnalysisConfig::default();
     /// let detector_config = StandardDetectorConfig {
     ///     enabled: true,
@@ -537,7 +537,7 @@ impl AnalysisConfig {
     ///         thresholds
     ///     },
     /// };
-    /// 
+    ///
     /// config.set_standard_detector_config("god_object", detector_config);
     /// ```
     pub fn set_standard_detector_config(

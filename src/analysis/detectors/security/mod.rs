@@ -36,7 +36,7 @@
 //!
 //! let config = SecurityConfig::default();
 //! let detector = SecurityDetector::new(config)?;
-//! 
+//!
 //! let issues = detector.detect_issues(&parsed_file).await?;
 //! for issue in issues {
 //!     println!("Security Issue: {} (Confidence: {:.2})", issue.title, issue.confidence_score);
@@ -70,8 +70,7 @@ pub mod validation;
 
 // Re-exports for convenience
 pub use agents::{
-    ConfigAnalysisAgent, DependencyAgent, SecurityOrchestrator, TaintAnalysisAgent,
-    ValidationAgent,
+    ConfigAnalysisAgent, DependencyAgent, SecurityOrchestrator, TaintAnalysisAgent, ValidationAgent,
 };
 pub use config::{
     AgentConfig, FalsePositiveConfig, MultiAgentConfig, SecurityConfig, TaintAnalysisConfig,
@@ -91,8 +90,7 @@ pub use taint_analysis::{
     DataFlowGraph, SanitizationPoint, TaintAnalysisEngine, TaintSink, TaintSource,
 };
 pub use types::{
-    SecurityIssue, SecurityIssueType, SecuritySeverity, VulnerabilityType,
-    VulnerabilityMetadata,
+    SecurityIssue, SecurityIssueType, SecuritySeverity, VulnerabilityMetadata, VulnerabilityType,
 };
 pub use validation::{
     BayesianOptimizer, ConfidenceCalculator, FalsePositiveMitigator, ValidationEngine,
@@ -182,11 +180,11 @@ impl MainSecurityDetector {
     }
 
     /// Analyze a single file for security vulnerabilities
-    async fn analyze_file(
-        &self,
-        file: &ParsedFile,
-    ) -> Result<Vec<SecurityIssue>, AnalysisError> {
-        debug!("Analyzing file for security issues: {}", file.file_path.display());
+    async fn analyze_file(&self, file: &ParsedFile) -> Result<Vec<SecurityIssue>, AnalysisError> {
+        debug!(
+            "Analyzing file for security issues: {}",
+            file.file_path.display()
+        );
 
         // Create security context from file
         let context = SecurityContext::from_parsed_file(file)?;
@@ -197,15 +195,16 @@ impl MainSecurityDetector {
         // Convert to security issues with confidence scoring
         let mut issues = Vec::new();
         for vulnerability in analysis_result.vulnerabilities {
-            let security_issue = SecurityIssue::from_vulnerability(
-                vulnerability,
-                &file.file_path,
-                file.language,
-            )?;
+            let security_issue =
+                SecurityIssue::from_vulnerability(vulnerability, &file.file_path, file.language)?;
             issues.push(security_issue);
         }
 
-        debug!("Found {} security issues in {}", issues.len(), file.file_path.display());
+        debug!(
+            "Found {} security issues in {}",
+            issues.len(),
+            file.file_path.display()
+        );
         Ok(issues)
     }
 
@@ -219,7 +218,7 @@ impl MainSecurityDetector {
             .into_iter()
             .map(|issue| ArchitecturalIssue {
                 issue_id: None,
-                analysis_run_id: 0, // Will be set by the analysis engine
+                analysis_run_id: 0,        // Will be set by the analysis engine
                 anti_pattern_type_id: 100, // Default security pattern type ID
                 file_path: file_path.to_string_lossy().to_string(),
                 start_line: Some(issue.location.start_line),
@@ -249,17 +248,15 @@ impl AnalysisDetector for MainSecurityDetector {
 
         match self.analyze_file(file).await {
             Ok(security_issues) => {
-                let architectural_issues = self.convert_to_architectural_issues(
-                    security_issues,
-                    &file.file_path,
-                );
-                
+                let architectural_issues =
+                    self.convert_to_architectural_issues(security_issues, &file.file_path);
+
                 info!(
                     "Security analysis completed for {}: {} issues found",
                     file.file_path.display(),
                     architectural_issues.len()
                 );
-                
+
                 Ok(architectural_issues)
             }
             Err(e) => {
@@ -383,7 +380,7 @@ mod tests {
             confidence_threshold: 0.8,
             ..Default::default()
         };
-        
+
         let detector = MainSecurityDetector::with_config(config);
         assert!(detector.is_ok());
     }
@@ -392,7 +389,7 @@ mod tests {
     async fn test_get_anti_pattern_types() {
         let detector = MainSecurityDetector::new().unwrap();
         let types = detector.get_anti_pattern_types();
-        
+
         assert!(!types.is_empty());
         assert!(types.iter().any(|t| t.name == "Injection"));
         assert!(types.iter().any(|t| t.name == "Broken Access Control"));

@@ -84,30 +84,39 @@ impl ServiceOrchestrator {
 
         // Ensure database directory exists
         if let Some(parent) = config.database_path.parent() {
-            std::fs::create_dir_all(parent)
-                .wrap_err("Failed to create database directory")?;
+            std::fs::create_dir_all(parent).wrap_err("Failed to create database directory")?;
         }
 
         // Initialize database
         info!("📊 Initializing database at {:?}", config.database_path);
         let database = Arc::new(
-            Database::new(Some(&config.database_path))
-                .wrap_err("Failed to initialize database")?,
+            Database::new(Some(&config.database_path)).wrap_err("Failed to initialize database")?,
         );
         self.database = Some(database.clone());
 
         // Start API server
         info!("🌐 Starting API server on port {}", config.api_port);
-        let api_ready_rx = self.start_api_server(database, config.api_port, config.frontend_assets_path.clone())
+        let api_ready_rx = self
+            .start_api_server(
+                database,
+                config.api_port,
+                config.frontend_assets_path.clone(),
+            )
             .await?;
 
         // Start rendering service
-        info!("🎨 Starting rendering service on port {}", config.rendering_port);
+        info!(
+            "🎨 Starting rendering service on port {}",
+            config.rendering_port
+        );
         self.start_rendering_service(config.rendering_port)?;
 
         // Start frontend (development mode only)
         if config.development_mode {
-            info!("🖥️  Starting frontend development server on port {}", config.frontend_port);
+            info!(
+                "🖥️  Starting frontend development server on port {}",
+                config.frontend_port
+            );
             self.start_frontend_dev_server(config.frontend_port)?;
         }
 
@@ -123,7 +132,9 @@ impl ServiceOrchestrator {
             }
             Ok(Err(_)) => {
                 error!("❌ API server readiness signal was dropped");
-                return Err(color_eyre::eyre::eyre!("API server readiness signal failed"));
+                return Err(color_eyre::eyre::eyre!(
+                    "API server readiness signal failed"
+                ));
             }
             Err(_) => {
                 error!("❌ API server startup timed out after 10 seconds");
@@ -155,7 +166,10 @@ impl ServiceOrchestrator {
     ) -> Result<oneshot::Receiver<Result<(), Box<dyn std::error::Error + Send + Sync>>>> {
         let config = RestApiConfig {
             enable_cors: true,
-            cors_origins: vec!["http://localhost:3000".to_string(), "http://localhost:3001".to_string()],
+            cors_origins: vec![
+                "http://localhost:3000".to_string(),
+                "http://localhost:3001".to_string(),
+            ],
             spa_assets_path: frontend_assets_path,
             reports_storage_path: PathBuf::from("./.uveddi/reports"),
             serve_spa: true,
@@ -164,13 +178,15 @@ impl ServiceOrchestrator {
         };
 
         let server = CombinedApiServer::new(config, port);
-        
+
         // Create a channel for readiness notification
         let (ready_tx, ready_rx) = oneshot::channel();
-        
+
         // Start the server in a background task
         let server_handle = tokio::spawn(async move {
-            server.start_with_readiness(database, ready_tx).await
+            server
+                .start_with_readiness(database, ready_tx)
+                .await
                 .map_err(|e| color_eyre::eyre::eyre!("API server failed to start: {}", e))
         });
 
@@ -181,7 +197,7 @@ impl ServiceOrchestrator {
     /// Start the rendering service for Mermaid diagrams
     fn start_rendering_service(&mut self, port: u16) -> Result<()> {
         let rendering_service_path = self.find_rendering_service_path()?;
-        
+
         let mut child = Command::new("node")
             .arg(&rendering_service_path)
             .env("PORT", port.to_string())
@@ -199,7 +215,7 @@ impl ServiceOrchestrator {
     /// Start the frontend development server (development mode only)
     fn start_frontend_dev_server(&mut self, port: u16) -> Result<()> {
         let frontend_path = self.find_frontend_path()?;
-        
+
         let mut child = Command::new("npm")
             .arg("run")
             .arg("dev")
@@ -209,7 +225,9 @@ impl ServiceOrchestrator {
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()
-            .wrap_err("Failed to start frontend dev server. Run 'npm install' in the frontend directory.")?;
+            .wrap_err(
+                "Failed to start frontend dev server. Run 'npm install' in the frontend directory.",
+            )?;
 
         self.frontend_process = Some(child);
         Ok(())
@@ -232,8 +250,10 @@ impl ServiceOrchestrator {
 
         // If not found, try to find it relative to the binary
         let exe_path = std::env::current_exe().wrap_err("Failed to get current executable path")?;
-        let exe_dir = exe_path.parent().ok_or_else(|| color_eyre::eyre::eyre!("Invalid executable path"))?;
-        
+        let exe_dir = exe_path
+            .parent()
+            .ok_or_else(|| color_eyre::eyre::eyre!("Invalid executable path"))?;
+
         let service_path = exe_dir.join("../rendering-service/src/server.js");
         if service_path.exists() {
             return Ok(service_path);
@@ -246,11 +266,7 @@ impl ServiceOrchestrator {
 
     /// Find the frontend directory
     fn find_frontend_path(&self) -> Result<PathBuf> {
-        let possible_paths = vec![
-            "frontend",
-            "./frontend",
-            "../frontend",
-        ];
+        let possible_paths = vec!["frontend", "./frontend", "../frontend"];
 
         for path in possible_paths {
             let path_buf = PathBuf::from(path);
@@ -270,7 +286,7 @@ impl ServiceOrchestrator {
             .timeout(Duration::from_secs(5))
             .build()
             .wrap_err("Failed to create HTTP client")?;
-        
+
         let mut retries = 0;
         const MAX_RETRIES: u32 = 15;
         let mut last_errors = Vec::new();
@@ -306,7 +322,8 @@ impl ServiceOrchestrator {
                     info!("✅ Rendering service is healthy at {}", rendering_url);
                 }
                 Ok(response) => {
-                    let error_msg = format!("Rendering service returned status: {}", response.status());
+                    let error_msg =
+                        format!("Rendering service returned status: {}", response.status());
                     warn!("⚠️ {} (attempt {}/{})", error_msg, retries + 1, MAX_RETRIES);
                     errors.push(error_msg);
                     all_healthy = false;
@@ -326,16 +343,21 @@ impl ServiceOrchestrator {
 
             retries += 1;
             last_errors = errors; // Store the errors from this attempt
-            
+
             // Exponential backoff: 500ms, 1s, 2s, 2s, 2s...
             let wait_time = std::cmp::min(500 * (1 << std::cmp::min(retries, 2)), 2000);
-            info!("⏳ Retrying health checks in {}ms... (attempt {}/{})", wait_time, retries + 1, MAX_RETRIES);
+            info!(
+                "⏳ Retrying health checks in {}ms... (attempt {}/{})",
+                wait_time,
+                retries + 1,
+                MAX_RETRIES
+            );
             sleep(Duration::from_millis(wait_time as u64)).await;
         }
 
         Err(color_eyre::eyre::eyre!(
-            "Services failed to become healthy after {} retries. Last errors: {:?}", 
-            MAX_RETRIES, 
+            "Services failed to become healthy after {} retries. Last errors: {:?}",
+            MAX_RETRIES,
             last_errors.join(", ")
         ))
     }
@@ -344,14 +366,26 @@ impl ServiceOrchestrator {
     fn print_service_urls(&self, config: &OrchestratorConfig) {
         println!("\n🌟 Uveddi Services Running:");
         println!("   📊 Dashboard: http://localhost:{}", config.api_port);
-        println!("   🔧 API Server: http://localhost:{}/api/v1", config.api_port);
-        println!("   🎨 Rendering Service: http://localhost:{}", config.rendering_port);
-        
+        println!(
+            "   🔧 API Server: http://localhost:{}/api/v1",
+            config.api_port
+        );
+        println!(
+            "   🎨 Rendering Service: http://localhost:{}",
+            config.rendering_port
+        );
+
         if config.development_mode {
-            println!("   🖥️  Dev Frontend: http://localhost:{}", config.frontend_port);
+            println!(
+                "   🖥️  Dev Frontend: http://localhost:{}",
+                config.frontend_port
+            );
         }
-        
-        println!("   📈 Health Check: http://localhost:{}/health", config.api_port);
+
+        println!(
+            "   📈 Health Check: http://localhost:{}/health",
+            config.api_port
+        );
         println!();
     }
 
@@ -406,7 +440,7 @@ impl Drop for ServiceOrchestrator {
         if let Some(mut child) = self.rendering_service_process.take() {
             let _ = child.kill();
         }
-        
+
         if let Some(mut child) = self.frontend_process.take() {
             let _ = child.kill();
         }

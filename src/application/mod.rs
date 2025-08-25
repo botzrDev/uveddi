@@ -308,7 +308,9 @@ impl AnalysisOrchestrator {
         // Set the correct analysis_run_id for all issues
         let analysis_run_id = analysis_run.run_id.ok_or_else(|| {
             error!("Analysis run missing ID after creation");
-            UveddiError::database_error_msg("Analysis run should have an ID after database insertion")
+            UveddiError::database_error_msg(
+                "Analysis run should have an ID after database insertion",
+            )
         })?;
         for issue in &mut issues {
             issue.analysis_run_id = analysis_run_id;
@@ -414,18 +416,18 @@ impl AnalysisOrchestrator {
                 .collect();
 
         debug!("Constructed mapping: {:#?}", anti_pattern_map);
-        
+
         // Validate critical mappings against engine canonical definitions
         let expected_mappings = vec![
             (1, "God Object"),
-            (2, "Dead Code"), 
+            (2, "Dead Code"),
             (3, "Tight Coupling"),
             (4, "Long Methods"),
             (5, "Large Classes"),
             (7, "Code Duplication"),
             (9, "Magic Values"),
         ];
-        
+
         for (expected_id, expected_name) in expected_mappings {
             if let Some(actual_type) = anti_pattern_map.get(&expected_id) {
                 if actual_type.name != expected_name {
@@ -433,8 +435,10 @@ impl AnalysisOrchestrator {
                           expected_id, actual_type.name, expected_name);
                 }
             } else {
-                warn!("Missing anti-pattern type ID {} ('{}') in database mapping", 
-                      expected_id, expected_name);
+                warn!(
+                    "Missing anti-pattern type ID {} ('{}') in database mapping",
+                    expected_id, expected_name
+                );
             }
         }
 
@@ -1181,11 +1185,11 @@ impl AnalysisOrchestrator {
 
 impl Default for AnalysisOrchestrator {
     /// Creates a default AnalysisOrchestrator with in-memory database.
-    /// 
+    ///
     /// # Panics
-    /// 
+    ///
     /// This will panic if the orchestrator cannot be created.
-    /// For production code, prefer using `AnalysisOrchestrator::new()` or 
+    /// For production code, prefer using `AnalysisOrchestrator::new()` or
     /// `AnalysisOrchestrator::with_db_path()` which return a `Result`.
     fn default() -> Self {
         Self::new().expect("Failed to create default AnalysisOrchestrator - this typically indicates a database initialization issue")
@@ -1293,7 +1297,7 @@ pub async fn run_app() -> Result<(), UveddiError> {
             frontend_assets,
         } => {
             info!("🚀 Starting Uveddi web services...");
-            
+
             let config = OrchestratorConfig {
                 api_port: port,
                 rendering_port,
@@ -1303,17 +1307,19 @@ pub async fn run_app() -> Result<(), UveddiError> {
                 frontend_assets_path: frontend_assets,
                 development_mode: development,
             };
-            
+
             let mut orchestrator = ServiceOrchestrator::new();
-            orchestrator.start_services(config).await
-                .map_err(|e| UveddiError::from(anyhow::anyhow!("Service orchestration failed: {}", e)))?;
-            
+            orchestrator.start_services(config).await.map_err(|e| {
+                UveddiError::from(anyhow::anyhow!("Service orchestration failed: {}", e))
+            })?;
+
             // Keep the services running
             info!("✅ All services are running. Press Ctrl+C to stop.");
-            tokio::signal::ctrl_c().await
+            tokio::signal::ctrl_c()
+                .await
                 .map_err(|e| UveddiError::from(anyhow::anyhow!("Signal handling failed: {}", e)))?;
             info!("🛑 Stopping services...");
-            
+
             Ok(())
         }
     };

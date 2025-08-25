@@ -23,8 +23,8 @@
 
 use crate::analysis::detectors::security::config::TaintAnalysisConfig;
 use crate::analysis::detectors::security::types::{
-    SecurityIssue, SecurityIssueType, SecurityLocation, SecuritySeverity, VulnerabilityType,
-    VulnerabilityMetadata,
+    SecurityIssue, SecurityIssueType, SecurityLocation, SecuritySeverity, VulnerabilityMetadata,
+    VulnerabilityType,
 };
 use crate::analysis::AnalysisError;
 use crate::ast::{ParsedFile, SourceLanguage};
@@ -202,22 +202,22 @@ pub struct DataFlowNode {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum DataFlowNodeType {
-    Source(String),      // Taint source
-    Sink(String),        // Taint sink
-    Sanitizer(String),   // Sanitization point
-    Variable(String),    // Variable assignment
+    Source(String),       // Taint source
+    Sink(String),         // Taint sink
+    Sanitizer(String),    // Sanitization point
+    Variable(String),     // Variable assignment
     FunctionCall(String), // Function call
-    Parameter(String),   // Function parameter
-    Return(String),      // Function return
-    FieldAccess(String), // Object field access
-    ArrayAccess(String), // Array element access
+    Parameter(String),    // Function parameter
+    Return(String),       // Function return
+    FieldAccess(String),  // Object field access
+    ArrayAccess(String),  // Array element access
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum TaintLevel {
-    Clean,      // No taint
-    Tainted,    // Fully tainted
-    Sanitized,  // Was tainted but sanitized
+    Clean,        // No taint
+    Tainted,      // Fully tainted
+    Sanitized,    // Was tainted but sanitized
     Partial(f64), // Partially tainted (0.0 - 1.0)
 }
 
@@ -247,8 +247,8 @@ impl TaintLevel {
             (TaintLevel::Partial(a), TaintLevel::Partial(b)) => {
                 TaintLevel::Partial((*a + *b).min(1.0))
             }
-            (TaintLevel::Partial(level), TaintLevel::Sanitized) |
-            (TaintLevel::Sanitized, TaintLevel::Partial(level)) => {
+            (TaintLevel::Partial(level), TaintLevel::Sanitized)
+            | (TaintLevel::Sanitized, TaintLevel::Partial(level)) => {
                 TaintLevel::Partial(*level * 0.5) // Sanitization reduces risk
             }
             (TaintLevel::Sanitized, TaintLevel::Sanitized) => TaintLevel::Sanitized,
@@ -281,32 +281,40 @@ impl DataFlowGraph {
 
     pub fn add_node(&mut self, node: DataFlowNode) {
         let node_id = node.id.clone();
-        
+
         match &node.node_type {
             DataFlowNodeType::Source(_) => self.taint_sources.push(node_id.clone()),
             DataFlowNodeType::Sink(_) => self.taint_sinks.push(node_id.clone()),
             DataFlowNodeType::Sanitizer(_) => self.sanitizers.push(node_id.clone()),
             _ => {}
         }
-        
+
         self.nodes.insert(node_id.clone(), node);
         self.edges.entry(node_id.clone()).or_insert_with(Vec::new);
         self.reverse_edges.entry(node_id).or_insert_with(Vec::new);
     }
 
     pub fn add_edge(&mut self, from: &str, to: &str) {
-        self.edges.entry(from.to_string()).or_default().push(to.to_string());
-        self.reverse_edges.entry(to.to_string()).or_default().push(from.to_string());
+        self.edges
+            .entry(from.to_string())
+            .or_default()
+            .push(to.to_string());
+        self.reverse_edges
+            .entry(to.to_string())
+            .or_default()
+            .push(from.to_string());
     }
 
     pub fn get_successors(&self, node_id: &str) -> Vec<&str> {
-        self.edges.get(node_id)
+        self.edges
+            .get(node_id)
             .map(|successors| successors.iter().map(|s| s.as_str()).collect())
             .unwrap_or_else(Vec::new)
     }
 
     pub fn get_predecessors(&self, node_id: &str) -> Vec<&str> {
-        self.reverse_edges.get(node_id)
+        self.reverse_edges
+            .get(node_id)
             .map(|predecessors| predecessors.iter().map(|s| s.as_str()).collect())
             .unwrap_or_else(Vec::new)
     }
@@ -360,22 +368,26 @@ impl TaintAnalysisEngine {
                 "rust_env_args".to_string(),
                 "std::env::args".to_string(),
                 "Command line arguments".to_string(),
-            ).with_language(SourceLanguage::Rust),
+            )
+            .with_language(SourceLanguage::Rust),
             TaintSource::new(
                 "rust_env_var".to_string(),
                 "std::env::var".to_string(),
                 "Environment variables".to_string(),
-            ).with_language(SourceLanguage::Rust),
+            )
+            .with_language(SourceLanguage::Rust),
             TaintSource::new(
                 "rust_file_read".to_string(),
                 "std::fs::read_to_string".to_string(),
                 "File contents".to_string(),
-            ).with_language(SourceLanguage::Rust),
+            )
+            .with_language(SourceLanguage::Rust),
             TaintSource::new(
                 "rust_http_request".to_string(),
                 "request.body".to_string(),
                 "HTTP request body".to_string(),
-            ).with_language(SourceLanguage::Rust),
+            )
+            .with_language(SourceLanguage::Rust),
         ];
 
         let rust_sinks = vec![
@@ -384,28 +396,30 @@ impl TaintAnalysisEngine {
                 "sqlx::query".to_string(),
                 SecurityIssueType::Injection,
                 "SQL query execution with potential injection".to_string(),
-            ).with_language(SourceLanguage::Rust),
+            )
+            .with_language(SourceLanguage::Rust),
             TaintSink::new(
                 "rust_command_exec".to_string(),
                 "std::process::Command::new".to_string(),
                 SecurityIssueType::Injection,
                 "Command execution with user input".to_string(),
-            ).with_language(SourceLanguage::Rust),
+            )
+            .with_language(SourceLanguage::Rust),
             TaintSink::new(
                 "rust_file_write".to_string(),
                 "std::fs::write".to_string(),
                 SecurityIssueType::PathTraversal,
                 "File write with user-controlled path".to_string(),
-            ).with_language(SourceLanguage::Rust),
+            )
+            .with_language(SourceLanguage::Rust),
         ];
 
-        let rust_sanitizers = vec![
-            SanitizationPoint::new(
-                "rust_sql_bind".to_string(),
-                "sqlx::query!".to_string(),
-                vec![SecurityIssueType::Injection],
-            ).with_language(SourceLanguage::Rust),
-        ];
+        let rust_sanitizers = vec![SanitizationPoint::new(
+            "rust_sql_bind".to_string(),
+            "sqlx::query!".to_string(),
+            vec![SecurityIssueType::Injection],
+        )
+        .with_language(SourceLanguage::Rust)];
 
         self.sources.extend(rust_sources);
         self.sinks.extend(rust_sinks);
@@ -418,22 +432,26 @@ impl TaintAnalysisEngine {
                 "python_sys_argv".to_string(),
                 "sys.argv".to_string(),
                 "Command line arguments".to_string(),
-            ).with_language(SourceLanguage::Python),
+            )
+            .with_language(SourceLanguage::Python),
             TaintSource::new(
                 "python_input".to_string(),
                 "input(".to_string(),
                 "User input".to_string(),
-            ).with_language(SourceLanguage::Python),
+            )
+            .with_language(SourceLanguage::Python),
             TaintSource::new(
                 "python_request".to_string(),
                 "request.".to_string(),
                 "HTTP request data".to_string(),
-            ).with_language(SourceLanguage::Python),
+            )
+            .with_language(SourceLanguage::Python),
             TaintSource::new(
                 "python_file_read".to_string(),
                 "open(".to_string(),
                 "File contents".to_string(),
-            ).with_language(SourceLanguage::Python),
+            )
+            .with_language(SourceLanguage::Python),
         ];
 
         let python_sinks = vec![
@@ -442,25 +460,29 @@ impl TaintAnalysisEngine {
                 "cursor.execute".to_string(),
                 SecurityIssueType::Injection,
                 "SQL execution with potential injection".to_string(),
-            ).with_language(SourceLanguage::Python),
+            )
+            .with_language(SourceLanguage::Python),
             TaintSink::new(
                 "python_eval".to_string(),
                 "eval(".to_string(),
                 SecurityIssueType::Injection,
                 "Code evaluation with user input".to_string(),
-            ).with_language(SourceLanguage::Python),
+            )
+            .with_language(SourceLanguage::Python),
             TaintSink::new(
                 "python_exec".to_string(),
                 "exec(".to_string(),
                 SecurityIssueType::Injection,
                 "Code execution with user input".to_string(),
-            ).with_language(SourceLanguage::Python),
+            )
+            .with_language(SourceLanguage::Python),
             TaintSink::new(
                 "python_os_system".to_string(),
                 "os.system".to_string(),
                 SecurityIssueType::Injection,
                 "OS command execution".to_string(),
-            ).with_language(SourceLanguage::Python),
+            )
+            .with_language(SourceLanguage::Python),
         ];
 
         self.sources.extend(python_sources);
@@ -473,17 +495,20 @@ impl TaintAnalysisEngine {
                 "js_query_params".to_string(),
                 "req.query".to_string(),
                 "URL query parameters".to_string(),
-            ).with_language(SourceLanguage::JavaScript),
+            )
+            .with_language(SourceLanguage::JavaScript),
             TaintSource::new(
                 "js_request_body".to_string(),
                 "req.body".to_string(),
                 "HTTP request body".to_string(),
-            ).with_language(SourceLanguage::JavaScript),
+            )
+            .with_language(SourceLanguage::JavaScript),
             TaintSource::new(
                 "js_location_search".to_string(),
                 "location.search".to_string(),
                 "Browser URL parameters".to_string(),
-            ).with_language(SourceLanguage::JavaScript),
+            )
+            .with_language(SourceLanguage::JavaScript),
         ];
 
         let js_sinks = vec![
@@ -492,19 +517,22 @@ impl TaintAnalysisEngine {
                 "innerHTML".to_string(),
                 SecurityIssueType::CrossSiteScripting,
                 "DOM manipulation with user input".to_string(),
-            ).with_language(SourceLanguage::JavaScript),
+            )
+            .with_language(SourceLanguage::JavaScript),
             TaintSink::new(
                 "js_eval".to_string(),
                 "eval(".to_string(),
                 SecurityIssueType::Injection,
                 "JavaScript code evaluation".to_string(),
-            ).with_language(SourceLanguage::JavaScript),
+            )
+            .with_language(SourceLanguage::JavaScript),
             TaintSink::new(
                 "js_setTimeout".to_string(),
                 "setTimeout(".to_string(),
                 SecurityIssueType::Injection,
                 "Code execution via setTimeout".to_string(),
-            ).with_language(SourceLanguage::JavaScript),
+            )
+            .with_language(SourceLanguage::JavaScript),
         ];
 
         self.sources.extend(js_sources);
@@ -512,50 +540,56 @@ impl TaintAnalysisEngine {
     }
 
     /// Analyze a parsed file for taint flow vulnerabilities
-    pub async fn analyze_file(&self, file: &ParsedFile) -> Result<Vec<SecurityIssue>, AnalysisError> {
+    pub async fn analyze_file(
+        &self,
+        file: &ParsedFile,
+    ) -> Result<Vec<SecurityIssue>, AnalysisError> {
         info!("Starting taint analysis for: {}", file.file_path.display());
 
         // Build data flow graph from AST
         let data_flow_graph = self.build_data_flow_graph(file)?;
-        
+
         // Perform taint propagation analysis
         let taint_flows = self.analyze_taint_flows(&data_flow_graph)?;
-        
+
         // Convert taint flows to security issues
         let issues = self.convert_flows_to_issues(taint_flows, file)?;
-        
-        info!("Taint analysis completed: {} vulnerabilities found", issues.len());
+
+        info!(
+            "Taint analysis completed: {} vulnerabilities found",
+            issues.len()
+        );
         Ok(issues)
     }
 
     /// Build data flow graph from parsed file
     fn build_data_flow_graph(&self, file: &ParsedFile) -> Result<DataFlowGraph, AnalysisError> {
         let mut graph = DataFlowGraph::new();
-        
+
         // This would be implemented with tree-sitter traversal
         // For now, we'll create a simplified implementation
         debug!("Building data flow graph for {}", file.file_path.display());
-        
+
         // TODO: Implement tree-sitter AST traversal to build actual graph
         // This would involve:
         // 1. Walking the AST nodes
         // 2. Identifying variable assignments, function calls, etc.
         // 3. Building edges based on data dependencies
         // 4. Marking sources, sinks, and sanitizers
-        
+
         Ok(graph)
     }
 
     /// Analyze taint flows in the data flow graph
     fn analyze_taint_flows(&self, graph: &DataFlowGraph) -> Result<Vec<TaintFlow>, AnalysisError> {
         let mut flows = Vec::new();
-        
+
         // For each taint source, perform forward data flow analysis
         for source_id in &graph.taint_sources {
             let source_flows = self.trace_taint_from_source(graph, source_id)?;
             flows.extend(source_flows);
         }
-        
+
         Ok(flows)
     }
 
@@ -569,18 +603,22 @@ impl TaintAnalysisEngine {
         let mut visited = HashSet::new();
         let mut queue = VecDeque::new();
         let mut current_path = Vec::new();
-        
-        queue.push_back((source_id.to_string(), TaintLevel::Tainted, current_path.clone()));
-        
+
+        queue.push_back((
+            source_id.to_string(),
+            TaintLevel::Tainted,
+            current_path.clone(),
+        ));
+
         while let Some((node_id, taint_level, path)) = queue.pop_front() {
             if visited.contains(&node_id) {
                 continue;
             }
             visited.insert(node_id.clone());
-            
+
             let mut new_path = path;
             new_path.push(node_id.clone());
-            
+
             if let Some(node) = graph.nodes.get(&node_id) {
                 // Check if this is a sink
                 if graph.taint_sinks.contains(&node_id) && taint_level.is_dangerous() {
@@ -593,18 +631,22 @@ impl TaintAnalysisEngine {
                         confidence: self.calculate_flow_confidence(&new_path, &taint_level),
                     });
                 }
-                
+
                 // Continue propagation to successors
                 let new_taint_level = self.propagate_taint(&taint_level, node);
-                
+
                 for successor in graph.get_successors(&node_id) {
                     if new_path.len() < self.config.max_depth {
-                        queue.push_back((successor.to_string(), new_taint_level.clone(), new_path.clone()));
+                        queue.push_back((
+                            successor.to_string(),
+                            new_taint_level.clone(),
+                            new_path.clone(),
+                        ));
                     }
                 }
             }
         }
-        
+
         Ok(flows)
     }
 
@@ -626,14 +668,14 @@ impl TaintAnalysisEngine {
     /// Calculate confidence score for a taint flow
     fn calculate_flow_confidence(&self, path: &[String], taint_level: &TaintLevel) -> f64 {
         let base_confidence = match path.len() {
-            1..=3 => 0.9,   // Short path, high confidence
-            4..=6 => 0.7,   // Medium path
-            7..=10 => 0.5,  // Long path, lower confidence
-            _ => 0.3,       // Very long path, low confidence
+            1..=3 => 0.9,  // Short path, high confidence
+            4..=6 => 0.7,  // Medium path
+            7..=10 => 0.5, // Long path, lower confidence
+            _ => 0.3,      // Very long path, low confidence
         };
-        
+
         let taint_confidence = taint_level.score();
-        
+
         (base_confidence + taint_confidence) / 2.0
     }
 
@@ -644,13 +686,13 @@ impl TaintAnalysisEngine {
         file: &ParsedFile,
     ) -> Result<Vec<SecurityIssue>, AnalysisError> {
         let mut issues = Vec::new();
-        
+
         for flow in flows {
             if let Some(issue) = self.create_security_issue_from_flow(&flow, file)? {
                 issues.push(issue);
             }
         }
-        
+
         Ok(issues)
     }
 
@@ -661,33 +703,39 @@ impl TaintAnalysisEngine {
         file: &ParsedFile,
     ) -> Result<Option<SecurityIssue>, AnalysisError> {
         // Find the source and sink information
-        let source = self.sources.iter()
-            .find(|s| s.id == flow.source_id);
-        let sink = self.sinks.iter()
-            .find(|s| s.id == flow.sink_id);
-            
+        let source = self.sources.iter().find(|s| s.id == flow.source_id);
+        let sink = self.sinks.iter().find(|s| s.id == flow.sink_id);
+
         if let (Some(source), Some(sink)) = (source, sink) {
             let location = SecurityLocation::new(
                 file.file_path.as_ref().to_path_buf(),
                 1, // TODO: Get actual line numbers from flow path
                 1,
             );
-            
+
             let issue = SecurityIssue::new(
                 sink.vulnerability_type.clone(),
                 VulnerabilityType::Static,
-                format!("{} via {}", sink.vulnerability_type.to_string(), source.description),
-                format!("Tainted data from {} reaches {} without proper sanitization", 
-                       source.description, sink.description),
+                format!(
+                    "{} via {}",
+                    sink.vulnerability_type.to_string(),
+                    source.description
+                ),
+                format!(
+                    "Tainted data from {} reaches {} without proper sanitization",
+                    source.description, sink.description
+                ),
                 location,
             )
             .with_language(file.language)
             .with_confidence(flow.confidence)
             .with_severity(sink.severity)
             .with_detector("TaintAnalysisEngine".to_string())
-            .with_metadata(VulnerabilityMetadata::new()
-                .with_tags(vec!["taint-analysis".to_string(), "data-flow".to_string()]));
-            
+            .with_metadata(
+                VulnerabilityMetadata::new()
+                    .with_tags(vec!["taint-analysis".to_string(), "data-flow".to_string()]),
+            );
+
             Ok(Some(issue))
         } else {
             warn!("Could not find source or sink for flow: {:?}", flow);
@@ -718,15 +766,15 @@ mod tests {
         let clean = TaintLevel::Clean;
         let tainted = TaintLevel::Tainted;
         let partial = TaintLevel::Partial(0.6);
-        
+
         assert!(!clean.is_dangerous());
         assert!(tainted.is_dangerous());
         assert!(partial.is_dangerous());
-        
+
         assert_eq!(clean.score(), 0.0);
         assert_eq!(tainted.score(), 1.0);
         assert_eq!(partial.score(), 0.6);
-        
+
         let combined = clean.combine(&tainted);
         assert_eq!(combined, TaintLevel::Tainted);
     }
@@ -740,7 +788,7 @@ mod tests {
         )
         .with_language(SourceLanguage::Python)
         .with_severity(SecuritySeverity::High);
-        
+
         assert_eq!(source.id, "test_source");
         assert_eq!(source.pattern, "input()");
         assert_eq!(source.language, Some(SourceLanguage::Python));
@@ -756,7 +804,7 @@ mod tests {
             "Code injection".to_string(),
         )
         .with_language(SourceLanguage::Python);
-        
+
         assert_eq!(sink.id, "test_sink");
         assert_eq!(sink.vulnerability_type, SecurityIssueType::Injection);
         assert_eq!(sink.language, Some(SourceLanguage::Python));
@@ -765,7 +813,7 @@ mod tests {
     #[test]
     fn test_data_flow_graph_operations() {
         let mut graph = DataFlowGraph::new();
-        
+
         let source_node = DataFlowNode {
             id: "source1".to_string(),
             node_type: DataFlowNodeType::Source("input()".to_string()),
@@ -773,7 +821,7 @@ mod tests {
             taint_level: TaintLevel::Tainted,
             metadata: HashMap::new(),
         };
-        
+
         let sink_node = DataFlowNode {
             id: "sink1".to_string(),
             node_type: DataFlowNodeType::Sink("eval()".to_string()),
@@ -781,11 +829,11 @@ mod tests {
             taint_level: TaintLevel::Clean,
             metadata: HashMap::new(),
         };
-        
+
         graph.add_node(source_node);
         graph.add_node(sink_node);
         graph.add_edge("source1", "sink1");
-        
+
         assert_eq!(graph.taint_sources.len(), 1);
         assert_eq!(graph.taint_sinks.len(), 1);
         assert_eq!(graph.get_successors("source1"), vec!["sink1"]);
@@ -796,7 +844,7 @@ mod tests {
     async fn test_taint_analysis_engine_creation() {
         let config = TaintAnalysisConfig::development();
         let engine = TaintAnalysisEngine::new(config);
-        
+
         assert!(engine.is_ok());
         let engine = engine.unwrap();
         assert!(!engine.sources.is_empty());

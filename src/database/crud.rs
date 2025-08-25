@@ -87,8 +87,9 @@ impl Database {
     /// * `Err(UveddiError)` - If the query or insert fails.
     pub fn get_or_create_project_id(&self, project_path: &Path) -> Result<i64> {
         let path_str = project_path.to_string_lossy().to_string();
-        let conn = self.conn.lock()
-            .map_err(|e| UveddiError::database_error_msg(&format!("Failed to acquire database lock: {}", e)))?;
+        let conn = self.conn.lock().map_err(|e| {
+            UveddiError::database_error_msg(&format!("Failed to acquire database lock: {}", e))
+        })?;
         let mut stmt = conn.prepare("SELECT project_id FROM projects WHERE path = ?")?;
         let mut rows = stmt.query([&path_str])?;
 
@@ -123,8 +124,9 @@ impl Database {
             analysis_config: "{}".to_string(), // Default empty JSON config
         };
 
-        let conn = self.conn.lock()
-            .map_err(|e| UveddiError::database_error_msg(&format!("Failed to acquire database lock: {}", e)))?;
+        let conn = self.conn.lock().map_err(|e| {
+            UveddiError::database_error_msg(&format!("Failed to acquire database lock: {}", e))
+        })?;
         conn.execute(
             "INSERT INTO analysis_runs (project_id, start_time, status, analysis_config) VALUES (?, ?, ?, ?)",
             rusqlite::params![
@@ -153,8 +155,9 @@ impl Database {
     /// * `Ok(())` - If the update succeeds.
     /// * `Err(UveddiError)` - If the update fails.
     pub fn update_analysis_run(&self, run: &AnalysisRun) -> Result<()> {
-        let conn = self.conn.lock()
-            .map_err(|e| UveddiError::database_error_msg(&format!("Failed to acquire database lock: {}", e)))?;
+        let conn = self.conn.lock().map_err(|e| {
+            UveddiError::database_error_msg(&format!("Failed to acquire database lock: {}", e))
+        })?;
         conn.execute(
             "UPDATE analysis_runs SET end_time = ?, status = ?, total_files_analyzed = ?, total_issues_found = ? WHERE run_id = ?",
             rusqlite::params![
@@ -185,8 +188,9 @@ impl Database {
         anti_pattern_type.description =
             security::sanitize_description(&anti_pattern_type.description);
 
-        let conn = self.conn.lock()
-            .map_err(|e| UveddiError::database_error_msg(&format!("Failed to acquire database lock: {}", e)))?;
+        let conn = self.conn.lock().map_err(|e| {
+            UveddiError::database_error_msg(&format!("Failed to acquire database lock: {}", e))
+        })?;
         conn.execute(
             "INSERT OR IGNORE INTO anti_pattern_types (name, description, category) VALUES (?, ?, ?)",
             rusqlite::params![
@@ -228,12 +232,22 @@ impl Database {
 
             // Validate line numbers
             if let Some(start_line) = issue.start_line {
-                security::validate_numeric_range((start_line as i32).into(), 1, 1_000_000, "start_line")
-                    .map_err(crate::error::UveddiError::from)?;
+                security::validate_numeric_range(
+                    (start_line as i32).into(),
+                    1,
+                    1_000_000,
+                    "start_line",
+                )
+                .map_err(crate::error::UveddiError::from)?;
             }
             if let Some(end_line) = issue.end_line {
-                security::validate_numeric_range((end_line as i32).into(), 1, 1_000_000, "end_line")
-                    .map_err(crate::error::UveddiError::from)?;
+                security::validate_numeric_range(
+                    (end_line as i32).into(),
+                    1,
+                    1_000_000,
+                    "end_line",
+                )
+                .map_err(crate::error::UveddiError::from)?;
             }
 
             // Validate code snippet if present - use code analysis validation
@@ -372,8 +386,9 @@ impl Database {
     /// * `Ok(String)` - The project path
     /// * `Err(UveddiError)` - If the query fails or project not found
     pub fn get_project_path(&self, project_id: i64) -> Result<String> {
-        let conn = self.conn.lock()
-            .map_err(|e| UveddiError::database_error_msg(&format!("Failed to acquire database lock: {}", e)))?;
+        let conn = self.conn.lock().map_err(|e| {
+            UveddiError::database_error_msg(&format!("Failed to acquire database lock: {}", e))
+        })?;
         let mut stmt = conn.prepare("SELECT path FROM projects WHERE project_id = ?")?;
         let path = stmt.query_row([project_id], |row| row.get::<_, String>(0))?;
         Ok(path)
@@ -390,8 +405,9 @@ impl Database {
     /// * `Ok(Vec<AntiPatternType>)` - Vector of all anti-pattern types in the database
     /// * `Err(UveddiError)` - If the query fails
     pub fn get_all_anti_pattern_types(&self) -> Result<Vec<AntiPatternType>> {
-        let conn = self.conn.lock()
-            .map_err(|e| UveddiError::database_error_msg(&format!("Failed to acquire database lock: {}", e)))?;
+        let conn = self.conn.lock().map_err(|e| {
+            UveddiError::database_error_msg(&format!("Failed to acquire database lock: {}", e))
+        })?;
         let mut stmt = conn.prepare(
             "SELECT anti_pattern_type_id, name, description, category FROM anti_pattern_types ORDER BY name"
         )?;
@@ -415,22 +431,29 @@ impl Database {
 
     /// Get analysis run by ID
     pub async fn get_analysis_run(&self, run_id: i64) -> Result<Option<AnalysisRun>> {
-        let conn = self.conn.lock()
-            .map_err(|e| UveddiError::database_error_msg(&format!("Failed to acquire database lock: {}", e)))?;
+        let conn = self.conn.lock().map_err(|e| {
+            UveddiError::database_error_msg(&format!("Failed to acquire database lock: {}", e))
+        })?;
         let mut stmt = conn.prepare(
             "SELECT run_id, project_id, start_time, end_time, status, total_files_analyzed, total_issues_found, analysis_config 
              FROM analysis_runs WHERE run_id = ?"
         )?;
-        
+
         let result = stmt.query_row([run_id], |row| {
             let start_time_str: String = row.get(2)?;
             let end_time_str: Option<String> = row.get(3)?;
-            
+
             Ok(AnalysisRun {
                 run_id: Some(row.get(0)?),
                 project_id: row.get(1)?,
                 start_time: chrono::DateTime::parse_from_rfc3339(&start_time_str)
-                    .map_err(|_| rusqlite::Error::InvalidColumnType(2, "start_time".to_string(), rusqlite::types::Type::Text))?
+                    .map_err(|_| {
+                        rusqlite::Error::InvalidColumnType(
+                            2,
+                            "start_time".to_string(),
+                            rusqlite::types::Type::Text,
+                        )
+                    })?
                     .with_timezone(&Utc),
                 end_time: end_time_str.and_then(|s| {
                     chrono::DateTime::parse_from_rfc3339(&s)
@@ -443,7 +466,7 @@ impl Database {
                 analysis_config: row.get(7)?,
             })
         });
-        
+
         match result {
             Ok(run) => Ok(Some(run)),
             Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
@@ -453,22 +476,29 @@ impl Database {
 
     /// Get latest analysis run
     pub async fn get_latest_analysis_run(&self) -> Result<Option<AnalysisRun>> {
-        let conn = self.conn.lock()
-            .map_err(|e| UveddiError::database_error_msg(&format!("Failed to acquire database lock: {}", e)))?;
+        let conn = self.conn.lock().map_err(|e| {
+            UveddiError::database_error_msg(&format!("Failed to acquire database lock: {}", e))
+        })?;
         let mut stmt = conn.prepare(
             "SELECT run_id, project_id, start_time, end_time, status, total_files_analyzed, total_issues_found, analysis_config 
              FROM analysis_runs ORDER BY start_time DESC LIMIT 1"
         )?;
-        
+
         let result = stmt.query_row([], |row| {
             let start_time_str: String = row.get(2)?;
             let end_time_str: Option<String> = row.get(3)?;
-            
+
             Ok(AnalysisRun {
                 run_id: Some(row.get(0)?),
                 project_id: row.get(1)?,
                 start_time: chrono::DateTime::parse_from_rfc3339(&start_time_str)
-                    .map_err(|_| rusqlite::Error::InvalidColumnType(2, "start_time".to_string(), rusqlite::types::Type::Text))?
+                    .map_err(|_| {
+                        rusqlite::Error::InvalidColumnType(
+                            2,
+                            "start_time".to_string(),
+                            rusqlite::types::Type::Text,
+                        )
+                    })?
                     .with_timezone(&Utc),
                 end_time: end_time_str.and_then(|s| {
                     chrono::DateTime::parse_from_rfc3339(&s)
@@ -481,7 +511,7 @@ impl Database {
                 analysis_config: row.get(7)?,
             })
         });
-        
+
         match result {
             Ok(run) => Ok(Some(run)),
             Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
@@ -491,22 +521,29 @@ impl Database {
 
     /// Get recent analysis runs
     pub async fn get_recent_analysis_runs(&self, limit: u32) -> Result<Vec<AnalysisRun>> {
-        let conn = self.conn.lock()
-            .map_err(|e| UveddiError::database_error_msg(&format!("Failed to acquire database lock: {}", e)))?;
+        let conn = self.conn.lock().map_err(|e| {
+            UveddiError::database_error_msg(&format!("Failed to acquire database lock: {}", e))
+        })?;
         let mut stmt = conn.prepare(
             "SELECT run_id, project_id, start_time, end_time, status, total_files_analyzed, total_issues_found, analysis_config 
              FROM analysis_runs ORDER BY start_time DESC LIMIT ?"
         )?;
-        
+
         let run_iter = stmt.query_map([limit], |row| {
             let start_time_str: String = row.get(2)?;
             let end_time_str: Option<String> = row.get(3)?;
-            
+
             Ok(AnalysisRun {
                 run_id: Some(row.get(0)?),
                 project_id: row.get(1)?,
                 start_time: chrono::DateTime::parse_from_rfc3339(&start_time_str)
-                    .map_err(|_| rusqlite::Error::InvalidColumnType(2, "start_time".to_string(), rusqlite::types::Type::Text))?
+                    .map_err(|_| {
+                        rusqlite::Error::InvalidColumnType(
+                            2,
+                            "start_time".to_string(),
+                            rusqlite::types::Type::Text,
+                        )
+                    })?
                     .with_timezone(&Utc),
                 end_time: end_time_str.and_then(|s| {
                     chrono::DateTime::parse_from_rfc3339(&s)
@@ -519,29 +556,30 @@ impl Database {
                 analysis_config: row.get(7)?,
             })
         })?;
-        
+
         let mut runs = Vec::new();
         for run in run_iter {
             runs.push(run?);
         }
-        
+
         Ok(runs)
     }
 
     /// Get issues for a specific analysis run
     pub async fn get_issues_for_run(&self, run_id: i64) -> Result<Vec<ArchitecturalIssue>> {
-        let conn = self.conn.lock()
-            .map_err(|e| UveddiError::database_error_msg(&format!("Failed to acquire database lock: {}", e)))?;
+        let conn = self.conn.lock().map_err(|e| {
+            UveddiError::database_error_msg(&format!("Failed to acquire database lock: {}", e))
+        })?;
         let mut stmt = conn.prepare(
             "SELECT issue_id, analysis_run_id, anti_pattern_type_id, file_path, start_line, end_line, 
                     line_number, column_number, message, metadata, detector_name, created_at, severity, 
                     description, code_snippet, ai_explanation
              FROM architectural_issues WHERE analysis_run_id = ?"
         )?;
-        
+
         let issue_iter = stmt.query_map([run_id], |row| {
             let created_at_str: String = row.get(11)?;
-            
+
             Ok(ArchitecturalIssue {
                 issue_id: Some(row.get(0)?),
                 analysis_run_id: row.get(1)?,
@@ -555,7 +593,13 @@ impl Database {
                 metadata: row.get(9)?,
                 detector_name: row.get(10)?,
                 created_at: chrono::DateTime::parse_from_rfc3339(&created_at_str)
-                    .map_err(|_| rusqlite::Error::InvalidColumnType(11, "created_at".to_string(), rusqlite::types::Type::Text))?
+                    .map_err(|_| {
+                        rusqlite::Error::InvalidColumnType(
+                            11,
+                            "created_at".to_string(),
+                            rusqlite::types::Type::Text,
+                        )
+                    })?
                     .with_timezone(&Utc),
                 severity: row.get(12)?,
                 description: row.get(13)?,
@@ -563,17 +607,20 @@ impl Database {
                 ai_explanation: row.get(15)?,
             })
         })?;
-        
+
         let mut issues = Vec::new();
         for issue in issue_iter {
             issues.push(issue?);
         }
-        
+
         Ok(issues)
     }
 
     /// Get dependencies for a specific analysis run
-    pub async fn get_dependencies_for_run(&self, _run_id: i64) -> Result<Vec<crate::database::models::Dependency>> {
+    pub async fn get_dependencies_for_run(
+        &self,
+        _run_id: i64,
+    ) -> Result<Vec<crate::database::models::Dependency>> {
         // TODO: Implement dependency storage and retrieval
         // For now, return empty vec as dependencies aren't stored in current schema
         Ok(vec![])
@@ -581,7 +628,10 @@ impl Database {
 
     /// Get security issues for a specific analysis run (if security feature enabled)
     #[cfg(feature = "security")]
-    pub async fn get_security_issues_for_run(&self, _run_id: i64) -> Result<Vec<crate::analysis::detectors::security::types::SecurityIssue>> {
+    pub async fn get_security_issues_for_run(
+        &self,
+        _run_id: i64,
+    ) -> Result<Vec<crate::analysis::detectors::security::types::SecurityIssue>> {
         // TODO: Implement security issue storage and retrieval
         // For now, return empty vec as security issues aren't stored in current schema
         Ok(vec![])

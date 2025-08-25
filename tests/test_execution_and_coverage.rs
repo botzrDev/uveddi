@@ -733,15 +733,19 @@ impl TestExecutor {
     /// Validate coverage targets
     fn validate_coverage_targets(&mut self) {
         let targets = self.config.coverage_targets.clone();
-        
+
         // Extract values before mutable borrow
         let overall_coverage = self.results.coverage.overall_coverage;
-        let security_coverage = self.results.coverage
+        let security_coverage = self
+            .results
+            .coverage
             .by_module
             .get("src/security/mod.rs")
             .map(|m| m.line_coverage >= targets.security_minimum)
             .unwrap_or(false);
-        let analysis_engine_coverage = self.results.coverage
+        let analysis_engine_coverage = self
+            .results
+            .coverage
             .by_module
             .get("src/analysis/mod.rs")
             .map(|m| m.line_coverage >= targets.analysis_engine_minimum)
@@ -753,15 +757,15 @@ impl TestExecutor {
             overall_coverage >= targets.overall_minimum,
         );
 
-        self.results.coverage.coverage_targets_met.insert(
-            "security".to_string(),
-            security_coverage,
-        );
+        self.results
+            .coverage
+            .coverage_targets_met
+            .insert("security".to_string(), security_coverage);
 
-        self.results.coverage.coverage_targets_met.insert(
-            "analysis_engine".to_string(),
-            analysis_engine_coverage,
-        );
+        self.results
+            .coverage
+            .coverage_targets_met
+            .insert("analysis_engine".to_string(), analysis_engine_coverage);
     }
 
     /// Generate performance report

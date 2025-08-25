@@ -35,8 +35,10 @@
 //! └─────────────┘ └───────────┘ └────────────┘
 //! ```
 
-use crate::analysis::detectors::security::config::{MultiAgentConfig, AgentConfig};
-use crate::analysis::detectors::security::core::{SecurityAnalysisResult, SecurityContext, VulnerabilityDatabase};
+use crate::analysis::detectors::security::config::{AgentConfig, MultiAgentConfig};
+use crate::analysis::detectors::security::core::{
+    SecurityAnalysisResult, SecurityContext, VulnerabilityDatabase,
+};
 use crate::analysis::detectors::security::knowledge_graph::SecurityKnowledgeGraph;
 use crate::analysis::detectors::security::owasp::OwaspVulnerability;
 use crate::analysis::detectors::security::taint_analysis::TaintAnalysisEngine;
@@ -203,7 +205,8 @@ impl SecurityOrchestrator {
                 self.message_tx.clone(),
                 self.knowledge_graph.clone(),
             )?;
-            self.agents.insert("TaintAgent".to_string(), Box::new(agent));
+            self.agents
+                .insert("TaintAgent".to_string(), Box::new(agent));
         }
 
         if self.config.enable_config_agent {
@@ -212,7 +215,8 @@ impl SecurityOrchestrator {
                 self.message_tx.clone(),
                 self.knowledge_graph.clone(),
             )?;
-            self.agents.insert("ConfigAgent".to_string(), Box::new(agent));
+            self.agents
+                .insert("ConfigAgent".to_string(), Box::new(agent));
         }
 
         if self.config.enable_dependency_agent {
@@ -221,7 +225,8 @@ impl SecurityOrchestrator {
                 self.message_tx.clone(),
                 self.vulnerability_db.clone(),
             )?;
-            self.agents.insert("DependencyAgent".to_string(), Box::new(agent));
+            self.agents
+                .insert("DependencyAgent".to_string(), Box::new(agent));
         }
 
         if self.config.enable_validation_agent {
@@ -229,7 +234,8 @@ impl SecurityOrchestrator {
                 AgentConfig::new("ValidationAgent".to_string()),
                 self.message_tx.clone(),
             )?;
-            self.agents.insert("ValidationAgent".to_string(), Box::new(agent));
+            self.agents
+                .insert("ValidationAgent".to_string(), Box::new(agent));
         }
 
         info!("Initialized {} agents", self.agents.len());
@@ -238,8 +244,14 @@ impl SecurityOrchestrator {
 
     /// Analyze a security context using the multi-agent system
     #[instrument(skip(self, context))]
-    pub async fn analyze_file(&self, context: &SecurityContext) -> Result<SecurityAnalysisResult, AnalysisError> {
-        info!("Starting multi-agent security analysis for file: {:?}", context.file_path);
+    pub async fn analyze_file(
+        &self,
+        context: &SecurityContext,
+    ) -> Result<SecurityAnalysisResult, AnalysisError> {
+        info!(
+            "Starting multi-agent security analysis for file: {:?}",
+            context.file_path
+        );
 
         let analysis_id = Uuid::new_v4().to_string();
         let mut results = SecurityAnalysisResult::new();
@@ -274,12 +286,18 @@ impl SecurityOrchestrator {
         // Synthesize final results
         results = self.synthesize_results(agent_results, context).await?;
 
-        info!("Multi-agent analysis completed: {} vulnerabilities found", results.vulnerabilities.len());
+        info!(
+            "Multi-agent analysis completed: {} vulnerabilities found",
+            results.vulnerabilities.len()
+        );
         Ok(results)
     }
 
     /// Decompose analysis into subtasks for different agents
-    async fn decompose_analysis_tasks(&self, context: &SecurityContext) -> Result<Vec<SubTask>, AnalysisError> {
+    async fn decompose_analysis_tasks(
+        &self,
+        context: &SecurityContext,
+    ) -> Result<Vec<SubTask>, AnalysisError> {
         let mut subtasks = Vec::new();
 
         // Always include OWASP analysis as it's comprehensive
@@ -328,33 +346,50 @@ impl SecurityOrchestrator {
     }
 
     fn is_configuration_file(&self, context: &SecurityContext) -> bool {
-        let file_name = context.file_path.file_name()
+        let file_name = context
+            .file_path
+            .file_name()
             .and_then(|n| n.to_str())
             .unwrap_or("");
-        
-        matches!(file_name, 
-            "config.toml" | "Cargo.toml" | "package.json" | 
-            "requirements.txt" | "settings.py" | "Dockerfile"
-        ) || file_name.ends_with(".toml") || 
-             file_name.ends_with(".json") || 
-             file_name.ends_with(".yml") ||
-             file_name.ends_with(".yaml")
+
+        matches!(
+            file_name,
+            "config.toml"
+                | "Cargo.toml"
+                | "package.json"
+                | "requirements.txt"
+                | "settings.py"
+                | "Dockerfile"
+        ) || file_name.ends_with(".toml")
+            || file_name.ends_with(".json")
+            || file_name.ends_with(".yml")
+            || file_name.ends_with(".yaml")
     }
 
     fn is_dependency_file(&self, context: &SecurityContext) -> bool {
-        let file_name = context.file_path.file_name()
+        let file_name = context
+            .file_path
+            .file_name()
             .and_then(|n| n.to_str())
             .unwrap_or("");
-        
-        matches!(file_name, 
-            "Cargo.toml" | "Cargo.lock" | "package.json" | 
-            "package-lock.json" | "requirements.txt" | 
-            "Pipfile" | "Pipfile.lock"
+
+        matches!(
+            file_name,
+            "Cargo.toml"
+                | "Cargo.lock"
+                | "package.json"
+                | "package-lock.json"
+                | "requirements.txt"
+                | "Pipfile"
+                | "Pipfile.lock"
         )
     }
 
     /// Execute a subtask by assigning it to the appropriate agent
-    async fn execute_subtask(&self, subtask: SubTask) -> Result<tokio::task::JoinHandle<Result<AgentResult, AnalysisError>>, AnalysisError> {
+    async fn execute_subtask(
+        &self,
+        subtask: SubTask,
+    ) -> Result<tokio::task::JoinHandle<Result<AgentResult, AnalysisError>>, AnalysisError> {
         let task_metadata = TaskMetadata {
             task_id: subtask.task_id.clone(),
             task_type: subtask.task_type.clone(),
@@ -372,33 +407,36 @@ impl SecurityOrchestrator {
 
         // Create and spawn the task
         let task_id = subtask.task_id.clone();
-        
+
         let handle = match subtask.task_type {
             TaskType::TaintAnalysis => {
                 if let Some(agent) = self.agents.get("TaintAgent") {
                     let agent = agent.clone_box();
                     let context = subtask.context.clone();
-                    tokio::spawn(async move {
-                        agent.execute_task(task_id, context).await
-                    })
+                    tokio::spawn(async move { agent.execute_task(task_id, context).await })
                 } else {
-                    return Err(AnalysisError::DetectionError("TaintAgent not available".to_string()));
+                    return Err(AnalysisError::DetectionError(
+                        "TaintAgent not available".to_string(),
+                    ));
                 }
             }
             TaskType::ConfigurationAnalysis => {
                 if let Some(agent) = self.agents.get("ConfigAgent") {
                     let agent = agent.clone_box();
                     let context = subtask.context.clone();
-                    tokio::spawn(async move {
-                        agent.execute_task(task_id, context).await
-                    })
+                    tokio::spawn(async move { agent.execute_task(task_id, context).await })
                 } else {
-                    return Err(AnalysisError::DetectionError("ConfigAgent not available".to_string()));
+                    return Err(AnalysisError::DetectionError(
+                        "ConfigAgent not available".to_string(),
+                    ));
                 }
             }
             // Add other task types...
             _ => {
-                return Err(AnalysisError::DetectionError(format!("Unsupported task type: {:?}", subtask.task_type)));
+                return Err(AnalysisError::DetectionError(format!(
+                    "Unsupported task type: {:?}",
+                    subtask.task_type
+                )));
             }
         };
 
@@ -416,36 +454,42 @@ impl SecurityOrchestrator {
         for result in agent_results {
             match result {
                 AgentResult::TaintAnalysis(issues) => {
-                    final_result.vulnerabilities.extend(issues.into_iter().map(|issue| {
-                        OwaspVulnerability {
-                            category: crate::analysis::detectors::security::owasp::OwaspCategory::Injection,
-                            issue_type: issue.issue_type,
-                            title: issue.title,
-                            description: issue.description,
-                            severity: issue.severity,
-                            confidence_score: issue.confidence_score,
-                            location: crate::analysis::detectors::security::types::SecurityLocation {
-                                file_path: issue.location.file_path,
-                                start_line: issue.location.start_line,
-                                end_line: issue.location.end_line,
-                                start_column: issue.location.start_column,
-                                end_column: issue.location.end_column,
-                                function_name: issue.location.function_name,
-                                class_name: issue.location.class_name,
-                                module_name: issue.location.module_name,
-                            },
-                            remediation: issue.remediation,
-                            metadata: issue.metadata,
-                            architectural_correlation: issue.correlation_id.map(|id| vec![id]).unwrap_or_default(),
-                        }
-                    }));
+                    final_result
+                        .vulnerabilities
+                        .extend(issues.into_iter().map(|issue| {
+                            OwaspVulnerability {
+                        category:
+                            crate::analysis::detectors::security::owasp::OwaspCategory::Injection,
+                        issue_type: issue.issue_type,
+                        title: issue.title,
+                        description: issue.description,
+                        severity: issue.severity,
+                        confidence_score: issue.confidence_score,
+                        location: crate::analysis::detectors::security::types::SecurityLocation {
+                            file_path: issue.location.file_path,
+                            start_line: issue.location.start_line,
+                            end_line: issue.location.end_line,
+                            start_column: issue.location.start_column,
+                            end_column: issue.location.end_column,
+                            function_name: issue.location.function_name,
+                            class_name: issue.location.class_name,
+                            module_name: issue.location.module_name,
+                        },
+                        remediation: issue.remediation,
+                        metadata: issue.metadata,
+                        architectural_correlation:
+                            issue.correlation_id.map(|id| vec![id]).unwrap_or_default(),
+                    }
+                        }));
                 }
                 AgentResult::OwaspAnalysis(vulnerabilities) => {
                     final_result.vulnerabilities.extend(vulnerabilities);
                 }
                 AgentResult::ValidationResult(validation_report) => {
                     // Apply validation results to adjust confidence scores
-                    for (issue_id, confidence_adjustment) in validation_report.confidence_adjustments {
+                    for (issue_id, confidence_adjustment) in
+                        validation_report.confidence_adjustments
+                    {
                         // Find and update corresponding vulnerability
                         // This would require a more sophisticated matching mechanism
                     }
@@ -470,22 +514,29 @@ impl SecurityOrchestrator {
     ) -> Result<SecurityAnalysisResult, AnalysisError> {
         // Simple deduplication based on location and issue type
         result.vulnerabilities.sort_by(|a, b| {
-            a.location.file_path.cmp(&b.location.file_path)
+            a.location
+                .file_path
+                .cmp(&b.location.file_path)
                 .then(a.location.start_line.cmp(&b.location.start_line))
                 .then(a.issue_type.to_string().cmp(&b.issue_type.to_string()))
         });
 
         result.vulnerabilities.dedup_by(|a, b| {
-            a.location.file_path == b.location.file_path &&
-            a.location.start_line == b.location.start_line &&
-            a.issue_type == b.issue_type
+            a.location.file_path == b.location.file_path
+                && a.location.start_line == b.location.start_line
+                && a.issue_type == b.issue_type
         });
 
         // Filter by confidence threshold
         let min_confidence = 0.5; // TODO: Make this configurable
-        result.vulnerabilities.retain(|v| v.confidence_score >= min_confidence);
+        result
+            .vulnerabilities
+            .retain(|v| v.confidence_score >= min_confidence);
 
-        info!("After deduplication and filtering: {} vulnerabilities remain", result.vulnerabilities.len());
+        info!(
+            "After deduplication and filtering: {} vulnerabilities remain",
+            result.vulnerabilities.len()
+        );
         Ok(result)
     }
 }
@@ -502,7 +553,11 @@ struct SubTask {
 /// Trait that all security agents must implement
 #[async_trait]
 pub trait SecurityAgent: Send + Sync {
-    async fn execute_task(&self, task_id: String, context: SecurityContext) -> Result<AgentResult, AnalysisError>;
+    async fn execute_task(
+        &self,
+        task_id: String,
+        context: SecurityContext,
+    ) -> Result<AgentResult, AnalysisError>;
     fn get_agent_id(&self) -> &str;
     fn get_capabilities(&self) -> Vec<TaskType>;
     fn clone_box(&self) -> Box<dyn SecurityAgent>;
@@ -523,7 +578,8 @@ impl TaintAnalysisAgent {
         message_tx: mpsc::UnboundedSender<AgentMessage>,
         knowledge_graph: Arc<SecurityKnowledgeGraph>,
     ) -> Result<Self, AnalysisError> {
-        let taint_config = crate::analysis::detectors::security::config::TaintAnalysisConfig::production();
+        let taint_config =
+            crate::analysis::detectors::security::config::TaintAnalysisConfig::production();
         let taint_engine = Arc::new(TaintAnalysisEngine::new(taint_config)?);
 
         Ok(Self {
@@ -537,16 +593,24 @@ impl TaintAnalysisAgent {
 
 #[async_trait]
 impl SecurityAgent for TaintAnalysisAgent {
-    async fn execute_task(&self, task_id: String, context: SecurityContext) -> Result<AgentResult, AnalysisError> {
+    async fn execute_task(
+        &self,
+        task_id: String,
+        context: SecurityContext,
+    ) -> Result<AgentResult, AnalysisError> {
         info!("TaintAnalysisAgent executing task: {}", task_id);
 
         // Create a ParsedFile from SecurityContext for taint analysis
         let parsed_file = context.to_parsed_file()?;
-        
+
         // Run taint analysis
         let issues = self.taint_engine.analyze_file(&parsed_file).await?;
-        
-        info!("TaintAnalysisAgent completed task {}: {} issues found", task_id, issues.len());
+
+        info!(
+            "TaintAnalysisAgent completed task {}: {} issues found",
+            task_id,
+            issues.len()
+        );
         Ok(AgentResult::TaintAnalysis(issues))
     }
 
@@ -587,12 +651,16 @@ impl ConfigAnalysisAgent {
 
 #[async_trait]
 impl SecurityAgent for ConfigAnalysisAgent {
-    async fn execute_task(&self, task_id: String, _context: SecurityContext) -> Result<AgentResult, AnalysisError> {
+    async fn execute_task(
+        &self,
+        task_id: String,
+        _context: SecurityContext,
+    ) -> Result<AgentResult, AnalysisError> {
         info!("ConfigAnalysisAgent executing task: {}", task_id);
-        
+
         // TODO: Implement configuration file analysis
         let issues = Vec::new();
-        
+
         Ok(AgentResult::ConfigAnalysis(issues))
     }
 
@@ -633,12 +701,16 @@ impl DependencyAgent {
 
 #[async_trait]
 impl SecurityAgent for DependencyAgent {
-    async fn execute_task(&self, task_id: String, _context: SecurityContext) -> Result<AgentResult, AnalysisError> {
+    async fn execute_task(
+        &self,
+        task_id: String,
+        _context: SecurityContext,
+    ) -> Result<AgentResult, AnalysisError> {
         info!("DependencyAgent executing task: {}", task_id);
-        
+
         // TODO: Implement dependency vulnerability analysis
         let issues = Vec::new();
-        
+
         Ok(AgentResult::DependencyAnalysis(issues))
     }
 
@@ -667,18 +739,19 @@ impl ValidationAgent {
         config: AgentConfig,
         message_tx: mpsc::UnboundedSender<AgentMessage>,
     ) -> Result<Self, AnalysisError> {
-        Ok(Self {
-            config,
-            message_tx,
-        })
+        Ok(Self { config, message_tx })
     }
 }
 
 #[async_trait]
 impl SecurityAgent for ValidationAgent {
-    async fn execute_task(&self, task_id: String, _context: SecurityContext) -> Result<AgentResult, AnalysisError> {
+    async fn execute_task(
+        &self,
+        task_id: String,
+        _context: SecurityContext,
+    ) -> Result<AgentResult, AnalysisError> {
         info!("ValidationAgent executing task: {}", task_id);
-        
+
         // TODO: Implement cross-validation logic
         let report = ValidationReport {
             validated_issues: Vec::new(),
@@ -686,7 +759,7 @@ impl SecurityAgent for ValidationAgent {
             confidence_adjustments: HashMap::new(),
             cross_validation_score: 0.8,
         };
-        
+
         Ok(AgentResult::ValidationResult(report))
     }
 
@@ -754,7 +827,7 @@ mod tests {
         let knowledge_graph = Arc::new(SecurityKnowledgeGraph::new().unwrap());
 
         let agent = TaintAnalysisAgent::new(config, tx, knowledge_graph).unwrap();
-        
+
         assert_eq!(agent.get_agent_id(), "TestAgent");
         assert_eq!(agent.get_capabilities(), vec![TaskType::TaintAnalysis]);
     }

@@ -47,11 +47,17 @@ impl ValidationEngine {
 
         // Apply false positive mitigation
         issues = self.false_positive_mitigator.filter_issues(issues).await?;
-        info!("After false positive filtering: {} issues remain", issues.len());
+        info!(
+            "After false positive filtering: {} issues remain",
+            issues.len()
+        );
 
         // Recalculate confidence scores
         for issue in &mut issues {
-            let new_confidence = self.confidence_calculator.calculate_confidence(issue).await?;
+            let new_confidence = self
+                .confidence_calculator
+                .calculate_confidence(issue)
+                .await?;
             issue.confidence_score = new_confidence.final_score;
         }
 
@@ -64,7 +70,10 @@ impl ValidationEngine {
         let min_confidence = 0.3; // TODO: Make this configurable
         issues.retain(|issue| issue.confidence_score >= min_confidence);
 
-        info!("After validation: {} high-confidence issues remain", issues.len());
+        info!(
+            "After validation: {} high-confidence issues remain",
+            issues.len()
+        );
         Ok(issues)
     }
 
@@ -73,7 +82,10 @@ impl ValidationEngine {
         &self,
         detector_results: HashMap<String, Vec<SecurityIssue>>,
     ) -> Result<Vec<SecurityIssue>, AnalysisError> {
-        info!("Cross-validating results from {} detectors", detector_results.len());
+        info!(
+            "Cross-validating results from {} detectors",
+            detector_results.len()
+        );
 
         let mut validated_issues = Vec::new();
         let mut issue_agreements = HashMap::new();
@@ -93,10 +105,10 @@ impl ValidationEngine {
             if agreements.len() >= min_agreement {
                 // Multiple detectors agree - high confidence
                 let mut representative_issue = agreements[0].1.clone();
-                
+
                 // Boost confidence based on agreement
                 let agreement_boost = (agreements.len() as f64 - 1.0) * 0.1;
-                representative_issue.confidence_score = 
+                representative_issue.confidence_score =
                     (representative_issue.confidence_score + agreement_boost).min(1.0);
 
                 // Add all detector names that found this issue
@@ -111,7 +123,10 @@ impl ValidationEngine {
             }
         }
 
-        info!("Cross-validation completed: {} issues validated", validated_issues.len());
+        info!(
+            "Cross-validation completed: {} issues validated",
+            validated_issues.len()
+        );
         Ok(validated_issues)
     }
 
@@ -146,25 +161,33 @@ impl FalsePositiveMitigator {
 
         // Initialize filters based on configuration
         if config.enable_heuristic_filtering {
-            mitigator.heuristic_filters.push(Box::new(SizeThresholdFilter::new(
-                config.min_lines_threshold,
-                config.min_tokens_threshold,
-            )));
-            mitigator.heuristic_filters.push(Box::new(CommentSuppressionFilter::new(
-                config.suppression_comments.clone(),
-            )));
+            mitigator
+                .heuristic_filters
+                .push(Box::new(SizeThresholdFilter::new(
+                    config.min_lines_threshold,
+                    config.min_tokens_threshold,
+                )));
+            mitigator
+                .heuristic_filters
+                .push(Box::new(CommentSuppressionFilter::new(
+                    config.suppression_comments.clone(),
+                )));
         }
 
         if config.enable_contextual_filtering {
-            mitigator.contextual_filters.push(Box::new(FileTypeFilter::new(
-                config.exclude_test_files,
-                config.exclude_generated_files,
-                config.exclude_third_party,
-            )));
+            mitigator
+                .contextual_filters
+                .push(Box::new(FileTypeFilter::new(
+                    config.exclude_test_files,
+                    config.exclude_generated_files,
+                    config.exclude_third_party,
+                )));
         }
 
         if config.enable_statistical_filtering {
-            mitigator.statistical_filters.push(Box::new(FrequencyFilter::new()));
+            mitigator
+                .statistical_filters
+                .push(Box::new(FrequencyFilter::new()));
         }
 
         Ok(mitigator)
@@ -174,7 +197,10 @@ impl FalsePositiveMitigator {
         &self,
         mut issues: Vec<SecurityIssue>,
     ) -> Result<Vec<SecurityIssue>, AnalysisError> {
-        debug!("Applying false positive mitigation to {} issues", issues.len());
+        debug!(
+            "Applying false positive mitigation to {} issues",
+            issues.len()
+        );
 
         // Apply heuristic filters
         for filter in &self.heuristic_filters {
@@ -191,7 +217,10 @@ impl FalsePositiveMitigator {
             issues = filter.filter(issues).await?;
         }
 
-        debug!("False positive mitigation completed: {} issues remain", issues.len());
+        debug!(
+            "False positive mitigation completed: {} issues remain",
+            issues.len()
+        );
         Ok(issues)
     }
 }
@@ -199,7 +228,8 @@ impl FalsePositiveMitigator {
 /// Trait for heuristic-based filters
 #[async_trait::async_trait]
 trait HeuristicFilter: Send + Sync {
-    async fn filter(&self, issues: Vec<SecurityIssue>) -> Result<Vec<SecurityIssue>, AnalysisError>;
+    async fn filter(&self, issues: Vec<SecurityIssue>)
+        -> Result<Vec<SecurityIssue>, AnalysisError>;
 }
 
 /// Size threshold filter to exclude very small code snippets
@@ -210,13 +240,19 @@ struct SizeThresholdFilter {
 
 impl SizeThresholdFilter {
     fn new(min_lines: usize, min_tokens: usize) -> Self {
-        Self { min_lines, min_tokens }
+        Self {
+            min_lines,
+            min_tokens,
+        }
     }
 }
 
 #[async_trait::async_trait]
 impl HeuristicFilter for SizeThresholdFilter {
-    async fn filter(&self, issues: Vec<SecurityIssue>) -> Result<Vec<SecurityIssue>, AnalysisError> {
+    async fn filter(
+        &self,
+        issues: Vec<SecurityIssue>,
+    ) -> Result<Vec<SecurityIssue>, AnalysisError> {
         let filtered: Vec<SecurityIssue> = issues
             .into_iter()
             .filter(|issue| {
@@ -246,7 +282,10 @@ impl CommentSuppressionFilter {
 
 #[async_trait::async_trait]
 impl HeuristicFilter for CommentSuppressionFilter {
-    async fn filter(&self, issues: Vec<SecurityIssue>) -> Result<Vec<SecurityIssue>, AnalysisError> {
+    async fn filter(
+        &self,
+        issues: Vec<SecurityIssue>,
+    ) -> Result<Vec<SecurityIssue>, AnalysisError> {
         let mut filtered = Vec::new();
 
         for issue in issues {
@@ -256,9 +295,11 @@ impl HeuristicFilter for CommentSuppressionFilter {
             if let Ok(content) = std::fs::read_to_string(&issue.location.file_path) {
                 let lines: Vec<&str> = content.lines().collect();
                 let issue_line = (issue.location.start_line - 1) as usize;
-                
+
                 // Check the few lines before the issue for suppression comments
-                for i in issue_line.saturating_sub(3)..=issue_line.min(lines.len().saturating_sub(1)) {
+                for i in
+                    issue_line.saturating_sub(3)..=issue_line.min(lines.len().saturating_sub(1))
+                {
                     if let Some(line) = lines.get(i) {
                         for pattern in &self.suppression_patterns {
                             if line.contains(pattern) {
@@ -279,7 +320,10 @@ impl HeuristicFilter for CommentSuppressionFilter {
             }
         }
 
-        debug!("Comment suppression filter: {} issues remaining", filtered.len());
+        debug!(
+            "Comment suppression filter: {} issues remaining",
+            filtered.len()
+        );
         Ok(filtered)
     }
 }
@@ -287,7 +331,8 @@ impl HeuristicFilter for CommentSuppressionFilter {
 /// Trait for contextual filters
 #[async_trait::async_trait]
 trait ContextualFilter: Send + Sync {
-    async fn filter(&self, issues: Vec<SecurityIssue>) -> Result<Vec<SecurityIssue>, AnalysisError>;
+    async fn filter(&self, issues: Vec<SecurityIssue>)
+        -> Result<Vec<SecurityIssue>, AnalysisError>;
 }
 
 /// File type filter to exclude test files, generated files, etc.
@@ -298,7 +343,11 @@ struct FileTypeFilter {
 }
 
 impl FileTypeFilter {
-    fn new(exclude_test_files: bool, exclude_generated_files: bool, exclude_third_party: bool) -> Self {
+    fn new(
+        exclude_test_files: bool,
+        exclude_generated_files: bool,
+        exclude_third_party: bool,
+    ) -> Self {
         Self {
             exclude_test_files,
             exclude_generated_files,
@@ -310,22 +359,31 @@ impl FileTypeFilter {
         let path_str = file_path.to_string_lossy().to_lowercase();
 
         if self.exclude_test_files {
-            if path_str.contains("/test/") || path_str.contains("/tests/") ||
-               path_str.contains("_test.") || path_str.contains(".test.") {
+            if path_str.contains("/test/")
+                || path_str.contains("/tests/")
+                || path_str.contains("_test.")
+                || path_str.contains(".test.")
+            {
                 return true;
             }
         }
 
         if self.exclude_generated_files {
-            if path_str.contains("generated") || path_str.contains(".gen.") ||
-               path_str.contains("__pycache__") || path_str.contains("/target/") {
+            if path_str.contains("generated")
+                || path_str.contains(".gen.")
+                || path_str.contains("__pycache__")
+                || path_str.contains("/target/")
+            {
                 return true;
             }
         }
 
         if self.exclude_third_party {
-            if path_str.contains("node_modules") || path_str.contains("vendor/") ||
-               path_str.contains("third_party") || path_str.contains(".cargo/") {
+            if path_str.contains("node_modules")
+                || path_str.contains("vendor/")
+                || path_str.contains("third_party")
+                || path_str.contains(".cargo/")
+            {
                 return true;
             }
         }
@@ -336,7 +394,10 @@ impl FileTypeFilter {
 
 #[async_trait::async_trait]
 impl ContextualFilter for FileTypeFilter {
-    async fn filter(&self, issues: Vec<SecurityIssue>) -> Result<Vec<SecurityIssue>, AnalysisError> {
+    async fn filter(
+        &self,
+        issues: Vec<SecurityIssue>,
+    ) -> Result<Vec<SecurityIssue>, AnalysisError> {
         let filtered: Vec<SecurityIssue> = issues
             .into_iter()
             .filter(|issue| !self.should_exclude_file(&issue.location.file_path))
@@ -350,7 +411,8 @@ impl ContextualFilter for FileTypeFilter {
 /// Trait for statistical filters
 #[async_trait::async_trait]
 trait StatisticalFilter: Send + Sync {
-    async fn filter(&self, issues: Vec<SecurityIssue>) -> Result<Vec<SecurityIssue>, AnalysisError>;
+    async fn filter(&self, issues: Vec<SecurityIssue>)
+        -> Result<Vec<SecurityIssue>, AnalysisError>;
 }
 
 /// Frequency filter to down-rank very common patterns
@@ -368,9 +430,12 @@ impl FrequencyFilter {
 
 #[async_trait::async_trait]
 impl StatisticalFilter for FrequencyFilter {
-    async fn filter(&self, issues: Vec<SecurityIssue>) -> Result<Vec<SecurityIssue>, AnalysisError> {
+    async fn filter(
+        &self,
+        issues: Vec<SecurityIssue>,
+    ) -> Result<Vec<SecurityIssue>, AnalysisError> {
         let mut pattern_counts = HashMap::new();
-        
+
         // Count pattern frequencies
         for issue in &issues {
             let pattern_key = format!("{}:{}", issue.issue_type.to_string(), issue.title);
@@ -385,10 +450,13 @@ impl StatisticalFilter for FrequencyFilter {
                 if count > self.frequency_threshold {
                     // Down-rank very common patterns
                     issue.confidence_score *= 0.8;
-                    debug!("Down-ranking frequent pattern: {} (count: {})", pattern_key, count);
+                    debug!(
+                        "Down-ranking frequent pattern: {} (count: {})",
+                        pattern_key, count
+                    );
                 }
             }
-            
+
             // Only keep issues with reasonable confidence after frequency adjustment
             if issue.confidence_score >= 0.2 {
                 filtered.push(issue);
@@ -438,7 +506,11 @@ impl ConfidenceCalculator {
         confidence = confidence.with_evidence_strength(evidence_strength);
 
         // Architectural context (would be calculated based on actual context)
-        let architectural_score = if issue.correlation_id.is_some() { 0.3 } else { 0.0 };
+        let architectural_score = if issue.correlation_id.is_some() {
+            0.3
+        } else {
+            0.0
+        };
         confidence = confidence.with_architectural_context(architectural_score);
 
         // Cross-validation score (based on number of detectors that found this issue)
@@ -509,21 +581,24 @@ impl BayesianOptimizer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::analysis::detectors::security::types::{SecurityIssueType, SecurityLocation, VulnerabilityType};
+    use crate::analysis::detectors::security::types::{
+        SecurityIssueType, SecurityLocation, VulnerabilityType,
+    };
     use std::path::PathBuf;
 
     #[tokio::test]
     async fn test_validation_engine() {
         let config = FalsePositiveConfig::moderate();
         let engine = ValidationEngine::new(config).unwrap();
-        
+
         let test_issue = SecurityIssue::new(
             SecurityIssueType::Injection,
             VulnerabilityType::Static,
             "SQL Injection".to_string(),
             "Test issue".to_string(),
             SecurityLocation::new(PathBuf::from("test.rs"), 10, 15),
-        ).with_confidence(0.8);
+        )
+        .with_confidence(0.8);
 
         let validated = engine.validate_issues(vec![test_issue]).await.unwrap();
         assert!(!validated.is_empty());
@@ -550,14 +625,15 @@ mod tests {
     #[tokio::test]
     async fn test_confidence_calculator() {
         let calculator = ConfidenceCalculator::new();
-        
+
         let test_issue = SecurityIssue::new(
             SecurityIssueType::Injection,
             VulnerabilityType::Static,
             "SQL Injection".to_string(),
             "Test issue".to_string(),
             SecurityLocation::new(PathBuf::from("test.rs"), 10, 15),
-        ).with_severity(SecuritySeverity::Critical);
+        )
+        .with_severity(SecuritySeverity::Critical);
 
         let confidence = calculator.calculate_confidence(&test_issue).await.unwrap();
         assert!(confidence.final_score > 0.0);
@@ -567,7 +643,7 @@ mod tests {
     #[test]
     fn test_size_threshold_filter() {
         let filter = SizeThresholdFilter::new(5, 10);
-        
+
         let small_issue = SecurityIssue::new(
             SecurityIssueType::Injection,
             VulnerabilityType::Static,
@@ -586,8 +662,10 @@ mod tests {
 
         // The actual filtering would be tested in an async context
         // Here we just test the line count calculation
-        let small_lines = (small_issue.location.end_line - small_issue.location.start_line + 1) as usize;
-        let large_lines = (large_issue.location.end_line - large_issue.location.start_line + 1) as usize;
+        let small_lines =
+            (small_issue.location.end_line - small_issue.location.start_line + 1) as usize;
+        let large_lines =
+            (large_issue.location.end_line - large_issue.location.start_line + 1) as usize;
 
         assert_eq!(small_lines, 2);
         assert_eq!(large_lines, 11);
@@ -598,7 +676,7 @@ mod tests {
     #[test]
     fn test_file_type_filter() {
         let filter = FileTypeFilter::new(true, true, true);
-        
+
         assert!(filter.should_exclude_file(&PathBuf::from("/src/test/helper.rs")));
         assert!(filter.should_exclude_file(&PathBuf::from("/src/generated/proto.rs")));
         assert!(filter.should_exclude_file(&PathBuf::from("/node_modules/lib/index.js")));
@@ -616,7 +694,8 @@ mod tests {
             "SQL Injection".to_string(),
             "Test issue".to_string(),
             SecurityLocation::new(PathBuf::from("test.rs"), 10, 15),
-        ).with_detector("Detector1".to_string());
+        )
+        .with_detector("Detector1".to_string());
 
         let issue2 = SecurityIssue::new(
             SecurityIssueType::Injection,
@@ -624,7 +703,8 @@ mod tests {
             "SQL Injection".to_string(), // Same issue found by different detector
             "Test issue".to_string(),
             SecurityLocation::new(PathBuf::from("test.rs"), 10, 15),
-        ).with_detector("Detector2".to_string());
+        )
+        .with_detector("Detector2".to_string());
 
         let mut detector_results = HashMap::new();
         detector_results.insert("Detector1".to_string(), vec![issue1]);

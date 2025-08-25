@@ -50,12 +50,12 @@ impl Default for MagicValuesConfig {
         allowed_integers.insert(1);
         allowed_integers.insert(-1);
         allowed_integers.insert(2); // Common in modulo operations
-        
+
         let mut allowed_floats = HashSet::new();
         allowed_floats.insert("0.0".to_string());
         allowed_floats.insert("1.0".to_string());
         allowed_floats.insert("-1.0".to_string());
-        
+
         Self {
             allowed_integers,
             allowed_floats,
@@ -102,9 +102,9 @@ pub enum MagicValueContext {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum MagicValueSeverity {
-    High,    // Repeated values, comparison operations
-    Medium,  // Single-use in functions
-    Low,     // Edge cases
+    High,   // Repeated values, comparison operations
+    Medium, // Single-use in functions
+    Low,    // Edge cases
 }
 
 pub struct MagicValuesDetector {
@@ -123,43 +123,45 @@ impl MagicValuesDetector {
             config: MagicValuesConfig::default(),
         }
     }
-    
+
     pub fn with_config(config: MagicValuesConfig) -> Self {
         Self { config }
     }
-    
+
     /// Check if an integer value should be ignored based on configured heuristics
     fn is_integer_allowed(&self, value: i64, context: &MagicValueContext) -> bool {
         // Universal exceptions
         if self.config.allowed_integers.contains(&value) {
             return true;
         }
-        
+
         // Powers of 2 heuristic (common in bitwise operations)
         if self.config.ignore_powers_of_two && value > 0 && (value & (value - 1)) == 0 {
             return true;
         }
-        
+
         // Array index context
         if self.config.ignore_array_indices && matches!(context, MagicValueContext::ArrayIndex) {
             return value >= 0 && value < 100; // Reasonable array index range
         }
-        
+
         // Constant declaration context
-        if self.config.ignore_const_declarations && matches!(context, MagicValueContext::ConstDeclaration) {
+        if self.config.ignore_const_declarations
+            && matches!(context, MagicValueContext::ConstDeclaration)
+        {
             return true;
         }
-        
+
         false
     }
-    
+
     /// Check if a float value should be ignored
     fn is_float_allowed(&self, value_str: &str, _value: f64, context: &MagicValueContext) -> bool {
         // Universal exceptions
         if self.config.allowed_floats.contains(value_str) {
             return true;
         }
-        
+
         // Mathematical constants heuristic
         if self.config.ignore_math_constants {
             let normalized = value_str.replace("f32", "").replace("f64", "");
@@ -168,22 +170,24 @@ impl MagicValuesDetector {
                 return true;
             }
         }
-        
+
         // Constant declaration context
-        if self.config.ignore_const_declarations && matches!(context, MagicValueContext::ConstDeclaration) {
+        if self.config.ignore_const_declarations
+            && matches!(context, MagicValueContext::ConstDeclaration)
+        {
             return true;
         }
-        
+
         false
     }
-    
+
     /// Check if a string value should be ignored
     fn is_string_allowed(&self, value: &str, context: &MagicValueContext) -> bool {
         // Ignore very long strings (likely not magic values)
         if value.len() > self.config.max_string_length {
             return true;
         }
-        
+
         // Simple punctuation and delimiters
         if self.config.ignore_simple_strings {
             let simple_strings = [",", ";", " ", "\t", "\n", ":", ".", "-", "_", "/", "\\"];
@@ -191,27 +195,29 @@ impl MagicValuesDetector {
                 return true;
             }
         }
-        
+
         // Constant declaration context
-        if self.config.ignore_const_declarations && matches!(context, MagicValueContext::ConstDeclaration) {
+        if self.config.ignore_const_declarations
+            && matches!(context, MagicValueContext::ConstDeclaration)
+        {
             return true;
         }
-        
+
         // Empty or very short strings are usually not magic
         if value.len() <= 1 {
             return true;
         }
-        
+
         false
     }
-    
+
     /// Determine context from AST node hierarchy
     fn determine_context(&self, node: &Node, source: &[u8]) -> MagicValueContext {
         let mut current = node.parent();
-        
+
         while let Some(parent) = current {
             let parent_kind = parent.kind();
-            
+
             match parent_kind {
                 "const_item" | "const_declaration" | "variable_declarator" => {
                     // Check if this is a const/final declaration
@@ -237,35 +243,49 @@ impl MagicValuesDetector {
                 }
                 _ => {}
             }
-            
+
             current = parent.parent();
         }
-        
+
         MagicValueContext::Other
     }
-    
+
     /// Check if a declaration is a constant (const, static, final, etc.)
     fn is_const_declaration(&self, node: &Node, source: &[u8]) -> bool {
         let text = node.utf8_text(source).unwrap_or("");
-        text.contains("const") || text.contains("static") || text.contains("final") || text.contains("CONST")
+        text.contains("const")
+            || text.contains("static")
+            || text.contains("final")
+            || text.contains("CONST")
     }
-    
+
     /// Determine severity based on context and value characteristics
-    fn determine_severity(&self, context: &MagicValueContext, _value: &MagicValueType) -> MagicValueSeverity {
+    fn determine_severity(
+        &self,
+        context: &MagicValueContext,
+        _value: &MagicValueType,
+    ) -> MagicValueSeverity {
         match context {
-            MagicValueContext::Comparison | MagicValueContext::FunctionArgument => MagicValueSeverity::High,
-            MagicValueContext::Assignment | MagicValueContext::ReturnValue => MagicValueSeverity::Medium,
+            MagicValueContext::Comparison | MagicValueContext::FunctionArgument => {
+                MagicValueSeverity::High
+            }
+            MagicValueContext::Assignment | MagicValueContext::ReturnValue => {
+                MagicValueSeverity::Medium
+            }
             _ => MagicValueSeverity::Low,
         }
     }
-    
+
     /// Analyze literals in Rust code
-    async fn analyze_rust_literals(&self, parsed_file: &ParsedFile) -> Result<Vec<MagicValue>, AnalysisError> {
+    async fn analyze_rust_literals(
+        &self,
+        parsed_file: &ParsedFile,
+    ) -> Result<Vec<MagicValue>, AnalysisError> {
         let mut magic_values = Vec::new();
-        
+
         if let Some(tree) = &parsed_file.tree {
             let source = parsed_file.source.as_bytes();
-            
+
             // Query for numeric and string literals
             let query_str = r#"
                 (integer_literal) @number
@@ -273,37 +293,38 @@ impl MagicValuesDetector {
                 (string_literal) @string
                 (char_literal) @string
             "#;
-            
-            let query = Query::new(&tree.language(), query_str)
-                .map_err(|e| AnalysisError::tree_sitter_parse_error(
+
+            let query = Query::new(&tree.language(), query_str).map_err(|e| {
+                AnalysisError::tree_sitter_parse_error(
                     parsed_file.file_path.to_string_lossy().to_string(),
                     "rust",
                     0,
-                    format!("Query creation failed: {}", e)
-                ))?;
-                
+                    format!("Query creation failed: {}", e),
+                )
+            })?;
+
             let mut cursor = QueryCursor::new();
             let mut captures = cursor.matches(&query, tree.root_node(), source);
-            
+
             while let Some(match_) = captures.next() {
                 for capture in match_.captures {
                     let node = capture.node;
                     let text = node.utf8_text(source).unwrap_or("");
                     let context = self.determine_context(&node, source);
-                    
+
                     let start_position = node.start_position();
                     let line = start_position.row as u32 + 1;
                     let column = start_position.column as u32;
-                    
+
                     let capture_name = query.capture_names()[capture.index as usize];
-                    
+
                     match capture_name {
                         "number" => {
                             if let Ok(int_val) = text.parse::<i64>() {
                                 if !self.is_integer_allowed(int_val, &context) {
                                     let value_type = MagicValueType::Integer(int_val);
                                     let severity = self.determine_severity(&context, &value_type);
-                                    
+
                                     magic_values.push(MagicValue {
                                         value: text.to_string(),
                                         value_type,
@@ -317,7 +338,7 @@ impl MagicValuesDetector {
                                 if !self.is_float_allowed(text, float_val, &context) {
                                     let value_type = MagicValueType::Float(float_val);
                                     let severity = self.determine_severity(&context, &value_type);
-                                    
+
                                     magic_values.push(MagicValue {
                                         value: text.to_string(),
                                         value_type,
@@ -335,7 +356,7 @@ impl MagicValuesDetector {
                             if !self.is_string_allowed(string_content, &context) {
                                 let value_type = MagicValueType::String(string_content.to_string());
                                 let severity = self.determine_severity(&context, &value_type);
-                                
+
                                 magic_values.push(MagicValue {
                                     value: text.to_string(),
                                     value_type,
@@ -351,61 +372,69 @@ impl MagicValuesDetector {
                 }
             }
         }
-        
+
         Ok(magic_values)
     }
-    
+
     /// Analyze literals in Python/JavaScript/TypeScript using similar approach
-    async fn analyze_generic_literals(&self, parsed_file: &ParsedFile) -> Result<Vec<MagicValue>, AnalysisError> {
+    async fn analyze_generic_literals(
+        &self,
+        parsed_file: &ParsedFile,
+    ) -> Result<Vec<MagicValue>, AnalysisError> {
         let mut magic_values = Vec::new();
-        
+
         if let Some(tree) = &parsed_file.tree {
             let source = parsed_file.source.as_bytes();
-            
+
             // Generic query that works for Python/JS/TS
             let query_str = match parsed_file.language {
-                SourceLanguage::Python => r#"
+                SourceLanguage::Python => {
+                    r#"
                     (integer) @number
                     (float) @number
                     (string) @string
-                "#,
-                SourceLanguage::JavaScript | SourceLanguage::TypeScript => r#"
+                "#
+                }
+                SourceLanguage::JavaScript | SourceLanguage::TypeScript => {
+                    r#"
                     (number) @number
                     (string) @string
-                "#,
+                "#
+                }
                 _ => return Ok(magic_values), // Skip unsupported languages
             };
-            
-            let query = Query::new(&tree.language(), query_str)
-                .map_err(|e| AnalysisError::tree_sitter_parse_error(
+
+            let query = Query::new(&tree.language(), query_str).map_err(|e| {
+                AnalysisError::tree_sitter_parse_error(
                     parsed_file.file_path.to_string_lossy().to_string(),
                     "generic",
                     0,
-                    format!("Query creation failed: {}", e)
-                ))?;
-                
+                    format!("Query creation failed: {}", e),
+                )
+            })?;
+
             let mut cursor = QueryCursor::new();
             let mut captures = cursor.matches(&query, tree.root_node(), source);
-            
+
             while let Some(match_) = captures.next() {
                 for capture in match_.captures {
                     let node = capture.node;
                     let text = node.utf8_text(source).unwrap_or("");
                     let context = self.determine_context(&node, source);
-                    
+
                     let start_position = node.start_position();
                     let line = start_position.row as u32 + 1;
                     let column = start_position.column as u32;
-                    
+
                     let capture_name = query.capture_names()[capture.index as usize];
-                    
+
                     match capture_name {
                         "number" => {
                             if let Ok(int_val) = text.parse::<i64>() {
                                 if !self.is_integer_allowed(int_val, &context) {
                                     let value_type = MagicValueType::Integer(int_val);
                                     let severity = self.determine_severity(&context, &value_type);
-                                    
+
                                     magic_values.push(MagicValue {
                                         value: text.to_string(),
                                         value_type,
@@ -419,7 +448,7 @@ impl MagicValuesDetector {
                                 if !self.is_float_allowed(text, float_val, &context) {
                                     let value_type = MagicValueType::Float(float_val);
                                     let severity = self.determine_severity(&context, &value_type);
-                                    
+
                                     magic_values.push(MagicValue {
                                         value: text.to_string(),
                                         value_type,
@@ -432,11 +461,12 @@ impl MagicValuesDetector {
                             }
                         }
                         "string" => {
-                            let string_content = text.trim_matches('"').trim_matches('\'').trim_matches('`');
+                            let string_content =
+                                text.trim_matches('"').trim_matches('\'').trim_matches('`');
                             if !self.is_string_allowed(string_content, &context) {
                                 let value_type = MagicValueType::String(string_content.to_string());
                                 let severity = self.determine_severity(&context, &value_type);
-                                
+
                                 magic_values.push(MagicValue {
                                     value: text.to_string(),
                                     value_type,
@@ -452,10 +482,10 @@ impl MagicValuesDetector {
                 }
             }
         }
-        
+
         Ok(magic_values)
     }
-    
+
     /// Convert MagicValue to ArchitecturalIssue
     fn magic_value_to_issue(&self, magic_value: MagicValue, file_path: &str) -> ArchitecturalIssue {
         let context_desc = match magic_value.context {
@@ -468,13 +498,13 @@ impl MagicValuesDetector {
             MagicValueContext::FieldInitialization => "used in field initialization",
             MagicValueContext::Other => "found in code",
         };
-        
+
         let severity_level = match magic_value.severity {
             MagicValueSeverity::High => "high",
-            MagicValueSeverity::Medium => "medium", 
+            MagicValueSeverity::Medium => "medium",
             MagicValueSeverity::Low => "low",
         };
-        
+
         let suggestion = match magic_value.value_type {
             MagicValueType::Integer(_) | MagicValueType::Float(_) => {
                 "Consider extracting this magic number into a named constant with a descriptive name."
@@ -486,7 +516,7 @@ impl MagicValuesDetector {
                 "Consider using a more descriptive boolean constant or enum value."
             }
         };
-        
+
         ArchitecturalIssue {
             anti_pattern_type_id: 9, // Updated to use correct ID
             file_path: file_path.to_string(),
@@ -508,37 +538,49 @@ impl AnalysisDetector for MagicValuesDetector {
         &self,
         parsed_file: &ParsedFile,
     ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
-        debug!("Analyzing file for magic values: {}", parsed_file.file_path.display());
-        
+        debug!(
+            "Analyzing file for magic values: {}",
+            parsed_file.file_path.display()
+        );
+
         let magic_values = match parsed_file.language {
             SourceLanguage::Rust => self.analyze_rust_literals(parsed_file).await?,
             SourceLanguage::Python | SourceLanguage::JavaScript | SourceLanguage::TypeScript => {
                 self.analyze_generic_literals(parsed_file).await?
             }
             _ => {
-                debug!("Unsupported language for magic value detection: {:?}", parsed_file.language);
+                debug!(
+                    "Unsupported language for magic value detection: {:?}",
+                    parsed_file.language
+                );
                 return Ok(vec![]);
             }
         };
-        
+
         let issues: Vec<ArchitecturalIssue> = magic_values
             .into_iter()
             .map(|mv| self.magic_value_to_issue(mv, &parsed_file.file_path.to_string_lossy()))
             .collect();
-            
-        debug!("Found {} magic values in {}", issues.len(), parsed_file.file_path.display());
+
+        debug!(
+            "Found {} magic values in {}",
+            issues.len(),
+            parsed_file.file_path.display()
+        );
         Ok(issues)
     }
-    
+
     fn get_detector_name(&self) -> &'static str {
         "MagicValuesDetector"
     }
-    
+
     fn get_anti_pattern_types(&self) -> Vec<AntiPatternType> {
         vec![AntiPatternType {
             anti_pattern_type_id: Some(9), // Updated to use correct ID
             name: "Magic Values".to_string(),
-            description: "Hard-coded numeric or string literals that should be replaced with named constants".to_string(),
+            description:
+                "Hard-coded numeric or string literals that should be replaced with named constants"
+                    .to_string(),
             category: "maintainability".to_string(),
         }]
     }

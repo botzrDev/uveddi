@@ -24,11 +24,13 @@
 //! - `GET /app/*` - Serve SPA static assets
 //! - `GET /*` - SPA fallback for client-side routing
 
+#[cfg(feature = "security")]
+use crate::analysis::detectors::security::types::{
+    SecurityIssue, SecuritySeverity, VulnerabilityMetadata,
+};
 use crate::api::types::{ApiServer, RestApiConfig};
 use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
 use crate::database::Database;
-#[cfg(feature = "security")]
-use crate::analysis::detectors::security::types::{SecurityIssue, SecuritySeverity, VulnerabilityMetadata};
 use crate::report::interactive_models::{
     DependencyGraph, InteractiveReport, REPORT_SCHEMA_VERSION,
 };
@@ -52,7 +54,6 @@ use tower_http::{
     services::ServeDir,
     trace::TraceLayer,
 };
-
 
 /// REST API Service implementation
 #[derive(Clone)]
@@ -153,11 +154,13 @@ impl CombinedApiServer {
     pub async fn start_with_readiness(
         self,
         database: Arc<Database>,
-        ready_tx: tokio::sync::oneshot::Sender<Result<(), Box<dyn std::error::Error + Send + Sync>>>,
+        ready_tx: tokio::sync::oneshot::Sender<
+            Result<(), Box<dyn std::error::Error + Send + Sync>>,
+        >,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let service = RestApiService::new(self.config, database);
         let app = service.create_app_with_state();
-        
+
         // Bind to the port first
         let listener = match tokio::net::TcpListener::bind(format!("0.0.0.0:{}", self.port)).await {
             Ok(listener) => {
@@ -169,10 +172,13 @@ impl CombinedApiServer {
             Err(e) => {
                 let error = Box::new(e) as Box<dyn std::error::Error + Send + Sync>;
                 let _ = ready_tx.send(Err(error));
-                return Err(Box::new(std::io::Error::new(std::io::ErrorKind::AddrInUse, "Failed to bind to port")));
+                return Err(Box::new(std::io::Error::new(
+                    std::io::ErrorKind::AddrInUse,
+                    "Failed to bind to port",
+                )));
             }
         };
-        
+
         axum::serve(listener, app).await?;
         Ok(())
     }
@@ -189,7 +195,9 @@ impl ApiServer for CombinedApiServer {
     async fn start_with_readiness(
         self,
         database: Arc<Database>,
-        ready_tx: tokio::sync::oneshot::Sender<Result<(), Box<dyn std::error::Error + Send + Sync>>>,
+        ready_tx: tokio::sync::oneshot::Sender<
+            Result<(), Box<dyn std::error::Error + Send + Sync>>,
+        >,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         self.start_with_readiness(database, ready_tx).await
     }
@@ -218,7 +226,7 @@ async fn list_reports(State(state): State<Arc<AppState>>) -> Result<impl IntoRes
     match list_reports_from_database(&state.database).await {
         Ok(reports) => {
             let mut report_list = reports;
-            
+
             // Add demo report as fallback
             report_list.push(serde_json::json!({
                 "id": "demo",
@@ -229,7 +237,7 @@ async fn list_reports(State(state): State<Arc<AppState>>) -> Result<impl IntoRes
                 "issue_count": 7,
                 "is_demo": true
             }));
-            
+
             Ok(Json(serde_json::json!({
                 "reports": report_list,
                 "total": report_list.len()
@@ -247,7 +255,7 @@ async fn list_reports(State(state): State<Arc<AppState>>) -> Result<impl IntoRes
                 "issue_count": 7,
                 "is_demo": true
             })];
-            
+
             Ok(Json(serde_json::json!({
                 "reports": reports,
                 "total": reports.len()
@@ -635,20 +643,26 @@ fn create_demo_report() -> InteractiveReport {
 #[cfg(feature = "security")]
 fn create_demo_security_analysis() -> crate::report::interactive_models::SecurityAnalysis {
     use crate::report::interactive_models::*;
-    
+
     let mut owasp_coverage = std::collections::HashMap::new();
-    owasp_coverage.insert("A01_Broken_Access_Control".to_string(), OwaspCategoryStats {
-        issues_found: 2,
-        coverage_percentage: 85.0,
-        avg_confidence: 0.75,
-        severity_distribution: std::collections::HashMap::new(),
-    });
-    owasp_coverage.insert("A03_Injection".to_string(), OwaspCategoryStats {
-        issues_found: 1,
-        coverage_percentage: 90.0,
-        avg_confidence: 0.92,
-        severity_distribution: std::collections::HashMap::new(),
-    });
+    owasp_coverage.insert(
+        "A01_Broken_Access_Control".to_string(),
+        OwaspCategoryStats {
+            issues_found: 2,
+            coverage_percentage: 85.0,
+            avg_confidence: 0.75,
+            severity_distribution: std::collections::HashMap::new(),
+        },
+    );
+    owasp_coverage.insert(
+        "A03_Injection".to_string(),
+        OwaspCategoryStats {
+            issues_found: 1,
+            coverage_percentage: 90.0,
+            avg_confidence: 0.92,
+            severity_distribution: std::collections::HashMap::new(),
+        },
+    );
 
     SecurityAnalysis {
         summary: SecuritySummary {
@@ -854,29 +868,42 @@ async fn get_security_issues(
                 if let Some(run_id) = run.run_id {
                     match state.database.get_security_issues_for_run(run_id).await {
                         Ok(security_issues) => {
-                            let response_issues: Vec<SecurityIssueResponse> = security_issues.iter().map(|issue| {
-                                SecurityIssueResponse {
-                                    id: format!("sec_{}", issue.id.as_ref().unwrap_or(&"unknown".to_string())),
-                                    issue_type: issue.issue_type.to_string(),
-                                    severity: issue.severity.to_string(),
-                                    confidence_score: issue.confidence_score,
-                                    location: LocationResponse {
-                                        file: issue.location.file_path.to_string_lossy().to_string(),
-                                        start_line: issue.location.start_line,
-                                        end_line: issue.location.end_line,
-                                        start_column: issue.location.start_column,
-                                        end_column: issue.location.end_column,
-                                    },
-                                    description: issue.description.clone(),
-                                    remediation: issue.remediation.clone().unwrap_or_default(),
-                                    owasp_category: issue.issue_type.owasp_category().map(|s| s.to_string()),
-                                    cwe_id: issue.metadata.cwe_id.clone(),
-                                    cvss_score: issue.metadata.cvss_score,
-                                    references: issue.metadata.references.clone(),
-                                    taint_flows: None, // TODO: Implement taint flow conversion
-                                }
-                            }).collect();
-                            
+                            let response_issues: Vec<SecurityIssueResponse> = security_issues
+                                .iter()
+                                .map(|issue| {
+                                    SecurityIssueResponse {
+                                        id: format!(
+                                            "sec_{}",
+                                            issue.id.as_ref().unwrap_or(&"unknown".to_string())
+                                        ),
+                                        issue_type: issue.issue_type.to_string(),
+                                        severity: issue.severity.to_string(),
+                                        confidence_score: issue.confidence_score,
+                                        location: LocationResponse {
+                                            file: issue
+                                                .location
+                                                .file_path
+                                                .to_string_lossy()
+                                                .to_string(),
+                                            start_line: issue.location.start_line,
+                                            end_line: issue.location.end_line,
+                                            start_column: issue.location.start_column,
+                                            end_column: issue.location.end_column,
+                                        },
+                                        description: issue.description.clone(),
+                                        remediation: issue.remediation.clone().unwrap_or_default(),
+                                        owasp_category: issue
+                                            .issue_type
+                                            .owasp_category()
+                                            .map(|s| s.to_string()),
+                                        cwe_id: issue.metadata.cwe_id.clone(),
+                                        cvss_score: issue.metadata.cvss_score,
+                                        references: issue.metadata.references.clone(),
+                                        taint_flows: None, // TODO: Implement taint flow conversion
+                                    }
+                                })
+                                .collect();
+
                             return Ok(Json(response_issues));
                         }
                         Err(e) => {
@@ -896,45 +923,43 @@ async fn get_security_issues(
             }
         }
     }
-    
+
     // Fallback to demo data if database query fails or security feature disabled
-    let demo_issues = vec![
-        SecurityIssueResponse {
-            id: "sec_001".to_string(),
-            issue_type: "Injection".to_string(),
-            severity: "Critical".to_string(),
-            confidence_score: 0.95,
-            location: LocationResponse {
-                file: "src/auth.py".to_string(),
-                start_line: 42,
-                end_line: 42,
-                start_column: Some(15),
-                end_column: Some(35),
-            },
-            description: "SQL injection vulnerability detected in user authentication".to_string(),
-            remediation: "Use parameterized queries to prevent SQL injection".to_string(),
-            owasp_category: Some("A03_Injection".to_string()),
-            cwe_id: Some("CWE-89".to_string()),
-            cvss_score: Some(9.8),
-            references: vec!["https://owasp.org/www-project-top-ten/2017/A1_2017-Injection".to_string()],
-            taint_flows: Some(vec![
-                TaintFlowResponse {
-                    source: FlowNodeResponse {
-                        name: "user_input".to_string(),
-                        location: "src/auth.py:35".to_string(),
-                        node_type: "UserInput".to_string(),
-                    },
-                    sink: FlowNodeResponse {
-                        name: "sql_execute".to_string(),
-                        location: "src/auth.py:42".to_string(),
-                        node_type: "SqlQuery".to_string(),
-                    },
-                    confidence: 0.95,
-                    sanitizers: vec![],
-                }
-            ]),
+    let demo_issues = vec![SecurityIssueResponse {
+        id: "sec_001".to_string(),
+        issue_type: "Injection".to_string(),
+        severity: "Critical".to_string(),
+        confidence_score: 0.95,
+        location: LocationResponse {
+            file: "src/auth.py".to_string(),
+            start_line: 42,
+            end_line: 42,
+            start_column: Some(15),
+            end_column: Some(35),
         },
-    ];
+        description: "SQL injection vulnerability detected in user authentication".to_string(),
+        remediation: "Use parameterized queries to prevent SQL injection".to_string(),
+        owasp_category: Some("A03_Injection".to_string()),
+        cwe_id: Some("CWE-89".to_string()),
+        cvss_score: Some(9.8),
+        references: vec![
+            "https://owasp.org/www-project-top-ten/2017/A1_2017-Injection".to_string(),
+        ],
+        taint_flows: Some(vec![TaintFlowResponse {
+            source: FlowNodeResponse {
+                name: "user_input".to_string(),
+                location: "src/auth.py:35".to_string(),
+                node_type: "UserInput".to_string(),
+            },
+            sink: FlowNodeResponse {
+                name: "sql_execute".to_string(),
+                location: "src/auth.py:42".to_string(),
+                node_type: "SqlQuery".to_string(),
+            },
+            confidence: 0.95,
+            sanitizers: vec![],
+        }]),
+    }];
 
     Ok(Json(demo_issues))
 }
@@ -963,23 +988,23 @@ async fn get_security_issue(
             owasp_category: Some("A03_Injection".to_string()),
             cwe_id: Some("CWE-89".to_string()),
             cvss_score: Some(9.8),
-            references: vec!["https://owasp.org/www-project-top-ten/2017/A1_2017-Injection".to_string()],
-            taint_flows: Some(vec![
-                TaintFlowResponse {
-                    source: FlowNodeResponse {
-                        name: "user_input".to_string(),
-                        location: "src/auth.py:35".to_string(),
-                        node_type: "UserInput".to_string(),
-                    },
-                    sink: FlowNodeResponse {
-                        name: "sql_execute".to_string(),
-                        location: "src/auth.py:42".to_string(),
-                        node_type: "SqlQuery".to_string(),
-                    },
-                    confidence: 0.95,
-                    sanitizers: vec![],
-                }
-            ]),
+            references: vec![
+                "https://owasp.org/www-project-top-ten/2017/A1_2017-Injection".to_string(),
+            ],
+            taint_flows: Some(vec![TaintFlowResponse {
+                source: FlowNodeResponse {
+                    name: "user_input".to_string(),
+                    location: "src/auth.py:35".to_string(),
+                    node_type: "UserInput".to_string(),
+                },
+                sink: FlowNodeResponse {
+                    name: "sql_execute".to_string(),
+                    location: "src/auth.py:42".to_string(),
+                    node_type: "SqlQuery".to_string(),
+                },
+                confidence: 0.95,
+                sanitizers: vec![],
+            }]),
         };
         Ok(Json(issue))
     } else {
@@ -992,21 +1017,30 @@ async fn get_security_summary(
     State(state): State<Arc<AppState>>,
 ) -> Result<impl IntoResponse, StatusCode> {
     let mut owasp_coverage = HashMap::new();
-    owasp_coverage.insert("A01_Broken_Access_Control".to_string(), OwaspCategoryStats {
-        issues_found: 5,
-        coverage_percentage: 90.0,
-        avg_confidence: 0.85,
-    });
-    owasp_coverage.insert("A02_Cryptographic_Failures".to_string(), OwaspCategoryStats {
-        issues_found: 2,
-        coverage_percentage: 70.0,
-        avg_confidence: 0.95,
-    });
-    owasp_coverage.insert("A03_Injection".to_string(), OwaspCategoryStats {
-        issues_found: 8,
-        coverage_percentage: 95.0,
-        avg_confidence: 0.90,
-    });
+    owasp_coverage.insert(
+        "A01_Broken_Access_Control".to_string(),
+        OwaspCategoryStats {
+            issues_found: 5,
+            coverage_percentage: 90.0,
+            avg_confidence: 0.85,
+        },
+    );
+    owasp_coverage.insert(
+        "A02_Cryptographic_Failures".to_string(),
+        OwaspCategoryStats {
+            issues_found: 2,
+            coverage_percentage: 70.0,
+            avg_confidence: 0.95,
+        },
+    );
+    owasp_coverage.insert(
+        "A03_Injection".to_string(),
+        OwaspCategoryStats {
+            issues_found: 8,
+            coverage_percentage: 95.0,
+            avg_confidence: 0.90,
+        },
+    );
 
     let mut confidence_distribution = HashMap::new();
     confidence_distribution.insert("high".to_string(), 25);
@@ -1048,31 +1082,46 @@ async fn get_owasp_coverage(
     State(state): State<Arc<AppState>>,
 ) -> Result<impl IntoResponse, StatusCode> {
     let mut coverage = HashMap::new();
-    coverage.insert("A01_Broken_Access_Control".to_string(), OwaspCategoryStats {
-        issues_found: 5,
-        coverage_percentage: 90.0,
-        avg_confidence: 0.85,
-    });
-    coverage.insert("A02_Cryptographic_Failures".to_string(), OwaspCategoryStats {
-        issues_found: 2,
-        coverage_percentage: 70.0,
-        avg_confidence: 0.95,
-    });
-    coverage.insert("A03_Injection".to_string(), OwaspCategoryStats {
-        issues_found: 8,
-        coverage_percentage: 95.0,
-        avg_confidence: 0.90,
-    });
-    coverage.insert("A04_Insecure_Design".to_string(), OwaspCategoryStats {
-        issues_found: 1,
-        coverage_percentage: 60.0,
-        avg_confidence: 0.75,
-    });
-    coverage.insert("A05_Security_Misconfiguration".to_string(), OwaspCategoryStats {
-        issues_found: 7,
-        coverage_percentage: 85.0,
-        avg_confidence: 0.80,
-    });
+    coverage.insert(
+        "A01_Broken_Access_Control".to_string(),
+        OwaspCategoryStats {
+            issues_found: 5,
+            coverage_percentage: 90.0,
+            avg_confidence: 0.85,
+        },
+    );
+    coverage.insert(
+        "A02_Cryptographic_Failures".to_string(),
+        OwaspCategoryStats {
+            issues_found: 2,
+            coverage_percentage: 70.0,
+            avg_confidence: 0.95,
+        },
+    );
+    coverage.insert(
+        "A03_Injection".to_string(),
+        OwaspCategoryStats {
+            issues_found: 8,
+            coverage_percentage: 95.0,
+            avg_confidence: 0.90,
+        },
+    );
+    coverage.insert(
+        "A04_Insecure_Design".to_string(),
+        OwaspCategoryStats {
+            issues_found: 1,
+            coverage_percentage: 60.0,
+            avg_confidence: 0.75,
+        },
+    );
+    coverage.insert(
+        "A05_Security_Misconfiguration".to_string(),
+        OwaspCategoryStats {
+            issues_found: 7,
+            coverage_percentage: 85.0,
+            avg_confidence: 0.80,
+        },
+    );
 
     Ok(Json(coverage))
 }
@@ -1116,9 +1165,7 @@ async fn get_taint_flows(
 }
 
 /// Export security findings in SARIF format
-async fn export_sarif(
-    State(state): State<Arc<AppState>>,
-) -> Result<impl IntoResponse, StatusCode> {
+async fn export_sarif(State(state): State<Arc<AppState>>) -> Result<impl IntoResponse, StatusCode> {
     // SARIF 2.1.0 format implementation
     let sarif_report = serde_json::json!({
         "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
@@ -1184,13 +1231,15 @@ async fn export_sarif(
 
     let mut headers = HeaderMap::new();
     headers.insert(
-        header::CONTENT_TYPE, 
-        "application/json".parse()
-            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+        header::CONTENT_TYPE,
+        "application/json"
+            .parse()
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?,
     );
     headers.insert(
         header::CONTENT_DISPOSITION,
-        "attachment; filename=\"security-analysis.sarif\"".parse()
+        "attachment; filename=\"security-analysis.sarif\""
+            .parse()
             .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?,
     );
 
@@ -1202,29 +1251,30 @@ async fn load_report_from_database(
     database: &Database,
     run_id: i64,
 ) -> Result<InteractiveReport, Box<dyn std::error::Error + Send + Sync>> {
-    use crate::database::models::{AnalysisRun, ArchitecturalIssue, AntiPatternType, Dependency};
+    use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue, Dependency};
     use crate::report::data_transformer::DataTransformer;
-    
+
     // Get analysis run
-    let analysis_run = database.get_analysis_run(run_id).await?
+    let analysis_run = database
+        .get_analysis_run(run_id)
+        .await?
         .ok_or("Analysis run not found")?;
-    
+
     // Get all issues for this run
     let issues = database.get_issues_for_run(run_id).await?;
-    
+
     // Get anti-pattern types
     let anti_pattern_types = database.get_all_anti_pattern_types()?;
-    
+
     // Build HashMap for anti-pattern types
-    let anti_pattern_map: std::collections::HashMap<i64, AntiPatternType> = 
-        anti_pattern_types
-            .into_iter()
-            .filter_map(|apt| apt.anti_pattern_type_id.map(|id| (id, apt)))
-            .collect();
-    
+    let anti_pattern_map: std::collections::HashMap<i64, AntiPatternType> = anti_pattern_types
+        .into_iter()
+        .filter_map(|apt| apt.anti_pattern_type_id.map(|id| (id, apt)))
+        .collect();
+
     // Get dependencies for this run
     let dependencies = database.get_dependencies_for_run(run_id).await?;
-    
+
     // Use the DataTransformer to create properly formatted report
     let mut report = DataTransformer::transform_to_interactive_report(
         &analysis_run,
@@ -1233,7 +1283,7 @@ async fn load_report_from_database(
         format!("Project {}", analysis_run.project_id),
         ".".to_string(), // TODO: Get actual project path from analysis run
     );
-    
+
     // Add security analysis if available
     #[cfg(feature = "security")]
     {
@@ -1241,7 +1291,7 @@ async fn load_report_from_database(
             report.security_analysis = Some(create_security_analysis_from_issues(&security_issues));
         }
     }
-    
+
     Ok(report)
 }
 
@@ -1250,39 +1300,42 @@ async fn list_reports_from_database(
     database: &Database,
 ) -> Result<Vec<serde_json::Value>, Box<dyn std::error::Error + Send + Sync>> {
     let runs = database.get_recent_analysis_runs(10).await?;
-    
-    let reports = runs.into_iter().map(|run| {
-        serde_json::json!({
-            "id": run.run_id.unwrap_or(0).to_string(),
-            "title": format!("Analysis Run {}", run.run_id.unwrap_or(0)),
-            "created_at": run.start_time,
-            "project_name": format!("Project {}", run.project_id),
-            "file_count": run.total_files_analyzed.unwrap_or(0),
-            "issue_count": run.total_issues_found.unwrap_or(0),
-            "status": run.status
+
+    let reports = runs
+        .into_iter()
+        .map(|run| {
+            serde_json::json!({
+                "id": run.run_id.unwrap_or(0).to_string(),
+                "title": format!("Analysis Run {}", run.run_id.unwrap_or(0)),
+                "created_at": run.start_time,
+                "project_name": format!("Project {}", run.project_id),
+                "file_count": run.total_files_analyzed.unwrap_or(0),
+                "issue_count": run.total_issues_found.unwrap_or(0),
+                "status": run.status
+            })
         })
-    }).collect();
-    
+        .collect();
+
     Ok(reports)
 }
 
 /// Create security analysis from security issues
 #[cfg(feature = "security")]
 fn create_security_analysis_from_issues(
-    security_issues: &[crate::analysis::detectors::security::types::SecurityIssue]
+    security_issues: &[crate::analysis::detectors::security::types::SecurityIssue],
 ) -> crate::report::interactive_models::SecurityAnalysis {
     use crate::report::interactive_models::*;
-    
+
     let total_issues = security_issues.len() as u32;
     let mut critical_count = 0;
     let mut high_count = 0;
     let mut medium_count = 0;
     let mut low_count = 0;
-    
+
     let mut owasp_coverage = std::collections::HashMap::new();
     let mut confidence_distribution = std::collections::HashMap::new();
     let mut issue_type_stats = std::collections::HashMap::new();
-    
+
     for issue in security_issues {
         // Count by severity
         match issue.severity.to_string().as_str() {
@@ -1290,56 +1343,82 @@ fn create_security_analysis_from_issues(
             "High" => high_count += 1,
             "Medium" => medium_count += 1,
             "Low" => low_count += 1,
-            _ => {},
+            _ => {}
         }
-        
+
         // Update OWASP coverage
         if let Some(owasp_cat) = issue.issue_type.owasp_category() {
-            let stats = owasp_coverage.entry(owasp_cat.to_string()).or_insert(OwaspCategoryStats {
-                issues_found: 0,
-                coverage_percentage: 0.0,
-                avg_confidence: 0.0,
-                severity_distribution: std::collections::HashMap::new(),
-            });
+            let stats = owasp_coverage
+                .entry(owasp_cat.to_string())
+                .or_insert(OwaspCategoryStats {
+                    issues_found: 0,
+                    coverage_percentage: 0.0,
+                    avg_confidence: 0.0,
+                    severity_distribution: std::collections::HashMap::new(),
+                });
             stats.issues_found += 1;
-            *stats.severity_distribution.entry(issue.severity.to_string()).or_insert(0) += 1;
+            *stats
+                .severity_distribution
+                .entry(issue.severity.to_string())
+                .or_insert(0) += 1;
         }
-        
+
         // Update confidence distribution
-        let confidence_tier = if issue.confidence_score >= 0.8 { "High" }
-                             else if issue.confidence_score >= 0.6 { "Medium" }
-                             else { "Low" };
-        *confidence_distribution.entry(confidence_tier.to_string()).or_insert(0) += 1;
-        
+        let confidence_tier = if issue.confidence_score >= 0.8 {
+            "High"
+        } else if issue.confidence_score >= 0.6 {
+            "Medium"
+        } else {
+            "Low"
+        };
+        *confidence_distribution
+            .entry(confidence_tier.to_string())
+            .or_insert(0) += 1;
+
         // Update issue type stats
-        let type_stats = issue_type_stats.entry(issue.issue_type.to_string()).or_insert((0u32, issue.severity.to_string(), 0.0));
+        let type_stats = issue_type_stats
+            .entry(issue.issue_type.to_string())
+            .or_insert((0u32, issue.severity.to_string(), 0.0));
         type_stats.0 += 1;
         type_stats.2 += issue.confidence_score;
     }
-    
+
     // Calculate OWASP coverage percentages
     for stats in owasp_coverage.values_mut() {
         stats.avg_confidence = if stats.issues_found > 0 {
             // This would need to be calculated from actual confidence scores
             0.75 // Placeholder
-        } else { 0.0 };
+        } else {
+            0.0
+        };
         stats.coverage_percentage = if total_issues > 0 {
             (stats.issues_found as f64 / total_issues as f64) * 100.0
-        } else { 0.0 };
+        } else {
+            0.0
+        };
     }
-    
-    let most_common_issues = issue_type_stats.into_iter()
-        .map(|(issue_type, (count, severity, total_confidence))| IssueTypeStats {
-            issue_type,
-            count,
-            avg_severity: severity,
-            avg_confidence: total_confidence / count as f64,
-        })
+
+    let most_common_issues = issue_type_stats
+        .into_iter()
+        .map(
+            |(issue_type, (count, severity, total_confidence))| IssueTypeStats {
+                issue_type,
+                count,
+                avg_severity: severity,
+                avg_confidence: total_confidence / count as f64,
+            },
+        )
         .collect();
-    
-    let security_score = if total_issues == 0 { 100.0 }
-                        else { std::cmp::max(0, 100 - (critical_count * 25 + high_count * 15 + medium_count * 5 + low_count * 1)) as f64 };
-    
+
+    let security_score = if total_issues == 0 {
+        100.0
+    } else {
+        std::cmp::max(
+            0,
+            100 - (critical_count * 25 + high_count * 15 + medium_count * 5 + low_count * 1),
+        ) as f64
+    };
+
     SecurityAnalysis {
         summary: SecuritySummary {
             total_issues,
@@ -1352,30 +1431,36 @@ fn create_security_analysis_from_issues(
             security_score,
         },
         owasp_coverage,
-        issues: security_issues.iter().map(|issue| crate::report::interactive_models::SecurityIssue {
-            id: format!("sec-{}", issue.id.as_ref().unwrap_or(&"unknown".to_string())),
-            issue_type: issue.issue_type.to_string(),
-            severity: issue.severity.to_string(),
-            confidence_score: issue.confidence_score,
-            location: crate::report::interactive_models::SecurityLocation {
-                file: issue.location.file_path.to_string_lossy().to_string(),
-                start_line: issue.location.start_line as u32,
-                end_line: issue.location.end_line as u32,
-                start_column: issue.location.start_column.map(|c| c as u32),
-                end_column: issue.location.end_column.map(|c| c as u32),
-                code_snippet: None, // TODO: Extract code snippet from file
-            },
-            description: issue.description.clone(),
-            remediation: issue.remediation.clone().unwrap_or_default(),
-            owasp_category: issue.issue_type.owasp_category().map(|s| s.to_string()),
-            cwe_id: issue.metadata.cwe_id.clone(),
-            cvss_score: issue.metadata.cvss_score,
-            references: issue.metadata.references.clone(),
-            related_taint_flows: vec![], // TODO: Implement taint flow tracking
-            attack_vector: None, // TODO: Extract from metadata
-        }).collect(),
-        taint_flows: vec![], // TODO: Implement taint flow analysis
+        issues: security_issues
+            .iter()
+            .map(|issue| crate::report::interactive_models::SecurityIssue {
+                id: format!(
+                    "sec-{}",
+                    issue.id.as_ref().unwrap_or(&"unknown".to_string())
+                ),
+                issue_type: issue.issue_type.to_string(),
+                severity: issue.severity.to_string(),
+                confidence_score: issue.confidence_score,
+                location: crate::report::interactive_models::SecurityLocation {
+                    file: issue.location.file_path.to_string_lossy().to_string(),
+                    start_line: issue.location.start_line as u32,
+                    end_line: issue.location.end_line as u32,
+                    start_column: issue.location.start_column.map(|c| c as u32),
+                    end_column: issue.location.end_column.map(|c| c as u32),
+                    code_snippet: None, // TODO: Extract code snippet from file
+                },
+                description: issue.description.clone(),
+                remediation: issue.remediation.clone().unwrap_or_default(),
+                owasp_category: issue.issue_type.owasp_category().map(|s| s.to_string()),
+                cwe_id: issue.metadata.cwe_id.clone(),
+                cvss_score: issue.metadata.cvss_score,
+                references: issue.metadata.references.clone(),
+                related_taint_flows: vec![], // TODO: Implement taint flow tracking
+                attack_vector: None,         // TODO: Extract from metadata
+            })
+            .collect(),
+        taint_flows: vec![],  // TODO: Implement taint flow analysis
         correlations: vec![], // TODO: Implement correlation analysis
-        compliance: None, // TODO: Implement compliance checking
+        compliance: None,     // TODO: Implement compliance checking
     }
 }

@@ -10,9 +10,15 @@ mod tests {
     fn test_io_error_conversion() {
         let io_error = io::Error::new(io::ErrorKind::NotFound, "File not found");
         let uveddi_error: UveddiError = io_error.into();
-        
+
         match uveddi_error {
-            UveddiError::IoError { operation, path, message, suggestion, .. } => {
+            UveddiError::IoError {
+                operation,
+                path,
+                message,
+                suggestion,
+                ..
+            } => {
                 assert_eq!(operation, "file operation");
                 assert_eq!(path, "unknown path");
                 assert!(message.contains("not found"));
@@ -26,9 +32,15 @@ mod tests {
     fn test_io_error_with_context() {
         let io_error = io::Error::new(io::ErrorKind::PermissionDenied, "Access denied");
         let uveddi_error = UveddiError::io_error("read", "/etc/passwd", io_error);
-        
+
         match uveddi_error {
-            UveddiError::IoError { operation, path, message, suggestion, .. } => {
+            UveddiError::IoError {
+                operation,
+                path,
+                message,
+                suggestion,
+                ..
+            } => {
                 assert_eq!(operation, "read");
                 assert_eq!(path, "/etc/passwd");
                 assert!(message.contains("denied"));
@@ -42,9 +54,15 @@ mod tests {
     fn test_database_error_conversion() {
         // Test database error message creation
         let error = UveddiError::database_error_msg("Connection timeout");
-        
+
         match error {
-            UveddiError::DatabaseError { operation, database, message, recovery_hint, .. } => {
+            UveddiError::DatabaseError {
+                operation,
+                database,
+                message,
+                recovery_hint,
+                ..
+            } => {
                 assert_eq!(operation, "database operation");
                 assert_eq!(database, "sqlite");
                 assert_eq!(message, "Connection timeout");
@@ -63,11 +81,18 @@ mod tests {
             "main.rs",
             42,
             "Failed to parse syntax",
-            "parsing Rust code"
+            "parsing Rust code",
         );
-        
+
         match error {
-            UveddiError::AnalysisError { file, line, message, context, suggestion, .. } => {
+            UveddiError::AnalysisError {
+                file,
+                line,
+                message,
+                context,
+                suggestion,
+                ..
+            } => {
                 assert_eq!(file, "main.rs");
                 assert_eq!(line, 42);
                 assert_eq!(message, "Failed to parse syntax");
@@ -82,11 +107,15 @@ mod tests {
     fn test_config_error_suggestions() {
         let error = UveddiError::config_error(
             "Ollama endpoint not reachable",
-            "~/.config/uveddi/config.toml"
+            "~/.config/uveddi/config.toml",
         );
-        
+
         match error {
-            UveddiError::ConfigError { message, location, suggestion } => {
+            UveddiError::ConfigError {
+                message,
+                location,
+                suggestion,
+            } => {
                 assert!(message.contains("Ollama"));
                 assert_eq!(location, "~/.config/uveddi/config.toml");
                 assert!(suggestion.contains("localhost:11434"));
@@ -102,7 +131,7 @@ mod tests {
             reason: "Directory does not exist".to_string(),
             suggestion: "Create the directory or check the path".to_string(),
         };
-        
+
         assert_eq!(error.severity(), ErrorSeverity::Low);
         assert_eq!(error.category(), ErrorCategory::Path);
     }
@@ -148,9 +177,15 @@ mod tests {
         let json_str = r#"{"invalid": json"#;
         let json_error = serde_json::from_str::<serde_json::Value>(json_str).unwrap_err();
         let uveddi_error: UveddiError = json_error.into();
-        
+
         match uveddi_error {
-            UveddiError::SerializationError { operation, data_type, message, suggestion, .. } => {
+            UveddiError::SerializationError {
+                operation,
+                data_type,
+                message,
+                suggestion,
+                ..
+            } => {
                 assert_eq!(operation, "JSON operation");
                 assert_eq!(data_type, "unknown");
                 // JSON error messages vary by version, just check it's not empty
@@ -166,9 +201,14 @@ mod tests {
         // Use lowercase "database" to match the detection logic
         let anyhow_error = anyhow::anyhow!("database schema migration failed");
         let uveddi_error: UveddiError = anyhow_error.into();
-        
+
         match uveddi_error {
-            UveddiError::GenericError { message, context, suggestion, .. } => {
+            UveddiError::GenericError {
+                message,
+                context,
+                suggestion,
+                ..
+            } => {
                 assert!(message.contains("database"));
                 // The context detection logic looks for lowercase "database" in the error message
                 assert_eq!(context, "database operation");
@@ -184,7 +224,7 @@ mod tests {
             size: 10_000_000,
             max_size: 1_000_000,
         };
-        
+
         let error_msg = error.to_string();
         assert!(error_msg.contains("10000000 bytes"));
         assert!(error_msg.contains("max: 1000000"));
@@ -194,7 +234,7 @@ mod tests {
     fn test_extraction_error() {
         let io_error = io::Error::new(io::ErrorKind::NotFound, "File not found");
         let extraction_error = ExtractionError::FileReadError(io_error);
-        
+
         let error_msg = extraction_error.to_string();
         assert!(error_msg.contains("File read error"));
     }
@@ -204,7 +244,7 @@ mod tests {
         fn sample_function() -> Result<String> {
             Ok("Success".to_string())
         }
-        
+
         let result = sample_function();
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), "Success");
@@ -219,17 +259,17 @@ mod tests {
                 Ok(42)
             }
         }
-        
+
         fn caller(should_fail: bool) -> Result<String> {
             let value = might_fail(should_fail)?;
             Ok(format!("Value: {}", value))
         }
-        
+
         // Test success case
         let result = caller(false);
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), "Value: 42");
-        
+
         // Test failure case
         let result = caller(true);
         assert!(result.is_err());
@@ -250,7 +290,7 @@ mod tests {
             suggestion: "".to_string(),
         };
         assert_eq!(error.severity(), ErrorSeverity::Low);
-        
+
         // Test very long error messages
         let long_message = "x".repeat(10000);
         let error = UveddiError::config_error(&long_message, "config.toml");
@@ -270,7 +310,7 @@ mod tests {
             reason: "Path traversal detected".to_string(),
             suggestion: "Use canonical paths".to_string(),
         };
-        
+
         match error {
             UveddiError::PathError { path, .. } => {
                 assert!(path.contains(".."));

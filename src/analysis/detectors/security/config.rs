@@ -14,40 +14,40 @@ use std::path::PathBuf;
 pub struct SecurityConfig {
     /// Enable taint analysis for injection detection
     pub enable_taint_analysis: bool,
-    
+
     /// Enable Software Composition Analysis (SCA) for dependency vulnerabilities
     pub enable_sca: bool,
-    
+
     /// Enable AI-powered analysis enhancement
     pub enable_ai_enhancement: bool,
-    
+
     /// Minimum confidence threshold for reporting issues (0.0 - 1.0)
     pub confidence_threshold: f64,
-    
+
     /// Maximum number of issues to report per file
     pub max_issues_per_file: usize,
-    
+
     /// Enable parallel analysis for performance
     pub enable_parallel_analysis: bool,
-    
+
     /// Multi-agent system configuration
     pub multi_agent: MultiAgentConfig,
-    
+
     /// Taint analysis specific configuration
     pub taint_analysis: TaintAnalysisConfig,
-    
+
     /// False positive mitigation configuration
     pub false_positive_mitigation: FalsePositiveConfig,
-    
+
     /// Validation engine configuration
     pub validation: ValidationConfig,
-    
+
     /// Language-specific configurations
     pub language_configs: HashMap<SourceLanguage, LanguageSecurityConfig>,
-    
+
     /// File and directory exclusion patterns
     pub exclusions: ExclusionPatterns,
-    
+
     /// Integration settings
     pub integrations: IntegrationConfig,
 }
@@ -76,7 +76,7 @@ impl SecurityConfig {
     pub fn development() -> Self {
         Self {
             enable_taint_analysis: true,
-            enable_sca: false, // Disabled for faster development cycles
+            enable_sca: false,            // Disabled for faster development cycles
             enable_ai_enhancement: false, // Disabled for faster analysis
             confidence_threshold: 0.5,
             max_issues_per_file: 20,
@@ -97,7 +97,7 @@ impl SecurityConfig {
             enable_taint_analysis: true,
             enable_sca: true,
             enable_ai_enhancement: false, // Disabled for deterministic results
-            confidence_threshold: 0.8, // Higher threshold for CI/CD
+            confidence_threshold: 0.8,    // Higher threshold for CI/CD
             max_issues_per_file: 100,
             enable_parallel_analysis: true,
             multi_agent: MultiAgentConfig::ci_cd(),
@@ -112,7 +112,7 @@ impl SecurityConfig {
 
     fn default_language_configs() -> HashMap<SourceLanguage, LanguageSecurityConfig> {
         let mut configs = HashMap::new();
-        
+
         // Rust configuration - memory safety focus
         configs.insert(
             SourceLanguage::Rust,
@@ -136,7 +136,7 @@ impl SecurityConfig {
                     "sqlx::query".to_string(),
                     "std::fs::write".to_string(),
                 ],
-            }
+            },
         );
 
         // Python configuration - injection and deserialization focus
@@ -164,7 +164,7 @@ impl SecurityConfig {
                     "subprocess.".to_string(),
                     "eval(".to_string(),
                 ],
-            }
+            },
         );
 
         // JavaScript/TypeScript configuration - web security focus
@@ -192,10 +192,13 @@ impl SecurityConfig {
                     "eval(".to_string(),
                     "setTimeout(".to_string(),
                 ],
-            }
+            },
         );
 
-        configs.insert(SourceLanguage::TypeScript, configs[&SourceLanguage::JavaScript].clone());
+        configs.insert(
+            SourceLanguage::TypeScript,
+            configs[&SourceLanguage::JavaScript].clone(),
+        );
 
         configs
     }
@@ -212,31 +215,31 @@ impl Default for SecurityConfig {
 pub struct MultiAgentConfig {
     /// Enable the orchestrator agent
     pub enable_orchestrator: bool,
-    
+
     /// Enable taint analysis agent
     pub enable_taint_agent: bool,
-    
+
     /// Enable configuration analysis agent
     pub enable_config_agent: bool,
-    
+
     /// Enable dependency analysis agent (SCA)
     pub enable_dependency_agent: bool,
-    
+
     /// Enable validation agent for cross-validation
     pub enable_validation_agent: bool,
-    
+
     /// Enable AI enhancement agent
     pub enable_ai_agent: bool,
-    
+
     /// Maximum number of concurrent agents
     pub max_concurrent_agents: usize,
-    
+
     /// Agent timeout in seconds
     pub agent_timeout_seconds: u64,
-    
+
     /// Inter-agent communication configuration
     pub communication: AgentCommunicationConfig,
-    
+
     /// Knowledge graph integration settings
     pub knowledge_graph_integration: bool,
 }
@@ -261,10 +264,10 @@ impl MultiAgentConfig {
         Self {
             enable_orchestrator: true,
             enable_taint_agent: true,
-            enable_config_agent: false, // Disabled for speed
+            enable_config_agent: false,     // Disabled for speed
             enable_dependency_agent: false, // Disabled for speed
             enable_validation_agent: false, // Disabled for speed
-            enable_ai_agent: false, // Disabled for speed
+            enable_ai_agent: false,         // Disabled for speed
             max_concurrent_agents: 2,
             agent_timeout_seconds: 60,
             communication: AgentCommunicationConfig::development(),
@@ -279,8 +282,8 @@ impl MultiAgentConfig {
             enable_config_agent: true,
             enable_dependency_agent: true,
             enable_validation_agent: true,
-            enable_ai_agent: false, // Disabled for deterministic results
-            max_concurrent_agents: 8, // Higher for CI/CD performance
+            enable_ai_agent: false,     // Disabled for deterministic results
+            max_concurrent_agents: 8,   // Higher for CI/CD performance
             agent_timeout_seconds: 600, // Longer timeout for large codebases
             communication: AgentCommunicationConfig::default(),
             knowledge_graph_integration: false, // Disabled for CI/CD speed
@@ -293,13 +296,13 @@ impl MultiAgentConfig {
 pub struct AgentCommunicationConfig {
     /// Enable message passing between agents
     pub enable_message_passing: bool,
-    
+
     /// Maximum message queue size per agent
     pub max_queue_size: usize,
-    
+
     /// Message timeout in milliseconds
     pub message_timeout_ms: u64,
-    
+
     /// Enable result sharing between agents
     pub enable_result_sharing: bool,
 }
@@ -355,28 +358,28 @@ impl AgentConfig {
 pub struct TaintAnalysisConfig {
     /// Enable inter-procedural analysis
     pub enable_interprocedural: bool,
-    
+
     /// Enable field-sensitive analysis
     pub enable_field_sensitive: bool,
-    
+
     /// Enable path-sensitive analysis
     pub enable_path_sensitive: bool,
-    
+
     /// Maximum analysis depth
     pub max_depth: usize,
-    
+
     /// Maximum number of paths to explore
     pub max_paths: usize,
-    
+
     /// Enable sanitization detection
     pub enable_sanitizer_detection: bool,
-    
+
     /// Custom taint sources (language-specific patterns will be added)
     pub custom_sources: Vec<String>,
-    
+
     /// Custom taint sinks (language-specific patterns will be added)
     pub custom_sinks: Vec<String>,
-    
+
     /// Custom sanitizers
     pub custom_sanitizers: Vec<String>,
 }
@@ -420,28 +423,28 @@ impl TaintAnalysisConfig {
 pub struct FalsePositiveConfig {
     /// Enable heuristic filtering
     pub enable_heuristic_filtering: bool,
-    
+
     /// Enable contextual filtering
     pub enable_contextual_filtering: bool,
-    
+
     /// Enable statistical frequency analysis
     pub enable_statistical_filtering: bool,
-    
+
     /// Minimum code size thresholds
     pub min_lines_threshold: usize,
     pub min_tokens_threshold: usize,
-    
+
     /// File exclusion patterns
     pub exclude_test_files: bool,
     pub exclude_generated_files: bool,
     pub exclude_third_party: bool,
-    
+
     /// Enable Bayesian optimization for adaptive tuning
     pub enable_bayesian_optimization: bool,
-    
+
     /// Suppression comment patterns
     pub suppression_comments: Vec<String>,
-    
+
     /// Context-aware rules
     pub context_rules: HashMap<String, Vec<String>>,
 }
@@ -505,19 +508,19 @@ impl FalsePositiveConfig {
 pub struct ValidationConfig {
     /// Enable cross-validation between detectors
     pub enable_cross_validation: bool,
-    
+
     /// Enable AI hallucination detection
     pub enable_hallucination_detection: bool,
-    
+
     /// Enable confidence scoring
     pub enable_confidence_scoring: bool,
-    
+
     /// Minimum number of detectors that must agree
     pub min_detector_agreement: usize,
-    
+
     /// Enable grounding with knowledge graph
     pub enable_knowledge_graph_grounding: bool,
-    
+
     /// Validation timeout in seconds
     pub validation_timeout_seconds: u64,
 }
@@ -551,19 +554,19 @@ impl ValidationConfig {
 pub struct LanguageSecurityConfig {
     /// Enable unsafe code analysis (relevant for Rust)
     pub enable_unsafe_analysis: bool,
-    
+
     /// Enable cryptographic library analysis
     pub enable_crypto_analysis: bool,
-    
+
     /// Enable deserialization vulnerability analysis
     pub enable_deserialization_analysis: bool,
-    
+
     /// Custom security patterns to detect
     pub custom_patterns: Vec<String>,
-    
+
     /// Language-specific taint sources
     pub taint_sources: Vec<String>,
-    
+
     /// Language-specific taint sinks
     pub taint_sinks: Vec<String>,
 }
@@ -573,10 +576,10 @@ pub struct LanguageSecurityConfig {
 pub struct ExclusionPatterns {
     /// File patterns to exclude
     pub file_patterns: Vec<String>,
-    
+
     /// Directory patterns to exclude
     pub directory_patterns: Vec<String>,
-    
+
     /// Language-specific exclusions
     pub language_exclusions: HashMap<SourceLanguage, Vec<String>>,
 }
@@ -647,16 +650,16 @@ impl Default for ExclusionPatterns {
 pub struct IntegrationConfig {
     /// Enable SARIF report generation
     pub enable_sarif_output: bool,
-    
+
     /// Enable integration with vulnerability databases
     pub enable_vulnerability_db: bool,
-    
+
     /// Enable CI/CD integration features
     pub enable_ci_integration: bool,
-    
+
     /// External API configurations
     pub external_apis: HashMap<String, ApiConfig>,
-    
+
     /// Webhook configurations for notifications
     pub webhooks: Vec<WebhookConfig>,
 }
@@ -761,13 +764,15 @@ mod tests {
     #[test]
     fn test_language_specific_configs() {
         let config = SecurityConfig::default();
-        
+
         // Check Rust configuration
         let rust_config = &config.language_configs[&SourceLanguage::Rust];
         assert!(rust_config.enable_unsafe_analysis);
-        assert!(rust_config.taint_sources.contains(&"std::env::args".to_string()));
-        
-        // Check Python configuration  
+        assert!(rust_config
+            .taint_sources
+            .contains(&"std::env::args".to_string()));
+
+        // Check Python configuration
         let python_config = &config.language_configs[&SourceLanguage::Python];
         assert!(!python_config.enable_unsafe_analysis);
         assert!(python_config.custom_patterns.contains(&"eval(".to_string()));

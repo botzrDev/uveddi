@@ -6,8 +6,5 @@
 pub mod orchestrator;
 
 pub use orchestrator::{
-    OrchestratorConfig, 
-    ServiceOrchestrator, 
-    start_default_services, 
-    start_development_services
+    start_default_services, start_development_services, OrchestratorConfig, ServiceOrchestrator,
 };

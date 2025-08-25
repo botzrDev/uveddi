@@ -7,8 +7,8 @@
 //! exist due to underlying design flaws.
 
 use crate::analysis::detectors::security::types::{
-    SecurityIssue, SecurityIssueType, SecurityLocation, SecuritySeverity, VulnerabilityType,
-    VulnerabilityMetadata,
+    SecurityIssue, SecurityIssueType, SecurityLocation, SecuritySeverity, VulnerabilityMetadata,
+    VulnerabilityType,
 };
 use crate::analysis::AnalysisError;
 use crate::ast::{ParsedFile, SourceLanguage};
@@ -172,10 +172,7 @@ impl OwaspTop10Detector {
             OwaspCategory::CryptographicFailures,
             Box::new(CryptographicFailuresDetector::new()),
         );
-        detectors.insert(
-            OwaspCategory::Injection,
-            Box::new(InjectionDetector::new()),
-        );
+        detectors.insert(OwaspCategory::Injection, Box::new(InjectionDetector::new()));
         detectors.insert(
             OwaspCategory::InsecureDesign,
             Box::new(InsecureDesignDetector::new()),
@@ -209,18 +206,28 @@ impl OwaspTop10Detector {
     }
 
     /// Analyze a parsed file for OWASP Top 10 vulnerabilities
-    pub async fn analyze_file(&self, file: &ParsedFile) -> Result<Vec<OwaspVulnerability>, AnalysisError> {
-        info!("Running OWASP Top 10 analysis on: {}", file.file_path.display());
+    pub async fn analyze_file(
+        &self,
+        file: &ParsedFile,
+    ) -> Result<Vec<OwaspVulnerability>, AnalysisError> {
+        info!(
+            "Running OWASP Top 10 analysis on: {}",
+            file.file_path.display()
+        );
 
         let mut all_vulnerabilities = Vec::new();
 
         // Run each category detector
         for (category, detector) in &self.detectors {
             debug!("Running {} detector", category.identifier());
-            
+
             match detector.detect(file).await {
                 Ok(mut vulnerabilities) => {
-                    info!("Found {} vulnerabilities in category {}", vulnerabilities.len(), category.identifier());
+                    info!(
+                        "Found {} vulnerabilities in category {}",
+                        vulnerabilities.len(),
+                        category.identifier()
+                    );
                     all_vulnerabilities.append(&mut vulnerabilities);
                 }
                 Err(e) => {
@@ -230,7 +237,10 @@ impl OwaspTop10Detector {
             }
         }
 
-        info!("OWASP analysis completed: {} total vulnerabilities found", all_vulnerabilities.len());
+        info!(
+            "OWASP analysis completed: {} total vulnerabilities found",
+            all_vulnerabilities.len()
+        );
         Ok(all_vulnerabilities)
     }
 }
@@ -256,48 +266,57 @@ struct AccessControlPattern {
 impl BrokenAccessControlDetector {
     fn new() -> Self {
         let mut patterns = HashMap::new();
-        
+
         // Rust patterns
-        patterns.insert(SourceLanguage::Rust, vec![
-            AccessControlPattern {
-                pattern: "pub fn ".to_string(),
-                description: "Public function without access control checks".to_string(),
-                confidence: 0.3,
-            },
-            AccessControlPattern {
-                pattern: "actix_web::web::get".to_string(),
-                description: "HTTP endpoint without authentication middleware".to_string(),
-                confidence: 0.6,
-            },
-        ]);
+        patterns.insert(
+            SourceLanguage::Rust,
+            vec![
+                AccessControlPattern {
+                    pattern: "pub fn ".to_string(),
+                    description: "Public function without access control checks".to_string(),
+                    confidence: 0.3,
+                },
+                AccessControlPattern {
+                    pattern: "actix_web::web::get".to_string(),
+                    description: "HTTP endpoint without authentication middleware".to_string(),
+                    confidence: 0.6,
+                },
+            ],
+        );
 
         // Python patterns
-        patterns.insert(SourceLanguage::Python, vec![
-            AccessControlPattern {
-                pattern: "@app.route".to_string(),
-                description: "Flask route without authentication decorator".to_string(),
-                confidence: 0.5,
-            },
-            AccessControlPattern {
-                pattern: "def ".to_string(),
-                description: "Function that may need access control".to_string(),
-                confidence: 0.2,
-            },
-        ]);
+        patterns.insert(
+            SourceLanguage::Python,
+            vec![
+                AccessControlPattern {
+                    pattern: "@app.route".to_string(),
+                    description: "Flask route without authentication decorator".to_string(),
+                    confidence: 0.5,
+                },
+                AccessControlPattern {
+                    pattern: "def ".to_string(),
+                    description: "Function that may need access control".to_string(),
+                    confidence: 0.2,
+                },
+            ],
+        );
 
         // JavaScript patterns
-        patterns.insert(SourceLanguage::JavaScript, vec![
-            AccessControlPattern {
-                pattern: "app.get(".to_string(),
-                description: "Express route without authentication middleware".to_string(),
-                confidence: 0.6,
-            },
-            AccessControlPattern {
-                pattern: "app.post(".to_string(),
-                description: "Express POST route without authentication".to_string(),
-                confidence: 0.7,
-            },
-        ]);
+        patterns.insert(
+            SourceLanguage::JavaScript,
+            vec![
+                AccessControlPattern {
+                    pattern: "app.get(".to_string(),
+                    description: "Express route without authentication middleware".to_string(),
+                    confidence: 0.6,
+                },
+                AccessControlPattern {
+                    pattern: "app.post(".to_string(),
+                    description: "Express POST route without authentication".to_string(),
+                    confidence: 0.7,
+                },
+            ],
+        );
 
         Self { patterns }
     }
@@ -307,11 +326,12 @@ impl BrokenAccessControlDetector {
 impl OwaspCategoryDetector for BrokenAccessControlDetector {
     async fn detect(&self, file: &ParsedFile) -> Result<Vec<OwaspVulnerability>, AnalysisError> {
         let mut vulnerabilities = Vec::new();
-        
+
         if let Some(patterns) = self.patterns.get(&file.language) {
-            let content = std::fs::read_to_string(&**file.file_path)
-                .map_err(|e| AnalysisError::file_system_error(file.file_path.to_string_lossy().to_string(), e))?;
-            
+            let content = std::fs::read_to_string(&**file.file_path).map_err(|e| {
+                AnalysisError::file_system_error(file.file_path.to_string_lossy().to_string(), e)
+            })?;
+
             for (line_num, line) in content.lines().enumerate() {
                 for pattern in patterns {
                     if line.contains(&pattern.pattern) {
@@ -331,11 +351,14 @@ impl OwaspCategoryDetector for BrokenAccessControlDetector {
                         .with_confidence(pattern.confidence)
                         .with_severity(SecuritySeverity::High)
                         .with_remediation(
-                            "Implement proper access control checks and authentication".to_string()
+                            "Implement proper access control checks and authentication".to_string(),
                         )
                         .with_architectural_correlation(
-                            OwaspCategory::BrokenAccessControl.related_anti_patterns()
-                                .iter().map(|s| s.to_string()).collect()
+                            OwaspCategory::BrokenAccessControl
+                                .related_anti_patterns()
+                                .iter()
+                                .map(|s| s.to_string())
+                                .collect(),
                         );
 
                         vulnerabilities.push(vulnerability);
@@ -364,46 +387,56 @@ struct CryptoPattern {
 impl CryptographicFailuresDetector {
     fn new() -> Self {
         let mut patterns = HashMap::new();
-        
+
         // Rust crypto patterns
-        patterns.insert(SourceLanguage::Rust, vec![
-            CryptoPattern {
-                pattern: "md5::".to_string(),
-                issue: "Use of weak MD5 hash function".to_string(),
-                severity: SecuritySeverity::High,
-                confidence: 0.9,
-            },
-            CryptoPattern {
-                pattern: "sha1::".to_string(),
-                issue: "Use of weak SHA1 hash function".to_string(),
-                severity: SecuritySeverity::Medium,
-                confidence: 0.8,
-            },
-            CryptoPattern {
-                pattern: "rand::random".to_string(),
-                issue: "Use of non-cryptographically secure random number generator".to_string(),
-                severity: SecuritySeverity::Medium,
-                confidence: 0.7,
-            },
-        ]);
+        patterns.insert(
+            SourceLanguage::Rust,
+            vec![
+                CryptoPattern {
+                    pattern: "md5::".to_string(),
+                    issue: "Use of weak MD5 hash function".to_string(),
+                    severity: SecuritySeverity::High,
+                    confidence: 0.9,
+                },
+                CryptoPattern {
+                    pattern: "sha1::".to_string(),
+                    issue: "Use of weak SHA1 hash function".to_string(),
+                    severity: SecuritySeverity::Medium,
+                    confidence: 0.8,
+                },
+                CryptoPattern {
+                    pattern: "rand::random".to_string(),
+                    issue: "Use of non-cryptographically secure random number generator"
+                        .to_string(),
+                    severity: SecuritySeverity::Medium,
+                    confidence: 0.7,
+                },
+            ],
+        );
 
         // Python crypto patterns
-        patterns.insert(SourceLanguage::Python, vec![
-            CryptoPattern {
-                pattern: "hashlib.md5".to_string(),
-                issue: "Use of weak MD5 hash function".to_string(),
-                severity: SecuritySeverity::High,
-                confidence: 0.9,
-            },
-            CryptoPattern {
-                pattern: "random.random".to_string(),
-                issue: "Use of non-cryptographically secure random number generator".to_string(),
-                severity: SecuritySeverity::Medium,
-                confidence: 0.6,
-            },
-        ]);
+        patterns.insert(
+            SourceLanguage::Python,
+            vec![
+                CryptoPattern {
+                    pattern: "hashlib.md5".to_string(),
+                    issue: "Use of weak MD5 hash function".to_string(),
+                    severity: SecuritySeverity::High,
+                    confidence: 0.9,
+                },
+                CryptoPattern {
+                    pattern: "random.random".to_string(),
+                    issue: "Use of non-cryptographically secure random number generator"
+                        .to_string(),
+                    severity: SecuritySeverity::Medium,
+                    confidence: 0.6,
+                },
+            ],
+        );
 
-        Self { crypto_patterns: patterns }
+        Self {
+            crypto_patterns: patterns,
+        }
     }
 }
 
@@ -411,11 +444,12 @@ impl CryptographicFailuresDetector {
 impl OwaspCategoryDetector for CryptographicFailuresDetector {
     async fn detect(&self, file: &ParsedFile) -> Result<Vec<OwaspVulnerability>, AnalysisError> {
         let mut vulnerabilities = Vec::new();
-        
+
         if let Some(patterns) = self.crypto_patterns.get(&file.language) {
-            let content = std::fs::read_to_string(&**file.file_path)
-                .map_err(|e| AnalysisError::file_system_error(file.file_path.to_string_lossy().to_string(), e))?;
-            
+            let content = std::fs::read_to_string(&**file.file_path).map_err(|e| {
+                AnalysisError::file_system_error(file.file_path.to_string_lossy().to_string(), e)
+            })?;
+
             for (line_num, line) in content.lines().enumerate() {
                 for pattern in patterns {
                     if line.contains(&pattern.pattern) {
@@ -435,7 +469,7 @@ impl OwaspCategoryDetector for CryptographicFailuresDetector {
                         .with_confidence(pattern.confidence)
                         .with_severity(pattern.severity)
                         .with_remediation(
-                            "Use strong, modern cryptographic algorithms and libraries".to_string()
+                            "Use strong, modern cryptographic algorithms and libraries".to_string(),
                         );
 
                         vulnerabilities.push(vulnerability);
@@ -464,33 +498,39 @@ struct InjectionPattern {
 impl InjectionDetector {
     fn new() -> Self {
         let mut patterns = HashMap::new();
-        
+
         // SQL injection patterns
-        patterns.insert(SourceLanguage::Rust, vec![
-            InjectionPattern {
+        patterns.insert(
+            SourceLanguage::Rust,
+            vec![InjectionPattern {
                 pattern: "format!(\"SELECT".to_string(),
                 vulnerability_type: SecurityIssueType::Injection,
                 description: "Potential SQL injection via string formatting".to_string(),
                 confidence: 0.8,
-            },
-        ]);
+            }],
+        );
 
-        patterns.insert(SourceLanguage::Python, vec![
-            InjectionPattern {
-                pattern: "\"SELECT * FROM {} WHERE".to_string(),
-                vulnerability_type: SecurityIssueType::Injection,
-                description: "Potential SQL injection via string formatting".to_string(),
-                confidence: 0.7,
-            },
-            InjectionPattern {
-                pattern: "cursor.execute(f\"".to_string(),
-                vulnerability_type: SecurityIssueType::Injection,
-                description: "Potential SQL injection via f-string".to_string(),
-                confidence: 0.9,
-            },
-        ]);
+        patterns.insert(
+            SourceLanguage::Python,
+            vec![
+                InjectionPattern {
+                    pattern: "\"SELECT * FROM {} WHERE".to_string(),
+                    vulnerability_type: SecurityIssueType::Injection,
+                    description: "Potential SQL injection via string formatting".to_string(),
+                    confidence: 0.7,
+                },
+                InjectionPattern {
+                    pattern: "cursor.execute(f\"".to_string(),
+                    vulnerability_type: SecurityIssueType::Injection,
+                    description: "Potential SQL injection via f-string".to_string(),
+                    confidence: 0.9,
+                },
+            ],
+        );
 
-        Self { injection_patterns: patterns }
+        Self {
+            injection_patterns: patterns,
+        }
     }
 }
 
@@ -498,11 +538,12 @@ impl InjectionDetector {
 impl OwaspCategoryDetector for InjectionDetector {
     async fn detect(&self, file: &ParsedFile) -> Result<Vec<OwaspVulnerability>, AnalysisError> {
         let mut vulnerabilities = Vec::new();
-        
+
         if let Some(patterns) = self.injection_patterns.get(&file.language) {
-            let content = std::fs::read_to_string(&**file.file_path)
-                .map_err(|e| AnalysisError::file_system_error(file.file_path.to_string_lossy().to_string(), e))?;
-            
+            let content = std::fs::read_to_string(&**file.file_path).map_err(|e| {
+                AnalysisError::file_system_error(file.file_path.to_string_lossy().to_string(), e)
+            })?;
+
             for (line_num, line) in content.lines().enumerate() {
                 for pattern in patterns {
                     if line.contains(&pattern.pattern) {
@@ -522,7 +563,7 @@ impl OwaspCategoryDetector for InjectionDetector {
                         .with_confidence(pattern.confidence)
                         .with_severity(SecuritySeverity::Critical)
                         .with_remediation(
-                            "Use parameterized queries or prepared statements".to_string()
+                            "Use parameterized queries or prepared statements".to_string(),
                         );
 
                         vulnerabilities.push(vulnerability);
@@ -539,8 +580,10 @@ impl OwaspCategoryDetector for InjectionDetector {
 // In a full implementation, each would have sophisticated detection logic
 
 struct InsecureDesignDetector;
-impl InsecureDesignDetector { 
-    fn new() -> Self { Self } 
+impl InsecureDesignDetector {
+    fn new() -> Self {
+        Self
+    }
 }
 
 #[async_trait::async_trait]
@@ -551,8 +594,10 @@ impl OwaspCategoryDetector for InsecureDesignDetector {
 }
 
 struct SecurityMisconfigurationDetector;
-impl SecurityMisconfigurationDetector { 
-    fn new() -> Self { Self } 
+impl SecurityMisconfigurationDetector {
+    fn new() -> Self {
+        Self
+    }
 }
 
 #[async_trait::async_trait]
@@ -563,8 +608,10 @@ impl OwaspCategoryDetector for SecurityMisconfigurationDetector {
 }
 
 struct VulnerableComponentsDetector;
-impl VulnerableComponentsDetector { 
-    fn new() -> Self { Self } 
+impl VulnerableComponentsDetector {
+    fn new() -> Self {
+        Self
+    }
 }
 
 #[async_trait::async_trait]
@@ -575,8 +622,10 @@ impl OwaspCategoryDetector for VulnerableComponentsDetector {
 }
 
 struct AuthenticationFailuresDetector;
-impl AuthenticationFailuresDetector { 
-    fn new() -> Self { Self } 
+impl AuthenticationFailuresDetector {
+    fn new() -> Self {
+        Self
+    }
 }
 
 #[async_trait::async_trait]
@@ -587,8 +636,10 @@ impl OwaspCategoryDetector for AuthenticationFailuresDetector {
 }
 
 struct DataIntegrityFailuresDetector;
-impl DataIntegrityFailuresDetector { 
-    fn new() -> Self { Self } 
+impl DataIntegrityFailuresDetector {
+    fn new() -> Self {
+        Self
+    }
 }
 
 #[async_trait::async_trait]
@@ -599,8 +650,10 @@ impl OwaspCategoryDetector for DataIntegrityFailuresDetector {
 }
 
 struct LoggingFailuresDetector;
-impl LoggingFailuresDetector { 
-    fn new() -> Self { Self } 
+impl LoggingFailuresDetector {
+    fn new() -> Self {
+        Self
+    }
 }
 
 #[async_trait::async_trait]
@@ -611,8 +664,10 @@ impl OwaspCategoryDetector for LoggingFailuresDetector {
 }
 
 struct ServerSideRequestForgeryDetector;
-impl ServerSideRequestForgeryDetector { 
-    fn new() -> Self { Self } 
+impl ServerSideRequestForgeryDetector {
+    fn new() -> Self {
+        Self
+    }
 }
 
 #[async_trait::async_trait]
@@ -638,7 +693,7 @@ mod tests {
     #[test]
     fn test_owasp_vulnerability_creation() {
         let location = SecurityLocation::new(PathBuf::from("test.rs"), 10, 10);
-        
+
         let vuln = OwaspVulnerability::new(
             OwaspCategory::Injection,
             SecurityIssueType::Injection,
@@ -658,7 +713,7 @@ mod tests {
     async fn test_owasp_detector_creation() {
         let detector = OwaspTop10Detector::new();
         assert!(detector.is_ok());
-        
+
         let detector = detector.unwrap();
         assert_eq!(detector.detectors.len(), 10); // All OWASP Top 10 categories
     }

@@ -15,31 +15,31 @@ use std::collections::HashMap;
 use std::time::{Duration, SystemTime};
 
 /// Service Level Indicator types defining the category of measurement
-/// 
+///
 /// Each SLI type represents a different aspect of service performance that can be
 /// monitored and used to calculate Service Level Objectives (SLOs).
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum SLIType {
     /// Measures service uptime and operational status
-    /// 
+    ///
     /// Typically expressed as a percentage (e.g., 99.9% availability)
     /// Commonly measured as successful requests / total requests
     Availability,
-    
+
     /// Measures response time and request processing speed
-    /// 
+    ///
     /// Usually expressed in milliseconds (e.g., 95th percentile < 200ms)
     /// Critical for user experience and performance monitoring
     Latency,
-    
+
     /// Measures request volume and processing capacity
-    /// 
+    ///
     /// Expressed as requests per second (RPS) or similar rate metrics
     /// Important for capacity planning and resource allocation
     Throughput,
-    
+
     /// Measures correctness and error rates of service responses
-    /// 
+    ///
     /// Includes error rates, data integrity, and functional correctness
     /// Often measured as successful operations / total operations
     Quality,
@@ -57,20 +57,20 @@ pub enum SLIValue {
 ///
 /// Defines a measurable aspect of service performance that can be monitored
 /// and used to calculate Service Level Objectives (SLOs).
-/// 
+///
 /// # Examples
-/// 
+///
 /// ```rust
 /// use uveddi::sla::{SLI, SLIType};
-/// 
+///
 /// let api_availability = SLI {
 ///     name: "api_availability".to_string(),
 ///     sli_type: SLIType::Availability,
 ///     description: "Percentage of successful API responses".to_string(),
 /// };
-/// 
+///
 /// let response_latency = SLI {
-///     name: "response_latency_p95".to_string(), 
+///     name: "response_latency_p95".to_string(),
 ///     sli_type: SLIType::Latency,
 ///     description: "95th percentile response time in milliseconds".to_string(),
 /// };
@@ -78,19 +78,19 @@ pub enum SLIValue {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SLI {
     /// Unique identifier for this SLI (e.g., "api_availability", "response_latency_p95")
-    /// 
+    ///
     /// Must be lowercase with underscores, no spaces or special characters.
     /// Used for referencing in SLO definitions and monitoring configurations.
     pub name: String,
-    
+
     /// The type of measurement this SLI represents
-    /// 
+    ///
     /// Determines how the SLI value should be interpreted and aggregated.
     /// Affects monitoring strategies and alerting thresholds.
     pub sli_type: SLIType,
-    
+
     /// Human-readable description of what this SLI measures
-    /// 
+    ///
     /// Should explain the business impact and measurement methodology.
     /// Used in dashboards and reporting to provide context for stakeholders.
     pub description: String,
@@ -107,13 +107,13 @@ pub enum SLOTarget {
 ///
 /// Defines a target value for a specific Service Level Indicator (SLI) over a time window.
 /// SLOs are used to set expectations and measure service reliability.
-/// 
+///
 /// # Examples
-/// 
+///
 /// ```rust
 /// use uveddi::sla::{SLO, SLOTarget};
 /// use std::time::Duration;
-/// 
+///
 /// // 99.9% availability over 30 days
 /// let availability_slo = SLO {
 ///     name: "API Availability".to_string(),
@@ -121,7 +121,7 @@ pub enum SLOTarget {
 ///     target: SLOTarget::Percentage(99.9),
 ///     window: Duration::from_secs(30 * 24 * 60 * 60), // 30 days
 /// };
-/// 
+///
 /// // Response time under 200ms for 95% of requests over 1 hour
 /// let latency_slo = SLO {
 ///     name: "Response Time SLO".to_string(),
@@ -133,25 +133,25 @@ pub enum SLOTarget {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SLO {
     /// Human-readable name for this SLO (e.g., "API Availability", "Response Time SLO")
-    /// 
+    ///
     /// Used in dashboards, alerts, and reports for identification.
     /// Should be descriptive and unique within the service context.
     pub name: String,
-    
+
     /// Name of the SLI this objective is based on
-    /// 
+    ///
     /// Must exactly match an existing SLI name in the same service definition.
     /// Creates the binding between the measurement (SLI) and target (SLO).
     pub sli_name: String,
-    
+
     /// Target value that defines successful service performance
-    /// 
+    ///
     /// - `Percentage`: For availability and success rates (e.g., 99.9%)
     /// - `Threshold`: For latency and other metrics (e.g., < 200ms)
     pub target: SLOTarget,
-    
+
     /// Time window over which the objective is measured
-    /// 
+    ///
     /// Common windows: 1 hour, 1 day, 7 days, 30 days.
     /// Shorter windows enable faster detection but may be more noisy.
     /// Longer windows provide stability but slower response to issues.

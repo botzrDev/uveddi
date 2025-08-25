@@ -43,17 +43,25 @@ impl SecurityContext {
     }
 
     pub fn from_parsed_file(file: &ParsedFile) -> Result<Self, AnalysisError> {
-        let content = std::fs::read_to_string(&**file.file_path)
-            .map_err(|e| AnalysisError::file_system_error(format!("Failed to read file {}: {}", file.file_path.display(), e), e))?;
+        let content = std::fs::read_to_string(&**file.file_path).map_err(|e| {
+            AnalysisError::file_system_error(
+                format!("Failed to read file {}: {}", file.file_path.display(), e),
+                e,
+            )
+        })?;
 
-        Ok(Self::new(file.file_path.as_ref().to_path_buf(), content, file.language))
+        Ok(Self::new(
+            file.file_path.as_ref().to_path_buf(),
+            content,
+            file.language,
+        ))
     }
 
     pub fn to_parsed_file(&self) -> Result<ParsedFile, AnalysisError> {
         // This is a simplified conversion - in a real implementation, we'd need to parse the AST
-        use std::sync::Arc;
         use crate::analysis::cache::wrappers::ArchivableSystemTime;
-        
+        use std::sync::Arc;
+
         Ok(ParsedFile {
             file_path: Arc::new(self.file_path.clone()),
             language: self.language,
@@ -132,39 +140,57 @@ impl SecurityAnalysisResult {
 
     fn update_statistics(&mut self) {
         self.statistics.total_issues = self.vulnerabilities.len();
-        
+
         // Count by severity
-        self.statistics.critical_count = self.vulnerabilities.iter()
+        self.statistics.critical_count = self
+            .vulnerabilities
+            .iter()
             .filter(|v| v.severity == SecuritySeverity::Critical)
             .count();
-        self.statistics.high_count = self.vulnerabilities.iter()
+        self.statistics.high_count = self
+            .vulnerabilities
+            .iter()
             .filter(|v| v.severity == SecuritySeverity::High)
             .count();
-        self.statistics.medium_count = self.vulnerabilities.iter()
+        self.statistics.medium_count = self
+            .vulnerabilities
+            .iter()
             .filter(|v| v.severity == SecuritySeverity::Medium)
             .count();
-        self.statistics.low_count = self.vulnerabilities.iter()
+        self.statistics.low_count = self
+            .vulnerabilities
+            .iter()
             .filter(|v| v.severity == SecuritySeverity::Low)
             .count();
 
         // Calculate average confidence
         if !self.vulnerabilities.is_empty() {
-            let total_confidence: f64 = self.vulnerabilities.iter()
+            let total_confidence: f64 = self
+                .vulnerabilities
+                .iter()
                 .map(|v| v.confidence_score)
                 .sum();
-            self.confidence_info.average_confidence = total_confidence / self.vulnerabilities.len() as f64;
+            self.confidence_info.average_confidence =
+                total_confidence / self.vulnerabilities.len() as f64;
         }
     }
 
     pub fn get_high_confidence_issues(&self) -> Vec<&OwaspVulnerability> {
-        self.vulnerabilities.iter()
+        self.vulnerabilities
+            .iter()
             .filter(|v| v.confidence_score >= 0.8)
             .collect()
     }
 
     pub fn get_urgent_issues(&self) -> Vec<&OwaspVulnerability> {
-        self.vulnerabilities.iter()
-            .filter(|v| matches!(v.severity, SecuritySeverity::Critical | SecuritySeverity::High))
+        self.vulnerabilities
+            .iter()
+            .filter(|v| {
+                matches!(
+                    v.severity,
+                    SecuritySeverity::Critical | SecuritySeverity::High
+                )
+            })
             .collect()
     }
 }
@@ -299,13 +325,15 @@ impl ConfidenceScore {
     pub fn calculate_final_score(&mut self) {
         // Weighted combination of different factors
         let weights = ConfidenceWeights::default();
-        
-        self.final_score = (
-            self.detection_method_score * weights.detection_method +
-            self.evidence_strength_score * weights.evidence_strength +
-            self.architectural_context_score * weights.architectural_context +
-            self.cross_validation_score * weights.cross_validation
-        ) / (weights.detection_method + weights.evidence_strength + weights.architectural_context + weights.cross_validation);
+
+        self.final_score = (self.detection_method_score * weights.detection_method
+            + self.evidence_strength_score * weights.evidence_strength
+            + self.architectural_context_score * weights.architectural_context
+            + self.cross_validation_score * weights.cross_validation)
+            / (weights.detection_method
+                + weights.evidence_strength
+                + weights.architectural_context
+                + weights.cross_validation);
 
         // Clamp to valid range
         self.final_score = self.final_score.clamp(0.0, 1.0);
@@ -362,10 +390,10 @@ struct ConfidenceWeights {
 impl Default for ConfidenceWeights {
     fn default() -> Self {
         Self {
-            detection_method: 0.4,  // Highest weight for detection method
-            evidence_strength: 0.3, // High weight for evidence quality
+            detection_method: 0.4,      // Highest weight for detection method
+            evidence_strength: 0.3,     // High weight for evidence quality
             architectural_context: 0.2, // Medium weight for architectural context
-            cross_validation: 0.1,  // Lower weight for cross-validation
+            cross_validation: 0.1,      // Lower weight for cross-validation
         }
     }
 }
@@ -393,9 +421,9 @@ pub struct VulnerabilityRecord {
 impl VulnerabilityDatabase {
     pub fn new() -> Result<Self, AnalysisError> {
         info!("Initializing vulnerability database");
-        
+
         let vulnerability_cache = Arc::new(HashMap::new());
-        
+
         Ok(Self {
             vulnerability_cache,
         })
@@ -407,15 +435,18 @@ impl VulnerabilityDatabase {
         package_name: &str,
         version: &str,
     ) -> Result<Vec<VulnerabilityRecord>, AnalysisError> {
-        debug!("Looking up vulnerabilities for package: {} version: {}", package_name, version);
-        
+        debug!(
+            "Looking up vulnerabilities for package: {} version: {}",
+            package_name, version
+        );
+
         // TODO: Implement actual vulnerability database lookup
         // This would involve querying:
         // - RustSec Advisory Database for Rust packages
         // - GitHub Advisory Database
         // - OSV database
         // - National Vulnerability Database (NVD)
-        
+
         Ok(Vec::new())
     }
 
@@ -426,23 +457,26 @@ impl VulnerabilityDatabase {
         version: &str,
         vulnerability_id: &str,
     ) -> Result<bool, AnalysisError> {
-        debug!("Checking if package {}:{} is affected by {}", package_name, version, vulnerability_id);
-        
+        debug!(
+            "Checking if package {}:{} is affected by {}",
+            package_name, version, vulnerability_id
+        );
+
         // TODO: Implement vulnerability matching logic
-        
+
         Ok(false)
     }
 
     /// Update vulnerability database from external sources
     pub async fn update_database(&mut self) -> Result<(), AnalysisError> {
         info!("Updating vulnerability database from external sources");
-        
+
         // TODO: Implement database update logic
         // This would involve:
         // - Fetching latest advisories from RustSec
         // - Syncing with GitHub Advisory Database
         // - Updating local cache
-        
+
         Ok(())
     }
 
@@ -451,7 +485,11 @@ impl VulnerabilityDatabase {
         VulnerabilityDatabaseStats {
             total_vulnerabilities: self.vulnerability_cache.len(),
             last_updated: chrono::Utc::now(), // TODO: Track actual update time
-            sources: vec!["RustSec".to_string(), "GitHub".to_string(), "OSV".to_string()],
+            sources: vec![
+                "RustSec".to_string(),
+                "GitHub".to_string(),
+                "OSV".to_string(),
+            ],
         }
     }
 }
@@ -528,14 +566,15 @@ mod tests {
             1,
             1,
         );
-        
+
         let vulnerability = OwaspVulnerability::new(
             crate::analysis::detectors::security::owasp::OwaspCategory::Injection,
             crate::analysis::detectors::security::types::SecurityIssueType::Injection,
             "Test Vulnerability".to_string(),
             "Test description".to_string(),
             location,
-        ).with_severity(SecuritySeverity::High);
+        )
+        .with_severity(SecuritySeverity::High);
 
         result.add_vulnerability(vulnerability);
         assert_eq!(result.statistics.total_issues, 1);
@@ -545,7 +584,7 @@ mod tests {
     #[test]
     fn test_confidence_score_calculation() {
         let mut score = ConfidenceScore::new()
-            .with_detection_method(0.9)  // High confidence detection
+            .with_detection_method(0.9) // High confidence detection
             .with_evidence_strength(0.8) // Strong evidence
             .with_architectural_context(0.6) // Some architectural issues
             .with_cross_validation(0.7); // Good cross-validation

@@ -85,22 +85,22 @@ impl Role {
 ///
 /// Roles are hierarchical with each level including capabilities of lower levels
 /// where applicable. Used throughout the system for authorization decisions.
-/// 
+///
 /// # Security Model
-/// 
+///
 /// The role system implements a capability-based security model where each role
 /// grants specific permissions for different system operations. Roles are enforced
 /// at multiple levels including API endpoints, data access, and UI features.
-/// 
+///
 /// # Examples
-/// 
+///
 /// ```rust
 /// use uveddi::security::models::UserRole;
-/// 
+///
 /// let user_role = UserRole::Developer;
 /// assert!(user_role.can_access_analysis_data());
 /// assert!(!user_role.is_admin());
-/// 
+///
 /// let admin_role = UserRole::Admin;
 /// assert!(admin_role.is_admin());
 /// assert!(admin_role.can_manage_users());
@@ -117,7 +117,7 @@ pub enum UserRole {
     /// - Security configuration and audit log access
     /// - Plugin and integration management
     Admin,
-    
+
     /// Development team member with project-focused access
     ///
     /// **Capabilities:**
@@ -128,7 +128,7 @@ pub enum UserRole {
     /// - Can create and manage personal API keys
     /// - Access to development and staging environments
     Developer,
-    
+
     /// Quality assurance team member with testing focus
     ///
     /// **Capabilities:**
@@ -139,7 +139,7 @@ pub enum UserRole {
     /// - Can trigger analysis runs for testing purposes
     /// - Limited access to test environment configurations
     QA,
-    
+
     /// Management role with reporting and oversight access
     ///
     /// **Capabilities:**
@@ -150,7 +150,7 @@ pub enum UserRole {
     /// - No direct system configuration or development access
     /// - Can export reports and configure dashboard views
     Manager,
-    
+
     /// Service account for automated integrations and CI/CD
     ///
     /// **Capabilities:**

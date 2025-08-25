@@ -1052,9 +1052,15 @@ impl AnalysisDetector for LongMethodsDetector {
         file: &ParsedFile,
     ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         let mut issues = Vec::new();
-        debug!("Long Methods Detector analyzing file: {}", file.file_path.display());
+        debug!(
+            "Long Methods Detector analyzing file: {}",
+            file.file_path.display()
+        );
         let method_metrics = self.extract_method_metrics(file)?;
-        debug!("Long Methods Detector found {} method metrics", method_metrics.len());
+        debug!(
+            "Long Methods Detector found {} method metrics",
+            method_metrics.len()
+        );
         let thresholds = self.thresholds.get(&file.language).ok_or_else(|| {
             crate::analysis::errors::AnalysisError::UnsupportedLanguage(format!(
                 "{:?}",
@@ -1063,8 +1069,10 @@ impl AnalysisDetector for LongMethodsDetector {
         })?;
         for metrics in method_metrics {
             let severity_score = self.calculate_severity_score(&metrics, thresholds);
-            debug!("Method '{}': {} logical LOC, severity score: {} (threshold: {})", 
-                   metrics.name, metrics.logical_loc, severity_score, thresholds.max_logical_loc);
+            debug!(
+                "Method '{}': {} logical LOC, severity score: {} (threshold: {})",
+                metrics.name, metrics.logical_loc, severity_score, thresholds.max_logical_loc
+            );
             if severity_score > 25 {
                 let mut issue = ArchitecturalIssue::new(
                     0, // analysis_run_id will be set by the engine
