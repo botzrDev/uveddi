@@ -497,12 +497,49 @@ impl AnalysisConfig {
         StandardDetectorConfig::default_for_detector(detector_name)
     }
 
-    /// Add or update a standardized detector configuration
+    /// Set standard detector configuration for a specific detector
     ///
-    /// # Arguments
+    /// Updates the detector configuration with standardized settings,
+    /// overriding any existing configuration for the specified detector.
     ///
-    /// * `detector_name` - Name of the detector
-    /// * `config` - Standardized configuration to set
+    /// # Parameters
+    ///
+    /// * `detector_name` - Name of the detector to configure (must match exactly)
+    ///   - Valid names: "god_object", "dead_code", "cyclic_dependencies", "tight_coupling", 
+    ///     "code_duplication", "long_method", "long_parameter_list"
+    ///   - Case-sensitive string matching is used
+    ///   - Unknown detector names will be stored but ignored during analysis
+    /// * `config` - Standardized configuration settings to apply
+    ///   - Replaces existing configuration completely
+    ///   - Will be validated for consistency before application
+    ///   - Must include enabled status and severity level
+    ///
+    /// # Side Effects
+    ///
+    /// - Invalidates any cached analysis results for this detector
+    /// - May trigger re-analysis if the engine is currently running
+    /// - Configuration changes are persisted to config file if auto-save enabled
+    /// 
+    /// # Examples
+    /// 
+    /// ```rust
+    /// use uveddi::analysis::{AnalysisConfig, StandardDetectorConfig, IssueSeverity};
+    /// use std::collections::HashMap;
+    /// 
+    /// let mut config = AnalysisConfig::default();
+    /// let detector_config = StandardDetectorConfig {
+    ///     enabled: true,
+    ///     severity: IssueSeverity::High,
+    ///     thresholds: {
+    ///         let mut thresholds = HashMap::new();
+    ///         thresholds.insert("max_methods".to_string(), 20.into());
+    ///         thresholds.insert("max_fields".to_string(), 15.into());
+    ///         thresholds
+    ///     },
+    /// };
+    /// 
+    /// config.set_standard_detector_config("god_object", detector_config);
+    /// ```
     pub fn set_standard_detector_config(
         &mut self,
         detector_name: &str,

@@ -269,10 +269,22 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for detailed guidelines.
 
 ## 📚 Documentation
 
+### User Documentation
 - **[User Guide](./docs/README.md)** - Comprehensive usage documentation
 - **[Configuration](./docs/03-user-guide/configuration.md)** - All configuration options
-- **[API Reference](./docs/08-api/)** - For programmatic usage
 - **[Examples](./docs/05-examples/)** - Real-world usage examples
+
+### API Reference
+- **[API Reference](./docs/08-api/)** - For programmatic usage
+- **[Core Library API](https://docs.rs/uveddi/latest/uveddi/)** - Complete Rust API documentation
+- **Key APIs**:
+  - [`uveddi::analysis::AnalysisEngine`](https://docs.rs/uveddi/latest/uveddi/analysis/struct.AnalysisEngine.html) - Main analysis orchestration
+  - [`uveddi::analysis::DetectorFactory`](https://docs.rs/uveddi/latest/uveddi/analysis/struct.DetectorFactory.html) - Detector creation and management
+  - [`uveddi::analysis::AnalysisConfig`](https://docs.rs/uveddi/latest/uveddi/analysis/struct.AnalysisConfig.html) - Configuration management
+  - [`uveddi::sla`](https://docs.rs/uveddi/latest/uveddi/sla/) - SLA monitoring framework
+  - [`uveddi::security::models::UserRole`](https://docs.rs/uveddi/latest/uveddi/security/models/enum.UserRole.html) - Security and authorization
+  - [`uveddi::plugins`](https://docs.rs/uveddi/latest/uveddi/plugins/) - WebAssembly plugin system
+  - [`uveddi::server`](https://docs.rs/uveddi/latest/uveddi/server/) - HTTP API endpoints
 
 ## 🚦 Roadmap
 

@@ -81,13 +81,85 @@ impl Role {
     }
 }
 
-/// System roles enumeration
+/// User roles defining access levels and permissions within the system
+///
+/// Roles are hierarchical with each level including capabilities of lower levels
+/// where applicable. Used throughout the system for authorization decisions.
+/// 
+/// # Security Model
+/// 
+/// The role system implements a capability-based security model where each role
+/// grants specific permissions for different system operations. Roles are enforced
+/// at multiple levels including API endpoints, data access, and UI features.
+/// 
+/// # Examples
+/// 
+/// ```rust
+/// use uveddi::security::models::UserRole;
+/// 
+/// let user_role = UserRole::Developer;
+/// assert!(user_role.can_access_analysis_data());
+/// assert!(!user_role.is_admin());
+/// 
+/// let admin_role = UserRole::Admin;
+/// assert!(admin_role.is_admin());
+/// assert!(admin_role.can_manage_users());
+/// ```
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum UserRole {
+    /// Full system administrator with unrestricted access
+    ///
+    /// **Capabilities:**
+    /// - Full system configuration access and settings management
+    /// - User management and role assignment for all users
+    /// - All analysis operations and unrestricted data access
+    /// - System monitoring, maintenance, and troubleshooting
+    /// - Security configuration and audit log access
+    /// - Plugin and integration management
     Admin,
+    
+    /// Development team member with project-focused access
+    ///
+    /// **Capabilities:**
+    /// - Analysis execution for owned/assigned projects
+    /// - Code quality metrics access and trend analysis
+    /// - Issue tracking, resolution, and code recommendations
+    /// - Limited to development-related operations and tools
+    /// - Can create and manage personal API keys
+    /// - Access to development and staging environments
     Developer,
+    
+    /// Quality assurance team member with testing focus
+    ///
+    /// **Capabilities:**
+    /// - Test execution and comprehensive failure analysis
+    /// - Quality metrics, reporting access, and trend monitoring
+    /// - Issue verification, validation, and regression testing
+    /// - Read-only access to most analysis results and reports
+    /// - Can trigger analysis runs for testing purposes
+    /// - Limited access to test environment configurations
     QA,
+    
+    /// Management role with reporting and oversight access
+    ///
+    /// **Capabilities:**
+    /// - Read-only access to reports, dashboards, and analytics
+    /// - Team performance metrics and productivity insights
+    /// - Project status, progress tracking, and milestone reporting
+    /// - High-level quality and security trend analysis
+    /// - No direct system configuration or development access
+    /// - Can export reports and configure dashboard views
     Manager,
+    
+    /// Service account for automated integrations and CI/CD
+    ///
+    /// **Capabilities:**
+    /// - API access for automated systems and integrations
+    /// - Limited to specific integration endpoints and operations
+    /// - No interactive UI access or user-facing features
+    /// - Restricted to programmatic operations only
+    /// - Can trigger analysis runs via API
+    /// - Limited data export capabilities for integration purposes
     Service,
 }
 

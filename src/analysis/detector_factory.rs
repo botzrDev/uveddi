@@ -24,7 +24,11 @@ use std::collections::HashMap;
 pub struct DetectorFactory;
 
 impl DetectorFactory {
-    /// Create default detector set for backward compatibility
+    /// Creates the default set of analysis detectors
+    ///
+    /// Returns a vector of pre-configured detectors that implement common
+    /// anti-pattern detection algorithms. These detectors are suitable for
+    /// most analysis scenarios and provide good coverage of code quality issues.
     ///
     /// Returns a vector containing the standard set of detectors that were
     /// previously hardcoded in the AnalysisEngine constructor. This ensures
@@ -32,7 +36,80 @@ impl DetectorFactory {
     ///
     /// # Returns
     ///
-    /// A vector of boxed detectors implementing the `AnalysisDetector` trait
+    /// A vector of boxed detectors implementing the `AnalysisDetector` trait.
+    /// Each detector is configured with sensible default thresholds.
+    ///
+    /// # Detectors Included
+    ///
+    /// - **GodObjectDetector**: Identifies oversized classes/structs (threshold: 5 methods, 8 fields)
+    /// - **CodeDuplicationDetector**: Finds duplicated code blocks (default similarity: 85%)
+    /// - **DeadCodeDetector**: Finds unused functions and variables (confidence: 80%)
+    /// - **LargeClassDetector**: Detects classes exceeding reasonable size limits
+    /// - **TightCouplingDetector**: Identifies high coupling between components
+    /// - **LongMethodsDetector**: Finds methods exceeding length thresholds
+    /// - **MagicValuesDetector**: Identifies hardcoded magic numbers and strings
+    /// - **SecurityDetector**: Security vulnerability detection (when feature enabled)
+    ///
+    /// # Examples
+    ///
+    /// ## Basic Usage
+    ///
+    /// ```rust
+    /// use uveddi::analysis::detector_factory::DetectorFactory;
+    /// use uveddi::analysis::AnalysisEngine;
+    ///
+    /// let detectors = DetectorFactory::create_default_detectors();
+    /// println!("Created {} detectors", detectors.len());
+    ///
+    /// // Use with analysis engine
+    /// let mut engine = AnalysisEngine::builder();
+    /// for detector in detectors {
+    ///     engine = engine.with_detector(detector);
+    /// }
+    /// let engine = engine.build()?;
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    ///
+    /// ## Selective Detector Usage
+    ///
+    /// ```rust
+    /// use uveddi::analysis::detector_factory::DetectorFactory;
+    /// use uveddi::analysis::detectors::anti_patterns::GodObjectDetector;
+    /// 
+    /// // Get all default detectors
+    /// let mut all_detectors = DetectorFactory::create_default_detectors();
+    /// 
+    /// // Add custom detector with specific configuration
+    /// let custom_god_detector = GodObjectDetector::new(15, 12); // More lenient thresholds
+    /// all_detectors.push(Box::new(custom_god_detector));
+    /// 
+    /// println!("Total detectors: {}", all_detectors.len());
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    ///
+    /// ## Analysis with Default Detectors
+    ///
+    /// ```rust
+    /// use uveddi::analysis::{AnalysisEngine, detector_factory::DetectorFactory};
+    /// use std::path::Path;
+    /// 
+    /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+    /// // Create engine with all default detectors
+    /// let detectors = DetectorFactory::create_default_detectors();
+    /// let mut builder = AnalysisEngine::builder();
+    /// 
+    /// for detector in detectors {
+    ///     builder = builder.with_detector(detector);
+    /// }
+    /// 
+    /// let engine = builder.build()?;
+    /// let (issues, graph) = engine.analyze(Path::new("src/")).await?;
+    /// 
+    /// println!("Found {} issues across {} files", 
+    ///          issues.len(), graph.nodes().count());
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn create_default_detectors() -> Vec<Box<dyn AnalysisDetector + Send + Sync>> {
         let mut detectors: Vec<Box<dyn AnalysisDetector + Send + Sync>> = vec![
             // Original detectors
