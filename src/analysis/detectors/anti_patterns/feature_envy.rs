@@ -445,4 +445,3 @@ mod tests {
         
         assert_eq!(detector.determine_severity(&medium_envy), IssueSeverity::Minor);
     }
-}

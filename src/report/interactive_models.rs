@@ -667,7 +667,7 @@ impl InteractiveReport {
         let anti_pattern_map: HashMap<i64, &AntiPatternType> = anti_pattern_types
             .iter()
             .filter_map(|apt| apt.anti_pattern_type_id.map(|id| (id, apt)))
-            .collect();
+            .collect::<HashMap<i64, &AntiPatternType>>(); // Explicitly collect into lookup map
 
         // Calculate summary statistics
         let mut issues_by_severity = HashMap::new();
@@ -922,7 +922,7 @@ impl InteractiveReport {
                 title: format!("{:?} Diagram", diagram.diagram_type),
                 source: diagram.mermaid_src.clone(),
                 description: None,
-                components: diagram.components.iter().map(|c| c.to_string()).collect(),
+                components: diagram.components.iter().map(|c| c.to_string()).collect::<Vec<String>>(), // Explicitly collect component names
                 metadata: DiagramRenderMetadata {
                     width: None,
                     height: None,
@@ -950,7 +950,7 @@ impl InteractiveReport {
             languages.insert("unknown".to_string());
         }
 
-        languages.into_iter().collect()
+        languages.into_iter().collect::<Vec<String>>() // Explicitly collect language list
     }
 
     /// Extract security metadata from issue metadata JSON

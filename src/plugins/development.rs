@@ -5,8 +5,10 @@
 
 #[cfg(feature = "ai")]
 use crate::ai::knowledge::compression::CompressedString;
+use tracing::{info, warn, error, debug};
 #[cfg(feature = "ai")]
 use crate::ai::knowledge::context_selection::{LocationContext, SeverityLevel};
+use tracing::{info, warn, error, debug};
 #[cfg(feature = "ai")]
 use crate::ai::knowledge::schema::*;
 use crate::plugins::knowledge::*;
@@ -14,6 +16,7 @@ use crate::plugins::PluginError;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use tracing::{info, warn, error, debug};
 
 // Stub types for when AI features are disabled
 #[cfg(not(feature = "ai"))]

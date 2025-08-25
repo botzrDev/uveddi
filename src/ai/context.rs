@@ -1,6 +1,7 @@
 //! Enhanced context builder for AI analysis
 
 use std::collections::HashMap;
+use tracing::{info, warn, error, debug};
 
 pub struct ContextBuilder {
     max_context_size: usize,

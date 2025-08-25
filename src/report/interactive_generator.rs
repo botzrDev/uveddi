@@ -23,6 +23,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use tokio::fs;
 use uuid::Uuid;
+use tracing::{info, warn, error, debug};
 
 /// Configuration for interactive report generation
 #[derive(Debug, Clone)]
@@ -147,7 +148,7 @@ impl InteractiveReportGenerator {
         // Auto-save if configured
         if self.config.auto_save {
             if let Err(e) = self.save_report(&report).await {
-                eprintln!("Warning: Failed to auto-save report: {}", e);
+                error!("Warning: Failed to auto-save report: {}", e);
             }
         }
 

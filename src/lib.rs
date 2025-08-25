@@ -1,4 +1,3 @@
-#![allow(warnings)]
 //! # Uveddi - Architectural Analysis Tool
 //!
 //! Uveddi is a comprehensive architectural analysis tool that combines static code analysis
@@ -154,15 +153,15 @@
 //!         // Use engine
 //!     }
 //!     Err(UveddiError::ConfigError(msg)) => {
-//!         eprintln!("Configuration error: {}", msg);
+//!         error!("Configuration error: {}", msg);
 //!     }
 //!     Err(UveddiError::IoError(io_err)) => {
-//!         eprintln!("File system error: {}", io_err);
+//!         error!("File system error: {}", io_err);
 //!     }
 //!     Err(e) => {
-//!         eprintln!("Analysis error: {}", e);
-//!         eprintln!("Category: {:?}", e.category());
-//!         eprintln!("Severity: {:?}", e.severity());
+//!         error!("Analysis error: {}", e);
+//!         error!("Category: {:?}", e.category());
+//!         error!("Severity: {:?}", e.severity());
 //!     }
 //! }
 //! # }
@@ -237,6 +236,7 @@
 //! ```
 //!
 //! See individual module documentation for detailed usage information and examples.
+
 
 #![warn(missing_docs)]
 #![warn(rustdoc::missing_crate_level_docs)]

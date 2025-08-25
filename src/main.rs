@@ -44,6 +44,7 @@
 //! - Suggestions for common issues
 
 use color_eyre::eyre::Result;
+use tracing::{info, error, debug};
 // TODO: Re-enable when monitoring dependencies are properly configured
 // use uveddi::monitoring::dashboard::MonitoringDashboard;
 // use uveddi::config::monitoring::MonitoringConfig;
@@ -58,9 +59,20 @@ mod server;
 async fn main() -> Result<()> {
     // Set up color_eyre for better error reporting
     color_eyre::install()?;
-    // Initialize logging using built-in logging system
-    tracing_subscriber::fmt::init();
+    
+    // Initialize enhanced logging system
+    // Use RUST_LOG environment variable or default to "info"
+    let log_level = std::env::var("RUST_LOG").unwrap_or_else(|_| "info".to_string());
+    let log_format = std::env::var("LOG_FORMAT").unwrap_or_else(|_| "compact".to_string());
+    
+    uveddi::core::logging::unified::init_logging_with_config(
+        &log_level,
+        log_format == "json"
+    ).expect("Failed to initialize logging");
 
+    info!("Starting Uveddi application");
+    debug!("Log level: {}, Format: {}", log_level, log_format);
+    
     // TEMPORARILY DISABLED: Health monitoring server to debug hanging issue
     // TODO: Re-enable after fixing hanging issue
 
@@ -75,7 +87,7 @@ async fn main() -> Result<()> {
     //
     //     // Start the server asynchronously - this will block the thread but not the main process
     //     if let Err(e) = rt.block_on(server::run_server(health_monitor_clone)) {
-    //         eprintln!("Health monitoring server error: {}", e);
+    //         error!("Health monitoring server error: {}", e);
     //     }
     // });
     //
@@ -93,9 +105,16 @@ async fn main() -> Result<()> {
     // });
 
     // Run main application
-    uveddi::application::run_app()
-        .await
-        .map_err(|e| color_eyre::eyre::eyre!(e))?;
+    info!("Running main application");
+    match uveddi::application::run_app().await {
+        Ok(_) => {
+            info!("Application completed successfully");
+        }
+        Err(e) => {
+            error!(error = ?e, "Application failed");
+            return Err(color_eyre::eyre::eyre!(e));
+        }
+    }
 
     // Example of using the new builder pattern for AnalysisEngine
     // This is for demonstration and can be removed if not needed in main.rs
@@ -104,5 +123,6 @@ async fn main() -> Result<()> {
     //     .build_async()
     //     .await?;
 
+    info!("Uveddi application shutting down");
     Ok(())
 }

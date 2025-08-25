@@ -48,6 +48,8 @@
 //!
 //! See the [`models`] module for detailed entity definitions.
 
+use tracing::{info, warn, error, debug};
+
 pub mod crud;
 pub mod models;
 

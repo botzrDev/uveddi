@@ -2,6 +2,8 @@
 //!
 //! This module provides end-to-end testing to validate Phase 2 implementation
 
+use tracing::{info, warn, error, debug};
+
 #[cfg(test)]
 mod tests {
     use super::super::*;
@@ -22,7 +24,7 @@ mod tests {
         );
 
         // Test 1: Statistical Analysis Components
-        println!("✅ Test 1: Statistical Analysis Components");
+        info!("✅ Test 1: Statistical Analysis Components");
         let analyzer = StatisticalAnalyzer::new();
         let detector = TrendDetector::new();
 
@@ -47,7 +49,7 @@ mod tests {
         // The test passes if the algorithm runs without error
 
         // Test 2: Baseline Management
-        println!("✅ Test 2: Baseline Management System");
+        info!("✅ Test 2: Baseline Management System");
         let temp_dir = TempDir::new().unwrap();
         let baseline_config = BaselineConfig::default();
         let mut baseline_manager =
@@ -94,7 +96,7 @@ mod tests {
         );
 
         // Test 3: Criterion Integration Manager
-        println!("✅ Test 3: Criterion Integration Manager");
+        info!("✅ Test 3: Criterion Integration Manager");
         let integration_config = CriterionIntegrationConfig {
             baseline_storage_path: temp_dir.path().join("integration_baselines.json"),
             report_output_directory: temp_dir.path().join("reports"),
@@ -143,7 +145,7 @@ mod tests {
         );
 
         // Test 4: Performance Report Generation
-        println!("✅ Test 4: Performance Report Generation");
+        info!("✅ Test 4: Performance Report Generation");
         let report_generator = PerformanceReportGenerator::new().unwrap();
 
         // Create baseline comparison data for report
@@ -186,7 +188,7 @@ mod tests {
 
         // Summary
         println!("\n🎉 Phase 2 Integration Test PASSED!");
-        println!("✅ All Phase 2 components working correctly:");
+        info!("✅ All Phase 2 components working correctly:");
         println!("   • Criterion.rs integration for performance characterization");
         println!("   • Benchmark harness with statistical correlation");
         println!("   • Baseline management system with persistence");
@@ -194,7 +196,7 @@ mod tests {
         println!("   • End-to-end integration between all components");
         println!("   • iai-callgrind setup (requires valgrind for execution)");
 
-        println!("\n📊 Phase 2 Statistics:");
+        info!("\n📊 Phase 2 Statistics:");
         println!("   • Statistical confidence: 95%+ achieved");
         println!("   • Mann-Kendall trend detection: Operational");
         println!("   • Change point detection: PELT algorithm ready");

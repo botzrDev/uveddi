@@ -5,6 +5,7 @@ use crate::plugins::{PluginId, PluginManifest, WasmPluginEngine};
 use async_trait::async_trait;
 use std::sync::Arc;
 use tokio::sync::RwLock;
+use tracing::{info, warn, error, debug};
 
 /// Adapter to make WASM plugins work as AnalysisDetectors
 ///

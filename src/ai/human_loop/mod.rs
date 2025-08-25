@@ -2,6 +2,7 @@
 
 use crate::ai::types::AiSuggestion;
 use std::io::{self, Write};
+use tracing::{info, warn, error, debug};
 
 /// CLI workflow for human review of AI suggestions
 pub fn request_human_verification_cli(suggestion: &AiSuggestion) -> bool {

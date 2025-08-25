@@ -20,16 +20,19 @@ use std::process::Command;
 use tempfile::NamedTempFile;
 use tera::{Context, Tera};
 use thiserror::Error;
+use tracing::{info, warn, error, debug};
 
 use crate::core::mocks::ai_mocks::AiInsight;
 use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
 use crate::models::visualization::{
+use tracing::{info, warn, error, debug};
     ArchitecturalComponent, ComponentMetrics, ComponentType, Dependency, DependencyNode,
     DependencyType, DiagramType as VizDiagramType,
 };
 use crate::report::metrics::{compute_debt_score, compute_issues_by_severity};
 use crate::report::DiagramMode;
 use uuid::Uuid;
+use tracing::{info, warn, error, debug};
 
 #[derive(Error, Debug)]
 pub enum MarkdownReportError {
@@ -216,7 +219,7 @@ impl MarkdownReportGenerator {
                         }
                         Err(e) if self.diagram_config.mode == DiagramMode::ImageWithFallback => {
                             // Fallback to Mermaid-only
-                            eprintln!("Warning: Failed to render diagram '{}', falling back to Mermaid-only: {}", title, e);
+                            error!("Warning: Failed to render diagram '{}', falling back to Mermaid-only: {}", title, e);
                             context.insert(
                                 "diagram",
                                 &serde_json::json!({

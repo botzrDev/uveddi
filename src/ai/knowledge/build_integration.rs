@@ -12,6 +12,7 @@ use crate::ai::knowledge::language_integration::{IntegratedKnowledgeFactory, Lan
 use std::path::Path;
 use std::fs;
 use std::io::Write;
+use tracing::{info, warn, error, debug};
 
 /// Build-time errors
 #[derive(Debug, thiserror::Error)]
@@ -103,7 +104,7 @@ impl KnowledgeLibraryBuilder {
         println!("  Writing build artifacts...");
         self.write_artifacts(&artifacts, output_dir)?;
 
-        println!("✓ Enhanced Knowledge library build completed successfully");
+        info!("✓ Enhanced Knowledge library build completed successfully");
         println!("  Universal patterns: {}", library.universal_patterns.len());
         println!("  Language-specific patterns: {}", 
                  library.language_specific.values().map(|l| l.patterns.len()).sum::<usize>());
@@ -148,10 +149,10 @@ impl KnowledgeLibraryBuilder {
                  report.pattern_count, report.quality_score);
         
         if !report.issues.is_empty() {
-            println!("  Validation warnings: {} issues found", report.issues.len());
+            warn!("  Validation warnings: {} issues found", report.issues.len());
             for issue in &report.issues {
                 if matches!(issue.severity, Severity::Warning) {
-                    println!("    Warning: {}", issue.message);
+                    warn!("    Warning: {}", issue.message);
                 }
             }
         }
@@ -616,7 +617,7 @@ mod tests {
                 println!("✓ Build artifacts generated successfully");
             },
             Err(e) => {
-                println!("Build failed (expected in test environment): {}", e);
+                error!("Build failed (expected in test environment): {}", e);
                 // This is acceptable in test environment where dependencies may not be available
             }
         }

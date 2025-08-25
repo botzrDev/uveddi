@@ -2,6 +2,8 @@
 //!
 //! Tests each component in isolation using mockall for dependency mocking.
 
+use tracing::{info, warn, error, debug};
+
 #[cfg(test)]
 mod config_service_tests {
     use super::super::config_service::ConfigurationService;

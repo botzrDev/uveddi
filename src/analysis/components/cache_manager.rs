@@ -4,6 +4,7 @@
 //! the new multi-layered caching architecture with memory and disk tiers,
 //! optimized serialization, and intelligent invalidation strategies.
 
+use tracing::{info, warn, error, debug};
 use crate::analysis::cache::{
     ast::{AstCache, CacheConfig},
     engine_cache::{EngineCache, EngineCacheConfig},

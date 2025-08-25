@@ -5,6 +5,7 @@ use reqwest::Client;
 use serde_json::Value;
 use std::collections::HashMap;
 use tokio::time::{timeout, Duration};
+use tracing::{info, warn, error, debug};
 
 /// HTTP client wrapper for notification channels
 pub struct NotificationClient {

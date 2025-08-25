@@ -39,11 +39,14 @@
 
 use crate::core::logging::{debug, info, warn};
 use crate::security::{HttpSecurityConfig, SecureHttpClient};
+use tracing::{info, warn, error, debug};
 #[cfg(feature = "ai")]
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
+use tracing::{info, warn, error, debug};
 #[cfg(feature = "ai")]
 use tokio::time::timeout;
+use tracing::{info, warn, error, debug};
 
 /// Request payload structure for Ollama API calls
 ///
@@ -573,10 +576,13 @@ impl OllamaProvider {
 
 #[cfg(feature = "ai")]
 use crate::ai::api::llm_provider::LlmProvider;
+use tracing::{info, warn, error, debug};
 #[cfg(feature = "ai")]
 use crate::error::UveddiError;
+use tracing::{info, warn, error, debug};
 #[cfg(feature = "ai")]
 use async_trait::async_trait;
+use tracing::{info, warn, error, debug};
 
 #[async_trait]
 impl LlmProvider for OllamaProvider {

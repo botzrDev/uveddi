@@ -1,4 +1,5 @@
 use crate::analysis::{
+use tracing::{info, warn, error, debug};
     AnalysisEngine, DetectorConfig, DetectorRegistry, DetectorThresholds, EnhancedDetectorConfig,
     IssueSeverity, StandardDetectorConfig,
 };

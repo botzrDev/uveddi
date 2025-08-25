@@ -458,4 +458,3 @@ mod tests {
         
         assert!(!detector.has_semantic_coherence(&random_group));
     }
-}

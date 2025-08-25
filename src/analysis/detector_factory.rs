@@ -1,4 +1,5 @@
 use crate::analysis::detectors::anti_patterns::code_duplication::CodeDuplicationDetector;
+use tracing::{info, warn, error, debug};
 // use crate::analysis::detectors::anti_patterns::data_clumps::DataClumpsDetector;
 use crate::analysis::detectors::anti_patterns::dead_code::DeadCodeDetector;
 // use crate::analysis::detectors::anti_patterns::feature_envy::FeatureEnvyDetector;

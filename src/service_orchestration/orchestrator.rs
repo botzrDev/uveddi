@@ -364,29 +364,29 @@ impl ServiceOrchestrator {
 
     /// Print service URLs for user reference
     fn print_service_urls(&self, config: &OrchestratorConfig) {
-        println!("\n🌟 Uveddi Services Running:");
-        println!("   📊 Dashboard: http://localhost:{}", config.api_port);
-        println!(
+        info!("\n🌟 Uveddi Services Running:");
+        info!("   📊 Dashboard: http://localhost:{}", config.api_port);
+        info!(
             "   🔧 API Server: http://localhost:{}/api/v1",
             config.api_port
         );
-        println!(
+        info!(
             "   🎨 Rendering Service: http://localhost:{}",
             config.rendering_port
         );
 
         if config.development_mode {
-            println!(
+            info!(
                 "   🖥️  Dev Frontend: http://localhost:{}",
                 config.frontend_port
             );
         }
 
-        println!(
+        info!(
             "   📈 Health Check: http://localhost:{}/health",
             config.api_port
         );
-        println!();
+        info!("");
     }
 
     /// Stop all running services

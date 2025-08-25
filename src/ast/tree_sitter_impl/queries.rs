@@ -8,4 +8,3 @@ impl Queries {
     pub fn new() -> Self {
         Self
     }
-}

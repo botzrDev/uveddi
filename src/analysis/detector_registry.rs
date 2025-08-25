@@ -1,4 +1,5 @@
 use crate::analysis::{
+use tracing::{info, warn, error, debug};
     AnalysisDetector, DetectorConfig, DetectorFactory, WasmPluginAdapterFactory,
 };
 use crate::error::UveddiError;

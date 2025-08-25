@@ -23,6 +23,7 @@
 //! - **JavaScript**: Framework-aware thresholds for React/Node.js patterns
 
 use crate::analysis::{AnalysisDetector, AnalysisError};
+use tracing::{info, warn, error, debug};
 #[cfg(not(feature = "tree-sitter"))]
 use crate::ast::tree_sitter::StreamingIterator;
 use crate::ast::tree_sitter::{tree_sitter_javascript, tree_sitter_python, tree_sitter_rust};

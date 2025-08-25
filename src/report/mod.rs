@@ -565,17 +565,17 @@ impl ReportGenerator {
         let mut summary = String::new();
 
         // Group issues by severity
-        let high_issues: Vec<_> = issues
+        let high_issues: Vec<&ArchitecturalIssue> = issues
             .iter()
             .filter(|i| {
                 i.severity.to_lowercase() == "high" || i.severity.to_lowercase() == "critical"
             })
             .collect();
-        let medium_issues: Vec<_> = issues
+        let medium_issues: Vec<&ArchitecturalIssue> = issues
             .iter()
             .filter(|i| i.severity.to_lowercase() == "medium")
             .collect();
-        let low_issues: Vec<_> = issues
+        let low_issues: Vec<&ArchitecturalIssue> = issues
             .iter()
             .filter(|i| i.severity.to_lowercase() == "low")
             .collect();
@@ -902,7 +902,7 @@ impl ReportGenerator {
         let mut diagrams = String::new();
 
         // Add dependency cycles diagram if there are cyclic dependency issues
-        let cycle_issues: Vec<_> = issues
+        let cycle_issues: Vec<&ArchitecturalIssue> = issues
             .iter()
             .filter(|i| {
                 anti_pattern_types
@@ -960,7 +960,7 @@ impl ReportGenerator {
         }
 
         // Add god object diagrams if there are god object issues
-        let god_object_issues: Vec<_> = issues
+        let god_object_issues: Vec<&ArchitecturalIssue> = issues
             .iter()
             .filter(|i| {
                 // Check both the anti-pattern type name and the description
@@ -1015,7 +1015,7 @@ impl ReportGenerator {
 
                 // If we have a code snippet, try to extract fields and methods
                 if let Some(code) = &issue.code_snippet {
-                    let lines: Vec<&str> = code.lines().collect();
+                    let lines: Vec<&str> = code.lines().collect::<Vec<&str>>(); // Collect lines for simple parsing of struct/impl
                     let mut in_struct = false;
                     let mut in_impl = false;
 

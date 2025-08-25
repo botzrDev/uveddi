@@ -11,6 +11,7 @@ use clap::{Args, Subcommand};
 use std::path::PathBuf;
 use std::sync::Arc;
 use tokio;
+use tracing::{info, warn, error, debug};
 
 /// UI-related commands for interactive reporting
 #[derive(Debug, Args)]
@@ -99,7 +100,7 @@ impl UiCommand {
         &self,
         args: &ServeArgs,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        println!("🚀 Starting Uveddi Interactive Reports Server");
+        info!("🚀 Starting Uveddi Interactive Reports Server");
         println!();
 
         // Create reports directory if it doesn't exist
@@ -107,7 +108,7 @@ impl UiCommand {
 
         // Initialize database
         let database = Arc::new(Database::new(Some(args.database.as_path()))?);
-        println!("✅ Database initialized: {}", args.database.display());
+        info!("✅ Database initialized: {}", args.database.display());
 
         // Create server configuration
         let config = RestApiConfig {
@@ -134,9 +135,9 @@ impl UiCommand {
         // Start server
         let server = CombinedApiServer::new(config, args.port);
 
-        println!("✅ Server configuration complete");
+        info!("✅ Server configuration complete");
         println!();
-        println!("🌐 Server starting on http://localhost:{}", args.port);
+        info!("🌐 Server starting on http://localhost:{}", args.port);
         println!(
             "📊 Dashboard: http://localhost:{}/dashboard/demo",
             args.port
@@ -178,13 +179,13 @@ impl UiCommand {
         if args.browser {
             // Try to open browser
             if let Err(e) = open_browser(&url) {
-                println!("⚠️  Could not open browser automatically: {}", e);
+                error!("⚠️  Could not open browser automatically: {}", e);
                 println!("   Please open: {}", url);
             } else {
-                println!("✅ Opened in browser: {}", url);
+                info!("✅ Opened in browser: {}", url);
             }
         } else {
-            println!("🌐 Report available at: {}", url);
+            info!("🌐 Report available at: {}", url);
         }
 
         // TODO: Start server in background and keep it running
@@ -237,7 +238,7 @@ impl UiCommand {
             let demo_report = InteractiveReportGenerator::generate_demo_report();
 
             generator.save_report(&demo_report).await?;
-            println!("✅ Demo report created");
+            info!("✅ Demo report created");
         }
 
         Ok(())

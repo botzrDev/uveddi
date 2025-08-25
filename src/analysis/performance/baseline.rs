@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
+use tracing::{info, warn, error, debug};
 
 #[cfg(feature = "image-rendering")]
 use crate::report::image_renderer::{ImageFormat, ImageRenderer, RenderingServiceConfig};
@@ -121,21 +122,21 @@ impl PerformanceAnalyzer {
     pub async fn analyze_rendering_performance(
         &self,
     ) -> Result<PerformanceBaseline, AnalysisError> {
-        println!("🔍 Starting UV-49 baseline performance analysis...");
+        info!("🔍 Starting UV-49 baseline performance analysis...");
 
         // Test different diagram types
         let test_diagrams = self.get_test_diagrams();
 
         // Clear cache for clean baseline
         if let Err(e) = self.clear_cache().await {
-            println!("⚠️  Warning: Could not clear cache: {}", e);
+            error!("⚠️  Warning: Could not clear cache: {}", e);
         }
 
         let mut all_measurements = Vec::new();
 
         // Run baseline tests for each diagram type
         for (diagram_type, mermaid_code) in test_diagrams {
-            println!("📊 Testing {} diagrams...", diagram_type);
+            info!("📊 Testing {} diagrams...", diagram_type);
             let measurements = self
                 .test_diagram_type(&diagram_type, &mermaid_code, 20)
                 .await?;
@@ -179,7 +180,7 @@ impl PerformanceAnalyzer {
         // Generate baseline report
         self.generate_baseline_report(&baseline).await?;
 
-        println!("✅ UV-49 baseline analysis complete");
+        info!("✅ UV-49 baseline analysis complete");
         Ok(baseline)
     }
 
@@ -638,7 +639,7 @@ graph TD
             .await
             .map_err(|e| AnalysisError::IoError(e.to_string()))?;
 
-        println!("📊 Baseline reports generated:");
+        info!("📊 Baseline reports generated:");
         println!("  - performance_baseline_report.json");
         println!("  - performance_baseline_summary.md");
 

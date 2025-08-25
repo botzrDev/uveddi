@@ -8,8 +8,10 @@ use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyModifiers};
 use ratatui::prelude::*;
 use std::time::{Duration, Instant};
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
+use tracing::{info, warn, error, debug};
 
 use crate::{
+use tracing::{info, warn, error, debug};
     cli::analyze_command::AnalyzeCommand,
     tui::{
         app::{AppScreen, AppState},
@@ -67,8 +69,8 @@ impl EventHandler {
 
         // Check terminal suitability
         if !terminal_manager.is_size_adequate()? {
-            eprintln!("Warning: Terminal size may be too small for optimal experience");
-            eprintln!("Recommended minimum: 80x24 characters");
+            error!("Warning: Terminal size may be too small for optimal experience");
+            error!("Recommended minimum: 80x24 characters");
         }
 
         // Main event loop

@@ -4,6 +4,7 @@
 //! Node.js rendering service for converting Mermaid.js diagrams to images.
 
 use crate::error::rendering::RenderingServiceError;
+use tracing::{info, warn, error, debug};
 #[cfg(feature = "security")]
 use crate::security::{HttpSecurityConfig, SecureHttpClient};
 use md5;
@@ -11,6 +12,7 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::time::Duration;
 use thiserror::Error;
+use tracing::{info, warn, error, debug};
 
 /// Configuration for the image rendering service
 #[derive(Debug, Clone)]
@@ -607,16 +609,16 @@ mod tests {
                 assert!(health.workers.total_workers > 0);
             }
             Err(RenderingServiceError::ServiceUnavailable) => {
-                println!("Rendering service not available, skipping test");
+                warn!("Rendering service not available, skipping test");
             }
             Err(RenderingServiceError::NetworkError { .. }) => {
-                println!("Network error - rendering service not available, skipping test");
+                error!("Network error - rendering service not available, skipping test");
             }
             Err(RenderingServiceError::ConnectionTimeout { .. }) => {
-                println!("Connection timeout - rendering service not available, skipping test");
+                warn!("Connection timeout - rendering service not available, skipping test");
             }
             Err(RenderingServiceError::RequestTimeout { .. }) => {
-                println!("Request timeout - rendering service not available, skipping test");
+                warn!("Request timeout - rendering service not available, skipping test");
             }
             Err(e) => {
                 println!(
@@ -647,16 +649,16 @@ graph TD
                 assert!(matches!(image.format, ImageFormat::Svg));
             }
             Err(RenderingServiceError::ServiceUnavailable) => {
-                println!("Rendering service not available, skipping test");
+                warn!("Rendering service not available, skipping test");
             }
             Err(RenderingServiceError::NetworkError { .. }) => {
-                println!("Network error - rendering service not available, skipping test");
+                error!("Network error - rendering service not available, skipping test");
             }
             Err(RenderingServiceError::ConnectionTimeout { .. }) => {
-                println!("Connection timeout - rendering service not available, skipping test");
+                warn!("Connection timeout - rendering service not available, skipping test");
             }
             Err(RenderingServiceError::RequestTimeout { .. }) => {
-                println!("Request timeout - rendering service not available, skipping test");
+                warn!("Request timeout - rendering service not available, skipping test");
             }
             Err(e) => {
                 println!(

@@ -55,6 +55,8 @@
 //! All cache implementations are designed to be thread-safe and can be
 //! used safely across async tasks and concurrent analysis operations.
 
+use tracing::{info, warn, error, debug};
+
 pub mod incremental_cache;
 pub mod result_cache;
 

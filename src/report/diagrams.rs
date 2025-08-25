@@ -3,6 +3,7 @@
 use crate::database::models::ArchitecturalIssue;
 use crate::models::visualization::Dependency;
 use std::collections::HashSet;
+use tracing::{info, warn, error, debug};
 
 /// Placeholder documentation for public items
 ///

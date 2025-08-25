@@ -34,6 +34,7 @@ use crate::database::Database;
 use crate::report::interactive_models::{
     DependencyGraph, InteractiveReport, REPORT_SCHEMA_VERSION,
 };
+use tracing::{info, warn, error, debug};
 use axum::{
     extract::{Path as AxumPath, State},
     http::{header, HeaderMap, StatusCode},
@@ -144,7 +145,7 @@ impl CombinedApiServer {
         let app = service.create_app_with_state();
 
         let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", self.port)).await?;
-        println!("🌐 Server listening on http://0.0.0.0:{}", self.port);
+        info!("🌐 Server listening on http://0.0.0.0:{}", self.port);
 
         axum::serve(listener, app).await?;
         Ok(())
@@ -164,7 +165,7 @@ impl CombinedApiServer {
         // Bind to the port first
         let listener = match tokio::net::TcpListener::bind(format!("0.0.0.0:{}", self.port)).await {
             Ok(listener) => {
-                println!("🌐 Server listening on http://0.0.0.0:{}", self.port);
+                info!("🌐 Server listening on http://0.0.0.0:{}", self.port);
                 // Signal that we're ready to accept connections
                 let _ = ready_tx.send(Ok(()));
                 listener
@@ -244,7 +245,7 @@ async fn list_reports(State(state): State<Arc<AppState>>) -> Result<impl IntoRes
             })))
         }
         Err(e) => {
-            eprintln!("Failed to load reports from database: {}", e);
+            error!("Failed to load reports from database: {}", e);
             // Fallback to demo data only
             let reports = vec![serde_json::json!({
                 "id": "demo",
@@ -279,7 +280,7 @@ async fn get_report(
         match load_report_from_database(&state.database, run_id).await {
             Ok(report) => return Ok(Json(report)),
             Err(e) => {
-                eprintln!("Failed to load report from database: {}", e);
+                error!("Failed to load report from database: {}", e);
                 // Fall through to file system
             }
         }
@@ -907,18 +908,18 @@ async fn get_security_issues(
                             return Ok(Json(response_issues));
                         }
                         Err(e) => {
-                            eprintln!("Failed to load security issues: {}", e);
+                            error!("Failed to load security issues: {}", e);
                             // Fall through to demo data
                         }
                     }
                 }
             }
             Ok(None) => {
-                eprintln!("No analysis runs found in database");
+                warn!("No analysis runs found in database");
                 // Fall through to demo data
             }
             Err(e) => {
-                eprintln!("Failed to get latest analysis run: {}", e);
+                error!("Failed to get latest analysis run: {}", e);
                 // Fall through to demo data
             }
         }

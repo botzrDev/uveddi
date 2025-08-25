@@ -5,6 +5,7 @@
 use crate::plugins::{PluginId, PluginManifest, WasmPluginEngine};
 use clap::{Args, Subcommand};
 use std::path::PathBuf;
+use tracing::{info, warn, error, debug};
 
 /// Plugin management commands
 #[derive(Args, Debug)]
@@ -76,7 +77,7 @@ impl PluginCommand {
             println!("Plugin Registry Statistics:");
             println!("  Total plugins: {}", stats.total_plugins);
             println!("  Ready plugins: {}", stats.ready_plugins);
-            println!("  Error plugins: {}", stats.error_plugins);
+            error!("  Error plugins: {}", stats.error_plugins);
             println!(
                 "  Supported languages: {}",
                 stats.supported_languages.join(", ")
@@ -255,9 +256,9 @@ impl PluginCommand {
                         );
                         println!("    Total fuel consumed: {}", stats.total_fuel_consumed);
                         println!("    Peak memory usage: {} bytes", stats.peak_memory_usage);
-                        println!("    Error count: {}", stats.error_count);
+                        error!("    Error count: {}", stats.error_count);
                         if let Some(ref error) = stats.last_error {
-                            println!("    Last error: {}", error);
+                            error!("    Last error: {}", error);
                         }
                         println!();
                     }
@@ -368,7 +369,7 @@ impl PluginCommand {
 
             match verifier.verify_plugin(&binary, &manifest, &policy).await {
                 Ok(report) => {
-                    println!("Verification completed!");
+                    info!("Verification completed!");
                     println!(
                         "  Plugin: {} v{}",
                         report.plugin_name, report.plugin_version
@@ -395,15 +396,15 @@ impl PluginCommand {
                     println!("\nManifest Validation:");
                     println!("  Valid: {}", report.manifest_validation.is_valid);
                     if !report.manifest_validation.errors.is_empty() {
-                        println!("  Errors:");
+                        error!("  Errors:");
                         for error in &report.manifest_validation.errors {
-                            println!("    - {}", error);
+                            error!("    - {}", error);
                         }
                     }
                     if !report.manifest_validation.warnings.is_empty() {
-                        println!("  Warnings:");
+                        warn!("  Warnings:");
                         for warning in &report.manifest_validation.warnings {
-                            println!("    - {}", warning);
+                            warn!("    - {}", warning);
                         }
                     }
 
@@ -422,7 +423,7 @@ impl PluginCommand {
                     );
                 }
                 Err(e) => {
-                    println!("Verification failed: {}", e);
+                    error!("Verification failed: {}", e);
                     return Err(crate::error::UveddiError::PluginError {
                         plugin: "unknown".to_string(),
                         plugin_type: "WASM".to_string(),

@@ -10,6 +10,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::broadcast;
+use tracing::{info, warn, error, debug};
 
 /// Central event bus for component communication
 ///
@@ -423,13 +424,13 @@ impl EventProcessor {
                 Ok(event) => {
                     for handler in &self.handlers {
                         if let Err(e) = handler.handle_event(event.clone()).await {
-                            eprintln!("Event handling error: {}", e);
+                            error!("Event handling error: {}", e);
                         }
                     }
                 }
                 Err(broadcast::error::RecvError::Closed) => break,
                 Err(broadcast::error::RecvError::Lagged(_)) => {
-                    eprintln!("Event processing lagged, some events may be lost");
+                    error!("Event processing lagged, some events may be lost");
                     continue;
                 }
             }

@@ -10,6 +10,7 @@ use std::collections::{HashMap, HashSet, VecDeque};
 use std::sync::Arc;
 use std::time::{Duration, SystemTime};
 use tokio::sync::RwLock;
+use tracing::{info, warn, error, debug};
 
 /// Alert types supported by the system
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash)]

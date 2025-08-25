@@ -93,6 +93,7 @@ use axum::{extract::State, http::StatusCode, routing::get, Json, Router};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use uveddi::resilience::health::{Alert, HealthMonitor, HealthStatus};
+use tracing::{info, warn, error, debug};
 
 /// Placeholder documentation for public items
 /// Shared state for HTTP handlers

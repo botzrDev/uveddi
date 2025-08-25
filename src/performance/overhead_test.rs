@@ -3,6 +3,7 @@
 use super::statistical_analysis::StatisticalAnalyzer;
 use super::trend_detection::TrendDetector;
 use std::time::Instant;
+use tracing::{info, warn, error, debug};
 
 pub fn measure_statistical_overhead() {
     println!("=== Performance Overhead Validation ===");
@@ -111,7 +112,7 @@ pub fn measure_statistical_overhead() {
 
     if overhead_percent < 500.0 {
         // 5x slower = 500% overhead
-        println!("✅ PASS: Overhead is within acceptable limits (<500%)");
+        info!("✅ PASS: Overhead is within acceptable limits (<500%)");
     } else {
         println!("❌ FAIL: Overhead is too high (>500%)");
     }

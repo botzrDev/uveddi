@@ -9,6 +9,7 @@ use std::sync::Arc;
 use std::time::Duration;
 use thiserror::Error;
 use tokio::sync::{Mutex, OwnedSemaphorePermit, Semaphore};
+use tracing::{info, warn, error, debug};
 
 /// Comprehensive error enum representing all possible failure modes
 /// when parsing files in a robust, async context.
@@ -336,7 +337,7 @@ mod tests {
                 Err(ParseFileError::Timeout(_)) => {
                     debug!("test_timeout_behavior completed: timeout as expected")
                 }
-                Ok(_) => println!("Parsing completed faster than expected timeout"),
+                Ok(_) => info!("Parsing completed faster than expected timeout"),
                 Err(e) => panic!("Unexpected error type: {:?}", e),
             },
             Err(_) => panic!("test_timeout_behavior timed out"),

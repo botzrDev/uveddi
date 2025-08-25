@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
+use tracing::{info, warn, error, debug};
 
 #[cfg(feature = "image-rendering")]
 use crate::report::image_renderer::{ImageFormat, ImageRenderer, RenderingServiceConfig};
@@ -87,28 +88,28 @@ impl PerformanceValidator {
     pub async fn run_comprehensive_validation(
         &self,
     ) -> Result<PerformanceTestSuite, ValidationError> {
-        println!("🧪 Starting UV-48 Comprehensive Performance Validation");
+        info!("🧪 Starting UV-48 Comprehensive Performance Validation");
 
         let mut test_results = Vec::new();
 
         // Test 1: Single Render Performance
-        println!("📊 Test 1: Single Render Performance");
+        info!("📊 Test 1: Single Render Performance");
         test_results.push(self.test_single_render_performance().await?);
 
         // Test 2: Cache Performance
-        println!("📊 Test 2: Cache Performance");
+        info!("📊 Test 2: Cache Performance");
         test_results.push(self.test_cache_performance().await?);
 
         // Test 3: Concurrent Load Test
-        println!("📊 Test 3: Concurrent Load Test");
+        info!("📊 Test 3: Concurrent Load Test");
         test_results.push(self.test_concurrent_load().await?);
 
         // Test 4: Consistency Test
-        println!("📊 Test 4: Consistency Test");
+        info!("📊 Test 4: Consistency Test");
         test_results.push(self.test_consistency().await?);
 
         // Test 5: Stress Test
-        println!("📊 Test 5: Stress Test");
+        info!("📊 Test 5: Stress Test");
         test_results.push(self.test_stress_performance().await?);
 
         let summary = self.generate_summary(&test_results);
@@ -163,14 +164,14 @@ impl PerformanceValidator {
                                 name, quality, result.render_time_ms
                             );
                         } else {
-                            println!("    ✅ {} {:?}: {}ms", name, quality, result.render_time_ms);
+                            info!("    ✅ {} {:?}: {}ms", name, quality, result.render_time_ms);
                         }
                     }
                     Err(e) => {
                         failures += 1;
                         let error_msg = format!("{} {:?}: {}", name, quality, e);
                         errors.push(error_msg.clone());
-                        println!("    ❌ {}", error_msg);
+                        error!("    ❌ {}", error_msg);
                     }
                 }
             }
@@ -258,7 +259,7 @@ graph TD
                     }
                 }
                 Err(e) => {
-                    println!("  Request {} failed: {}", i + 1, e);
+                    error!("  Request {} failed: {}", i + 1, e);
                 }
             }
         }
@@ -748,7 +749,7 @@ graph TD
             .await
             .map_err(|e| ValidationError::ReportGenerationFailed(e.to_string()))?;
 
-        println!("\n📊 Validation reports generated:");
+        info!("\n📊 Validation reports generated:");
         println!("  - uv48_performance_validation_report.json");
         println!("  - uv48_performance_validation_summary.md");
 

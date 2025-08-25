@@ -12,6 +12,7 @@ use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime};
 use tokio::sync::RwLock;
 use uuid::Uuid;
+use tracing::{info, warn, error, debug};
 
 /// Represents a chaos experiment with its current state and metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -394,7 +395,7 @@ impl ExperimentRunner {
                 
                 // Perform safety checks
                 if let Err(e) = safety_monitor.check_safety_conditions(experiment_id).await {
-                    eprintln!("Safety check failed for experiment {}: {}", experiment_id, e);
+                    error!("Safety check failed for experiment {}: {}", experiment_id, e);
                     // In a real implementation, this would trigger an abort
                 }
             }

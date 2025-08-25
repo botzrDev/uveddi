@@ -5,53 +5,99 @@
 //! while enabling structured logging capabilities.
 
 use std::io;
+use std::path::Path;
 use thiserror::Error;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Registry};
+use tracing_subscriber::fmt::time::OffsetTime;
+use time::OffsetDateTime;
+use std::sync::atomic::{AtomicU64, Ordering};
+
+/// Global request ID counter for correlation
+static REQUEST_ID_COUNTER: AtomicU64 = AtomicU64::new(1);
+
+/// Generate a unique request ID for correlation
+pub fn generate_request_id() -> u64 {
+    REQUEST_ID_COUNTER.fetch_add(1, Ordering::SeqCst)
+}
 
 /// Initialize unified logging system
 pub fn init_logging() -> Result<(), LoggingError> {
-    let env_filter = EnvFilter::try_from_default_env()
-        .or_else(|_| EnvFilter::try_new("info"))
-        .map_err(LoggingError::FilterCreation)?;
-
-    let formatting_layer = tracing_subscriber::fmt::layer()
-        .with_target(false)
-        .with_thread_ids(true)
-        .with_file(true)
-        .with_line_number(true);
-
-    let registry = Registry::default().with(env_filter).with(formatting_layer);
-
-    registry
-        .try_init()
-        .map_err(|_| LoggingError::InitializationFailed)?;
-
-    Ok(())
+    init_logging_with_config("info", false)
 }
 
 /// Initialize logging with custom configuration
 pub fn init_logging_with_config(log_level: &str, with_json: bool) -> Result<(), LoggingError> {
-    let env_filter = EnvFilter::try_new(log_level).map_err(LoggingError::FilterCreation)?;
+    // Allow environment variable to override the log level
+    let env_filter = EnvFilter::try_from_default_env()
+        .or_else(|_| EnvFilter::try_new(log_level))
+        .map_err(LoggingError::FilterCreation)?;
 
     if with_json {
         let registry = Registry::default().with(env_filter).with(
             tracing_subscriber::fmt::layer()
                 .json()
-                .with_target(false)
+                .with_target(true)
                 .with_thread_ids(true)
+                .with_thread_names(true)
                 .with_file(true)
-                .with_line_number(true),
+                .with_line_number(true)
+                .with_current_span(true),
         );
         tracing::subscriber::set_global_default(registry).map_err(LoggingError::SubscriberInit)?;
     } else {
         let registry = Registry::default().with(env_filter).with(
             tracing_subscriber::fmt::layer()
-                .with_target(false)
-                .with_thread_ids(true)
+                .compact()
+                .with_target(true)
+                .with_thread_ids(false)
+                .with_thread_names(false)
                 .with_file(true)
-                .with_line_number(true),
+                .with_line_number(true)
+                .with_ansi(true),
         );
         tracing::subscriber::set_global_default(registry).map_err(LoggingError::SubscriberInit)?;
+    }
+
+    Ok(())
+}
+
+/// Initialize logging for production environment with file output
+pub fn init_production_logging(
+    log_level: &str,
+    log_file: Option<&Path>,
+) -> Result<(), LoggingError> {
+    let env_filter = EnvFilter::try_from_default_env()
+        .or_else(|_| EnvFilter::try_new(log_level))
+        .map_err(LoggingError::FilterCreation)?;
+
+    let stdout_layer = tracing_subscriber::fmt::layer()
+        .compact()
+        .with_target(true)
+        .with_ansi(true);
+
+    let registry = Registry::default().with(env_filter).with(stdout_layer);
+
+    // Add file layer if log file is specified
+    if let Some(log_file) = log_file {
+        let file = std::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(log_file)
+            .map_err(LoggingError::FileCreation)?;
+
+        let file_layer = tracing_subscriber::fmt::layer()
+            .json()
+            .with_writer(file)
+            .with_target(true)
+            .with_file(true)
+            .with_line_number(true)
+            .with_current_span(true);
+
+        registry.with(file_layer).try_init()
+            .map_err(|_| LoggingError::InitializationFailed)?;
+    } else {
+        registry.try_init()
+            .map_err(|_| LoggingError::InitializationFailed)?;
     }
 
     Ok(())
@@ -92,8 +138,67 @@ macro_rules! log_function_exit {
 #[macro_export]
 macro_rules! log_timing {
     ($operation:expr, $duration:expr) => {
-        tracing::info!("Operation '{}' completed in {:?}", $operation, $duration);
+        tracing::info!(
+            operation = $operation,
+            duration_ms = ?$duration.as_millis(),
+            "Operation completed"
+        );
     };
+}
+
+/// Log with request context
+#[macro_export]
+macro_rules! log_with_context {
+    ($level:expr, $request_id:expr, $message:expr) => {
+        tracing::event!(
+            $level,
+            request_id = $request_id,
+            "{}",
+            $message
+        );
+    };
+    ($level:expr, $request_id:expr, $message:expr, $($field:tt)*) => {
+        tracing::event!(
+            $level,
+            request_id = $request_id,
+            $($field)*,
+            "{}",
+            $message
+        );
+    };
+}
+
+/// Log error with context and error chain
+#[macro_export]
+macro_rules! log_error_with_context {
+    ($error:expr) => {
+        tracing::error!(
+            error = ?$error,
+            error_chain = %$crate::core::logging::unified::format_error_chain(&$error),
+            "Error occurred"
+        );
+    };
+    ($error:expr, $context:expr) => {
+        tracing::error!(
+            error = ?$error,
+            error_chain = %$crate::core::logging::unified::format_error_chain(&$error),
+            context = $context,
+            "Error occurred"
+        );
+    };
+}
+
+/// Format error chain for logging
+pub fn format_error_chain(error: &dyn std::error::Error) -> String {
+    let mut chain = vec![error.to_string()];
+    let mut current = error.source();
+    
+    while let Some(cause) = current {
+        chain.push(cause.to_string());
+        current = cause.source();
+    }
+    
+    chain.join(" -> ")
 }
 
 #[derive(Debug, Error)]
@@ -104,6 +209,81 @@ pub enum LoggingError {
     InitializationFailed,
     #[error("Failed to set global subscriber")]
     SubscriberInit(#[from] tracing::subscriber::SetGlobalDefaultError),
+    #[error("Failed to create log file: {0}")]
+    FileCreation(#[from] std::io::Error),
+}
+
+/// Configuration for logging system
+#[derive(Debug, Clone)]
+pub struct LoggingConfig {
+    pub level: String,
+    pub format: LogFormat,
+    pub output: LogOutput,
+    pub include_timestamps: bool,
+    pub include_thread_info: bool,
+    pub include_location: bool,
+}
+
+impl Default for LoggingConfig {
+    fn default() -> Self {
+        Self {
+            level: "info".to_string(),
+            format: LogFormat::Compact,
+            output: LogOutput::Stdout,
+            include_timestamps: true,
+            include_thread_info: false,
+            include_location: true,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum LogFormat {
+    Compact,
+    Pretty,
+    Json,
+}
+
+#[derive(Debug, Clone)]
+pub enum LogOutput {
+    Stdout,
+    File(String),
+    Both(String),
+}
+
+/// Initialize logging with advanced configuration
+pub fn init_with_config(config: LoggingConfig) -> Result<(), LoggingError> {
+    let env_filter = EnvFilter::try_from_default_env()
+        .or_else(|_| EnvFilter::try_new(&config.level))
+        .map_err(LoggingError::FilterCreation)?;
+
+    let base_layer = match config.format {
+        LogFormat::Compact => tracing_subscriber::fmt::layer()
+            .compact()
+            .with_ansi(true)
+            .boxed(),
+        LogFormat::Pretty => tracing_subscriber::fmt::layer()
+            .pretty()
+            .with_ansi(true)
+            .boxed(),
+        LogFormat::Json => tracing_subscriber::fmt::layer()
+            .json()
+            .boxed(),
+    };
+
+    let layer = base_layer
+        .with_target(true)
+        .with_thread_ids(config.include_thread_info)
+        .with_thread_names(config.include_thread_info)
+        .with_file(config.include_location)
+        .with_line_number(config.include_location);
+
+    let registry = Registry::default().with(env_filter).with(layer);
+    
+    registry.try_init()
+        .map_err(|_| LoggingError::InitializationFailed)?;
+
+    Ok(())
 }
 
 #[cfg(test)]

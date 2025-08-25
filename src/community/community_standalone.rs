@@ -6,6 +6,7 @@ use rusqlite::{Connection, Result, params};
 use chrono::{DateTime, Utc, Duration};
 use serde::{Serialize, Deserialize};
 use std::path::Path;
+use tracing::{info, warn, error, debug};
 
 /// Placeholder documentation for public items
 
@@ -426,12 +427,12 @@ impl CommunityDatabase {
 
 // Demo function
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    println!("🚀 Community Management System Demo");
+    info!("🚀 Community Management System Demo");
     println!("=====================================\n");
 
     // Create database
     let db = CommunityDatabase::new(Path::new("community_demo.db"))?;
-    println!("✅ Database initialized successfully");
+    info!("✅ Database initialized successfully");
 
     // Register some members
     let member1 = CommunityMember {
@@ -471,7 +472,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let bob_id = db.register_member(&member2)?;
     let carol_id = db.register_member(&member3)?;
 
-    println!("✅ Registered 3 community members:");
+    info!("✅ Registered 3 community members:");
     println!("   - Alice (Developer, ID: {})", alice_id);
     println!("   - Bob (Admin, ID: {})", bob_id);
     println!("   - Carol (Member, ID: {})", carol_id);
@@ -494,7 +495,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     db.update_profile(&alice_profile)?;
-    println!("✅ Updated Alice's profile");
+    info!("✅ Updated Alice's profile");
 
     // Log some activities
     let activities = vec![
@@ -535,15 +536,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     for activity in &activities {
         db.log_activity(activity)?;
     }
-    println!("✅ Logged {} activities", activities.len());
+    info!("✅ Logged {} activities", activities.len());
 
     // Change a role
     db.update_member_role(carol_id, &MemberRole::Developer)?;
-    println!("✅ Promoted Carol to Developer role");
+    info!("✅ Promoted Carol to Developer role");
 
     // Get some analytics
     let member_count = db.get_member_count()?;
-    println!("\n📊 Community Analytics:");
+    info!("\n📊 Community Analytics:");
     println!("   - Total active members: {}", member_count);
 
     let recent_activities = db.get_recent_activities(10)?;
@@ -556,7 +557,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     // Test member lookup
-    println!("\n🔍 Member Lookup:");
+    info!("\n🔍 Member Lookup:");
     if let Some(alice) = db.get_member_by_email("alice@example.com")? {
         println!("   - Found Alice: {} ({})", alice.username, alice.role.to_string());
         println!("     Display name: {}", alice.display_name.unwrap_or("None".to_string()));
@@ -566,7 +567,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                      .unwrap_or("Never".to_string()));
     }
 
-    println!("\n✨ Demo completed successfully!");
+    info!("\n✨ Demo completed successfully!");
     println!("   Database file: community_demo.db");
     println!("   You can inspect the database with: sqlite3 community_demo.db");
 

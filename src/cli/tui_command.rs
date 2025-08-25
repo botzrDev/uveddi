@@ -7,9 +7,11 @@
 use anyhow::{Context, Result};
 use clap::Args;
 use std::path::PathBuf;
+use tracing::{info, warn, error, debug};
 
 #[cfg(feature = "tui")]
 use crate::tui::events::run_tui;
+use tracing::{info, warn, error, debug};
 
 /// Arguments for the TUI command
 #[derive(Debug, Args)]
@@ -150,8 +152,8 @@ impl TuiCommand {
             if self.force {
                 tracing::warn!("{}", message);
             } else {
-                eprintln!("⚠️  {}", message);
-                eprintln!("Use --force to continue anyway.");
+                error!("⚠️  {}", message);
+                error!("Use --force to continue anyway.");
                 return Err(anyhow::anyhow!("Terminal size too small"));
             }
         }

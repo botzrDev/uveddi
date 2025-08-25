@@ -7,6 +7,7 @@
 use crate::ai::knowledge::compression::CompressedString;
 use crate::ai::knowledge::schema::*;
 use std::collections::HashMap;
+use tracing::{info, warn, error, debug};
 
 /// Create comprehensive language-specific pattern libraries
 pub fn create_language_specific_libraries() -> HashMap<SourceLanguage, LanguageKnowledge> {
@@ -288,7 +289,7 @@ fn create_rust_patterns() -> HashMap<String, PatternKnowledge> {
                                  fn drop(&mut self) {\n\
                                      // Guaranteed cleanup on scope exit\n\
                                      if let Err(e) = self.connection.shutdown(Shutdown::Both) {\n\
-                                         eprintln!(\"Failed to shutdown connection: {}\", e);\n\
+                                         error!(\"Failed to shutdown connection: {}\", e);\n\
                                      }\n\
                                      // File automatically closed by its Drop impl\n\
                                  }\n\

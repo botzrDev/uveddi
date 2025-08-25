@@ -20,6 +20,7 @@ use petgraph::{Direction, Graph};
 use rayon::prelude::*;
 use sha2::{Digest, Sha256};
 use std::collections::{HashMap, HashSet};
+use tracing::{info, warn, error, debug};
 
 /// Semantic features extracted from code without ML
 #[derive(Debug, Clone)]

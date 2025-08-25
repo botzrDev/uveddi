@@ -5,9 +5,11 @@ use async_graphql_warp::{GraphQLBadRequest, Response};
 use std::convert::Infallible;
 use std::sync::Arc;
 use warp::{Filter, Rejection, Reply};
+use tracing::{info, warn, error, debug};
 
 use super::graphql::subscriptions::EventBroadcaster;
 use super::graphql::{GraphQLConfig, UveddiSchema};
+use tracing::{info, warn, error, debug};
 
 /// Start the GraphQL HTTP server
 pub async fn start_graphql_server(
@@ -15,7 +17,7 @@ pub async fn start_graphql_server(
     config: GraphQLConfig,
     port: u16,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    println!("Starting GraphQL server on http://localhost:{}", port);
+    info!("Starting GraphQL server on http://localhost:{}", port);
 
     // GraphQL endpoint
     let graphql_post = async_graphql_warp::graphql(schema.clone()).and_then(
@@ -135,7 +137,7 @@ async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
     }
 
     // Generic error handler
-    eprintln!("Unhandled rejection: {:?}", err);
+    error!("Unhandled rejection: {:?}", err);
     Ok(warp::reply::with_status(
         warp::reply::json(&serde_json::json!({
             "error": "Internal Server Error",

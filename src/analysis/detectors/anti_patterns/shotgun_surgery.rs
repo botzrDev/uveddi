@@ -370,4 +370,3 @@ mod tests {
         
         assert_eq!(detector.determine_severity(&medium_coupling_pattern), IssueSeverity::Minor);
     }
-}

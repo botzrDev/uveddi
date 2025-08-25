@@ -1,6 +1,7 @@
 //! Escalation and acknowledgment workflows for alert system (UV-248)
 
 use crate::resilience::alerting::{
+use tracing::{info, warn, error, debug};
     AlertingError, EnhancedAlert, EscalationLevel, EscalationPolicy, NotificationChannel,
 };
 use crate::resilience::notifications::NotificationClient;
@@ -10,6 +11,7 @@ use std::sync::Arc;
 use std::time::{Duration, SystemTime};
 use tokio::sync::RwLock;
 use tokio::time::{sleep, Instant};
+use tracing::{info, warn, error, debug};
 
 /// Escalation state for tracking alert escalation progress
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -144,7 +146,7 @@ impl EscalationManager {
                 {
                     Ok(_) => successful_channels.push(channel_name.clone()),
                     Err(e) => {
-                        eprintln!(
+                        error!(
                             "Failed to send escalation notification via {}: {}",
                             channel_name, e
                         );

@@ -10,14 +10,17 @@ use std::env;
 use std::path::{Path, PathBuf};
 use tera::{Context, Tera};
 use thiserror::Error;
+use tracing::{info, warn, error, debug};
 
 use crate::analysis::mermaid_generator::{MermaidGenerationError, MermaidGenerator};
 use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
 use crate::models::visualization::{
+use tracing::{info, warn, error, debug};
     ArchitecturalComponent, ComponentMetrics, ComponentType, Dependency, DependencyNode,
     DependencyType, DiagramType,
 };
 use uuid::Uuid;
+use tracing::{info, warn, error, debug};
 
 // Include the bundled assets generated at build time
 include!(concat!(env!("OUT_DIR"), "/bundled_assets.rs"));
@@ -1021,7 +1024,7 @@ mod tests {
         // This will fail if templates don't exist, which is expected in test environment
         match result {
             Ok(_) => println!("Modern generator created successfully"),
-            Err(e) => println!("Expected error in test environment: {}", e),
+            Err(e) => error!("Expected error in test environment: {}", e),
         }
     }
 

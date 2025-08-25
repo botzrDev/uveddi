@@ -29,13 +29,12 @@
 
 // NOTE: UV-112, UV-115 - Layer boundary compliance confirmed July 2025. This module only interacts with the Application layer per architecture.
 
-use crate::core::logging::info;
 use anyhow::Context;
 use clap::Args;
 use std::error::Error;
 use std::path::PathBuf;
 use sysinfo::System;
-use tracing::warn;
+use tracing::{info, warn, error, debug};
 
 use crate::application::{AnalysisConfig, AnalysisOrchestrator};
 use crate::error::UveddiError;
@@ -690,18 +689,18 @@ impl AnalyzeCommand {
         let mode = self.get_diagram_mode();
         match mode {
             DiagramMode::MermaidOnly => {
-                println!("📊 Diagram Mode: Mermaid-only (zero hosting costs)");
-                println!(
+                info!("📊 Diagram Mode: Mermaid-only (zero hosting costs)");
+                info!(
                     "   Diagrams will be generated as Mermaid code with rendering instructions"
                 );
             }
             DiagramMode::ImageOnly => {
-                println!("📊 Diagram Mode: Image-only (requires rendering service)");
-                println!("   Analysis will fail if rendering service is unavailable");
+                info!("📊 Diagram Mode: Image-only (requires rendering service)");
+                info!("   Analysis will fail if rendering service is unavailable");
             }
             DiagramMode::ImageWithFallback => {
-                println!("📊 Diagram Mode: Image with fallback (hybrid approach)");
-                println!(
+                info!("📊 Diagram Mode: Image with fallback (hybrid approach)");
+                info!(
                     "   Will attempt image rendering, fallback to Mermaid-only if unavailable"
                 );
             }
@@ -715,7 +714,7 @@ impl AnalyzeCommand {
     ) -> Result<bool, Box<dyn std::error::Error>> {
         use crate::report::ImageRenderer;
 
-        println!(
+        info!(
             "🔍 Checking rendering service at {}...",
             self.rendering_service_url
         );
@@ -725,20 +724,20 @@ impl AnalyzeCommand {
         match tokio::time::timeout(std::time::Duration::from_secs(5), renderer.health_check()).await
         {
             Ok(Ok(_)) => {
-                println!("✅ Rendering service is available!");
-                println!("   URL: {}", self.rendering_service_url);
+                info!("✅ Rendering service is available!");
+                info!("   URL: {}", self.rendering_service_url);
                 Ok(true)
             }
             Ok(Err(e)) => {
-                println!("❌ Rendering service is not available:");
-                println!("   Error: {}", e);
-                println!("   URL: {}", self.rendering_service_url);
+                warn!("❌ Rendering service is not available:");
+                warn!("   Error: {}", e);
+                warn!("   URL: {}", self.rendering_service_url);
                 self.print_rendering_service_setup_help();
                 Ok(false)
             }
             Err(_) => {
-                println!("⏰ Rendering service check timed out");
-                println!("   URL: {}", self.rendering_service_url);
+                warn!("⏰ Rendering service check timed out");
+                warn!("   URL: {}", self.rendering_service_url);
                 self.print_rendering_service_setup_help();
                 Ok(false)
             }
@@ -750,22 +749,22 @@ impl AnalyzeCommand {
     pub async fn check_rendering_service_availability(
         &self,
     ) -> Result<bool, Box<dyn std::error::Error>> {
-        println!("❌ Image rendering feature not enabled");
-        println!("   To enable image rendering, rebuild with:");
-        println!("   cargo build --features image-rendering");
+        info!("❌ Image rendering feature not enabled");
+        info!("   To enable image rendering, rebuild with:");
+        info!("   cargo build --features image-rendering");
         Ok(false)
     }
 
     /// Print helpful setup instructions for the rendering service
     fn print_rendering_service_setup_help(&self) {
-        println!("\n💡 To set up the rendering service:");
-        println!("   1. Local Docker setup:");
-        println!("      docker-compose up rendering-service");
-        println!("   2. Custom URL:");
-        println!("      uveddi analyze --rendering-service-url http://your-service:3001");
-        println!("   3. Zero-cost alternative:");
-        println!("      uveddi analyze --mermaid-only");
-        println!("\n📖 For more help, visit: https://github.com/botzrDev/uveddi#image-rendering");
+        info!("\n💡 To set up the rendering service:");
+        info!("   1. Local Docker setup:");
+        info!("      docker-compose up rendering-service");
+        info!("   2. Custom URL:");
+        info!("      uveddi analyze --rendering-service-url http://your-service:3001");
+        info!("   3. Zero-cost alternative:");
+        info!("      uveddi analyze --mermaid-only");
+        info!("\n📖 For more help, visit: https://github.com/botzrDev/uveddi#image-rendering");
     }
     /// Execute the analyze command with the provided arguments
     ///
@@ -1043,6 +1042,7 @@ impl AnalyzeCommand {
 
         // Output results
         if self.output.is_none() {
+            // Print to stdout for user - this is intentional user output, not logging
             println!("{}", report.content);
         }
 
@@ -1065,11 +1065,11 @@ impl AnalyzeCommand {
             .unwrap_or_else(|| "stdout".to_string());
 
         if report.metadata.issues_found > 0 {
-            println!("\n📊 Analysis Summary:");
-            println!("  • Files analyzed: {}", report.metadata.files_analyzed);
-            println!("  • Issues found: {}", report.metadata.issues_found);
+            info!("\n📊 Analysis Summary:");
+            info!("  • Files analyzed: {}", report.metadata.files_analyzed);
+            info!("  • Issues found: {}", report.metadata.issues_found);
             if report.metadata.ai_enhanced {
-                println!("  • AI enhanced: ✅");
+                info!("  • AI enhanced: ✅");
             }
 
             // Add security-specific summary if security analysis was enabled
@@ -1077,23 +1077,23 @@ impl AnalyzeCommand {
                 self.print_security_summary(&report).await;
             }
 
-            println!("\n💡 Report generated: {}", output_info);
+            info!("\n💡 Report generated: {}", output_info);
         } else {
-            println!("\n✅ Analysis complete: No issues found! 🎉");
-            println!("📊 Files analyzed: {}", report.metadata.files_analyzed);
+            info!("\n✅ Analysis complete: No issues found! 🎉");
+            info!("📊 Files analyzed: {}", report.metadata.files_analyzed);
             if self.security {
-                println!("🔒 Security analysis: No vulnerabilities detected");
+                info!("🔒 Security analysis: No vulnerabilities detected");
             }
-            println!("💡 Report generated: {}", output_info);
+            info!("💡 Report generated: {}", output_info);
         }
 
         // Auto-launch dashboard if requested
         if self.open_dashboard {
-            println!("\n🚀 Dashboard launch requested but temporarily disabled during development");
+            info!("\n🚀 Dashboard launch requested but temporarily disabled during development");
             // self.launch_dashboard();
         } else if report.metadata.issues_found > 0 {
             // Suggest dashboard for a better experience when issues are found
-            println!(
+            info!(
                 "\n💡 Tip: Run with --open-dashboard to visualize results in the web interface"
             );
         }
@@ -1198,7 +1198,7 @@ impl AnalyzeCommand {
         // Note: This is a placeholder implementation until we have the security data
         // properly flowing through the AnalysisReport structure
 
-        println!("  🔒 Security Analysis:");
+        info!("  🔒 Security Analysis:");
 
         if self.export_sarif {
             let sarif_path = self
@@ -1215,22 +1215,22 @@ impl AnalyzeCommand {
                     }
                 });
 
-            println!("     • SARIF export: {}", sarif_path);
+            info!("     • SARIF export: {}", sarif_path);
         }
 
         if self.enable_taint_analysis {
             let depth = self.taint_analysis_depth.unwrap_or(10);
-            println!("     • Taint analysis depth: {}", depth);
+            info!("     • Taint analysis depth: {}", depth);
         }
 
         if let Some(ref categories) = self.owasp_categories {
-            println!("     • OWASP categories: {}", categories.join(", "));
+            info!("     • OWASP categories: {}", categories.join(", "));
         } else {
-            println!("     • OWASP coverage: All Top 10 2021 categories");
+            info!("     • OWASP coverage: All Top 10 2021 categories");
         }
 
         let confidence = self.min_security_confidence.unwrap_or(0.5);
-        println!("     • Min confidence: {:.0}%", confidence * 100.0);
+        info!("     • Min confidence: {:.0}%", confidence * 100.0);
     }
 
     // TODO: Dashboard integration methods temporarily disabled
@@ -1289,7 +1289,7 @@ impl AnalyzeCommand {
         use std::process::Command;
         use std::thread;
 
-        println!("\n🚀 Launching dashboard in your browser...");
+        info!("\n🚀 Launching dashboard in your browser...");
 
         // Start the dashboard server in the background if not already running
         thread::spawn(|| {
@@ -1338,9 +1338,9 @@ impl AnalyzeCommand {
 
         let dashboard_url = "http://localhost:8080/dashboard";
         if let Err(e) = Command::new(open_cmd).arg(dashboard_url).spawn() {
-            println!("Could not open browser automatically: {}", e);
-            println!("Please open the dashboard manually at: {}", e);
-            println!("Dashboard URL: {}", dashboard_url);
+            warn!("Could not open browser automatically: {}", e);
+            info!("Please open the dashboard manually at: {}", dashboard_url);
+            info!("Dashboard URL: {}", dashboard_url);
         }
     }
     */
