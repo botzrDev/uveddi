@@ -1277,7 +1277,13 @@ impl AnalyzeCommand {
         // Start the dashboard server in the background if not already running
         thread::spawn(|| {
             // Use a separate tokio runtime for this background process
-            let rt = tokio::runtime::Runtime::new().expect("Failed to create runtime");
+            let rt = match tokio::runtime::Runtime::new() {
+                Ok(rt) => rt,
+                Err(e) => {
+                    tracing::error!("Failed to create tokio runtime for dashboard: {}", e);
+                    return;
+                }
+            };
             rt.block_on(async {
                 // Configure the dashboard server
                 let config = crate::service_orchestration::OrchestratorConfig {

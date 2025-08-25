@@ -21,6 +21,9 @@ pub mod large_codebase;
 pub mod main;
 pub mod rendering;
 
+#[cfg(test)]
+mod tests;
+
 pub use helpers::ErrorHelpers;
 pub use large_codebase::{
     ErrorAggregator, ErrorContext, LargeCodebaseError, LargeCodebaseErrorHandler,

@@ -306,7 +306,10 @@ impl AnalysisOrchestrator {
         info!("Starting to store {} issues to database", issues.len());
 
         // Set the correct analysis_run_id for all issues
-        let analysis_run_id = analysis_run.run_id.expect("Analysis run should have an ID");
+        let analysis_run_id = analysis_run.run_id.ok_or_else(|| {
+            error!("Analysis run missing ID after creation");
+            UveddiError::database_error_msg("Analysis run should have an ID after database insertion")
+        })?;
         for issue in &mut issues {
             issue.analysis_run_id = analysis_run_id;
         }
@@ -1177,8 +1180,15 @@ impl AnalysisOrchestrator {
 }
 
 impl Default for AnalysisOrchestrator {
+    /// Creates a default AnalysisOrchestrator with in-memory database.
+    /// 
+    /// # Panics
+    /// 
+    /// This will panic if the orchestrator cannot be created.
+    /// For production code, prefer using `AnalysisOrchestrator::new()` or 
+    /// `AnalysisOrchestrator::with_db_path()` which return a `Result`.
     fn default() -> Self {
-        Self::new().expect("Failed to create default AnalysisOrchestrator")
+        Self::new().expect("Failed to create default AnalysisOrchestrator - this typically indicates a database initialization issue")
     }
 }
 

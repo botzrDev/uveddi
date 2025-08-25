@@ -552,8 +552,14 @@ unsafe impl Send for AnalysisEngine {}
 unsafe impl Sync for AnalysisEngine {}
 
 impl Default for AnalysisEngine {
+    /// Creates a default AnalysisEngine instance.
+    /// 
+    /// # Panics
+    /// 
+    /// This will panic if the engine cannot be created with default configuration.
+    /// For production code, prefer using `AnalysisEngine::new()` which returns a `Result`.
     fn default() -> Self {
-        Self::new().expect("Failed to create default AnalysisEngine")
+        Self::new().expect("Failed to create default AnalysisEngine - this typically indicates a configuration or resource issue")
     }
 }
 

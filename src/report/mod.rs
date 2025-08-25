@@ -681,7 +681,9 @@ impl ReportGenerator {
 
         // Generate a section for each anti-pattern type
         for type_id in anti_pattern_ids {
-            let issues = issues_by_type.get(&type_id).unwrap();
+            let Some(issues) = issues_by_type.get(&type_id) else {
+                continue;
+            };
             let anti_pattern = anti_pattern_types.get(&type_id);
 
             let name = anti_pattern
@@ -706,42 +708,43 @@ impl ReportGenerator {
                 }
 
                 // Add code snippet if available and enabled
-                if self.include_code_snippets && issue.code_snippet.is_some() {
-                    analysis.push_str("\n**Code Snippet**:\n\n");
-                    analysis.push_str("```\n");
-                    analysis.push_str(issue.code_snippet.as_ref().unwrap());
-                    analysis.push_str("\n```\n\n");
+                if self.include_code_snippets {
+                    if let Some(ref snippet) = issue.code_snippet {
+                        analysis.push_str("\n**Code Snippet**:\n\n");
+                        analysis.push_str("```\n");
+                        analysis.push_str(snippet);
+                        analysis.push_str("\n```\n\n");
+                    }
                 }
 
                 // Add AI explanation if available and enabled
-                if self.include_ai_explanations && issue.ai_explanation.is_some() {
-                    analysis.push_str("**AI Analysis**:\n\n");
+                if self.include_ai_explanations {
+                    if let Some(ref ai_explanation) = issue.ai_explanation {
+                        analysis.push_str("**AI Analysis**:\n\n");
 
-                    // Try to parse as JSON first (structured format)
-                    if let Ok(json) =
-                        serde_json::from_str::<Value>(issue.ai_explanation.as_ref().unwrap())
-                    {
-                        if let Some(title) = json.get("title").and_then(|v| v.as_str()) {
-                            analysis.push_str(&format!("*{}*\n\n", title));
-                        }
-
-                        if let Some(explanation) = json.get("explanation").and_then(|v| v.as_str())
-                        {
-                            analysis.push_str(&format!("{}\n\n", explanation));
-                        }
-
-                        if self.include_remediation_steps {
-                            if let Some(refactoring) =
-                                json.get("refactoring").and_then(|v| v.as_str())
-                            {
-                                analysis.push_str("**Recommended Refactoring**:\n\n");
-                                analysis.push_str(&format!("{}\n\n", refactoring));
+                        // Try to parse as JSON first (structured format)
+                        if let Ok(json) = serde_json::from_str::<Value>(ai_explanation) {
+                            if let Some(title) = json.get("title").and_then(|v| v.as_str()) {
+                                analysis.push_str(&format!("*{}*\n\n", title));
                             }
+
+                            if let Some(explanation) = json.get("explanation").and_then(|v| v.as_str())
+                            {
+                                analysis.push_str(&format!("{}\n\n", explanation));
+                            }
+
+                            if self.include_remediation_steps {
+                                if let Some(refactoring) =
+                                    json.get("refactoring").and_then(|v| v.as_str())
+                                {
+                                    analysis.push_str("**Recommended Refactoring**:\n\n");
+                                    analysis.push_str(&format!("{}\n\n", refactoring));
+                                }
+                            }
+                        } else {
+                            // Fall back to raw text if not valid JSON
+                            analysis.push_str(&format!("{}\n\n", ai_explanation));
                         }
-                    } else {
-                        // Fall back to raw text if not valid JSON
-                        analysis
-                            .push_str(&format!("{}\n\n", issue.ai_explanation.as_ref().unwrap()));
                     }
                 }
 

@@ -1183,10 +1183,15 @@ async fn export_sarif(
     });
 
     let mut headers = HeaderMap::new();
-    headers.insert(header::CONTENT_TYPE, "application/json".parse().unwrap());
+    headers.insert(
+        header::CONTENT_TYPE, 
+        "application/json".parse()
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+    );
     headers.insert(
         header::CONTENT_DISPOSITION,
-        "attachment; filename=\"security-analysis.sarif\"".parse().unwrap(),
+        "attachment; filename=\"security-analysis.sarif\"".parse()
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?,
     );
 
     Ok((headers, Json(sarif_report)))

@@ -1,6 +1,6 @@
 use crate::core::logging::error;
 use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
-use crate::error::Result;
+use crate::error::{Result, UveddiError};
 use crate::security;
 use chrono::{DateTime, Utc};
 use rusqlite::Connection;
@@ -87,7 +87,8 @@ impl Database {
     /// * `Err(UveddiError)` - If the query or insert fails.
     pub fn get_or_create_project_id(&self, project_path: &Path) -> Result<i64> {
         let path_str = project_path.to_string_lossy().to_string();
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn.lock()
+            .map_err(|e| UveddiError::database_error_msg(&format!("Failed to acquire database lock: {}", e)))?;
         let mut stmt = conn.prepare("SELECT project_id FROM projects WHERE path = ?")?;
         let mut rows = stmt.query([&path_str])?;
 
@@ -122,7 +123,8 @@ impl Database {
             analysis_config: "{}".to_string(), // Default empty JSON config
         };
 
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn.lock()
+            .map_err(|e| UveddiError::database_error_msg(&format!("Failed to acquire database lock: {}", e)))?;
         conn.execute(
             "INSERT INTO analysis_runs (project_id, start_time, status, analysis_config) VALUES (?, ?, ?, ?)",
             rusqlite::params![
@@ -151,7 +153,8 @@ impl Database {
     /// * `Ok(())` - If the update succeeds.
     /// * `Err(UveddiError)` - If the update fails.
     pub fn update_analysis_run(&self, run: &AnalysisRun) -> Result<()> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn.lock()
+            .map_err(|e| UveddiError::database_error_msg(&format!("Failed to acquire database lock: {}", e)))?;
         conn.execute(
             "UPDATE analysis_runs SET end_time = ?, status = ?, total_files_analyzed = ?, total_issues_found = ? WHERE run_id = ?",
             rusqlite::params![
@@ -182,7 +185,8 @@ impl Database {
         anti_pattern_type.description =
             security::sanitize_description(&anti_pattern_type.description);
 
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn.lock()
+            .map_err(|e| UveddiError::database_error_msg(&format!("Failed to acquire database lock: {}", e)))?;
         conn.execute(
             "INSERT OR IGNORE INTO anti_pattern_types (name, description, category) VALUES (?, ?, ?)",
             rusqlite::params![
@@ -368,7 +372,8 @@ impl Database {
     /// * `Ok(String)` - The project path
     /// * `Err(UveddiError)` - If the query fails or project not found
     pub fn get_project_path(&self, project_id: i64) -> Result<String> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn.lock()
+            .map_err(|e| UveddiError::database_error_msg(&format!("Failed to acquire database lock: {}", e)))?;
         let mut stmt = conn.prepare("SELECT path FROM projects WHERE project_id = ?")?;
         let path = stmt.query_row([project_id], |row| row.get::<_, String>(0))?;
         Ok(path)
@@ -385,7 +390,8 @@ impl Database {
     /// * `Ok(Vec<AntiPatternType>)` - Vector of all anti-pattern types in the database
     /// * `Err(UveddiError)` - If the query fails
     pub fn get_all_anti_pattern_types(&self) -> Result<Vec<AntiPatternType>> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn.lock()
+            .map_err(|e| UveddiError::database_error_msg(&format!("Failed to acquire database lock: {}", e)))?;
         let mut stmt = conn.prepare(
             "SELECT anti_pattern_type_id, name, description, category FROM anti_pattern_types ORDER BY name"
         )?;
@@ -409,7 +415,8 @@ impl Database {
 
     /// Get analysis run by ID
     pub async fn get_analysis_run(&self, run_id: i64) -> Result<Option<AnalysisRun>> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn.lock()
+            .map_err(|e| UveddiError::database_error_msg(&format!("Failed to acquire database lock: {}", e)))?;
         let mut stmt = conn.prepare(
             "SELECT run_id, project_id, start_time, end_time, status, total_files_analyzed, total_issues_found, analysis_config 
              FROM analysis_runs WHERE run_id = ?"
@@ -446,7 +453,8 @@ impl Database {
 
     /// Get latest analysis run
     pub async fn get_latest_analysis_run(&self) -> Result<Option<AnalysisRun>> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn.lock()
+            .map_err(|e| UveddiError::database_error_msg(&format!("Failed to acquire database lock: {}", e)))?;
         let mut stmt = conn.prepare(
             "SELECT run_id, project_id, start_time, end_time, status, total_files_analyzed, total_issues_found, analysis_config 
              FROM analysis_runs ORDER BY start_time DESC LIMIT 1"
@@ -483,7 +491,8 @@ impl Database {
 
     /// Get recent analysis runs
     pub async fn get_recent_analysis_runs(&self, limit: u32) -> Result<Vec<AnalysisRun>> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn.lock()
+            .map_err(|e| UveddiError::database_error_msg(&format!("Failed to acquire database lock: {}", e)))?;
         let mut stmt = conn.prepare(
             "SELECT run_id, project_id, start_time, end_time, status, total_files_analyzed, total_issues_found, analysis_config 
              FROM analysis_runs ORDER BY start_time DESC LIMIT ?"
@@ -521,7 +530,8 @@ impl Database {
 
     /// Get issues for a specific analysis run
     pub async fn get_issues_for_run(&self, run_id: i64) -> Result<Vec<ArchitecturalIssue>> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.conn.lock()
+            .map_err(|e| UveddiError::database_error_msg(&format!("Failed to acquire database lock: {}", e)))?;
         let mut stmt = conn.prepare(
             "SELECT issue_id, analysis_run_id, anti_pattern_type_id, file_path, start_line, end_line, 
                     line_number, column_number, message, metadata, detector_name, created_at, severity, 
