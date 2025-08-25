@@ -103,6 +103,9 @@ pub struct IndexedChunk {
 ///
 /// For larger codebases, consider using external vector databases like
 /// Pinecone, Weaviate, or Chroma.
+/// Alias for a single semantic search result: a borrowed chunk and its similarity score
+pub type SearchResult<'a> = (&'a IndexedChunk, f32);
+
 pub struct VectorIndex {
     /// Collection of indexed code chunks with embeddings
     pub chunks: Vec<IndexedChunk>,
@@ -191,18 +194,18 @@ impl VectorIndex {
     ///     println!("Found chunk '{}' with similarity: {:.3}", chunk.id, score);
     /// }
     /// ```
-    pub fn search(&self, query_embedding: &Array1<f32>, k: usize) -> Vec<(&IndexedChunk, f32)> {
+    pub fn search(&self, query_embedding: &Array1<f32>, k: usize) -> Vec<SearchResult<'_>> {
         let mut scored: Vec<(f32, &IndexedChunk)> = self
             .chunks
             .iter()
             .map(|chunk| (cosine_similarity(query_embedding, &chunk.embedding), chunk))
-            .collect();
+            .collect::<Vec<(f32, &IndexedChunk)>>(); // Materialize as Vec of (score, &IndexedChunk) pairs for clarity
         scored.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap());
         scored
             .into_iter()
             .take(k)
             .map(|(score, chunk)| (chunk, score))
-            .collect()
+            .collect::<Vec<SearchResult<'_>>>()
     }
 }
 

@@ -543,9 +543,9 @@ graph TD
         }
 
         for (diagram_type, measures) in grouped {
-            let total_count = measures.len();
+            let total_count: usize = measures.len();
             let successful_measures: Vec<&RenderingMeasurement> =
-                measures.into_iter().filter(|m| m.success).collect();
+                measures.into_iter().filter(|m| m.success).collect::<Vec<&RenderingMeasurement>>(); // Explicitly collect successful measures
 
             if !successful_measures.is_empty() {
                 let times: Vec<f64> = successful_measures

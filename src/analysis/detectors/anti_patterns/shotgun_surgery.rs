@@ -71,7 +71,7 @@ impl ShotgunSurgeryDetector {
                 
                 if external_calls.len() >= self.config.min_related_changes {
                     let pattern = ChangePattern {
-                        affected_files: external_calls.into_iter().collect(),
+                        affected_files: external_calls.into_iter().collect::<std::collections::HashSet<String>>(), // Explicitly collect into set for uniqueness
                         functionality_area: function.name.clone(),
                         confidence: self.calculate_shotgun_confidence(&function.name, file_path),
                     };
@@ -149,7 +149,7 @@ impl ShotgunSurgeryDetector {
                 
                 if dependencies.len() > self.config.max_coupled_classes {
                     let pattern = ChangePattern {
-                        affected_files: dependencies.into_iter().collect(),
+                        affected_files: dependencies.into_iter().collect::<std::collections::HashSet<String>>(), // Explicitly collect into set for uniqueness
                         functionality_area: format!("Class: {}", class.name),
                         confidence: 0.8,
                     };

@@ -385,7 +385,7 @@ impl AnalysisConfig {
         names.extend(self.detectors.keys().cloned());
         names.extend(self.enhanced_detectors.keys().cloned());
         names.extend(self.standard_detectors.keys().cloned());
-        names.into_iter().collect()
+        names.into_iter().collect::<Vec<String>>() // Explicitly collect into Vec<String> for API clarity
     }
 
     /// Check if a specific detector is configured
@@ -576,7 +576,7 @@ impl AnalysisConfig {
             enabled.insert(name.clone());
         }
 
-        enabled.into_iter().collect()
+        enabled.into_iter().collect::<Vec<String>>() // Explicitly collect to ensure deterministic API return type
     }
 }
 

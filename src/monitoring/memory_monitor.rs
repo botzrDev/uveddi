@@ -2,7 +2,7 @@
 //!
 //! Uses sysinfo to sample memory usage before/after component analysis.
 
-use sysinfo::{Pid, System};
+use sysinfo::{Pid, ProcessesToUpdate, System};
 
 pub struct MemoryMonitor {
     system: System,
@@ -19,7 +19,7 @@ impl MemoryMonitor {
 
     /// Returns current memory usage in bytes for the process
     pub fn get_current_memory_usage(&mut self) -> u64 {
-        self.system.refresh_process(self.process_id);
+        self.system.refresh_processes(ProcessesToUpdate::Some(&[self.process_id]), true);
         if let Some(process) = self.system.process(self.process_id) {
             process.memory() * 1024 // sysinfo returns KB
         } else {

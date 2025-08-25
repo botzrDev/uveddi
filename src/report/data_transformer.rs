@@ -144,7 +144,7 @@ impl DataTransformer {
                     security_metadata: None,
                 }
             })
-            .collect()
+            .collect::<Vec<Finding>>() // Explicitly materialize transformed findings list
     }
 
     /// Calculate summary statistics
@@ -196,7 +196,7 @@ impl DataTransformer {
         if let Some(apt) = anti_pattern {
             format!("{} detected", apt.name)
         } else {
-            issue.message.chars().take(100).collect()
+            issue.message.chars().take(100).collect::<String>() // Explicitly collect first 100 chars into String
         }
     }
 
@@ -289,6 +289,6 @@ impl DataTransformer {
             }
         }
 
-        languages.into_iter().map(|s| s.to_string()).collect()
+        languages.into_iter().map(|s| s.to_string()).collect::<Vec<String>>() // Explicitly collect language identifiers
     }
 }

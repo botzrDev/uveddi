@@ -902,7 +902,7 @@ async fn get_security_issues(
                                         taint_flows: None, // TODO: Implement taint flow conversion
                                     }
                                 })
-                                .collect();
+                                .collect::<Vec<SecurityIssueResponse>>(); // Explicitly collect into Vec<SecurityIssueResponse> for clarity
 
                             return Ok(Json(response_issues));
                         }
@@ -1301,7 +1301,7 @@ async fn list_reports_from_database(
 ) -> Result<Vec<serde_json::Value>, Box<dyn std::error::Error + Send + Sync>> {
     let runs = database.get_recent_analysis_runs(10).await?;
 
-    let reports = runs
+    let reports: Vec<serde_json::Value> = runs
         .into_iter()
         .map(|run| {
             serde_json::json!({
@@ -1314,7 +1314,7 @@ async fn list_reports_from_database(
                 "status": run.status
             })
         })
-        .collect();
+        .collect::<Vec<serde_json::Value>>(); // Explicit collection type for readability
 
     Ok(reports)
 }
@@ -1408,7 +1408,7 @@ fn create_security_analysis_from_issues(
                 avg_confidence: total_confidence / count as f64,
             },
         )
-        .collect();
+        .collect::<Vec<IssueTypeStats>>(); // Explicitly collect into Vec<IssueTypeStats> to make types clear to readers
 
     let security_score = if total_issues == 0 {
         100.0
@@ -1458,7 +1458,7 @@ fn create_security_analysis_from_issues(
                 related_taint_flows: vec![], // TODO: Implement taint flow tracking
                 attack_vector: None,         // TODO: Extract from metadata
             })
-            .collect(),
+            .collect::<Vec<crate::report::interactive_models::SecurityIssue>>(), // Explicit for clarity
         taint_flows: vec![],  // TODO: Implement taint flow analysis
         correlations: vec![], // TODO: Implement correlation analysis
         compliance: None,     // TODO: Implement compliance checking

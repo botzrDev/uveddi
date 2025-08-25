@@ -140,8 +140,8 @@ impl ConnectionBuilder {
             params.before.is_some()
         };
 
-        let start_cursor = items.first().map(&cursor_fn).transpose()?;
-        let end_cursor = items.last().map(&cursor_fn).transpose()?;
+        let start_cursor: Option<String> = items.first().map(&cursor_fn).transpose()?; // Explicit type clarifies Option<Cursor> wrapping
+        let end_cursor: Option<String> = items.last().map(&cursor_fn).transpose()?; // Explicit type mirrors start_cursor
 
         Ok(PageInfo {
             has_next_page,
@@ -156,8 +156,8 @@ impl ConnectionBuilder {
         params: &PaginationParams,
         base_query: &str,
     ) -> Result<(String, Vec<String>)> {
-        let mut query = base_query.to_string();
-        let mut bind_params = Vec::new();
+        let mut query: String = base_query.to_string(); // Explicit type annotation clarifies it's SQL text
+        let mut bind_params: Vec<String> = Vec::new(); // Bind parameters are stringified for DB driver compatibility
 
         if let Some(after) = &params.after {
             let cursor = Cursor::decode(after)?;
@@ -219,6 +219,10 @@ impl SortBuilder {
     }
 
     pub fn add_field(mut self, column: String, direction: SortDirection) -> Self {
+        // Explicitly annotate types for clarity in builder pattern
+        let column: String = column;
+        let direction: SortDirection = direction;
+
         self.fields.push(SortField { column, direction });
         self
     }

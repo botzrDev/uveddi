@@ -185,12 +185,12 @@ pub mod conversion {
     pub fn arena_issues_to_owned(
         arena_issues: ArenaVec<ArchitecturalIssue>,
     ) -> Vec<ArchitecturalIssue> {
-        arena_issues.into_iter().collect()
+        arena_issues.into_iter().collect::<Vec<ArchitecturalIssue>>() // Explicitly convert ArenaVec into owned Vec<ArchitecturalIssue>
     }
 
     /// Convert arena-allocated strings to owned strings
     pub fn arena_strings_to_owned(arena_strings: ArenaVec<ArenaString>) -> Vec<String> {
-        arena_strings.into_iter().map(|s| s.to_string()).collect()
+        arena_strings.into_iter().map(|s| s.to_string()).collect::<Vec<String>>() // Explicitly collect owned Strings
     }
 
     /// Convert arena string to owned string

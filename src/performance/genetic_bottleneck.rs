@@ -5,6 +5,7 @@
 
 use anyhow::{anyhow, Result};
 use rand::prelude::*;
+use rand::{SeedableRng, rngs::StdRng, thread_rng};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
@@ -206,7 +207,7 @@ impl GeneticBottleneckDetector {
             crossover_rate: 0.8,
             elitism_rate: 0.1,
             fitness_evaluator: FitnessEvaluator::new(),
-            rng: StdRng::from_entropy(),
+            rng: StdRng::from_rng(&mut thread_rng()),
         }
     }
 
