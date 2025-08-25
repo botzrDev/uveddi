@@ -8,10 +8,15 @@
 pub mod analyze_command;
 pub mod ci_command;
 pub mod config_command;
+pub mod doctor_command;
+pub mod enhanced_help;
+pub mod help_command;
 pub mod plugin_command;
 pub mod tui_command;
 pub mod ui_command;
 
 // Re-export commonly used types
 pub use analyze_command::AnalyzeCommand;
+pub use doctor_command::DoctorCommand;
+pub use help_command::HelpCommand;
 pub use tui_command::TuiCommand;

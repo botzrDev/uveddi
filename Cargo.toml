@@ -40,6 +40,12 @@ rustls = "0.23.31"
 # Date/time handling
 chrono = { version = "0.4.41", features = ["serde"] }
 
+# System directories
+dirs = "5.0"
+
+# String similarity for command suggestions
+levenshtein = "1.0"
+
 # Feature flags for modular compilation
 [features]
 # Lightweight default for fast development builds
@@ -130,6 +136,8 @@ anyhow = { workspace = true }
 thiserror = { workspace = true }
 chrono = { workspace = true }
 reqwest = { workspace = true }
+dirs = { workspace = true }
+levenshtein = { workspace = true }
 rustls = { workspace = true, optional = true }
 ring = { version = "0.17.14", optional = true }
 tracing = { workspace = true }
@@ -397,3 +405,9 @@ opt-level = 3
 lto = true
 codegen-units = 1
 panic = "abort"
+serde = { version = "1.0.219", features = ["derive"] }
+chrono = { version = "0.4.41", features = ["serde"] }
+
+[[bin]]
+name = "doctor_demo"
+path = "examples/doctor_demo.rs"

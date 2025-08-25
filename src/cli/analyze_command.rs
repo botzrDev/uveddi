@@ -38,6 +38,7 @@ use tracing::{info, warn, error, debug};
 
 use crate::application::{AnalysisConfig, AnalysisOrchestrator};
 use crate::error::UveddiError;
+use crate::progress::{create_progress_reporter, ProgressTracker, AnalysisPhase};
 use crate::report::DiagramMode;
 use crate::security::{self, SecurityError, validate_cli_argument, CliArgumentType};
 
@@ -269,6 +270,22 @@ pub struct AnalyzeCommand {
     /// stack traces, and context to help diagnose issues.
     #[arg(long)]
     pub verbose: bool,
+
+    /// Progress reporting format
+    ///
+    /// Controls how progress is displayed during analysis:
+    /// - `terminal`: Rich terminal output with progress bars and estimates (default)
+    /// - `json`: JSON progress events for programmatic consumption
+    /// - `silent`: No progress output (quiet mode)
+    #[arg(long, default_value = "terminal")]
+    pub progress_format: String,
+
+    /// Show detailed progress information
+    ///
+    /// When enabled with terminal progress format, displays current file being processed,
+    /// throughput metrics, and detailed timing information.
+    #[arg(long)]
+    pub progress_details: bool,
 
     /// Automatically open dashboard after analysis completes
     ///
@@ -815,11 +832,13 @@ impl AnalyzeCommand {
     pub async fn execute(&self) -> Result<(), UveddiError> {
         info!("Starting analysis of: {}", self.path.display());
 
-        // Set up progress reporting for large codebases
-        let enable_progress_reporting = self.timeout > 60; // Enable for analyses longer than 1 minute
-        if enable_progress_reporting {
-            info!("Progress reporting enabled - updates will be logged every 10 files processed");
-        }
+        // Set up enhanced progress reporting
+        let progress_reporter = create_progress_reporter(&self.progress_format, self.progress_details);
+        let mut progress_tracker = ProgressTracker::new(progress_reporter);
+        
+        // Start discovery phase
+        progress_tracker.start_phase(AnalysisPhase::Discovery, None);
+        info!("Starting analysis with {} progress reporting", self.progress_format);
 
         // Create application layer orchestrator with persistent database
         // Use the same database path as the dashboard server for consistency
@@ -880,22 +899,11 @@ impl AnalyzeCommand {
             timeout_seconds: self.timeout,
         };
 
+        // Start parsing phase
+        progress_tracker.start_phase(AnalysisPhase::Parsing, None);
+        
         // Execute analysis through application layer with timeout
         let analysis_future = orchestrator.execute_analysis(config);
-
-        // Start progress monitoring task for large codebases
-        let progress_handle = if enable_progress_reporting {
-            let analysis_path = self.path.clone();
-            Some(tokio::spawn(async move {
-                let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(15));
-                loop {
-                    interval.tick().await;
-                    info!("⏳ Analysis in progress for: {}", analysis_path.display());
-                }
-            }))
-        } else {
-            None
-        };
 
         let report = if self.timeout > 0 {
             // Execute with timeout and graceful degradation
@@ -926,6 +934,7 @@ impl AnalyzeCommand {
                         _ => "Analysis failed"
                     };
 
+                    progress_tracker.error(specific_error);
                     if self.verbose {
                         tracing::error!("🔍 {}: {:#}", specific_error, e);
                         if let Some(backtrace) = e.source() {
@@ -938,6 +947,7 @@ impl AnalyzeCommand {
                 })?,
                 Err(_) => {
                     // Implement graceful degradation on timeout
+                    progress_tracker.error("Analysis timed out, attempting graceful degradation");
                     warn!("Analysis timed out after {} seconds. Attempting graceful degradation...", self.timeout);
 
                     // Try with reduced scope and timeouts
@@ -1024,6 +1034,7 @@ impl AnalyzeCommand {
                     _ => "Analysis failed",
                 };
 
+                progress_tracker.error(specific_error);
                 if self.verbose {
                     tracing::error!("🔍 {}: {:#}", specific_error, e);
                     if let Some(backtrace) = e.source() {
@@ -1039,10 +1050,8 @@ impl AnalyzeCommand {
             })?
         };
 
-        // Clean up progress monitoring task
-        if let Some(handle) = progress_handle {
-            handle.abort();
-        }
+        // Complete progress tracking
+        progress_tracker.complete();
 
         // Output results
         if self.output.is_none() {

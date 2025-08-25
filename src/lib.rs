@@ -253,6 +253,7 @@ pub mod config;
 pub mod constants;
 pub mod core;
 pub mod database;
+pub mod health;
 pub mod deployment;
 pub mod error;
 pub mod infrastructure;
@@ -263,6 +264,7 @@ pub mod monitoring;
 pub mod observability;
 pub mod performance;
 pub mod plugins;
+pub mod progress;
 pub mod report;
 pub mod resilience;
 #[cfg(feature = "security")]

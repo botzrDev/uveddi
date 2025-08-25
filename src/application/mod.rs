@@ -1209,7 +1209,7 @@ impl Default for AnalysisOrchestrator {
 pub async fn run_app() -> Result<(), UveddiError> {
     use crate::cli::{
         analyze_command::AnalyzeCommand, ci_command::CiCommand, config_command::ConfigCommand,
-        tui_command::TuiCommand,
+        doctor_command::DoctorCommand, help_command::HelpCommand, tui_command::TuiCommand,
     };
     #[cfg(feature = "wasm-plugins")]
     use crate::cli::plugin_command::PluginCommand;
@@ -1226,8 +1226,17 @@ pub async fn run_app() -> Result<(), UveddiError> {
 
     #[derive(clap::Subcommand)]
     enum Commands {
+        /// Perform comprehensive code analysis
+        #[command(alias = "a")]
         Analyze(AnalyzeCommand),
+        /// Manage configuration settings
+        #[command(alias = "cfg")]
         Config(ConfigCommand),
+        /// Run health diagnostics and fix common issues
+        #[command(alias = "dr")]
+        Doctor(DoctorCommand),
+        /// Show help information
+        Help(HelpCommand),
         Ui(crate::cli::ui_command::UiCommand),
         Ci(CiCommand),
         /// Launch the Terminal User Interface for interactive analysis
@@ -1274,6 +1283,14 @@ pub async fn run_app() -> Result<(), UveddiError> {
             command
                 .execute()
                 .map_err(|e| UveddiError::config_error(&e.to_string(), "config validation"))
+        }
+        Commands::Doctor(command) => {
+            info!("Executing doctor command...");
+            command.execute().await
+        }
+        Commands::Help(command) => {
+            info!("Executing help command...");
+            command.execute().await
         }
         Commands::Ui(command) => {
             info!("Executing UI command...");
