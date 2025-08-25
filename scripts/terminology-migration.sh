@@ -368,7 +368,7 @@ generate_recommendations() {
    - Update IDE configurations
    - Create custom lint rules
 
-3. **Community Resources**
+3. **Alpha 0.9 Resources**
    - Update contributor documentation
    - Review issue templates
 

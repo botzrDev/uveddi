@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Advanced Test Result Analysis for Uveddi v1.0 Community Core
+Advanced Test Result Analysis for Uveddi v1.0 Alpha 0.9 Core
 Analyzes automated testing results and generates insights for v1.0 release readiness
 """
 
@@ -396,10 +396,10 @@ class TestResultAnalyzer:
         # Readiness determination
         if overall_score >= 80:
             readiness = 'READY'
-            message = 'v1.0 community core ready - good stability and detection rates'
+            message = 'v1.0 alpha 0.9 core ready - good stability and detection rates'
         elif overall_score >= 65:
             readiness = 'READY_WITH_CAVEATS'
-            message = 'v1.0 community core possible with known limitations'
+            message = 'v1.0 alpha 0.9 core possible with known limitations'
         elif overall_score >= 50:
             readiness = 'NEEDS_IMPROVEMENT'
             message = 'Significant issues need addressing before v1.0 release'
@@ -425,7 +425,7 @@ class TestResultAnalyzer:
         # Add metadata
         self.analysis_data['metadata'] = {
             'analysis_date': datetime.now().isoformat(),
-            'uveddi_version': '1.0.0-community',
+            'uveddi_version': '1.0.0-alpha0.9',
             'analyzer_version': '1.0.0'
         }
         
@@ -440,7 +440,7 @@ class TestResultAnalyzer:
         readiness = self.analysis_data.get('release_readiness', {})
         
         with open(output_file, 'w') as f:
-            f.write("# Uveddi v1.0 Community Core Analysis Report\n\n")
+            f.write("# Uveddi v1.0 Alpha 0.9 Core Analysis Report\n\n")
             f.write(f"**Generated**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
             
             # Executive Summary

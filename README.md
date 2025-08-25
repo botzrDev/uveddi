@@ -44,7 +44,7 @@ Uveddi exposes two main CLI commands:
 
 ### From Release Binary
 ```bash
-# Download the latest community release
+# Download the latest alpha 0.9
 curl -L https://github.com/botzrDev/uveddi/releases/latest/download/uveddi-linux-x86_64.tar.gz | tar xz
 sudo mv uveddi /usr/local/bin/
 ```

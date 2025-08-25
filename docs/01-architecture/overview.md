@@ -1,8 +1,8 @@
-# Uveddi Community Release Architecture
+# Uveddi Alpha 0.9 Architecture
 
 ## Overview
 
-Uveddi follows a simplified, layered architecture focused on local analysis and community-driven development. This document defines the architectural layers for the community release, emphasizing privacy, simplicity, and extensibility through open source contributions.
+Uveddi follows a simplified, layered architecture focused on local analysis and community-driven development. This document defines the architectural layers for alpha 0.9, emphasizing privacy, simplicity, and extensibility through open source contributions.
 
 ## Architectural Principles
 
