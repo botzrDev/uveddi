@@ -1209,7 +1209,7 @@ impl Default for AnalysisOrchestrator {
 pub async fn run_app() -> Result<(), UveddiError> {
     use crate::cli::{
         analyze_command::AnalyzeCommand, ci_command::CiCommand, config_command::ConfigCommand,
-        doctor_command::DoctorCommand, help_command::HelpCommand, tui_command::TuiCommand,
+        doctor_command::DoctorCommand, help_command::HelpCommand, hooks_command::HooksCommand, init_command::InitCommand, tui_command::TuiCommand,
     };
     #[cfg(feature = "wasm-plugins")]
     use crate::cli::plugin_command::PluginCommand;
@@ -1237,6 +1237,10 @@ pub async fn run_app() -> Result<(), UveddiError> {
         Doctor(DoctorCommand),
         /// Show help information
         Help(HelpCommand),
+        /// Git hooks management
+        Hooks(HooksCommand),
+        /// Initialize Uveddi configuration for a project
+        Init(InitCommand),
         Ui(crate::cli::ui_command::UiCommand),
         Ci(CiCommand),
         /// Launch the Terminal User Interface for interactive analysis
@@ -1290,6 +1294,14 @@ pub async fn run_app() -> Result<(), UveddiError> {
         }
         Commands::Help(command) => {
             info!("Executing help command...");
+            command.execute().await
+        }
+        Commands::Hooks(command) => {
+            info!("Executing hooks command...");
+            command.execute().await
+        }
+        Commands::Init(command) => {
+            info!("Executing init command...");
             command.execute().await
         }
         Commands::Ui(command) => {

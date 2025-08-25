@@ -1,0 +1,66 @@
+# Uveddi Configuration Template: Rust Library Project
+# Optimized for Rust library development with strict quality standards
+
+# AI Configuration - Optimized for code analysis
+ollama_model = "deepseek-coder:6.7b-instruct-q4_0"
+
+[dead_code]
+# Library projects require higher confidence due to public APIs
+confidence_threshold = 0.9
+library_mode = true
+
+# Rust library specific ignore patterns
+ignore_patterns = [
+    "target/**",
+    "**/target/**",
+    "examples/**",
+    "benches/**",
+    "tests/**",
+    "test_data/**",
+    "docs/**",
+    "*.md"
+]
+
+# Keep public APIs alive
+keep_alive_patterns = [
+    "pub fn",
+    "pub struct", 
+    "pub enum",
+    "pub trait",
+    "pub mod",
+    "pub use",
+    "pub type",
+    "pub const",
+    "pub static",
+    "main"
+]
+
+[large_classes]
+# Stricter thresholds for library code quality
+max_logical_loc = 150
+max_methods = 15
+max_fields = 12
+max_cyclomatic_complexity = 10
+max_cognitive_complexity = 15
+max_lcom_score = 0.7
+max_coupling = 20
+
+# Library-specific ignore patterns
+ignore_patterns = [
+    "target/**",
+    "examples/**",
+    "benches/**", 
+    "tests/**",
+    "*_test.rs",
+    "lib.rs"  # Main library file can be larger
+]
+
+# Rust-specific language overrides
+[large_classes.language_overrides.rust]
+max_logical_loc = 150
+max_methods = 15
+max_fields = 12
+max_cyclomatic_complexity = 10
+max_cognitive_complexity = 15
+max_lcom_score = 0.7
+max_coupling = 20

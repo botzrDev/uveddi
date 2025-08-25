@@ -1,0 +1,117 @@
+# Uveddi Configuration Template: Strict Quality Standards
+# Designed for high-quality code with stringent requirements
+
+# AI Configuration - Best model for detailed analysis
+ollama_model = "deepseek-coder:6.7b-instruct-q4_0"
+
+[dead_code]
+# Very high confidence for strict quality
+confidence_threshold = 0.95
+library_mode = true
+
+# Comprehensive ignore patterns
+ignore_patterns = [
+    # Build artifacts
+    "target/**", 
+    "**/target/**",
+    "node_modules/**",
+    "__pycache__/**",
+    "dist/**",
+    "build/**",
+    "out/**",
+    ".next/**",
+    
+    # Test files (but keep test quality high)
+    "tests/**",
+    "test/**", 
+    "__tests__/**",
+    "*.test.*",
+    "*.spec.*",
+    
+    # Documentation
+    "docs/**",
+    "*.md",
+    "README*",
+    
+    # Configuration
+    "*.config.*",
+    "webpack.*",
+    "rollup.*",
+    "vite.*"
+]
+
+# Keep all public APIs alive
+keep_alive_patterns = [
+    "pub fn",
+    "pub struct",
+    "pub enum", 
+    "pub trait",
+    "pub mod",
+    "pub use",
+    "pub type",
+    "pub const",
+    "export",
+    "export default",
+    "function",
+    "class",
+    "interface",
+    "type",
+    "def",
+    "__init__",
+    "__main__",
+    "main"
+]
+
+[large_classes]
+# Very strict thresholds for high quality
+max_logical_loc = 100
+max_methods = 10
+max_fields = 8
+max_cyclomatic_complexity = 8
+max_cognitive_complexity = 10
+max_lcom_score = 0.5
+max_coupling = 15
+
+# Strict ignore patterns (analyze almost everything)
+ignore_patterns = [
+    "tests/**",
+    "*.test.*",
+    "*.spec.*"
+]
+
+# Language-specific strict overrides
+[large_classes.language_overrides.rust]
+max_logical_loc = 100
+max_methods = 10
+max_fields = 8
+max_cyclomatic_complexity = 8
+max_cognitive_complexity = 10
+max_lcom_score = 0.5
+max_coupling = 15
+
+[large_classes.language_overrides.python]
+max_logical_loc = 120
+max_methods = 12
+max_fields = 10
+max_cyclomatic_complexity = 10
+max_cognitive_complexity = 12
+max_lcom_score = 0.6
+max_coupling = 18
+
+[large_classes.language_overrides.typescript]
+max_logical_loc = 110
+max_methods = 11
+max_fields = 9
+max_cyclomatic_complexity = 9
+max_cognitive_complexity = 11
+max_lcom_score = 0.55
+max_coupling = 16
+
+[large_classes.language_overrides.javascript]
+max_logical_loc = 100
+max_methods = 10
+max_fields = 8
+max_cyclomatic_complexity = 8
+max_cognitive_complexity = 10
+max_lcom_score = 0.5
+max_coupling = 15

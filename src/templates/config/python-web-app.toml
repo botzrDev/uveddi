@@ -1,0 +1,84 @@
+# Uveddi Configuration Template: Python Web Application
+# Optimized for Python web applications (Django, Flask, FastAPI)
+
+# AI Configuration
+ollama_model = "deepseek-coder:6.7b-instruct-q4_0"
+
+[dead_code]
+# Lower confidence for Python's dynamic nature
+confidence_threshold = 0.7
+library_mode = false
+
+# Python web app specific ignore patterns
+ignore_patterns = [
+    "__pycache__/**",
+    "*.pyc",
+    "*.pyo",
+    ".venv/**",
+    "venv/**",
+    "env/**",
+    "migrations/**",
+    "static/**",
+    "media/**",
+    "node_modules/**",
+    "dist/**",
+    "build/**",
+    ".pytest_cache/**",
+    "htmlcov/**",
+    "*.egg-info/**",
+    "manage.py",
+    "wsgi.py",
+    "asgi.py"
+]
+
+# Keep web framework patterns alive
+keep_alive_patterns = [
+    "__init__",
+    "__main__",
+    "main",
+    "app",
+    "application",
+    "create_app",
+    "get_application",
+    "urlpatterns",
+    "def save",
+    "def clean",
+    "def get_absolute_url",
+    "def __str__",
+    "def __unicode__",
+    "class Meta",
+    "class Admin"
+]
+
+[large_classes]
+# More lenient for Python's verbose nature
+max_logical_loc = 300
+max_methods = 30
+max_fields = 25
+max_cyclomatic_complexity = 15
+max_cognitive_complexity = 20
+max_lcom_score = 0.8
+max_coupling = 35
+
+# Web application specific ignore patterns
+ignore_patterns = [
+    "migrations/**",
+    "tests/**",
+    "test_*.py",
+    "*_test.py",
+    "conftest.py",
+    "settings.py",
+    "settings/**",
+    "config.py",
+    "urls.py"
+]
+
+# Python-specific language overrides
+[large_classes.language_overrides.python]
+max_logical_loc = 300
+max_methods = 30
+max_fields = 25
+max_cyclomatic_complexity = 15
+max_cognitive_complexity = 20
+max_lcom_score = 0.8
+max_coupling = 35

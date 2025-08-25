@@ -41,6 +41,8 @@
 // TODO: Re-enable when monitoring dependencies are properly configured
 // pub mod monitoring;
 
+pub mod validation;
+
 // use crate::analysis::components::ComponentConfig; // Unused import
 use crate::error::{Result, UveddiError};
 use crate::security::{self, SecurityError};
