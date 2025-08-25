@@ -4,7 +4,6 @@
 //! integration, API key authentication, and JWT token management.
 
 use crate::security::{
-use tracing::{info, warn, error, debug};
     errors::{SecurityError, SecurityResult},
     models::{ApiKey, AuthenticatedUser, Session, User, UserRole},
     secrets::SecretStore,
@@ -15,12 +14,10 @@ use base64::Engine;
 use chrono::{DateTime, Duration as ChronoDuration, Utc};
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use oauth2::{
-use tracing::{info, warn, error, debug};
     basic::BasicClient, AuthType, AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken,
     PkceCodeChallenge, RedirectUrl, Scope, TokenResponse, TokenUrl,
 };
 use openidconnect::{
-use tracing::{info, warn, error, debug};
     core::{CoreAuthenticationFlow, CoreClient, CoreProviderMetadata, CoreResponseType},
     // reqwest::async_http_client as oidc_http_client, // TODO: Fix for v4.0.1
     AccessTokenHash,

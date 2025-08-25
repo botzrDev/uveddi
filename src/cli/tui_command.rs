@@ -11,7 +11,6 @@ use tracing::{info, warn, error, debug};
 
 #[cfg(feature = "tui")]
 use crate::tui::events::run_tui;
-use tracing::{info, warn, error, debug};
 
 /// Arguments for the TUI command
 #[derive(Debug, Args)]

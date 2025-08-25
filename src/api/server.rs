@@ -9,7 +9,6 @@ use tracing::{info, warn, error, debug};
 
 use super::graphql::subscriptions::EventBroadcaster;
 use super::graphql::{GraphQLConfig, UveddiSchema};
-use tracing::{info, warn, error, debug};
 
 /// Start the GraphQL HTTP server
 pub async fn start_graphql_server(

@@ -15,12 +15,10 @@ use tracing::{info, warn, error, debug};
 use crate::analysis::mermaid_generator::{MermaidGenerationError, MermaidGenerator};
 use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
 use crate::models::visualization::{
-use tracing::{info, warn, error, debug};
     ArchitecturalComponent, ComponentMetrics, ComponentType, Dependency, DependencyNode,
     DependencyType, DiagramType,
 };
 use uuid::Uuid;
-use tracing::{info, warn, error, debug};
 
 // Include the bundled assets generated at build time
 include!(concat!(env!("OUT_DIR"), "/bundled_assets.rs"));

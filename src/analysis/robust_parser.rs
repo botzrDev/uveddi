@@ -9,7 +9,6 @@ use std::sync::Arc;
 use std::time::Duration;
 use thiserror::Error;
 use tokio::sync::{Mutex, OwnedSemaphorePermit, Semaphore};
-use tracing::{info, warn, error, debug};
 
 /// Comprehensive error enum representing all possible failure modes
 /// when parsing files in a robust, async context.

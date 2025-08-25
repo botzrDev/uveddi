@@ -4,7 +4,7 @@
 //! Uveddi analysis automatically during development workflows.
 
 pub mod manager;
-pub mod templates;
+// pub mod templates;  // TODO: Create templates module
 
 use crate::core::UveddiError;
 use serde::{Deserialize, Serialize};

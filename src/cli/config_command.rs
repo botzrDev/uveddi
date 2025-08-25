@@ -6,7 +6,7 @@ use clap::{Args, Subcommand};
 use std::fs;
 use std::io::Write;
 use std::path::PathBuf;
-use tracing::{info, warn, error, debug};
+use tracing::debug;
 
 #[derive(Subcommand)]
 pub enum ConfigSubcommand {

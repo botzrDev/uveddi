@@ -1,8 +1,8 @@
 use crate::analysis::{
-use tracing::{info, warn, error, debug};
     AnalysisEngine, DetectorConfig, DetectorRegistry, DetectorThresholds, EnhancedDetectorConfig,
     IssueSeverity, StandardDetectorConfig,
 };
+use tracing::{info, warn, error, debug};
 use crate::error::UveddiError;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

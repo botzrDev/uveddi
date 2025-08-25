@@ -11,7 +11,6 @@ use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use tracing::{info, warn, error, debug};
 
 use crate::{
-use tracing::{info, warn, error, debug};
     cli::analyze_command::AnalyzeCommand,
     tui::{
         app::{AppScreen, AppState},

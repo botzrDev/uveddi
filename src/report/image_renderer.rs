@@ -12,7 +12,6 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::time::Duration;
 use thiserror::Error;
-use tracing::{info, warn, error, debug};
 
 /// Configuration for the image rendering service
 #[derive(Debug, Clone)]

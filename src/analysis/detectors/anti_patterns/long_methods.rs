@@ -23,15 +23,14 @@
 //! - **JavaScript**: Framework-aware thresholds for React/Node.js patterns
 
 use crate::analysis::{AnalysisDetector, AnalysisError};
-use tracing::{info, warn, error, debug};
+use tracing::{warn, error};
 #[cfg(not(feature = "tree-sitter"))]
 use crate::ast::tree_sitter::StreamingIterator;
 use crate::ast::tree_sitter::{tree_sitter_javascript, tree_sitter_python, tree_sitter_rust};
 #[cfg(not(feature = "tree-sitter"))]
 use crate::ast::tree_sitter::{Language, Node, Parser, Query, QueryCursor, QueryMatch};
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
-use crate::core::logging::debug;
-use crate::core::logging::info;
+use crate::core::logging::{debug, info};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use async_trait::async_trait;
 use futures::TryFutureExt;

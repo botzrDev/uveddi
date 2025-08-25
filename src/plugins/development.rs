@@ -5,10 +5,8 @@
 
 #[cfg(feature = "ai")]
 use crate::ai::knowledge::compression::CompressedString;
-use tracing::{info, warn, error, debug};
 #[cfg(feature = "ai")]
 use crate::ai::knowledge::context_selection::{LocationContext, SeverityLevel};
-use tracing::{info, warn, error, debug};
 #[cfg(feature = "ai")]
 use crate::ai::knowledge::schema::*;
 use crate::plugins::knowledge::*;

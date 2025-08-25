@@ -12,7 +12,6 @@ use std::path::{Path, PathBuf};
 use std::pin::Pin;
 use tokio::fs;
 use tokio_stream::{wrappers::ReadDirStream, StreamExt as TokioStreamExt};
-use tracing::{info, warn, error, debug};
 
 /// Async file walker that yields file paths with security validation
 pub struct AsyncWalker {

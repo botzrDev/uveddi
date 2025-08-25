@@ -966,4 +966,3 @@ mod tests {
         assert!(help.contains("doctor"));
     }
 }
-"#.to_string()),
