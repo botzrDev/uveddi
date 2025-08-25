@@ -220,7 +220,7 @@ uveddi config validate --file custom.toml
 
 ### 5. `plugin` - Plugin Management
 
-Manages WebAssembly plugins for extended functionality.
+Manages WebAssembly plugins for extended functionality with production-ready WASM runtime.
 
 #### Syntax
 ```bash
@@ -230,54 +230,165 @@ uveddi plugin <SUBCOMMAND> [OPTIONS]
 #### Subcommands
 
 ##### `plugin list`
-List installed plugins.
+List installed plugins with status and metadata.
 
 ```bash
-uveddi plugin list [--verbose]
+uveddi plugin list [OPTIONS]
 ```
+
+**Options:**
+- `--verbose`, `-v` - Show detailed plugin information including permissions and resource usage
+- `--status <STATUS>` - Filter by status: `enabled`, `disabled`, `error`
+- `--format <FORMAT>` - Output format: `table`, `json`, `yaml` (default: `table`)
 
 ##### `plugin install`
-Install a plugin from file or URL.
+Install a plugin from WebAssembly binary with automatic validation.
 
 ```bash
-uveddi plugin install <SOURCE> [--force]
+uveddi plugin install <PLUGIN_FILE> [OPTIONS]
 ```
+
+**Arguments:**
+- `<PLUGIN_FILE>` - Path to `.wasm` plugin binary file
+
+**Options:**
+- `--manifest <FILE>` - Path to plugin manifest file (default: `plugin.toml` in same directory)
+- `--force` - Force installation even if plugin exists
+- `--enable` - Enable plugin immediately after installation
+- `--validate-security` - Run security validation on plugin binary
+- `--dry-run` - Validate plugin without installing
 
 ##### `plugin remove`
-Remove an installed plugin.
+Remove an installed plugin and cleanup resources.
 
 ```bash
-uveddi plugin remove <PLUGIN_ID>
+uveddi plugin remove <PLUGIN_ID> [OPTIONS]
 ```
+
+**Arguments:**
+- `<PLUGIN_ID>` - Plugin identifier from `plugin list`
+
+**Options:**
+- `--force` - Force removal even if plugin is in use
+- `--keep-data` - Preserve plugin data and configuration
 
 ##### `plugin info`
-Display plugin information.
+Display comprehensive plugin information and statistics.
 
 ```bash
-uveddi plugin info <PLUGIN_ID>
+uveddi plugin info <PLUGIN_ID> [OPTIONS]
 ```
 
-##### `plugin run`
-Run a specific plugin.
+**Arguments:**
+- `<PLUGIN_ID>` - Plugin identifier from `plugin list`
+
+**Options:**
+- `--show-permissions` - Display plugin security permissions
+- `--show-stats` - Show runtime execution statistics
+- `--show-manifest` - Display plugin manifest content
+
+##### `plugin test`
+Test plugin functionality and validate operation.
 
 ```bash
-uveddi plugin run <PLUGIN_ID> <PATH> [--output <FILE>]
+uveddi plugin test <PLUGIN_ID> [OPTIONS]
+```
+
+**Arguments:**
+- `<PLUGIN_ID>` - Plugin identifier to test
+
+**Options:**
+- `--test-file <PATH>` - Use specific file for testing
+- `--timeout <SECONDS>` - Test execution timeout (default: 30)
+- `--verbose` - Show detailed test output
+
+##### `plugin update`
+Update an installed plugin to newer version.
+
+```bash
+uveddi plugin update <PLUGIN_ID> [OPTIONS]
+```
+
+**Arguments:**
+- `<PLUGIN_ID>` - Plugin identifier to update
+
+**Options:**
+- `--binary <FILE>` - Path to new plugin binary
+- `--check-only` - Check for updates without installing
+- `--backup` - Create backup before updating
+
+#### Security and Permissions
+
+Plugins run in a secure WebAssembly sandbox with capability-based permissions:
+
+**Available Permissions:**
+- `ConfigRead` - Read project configuration
+- `TempFileCreate` - Create temporary files
+- `Logging` - Write to log output
+- `FileRead` - Read specific files (path-restricted)
+- `NetworkConnect` - Network access (URL-restricted)
+
+**Resource Limits:**
+- Memory limit: 32MB (configurable)
+- Execution timeout: 30 seconds (configurable)
+- Fuel limit: 2,000,000 operations (prevents infinite loops)
+
+#### Plugin Integration
+
+Plugins integrate seamlessly with Uveddi's analysis pipeline:
+
+```bash
+# Analyze with all enabled plugins
+uveddi analyze ./src
+
+# Analyze with specific plugins only
+uveddi analyze ./src --plugins security-scanner,performance-analyzer
+
+# Disable all plugins for analysis
+uveddi analyze ./src --no-plugins
 ```
 
 #### Examples
 
 ```bash
-# List all plugins
-uveddi plugin list
+# List all plugins with details
+uveddi plugin list --verbose
 
-# Install plugin from file
-uveddi plugin install ./my-plugin.wasm
+# Install plugin with security validation
+uveddi plugin install security-analyzer.wasm --validate-security --enable
 
-# Remove plugin
-uveddi plugin remove custom-detector
+# View plugin information and statistics
+uveddi plugin info security-analyzer --show-stats --show-permissions
 
-# Run specific plugin
-uveddi plugin run security-scanner ./src --output results.json
+# Test plugin functionality
+uveddi plugin test security-analyzer --test-file src/main.rs --verbose
+
+# Update plugin to newer version
+uveddi plugin update security-analyzer --binary security-analyzer-v2.wasm
+
+# Remove plugin and cleanup
+uveddi plugin remove security-analyzer --force
+
+# Install from URL (if supported)
+uveddi plugin install https://plugins.uveddi.dev/security-analyzer.wasm
+
+# Dry run installation
+uveddi plugin install new-plugin.wasm --dry-run --validate-security
+```
+
+#### Plugin Development
+
+Create new plugins using the built-in scaffolding:
+
+```bash
+# Generate plugin template
+scripts/generate-plugin.py my-analyzer
+
+# Build plugin
+cd plugins/my-analyzer && make build
+
+# Test during development
+uveddi plugin test my-analyzer --verbose
 ```
 
 ### 6. `ci` - CI/CD Integration

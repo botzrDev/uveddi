@@ -1,0 +1,93 @@
+# Example TOML rule set for Uveddi Rule Engine Plugin
+
+[rule_set]
+name = "basic-code-quality"
+version = "1.0.0"
+description = "Basic code quality rules for common issues"
+author = "Uveddi Team"
+format = "toml"
+
+# Rule definitions
+[[rules]]
+id = "no-todo-comments"
+name = "No TODO Comments"
+description = "Detect TODO comments that should be resolved"
+pattern = "(?i)todo|fixme|hack|xxx"
+pattern_type = "regex"
+severity = "warning"
+category = "maintenance"
+message = "TODO comment found - consider resolving or creating a ticket"
+suggestion = "Replace with a proper issue tracker ticket or implement the functionality"
+languages = ["*"]
+enabled = true
+tags = ["maintenance", "documentation"]
+
+[[rules]]
+id = "no-console-log"
+name = "No Console Log"
+description = "Detect console.log statements in production code"
+pattern = "console\\.log\\s*\\("
+pattern_type = "regex"
+severity = "warning"
+category = "debugging"
+message = "Console.log statement found - remove before production"
+suggestion = "Use proper logging framework or remove debug statements"
+languages = ["javascript", "typescript"]
+enabled = true
+tags = ["debugging", "production"]
+
+[[rules]]
+id = "no-hardcoded-secrets"
+name = "No Hardcoded Secrets"
+description = "Detect potential hardcoded secrets or passwords"
+pattern = "(password|secret|key|token)\\s*[=:]\\s*['\"][^'\"]{8,}['\"]"
+pattern_type = "regex"
+severity = "error"
+category = "security"
+message = "Potential hardcoded secret detected"
+suggestion = "Use environment variables or secure configuration management"
+languages = ["*"]
+enabled = true
+tags = ["security", "secrets"]
+
+[[rules]]
+id = "function-length"
+name = "Function Length Limit"
+description = "Functions should not exceed 50 lines"
+pattern = "fn\\s+\\w+[^{]*\\{[^}]{500,}\\}"
+pattern_type = "regex"
+severity = "info"
+category = "complexity"
+message = "Function is too long - consider breaking it down"
+suggestion = "Extract smaller functions or refactor for better readability"
+languages = ["rust"]
+enabled = true
+tags = ["complexity", "maintainability"]
+
+[[rules]]
+id = "no-magic-numbers"
+name = "No Magic Numbers"
+description = "Avoid magic numbers in code"
+pattern = "\\b(?<!\\.)\\d{2,}\\b(?!\\s*[;,)])"
+pattern_type = "regex"
+severity = "info"
+category = "readability"
+message = "Magic number detected - consider using a named constant"
+suggestion = "Replace with a well-named constant"
+languages = ["rust", "python", "javascript", "typescript"]
+enabled = true
+tags = ["readability", "constants"]
+
+# Rule overrides
+[[overrides]]
+rule_id = "no-magic-numbers"
+languages = ["rust"]
+# More lenient for Rust due to common patterns
+
+[[overrides]]
+rule_id = "function-length"
+severity = "warning"
+# Make it more strict
+
+# Extensions (other rule sets to include)
+extends = []

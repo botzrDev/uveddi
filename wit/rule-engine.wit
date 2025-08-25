@@ -1,0 +1,178 @@
+package uveddi:rule-engine;
+
+use uveddi:core-analysis/core-analysis.{ast-node, issue, source-file, analysis-result, span};
+
+/// Custom rule engine interface for policy-based analysis
+world rule-engine {
+    /// Rule definition format
+    enum rule-format {
+        toml,
+        yaml,
+        json,
+        dsl,
+    }
+
+    /// Rule match pattern type
+    enum pattern-type {
+        tree-sitter-query,
+        regex,
+        ast-pattern,
+        structural-pattern,
+    }
+
+    /// Rule severity mapping
+    enum rule-severity {
+        error,
+        warning,
+        info,
+        hint,
+    }
+
+    /// Custom rule definition
+    record rule-definition {
+        id: string,
+        name: string,
+        description: string,
+        pattern: string,
+        pattern-type: pattern-type,
+        severity: rule-severity,
+        category: string,
+        message: string,
+        suggestion: option<string>,
+        auto-fix: option<string>,
+        languages: list<string>,
+        enabled: bool,
+        tags: list<string>,
+        metadata: list<tuple<string, string>>,
+    }
+
+    /// Rule set configuration
+    record rule-set {
+        name: string,
+        version: string,
+        description: string,
+        author: string,
+        format: rule-format,
+        rules: list<rule-definition>,
+        extends: list<string>, // Base rule sets to extend
+        overrides: list<rule-override>,
+    }
+
+    /// Rule override configuration
+    record rule-override {
+        rule-id: string,
+        enabled: option<bool>,
+        severity: option<rule-severity>,
+        message: option<string>,
+        languages: option<list<string>>,
+    }
+
+    /// Rule match result
+    record rule-match {
+        rule-id: string,
+        spans: list<span>,
+        captured-groups: list<tuple<string, string>>,
+        confidence: float32,
+        context: list<tuple<string, string>>,
+    }
+
+    /// Tree-sitter query result
+    record query-result {
+        matches: list<ast-node>,
+        captures: list<tuple<string, ast-node>>,
+    }
+
+    /// Rule evaluation context
+    record evaluation-context {
+        file: source-file,
+        ast: ast-node,
+        current-node: option<ast-node>,
+        parent-nodes: list<ast-node>,
+        symbols: list<tuple<string, string>>,
+        imports: list<string>,
+        exports: list<string>,
+    }
+
+    /// Policy violation
+    record policy-violation {
+        rule-id: string,
+        policy-id: string,
+        severity: rule-severity,
+        message: string,
+        file: string,
+        span: span,
+        remediation: option<string>,
+        exemption: option<exemption-info>,
+    }
+
+    /// Exemption information
+    record exemption-info {
+        reason: string,
+        expires: option<u64>, // Unix timestamp
+        approver: string,
+        ticket: option<string>,
+    }
+
+    /// Organizational policy
+    record organizational-policy {
+        id: string,
+        name: string,
+        description: string,
+        rules: list<string>, // Rule IDs
+        enforcement-level: enforcement-level,
+        scope: policy-scope,
+        exceptions: list<policy-exception>,
+    }
+
+    /// Policy enforcement levels
+    enum enforcement-level {
+        disabled,
+        warning,
+        error,
+        blocking,
+    }
+
+    /// Policy scope
+    record policy-scope {
+        languages: list<string>,
+        file-patterns: list<string>,
+        exclude-patterns: list<string>,
+        directories: list<string>,
+    }
+
+    /// Policy exception
+    record policy-exception {
+        pattern: string,
+        reason: string,
+        expires: option<u64>,
+        approver: string,
+    }
+
+    /// Plugin interface functions
+    export initialize-rules: func(rule-sets: list<rule-set>) -> result<u32, string>;
+    export load-rule-set: func(rule-set: rule-set) -> result<_, string>;
+    export evaluate-rules: func(context: evaluation-context) -> result<list<rule-match>, string>;
+    export check-policy: func(file: source-file, policy: organizational-policy) -> result<list<policy-violation>, string>;
+    export validate-rule-syntax: func(rule: rule-definition) -> result<_, string>;
+
+    /// Host functions for rule engine
+    import execute-tree-sitter-query: func(node: ast-node, query: string) -> result<query-result, string>;
+    import match-regex: func(text: string, pattern: string, flags: string) -> result<list<tuple<u32, u32>>, string>;
+    import resolve-symbol: func(name: string, context: evaluation-context) -> option<string>;
+    import get-node-ancestors: func(node: ast-node) -> list<ast-node>;
+    import get-node-descendants: func(node: ast-node, node-type: option<string>) -> list<ast-node>;
+
+    /// Advanced pattern matching
+    import match-structural-pattern: func(node: ast-node, pattern: string) -> result<bool, string>;
+    import find-similar-code: func(node: ast-node, threshold: float32) -> result<list<ast-node>, string>;
+
+    /// Rule management
+    import save-rule-set: func(rule-set: rule-set, path: string) -> result<_, string>;
+    import load-rule-set-from-path: func(path: string) -> result<rule-set, string>;
+    import validate-rule-set: func(rule-set: rule-set) -> result<list<string>, string>;
+
+    /// Policy management
+    import save-policy: func(policy: organizational-policy, path: string) -> result<_, string>;
+    import load-policy-from-path: func(path: string) -> result<organizational-policy, string>;
+    import check-exemption: func(violation: policy-violation, exemptions: list<exemption-info>) -> bool;
+}

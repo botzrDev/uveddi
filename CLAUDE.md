@@ -11,7 +11,7 @@ Uveddi is a comprehensive architectural analysis tool built in Rust that combine
 - **Dependency analysis**: Graph-based dependency tracking and visualization
 - **Report generation**: HTML, JSON, and Markdown output formats with interactive diagrams
 - **Terminal UI**: Interactive TUI for analysis exploration
-- **Plugin system**: WebAssembly-based extensibility
+- **WASM Plugin System**: **PRODUCTION READY** - Complete WebAssembly-based extensibility with CLI management, host functions, and runtime integration
 - **Performance optimization**: Memory-efficient caching and parallel processing
 - **Service orchestration**: Integrated web services with automatic health monitoring
 - **Build optimization**: Memory-hierarchy-aware dependency management for 60-80% faster builds
@@ -45,6 +45,52 @@ uveddi serve --port 8888 --rendering-port 3333 --frontend-port 3000 --developmen
 # - Rendering: http://localhost:3333/health
 ```
 
+### WASM Plugin System
+Uveddi features a **production-ready WASM plugin system** that enables secure, performant extensibility through WebAssembly plugins.
+
+#### Plugin Management
+Complete CLI-based plugin lifecycle management:
+
+```bash
+# Install a plugin
+uveddi plugin install plugin.wasm
+
+# List all installed plugins
+uveddi plugin list
+
+# Get detailed plugin information
+uveddi plugin info <plugin-id>
+
+# Remove a plugin
+uveddi plugin remove <plugin-id>
+
+# Test plugin functionality
+uveddi plugin test <plugin-id>
+
+# Update a plugin to newer version
+uveddi plugin update <plugin-id>
+```
+
+#### Plugin Architecture
+- **Security**: Capability-based security model with WASI sandboxing
+- **Performance**: Zero-copy data exchange with Apache Arrow integration
+- **Integration**: Seamless integration with existing analysis pipeline
+- **Host Functions**: Full access to Uveddi's core services (AST parsing, database, configuration)
+- **Runtime**: Advanced WASM runtime with fuel limits, memory management, and monitoring
+
+#### Plugin Development
+- **WIT Interface**: WebAssembly Component Model with well-defined interfaces
+- **Host API**: Comprehensive host functions for accessing Uveddi services
+- **Security Policy**: Granular permission system for resource access
+- **Template Generator**: Automated plugin scaffolding and build toolchain
+
+#### Production Features
+- **Auto-loading**: Automatic plugin discovery and loading on startup
+- **Hot Reload**: Development mode supports plugin hot-reloading
+- **Monitoring**: Runtime performance and resource usage monitoring
+- **Error Handling**: Comprehensive error reporting and recovery
+- **Resource Limits**: Configurable memory, execution time, and fuel limits
+
 ## Architecture
 
 The project follows a layered architecture:
@@ -55,13 +101,23 @@ CLI Layer (src/cli/) → Application Layer (src/application/) → Analysis Layer
 
 ### Core Modules
 - **`src/analysis/`**: Core analysis engines, detectors, and algorithms
+  - **`plugin_detector_adapter.rs`**: Integration bridge for WASM plugins as analysis detectors
 - **`src/ai/`**: AI provider integrations (Ollama) for intelligent analysis
 - **`src/api/`**: REST API server with shared types architecture and health monitoring
 - **`src/ast/`**: Abstract Syntax Tree parsing using tree-sitter
 - **`src/cli/`**: Command-line interface and argument parsing
+  - **`plugin_command.rs`**: Complete CLI plugin management commands
 - **`src/database/`**: SQLite-based data persistence
 - **`src/report/`**: Report generation in multiple formats
-- **`src/plugins/`**: WebAssembly plugin system
+- **`src/plugins/`**: **Complete WASM plugin system** (PRODUCTION READY)
+  - **`host_functions.rs`**: Host API for plugin access to Uveddi services
+  - **`runtime.rs`**: WASM runtime management with security and monitoring
+  - **`engine.rs`**: Plugin orchestration and lifecycle management
+  - **`security.rs`**: Capability-based security and sandboxing
+  - **`registry.rs`**: Plugin discovery and metadata management
+- **`src/application/`**: Application layer coordination
+  - **`plugin_manager.rs`**: High-level plugin integration with core systems
+  - **`startup.rs`**: Application initialization with plugin auto-loading
 - **`src/service_orchestration/`**: Multi-service lifecycle management with readiness detection
 - **`src/tui/`**: Terminal user interface
 - **`src/cache/`**: Performance optimization through caching
@@ -141,7 +197,7 @@ The project uses extensive feature flags for modular compilation, optimized for 
 - **`ai`**: Base AI functionality
 - **`local-ai`**: Ollama integration
 - **`tui`**: Terminal user interface
-- **`wasm-plugins`**: WebAssembly plugin system
+- **`wasm-plugins`**: **Complete WebAssembly plugin system** with CLI management, host functions, runtime integration, and security
 - **`memory-optimization`**: Memory-efficient processing
 - **`security`**: Security analysis features (consolidated crypto/auth stack)
 - **`web-full`**: Complete web server stack (API + rendering services)
@@ -239,6 +295,11 @@ cargo run --features=production -- serve --port 8888 --rendering-port 3333 --fro
 
 # TUI interface
 cargo run --features=production --bin tui_test
+
+# Plugin management (requires wasm-plugins feature)
+cargo run --features=production -- plugin list
+cargo run --features=production -- plugin install plugin.wasm
+cargo run --features=production -- plugin info <plugin-id>
 ```
 
 #### Development Tools
@@ -430,6 +491,10 @@ Common issues and solutions:
 - **Health check timeouts**: Services use exponential backoff retry logic with detailed error reporting
 - **Circular dependencies**: Use shared types pattern in `src/api/types.rs` for cross-module communication
 - **CI/CD taking too long**: Use `--features=dev-minimal` for test builds, `--features=production` only for release
+- **Plugin system not available**: Compile with `--features=wasm-plugins` to enable plugin functionality
+- **Plugin installation fails**: Ensure plugin directory exists and plugin manifest is valid TOML
+- **Plugin execution timeouts**: Check plugin resource limits and fuel consumption settings
+- **Plugin permission denied**: Verify plugin security policy allows required operations
 
 #### WSL Build Timeout Issues (Windows Subsystem for Linux)
 

@@ -1,0 +1,149 @@
+# Example YAML organizational security policy
+
+rule_set:
+  name: "enterprise-security-policy"
+  version: "2.0.0"
+  description: "Enterprise security policy for code analysis"
+  author: "Security Team"
+  format: "yaml"
+
+rules:
+  - id: "sql-injection-prevention"
+    name: "SQL Injection Prevention"
+    description: "Detect potential SQL injection vulnerabilities"
+    pattern: "(SELECT|INSERT|UPDATE|DELETE).*\\+.*\\$"
+    pattern_type: "regex"
+    severity: "error"
+    category: "security"
+    message: "Potential SQL injection vulnerability - use parameterized queries"
+    suggestion: "Replace string concatenation with parameterized queries or prepared statements"
+    languages: ["python", "javascript", "typescript", "rust"]
+    enabled: true
+    tags: ["security", "sql", "injection"]
+    metadata:
+      cwe: "CWE-89"
+      owasp: "A03:2021"
+
+  - id: "xss-prevention"
+    name: "XSS Prevention"
+    description: "Detect potential XSS vulnerabilities"
+    pattern: "innerHTML\\s*=|document\\.write\\s*\\("
+    pattern_type: "regex"
+    severity: "error"
+    category: "security"
+    message: "Potential XSS vulnerability - sanitize user input"
+    suggestion: "Use safe DOM manipulation methods or proper sanitization"
+    languages: ["javascript", "typescript"]
+    enabled: true
+    tags: ["security", "xss", "dom"]
+    metadata:
+      cwe: "CWE-79"
+      owasp: "A03:2021"
+
+  - id: "weak-crypto"
+    name: "Weak Cryptography"
+    description: "Detect usage of weak cryptographic algorithms"
+    pattern: "(md5|sha1|des|rc4)\\s*\\("
+    pattern_type: "regex"
+    severity: "error"
+    category: "security"
+    message: "Weak cryptographic algorithm detected"
+    suggestion: "Use strong cryptographic algorithms like SHA-256, AES-256"
+    languages: ["*"]
+    enabled: true
+    tags: ["security", "cryptography", "weak-crypto"]
+    metadata:
+      cwe: "CWE-327"
+
+  - id: "path-traversal"
+    name: "Path Traversal Prevention"
+    description: "Detect potential path traversal vulnerabilities"
+    pattern: "\\.\\.[\\/\\\\]|[\\/\\\\]\\.\\."
+    pattern_type: "regex"
+    severity: "error"
+    category: "security"
+    message: "Potential path traversal vulnerability"
+    suggestion: "Validate and sanitize file paths, use allowlists"
+    languages: ["*"]
+    enabled: true
+    tags: ["security", "path-traversal", "filesystem"]
+    metadata:
+      cwe: "CWE-22"
+
+  - id: "insecure-random"
+    name: "Insecure Random Number Generation"
+    description: "Detect usage of insecure random number generators"
+    pattern: "Math\\.random\\(\\)|rand\\(\\)|srand\\("
+    pattern_type: "regex"
+    severity: "warning"
+    category: "security"
+    message: "Insecure random number generator - use cryptographically secure alternative"
+    suggestion: "Use crypto.randomBytes(), secrets.SystemRandom(), or similar secure alternatives"
+    languages: ["javascript", "typescript", "python", "rust"]
+    enabled: true
+    tags: ["security", "random", "cryptography"]
+    metadata:
+      cwe: "CWE-338"
+
+  - id: "eval-usage"
+    name: "Dangerous eval() Usage"
+    description: "Detect usage of eval() which can lead to code injection"
+    pattern: "\\beval\\s*\\("
+    pattern_type: "regex"
+    severity: "error"
+    category: "security"
+    message: "Dangerous eval() usage detected"
+    suggestion: "Avoid eval(), use safer alternatives like JSON.parse() for data"
+    languages: ["javascript", "typescript", "python"]
+    enabled: true
+    tags: ["security", "eval", "code-injection"]
+    metadata:
+      cwe: "CWE-95"
+
+overrides:
+  - rule_id: "insecure-random"
+    languages: ["rust"]
+    severity: "info"  # Rust has better defaults
+  
+  - rule_id: "eval-usage"
+    enabled: false  # Can be disabled for specific contexts
+
+extends: []
+
+# Organizational policies using these rules
+policies:
+  - id: "production-security"
+    name: "Production Security Policy"
+    description: "Mandatory security rules for production code"
+    rules:
+      - "sql-injection-prevention"
+      - "xss-prevention"
+      - "weak-crypto"
+      - "path-traversal"
+      - "eval-usage"
+    enforcement_level: "blocking"
+    scope:
+      languages: ["javascript", "typescript", "python", "rust"]
+      file_patterns: ["src/*", "lib/*"]
+      exclude_patterns: ["test/*", "tests/*", "*.test.*", "*.spec.*"]
+      directories: ["src", "lib"]
+    exceptions:
+      - pattern: "legacy/*"
+        reason: "Legacy code exempted until migration"
+        expires: 1735689600  # 2025-01-01
+        approver: "security-team"
+
+  - id: "development-security"
+    name: "Development Security Guidelines"
+    description: "Security guidelines for development"
+    rules:
+      - "insecure-random"
+      - "weak-crypto"
+      - "eval-usage"
+    enforcement_level: "warning"
+    scope:
+      languages: ["*"]
+      file_patterns: ["*"]
+      exclude_patterns: ["node_modules/*", "target/*", "build/*"]
+      directories: ["."]
+    exceptions: []

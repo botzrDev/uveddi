@@ -1,0 +1,58 @@
+[package]
+name = "uveddi-metrics-analyzer"
+version = "1.0.0"
+edition = "2021"
+description = "Advanced code metrics calculation and visualization for comprehensive quality analysis"
+authors = ["Uveddi Team"]
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+# WASM bindings
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"
+js-sys = "0.3"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Error handling
+thiserror = "2.0"
+anyhow = "1.0"
+
+# Utility
+uuid = { version = "1.8", features = ["v4", "serde"] }
+
+# Tree-sitter for AST analysis (optional)
+tree-sitter = { version = "0.25", optional = true }
+tree-sitter-rust = { version = "0.24", optional = true }
+tree-sitter-python = { version = "0.23", optional = true }
+tree-sitter-javascript = { version = "0.23", optional = true }
+tree-sitter-typescript = { version = "0.23", optional = true }
+
+# Plugin-specific dependencies
+
+petgraph = "0.8"
+
+regex = "1.10"
+
+serde_json = "1.0"
+
+chrono = { version = "0.4", features = ["serde"] }
+
+
+[features]
+default = []
+tree-sitter = ["dep:tree-sitter"]
+rust-support = ["tree-sitter", "dep:tree-sitter-rust"]  
+python-support = ["tree-sitter", "dep:tree-sitter-python"]
+js-support = ["tree-sitter", "dep:tree-sitter-javascript"]
+ts-support = ["tree-sitter", "dep:tree-sitter-typescript"]
+
+[profile.release]
+opt-level = "z"     # Optimize for size
+lto = true
+codegen-units = 1
+panic = "abort"

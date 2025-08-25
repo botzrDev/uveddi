@@ -68,11 +68,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Basic security framework with OAuth2 support
 - Initial knowledge library with universal patterns
 
-### Known Limitations (v1.0 Community Core)
-- Enhanced prompt templates temporarily disabled
-- OIDC authentication temporarily disabled pending API updates  
-- Some advanced AI features require further development
-- Performance optimizations in progress
 
 ### Security
 - Fixed RSA timing attack vulnerability (RUSTSEC-2023-0071)

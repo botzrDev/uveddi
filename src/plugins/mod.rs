@@ -44,8 +44,10 @@
 pub mod data_plane;
 pub mod engine;
 pub mod errors;
+pub mod host_functions;
 pub mod lifecycle;
 pub mod registry;
+pub mod runtime;
 pub mod security;
 pub mod types;
 pub mod verification;
@@ -59,9 +61,11 @@ pub mod knowledge;
 pub use data_plane::AstDataPlane;
 pub use engine::WasmPluginEngine;
 pub use errors::PluginError;
+pub use host_functions::{HostContext, HostFunctions, HostContextFactory};
 // Note: PluginResult is deprecated - use crate::error::Result<T> instead
 pub use lifecycle::{PluginLifecycleManager, ResourceReport};
 pub use registry::{PluginManifest, PluginMetadata, PluginRegistry};
+pub use runtime::{PluginRuntime, RuntimeFactory, PluginRuntimeStats, RuntimeStats};
 pub use security::{Permission, SecurityPolicy};
 pub use types::*;
 pub use verification::{PluginVerifier, VerificationReport};

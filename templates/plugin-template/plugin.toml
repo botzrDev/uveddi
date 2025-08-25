@@ -1,0 +1,26 @@
+[plugin]
+name = "{{plugin_name}}"
+version = "{{version}}"
+author = "{{author}}"
+description = "{{description}}"
+license = "{{license}}"
+
+[capabilities]
+languages = [{{#each languages}}"{{this}}"{{#unless @last}}, {{/unless}}{{/each}}]
+detector_types = [{{#each detector_types}}"{{this}}"{{#unless @last}}, {{/unless}}{{/each}}]
+api_version = "1.0"
+
+[requirements]
+min_uveddi_version = "1.0.0"
+max_uveddi_version = "2.0.0"
+
+[permissions]
+read_files = {{read_files}}
+write_files = {{write_files}}
+network_access = {{network_access}}
+system_info = {{system_info}}
+
+[resources]
+max_memory_mb = {{max_memory_mb}}
+max_cpu_percent = {{max_cpu_percent}}
+timeout_seconds = {{timeout_seconds}}

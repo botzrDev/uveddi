@@ -125,6 +125,7 @@ pub mod memory_report;
 pub mod mermaid_generator;
 pub mod orchestrator;
 pub mod performance;
+pub mod plugin_detector_adapter;
 pub mod plugin_adapter;
 pub mod robust_parser;
 pub mod semantic;

@@ -1,0 +1,116 @@
+package uveddi:plugin-template;
+
+/// Core plugin interface for Uveddi code analysis
+world code-analyzer {
+    /// AST node representation
+    record ast-node {
+        node-type: string,
+        content: string,
+        line: u32,
+        column: u32,
+        children: list<ast-node>,
+    }
+
+    /// Analysis issue found by plugin
+    record issue {
+        id: string,
+        severity: severity-level,
+        message: string,
+        file: string,
+        line: u32,
+        column: u32,
+        category: string,
+        suggestion: option<string>,
+    }
+
+    /// Severity levels for issues
+    enum severity-level {
+        critical,
+        high,
+        medium,
+        low,
+        info,
+    }
+
+    /// Code metrics calculated by plugin
+    record metrics {
+        lines-of-code: u32,
+        complexity: u32,
+        maintainability-index: float64,
+        custom-metrics: list<tuple<string, float64>>,
+    }
+
+    /// Analysis result
+    record analysis-result {
+        issues: list<issue>,
+        metrics: metrics,
+    }
+
+    /// Plugin configuration
+    record plugin-config {
+        severity-threshold: float32,
+        max-issues-per-file: u32,
+        custom-settings: list<tuple<string, string>>,
+    }
+
+    /// File content with metadata
+    record source-file {
+        path: string,
+        content: string,
+        language: string,
+        ast: option<ast-node>,
+    }
+
+    /// Plugin capabilities and metadata
+    record plugin-info {
+        name: string,
+        version: string,
+        description: string,
+        author: string,
+        supported-languages: list<string>,
+        detector-types: list<string>,
+    }
+
+    /// Initialize plugin with configuration
+    export initialize: func(config: plugin-config) -> result<_, string>;
+
+    /// Main analysis function
+    export analyze: func(file: source-file) -> result<analysis-result, string>;
+
+    /// Get plugin information
+    export get-info: func() -> plugin-info;
+
+    /// Cleanup resources
+    export cleanup: func() -> result<_, string>;
+
+    /// Host functions available to plugins
+
+    /// Log messages to host
+    import log: func(level: log-level, message: string);
+
+    /// Log levels
+    enum log-level {
+        debug,
+        info,
+        warn,
+        error,
+    }
+
+    /// Read file content
+    import read-file: func(path: string) -> result<string, string>;
+
+    /// Check if file exists
+    import file-exists: func(path: string) -> bool;
+
+    /// List files matching pattern
+    import list-files: func(pattern: string) -> result<list<string>, string>;
+
+    /// Get configuration value
+    import get-config: func(key: string) -> option<string>;
+
+    /// Parse AST for given code and language
+    import parse-ast: func(code: string, language: string) -> result<ast-node, string>;
+
+    /// Calculate hash of content
+    import calculate-hash: func(content: string) -> string;
+}

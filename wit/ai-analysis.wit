@@ -1,0 +1,290 @@
+package uveddi:ai-analysis;
+
+use uveddi:core-analysis/core-analysis.{ast-node, issue, source-file, analysis-result, span, severity-level};
+
+/// AI-powered code analysis interface
+world ai-analysis {
+    /// AI model configuration
+    record ai-model-config {
+        provider: ai-provider,
+        model-name: string,
+        endpoint: string,
+        api-key: option<string>,
+        max-tokens: u32,
+        temperature: float32,
+        timeout-seconds: u32,
+    }
+
+    /// AI providers
+    enum ai-provider {
+        ollama,
+        openai,
+        anthropic,
+        google,
+        huggingface,
+        local,
+    }
+
+    /// AI analysis types
+    enum analysis-type {
+        code-quality,
+        security-scan,
+        performance-review,
+        style-check,
+        documentation-review,
+        test-generation,
+        refactoring-suggestions,
+    }
+
+    /// AI-generated claim
+    record ai-claim {
+        id: string,
+        claim-type: claim-type,
+        statement: string,
+        confidence: float32,
+        evidence: list<evidence>,
+        source-span: option<span>,
+        verifiable: bool,
+        verified: option<bool>,
+    }
+
+    /// Types of AI claims
+    enum claim-type {
+        factual,        // "Function X calls function Y"
+        structural,     // "This class has 10 methods"
+        behavioral,     // "This function returns an error when input is null"
+        quality,        // "This code violates DRY principle"
+        performance,    // "This loop has O(n²) complexity"
+        security,       // "This function is vulnerable to XSS"
+    }
+
+    /// Evidence supporting an AI claim
+    record evidence {
+        source: evidence-source,
+        location: span,
+        description: string,
+        strength: float32, // 0.0 to 1.0
+    }
+
+    /// Sources of evidence
+    enum evidence-source {
+        ast-analysis,
+        static-analysis,
+        pattern-matching,
+        call-graph,
+        data-flow,
+        control-flow,
+        documentation,
+        tests,
+    }
+
+    /// Hallucination detection result
+    record hallucination-check {
+        claim-id: string,
+        is-hallucination: bool,
+        confidence: float32,
+        contradictory-evidence: list<evidence>,
+        verification-method: verification-method,
+        details: string,
+    }
+
+    /// Verification methods
+    enum verification-method {
+        ast-query,
+        symbol-lookup,
+        call-graph-analysis,
+        data-flow-analysis,
+        static-analysis,
+        pattern-verification,
+        cross-reference,
+    }
+
+    /// AI-generated issue with confidence scoring
+    record ai-issue {
+        base-issue: issue,
+        confidence: float32,
+        reasoning: string,
+        claims: list<ai-claim>,
+        alternatives: list<string>,
+        human-review-required: bool,
+        verification-status: verification-status,
+    }
+
+    /// Verification status
+    enum verification-status {
+        unverified,
+        verified,
+        disputed,
+        hallucination,
+        partial,
+    }
+
+    /// AI code review
+    record ai-review {
+        summary: string,
+        overall-quality-score: float32,
+        issues: list<ai-issue>,
+        suggestions: list<improvement-suggestion>,
+        patterns-detected: list<code-pattern>,
+        metrics-analysis: metrics-analysis,
+    }
+
+    /// Improvement suggestion
+    record improvement-suggestion {
+        category: suggestion-category,
+        priority: priority-level,
+        description: string,
+        rationale: string,
+        code-example: option<string>,
+        estimated-effort: effort-estimate,
+    }
+
+    /// Suggestion categories
+    enum suggestion-category {
+        refactoring,
+        performance,
+        security,
+        maintainability,
+        testing,
+        documentation,
+        architecture,
+    }
+
+    /// Priority levels
+    enum priority-level {
+        critical,
+        high,
+        medium,
+        low,
+        nice-to-have,
+    }
+
+    /// Effort estimates
+    enum effort-estimate {
+        trivial,      // < 1 hour
+        minor,        // 1-4 hours
+        moderate,     // 1-2 days
+        major,        // 1 week
+        extensive,    // > 1 week
+    }
+
+    /// Detected code patterns
+    record code-pattern {
+        name: string,
+        description: string,
+        confidence: float32,
+        instances: list<span>,
+        pattern-type: pattern-category,
+        ai-generated-likely: bool,
+    }
+
+    /// Pattern categories
+    enum pattern-category {
+        anti-pattern,
+        design-pattern,
+        idiom,
+        ai-signature,
+        style-violation,
+        best-practice,
+    }
+
+    /// AI metrics analysis
+    record metrics-analysis {
+        complexity-assessment: string,
+        maintainability-insights: list<string>,
+        quality-trends: list<quality-trend>,
+        recommendations: list<metric-recommendation>,
+    }
+
+    /// Quality trend
+    record quality-trend {
+        metric-name: string,
+        current-value: float64,
+        trend-direction: trend-direction,
+        confidence: float32,
+        interpretation: string,
+    }
+
+    /// Trend directions
+    enum trend-direction {
+        improving,
+        stable,
+        degrading,
+        unknown,
+    }
+
+    /// Metric recommendation
+    record metric-recommendation {
+        metric-name: string,
+        current-value: float64,
+        target-value: float64,
+        actions: list<string>,
+        priority: priority-level,
+    }
+
+    /// Grounding context for claim verification
+    record grounding-context {
+        file: source-file,
+        ast: ast-node,
+        symbol-table: list<tuple<string, string>>,
+        call-graph: list<tuple<string, string>>,
+        imports: list<string>,
+        exports: list<string>,
+        dependencies: list<string>,
+    }
+
+    /// Plugin interface functions
+    export analyze-with-ai: func(file: source-file, analysis-type: analysis-type, model: ai-model-config) -> result<ai-review, string>;
+    export extract-claims: func(ai-response: string, context: grounding-context) -> result<list<ai-claim>, string>;
+    export verify-claims: func(claims: list<ai-claim>, context: grounding-context) -> result<list<hallucination-check>, string>;
+    export detect-ai-patterns: func(file: source-file) -> result<list<code-pattern>, string>;
+    export score-confidence: func(issue: issue, evidence: list<evidence>) -> float32;
+
+    /// Host functions for AI integration
+    import call-ai-model: func(model: ai-model-config, prompt: string, context: list<tuple<string, string>>) -> result<string, string>;
+    import stream-ai-response: func(model: ai-model-config, prompt: string) -> result<string, string>;
+    
+    /// Grounding and verification functions
+    import ground-claim: func(claim: ai-claim, context: grounding-context) -> result<hallucination-check, string>;
+    import verify-factual-claim: func(statement: string, ast: ast-node) -> result<bool, string>;
+    import cross-reference: func(claim: ai-claim, external-sources: list<string>) -> result<list<evidence>, string>;
+
+    /// Pattern recognition
+    import detect-ai-signatures: func(code: string, language: string) -> result<list<code-pattern>, string>;
+    import compare-with-known-patterns: func(code: string, pattern-db: string) -> result<list<tuple<string, float32>>, string>;
+
+    /// Quality assessment
+    import assess-code-quality: func(file: source-file, criteria: list<string>) -> result<quality-assessment, string>;
+    
+    /// Quality assessment result
+    record quality-assessment {
+        overall-score: float32,
+        dimension-scores: list<tuple<string, float32>>,
+        strengths: list<string>,
+        weaknesses: list<string>,
+        risk-factors: list<risk-factor>,
+    }
+
+    /// Risk factor
+    record risk-factor {
+        category: string,
+        severity: severity-level,
+        description: string,
+        likelihood: float32,
+        impact: float32,
+    }
+
+    /// Feedback collection for model improvement
+    import record-feedback: func(claim-id: string, is-correct: bool, explanation: option<string>) -> result<_, string>;
+    import get-feedback-summary: func() -> result<feedback-summary, string>;
+
+    /// Feedback summary
+    record feedback-summary {
+        total-claims: u32,
+        verified-claims: u32,
+        false-positives: u32,
+        accuracy-rate: float32,
+        common-errors: list<string>,
+        improvement-areas: list<string>,
+    }
+}

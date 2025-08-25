@@ -4,6 +4,9 @@
 //! database, analysis engine, AI engine, and report generation. It serves as the boundary
 //! between the CLI and infrastructure layers.
 
+pub mod plugin_manager;
+pub mod startup;
+
 use crate::core::logging::{debug, error, info, warn};
 use anyhow::Context;
 use chrono::Utc;
@@ -1208,6 +1211,8 @@ pub async fn run_app() -> Result<(), UveddiError> {
         analyze_command::AnalyzeCommand, ci_command::CiCommand, config_command::ConfigCommand,
         tui_command::TuiCommand,
     };
+    #[cfg(feature = "wasm-plugins")]
+    use crate::cli::plugin_command::PluginCommand;
     use crate::core::logging::{error, info};
     use clap::Parser;
 
@@ -1227,6 +1232,9 @@ pub async fn run_app() -> Result<(), UveddiError> {
         Ci(CiCommand),
         /// Launch the Terminal User Interface for interactive analysis
         Tui(TuiCommand),
+        /// Manage WASM plugins
+        #[cfg(feature = "wasm-plugins")]
+        Plugin(crate::cli::plugin_command::PluginCommand),
         /// Start the web dashboard with all required services
         Serve {
             /// Port for the API server and dashboard
@@ -1287,6 +1295,11 @@ pub async fn run_app() -> Result<(), UveddiError> {
                 .execute()
                 .await
                 .map_err(|e| UveddiError::config_error(&e.to_string(), "tui command"))
+        }
+        #[cfg(feature = "wasm-plugins")]
+        Commands::Plugin(command) => {
+            info!("Executing plugin command...");
+            command.execute().await
         }
         Commands::Serve {
             port,
