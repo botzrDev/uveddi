@@ -18,23 +18,19 @@
 
 use axum::{
     body::Body,
-    http::{Request, StatusCode},
+    http::{HeaderMap, Request, StatusCode},
     response::Response,
     Router,
 };
-use hyper::HeaderMap;
 use serde_json::{json, Value};
-use std::collections::HashMap;
 use std::sync::Arc;
 use tempfile::TempDir;
-use tokio::net::TcpListener;
 use tower::ServiceExt; // for oneshot
-use uuid::Uuid;
 
-use crate::api::rest::{CombinedApiServer, RestApiService};
-use crate::api::types::RestApiConfig;
-use crate::database::Database;
-use crate::test_utils::helpers::TestResult;
+use uveddi::api::rest::{CombinedApiServer, RestApiService};
+use uveddi::api::types::RestApiConfig;
+use uveddi::database::Database;
+use uveddi::test_utils::helpers::TestResult;
 
 /// API integration test utilities
 pub struct ApiTestClient {
