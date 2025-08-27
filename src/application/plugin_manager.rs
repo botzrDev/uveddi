@@ -153,6 +153,10 @@ impl ApplicationPluginManager {
         // Validate plugin constraints
         self.validate_plugin_constraints(&manifest)?;
 
+        // Set plugin status to loading
+        let plugin_id = PluginId::from_name(&manifest.name);
+        self.set_plugin_status(plugin_id.clone(), PluginStatus::Loading).await;
+
         // Get plugin engine
         let engine = self.plugin_engine.as_mut().ok_or_else(|| {
             UveddiError::PluginError {
@@ -163,10 +167,6 @@ impl ApplicationPluginManager {
                 source: None,
             }
         })?;
-
-        // Set plugin status to loading
-        let plugin_id = PluginId::from_name(&manifest.name);
-        self.set_plugin_status(plugin_id.clone(), PluginStatus::Loading).await;
 
         // Install plugin in engine
         match engine.install_plugin(manifest.clone(), binary).await {
@@ -320,10 +320,10 @@ impl ApplicationPluginManager {
         }
 
         // Validate plugin requirements
-        if manifest.min_uveddi_version.is_some() {
-            // TODO: Version checking would go here
-            debug!("Plugin requires Uveddi version: {:?}", manifest.min_uveddi_version);
-        }
+        // TODO: Add min_uveddi_version field to PluginManifest
+        // if manifest.min_uveddi_version.is_some() {
+        //     debug!("Plugin requires Uveddi version: {:?}", manifest.min_uveddi_version);
+        // }
 
         Ok(())
     }

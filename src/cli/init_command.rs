@@ -4,7 +4,7 @@
 //! generation to reduce "time to first success" from minutes to seconds.
 
 use crate::config::{Config, DeadCodeConfig, LargeClassConfig, LanguageThresholds};
-use crate::core::UveddiError;
+use crate::error::UveddiError;
 use clap::Args;
 use std::collections::HashMap;
 use std::fs;
@@ -86,10 +86,10 @@ impl InitCommand {
         // Check if configuration already exists
         let config_path = self.path.join("uveddi.toml");
         if config_path.exists() && !self.force {
-            return Err(UveddiError::Config(format!(
+            return Err(UveddiError::config_error(&format!(
                 "Configuration already exists at {}. Use --force to overwrite.",
                 config_path.display()
-            )));
+            ), "cli"));
         }
         
         // Analyze the project
@@ -109,7 +109,7 @@ impl InitCommand {
         let template = if let Some(template) = &self.template {
             template.clone()
         } else if self.non_interactive {
-            project_info.project_type
+            project_info.project_type.clone()
         } else {
             self.prompt_for_template(&project_info)?
         };
@@ -160,7 +160,7 @@ impl InitCommand {
         
         let mut input = String::new();
         io::stdin().read_line(&mut input).map_err(|e| {
-            UveddiError::Config(format!("Failed to read input: {}", e))
+            UveddiError::config_error(&format!("Failed to read input: {}", e), "cli")
         })?;
         
         let choice = input.trim();
@@ -213,7 +213,7 @@ impl InitCommand {
         
         let mut input = String::new();
         io::stdin().read_line(&mut input).map_err(|e| {
-            UveddiError::Config(format!("Failed to read input: {}", e))
+            UveddiError::config_error(&format!("Failed to read input: {}", e), "cli")
         })?;
         
         match input.trim().to_lowercase().as_str() {
@@ -236,7 +236,7 @@ impl InitCommand {
         
         let mut input = String::new();
         io::stdin().read_line(&mut input).map_err(|e| {
-            UveddiError::Config(format!("Failed to read input: {}", e))
+            UveddiError::config_error(&format!("Failed to read input: {}", e), "cli")
         })?;
         
         match input.trim() {
@@ -248,7 +248,7 @@ impl InitCommand {
                 io::stdout().flush().unwrap();
                 let mut custom_input = String::new();
                 io::stdin().read_line(&mut custom_input).map_err(|e| {
-                    UveddiError::Config(format!("Failed to read input: {}", e))
+                    UveddiError::config_error(&format!("Failed to read input: {}", e), "cli")
                 })?;
                 Ok(custom_input.trim().to_string())
             },
@@ -266,7 +266,7 @@ impl InitCommand {
             io::stdout().flush().unwrap();
             let mut input = String::new();
             io::stdin().read_line(&mut input).map_err(|e| {
-                UveddiError::Config(format!("Failed to read input: {}", e))
+                UveddiError::config_error(&format!("Failed to read input: {}", e), "cli")
             })?;
             input.trim().parse().ok()
         };
@@ -310,7 +310,7 @@ impl InitCommand {
             io::stdout().flush().unwrap();
             let mut input = String::new();
             io::stdin().read_line(&mut input).map_err(|e| {
-                UveddiError::Config(format!("Failed to read input: {}", e))
+                UveddiError::config_error(&format!("Failed to read input: {}", e), "cli")
             })?;
             input.trim().parse().ok()
         };
@@ -322,7 +322,7 @@ impl InitCommand {
             io::stdout().flush().unwrap();
             let mut input = String::new();
             io::stdin().read_line(&mut input).map_err(|e| {
-                UveddiError::Config(format!("Failed to read input: {}", e))
+                UveddiError::config_error(&format!("Failed to read input: {}", e), "cli")
             })?;
             input.trim().parse().ok()
         };
@@ -492,7 +492,7 @@ impl InitCommand {
     
     fn write_config(&self, config: &Config, path: &Path) -> Result<(), UveddiError> {
         let toml_content = toml::to_string_pretty(config)
-            .map_err(|e| UveddiError::Config(format!("Failed to serialize config: {}", e)))?;
+            .map_err(|e| UveddiError::config_error(&format!("Failed to serialize config: {}", e), "cli"))?;
         
         // Add header comment
         let header = format!(
@@ -512,7 +512,7 @@ impl InitCommand {
         let full_content = format!("{}{}", header, toml_content);
         
         fs::write(path, full_content)
-            .map_err(|e| UveddiError::Config(format!("Failed to write config file: {}", e)))?;
+            .map_err(|e| UveddiError::config_error(&format!("Failed to write config file: {}", e), "cli"))?;
         
         Ok(())
     }
@@ -526,7 +526,7 @@ impl InitCommand {
         
         let hooks_dir = git_dir.join("hooks");
         fs::create_dir_all(&hooks_dir)
-            .map_err(|e| UveddiError::Config(format!("Failed to create hooks directory: {}", e)))?;
+            .map_err(|e| UveddiError::config_error(&format!("Failed to create hooks directory: {}", e), "cli"))?;
         
         // Pre-commit hook
         let pre_commit_content = r#"#!/bin/sh
@@ -549,18 +549,18 @@ exit 0
         
         let pre_commit_path = hooks_dir.join("pre-commit");
         fs::write(&pre_commit_path, pre_commit_content)
-            .map_err(|e| UveddiError::Config(format!("Failed to write pre-commit hook: {}", e)))?;
+            .map_err(|e| UveddiError::config_error(&format!("Failed to write pre-commit hook: {}", e), "cli"))?;
         
         // Make executable (Unix systems)
         #[cfg(unix)]
         {
             use std::os::unix::fs::PermissionsExt;
             let mut perms = fs::metadata(&pre_commit_path)
-                .map_err(|e| UveddiError::Config(format!("Failed to read hook permissions: {}", e)))?
+                .map_err(|e| UveddiError::config_error(&format!("Failed to read hook permissions: {}", e), "cli"))?
                 .permissions();
             perms.set_mode(0o755);
             fs::set_permissions(&pre_commit_path, perms)
-                .map_err(|e| UveddiError::Config(format!("Failed to set hook permissions: {}", e)))?;
+                .map_err(|e| UveddiError::config_error(&format!("Failed to set hook permissions: {}", e), "cli"))?;
         }
         
         println!("🔧 Git pre-commit hook installed successfully!");
@@ -571,17 +571,17 @@ exit 0
     fn generate_project_docs(&self, template: &ProjectTemplate, project_info: &ProjectInfo) -> Result<(), UveddiError> {
         let docs_dir = self.path.join("docs").join("uveddi");
         fs::create_dir_all(&docs_dir)
-            .map_err(|e| UveddiError::Config(format!("Failed to create docs directory: {}", e)))?;
+            .map_err(|e| UveddiError::config_error(&format!("Failed to create docs directory: {}", e), "cli"))?;
         
         // Generate README
         let readme_content = self.generate_readme_content(template, project_info);
         fs::write(docs_dir.join("README.md"), readme_content)
-            .map_err(|e| UveddiError::Config(format!("Failed to write README: {}", e)))?;
+            .map_err(|e| UveddiError::config_error(&format!("Failed to write README: {}", e), "cli"))?;
         
         // Generate analysis guide
         let guide_content = self.generate_analysis_guide(template);
         fs::write(docs_dir.join("ANALYSIS_GUIDE.md"), guide_content)
-            .map_err(|e| UveddiError::Config(format!("Failed to write analysis guide: {}", e)))?;
+            .map_err(|e| UveddiError::config_error(&format!("Failed to write analysis guide: {}", e), "cli"))?;
         
         println!("📚 Project documentation generated in docs/uveddi/");
         
@@ -696,7 +696,7 @@ impl ProjectAnalyzer {
         let mut languages = Vec::new();
         
         // Check for common language files
-        let language_patterns = [
+        let language_patterns: Vec<(&str, &[&str])> = vec![
             ("rust", &["*.rs", "Cargo.toml"]),
             ("python", &["*.py", "requirements.txt", "pyproject.toml", "setup.py"]),
             ("javascript", &["*.js", "package.json"]),

@@ -198,7 +198,7 @@ impl PluginDetectorAdapter {
             "language": format!("{:?}", file.language),
             "source": file.source.as_str(),
             "has_tree": file.tree.is_some(),
-            "syntax_errors": file.syntax_errors.len(),
+            "syntax_errors": 0, // TODO: Add syntax error tracking to ParsedFile
         });
 
         serde_json::to_vec(&plugin_file_data).map_err(|e| UveddiError::PluginError {
@@ -238,13 +238,20 @@ impl PluginDetectorAdapter {
             .map(|issue| ArchitecturalIssue {
                 issue_id: None, // Will be assigned by database
                 analysis_run_id: 0, // Will be set by caller
-                anti_pattern_type_id: issue.anti_pattern_type_id,
+                anti_pattern_type_id: issue.anti_pattern_type_id.unwrap_or(0),
                 file_path: issue.file_path,
+                start_line: issue.line_number,
+                end_line: issue.line_number,
                 line_number: issue.line_number,
+                column_number: None, // TODO: Add column_number to PluginIssue
                 message: format!("[{}] {}", self.plugin_name, issue.message),
-                severity: issue.severity,
-                suggestion: issue.suggestion,
                 metadata: serde_json::to_string(&issue.metadata).unwrap_or_default(),
+                detector_name: self.plugin_name.clone(),
+                created_at: chrono::Utc::now(),
+                severity: issue.severity,
+                description: issue.message.clone(),
+                code_snippet: None,
+                ai_explanation: Some(issue.suggestion),
             })
             .collect()
     }
@@ -252,23 +259,17 @@ impl PluginDetectorAdapter {
 
 #[async_trait]
 impl AnalysisDetector for PluginDetectorAdapter {
-    fn name(&self) -> &str {
-        &self.plugin_name
-    }
-
-    fn anti_pattern_types(&self) -> Vec<AntiPatternType> {
-        self.supported_anti_patterns.clone()
-    }
-
-    async fn analyze_file(&self, file: &ParsedFile) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
+    async fn detect_issues(
+        &self,
+        file: &ParsedFile,
+    ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         // Execute plugin analysis
         let plugin_issues = self
             .execute_plugin_analysis(file)
             .await
-            .map_err(|e| AnalysisError::PluginError {
-                plugin: self.plugin_name.clone(),
-                message: e.to_string(),
-            })?;
+            .map_err(|e| AnalysisError::PluginError(
+                crate::plugins::errors::PluginError::Execution(format!("Plugin '{}': {}", self.plugin_name, e))
+            ))?;
 
         // Convert to architectural issues
         let architectural_issues = self.convert_to_architectural_issues(
@@ -277,6 +278,16 @@ impl AnalysisDetector for PluginDetectorAdapter {
         );
 
         Ok(architectural_issues)
+    }
+
+    fn get_anti_pattern_types(&self) -> Vec<AntiPatternType> {
+        self.supported_anti_patterns.clone()
+    }
+
+    fn get_detector_name(&self) -> &'static str {
+        // Since we can't return a reference to self.plugin_name, we return a generic name
+        // This could be improved by using a static string pool or Box::leak
+        "PluginDetector"
     }
 }
 
@@ -321,7 +332,7 @@ impl PluginDetectorManager {
             runtime
                 .register_plugin(
                     plugin_id.clone(),
-                    host_context.security_policy.clone(),
+                    host_context.security_policy().clone(),
                     host_context.clone(),
                 )
                 .await?;

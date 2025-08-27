@@ -918,9 +918,9 @@ impl Database {
         params.push(offset.to_string());
 
         let mut stmt = conn.prepare(&query)?;
-        let param_refs: Vec<&str> = params.iter().map(|s| s.as_str()).collect();
+        let param_refs: Vec<&dyn rusqlite::ToSql> = params.iter().map(|s| s as &dyn rusqlite::ToSql).collect();
 
-        let issue_iter = stmt.query_map(&param_refs[..], |row| {
+        let issue_iter = stmt.query_map(param_refs.as_slice(), |row| {
             let created_at_str: String = row.get(11)?;
 
             Ok(ArchitecturalIssue {

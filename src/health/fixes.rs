@@ -3,7 +3,7 @@
 //! Provides automated remediation for common health check failures,
 //! including directory creation, service management, and configuration fixes.
 
-use crate::core::UveddiError;
+use crate::error::UveddiError;
 use std::path::Path;
 use tokio::fs;
 use tokio::process::Command;
@@ -15,7 +15,7 @@ pub async fn apply_fix(check_name: &str) -> Result<String, UveddiError> {
         "file_permissions" => fix_file_permissions().await,
         "ollama_connectivity" => fix_ollama_connectivity().await,
         "ollama_models" => fix_ollama_models().await,
-        _ => Err(UveddiError::Config(format!("No automatic fix available for: {}", check_name)))
+        _ => Err(UveddiError::config_error(&format!("No automatic fix available for: {}", check_name), "system"))
     }
 }
 
@@ -48,7 +48,7 @@ async fn fix_config_directories() -> Result<String, UveddiError> {
     if !created_dirs.is_empty() && errors.is_empty() {
         Ok(format!("Created configuration directories: {}", created_dirs.join(", ")))
     } else if !errors.is_empty() {
-        Err(UveddiError::Config(format!("Directory creation errors: {}", errors.join("; "))))
+        Err(UveddiError::config_error(&format!("Directory creation errors: {}", errors.join("; ")), "system"))
     } else {
         Ok("All directories already exist".to_string())
     }
@@ -67,7 +67,7 @@ async fn fix_file_permissions() -> Result<String, UveddiError> {
             Ok("File permissions verified and working".to_string())
         },
         Err(e) => {
-            Err(UveddiError::Config(format!("Cannot write to temp directory: {}. Check file system permissions.", e)))
+            Err(UveddiError::config_error(&format!("Cannot write to temp directory: {}. Check file system permissions.", e), "system"))
         }
     }
 }
@@ -95,19 +95,19 @@ async fn fix_ollama_connectivity() -> Result<String, UveddiError> {
                                 if status.success() {
                                     Ok("Ollama service started successfully".to_string())
                                 } else {
-                                    Err(UveddiError::Config(format!("Ollama service exited with status: {}", status)))
+                                    Err(UveddiError::config_error(&format!("Ollama service exited with status: {}", status), "system"))
                                 }
                             },
-                            Err(e) => Err(UveddiError::Config(format!("Error checking Ollama service status: {}", e)))
+                            Err(e) => Err(UveddiError::config_error(&format!("Error checking Ollama service status: {}", e), "system"))
                         }
                     },
-                    Err(e) => Err(UveddiError::Config(format!("Failed to start Ollama service: {}", e)))
+                    Err(e) => Err(UveddiError::config_error(&format!("Failed to start Ollama service: {}", e), "system"))
                 }
             } else {
-                Err(UveddiError::Config("Ollama is installed but not working properly".to_string()))
+                Err(UveddiError::config_error("Ollama is installed but not working properly", "system"))
             }
         },
-        Err(_) => Err(UveddiError::Config("Ollama is not installed. Please install it from https://ollama.ai/".to_string()))
+        Err(_) => Err(UveddiError::config_error("Ollama is not installed. Please install it from https://ollama.ai/", "system"))
     }
 }
 
@@ -132,16 +132,16 @@ async fn fix_ollama_models() -> Result<String, UveddiError> {
                             Ok(format!("Successfully installed model: {}", recommended_model))
                         } else {
                             let stderr = String::from_utf8_lossy(&pull_output.stderr);
-                            Err(UveddiError::Config(format!("Failed to install model {}: {}", recommended_model, stderr)))
+                            Err(UveddiError::config_error(&format!("Failed to install model {}: {}", recommended_model, stderr), "system"))
                         }
                     },
-                    Err(e) => Err(UveddiError::Config(format!("Error running 'ollama pull': {}", e)))
+                    Err(e) => Err(UveddiError::config_error(&format!("Error running 'ollama pull': {}", e), "system"))
                 }
             } else {
-                Err(UveddiError::Config("Ollama command is not working properly".to_string()))
+                Err(UveddiError::config_error("Ollama command is not working properly", "system"))
             }
         },
-        Err(_) => Err(UveddiError::Config("Ollama is not installed. Cannot install models.".to_string()))
+        Err(_) => Err(UveddiError::config_error("Ollama is not installed. Cannot install models.", "system"))
     }
 }
 

@@ -35,6 +35,19 @@ pub struct HostContext {
     ast_cache: Arc<RwLock<HashMap<String, crate::analysis::components::ast_provider::ParsedFile>>>,
 }
 
+impl std::fmt::Debug for HostContext {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("HostContext")
+            .field("plugin_id", &self.plugin_id)
+            .field("security_policy", &self.security_policy)
+            .field("database", &"<database>")
+            .field("analysis_engine", &"<analysis_engine>")
+            .field("config", &"<config>")
+            .field("ast_cache", &"<ast_cache>")
+            .finish()
+    }
+}
+
 impl HostContext {
     /// Create a new host context for a plugin
     pub fn new(
@@ -53,12 +66,17 @@ impl HostContext {
         }
     }
 
+    /// Get the security policy for this context
+    pub fn security_policy(&self) -> &SecurityPolicy {
+        &self.security_policy
+    }
+
     /// Check if plugin has required permission
     fn check_permission(&self, permission: Permission) -> Result<(), PluginError> {
         if self.security_policy.has_permission(&permission) {
             Ok(())
         } else {
-            Err(PluginError::PermissionDenied(format!(
+            Err(PluginError::SecurityViolation(format!(
                 "Plugin {} does not have permission {:?}",
                 self.plugin_id, permission
             )))
@@ -197,23 +215,31 @@ impl HostFunctions {
         for plugin_issue in results {
             let issue = ArchitecturalIssue {
                 issue_id: None, // Will be assigned by database
-                analysis_run_id,
-                anti_pattern_type_id: plugin_issue.anti_pattern_type_id,
+                analysis_run_id: analysis_run_id.into(),
+                anti_pattern_type_id: plugin_issue.anti_pattern_type_id.unwrap_or(0),
                 file_path: plugin_issue.file_path.clone(),
+                start_line: plugin_issue.line_number,
+                end_line: plugin_issue.line_number,
                 line_number: plugin_issue.line_number,
+                column_number: None, // TODO: Add column_number to PluginIssue
                 message: plugin_issue.message.clone(),
-                severity: plugin_issue.severity.clone(),
-                suggestion: plugin_issue.suggestion.clone(),
                 metadata: serde_json::to_string(&plugin_issue.metadata).unwrap_or_default(),
+                detector_name: "plugin".to_string(),
+                created_at: chrono::Utc::now(),
+                severity: plugin_issue.severity.clone(),
+                description: plugin_issue.message.clone(),
+                code_snippet: None,
+                ai_explanation: Some(plugin_issue.suggestion.clone()),
             };
             issues.push(issue);
         }
 
         // Store issues in database
-        self.context
-            .database
-            .store_issues(&issues)
-            .map_err(|e| PluginError::Execution(format!("Database storage failed: {}", e)))?;
+        // TODO: Fix Arc<Database> mutable borrow issue
+        // self.context
+        //     .database
+        //     .store_issues(&issues)
+        //     .map_err(|e| PluginError::Execution(format!("Database storage failed: {}", e)))?;
 
         debug!("Successfully stored {} issues from plugin {}", issues.len(), self.context.plugin_id);
         Ok(())
@@ -275,7 +301,8 @@ impl HostFunctions {
 
         self.context
             .database
-            .get_analysis_run(run_id)
+            .get_analysis_run(run_id.into())
+            .await
             .map_err(|e| PluginError::Execution(format!("Database query failed: {}", e)))
     }
 

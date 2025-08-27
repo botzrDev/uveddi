@@ -47,7 +47,7 @@ pub mod validation;
 use crate::error::{Result, UveddiError};
 use crate::security::{self, SecurityError};
 use serde::{Deserialize, Serialize};
-use std::{env, fs};
+use std::{env, fs, path::Path};
 
 /// Placeholder documentation for public items
 ///
@@ -228,16 +228,18 @@ impl Config {
     /// and ensures the file meets security requirements (size limits, allowed extensions, etc.).
     pub fn from_file(path: &str) -> crate::error::Result<Self> {
         // Enhanced path validation to prevent directory traversal attacks
-        let allowed_config_dirs = [
+        let config_dir = std::env::var("UVEDDI_CONFIG_DIR").unwrap_or_else(|_| ".".to_string());
+        let allowed_config_dirs_str = [
             ".", "./config", "/etc/uveddi", "~/.config/uveddi",
-            std::env::var("UVEDDI_CONFIG_DIR").as_deref().unwrap_or(".")
+            &config_dir
         ];
+        let allowed_config_paths: Vec<&Path> = allowed_config_dirs_str.iter().map(|s| Path::new(s)).collect();
         
-        let validated_path = security::validate_config_file_path(path, Some(&allowed_config_dirs))
+        let _validation = security::validate_config_file_path(Path::new(path), Some(&allowed_config_paths))
             .map_err(|e| UveddiError::config_error(&format!("Configuration file path validation failed: {}", e), path))?;
 
         // Read and validate file content
-        let content = fs::read_to_string(&validated_path)
+        let content = fs::read_to_string(path)
             .map_err(|e| UveddiError::config_error(&format!("Failed to read configuration file: {}", e), path))?;
         
         // Validate content for security (basic input validation)
@@ -259,7 +261,7 @@ impl Config {
     /// # Returns
     /// * `Ok(())` - Configuration is valid
     /// * `Err(SecurityError)` - Configuration contains invalid values
-    fn validate(&self) -> Result<(), SecurityError> {
+    fn validate(&self) -> std::result::Result<(), SecurityError> {
         // Validate Ollama model name if provided
         if let Some(ref model) = self.ollama_model {
             security::validate_model_name(model)?;

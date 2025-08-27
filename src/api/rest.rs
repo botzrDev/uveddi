@@ -218,9 +218,9 @@ struct AppState {
 }
 
 /// Request validation middleware that validates HTTP headers and parameters
-async fn validate_request_middleware<B>(
-    request: Request<B>,
-    next: Next<B>,
+async fn validate_request_middleware(
+    request: Request<axum::body::Body>,
+    next: Next,
 ) -> Result<impl IntoResponse, StatusCode> {
     // Extract headers for validation
     let headers = request.headers();

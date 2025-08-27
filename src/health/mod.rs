@@ -10,7 +10,7 @@ pub mod ai;
 pub mod system;
 pub mod fixes;
 
-use crate::core::UveddiError;
+use crate::error::UveddiError;
 use std::fmt;
 use serde::{Deserialize, Serialize};
 

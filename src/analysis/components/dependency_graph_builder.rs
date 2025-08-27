@@ -54,13 +54,7 @@ impl DependencyGraphBuilderImpl {
 
         // Create a minimal ParsedFile structure for dependency extraction
         let file_content =
-            std::fs::read_to_string(file_path).map_err(|e| UveddiError::IoError {
-                operation: "reading file for dependency extraction".to_string(),
-                path: file_path.to_string_lossy().to_string(),
-                message: e.to_string(),
-                suggestion: "Ensure the file exists and is readable".to_string(),
-                source: Some(e),
-            })?;
+            std::fs::read_to_string(file_path).map_err(|e| UveddiError::io_error("reading file for dependency extraction", &file_path.to_string_lossy(), e))?;
 
         let parsed_file = crate::ast::ParsedFile {
             file_path: Arc::new(file_path.to_path_buf()),

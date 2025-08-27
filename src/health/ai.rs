@@ -4,7 +4,7 @@
 //! configuration for intelligent code analysis features.
 
 use super::{HealthCheck, HealthStatus};
-use crate::core::UveddiError;
+use crate::error::UveddiError;
 use std::time::Duration;
 
 /// Check AI integration health

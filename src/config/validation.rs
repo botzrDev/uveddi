@@ -4,7 +4,7 @@
 //! suggestions for optimal settings based on project characteristics.
 
 use crate::config::{Config, DeadCodeConfig, LargeClassConfig, LanguageThresholds};
-use crate::core::UveddiError;
+use crate::error::UveddiError;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::Path;
@@ -603,7 +603,7 @@ impl SmartConfigValidator {
             if lc_config.language_overrides.as_ref().map_or(false, |o| !o.is_empty()) { score += 2.5; }
         }
 
-        (score / total_possible * 100.0).min(100.0)
+        (score / total_possible * 100.0_f64).min(100.0_f64)
     }
 }
 

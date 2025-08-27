@@ -6,7 +6,7 @@
 pub mod manager;
 // pub mod templates;  // TODO: Create templates module
 
-use crate::core::UveddiError;
+use crate::error::UveddiError;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
@@ -107,11 +107,7 @@ pub fn get_git_hooks_dir(repo_path: &Path) -> Result<PathBuf, UveddiError> {
     if git_dir.is_file() {
         // Handle git worktrees and submodules
         let content = std::fs::read_to_string(&git_dir)
-            .map_err(|e| UveddiError::Io {
-                operation: "reading .git file".to_string(),
-                path: git_dir.to_string_lossy().to_string(),
-                source: e,
-            })?;
+            .map_err(|e| UveddiError::io_error("reading .git file", &git_dir.to_string_lossy(), e))?;
         
         if let Some(gitdir_line) = content.lines().find(|line| line.starts_with("gitdir:")) {
             let gitdir = gitdir_line[8..].trim(); // Remove "gitdir: " prefix
@@ -128,10 +124,10 @@ pub fn get_git_hooks_dir(repo_path: &Path) -> Result<PathBuf, UveddiError> {
         return Ok(git_dir.join("hooks"));
     }
     
-    Err(UveddiError::Config(format!(
+    Err(UveddiError::config_error(&format!(
         "Not a git repository: {}", 
         repo_path.display()
-    )))
+    ), "system"))
 }
 
 /// Check if a git repository exists at the given path
@@ -147,15 +143,19 @@ pub fn get_staged_files(repo_path: &Path) -> Result<Vec<PathBuf>, UveddiError> {
         .args(&["diff", "--cached", "--name-only", "--diff-filter=ACMR"])
         .current_dir(repo_path)
         .output()
-        .map_err(|e| UveddiError::Command {
+        .map_err(|e| UveddiError::CliError {
             command: "git diff --cached --name-only".to_string(),
-            source: e.into(),
+            message: e.to_string(),
+            suggestion: "Ensure git is installed and the directory is a git repository".to_string(),
+            source: None,
         })?;
     
     if !output.status.success() {
-        return Err(UveddiError::Command {
+        return Err(UveddiError::CliError {
             command: "git diff --cached --name-only".to_string(),
-            source: anyhow::anyhow!("Git command failed: {}", String::from_utf8_lossy(&output.stderr)),
+            message: format!("Git command failed: {}", String::from_utf8_lossy(&output.stderr)),
+            suggestion: "Check git repository status and permissions".to_string(),
+            source: None,
         });
     }
     
@@ -228,9 +228,11 @@ pub async fn execute_analysis_for_hook(
     
     // Execute analysis
     cmd.current_dir(repo_path);
-    let output = cmd.output().map_err(|e| UveddiError::Command {
+    let output = cmd.output().map_err(|e| UveddiError::CliError {
         command: format!("{:?}", cmd),
-        source: e.into(),
+        message: e.to_string(),
+        suggestion: "Ensure Uveddi is properly installed and accessible".to_string(),
+        source: None,
     })?;
     
     let execution_time = start_time.elapsed().as_secs_f64();
@@ -281,18 +283,10 @@ fn count_analyzable_files(path: &Path) -> Result<u32, UveddiError> {
     let mut count = 0;
     
     fn visit_dir(dir: &Path, count: &mut u32) -> Result<(), UveddiError> {
-        let entries = fs::read_dir(dir).map_err(|e| UveddiError::Io {
-            operation: "reading directory".to_string(),
-            path: dir.to_string_lossy().to_string(),
-            source: e,
-        })?;
+        let entries = fs::read_dir(dir).map_err(|e| UveddiError::io_error("reading directory", &dir.to_string_lossy(), e))?;
         
         for entry in entries {
-            let entry = entry.map_err(|e| UveddiError::Io {
-                operation: "reading directory entry".to_string(),
-                path: dir.to_string_lossy().to_string(),
-                source: e,
-            })?;
+            let entry = entry.map_err(|e| UveddiError::io_error("reading directory entry", &dir.to_string_lossy(), e))?;
             
             let path = entry.path();
             

@@ -4,7 +4,7 @@
 //! for the Uveddi installation and environment.
 
 use crate::health::{HealthChecker, HealthReport, HealthStatus};
-use crate::core::UveddiError;
+use crate::error::UveddiError;
 use clap::Args;
 use std::io::{self, Write};
 
@@ -165,7 +165,7 @@ impl DoctorCommand {
 
     async fn display_json_report(&self, report: &HealthReport) -> Result<(), UveddiError> {
         let json = serde_json::to_string_pretty(report)
-            .map_err(|e| UveddiError::Config(format!("Failed to serialize report to JSON: {}", e)))?;
+            .map_err(|e| UveddiError::config_error(&format!("Failed to serialize report to JSON: {}", e), "cli"))?;
         
         println!("{}", json);
         Ok(())

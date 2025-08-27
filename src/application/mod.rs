@@ -1286,6 +1286,7 @@ pub async fn run_app() -> Result<(), UveddiError> {
             info!("Executing config command...");
             command
                 .execute()
+                .await
                 .map_err(|e| UveddiError::config_error(&e.to_string(), "config validation"))
         }
         Commands::Doctor(command) => {

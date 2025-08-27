@@ -3,7 +3,7 @@
 //! Provides CLI interface for installing, managing, and configuring
 //! Git hooks for automated Uveddi analysis.
 
-use crate::core::UveddiError;
+use crate::error::UveddiError;
 use crate::hooks::{HookConfig, HookType};
 use crate::hooks::manager::HookManager;
 use clap::{Args, Subcommand};
@@ -158,10 +158,10 @@ impl HooksCommand {
     ) -> Result<(), UveddiError> {
         // Check if it's a Git repository
         if !crate::hooks::is_git_repository(&repo_path) {
-            return Err(UveddiError::Config(format!(
+            return Err(UveddiError::config_error(&format!(
                 "Not a Git repository: {}",
                 repo_path.display()
-            )));
+            ), "cli"));
         }
 
         println!("🔧 Installing Uveddi Git hooks...");
@@ -237,10 +237,10 @@ impl HooksCommand {
 
     async fn uninstall_hooks(&self, repo_path: PathBuf) -> Result<(), UveddiError> {
         if !crate::hooks::is_git_repository(&repo_path) {
-            return Err(UveddiError::Config(format!(
+            return Err(UveddiError::config_error(&format!(
                 "Not a Git repository: {}",
                 repo_path.display()
-            )));
+            ), "cli"));
         }
 
         println!("🗑️  Uninstalling Uveddi Git hooks...");
@@ -265,10 +265,10 @@ impl HooksCommand {
 
     async fn list_hooks(&self, repo_path: PathBuf, detailed: bool) -> Result<(), UveddiError> {
         if !crate::hooks::is_git_repository(&repo_path) {
-            return Err(UveddiError::Config(format!(
+            return Err(UveddiError::config_error(&format!(
                 "Not a Git repository: {}",
                 repo_path.display()
-            )));
+            ), "cli"));
         }
 
         println!("📋 Git hooks status");
@@ -276,7 +276,7 @@ impl HooksCommand {
         println!();
 
         let config = HookManager::load_config(&repo_path).unwrap_or_default();
-        let manager = HookManager::new(repo_path, config)?;
+        let manager = HookManager::new(repo_path, config.clone())?;
         let hooks = manager.list_hooks().await?;
 
         for (hook_type, is_uveddi, hook_path) in hooks {
@@ -341,10 +341,10 @@ impl HooksCommand {
         files: Option<Vec<PathBuf>>,
     ) -> Result<(), UveddiError> {
         if !crate::hooks::is_git_repository(&repo_path) {
-            return Err(UveddiError::Config(format!(
+            return Err(UveddiError::config_error(&format!(
                 "Not a Git repository: {}",
                 repo_path.display()
-            )));
+            ), "cli"));
         }
 
         println!("🧪 Testing {:?} hook...", hook_type);
@@ -413,10 +413,10 @@ impl HooksCommand {
 
     async fn show_config(&self, repo_path: PathBuf) -> Result<(), UveddiError> {
         if !crate::hooks::is_git_repository(&repo_path) {
-            return Err(UveddiError::Config(format!(
+            return Err(UveddiError::config_error(&format!(
                 "Not a Git repository: {}",
                 repo_path.display()
-            )));
+            ), "cli"));
         }
 
         println!("⚙️  Uveddi Hooks Configuration");
@@ -428,13 +428,13 @@ impl HooksCommand {
             println!("📝 Configuration file: {}", config_path.display());
             let config = HookManager::load_config(&repo_path)?;
             let toml_content = toml::to_string_pretty(&config)
-                .map_err(|e| UveddiError::Config(format!("Failed to serialize config: {}", e)))?;
+                .map_err(|e| UveddiError::config_error(&format!("Failed to serialize config: {}", e), "cli"))?;
             println!("\n{}", toml_content);
         } else {
             println!("📝 Configuration file: Not found (using defaults)");
             let config = HookConfig::default();
             let toml_content = toml::to_string_pretty(&config)
-                .map_err(|e| UveddiError::Config(format!("Failed to serialize config: {}", e)))?;
+                .map_err(|e| UveddiError::config_error(&format!("Failed to serialize config: {}", e), "cli"))?;
             println!("\n{}", toml_content);
             println!("\n💡 Run 'uveddi hooks install' to create configuration file");
         }

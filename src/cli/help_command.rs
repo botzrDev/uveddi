@@ -4,7 +4,7 @@
 //! and topic-based assistance for better user experience.
 
 use crate::cli::enhanced_help::{generate_quick_help, generate_topic_help};
-use crate::core::UveddiError;
+use crate::error::UveddiError;
 use clap::Args;
 
 #[derive(Args, Debug)]
@@ -55,7 +55,7 @@ impl HelpCommand {
             println!("   • examples       - Usage examples and tutorials");
             println!("\n📚 Use 'uveddi help <topic>' for specific help");
             
-            return Err(UveddiError::Config(format!("Unknown help topic: {}", topic)));
+            return Err(UveddiError::config_error(&format!("Unknown help topic: {}", topic), "cli"));
         }
         
         Ok(())

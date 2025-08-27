@@ -77,6 +77,7 @@ pub struct HostState {
 
 /// Wrapper type for WASI context to avoid orphan rule issues
 #[cfg(feature = "wasm-plugins")]
+#[derive(Debug)]
 pub struct HostContext {
     pub host_state: HostState,
     pub wasi_ctx: WasiP1Ctx,

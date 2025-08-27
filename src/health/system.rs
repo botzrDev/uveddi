@@ -4,7 +4,7 @@
 //! needed for Uveddi to operate correctly.
 
 use super::{HealthCheck, HealthStatus};
-use crate::core::UveddiError;
+use crate::error::UveddiError;
 use std::path::Path;
 use tokio::fs;
 

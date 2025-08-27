@@ -47,7 +47,7 @@ pub struct ConfigCommand {
 }
 
 impl ConfigCommand {
-    pub fn execute(&self) -> crate::error::Result<()> {
+    pub async fn execute(&self) -> crate::error::Result<()> {
         match &self.command {
             ConfigSubcommand::Show { file } => {
                 if let Some(path) = file {

@@ -61,7 +61,7 @@ impl MigrationManager {
     }
 
     /// Apply all pending migrations
-    pub fn migrate_up(&self, conn: &Connection) -> Result<Vec<u32>> {
+    pub fn migrate_up(&self, conn: &mut Connection) -> Result<Vec<u32>> {
         let current_version = self.get_current_version(conn)?;
         let mut applied_versions = Vec::new();
 
@@ -102,7 +102,7 @@ impl MigrationManager {
     }
 
     /// Rollback to a specific version
-    pub fn migrate_down(&self, conn: &Connection, target_version: u32) -> Result<Vec<u32>> {
+    pub fn migrate_down(&self, conn: &mut Connection, target_version: u32) -> Result<Vec<u32>> {
         let current_version = self.get_current_version(conn)?;
         let mut rolled_back = Vec::new();
 

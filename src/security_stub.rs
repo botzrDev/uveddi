@@ -98,6 +98,28 @@ impl Default for HttpSecurityConfig {
     }
 }
 
+#[derive(Debug, Clone)]
+pub enum CliArgumentType {
+    String,
+    Path,
+    Number,
+    Boolean,
+    FilePath,
+    Generic,
+}
+
+pub fn validate_api_request(_content_type: Option<&str>, _content_length: Option<u64>, _user_agent: Option<&str>) -> Result<(), SecurityError> {
+    Ok(())
+}
+
+pub fn validate_cli_argument(_value: &str, _field_name: &str, _arg_type: CliArgumentType) -> Result<(), SecurityError> {
+    Ok(())
+}
+
+pub fn validate_config_file_path(_path: &Path, _allowed_dirs: Option<&[&Path]>) -> Result<(), SecurityError> {
+    Ok(())
+}
+
 pub struct SecureHttpClient;
 
 impl SecureHttpClient {

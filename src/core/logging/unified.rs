@@ -7,8 +7,9 @@
 use std::io;
 use std::path::Path;
 use thiserror::Error;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Registry};
-use tracing_subscriber::fmt::time::OffsetTime;
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Registry, Layer};
+// OffsetTime requires the `time` feature, using system time instead
+// use tracing_subscriber::fmt::time::OffsetTime;
 use time::OffsetDateTime;
 use std::sync::atomic::{AtomicU64, Ordering};
 
@@ -257,26 +258,34 @@ pub fn init_with_config(config: LoggingConfig) -> Result<(), LoggingError> {
         .or_else(|_| EnvFilter::try_new(&config.level))
         .map_err(LoggingError::FilterCreation)?;
 
-    let base_layer = match config.format {
+    let layer = match config.format {
         LogFormat::Compact => tracing_subscriber::fmt::layer()
             .compact()
             .with_ansi(true)
+            .with_target(true)
+            .with_thread_ids(config.include_thread_info)
+            .with_thread_names(config.include_thread_info)
+            .with_file(config.include_location)
+            .with_line_number(config.include_location)
             .boxed(),
         LogFormat::Pretty => tracing_subscriber::fmt::layer()
             .pretty()
             .with_ansi(true)
+            .with_target(true)
+            .with_thread_ids(config.include_thread_info)
+            .with_thread_names(config.include_thread_info)
+            .with_file(config.include_location)
+            .with_line_number(config.include_location)
             .boxed(),
         LogFormat::Json => tracing_subscriber::fmt::layer()
             .json()
+            .with_target(true)
+            .with_thread_ids(config.include_thread_info)
+            .with_thread_names(config.include_thread_info)
+            .with_file(config.include_location)
+            .with_line_number(config.include_location)
             .boxed(),
     };
-
-    let layer = base_layer
-        .with_target(true)
-        .with_thread_ids(config.include_thread_info)
-        .with_thread_names(config.include_thread_info)
-        .with_file(config.include_location)
-        .with_line_number(config.include_location);
 
     let registry = Registry::default().with(env_filter).with(layer);
     

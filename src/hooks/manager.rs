@@ -4,7 +4,7 @@
 //! Git hooks for automated Uveddi analysis.
 
 use super::{HookConfig, HookType, InstallationResult};
-use crate::core::UveddiError;
+use crate::error::UveddiError;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::os::unix::fs::PermissionsExt;
@@ -22,11 +22,7 @@ impl HookManager {
         
         // Ensure hooks directory exists
         if !hooks_dir.exists() {
-            fs::create_dir_all(&hooks_dir).map_err(|e| UveddiError::Io {
-                operation: "creating hooks directory".to_string(),
-                path: hooks_dir.to_string_lossy().to_string(),
-                source: e,
-            })?;
+            fs::create_dir_all(&hooks_dir).map_err(|e| UveddiError::io_error("creating hooks directory", &hooks_dir.to_string_lossy(), e))?;
         }
         
         Ok(Self {
@@ -98,11 +94,7 @@ impl HookManager {
             
             // Backup existing non-Uveddi hook
             let backup_path = hook_path.with_extension("backup");
-            fs::rename(&hook_path, &backup_path).map_err(|e| UveddiError::Io {
-                operation: "backing up existing hook".to_string(),
-                path: hook_path.to_string_lossy().to_string(),
-                source: e,
-            })?;
+            fs::rename(&hook_path, &backup_path).map_err(|e| UveddiError::io_error("backing up existing hook", &hook_path.to_string_lossy(), e))?;
         }
         
         self.write_hook_script(&hook_path, hook_type).await?;
@@ -115,11 +107,7 @@ impl HookManager {
     async fn write_hook_script(&self, hook_path: &Path, hook_type: &HookType) -> Result<(), UveddiError> {
         let script_content = self.generate_hook_script(hook_type);
         
-        fs::write(hook_path, script_content).map_err(|e| UveddiError::Io {
-            operation: "writing hook script".to_string(),
-            path: hook_path.to_string_lossy().to_string(),
-            source: e,
-        })?;
+        fs::write(hook_path, script_content).map_err(|e| UveddiError::io_error("writing hook script", &hook_path.to_string_lossy(), e))?;
         
         Ok(())
     }
@@ -358,19 +346,11 @@ echo "✅ Commit message validation passed"
     fn make_executable(&self, path: &Path) -> Result<(), UveddiError> {
         #[cfg(unix)]
         {
-            let mut perms = fs::metadata(path).map_err(|e| UveddiError::Io {
-                operation: "reading file metadata".to_string(),
-                path: path.to_string_lossy().to_string(),
-                source: e,
-            })?.permissions();
+            let mut perms = fs::metadata(path).map_err(|e| UveddiError::io_error("reading file metadata", &path.to_string_lossy(), e))?.permissions();
             
             perms.set_mode(0o755);
             
-            fs::set_permissions(path, perms).map_err(|e| UveddiError::Io {
-                operation: "setting file permissions".to_string(),
-                path: path.to_string_lossy().to_string(),
-                source: e,
-            })?;
+            fs::set_permissions(path, perms).map_err(|e| UveddiError::io_error("setting file permissions", &path.to_string_lossy(), e))?;
         }
         
         Ok(())
@@ -382,15 +362,11 @@ echo "✅ Commit message validation passed"
         
         // Ensure config directory exists
         if let Some(parent) = config_path.parent() {
-            fs::create_dir_all(parent).map_err(|e| UveddiError::Io {
-                operation: "creating config directory".to_string(),
-                path: parent.to_string_lossy().to_string(),
-                source: e,
-            })?;
+            fs::create_dir_all(parent).map_err(|e| UveddiError::io_error("creating config directory", &parent.to_string_lossy(), e))?;
         }
         
         let toml_content = toml::to_string_pretty(&self.config)
-            .map_err(|e| UveddiError::Config(format!("Failed to serialize hook config: {}", e)))?;
+            .map_err(|e| UveddiError::config_error(&format!("Failed to serialize hook config: {}", e), "system"))?;
         
         let header = format!(
             r#"# Uveddi Git Hooks Configuration
@@ -405,11 +381,7 @@ echo "✅ Commit message validation passed"
         
         let full_content = format!("{}{}", header, toml_content);
         
-        fs::write(&config_path, full_content).map_err(|e| UveddiError::Io {
-            operation: "writing hook config".to_string(),
-            path: config_path.to_string_lossy().to_string(),
-            source: e,
-        })?;
+        fs::write(&config_path, full_content).map_err(|e| UveddiError::io_error("writing hook config", &config_path.to_string_lossy(), e))?;
         
         Ok(config_path)
     }
@@ -431,22 +403,14 @@ echo "✅ Commit message validation passed"
                 // Check if it's an Uveddi hook
                 if let Ok(content) = fs::read_to_string(&hook_path) {
                     if content.contains("# Uveddi Hook") {
-                        fs::remove_file(&hook_path).map_err(|e| UveddiError::Io {
-                            operation: "removing hook".to_string(),
-                            path: hook_path.to_string_lossy().to_string(),
-                            source: e,
-                        })?;
+                        fs::remove_file(&hook_path).map_err(|e| UveddiError::io_error("removing hook", &hook_path.to_string_lossy(), e))?;
                         
                         removed_hooks.push(hook_type.clone());
                         
                         // Restore backup if it exists
                         let backup_path = hook_path.with_extension("backup");
                         if backup_path.exists() {
-                            fs::rename(&backup_path, &hook_path).map_err(|e| UveddiError::Io {
-                                operation: "restoring backup hook".to_string(),
-                                path: backup_path.to_string_lossy().to_string(),
-                                source: e,
-                            })?;
+                            fs::rename(&backup_path, &hook_path).map_err(|e| UveddiError::io_error("restoring backup hook", &backup_path.to_string_lossy(), e))?;
                         }
                     }
                 }
@@ -487,14 +451,10 @@ echo "✅ Commit message validation passed"
         let config_path = repo_path.join(".uveddi").join("hooks.toml");
         
         if config_path.exists() {
-            let content = fs::read_to_string(&config_path).map_err(|e| UveddiError::Io {
-                operation: "reading hook config".to_string(),
-                path: config_path.to_string_lossy().to_string(),
-                source: e,
-            })?;
+            let content = fs::read_to_string(&config_path).map_err(|e| UveddiError::io_error("reading hook config", &config_path.to_string_lossy(), e))?;
             
-            toml::from_str(&content).map_err(|e| UveddiError::Config(
-                format!("Failed to parse hook config: {}", e)
+            toml::from_str(&content).map_err(|e| UveddiError::config_error(
+                &format!("Failed to parse hook config: {}", e), "system"
             ))
         } else {
             Ok(HookConfig::default())

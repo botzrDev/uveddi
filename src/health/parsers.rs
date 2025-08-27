@@ -4,7 +4,7 @@
 //! Rust, Python, JavaScript, and TypeScript analysis.
 
 use super::{HealthCheck, HealthStatus};
-use crate::core::UveddiError;
+use crate::error::UveddiError;
 
 /// Check parser health for all supported languages
 pub async fn check_parser_health() -> Result<Vec<HealthCheck>, UveddiError> {
