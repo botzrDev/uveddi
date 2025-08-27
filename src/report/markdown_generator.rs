@@ -547,7 +547,7 @@ impl MarkdownReportGenerator {
     fn generate_issues_breakdown(
         &self,
         issues: &[ArchitecturalIssue],
-        anti_pattern_types: &HashMap<i64, AntiPatternType>,
+        _anti_pattern_types: &HashMap<i64, AntiPatternType>,
     ) -> String {
         let mut breakdown = String::from("## Issues Breakdown\n\n");
 
@@ -853,7 +853,7 @@ impl MarkdownReportGenerator {
     /// Extract architectural components from analysis data
     fn extract_architectural_components(
         &self,
-        analysis_run: &AnalysisRun,
+        _analysis_run: &AnalysisRun,
         issues: &[ArchitecturalIssue],
     ) -> Vec<ArchitecturalComponent> {
         let mut components = Vec::new();

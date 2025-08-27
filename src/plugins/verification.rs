@@ -324,7 +324,7 @@ impl SignatureVerifier {
         // Calculate binary hash
         let mut hasher = Sha256::new();
         hasher.update(binary);
-        let hash = format!("{:x}", hasher.finalize());
+        let _hash = format!("{:x}", hasher.finalize());
 
         // In a real implementation, this would verify the signature
         // For now, we'll just check if the signature looks valid

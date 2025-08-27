@@ -291,7 +291,7 @@ impl InitCommand {
         })
     }
     
-    fn prompt_large_classes_config(&self, template: &ProjectTemplate, project_info: &ProjectInfo) -> Result<LargeClassConfig, UveddiError> {
+    fn prompt_large_classes_config(&self, template: &ProjectTemplate, _project_info: &ProjectInfo) -> Result<LargeClassConfig, UveddiError> {
         println!("\n📏 Large Classes Detection Configuration:");
         
         let (default_loc, default_methods) = match template {

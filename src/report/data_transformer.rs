@@ -240,7 +240,7 @@ impl DataTransformer {
 
     /// Generate recommendation for an issue
     fn generate_recommendation(
-        issue: &ArchitecturalIssue,
+        _issue: &ArchitecturalIssue,
         anti_pattern: Option<&AntiPatternType>,
     ) -> Option<String> {
         if let Some(apt) = anti_pattern {

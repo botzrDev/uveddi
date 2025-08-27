@@ -402,7 +402,7 @@ impl TightCouplingDetector {
     pub fn build_incremental_dependency_graph(
         &self,
         changed_files: &[(String, ParsedFile)],
-        existing_graph: &LocalDependencyGraph,
+        _existing_graph: &LocalDependencyGraph,
     ) -> Result<LocalDependencyGraph, AnalysisError> {
         info!(
             "Building incremental dependency graph for {} changed files",

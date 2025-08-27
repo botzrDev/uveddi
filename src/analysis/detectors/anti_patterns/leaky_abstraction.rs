@@ -439,7 +439,7 @@ impl LeakyAbstractionDetector {
         analysis_run_id: i64,
     ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         let mut issues = Vec::new();
-        let empty_source = String::new();
+        let _empty_source = String::new();
         let source_bytes = parsed_file.source.as_bytes();
         let tree = parsed_file.tree.as_ref().ok_or_else(|| {
             crate::analysis::errors::AnalysisError::DetectionError("No AST available".to_string())
@@ -596,7 +596,7 @@ impl LeakyAbstractionDetector {
         analysis_run_id: i64,
     ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         let mut issues = Vec::new();
-        let empty_source = String::new();
+        let _empty_source = String::new();
         let source_bytes = parsed_file.source.as_bytes();
 
         // Check architectural layer violations
@@ -704,7 +704,7 @@ impl LeakyAbstractionDetector {
         analysis_run_id: i64,
     ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         let mut issues = Vec::new();
-        let empty_source = String::new();
+        let _empty_source = String::new();
         let source_bytes = parsed_file.source.as_bytes();
         let tree = parsed_file.tree.as_ref().ok_or_else(|| {
             crate::analysis::errors::AnalysisError::DetectionError("No AST available".to_string())

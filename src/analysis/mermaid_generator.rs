@@ -465,7 +465,7 @@ impl MermaidGenerator {
 
         // Flatten all cycle components
         let cycle_components: HashSet<Uuid> = cycles.iter().flatten().cloned().collect();
-        let cycle_edge_set: HashSet<(Uuid, Uuid)> = cycle_edges.iter().cloned().collect();
+        let _cycle_edge_set: HashSet<(Uuid, Uuid)> = cycle_edges.iter().cloned().collect();
 
         // Transform components with cycle information
         let template_components: Vec<Value> = components

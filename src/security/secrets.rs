@@ -204,7 +204,7 @@ impl SecretStore for VaultSecretStore {
         }
     }
 
-    async fn set_secret(&self, key: &str, value: &str) -> SecurityResult<()> {
+    async fn set_secret(&self, key: &str, _value: &str) -> SecurityResult<()> {
         // Simplified implementation for demonstration
         // In production, this would use the vaultrs crate to store secrets in Vault
         tracing::info!(

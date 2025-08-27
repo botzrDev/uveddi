@@ -256,7 +256,7 @@ impl PersistenceProvider for MockPersistenceProvider {
         Ok(())
     }
 
-    async fn load_issues(&self, filter: IssueFilter) -> Result<Vec<DomainIssue>, Self::Error> {
+    async fn load_issues(&self, _filter: IssueFilter) -> Result<Vec<DomainIssue>, Self::Error> {
         let stored_issues = self.issues.lock().unwrap();
         // In a real implementation, this would filter by the provided criteria
         Ok(stored_issues.clone())

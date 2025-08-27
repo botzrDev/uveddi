@@ -125,7 +125,7 @@ pub fn suggest_command(input: &str) -> Vec<String> {
 }
 
 /// Generate contextual error message for common CLI mistakes
-pub fn enhance_cli_error(original_error: &str, command_context: Option<&str>) -> CliError {
+pub fn enhance_cli_error(original_error: &str, _command_context: Option<&str>) -> CliError {
     let lower_error = original_error.to_lowercase();
     
     // Handle "command not found" errors

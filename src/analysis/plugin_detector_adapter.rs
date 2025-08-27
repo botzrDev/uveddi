@@ -231,7 +231,7 @@ impl PluginDetectorAdapter {
     fn convert_to_architectural_issues(
         &self,
         plugin_issues: Vec<PluginIssue>,
-        file_path: &str,
+        _file_path: &str,
     ) -> Vec<ArchitecturalIssue> {
         plugin_issues
             .into_iter()

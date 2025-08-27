@@ -1043,7 +1043,7 @@ impl AnalysisOrchestrator {
     }
 
     /// Generate long method analysis
-    fn generate_long_method_analysis(&self, issue: &ArchitecturalIssue) -> String {
+    fn generate_long_method_analysis(&self, _issue: &ArchitecturalIssue) -> String {
         format!(
             "📏 **Long Method Anti-Pattern**\n\n\
             **Cognitive Complexity**: Method exceeds recommended length thresholds.\n\n\
@@ -1057,7 +1057,7 @@ impl AnalysisOrchestrator {
     }
 
     /// Generate large class analysis
-    fn generate_large_class_analysis(&self, issue: &ArchitecturalIssue) -> String {
+    fn generate_large_class_analysis(&self, _issue: &ArchitecturalIssue) -> String {
         format!(
             "🏢 **Large Class Anti-Pattern**\n\n\
             **SRP Violation**: Class has grown beyond single responsibility.\n\n\
@@ -1070,7 +1070,7 @@ impl AnalysisOrchestrator {
     }
 
     /// Generate feature envy analysis
-    fn generate_feature_envy_analysis(&self, issue: &ArchitecturalIssue) -> String {
+    fn generate_feature_envy_analysis(&self, _issue: &ArchitecturalIssue) -> String {
         format!(
             "👀 **Feature Envy Anti-Pattern**\n\n\
             **Data-Behavior Misalignment**: Component accessing external data excessively.\n\n\
@@ -1083,7 +1083,7 @@ impl AnalysisOrchestrator {
     }
 
     /// Generate shotgun surgery analysis
-    fn generate_shotgun_surgery_analysis(&self, issue: &ArchitecturalIssue) -> String {
+    fn generate_shotgun_surgery_analysis(&self, _issue: &ArchitecturalIssue) -> String {
         format!(
             "🔫 **Shotgun Surgery Anti-Pattern**\n\n\
             **High Change Impact**: Modifications require touching many files.\n\n\
@@ -1096,7 +1096,7 @@ impl AnalysisOrchestrator {
     }
 
     /// Generate generic analysis for unclassified issues
-    fn generate_generic_analysis(&self, issue: &ArchitecturalIssue) -> String {
+    fn generate_generic_analysis(&self, _issue: &ArchitecturalIssue) -> String {
         format!(
             "🔍 **Architectural Quality Assessment**\n\n\
             **Issue Context**: General code quality improvement opportunity identified.\n\n\

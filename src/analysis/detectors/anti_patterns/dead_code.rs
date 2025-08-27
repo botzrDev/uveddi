@@ -288,7 +288,7 @@ impl DeadCodeDetector {
         parsed_file: &ParsedFile,
     ) -> Result<Vec<Symbol>, AnalysisError> {
         let mut symbols = Vec::new();
-        let default_source = String::new();
+        let _default_source = String::new();
         let source = parsed_file.source.as_bytes();
         let tree = parsed_file.tree.as_ref().ok_or_else(|| {
             crate::analysis::errors::AnalysisError::DetectionError("AST tree missing".to_string())
@@ -364,7 +364,7 @@ impl DeadCodeDetector {
         parsed_file: &ParsedFile,
     ) -> Result<Vec<Symbol>, AnalysisError> {
         let mut symbols = Vec::new();
-        let default_source = String::new();
+        let _default_source = String::new();
         let source = parsed_file.source.as_bytes();
         let tree = parsed_file.tree.as_ref().ok_or_else(|| {
             crate::analysis::errors::AnalysisError::DetectionError("AST tree missing".to_string())
@@ -411,7 +411,7 @@ impl DeadCodeDetector {
         parsed_file: &ParsedFile,
     ) -> Result<HashSet<String>, AnalysisError> {
         let mut references = HashSet::new();
-        let default_source = String::new();
+        let _default_source = String::new();
         let source = parsed_file.source.as_bytes();
         let tree = parsed_file.tree.as_ref().ok_or_else(|| {
             crate::analysis::errors::AnalysisError::DetectionError("AST tree missing".to_string())
@@ -442,7 +442,7 @@ impl DeadCodeDetector {
         parsed_file: &ParsedFile,
     ) -> Result<HashSet<String>, AnalysisError> {
         let mut references = HashSet::new();
-        let default_source = String::new();
+        let _default_source = String::new();
         let source = parsed_file.source.as_bytes();
         let tree = parsed_file.tree.as_ref().ok_or_else(|| {
             crate::analysis::errors::AnalysisError::DetectionError("AST tree missing".to_string())
@@ -473,7 +473,7 @@ impl DeadCodeDetector {
         parsed_file: &ParsedFile,
     ) -> Result<HashSet<String>, AnalysisError> {
         let mut references = HashSet::new();
-        let default_source = String::new();
+        let _default_source = String::new();
         let source = parsed_file.source.as_bytes();
         let tree = parsed_file.tree.as_ref().ok_or_else(|| {
             crate::analysis::errors::AnalysisError::DetectionError("AST tree missing".to_string())

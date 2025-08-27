@@ -129,7 +129,7 @@ macro_rules! error_span_traced {
 
 /// Extract trace ID from the current span, if available
 pub fn current_trace_id() -> Option<TraceId> {
-    let span = Span::current();
+    let _span = Span::current();
     // This is a simplified implementation
     // In a real implementation, you'd need to extract the trace_id field from the span
     // For now, we'll return None and rely on explicit trace ID management

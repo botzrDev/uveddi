@@ -1031,7 +1031,7 @@ fn calculate_variance(values: &[f64], mean: f64) -> f64 {
         / values.len() as f64
 }
 
-fn calculate_confidence_interval(values: &[f64], confidence_level: f64) -> (f64, f64) {
+fn calculate_confidence_interval(values: &[f64], _confidence_level: f64) -> (f64, f64) {
     if values.len() < 2 {
         let value = values.first().copied().unwrap_or(0.0);
         return (value, value);

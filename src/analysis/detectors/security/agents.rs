@@ -254,7 +254,6 @@ impl SecurityOrchestrator {
         );
 
         let _analysis_id = Uuid::new_v4().to_string();
-        let mut results = SecurityAnalysisResult::new();
 
         // Decompose the analysis into subtasks
         let subtasks = self.decompose_analysis_tasks(context).await?;
@@ -284,7 +283,7 @@ impl SecurityOrchestrator {
         }
 
         // Synthesize final results
-        results = self.synthesize_results(agent_results, context).await?;
+        let results = self.synthesize_results(agent_results, context).await?;
 
         info!(
             "Multi-agent analysis completed: {} vulnerabilities found",

@@ -1126,7 +1126,7 @@ impl CodeDuplicationDetector {
         &self,
         root_node: crate::ast::tree_sitter::Node<'a>,
         block: &CodeBlock,
-        source: &[u8],
+        _source: &[u8],
     ) -> Option<crate::ast::tree_sitter::Node<'a>> {
         let mut cursor = root_node.walk();
 
@@ -1229,7 +1229,7 @@ impl CodeDuplicationDetector {
         use crate::analysis::semantic::SimilarityWeights;
 
         // Create a hybrid scorer with weights from config
-        let weights = SimilarityWeights {
+        let _weights = SimilarityWeights {
             structural: 0.3,
             cfg: self.config.cfg_similarity_weight,
             semantic: 0.25,

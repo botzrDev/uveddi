@@ -250,7 +250,7 @@ pub mod rayon_integration {
 
         // Phase 1: Computation using arena (temporary allocations)
         // Simulate some arena allocations to demonstrate the pattern
-        for i in 0..10 {
+        for _i in 0..10 {
             // Allocate temporary data in arena to simulate computation
             let _temp_data = arena_handle.alloc([0u8; 64]);
             let _temp_string = arena_handle.alloc_str("temporary analysis data");

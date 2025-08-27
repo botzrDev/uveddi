@@ -753,7 +753,7 @@ impl GeneticBottleneckDetector {
         peak_utilization: f64,
     ) -> BottleneckSeverity {
         let excess_ratio = (mean_utilization - threshold) / threshold;
-        let peak_ratio = peak_utilization / threshold;
+        let _peak_ratio = peak_utilization / threshold;
 
         if peak_utilization > 0.95 || excess_ratio > 0.6 {
             BottleneckSeverity::Critical
@@ -859,7 +859,7 @@ impl GeneticBottleneckDetector {
     fn detect_compound_bottleneck(
         &self,
         chromosome: &BottleneckChromosome,
-        performance_data: &[PerformanceDataPoint],
+        _performance_data: &[PerformanceDataPoint],
         resource_states: &[(ResourceType, f64, f64)], // (type, utilization, threshold)
     ) -> Option<Bottleneck> {
         let stressed_resources: Vec<_> = resource_states
@@ -1400,7 +1400,7 @@ impl FitnessEvaluator {
         performance_data: &[PerformanceDataPoint],
     ) -> Result<f64> {
         let mut detection_score = 0.0;
-        let mut total_evaluations = 0;
+        let mut _total_evaluations = 0;
         let mut bottleneck_count = 0;
 
         for data_point in performance_data {
@@ -1442,7 +1442,7 @@ impl FitnessEvaluator {
                 bottleneck_count += 1;
             }
 
-            total_evaluations += 1;
+            _total_evaluations += 1;
         }
 
         if bottleneck_count > 0 {

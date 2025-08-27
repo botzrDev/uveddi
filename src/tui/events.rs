@@ -204,7 +204,7 @@ impl EventHandler {
     fn handle_analyze_form_keys(
         &self,
         key_event: KeyEvent,
-        app_state: &AppState,
+        _app_state: &AppState,
     ) -> Vec<AppMessage> {
         use crossterm::event::{KeyCode, KeyModifiers};
         use ratatui::crossterm::event::{

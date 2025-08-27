@@ -843,7 +843,7 @@ impl InteractiveReport {
         }
 
         // Add dependency edges
-        for (index, dep) in dependencies.iter().enumerate() {
+        for (_index, dep) in dependencies.iter().enumerate() {
             let source = dep.from_file.to_string_lossy().to_string();
             let target = dep.to_module.clone();
 

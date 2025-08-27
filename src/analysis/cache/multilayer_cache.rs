@@ -152,7 +152,7 @@ where
     /// Get value from cache, checking both layers
     pub async fn get(&self, key: &K) -> Result<Option<V>, CacheError> {
         let start_time = Instant::now();
-        let key_str = key.to_string();
+        let _key_str = key.to_string();
 
         // Check L1 cache first
         {
@@ -224,7 +224,7 @@ where
 
     /// Set value in cache
     pub async fn set(&self, key: K, value: V) -> Result<(), CacheError> {
-        let key_str = key.to_string();
+        let _key_str = key.to_string();
         let size_estimate = self.estimate_size(&value);
 
         // Create cache entry
@@ -243,7 +243,7 @@ where
 
             // Check if we need to evict from memory
             while memory_cache.len() >= self.config.memory_capacity {
-                if let Some((evicted_key, evicted_entry)) = memory_cache.pop_lru() {
+                if let Some((_evicted_key, evicted_entry)) = memory_cache.pop_lru() {
                     self.metrics
                         .record_eviction("memory", evicted_entry.size_bytes);
                 }
@@ -371,7 +371,7 @@ where
 
         // Make room if needed
         while memory_cache.len() >= self.config.memory_capacity {
-            if let Some((evicted_key, evicted_entry)) = memory_cache.pop_lru() {
+            if let Some((_evicted_key, evicted_entry)) = memory_cache.pop_lru() {
                 self.metrics
                     .record_eviction("memory", evicted_entry.size_bytes);
             }
@@ -387,7 +387,7 @@ where
         1024 // 1KB default estimate
     }
 
-    fn calculate_content_hash(&self, value: &V) -> String {
+    fn calculate_content_hash(&self, _value: &V) -> String {
         // Simple hash based on serialized content
         use std::collections::hash_map::DefaultHasher;
         use std::hash::Hasher;

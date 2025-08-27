@@ -224,8 +224,8 @@ impl<'a> AnalyticsEngine<'a> {
     /// Calculate engagement metrics
     fn calculate_engagement_metrics(&self) -> Result<EngagementMetrics, UveddiError> {
         let now = Utc::now();
-        let day_ago = now - Duration::days(1);
-        let week_ago = now - Duration::days(7);
+        let _day_ago = now - Duration::days(1);
+        let _week_ago = now - Duration::days(7);
         let month_ago = now - Duration::days(30);
 
         // Daily active users

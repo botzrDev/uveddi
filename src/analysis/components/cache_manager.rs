@@ -230,7 +230,7 @@ impl CacheManagerImpl {
     pub async fn cache_dependency_graph(
         &self,
         cache_key: &str,
-        graph: &crate::analysis::graph::dependency::LocalDependencyGraph,
+        _graph: &crate::analysis::graph::dependency::LocalDependencyGraph,
     ) -> Result<(), UveddiError> {
         // For now, we'll just log this operation since the cache infrastructure
         // for dependency graphs is not fully implemented yet

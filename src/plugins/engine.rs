@@ -296,7 +296,7 @@ impl WasmPluginAdapter {
 impl AnalysisDetector for WasmPluginAdapter {
     async fn detect_issues(
         &self,
-        file: &ParsedFile,
+        _file: &ParsedFile,
     ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
         #[cfg(not(feature = "wasm-plugins"))]
         {
@@ -305,7 +305,7 @@ impl AnalysisDetector for WasmPluginAdapter {
 
         #[cfg(feature = "wasm-plugins")]
         {
-            self.detect_issues_async(file)
+            self.detect_issues_async(_file)
                 .await
                 .map_err(|e| AnalysisError::PluginError(e))
         }

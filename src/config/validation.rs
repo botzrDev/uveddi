@@ -221,7 +221,7 @@ impl SmartConfigValidator {
         }
     }
 
-    fn validate_dead_code_config(&self, config: &Config, errors: &mut Vec<ValidationError>, warnings: &mut Vec<ValidationWarning>, suggestions: &mut Vec<ConfigSuggestion>) {
+    fn validate_dead_code_config(&self, config: &Config, _errors: &mut Vec<ValidationError>, warnings: &mut Vec<ValidationWarning>, suggestions: &mut Vec<ConfigSuggestion>) {
         if let Some(ref dc_config) = config.dead_code {
             // Validate confidence threshold
             if let Some(confidence) = dc_config.confidence_threshold {
@@ -309,7 +309,7 @@ impl SmartConfigValidator {
         }
     }
 
-    fn validate_large_classes_config(&self, config: &Config, errors: &mut Vec<ValidationError>, warnings: &mut Vec<ValidationWarning>, suggestions: &mut Vec<ConfigSuggestion>) {
+    fn validate_large_classes_config(&self, config: &Config, _errors: &mut Vec<ValidationError>, warnings: &mut Vec<ValidationWarning>, suggestions: &mut Vec<ConfigSuggestion>) {
         if let Some(ref lc_config) = config.large_classes {
             // Validate thresholds are reasonable
             if let Some(max_loc) = lc_config.max_logical_loc {

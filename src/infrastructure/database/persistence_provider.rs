@@ -43,11 +43,11 @@ impl PersistenceProvider for DatabasePersistenceProvider {
         // Save using database operations
         // Note: The current Database struct doesn't have async methods,
         // so we'll use tokio::task::spawn_blocking for now
-        let database = self.database.clone();
+        let _database = self.database.clone();
         tokio::task::spawn_blocking(move || {
             // For now, we'll use the store_issues method which expects a mutable reference
             // This is a temporary implementation until we can properly refactor the database layer
-            for issue in &db_issues {
+            for _issue in &db_issues {
                 // Note: This is a simplified implementation
                 // In a full implementation, we'd need to extend the Database struct
                 // to have proper methods for individual issue storage
@@ -58,7 +58,7 @@ impl PersistenceProvider for DatabasePersistenceProvider {
         .map_err(|e| PersistenceError::Internal(e.to_string()))?
     }
 
-    async fn load_issues(&self, filter: IssueFilter) -> Result<Vec<DomainIssue>, Self::Error> {
+    async fn load_issues(&self, _filter: IssueFilter) -> Result<Vec<DomainIssue>, Self::Error> {
         // For now, return empty vector as this requires implementing additional database methods
         // This is a placeholder implementation that needs to be extended
         Ok(Vec::new())
@@ -71,7 +71,7 @@ impl PersistenceProvider for DatabasePersistenceProvider {
 
     async fn save_analysis_run(&self, run: AnalysisRunDomain) -> Result<i64, Self::Error> {
         let database = self.database.clone();
-        let run_copy = run.clone();
+        let _run_copy = run.clone();
 
         tokio::task::spawn_blocking(move || {
             // Create an analysis run using the existing database method
@@ -88,9 +88,9 @@ impl PersistenceProvider for DatabasePersistenceProvider {
 
     async fn update_analysis_run(
         &self,
-        run_id: i64,
-        status: String,
-        end_time: Option<DateTime<Utc>>,
+        _run_id: i64,
+        _status: String,
+        _end_time: Option<DateTime<Utc>>,
     ) -> Result<(), Self::Error> {
         // Placeholder implementation
         Ok(())
@@ -104,7 +104,7 @@ impl DatabasePersistenceProvider {
         domain_issue: DomainIssue,
     ) -> PersistenceResult<ArchitecturalIssue> {
         {
-            let mut issue = ArchitecturalIssue::new(
+            let mut _issue = ArchitecturalIssue::new(
                 domain_issue.run_id.unwrap_or(0),
                 1, // TODO: Map issue_type to anti_pattern_type_id
                 domain_issue.file_path,
@@ -114,17 +114,17 @@ impl DatabasePersistenceProvider {
                 domain_issue.severity.to_string(),
                 domain_issue.description,
             );
-            issue.issue_id = domain_issue.id.map(|id| id.parse().unwrap_or(0));
-            issue.column_number = domain_issue.column_number.map(|c| c as i32);
-            issue.created_at = domain_issue.created_at;
+            _issue.issue_id = domain_issue.id.map(|id| id.parse().unwrap_or(0));
+            _issue.column_number = domain_issue.column_number.map(|c| c as i32);
+            _issue.created_at = domain_issue.created_at;
             // Note: metadata field is not available in the new ArchitecturalIssue structure
-            Ok(issue)
+            Ok(_issue)
         }
     }
 
     /// Convert database model to domain issue
-    fn convert_to_domain(&self, db_issue: ArchitecturalIssue) -> PersistenceResult<DomainIssue> {
-        let severity = match db_issue.severity.to_lowercase().as_str() {
+    fn convert_to_domain(&self, _db_issue: ArchitecturalIssue) -> PersistenceResult<DomainIssue> {
+        let severity = match _db_issue.severity.to_lowercase().as_str() {
             "low" => IssueSeverity::Low,
             "medium" => IssueSeverity::Medium,
             "high" => IssueSeverity::High,
@@ -132,21 +132,21 @@ impl DatabasePersistenceProvider {
             _ => IssueSeverity::Medium, // Default
         };
 
-        let metadata = serde_json::from_str(&db_issue.metadata).unwrap_or(serde_json::Value::Null);
+        let metadata = serde_json::from_str(&_db_issue.metadata).unwrap_or(serde_json::Value::Null);
 
         Ok(DomainIssue {
-            id: db_issue.issue_id.map(|id| id.to_string()),
-            run_id: Some(db_issue.analysis_run_id),
-            detector_name: db_issue.detector_name,
+            id: _db_issue.issue_id.map(|id| id.to_string()),
+            run_id: Some(_db_issue.analysis_run_id),
+            detector_name: _db_issue.detector_name,
             issue_type: "architectural".to_string(), // TODO: Map from anti_pattern_type_id
             severity,
-            message: db_issue.message,
-            description: db_issue.description,
-            file_path: db_issue.file_path,
-            line_number: db_issue.line_number.map(|l| l as u32).unwrap_or(0),
-            column_number: db_issue.column_number.map(|c| c as u32),
+            message: _db_issue.message,
+            description: _db_issue.description,
+            file_path: _db_issue.file_path,
+            line_number: _db_issue.line_number.map(|l| l as u32).unwrap_or(0),
+            column_number: _db_issue.column_number.map(|c| c as u32),
             metadata,
-            created_at: db_issue.created_at,
+            created_at: _db_issue.created_at,
         })
     }
 

@@ -370,7 +370,7 @@ async fn get_report(
 /// Get dependency graph for a specific report
 async fn get_dependency_graph(
     AxumPath(report_id): AxumPath<String>,
-    State(state): State<Arc<AppState>>,
+    State(_state): State<Arc<AppState>>,
 ) -> Result<impl IntoResponse, StatusCode> {
     // Enhanced input validation for report ID
     if let Err(e) = security::validate_input(&report_id, "report_id") {
@@ -1057,7 +1057,7 @@ async fn get_security_issues(
 /// Get a specific security issue by ID
 async fn get_security_issue(
     AxumPath(issue_id): AxumPath<String>,
-    State(state): State<Arc<AppState>>,
+    State(_state): State<Arc<AppState>>,
 ) -> Result<impl IntoResponse, StatusCode> {
     // Enhanced input validation for security issue ID
     if let Err(e) = security::validate_input(&issue_id, "issue_id") {
@@ -1122,7 +1122,7 @@ async fn get_security_issue(
 
 /// Get security analysis summary statistics
 async fn get_security_summary(
-    State(state): State<Arc<AppState>>,
+    State(_state): State<Arc<AppState>>,
 ) -> Result<impl IntoResponse, StatusCode> {
     let mut owasp_coverage = HashMap::new();
     owasp_coverage.insert(
@@ -1187,7 +1187,7 @@ async fn get_security_summary(
 
 /// Get OWASP Top 10 coverage information
 async fn get_owasp_coverage(
-    State(state): State<Arc<AppState>>,
+    State(_state): State<Arc<AppState>>,
 ) -> Result<impl IntoResponse, StatusCode> {
     let mut coverage = HashMap::new();
     coverage.insert(
@@ -1236,7 +1236,7 @@ async fn get_owasp_coverage(
 
 /// Get taint flow analysis results
 async fn get_taint_flows(
-    State(state): State<Arc<AppState>>,
+    State(_state): State<Arc<AppState>>,
 ) -> Result<impl IntoResponse, StatusCode> {
     let taint_flows = vec![
         TaintFlowResponse {
@@ -1273,7 +1273,7 @@ async fn get_taint_flows(
 }
 
 /// Export security findings in SARIF format
-async fn export_sarif(State(state): State<Arc<AppState>>) -> Result<impl IntoResponse, StatusCode> {
+async fn export_sarif(State(_state): State<Arc<AppState>>) -> Result<impl IntoResponse, StatusCode> {
     // SARIF 2.1.0 format implementation
     let sarif_report = serde_json::json!({
         "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
@@ -1381,7 +1381,7 @@ async fn load_report_from_database(
         .collect();
 
     // Get dependencies for this run
-    let dependencies = database.get_dependencies_for_run(run_id).await?;
+    let _dependencies = database.get_dependencies_for_run(run_id).await?;
 
     // Use the DataTransformer to create properly formatted report
     let mut report = DataTransformer::transform_to_interactive_report(

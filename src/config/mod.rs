@@ -231,15 +231,15 @@ impl Config {
         // Enhanced path validation to prevent directory traversal attacks
         let config_dir = std::env::var("UVEDDI_CONFIG_DIR").unwrap_or_else(|_| ".".to_string());
         let config_dir_path = Path::new(&config_dir);
-        let allowed_config_dirs: Vec<&Path> = vec![
-            Path::new("."), 
-            Path::new("./config"), 
-            Path::new("/etc/uveddi"), 
-            Path::new("~/.config/uveddi"),
-            config_dir_path
+        let allowed_config_dirs: Vec<&str> = vec![
+            ".", 
+            "./config", 
+            "/etc/uveddi", 
+            "~/.config/uveddi",
+            &config_dir
         ];
         
-        let _validation = security::validate_config_file_path(Path::new(path), Some(&allowed_config_dirs))
+        let _validation = security::validate_config_file_path(path, Some(&allowed_config_dirs))
             .map_err(|e| UveddiError::config_error(&format!("Configuration file path validation failed: {}", e), path))?;
 
         // Read and validate file content

@@ -486,7 +486,7 @@ impl AstCache {
 
         // Store in zero-copy cache for larger files if enabled
         #[cfg(feature = "memory-optimization")]
-        if let Some(ref zero_copy_cache) = self.zero_copy_cache {
+        if let Some(ref _zero_copy_cache) = self.zero_copy_cache {
             // We need the source content to determine if we should use zero-copy cache
             // For now, we'll use file size as a proxy
             if let Ok(metadata) = std::fs::metadata(path) {

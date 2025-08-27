@@ -182,7 +182,7 @@ impl ResultCacheTrait for ResultCacheAdapter {
     }
 
     fn clear(&self) {
-        if let Ok(cache) = self.cache.lock() {
+        if let Ok(_cache) = self.cache.lock() {
             // The original ResultCache doesn't have a clear method
             // This is a no-op for now
         }

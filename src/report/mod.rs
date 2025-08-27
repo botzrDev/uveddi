@@ -1488,7 +1488,7 @@ impl ReportGenerator {
         components: Option<&[ArchitecturalComponent]>,
         diagrams: &[DiagramMetadata],
     ) -> Result<String, serde_json::Error> {
-        let anti_pattern_map: HashMap<i64, &AntiPatternType> = anti_pattern_types
+        let _anti_pattern_map: HashMap<i64, &AntiPatternType> = anti_pattern_types
             .iter()
             .filter_map(|apt| apt.anti_pattern_type_id.map(|id| (id, apt)))
             .collect();
@@ -2443,7 +2443,7 @@ impl ReportGenerator {
     /// Generate HTML executive summary section
     fn generate_html_executive_summary(
         &self,
-        analysis_run: &AnalysisRun,
+        _analysis_run: &AnalysisRun,
         issues: &[ArchitecturalIssue],
     ) -> String {
         let total_issues = issues.len();

@@ -315,7 +315,7 @@ impl ModernReportGenerator {
     /// Calculate overall health metrics
     fn calculate_health_metrics(
         &self,
-        analysis_run: &AnalysisRun,
+        _analysis_run: &AnalysisRun,
         issues: &[ArchitecturalIssue],
     ) -> HealthMetrics {
         let total_issues = issues.len();

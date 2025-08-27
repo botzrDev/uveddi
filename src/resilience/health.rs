@@ -69,7 +69,7 @@ impl HealthStatus {
     }
 
     /// Updates health score based on metrics
-    pub fn update_from_metrics(&mut self, metrics: &MetricsData) {
+    pub fn update_from_metrics(&mut self, _metrics: &MetricsData) {
         // TODO: Implement scoring algorithm (UV-173)
         self.last_updated = SystemTime::now();
     }

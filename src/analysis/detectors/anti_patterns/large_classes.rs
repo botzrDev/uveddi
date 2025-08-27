@@ -4,7 +4,6 @@
 //! God Objects, and Blob anti-patterns as described in the Large Class Research document.
 
 use crate::analysis::{AnalysisDetector, AnalysisError};
-use tracing::debug;
 use crate::ast::tree_sitter::{Node, Query, QueryCursor, Tree};
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
 use crate::constants::detector_thresholds;
@@ -269,7 +268,7 @@ impl LargeClassDetector {
     fn count_rust_struct_fields(
         &self,
         struct_node: &Node,
-        source: &[u8],
+        _source: &[u8],
     ) -> Result<u32, AnalysisError> {
         let mut field_count = 0;
         let mut cursor = struct_node.walk();
@@ -509,7 +508,7 @@ impl AnalysisDetector for LargeClassDetector {
 
     fn detect(
         &self,
-        graph: &crate::analysis::graph::dependency::LocalDependencyGraph,
+        _graph: &crate::analysis::graph::dependency::LocalDependencyGraph,
     ) -> Vec<ArchitecturalIssue> {
         // For the graph-based detect method, we return empty for now
         // This method is used for dependency-based analysis

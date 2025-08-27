@@ -487,7 +487,7 @@ impl PerformanceReportGenerator {
         }
 
         // Performance comparison insight
-        if let Some(ref previous) = comparison.previous_baseline {
+        if let Some(ref _previous) = comparison.previous_baseline {
             let change = comparison.comparison_result.performance_change_percent;
             if change.abs() > 10.0 {
                 let direction = if change > 0.0 { "degraded" } else { "improved" };

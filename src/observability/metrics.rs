@@ -68,7 +68,7 @@ pub struct UveddiMetrics {
 
 impl UveddiMetrics {
     /// Create a new metrics collector with the given configuration
-    pub fn new(config: &MetricsConfig) -> Result<Self> {
+    pub fn new(_config: &MetricsConfig) -> Result<Self> {
         let registry = Arc::new(Registry::new());
 
         // Four Golden Signals

@@ -183,10 +183,10 @@ impl AstProviderImpl {
     }
 
     /// Collect syntax errors from the parse tree
-    fn collect_syntax_errors(&self, tree: &Tree, source: &str) -> Vec<SyntaxError> {
+    fn collect_syntax_errors(&self, tree: &Tree, _source: &str) -> Vec<SyntaxError> {
         let mut errors = Vec::new();
         let root_node = tree.root_node();
-        let cursor = root_node.walk();
+        let _cursor = root_node.walk();
 
         // Traverse all nodes in the tree
         let mut stack = vec![root_node];

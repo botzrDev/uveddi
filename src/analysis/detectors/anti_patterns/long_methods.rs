@@ -687,7 +687,7 @@ impl LongMethodsDetector {
         _source: &[u8],
     ) -> Result<u32, AnalysisError> {
         let mut complexity = 1; // Base complexity
-        let cursor = node.walk();
+        let _cursor = node.walk();
 
         fn traverse_complexity(node: &Node, complexity: &mut u32) {
             let mut cursor = node.walk();
@@ -1123,7 +1123,7 @@ impl AnalysisDetector for LongMethodsDetector {
 
     fn detect(
         &self,
-        graph: &crate::analysis::graph::dependency::LocalDependencyGraph,
+        _graph: &crate::analysis::graph::dependency::LocalDependencyGraph,
     ) -> Vec<ArchitecturalIssue> {
         // For the graph-based detect method, we return empty for now
         // This method is used for dependency-based analysis

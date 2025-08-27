@@ -425,7 +425,7 @@ impl BaselineCollector {
     }
 
     /// Generate realistic test file content
-    fn generate_test_file_content(&self, index: usize, total_files: usize) -> String {
+    fn generate_test_file_content(&self, index: usize, _total_files: usize) -> String {
         let complexity = match index % 4 {
             0 => "simple",
             1 => "medium",

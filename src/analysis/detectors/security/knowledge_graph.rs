@@ -252,7 +252,7 @@ impl StructuralGraph {
             .collect()
     }
 
-    fn find_anti_patterns_for_location(&self, file_path: &PathBuf) -> Vec<AntiPatternInfo> {
+    fn find_anti_patterns_for_location(&self, _file_path: &PathBuf) -> Vec<AntiPatternInfo> {
         // TODO: Implement anti-pattern detection based on structural analysis
         Vec::new()
     }
@@ -264,7 +264,7 @@ impl StructuralGraph {
             .unwrap_or_default()
     }
 
-    fn find_entities_by_pattern(&self, pattern_type: &str) -> Vec<CodeEntity> {
+    fn find_entities_by_pattern(&self, _pattern_type: &str) -> Vec<CodeEntity> {
         // TODO: Implement pattern-based entity search
         Vec::new()
     }
@@ -687,7 +687,7 @@ impl StructuralSemanticGraph {
         self.metadata.edge_count = self.edges.len();
     }
 
-    pub fn find_paths(&self, from: &str, to: &str) -> Vec<Vec<String>> {
+    pub fn find_paths(&self, _from: &str, _to: &str) -> Vec<Vec<String>> {
         // TODO: Implement path finding algorithm
         Vec::new()
     }
