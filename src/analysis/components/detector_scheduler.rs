@@ -96,9 +96,7 @@ impl DetectorScheduler {
             tree: Some((*ast).clone()),
             source: Arc::new(file_content),
             custom_ast: Arc::new(None),
-            modified_at: crate::analysis::cache::wrappers::ArchivableSystemTime(
-                std::fs::metadata(file_path)?.modified()?,
-            ),
+            modified_at: std::fs::metadata(file_path)?.modified()?.into(),
         };
 
         let mut all_issues = Vec::new();

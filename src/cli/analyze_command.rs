@@ -34,7 +34,7 @@ use clap::Args;
 use std::error::Error;
 use std::path::PathBuf;
 use sysinfo::System;
-use tracing::{info, warn, error, debug};
+use tracing::{info, warn};
 
 use crate::application::{AnalysisConfig, AnalysisOrchestrator};
 use crate::error::UveddiError;

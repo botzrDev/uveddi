@@ -5,14 +5,14 @@
 //! and vulnerability database interfaces.
 
 use crate::analysis::detectors::security::owasp::OwaspVulnerability;
-use crate::analysis::detectors::security::types::{SecuritySeverity, VulnerabilityMetadata};
+use crate::analysis::detectors::security::types::SecuritySeverity;
 use crate::analysis::AnalysisError;
 use crate::ast::{ParsedFile, SourceLanguage};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
-use tracing::{debug, info, warn};
+use tracing::{debug, info};
 
 /// Security analysis context containing all necessary information for analysis
 #[derive(Debug, Clone, Serialize, Deserialize)]

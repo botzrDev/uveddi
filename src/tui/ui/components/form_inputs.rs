@@ -23,11 +23,14 @@ use tui_input::{backend::crossterm::EventHandler, Input};
 /// Validation result for form inputs
 #[derive(Debug, Clone)]
 pub struct ValidationResult {
+    /// Whether the validation passed
     pub is_valid: bool,
+    /// Error message if validation failed
     pub error_message: Option<String>,
 }
 
 impl ValidationResult {
+    /// Create a valid validation result
     pub fn valid() -> Self {
         Self {
             is_valid: true,
@@ -35,6 +38,7 @@ impl ValidationResult {
         }
     }
 
+    /// Create an invalid validation result with error message
     pub fn invalid(message: &str) -> Self {
         Self {
             is_valid: false,

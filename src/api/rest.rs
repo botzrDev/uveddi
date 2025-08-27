@@ -24,33 +24,25 @@
 //! - `GET /app/*` - Serve SPA static assets
 //! - `GET /*` - SPA fallback for client-side routing
 
-#[cfg(feature = "security")]
-use crate::analysis::detectors::security::types::{
-    SecurityIssue, SecuritySeverity, VulnerabilityMetadata,
-};
 use crate::api::types::{ApiServer, RestApiConfig};
-use crate::security::{self, validate_api_request, validate_cli_argument, CliArgumentType};
-use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
+use crate::security::{self, validate_api_request};
 use crate::database::Database;
 use crate::report::interactive_models::{
-    DependencyGraph, InteractiveReport, REPORT_SCHEMA_VERSION,
+    InteractiveReport, REPORT_SCHEMA_VERSION,
 };
-use tracing::{info, warn, error, debug};
+use tracing::{info, warn, error};
 use axum::{
-    extract::{Path as AxumPath, State, Query},
-    http::{header, HeaderMap, HeaderValue, StatusCode, Request},
-    response::{Html, IntoResponse, Json},
-    routing::{get, get_service},
-    serve, Router, ServiceExt,
+    extract::{Path as AxumPath, State},
+    http::{header, HeaderMap, StatusCode, Request},
+    response::{IntoResponse, Json},
+    routing::{get, get_service}, Router,
     middleware::{self, Next},
 };
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use tokio::fs;
-use tower::Service;
 use tower::ServiceBuilder;
 use tower_http::{
     cors::{Any, CorsLayer},
@@ -1367,7 +1359,7 @@ async fn load_report_from_database(
     database: &Database,
     run_id: i64,
 ) -> Result<InteractiveReport, Box<dyn std::error::Error + Send + Sync>> {
-    use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue, Dependency};
+    use crate::database::models::AntiPatternType;
     use crate::report::data_transformer::DataTransformer;
 
     // Get analysis run

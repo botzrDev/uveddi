@@ -16,10 +16,10 @@ use std::hash::{Hash, Hasher};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, RwLock};
 use std::time::{Instant, SystemTime};
-use tracing::{debug, info};
+use tracing::{debug, error, info, warn};
 
 #[cfg(feature = "memory-optimization")]
-use crate::analysis::memory::zero_copy::{SerializableAst, ZeroCopyAstCache, ZeroCopyError};
+use crate::analysis::memory::zero_copy::{SerializableAst, ZeroCopyAstCache};
 #[cfg(feature = "memory-optimization")]
 use crate::ast::tree_sitter::ParsedFile;
 

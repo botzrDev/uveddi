@@ -9,10 +9,8 @@
 use crate::observability::config::{
     LogFormat, LoggingConfig, PiiRedactionConfig, RedactionStrategy,
 };
-use crate::observability::tracing_utils::TraceId;
 use anyhow::{Context, Result};
 use regex::Regex;
-use serde_json::Value;
 use std::collections::HashMap;
 use std::io;
 use std::sync::Once;

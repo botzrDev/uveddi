@@ -7,7 +7,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::time::{Duration, Instant, SystemTime};
+use std::time::Duration;
 use tokio::sync::RwLock;
 
 /// Enterprise metrics collector for all 6 optimization areas
@@ -798,12 +798,12 @@ impl EnterpriseMetricsCollector {
             .min(100.0);
 
         // Weighted average
-        (pipeline_score * 0.25
+        pipeline_score * 0.25
             + memory_score * 0.20
             + ast_score * 0.15
             + diagram_score * 0.15
             + cache_score * 0.15
-            + incremental_score * 0.10)
+            + incremental_score * 0.10
     }
 
     fn check_pipeline_regression(

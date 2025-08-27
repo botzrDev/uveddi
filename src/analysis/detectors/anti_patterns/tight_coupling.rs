@@ -12,22 +12,19 @@
 //! - Context-aware severity assessment
 
 use crate::analysis::graph::dependency::{
-    ComponentNode, DependencyEdge, LocalDependencyGraph, LocalDependencyType,
+    ComponentNode, LocalDependencyGraph, LocalDependencyType,
 };
 use crate::analysis::{AnalysisDetector, AnalysisError};
 use crate::ast::tree_sitter::{tree_sitter_javascript, tree_sitter_python, tree_sitter_rust};
-use crate::ast::tree_sitter::{Node, Query, QueryCursor, Tree};
+use crate::ast::tree_sitter::{Query, QueryCursor, Tree};
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use async_trait::async_trait;
-use petgraph::graph::{DiGraph, NodeIndex};
 use rayon::prelude::*;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::Path;
-use std::sync::Arc;
 use streaming_iterator::StreamingIterator;
-use tracing::{debug, info, warn};
+use tracing::{debug, info};
 
 /// Represents a dependency relationship between components
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -559,7 +556,7 @@ impl AnalysisDetector for TightCouplingDetector {
         }
 
         // Flatten all issues and set analysis_run_id
-        let mut all_issues: Vec<ArchitecturalIssue> = issues_by_language
+        let all_issues: Vec<ArchitecturalIssue> = issues_by_language
             .into_values()
             .flatten()
             .map(|mut issue| {

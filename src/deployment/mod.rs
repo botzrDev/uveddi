@@ -10,7 +10,7 @@ use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use tokio::time::{sleep, timeout};
+use tokio::time::sleep;
 use tracing::{error, info, instrument, warn};
 
 pub mod blue_green;

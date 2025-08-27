@@ -3,9 +3,9 @@
 //! Manages intelligent cache invalidation strategies based on change impact analysis
 //! and dependency relationships to maintain cache coherency while maximizing hit rates.
 
-use super::{DiagramCacheError, Result};
+use super::Result;
 use crate::analysis::incremental::ChangeSet;
-use crate::core::logging::{debug, info, warn};
+use crate::core::logging::{info, warn};
 use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};

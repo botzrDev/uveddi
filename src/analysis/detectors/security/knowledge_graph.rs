@@ -14,15 +14,14 @@
 //! - **Long-Term Memory**: Historical analysis results and patterns
 
 use crate::analysis::detectors::security::types::{
-    SecurityIssue, SecurityIssueType, VulnerabilityMetadata,
+    SecurityIssue, SecurityIssueType,
 };
 use crate::analysis::AnalysisError;
 use crate::ast::SourceLanguage;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
-use std::sync::Arc;
-use tracing::{debug, info, warn};
+use tracing::{debug, info};
 
 /// Main security knowledge graph that integrates structural and semantic information
 pub struct SecurityKnowledgeGraph {

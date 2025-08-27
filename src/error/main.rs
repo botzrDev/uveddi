@@ -8,7 +8,6 @@ use clap::error::Error as ClapError;
 use reqwest::Error as ReqwestError;
 use rusqlite::Error as RusqliteError;
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
 use thiserror::Error;
 
 #[derive(Error, Debug)]

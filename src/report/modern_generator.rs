@@ -15,7 +15,7 @@ use thiserror::Error;
 use crate::analysis::mermaid_generator::MermaidGenerator;
 use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
 use crate::models::visualization::{
-    ArchitecturalComponent, ComponentMetrics, ComponentType,
+    ArchitecturalComponent, ComponentType,
 };
 // Removed unused uuid import
 

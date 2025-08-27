@@ -12,7 +12,7 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::fs;
-use tracing::{debug, error, info, warn};
+use tracing::{debug, info};
 
 use crate::performance::{
     ChangePointResult, MannKendallResult, StatisticalAnalyzer, TrendDetector,

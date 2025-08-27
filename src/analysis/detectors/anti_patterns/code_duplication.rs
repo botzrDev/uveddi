@@ -1226,7 +1226,7 @@ impl CodeDuplicationDetector {
         features1: &crate::analysis::semantic::SemanticFeatures,
         features2: &crate::analysis::semantic::SemanticFeatures,
     ) -> f64 {
-        use crate::analysis::semantic::{HybridSimilarityScorer, SimilarityWeights};
+        use crate::analysis::semantic::SimilarityWeights;
 
         // Create a hybrid scorer with weights from config
         let weights = SimilarityWeights {

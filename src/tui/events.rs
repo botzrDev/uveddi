@@ -361,8 +361,11 @@ impl Default for EventHandler {
 /// Performance statistics for the event loop
 #[derive(Debug, Clone)]
 pub struct EventLoopStats {
+    /// Target frames per second for the UI
     pub target_fps: u32,
+    /// Actual frames per second being achieved
     pub actual_fps: f32,
+    /// Tick rate for the event loop (ticks per second)
     pub tick_rate: u32,
 }
 
@@ -380,7 +383,7 @@ fn spawn_action_handler(
     tokio::spawn(async move {
         while let Some(action) = action_rx.recv().await {
             match action {
-                Action::Analyze(mut command) => {
+                Action::Analyze(command) => {
                     let msg = match command.execute().await {
                         Ok(()) => AppMessage::AnalysisCompleted(
                             "Analysis completed successfully".to_string(),

@@ -10,7 +10,7 @@ use std::fs;
 use std::path::Path;
 
 use super::distribution::{DistributionChannel, SlackWebhookConfig, SmtpConfig};
-use super::reporting::{BrandingConfig, ReportType, StakeholderRole, TemplateCustomization};
+use super::reporting::{BrandingConfig, ReportType, StakeholderRole};
 use super::scheduler::{RetryConfig, ScheduleConfig};
 
 /// Main configuration structure for the reporting system

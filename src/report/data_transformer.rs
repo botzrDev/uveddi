@@ -6,8 +6,7 @@
 
 use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
 use crate::report::interactive_models::{
-    AnalysisSummary, DependencyGraph, DiagramDefinition, Finding, GraphEdge, GraphMetadata,
-    GraphNode, InteractiveReport, ProjectMetadata, ReportMetadata, REPORT_SCHEMA_VERSION,
+    AnalysisSummary, DependencyGraph, Finding, GraphMetadata, InteractiveReport, ProjectMetadata, ReportMetadata, REPORT_SCHEMA_VERSION,
 };
 use chrono::Utc;
 use std::collections::HashMap;

@@ -42,7 +42,7 @@ use crate::analysis::detectors::security::core::{
 use crate::analysis::detectors::security::knowledge_graph::SecurityKnowledgeGraph;
 use crate::analysis::detectors::security::owasp::OwaspVulnerability;
 use crate::analysis::detectors::security::taint_analysis::TaintAnalysisEngine;
-use crate::analysis::detectors::security::types::{SecurityIssue, SecuritySeverity};
+use crate::analysis::detectors::security::types::SecurityIssue;
 use crate::analysis::AnalysisError;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
@@ -50,7 +50,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::{mpsc, Mutex, RwLock};
-use tracing::{debug, error, info, instrument, warn};
+use tracing::{debug, info, instrument, warn};
 use uuid::Uuid;
 
 /// Message types for inter-agent communication

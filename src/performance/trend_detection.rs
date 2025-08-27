@@ -7,7 +7,6 @@
 
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use std::collections::VecDeque;
 
 use crate::performance::statistical_analysis::TrendType;
 

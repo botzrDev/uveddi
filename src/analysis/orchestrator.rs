@@ -5,7 +5,7 @@
 //! that delegates to specialized services.
 
 use crate::analysis::graph::dependency::LocalDependencyGraph;
-use crate::analysis::services::performance_service::{MonitoringSession, PerformanceReport};
+use crate::analysis::services::performance_service::PerformanceReport;
 use crate::analysis::services::{
     AnalysisResult, AnalysisService, DependencyAnalysisService, PerformanceAnalysisService,
 };
@@ -17,7 +17,7 @@ use crate::ai::engine::AiAnalysisEngine;
 #[cfg(feature = "ai")]
 use crate::ai::{AiInsight, AiService};
 
-use crate::core::logging::{debug, info, warn};
+use crate::core::logging::{debug, info};
 use std::path::Path;
 use std::sync::Arc;
 use std::time::Instant;

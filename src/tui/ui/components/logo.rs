@@ -12,9 +12,12 @@ use ratatui::{
 /// Logo variant based on terminal size
 #[derive(Debug, Clone, PartialEq)]
 pub enum LogoVariant {
-    Large,    // Full ASCII art for wide terminals (≥80 chars)
-    Compact,  // Simplified version for medium terminals (60-79 chars)
-    TextOnly, // Simple text for narrow terminals (<60 chars)
+    /// Full ASCII art for wide terminals (≥80 chars)
+    Large,
+    /// Simplified version for medium terminals (60-79 chars)
+    Compact,
+    /// Simple text for narrow terminals (<60 chars)
+    TextOnly,
 }
 
 /// Uveddi logo component
@@ -23,12 +26,17 @@ pub struct UveddiLogo {
     colors: LogoColors,
 }
 
+/// Color scheme configuration for the logo display
 #[derive(Debug, Clone)]
 pub struct LogoColors {
-    pub primary: Style,  // Main "UVEDDI" text
-    pub accent: Style,   // Decorative elements
-    pub border: Style,   // Box borders
-    pub subtitle: Style, // Tagline text
+    /// Main "UVEDDI" text color
+    pub primary: Style,
+    /// Decorative elements color
+    pub accent: Style,
+    /// Box borders color
+    pub border: Style,
+    /// Tagline text color
+    pub subtitle: Style,
 }
 
 impl Default for LogoColors {

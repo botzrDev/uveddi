@@ -6,16 +6,15 @@
 //! - Integration with security events from UV-247
 //! - Service Level Objectives (SLO) tracking
 
-use crate::observability::config::{MetricsConfig, SloConfig};
+use crate::observability::config::MetricsConfig;
 use crate::observability::tracing_utils::TraceId;
 use anyhow::{Context, Result};
 use axum::response::IntoResponse;
 use prometheus::{
-    Counter, CounterVec, Gauge, GaugeVec, Histogram, HistogramOpts, HistogramVec, Opts, Registry,
+    Counter, CounterVec, Gauge, GaugeVec, HistogramOpts, HistogramVec, Opts, Registry,
 };
 use std::sync::Arc;
 use std::time::{Duration, Instant};
-use tokio::time;
 
 /// Metrics collector for the Uveddi analysis system
 #[derive(Clone)]
@@ -518,8 +517,6 @@ impl MetricsServer {
     /// Start the metrics server
     pub async fn start(&self) -> Result<()> {
         use axum::{
-            http::StatusCode,
-            response::{IntoResponse, Response},
             routing::get,
             Router,
         };

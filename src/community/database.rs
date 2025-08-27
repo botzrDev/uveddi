@@ -8,9 +8,9 @@ use crate::community::models::{
     CommunityMember, DeveloperBadge, DeveloperProfile, DeveloperType, MemberActivity,
     MemberProfile, MemberRole, RolePermissions,
 };
-use crate::error::{DeserializationError, RusqliteError, UveddiError};
+use crate::error::{DeserializationError, UveddiError};
 use chrono::{DateTime, Utc};
-use rusqlite::{Connection, Result as SqlResult, Row};
+use rusqlite::{Connection, Row};
 use serde_json;
 use std::collections::HashMap;
 use std::path::Path;

@@ -1,11 +1,10 @@
 //! Zero-copy AST serialization using rkyv and memory mapping
 //! Based on UV-210 research: instant cache access with no deserialization overhead
 
-use crate::analysis::memory::metrics::BASIC_MEMORY_METRICS;
 use crate::ast::tree_sitter::ParsedFile;
 use memmap2::{Mmap, MmapOptions};
 use std::collections::HashMap;
-use std::fs::{File, OpenOptions};
+use std::fs::File;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, RwLock};
 

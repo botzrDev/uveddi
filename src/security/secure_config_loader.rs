@@ -262,9 +262,13 @@ impl SecureConfigLoader {
 /// Health status of secret stores
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct SecretStoreHealthStatus {
+    /// Health status of the secret store ("healthy", "unhealthy", "unknown")
     pub status: String,
+    /// Type of secret store ("vault", "aws", "env", etc.)
     pub store_type: String,
+    /// Timestamp of the last health check
     pub last_check: chrono::DateTime<chrono::Utc>,
+    /// Error message if the store is unhealthy
     pub error_message: Option<String>,
 }
 

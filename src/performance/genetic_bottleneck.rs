@@ -10,8 +10,6 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
 
-use crate::monitoring::PerformanceMetricsCollector;
-use crate::performance::statistical_analysis::StatisticalAnalyzer;
 
 /// Helper struct for resource statistics
 #[derive(Debug, Clone)]

@@ -433,11 +433,17 @@ impl SecretStoreFactory {
 /// Configuration for secret stores
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SecretStoreConfig {
+    /// Environment variable prefix for secret keys
     pub env_prefix: Option<String>,
+    /// HashiCorp Vault URL for secret storage
     pub vault_url: Option<String>,
+    /// Authentication token for Vault access
     pub vault_token: Option<String>,
+    /// Mount path for Vault secrets engine
     pub vault_mount_path: Option<String>,
+    /// AWS region for AWS Secrets Manager
     pub aws_region: Option<String>,
+    /// Prefix for AWS secret names
     pub aws_secret_prefix: Option<String>,
 }
 
@@ -606,10 +612,15 @@ pub struct SecretRotationManager {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// Policy configuration for automatic secret rotation
 pub struct RotationPolicy {
+    /// Pattern to match secret keys for this policy
     pub key_pattern: String,
+    /// Number of days between rotations
     pub rotation_interval_days: u32,
+    /// Days before expiration to send notifications
     pub notification_days_before: u32,
+    /// Whether to automatically rotate secrets
     pub auto_rotate: bool,
 }
 

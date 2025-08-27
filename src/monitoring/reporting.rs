@@ -7,9 +7,8 @@ use anyhow::{Context, Result};
 use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::time::SystemTime;
 use tera::{Context as TeraContext, Tera};
-use tokio::time::{interval, Instant};
+use tokio::time::interval;
 use uuid::Uuid;
 
 use super::distribution::{DistributionChannel, DistributionManager};

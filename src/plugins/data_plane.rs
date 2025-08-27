@@ -8,8 +8,6 @@ use crate::{
     plugins::{errors::*, types::AstHandle},
 };
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "tree-sitter")]
-use tree_sitter;
 
 #[cfg(not(feature = "wasm-plugins"))]
 use std::collections::HashMap;

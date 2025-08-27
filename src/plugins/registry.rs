@@ -8,7 +8,6 @@ use crate::plugins::{
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
-    fs,
     path::{Path, PathBuf},
 };
 use tokio::fs as async_fs;

@@ -13,8 +13,6 @@ use crate::plugins::knowledge::*;
 use crate::plugins::PluginError;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use tracing::{info, warn, error, debug};
 
 // Stub types for when AI features are disabled
 #[cfg(not(feature = "ai"))]
@@ -173,7 +171,7 @@ impl ExampleAntiPatternPlugin {
     }
 
     async fn load_custom_patterns(&self) -> Result<Vec<PatternKnowledge>, PluginError> {
-        use std::collections::HashMap;
+        
 
         // Example: Load patterns from plugin-specific source
         // TODO: Fix PatternKnowledge struct fields - using available fields only

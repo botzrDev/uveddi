@@ -3,7 +3,7 @@
 //! This module provides comprehensive configuration validation with intelligent
 //! suggestions for optimal settings based on project characteristics.
 
-use crate::config::{Config, DeadCodeConfig, LargeClassConfig, LanguageThresholds};
+use crate::config::Config;
 use crate::error::UveddiError;
 use serde::{Deserialize, Serialize};
 use std::path::Path;

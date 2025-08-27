@@ -2,7 +2,7 @@ use crate::core::logging::error;
 use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue, AnalysisStats};
 use crate::error::{Result, UveddiError};
 use crate::security;
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use rusqlite::Connection;
 use std::path::Path;
 use std::sync::{Arc, Mutex};

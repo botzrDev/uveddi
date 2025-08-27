@@ -9,12 +9,10 @@
 use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::path::PathBuf;
 use std::time::{Duration, SystemTime};
-use tokio::time::{sleep, timeout, Instant};
+use tokio::time::{sleep, Instant};
 use tracing::{debug, error, info, instrument, warn};
 
-use super::{DeploymentStatus, Environment, HealthStatus};
 
 /// Disaster recovery coordinator
 #[derive(Debug)]

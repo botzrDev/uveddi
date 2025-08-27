@@ -5,7 +5,6 @@
 
 use super::{HealthCheck, HealthStatus};
 use crate::error::UveddiError;
-use std::path::Path;
 use tokio::fs;
 
 /// Check overall system health

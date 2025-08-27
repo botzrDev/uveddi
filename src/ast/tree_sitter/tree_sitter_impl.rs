@@ -1,7 +1,6 @@
 // Implementation file for tree-sitter enabled builds
 // UV-97: Tree-sitter feature gating implementation
 
-use crate::error::UveddiError;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};

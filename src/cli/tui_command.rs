@@ -7,7 +7,7 @@
 use anyhow::{Context, Result};
 use clap::Args;
 use std::path::PathBuf;
-use tracing::{info, warn, error, debug};
+use tracing::error;
 
 #[cfg(feature = "tui")]
 use crate::tui::events::run_tui;

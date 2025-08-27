@@ -5,7 +5,6 @@
 
 use super::{HealthCheck, HealthStatus};
 use crate::error::UveddiError;
-use std::time::Duration;
 
 /// Check AI integration health
 pub async fn check_ai_health() -> Result<Vec<HealthCheck>, UveddiError> {

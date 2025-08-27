@@ -6,10 +6,10 @@
 //! - Enhanced regression detection with statistical confidence
 //! - Performance report generation combining both systems
 
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
-use std::time::{Duration, SystemTime};
+use std::time::SystemTime;
 use tracing::{debug, error, info, warn};
 
 use crate::performance::{

@@ -8,16 +8,13 @@ use crate::analysis::components::ast_provider::ParsedFile;
 use crate::analysis::components::traits::{
     AstProvider as AstProviderTrait, DependencyGraphBuilder as DependencyGraphBuilderTrait,
 };
-use crate::analysis::components::CacheManager as CacheManagerTrait;
 use crate::analysis::components::{AstProviderImpl, CacheManagerImpl, DependencyGraphBuilderImpl};
 use crate::analysis::detectors::dependency::{Dependency, DependencyExtractor};
 use crate::analysis::graph::dependency::{
-    ComponentNode, EdgeCount, IntoEdges, LocalDependencyGraph, LocalDependencyType,
+    EdgeCount, IntoEdges, LocalDependencyGraph, LocalDependencyType,
 };
-use crate::analysis::traits::DependencyExtractorTrait;
-use crate::database::models::ArchitecturalIssue;
 
-use super::{AnalysisResult, ServiceConfiguration};
+use super::AnalysisResult;
 
 use crate::core::logging::{debug, info, warn};
 use std::collections::{HashMap, HashSet};

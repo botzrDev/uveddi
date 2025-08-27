@@ -10,7 +10,7 @@ use crate::analysis::detectors::security::types::{SecurityIssue, SecuritySeverit
 use crate::analysis::AnalysisError;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use tracing::{debug, info, warn};
+use tracing::{debug, info};
 
 /// Main validation engine that coordinates all validation strategies
 pub struct ValidationEngine {

@@ -14,13 +14,12 @@ use crate::analysis::cfg::{CfgEdge, CfgNode, CfgNodeType, ControlFlowGraph};
 use crate::analysis::errors::AnalysisError;
 use crate::ast::tree_sitter::Node;
 use crate::ast::tree_sitter_impl::SourceLanguage;
-use crate::core::logging::{debug, warn};
+use crate::core::logging::debug;
 use ndarray::Array1;
 use petgraph::{Direction, Graph};
 use rayon::prelude::*;
 use sha2::{Digest, Sha256};
 use std::collections::{HashMap, HashSet};
-use tracing::{info, error};
 
 /// Semantic features extracted from code without ML
 #[derive(Debug, Clone)]

@@ -9,7 +9,7 @@ use crate::core::interfaces::persistence::{
     PersistenceProvider, PersistenceResult,
 };
 use crate::database::crud::Database;
-use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
+use crate::database::models::{AnalysisRun, ArchitecturalIssue};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use std::sync::Arc;

@@ -8,7 +8,6 @@ use crate::ast::tree_sitter::{Node, Query, QueryCursor, Tree};
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
 use crate::constants::detector_thresholds;
 use crate::constants::severity_weights;
-use crate::core::logging::debug;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use async_trait::async_trait;
 #[cfg(feature = "tree-sitter")]

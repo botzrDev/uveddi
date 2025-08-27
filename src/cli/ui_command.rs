@@ -11,7 +11,7 @@ use clap::{Args, Subcommand};
 use std::path::PathBuf;
 use std::sync::Arc;
 use tokio;
-use tracing::{info, warn, error, debug};
+use tracing::{info, error};
 
 /// UI-related commands for interactive reporting
 #[derive(Debug, Args)]

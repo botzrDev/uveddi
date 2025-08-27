@@ -44,10 +44,10 @@
 pub mod validation;
 
 // use crate::analysis::components::ComponentConfig; // Unused import
-use crate::error::{Result, UveddiError};
+use crate::error::UveddiError;
 use crate::security::{self, SecurityError};
 use serde::{Deserialize, Serialize};
-use std::{env, fs, path::Path};
+use std::{env, fs};
 
 /// Placeholder documentation for public items
 ///
@@ -233,9 +233,8 @@ impl Config {
             ".", "./config", "/etc/uveddi", "~/.config/uveddi",
             &config_dir
         ];
-        let allowed_config_paths: Vec<&Path> = allowed_config_dirs_str.iter().map(|s| Path::new(s)).collect();
         
-        let _validation = security::validate_config_file_path(Path::new(path), Some(&allowed_config_paths))
+        let _validation = security::validate_config_file_path(path, Some(&allowed_config_dirs_str))
             .map_err(|e| UveddiError::config_error(&format!("Configuration file path validation failed: {}", e), path))?;
 
         // Read and validate file content
@@ -247,7 +246,7 @@ impl Config {
             .map_err(|e| UveddiError::config_error(&format!("Configuration content validation failed: {}", e), path))?;
             
         // Parse TOML configuration
-        let mut config: Config = toml::from_str(&content)
+        let config: Config = toml::from_str(&content)
             .map_err(|e| crate::error::UveddiError::config_error(&e.to_string(), path))?;
 
         // Validate configuration values

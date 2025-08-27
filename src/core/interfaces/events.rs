@@ -10,7 +10,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::broadcast;
-use tracing::{info, warn, error, debug};
+use tracing::error;
 
 /// Central event bus for component communication
 ///

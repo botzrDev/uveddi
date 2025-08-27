@@ -29,9 +29,13 @@ use crate::{
 /// Form sections for organizing related fields
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum FormSection {
+    /// Basic analysis settings (path, output format, etc.)
     BasicSettings,
+    /// AI and machine learning configuration
     AIConfiguration,
+    /// Dead code detection parameters
     DeadCodeDetection,
+    /// Large class detection thresholds
     LargeClassesDetection,
 }
 
@@ -61,28 +65,45 @@ impl FormSection {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum FormField {
     // Basic Settings
+    /// Path to analyze
     Path,
+    /// Output format (html, json, markdown)
     OutputFormat,
+    /// Output file path
     OutputFile,
 
     // AI Configuration
+    /// Enable AI-powered analysis
     EnableAI,
+    /// Ollama API URL
     OllamaApiUrl,
+    /// Ollama model name
     OllamaModel,
 
     // Dead Code Detection
+    /// Confidence threshold for dead code detection
     DeadCodeConfidence,
+    /// Enable library mode for dead code detection
     DeadCodeLibraryMode,
+    /// Patterns to ignore in dead code detection
     DeadCodeIgnorePatterns,
+    /// Keep alive patterns for dead code detection
     DeadCodeKeepAlive,
 
     // Large Classes Detection
+    /// Maximum lines of code threshold
     LargeClassesMaxLoc,
+    /// Maximum methods per class threshold
     LargeClassesMaxMethods,
+    /// Maximum fields per class threshold
     LargeClassesMaxFields,
+    /// Maximum complexity threshold
     LargeClassesMaxComplexity,
+    /// Maximum LCOM (Lack of Cohesion of Methods) threshold
     LargeClassesMaxLcom,
+    /// Patterns to ignore in large class detection
     LargeClassesIgnorePatterns,
+    /// Minimum severity level for large class issues
     LargeClassesMinSeverity,
 }
 

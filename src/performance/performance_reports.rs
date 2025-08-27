@@ -6,7 +6,7 @@
 //! - Historical trend analysis
 //! - Executive summary generation
 
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use std::time::SystemTime;
@@ -14,8 +14,7 @@ use tera::{Context, Tera};
 use tokio::fs;
 
 use crate::performance::{
-    BaselineComparison, BaselineRecommendation, BenchmarkBaseline, ChangeCategory,
-    ChangePointResult, MannKendallResult, StatisticalAnalyzer, TrendDetector,
+    BaselineComparison, BaselineRecommendation, BenchmarkBaseline, ChangeCategory, StatisticalAnalyzer, TrendDetector,
 };
 
 /// Comprehensive performance report

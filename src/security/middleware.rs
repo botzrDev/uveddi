@@ -34,9 +34,13 @@ use tower_http::{
 /// Security middleware services
 #[derive(Clone)]
 pub struct SecurityServices {
+    /// Authentication service for user verification
     pub auth_service: Arc<AuthenticationService>,
+    /// Authorization engine for permission checks
     pub authz_engine: Arc<AuthorizationEngine>,
+    /// Audit logger for security event logging
     pub audit_logger: Arc<AuditLogger>,
+    /// Rate limiter for request throttling
     pub rate_limiter: Arc<RateLimiter>,
 }
 

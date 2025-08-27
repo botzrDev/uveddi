@@ -259,7 +259,7 @@ mod tests {
             tree: None,
             source: Arc::new("fn main() {}".to_string()),
             custom_ast: Arc::new(None),
-            modified_at: ArchivableSystemTime(std::time::SystemTime::now()),
+            modified_at: std::time::SystemTime::now().into(),
         }
     }
 

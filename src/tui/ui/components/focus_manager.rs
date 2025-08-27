@@ -94,6 +94,7 @@ impl FocusManager {
         self.focusable_inputs.get(index).map(|b| b.as_ref())
     }
 
+    /// Handle keyboard input for the currently focused element
     pub fn handle_key(
         &mut self,
         key: ratatui::crossterm::event::KeyEvent,

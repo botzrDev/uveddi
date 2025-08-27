@@ -8,7 +8,7 @@
 use crate::ai::knowledge::context_selection::*;
 #[cfg(feature = "ai")]
 use crate::ai::knowledge::schema::*;
-use crate::plugins::{PluginError, PluginId, PluginMetadata, SecurityPolicy};
+use crate::plugins::PluginError;
 // Import stub types when AI features are disabled
 #[cfg(not(feature = "ai"))]
 use crate::plugins::integration::{

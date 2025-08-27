@@ -9,7 +9,7 @@ use crate::ast::tree_sitter_impl::ParsedFile;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use crate::error::UveddiError;
 use crate::plugins::{
-    host_functions::{HostContext, HostFunctions, PluginIssue},
+    host_functions::{HostContext, PluginIssue},
     PluginId, PluginRuntime, WasmPluginEngine,
 };
 use async_trait::async_trait;

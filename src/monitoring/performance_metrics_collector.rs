@@ -5,7 +5,6 @@
 
 use crate::database::models::{ComponentPerformanceMetrics, PerformanceMetricsConfig};
 use crate::monitoring::memory_monitor::MemoryMonitor;
-use chrono::{DateTime, Utc};
 use rusqlite::Connection;
 use serde_json;
 use std::sync::atomic::{AtomicBool, Ordering};

@@ -6,7 +6,6 @@
 
 use crate::analysis::components::traits::{
     AnalysisAggregator as AnalysisAggregatorTrait, DetectorScheduler as DetectorSchedulerTrait,
-    PluginManagerHandle as PluginManagerHandleTrait,
 };
 use crate::analysis::components::{
     AnalysisAggregator, ConfigurationService, DetectorScheduler, PluginManagerHandle,
@@ -14,12 +13,10 @@ use crate::analysis::components::{
 use crate::analysis::detector_factory::DetectorFactory;
 use crate::analysis::file_discovery::{FileDiscovery, SourceFile};
 use crate::analysis::symbols::GlobalSymbolTable;
-use crate::analysis::workspace::{WorkspaceDetector, WorkspaceInfo, WorkspaceType};
-use crate::ast::ParsedFile;
+use crate::analysis::workspace::{WorkspaceDetector, WorkspaceInfo};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
-use crate::ingestion::AsyncWalker;
 
-use super::{AnalysisResult, ServiceConfiguration};
+use super::AnalysisResult;
 
 use crate::core::logging::{debug, info, warn};
 use std::path::Path;

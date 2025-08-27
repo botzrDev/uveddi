@@ -9,11 +9,10 @@ use crate::observability::{
     telemetry::{TelemetryLevel, TelemetrySender, TelemetryValue},
     tracing_utils::TraceId,
 };
-use crate::resilience::{circuit_breaker::State, CircuitBreaker as BaseCircuitBreaker};
-use anyhow::Context;
+use crate::resilience::CircuitBreaker as BaseCircuitBreaker;
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 use tokio::time::sleep;
 use tracing::{error, info, instrument, warn};
 

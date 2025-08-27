@@ -6,12 +6,11 @@ use crate::analysis::adapters::ResultCacheAdapter;
 use crate::analysis::cache::ast::{AstCache, CacheConfig};
 use crate::analysis::components::{
     AnalysisAggregator, AstProviderImpl, CacheManagerImpl, ConfigurationService,
-    DependencyGraphBuilderImpl, DetectorScheduler, PluginManager, PluginManagerHandle,
+    DependencyGraphBuilderImpl, DetectorScheduler, PluginManager,
 };
 use crate::analysis::detector_factory::DetectorFactory;
 use crate::analysis::traits::{AstParserTrait, DependencyExtractorTrait, ResultCacheTrait};
 use crate::analysis::AnalysisDetector;
-use crate::ast::tree_sitter_impl::AstParser;
 use crate::cache::result_cache::ResultCache;
 use crate::error::UveddiError;
 use crate::monitoring::performance_metrics_collector::PerformanceMetricsCollector;
@@ -201,7 +200,7 @@ impl AnalysisEngineBuilder {
     ///
     /// # Errors
     /// Returns `UveddiError` if initialization fails.
-    pub fn build(mut self) -> crate::error::Result<crate::analysis::AnalysisEngine> {
+    pub fn build(self) -> crate::error::Result<crate::analysis::AnalysisEngine> {
         if self.enable_plugins {
             warn!("Plugins enabled, but building synchronously. Use `build_async().await` for proper plugin initialization.");
         }
@@ -381,7 +380,7 @@ impl AnalysisEngineBuilder {
     ///
     /// # Errors
     /// Returns `UveddiError` if initialization fails.
-    pub async fn build_async(mut self) -> crate::error::Result<crate::analysis::AnalysisEngine> {
+    pub async fn build_async(self) -> crate::error::Result<crate::analysis::AnalysisEngine> {
         // Extract all values before using self methods to avoid partial moves
         let enable_knowledge = self.enable_knowledge_enhancement;
         let enable_ai = self.enable_ai_explanations;

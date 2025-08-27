@@ -3,13 +3,11 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
-use tracing::{info, warn, error, debug};
+use tracing::{info, error};
 
 #[cfg(feature = "image-rendering")]
 use crate::report::image_renderer::{ImageFormat, ImageRenderer, RenderingServiceConfig};
 
-#[cfg(not(feature = "image-rendering"))]
-use super::image_stubs::{ImageFormat, ImageRenderer, RenderingServiceConfig};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PerformanceBaseline {

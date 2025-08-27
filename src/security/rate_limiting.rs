@@ -49,6 +49,7 @@ struct RateLimitEntry {
 }
 
 impl InMemoryRateLimitStorage {
+    /// Create a new in-memory rate limit storage
     pub fn new() -> Self {
         Self {
             data: Arc::new(RwLock::new(HashMap::new())),
@@ -170,6 +171,7 @@ pub struct RedisRateLimitStorage {
 }
 
 impl RedisRateLimitStorage {
+    /// Create a new Redis rate limit storage with connection URL
     pub fn new(redis_url: String) -> Self {
         Self { redis_url }
     }
@@ -385,14 +387,20 @@ pub fn create_governor_config(config: &RateLimitingConfig) -> (u32, u32) {
 /// Rate limiting statistics
 #[derive(Debug, Clone)]
 pub struct RateLimitStats {
+    /// Total number of requests processed
     pub total_requests: u64,
+    /// Number of requests that were allowed through
     pub allowed_requests: u64,
+    /// Number of requests that were rejected due to rate limits
     pub rejected_requests: u64,
+    /// Number of currently active rate limit keys
     pub active_keys: u64,
+    /// List of top rate-limited identifiers with their request counts
     pub top_rate_limited_identifiers: Vec<(String, u32)>,
 }
 
 impl RateLimitStats {
+    /// Create a new rate limit statistics tracker
     pub fn new() -> Self {
         Self {
             total_requests: 0,
@@ -403,6 +411,7 @@ impl RateLimitStats {
         }
     }
 
+    /// Calculate the rejection rate as a percentage
     pub fn rejection_rate(&self) -> f64 {
         if self.total_requests == 0 {
             0.0
@@ -425,6 +434,7 @@ pub struct RateLimitManager {
 }
 
 impl RateLimitManager {
+    /// Create a new rate limit manager with the given limiter
     pub fn new(limiter: Arc<RateLimiter>) -> Self {
         Self {
             limiter,

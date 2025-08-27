@@ -63,6 +63,7 @@ impl Default for OrchestratorConfig {
 }
 
 impl ServiceOrchestrator {
+    /// Create a new service orchestrator
     pub fn new() -> Self {
         Self {
             api_server_handle: None,
@@ -198,7 +199,7 @@ impl ServiceOrchestrator {
     fn start_rendering_service(&mut self, port: u16) -> Result<()> {
         let rendering_service_path = self.find_rendering_service_path()?;
 
-        let mut child = Command::new("node")
+        let child = Command::new("node")
             .arg(&rendering_service_path)
             .env("PORT", port.to_string())
             .env("NODE_ENV", "production")
@@ -216,7 +217,7 @@ impl ServiceOrchestrator {
     fn start_frontend_dev_server(&mut self, port: u16) -> Result<()> {
         let frontend_path = self.find_frontend_path()?;
 
-        let mut child = Command::new("npm")
+        let child = Command::new("npm")
             .arg("run")
             .arg("dev")
             .env("PORT", port.to_string())

@@ -22,7 +22,7 @@ pub use invalidation_manager::{InvalidationManager, InvalidationStrategy};
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::path::PathBuf;
 
 /// Types of diagrams supported by the cache system

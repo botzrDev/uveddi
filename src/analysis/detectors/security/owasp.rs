@@ -7,8 +7,7 @@
 //! exist due to underlying design flaws.
 
 use crate::analysis::detectors::security::types::{
-    SecurityIssue, SecurityIssueType, SecurityLocation, SecuritySeverity, VulnerabilityMetadata,
-    VulnerabilityType,
+    SecurityIssueType, SecurityLocation, SecuritySeverity, VulnerabilityMetadata,
 };
 use crate::analysis::AnalysisError;
 use crate::ast::{ParsedFile, SourceLanguage};

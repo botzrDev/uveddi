@@ -12,7 +12,7 @@ use std::collections::{HashMap, VecDeque};
 use std::path::PathBuf;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tokio::sync::RwLock;
-use tracing::{debug, error, info, instrument, warn};
+use tracing::{debug, info, instrument, warn};
 
 use crate::performance::genetic_bottleneck::{
     BottleneckAnalysis, GeneticBottleneckDetector, PerformanceDataPoint,

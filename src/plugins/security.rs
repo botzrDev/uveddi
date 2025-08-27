@@ -2,7 +2,7 @@
 
 use crate::plugins::{
     errors::*,
-    types::{PluginId, PluginStats, ResourceLimits},
+    types::ResourceLimits,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;

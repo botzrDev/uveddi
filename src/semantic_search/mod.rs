@@ -107,6 +107,7 @@ pub struct IndexedChunk {
 /// Alias for a single semantic search result: a borrowed chunk and its similarity score
 pub type SearchResult<'a> = (&'a IndexedChunk, f32);
 
+/// In-memory vector index for semantic search over code chunks
 pub struct VectorIndex {
     /// Collection of indexed code chunks with embeddings
     pub chunks: Vec<IndexedChunk>,

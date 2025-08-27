@@ -9,7 +9,7 @@ use crate::analysis::detectors::anti_patterns::{
     large_classes::LargeClassConfig,
 };
 use crate::analysis::standardized_config::{
-    ConfigValue, StandardConfigBuilder, StandardDetectorConfig,
+    StandardConfigBuilder, StandardDetectorConfig,
 };
 use crate::analysis::IssueSeverity;
 use crate::ast::tree_sitter_impl::SourceLanguage;

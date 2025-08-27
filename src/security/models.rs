@@ -11,12 +11,19 @@ use uuid::Uuid;
 /// User information from identity providers
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct User {
+    /// Unique internal user identifier
     pub id: Uuid,
+    /// External identity provider user ID
     pub external_id: String,
+    /// User's email address
     pub email: String,
+    /// User's display name or full name
     pub display_name: String,
+    /// Whether the user account is active
     pub is_active: bool,
+    /// When the user account was created
     pub created_at: DateTime<Utc>,
+    /// When the user account was last updated
     pub updated_at: DateTime<Utc>,
 }
 
@@ -56,10 +63,15 @@ impl User {
 /// System role definitions
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Role {
+    /// Unique role identifier
     pub id: Uuid,
+    /// Role name
     pub name: String,
+    /// Optional role description
     pub description: Option<String>,
+    /// Whether this is a system-defined role
     pub is_system_role: bool,
+    /// When the role was created
     pub created_at: DateTime<Utc>,
 }
 
@@ -226,10 +238,15 @@ impl std::str::FromStr for UserRole {
 /// Permission definition
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Permission {
+    /// Unique permission identifier
     pub id: Uuid,
+    /// Resource that this permission applies to
     pub resource: String,
+    /// Action that can be performed on the resource
     pub action: String,
+    /// Optional scope for the permission (e.g., "own", "all")
     pub scope: Option<String>,
+    /// When the permission was created
     pub created_at: DateTime<Utc>,
 }
 
@@ -262,10 +279,15 @@ impl Permission {
 /// User role assignment
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct UserRoleAssignment {
+    /// ID of the user receiving the role
     pub user_id: Uuid,
+    /// ID of the role being assigned
     pub role_id: Uuid,
+    /// ID of the user who granted this role (if applicable)
     pub granted_by: Option<Uuid>,
+    /// When the role was granted
     pub granted_at: DateTime<Utc>,
+    /// When the role assignment expires (if applicable)
     pub expires_at: Option<DateTime<Utc>>,
 }
 
@@ -312,14 +334,23 @@ impl UserRoleAssignment {
 /// User session information
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Session {
+    /// Unique session identifier
     pub id: Uuid,
+    /// ID of the user this session belongs to
     pub user_id: Uuid,
+    /// Session token used for authentication
     pub session_token: String,
+    /// When the session expires
     pub expires_at: DateTime<Utc>,
+    /// Client IP address (if available)
     pub ip_address: Option<String>,
+    /// Client user agent string (if available)
     pub user_agent: Option<String>,
+    /// Whether the session is currently active
     pub is_active: bool,
+    /// When the session was created
     pub created_at: DateTime<Utc>,
+    /// When the session was last accessed
     pub last_accessed: DateTime<Utc>,
 }
 
@@ -370,16 +401,27 @@ impl Session {
 /// API key for service-to-service authentication
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ApiKey {
+    /// Unique API key identifier
     pub id: Uuid,
+    /// ID of the user who owns this API key (if applicable)
     pub user_id: Option<Uuid>,
+    /// Human-readable name for the API key
     pub name: String,
+    /// Cryptographic hash of the API key
     pub key_hash: String,
+    /// Prefix of the API key for identification
     pub key_prefix: String,
-    pub permissions: Option<String>, // JSON string
+    /// JSON string containing permissions granted to this API key
+    pub permissions: Option<String>,
+    /// Whether the API key is currently active
     pub is_active: bool,
+    /// When the API key expires (if applicable)
     pub expires_at: Option<DateTime<Utc>>,
+    /// When the API key was last used
     pub last_used: Option<DateTime<Utc>>,
+    /// When the API key was created
     pub created_at: DateTime<Utc>,
+    /// ID of the user who created this API key
     pub created_by: Option<Uuid>,
 }
 
@@ -433,11 +475,17 @@ impl ApiKey {
 /// Audit event types
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum AuditEventType {
+    /// Authentication events (login, logout, etc.)
     Authentication,
+    /// Authorization events (permission checks, access grants/denials)
     Authorization,
+    /// Data access events (read, write, delete operations)
     DataAccess,
+    /// Configuration or settings changes in the system
     ConfigurationChange,
+    /// Security policy violations and potential threats
     SecurityViolation,
+    /// General system events and operations
     SystemEvent,
 }
 
@@ -473,8 +521,11 @@ impl std::str::FromStr for AuditEventType {
 /// Audit outcome
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum AuditOutcome {
+    /// Operation completed successfully
     Success,
+    /// Operation failed due to an error
     Failure,
+    /// Operation denied due to authorization failure
     Denied,
 }
 
@@ -504,17 +555,29 @@ impl std::str::FromStr for AuditOutcome {
 /// Audit event for security logging
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AuditEvent {
+    /// Unique identifier for the audit event
     pub id: Uuid,
+    /// When the event occurred (UTC)
     pub timestamp: DateTime<Utc>,
+    /// Type of event being audited
     pub event_type: AuditEventType,
+    /// ID of user associated with the event (if applicable)
     pub user_id: Option<Uuid>,
+    /// ID of session associated with the event (if applicable)
     pub session_id: Option<Uuid>,
+    /// Resource being accessed or modified
     pub resource: String,
+    /// Action being performed on the resource
     pub action: String,
+    /// Result of the operation
     pub outcome: AuditOutcome,
+    /// IP address of the client (if available)
     pub ip_address: Option<String>,
+    /// User agent string of the client (if available)
     pub user_agent: Option<String>,
+    /// Additional contextual information as JSON
     pub additional_data: serde_json::Value,
+    /// BLAKE3 hash for tamper detection
     pub integrity_hash: String,
 }
 
@@ -579,13 +642,21 @@ impl AuditEvent {
 /// Authentication context
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AuthenticatedUser {
+    /// Internal user ID
     pub id: Uuid,
+    /// External identity provider ID
     pub external_id: String,
+    /// User's email address
     pub email: String,
+    /// User's display name
     pub display_name: String,
+    /// List of roles assigned to the user
     pub roles: Vec<UserRole>,
+    /// List of permissions granted to the user
     pub permissions: Vec<Permission>,
+    /// Current session ID (if logged in via session)
     pub session_id: Option<Uuid>,
+    /// When the user was authenticated
     pub authenticated_at: DateTime<Utc>,
 }
 
@@ -635,13 +706,21 @@ impl AuthenticatedUser {
 /// Authorization context for permission checks
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuthContext {
+    /// ID of the user requesting authorization
     pub user_id: Uuid,
+    /// Resource being accessed
     pub resource: String,
+    /// Action being performed
     pub action: String,
+    /// Optional scope for the operation
     pub scope: Option<String>,
+    /// Client IP address for context
     pub ip_address: Option<String>,
+    /// Client user agent for context
     pub user_agent: Option<String>,
+    /// Session ID for the request
     pub session_id: Option<Uuid>,
+    /// Additional context data as key-value pairs
     pub additional_context: HashMap<String, serde_json::Value>,
 }
 
@@ -688,12 +767,19 @@ impl AuthContext {
 /// Rate limiting information
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct RateLimitInfo {
+    /// Identifier being rate limited (IP, user ID, etc.)
     pub identifier: String,
+    /// Type of identifier being rate limited
     pub identifier_type: RateLimitIdentifierType,
+    /// Endpoint or resource being rate limited
     pub endpoint: String,
+    /// Number of requests made in current window
     pub request_count: u32,
+    /// Start time of the current rate limiting window
     pub window_start: DateTime<Utc>,
-    pub window_size: u32, // in seconds
+    /// Size of the rate limiting window in seconds
+    pub window_size: u32,
+    /// Maximum number of requests allowed in the window
     pub limit: u32,
 }
 
@@ -723,8 +809,11 @@ impl RateLimitInfo {
 /// Rate limit identifier types
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum RateLimitIdentifierType {
+    /// Rate limiting by client IP address
     IpAddress,
+    /// Rate limiting by authenticated user ID
     UserId,
+    /// Rate limiting by API key
     ApiKey,
 }
 

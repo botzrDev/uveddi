@@ -10,7 +10,6 @@ use std::collections::HashMap;
 use std::fs;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
-use dirs;
 
 #[derive(Args, Debug)]
 pub struct InitCommand {

@@ -75,7 +75,7 @@ impl GlobalSymbolTable {
     ) -> Result<Self, Box<dyn std::error::Error>> {
         // UV-2: Follow ResultCache pattern for SQLite persistence
         // Use rusqlite for SQLite integration
-        use rusqlite::{params, Connection};
+        use rusqlite::Connection;
         let conn = Connection::open(db_path)?;
         // Create symbols table if not exists
         conn.execute(

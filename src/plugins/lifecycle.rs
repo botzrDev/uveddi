@@ -5,7 +5,7 @@ use crate::plugins::{
     errors::*,
     registry::*,
     security::*,
-    types::{HostState, PluginConfig, PluginId, PluginStats, PluginStatus, ResourceLimits},
+    types::{PluginId, PluginStats, PluginStatus},
     verification::*,
 };
 

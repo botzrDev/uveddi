@@ -6,7 +6,6 @@
 use crate::analysis::errors::AnalysisError;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
-use std::fs;
 use std::path::{Path, PathBuf};
 use tokio::fs as async_fs;
 use tracing::{debug, info, warn};

@@ -48,8 +48,11 @@ pub enum SLIType {
 /// Service Level Indicator value
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum SLIValue {
+    /// Floating point metric value
     Float(f64),
+    /// Integer metric value
     Integer(i64),
+    /// Boolean metric value (success/failure)
     Boolean(bool),
 }
 
@@ -99,7 +102,9 @@ pub struct SLI {
 /// Service Level Objective target
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum SLOTarget {
+    /// Target as a percentage (0-100)
     Percentage(f64),
+    /// Target as an absolute threshold value
     Threshold(f64),
 }
 
@@ -161,51 +166,72 @@ pub struct SLO {
 /// Alert severity levels
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum AlertSeverity {
+    /// Critical alert requiring immediate action
     Critical,
+    /// Warning alert indicating potential issues
     Warning,
+    /// Informational alert for awareness
     Info,
 }
 
 /// Risk level classification
 #[derive(Debug, Serialize, PartialEq)]
 pub enum RiskLevel {
+    /// Low risk of SLA breach
     Low,
+    /// Medium risk of SLA breach
     Medium,
+    /// High risk of SLA breach
     High,
+    /// Risk level cannot be determined
     Unknown,
 }
 
 /// SLA risk assessment result
 #[derive(Debug, Serialize)]
 pub struct SLARiskAssessment {
+    /// Assessed risk level for SLA breach
     pub risk_level: RiskLevel,
+    /// Confidence score in the risk assessment (0.0-1.0)
     pub confidence: f64,
+    /// Probability of SLA breach occurring (0.0-1.0)
     pub predicted_sla_breach_probability: f64,
+    /// List of recommendations to mitigate risk
     pub recommendations: Vec<String>,
 }
 
 /// Basic SLA framework for testing and validation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SLAFramework {
+    /// Map of service names to their SLA definitions
     pub services: HashMap<String, ServiceDefinition>,
+    /// Global configuration for the SLA framework
     pub global_config: GlobalSLAConfig,
 }
 
 /// Definition of a service and its SLAs
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ServiceDefinition {
+    /// Name of the service
     pub name: String,
+    /// Description of what the service does
     pub description: String,
+    /// List of Service Level Indicators for this service
     pub slis: Vec<SLI>,
+    /// List of Service Level Objectives for this service
     pub slos: Vec<SLO>,
 }
 
 /// Global SLA configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GlobalSLAConfig {
+    /// Timezone for SLA calculations and reporting
     pub timezone: String,
+    /// How often to measure and record SLI values
     pub measurement_interval: Duration,
+    /// How long to retain SLA measurement data
     pub retention_period: Duration,
+    /// Whether to enable predictive analysis for SLA breach risk
     pub predictive_analysis: bool,
 }
 

@@ -197,7 +197,7 @@ impl CacheManager for CacheManagerImpl {
 
         // Clear legacy cache for compatibility
         {
-            let mut legacy_ast_cache = self.legacy_ast_cache.write().await;
+            let legacy_ast_cache = self.legacy_ast_cache.write().await;
             legacy_ast_cache.clear();
         }
 

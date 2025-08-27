@@ -23,10 +23,8 @@
 //! - **JavaScript**: Framework-aware thresholds for React/Node.js patterns
 
 use crate::analysis::{AnalysisDetector, AnalysisError};
-use tracing::{warn, error};
 #[cfg(not(feature = "tree-sitter"))]
 use crate::ast::tree_sitter::StreamingIterator;
-use crate::ast::tree_sitter::{tree_sitter_javascript, tree_sitter_python, tree_sitter_rust};
 #[cfg(not(feature = "tree-sitter"))]
 use crate::ast::tree_sitter::{Language, Node, Parser, Query, QueryCursor, QueryMatch};
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
@@ -38,7 +36,7 @@ use std::collections::HashMap;
 #[cfg(feature = "tree-sitter")]
 use tree_sitter::StreamingIterator;
 #[cfg(feature = "tree-sitter")]
-use tree_sitter::{Language, Node, Parser, Query, QueryCursor, QueryMatch};
+use tree_sitter::{Language, Node, Query, QueryCursor, QueryMatch};
 
 /// Represents metrics collected for a method/function
 #[derive(Debug, Clone)]
@@ -690,7 +688,7 @@ impl LongMethodsDetector {
         _source: &[u8],
     ) -> Result<u32, AnalysisError> {
         let mut complexity = 1; // Base complexity
-        let mut cursor = node.walk();
+        let cursor = node.walk();
 
         fn traverse_complexity(node: &Node, complexity: &mut u32) {
             let mut cursor = node.walk();

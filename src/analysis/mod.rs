@@ -185,7 +185,6 @@ pub use workspace::{CrateInfo, WorkspaceDetector, WorkspaceInfo};
 use crate::ast::ParsedFile;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use async_trait::async_trait;
-use tracing::{info, warn, error, debug};
 
 /// Core analysis trait for all detectors
 ///

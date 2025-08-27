@@ -2,7 +2,6 @@
 //! Targets expensive-to-construct detector configurations and temporary objects
 
 use super::pool::{MemoryPool, PoolStats};
-use crate::analysis::memory::allocator::AllocationStrategy;
 use crate::analysis::memory::config::MemoryOptimizationConfig;
 use std::sync::Arc;
 

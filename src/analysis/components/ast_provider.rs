@@ -4,6 +4,7 @@
 
 use super::traits::AstProvider;
 use crate::analysis::cache::ast::{AstCache, CacheConfig};
+use crate::analysis::cache::wrappers::ArchivableSystemTime;
 use crate::ast::{tree_sitter_impl::AstParser, ParseError, SourceLanguage, SyntaxError};
 use crate::error::UveddiError;
 
@@ -18,7 +19,7 @@ use tokio::sync::{Mutex, RwLock};
 #[cfg(not(feature = "tree-sitter"))]
 use crate::ast::tree_sitter::{Language, Node, Parser, Tree};
 #[cfg(feature = "tree-sitter")]
-use tree_sitter::{Language, Node, Parser, Tree};
+use tree_sitter::{Language, Parser, Tree};
 #[derive(Debug)]
 pub struct ParsedFile {
     pub file_path: Arc<PathBuf>,
@@ -185,7 +186,7 @@ impl AstProviderImpl {
     fn collect_syntax_errors(&self, tree: &Tree, source: &str) -> Vec<SyntaxError> {
         let mut errors = Vec::new();
         let root_node = tree.root_node();
-        let mut cursor = root_node.walk();
+        let cursor = root_node.walk();
 
         // Traverse all nodes in the tree
         let mut stack = vec![root_node];

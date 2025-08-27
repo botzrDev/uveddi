@@ -3,7 +3,6 @@
 
 #![cfg(feature = "memory-optimization")]
 
-use crate::analysis::memory::metrics::BASIC_MEMORY_METRICS;
 use crate::database::models::ArchitecturalIssue;
 use bumpalo::Bump;
 use bumpalo_herd::Herd;

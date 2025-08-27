@@ -3,10 +3,10 @@
 //! This module provides utilities for managing database schema changes and migrations
 //! in a controlled and reversible manner.
 
-use crate::error::{Result, UveddiError};
+use crate::error::Result;
 use rusqlite::Connection;
 use std::collections::HashMap;
-use tracing::{info, warn, error};
+use tracing::{info, warn};
 
 /// Database migration definition
 #[derive(Debug, Clone)]

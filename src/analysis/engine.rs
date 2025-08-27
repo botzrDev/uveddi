@@ -16,9 +16,8 @@ use crate::analysis::errors::AnalysisError;
 use crate::analysis::graph::dependency::LocalDependencyGraph;
 use crate::analysis::memory_report::MemoryAnalysisReport;
 use crate::analysis::orchestrator::{
-    AnalysisOptions, AnalysisOrchestrator, AnalysisOrchestratorBuilder, EnhancedAnalysisResult,
+    AnalysisOptions, AnalysisOrchestrator, EnhancedAnalysisResult,
 };
-use crate::analysis::services::performance_service::MemoryConfig;
 use crate::analysis::services::{
     AnalysisService, DependencyAnalysisService, PerformanceAnalysisService,
 };

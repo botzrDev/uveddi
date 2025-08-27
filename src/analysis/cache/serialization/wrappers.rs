@@ -6,57 +6,112 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-#[repr(transparent)]
+// Custom wrapper for SystemTime that implements rkyv traits manually
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[cfg_attr(feature = "memory-optimization", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
-pub struct ArchivableSystemTime(pub SystemTime);
+pub struct ArchivableSystemTime {
+    // Store as duration since UNIX_EPOCH for rkyv compatibility
+    #[cfg(feature = "memory-optimization")]
+    duration_since_epoch: u64,
+    #[cfg(not(feature = "memory-optimization"))]
+    time: SystemTime,
+}
 
 impl From<SystemTime> for ArchivableSystemTime {
     fn from(time: SystemTime) -> Self {
-        Self(time)
+        #[cfg(feature = "memory-optimization")]
+        {
+            let duration_since_epoch = time.duration_since(UNIX_EPOCH)
+                .unwrap_or(Duration::from_secs(0))
+                .as_secs();
+            Self { duration_since_epoch }
+        }
+        #[cfg(not(feature = "memory-optimization"))]
+        {
+            Self { time }
+        }
     }
 }
 
 impl From<ArchivableSystemTime> for SystemTime {
     fn from(time: ArchivableSystemTime) -> Self {
-        time.0
+        #[cfg(feature = "memory-optimization")]
+        {
+            UNIX_EPOCH + Duration::from_secs(time.duration_since_epoch)
+        }
+        #[cfg(not(feature = "memory-optimization"))]
+        {
+            time.time
+        }
     }
 }
 
-impl std::ops::Deref for ArchivableSystemTime {
-    type Target = SystemTime;
-    fn deref(&self) -> &Self::Target {
-        &self.0
+impl ArchivableSystemTime {
+    pub fn as_system_time(&self) -> SystemTime {
+        #[cfg(feature = "memory-optimization")]
+        {
+            UNIX_EPOCH + Duration::from_secs(self.duration_since_epoch)
+        }
+        #[cfg(not(feature = "memory-optimization"))]
+        {
+            self.time
+        }
     }
 }
 
 impl ArchivableSystemTime {
     pub fn now() -> Self {
-        Self(SystemTime::now())
+        SystemTime::now().into()
     }
 }
 
-#[repr(transparent)]
+// Custom wrapper for PathBuf that implements rkyv traits manually
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[cfg_attr(feature = "memory-optimization", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
-pub struct ArchivablePathBuf(pub PathBuf);
+pub struct ArchivablePathBuf {
+    // Store as String for rkyv compatibility
+    #[cfg(feature = "memory-optimization")]
+    path_string: String,
+    #[cfg(not(feature = "memory-optimization"))]
+    path: PathBuf,
+}
 
 impl From<PathBuf> for ArchivablePathBuf {
     fn from(path: PathBuf) -> Self {
-        Self(path)
+        #[cfg(feature = "memory-optimization")]
+        {
+            Self { path_string: path.to_string_lossy().into_owned() }
+        }
+        #[cfg(not(feature = "memory-optimization"))]
+        {
+            Self { path }
+        }
     }
 }
 
 impl From<ArchivablePathBuf> for PathBuf {
     fn from(path: ArchivablePathBuf) -> Self {
-        path.0
+        #[cfg(feature = "memory-optimization")]
+        {
+            PathBuf::from(path.path_string)
+        }
+        #[cfg(not(feature = "memory-optimization"))]
+        {
+            path.path
+        }
     }
 }
 
-impl std::ops::Deref for ArchivablePathBuf {
-    type Target = PathBuf;
-    fn deref(&self) -> &Self::Target {
-        &self.0
+impl ArchivablePathBuf {
+    pub fn as_path_buf(&self) -> PathBuf {
+        #[cfg(feature = "memory-optimization")]
+        {
+            PathBuf::from(&self.path_string)
+        }
+        #[cfg(not(feature = "memory-optimization"))]
+        {
+            self.path.clone()
+        }
     }
 }
 
@@ -75,9 +130,10 @@ mod tests {
 
     #[test]
     fn test_archivable_path_buf_serde() {
-        let path = ArchivablePathBuf(PathBuf::from("/test/path"));
+        let original_path = PathBuf::from("/test/path");
+        let path = ArchivablePathBuf::from(original_path.clone());
         let json = serde_json::to_string(&path).unwrap();
         let deserialized: ArchivablePathBuf = serde_json::from_str(&json).unwrap();
-        assert_eq!(path.0, deserialized.0);
+        assert_eq!(original_path, deserialized.as_path_buf());
     }
 }

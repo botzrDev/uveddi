@@ -8,7 +8,6 @@
 
 #![cfg(feature = "memory-optimization")]
 
-use crate::analysis::cache::wrappers::ArchivablePathBuf;
 use crate::analysis::cache::{
     invalidation::{ContentHashInvalidator, InvalidationStrategy},
     metrics::CacheMetrics,
@@ -23,7 +22,7 @@ use std::collections::HashMap;
 use std::hash::Hash;
 use std::marker::PhantomData;
 use std::num::NonZeroUsize;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use thiserror::Error;
@@ -391,10 +390,10 @@ where
     fn calculate_content_hash(&self, value: &V) -> String {
         // Simple hash based on serialized content
         use std::collections::hash_map::DefaultHasher;
-        use std::hash::{Hash, Hasher};
+        use std::hash::Hasher;
 
         // This is a simplified approach - in production, you'd want proper content hashing
-        let mut hasher = DefaultHasher::new();
+        let hasher = DefaultHasher::new();
 
         // For now, use a simple approach
         // In production, serialize the value and hash the bytes

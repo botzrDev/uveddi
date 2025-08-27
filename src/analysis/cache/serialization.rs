@@ -109,7 +109,7 @@ impl CacheSerializer {
     pub fn serialize_to_writer<T, W>(
         &self,
         data: &T,
-        mut writer: W,
+        writer: W,
     ) -> Result<(), SerializationError>
     where
         T: Serialize,
@@ -176,7 +176,6 @@ impl CacheSerializer {
     }
 }
 
-use std::time::SystemTime;
 
 /// Serializable cache entry with metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -196,9 +195,7 @@ impl<T> CacheEntry<T> {
     pub fn new(data: T, content_hash: String, size_bytes: u64) -> Self {
         Self {
             data,
-            timestamp: crate::analysis::cache::serialization::wrappers::ArchivableSystemTime(
-                std::time::SystemTime::now(),
-            ),
+            timestamp: std::time::SystemTime::now().into(),
             access_count: 0,
             size_bytes,
             content_hash,
@@ -207,12 +204,11 @@ impl<T> CacheEntry<T> {
 
     pub fn touch(&mut self) {
         self.access_count += 1;
-        self.timestamp =
-            crate::analysis::cache::serialization::wrappers::ArchivableSystemTime(std::time::SystemTime::now());
+        self.timestamp = std::time::SystemTime::now().into();
     }
 
     pub fn age(&self) -> std::time::Duration {
-        self.timestamp.0.elapsed().unwrap_or_default()
+        self.timestamp.as_system_time().elapsed().unwrap_or_default()
     }
 }
 

@@ -4,7 +4,7 @@
 //! 60%+ storage reduction while maintaining fast decompression times.
 
 use super::{DiagramCacheError, DiagramType, Result};
-use crate::core::logging::{debug, warn};
+use crate::core::logging::debug;
 use serde::{Deserialize, Serialize};
 use std::io::{Read, Write};
 

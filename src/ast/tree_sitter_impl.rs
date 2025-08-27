@@ -1,4 +1,3 @@
-use crate::analysis::cache::wrappers::{ArchivablePathBuf, ArchivableSystemTime};
 // Import security module (aliased to security_stub when security feature is disabled)
 #[cfg(not(feature = "tree-sitter"))]
 use crate::ast::tree_sitter::{Parser, Tree};
@@ -155,7 +154,7 @@ impl AstParser {
             }
             #[cfg(feature = "typescript-lang")]
             {
-                let mut typescript_parser = Parser::new();
+                let typescript_parser = Parser::new();
                 // Use TypeScript grammar; TSX support can be added later if needed
                 #[allow(non_snake_case)]
                 {
@@ -489,7 +488,7 @@ impl AstParser {
                 .map_err(|_| AstError::Other("Cache lock poisoned".to_string()))?;
 
             if let Some(cached) = cache.get(&path_str) {
-                if cached.modified_at.0 == modified_time {
+                if cached.modified_at.as_system_time() == modified_time {
                     // Cache hit - return cached result
                     info!("AST cache HIT for: {}", file_path.display());
                     Some(cached.clone())
@@ -520,7 +519,7 @@ impl AstParser {
             let mut buf = Vec::new();
             f.read_to_end(&mut buf).ok();
             if let Ok(mut parsed) = bincode::deserialize::<ParsedFile>(&buf) {
-                if parsed.modified_at.0 == modified_time {
+                if parsed.modified_at.as_system_time() == modified_time {
                     // Re-parse the AST since Tree is not serializable
                     let parser = self.parsers.get_mut(&parsed.language).ok_or_else(|| {
                         AstError::UnsupportedLanguage(format!("{:?}", parsed.language))
@@ -564,7 +563,7 @@ impl AstParser {
             tree: Some(tree),
             source: source.clone(),
             custom_ast: Arc::new(Some(custom_ast.as_ref().clone())),
-            modified_at: crate::analysis::cache::wrappers::ArchivableSystemTime(modified_time),
+            modified_at: modified_time.into(),
         };
         let mut disk_parsed = parsed.clone();
         disk_parsed.tree = None;
@@ -625,9 +624,7 @@ impl AstParser {
             tree: Some(tree),
             source: Arc::new(content.to_string()),
             custom_ast: Arc::new(Some(custom_ast)),
-            modified_at: crate::analysis::cache::wrappers::ArchivableSystemTime(
-                std::time::SystemTime::now(),
-            ),
+            modified_at: std::time::SystemTime::now().into(),
         };
 
         Ok(parsed)

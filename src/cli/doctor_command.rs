@@ -6,7 +6,6 @@
 use crate::health::{HealthChecker, HealthReport, HealthStatus};
 use crate::error::UveddiError;
 use clap::Args;
-use std::io::{self, Write};
 
 #[derive(Args, Debug)]
 pub struct DoctorCommand {

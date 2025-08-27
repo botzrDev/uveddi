@@ -5,7 +5,9 @@ use super::IndexedChunk;
 /// Placeholder for BM25 or sparse keyword search result
 #[derive(Debug)]
 pub struct SparseResult<'a> {
+    /// BM25 or keyword search score
     pub score: f32,
+    /// Reference to the matched chunk
     pub chunk: &'a IndexedChunk,
 }
 

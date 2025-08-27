@@ -424,6 +424,7 @@ impl AppState {
         self.status_message = None;
     }
 
+    /// Get the title for the current screen
     pub fn current_screen_title(&self) -> &'static str {
         match self.current_screen {
             AppScreen::MainMenu => "Uveddi - Main Menu",
@@ -434,6 +435,7 @@ impl AppState {
         }
     }
 
+    /// Check if the user can navigate back from the current screen
     pub fn can_navigate_back(&self) -> bool {
         !matches!(self.current_screen, AppScreen::MainMenu)
     }

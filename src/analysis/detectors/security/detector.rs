@@ -3,7 +3,7 @@
 //! This module provides the concrete implementation of the SecurityDetector
 //! that integrates with Uveddi's existing AnalysisDetector trait system.
 
-use crate::analysis::detectors::security::{MainSecurityDetector, SecurityConfig};
+use crate::analysis::detectors::security::SecurityConfig;
 
 // Re-export the main detector as SecurityDetector for convenience
 pub use crate::analysis::detectors::security::MainSecurityDetector as SecurityDetector;

@@ -6,13 +6,12 @@
 
 use crate::error::UveddiError;
 use crate::plugins::{
-    errors::PluginError, host_functions::HostContext, types::PluginId, SecurityPolicy,
+    host_functions::HostContext, types::PluginId, SecurityPolicy,
 };
 use std::collections::HashMap;
-use std::path::Path;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tracing::{debug, error, info, warn};
+use tracing::{debug, info};
 
 /// WASM runtime manager that handles plugin execution environments
 pub struct PluginRuntime {

@@ -4,13 +4,11 @@
 //! with tracing throughout the application. It provides backward compatibility
 //! while enabling structured logging capabilities.
 
-use std::io;
 use std::path::Path;
 use thiserror::Error;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Registry, Layer};
 // OffsetTime requires the `time` feature, using system time instead
 // use tracing_subscriber::fmt::time::OffsetTime;
-use time::OffsetDateTime;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 /// Global request ID counter for correlation

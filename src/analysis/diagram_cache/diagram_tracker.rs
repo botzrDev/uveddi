@@ -3,9 +3,9 @@
 //! Tracks relationships between code files and diagrams to enable intelligent
 //! cache invalidation and selective regeneration based on change impact analysis.
 
-use super::{DiagramCacheError, DiagramType, Result};
+use super::{DiagramType, Result};
 use crate::analysis::incremental::ChangeSet;
-use crate::core::logging::{debug, info, warn};
+use crate::core::logging::{debug, info};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;

@@ -101,9 +101,8 @@
 use crate::analysis::mermaid_generator::{MermaidGenerationError, MermaidGenerator};
 use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
 use crate::models::visualization::{ArchitecturalComponent, DiagramMetadata, DiagramType};
-use crate::report::svg_generator::{SvgConfig, SvgGenerator};
+use crate::report::svg_generator::SvgGenerator;
 use serde::{Deserialize, Serialize};
-use std::time::Duration;
 pub mod errors;
 
 #[cfg(feature = "image-rendering")]

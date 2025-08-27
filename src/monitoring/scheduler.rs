@@ -6,10 +6,10 @@ use anyhow::{Context, Result};
 use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use tokio::time::{interval, sleep, Duration as TokioDuration, Instant};
+use tokio::time::{interval, Duration as TokioDuration};
 use uuid::Uuid;
 
-use super::reporting::{GeneratedReport, ReportConfiguration, ReportType, ReportingEngine};
+use super::reporting::{GeneratedReport, ReportConfiguration, ReportingEngine};
 
 /// Schedule configuration for automated reports
 #[derive(Debug, Clone, Serialize, Deserialize)]

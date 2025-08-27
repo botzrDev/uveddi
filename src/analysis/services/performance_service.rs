@@ -4,13 +4,12 @@
 //! management during analysis. It replaces the performance monitoring logic from the
 //! monolithic AnalysisEngine.
 
-use crate::analysis::memory_report::{MemoryAnalysisReport, PhaseMemoryBreakdown};
-use crate::database::models::{ComponentPerformanceMetrics, PerformanceMetricsConfig};
+use crate::analysis::memory_report::MemoryAnalysisReport;
 use crate::monitoring::performance_metrics_collector::PerformanceMetricsCollector;
 
 use super::AnalysisResult;
 
-use crate::core::logging::{debug, info, warn};
+use crate::core::logging::{debug, warn};
 use std::collections::HashMap;
 use std::future::Future;
 use std::sync::Arc;

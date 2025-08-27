@@ -10,7 +10,7 @@ use crate::plugins::{
     lifecycle::*,
     registry::*,
     security::*,
-    types::{PluginId, PluginStats, PluginStatus, ResourceLimits},
+    types::{PluginId, PluginStats, PluginStatus},
 };
 use std::{collections::HashMap, path::Path, sync::Arc};
 use tokio::sync::RwLock;

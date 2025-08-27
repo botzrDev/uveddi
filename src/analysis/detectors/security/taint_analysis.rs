@@ -564,7 +564,7 @@ impl TaintAnalysisEngine {
 
     /// Build data flow graph from parsed file
     fn build_data_flow_graph(&self, file: &ParsedFile) -> Result<DataFlowGraph, AnalysisError> {
-        let mut graph = DataFlowGraph::new();
+        let graph = DataFlowGraph::new();
 
         // This would be implemented with tree-sitter traversal
         // For now, we'll create a simplified implementation
@@ -602,7 +602,7 @@ impl TaintAnalysisEngine {
         let mut flows = Vec::new();
         let mut visited = HashSet::new();
         let mut queue = VecDeque::new();
-        let mut current_path = Vec::new();
+        let current_path = Vec::new();
 
         queue.push_back((
             source_id.to_string(),

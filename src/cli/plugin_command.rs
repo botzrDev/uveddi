@@ -5,7 +5,6 @@
 use crate::plugins::{PluginId, PluginManifest, WasmPluginEngine};
 use clap::{Args, Subcommand};
 use std::path::PathBuf;
-use tracing::{info, warn, error, debug};
 
 /// Plugin management commands
 #[derive(Args, Debug)]

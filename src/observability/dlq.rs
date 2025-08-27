@@ -7,10 +7,10 @@ use crate::observability::metrics::UveddiMetrics;
 use crate::observability::tracing_utils::TraceId;
 use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
-use rusqlite::{params, Connection, Row};
+use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
-use tracing::{error, info, warn};
+use tracing::{info, warn};
 
 /// Record stored in the Dead Letter Queue
 #[derive(Debug, Clone, Serialize, Deserialize)]

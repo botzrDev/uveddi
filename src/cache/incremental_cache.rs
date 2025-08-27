@@ -9,16 +9,16 @@
 //! - Memory-efficient storage with configurable limits
 //! - High-performance lookup with O(1) average complexity
 
-use crate::analysis::incremental::{FileState, IncrementalAnalysisError, Result};
+use crate::analysis::incremental::{FileState, Result};
 use crate::core::logging::{debug, info, warn};
 use crate::database::models::ArchitecturalIssue;
 use chrono::{DateTime, Utc};
 use lru::LruCache;
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeSet, HashMap, HashSet};
+use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 use std::sync::Arc;
-use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
+use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
 
 /// Configuration for the incremental cache

@@ -2,7 +2,6 @@ use crate::analysis::graph::dependency::{ComponentNode, LocalDependencyGraph};
 use crate::core::logging::info;
 use crate::database::models::ArchitecturalIssue;
 use petgraph::algo::tarjan_scc;
-use tracing::{warn, error, debug};
 
 /// A detector for identifying cyclic dependencies between software components.
 ///

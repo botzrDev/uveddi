@@ -7,9 +7,8 @@ use crate::observability::tracing_utils::TraceId;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::sync::Arc;
 use tokio::sync::mpsc;
-use tracing::{event, Level};
+use tracing::Level;
 
 /// A telemetry event that can be correlated across systems
 #[derive(Debug, Clone, Serialize, Deserialize)]

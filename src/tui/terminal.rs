@@ -233,9 +233,13 @@ pub fn check_terminal_capabilities() -> Vec<String> {
 /// Terminal information for debugging
 #[derive(Debug)]
 pub struct TerminalInfo {
+    /// Terminal dimensions (width, height)
     pub size: (u16, u16),
+    /// Terminal type identifier
     pub term_type: String,
+    /// Whether terminal supports colors
     pub color_support: bool,
+    /// Whether terminal supports mouse input
     pub mouse_support: bool,
 }
 
