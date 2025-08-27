@@ -17,7 +17,6 @@ use crate::ast::tree_sitter_impl::SourceLanguage;
 use crate::core::logging::debug;
 use ndarray::Array1;
 use petgraph::{Direction, Graph};
-use rayon::prelude::*;
 use sha2::{Digest, Sha256};
 use std::collections::{HashMap, HashSet};
 

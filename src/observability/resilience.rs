@@ -360,7 +360,7 @@ impl InstrumentedRetry {
     /// Add jitter to prevent thundering herd effect
     fn add_jitter(&self, delay: Duration) -> Duration {
         use rand::Rng;
-        let jitter_ms = rand::rng().gen_range(0..=delay.as_millis() / 4);
+        let jitter_ms = rand::rng().random_range(0..=delay.as_millis() / 4);
         delay + Duration::from_millis(jitter_ms as u64)
     }
 }

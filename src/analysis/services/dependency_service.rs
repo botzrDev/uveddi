@@ -11,7 +11,7 @@ use crate::analysis::components::traits::{
 use crate::analysis::components::{AstProviderImpl, CacheManagerImpl, DependencyGraphBuilderImpl};
 use crate::analysis::detectors::dependency::{Dependency, DependencyExtractor};
 use crate::analysis::graph::dependency::{
-    EdgeCount, IntoEdges, LocalDependencyGraph, LocalDependencyType,
+    EdgeCount, LocalDependencyGraph, LocalDependencyType,
 };
 
 use super::AnalysisResult;

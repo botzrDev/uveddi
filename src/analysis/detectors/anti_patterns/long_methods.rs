@@ -31,7 +31,6 @@ use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
 use crate::core::logging::{debug, info};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use async_trait::async_trait;
-use futures::TryFutureExt;
 use std::collections::HashMap;
 #[cfg(feature = "tree-sitter")]
 use tree_sitter::StreamingIterator;

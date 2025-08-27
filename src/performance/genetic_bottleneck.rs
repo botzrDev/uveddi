@@ -329,32 +329,32 @@ impl GeneticBottleneckDetector {
     fn create_random_chromosome(&mut self) -> Result<BottleneckChromosome> {
         // Resource weights for CPU, Memory, I/O, Network (sum to 1.0)
         let mut resource_weights = vec![
-            self.rng.gen::<f64>(),
-            self.rng.gen::<f64>(),
-            self.rng.gen::<f64>(),
-            self.rng.gen::<f64>(),
+            self.rng.random::<f64>(),
+            self.rng.random::<f64>(),
+            self.rng.random::<f64>(),
+            self.rng.random::<f64>(),
         ];
         let sum: f64 = resource_weights.iter().sum();
         resource_weights.iter_mut().for_each(|w| *w /= sum);
 
         // Threshold values (0.1 to 0.9 for each resource)
-        let threshold_values = (0..4).map(|_| 0.1 + self.rng.gen::<f64>() * 0.8).collect();
+        let threshold_values = (0..4).map(|_| 0.1 + self.rng.random::<f64>() * 0.8).collect();
 
         // Optimization targets
         let optimization_targets = vec![
             OptimizationTarget {
                 objective: OptimizationObjective::ExecutionTime,
-                weight: self.rng.gen::<f64>(),
+                weight: self.rng.random::<f64>(),
                 target_direction: TargetDirection::Minimize,
             },
             OptimizationTarget {
                 objective: OptimizationObjective::MemoryUsage,
-                weight: self.rng.gen::<f64>(),
+                weight: self.rng.random::<f64>(),
                 target_direction: TargetDirection::Minimize,
             },
             OptimizationTarget {
                 objective: OptimizationObjective::Throughput,
-                weight: self.rng.gen::<f64>(),
+                weight: self.rng.random::<f64>(),
                 target_direction: TargetDirection::Maximize,
             },
         ];
@@ -418,17 +418,17 @@ impl GeneticBottleneckDetector {
             let parent1 = &parents[i];
             let parent2 = &parents[(i + 1) % parents.len()];
 
-            let (mut child1, mut child2) = if self.rng.gen::<f64>() < self.crossover_rate {
+            let (mut child1, mut child2) = if self.rng.random::<f64>() < self.crossover_rate {
                 self.crossover(parent1, parent2)?
             } else {
                 (parent1.clone(), parent2.clone())
             };
 
             // Apply mutation
-            if self.rng.gen::<f64>() < self.mutation_rate {
+            if self.rng.random::<f64>() < self.mutation_rate {
                 self.mutate(&mut child1)?;
             }
-            if self.rng.gen::<f64>() < self.mutation_rate {
+            if self.rng.random::<f64>() < self.mutation_rate {
                 self.mutate(&mut child2)?;
             }
 
