@@ -73,7 +73,7 @@ use async_trait::async_trait;
 
 use crate::analysis::{AnalysisDetector, AnalysisError};
 use crate::ast::tree_sitter::{Node, Query, QueryCursor};
-use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
+use crate::ast::tree_sitter_impl::ParsedFile;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use std::collections::{HashMap, HashSet};
 use strum_macros::EnumString;

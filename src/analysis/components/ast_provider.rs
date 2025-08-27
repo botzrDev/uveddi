@@ -17,7 +17,7 @@ use std::sync::Arc;
 use tokio::sync::{Mutex, RwLock};
 // Feature-gated tree-sitter imports
 #[cfg(not(feature = "tree-sitter"))]
-use crate::ast::tree_sitter::{Language, Node, Parser, Tree};
+use crate::ast::tree_sitter::{Language, Parser, Tree};
 #[cfg(feature = "tree-sitter")]
 use tree_sitter::{Language, Parser, Tree};
 #[derive(Debug)]

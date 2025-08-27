@@ -137,6 +137,7 @@ pub struct KnowledgePluginPermissions {
     pub data: DataPermissions,
 }
 
+/// Network permissions for knowledge plugins
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NetworkPermissions {
     /// Allow outbound HTTP requests
@@ -149,6 +150,7 @@ pub struct NetworkPermissions {
     pub allowed_ports: Vec<u16>,
 }
 
+/// Filesystem permissions for knowledge plugins
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FilesystemPermissions {
     /// Allow read access
@@ -159,6 +161,7 @@ pub struct FilesystemPermissions {
     pub allowed_paths: Vec<PathBuf>,
 }
 
+/// System permissions for knowledge plugins
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SystemPermissions {
     /// Allow process execution
@@ -171,6 +174,7 @@ pub struct SystemPermissions {
     pub max_execution_time_ms: u64,
 }
 
+/// Data access permissions for knowledge plugins
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DataPermissions {
     /// Allow access to existing knowledge library
@@ -328,8 +332,11 @@ pub trait EnterprisePlugin: KnowledgePlugin {
 /// Plugin health status
 #[derive(Debug, Clone)]
 pub enum PluginHealthStatus {
+    /// Plugin is healthy and operating normally
     Healthy,
+    /// Plugin has warnings but is still functional
     Warning(String),
+    /// Plugin is unhealthy and may not function properly
     Unhealthy(String),
 }
 
@@ -411,8 +418,11 @@ pub struct OrganizationPolicy {
 /// Policy enforcement levels
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum EnforcementLevel {
+    /// Issue a warning but allow the operation to continue
     Warning,
+    /// Report as an error but allow the operation to continue
     Error,
+    /// Block the operation from proceeding
     Blocking,
 }
 
@@ -820,6 +830,7 @@ pub struct PluginLibraryMetrics {
 }
 
 impl PluginLibraryMetrics {
+    /// Creates a new set of plugin library metrics
     pub fn new() -> Self {
         Self {
             plugin_count: 0,
@@ -831,6 +842,7 @@ impl PluginLibraryMetrics {
 }
 
 impl KnowledgePluginMetrics {
+    /// Creates a new set of knowledge plugin metrics
     pub fn new() -> Self {
         Self {
             init_time_ms: 0,
@@ -844,6 +856,7 @@ impl KnowledgePluginMetrics {
 }
 
 impl KnowledgePluginRegistry {
+    /// Creates a new plugin registry
     pub fn new() -> Self {
         Self {
             plugins: HashMap::new(),
@@ -852,6 +865,7 @@ impl KnowledgePluginRegistry {
         }
     }
 
+    /// Registers a new knowledge plugin
     pub fn register_plugin(
         &mut self,
         plugin_id: String,
@@ -863,6 +877,7 @@ impl KnowledgePluginRegistry {
 }
 
 impl PluginDependencyGraph {
+    /// Creates a new plugin dependency graph
     pub fn new() -> Self {
         Self {
             dependencies: HashMap::new(),
@@ -916,12 +931,14 @@ pub struct KnowledgePluginLoader {
 }
 
 impl KnowledgePluginLoader {
+    /// Creates a new plugin loader with the given configuration
     pub fn new(config: &KnowledgePluginSystemConfig) -> Self {
         Self {
             config: config.clone(),
         }
     }
 
+    /// Loads a plugin from the specified path
     pub async fn load_plugin(
         &self,
         _plugin_path: &PathBuf,
@@ -934,7 +951,9 @@ impl KnowledgePluginLoader {
 
 /// Plugin package containing metadata and implementation
 pub struct KnowledgePluginPackage {
+    /// Plugin metadata information
     pub metadata: KnowledgePluginMetadata,
+    /// Plugin implementation
     pub implementation: Box<dyn KnowledgePlugin>,
 }
 
@@ -944,12 +963,14 @@ pub struct KnowledgePluginSecurityManager {
 }
 
 impl KnowledgePluginSecurityManager {
+    /// Creates a new plugin security manager
     pub fn new(config: &SecurityConfig) -> Self {
         Self {
             config: config.clone(),
         }
     }
 
+    /// Validates plugin security requirements
     pub async fn validate_plugin(
         &self,
         _package: &KnowledgePluginPackage,
@@ -966,10 +987,12 @@ pub struct KnowledgePluginPerformanceMonitor {
 }
 
 impl KnowledgePluginPerformanceMonitor {
+    /// Creates a new performance monitor
     pub fn new() -> Self {
         Self {}
     }
 
+    /// Validates plugin performance requirements
     pub async fn validate_performance(
         &self,
         _package: &KnowledgePluginPackage,

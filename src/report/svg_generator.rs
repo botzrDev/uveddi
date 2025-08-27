@@ -12,12 +12,16 @@ use tokio::process::Command;
 /// Errors that can occur during SVG generation
 #[derive(Debug, Error)]
 pub enum SvgGenerationError {
+    /// Failed to create temporary directory
     #[error("Failed to create temporary directory: {0}")]
     TempDirError(#[from] std::io::Error),
+    /// Mermaid CLI execution failed
     #[error("Mermaid CLI not found or failed to execute: {0}")]
     MermaidCliError(String),
+    /// SVG file generation failed
     #[error("SVG file generation failed: {0}")]
     SvgOutputError(String),
+    /// Failed to read generated SVG file
     #[error("Failed to read generated SVG: {0}")]
     SvgReadError(String),
 }

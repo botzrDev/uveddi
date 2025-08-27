@@ -103,9 +103,11 @@ pub mod wasm {
 
     use crate::error::UveddiError;
 
+    /// Stub WASM plugin engine when WASM features are disabled
     pub struct WasmPluginEngine;
 
     impl WasmPluginEngine {
+        /// Creates a new WASM plugin engine (always fails when feature disabled)
         pub async fn new() -> Result<Self, UveddiError> {
             Err(UveddiError::PluginError {
                 plugin: "WASM engine".to_string(),

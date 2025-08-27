@@ -725,6 +725,7 @@ pub struct PluginContributions {
 }
 
 impl IntegrationCache {
+    /// Creates a new empty integration cache
     pub fn new() -> Self {
         Self {
             pattern_index: HashMap::new(),
@@ -735,6 +736,7 @@ impl IntegrationCache {
         }
     }
 
+    /// Clears all cached integration data
     pub fn clear(&mut self) {
         self.pattern_index.clear();
         self.language_patterns.clear();
@@ -744,6 +746,7 @@ impl IntegrationCache {
 }
 
 impl IntegrationMetrics {
+    /// Creates a new set of integration metrics
     pub fn new() -> Self {
         Self {
             total_patterns: 0,

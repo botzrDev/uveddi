@@ -4,10 +4,10 @@
 //! interactive terminal interface. It handles arguments, validates the
 //! environment, and bridges between the CLI and TUI modules.
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 use clap::Args;
 use std::path::PathBuf;
-use tracing::error;
+// tracing will be used conditionally
 
 #[cfg(feature = "tui")]
 use crate::tui::events::run_tui;

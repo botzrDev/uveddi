@@ -30,7 +30,7 @@ use crate::database::Database;
 use crate::report::interactive_models::{
     InteractiveReport, REPORT_SCHEMA_VERSION,
 };
-use tracing::{info, warn, error};
+use tracing::{info, error};
 use axum::{
     extract::{Path as AxumPath, State},
     http::{header, HeaderMap, StatusCode, Request},

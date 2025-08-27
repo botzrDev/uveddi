@@ -103,6 +103,7 @@ use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
 use crate::models::visualization::{ArchitecturalComponent, DiagramMetadata, DiagramType};
 use crate::report::svg_generator::SvgGenerator;
 use serde::{Deserialize, Serialize};
+/// Error types for report generation
 pub mod errors;
 
 #[cfg(feature = "image-rendering")]
@@ -3878,18 +3879,23 @@ pub struct EnhancedReportData {
 /// Errors that can occur during report generation
 #[derive(Debug, thiserror::Error)]
 pub enum ReportGenerationError {
+    /// Diagram generation failed
     #[error("Diagram generation failed: {0}")]
     DiagramGenerationError(#[from] MermaidGenerationError),
 
+    /// Template processing failed
     #[error("Template processing failed: {0}")]
     TemplateError(String),
 
+    /// Component analysis failed
     #[error("Component analysis failed: {0}")]
     ComponentAnalysisError(String),
 
+    /// IO operation failed
     #[error("IO error: {0}")]
     IoError(#[from] std::io::Error),
 
+    /// JSON serialization failed
     #[error("JSON serialization error: {0}")]
     SerializationError(#[from] serde_json::Error),
 }

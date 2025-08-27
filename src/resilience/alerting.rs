@@ -15,10 +15,15 @@ use tokio::sync::RwLock;
 /// Alert types supported by the system
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash)]
 pub enum AlertType {
+    /// Critical system failure rate exceeded
     CriticalFailureRate,
+    /// Performance has degraded significantly
     PerformanceRegression,
+    /// Infrastructure-related issues detected
     InfrastructureIssues,
+    /// Flaky or unstable tests detected
     FlakyTestDetection,
+    /// Resource utilization thresholds exceeded
     ResourceUtilization,
 }
 
@@ -37,47 +42,73 @@ impl std::fmt::Display for AlertType {
 /// Configuration for alert thresholds
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AlertThreshold {
+    /// Type of alert this threshold applies to
     pub alert_type: AlertType,
+    /// Environment this threshold applies to
     pub environment: String,
+    /// Warning threshold value
     pub warning_threshold: f64,
+    /// Critical threshold value
     pub critical_threshold: f64,
+    /// Whether this threshold is enabled
     pub enabled: bool,
 }
 
 /// Notification channel configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NotificationChannel {
+    /// Channel name
     pub name: String,
+    /// Type of notification channel
     pub channel_type: ChannelType,
+    /// Channel configuration
     pub config: ChannelConfig,
+    /// Whether this channel is enabled
     pub enabled: bool,
 }
 
+/// Supported notification channel types
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ChannelType {
+    /// Slack notifications
     Slack,
+    /// Email notifications
     Email,
+    /// GitHub issue notifications
     GitHub,
 }
 
+/// Configuration for notification channels
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChannelConfig {
+    /// Webhook URL for notifications
     pub webhook_url: Option<String>,
+    /// Email recipients list
     pub email_recipients: Option<Vec<String>>,
+    /// GitHub repository for issue creation
     pub github_repo: Option<String>,
+    /// GitHub access token
     pub github_token: Option<String>,
 }
 
 /// Enhanced alert with additional metadata for grouping and escalation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EnhancedAlert {
+    /// Base alert information
     pub base_alert: Alert,
+    /// Type of alert
     pub alert_type: AlertType,
+    /// Unique fingerprint for deduplication
     pub fingerprint: String,
+    /// Group key for alert aggregation
     pub group_key: String,
+    /// Environment where alert occurred
     pub environment: String,
+    /// Additional metadata
     pub metadata: HashMap<String, String>,
+    /// Whether alert has been acknowledged
     pub acknowledged: bool,
+    /// When the alert was acknowledged
     pub acknowledged_at: Option<SystemTime>,
     /// User or system that acknowledged the alert
     pub acknowledged_by: Option<String>,

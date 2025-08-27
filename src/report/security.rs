@@ -10,14 +10,24 @@ use thiserror::Error;
 /// Security errors related to report generation
 #[derive(Error, Debug)]
 pub enum ReportSecurityError {
+    /// Malicious content detected
     #[error("Malicious content detected: {0}")]
     MaliciousContent(String),
+    /// Content size limit exceeded
     #[error("Content size limit exceeded: {current} bytes > {limit} bytes")]
-    SizeLimit { current: usize, limit: usize },
+    SizeLimit { 
+        /// Current content size
+        current: usize, 
+        /// Maximum allowed size
+        limit: usize 
+    },
+    /// Invalid file path provided
     #[error("Invalid file path: {0}")]
     InvalidPath(String),
+    /// Unsafe content detected
     #[error("Unsafe content found: {0}")]
     UnsafeContent(String),
+    /// Encoding validation failed
     #[error("Encoding validation failed: {0}")]
     EncodingError(String),
 }

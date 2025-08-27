@@ -32,15 +32,21 @@ use crate::report::DiagramMode;
 use uuid::Uuid;
 
 #[derive(Error, Debug)]
+/// Errors that can occur during markdown report generation
 pub enum MarkdownReportError {
+    /// IO operation failed
     #[error("IO error: {0}")]
     IoError(#[from] std::io::Error),
+    /// Context serialization failed
     #[error("Context serialization error: {0}")]
     ContextError(String),
+    /// AI analysis failed
     #[error("AI analysis error: {0}")]
     AiAnalysisError(String),
+    /// Template processing failed
     #[error("Template error: {0}")]
     TemplateError(#[from] tera::Error),
+    /// Diagram rendering failed
     #[error("Diagram rendering error: {0}")]
     DiagramError(String),
 }

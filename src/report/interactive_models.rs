@@ -474,38 +474,52 @@ pub struct ChartDatasets {
 /// Time series chart data for Chart.js line charts
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TimeSeriesChart {
+    /// Chart axis labels
     pub labels: Vec<String>,
+    /// Chart data sets
     pub datasets: Vec<TimeSeriesDataset>,
 }
 
 /// Dataset for time series charts
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TimeSeriesDataset {
+    /// Dataset label
     pub label: String,
+    /// Data values
     pub data: Vec<f64>,
+    /// Border color
     #[serde(rename = "borderColor")]
     pub border_color: String,
+    /// Background color
     #[serde(rename = "backgroundColor")]
     pub background_color: String,
+    /// Line tension
     pub tension: f64,
 }
 
 /// Pie chart data for Chart.js pie charts
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PieChart {
+    /// Chart slice labels
     pub labels: Vec<String>,
+    /// Chart data sets
     pub datasets: Vec<PieDataset>,
 }
 
 /// Dataset for pie charts
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PieDataset {
+    /// Dataset label
     pub label: String,
+    /// Data values
     pub data: Vec<u32>,
+    /// Background colors for slices
     #[serde(rename = "backgroundColor")]
     pub background_color: Vec<String>,
+    /// Border colors for slices
     #[serde(rename = "borderColor")]
     pub border_color: Vec<String>,
+    /// Border width
     #[serde(rename = "borderWidth")]
     pub border_width: u32,
 }
@@ -513,19 +527,26 @@ pub struct PieDataset {
 /// Bar chart data for Chart.js bar charts
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BarChart {
+    /// Chart axis labels
     pub labels: Vec<String>,
+    /// Chart data sets
     pub datasets: Vec<BarDataset>,
 }
 
 /// Dataset for bar charts
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BarDataset {
+    /// Dataset label
     pub label: String,
+    /// Data values
     pub data: Vec<u32>,
+    /// Background colors for bars
     #[serde(rename = "backgroundColor")]
     pub background_color: Vec<String>,
+    /// Border colors for bars
     #[serde(rename = "borderColor")]
     pub border_color: Vec<String>,
+    /// Border width
     #[serde(rename = "borderWidth")]
     pub border_width: u32,
 }
@@ -533,18 +554,24 @@ pub struct BarDataset {
 /// Scatter chart data for Chart.js scatter plots
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ScatterChart {
+    /// Chart data sets
     pub datasets: Vec<ScatterDataset>,
 }
 
 /// Dataset for scatter charts
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ScatterDataset {
+    /// Dataset label
     pub label: String,
+    /// Data points
     pub data: Vec<ScatterPoint>,
+    /// Background color
     #[serde(rename = "backgroundColor")]
     pub background_color: String,
+    /// Border color
     #[serde(rename = "borderColor")]
     pub border_color: String,
+    /// Point radius
     #[serde(rename = "pointRadius")]
     pub point_radius: u32,
 }
@@ -552,7 +579,9 @@ pub struct ScatterDataset {
 /// Point in a scatter chart
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ScatterPoint {
+    /// X coordinate
     pub x: f64,
+    /// Y coordinate
     pub y: f64,
     /// Optional metadata for tooltips
     pub metadata: Option<HashMap<String, String>>,
@@ -577,9 +606,12 @@ pub struct PerformanceMetrics {
 /// Memory usage data point
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MemoryDataPoint {
+    /// Timestamp of measurement
     pub timestamp: DateTime<Utc>,
+    /// Memory used in MB
     #[serde(rename = "usedMb")]
     pub used_mb: f64,
+    /// Available memory in MB
     #[serde(rename = "availableMb")]
     pub available_mb: f64,
 }
@@ -587,7 +619,9 @@ pub struct MemoryDataPoint {
 /// CPU utilization data point
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CpuDataPoint {
+    /// Timestamp of measurement
     pub timestamp: DateTime<Utc>,
+    /// CPU utilization percentage
     #[serde(rename = "utilizationPercent")]
     pub utilization_percent: f64,
 }
@@ -595,10 +629,13 @@ pub struct CpuDataPoint {
 /// File processing rate metrics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProcessingRates {
+    /// Files processed per second
     #[serde(rename = "filesPerSecond")]
     pub files_per_second: f64,
+    /// Lines processed per second
     #[serde(rename = "linesPerSecond")]
     pub lines_per_second: f64,
+    /// Bytes processed per second
     #[serde(rename = "bytesPerSecond")]
     pub bytes_per_second: f64,
 }
@@ -606,11 +643,15 @@ pub struct ProcessingRates {
 /// Performance bottleneck identified during analysis
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PerformanceBottleneck {
+    /// Analysis phase where bottleneck occurred
     pub phase: String,
+    /// Duration of bottleneck in milliseconds
     #[serde(rename = "durationMs")]
     pub duration_ms: u64,
+    /// Percentage of total analysis time
     #[serde(rename = "percentOfTotal")]
     pub percent_of_total: f64,
+    /// Description of the bottleneck
     pub description: String,
 }
 

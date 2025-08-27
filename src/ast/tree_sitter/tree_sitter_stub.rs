@@ -5,7 +5,7 @@
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use std::time::SystemTime;
+// SystemTime will be used when needed
 
 // Stub tree-sitter language modules
 pub mod tree_sitter_rust {

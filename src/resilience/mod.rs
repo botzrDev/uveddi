@@ -7,15 +7,18 @@
 pub mod alerting;
 pub mod analytics;
 pub mod availability;
+/// Circuit breaker pattern implementation
 pub mod circuit_breaker;
 pub mod degradation;
 pub mod escalation;
+/// Fallback mechanisms for graceful degradation
 pub mod fallback;
 pub mod graceful_handler;
 pub mod health;
 pub mod metrics;
 pub mod notifications;
 pub mod recovery;
+/// Retry mechanisms with backoff strategies
 pub mod retry;
 
 pub use alerting::{AdvancedAlertSystem, AlertType, AlertingConfig, EnhancedAlert};

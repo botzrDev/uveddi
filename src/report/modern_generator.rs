@@ -23,14 +23,19 @@ use crate::models::visualization::{
 include!(concat!(env!("OUT_DIR"), "/bundled_assets.rs"));
 include!(concat!(env!("OUT_DIR"), "/feature_flags.rs"));
 
+/// Errors that can occur during modern report generation
 #[derive(Error, Debug)]
 pub enum ModernReportError {
+    /// Template engine error
     #[error("Template engine error: {0}")]
     TemplateError(#[from] tera::Error),
+    /// IO operation failed
     #[error("IO error: {0}")]
     IoError(#[from] std::io::Error),
+    /// Template file not found
     #[error("Missing template: {0}")]
     MissingTemplate(String),
+    /// Context serialization failed
     #[error("Context serialization error: {0}")]
     ContextError(String),
 }

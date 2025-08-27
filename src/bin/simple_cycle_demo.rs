@@ -3,7 +3,6 @@
 //! A minimal demonstration showing how UV-105 Phase 1 resolves circular dependencies.
 //! This demo does not depend on the full library, only on standard Rust libraries.
 
-use std::collections::HashMap;
 use std::sync::Arc;
 
 /// Demonstrates the circular dependency problem and its solution
@@ -113,6 +112,7 @@ impl PersistenceProvider for MockPersistenceProvider {
 
 /// Simple event system (breaks circular dependency)
 struct EventSystem {
+    #[allow(dead_code)]
     subscribers: std::sync::Mutex<Vec<String>>,
 }
 
@@ -127,6 +127,7 @@ impl EventSystem {
         println!("      📡 Published event: {}", event);
     }
 
+    #[allow(dead_code)]
     fn subscribe(&self, subscriber: String) {
         let mut subs = self.subscribers.lock().unwrap();
         subs.push(subscriber);
@@ -189,6 +190,7 @@ impl AnalysisService {
 
 /// Simple issue representation
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 struct Issue {
     id: u32,
     detector: String,

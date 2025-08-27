@@ -4,9 +4,7 @@ use std::sync::Arc;
 #[cfg(feature = "tree-sitter")]
 use tree_sitter::{Query, QueryCursor, StreamingIterator};
 
-use crate::ast::tree_sitter::queries::{
-    JAVASCRIPT_IMPORTS_QUERY, PYTHON_IMPORTS_QUERY, RUST_IMPORTS_QUERY,
-};
+// Queries will be loaded dynamically when needed
 use crate::ast::tree_sitter_impl::{AstError, AstParser, ParsedFile, SourceLanguage};
 pub use crate::database::models::{Dependency, DependencyType};
 

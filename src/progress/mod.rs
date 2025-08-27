@@ -28,6 +28,7 @@ pub enum AnalysisPhase {
 }
 
 impl AnalysisPhase {
+    /// Returns a human-readable description of the analysis phase
     pub fn description(&self) -> &'static str {
         match self {
             AnalysisPhase::Discovery => "Discovering source files",
@@ -40,6 +41,7 @@ impl AnalysisPhase {
         }
     }
 
+    /// Returns an emoji representing the analysis phase
     pub fn emoji(&self) -> &'static str {
         match self {
             AnalysisPhase::Discovery => "🔍",
@@ -56,16 +58,24 @@ impl AnalysisPhase {
 /// Progress information for a specific analysis phase
 #[derive(Debug, Clone)]
 pub struct PhaseProgress {
+    /// The current analysis phase
     pub phase: AnalysisPhase,
+    /// Progress percentage (0.0 to 1.0)
     pub progress: f32, // 0.0 to 1.0
+    /// Currently processing item (file, module, etc.)
     pub current_item: Option<String>,
+    /// Number of items processed so far
     pub items_processed: usize,
+    /// Total number of items to process (if known)
     pub total_items: Option<usize>,
+    /// Time elapsed in this phase
     pub elapsed_time: Duration,
+    /// Estimated time remaining (if calculable)
     pub estimated_remaining: Option<Duration>,
 }
 
 impl PhaseProgress {
+    /// Creates a new progress tracker for the given phase
     pub fn new(phase: AnalysisPhase) -> Self {
         Self {
             phase,
@@ -78,11 +88,13 @@ impl PhaseProgress {
         }
     }
 
+    /// Sets the total number of items to process
     pub fn with_total_items(mut self, total: usize) -> Self {
         self.total_items = Some(total);
         self
     }
 
+    /// Updates progress information with current status
     pub fn update_progress(&mut self, processed: usize, current_item: Option<String>, start_time: Instant) {
         self.items_processed = processed;
         self.current_item = current_item;
@@ -125,6 +137,7 @@ pub struct TerminalProgressReporter {
 }
 
 impl TerminalProgressReporter {
+    /// Creates a new terminal progress reporter
     pub fn new(show_details: bool) -> Self {
         Self {
             show_details,
@@ -297,6 +310,7 @@ pub struct ProgressTracker {
 }
 
 impl ProgressTracker {
+    /// Creates a new progress tracker with the given reporter
     pub fn new(reporter: Box<dyn ProgressReporter>) -> Self {
         let now = Instant::now();
         Self {
@@ -308,12 +322,14 @@ impl ProgressTracker {
         }
     }
 
+    /// Adds a watch channel for external progress monitoring
     pub fn with_watch_channel(mut self) -> (Self, watch::Receiver<PhaseProgress>) {
         let (tx, rx) = watch::channel(PhaseProgress::new(AnalysisPhase::Discovery));
         self.sender = Some(tx);
         (self, rx)
     }
 
+    /// Starts tracking progress for a new analysis phase
     pub fn start_phase(&mut self, phase: AnalysisPhase, total_items: Option<usize>) {
         self.current_phase = phase;
         self.phase_start_time = Instant::now();
@@ -330,6 +346,7 @@ impl ProgressTracker {
         }
     }
 
+    /// Updates progress for the current phase
     pub fn update_progress(&mut self, processed: usize, current_item: Option<String>) {
         let mut progress = PhaseProgress::new(self.current_phase.clone());
         progress.update_progress(processed, current_item, self.phase_start_time);
@@ -341,6 +358,7 @@ impl ProgressTracker {
         }
     }
 
+    /// Updates progress with specific file information
     pub fn update_file_progress(&mut self, file_path: &Path, current: usize, total: usize) {
         self.update_progress(current, Some(file_path.display().to_string()));
         
@@ -377,6 +395,7 @@ impl ProgressTracker {
         completed_phases_weight + (phase_progress * phase_weights)
     }
 
+    /// Marks the analysis as complete
     pub fn complete(&self) {
         let total_time = self.analysis_start_time.elapsed();
         self.reporter.report_complete(total_time);
@@ -395,6 +414,7 @@ impl ProgressTracker {
         }
     }
 
+    /// Reports an error during analysis
     pub fn error(&self, error: &str) {
         self.reporter.report_error(&self.current_phase, error);
     }
