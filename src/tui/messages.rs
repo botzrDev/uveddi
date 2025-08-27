@@ -4,7 +4,7 @@
 //! This ensures consistency across all components and prevents
 //! message definition duplication.
 
-use crate::{cli::analyze_command::AnalyzeCommand, tui::ui::analyze_form::FormField};
+use crate::tui::ui::analyze_form::FormField;
 use crossterm::event::KeyEvent;
 use ratatui::crossterm::event::KeyEvent as RatatuiKeyEvent;
 

@@ -219,7 +219,7 @@ impl AnalysisEngineBuilder {
             .detectors
             .unwrap_or_else(DetectorFactory::create_default_detectors);
 
-        let cache = if let Some(injected_cache) = injected_result_cache {
+        let _cache = if let Some(injected_cache) = injected_result_cache {
             injected_cache
         } else if in_memory_cache {
             Box::new(ResultCacheAdapter::new(ResultCache::new_in_memory()?))
@@ -237,7 +237,7 @@ impl AnalysisEngineBuilder {
 
         // Initialize components
         let config_service = Arc::new(ConfigurationService::new());
-        let ast_provider = if let Some(parser) = injected_ast_parser {
+        let ast_provider = if let Some(_parser) = injected_ast_parser {
             Arc::new(AstProviderImpl::new()?)
         } else {
             Arc::new(AstProviderImpl::new()?)
@@ -248,7 +248,7 @@ impl AnalysisEngineBuilder {
         let aggregator = Arc::new(AnalysisAggregator::new());
 
         // Components that need dependencies
-        let dependency_builder = if let Some(extractor) = injected_dependency_extractor {
+        let dependency_builder = if let Some(_extractor) = injected_dependency_extractor {
             Arc::new(DependencyGraphBuilderImpl::new(ast_provider.clone())?)
         } else {
             Arc::new(DependencyGraphBuilderImpl::new(ast_provider.clone())?)
@@ -287,7 +287,7 @@ impl AnalysisEngineBuilder {
             ))
         };
 
-        let (knowledge_library, context_selector, ai_engine) = if enable_knowledge {
+        let (_knowledge_library, _context_selector, _ai_engine) = if enable_knowledge {
             let knowledge_lib = match knowledge_library_result {
                 Ok(lib) => Some(Arc::new(lib)),
                 Err(e) => {
@@ -396,7 +396,7 @@ impl AnalysisEngineBuilder {
             .detectors
             .unwrap_or_else(DetectorFactory::create_default_detectors);
 
-        let cache = if let Some(injected_cache) = injected_result_cache {
+        let _cache = if let Some(injected_cache) = injected_result_cache {
             injected_cache
         } else if in_memory_cache {
             Box::new(ResultCacheAdapter::new(ResultCache::new_in_memory()?))
@@ -433,7 +433,7 @@ impl AnalysisEngineBuilder {
 
         // Initialize components
         let config_service = Arc::new(ConfigurationService::new());
-        let ast_provider = if let Some(parser) = injected_ast_parser {
+        let ast_provider = if let Some(_parser) = injected_ast_parser {
             Arc::new(AstProviderImpl::new()?)
         } else {
             Arc::new(AstProviderImpl::new()?)
@@ -444,14 +444,14 @@ impl AnalysisEngineBuilder {
         let aggregator = Arc::new(AnalysisAggregator::new());
 
         // PluginManagerHandle needs to be created from WasmPluginEngine
-        let plugin_manager = if let Some(ref engine) = plugin_engine {
+        let plugin_manager = if let Some(ref _engine) = plugin_engine {
             Some(PluginManager::spawn(config_service.clone()))
         } else {
             None
         };
 
         // Components that need dependencies
-        let dependency_builder = if let Some(extractor) = injected_dependency_extractor {
+        let dependency_builder = if let Some(_extractor) = injected_dependency_extractor {
             Arc::new(DependencyGraphBuilderImpl::new(ast_provider.clone())?)
         } else {
             Arc::new(DependencyGraphBuilderImpl::new(ast_provider.clone())?)
@@ -497,7 +497,7 @@ impl AnalysisEngineBuilder {
             ))
         };
 
-        let (knowledge_library, context_selector, ai_engine) = if enable_knowledge {
+        let (_knowledge_library, _context_selector, _ai_engine) = if enable_knowledge {
             let knowledge_lib = match knowledge_library_result {
                 Ok(lib) => Some(Arc::new(lib)),
                 Err(e) => {

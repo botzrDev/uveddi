@@ -428,7 +428,7 @@ impl PerformanceAnalysisService {
         recommendations
     }
 
-    async fn generate_memory_recommendations(&self, current: usize, peak: usize) -> Vec<String> {
+    async fn generate_memory_recommendations(&self, _current: usize, peak: usize) -> Vec<String> {
         let mut recommendations = Vec::new();
 
         if peak > 2 * 1024 * 1024 * 1024 {

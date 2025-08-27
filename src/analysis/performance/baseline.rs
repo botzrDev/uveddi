@@ -357,7 +357,7 @@ sequenceDiagram
 
     async fn analyze_cache_performance(&self) -> Result<CacheMetrics, AnalysisError> {
         // Test cache performance with repeated requests
-        let test_diagram = r#"
+        let _test_diagram = r#"
 graph TD
     A[Cache Test] --> B[Performance]
     B --> C[Analysis]

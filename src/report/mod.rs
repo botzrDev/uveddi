@@ -169,7 +169,7 @@ pub mod modern_generator;
 pub mod security;
 pub mod svg_generator;
 use crate::core::logging::{debug, error, info, warn};
-use crate::report::metrics::{compute_debt_score, compute_issues_by_severity, count_unique_files};
+use crate::report::metrics::{compute_debt_score, compute_issues_by_severity};
 use chrono::{DateTime, Local};
 use serde_json::Value;
 use std::collections::HashMap;
@@ -1542,7 +1542,7 @@ impl ReportGenerator {
         issues: &[ArchitecturalIssue],
         anti_pattern_types: &HashMap<i64, AntiPatternType>,
         output_path: Option<&Path>,
-        codebase_path: Option<&str>,
+        _codebase_path: Option<&str>,
     ) -> Result<String, String> {
         info!(
             "Generating interactive HTML report with {} issues",
@@ -2660,7 +2660,7 @@ impl ReportGenerator {
         );
 
         // Generate embedded hidden diagrams
-        for (i, (title, code)) in diagrams_to_render.iter().enumerate() {
+        for (i, (_title, code)) in diagrams_to_render.iter().enumerate() {
             let diagram_id = format!("diagram-{}", i);
             let unique_mermaid_id = format!(
                 "mermaid-{}",

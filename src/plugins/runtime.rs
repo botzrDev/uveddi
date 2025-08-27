@@ -207,9 +207,9 @@ impl PluginRuntime {
     pub async fn execute_plugin(
         &self,
         plugin_id: &PluginId,
-        binary: &[u8],
-        function: &str,
-        args: &[u8],
+        _binary: &[u8],
+        _function: &str,
+        _args: &[u8],
     ) -> Result<Vec<u8>, UveddiError> {
         #[cfg(not(feature = "wasm-plugins"))]
         {

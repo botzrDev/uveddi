@@ -8,7 +8,7 @@ use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyModifiers};
 use ratatui::prelude::*;
 use std::time::{Duration, Instant};
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
-use tracing::{info, warn, error, debug};
+// Removed unused tracing imports
 
 use crate::{
     cli::analyze_command::AnalyzeCommand,

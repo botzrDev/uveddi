@@ -4,12 +4,12 @@
 //! including authentication, authorization, and audit logging configuration.
 
 use crate::security::{
-    authentication::{AuthenticationConfig, OAuthProviderConfig, OidcProviderConfig},
+    // Removed unused authentication imports
     errors::{SecurityError, SecurityResult},
-    http_client::HttpSecurityConfig,
+    // Removed unused http_client import
     secrets::{SecretStore, SecretStoreConfig},
 };
-use config::{Config, ConfigError, Environment, File, FileFormat, Source};
+use config::{Config, ConfigError, Environment, File, FileFormat};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::Path;

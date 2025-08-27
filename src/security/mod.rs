@@ -134,9 +134,9 @@ pub use secrets::{RotationPolicy, SecretRotationManager, SecretStore, SecretStor
 #[cfg(feature = "security")]
 pub use secure_config_loader::{SecretStoreHealthStatus, SecureConfigLoader};
 
-use crate::error::UveddiError;
-use std::path::Component;
-use validator::Validate;
+// Removed unused UveddiError import
+// Removed unused Component import
+// Removed unused Validate import
 
 // Include integration tests in test builds
 #[cfg(test)]

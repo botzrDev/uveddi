@@ -4,7 +4,7 @@
 //! eliminating client-side rendering issues and providing reliable diagram output.
 
 use crate::core::logging::{debug, error, warn};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use tempfile::TempDir;
 use thiserror::Error;
 use tokio::process::Command;

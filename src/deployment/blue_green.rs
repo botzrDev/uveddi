@@ -408,7 +408,7 @@ impl BlueGreenManager {
         let mut metadata = HashMap::new();
 
         for endpoint in endpoints {
-            let endpoint_url = format!("{}{}", service_url, endpoint);
+            let _endpoint_url = format!("{}{}", service_url, endpoint);
 
             // Simulate HTTP call
             sleep(Duration::from_millis(100)).await;

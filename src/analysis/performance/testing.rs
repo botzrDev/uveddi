@@ -558,7 +558,7 @@ graph TD
         let mut errors = Vec::new();
 
         for result in results {
-            if let Ok((i, total_time, render_time, success, error)) = result {
+            if let Ok((i, _total_time, render_time, success, error)) = result {
                 if success {
                     successes += 1;
                     times.push(render_time);

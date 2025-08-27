@@ -15,15 +15,15 @@
 use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue, Dependency};
 use crate::database::Database;
 use crate::models::visualization::{ArchitecturalComponent, DiagramMetadata};
-use crate::report::interactive_models::{InteractiveReport, REPORT_SCHEMA_VERSION};
+use crate::report::interactive_models::InteractiveReport;
 use crate::report::ReportGenerationError;
 use chrono::Utc;
 use serde_json;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::fs;
-use uuid::Uuid;
-use tracing::{info, warn, error, debug};
+// Removed unused uuid import
+use tracing::error;
 
 /// Configuration for interactive report generation
 #[derive(Debug, Clone)]
@@ -391,7 +391,7 @@ impl InteractiveReportGenerator {
 
     async fn load_analysis_run(
         &self,
-        db: &Database,
+        _db: &Database,
         run_id: i64,
     ) -> Result<AnalysisRun, ReportGenerationError> {
         // TODO: Implement actual database query
@@ -410,8 +410,8 @@ impl InteractiveReportGenerator {
 
     async fn load_issues(
         &self,
-        db: &Database,
-        run_id: i64,
+        _db: &Database,
+        _run_id: i64,
     ) -> Result<Vec<ArchitecturalIssue>, ReportGenerationError> {
         // TODO: Implement actual database query
         Ok(vec![])
@@ -419,7 +419,7 @@ impl InteractiveReportGenerator {
 
     async fn load_anti_pattern_types(
         &self,
-        db: &Database,
+        _db: &Database,
     ) -> Result<Vec<AntiPatternType>, ReportGenerationError> {
         // TODO: Implement actual database query
         Ok(vec![])
@@ -427,8 +427,8 @@ impl InteractiveReportGenerator {
 
     async fn load_components(
         &self,
-        db: &Database,
-        run_id: i64,
+        _db: &Database,
+        _run_id: i64,
     ) -> Result<Vec<ArchitecturalComponent>, ReportGenerationError> {
         // TODO: Implement actual database query
         Err(ReportGenerationError::ComponentAnalysisError(
@@ -438,8 +438,8 @@ impl InteractiveReportGenerator {
 
     async fn load_dependencies(
         &self,
-        db: &Database,
-        run_id: i64,
+        _db: &Database,
+        _run_id: i64,
     ) -> Result<Vec<Dependency>, ReportGenerationError> {
         // TODO: Implement actual database query
         Ok(vec![])
@@ -447,8 +447,8 @@ impl InteractiveReportGenerator {
 
     async fn load_diagrams(
         &self,
-        db: &Database,
-        run_id: i64,
+        _db: &Database,
+        _run_id: i64,
     ) -> Result<Vec<DiagramMetadata>, ReportGenerationError> {
         // TODO: Implement actual database query
         Ok(vec![])
@@ -464,7 +464,7 @@ mod tests {
     async fn test_generate_demo_report() {
         let demo_report = InteractiveReportGenerator::generate_demo_report();
 
-        assert_eq!(demo_report.schema_version, REPORT_SCHEMA_VERSION);
+        assert_eq!(demo_report.schema_version, crate::report::interactive_models::REPORT_SCHEMA_VERSION);
         assert_eq!(demo_report.project.name, "Demo Rust Project");
         assert_eq!(demo_report.findings.len(), 2);
         assert_eq!(demo_report.dependency_graph.nodes.len(), 2);

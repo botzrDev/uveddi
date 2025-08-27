@@ -527,7 +527,7 @@ impl AnalysisEngine {
             // Rebuild engine with plugins enabled (simple fallback)
             let rebuilt = Self::builder().enable_plugins(true).build();
             match rebuilt {
-                Ok(mut eng) => {
+                Ok(eng) => {
                     // swap orchestrator & plugin manager
                     self.orchestrator = eng.orchestrator;
                     self.plugin_manager = eng.plugin_manager;

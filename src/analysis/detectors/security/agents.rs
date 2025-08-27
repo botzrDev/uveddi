@@ -253,7 +253,7 @@ impl SecurityOrchestrator {
             context.file_path
         );
 
-        let analysis_id = Uuid::new_v4().to_string();
+        let _analysis_id = Uuid::new_v4().to_string();
         let mut results = SecurityAnalysisResult::new();
 
         // Decompose the analysis into subtasks
@@ -487,7 +487,7 @@ impl SecurityOrchestrator {
                 }
                 AgentResult::ValidationResult(validation_report) => {
                     // Apply validation results to adjust confidence scores
-                    for (issue_id, confidence_adjustment) in
+                    for (_issue_id, _confidence_adjustment) in
                         validation_report.confidence_adjustments
                     {
                         // Find and update corresponding vulnerability

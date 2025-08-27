@@ -5,7 +5,7 @@
 
 use color_eyre::Result;
 use crossterm::{
-    cursor::{Hide, Show},
+    cursor::Show,
     event::{DisableMouseCapture, EnableMouseCapture},
     execute,
     terminal::{

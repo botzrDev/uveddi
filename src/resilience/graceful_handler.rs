@@ -4,7 +4,7 @@
 //! during service degradation. Integrates with circuit breaker, fallback, and metrics
 //! systems to provide coordinated failure response.
 
-use crate::error::{ErrorCategory, RenderingServiceError};
+use crate::error::RenderingServiceError;
 use crate::resilience::{CircuitBreaker, FallbackManager, MetricsCollector};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -341,13 +341,13 @@ impl GracefulFailureHandler {
 
     /// Assess degradation level based on error and current state
     async fn assess_degradation_level(&self, error: &RenderingServiceError) -> DegradationLevel {
-        let failure_rate = {
+        let _failure_rate = {
             let history = self.failure_history.read().await;
             history.get_failure_rate()
         };
 
         // Check circuit breaker state
-        let circuit_open = {
+        let _circuit_open = {
             let cb = self.circuit_breaker.read().await;
             cb.is_open()
         };

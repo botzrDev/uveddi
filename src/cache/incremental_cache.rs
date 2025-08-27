@@ -392,7 +392,7 @@ impl IncrementalCache {
     }
 
     /// Evicts entries to make space for a new entry
-    async fn evict_entries_for_space(&self, new_entry: &CachedAnalysisEntry) -> Result<()> {
+    async fn evict_entries_for_space(&self, _new_entry: &CachedAnalysisEntry) -> Result<()> {
         let target_memory_mb = self.config.max_memory_mb * 80 / 100; // Target 80% of limit
         let mut evicted_count = 0;
 

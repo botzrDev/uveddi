@@ -8,7 +8,7 @@ use crate::security::{
     authentication::AuthenticationService,
     authorization::AuthorizationEngine,
     errors::{SecurityError, SecurityResult},
-    models::{AuditEvent, AuditEventType, AuditOutcome, AuthContext, AuthenticatedUser},
+    models::{AuditEventType, AuditOutcome, AuthContext, AuthenticatedUser},
     rate_limiting::RateLimiter,
 };
 use axum::{
@@ -29,7 +29,7 @@ use tower_http::{
     limit::RequestBodyLimitLayer,
     timeout::TimeoutLayer,
 };
-use uuid::Uuid;
+// Removed unused uuid import
 
 /// Security middleware services
 #[derive(Clone)]
@@ -462,8 +462,8 @@ pub fn endpoint_security_middleware(
     let action = action.to_string();
 
     move |request: Request, next: Next| {
-        let resource = resource.clone();
-        let action = action.clone();
+        let _resource = resource.clone();
+        let _action = action.clone();
 
         Box::pin(async move {
             if require_auth {
@@ -520,7 +520,7 @@ pub async fn service_account_middleware(
 }
 
 /// Development mode middleware (disabled in production)
-pub async fn dev_mode_middleware(request: Request, next: Next) -> Result<Response, StatusCode> {
+pub async fn dev_mode_middleware(_request: Request, _next: Next) -> Result<Response, StatusCode> {
     #[cfg(debug_assertions)]
     {
         Ok(next.run(request).await)

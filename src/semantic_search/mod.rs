@@ -61,7 +61,7 @@
 
 use ndarray::Array1;
 use std::collections::HashMap;
-use tracing::{info, warn, error, debug};
+// Removed unused tracing imports
 
 /// Code chunk with vector embedding and contextual metadata
 ///

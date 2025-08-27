@@ -39,14 +39,14 @@ impl Archive for ArchivableSystemTime {
     type Archived = rkyv::Archived<u128>;
     type Resolver = rkyv::Resolver<u128>;
 
-    unsafe fn resolve(&self, pos: usize, resolver: Self::Resolver, out: *mut Self::Archived) {
+    unsafe fn resolve(&self, resolver: Self::Resolver, out: rkyv::Place<Self::Archived>) {
         let nanos = self.0.duration_since(UNIX_EPOCH).unwrap().as_nanos();
-        nanos.resolve(pos, resolver, out);
+        nanos.resolve(resolver, out);
     }
 }
 
 impl<S: rkyv::ser::Serializer + ?Sized> Serialize<S> for ArchivableSystemTime {
-    fn serialize(&self, serializer: &mut S) -> Result<Self::Resolver, S::Error> {
+    fn serialize(&self, serializer: &mut S) -> Result<Self::Resolver, <S as rkyv::ser::Fallible>::Error> {
         let nanos = self.0.duration_since(UNIX_EPOCH).unwrap().as_nanos();
         nanos.serialize(serializer)
     }
@@ -117,14 +117,14 @@ impl Archive for ArchivablePathBuf {
     type Archived = rkyv::Archived<String>;
     type Resolver = rkyv::Resolver<String>;
 
-    unsafe fn resolve(&self, pos: usize, resolver: Self::Resolver, out: *mut Self::Archived) {
+    unsafe fn resolve(&self, resolver: Self::Resolver, out: rkyv::Place<Self::Archived>) {
         let string = self.0.to_string_lossy().into_owned();
-        string.resolve(pos, resolver, out);
+        string.resolve(resolver, out);
     }
 }
 
 impl<S: rkyv::ser::Serializer + ?Sized> Serialize<S> for ArchivablePathBuf {
-    fn serialize(&self, serializer: &mut S) -> Result<Self::Resolver, S::Error> {
+    fn serialize(&self, serializer: &mut S) -> Result<Self::Resolver, <S as rkyv::ser::Fallible>::Error> {
         let string = self.0.to_string_lossy().into_owned();
         string.serialize(serializer)
     }

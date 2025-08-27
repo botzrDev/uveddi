@@ -13,23 +13,8 @@ use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
 use base64::Engine;
 use chrono::{DateTime, Duration as ChronoDuration, Utc};
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
-use oauth2::{
-    basic::BasicClient, AuthType, AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken,
-    PkceCodeChallenge, RedirectUrl, Scope, TokenResponse, TokenUrl,
-};
-use openidconnect::{
-    core::{CoreAuthenticationFlow, CoreClient, CoreProviderMetadata, CoreResponseType},
-    // reqwest::async_http_client as oidc_http_client, // TODO: Fix for v4.0.1
-    AccessTokenHash,
-    AuthenticationFlow,
-    ClientId as OidcClientId,
-    ClientSecret as OidcClientSecret,
-    CsrfToken as OidcCsrfToken,
-    IssuerUrl,
-    Nonce,
-    RedirectUrl as OidcRedirectUrl,
-    TokenResponse as OidcTokenResponse,
-};
+// Removed unused oauth2 imports
+// Removed unused openidconnect imports
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
@@ -37,7 +22,7 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
 use uuid::Uuid;
-use tracing::{info, warn, error, debug};
+// Removed unused tracing imports
 
 /// JWT claims structure
 #[derive(Debug, Serialize, Deserialize)]
@@ -95,9 +80,9 @@ impl Default for AuthenticationConfig {
                 error!("WARNING: Using insecure default JWT secret. Set UVEDDI_JWT_SECRET environment variable in production!");
                 // Generate a random secret for development
                 use rand::Rng;
-                let mut rng = rand::thread_rng();
+                let mut rng = rand::rng();
                 let bytes: Vec<u8> = (0..32).map(|_| rng.gen()).collect();
-                base64::encode(&bytes)
+                base64::engine::general_purpose::STANDARD.encode(&bytes)
             });
 
         Self {
@@ -165,7 +150,7 @@ impl JwtManager {
     /// Generate a secure random key
     fn generate_secure_key(&self) -> String {
         use rand::Rng;
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let bytes: Vec<u8> = (0..64).map(|_| rng.gen()).collect();
         base64::engine::general_purpose::STANDARD.encode(&bytes)
     }
@@ -240,7 +225,7 @@ impl AuthenticationService {
         config: AuthenticationConfig,
         secret_store: Arc<dyn SecretStore>,
     ) -> SecurityResult<Self> {
-        let mut oauth_clients = HashMap::new();
+        let oauth_clients = HashMap::new();
         // TODO: OIDC disabled for alpha release
         // let mut oidc_clients = HashMap::new();
 
@@ -712,7 +697,7 @@ impl AuthenticationService {
         created_by: Option<Uuid>,
     ) -> SecurityResult<(String, ApiKey)> {
         // Generate random key components
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let key_id: String = (0..8)
             .map(|_| rng.sample(rand::distributions::Alphanumeric) as char)
             .collect();
@@ -756,7 +741,7 @@ impl AuthenticationService {
     /// Revoke API key
     pub async fn revoke_api_key(&self, key_prefix: &str) -> SecurityResult<()> {
         let mut store = self.api_key_store.write().await;
-        if let Some(mut api_key) = store.get_mut(key_prefix) {
+        if let Some(api_key) = store.get_mut(key_prefix) {
             api_key.deactivate();
             Ok(())
         } else {
@@ -769,7 +754,7 @@ impl AuthenticationService {
     /// Revoke session
     pub async fn revoke_session(&self, token: &str) -> SecurityResult<()> {
         let mut store = self.session_store.write().await;
-        if let Some(mut session) = store.get_mut(token) {
+        if let Some(session) = store.get_mut(token) {
             session.deactivate();
             Ok(())
         } else {
@@ -781,7 +766,7 @@ impl AuthenticationService {
 
     /// Generate secure session token
     fn generate_session_token(&self) -> String {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         (0..64)
             .map(|_| rng.sample(rand::distributions::Alphanumeric) as char)
             .collect()

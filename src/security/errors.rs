@@ -356,16 +356,18 @@ impl fmt::Display for SecurityErrorSeverity {
 /// Result type for security operations
 pub type SecurityResult<T> = Result<T, SecurityError>;
 
-/// Convert from various error types to SecurityError
-#[cfg(feature = "sqlx")]
-impl From<sqlx::Error> for SecurityError {
-    fn from(error: sqlx::Error) -> Self {
-        SecurityError::DatabaseError {
-            operation: "database_operation".to_string(),
-            error: error.to_string(),
-        }
-    }
-}
+// Convert from various error types to SecurityError
+// Note: sqlx support is not currently enabled as a feature
+// Uncomment and add sqlx feature to Cargo.toml if needed
+// #[cfg(feature = "sqlx")]
+// impl From<sqlx::Error> for SecurityError {
+//     fn from(error: sqlx::Error) -> Self {
+//         SecurityError::DatabaseError {
+//             operation: "database_operation".to_string(),
+//             error: error.to_string(),
+//         }
+//     }
+// }
 
 impl From<rusqlite::Error> for SecurityError {
     fn from(error: rusqlite::Error) -> Self {

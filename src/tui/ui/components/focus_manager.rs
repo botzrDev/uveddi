@@ -16,7 +16,7 @@
 //! ```
 
 use super::FocusableInput;
-use std::any::Any;
+// Removed unused Any import
 
 /// Manages focus state across multiple input components
 pub struct FocusManager {

@@ -291,8 +291,8 @@ impl DisasterRecoveryCoordinator {
         let recovery_start_time = Instant::now();
 
         // Execute recovery steps
-        let mut recovery_failed = false;
-        let mut failed_step_id = String::new();
+        let recovery_failed = false;
+        let failed_step_id = String::new();
 
         // TODO: Fix borrowing issue - temporarily simplified for compilation
         for step in &incident.recovery_plan.steps {

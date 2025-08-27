@@ -307,7 +307,7 @@ impl ResourceMonitor {
         &self,
         plugin: &ActivePlugin,
     ) -> crate::error::Result<PluginResourceReport> {
-        let mut report = PluginResourceReport {
+        let report = PluginResourceReport {
             plugin_id: plugin.id.clone(),
             memory_usage: 0,
             fuel_consumed: 0,

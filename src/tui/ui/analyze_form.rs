@@ -12,16 +12,16 @@ use ratatui::{
     text::{Line, Span},
     widgets::{Block, Borders, Paragraph, Tabs},
 };
-use std::path::PathBuf;
+// Removed unused PathBuf import
 
 use crate::{
-    cli::analyze_command::AnalyzeCommand,
+    // Removed unused AnalyzeCommand import
     tui::{
         app::AppState,
         messages::AppMessage,
         ui::components::{
             Dropdown, FocusManager, FocusableInput, NumericInput, PathPicker, TextInput, Toggle,
-            ValidationResult,
+            // Removed unused ValidationResult import
         },
     },
 };

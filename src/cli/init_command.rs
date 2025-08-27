@@ -818,7 +818,7 @@ impl ProjectAnalyzer {
     
     async fn estimate_size(&self) -> Result<ProjectSize, UveddiError> {
         let mut line_count = 0;
-        let mut file_count = 0;
+        let mut _file_count = 0;
         
         let code_patterns = ["**/*.rs", "**/*.py", "**/*.js", "**/*.ts", "**/*.go", "**/*.java"];
         
@@ -828,7 +828,7 @@ impl ProjectAnalyzer {
                 for entry in entries.flatten() {
                     if let Ok(content) = fs::read_to_string(&entry) {
                         line_count += content.lines().count();
-                        file_count += 1;
+                        _file_count += 1;
                     }
                 }
             }

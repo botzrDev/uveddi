@@ -11,7 +11,7 @@
 //! - Performance metrics and optimization recommendations
 //! - Security-focused rendering with input sanitization
 
-use chrono::{DateTime, Local};
+use chrono::Local;
 use std::collections::HashMap;
 use std::fs;
 use std::io::Write;
@@ -20,13 +20,12 @@ use std::process::Command;
 use tempfile::NamedTempFile;
 use tera::{Context, Tera};
 use thiserror::Error;
-use tracing::{info, warn, error, debug};
+use tracing::error;
 
 use crate::core::mocks::ai_mocks::AiInsight;
 use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
 use crate::models::visualization::{
-    ArchitecturalComponent, ComponentMetrics, ComponentType, Dependency, DependencyNode,
-    DependencyType, DiagramType as VizDiagramType,
+    ArchitecturalComponent, ComponentMetrics, ComponentType,
 };
 use crate::report::metrics::{compute_debt_score, compute_issues_by_severity};
 use crate::report::DiagramMode;

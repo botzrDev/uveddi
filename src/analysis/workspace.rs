@@ -253,7 +253,7 @@ impl WorkspaceDetector {
         let mut languages = HashSet::new();
 
         // Scan for multiple language indicators in the same directory tree
-        let mut current = start_path.to_path_buf();
+        let current = start_path.to_path_buf();
 
         // Look for combinations of language manifests
         let cargo_path = current.join("Cargo.toml");

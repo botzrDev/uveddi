@@ -427,7 +427,7 @@ impl EnterpriseMetricsCollector {
         &self,
         diagram_type: &str,
         generation_time: Duration,
-        complexity: u32,
+        _complexity: u32,
         cache_hit: bool,
         success: bool,
     ) {

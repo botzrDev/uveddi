@@ -472,7 +472,7 @@ impl PluginKnowledgeIntegrator {
     /// Get patterns from plugin library for analysis context
     async fn get_plugin_patterns(
         &self,
-        context: &AnalysisContext,
+        _context: &AnalysisContext,
     ) -> Result<Vec<PatternKnowledge>, PluginError> {
         let plugin_lib = self.plugin_library.read().await;
         let mut patterns = Vec::new();

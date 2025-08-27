@@ -10,15 +10,14 @@ use std::env;
 use std::path::{Path, PathBuf};
 use tera::{Context, Tera};
 use thiserror::Error;
-use tracing::{info, warn, error, debug};
+// Removed unused tracing imports
 
-use crate::analysis::mermaid_generator::{MermaidGenerationError, MermaidGenerator};
+use crate::analysis::mermaid_generator::MermaidGenerator;
 use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
 use crate::models::visualization::{
-    ArchitecturalComponent, ComponentMetrics, ComponentType, Dependency, DependencyNode,
-    DependencyType, DiagramType,
+    ArchitecturalComponent, ComponentMetrics, ComponentType,
 };
-use uuid::Uuid;
+// Removed unused uuid import
 
 // Include the bundled assets generated at build time
 include!(concat!(env!("OUT_DIR"), "/bundled_assets.rs"));
@@ -46,7 +45,7 @@ pub struct ModernReportGenerator {
 impl ModernReportGenerator {
     /// Create a new modern report generator
     pub fn new() -> Result<Self, ModernReportError> {
-        use crate::core::logging::{info, warn};
+        use crate::core::logging::{info};
         use std::env;
 
         info!("Attempting to initialize modern report generator with templates");
@@ -517,9 +516,7 @@ impl ModernReportGenerator {
     ) -> Vec<ArchitectureDiagram> {
         use crate::analysis::mermaid_generator::MermaidGenerator;
         use crate::core::logging::{debug, info, warn};
-        use crate::models::visualization::{
-            ArchitecturalComponent, ComponentMetrics, ComponentType, DiagramType,
-        };
+        use crate::models::visualization::DiagramType;
         use std::collections::HashMap;
         use uuid::Uuid;
 
@@ -604,8 +601,7 @@ impl ModernReportGenerator {
     ) -> Vec<ArchitecturalComponent> {
         use crate::core::logging::debug;
         use crate::models::visualization::{
-            ArchitecturalComponent, ComponentMetrics, ComponentType, Dependency, DependencyNode,
-            DependencyType,
+            ArchitecturalComponent, ComponentMetrics, ComponentType,
         };
         use std::collections::{HashMap, HashSet};
         use uuid::Uuid;
@@ -1013,6 +1009,7 @@ struct PerformanceMetric {
 mod tests {
     use super::*;
     use chrono::Utc;
+    use crate::core::logging::error;
     use std::collections::HashMap;
     use tera::Value;
 

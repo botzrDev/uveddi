@@ -9,7 +9,7 @@ use crate::security::{
     errors::{SecurityError, SecurityResult},
     secrets::{SecretStore, SecretStoreConfig, SecretStoreFactory},
 };
-use async_trait::async_trait;
+// Removed unused async_trait import
 use base64::{engine::general_purpose, Engine};
 use std::sync::Arc;
 use tracing::{error, info, warn};
@@ -118,7 +118,7 @@ impl SecureConfigLoader {
         }
 
         // Inject database credentials if needed
-        if let Ok(database_url) = self.get_secret_with_fallback("database_url").await {
+        if let Ok(_database_url) = self.get_secret_with_fallback("database_url").await {
             info!("Successfully injected database URL from secure store");
             // You could set this on an audit config database_url field if it exists
         }

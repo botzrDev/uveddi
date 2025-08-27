@@ -1207,7 +1207,7 @@ impl AnalyzeCommand {
     }
 
     /// Print security analysis summary with color-coded output
-    async fn print_security_summary(&self, report: &crate::application::AnalysisReport) {
+    async fn print_security_summary(&self, _report: &crate::application::AnalysisReport) {
         // Note: This is a placeholder implementation until we have the security data
         // properly flowing through the AnalysisReport structure
 

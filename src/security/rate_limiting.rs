@@ -5,14 +5,14 @@
 
 use crate::security::{
     config::RateLimitingConfig,
-    errors::{SecurityError, SecurityResult},
+    errors::SecurityResult,
     models::{RateLimitIdentifierType, RateLimitInfo},
 };
 use chrono::{DateTime, Utc};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tower_governor::{governor::GovernorConfig, governor::GovernorConfigBuilder};
+// Removed unused tower_governor imports
 
 /// Rate limiter trait for different implementations
 #[async_trait::async_trait]

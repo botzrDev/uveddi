@@ -6,11 +6,11 @@
 
 use crate::resilience::health::{Alert, AlertSeverity, HealthMonitor};
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, VecDeque};
 use std::sync::Arc;
 use std::time::{Duration, SystemTime};
 use tokio::sync::RwLock;
-use tracing::{info, warn, error, debug};
+// Removed unused tracing imports
 
 /// Alert types supported by the system
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash)]

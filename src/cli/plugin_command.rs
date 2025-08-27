@@ -107,34 +107,34 @@ impl PluginCommand {
 
     async fn install_plugin(
         &self,
-        binary_path: PathBuf,
-        manifest_path: PathBuf,
+        _binary_path: PathBuf,
+        _manifest_path: PathBuf,
     ) -> Result<(), crate::error::UveddiError> {
         #[cfg(feature = "wasm-plugins")]
         {
             println!(
                 "Installing plugin from {} and {}...",
-                binary_path.display(),
-                manifest_path.display()
+                _binary_path.display(),
+                _manifest_path.display()
             );
 
             // Read binary file
-            let binary = tokio::fs::read(&binary_path).await.map_err(|e| {
+            let binary = tokio::fs::read(&_binary_path).await.map_err(|e| {
                 crate::error::UveddiError::io_error(
                     "read file",
-                    binary_path.to_string_lossy().as_ref(),
+                    _binary_path.to_string_lossy().as_ref(),
                     e,
                 )
             })?;
 
             // Read and parse manifest
             let manifest_content =
-                tokio::fs::read_to_string(&manifest_path)
+                tokio::fs::read_to_string(&_manifest_path)
                     .await
                     .map_err(|e| {
                         crate::error::UveddiError::io_error(
                             "read file",
-                            manifest_path.to_string_lossy().as_ref(),
+                            _manifest_path.to_string_lossy().as_ref(),
                             e,
                         )
                     })?;
@@ -181,10 +181,10 @@ impl PluginCommand {
         Ok(())
     }
 
-    async fn uninstall_plugin(&self, plugin_name: String) -> Result<(), crate::error::UveddiError> {
+    async fn uninstall_plugin(&self, _plugin_name: String) -> Result<(), crate::error::UveddiError> {
         #[cfg(feature = "wasm-plugins")]
         {
-            println!("Uninstalling plugin '{}'...", plugin_name);
+            println!("Uninstalling plugin '{}'...", _plugin_name);
 
             let mut engine = WasmPluginEngine::new().await?;
 
@@ -192,10 +192,10 @@ impl PluginCommand {
             let stats = engine.get_registry_stats();
             // For simplicity, we'll create a plugin ID from the name
             // In a real implementation, you'd search the registry properly
-            let plugin_id = PluginId::from_name(&plugin_name);
+            let plugin_id = PluginId::from_name(&_plugin_name);
 
             engine.uninstall_plugin(&plugin_id).await?;
-            println!("Successfully uninstalled plugin '{}'", plugin_name);
+            println!("Successfully uninstalled plugin '{}'", _plugin_name);
         }
 
         #[cfg(not(feature = "wasm-plugins"))]
@@ -208,13 +208,13 @@ impl PluginCommand {
         Ok(())
     }
 
-    async fn show_plugin_info(&self, plugin_name: String) -> Result<(), crate::error::UveddiError> {
+    async fn show_plugin_info(&self, _plugin_name: String) -> Result<(), crate::error::UveddiError> {
         #[cfg(feature = "wasm-plugins")]
         {
             let engine = WasmPluginEngine::new().await?;
 
             // Find plugin by name and show detailed information
-            println!("Plugin Information for '{}':", plugin_name);
+            println!("Plugin Information for '{}':", _plugin_name);
             println!("  Status: Not implemented - would show detailed plugin info");
 
             // In a real implementation, you would:
@@ -318,8 +318,8 @@ impl PluginCommand {
 
     async fn verify_plugin(
         &self,
-        binary_path: PathBuf,
-        manifest_path: PathBuf,
+        _binary_path: PathBuf,
+        _manifest_path: PathBuf,
     ) -> Result<(), crate::error::UveddiError> {
         #[cfg(feature = "wasm-plugins")]
         {
@@ -327,27 +327,27 @@ impl PluginCommand {
 
             println!(
                 "Verifying plugin from {} and {}...",
-                binary_path.display(),
-                manifest_path.display()
+                _binary_path.display(),
+                _manifest_path.display()
             );
 
             // Read binary file
-            let binary = tokio::fs::read(&binary_path).await.map_err(|e| {
+            let binary = tokio::fs::read(&_binary_path).await.map_err(|e| {
                 crate::error::UveddiError::io_error(
                     "read file",
-                    binary_path.to_string_lossy().as_ref(),
+                    _binary_path.to_string_lossy().as_ref(),
                     e,
                 )
             })?;
 
             // Read and parse manifest
             let manifest_content =
-                tokio::fs::read_to_string(&manifest_path)
+                tokio::fs::read_to_string(&_manifest_path)
                     .await
                     .map_err(|e| {
                         crate::error::UveddiError::io_error(
                             "read file",
-                            manifest_path.to_string_lossy().as_ref(),
+                            _manifest_path.to_string_lossy().as_ref(),
                             e,
                         )
                     })?;

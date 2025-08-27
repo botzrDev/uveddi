@@ -1,5 +1,5 @@
 use crate::error::rendering::{ErrorCategory, ErrorSeverity, RenderingServiceError};
-use std::cmp::max;
+// Removed unused std::cmp import
 use std::future::Future;
 use std::pin::Pin;
 use std::time::Duration;

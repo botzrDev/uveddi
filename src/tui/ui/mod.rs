@@ -12,7 +12,7 @@ pub mod main_menu;
 // pub mod report_viewer;    // Will be implemented in later tasks
 pub mod components;
 
-use self::{analyze_form::AnalyzeForm, main_menu::MainMenu};
+use self::main_menu::MainMenu;
 use crate::tui::app::{AppScreen, AppState};
 use ratatui::prelude::*;
 

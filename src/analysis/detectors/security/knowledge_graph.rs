@@ -294,7 +294,7 @@ impl SemanticGraph {
         Ok(())
     }
 
-    pub async fn query(&self, query: &SecurityQuery) -> Result<SemanticQueryResult, AnalysisError> {
+    pub async fn query(&self, _query: &SecurityQuery) -> Result<SemanticQueryResult, AnalysisError> {
         // TODO: Implement semantic querying
         Ok(SemanticQueryResult {
             insights: Vec::new(),
@@ -321,7 +321,7 @@ impl CodeCentricRAG {
         Ok(())
     }
 
-    pub async fn query(&self, query: &SecurityQuery) -> Result<RAGQueryResult, AnalysisError> {
+    pub async fn query(&self, _query: &SecurityQuery) -> Result<RAGQueryResult, AnalysisError> {
         // TODO: Implement RAG querying with embeddings
         Ok(RAGQueryResult {
             relevant_contexts: Vec::new(),
@@ -368,7 +368,7 @@ impl LongTermMemory {
 
     pub async fn find_patterns(
         &self,
-        query: &SecurityQuery,
+        _query: &SecurityQuery,
     ) -> Result<Vec<HistoricalPattern>, AnalysisError> {
         // TODO: Implement pattern matching based on query
         Ok(Vec::new())

@@ -556,7 +556,7 @@ impl KnowledgePluginSystem {
     }
 
     /// Initialize a plugin
-    async fn initialize_plugin(&mut self, plugin_id: &str) -> Result<(), PluginError> {
+    async fn initialize_plugin(&mut self, _plugin_id: &str) -> Result<(), PluginError> {
         // Implementation for plugin initialization
         // This would load the actual plugin implementation and call initialize()
         Ok(())
@@ -565,7 +565,7 @@ impl KnowledgePluginSystem {
     /// Resolve plugin dependencies
     async fn resolve_dependencies(
         &self,
-        metadata: &KnowledgePluginMetadata,
+        _metadata: &KnowledgePluginMetadata,
     ) -> Result<(), PluginError> {
         // Implementation for dependency resolution
         Ok(())
@@ -633,7 +633,7 @@ impl KnowledgePluginSystem {
     /// Get context from a specific plugin
     async fn get_context_from_plugin(
         &self,
-        plugin_id: &str,
+        _plugin_id: &str,
         plugin: &Box<dyn KnowledgePlugin>,
         analysis_context: &AnalysisContext,
     ) -> Result<PluginSpecificContext, PluginError> {
@@ -924,7 +924,7 @@ impl KnowledgePluginLoader {
 
     pub async fn load_plugin(
         &self,
-        plugin_path: &PathBuf,
+        _plugin_path: &PathBuf,
     ) -> Result<KnowledgePluginPackage, PluginError> {
         // Implementation for loading plugin packages
         // This would parse plugin manifests, validate structure, etc.
@@ -952,7 +952,7 @@ impl KnowledgePluginSecurityManager {
 
     pub async fn validate_plugin(
         &self,
-        package: &KnowledgePluginPackage,
+        _package: &KnowledgePluginPackage,
     ) -> Result<(), PluginError> {
         // Implementation for security validation
         // This would check permissions, scan for vulnerabilities, etc.
@@ -972,7 +972,7 @@ impl KnowledgePluginPerformanceMonitor {
 
     pub async fn validate_performance(
         &self,
-        package: &KnowledgePluginPackage,
+        _package: &KnowledgePluginPackage,
     ) -> Result<(), PluginError> {
         // Implementation for performance validation
         // This would test initialization time, memory usage, etc.

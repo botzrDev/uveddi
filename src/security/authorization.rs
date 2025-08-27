@@ -6,9 +6,9 @@
 
 use crate::security::{
     errors::{SecurityError, SecurityResult},
-    models::{AuthContext, AuthenticatedUser, Permission, Role, User, UserRole},
+    models::{AuthContext, Permission, UserRole},
 };
-use casbin::{CoreApi, DefaultModel, Enforcer, MemoryAdapter, MgmtApi, Result as CasbinResult};
+use casbin::{CoreApi, DefaultModel, Enforcer, MemoryAdapter, MgmtApi};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -318,14 +318,14 @@ impl AuthorizationEngine {
     }
 
     /// Get all roles for a user
-    pub async fn get_roles_for_user(&self, user: String) -> SecurityResult<Vec<String>> {
+    pub async fn get_roles_for_user(&self, _user: String) -> SecurityResult<Vec<String>> {
         // Simplified implementation - in a real system this would query the enforcer
         // For now, return empty roles as a placeholder
         Ok(vec![])
     }
 
     /// Get all users with a specific role
-    pub async fn get_users_for_role(&self, role: String) -> SecurityResult<Vec<String>> {
+    pub async fn get_users_for_role(&self, _role: String) -> SecurityResult<Vec<String>> {
         // Simplified implementation - in a real system this would query the enforcer
         // For now, return empty users as a placeholder
         Ok(vec![])
@@ -348,7 +348,7 @@ impl AuthorizationEngine {
     }
 
     /// Get all permissions for a user
-    pub async fn get_permissions_for_user(&self, user: String) -> SecurityResult<Vec<Vec<String>>> {
+    pub async fn get_permissions_for_user(&self, _user: String) -> SecurityResult<Vec<Vec<String>>> {
         // Simplified implementation - in a real system this would query the enforcer
         // For now, return empty permissions as a placeholder
         Ok(vec![])
@@ -379,9 +379,9 @@ impl AuthorizationEngine {
     /// Apply attribute-based access control rules
     async fn apply_abac_rules(
         &self,
-        user_id: &Uuid,
-        resource: &str,
-        action: &str,
+        _user_id: &Uuid,
+        _resource: &str,
+        _action: &str,
         context: &AuthContext,
     ) -> SecurityResult<bool> {
         // Time-based access control

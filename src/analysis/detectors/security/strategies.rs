@@ -337,7 +337,7 @@ impl SoftwareCompositionAnalyzer {
 
     async fn analyze_cargo_toml(
         &self,
-        file: &ParsedFile,
+        _file: &ParsedFile,
     ) -> Result<Vec<SecurityIssue>, AnalysisError> {
         // TODO: Parse Cargo.toml and check dependencies against RustSec database
         Ok(Vec::new())
@@ -345,7 +345,7 @@ impl SoftwareCompositionAnalyzer {
 
     async fn analyze_package_json(
         &self,
-        file: &ParsedFile,
+        _file: &ParsedFile,
     ) -> Result<Vec<SecurityIssue>, AnalysisError> {
         // TODO: Parse package.json and check dependencies against npm audit
         Ok(Vec::new())
@@ -353,7 +353,7 @@ impl SoftwareCompositionAnalyzer {
 
     async fn analyze_requirements_txt(
         &self,
-        file: &ParsedFile,
+        _file: &ParsedFile,
     ) -> Result<Vec<SecurityIssue>, AnalysisError> {
         // TODO: Parse requirements.txt and check dependencies against safety database
         Ok(Vec::new())

@@ -306,7 +306,7 @@ impl StartupManager {
         info!("Shutting down Uveddi application");
 
         // Shutdown plugin system
-        if let Some(mut runtime) = self.plugin_runtime.take() {
+        if let Some(runtime) = self.plugin_runtime.take() {
             if let Ok(mut runtime_guard) = Arc::try_unwrap(runtime).map(|r| r.into_inner()) {
                 runtime_guard.shutdown().await?;
             }

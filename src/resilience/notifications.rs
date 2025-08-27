@@ -2,10 +2,10 @@
 
 use crate::resilience::alerting::{AlertingError, ChannelType, EnhancedAlert, NotificationChannel};
 use reqwest::Client;
-use serde_json::Value;
+// Removed unused serde_json import
 use std::collections::HashMap;
 use tokio::time::{timeout, Duration};
-use tracing::{info, warn, error, debug};
+// Removed unused tracing imports
 
 /// HTTP client wrapper for notification channels
 pub struct NotificationClient {

@@ -482,7 +482,7 @@ impl SmartConfigValidator {
         });
     }
 
-    async fn validate_project_specific_settings(&self, config: &Config, project_path: &Path, warnings: &mut Vec<ValidationWarning>, suggestions: &mut Vec<ConfigSuggestion>) {
+    async fn validate_project_specific_settings(&self, config: &Config, project_path: &Path, _warnings: &mut Vec<ValidationWarning>, suggestions: &mut Vec<ConfigSuggestion>) {
         // Check if project has package.json but no Node.js patterns
         if project_path.join("package.json").exists() {
             if let Some(ref dc_config) = config.dead_code {

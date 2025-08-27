@@ -9,10 +9,10 @@
 //! - Intelligent alerting with burn rate analysis
 //! - Predictive SLA risk assessment
 
-use anyhow::Result;
+// Removed unused anyhow import
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::time::{Duration, SystemTime};
+use std::time::Duration;
 
 /// Service Level Indicator types defining the category of measurement
 ///

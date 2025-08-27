@@ -223,7 +223,7 @@ impl InvalidationManager {
     /// Direct dependency invalidation decision
     async fn direct_dependency_decision(
         &self,
-        diagram_id: &str,
+        _diagram_id: &str,
         changeset: &ChangeSet,
         diagram_dependencies: &HashSet<PathBuf>,
     ) -> Result<InvalidationDecision> {

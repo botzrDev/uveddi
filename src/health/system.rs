@@ -135,12 +135,12 @@ async fn check_config_directories() -> HealthCheck {
     ];
 
     let mut missing_dirs = Vec::new();
-    let mut accessible_dirs = 0;
+    let mut _accessible_dirs = 0;
 
     for dir_opt in &config_dirs {
         if let Some(dir) = dir_opt {
             match fs::metadata(dir).await {
-                Ok(_) => accessible_dirs += 1,
+                Ok(_) => _accessible_dirs += 1,
                 Err(_) => missing_dirs.push(dir.display().to_string()),
             }
         }

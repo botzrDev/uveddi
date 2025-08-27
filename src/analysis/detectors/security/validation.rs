@@ -101,7 +101,7 @@ impl ValidationEngine {
 
         // Filter issues based on agreement threshold
         let min_agreement = self.config.min_lines_threshold; // Reuse config value
-        for (issue_key, agreements) in issue_agreements {
+        for (_issue_key, agreements) in issue_agreements {
             if agreements.len() >= min_agreement {
                 // Multiple detectors agree - high confidence
                 let mut representative_issue = agreements[0].1.clone();
