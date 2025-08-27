@@ -6,7 +6,6 @@
 use crate::database::models::ArchitecturalIssue;
 use async_trait::async_trait;
 use serde_json::Value;
-use std::collections::HashMap;
 
 /// Mock AI service that provides deterministic responses for testing
 #[derive(Debug, Clone)]

@@ -39,9 +39,9 @@ impl Archive for ArchivableSystemTime {
     type Archived = rkyv::Archived<u128>;
     type Resolver = rkyv::Resolver<u128>;
 
-    unsafe fn resolve(&self, resolver: Self::Resolver, out: rkyv::Place<Self::Archived>) {
+    fn resolve(&self, resolver: Self::Resolver, out: rkyv::Place<Self::Archived>) {
         let nanos = self.0.duration_since(UNIX_EPOCH).unwrap().as_nanos();
-        nanos.resolve(resolver, out);
+        unsafe { nanos.resolve(resolver, out) };
     }
 }
 
@@ -117,9 +117,9 @@ impl Archive for ArchivablePathBuf {
     type Archived = rkyv::Archived<String>;
     type Resolver = rkyv::Resolver<String>;
 
-    unsafe fn resolve(&self, resolver: Self::Resolver, out: rkyv::Place<Self::Archived>) {
+    fn resolve(&self, resolver: Self::Resolver, out: rkyv::Place<Self::Archived>) {
         let string = self.0.to_string_lossy().into_owned();
-        string.resolve(resolver, out);
+        unsafe { string.resolve(resolver, out) };
     }
 }
 

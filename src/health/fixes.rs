@@ -4,7 +4,6 @@
 //! including directory creation, service management, and configuration fixes.
 
 use crate::error::UveddiError;
-use std::path::Path;
 use tokio::fs;
 use tokio::process::Command;
 

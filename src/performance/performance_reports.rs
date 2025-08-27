@@ -8,7 +8,6 @@
 
 use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::path::Path;
 use std::time::SystemTime;
 use tera::{Context, Tera};

@@ -97,7 +97,7 @@ pub use validation::{
 };
 
 use crate::analysis::{AnalysisDetector, AnalysisError};
-use crate::ast::{ParsedFile, SourceLanguage};
+use crate::ast::ParsedFile;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use async_trait::async_trait;
 use std::sync::Arc;
@@ -363,7 +363,7 @@ impl Default for MainSecurityDetector {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ast::{ParsedFile, SourceLanguage};
+    use crate::ast::ParsedFile;
     use std::path::PathBuf;
 
     #[tokio::test]

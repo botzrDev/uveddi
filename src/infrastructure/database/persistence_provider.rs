@@ -12,7 +12,6 @@ use crate::database::crud::Database;
 use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
-use std::collections::HashMap;
 use std::sync::Arc;
 
 /// Database implementation of the persistence provider

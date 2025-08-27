@@ -22,7 +22,6 @@ use crate::ast::tree_sitter::{StreamingIterator, TreeCursor};
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
 use crate::core::logging::{debug, info, warn};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
-use crate::error::UveddiError;
 use async_trait::async_trait;
 use rayon::prelude::*;
 use sha2::{Digest, Sha256};

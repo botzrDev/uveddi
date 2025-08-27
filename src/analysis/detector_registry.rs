@@ -1,7 +1,6 @@
 use crate::analysis::{
     AnalysisDetector, DetectorConfig, DetectorFactory, WasmPluginAdapterFactory,
 };
-use tracing::{info, warn, error, debug};
 use crate::error::UveddiError;
 use std::collections::HashMap;
 

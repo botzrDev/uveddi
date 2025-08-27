@@ -4,13 +4,12 @@
 //! the new multi-layered caching architecture with memory and disk tiers,
 //! optimized serialization, and intelligent invalidation strategies.
 
-use tracing::{info, warn, error, debug};
 use crate::analysis::cache::{
     ast::{AstCache, CacheConfig},
     engine_cache::{EngineCache, EngineCacheConfig},
     metrics::CacheMetrics,
 };
-use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
+use crate::ast::tree_sitter_impl::ParsedFile;
 use crate::database::models::ArchitecturalIssue;
 use crate::error::UveddiError;
 use prometheus::Registry;

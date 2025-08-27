@@ -7,7 +7,6 @@
 use crate::ast::SourceLanguage;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::path::PathBuf;
 
 /// Main configuration for the security detector system
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

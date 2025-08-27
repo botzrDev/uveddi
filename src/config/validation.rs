@@ -6,7 +6,6 @@
 use crate::config::{Config, DeadCodeConfig, LargeClassConfig, LanguageThresholds};
 use crate::error::UveddiError;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::path::Path;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
