@@ -379,8 +379,8 @@ impl AuthorizationEngine {
     /// Apply attribute-based access control rules
     async fn apply_abac_rules(
         &self,
-        _user_id: &Uuid,
-        _resource: &str,
+        user_id: &Uuid,
+        resource: &str,
         _action: &str,
         context: &AuthContext,
     ) -> SecurityResult<bool> {

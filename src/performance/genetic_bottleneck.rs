@@ -394,7 +394,7 @@ impl GeneticBottleneckDetector {
         for _ in 0..population.len() {
             let mut tournament = Vec::new();
             for _ in 0..tournament_size {
-                let idx = self.rng.gen_range(0..population.len());
+                let idx = self.rng.random_range(0..population.len());
                 tournament.push(&population[idx]);
             }
 
@@ -447,7 +447,7 @@ impl GeneticBottleneckDetector {
         parent1: &BottleneckChromosome,
         parent2: &BottleneckChromosome,
     ) -> Result<(BottleneckChromosome, BottleneckChromosome)> {
-        let crossover_point = self.rng.gen_range(0..parent1.resource_weights.len());
+        let crossover_point = self.rng.random_range(0..parent1.resource_weights.len());
 
         let mut child1 = parent1.clone();
         let mut child2 = parent2.clone();
@@ -474,8 +474,8 @@ impl GeneticBottleneckDetector {
     /// Mutation operation for chromosome
     fn mutate(&mut self, chromosome: &mut BottleneckChromosome) -> Result<()> {
         // Mutate resource weights
-        let idx = self.rng.gen_range(0..chromosome.resource_weights.len());
-        chromosome.resource_weights[idx] += self.rng.gen_range(-0.1..0.1);
+        let idx = self.rng.random_range(0..chromosome.resource_weights.len());
+        chromosome.resource_weights[idx] += self.rng.random_range(-0.1..0.1);
         chromosome.resource_weights[idx] = chromosome.resource_weights[idx].clamp(0.01, 1.0);
 
         // Normalize weights
@@ -486,8 +486,8 @@ impl GeneticBottleneckDetector {
             .for_each(|w| *w /= sum);
 
         // Mutate threshold values
-        let idx = self.rng.gen_range(0..chromosome.threshold_values.len());
-        chromosome.threshold_values[idx] += self.rng.gen_range(-0.05..0.05);
+        let idx = self.rng.random_range(0..chromosome.threshold_values.len());
+        chromosome.threshold_values[idx] += self.rng.random_range(-0.05..0.05);
         chromosome.threshold_values[idx] = chromosome.threshold_values[idx].clamp(0.1, 0.9);
 
         // Reset fitness

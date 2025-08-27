@@ -13,7 +13,7 @@
 use crate::analysis::errors::AnalysisError;
 use crate::ast::tree_sitter::{Node, Query, QueryCursor};
 use crate::ast::tree_sitter_impl::SourceLanguage;
-use crate::core::logging::{debug, warn};
+use crate::core::logging::warn;
 use petgraph::{
     visit::{EdgeRef, IntoNodeReferences},
     Graph,

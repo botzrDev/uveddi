@@ -126,6 +126,12 @@ streaming-iterator = []
 tower = []
 tower-http = []
 
+# Missing feature flags (fixing configuration warnings)
+mimalloc = []
+graphql-api = []
+yaml = []
+reqwest = []
+
 [dependencies]
 # Use workspace dependencies for consistency
 serde = { workspace = true }

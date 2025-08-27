@@ -11,18 +11,18 @@ use crate::security::{
 use argon2::password_hash::{rand_core::OsRng, SaltString};
 use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
 use base64::Engine;
-use chrono::{DateTime, Duration as ChronoDuration, Utc};
+use chrono::{Duration as ChronoDuration, Utc};
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
-// Removed unused oauth2 imports
+use oauth2::basic::BasicClient;
 // Removed unused openidconnect imports
-use rand::Rng;
+use rand::{Rng, rng};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
 use uuid::Uuid;
-// Removed unused tracing imports
+use tracing::error;
 
 /// JWT claims structure
 #[derive(Debug, Serialize, Deserialize)]
@@ -81,7 +81,7 @@ impl Default for AuthenticationConfig {
                 // Generate a random secret for development
                 use rand::Rng;
                 let mut rng = rand::rng();
-                let bytes: Vec<u8> = (0..32).map(|_| rng.gen()).collect();
+                let bytes: Vec<u8> = (0..32).map(|_| rng.random()).collect();
                 base64::engine::general_purpose::STANDARD.encode(&bytes)
             });
 
@@ -151,7 +151,7 @@ impl JwtManager {
     fn generate_secure_key(&self) -> String {
         use rand::Rng;
         let mut rng = rand::rng();
-        let bytes: Vec<u8> = (0..64).map(|_| rng.gen()).collect();
+        let bytes: Vec<u8> = (0..64).map(|_| rng.random()).collect();
         base64::engine::general_purpose::STANDARD.encode(&bytes)
     }
 
@@ -697,12 +697,24 @@ impl AuthenticationService {
         created_by: Option<Uuid>,
     ) -> SecurityResult<(String, ApiKey)> {
         // Generate random key components
-        let mut rng = rand::rng();
+        let mut rng = rng();
         let key_id: String = (0..8)
-            .map(|_| rng.sample(rand::distributions::Alphanumeric) as char)
+            .map(|_| rng.random::<u8>() % 62)
+            .map(|i| match i {
+                0..=9 => (b'0' + i) as char,
+                10..=35 => (b'A' + (i - 10)) as char,
+                36..=61 => (b'a' + (i - 36)) as char,
+                _ => unreachable!(),
+            })
             .collect();
         let key_secret: String = (0..32)
-            .map(|_| rng.sample(rand::distributions::Alphanumeric) as char)
+            .map(|_| rng.random::<u8>() % 62)
+            .map(|i| match i {
+                0..=9 => (b'0' + i) as char,
+                10..=35 => (b'A' + (i - 10)) as char,
+                36..=61 => (b'a' + (i - 36)) as char,
+                _ => unreachable!(),
+            })
             .collect();
 
         let key_prefix = format!("uvd_{}", key_id);
@@ -766,9 +778,15 @@ impl AuthenticationService {
 
     /// Generate secure session token
     fn generate_session_token(&self) -> String {
-        let mut rng = rand::rng();
+        let mut rng = rng();
         (0..64)
-            .map(|_| rng.sample(rand::distributions::Alphanumeric) as char)
+            .map(|_| rng.random::<u8>() % 62)
+            .map(|i| match i {
+                0..=9 => (b'0' + i) as char,
+                10..=35 => (b'A' + (i - 10)) as char,
+                36..=61 => (b'a' + (i - 36)) as char,
+                _ => unreachable!(),
+            })
             .collect()
     }
 

@@ -504,6 +504,8 @@ impl AppState {
             ollama_model: get_string(FormField::OllamaModel).ok(),
             timeout: 300,
             verbose: false,
+            progress_format: "terminal".to_string(),
+            progress_details: false,
             dead_code_confidence: get_float(FormField::DeadCodeConfidence)?,
             dead_code_library_mode: get_bool(FormField::DeadCodeLibraryMode)?,
             dead_code_ignore_patterns: get_patterns(FormField::DeadCodeIgnorePatterns)?,

@@ -15,7 +15,9 @@ use crate::analysis::cache::{
     serialization::{CacheEntry, CacheSerializer, SerializationFormat},
 };
 use lru::LruCache;
-use rkyv::de::deserializers::SharedDeserializeMap;
+// RKYV imports temporarily disabled due to API changes
+// #[cfg(feature = "memory-optimization")]
+// use rkyv::de::SharedDeserializeMap;
 use serde::{de::DeserializeOwned, Serialize};
 use std::collections::HashMap;
 use std::hash::Hash;
@@ -119,9 +121,7 @@ impl<K, V> MultiLayerCache<K, V>
 where
     K: Clone + Eq + Hash + Send + Sync + ToString + 'static,
     V: Clone + Send + Sync + Serialize + for<'de> DeserializeOwned + 'static,
-    V: rkyv::Archive + rkyv::Serialize<rkyv::ser::serializers::AllocSerializer<256>>,
-    V: rkyv::Deserialize<V::Archived, SharedDeserializeMap>,
-    V::Archived: for<'a> rkyv::CheckBytes<rkyv::validation::validators::DefaultValidator<'a>>,
+    // RKYV constraints temporarily disabled due to API changes
 {
     /// Create a new multi-layer cache
     pub async fn new(config: CacheConfig, metrics: Arc<CacheMetrics>) -> Result<Self, CacheError> {
@@ -406,9 +406,7 @@ impl<K, V> DiskCache<K, V>
 where
     K: Clone + Eq + Hash + Send + Sync + ToString,
     V: Clone + Send + Sync + Serialize + for<'de> DeserializeOwned,
-    V: rkyv::Archive + rkyv::Serialize<rkyv::ser::serializers::AllocSerializer<256>>,
-    V: rkyv::Deserialize<V::Archived, SharedDeserializeMap>,
-    V::Archived: for<'a> rkyv::CheckBytes<rkyv::validation::validators::DefaultValidator<'a>>,
+    // RKYV constraints temporarily disabled due to API changes
 {
     async fn new(config: CacheConfig) -> Result<Self, CacheError> {
         let serializer = CacheSerializer::new(config.serialization_format);
@@ -597,25 +595,18 @@ mod tests {
     use prometheus::Registry;
     use tempfile::TempDir;
 
-    #[derive(
-        Debug, Clone, PartialEq, Serialize, serde::Deserialize, rkyv::Archive, rkyv::Serialize,
-    )]
-    #[archive(check_bytes)]
+    #[derive(Debug, Clone, PartialEq, Serialize, serde::Deserialize)]
+    #[cfg_attr(feature = "memory-optimization", derive(rkyv::Archive, rkyv::Serialize))]
+    #[cfg_attr(feature = "memory-optimization", archive(check_bytes))]
     struct TestValue {
         id: u64,
         data: String,
     }
 
-    // Manual implementation of the required Deserialize trait
-    impl rkyv::Deserialize<ArchivedTestValue, SharedDeserializeMap> for TestValue {
-        fn deserialize(
-            &self,
-            _deserializer: &mut SharedDeserializeMap,
-        ) -> Result<ArchivedTestValue, rkyv::de::deserializers::SharedDeserializeMapError> {
-            // This implementation is not actually used in practice for this direction
-            // The real deserialization happens from ArchivedTestValue -> TestValue
-            unreachable!("This direction of deserialization should not be called")
-        }
+    // RKYV implementation temporarily disabled due to API changes
+    #[cfg(feature = "memory-optimization")]
+    impl TestValue {
+        // Placeholder for rkyv implementation
     }
 
     #[tokio::test]

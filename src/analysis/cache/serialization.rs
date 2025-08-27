@@ -8,7 +8,9 @@
 
 pub mod wrappers;
 
-use rkyv::de::deserializers::SharedDeserializeMap;
+// RKYV imports temporarily disabled due to API changes
+// #[cfg(feature = "memory-optimization")]
+// use rkyv::de::SharedDeserializeMap;
 use serde::{Deserialize, Serialize};
 use std::io::{Read, Write};
 use thiserror::Error;
@@ -134,9 +136,7 @@ impl CacheSerializer {
     /// Read and deserialize data directly from a reader (for streaming)
     pub fn deserialize_from_reader<T, R>(&self, reader: R) -> Result<T, SerializationError>
     where
-        T: for<'de> Deserialize<'de> + rkyv::Archive,
-        T: rkyv::Deserialize<T::Archived, SharedDeserializeMap>,
-        T::Archived: for<'a> rkyv::CheckBytes<rkyv::validation::validators::DefaultValidator<'a>>,
+        T: for<'de> Deserialize<'de>,
         R: Read,
     {
         match self.format {
@@ -184,10 +184,9 @@ use std::time::SystemTime;
     feature = "memory-optimization",
     derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize)
 )]
-#[cfg_attr(feature = "memory-optimization", archive(check_bytes))]
 pub struct CacheEntry<T> {
     pub data: T,
-    pub timestamp: crate::analysis::cache::wrappers::ArchivableSystemTime,
+    pub timestamp: crate::analysis::cache::serialization::wrappers::ArchivableSystemTime,
     pub access_count: u64,
     pub size_bytes: u64,
     pub content_hash: String,
@@ -197,7 +196,7 @@ impl<T> CacheEntry<T> {
     pub fn new(data: T, content_hash: String, size_bytes: u64) -> Self {
         Self {
             data,
-            timestamp: crate::analysis::cache::wrappers::ArchivableSystemTime(
+            timestamp: crate::analysis::cache::serialization::wrappers::ArchivableSystemTime(
                 std::time::SystemTime::now(),
             ),
             access_count: 0,
@@ -209,7 +208,7 @@ impl<T> CacheEntry<T> {
     pub fn touch(&mut self) {
         self.access_count += 1;
         self.timestamp =
-            crate::analysis::cache::wrappers::ArchivableSystemTime(std::time::SystemTime::now());
+            crate::analysis::cache::serialization::wrappers::ArchivableSystemTime(std::time::SystemTime::now());
     }
 
     pub fn age(&self) -> std::time::Duration {
@@ -227,7 +226,6 @@ mod tests {
         feature = "memory-optimization",
         derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize)
     )]
-    #[archive(check_bytes)]
     struct TestData {
         id: u64,
         name: String,

@@ -15,7 +15,7 @@ use crate::error::UveddiError;
 use prometheus::Registry;
 use serde_json::Value;
 use std::collections::HashMap;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 

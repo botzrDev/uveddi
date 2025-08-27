@@ -3,7 +3,6 @@
 //! This module provides intelligent cache invalidation mechanisms using
 //! content-based hashing to ensure cache coherence and optimal performance.
 
-use crate::analysis::cache::wrappers::{ArchivablePathBuf, ArchivableSystemTime};
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};

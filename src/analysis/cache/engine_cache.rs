@@ -4,13 +4,12 @@
 //! analysis engine's needs, avoiding complex serialization issues.
 
 use crate::analysis::cache::metrics::CacheMetrics;
-use crate::analysis::cache::wrappers::ArchivableSystemTime;
-use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
+use crate::ast::tree_sitter_impl::ParsedFile;
 use crate::database::models::ArchitecturalIssue;
 use lru::LruCache;
 use std::collections::HashMap;
 use std::num::NonZeroUsize;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::RwLock;

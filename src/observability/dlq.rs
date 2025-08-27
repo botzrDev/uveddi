@@ -181,7 +181,7 @@ impl DeadLetterQueue {
         let record = stmt.query_row(params![id], |row| {
             Ok(DlqRecord {
                 id: Some(row.get::<_, i64>(0)?),
-                trace_id: TraceId::from_str(&row.get::<_, String>(1)?).map_err(|e| {
+                trace_id: TraceId::from_str(&row.get::<_, String>(1)?).map_err(|_e| {
                     rusqlite::Error::InvalidColumnType(
                         1,
                         "trace_id".to_string(),
@@ -189,7 +189,7 @@ impl DeadLetterQueue {
                     )
                 })?,
                 timestamp: DateTime::parse_from_rfc3339(&row.get::<_, String>(2)?)
-                    .map_err(|e| {
+                    .map_err(|_e| {
                         rusqlite::Error::InvalidColumnType(
                             2,
                             "timestamp".to_string(),
@@ -198,7 +198,7 @@ impl DeadLetterQueue {
                     })?
                     .with_timezone(&Utc),
                 operation_type: row.get::<_, String>(3)?,
-                input_data: serde_json::from_str(&row.get::<_, String>(4)?).map_err(|e| {
+                input_data: serde_json::from_str(&row.get::<_, String>(4)?).map_err(|_e| {
                     rusqlite::Error::InvalidColumnType(
                         4,
                         "input_data".to_string(),

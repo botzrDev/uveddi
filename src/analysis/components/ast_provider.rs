@@ -4,7 +4,6 @@
 
 use super::traits::AstProvider;
 use crate::analysis::cache::ast::{AstCache, CacheConfig};
-use crate::analysis::cache::wrappers::ArchivableSystemTime;
 use crate::ast::{tree_sitter_impl::AstParser, ParseError, SourceLanguage, SyntaxError};
 use crate::error::UveddiError;
 

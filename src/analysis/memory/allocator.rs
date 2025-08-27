@@ -1,8 +1,6 @@
 //! High-performance global allocator configuration for Uveddi
 //! Based on UV-210 research: mimalloc for multi-threaded performance
 
-use std::alloc::{GlobalAlloc, Layout};
-
 #[cfg(feature = "mimalloc")]
 use mimalloc::MiMalloc;
 

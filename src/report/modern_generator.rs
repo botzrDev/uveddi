@@ -46,7 +46,6 @@ impl ModernReportGenerator {
     /// Create a new modern report generator
     pub fn new() -> Result<Self, ModernReportError> {
         use crate::core::logging::{info};
-        use std::env;
 
         info!("Attempting to initialize modern report generator with templates");
 
@@ -517,8 +516,6 @@ impl ModernReportGenerator {
         use crate::analysis::mermaid_generator::MermaidGenerator;
         use crate::core::logging::{debug, info, warn};
         use crate::models::visualization::DiagramType;
-        use std::collections::HashMap;
-        use uuid::Uuid;
 
         info!(
             "Generating data-driven architecture diagrams from {} issues",
@@ -601,9 +598,9 @@ impl ModernReportGenerator {
     ) -> Vec<ArchitecturalComponent> {
         use crate::core::logging::debug;
         use crate::models::visualization::{
-            ArchitecturalComponent, ComponentMetrics, ComponentType,
+            ArchitecturalComponent, ComponentMetrics,
         };
-        use std::collections::{HashMap, HashSet};
+        use std::collections::HashSet;
         use uuid::Uuid;
 
         let mut components = Vec::new();

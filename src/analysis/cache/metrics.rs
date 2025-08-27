@@ -4,7 +4,7 @@
 //! for cache performance, including hit rates, latencies, memory usage,
 //! and real-time performance analytics.
 
-use prometheus::{Counter, Gauge, Histogram, IntCounter, IntGauge, Registry};
+use prometheus::{Histogram, IntCounter, IntGauge, Registry};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
