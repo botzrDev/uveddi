@@ -9,64 +9,102 @@ use std::time::{Duration, SystemTime};
 /// Time series data point for trending analysis
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TimeSeriesPoint {
+    /// When this data point was recorded
     pub timestamp: SystemTime,
+    /// Numerical value for this metric
     pub value: f64,
+    /// Type of alert this measurement relates to
     pub alert_type: AlertType,
+    /// Environment where this measurement was taken
     pub environment: String,
 }
 
 /// Alert pattern for detection of recurring issues
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AlertPattern {
+    /// Unique identifier for this pattern
     pub pattern_id: String,
+    /// Type of alert in this pattern
     pub alert_type: AlertType,
+    /// Environment where pattern occurs
     pub environment: String,
+    /// How often this pattern repeats
     pub frequency: Duration,
+    /// Number of times pattern has been observed
     pub occurrences: u32,
+    /// When this pattern was first detected
     pub first_seen: SystemTime,
+    /// Most recent occurrence of this pattern
     pub last_seen: SystemTime,
+    /// Confidence score for pattern detection (0.0 to 1.0)
     pub confidence_score: f64,
 }
 
 /// Trend analysis result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TrendAnalysis {
+    /// Type of alert being analyzed for trends
     pub alert_type: AlertType,
+    /// Environment where trend analysis was performed
     pub environment: String,
+    /// Direction of the trend
     pub trend_direction: TrendDirection,
+    /// Strength of the trend (0.0 to 1.0)
     pub trend_strength: f64,
+    /// Analysis period in days
     pub period_days: u32,
+    /// Number of data points used in analysis
     pub data_points: u32,
+    /// Future trend prediction if available
     pub prediction: Option<TrendPrediction>,
 }
 
+/// Direction of a trend in time series data
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum TrendDirection {
+    /// Values are trending upward
     Increasing,
+    /// Values are trending downward
     Decreasing,
+    /// Values are relatively stable
     Stable,
+    /// Values show high variance with no clear trend
     Volatile,
 }
 
+/// Future trend prediction based on historical data
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TrendPrediction {
+    /// Predicted value for the future time point
     pub predicted_value: f64,
+    /// Lower and upper bounds of confidence interval
     pub confidence_interval: (f64, f64),
+    /// How many hours into the future this prediction covers
     pub prediction_horizon_hours: u32,
 }
 
 /// Alert analytics dashboard data
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AlertDashboard {
+    /// Total number of alerts in the last 24 hours
     pub total_alerts_24h: u32,
+    /// Alert counts grouped by severity level
     pub alerts_by_severity: HashMap<String, u32>,
+    /// Alert counts grouped by alert type
     pub alerts_by_type: HashMap<String, u32>,
+    /// Alert counts grouped by environment
     pub alerts_by_environment: HashMap<String, u32>,
+    /// Top alert sources with their counts
     pub top_alert_sources: Vec<(String, u32)>,
+    /// Average time to resolve alerts
     pub avg_resolution_time: Option<Duration>,
+    /// Historical trend analysis for different alert types
     pub alert_trends: Vec<TrendAnalysis>,
+    /// Detected recurring alert patterns
     pub recurring_patterns: Vec<AlertPattern>,
+    /// Percentage of noise reduced by intelligent filtering
     pub noise_reduction_percentage: f64,
+    /// When this dashboard data was generated
     pub generated_at: SystemTime,
 }
 
@@ -80,6 +118,7 @@ pub struct AlertAnalytics {
 }
 
 impl AlertAnalytics {
+    /// Creates a new AlertAnalytics engine with default configuration
     pub fn new() -> Self {
         Self {
             history_buffer: VecDeque::with_capacity(10000),
@@ -472,8 +511,11 @@ impl AlertAnalytics {
 }
 
 #[derive(Debug, Clone)]
+/// Export format for analytics data
 pub enum AnalyticsExportFormat {
+    /// Export as JSON format
     Json,
+    /// Export as CSV format
     Csv,
 }
 

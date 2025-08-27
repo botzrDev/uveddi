@@ -15,41 +15,64 @@ use tokio::time::sleep;
 /// Escalation state for tracking alert escalation progress
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EscalationState {
+    /// ID of the alert being escalated
     pub alert_id: String,
+    /// Name of the escalation policy being used
     pub policy_name: String,
+    /// Current escalation level (0 = not started, 1+ = escalation levels)
     pub current_level: u8,
+    /// When the next escalation should occur
     pub next_escalation_time: Option<SystemTime>,
+    /// History of all escalation events for this alert
     pub escalation_history: Vec<EscalationEvent>,
+    /// Whether this escalation is currently active
     pub is_active: bool,
 }
 
 /// Event in escalation history
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EscalationEvent {
+    /// Escalation level for this event
     pub level: u8,
+    /// When this escalation event occurred
     pub timestamp: SystemTime,
+    /// List of notification channels that were contacted
     pub channels_notified: Vec<String>,
+    /// List of roles/users that were notified
     pub roles_notified: Vec<String>,
+    /// Whether the escalation attempt was successful
     pub successful: bool,
+    /// Error message if escalation failed
     pub error_message: Option<String>,
 }
 
 /// Acknowledgment record
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AcknowledgmentRecord {
+    /// ID of the alert being acknowledged
     pub alert_id: String,
+    /// User or system that acknowledged the alert
     pub acknowledged_by: String,
+    /// When the alert was acknowledged
     pub acknowledged_at: SystemTime,
+    /// Source/method used for acknowledgment
     pub acknowledgment_source: AcknowledgmentSource,
+    /// Optional acknowledgment message or notes
     pub message: Option<String>,
 }
 
+/// Source of alert acknowledgment
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum AcknowledgmentSource {
+    /// Acknowledgment via web user interface
     WebUI,
+    /// Acknowledgment via Slack integration
     Slack,
+    /// Acknowledgment via email reply
     Email,
+    /// Acknowledgment via REST API
     API,
+    /// Acknowledgment via command line interface
     CLI,
 }
 
@@ -62,6 +85,7 @@ pub struct EscalationManager {
 }
 
 impl EscalationManager {
+    /// Create a new escalation manager
     pub fn new() -> Self {
         Self {
             escalation_states: Arc::new(RwLock::new(HashMap::new())),
@@ -381,10 +405,15 @@ impl EscalationManager {
 /// Statistics for escalation analysis
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EscalationStats {
+    /// Total number of alerts processed
     pub total_alerts: usize,
+    /// Number of alerts that were acknowledged
     pub acknowledged_alerts: usize,
+    /// Count of alerts at each escalation level
     pub escalation_levels: HashMap<u8, u32>,
+    /// Average time from alert creation to acknowledgment
     pub avg_acknowledgment_time: Option<Duration>,
+    /// Time period in hours that these statistics cover
     pub period_hours: u32,
 }
 
@@ -406,6 +435,7 @@ pub struct AcknowledgmentAPI {
 }
 
 impl AcknowledgmentAPI {
+    /// Create a new acknowledgment API interface
     pub fn new(escalation_manager: Arc<EscalationManager>) -> Self {
         Self { escalation_manager }
     }

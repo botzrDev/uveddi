@@ -25,6 +25,10 @@ impl ArchivableSystemTime {
     pub fn now() -> Self {
         ArchivableSystemTime(SystemTime::now())
     }
+    
+    pub fn as_system_time(&self) -> SystemTime {
+        self.0
+    }
 }
 
 impl From<PathBuf> for ArchivablePathBuf {

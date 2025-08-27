@@ -5,9 +5,13 @@ use tracing::{info, warn};
 /// Configuration for fallback behavior during service failures
 #[derive(Debug, Clone)]
 pub struct FallbackConfig {
+    /// Maximum time to wait before entering fallback mode
     pub fallback_timeout: Duration,
+    /// How often to check if recovery is possible
     pub recovery_check_interval: Duration,
+    /// Maximum time to stay in fallback mode before giving up
     pub max_fallback_duration: Duration,
+    /// Whether to automatically attempt recovery from fallback mode
     pub enable_automatic_recovery: bool,
 }
 

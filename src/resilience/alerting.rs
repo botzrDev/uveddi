@@ -79,58 +79,88 @@ pub struct EnhancedAlert {
     pub metadata: HashMap<String, String>,
     pub acknowledged: bool,
     pub acknowledged_at: Option<SystemTime>,
+    /// User or system that acknowledged the alert
     pub acknowledged_by: Option<String>,
+    /// Current escalation level (0 = initial, higher = escalated)
     pub escalation_level: u8,
+    /// Timestamp when alert was escalated
     pub escalated_at: Option<SystemTime>,
 }
 
 /// Alert group for intelligent grouping
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AlertGroup {
+    /// Unique identifier for the alert group
     pub id: String,
+    /// Key used for grouping related alerts
     pub group_key: String,
+    /// List of alert IDs in this group
     pub alerts: Vec<String>, // Alert IDs
+    /// Timestamp when first alert in group was seen
     pub first_seen: SystemTime,
+    /// Timestamp when most recent alert in group was seen
     pub last_seen: SystemTime,
+    /// Number of alerts in this group
     pub count: u32,
+    /// Highest severity level in the group
     pub severity: AlertSeverity,
+    /// Human-readable summary of the alert group
     pub summary: String,
 }
 
 /// Escalation policy configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EscalationPolicy {
+    /// Name of the escalation policy
     pub name: String,
+    /// List of escalation levels with increasing urgency
     pub levels: Vec<EscalationLevel>,
+    /// Whether this escalation policy is active
     pub enabled: bool,
 }
 
+/// Configuration for a single escalation level
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EscalationLevel {
+    /// Escalation level number (0 = initial, higher = more urgent)
     pub level: u8,
+    /// Minutes to wait before escalating to this level
     pub delay_minutes: u64,
+    /// Notification channels to use at this level
     pub channels: Vec<String>,
+    /// User roles to notify at this level
     pub roles: Vec<String>,
 }
 
 /// Historical alert data for trend analysis
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AlertHistory {
+    /// When this historical alert occurred
     pub timestamp: SystemTime,
+    /// Type of alert that occurred
     pub alert_type: AlertType,
+    /// Severity level of the historical alert
     pub severity: AlertSeverity,
+    /// Number of similar alerts at this time
     pub count: u32,
+    /// Environment where the alert occurred
     pub environment: String,
 }
 
 /// Main alerting system configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AlertingConfig {
+    /// Alert threshold configurations
     pub thresholds: Vec<AlertThreshold>,
+    /// Available notification channels
     pub channels: Vec<NotificationChannel>,
+    /// Escalation policies for different alert types
     pub escalation_policies: Vec<EscalationPolicy>,
+    /// Minutes to wait before grouping related alerts
     pub grouping_window_minutes: u64,
+    /// Maximum number of alerts to include in a single group
     pub max_alerts_per_group: u32,
+    /// Number of days to retain alert history
     pub history_retention_days: u32,
 }
 
@@ -616,12 +646,16 @@ impl AdvancedAlertSystem {
 /// Errors that can occur in the alerting system
 #[derive(Debug, thiserror::Error)]
 pub enum AlertingError {
+    /// No escalation policy is configured for the alert type
     #[error("No escalation policy configured")]
     NoEscalationPolicy,
+    /// Alert with the specified ID was not found
     #[error("Alert not found")]
     AlertNotFound,
+    /// Failed to send notification via configured channels
     #[error("Notification failed: {0}")]
     NotificationFailed(String),
+    /// Configuration error in alerting system setup
     #[error("Configuration error: {0}")]
     ConfigurationError(String),
 }
@@ -629,11 +663,17 @@ pub enum AlertingError {
 /// Metrics data structure for threshold checking
 #[derive(Debug, Clone)]
 pub struct MetricsData {
+    /// Error rate as a percentage (0.0 to 100.0)
     pub error_rate: f32,
+    /// Average response latency
     pub latency: Duration,
+    /// Requests per second throughput
     pub throughput: u32,
+    /// CPU utilization as a percentage (0.0 to 100.0)
     pub cpu_usage: Option<f32>,
+    /// Memory utilization as a percentage (0.0 to 100.0)
     pub memory_usage: Option<f32>,
+    /// Disk utilization as a percentage (0.0 to 100.0)
     pub disk_usage: Option<f32>,
 }
 
