@@ -2,6 +2,7 @@ use crate::error::RenderingServiceError;
 use std::time::{Duration, Instant};
 use tracing::{info, warn};
 
+/// Configuration for fallback behavior during service failures
 #[derive(Debug, Clone)]
 pub struct FallbackConfig {
     pub fallback_timeout: Duration,
@@ -21,15 +22,21 @@ impl Default for FallbackConfig {
     }
 }
 
+/// Current fallback mode of the rendering service
 #[derive(Debug, PartialEq)]
 pub enum FallbackMode {
+    /// Normal operation mode with full service availability
     Normal,
+    /// Fallback mode using only Mermaid rendering
     MermaidOnly {
+        /// When the fallback mode was triggered
         triggered_at: Instant,
+        /// Reason for entering fallback mode
         reason: String,
     },
 }
 
+/// Manages fallback modes and recovery for the rendering service
 pub struct FallbackManager {
     config: FallbackConfig,
     mode: FallbackMode,
@@ -37,6 +44,7 @@ pub struct FallbackManager {
 }
 
 impl FallbackManager {
+    /// Creates a new fallback manager with the given configuration
     pub fn new(config: FallbackConfig) -> Self {
         Self {
             config,
@@ -45,6 +53,7 @@ impl FallbackManager {
         }
     }
 
+    /// Determines if the given error should trigger fallback mode
     pub fn should_trigger_fallback(&mut self, error: &RenderingServiceError) -> bool {
         // If already in fallback mode, don't trigger again
         if self.is_in_fallback_mode() {
@@ -65,6 +74,7 @@ impl FallbackManager {
         false
     }
 
+    /// Manually trigger fallback mode with the given reason
     pub fn trigger_fallback(&mut self, reason: String) {
         // Only trigger if not already in fallback mode
         if !self.is_in_fallback_mode() {
@@ -79,6 +89,7 @@ impl FallbackManager {
         }
     }
 
+    /// Attempts to recover from fallback mode if conditions are met
     pub fn attempt_recovery(&mut self) -> bool {
         // Only attempt recovery if in fallback mode
         if let FallbackMode::MermaidOnly {
@@ -112,10 +123,12 @@ impl FallbackManager {
         false
     }
 
+    /// Returns true if currently in fallback mode
     pub fn is_in_fallback_mode(&self) -> bool {
         matches!(self.mode, FallbackMode::MermaidOnly { .. })
     }
 
+    /// Gets the reason for being in fallback mode, if any
     pub fn get_fallback_reason(&self) -> Option<String> {
         match &self.mode {
             FallbackMode::MermaidOnly { reason, .. } => Some(reason.clone()),

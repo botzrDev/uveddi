@@ -890,10 +890,15 @@ pub fn validate_cli_argument(
 /// CLI argument validation types
 #[derive(Debug, Clone, Copy)]
 pub enum CliArgumentType {
+    /// File path argument requiring path validation
     FilePath,
+    /// Port number argument (1-65535)
     Port,
+    /// Percentage value argument (0-100)
     Percentage,
+    /// Count or numeric argument
     Count,
+    /// Generic string argument
     Generic,
 }
 
@@ -949,10 +954,15 @@ pub fn validate_db_parameter(
 /// Database parameter types for validation
 #[derive(Debug, Clone, Copy)]
 pub enum DbParameterType {
+    /// Unique identifier parameter
     Id,
+    /// General text parameter
     Text,
+    /// File path parameter
     FilePath,
+    /// Source code content parameter
     CodeContent,
+    /// Timestamp parameter
     Timestamp,
 }
 

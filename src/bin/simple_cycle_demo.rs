@@ -3,7 +3,7 @@
 //! A minimal demonstration showing how UV-105 Phase 1 resolves circular dependencies.
 //! This demo does not depend on the full library, only on standard Rust libraries.
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::sync::Arc;
 
 /// Demonstrates the circular dependency problem and its solution

@@ -405,10 +405,15 @@ impl GracefulFailureHandler {
 /// Statistics about failure handling
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FailureStats {
+    /// Current level of service degradation
     pub current_degradation: DegradationLevel,
+    /// Current failure rate as a percentage (0.0-1.0)
     pub failure_rate: f64,
+    /// Estimated time until recovery, if available
     pub estimated_recovery: Option<Duration>,
+    /// Number of recent failures recorded
     pub recent_failures: usize,
+    /// Average time for recovery from previous failures
     pub average_recovery_time: Option<Duration>,
 }
 

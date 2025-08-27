@@ -9,23 +9,40 @@ use std::fmt;
 #[derive(Debug, thiserror::Error)]
 pub enum SecurityError {
     // Authentication Errors
+    /// Authentication failed with specific reason
     #[error("Authentication failed: {reason}")]
-    AuthenticationFailed { reason: String },
+    AuthenticationFailed { 
+        /// Reason for authentication failure
+        reason: String 
+    },
 
+    /// Invalid credentials were provided
     #[error("Invalid credentials provided")]
     InvalidCredentials,
 
+    /// Authentication token has expired
     #[error("Token has expired")]
     TokenExpired,
 
+    /// Token format or signature is invalid
     #[error("Invalid token format or signature")]
     InvalidToken,
 
+    /// OIDC provider error
     #[error("OIDC provider error: {provider} - {error}")]
-    OidcProviderError { provider: String, error: String },
+    OidcProviderError { 
+        /// Name of the OIDC provider
+        provider: String, 
+        /// Error details
+        error: String 
+    },
 
+    /// OAuth2 flow error
     #[error("OAuth2 flow error: {error}")]
-    OAuth2Error { error: String },
+    OAuth2Error { 
+        /// OAuth2 error details
+        error: String 
+    },
 
     #[error("OAuth provider error: {provider} - {error}")]
     /// OAuth provider authentication error with provider name and error details

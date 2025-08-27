@@ -19,8 +19,11 @@ pub fn create_secure_http_client() -> Result<reqwest::Client, SecurityError> {
 
 /// Security configuration for handling external data with size limits
 pub struct SecurityLimits {
+    /// Maximum allowed XML document size in bytes
     pub max_xml_size: usize,
+    /// Maximum allowed JSON document size in bytes
     pub max_json_size: usize,
+    /// Maximum allowed HTTP request size in bytes
     pub max_request_size: usize,
 }
 
@@ -64,18 +67,25 @@ pub fn create_custom_http_client(
         .map_err(|e| SecurityError::HttpClientCreation(e.to_string()))
 }
 
+/// Security-related errors
 #[derive(Debug, Error)]
 pub enum SecurityError {
+    /// HTTP client creation failed
     #[error("HTTP client creation failed: {0}")]
     HttpClientCreation(String),
 
+    /// Input data exceeds size limits
     #[error("{data_type} document too large: {size} bytes (limit: {limit})")]
     InputTooLarge {
+        /// Type of data that was too large
         data_type: String,
+        /// Actual size in bytes
         size: usize,
+        /// Maximum allowed size in bytes
         limit: usize,
     },
 
+    /// Security validation failed
     #[error("Security validation failed: {0}")]
     ValidationFailed(String),
 }

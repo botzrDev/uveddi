@@ -27,48 +27,76 @@ use tracing::error;
 /// JWT claims structure
 #[derive(Debug, Serialize, Deserialize)]
 pub struct JwtClaims {
-    pub sub: String,        // Subject (user ID)
-    pub email: String,      // User email
-    pub name: String,       // Display name
-    pub roles: Vec<String>, // User roles
-    pub iat: i64,           // Issued at
-    pub exp: i64,           // Expiration time
-    pub aud: String,        // Audience
-    pub iss: String,        // Issuer
-    pub jti: String,        // JWT ID for blacklisting
+    /// Subject (user ID)
+    pub sub: String,
+    /// User email address
+    pub email: String,
+    /// User display name
+    pub name: String,
+    /// User roles for authorization
+    pub roles: Vec<String>,
+    /// Issued at timestamp
+    pub iat: i64,
+    /// Expiration time timestamp
+    pub exp: i64,
+    /// Intended audience
+    pub aud: String,
+    /// Token issuer
+    pub iss: String,
+    /// JWT ID for blacklisting
+    pub jti: String,
 }
 
 /// OAuth provider configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OAuthProviderConfig {
+    /// Name of the OAuth provider
     pub provider_name: String,
+    /// OAuth client ID
     pub client_id: String,
+    /// OAuth client secret
     pub client_secret: String,
+    /// Authorization URL
     pub auth_url: String,
+    /// Token exchange URL
     pub token_url: String,
+    /// Redirect URL after authentication
     pub redirect_url: String,
+    /// Requested OAuth scopes
     pub scopes: Vec<String>,
 }
 
 /// OIDC provider configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OidcProviderConfig {
+    /// Name of the OIDC provider
     pub provider_name: String,
+    /// OIDC issuer URL
     pub issuer_url: String,
+    /// OIDC client ID
     pub client_id: String,
+    /// OIDC client secret
     pub client_secret: String,
+    /// Redirect URL after authentication
     pub redirect_url: String,
+    /// Requested OIDC scopes
     pub scopes: Vec<String>,
 }
 
 /// Authentication configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuthenticationConfig {
+    /// JWT signing secret
     pub jwt_secret: String,
+    /// JWT token expiry in hours
     pub jwt_expiry_hours: i64,
+    /// Session expiry in hours
     pub session_expiry_hours: i64,
+    /// Configured OAuth providers
     pub oauth_providers: Vec<OAuthProviderConfig>,
+    /// Configured OIDC providers
     pub oidc_providers: Vec<OidcProviderConfig>,
+    /// API key expiry in days (optional)
     pub api_key_expiry_days: Option<i64>,
 }
 

@@ -7,8 +7,11 @@ use std::time::{Duration, SystemTime};
 /// Health status for individual components
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum ComponentHealth {
+    /// Component is fully operational
     Operational,
+    /// Component has reduced functionality
     Degraded,
+    /// Component is not available
     Unavailable,
 }
 
@@ -30,10 +33,15 @@ pub struct HealthStatus {
 /// Alert representation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Alert {
+    /// Unique identifier for the alert
     pub id: String,
+    /// Component that generated the alert
     pub component: String,
+    /// Alert message
     pub message: String,
+    /// Severity level of the alert
     pub severity: AlertSeverity,
+    /// When the alert was created
     pub created_at: SystemTime,
 }
 
@@ -41,8 +49,11 @@ pub struct Alert {
 /// Alert severity levels
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum AlertSeverity {
+    /// Informational message
     Info,
+    /// Warning that may require attention
     Warning,
+    /// Critical issue requiring immediate attention
     Critical,
 }
 
@@ -126,7 +137,10 @@ impl HealthMonitor {
 /// Metrics data structure (placeholder - will integrate with UV-174)
 #[derive(Debug, Clone)]
 pub struct MetricsData {
+    /// Current error rate as a percentage (0.0-1.0)
     pub error_rate: f32,
+    /// Average response latency
     pub latency: Duration,
+    /// Requests processed per unit time
     pub throughput: u32,
 }

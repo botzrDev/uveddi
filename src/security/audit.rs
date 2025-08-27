@@ -42,37 +42,59 @@ pub trait AuditStore: Send + Sync {
 /// Audit query criteria for filtering events
 #[derive(Debug, Clone, Default)]
 pub struct AuditQueryCriteria {
+    /// Filter by user ID
     pub user_id: Option<Uuid>,
+    /// Filter by session ID
     pub session_id: Option<Uuid>,
+    /// Filter by event type
     pub event_type: Option<AuditEventType>,
+    /// Filter by event outcome
     pub outcome: Option<AuditOutcome>,
+    /// Filter by resource name
     pub resource: Option<String>,
+    /// Filter by action performed
     pub action: Option<String>,
+    /// Filter events from this time onwards
     pub start_time: Option<DateTime<Utc>>,
+    /// Filter events up to this time
     pub end_time: Option<DateTime<Utc>>,
+    /// Filter by IP address
     pub ip_address: Option<String>,
+    /// Maximum number of results to return
     pub limit: Option<u64>,
+    /// Number of results to skip
     pub offset: Option<u64>,
 }
 
 /// Integrity check result
 #[derive(Debug, Clone)]
 pub struct IntegrityCheckResult {
+    /// Total number of events checked
     pub total_events: u64,
+    /// Number of events that passed verification
     pub verified_events: u64,
+    /// IDs of events that failed verification
     pub failed_events: Vec<Uuid>,
+    /// Overall integrity status
     pub integrity_ok: bool,
 }
 
 /// Audit statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuditStatistics {
+    /// Total number of audit events
     pub total_events: u64,
+    /// Events grouped by type
     pub events_by_type: HashMap<String, u64>,
+    /// Events grouped by outcome
     pub events_by_outcome: HashMap<String, u64>,
+    /// Events grouped by user
     pub events_by_user: HashMap<String, u64>,
+    /// Number of failed authentication attempts
     pub failed_authentication_attempts: u64,
+    /// Number of authorization denials
     pub authorization_denials: u64,
+    /// Number of security violations
     pub security_violations: u64,
 }
 
@@ -82,6 +104,7 @@ pub struct InMemoryAuditStore {
 }
 
 impl InMemoryAuditStore {
+    /// Creates a new in-memory audit store
     pub fn new() -> Self {
         Self {
             events: Arc::new(RwLock::new(Vec::new())),
@@ -274,6 +297,7 @@ pub struct DatabaseAuditStore {
 }
 
 impl DatabaseAuditStore {
+    /// Creates a new database audit store with the given path
     pub fn new(db_path: String) -> Self {
         Self { db_path }
     }
@@ -727,6 +751,7 @@ pub struct ChainHasher {
 }
 
 impl ChainHasher {
+    /// Creates a new chain hasher for audit event integrity
     pub fn new() -> Self {
         Self {
             hasher: Hasher::new(),
@@ -734,6 +759,7 @@ impl ChainHasher {
         }
     }
 
+    /// Updates the hash chain with a new audit event
     pub fn update(&mut self, event: &AuditEvent) {
         // Include previous hash in the chain
         if let Some(prev_hash) = &self.previous_hash {
@@ -757,6 +783,7 @@ impl ChainHasher {
         self.hasher = Hasher::new();
     }
 
+    /// Gets the current hash in the chain
     pub fn get_current_hash(&self) -> Option<String> {
         self.previous_hash.clone()
     }

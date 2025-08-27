@@ -14,6 +14,7 @@ pub struct NotificationClient {
 }
 
 impl NotificationClient {
+    /// Creates a new notification client with default settings
     pub fn new() -> Self {
         Self {
             client: Client::new(),
@@ -326,6 +327,7 @@ pub struct BatchNotificationSender {
 }
 
 impl BatchNotificationSender {
+    /// Creates a new batch notification sender with default settings
     pub fn new() -> Self {
         Self {
             client: NotificationClient::new(),

@@ -8,14 +8,20 @@ use std::time::Duration;
 use crate::error::RenderingServiceError;
 use crate::resilience::{CircuitBreaker, HealthMonitor, MetricsCollector, RetryClient};
 
-/// Placeholder documentation for public items
+/// Defines a recovery strategy for handling service failures
 #[derive(Debug, Clone)]
 pub struct RecoveryStrategy {
+    /// Unique identifier for this recovery strategy
     pub strategy_id: String,
+    /// Conditions that trigger this recovery strategy
     pub trigger_conditions: Vec<RecoveryTrigger>,
+    /// Actions to perform during recovery
     pub recovery_actions: Vec<RecoveryAction>,
+    /// Criteria for determining successful recovery
     pub success_criteria: Vec<SuccessCriterion>,
+    /// Maximum time allowed for recovery attempts
     pub timeout: Duration,
+    /// Maximum number of recovery attempts
     pub max_attempts: u32,
 }
 

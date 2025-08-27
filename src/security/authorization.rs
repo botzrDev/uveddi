@@ -550,8 +550,11 @@ impl AuthorizationEngine {
 /// User authorization summary
 #[derive(Debug, Clone)]
 pub struct UserAuthorizationSummary {
+    /// Unique user identifier
     pub user_id: Uuid,
+    /// User's assigned roles
     pub roles: Vec<UserRole>,
+    /// User's effective permissions
     pub permissions: Vec<Permission>,
 }
 

@@ -8,49 +8,75 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tokio::sync::Mutex;
 use tracing::info;
 
+/// Aggregated error metrics for monitoring and analysis
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ErrorMetrics {
+    /// Total number of errors recorded
     pub total_errors: u64,
+    /// Error counts grouped by category
     pub errors_by_category: HashMap<String, u64>,
+    /// Error counts grouped by severity level
     pub errors_by_severity: HashMap<String, u64>,
+    /// Current error rate per minute
     pub error_rate_per_minute: f64,
+    /// Timestamp of last metrics update
     pub last_updated: SystemTime,
+    /// Time window in minutes for rate calculations
     pub time_window_minutes: u32,
 }
 
+/// Individual error event record
 #[derive(Debug, Clone)]
 pub struct ErrorEvent {
+    /// When the error occurred
     pub timestamp: SystemTime,
+    /// Error category classification
     pub category: String,
+    /// Severity level of the error
     pub severity: String,
+    /// Specific type of error
     pub error_type: String,
 }
 
+/// Error trend analysis over a time window
 #[derive(Debug, Clone, Serialize)]
 pub struct ErrorTrend {
+    /// Time window description
     pub time_window: String,
+    /// Total errors in this window
     pub error_count: u64,
+    /// Error rate for this window
     pub error_rate: f64,
+    /// Most common error categories
     pub top_categories: Vec<(String, u64)>,
 }
 
+/// Available formats for metrics export
 #[derive(Debug, Clone)]
 pub enum MetricsFormat {
+    /// JSON format for general consumption
     Json,
+    /// Prometheus metrics format
     Prometheus,
+    /// InfluxDB line protocol
     InfluxDb,
 }
 
+/// Collects and manages error metrics with automatic cleanup
 pub struct MetricsCollector {
     events: Arc<Mutex<Vec<ErrorEvent>>>,
     cleanup_handle: tokio::task::JoinHandle<()>,
     config: MetricsConfig,
 }
 
+/// Configuration for metrics collection behavior
 #[derive(Debug, Clone)]
 pub struct MetricsConfig {
+    /// How long to retain metrics data
     pub retention_duration: Duration,
+    /// Window size in minutes for trend analysis
     pub trend_window_minutes: u32,
+    /// How often to clean up old metrics
     pub cleanup_interval: Duration,
 }
 
@@ -67,10 +93,12 @@ impl Default for MetricsConfig {
 impl MetricsCollector {
     // Remove duplicate new method
 
+    /// Creates a new metrics collector with default configuration
     pub fn with_default_config() -> Self {
         Self::new(MetricsConfig::default())
     }
 
+    /// Records an error event for metrics tracking
     pub async fn record_error(&self, error: &RenderingServiceError) {
         let category = error.category().as_str().to_string();
         let severity = error.severity().as_str().to_string();
@@ -93,6 +121,7 @@ impl MetricsCollector {
         // No need to trigger cleanup here - it's handled by the background task
     }
 
+    /// Creates a new metrics collector with the given configuration
     pub fn new(config: MetricsConfig) -> Self {
         let events: Arc<Mutex<Vec<ErrorEvent>>> = Arc::new(Mutex::new(Vec::new()));
         let cleanup_handle = tokio::spawn({
@@ -123,6 +152,7 @@ impl MetricsCollector {
         }
     }
 
+    /// Calculates the current error rate per minute
     pub async fn calculate_error_rate(&self) -> f64 {
         let now = SystemTime::now();
         let events = self.events.lock().await;
@@ -135,6 +165,7 @@ impl MetricsCollector {
             .count() as f64
     }
 
+    /// Gets a snapshot of current metrics
     pub async fn get_metrics_snapshot(&self) -> ErrorMetrics {
         // First collect counts without holding the lock during rate calculation
         let (total_errors, errors_by_category, errors_by_severity) = {
@@ -169,6 +200,7 @@ impl MetricsCollector {
         }
     }
 
+    /// Exports metrics in the specified format
     pub async fn export_metrics(&self, format: &MetricsFormat) -> String {
         let metrics = self.get_metrics_snapshot().await;
         match format {
@@ -178,6 +210,7 @@ impl MetricsCollector {
         }
     }
 
+    /// Generates trend analysis over time windows
     pub async fn generate_trends(&self) -> Vec<ErrorTrend> {
         let now = SystemTime::now();
         let events = self.events.lock().await;
@@ -216,6 +249,7 @@ impl MetricsCollector {
         trends
     }
 
+    /// Resets all collected metrics
     pub async fn reset_metrics(&self) {
         let mut events = self.events.lock().await;
         events.clear();

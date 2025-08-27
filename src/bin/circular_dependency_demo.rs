@@ -4,7 +4,6 @@
 //! as part of UV-105. It shows how the new interfaces break circular dependencies
 //! and enable clean architecture.
 
-use chrono::Utc;
 use std::sync::Arc;
 use uveddi::core::interfaces::{
     events::{AnalysisEvent, AstData, AstEvent, AstMetadata, DomainEvent, EventBus},
