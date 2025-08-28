@@ -1,8 +1,9 @@
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 #[cfg(feature = "tree-sitter")]
-#[cfg(feature = "tree-sitter")]
 use tree_sitter::{Query, QueryCursor, StreamingIterator};
+#[cfg(feature = "tree-sitter")]
+use crate::ast::tree_sitter::queries::{RUST_IMPORTS_QUERY, PYTHON_IMPORTS_QUERY, JAVASCRIPT_IMPORTS_QUERY};
 
 // Queries will be loaded dynamically when needed
 use crate::ast::tree_sitter_impl::{AstError, AstParser, ParsedFile, SourceLanguage};

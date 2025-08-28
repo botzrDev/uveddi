@@ -10,8 +10,9 @@ use crate::constants::detector_thresholds;
 use crate::constants::severity_weights;
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use async_trait::async_trait;
+use tracing::debug;
 #[cfg(feature = "tree-sitter")]
-use tree_sitter::StreamingIterator;
+use tree_sitter::{StreamingIterator, Query, QueryCursor, Tree};
 
 /// Holds the collected metrics for a single class or struct.
 #[derive(Debug, Clone)]

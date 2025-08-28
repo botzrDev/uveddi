@@ -116,8 +116,8 @@ pub fn validate_cli_argument(_value: &str, _field_name: &str, _arg_type: CliArgu
     Ok(())
 }
 
-pub fn validate_config_file_path(_path: &Path, _allowed_dirs: Option<&[&Path]>) -> Result<(), SecurityError> {
-    Ok(())
+pub fn validate_config_file_path(_path: &str, _allowed_dirs: Option<&[&str]>) -> Result<std::path::PathBuf, SecurityError> {
+    Ok(std::path::PathBuf::from(_path))
 }
 
 pub struct SecureHttpClient;
