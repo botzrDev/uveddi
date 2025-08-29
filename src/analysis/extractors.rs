@@ -1,8 +1,10 @@
-//! Logic for extracting symbols from an AST.
+use crate::analysis::symbols::{SymbolKind, CanonicalSymbol, SourceLocation};
+use std::sync::atomic::Ordering;
+/// Logic for extracting symbols from an AST.
 
-use crate::analysis::symbols::{CanonicalSymbol, GlobalSymbolTable, SourceLocation, SymbolKind};
+use crate::analysis::symbols::GlobalSymbolTable;
 use crate::ast::tree_sitter_impl::ParsedFile;
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::AtomicU64;
 #[cfg(feature = "tree-sitter")]
 use tree_sitter::{Query, QueryCursor, StreamingIterator};
 

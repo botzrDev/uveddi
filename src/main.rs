@@ -43,6 +43,9 @@
 //! - Contextual error information
 //! - Suggestions for common issues
 
+// Targeted warning suppressions - only for unused variables, not all warnings
+#![allow(unused_variables, unused_imports)]
+
 use color_eyre::eyre::Result;
 use tracing::{info, error, debug};
 // TODO: Re-enable when monitoring dependencies are properly configured

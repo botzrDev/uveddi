@@ -26,7 +26,7 @@ use crate::analysis::{AnalysisDetector, AnalysisError};
 #[cfg(not(feature = "tree-sitter"))]
 use crate::ast::tree_sitter::StreamingIterator;
 #[cfg(not(feature = "tree-sitter"))]
-use crate::ast::tree_sitter::{Language, Node, Parser, Query, QueryCursor, QueryMatch};
+use crate::ast::tree_sitter::{Language, Node, Query, QueryMatch};
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
 use crate::core::logging::{debug, info};
 use crate::database::models::{AntiPatternType, ArchitecturalIssue};
