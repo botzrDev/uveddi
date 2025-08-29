@@ -51,7 +51,7 @@ levenshtein = "1.0"
 # Lightweight default for fast development builds
 default = ["dev-core"]
 # Production-ready features (previous default behavior)  
-production = ["tree-sitter", "security", "memory-optimization", "web-full", "tui"]
+production = ["tree-sitter", "security", "memory-optimization", "web-full", "tui", "wasm-plugins", "dep:rayon", "dep:tokio-stream", "dep:async-stream", "dep:rusqlite", "dep:bincode", "dep:prometheus"]
 # Chaos engineering and load testing
 chaos = ["dep:fail", "dep:statrs", "dep:ndarray-stats"]
 # Performance regression detection with genetic algorithms
@@ -61,7 +61,9 @@ sla-monitoring = ["dep:metrics-exporter-prometheus", "dep:tokio-metrics"]
 
 # Development feature sets for fast builds
 # Minimal development build (only essential deps)
-dev-minimal = []
+dev-minimal = ["dep:rusqlite", "dep:bincode"]
+# Ultra-minimal build (absolute minimum dependencies)
+dev-ultra-minimal = []
 # Single-language development builds
 dev-rust-only = ["dev-minimal", "rust-lang"]
 dev-python-only = ["dev-minimal", "python-lang"] 
@@ -70,7 +72,7 @@ dev-ts-only = ["dev-minimal", "typescript-lang"]
 # Fast iteration (no heavy analysis)
 dev-fast = ["dev-minimal"]
 # Core analysis without tree-sitter
-dev-core = ["dev-minimal"]
+dev-core = ["dev-minimal", "dep:rayon", "dep:tokio-stream", "dep:async-stream"]
 
 # Consolidated dependency groups
 crypto-minimal = []
@@ -150,16 +152,16 @@ tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 
 # Project-specific dependencies
-rusqlite = { version = "0.37.0", features = ["bundled"] }
-tokio-stream = { version = "0.1.17", features = ["fs"] }
-async-stream = "0.3"
-bincode = "1.3.3"
+rusqlite = { version = "0.37.0", features = ["bundled"], optional = true }
+tokio-stream = { version = "0.1.17", features = ["fs"], optional = true }
+async-stream = { version = "0.3", optional = true }
+bincode = { version = "1.3.3", optional = true }
 clap = { version = "4.5.4", features = ["derive", "env"] }
 # Unified logging with tracing (replaces log + env_logger)
 # log = "0.4.21"        # Replaced by tracing
 # env_logger = "0.11.3"  # Replaced by tracing-subscriber
 regex = "1.11.2"
-rayon = "1.8.0"
+rayon = { version = "1.8.0", optional = true }
 # AST parsing dependencies (optional via features)
 tree-sitter = { version = "0.25.8", optional = true }
 tree-sitter-rust = { version = "0.24.0", optional = true }
@@ -172,7 +174,7 @@ html-escape = "0.2"
 tracing-appender = "0.2"
 # Time handling for logging timestamps
 time = { version = "0.3", features = ["formatting", "local-offset"] }
-prometheus = "0.14.0"
+prometheus = { version = "0.14.0", optional = true }
 rand = "0.9.2"
 # LRU cache for bounded memory management (UV-152)
 lru = "0.16.0"

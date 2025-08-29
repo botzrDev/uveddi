@@ -7,7 +7,7 @@ use uuid::Uuid;
 #[cfg(feature = "wasm-plugins")]
 use wasmtime::component::ResourceTable;
 #[cfg(feature = "wasm-plugins")]
-use wasmtime_wasi::p2::{IoView, WasiView};
+use wasmtime_wasi::WasiView;
 #[cfg(feature = "wasm-plugins")]
 use wasmtime_wasi::preview1::WasiP1Ctx;
 

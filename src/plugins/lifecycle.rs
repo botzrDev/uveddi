@@ -5,7 +5,7 @@ use crate::plugins::{
     errors::*,
     registry::*,
     security::*,
-    types::{PluginId, PluginStats, PluginStatus},
+    types::{PluginId, PluginStats, PluginStatus, HostState, PluginConfig},
     verification::*,
 };
 
@@ -17,7 +17,7 @@ use tokio::sync::RwLock;
 #[cfg(feature = "wasm-plugins")]
 use wasmtime::{Engine, Linker, Module, Store};
 #[cfg(feature = "wasm-plugins")]
-use wasmtime_wasi::p2::{WasiCtxBuilder, WasiView};
+use wasmtime_wasi::{WasiCtxBuilder, WasiView};
 #[cfg(feature = "wasm-plugins")]
 use wasmtime_wasi::preview1::{self, WasiP1Ctx};
 

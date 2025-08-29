@@ -56,8 +56,8 @@ impl WasmPluginEngine {
     /// Create a new engine with custom configuration
     /// Placeholder documentation for public items
     pub async fn with_config(
-        _plugins_dir: &Path,
-        _security_policy: SecurityPolicy,
+        plugins_dir: &Path,
+        security_policy: SecurityPolicy,
     ) -> crate::error::Result<Self> {
         #[cfg(not(feature = "wasm-plugins"))]
         {

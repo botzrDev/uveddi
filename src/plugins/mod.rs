@@ -89,9 +89,8 @@ pub mod wasm {
 
     // Generate bindings from WIT file
     wasmtime::component::bindgen!({
-        path: "wit/plugin.wit",
-        world: "code-analyzer",
-        async: true,
+        path: "wit/core-analysis.wit",
+        world: "core-analysis",
     });
 
     // pub use self::exports::uveddi::plugins::*;

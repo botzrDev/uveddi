@@ -17,7 +17,7 @@ use crate::ai::engine::AiAnalysisEngine;
 #[cfg(feature = "ai")]
 use crate::ai::{AiInsight, AiService};
 
-use crate::core::logging::{debug, info};
+use crate::core::logging::{debug, info, warn};
 use std::path::Path;
 use std::sync::Arc;
 use std::time::Instant;

@@ -1,6 +1,7 @@
 //! Zero-copy AST serialization using rkyv and memory mapping
 //! Based on UV-210 research: instant cache access with no deserialization overhead
 
+#[cfg(feature = "tree-sitter")]
 use crate::ast::tree_sitter::ParsedFile;
 use memmap2::{Mmap, MmapOptions};
 use std::collections::HashMap;
@@ -57,6 +58,7 @@ pub struct SerializableNode {
 
 impl SerializableAst {
     /// Create from ParsedFile
+    #[cfg(feature = "tree-sitter")]
     pub fn from_parsed_file(parsed_file: &ParsedFile) -> Result<Self, ZeroCopyError> {
         let source_hash = Self::calculate_source_hash(&parsed_file.source);
         let root_node = Self::convert_node(
@@ -90,6 +92,7 @@ impl SerializableAst {
     }
 
     /// Convert tree-sitter node to serializable format
+    #[cfg(feature = "tree-sitter")]
     fn convert_node(
         node: &tree_sitter::Node,
         source: &str,

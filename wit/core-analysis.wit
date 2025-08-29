@@ -21,7 +21,6 @@ world core-analysis {
         content: string,
         span: span,
         language: string,
-        children: list<ast-node>,
         attributes: list<tuple<string, string>>,
     }
 
@@ -90,9 +89,9 @@ world core-analysis {
         lines-of-code: u32,
         lines-of-comments: u32,
         complexity: u32,
-        maintainability-index: float64,
+        maintainability-index: f64,
         technical-debt-minutes: u32,
-        custom-metrics: list<tuple<string, float64>>,
+        custom-metrics: list<tuple<string, f64>>,
     }
 
     /// Analysis result
@@ -218,7 +217,7 @@ world core-analysis {
     record process-info {
         pid: u32,
         memory-usage-mb: u32,
-        cpu-usage-percent: float32,
+        cpu-usage-percent: f32,
         uptime-seconds: u32,
     }
 }

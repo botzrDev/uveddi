@@ -3,6 +3,7 @@
 
 #[cfg(feature = "wasm-plugins")]
 use crate::plugins::{PluginId, PluginManifest, WasmPluginEngine};
+use crate::core::logging::{error, info, warn};
 use clap::{Args, Subcommand};
 use std::path::PathBuf;
 

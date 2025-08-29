@@ -13,6 +13,7 @@ use crate::plugins::knowledge::*;
 use crate::plugins::PluginError;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 // Stub types for when AI features are disabled
 #[cfg(not(feature = "ai"))]

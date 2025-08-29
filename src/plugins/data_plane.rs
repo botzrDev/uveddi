@@ -88,6 +88,7 @@ impl AstDataPlane {
         let mut nodes = Vec::new();
         let mut node_id = 0u64;
 
+        #[cfg(feature = "tree-sitter")]
         if let Some(ref tree) = parsed_file.tree {
             let root_node = tree.root_node();
             let source_bytes = parsed_file.source.as_bytes();

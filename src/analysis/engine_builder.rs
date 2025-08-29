@@ -286,7 +286,7 @@ impl AnalysisEngineBuilder {
             ))
         };
 
-        let (_knowledge_library, _context_selector, _ai_engine) = if enable_knowledge {
+        let (knowledge_library, context_selector, ai_engine) = if enable_knowledge {
             let knowledge_lib = match knowledge_library_result {
                 Ok(lib) => Some(Arc::new(lib)),
                 Err(e) => {
@@ -496,7 +496,7 @@ impl AnalysisEngineBuilder {
             ))
         };
 
-        let (_knowledge_library, _context_selector, _ai_engine) = if enable_knowledge {
+        let (knowledge_library, context_selector, ai_engine) = if enable_knowledge {
             let knowledge_lib = match knowledge_library_result {
                 Ok(lib) => Some(Arc::new(lib)),
                 Err(e) => {
