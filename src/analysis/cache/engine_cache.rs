@@ -3,6 +3,7 @@
 //! This provides a high-performance cache specifically tailored for the
 //! analysis engine's needs, avoiding complex serialization issues.
 
+#[cfg(feature = "prometheus")]
 use crate::analysis::cache::metrics::CacheMetrics;
 use crate::ast::tree_sitter_impl::ParsedFile;
 use crate::database::models::ArchitecturalIssue;
@@ -21,6 +22,7 @@ pub struct EngineCache {
     /// Analysis results cache
     result_cache: Arc<RwLock<HashMap<String, CachedResult>>>,
     /// Performance metrics
+    #[cfg(feature = "prometheus")]
     metrics: Arc<CacheMetrics>,
     /// Configuration
     config: EngineCacheConfig,
@@ -73,13 +75,21 @@ impl CachedResult {
 
 impl EngineCache {
     /// Create new engine cache with default configuration
+    #[cfg(feature = "prometheus")]
     pub async fn new(
         metrics: Arc<CacheMetrics>,
     ) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
         Self::new_with_config(EngineCacheConfig::default(), metrics).await
     }
 
+    /// Create new engine cache with default configuration (no metrics)
+    #[cfg(not(feature = "prometheus"))]
+    pub async fn new() -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
+        Self::new_with_config(EngineCacheConfig::default()).await
+    }
+
     /// Create new engine cache with custom configuration
+    #[cfg(feature = "prometheus")]
     pub async fn new_with_config(
         config: EngineCacheConfig,
         metrics: Arc<CacheMetrics>,
@@ -94,6 +104,24 @@ impl EngineCache {
             ast_cache,
             result_cache,
             metrics,
+            config,
+        })
+    }
+
+    /// Create new engine cache with custom configuration (no metrics)
+    #[cfg(not(feature = "prometheus"))]
+    pub async fn new_with_config(
+        config: EngineCacheConfig,
+    ) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
+        let ast_capacity =
+            NonZeroUsize::new(config.ast_capacity).ok_or("AST cache capacity must be > 0")?;
+
+        let ast_cache = Arc::new(RwLock::new(LruCache::new(ast_capacity)));
+        let result_cache = Arc::new(RwLock::new(HashMap::new()));
+
+        Ok(Self {
+            ast_cache,
+            result_cache,
             config,
         })
     }

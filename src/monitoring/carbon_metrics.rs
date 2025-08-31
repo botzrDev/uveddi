@@ -7,6 +7,7 @@
 
 use anyhow::{anyhow, Result};
 use chrono::{DateTime, Utc};
+#[cfg(feature = "prometheus")]
 use prometheus::{Counter, Gauge, Histogram, Registry};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

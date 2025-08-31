@@ -10,6 +10,7 @@ use crate::observability::config::MetricsConfig;
 use crate::observability::tracing_utils::TraceId;
 use anyhow::{Context, Result};
 use axum::response::IntoResponse;
+#[cfg(feature = "prometheus")]
 use prometheus::{
     Counter, CounterVec, Gauge, GaugeVec, HistogramOpts, HistogramVec, Opts, Registry,
 };
@@ -17,6 +18,7 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 /// Metrics collector for the Uveddi analysis system
+#[cfg(feature = "prometheus")]
 #[derive(Clone)]
 pub struct UveddiMetrics {
     registry: Arc<Registry>,
@@ -66,6 +68,12 @@ pub struct UveddiMetrics {
     dlq_size: Gauge,
 }
 
+/// Stub implementation when prometheus is not enabled
+#[cfg(not(feature = "prometheus"))]
+#[derive(Clone)]
+pub struct UveddiMetrics;
+
+#[cfg(feature = "prometheus")]
 impl UveddiMetrics {
     /// Create a new metrics collector with the given configuration
     pub fn new(_config: &MetricsConfig) -> Result<Self> {
@@ -460,6 +468,115 @@ impl UveddiMetrics {
     }
 }
 
+#[cfg(not(feature = "prometheus"))]
+impl UveddiMetrics {
+    /// Create a new metrics collector with the given configuration
+    pub fn new(_config: &MetricsConfig) -> Result<Self> {
+        Ok(Self)
+    }
+
+    /// Get the Prometheus registry for exposing metrics
+    pub fn registry(&self) -> Arc<Registry> {
+        // Return a dummy registry when prometheus is not enabled
+        Arc::new(Registry::new())
+    }
+
+    /// Record an HTTP request (no-op when prometheus is disabled)
+    pub fn record_request(&self, _method: &str, _endpoint: &str, _status: &str, _duration: Duration) {
+        // No-op
+    }
+
+    /// Record an error (no-op when prometheus is disabled)
+    pub fn record_error(&self, _error_type: &str, _severity: &str, _component: &str) {
+        // No-op
+    }
+
+    /// Update system resource metrics (no-op when prometheus is disabled)
+    pub fn update_system_metrics(&self, _cpu_percent: f64, _memory_bytes: f64, _connections: f64) {
+        // No-op
+    }
+
+    /// Record an analysis request (no-op when prometheus is disabled)
+    pub fn record_analysis_request(
+        &self,
+        _status: &str,
+        _error_type: Option<&str>,
+        _pipeline_stage: &str,
+        _duration: Duration,
+        _language: &str,
+    ) {
+        // No-op
+    }
+
+    /// Update analysis queue length (no-op when prometheus is disabled)
+    pub fn set_analysis_queue_length(&self, _length: usize) {
+        // No-op
+    }
+
+    /// Record analysis complexity (no-op when prometheus is disabled)
+    pub fn record_analysis_complexity(&self, _complexity: f64, _language: &str) {
+        // No-op
+    }
+
+    /// Record bugs found (no-op when prometheus is disabled)
+    pub fn record_bugs_found(&self, _count: u64, _severity: &str, _language: &str) {
+        // No-op
+    }
+
+    /// Record duplicated lines (no-op when prometheus is disabled)
+    pub fn record_duplicated_lines(&self, _lines: u64) {
+        // No-op
+    }
+
+    /// Record rendering request (no-op when prometheus is disabled)
+    pub fn record_rendering_request(&self, _format: &str, _duration: Duration) {
+        // No-op
+    }
+
+    /// Record security event (no-op when prometheus is disabled)
+    pub fn record_security_event(&self, _event_type: &str) {
+        // No-op
+    }
+
+    /// Update circuit breaker state (no-op when prometheus is disabled)
+    pub fn update_circuit_breaker_state(&self, _service: &str, _state: CircuitBreakerState) {
+        // No-op
+    }
+
+    /// Record retry attempt (no-op when prometheus is disabled)
+    pub fn record_retry_attempt(&self, _service: &str, _attempt: u32) {
+        // No-op
+    }
+
+    /// Record fallback activation (no-op when prometheus is disabled)
+    pub fn record_fallback_activation(&self, _service: &str) {
+        // No-op
+    }
+
+    /// Update SLO metrics (no-op when prometheus is disabled)
+    pub fn update_slo_metrics(
+        &self,
+        _availability: f64,
+        _latency_p99: f64,
+        _error_budget_remaining: f64,
+    ) {
+        // No-op
+    }
+
+    /// Get Dead Letter Queue size gauge for direct manipulation
+    #[cfg(feature = "prometheus")]
+    pub fn dlq_size(&self) -> &Gauge {
+        &self.dlq_size
+    }
+
+    /// Get Dead Letter Queue size gauge for direct manipulation (stub when prometheus disabled)
+    #[cfg(not(feature = "prometheus"))]
+    pub fn dlq_size(&self) -> &Gauge {
+        // This should never be called when prometheus is disabled
+        panic!("Prometheus metrics not available - compile with 'prometheus' feature")
+    }
+}
+
 /// Circuit breaker states for metrics
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum CircuitBreakerState {
@@ -550,6 +667,7 @@ impl MetricsServer {
 async fn metrics_handler(
     axum::extract::State(registry): axum::extract::State<Arc<Registry>>,
 ) -> axum::response::Response {
+    #[cfg(feature = "prometheus")]
     use prometheus::TextEncoder;
 
     let encoder = TextEncoder::new();

@@ -54,6 +54,7 @@
 pub mod config;
 pub mod dlq;
 pub mod logging;
+#[cfg(feature = "prometheus")]
 pub mod metrics;
 pub mod resilience;
 pub mod service;

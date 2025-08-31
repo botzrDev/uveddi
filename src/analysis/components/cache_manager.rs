@@ -74,15 +74,24 @@ impl CacheManagerImpl {
     /// Create cache manager with custom configuration
     pub async fn with_config(config: EngineCacheConfig) -> Result<Self, UveddiError> {
         // Initialize metrics
+        #[cfg(feature = "prometheus")]
         let registry = Registry::new();
+        #[cfg(feature = "prometheus")]
         let metrics = Arc::new(
             CacheMetrics::new(&registry)
                 .map_err(|e| UveddiError::config_error(&e.to_string(), "CacheManager metrics"))?,
         );
 
         // Create high-performance engine cache
+        #[cfg(feature = "prometheus")]
         let engine_cache = Arc::new(
             EngineCache::new_with_config(config, metrics.clone())
+                .await
+                .map_err(|e| UveddiError::config_error(&e.to_string(), "Engine cache creation"))?,
+        );
+        #[cfg(not(feature = "prometheus"))]
+        let engine_cache = Arc::new(
+            EngineCache::new_with_config(config)
                 .await
                 .map_err(|e| UveddiError::config_error(&e.to_string(), "Engine cache creation"))?,
         );
@@ -91,48 +100,91 @@ impl CacheManagerImpl {
         let legacy_ast_cache = AstCache::new(CacheConfig::default())
             .map_err(|e| UveddiError::config_error(&e.to_string(), "Legacy AST cache"))?;
 
-        Ok(Self {
-            engine_cache,
-            metrics,
-            legacy_ast_cache: Arc::new(RwLock::new(legacy_ast_cache)),
-            cache_stats: Arc::new(RwLock::new(CacheStats {
-                ast_cache_size: 0,
-                result_cache_size: 0,
-                ast_hit_rate: 0.0,
-                result_hit_rate: 0.0,
-                total_memory_usage: 0,
-            })),
-        })
+        #[cfg(feature = "prometheus")]
+        {
+            Ok(Self {
+                engine_cache,
+                metrics,
+                legacy_ast_cache: Arc::new(RwLock::new(legacy_ast_cache)),
+                cache_stats: Arc::new(RwLock::new(CacheStats {
+                    ast_cache_size: 0,
+                    result_cache_size: 0,
+                    ast_hit_rate: 0.0,
+                    result_hit_rate: 0.0,
+                    total_memory_usage: 0,
+                })),
+            })
+        }
+        #[cfg(not(feature = "prometheus"))]
+        {
+            Ok(Self {
+                engine_cache,
+                legacy_ast_cache: Arc::new(RwLock::new(legacy_ast_cache)),
+                cache_stats: Arc::new(RwLock::new(CacheStats {
+                    ast_cache_size: 0,
+                    result_cache_size: 0,
+                    ast_hit_rate: 0.0,
+                    result_hit_rate: 0.0,
+                    total_memory_usage: 0,
+                })),
+            })
+        }
     }
 
     /// Create a new cache manager with custom AST cache (legacy compatibility)
     pub async fn with_ast_cache(ast_cache: AstCache) -> Result<Self, UveddiError> {
         // Initialize metrics
+        #[cfg(feature = "prometheus")]
         let registry = Registry::new();
+        #[cfg(feature = "prometheus")]
         let metrics = Arc::new(
             CacheMetrics::new(&registry)
                 .map_err(|e| UveddiError::config_error(&e.to_string(), "CacheManager metrics"))?,
         );
 
         // Create engine cache with default config
+        #[cfg(feature = "prometheus")]
         let engine_cache = Arc::new(
             EngineCache::new(metrics.clone())
                 .await
                 .map_err(|e| UveddiError::config_error(&e.to_string(), "Engine cache creation"))?,
         );
+        #[cfg(not(feature = "prometheus"))]
+        let engine_cache = Arc::new(
+            EngineCache::new()
+                .await
+                .map_err(|e| UveddiError::config_error(&e.to_string(), "Engine cache creation"))?,
+        );
 
-        Ok(Self {
-            engine_cache,
-            metrics,
-            legacy_ast_cache: Arc::new(RwLock::new(ast_cache)),
-            cache_stats: Arc::new(RwLock::new(CacheStats {
-                ast_cache_size: 0,
-                result_cache_size: 0,
-                ast_hit_rate: 0.0,
-                result_hit_rate: 0.0,
-                total_memory_usage: 0,
-            })),
-        })
+        #[cfg(feature = "prometheus")]
+        {
+            Ok(Self {
+                engine_cache,
+                metrics,
+                legacy_ast_cache: Arc::new(RwLock::new(ast_cache)),
+                cache_stats: Arc::new(RwLock::new(CacheStats {
+                    ast_cache_size: 0,
+                    result_cache_size: 0,
+                    ast_hit_rate: 0.0,
+                    result_hit_rate: 0.0,
+                    total_memory_usage: 0,
+                })),
+            })
+        }
+        #[cfg(not(feature = "prometheus"))]
+        {
+            Ok(Self {
+                engine_cache,
+                legacy_ast_cache: Arc::new(RwLock::new(ast_cache)),
+                cache_stats: Arc::new(RwLock::new(CacheStats {
+                    ast_cache_size: 0,
+                    result_cache_size: 0,
+                    ast_hit_rate: 0.0,
+                    result_hit_rate: 0.0,
+                    total_memory_usage: 0,
+                })),
+            })
+        }
     }
 
     /// Update cache statistics using engine cache stats
@@ -209,17 +261,32 @@ impl CacheManager for CacheManagerImpl {
     }
 
     fn get_cache_metrics(&self) -> Value {
-        // Get performance summary from metrics collector
-        let summary = self.metrics.performance_summary();
+        #[cfg(feature = "prometheus")]
+        {
+            // Get performance summary from metrics collector
+            let summary = self.metrics.performance_summary();
 
-        serde_json::json!({
-            "overall_hit_rate": summary.overall_hit_rate,
-            "average_latency_ms": summary.average_latency_ms,
-            "total_size_bytes": summary.total_size_bytes,
-            "total_entries": summary.total_entries,
-            "layer_summaries": summary.layer_summaries,
-            "prometheus_metrics": self.metrics.export_metrics()
-        })
+            serde_json::json!({
+                "overall_hit_rate": summary.overall_hit_rate,
+                "average_latency_ms": summary.average_latency_ms,
+                "total_size_bytes": summary.total_size_bytes,
+                "total_entries": summary.total_entries,
+                "layer_summaries": summary.layer_summaries,
+                "prometheus_metrics": self.metrics.export_metrics()
+            })
+        }
+        #[cfg(not(feature = "prometheus"))]
+        {
+            serde_json::json!({
+                "message": "Prometheus metrics not available - compile with 'prometheus' feature",
+                "overall_hit_rate": 0.0,
+                "average_latency_ms": 0.0,
+                "total_size_bytes": 0,
+                "total_entries": 0,
+                "layer_summaries": [],
+                "prometheus_metrics": null
+            })
+        }
     }
 
     async fn get_cache_stats(&self) -> CacheStats {

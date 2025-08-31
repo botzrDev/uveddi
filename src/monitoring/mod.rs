@@ -10,6 +10,7 @@ pub mod metrics;
 // pub mod database;
 // pub mod classification;
 pub mod baseline_collector;
+#[cfg(feature = "prometheus")]
 pub mod carbon_metrics;
 pub mod config;
 pub mod distribution;
@@ -29,6 +30,7 @@ pub use metrics::{TestExecution, TestMetrics, TestResult};
 pub use baseline_collector::{
     BaselineCollectionConfig, BaselineCollector, BaselineComparison, StoredBaseline,
 };
+#[cfg(feature = "prometheus")]
 pub use carbon_metrics::{
     CarbonAwarenessCollector, CarbonAwarenessConfig, CarbonFootprintReport,
     EnergyConsumptionMetrics, WorkloadCarbonSummary, WorkloadType,

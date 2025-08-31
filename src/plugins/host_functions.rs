@@ -395,29 +395,45 @@ pub struct QueryMatch {
     pub captures: Vec<QueryCapture>,
 }
 
-/// Tree-sitter query capture
+/// Tree-sitter query capture result with location information
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct QueryCapture {
+    /// Capture index in the query pattern
     pub index: u32,
+    /// Capture name from the query pattern
     pub name: String,
+    /// Captured text content
     pub text: String,
+    /// Starting byte position in the source
     pub start_byte: u32,
+    /// Ending byte position in the source
     pub end_byte: u32,
+    /// Starting row (line) number (0-indexed)
     pub start_row: u32,
+    /// Starting column number (0-indexed)
     pub start_column: u32,
+    /// Ending row (line) number (0-indexed)
     pub end_row: u32,
+    /// Ending column number (0-indexed)
     pub end_column: u32,
 }
 
 /// Plugin issue format for database storage
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct PluginIssue {
+    /// Anti-pattern type identifier from the database
     pub anti_pattern_type_id: Option<i64>,
+    /// File path where the issue was detected
     pub file_path: String,
+    /// Line number where the issue occurs (1-indexed)
     pub line_number: Option<i32>,
+    /// Human-readable issue description
     pub message: String,
+    /// Issue severity level (e.g., "low", "medium", "high", "critical")
     pub severity: String,
+    /// Suggested fix or improvement
     pub suggestion: String,
+    /// Additional metadata about the issue
     pub metadata: HashMap<String, serde_json::Value>,
 }
 

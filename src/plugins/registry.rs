@@ -284,26 +284,42 @@ impl PluginRegistry {
 /// Plugin metadata stored in the registry
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PluginMetadata {
+    /// Unique identifier for the plugin
     pub id: PluginId,
+    /// Plugin manifest with configuration details
     pub manifest: PluginManifest,
+    /// Path to the plugin binary file
     pub binary_path: PathBuf,
+    /// Path to the plugin manifest file
     pub manifest_path: PathBuf,
+    /// Timestamp when the plugin was installed
     pub installation_time: std::time::SystemTime,
+    /// Timestamp when the plugin was last used
     pub last_used: Option<std::time::SystemTime>,
+    /// Number of times the plugin has been used
     pub usage_count: u64,
+    /// Current status of the plugin
     pub status: PluginStatus,
 }
 
 /// Plugin manifest file structure
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PluginManifest {
+    /// Human-readable name of the plugin
     pub name: String,
+    /// Version string of the plugin
     pub version: String,
+    /// Author or maintainer of the plugin
     pub author: String,
+    /// Description of what the plugin does
     pub description: String,
+    /// List of permissions required by the plugin
     pub permissions: Vec<Permission>,
+    /// Programming languages supported by the plugin
     pub supported_languages: Vec<String>,
+    /// Types of anti-patterns this plugin can detect
     pub anti_pattern_types: Vec<String>,
+    /// Optional cryptographic signature for verification
     pub signature: Option<String>,
 }
 
@@ -359,10 +375,15 @@ impl RegistryCache {
 /// Registry statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RegistryStatistics {
+    /// Total number of plugins registered
     pub total_plugins: usize,
+    /// Number of plugins in ready state
     pub ready_plugins: usize,
+    /// Number of plugins in error state
     pub error_plugins: usize,
+    /// List of all supported programming languages
     pub supported_languages: Vec<String>,
+    /// List of all supported anti-pattern types
     pub supported_anti_patterns: Vec<String>,
 }
 

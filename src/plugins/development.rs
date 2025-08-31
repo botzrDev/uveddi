@@ -31,6 +31,7 @@ pub use crate::plugins::integration::SeverityLevel;
 pub struct CompressedString(String);
 #[cfg(not(feature = "ai"))]
 impl CompressedString {
+    /// Create a new compressed string from a regular string
     pub fn new(s: &str) -> Self {
         Self(s.to_string())
     }
@@ -40,25 +41,36 @@ pub use crate::plugins::integration::SolutionPattern;
 #[cfg(not(feature = "ai"))]
 pub use crate::plugins::integration::SourceLanguage;
 #[cfg(not(feature = "ai"))]
+/// Impact level of a code issue or anti-pattern
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ImpactLevel {
+    /// Low impact - minor issue with limited consequences
     Low,
+    /// Medium impact - moderate issue affecting code quality
     Medium,
+    /// High impact - significant issue requiring immediate attention
     High,
 }
 #[cfg(not(feature = "ai"))]
 pub use crate::plugins::integration::LanguageKnowledge;
 #[cfg(not(feature = "ai"))]
+/// Effort level required to fix an issue
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum EffortLevel {
+    /// Low effort - quick fix requiring minimal changes
     Low,
+    /// Medium effort - moderate changes needed
     Medium,
+    /// High effort - significant refactoring or redesign required
     High,
 }
 #[cfg(not(feature = "ai"))]
+/// Code examples showing good and bad practices
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CodeExamples {
+    /// Examples of good coding practices
     pub good: Vec<String>,
+    /// Examples of bad coding practices to avoid
     pub bad: Vec<String>,
 }
 

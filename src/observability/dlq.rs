@@ -3,6 +3,7 @@
 //! Provides persistent storage for failed operations that cannot be retried,
 //! with enterprise-grade features for monitoring and reprocessing.
 
+#[cfg(feature = "prometheus")]
 use crate::observability::metrics::UveddiMetrics;
 use crate::observability::tracing_utils::TraceId;
 use anyhow::{Context, Result};
@@ -54,12 +55,13 @@ impl DlqRecord {
 /// Dead Letter Queue implementation with SQLite persistence
 pub struct DeadLetterQueue {
     connection: Arc<Mutex<Connection>>,
+    #[cfg(feature = "prometheus")]
     metrics: Arc<UveddiMetrics>,
 }
 
 impl DeadLetterQueue {
     /// Create a new Dead Letter Queue with the given database connection
-    pub fn new(connection: Connection, metrics: Arc<UveddiMetrics>) -> Result<Self> {
+    pub fn new(connection: Connection, #[cfg(feature = "prometheus")] metrics: Arc<UveddiMetrics>) -> Result<Self> {
         let conn = Arc::new(Mutex::new(connection));
 
         // Initialize DLQ table
@@ -107,6 +109,7 @@ impl DeadLetterQueue {
 
         Ok(Self {
             connection: conn,
+            #[cfg(feature = "prometheus")]
             metrics,
         })
     }
@@ -137,6 +140,7 @@ impl DeadLetterQueue {
         ).context("Failed to insert record into dead letter queue")?;
 
         // Update metrics
+        #[cfg(feature = "prometheus")]
         self.metrics.dlq_size().inc();
 
         warn!(
@@ -303,6 +307,7 @@ impl DeadLetterQueue {
             .context("Failed to delete DLQ record")?;
 
         if rows_affected > 0 {
+            #[cfg(feature = "prometheus")]
             self.metrics.dlq_size().dec();
             info!(dlq_id = id, "Record removed from Dead Letter Queue");
             Ok(true)
@@ -327,6 +332,7 @@ impl DeadLetterQueue {
 
         // Reset metrics
         for _ in 0..count {
+            #[cfg(feature = "prometheus")]
             self.metrics.dlq_size().dec();
         }
 
@@ -444,16 +450,18 @@ pub struct DlqStatistics {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::observability::metrics::UveddiMetrics;
+    #[cfg(feature = "prometheus")]
+use crate::observability::metrics::UveddiMetrics;
     use rusqlite::Connection;
     use std::sync::Arc;
 
     fn create_test_dlq() -> Result<DeadLetterQueue> {
         let conn = Connection::open_in_memory()?;
+        #[cfg(feature = "prometheus")]
         let metrics = Arc::new(UveddiMetrics::new(
             &crate::observability::config::MetricsConfig::default(),
         )?);
-        DeadLetterQueue::new(conn, metrics)
+        DeadLetterQueue::new(conn, #[cfg(feature = "prometheus")] metrics)
     }
 
     #[test]

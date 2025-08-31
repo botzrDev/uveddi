@@ -74,7 +74,7 @@ dev-ts-only = ["dev-minimal", "typescript-lang"]
 # Fast iteration (no heavy analysis)
 dev-fast = ["dev-minimal"]
 # Core analysis without tree-sitter
-dev-core = ["dev-minimal", "dep:rayon", "dep:tokio-stream", "dep:async-stream"]
+dev-core = ["dev-minimal", "dep:rayon", "dep:tokio-stream", "dep:async-stream", "prometheus"]
 
 # Consolidated dependency groups
 crypto-minimal = []

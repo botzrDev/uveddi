@@ -18,115 +18,173 @@ use tokio::sync::RwLock;
 
 // Stub types for when AI features are disabled
 #[cfg(not(feature = "ai"))]
+/// Central knowledge library containing patterns and anti-patterns
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct KnowledgeLibrary {
+    /// Universal patterns that apply to all programming languages
     pub universal_patterns: HashMap<String, PatternKnowledge>,
+    /// Language-specific patterns and knowledge
     pub language_specific: HashMap<SourceLanguage, LanguageKnowledge>,
+    /// Metadata about the knowledge library
     pub metadata: LibraryMetadata,
 }
 
 #[cfg(not(feature = "ai"))]
+/// Loader for knowledge libraries from various sources
 #[derive(Debug, Clone, Default)]
 pub struct KnowledgeLibraryLoader;
 
 #[cfg(not(feature = "ai"))]
+/// Programming languages supported by the analysis system
 #[derive(Debug, Clone, Hash, PartialEq, Eq, Copy, Serialize, Deserialize)]
 pub enum SourceLanguage {
+    /// Rust programming language
     Rust,
+    /// Python programming language
     Python,
+    /// JavaScript programming language
     JavaScript,
+    /// TypeScript programming language
     TypeScript,
+    /// Java programming language
     Java,
+    /// Universal patterns that apply to all languages
     Universal,
 }
 
 #[cfg(not(feature = "ai"))]
+/// Categories of anti-patterns that can be detected
 #[derive(Debug, Clone, Hash, PartialEq, Eq, Copy, Serialize, Deserialize)]
 pub enum AntiPatternCategory {
+    /// God object anti-pattern
     GodObject,
+    /// Cyclic dependency anti-pattern
     CyclicDependency,
+    /// Magic values anti-pattern
     MagicValues,
+    /// Global state anti-pattern
     GlobalState,
+    /// Tight coupling anti-pattern
     TightCoupling,
+    /// Resource leak anti-pattern
     ResourceLeak,
+    /// Silent failure anti-pattern
     SilentFailure,
+    /// Code duplication anti-pattern
     CodeDuplication,
+    /// Leaky abstraction anti-pattern
     LeakyAbstraction,
+    /// Dead code anti-pattern
     DeadCode,
+    /// Long method anti-pattern
     LongMethod,
+    /// Large class anti-pattern
     LargeClass,
 }
 
 #[cfg(not(feature = "ai"))]
+/// Knowledge about a specific anti-pattern
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct PatternKnowledge {
+    /// Unique identifier for the pattern
     pub id: String,
+    /// Category this pattern belongs to
     pub category: AntiPatternCategory,
+    /// Confidence level in detection (0.0 to 1.0)
     pub detection_confidence: f32,
+    /// Tags for categorization and search
     pub tags: Vec<String>,
+    /// Suggested solutions for this pattern
     pub solutions: Vec<SolutionPattern>,
+    /// Methods for detecting this pattern
     pub detection_methods: Vec<DetectionMethod>,
 }
 
 #[cfg(not(feature = "ai"))]
+/// Language-specific knowledge and patterns
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct LanguageKnowledge {
+    /// Patterns specific to this programming language
     pub patterns: HashMap<String, PatternKnowledge>,
+    /// Framework-specific knowledge and patterns
     pub frameworks: HashMap<String, FrameworkKnowledge>,
 }
 
 #[cfg(not(feature = "ai"))]
+/// Knowledge about a specific framework
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct FrameworkKnowledge {
+    /// Patterns specific to this framework
     pub specific_patterns: Vec<String>,
 }
 
 #[cfg(not(feature = "ai"))]
+/// Metadata about the knowledge library
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct LibraryMetadata {
+    /// Programming languages supported by this library
     pub supported_languages: Vec<SourceLanguage>,
 }
 
 #[cfg(not(feature = "ai"))]
+/// Pattern for solving an anti-pattern
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct SolutionPattern {
+    /// Unique identifier for the solution
     pub id: String,
 }
 
 #[cfg(not(feature = "ai"))]
+/// Method for detecting an anti-pattern
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct DetectionMethod {
+    /// Unique identifier for the detection method
     pub id: String,
 }
 
 #[cfg(not(feature = "ai"))]
+/// Context information for analysis operations
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct AnalysisContext {
+    /// Programming language being analyzed
     pub language: SourceLanguage,
+    /// Frameworks detected in the codebase
     pub frameworks: Vec<String>,
+    /// Patterns that have been detected
     pub detected_patterns: Vec<DetectedPattern>,
 }
 
 #[cfg(not(feature = "ai"))]
+/// A pattern that has been detected in the code
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct DetectedPattern {
+    /// Identifier of the detected pattern
     pub pattern_id: String,
+    /// Confidence level of the detection (0.0 to 1.0)
     pub confidence: f32,
 }
 
 #[cfg(not(feature = "ai"))]
+/// Severity levels for detected issues
 #[derive(Debug, Clone, Hash, PartialEq, Eq, Copy, Serialize, Deserialize)]
 pub enum SeverityLevel {
+    /// Low severity issue
     Low,
+    /// Medium severity issue
     Medium,
+    /// High severity issue
     High,
+    /// Critical severity issue requiring immediate attention
     Critical,
 }
 
 #[cfg(not(feature = "ai"))]
+/// Location context for detected issues
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct LocationContext {
+    /// File path where the issue was detected
     pub file_path: String,
+    /// Line number where the issue occurs (1-indexed)
     pub line_number: u32,
 }
 

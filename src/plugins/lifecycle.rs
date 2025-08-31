@@ -221,9 +221,13 @@ impl Default for PluginLifecycleManager {
 // Debug trait removed due to Wasmtime types not implementing Debug
 #[derive(Clone)]
 pub struct ActivePlugin {
+    /// Unique identifier for the plugin
     pub id: PluginId,
+    /// Plugin manifest with metadata
     pub manifest: PluginManifest,
+    /// Runtime statistics for the plugin
     pub stats: PluginStats,
+    /// Current status of the plugin
     pub status: PluginStatus,
     #[cfg(feature = "wasm-plugins")]
     engine: wasmtime::Engine,
@@ -283,19 +287,25 @@ impl ActivePlugin {
 /// Read-only reference to an active plugin
 #[derive(Debug, Clone)]
 pub struct ActivePluginRef {
+    /// Unique identifier for the plugin
     pub id: PluginId,
+    /// Plugin manifest with metadata
     pub manifest: PluginManifest,
+    /// Runtime statistics for the plugin
     pub stats: PluginStats,
+    /// Current status of the plugin
     pub status: PluginStatus,
 }
 
 /// Resource monitor for tracking plugin resource usage
 #[derive(Debug, Clone)]
 pub struct ResourceMonitor {
+    /// Interval between resource checks
     monitoring_interval: std::time::Duration,
 }
 
 impl ResourceMonitor {
+    /// Create a new resource monitor with default settings
     pub fn new() -> Self {
         Self {
             monitoring_interval: std::time::Duration::from_secs(5),
@@ -336,12 +346,16 @@ impl Default for ResourceMonitor {
 /// Resource usage report for all plugins
 #[derive(Debug, Default)]
 pub struct ResourceReport {
+    /// Individual resource reports for each plugin
     pub plugin_reports: HashMap<PluginId, PluginResourceReport>,
+    /// Total memory usage across all plugins
     pub total_memory_usage: u64,
+    /// Total fuel consumed across all plugins
     pub total_fuel_consumed: u64,
 }
 
 impl ResourceReport {
+    /// Create a new empty resource report
     pub fn new() -> Self {
         Self::default()
     }
@@ -365,11 +379,17 @@ impl ResourceReport {
 /// Resource usage report for a single plugin
 #[derive(Debug, Clone)]
 pub struct PluginResourceReport {
+    /// Unique identifier of the plugin
     pub plugin_id: PluginId,
+    /// Memory usage in bytes
     pub memory_usage: u64,
+    /// Fuel consumed during execution
     pub fuel_consumed: u64,
+    /// Total execution time
     pub execution_time: std::time::Duration,
+    /// Number of active handles
     pub handle_count: usize,
+    /// Memory used by handles
     pub handle_memory: u64,
 }
 
