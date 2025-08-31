@@ -50,8 +50,10 @@ levenshtein = "1.0"
 [features]
 # Lightweight default for fast development builds
 default = ["dev-core"]
+# Prometheus metrics collection
+prometheus = ["dep:prometheus"]
 # Production-ready features (previous default behavior)  
-production = ["tree-sitter", "security", "memory-optimization", "web-full", "tui", "wasm-plugins", "dep:rayon", "dep:tokio-stream", "dep:async-stream", "dep:rusqlite", "dep:bincode", "dep:prometheus"]
+production = ["tree-sitter", "security", "memory-optimization", "web-full", "tui", "wasm-plugins", "prometheus", "dep:rayon", "dep:tokio-stream", "dep:async-stream", "dep:rusqlite", "dep:bincode"]
 # Chaos engineering and load testing
 chaos = ["dep:fail", "dep:statrs", "dep:ndarray-stats"]
 # Performance regression detection with genetic algorithms

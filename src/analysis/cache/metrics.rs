@@ -4,6 +4,7 @@
 //! for cache performance, including hit rates, latencies, memory usage,
 //! and real-time performance analytics.
 
+#[cfg(feature = "prometheus")]
 use prometheus::{Histogram, IntCounter, IntGauge, Registry};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};

@@ -292,6 +292,7 @@ pub struct SecurityMonitor {
 }
 
 impl SecurityMonitor {
+    /// Create a new security monitor with the given policy
     pub fn new(policy: SecurityPolicy) -> Self {
         Self {
             policy,
@@ -359,9 +360,13 @@ impl SecurityMonitor {
 /// Security execution statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SecurityStats {
+    /// Execution time in milliseconds
     pub execution_time_ms: u64,
+    /// Total fuel units consumed during execution
     pub fuel_consumed: u64,
+    /// Peak memory usage in bytes
     pub memory_peak: u64,
+    /// Number of security policy violations detected
     pub policy_violations: u32,
 }
 

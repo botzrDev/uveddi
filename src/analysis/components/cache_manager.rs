@@ -7,11 +7,13 @@
 use crate::analysis::cache::{
     ast::{AstCache, CacheConfig},
     engine_cache::{EngineCache, EngineCacheConfig},
-    metrics::CacheMetrics,
 };
+#[cfg(feature = "prometheus")]
+use crate::analysis::cache::metrics::CacheMetrics;
 use crate::ast::tree_sitter_impl::ParsedFile;
 use crate::database::models::ArchitecturalIssue;
 use crate::error::UveddiError;
+#[cfg(feature = "prometheus")]
 use prometheus::Registry;
 use serde_json::Value;
 use std::collections::HashMap;
@@ -55,6 +57,7 @@ pub struct CacheManagerImpl {
     /// High-performance engine cache
     engine_cache: Arc<EngineCache>,
     /// Performance metrics collector
+    #[cfg(feature = "prometheus")]
     metrics: Arc<CacheMetrics>,
     /// Legacy AST cache for compatibility
     legacy_ast_cache: Arc<RwLock<AstCache>>,

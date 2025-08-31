@@ -7,7 +7,7 @@ use uuid::Uuid;
 #[cfg(feature = "wasm-plugins")]
 use wasmtime::component::ResourceTable;
 #[cfg(feature = "wasm-plugins")]
-use wasmtime_wasi::WasiView;
+use wasmtime_wasi::{WasiView, WasiCtxView};
 #[cfg(feature = "wasm-plugins")]
 use wasmtime_wasi::preview1::WasiP1Ctx;
 
@@ -51,8 +51,11 @@ impl std::fmt::Display for PluginId {
 /// Plugin configuration passed to plugins at initialization
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PluginConfig {
+    /// Minimum severity level for reporting issues (0.0 to 1.0)
     pub severity_threshold: f32,
+    /// Maximum number of issues to report per file
     pub max_issues_per_file: u32,
+    /// Custom plugin-specific configuration settings
     pub custom_settings: HashMap<String, String>,
 }
 
@@ -69,31 +72,43 @@ impl Default for PluginConfig {
 /// Host state passed to WASM instances
 #[derive(Debug)]
 pub struct HostState {
+    /// Unique identifier for the plugin instance
     pub plugin_id: PluginId,
+    /// Plugin configuration settings
     pub config: PluginConfig,
+    /// Resource limits for plugin execution
     pub resource_limits: ResourceLimits,
-    pub security_policy: SecurityPolicy, // Add this field
+    /// Security policy governing plugin permissions
+    pub security_policy: SecurityPolicy,
 }
 
 /// Wrapper type for WASI context to avoid orphan rule issues
 #[cfg(feature = "wasm-plugins")]
-#[derive(Debug)]
 pub struct HostContext {
+    /// Host state containing plugin configuration and limits
     pub host_state: HostState,
+    /// WASI Preview 1 context for system interface
     pub wasi_ctx: WasiP1Ctx,
-    pub table: ResourceTable, // Added for WASI Host trait
+    /// Resource table for WASI host trait implementation
+    pub table: ResourceTable,
 }
 
 #[cfg(feature = "wasm-plugins")]
-impl IoView for HostContext {
-    fn table(&mut self) -> &mut ResourceTable {
-        &mut self.table
+impl std::fmt::Debug for HostContext {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("HostContext")
+            .field("host_state", &self.host_state)
+            .field("wasi_ctx", &"<WasiP1Ctx>")
+            .field("table", &"<ResourceTable>")
+            .finish()
     }
 }
 
+// IoView trait implementation removed as it's not available in this wasmtime-wasi version
+
 #[cfg(feature = "wasm-plugins")]
 impl WasiView for HostContext {
-    fn ctx(&mut self) -> &mut wasmtime_wasi::p2::WasiCtx {
+    fn ctx(&mut self) -> WasiCtxView<'_> {
         self.wasi_ctx.ctx()
     }
 }
@@ -157,6 +172,7 @@ pub struct PluginStats {
 }
 
 impl PluginStats {
+    /// Record execution metrics for a plugin invocation
     pub fn record_execution(
         &mut self,
         execution_time_ms: u64,
@@ -170,6 +186,7 @@ impl PluginStats {
         self.peak_memory_usage = self.peak_memory_usage.max(memory_usage);
     }
 
+    /// Record an error that occurred during plugin execution
     pub fn record_error(&mut self, error: String) {
         self.error_count += 1;
         self.last_error = Some(error);
@@ -179,20 +196,27 @@ impl PluginStats {
 /// Handle to AST data stored in plugin memory
 #[derive(Debug, Clone)]
 pub struct AstHandle {
+    /// Unique identifier for the AST handle
     pub id: u32,
+    /// Size of the AST data in bytes
     pub size: u64,
+    /// Programming language of the AST
     pub language: String,
 }
 
 /// Plugin execution context
 #[derive(Debug)]
 pub struct ExecutionContext {
+    /// Timestamp when execution started
     pub start_time: std::time::Instant,
+    /// Maximum fuel units allowed for this execution
     pub fuel_limit: u64,
+    /// Maximum memory allowed in bytes
     pub memory_limit: u64,
 }
 
 impl ExecutionContext {
+    /// Create a new execution context with the given resource limits
     pub fn new(limits: &ResourceLimits) -> Self {
         Self {
             start_time: std::time::Instant::now(),
@@ -201,6 +225,7 @@ impl ExecutionContext {
         }
     }
 
+    /// Get the elapsed time since execution started in milliseconds
     pub fn elapsed_ms(&self) -> u64 {
         self.start_time.elapsed().as_millis() as u64
     }

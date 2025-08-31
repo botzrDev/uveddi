@@ -6,7 +6,7 @@
 
 use crate::error::UveddiError;
 use crate::plugins::{
-    host_functions::HostContext, types::PluginId, SecurityPolicy,
+    host_functions::HostContext, types::PluginId, SecurityPolicy, PluginError,
 };
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -206,9 +206,9 @@ impl PluginRuntime {
     pub async fn execute_plugin(
         &self,
         plugin_id: &PluginId,
-        _binary: &[u8],
-        _function: &str,
-        _args: &[u8],
+        binary: &[u8],
+        function: &str,
+        args: &[u8],
     ) -> Result<Vec<u8>, UveddiError> {
         #[cfg(not(feature = "wasm-plugins"))]
         {
@@ -331,7 +331,7 @@ impl PluginRuntime {
         config.max_wasm_stack(1024 * 1024); // 1MB stack limit
         
         // Configure memory limits
-        config.static_memory_maximum_size(self.global_config.default_memory_limit as u64);
+        config.max_wasm_stack(self.global_config.default_memory_limit);
         
         // Enable debugging if configured
         if self.global_config.enable_debugging {
@@ -389,25 +389,40 @@ impl Default for PluginRuntime {
 /// Runtime statistics for a specific plugin
 #[derive(Debug, Clone)]
 pub struct PluginRuntimeStats {
+    /// Unique identifier for this plugin
     pub plugin_id: PluginId,
+    /// Total number of times this plugin has been executed
     pub total_executions: u64,
+    /// Total cumulative execution time in milliseconds
     pub total_execution_time_ms: u64,
+    /// Average execution time per invocation in milliseconds
     pub average_execution_time_ms: f64,
+    /// Total fuel units consumed across all executions
     pub fuel_consumed: u64,
+    /// Peak memory usage in bytes during execution
     pub memory_peak_bytes: usize,
+    /// Number of host function calls made by this plugin
     pub host_calls_made: u32,
+    /// Number of errors encountered during execution
     pub errors_count: u32,
+    /// Timestamp of the last successful execution
     pub last_execution: Option<chrono::DateTime<chrono::Utc>>,
 }
 
 /// Overall runtime system statistics
 #[derive(Debug, Clone)]
 pub struct RuntimeStats {
+    /// Total number of plugins currently registered in the runtime
     pub total_registered_plugins: usize,
+    /// Total executions across all plugins
     pub total_executions: u64,
+    /// Average execution time across all plugins in milliseconds
     pub average_execution_time_ms: f64,
+    /// Total fuel consumed by all plugins
     pub total_fuel_consumed: u64,
+    /// Total memory used by all plugins in bytes
     pub total_memory_used_bytes: usize,
+    /// Percentage of executions that resulted in errors
     pub error_rate: f64,
 }
 

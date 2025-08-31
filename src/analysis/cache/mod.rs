@@ -9,6 +9,8 @@
 pub mod ast;
 pub mod engine_cache;
 pub mod invalidation;
+
+#[cfg(feature = "prometheus")]
 pub mod metrics;
 
 #[cfg(feature = "memory-optimization")]
@@ -21,6 +23,8 @@ pub mod compat;
 
 pub use ast::AstCache;
 pub use invalidation::{ContentHashInvalidator, InvalidationStrategy};
+
+#[cfg(feature = "prometheus")]
 pub use metrics::{CacheMetrics, CacheMonitor};
 
 #[cfg(feature = "memory-optimization")]

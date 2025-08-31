@@ -144,6 +144,7 @@ pub struct StaticAnalyzer {
 }
 
 impl StaticAnalyzer {
+    /// Create a new static analyzer instance
     pub fn new() -> Self {
         Self {}
     }
@@ -278,6 +279,7 @@ pub struct SignatureVerifier {
 }
 
 impl SignatureVerifier {
+    /// Create a new signature verifier instance
     pub fn new() -> Self {
         Self {
             trusted_keys: HashMap::new(),
@@ -342,6 +344,7 @@ impl SignatureVerifier {
 pub struct ManifestValidator;
 
 impl ManifestValidator {
+    /// Create a new manifest validator instance
     pub fn new() -> Self {
         Self
     }
@@ -427,14 +430,23 @@ impl ManifestValidator {
 /// Complete verification report
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VerificationReport {
+    /// SHA256 hash of the plugin binary
     pub plugin_hash: String,
+    /// Name of the plugin from manifest
     pub plugin_name: String,
+    /// Version of the plugin from manifest
     pub plugin_version: String,
+    /// Timestamp when verification was performed
     pub verification_timestamp: chrono::DateTime<chrono::Utc>,
+    /// Results from static analysis
     pub static_analysis: StaticAnalysisReport,
+    /// Results from signature verification (if applicable)
     pub signature_verification: Option<SignatureVerification>,
+    /// Results from manifest validation
     pub manifest_validation: ManifestValidation,
+    /// Results from capability audit
     pub capability_audit: CapabilityAudit,
+    /// Overall verification status
     pub overall_status: VerificationStatus,
 }
 
@@ -460,80 +472,115 @@ impl VerificationReport {
 /// Static analysis report
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct StaticAnalysisReport {
+    /// SHA256 hash of the analyzed binary
     pub binary_hash: String,
+    /// Size of the binary in bytes
     pub binary_size: usize,
+    /// List of discovered vulnerabilities
     pub vulnerabilities: Vec<Vulnerability>,
+    /// List of code quality issues
     pub code_quality_issues: Vec<CodeQualityIssue>,
+    /// Code complexity metrics
     pub complexity_metrics: ComplexityMetrics,
 }
 
 /// Vulnerability information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Vulnerability {
+    /// Unique vulnerability identifier
     pub id: String,
+    /// Description of the vulnerability
     pub description: String,
+    /// Severity level of the vulnerability
     pub severity: VulnerabilitySeverity,
+    /// Location where vulnerability was found (if applicable)
     pub location: Option<String>,
 }
 
 /// Vulnerability severity levels
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum VulnerabilitySeverity {
+    /// Low severity - minimal impact
     Low,
+    /// Medium severity - moderate impact
     Medium,
+    /// High severity - significant impact
     High,
+    /// Critical severity - severe impact
     Critical,
 }
 
 /// Code quality issue
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CodeQualityIssue {
+    /// Description of the quality issue
     pub description: String,
+    /// Severity level of the issue
     pub severity: String,
+    /// Location where issue was found (if applicable)
     pub location: Option<String>,
 }
 
 /// Code complexity metrics
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct ComplexityMetrics {
+    /// Cyclomatic complexity of the code
     pub cyclomatic_complexity: u32,
+    /// Total number of functions
     pub function_count: u32,
+    /// Total number of instructions
     pub instruction_count: u32,
 }
 
 /// Signature verification result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SignatureVerification {
+    /// Whether the signature is valid
     pub is_valid: bool,
+    /// Identity of the signer (if known)
     pub signer: Option<String>,
+    /// Signature algorithm used
     pub algorithm: Option<String>,
+    /// Timestamp of the signature
     pub timestamp: Option<chrono::DateTime<chrono::Utc>>,
+    /// Trust chain for certificate validation
     pub trust_chain: Vec<String>,
 }
 
 /// Manifest validation result
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct ManifestValidation {
+    /// Whether the manifest is valid
     pub is_valid: bool,
+    /// List of validation errors
     pub errors: Vec<String>,
+    /// List of validation warnings
     pub warnings: Vec<String>,
 }
 
 /// Capability audit result
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct CapabilityAudit {
+    /// Permissions requested by the plugin
     pub requested_permissions: Vec<crate::plugins::security::Permission>,
+    /// Permissions granted to the plugin
     pub granted_permissions: Vec<crate::plugins::security::Permission>,
+    /// Permissions denied to the plugin
     pub denied_permissions: Vec<crate::plugins::security::Permission>,
+    /// Security warnings from the audit
     pub warnings: Vec<String>,
 }
 
 /// Overall verification status
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum VerificationStatus {
+    /// Verification is still in progress
     Pending,
+    /// Plugin is approved for use
     Approved,
+    /// Plugin has warnings but may be used
     Warning(String),
+    /// Plugin is rejected and should not be used
     Rejected(String),
 }
 
