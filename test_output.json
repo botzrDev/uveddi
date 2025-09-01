@@ -1,0 +1,931 @@
+{
+  "issues": [
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"Hello World\"' passed as function argument (high). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./test_analysis/main.rs",
+      "severity": "high"
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "hello",
+      "description": "Potentially dead code: function 'hello' is not used in this file (confidence: 80.0%)",
+      "endLine": 1,
+      "filePath": "./test_analysis/hello.ts",
+      "severity": "High",
+      "startLine": 1
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value ''Hello World'' passed as function argument (high). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./test_analysis/hello.ts",
+      "severity": "high"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "codeSnippet": "class MegaManager:\n    def __init__(self):\n        self.database = None\n        self.file_system = None\n        self.network = None\n        self.ui = None\n        self.cache = None\n        self.security = None\n        self.validation = None\n        self.logging = None\n    \n    # Too many methods - God Object\n    def handle_users(self): pass\n    def manage_files(self): pass\n    def process_network(self): pass\n    def update_ui(self): pass\n    def cache_data(self): pass\n    def validate_input(self): pass\n    def log_events(self): pass\n    def handle_security(self): pass\n    def manage_config(self): pass\n    def process_payments(self): pass\n    def generate_reports(self): pass\n    def backup_data(self): pass\n    def send_notifications(self): pass\n    def monitor_system(self): pass\n    def analyze_data(self): pass\n    def method1(self): pass\n    def method2(self): pass\n    def method3(self): pass\n    def method4(self): pass\n    def method5(self): pass",
+      "description": "God Object detected: 'MegaManager' has 21 methods and 8 fields. (Thresholds: methods>5, fields>8) LCOM4 score: 2 (>1 indicates low cohesion) Methods: 14 trivial, 7 complex",
+      "endLine": 2,
+      "filePath": "./test_analysis/anti_patterns_example.py",
+      "severity": "Critical",
+      "startLine": 2
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "handle_users",
+      "description": "Potentially dead code: function 'handle_users' is not used in this file (confidence: 90.0%)",
+      "endLine": 14,
+      "filePath": "./test_analysis/anti_patterns_example.py",
+      "severity": "High",
+      "startLine": 14
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "manage_files",
+      "description": "Potentially dead code: function 'manage_files' is not used in this file (confidence: 90.0%)",
+      "endLine": 15,
+      "filePath": "./test_analysis/anti_patterns_example.py",
+      "severity": "High",
+      "startLine": 15
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "process_network",
+      "description": "Potentially dead code: function 'process_network' is not used in this file (confidence: 90.0%)",
+      "endLine": 16,
+      "filePath": "./test_analysis/anti_patterns_example.py",
+      "severity": "High",
+      "startLine": 16
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "update_ui",
+      "description": "Potentially dead code: function 'update_ui' is not used in this file (confidence: 90.0%)",
+      "endLine": 17,
+      "filePath": "./test_analysis/anti_patterns_example.py",
+      "severity": "High",
+      "startLine": 17
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "cache_data",
+      "description": "Potentially dead code: function 'cache_data' is not used in this file (confidence: 90.0%)",
+      "endLine": 18,
+      "filePath": "./test_analysis/anti_patterns_example.py",
+      "severity": "High",
+      "startLine": 18
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "validate_input",
+      "description": "Potentially dead code: function 'validate_input' is not used in this file (confidence: 90.0%)",
+      "endLine": 19,
+      "filePath": "./test_analysis/anti_patterns_example.py",
+      "severity": "High",
+      "startLine": 19
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "log_events",
+      "description": "Potentially dead code: function 'log_events' is not used in this file (confidence: 90.0%)",
+      "endLine": 20,
+      "filePath": "./test_analysis/anti_patterns_example.py",
+      "severity": "High",
+      "startLine": 20
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "handle_security",
+      "description": "Potentially dead code: function 'handle_security' is not used in this file (confidence: 90.0%)",
+      "endLine": 21,
+      "filePath": "./test_analysis/anti_patterns_example.py",
+      "severity": "High",
+      "startLine": 21
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "manage_config",
+      "description": "Potentially dead code: function 'manage_config' is not used in this file (confidence: 90.0%)",
+      "endLine": 22,
+      "filePath": "./test_analysis/anti_patterns_example.py",
+      "severity": "High",
+      "startLine": 22
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "process_payments",
+      "description": "Potentially dead code: function 'process_payments' is not used in this file (confidence: 90.0%)",
+      "endLine": 23,
+      "filePath": "./test_analysis/anti_patterns_example.py",
+      "severity": "High",
+      "startLine": 23
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "generate_reports",
+      "description": "Potentially dead code: function 'generate_reports' is not used in this file (confidence: 90.0%)",
+      "endLine": 24,
+      "filePath": "./test_analysis/anti_patterns_example.py",
+      "severity": "High",
+      "startLine": 24
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "backup_data",
+      "description": "Potentially dead code: function 'backup_data' is not used in this file (confidence: 90.0%)",
+      "endLine": 25,
+      "filePath": "./test_analysis/anti_patterns_example.py",
+      "severity": "High",
+      "startLine": 25
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "send_notifications",
+      "description": "Potentially dead code: function 'send_notifications' is not used in this file (confidence: 90.0%)",
+      "endLine": 26,
+      "filePath": "./test_analysis/anti_patterns_example.py",
+      "severity": "High",
+      "startLine": 26
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "monitor_system",
+      "description": "Potentially dead code: function 'monitor_system' is not used in this file (confidence: 90.0%)",
+      "endLine": 27,
+      "filePath": "./test_analysis/anti_patterns_example.py",
+      "severity": "High",
+      "startLine": 27
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "analyze_data",
+      "description": "Potentially dead code: function 'analyze_data' is not used in this file (confidence: 90.0%)",
+      "endLine": 28,
+      "filePath": "./test_analysis/anti_patterns_example.py",
+      "severity": "High",
+      "startLine": 28
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "method1",
+      "description": "Potentially dead code: function 'method1' is not used in this file (confidence: 90.0%)",
+      "endLine": 29,
+      "filePath": "./test_analysis/anti_patterns_example.py",
+      "severity": "High",
+      "startLine": 29
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "method2",
+      "description": "Potentially dead code: function 'method2' is not used in this file (confidence: 90.0%)",
+      "endLine": 30,
+      "filePath": "./test_analysis/anti_patterns_example.py",
+      "severity": "High",
+      "startLine": 30
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "method3",
+      "description": "Potentially dead code: function 'method3' is not used in this file (confidence: 90.0%)",
+      "endLine": 31,
+      "filePath": "./test_analysis/anti_patterns_example.py",
+      "severity": "High",
+      "startLine": 31
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "method4",
+      "description": "Potentially dead code: function 'method4' is not used in this file (confidence: 90.0%)",
+      "endLine": 32,
+      "filePath": "./test_analysis/anti_patterns_example.py",
+      "severity": "High",
+      "startLine": 32
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "method5",
+      "description": "Potentially dead code: function 'method5' is not used in this file (confidence: 90.0%)",
+      "endLine": 33,
+      "filePath": "./test_analysis/anti_patterns_example.py",
+      "severity": "High",
+      "startLine": 33
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "never_called_function",
+      "description": "Potentially dead code: function 'never_called_function' is not used in this file (confidence: 90.0%)",
+      "endLine": 36,
+      "filePath": "./test_analysis/anti_patterns_example.py",
+      "severity": "High",
+      "startLine": 36
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "another_dead_function",
+      "description": "Potentially dead code: function 'another_dead_function' is not used in this file (confidence: 90.0%)",
+      "endLine": 40,
+      "filePath": "./test_analysis/anti_patterns_example.py",
+      "severity": "High",
+      "startLine": 40
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "calculate_discount",
+      "description": "Potentially dead code: function 'calculate_discount' is not used in this file (confidence: 90.0%)",
+      "endLine": 45,
+      "filePath": "./test_analysis/anti_patterns_example.py",
+      "severity": "High",
+      "startLine": 45
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "get_timeout",
+      "description": "Potentially dead code: function 'get_timeout' is not used in this file (confidence: 90.0%)",
+      "endLine": 48,
+      "filePath": "./test_analysis/anti_patterns_example.py",
+      "severity": "High",
+      "startLine": 48
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "process_batch",
+      "description": "Potentially dead code: function 'process_batch' is not used in this file (confidence: 90.0%)",
+      "endLine": 51,
+      "filePath": "./test_analysis/anti_patterns_example.py",
+      "severity": "High",
+      "startLine": 51
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "MegaManager",
+      "description": "Potentially dead code: class 'MegaManager' is not used in this file (confidence: 90.0%)",
+      "endLine": 2,
+      "filePath": "./test_analysis/anti_patterns_example.py",
+      "severity": "High",
+      "startLine": 2
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"This function is never used\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./test_analysis/anti_patterns_example.py",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '42' used in return statement (medium). Consider extracting this magic number into a named constant with a descriptive name.",
+      "filePath": "./test_analysis/anti_patterns_example.py",
+      "severity": "medium"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"This is dead code\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./test_analysis/anti_patterns_example.py",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '0.15' used in return statement (medium). Consider extracting this magic number into a named constant with a descriptive name.",
+      "filePath": "./test_analysis/anti_patterns_example.py",
+      "severity": "medium"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '30000' used in return statement (medium). Consider extracting this magic number into a named constant with a descriptive name.",
+      "filePath": "./test_analysis/anti_patterns_example.py",
+      "severity": "medium"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '500' found in code (low). Consider extracting this magic number into a named constant with a descriptive name.",
+      "filePath": "./test_analysis/anti_patterns_example.py",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '3' found in code (low). Consider extracting this magic number into a named constant with a descriptive name.",
+      "filePath": "./test_analysis/anti_patterns_example.py",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value 'f\"Processing batch {i}\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./test_analysis/anti_patterns_example.py",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "codeSnippet": "struct GodObject {\n    field1: String,\n    field2: i32,\n    field3: Vec<String>,\n    field4: HashMap<String, i32>,\n    field5: bool,\n    field6: f64,\n    field7: Option<String>,\n    field8: Result<i32, String>,\n    field9: Vec<Vec<i32>>,\n    field10: String,\n}",
+      "description": "God Object detected: 'GodObject' has 10 methods and 10 fields. (Thresholds: methods>5, fields>8) LCOM4 score: 1 (>1 indicates low cohesion) Methods: 0 trivial, 0 complex",
+      "endLine": 2,
+      "filePath": "./test_analysis/test.rs",
+      "severity": "High",
+      "startLine": 2
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "method1",
+      "description": "Potentially dead code: function 'method1' is not used in this file (confidence: 90.0%)",
+      "endLine": 16,
+      "filePath": "./test_analysis/test.rs",
+      "severity": "High",
+      "startLine": 16
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "method2",
+      "description": "Potentially dead code: function 'method2' is not used in this file (confidence: 90.0%)",
+      "endLine": 17,
+      "filePath": "./test_analysis/test.rs",
+      "severity": "High",
+      "startLine": 17
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "method3",
+      "description": "Potentially dead code: function 'method3' is not used in this file (confidence: 90.0%)",
+      "endLine": 18,
+      "filePath": "./test_analysis/test.rs",
+      "severity": "High",
+      "startLine": 18
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "method4",
+      "description": "Potentially dead code: function 'method4' is not used in this file (confidence: 90.0%)",
+      "endLine": 19,
+      "filePath": "./test_analysis/test.rs",
+      "severity": "High",
+      "startLine": 19
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "method5",
+      "description": "Potentially dead code: function 'method5' is not used in this file (confidence: 90.0%)",
+      "endLine": 20,
+      "filePath": "./test_analysis/test.rs",
+      "severity": "High",
+      "startLine": 20
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "method6",
+      "description": "Potentially dead code: function 'method6' is not used in this file (confidence: 90.0%)",
+      "endLine": 21,
+      "filePath": "./test_analysis/test.rs",
+      "severity": "High",
+      "startLine": 21
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "method7",
+      "description": "Potentially dead code: function 'method7' is not used in this file (confidence: 90.0%)",
+      "endLine": 22,
+      "filePath": "./test_analysis/test.rs",
+      "severity": "High",
+      "startLine": 22
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "method8",
+      "description": "Potentially dead code: function 'method8' is not used in this file (confidence: 90.0%)",
+      "endLine": 23,
+      "filePath": "./test_analysis/test.rs",
+      "severity": "High",
+      "startLine": 23
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "method9",
+      "description": "Potentially dead code: function 'method9' is not used in this file (confidence: 90.0%)",
+      "endLine": 24,
+      "filePath": "./test_analysis/test.rs",
+      "severity": "High",
+      "startLine": 24
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "method10",
+      "description": "Potentially dead code: function 'method10' is not used in this file (confidence: 90.0%)",
+      "endLine": 25,
+      "filePath": "./test_analysis/test.rs",
+      "severity": "High",
+      "startLine": 25
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "unused_function",
+      "description": "Potentially dead code: function 'unused_function' is not used in this file (confidence: 90.0%)",
+      "endLine": 29,
+      "filePath": "./test_analysis/test.rs",
+      "severity": "High",
+      "startLine": 29
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "calculate_price",
+      "description": "Potentially dead code: function 'calculate_price' is not used in this file (confidence: 90.0%)",
+      "endLine": 34,
+      "filePath": "./test_analysis/test.rs",
+      "severity": "High",
+      "startLine": 34
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "GodObject",
+      "description": "Potentially dead code: struct 'GodObject' is not used in this file (confidence: 90.0%)",
+      "endLine": 2,
+      "filePath": "./test_analysis/test.rs",
+      "severity": "High",
+      "startLine": 2
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"Never called\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./test_analysis/test.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '19.99' used in comparison operation (high). Consider extracting this magic number into a named constant with a descriptive name.",
+      "filePath": "./test_analysis/test.rs",
+      "severity": "high"
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "hello",
+      "description": "Potentially dead code: function 'hello' is not used in this file (confidence: 80.0%)",
+      "endLine": 1,
+      "filePath": "./test_analysis/hello.js",
+      "severity": "High",
+      "startLine": 1
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value ''Hello World'' passed as function argument (high). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./test_analysis/hello.js",
+      "severity": "high"
+    },
+    {
+      "antiPatternDescription": "Classes that know too much or do too much",
+      "antiPatternType": "God Object",
+      "codeSnippet": "pub struct MegaController {\n    database_connection: String,\n    file_system: String,\n    network_handler: String,\n    user_interface: String,\n    logging_system: String,\n    validation_engine: String,\n    security_manager: String,\n    cache_system: String,\n    configuration: String,\n}",
+      "description": "God Object detected: 'MegaController' has 25 methods and 9 fields. (Thresholds: methods>5, fields>8) LCOM4 score: 1 (>1 indicates low cohesion) Methods: 0 trivial, 0 complex",
+      "endLine": 2,
+      "filePath": "./test_analysis/god_object_example.rs",
+      "severity": "Critical",
+      "startLine": 2
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "handle_user_login",
+      "description": "Potentially dead code: function 'handle_user_login' is not used in this file (confidence: 60.0%)",
+      "endLine": 16,
+      "filePath": "./test_analysis/god_object_example.rs",
+      "severity": "Medium",
+      "startLine": 16
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "validate_input",
+      "description": "Potentially dead code: function 'validate_input' is not used in this file (confidence: 60.0%)",
+      "endLine": 17,
+      "filePath": "./test_analysis/god_object_example.rs",
+      "severity": "Medium",
+      "startLine": 17
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "log_activity",
+      "description": "Potentially dead code: function 'log_activity' is not used in this file (confidence: 60.0%)",
+      "endLine": 18,
+      "filePath": "./test_analysis/god_object_example.rs",
+      "severity": "Medium",
+      "startLine": 18
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "cache_data",
+      "description": "Potentially dead code: function 'cache_data' is not used in this file (confidence: 60.0%)",
+      "endLine": 19,
+      "filePath": "./test_analysis/god_object_example.rs",
+      "severity": "Medium",
+      "startLine": 19
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "handle_database",
+      "description": "Potentially dead code: function 'handle_database' is not used in this file (confidence: 60.0%)",
+      "endLine": 20,
+      "filePath": "./test_analysis/god_object_example.rs",
+      "severity": "Medium",
+      "startLine": 20
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "manage_files",
+      "description": "Potentially dead code: function 'manage_files' is not used in this file (confidence: 60.0%)",
+      "endLine": 21,
+      "filePath": "./test_analysis/god_object_example.rs",
+      "severity": "Medium",
+      "startLine": 21
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "send_network_request",
+      "description": "Potentially dead code: function 'send_network_request' is not used in this file (confidence: 60.0%)",
+      "endLine": 22,
+      "filePath": "./test_analysis/god_object_example.rs",
+      "severity": "Medium",
+      "startLine": 22
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "update_ui",
+      "description": "Potentially dead code: function 'update_ui' is not used in this file (confidence: 60.0%)",
+      "endLine": 23,
+      "filePath": "./test_analysis/god_object_example.rs",
+      "severity": "Medium",
+      "startLine": 23
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "manage_security",
+      "description": "Potentially dead code: function 'manage_security' is not used in this file (confidence: 60.0%)",
+      "endLine": 24,
+      "filePath": "./test_analysis/god_object_example.rs",
+      "severity": "Medium",
+      "startLine": 24
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "handle_configuration",
+      "description": "Potentially dead code: function 'handle_configuration' is not used in this file (confidence: 60.0%)",
+      "endLine": 25,
+      "filePath": "./test_analysis/god_object_example.rs",
+      "severity": "Medium",
+      "startLine": 25
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "process_payments",
+      "description": "Potentially dead code: function 'process_payments' is not used in this file (confidence: 60.0%)",
+      "endLine": 26,
+      "filePath": "./test_analysis/god_object_example.rs",
+      "severity": "Medium",
+      "startLine": 26
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "generate_reports",
+      "description": "Potentially dead code: function 'generate_reports' is not used in this file (confidence: 60.0%)",
+      "endLine": 27,
+      "filePath": "./test_analysis/god_object_example.rs",
+      "severity": "Medium",
+      "startLine": 27
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "manage_users",
+      "description": "Potentially dead code: function 'manage_users' is not used in this file (confidence: 60.0%)",
+      "endLine": 28,
+      "filePath": "./test_analysis/god_object_example.rs",
+      "severity": "Medium",
+      "startLine": 28
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "handle_notifications",
+      "description": "Potentially dead code: function 'handle_notifications' is not used in this file (confidence: 60.0%)",
+      "endLine": 29,
+      "filePath": "./test_analysis/god_object_example.rs",
+      "severity": "Medium",
+      "startLine": 29
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "backup_system",
+      "description": "Potentially dead code: function 'backup_system' is not used in this file (confidence: 60.0%)",
+      "endLine": 30,
+      "filePath": "./test_analysis/god_object_example.rs",
+      "severity": "Medium",
+      "startLine": 30
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "method1",
+      "description": "Potentially dead code: function 'method1' is not used in this file (confidence: 60.0%)",
+      "endLine": 33,
+      "filePath": "./test_analysis/god_object_example.rs",
+      "severity": "Medium",
+      "startLine": 33
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "method2",
+      "description": "Potentially dead code: function 'method2' is not used in this file (confidence: 60.0%)",
+      "endLine": 34,
+      "filePath": "./test_analysis/god_object_example.rs",
+      "severity": "Medium",
+      "startLine": 34
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "method3",
+      "description": "Potentially dead code: function 'method3' is not used in this file (confidence: 60.0%)",
+      "endLine": 35,
+      "filePath": "./test_analysis/god_object_example.rs",
+      "severity": "Medium",
+      "startLine": 35
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "method4",
+      "description": "Potentially dead code: function 'method4' is not used in this file (confidence: 60.0%)",
+      "endLine": 36,
+      "filePath": "./test_analysis/god_object_example.rs",
+      "severity": "Medium",
+      "startLine": 36
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "method5",
+      "description": "Potentially dead code: function 'method5' is not used in this file (confidence: 60.0%)",
+      "endLine": 37,
+      "filePath": "./test_analysis/god_object_example.rs",
+      "severity": "Medium",
+      "startLine": 37
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "method6",
+      "description": "Potentially dead code: function 'method6' is not used in this file (confidence: 60.0%)",
+      "endLine": 38,
+      "filePath": "./test_analysis/god_object_example.rs",
+      "severity": "Medium",
+      "startLine": 38
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "method7",
+      "description": "Potentially dead code: function 'method7' is not used in this file (confidence: 60.0%)",
+      "endLine": 39,
+      "filePath": "./test_analysis/god_object_example.rs",
+      "severity": "Medium",
+      "startLine": 39
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "method8",
+      "description": "Potentially dead code: function 'method8' is not used in this file (confidence: 60.0%)",
+      "endLine": 40,
+      "filePath": "./test_analysis/god_object_example.rs",
+      "severity": "Medium",
+      "startLine": 40
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "method9",
+      "description": "Potentially dead code: function 'method9' is not used in this file (confidence: 60.0%)",
+      "endLine": 41,
+      "filePath": "./test_analysis/god_object_example.rs",
+      "severity": "Medium",
+      "startLine": 41
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "method10",
+      "description": "Potentially dead code: function 'method10' is not used in this file (confidence: 60.0%)",
+      "endLine": 42,
+      "filePath": "./test_analysis/god_object_example.rs",
+      "severity": "Medium",
+      "startLine": 42
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "never_used_function",
+      "description": "Potentially dead code: function 'never_used_function' is not used in this file (confidence: 90.0%)",
+      "endLine": 46,
+      "filePath": "./test_analysis/god_object_example.rs",
+      "severity": "High",
+      "startLine": 46
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "another_unused_function",
+      "description": "Potentially dead code: function 'another_unused_function' is not used in this file (confidence: 90.0%)",
+      "endLine": 50,
+      "filePath": "./test_analysis/god_object_example.rs",
+      "severity": "High",
+      "startLine": 50
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "calculate_tax",
+      "description": "Potentially dead code: function 'calculate_tax' is not used in this file (confidence: 60.0%)",
+      "endLine": 55,
+      "filePath": "./test_analysis/god_object_example.rs",
+      "severity": "Medium",
+      "startLine": 55
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "get_max_connections",
+      "description": "Potentially dead code: function 'get_max_connections' is not used in this file (confidence: 60.0%)",
+      "endLine": 59,
+      "filePath": "./test_analysis/god_object_example.rs",
+      "severity": "Medium",
+      "startLine": 59
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "process_data",
+      "description": "Potentially dead code: function 'process_data' is not used in this file (confidence: 60.0%)",
+      "endLine": 63,
+      "filePath": "./test_analysis/god_object_example.rs",
+      "severity": "Medium",
+      "startLine": 63
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "MegaController",
+      "description": "Potentially dead code: struct 'MegaController' is not used in this file (confidence: 60.0%)",
+      "endLine": 2,
+      "filePath": "./test_analysis/god_object_example.rs",
+      "severity": "Medium",
+      "startLine": 2
+    },
+    {
+      "aiExplanation": "Consider breaking this class into smaller, more focused classes",
+      "antiPatternDescription": "Classes that have grown too large",
+      "antiPatternType": "Large Classes",
+      "codeSnippet": "",
+      "description": "Large class 'MegaController' detected: 0 LOC, 25 methods, 9 fields",
+      "endLine": 12,
+      "filePath": "./test_analysis/god_object_example.rs",
+      "severity": "30",
+      "startLine": 2
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"This function is never called\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./test_analysis/god_object_example.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"This is dead code\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./test_analysis/god_object_example.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '0.08' used in comparison operation (high). Consider extracting this magic number into a named constant with a descriptive name.",
+      "filePath": "./test_analysis/god_object_example.rs",
+      "severity": "high"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '100' found in code (low). Consider extracting this magic number into a named constant with a descriptive name.",
+      "filePath": "./test_analysis/god_object_example.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '5000' found in code (low). Consider extracting this magic number into a named constant with a descriptive name.",
+      "filePath": "./test_analysis/god_object_example.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value '\"Processing with timeout: {} and buffer: {}\"' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./test_analysis/god_object_example.rs",
+      "severity": "low"
+    },
+    {
+      "antiPatternDescription": "Unused code that can be safely removed",
+      "antiPatternType": "Dead Code",
+      "codeSnippet": "hello_world",
+      "description": "Potentially dead code: function 'hello_world' is not used in this file (confidence: 90.0%)",
+      "endLine": 1,
+      "filePath": "./test_analysis/hello.py",
+      "severity": "High",
+      "startLine": 1
+    },
+    {
+      "antiPatternDescription": "Hard-coded numeric or string literals that should be replaced with named constants",
+      "antiPatternType": "Magic Values",
+      "description": "Magic value ''Hello World'' found in code (low). Consider extracting this magic string into a named constant to improve maintainability.",
+      "filePath": "./test_analysis/hello.py",
+      "severity": "low"
+    }
+  ],
+  "metadata": {
+    "codebasePath": "./test_analysis",
+    "durationSeconds": 0.0,
+    "timestamp": "2025-08-31T18:21:52.930569567-05:00"
+  },
+  "summary": {
+    "debtScore": 100,
+    "filesAnalyzed": 7,
+    "issuesBySeverity": {
+      "critical": 2,
+      "high": 50,
+      "low": 12,
+      "medium": 33
+    },
+    "issuesTotal": 97
+  }
+}
