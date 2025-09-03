@@ -308,14 +308,13 @@ impl DisasterRecoveryCoordinator {
             if let Some(rollback_plan) = &incident.recovery_plan.rollback_plan {
                 warn!("Executing rollback plan");
                 let rollback_plan_clone = rollback_plan.clone();
-                drop(incident); // Release the mutable borrow
+                // incident guard will be dropped when it goes out of scope
                 self.execute_rollback_plan(&rollback_plan_clone).await?;
             }
             return Err(anyhow!("Recovery step failed: {}", failed_step_id));
         }
 
-        // Release the mutable borrow before validation
-        drop(incident);
+        // incident guard will be dropped here when it goes out of scope
 
         // Validate recovery
         if !self.validate_recovery().await? {

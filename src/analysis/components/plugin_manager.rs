@@ -3,6 +3,7 @@
 //! Manages WASM plugins using an actor-based architecture for better isolation
 //! and non-blocking operation.
 
+use async_trait::async_trait;
 use super::config_service::ConfigurationService;
 use super::traits::{
     ConfigurationService as ConfigurationServiceTrait, PluginCommand,
@@ -551,6 +552,7 @@ impl PluginManagerHandle {
     }
 }
 
+#[async_trait]
 impl PluginManagerHandleTrait for PluginManagerHandle {
     async fn execute_plugin(
         &self,

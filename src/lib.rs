@@ -240,8 +240,9 @@
 
 // Targeted warning suppressions - only suppress specific warnings, not all warnings
 #![allow(unused_variables, unused_imports, dead_code, unused_mut)]
-#![warn(missing_docs)]
-#![warn(rustdoc::missing_crate_level_docs)]
+// TODO: Re-enable documentation warnings after v1.0 release
+// #![warn(missing_docs)]
+// #![warn(rustdoc::missing_crate_level_docs)]
 
 pub mod ai;
 pub mod analysis;

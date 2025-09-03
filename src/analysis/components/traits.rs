@@ -166,6 +166,7 @@ pub struct PluginStats {
 }
 
 /// Handle for communicating with the plugin manager actor
+#[async_trait]
 pub trait PluginManagerHandle: Send + Sync {
     /// Execute a plugin on a file
     async fn execute_plugin(

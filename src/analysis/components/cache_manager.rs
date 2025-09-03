@@ -4,6 +4,7 @@
 //! the new multi-layered caching architecture with memory and disk tiers,
 //! optimized serialization, and intelligent invalidation strategies.
 
+use async_trait::async_trait;
 use crate::analysis::cache::{
     ast::{AstCache, CacheConfig},
     engine_cache::{EngineCache, EngineCacheConfig},
@@ -22,6 +23,7 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 
 /// Trait defining the cache management interface
+#[async_trait]
 pub trait CacheManager: Send + Sync {
     /// Get or parse an AST for a file
     async fn get_or_parse_ast(&self, file_path: &Path) -> Result<Arc<ParsedFile>, UveddiError>;
@@ -204,6 +206,7 @@ impl CacheManagerImpl {
     }
 }
 
+#[async_trait]
 impl CacheManager for CacheManagerImpl {
     async fn get_or_parse_ast(&self, file_path: &Path) -> Result<Arc<ParsedFile>, UveddiError> {
         let parser = || -> Result<ParsedFile, Box<dyn std::error::Error + Send + Sync>> {
