@@ -271,6 +271,7 @@ pub mod plugins;
 pub mod progress;
 pub mod report;
 pub mod resilience;
+pub mod resource_management;
 #[cfg(feature = "security")]
 pub mod security;
 #[cfg(not(feature = "security"))]

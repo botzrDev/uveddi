@@ -22,6 +22,7 @@ use crate::database::models::{AnalysisRun, ArchitecturalIssue};
 use crate::error::UveddiError;
 use crate::report::{markdown_generator::MarkdownReportGenerator, ReportGenerator};
 use crate::service_orchestration::{OrchestratorConfig, ServiceOrchestrator};
+use crate::resource_management::{ResourceManager, ResourceConfig};
 
 #[cfg(feature = "memory-optimization")]
 use crate::analysis::memory::MemoryOptimizationConfig;
@@ -37,6 +38,8 @@ pub struct AnalysisOrchestrator {
     database: Database,
     /// The core analysis engine that performs code parsing and issue detection.
     analysis_engine: AnalysisEngine,
+    /// Resource manager for memory and system resource control
+    resource_manager: Option<ResourceManager>,
 }
 
 /// Configuration for an analysis operation.
@@ -94,6 +97,12 @@ pub struct AnalysisConfig {
 
     /// Analysis timeout in seconds (0 = no timeout)
     pub timeout_seconds: u64,
+    
+    /// Enable resource management and monitoring
+    pub enable_resource_management: bool,
+    
+    /// Resource management configuration
+    pub resource_config: Option<ResourceConfig>,
 }
 
 /// Represents the result of a completed analysis operation.
@@ -143,9 +152,31 @@ impl AnalysisOrchestrator {
         let analysis_engine =
             AnalysisEngine::new().context("Failed to initialize analysis engine")?;
 
+        // Initialize resource manager if enabled
+        let resource_manager = if std::env::var("UVEDDI_ENABLE_RESOURCE_MANAGEMENT")
+            .unwrap_or_default()
+            .parse::<bool>()
+            .unwrap_or(false) 
+        {
+            let resource_config = ResourceConfig::development();
+            match ResourceManager::new(resource_config) {
+                Ok(manager) => {
+                    tracing::info!("Resource management enabled with database path");
+                    Some(manager)
+                },
+                Err(e) => {
+                    tracing::warn!("Failed to initialize resource manager: {}", e);
+                    None
+                }
+            }
+        } else {
+            None
+        };
+
         Ok(Self {
             database,
             analysis_engine,
+            resource_manager,
         })
     }
 
@@ -168,9 +199,31 @@ impl AnalysisOrchestrator {
         let analysis_engine =
             AnalysisEngine::new().context("Failed to initialize analysis engine")?;
 
+        // Initialize resource manager if enabled
+        let resource_manager = if std::env::var("UVEDDI_ENABLE_RESOURCE_MANAGEMENT")
+            .unwrap_or_default()
+            .parse::<bool>()
+            .unwrap_or(false) 
+        {
+            let resource_config = ResourceConfig::development();
+            match ResourceManager::new(resource_config) {
+                Ok(manager) => {
+                    tracing::info!("Resource management enabled with in-memory database");
+                    Some(manager)
+                },
+                Err(e) => {
+                    tracing::warn!("Failed to initialize resource manager: {}", e);
+                    None
+                }
+            }
+        } else {
+            None
+        };
+
         Ok(Self {
             database,
             analysis_engine,
+            resource_manager,
         })
     }
 
@@ -194,9 +247,31 @@ impl AnalysisOrchestrator {
         let analysis_engine =
             AnalysisEngine::new().context("Failed to initialize analysis engine")?;
 
+        // Initialize resource manager if enabled
+        let resource_manager = if std::env::var("UVEDDI_ENABLE_RESOURCE_MANAGEMENT")
+            .unwrap_or_default()
+            .parse::<bool>()
+            .unwrap_or(false) 
+        {
+            let resource_config = ResourceConfig::default();
+            match ResourceManager::new(resource_config) {
+                Ok(manager) => {
+                    tracing::info!("Resource management enabled with custom memory config");
+                    Some(manager)
+                },
+                Err(e) => {
+                    tracing::warn!("Failed to initialize resource manager: {}", e);
+                    None
+                }
+            }
+        } else {
+            None
+        };
+
         Ok(Self {
             database,
             analysis_engine,
+            resource_manager,
         })
     }
 
@@ -226,6 +301,33 @@ impl AnalysisOrchestrator {
             "🚀 Starting execute_analysis for path: {}",
             config.target_path.display()
         );
+
+        // Initialize or update resource management if enabled
+        if config.enable_resource_management {
+            tracing::debug!("🔧 Resource management enabled, initializing resource manager");
+            
+            let resource_config = config.resource_config
+                .clone()
+                .unwrap_or_else(|| ResourceConfig::production());
+            
+            match ResourceManager::new(resource_config) {
+                Ok(manager) => {
+                    // Start monitoring in the background
+                    if let Err(e) = manager.start_monitoring().await {
+                        tracing::warn!("Failed to start resource monitoring: {}", e);
+                    } else {
+                        tracing::info!("Resource monitoring started successfully");
+                    }
+                    
+                    self.resource_manager = Some(manager);
+                    tracing::debug!("✅ Resource manager initialized successfully");
+                },
+                Err(e) => {
+                    tracing::warn!("Failed to initialize resource manager: {}", e);
+                    tracing::warn!("Continuing without resource management");
+                }
+            }
+        }
 
         // Recreate analysis engine with memory optimization if enabled
         if config.enable_memory_optimization {
