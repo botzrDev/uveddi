@@ -485,7 +485,7 @@ impl AcknowledgmentAPI {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::resilience::alerting::{AlertType, ChannelConfig, ChannelType};
+    use crate::resilience::alerting::{AlertType, ChannelConfig, ChannelType, EscalationLevel};
     use crate::resilience::health::{Alert, AlertSeverity};
     use std::collections::HashMap;
 

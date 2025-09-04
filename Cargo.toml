@@ -2,7 +2,7 @@
 
 [package]
 name = "uveddi"
-version = "1.0.0"
+version = "0.9.0-alpha"
 edition = "2021"
 resolver = "2"
 description = "A Rust-based code analysis and exploration tool"
@@ -29,7 +29,7 @@ thiserror = "2.0.16"
 
 # Logging - unified logging infrastructure
 tracing = { version = "0.1.41", features = ["log"] }
-tracing-subscriber = { version = "0.3.19", features = ["env-filter", "json"] }
+tracing-subscriber = { version = "0.3.20", features = ["env-filter", "json"] }
 
 # HTTP client - single version with needed features
 reqwest = { version = "0.12.22", default-features = false, features = ["json", "rustls-tls"] }
@@ -236,7 +236,7 @@ crossterm = { version = "0.29", optional = true }
 tui-input = { version = "0.14", optional = true }
 
 # Input validation framework
-validator = { version = "0.16", features = ["derive"] }
+validator = { version = "0.20.0", features = ["derive"] }
 
 # Configuration Management (for TUI settings)
 confy = "1.0"

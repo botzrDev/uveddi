@@ -118,6 +118,7 @@ mod tests {
     use super::*;
     use crate::tui::messages::AppMessage;
     use ratatui::crossterm::event::KeyEvent;
+    use std::any::Any;
 
     #[derive(Debug)]
     struct DummyInput {

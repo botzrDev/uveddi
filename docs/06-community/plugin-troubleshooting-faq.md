@@ -622,7 +622,7 @@ Future versions may support controlled inter-plugin communication through a mess
 2. **Package with manifest**
    ```bash
    # Create distribution package
-   tar -czf my-plugin-v1.0.0.tar.gz plugin.wasm plugin.toml README.md
+   tar -czf my-plugin-v0.9.0.tar.gz plugin.wasm plugin.toml README.md
    ```
 
 3. **GitHub releases**
@@ -631,12 +631,12 @@ Future versions may support controlled inter-plugin communication through a mess
    - name: Create Release
      uses: actions/create-release@v1
      with:
-       tag_name: v1.0.0
-       release_name: My Plugin v1.0.0
+       tag_name: v0.9.0
+       release_name: My Plugin v0.9.0
        body: |
          ## Installation
          ```bash
-         uveddi plugin install https://github.com/user/plugin/releases/download/v1.0.0/plugin.wasm
+         uveddi plugin install https://github.com/user/plugin/releases/download/v0.9.0/plugin.wasm
          ```
    ```
 

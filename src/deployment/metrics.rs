@@ -925,7 +925,7 @@ mod tests {
 
         let metadata = DeploymentMetadata {
             id: "test-deployment".to_string(),
-            version: "v1.0.0".to_string(),
+            version: "v0.9.0-alpha".to_string(),
             timestamp: SystemTime::now(),
             triggered_by: "test".to_string(),
             commit_sha: "abc123".to_string(),

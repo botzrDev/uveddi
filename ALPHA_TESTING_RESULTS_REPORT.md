@@ -1,12 +1,12 @@
 # Uveddi Alpha Testing Results Report
 
 **Date**: August 31, 2025  
-**Version**: v1.0.0-alpha  
+**Version**: v0.9.0-alpha  
 **Testing Environment**: Linux 6.6.87.2-microsoft-standard-WSL2  
 
 ## Executive Summary
 
-Alpha testing for Uveddi v1.0.0 has been completed with **overall positive results**. The core functionality is working as expected, with successful builds across all feature sets and functional anti-pattern detection. Some areas require attention before beta release, particularly around test suite stability and plugin system initialization.
+Alpha testing for Uveddi v0.9.0 has been completed with **overall positive results**. The core functionality is working as expected, with successful builds across all feature sets and functional anti-pattern detection. Some areas require attention before beta release, particularly around test suite stability and plugin system initialization.
 
 ### Key Findings
 - ✅ **Build System**: All build configurations compile successfully
@@ -181,7 +181,7 @@ Alpha testing for Uveddi v1.0.0 has been completed with **overall positive resul
 
 **Alpha Release Status**: ✅ **READY WITH CAVEATS**
 
-Uveddi v1.0.0-alpha demonstrates solid core functionality with excellent build performance and working anti-pattern detection. The architecture is sound, and the system successfully analyzes codebases and generates reports.
+Uveddi v0.9.0-alpha demonstrates solid core functionality with excellent build performance and working anti-pattern detection. The architecture is sound, and the system successfully analyzes codebases and generates reports.
 
 ### Strengths
 - Fast build times with optimized feature sets

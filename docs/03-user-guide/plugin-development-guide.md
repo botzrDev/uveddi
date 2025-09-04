@@ -708,7 +708,7 @@ fn log_warning(message: &str) {
 make release
 
 # Package plugin with metadata
-tar -czf my-analyzer-v1.0.0.tar.gz my-analyzer.wasm plugin.toml README.md
+tar -czf my-analyzer-v0.9.0.tar.gz my-analyzer.wasm plugin.toml README.md
 
 # Generate plugin hash for verification
 sha256sum my-analyzer.wasm > my-analyzer.wasm.sha256

@@ -17,7 +17,7 @@
 
 use crate::analysis::{AnalysisDetector, AnalysisError};
 use crate::ast::tree_sitter::{Query, QueryCursor};
-#[cfg(not(feature = "tree-sitter"))]
+#[cfg(feature = "tree-sitter")]
 use crate::ast::tree_sitter::{StreamingIterator, TreeCursor};
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
 use crate::core::logging::{debug, info, warn};
@@ -27,8 +27,6 @@ use rayon::prelude::*;
 use sha2::{Digest, Sha256};
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
-#[cfg(feature = "tree-sitter")]
-use tree_sitter::{StreamingIterator, TreeCursor};
 
 /// Represents a contiguous block of code extracted for duplication analysis.
 ///
@@ -871,9 +869,11 @@ impl AnalysisDetector for CodeDuplicationDetector {
                 self.process_blocks_parallel(&mut blocks, parsed_file)?;
             } else {
                 // Use sequential processing for small numbers of blocks
+                #[cfg(feature = "tree-sitter")]
                 if self.config.enable_cfg_analysis {
                     self.enhance_blocks_with_cfg(&mut blocks, parsed_file)?;
                 }
+                #[cfg(feature = "tree-sitter")]
                 if self.config.enable_semantic_features {
                     self.enhance_blocks_with_semantic_features(&mut blocks, parsed_file)?;
                 }
@@ -1006,6 +1006,7 @@ impl AnalysisDetector for CodeDuplicationDetector {
 
 impl CodeDuplicationDetector {
     /// Enhance code blocks with CFG analysis
+    #[cfg(feature = "tree-sitter")]
     fn enhance_blocks_with_cfg(
         &self,
         blocks: &mut [CodeBlock],
@@ -1070,6 +1071,7 @@ impl CodeDuplicationDetector {
     }
 
     /// Enhance code blocks with semantic feature extraction
+    #[cfg(feature = "tree-sitter")]
     fn enhance_blocks_with_semantic_features(
         &self,
         blocks: &mut [CodeBlock],
@@ -1122,6 +1124,7 @@ impl CodeDuplicationDetector {
     }
 
     /// Find the AST node corresponding to a code block
+    #[cfg(feature = "tree-sitter")]
     fn find_ast_node_for_block<'a>(
         &self,
         root_node: crate::ast::tree_sitter::Node<'a>,
@@ -1131,6 +1134,7 @@ impl CodeDuplicationDetector {
         let mut cursor = root_node.walk();
 
         // Simple approach: find node that matches the byte range
+        #[cfg(feature = "tree-sitter")]
         fn find_matching_node<'a>(
             cursor: &mut TreeCursor<'a>,
             start_byte: usize,

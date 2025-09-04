@@ -717,6 +717,7 @@ mod tests {
     use super::*;
     use std::fs;
     use tempfile::tempdir;
+    use crate::security::{OAuthProviderConfig, OidcProviderConfig};
 
     #[test]
     fn test_default_security_config() {

@@ -323,6 +323,9 @@ mod tests {
         let mut registry = DetectorRegistry::new();
         registry.load_defaults();
 
+        #[cfg(feature = "security")]
+        assert_eq!(registry.count(), 8); // 7 base + 1 security
+        #[cfg(not(feature = "security"))]
         assert_eq!(registry.count(), 7);
         assert!(registry.has_detector("god_object"));
         assert!(registry.has_detector("code_duplication"));
@@ -366,6 +369,9 @@ mod tests {
         registry.load_defaults();
 
         let detectors = registry.get_all_detectors();
+        #[cfg(feature = "security")]
+        assert_eq!(detectors.len(), 8); // 7 base + 1 security
+        #[cfg(not(feature = "security"))]
         assert_eq!(detectors.len(), 7);
 
         // Verify detector types
@@ -382,7 +388,10 @@ mod tests {
         assert!(registry.has_detector("god_object"));
         assert!(registry.remove_detector("god_object"));
         assert!(!registry.has_detector("god_object"));
-        assert_eq!(registry.count(), 4);
+        #[cfg(feature = "security")]
+        assert_eq!(registry.count(), 7); // 8 - 1 = 7
+        #[cfg(not(feature = "security"))]
+        assert_eq!(registry.count(), 6); // 7 - 1 = 6
 
         // Removing non-existent detector should return false
         assert!(!registry.remove_detector("nonexistent"));
@@ -393,6 +402,9 @@ mod tests {
         let mut registry = DetectorRegistry::new();
         registry.load_defaults();
 
+        #[cfg(feature = "security")]
+        assert_eq!(registry.count(), 8); // 7 base + 1 security
+        #[cfg(not(feature = "security"))]
         assert_eq!(registry.count(), 7);
         registry.clear();
         assert_eq!(registry.count(), 0);
@@ -401,6 +413,9 @@ mod tests {
     #[test]
     fn test_default_registry() {
         let registry = DetectorRegistry::default();
+        #[cfg(feature = "security")]
+        assert_eq!(registry.count(), 8); // 7 base + 1 security
+        #[cfg(not(feature = "security"))]
         assert_eq!(registry.count(), 7);
         assert!(registry.has_detector("god_object"));
     }

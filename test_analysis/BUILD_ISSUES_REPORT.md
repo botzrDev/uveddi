@@ -1,7 +1,7 @@
 # Uveddi Build Issues Investigation Report
 
 **Date**: November 27, 2024  
-**Version**: v1.0.0 (prereleasev3 branch)  
+**Version**: v0.9.0-alpha (testing/alpha4 branch)  
 **Investigator**: Build System Analysis
 
 ## Executive Summary

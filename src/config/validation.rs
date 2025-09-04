@@ -633,6 +633,7 @@ pub async fn validate_config_with_context(config: &Config, context: ProjectConte
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::config::{DeadCodeConfig, LargeClassConfig};
 
     #[tokio::test]
     async fn test_empty_config_validation() {
@@ -654,7 +655,7 @@ mod tests {
     async fn test_optimal_config_validation() {
         let config = Config {
             ollama_model: Some("deepseek-coder:6.7b-instruct-q4_0".to_string()),
-            dead_code: Some(DeadCodeConfig {
+            dead_code: Some(crate::config::DeadCodeConfig {
                 confidence_threshold: Some(0.8),
                 library_mode: Some(false),
                 ignore_patterns: Some(vec!["test/**".to_string()]),

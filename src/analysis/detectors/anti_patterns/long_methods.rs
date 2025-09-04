@@ -23,9 +23,9 @@
 //! - **JavaScript**: Framework-aware thresholds for React/Node.js patterns
 
 use crate::analysis::{AnalysisDetector, AnalysisError};
-#[cfg(not(feature = "tree-sitter"))]
+#[cfg(feature = "tree-sitter")]
 use crate::ast::tree_sitter::StreamingIterator;
-#[cfg(not(feature = "tree-sitter"))]
+#[cfg(feature = "tree-sitter")]
 use crate::ast::tree_sitter::{Language, Node, Query, QueryMatch};
 use crate::ast::tree_sitter_impl::{ParsedFile, SourceLanguage};
 use crate::core::logging::{debug, info};
@@ -33,9 +33,7 @@ use crate::database::models::{AntiPatternType, ArchitecturalIssue};
 use async_trait::async_trait;
 use std::collections::HashMap;
 #[cfg(feature = "tree-sitter")]
-use tree_sitter::StreamingIterator;
-#[cfg(feature = "tree-sitter")]
-use tree_sitter::{Language, Node, Query, QueryCursor, QueryMatch};
+use tree_sitter::QueryCursor;
 
 /// Represents metrics collected for a method/function
 #[derive(Debug, Clone)]
@@ -222,6 +220,7 @@ impl LongMethodsDetector {
     /// # Errors
     /// Returns `AntiPatternDetectionError` if the query string is malformed or
     /// incompatible with the provided language grammar.
+    #[cfg(feature = "tree-sitter")]
     fn create_rust_function_query(&self, language: &Language) -> Result<Query, AnalysisError> {
         Query::new(language, RUST_FUNCTION_QUERY).map_err(|e| {
             AnalysisError::AntiPatternDetectionError(format!(
@@ -247,6 +246,7 @@ impl LongMethodsDetector {
     /// # Returns
     /// * `Ok(MethodMetrics)` - Complete metrics for the function
     /// * `Err(AnalysisError)` - If metrics calculation fails
+    #[cfg(feature = "tree-sitter")]
     fn calculate_method_metrics(
         &self,
         name_node: Node,
@@ -303,6 +303,7 @@ impl LongMethodsDetector {
     /// # Returns
     /// * `Ok(Vec<MethodMetrics>)` - Vector of calculated method metrics
     /// * `Err(AnalysisError)` - If processing fails
+    #[cfg(feature = "tree-sitter")]
     fn process_function_matches(
         &self,
         mut matches: Vec<QueryMatch>,
@@ -563,6 +564,7 @@ impl LongMethodsDetector {
     }
 
     /// Calculate logical lines of code (excluding comments and blank lines)
+    #[cfg(feature = "tree-sitter")]
     fn calculate_logical_loc(&self, node: &Node, source: &[u8]) -> u32 {
         let start_line = node.start_position().row;
         let end_line = node.end_position().row;
@@ -588,6 +590,7 @@ impl LongMethodsDetector {
     }
 
     /// Count statements in a function body
+    #[cfg(feature = "tree-sitter")]
     fn count_statements(&self, node: &Node, _source: &[u8]) -> Result<u32, AnalysisError> {
         let mut count = 0;
         let mut _cursor = node.walk();
@@ -636,7 +639,9 @@ impl LongMethodsDetector {
     }
 
     /// Calculate maximum nesting depth in a function
+    #[cfg(feature = "tree-sitter")]
     fn calculate_max_nesting_depth(&self, node: &Node, _source: &[u8]) -> u32 {
+        #[cfg(feature = "tree-sitter")]
         fn traverse_depth(node: &Node, current_depth: u32) -> u32 {
             let mut max_depth = current_depth;
             let mut cursor = node.walk();
@@ -681,6 +686,7 @@ impl LongMethodsDetector {
     }
 
     /// Calculate cyclomatic complexity
+    #[cfg(feature = "tree-sitter")]
     fn calculate_cyclomatic_complexity(
         &self,
         node: &Node,
@@ -689,6 +695,7 @@ impl LongMethodsDetector {
         let mut complexity = 1; // Base complexity
         let _cursor = node.walk();
 
+        #[cfg(feature = "tree-sitter")]
         fn traverse_complexity(node: &Node, complexity: &mut u32) {
             let mut cursor = node.walk();
 
@@ -732,6 +739,7 @@ impl LongMethodsDetector {
     }
 
     /// Calculate cognitive complexity (more nuanced than cyclomatic)
+    #[cfg(feature = "tree-sitter")]
     fn calculate_cognitive_complexity(
         &self,
         node: &Node,
@@ -739,6 +747,7 @@ impl LongMethodsDetector {
     ) -> Result<u32, AnalysisError> {
         let mut complexity = 0;
 
+        #[cfg(feature = "tree-sitter")]
         fn traverse_cognitive(node: &Node, complexity: &mut u32, nesting_level: u32) {
             let mut cursor = node.walk();
 
@@ -782,6 +791,7 @@ impl LongMethodsDetector {
     }
 
     /// Count parameters in a Rust function
+    #[cfg(feature = "tree-sitter")]
     fn count_rust_parameters(&self, node: &Node, _source: &[u8]) -> Result<u32, AnalysisError> {
         let mut cursor = node.walk();
         if cursor.goto_first_child() {
@@ -813,6 +823,7 @@ impl LongMethodsDetector {
     }
 
     /// Count parameters in a Python function
+    #[cfg(feature = "tree-sitter")]
     fn count_python_parameters(&self, node: &Node, source: &[u8]) -> Result<u32, AnalysisError> {
         let mut cursor = node.walk();
         if cursor.goto_first_child() {
@@ -847,6 +858,7 @@ impl LongMethodsDetector {
     }
 
     /// Count parameters in a JavaScript function
+    #[cfg(feature = "tree-sitter")]
     fn count_javascript_parameters(
         &self,
         node: &Node,
@@ -867,6 +879,7 @@ impl LongMethodsDetector {
     }
 
     /// Check if a Rust function is exported
+    #[cfg(feature = "tree-sitter")]
     fn is_rust_exported(&self, node: &Node, source: &[u8]) -> bool {
         let mut cursor = node.walk();
         if cursor.goto_parent() {
@@ -885,6 +898,7 @@ impl LongMethodsDetector {
     }
 
     /// Check if a JavaScript function is exported
+    #[cfg(feature = "tree-sitter")]
     fn is_javascript_exported(&self, node: &Node, _source: &[u8]) -> bool {
         let mut cursor = node.walk();
         if cursor.goto_parent() {
@@ -902,6 +916,7 @@ impl LongMethodsDetector {
     }
 
     /// Extract code snippet around a node
+    #[cfg(feature = "tree-sitter")]
     fn extract_code_snippet(&self, node: &Node, source: &[u8], context_lines: usize) -> String {
         let start_line = node.start_position().row.saturating_sub(context_lines);
         let end_line = node.end_position().row + context_lines;
@@ -918,6 +933,7 @@ impl LongMethodsDetector {
     }
 
     /// Determine Rust method type
+    #[cfg(feature = "tree-sitter")]
     fn determine_rust_method_type(&self, node: &Node, _source: &[u8]) -> String {
         let mut cursor = node.walk();
         let mut method_type = "function".to_string();
@@ -948,6 +964,7 @@ impl LongMethodsDetector {
     }
 
     /// Determine Python method type
+    #[cfg(feature = "tree-sitter")]
     fn determine_python_method_type(&self, node: &Node, _source: &[u8]) -> String {
         let mut cursor = node.walk();
         let mut method_type = "function".to_string();
@@ -978,6 +995,7 @@ impl LongMethodsDetector {
     }
 
     /// Determine JavaScript method type
+    #[cfg(feature = "tree-sitter")]
     fn determine_javascript_method_type(&self, node: &Node, _source: &[u8]) -> String {
         let node_type = node.kind();
         match node_type {
@@ -1223,10 +1241,11 @@ fn short_function() {
         Ok(())
     }
 
+    #[cfg(feature = "tree-sitter")]
     #[tokio::test]
     async fn test_calculate_method_metrics_success() -> Result<(), Box<dyn std::error::Error>> {
         let detector = LongMethodsDetector::new();
-        let mut parser = Parser::new();
+        let mut parser = tree_sitter::Parser::new();
         parser.set_language(&tree_sitter_rust::LANGUAGE.into())?;
 
         let rust_code = r#"
@@ -1307,11 +1326,12 @@ fn test_function(param1: i32, param2: String) -> i32 {
         Ok(())
     }
 
+    #[cfg(feature = "tree-sitter")]
     #[tokio::test]
     async fn test_calculate_method_metrics_invalid_name() -> Result<(), Box<dyn std::error::Error>>
     {
         let detector = LongMethodsDetector::new();
-        let mut parser = Parser::new();
+        let mut parser = tree_sitter::Parser::new();
         parser.set_language(&tree_sitter_rust::LANGUAGE.into())?;
 
         // Create a mock node that will fail utf8_text extraction
@@ -1366,10 +1386,11 @@ fn test_function(param1: i32, param2: String) -> i32 {
         assert!(result.is_ok());
     }
 
+    #[cfg(feature = "tree-sitter")]
     #[tokio::test]
     async fn test_process_function_matches_success() -> Result<(), Box<dyn std::error::Error>> {
         let detector = LongMethodsDetector::new();
-        let mut parser = Parser::new();
+        let mut parser = tree_sitter::Parser::new();
         parser.set_language(&tree_sitter_rust::LANGUAGE.into())?;
 
         let rust_code = r#"
@@ -1463,10 +1484,11 @@ fn function_two() {
         Ok(())
     }
 
+    #[cfg(feature = "tree-sitter")]
     #[tokio::test]
     async fn test_process_function_matches_malformed() -> Result<(), Box<dyn std::error::Error>> {
         let detector = LongMethodsDetector::new();
-        let mut parser = Parser::new();
+        let mut parser = tree_sitter::Parser::new();
         parser.set_language(&tree_sitter_rust::LANGUAGE.into())?;
 
         let rust_code = r#"

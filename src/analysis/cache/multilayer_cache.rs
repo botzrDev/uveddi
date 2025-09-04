@@ -596,7 +596,6 @@ mod tests {
 
     #[derive(Debug, Clone, PartialEq, Serialize, serde::Deserialize)]
     #[cfg_attr(feature = "memory-optimization", derive(rkyv::Archive, rkyv::Serialize))]
-    #[cfg_attr(feature = "memory-optimization", archive(check_bytes))]
     struct TestValue {
         id: u64,
         data: String,

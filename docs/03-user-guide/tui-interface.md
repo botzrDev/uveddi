@@ -362,12 +362,12 @@ Manage analysis plugins through the TUI:
 │                                                                 │
 │ ✅ God Object Detector        v1.2.0    [Configure] [Disable]  │
 │ ✅ Tight Coupling Detector    v1.1.0    [Configure] [Disable]  │
-│ ✅ Dead Code Detector         v1.0.0    [Configure] [Disable]  │
+│ ✅ Dead Code Detector         v0.9.0    [Configure] [Disable]  │
 │ ❌ Large Class Detector       v0.9.0    [Enable]   [Remove]    │
 │                                                                 │
 │ Available Plugins:                                              │
 │                                                                 │
-│ 📦 Cyclic Dependency Detector v1.0.0    [Install]             │
+│ 📦 Cyclic Dependency Detector v0.9.0    [Install]             │
 │ 📦 Code Duplication Detector  v0.8.0    [Install]             │
 │                                                                 │
 ├─────────────────────────────────────────────────────────────────┤

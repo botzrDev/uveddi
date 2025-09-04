@@ -19,9 +19,11 @@ pub use tree_sitter_stub::*;
 
 // Re-export tree-sitter types for compatibility
 #[cfg(feature = "tree-sitter")]
-pub use tree_sitter::{Node, Query, QueryCursor, Tree};
+pub use tree_sitter::{Language, Node, Query, QueryCursor, QueryMatch, Tree, TreeCursor};
+#[cfg(feature = "tree-sitter")]
+pub use streaming_iterator::StreamingIterator;
 #[cfg(not(feature = "tree-sitter"))]
-pub use tree_sitter_stub::{Node, Query, QueryCursor, Tree};
+pub use tree_sitter_stub::{Language, Node, Query, QueryCursor, QueryMatch, Tree, TreeCursor, StreamingIterator};
 
 // Re-export tree-sitter language modules
 #[cfg(not(feature = "tree-sitter"))]

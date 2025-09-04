@@ -9,6 +9,7 @@ mod tests {
     use super::super::*;
     use tempfile::TempDir;
     use tokio::runtime::Runtime;
+    use tracing::{info, warn, debug};
 
     #[test]
     fn test_phase2_integration_complete() {

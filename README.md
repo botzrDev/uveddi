@@ -2,9 +2,9 @@
 
 [![Rust](https://img.shields.io/badge/language-Rust-orange.svg)](https://www.rust-lang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-v1.0.0-blue.svg)](https://github.com/botzrDev/uveddi/releases)
+[![Version](https://img.shields.io/badge/version-v0.9.0--alpha-orange.svg)](https://github.com/botzrDev/uveddi/releases)
 
-> **🎉 Production Release v1.0.0** - Ready for production use with comprehensive features and stability.
+> **⚠️ Alpha Release v0.9.0-alpha** - Currently in alpha testing. Core features are functional but may have limitations. Use with caution in production environments.
 
 Uveddi is a powerful static analysis tool designed to detect architectural anti-patterns and code quality issues across multiple programming languages. Built in Rust for performance and reliability, Uveddi helps development teams maintain clean, maintainable codebases.
 
@@ -17,6 +17,18 @@ Uveddi is a powerful static analysis tool designed to detect architectural anti-
 - **Circular Dependency Detection** - Detect problematic dependency cycles
 - **Tight Coupling Analysis** - Identify components with excessive dependencies
 - **Magic Values Detection** - Find hardcoded constants that should be configurable
+
+## ⚠️ Alpha Release Limitations
+
+This is an alpha release with the following current limitations:
+
+- **Core Analysis Engine**: Some analysis features may not be fully implemented yet
+- **Test Suite**: 18 out of 679 tests currently failing (97.3% pass rate)
+- **Production Use**: Not recommended for critical production environments without thorough testing
+- **API Stability**: Breaking changes may occur before v1.0 release
+- **Documentation**: Some features may be documented but not yet implemented
+
+For detailed alpha testing guidance, see our [Alpha Testing Guide](ALPHA_TESTING_GUIDE.md) and [Installation Documentation](docs/02-getting-started/installation.md).
 
 ## 🛠️ Available CLI Commands
 

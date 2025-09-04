@@ -455,6 +455,9 @@ mod tests {
     #[test]
     fn test_create_default_detectors() {
         let detectors = DetectorFactory::create_default_detectors();
+        #[cfg(feature = "security")]
+        assert_eq!(detectors.len(), 8); // 7 base + 1 security
+        #[cfg(not(feature = "security"))]
         assert_eq!(detectors.len(), 7);
 
         // Verify each detector type is present

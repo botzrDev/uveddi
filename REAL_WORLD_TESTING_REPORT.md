@@ -1,7 +1,7 @@
 # Uveddi Real-World Codebase Testing Report
 
 **Date**: August 31, 2025  
-**Version**: v1.0.0-alpha  
+**Version**: v0.9.0-alpha  
 **Test Type**: Real-world open-source project analysis  
 
 ## Executive Summary

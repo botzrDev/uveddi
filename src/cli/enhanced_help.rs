@@ -651,8 +651,8 @@ Release Preparation Workflow:
   
   # Verify CI integration
   uveddi hooks test pre-push            # Ensure hooks pass
-  git tag v1.0.0
-  git push origin v1.0.0               # Triggers full CI analysis
+  git tag v0.9.0-alpha
+  git push origin v0.9.0-alpha         # Triggers full CI analysis
 
 Debugging Workflow:
   # When analysis reports false positives
