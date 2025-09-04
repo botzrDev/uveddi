@@ -1,0 +1,174 @@
+# Uveddi Configuration Example - v0.9.0-alpha
+# ⚠️ WARNING: Many options documented here may not work as expected
+# This file shows both working and non-working configuration options
+
+# ==============================================================================
+# ✅ WORKING CONFIGURATION OPTIONS
+# These settings are actually implemented and functional
+# ==============================================================================
+
+[analysis]
+# Timeout for analysis operations (actually works)
+timeout_seconds = 300  # Default: 300, increase for large codebases
+
+# Output format configuration (works)
+default_output_format = "json"  # Options: "json", "markdown", "html"
+
+# ==============================================================================
+# ⚠️ PARTIALLY WORKING OPTIONS
+# These work but with significant limitations
+# ==============================================================================
+
+# Dead code detection configuration
+[dead_code]
+# Confidence threshold (partially works, algorithm is imperfect)
+confidence_threshold = 0.9  # 0.0-1.0, higher = fewer false positives
+
+# Library mode (works but may miss valid dead code)
+library_mode = true  # Set to true for libraries that export APIs
+
+# Ignore patterns (basic pattern matching only)
+ignore_patterns = ["test", "spec", "mock", "__test__"]
+
+# Keep alive symbols (basic implementation)
+keep_alive = ["main", "init", "setup"]
+
+# Large class detection configuration  
+[large_classes]
+# These thresholds work but detection requires tree-sitter feature
+max_logical_loc = 1000        # Max lines of code
+max_methods = 20              # Max number of methods
+max_fields = 15               # Max number of fields
+max_cyclomatic_complexity = 50  # McCabe complexity
+max_cognitive_complexity = 40   # Cognitive complexity
+max_lcom_score = 0.8          # Lack of cohesion (0.0-1.0)
+max_coupling = 30             # Coupling between objects
+
+# Patterns to ignore (basic glob matching)
+ignore_patterns = ["tests/", "examples/", "vendor/"]
+
+# ==============================================================================
+# ⚠️ EXPERIMENTAL OPTIONS
+# These options exist but are unstable or unreliable
+# ==============================================================================
+
+# AI Integration (requires Ollama, often fails)
+[ai]
+# ⚠️ Only Ollama provider works, and it's experimental
+provider = "ollama"  # Only "ollama" is partially implemented
+
+# Model selection (must be pre-downloaded in Ollama)
+ollama_model = "deepseek-coder:6.7b"  # Must match exact Ollama model name
+
+# API endpoint (must have Ollama running)
+ollama_api_url = "http://localhost:11434"  # Default Ollama URL
+
+# Enable AI explanations (very slow, may timeout)
+enable_explanations = false  # Set to false for stability
+
+# Memory optimization (experimental, may cause crashes)
+[memory]
+# ⚠️ These settings are experimental and may not work
+enable_optimization = false  # Keep false for stability
+memory_limit_gb = 8.0       # May be ignored
+cache_size_mb = 512         # Cache implementation is buggy
+
+# Plugin system configuration (alpha quality)
+[plugins]
+# ⚠️ Plugin system is very unstable
+enabled = false              # Keep disabled unless testing
+plugin_dir = "./plugins"     # Directory for WASM plugins
+max_plugin_memory_mb = 256   # Memory limit per plugin
+plugin_timeout_seconds = 30  # Execution timeout
+
+# ==============================================================================
+# ❌ NON-FUNCTIONAL OPTIONS
+# These options are documented elsewhere but DO NOT WORK
+# ==============================================================================
+
+# Authentication (NOT IMPLEMENTED)
+[auth]
+# ❌ None of these settings work - no auth system exists
+# provider = "oauth2"        # Not implemented
+# client_id = "xxx"          # Not implemented  
+# client_secret = "xxx"      # Not implemented
+# redirect_uri = "xxx"       # Not implemented
+
+# Database configuration (NOT WORKING)
+[database]
+# ❌ Database integration is not functional
+# provider = "postgresql"    # Not implemented
+# connection_string = "xxx"  # Not implemented
+# pool_size = 10            # Not implemented
+
+# Monitoring and metrics (NOT WORKING)
+[monitoring]
+# ❌ Monitoring is not implemented despite code existing
+# prometheus_endpoint = "http://localhost:9090"  # Not working
+# metrics_enabled = false                        # Not working
+# grafana_dashboard = "xxx"                      # Not working
+
+# CI/CD Integration (NOT IMPLEMENTED)
+[ci]
+# ❌ CI integration features don't exist
+# github_token = "xxx"       # Not implemented
+# gitlab_token = "xxx"       # Not implemented
+# auto_comment = false       # Not implemented
+# fail_on_issues = false     # Not implemented
+
+# Enterprise features (PLANNED, NOT IMPLEMENTED)
+[enterprise]
+# ❌ No enterprise features exist
+# multi_tenancy = false      # Not implemented
+# rbac_enabled = false       # Not implemented
+# audit_logging = false      # Not implemented
+# sso_provider = "saml"      # Not implemented
+
+# Real-time features (NOT IMPLEMENTED)
+[realtime]
+# ❌ No real-time features exist
+# websocket_enabled = false  # Not implemented
+# live_reload = false        # Not implemented
+# watch_mode = false         # Not implemented
+
+# ==============================================================================
+# 📝 ENVIRONMENT VARIABLE OVERRIDES
+# Some config can be overridden via environment variables
+# ==============================================================================
+
+# Working environment variables:
+# - RUST_LOG=debug           # Logging level (works)
+# - OLLAMA_API_URL=xxx       # Ollama endpoint (experimental)
+# - OLLAMA_MODEL=xxx         # Ollama model (experimental)
+
+# Non-working environment variables (documented but ignored):
+# - UVEDDI_CONFIG_PATH       # ❌ Not implemented
+# - UVEDDI_PLUGIN_PATH       # ❌ Not implemented
+# - UVEDDI_CACHE_DIR         # ❌ Not implemented
+# - OPENAI_API_KEY           # ❌ Not implemented
+# - ANTHROPIC_API_KEY        # ❌ Not implemented
+
+# ==============================================================================
+# ⚠️ IMPORTANT NOTES
+# ==============================================================================
+
+# 1. This configuration file must be named 'uveddi.toml' in project root
+# 2. Many options shown here are aspirational and don't work yet
+# 3. Build flags affect which features are available:
+#    - Without tree-sitter: No anti-pattern detection
+#    - Without wasm-plugins: No plugin support
+#    - Without local-ai: No AI features
+# 4. Always test configuration changes thoroughly
+# 5. Check logs (RUST_LOG=debug) when settings seem ignored
+
+# ==============================================================================
+# 🔍 VALIDATION
+# ==============================================================================
+
+# To validate this configuration:
+# uveddi config validate --file uveddi.toml
+#
+# To see current configuration:
+# uveddi config show
+#
+# Note: The validate command itself may have bugs and approve invalid configs

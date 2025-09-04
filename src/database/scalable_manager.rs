@@ -24,7 +24,7 @@ impl ScalableDatabase {
     /// Create a new scalable database manager
     pub async fn new(config: DatabaseConfig) -> Result<Self> {
         // Create write provider
-        let write_provider = Arc::new(create_database_provider(&config)?);
+        let write_provider: Arc<dyn DatabaseProvider> = Arc::from(create_database_provider(&config)?);
         
         // Create read providers (can be same as write provider for SQLite)
         let mut read_providers = Vec::new();
@@ -37,7 +37,7 @@ impl ScalableDatabase {
             for read_conn_str in &config.read_connection_strings {
                 let mut read_config = config.clone();
                 read_config.connection_string = read_conn_str.clone();
-                let read_provider = Arc::new(create_database_provider(&read_config)?);
+                let read_provider: Arc<dyn DatabaseProvider> = Arc::from(create_database_provider(&read_config)?);
                 read_providers.push(read_provider);
             }
         }
@@ -185,9 +185,13 @@ impl ScalableDatabase {
         }).await
     }
     
-    pub async fn store_anti_pattern_types_batch(&self, anti_pattern_types: &mut [AntiPatternType]) -> Result<()> {
-        self.write_query(|provider| async move {
-            provider.store_anti_pattern_types_batch(anti_pattern_types).await
+    pub async fn store_anti_pattern_types_batch(&self, anti_pattern_types: &[AntiPatternType]) -> Result<()> {
+        let mut anti_pattern_types = anti_pattern_types.to_vec();
+        self.write_query(move |provider| {
+            let mut anti_pattern_types = anti_pattern_types.clone();
+            async move {
+                provider.store_anti_pattern_types_batch(&mut anti_pattern_types).await
+            }
         }).await
     }
     
@@ -435,7 +439,7 @@ impl ReadLoadBalancer {
 }
 
 /// Load balancer statistics
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct LoadBalancerStats {
     pub total_providers: usize,
     pub healthy_providers: usize,

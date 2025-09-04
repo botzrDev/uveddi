@@ -246,7 +246,7 @@ pub use self::config_manager::{DatabaseConfigManager, Environment, DatabaseConfi
 // Re-export models for convenience
 pub use self::models::{
     AnalysisRun, AntiPatternType, ArchitecturalIssue, AnalysisStats, 
-    Dependency, DependencyType, Project
+    Dependency, DependencyType
 };
 
 /// Database layer initialization for applications

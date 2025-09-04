@@ -207,7 +207,7 @@ impl DatabaseProvider for PostgreSqlProvider {
             ")?;
             
             let row = conn.query_one(&stmt, &[&path_str])?;
-            Ok(row.get::<_, i64>(0))
+            Ok(row.get::<i64>(0))
         }).await?;
         
         pool.return_connection(conn).await?;
@@ -243,7 +243,7 @@ impl DatabaseProvider for PostgreSqlProvider {
                 &serde_json::Value::String(analysis_run.analysis_config.clone()),
             ])?;
             
-            Ok(row.get::<_, i64>(0))
+            Ok(row.get::<i64>(0))
         }).await?;
         
         pool.return_connection(conn).await?;
@@ -425,12 +425,12 @@ impl DatabaseProvider for PostgreSqlProvider {
                     Ok(Some(AnalysisRun {
                         run_id: Some(row.get(0)),
                         project_id: row.get(1),
-                        start_time: row.get::<_, chrono::DateTime<Utc>>(2),
+                        start_time: row.get::<chrono::DateTime<Utc>>(2),
                         end_time: row.get(3),
                         status: row.get(4),
-                        total_files_analyzed: row.get::<_, Option<i32>>(5).map(|i| i as u32),
-                        total_issues_found: row.get::<_, Option<i32>>(6).map(|i| i as u32),
-                        analysis_config: row.get::<_, serde_json::Value>(7).to_string(),
+                        total_files_analyzed: row.get::<Option<i32>>(5),
+                        total_issues_found: row.get::<Option<i32>>(6),
+                        analysis_config: row.get::<serde_json::Value>(7).to_string(),
                     }))
                 }
                 None => Ok(None),
@@ -620,6 +620,10 @@ impl PostgreSqlCopyWriter {
 impl PostgreSqlTransaction {
     fn prepare_cached(&self, _query: &str) -> Result<PostgreSqlStatement> {
         todo!("PostgreSQL transaction prepare_cached implementation")
+    }
+    
+    fn copy_in(&self, _query: &str) -> Result<PostgreSqlCopyWriter> {
+        todo!("PostgreSQL transaction copy_in implementation")
     }
     
     fn execute(&self, _stmt: &PostgreSqlStatement, _params: &[&(dyn std::fmt::Debug)]) -> Result<()> {

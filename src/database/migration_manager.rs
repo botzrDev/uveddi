@@ -22,7 +22,7 @@ pub struct MigrationManager {
 impl MigrationManager {
     /// Create a new migration manager
     pub async fn new(config: DatabaseConfig, migrations_dir: Option<PathBuf>) -> Result<Self> {
-        let provider = Arc::new(create_database_provider(&config)?);
+        let provider: Arc<dyn DatabaseProvider> = Arc::from(create_database_provider(&config)?);
         let migrations_dir = migrations_dir.unwrap_or_else(|| PathBuf::from("migrations"));
         
         let manager = Self {
@@ -150,10 +150,10 @@ impl MigrationManager {
         
         // Read migration files from directory
         let migration_files = std::fs::read_dir(&self.migrations_dir)
-            .map_err(|e| UveddiError::io_error(&format!("Failed to read migrations directory: {}", e)))?;
+            .map_err(|e| UveddiError::io_error("read_dir", &self.migrations_dir.to_string_lossy(), e))?;
         
         for entry in migration_files {
-            let entry = entry.map_err(|e| UveddiError::io_error(&format!("Failed to read migration entry: {}", e)))?;
+            let entry = entry.map_err(|e| UveddiError::io_error("read_dir_entry", &self.migrations_dir.to_string_lossy(), e))?;
             let path = entry.path();
             
             if path.extension().and_then(|s| s.to_str()) == Some("sql") {
@@ -191,7 +191,7 @@ impl MigrationManager {
         let name = parts[1].trim_end_matches(".sql").replace('_', " ");
         
         let content = tokio::fs::read_to_string(path).await
-            .map_err(|e| UveddiError::io_error(&format!("Failed to read migration file {}: {}", filename, e)))?;
+            .map_err(|e| UveddiError::io_error("read_to_string", &path.to_string_lossy(), e))?;
         
         let checksum = calculate_checksum(&content);
         
@@ -208,12 +208,12 @@ impl MigrationManager {
     /// Find the latest migration version available
     async fn find_latest_migration_version(&self) -> Result<u32> {
         let migration_files = std::fs::read_dir(&self.migrations_dir)
-            .map_err(|e| UveddiError::io_error(&format!("Failed to read migrations directory: {}", e)))?;
+            .map_err(|e| UveddiError::io_error("read_dir", &self.migrations_dir.to_string_lossy(), e))?;
         
         let mut max_version = 0u32;
         
         for entry in migration_files {
-            let entry = entry.map_err(|e| UveddiError::io_error(&format!("Failed to read migration entry: {}", e)))?;
+            let entry = entry.map_err(|e| UveddiError::io_error("read_dir_entry", &self.migrations_dir.to_string_lossy(), e))?;
             let path = entry.path();
             
             if path.extension().and_then(|s| s.to_str()) == Some("sql") {
@@ -329,10 +329,10 @@ impl MigrationManager {
         let mut sqlite_config = self.config.clone();
         sqlite_config.provider_type = DatabaseType::SQLite;
         sqlite_config.connection_string = sqlite_path.to_string();
-        let sqlite_provider = Arc::new(create_database_provider(&sqlite_config)?);
+        let sqlite_provider: Arc<dyn DatabaseProvider> = Arc::from(create_database_provider(&sqlite_config)?);
         
         // Create PostgreSQL provider for destination
-        let pg_provider = Arc::new(create_database_provider(&postgresql_config)?);
+        let pg_provider: Arc<dyn DatabaseProvider> = Arc::from(create_database_provider(&postgresql_config)?);
         
         // Initialize PostgreSQL schema
         pg_provider.initialize().await?;
@@ -417,10 +417,10 @@ impl MigrationManager {
         );
         
         tokio::fs::create_dir_all(&self.migrations_dir).await
-            .map_err(|e| UveddiError::io_error(&format!("Failed to create migrations directory: {}", e)))?;
+            .map_err(|e| UveddiError::io_error("create_dir_all", &self.migrations_dir.to_string_lossy(), e))?;
         
         tokio::fs::write(&file_path, template).await
-            .map_err(|e| UveddiError::io_error(&format!("Failed to create migration file: {}", e)))?;
+            .map_err(|e| UveddiError::io_error("write", &file_path.to_string_lossy(), e))?;
         
         info!("Created migration file: {}", file_path.display());
         Ok(file_path)

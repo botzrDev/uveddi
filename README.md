@@ -4,12 +4,15 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Version](https://img.shields.io/badge/version-v0.9.0--alpha-orange.svg)](https://github.com/botzrDev/uveddi/releases)
 
-> **⚠️ Alpha Release v0.9.0-alpha** - Currently in alpha testing. Core features are functional but may have limitations. Use with caution in production environments.
+> **⚠️ ALPHA SOFTWARE NOTICE** - This is pre-release software (v0.9.0-alpha) under active development. Core analysis features work reliably, but expect rough edges, breaking changes, and incomplete features. NOT recommended for production use without thorough testing.
 
 Uveddi is a powerful static analysis tool designed to detect architectural anti-patterns and code quality issues across multiple programming languages. Built in Rust for performance and reliability, Uveddi helps development teams maintain clean, maintainable codebases.
 
-## 🚀 Features
+## 📊 Current Feature Status
 
+For a detailed breakdown of what works, what's experimental, and what's planned, see our [Feature Status Matrix](docs/feature-status-matrix.md).
+
+## 🚀 Working Features (Production Ready)
 
 ### Core Analysis Capabilities
 - **God Object Detection** - Identify overly complex classes and modules
@@ -18,33 +21,47 @@ Uveddi is a powerful static analysis tool designed to detect architectural anti-
 - **Tight Coupling Analysis** - Identify components with excessive dependencies
 - **Magic Values Detection** - Find hardcoded constants that should be configurable
 
-## ⚠️ Alpha Release Limitations
+## ⚠️ Known Alpha Limitations
 
-This is an alpha release with the following current limitations:
+**Critical Issues:**
+- **Anti-Pattern Detection**: Requires `--features=tree-sitter` or `production` build flags
+- **Test Suite**: 18 out of 679 tests failing (97.3% pass rate) - mostly test infrastructure issues
+- **Web Dashboard**: NOT functional - React frontend is unstable
+- **TypeScript**: Limited support for complex type definitions
+- **Memory Usage**: High consumption for files >1MB
+- **Plugin System**: Alpha quality - may crash or fail to load plugins
 
-- **Core Analysis Engine**: Some analysis features may not be fully implemented yet
-- **Test Suite**: 18 out of 679 tests currently failing (97.3% pass rate)
-- **Production Use**: Not recommended for critical production environments without thorough testing
-- **API Stability**: Breaking changes may occur before v1.0 release
-- **Documentation**: Some features may be documented but not yet implemented
+**Documentation Gaps:**
+- Some documented features may not be implemented (40% gap identified)
+- API documentation may reference non-existent endpoints
+- Configuration examples may include unsupported options
 
 For detailed alpha testing guidance, see our [Alpha Testing Guide](ALPHA_TESTING_GUIDE.md) and [Installation Documentation](docs/02-getting-started/installation.md).
 
 ## 🛠️ Available CLI Commands
 
-Uveddi exposes two main CLI commands:
-
+### Working Commands ✅
 - `analyze` — Analyze a codebase for quality issues and architectural problems
 - `config` — Manage Uveddi configuration settings (show, set, validate)
 
-> **Note:** Other commands (such as `ci` and `ui`) may exist in the codebase but are not currently available in the main CLI.
+### Alpha Commands ⚠️ (May have issues)
+- `doctor` — Run diagnostics and fix common issues
+- `init` — Initialize Uveddi configuration for a project
+- `hooks` — Manage Git hooks integration
+- `serve` — Start web services (API + rendering) - EXPERIMENTAL
+- `plugin` — Manage WASM plugins (requires `--features=wasm-plugins`)
+- `tui` — Terminal UI interface (requires `--features=tui`)
+
+### Hidden/Non-functional Commands ❌
+- `ci` — Exists in code but not exposed in CLI
+- `ui` — Exists in code but not exposed in CLI
 
 ### Language Support
-- ✅ **Rust** - Full AST-based analysis
-- ✅ **Python** - Comprehensive pattern detection
-- ✅ **JavaScript** - ES6+ support with modern syntax
-- ⚠️ **TypeScript** - Beta support (some limitations)
-- 🔄 **More languages** - Planned for future releases
+- ✅ **Rust** - Full AST-based analysis (stable)
+- ✅ **Python** - Comprehensive pattern detection (stable)
+- ✅ **JavaScript** - ES6+ support with modern syntax (stable)
+- ⚠️ **TypeScript** - Alpha support (complex types may fail to parse)
+- ❌ **Java, C#, Go** - Planned for v1.0+
 
 ### Reporting & Visualization
 - **HTML Reports** - Interactive, styled reports with issue details
@@ -54,28 +71,38 @@ Uveddi exposes two main CLI commands:
 
 ## 📦 Installation
 
-### From Release Binary
+### From Release Binary (NOT YET AVAILABLE)
 ```bash
-# Download the latest alpha 0.9
-curl -L https://github.com/botzrDev/uveddi/releases/latest/download/uveddi-linux-x86_64.tar.gz | tar xz
-sudo mv uveddi /usr/local/bin/
+# Binary releases are not yet published
+# You must build from source for now
 ```
 
-### From Source
+### From Source (REQUIRED)
 ```bash
-# Requires Rust 1.70+
+# Prerequisites: Rust 1.70+, 8GB+ RAM
 git clone https://github.com/botzrDev/uveddi.git
 cd uveddi
 
-# Fast development build (60-80% faster, recommended for contributing)
-cargo build --features=dev-core --profile=dev-fast
+# ⚠️ IMPORTANT: Choose the right build for your needs:
 
-# Production build (full feature set)
+# For testing basic features (fast, no anti-patterns):
+cargo build --features=dev-core
+
+# For anti-pattern detection (REQUIRED for full analysis):
 cargo build --release --features=production
+
+# Install locally (optional):
 sudo cp target/release/uveddi /usr/local/bin/
 ```
 
+**Build Issues?** See [Troubleshooting](#troubleshooting) or [Known Issues](docs/known-issues.md)
+
 ## 🔧 Quick Start
+
+### ⚠️ Before You Start
+1. **Anti-pattern detection** requires building with `--features=tree-sitter` or `production`
+2. **Web dashboard** is NOT functional - use JSON/HTML output instead
+3. **Plugin system** is experimental and may crash
 
 ### Basic Analysis
 ```bash
@@ -248,17 +275,27 @@ ignore_patterns = ["tests/", "examples/"]
 
 You can also set configuration via environment variables (see `Config::from_env()` in the source).
 
-## 🎯 v1.0 Community Core Features
+## 🚧 Current Alpha Status (v0.9.0-alpha)
 
-- **TypeScript**: Some complex type definitions may not be fully analyzed
-- **Large Codebases**: Projects with >10,000 files may experience timeouts
-- **Memory Usage**: Analysis of very large files (>1MB) may be slow
-- **Plugin System**: Custom detectors not yet supported
+### What Actually Works ✅
+- Core static analysis for Rust, Python, JavaScript
+- Anti-pattern detection (with proper build flags)
+- JSON/Markdown/HTML report generation
+- Basic CLI commands (analyze, config)
 
-Note: this repository is now at v1.0 Community Core. The core features are stable and ready for production use.
-recorded in the project diagnostics; some features or detectors may not compile cleanly in the
-current branch. If you hit build errors, please open an issue with reproduction steps and the
-output from `cargo build` so the maintainers can triage.
+### What Partially Works ⚠️
+- TypeScript analysis (simple code only)
+- Plugin system (may crash)
+- Web services (very unstable)
+- TUI interface (terminal compatibility issues)
+
+### What Doesn't Work ❌
+- Web dashboard UI
+- Real-time analysis
+- Enterprise features (auth, RBAC)
+- IDE integrations
+
+**Important**: This is NOT v1.0 - we are at v0.9.0-alpha. Expect breaking changes.
 
 ## 🤝 Contributing
 
@@ -334,6 +371,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**🎯 v1.0 Community Core**: This software is production-ready with core functionality stable and tested. Advanced features may be added in future releases.
+**⚠️ v0.9.0-alpha Status**: This is PRE-RELEASE software. Core analysis works but is not production-ready. Use at your own risk and expect breaking changes before v1.0.
 
 For support, questions, or feedback: [GitHub Issues](https://github.com/botzrDev/uveddi/issues)

@@ -71,7 +71,7 @@ impl SqliteProvider {
 impl DatabaseProvider for SqliteProvider {
     async fn initialize(&self) -> Result<()> {
         let pool = self.write_pool.clone();
-        let conn = pool.get_connection().await?;
+        let mut conn = pool.get_connection().await?;
         
         self.execute_with_metrics(|| {
             // Enable SQLite optimizations
@@ -175,7 +175,7 @@ impl DatabaseProvider for SqliteProvider {
     
     async fn test_connection(&self) -> Result<()> {
         let pool = self.read_pool.clone();
-        let conn = pool.get_connection().await?;
+        let mut conn = pool.get_connection().await?;
         
         self.execute_with_metrics(|| {
             conn.execute("SELECT 1", params![])?;
@@ -203,14 +203,23 @@ impl DatabaseProvider for SqliteProvider {
     async fn get_or_create_project_id(&self, project_path: &Path) -> Result<i64> {
         let path_str = project_path.to_string_lossy().to_string();
         let pool = self.write_pool.clone();
-        let conn = pool.get_connection().await?;
+        let mut conn = pool.get_connection().await?;
         
         let result = self.execute_with_metrics(|| {
-            let mut stmt = conn.prepare_cached("SELECT project_id FROM projects WHERE path = ?")?;
-            let mut rows = stmt.query([&path_str])?;
+            // First try to find existing project
+            let project_id: Option<i64> = {
+                let mut stmt = conn.prepare_cached("SELECT project_id FROM projects WHERE path = ?")?;
+                let mut rows = stmt.query([&path_str])?;
+                if let Some(row) = rows.next()? {
+                    Some(row.get(0)?)
+                } else {
+                    None
+                }
+            };
             
-            if let Some(row) = rows.next()? {
-                Ok(row.get(0)?)
+            // If not found, insert new project
+            if let Some(id) = project_id {
+                Ok(id)
             } else {
                 conn.execute("INSERT INTO projects (path) VALUES (?)", [&path_str])?;
                 Ok(conn.last_insert_rowid())
@@ -224,7 +233,7 @@ impl DatabaseProvider for SqliteProvider {
     async fn create_analysis_run(&self, project_path: &Path) -> Result<AnalysisRun> {
         let project_id = self.get_or_create_project_id(project_path).await?;
         let pool = self.write_pool.clone();
-        let conn = pool.get_connection().await?;
+        let mut conn = pool.get_connection().await?;
         
         let analysis_run = AnalysisRun {
             run_id: None,
@@ -260,7 +269,7 @@ impl DatabaseProvider for SqliteProvider {
     
     async fn update_analysis_run(&self, run: &AnalysisRun) -> Result<()> {
         let pool = self.write_pool.clone();
-        let conn = pool.get_connection().await?;
+        let mut conn = pool.get_connection().await?;
         
         self.execute_with_metrics(|| {
             conn.execute(
@@ -282,7 +291,7 @@ impl DatabaseProvider for SqliteProvider {
     
     async fn store_anti_pattern_types_batch(&self, anti_pattern_types: &mut [AntiPatternType]) -> Result<()> {
         let pool = self.write_pool.clone();
-        let conn = pool.get_connection().await?;
+        let mut conn = pool.get_connection().await?;
         
         self.execute_with_metrics(|| {
             let tx = conn.transaction()?;
@@ -319,7 +328,7 @@ impl DatabaseProvider for SqliteProvider {
     
     async fn store_issues_batch(&self, issues: &[ArchitecturalIssue]) -> Result<()> {
         let pool = self.write_pool.clone();
-        let conn = pool.get_connection().await?;
+        let mut conn = pool.get_connection().await?;
         
         self.execute_with_metrics(|| {
             let tx = conn.transaction()?;
@@ -370,7 +379,7 @@ impl DatabaseProvider for SqliteProvider {
     
     async fn store_dependencies_batch(&self, run_id: i64, dependencies: &[Dependency]) -> Result<()> {
         let pool = self.write_pool.clone();
-        let conn = pool.get_connection().await?;
+        let mut conn = pool.get_connection().await?;
         
         self.execute_with_metrics(|| {
             let tx = conn.transaction()?;
@@ -402,7 +411,7 @@ impl DatabaseProvider for SqliteProvider {
     
     async fn get_analysis_run(&self, run_id: i64) -> Result<Option<AnalysisRun>> {
         let pool = self.read_pool.clone();
-        let conn = pool.get_connection().await?;
+        let mut conn = pool.get_connection().await?;
         
         let result = self.execute_with_metrics(|| {
             let mut stmt = conn.prepare_cached(

@@ -1,23 +1,32 @@
 # Uveddi Alpha Installation Guide
 
-## Alpha Release Notice
+## ⚠️ CRITICAL ALPHA WARNING
 
-**Warning: This is an alpha release** - The CLI interface is fully functional, but the analysis engine is in development. See [Alpha Testing Guide](../../ALPHA_TESTING_GUIDE.md) for complete instructions.
+**This is v0.9.0-alpha pre-release software** with significant gaps between documentation and implementation:
+- **40% of documented features may not work**
+- **Web dashboard is completely non-functional**
+- **Anti-pattern detection requires specific build flags**
+- **18 tests currently failing (97.3% pass rate)**
+
+⚠️ **DO NOT USE IN PRODUCTION** without thorough testing and understanding of limitations.
 
 ## Prerequisites
 
 ### Required
-- **Rust toolchain**: 1.70.0 or later
+- **Rust toolchain**: 1.70.0 or later (MANDATORY - no binaries available)
 - **Git**: For source code management
 - **C/C++ compiler**: Required for native dependencies
-- **Memory**: At least 2GB RAM (8GB+ recommended for large codebases)
-- **Storage**: 2GB free space for build artifacts
+- **Memory**: Minimum 4GB RAM, 8GB+ strongly recommended
+- **Storage**: 3-5GB free space for build artifacts
+- **Patience**: Build times can exceed 20 minutes for full features
 
-> **Note**: Uveddi automatically detects your system memory and optimizes performance accordingly. Memory optimization is enabled by default for the best experience.
+> **⚠️ Reality Check**: Memory optimization is experimental and may not work as expected. Large codebases (>10k files) may cause out-of-memory errors even with 16GB RAM.
 
-### Optional (for future features)
-- **PostgreSQL**: For database features (not active in alpha)
-- **Ollama**: For local AI analysis (CLI ready, engine in development)
+### Optional (Experimental/Non-functional)
+- **PostgreSQL**: Database features exist in code but are NOT functional
+- **Ollama**: AI analysis is highly experimental and often fails
+- **Node.js/npm**: Required for web services (which don't work properly)
+- **Playwright**: Required for diagram rendering (unstable)
 
 ## System Dependencies
 
@@ -47,9 +56,13 @@ sudo apt update
 sudo apt install -y build-essential pkg-config libssl-dev git
 ```
 
-## Alpha Installation
+## Installation (Source Build ONLY)
 
-### From Source (Recommended)
+### ⚠️ No Binary Releases Available
+
+You MUST build from source. There are no pre-built binaries.
+
+### Building from Source
 
 1. Clone the repository:
    ```bash
@@ -57,11 +70,20 @@ sudo apt install -y build-essential pkg-config libssl-dev git
    cd uveddi
    ```
 
-2. Build the alpha release:
+2. **CRITICAL: Choose the right build for your needs:**
+   
    ```bash
-   cargo build --release --features="alpha"
+   # For basic testing (FAST, but NO anti-pattern detection):
+   cargo build --features=dev-core
+   # Build time: ~13 seconds
+   
+   # For full analysis with anti-patterns (REQUIRED for real use):
+   cargo build --release --features=production
+   # Build time: 5-20 minutes (may timeout on WSL)
+   
+   # WSL users: Use special script to avoid timeouts
+   ./scripts/wsl-build-incremental.sh
    ```
-   **Build time**: 5-15 minutes depending on system
 
 3. Verify build:
    ```bash
@@ -78,53 +100,87 @@ cargo install --path . --features="alpha"
 uveddi --help
 ```
 
-### Not Available in Alpha
-- **Cargo package**: Not published to crates.io yet
-- **Docker images**: Not available for alpha
-- **Package managers**: Use source build only
+### What's NOT Available
+- **Binary releases**: Must build from source
+- **Cargo package**: Not on crates.io
+- **Docker images**: Not available
+- **Package managers**: No Homebrew, apt, etc.
+- **Installer scripts**: Manual build only
+- **Auto-updates**: Manual git pull and rebuild
 
 ## Verification
 
-### Test CLI Interface
+### Test What Actually Works
 ```bash
-# Test main help (should work)
+# Basic CLI (should work)
 ./target/release/uveddi --help
-
-# Test analysis help (should work)
 ./target/release/uveddi analyze --help
+./target/release/uveddi config show
 
-# Test configuration (should work)
-./target/release/uveddi config --help
+# Basic analysis (works ONLY with production build):
+./target/release/uveddi analyze ./src --output-format json
 
-# Test analysis (will show expected "execution failed" error)
-./target/release/uveddi analyze /path/to/project --output-format=json
+# If you see "0 issues found" on obvious bad code:
+# YOU BUILT WITHOUT tree-sitter SUPPORT!
+# Rebuild with: cargo build --release --features=production
+```
+
+### Test What DOESN'T Work
+```bash
+# Web services (will crash or hang):
+./target/release/uveddi serve  # ❌ Unstable
+
+# Plugin system (may crash):
+./target/release/uveddi plugin list  # ⚠️ Experimental
+
+# TUI (terminal issues):
+./target/release/uveddi tui  # ⚠️ May not display correctly
 ```
 
 ## Expected Alpha Behavior
 
-### Working Features
-- All CLI commands and help system
-- Argument parsing and validation
-- Configuration management
-- Error handling and messages
+### Actually Working Features ✅
+- Basic `analyze` command (with proper build flags)
+- `config` command for settings management
+- JSON/Markdown/HTML report generation
+- Basic anti-pattern detection (production build only)
 
-### Expected Issues
-- **Analysis commands will fail** with "Analysis execution failed" - this is expected
-- **TUI requires separate binary**: `cargo run --bin tui_test --features="tui"`
+### Partially Working ⚠️
+- Plugin system (crashes frequently)
+- Web services (very unstable)
+- AI integration (requires Ollama, often fails)
+- TUI interface (display issues)
+
+### Not Working ❌
+- Web dashboard UI
+- Real-time analysis
+- Enterprise features (auth, RBAC)
+- Many documented API endpoints
+- TypeScript complex type analysis
 
 ## Known Limitations
 
 ### Critical Alpha Limitations
-- **Analysis Engine**: Core analysis functionality is not implemented yet
-  - All `uveddi analyze` commands will fail with "Analysis execution failed"
-  - This affects all detection algorithms (God Objects, Dead Code, etc.)
-  - Expected to be resolved in beta release
+- **Anti-Pattern Detection**: ONLY works with `--features=tree-sitter` or `production`
+  - Without these flags, analysis finds 0 issues even on bad code
+  - This is the #1 source of user confusion
+  
+- **Documentation vs Reality**: 40% gap between what's documented and what works
+  - Many features in docs are planned but not implemented
+  - Configuration options may be ignored
+  - API endpoints may not exist
 
-### Build and Testing Issues
-- **Test Suite Status**: 18 out of 679 tests currently failing (97.3% pass rate)
-  - Failing tests are primarily in test infrastructure, not core logic
-  - Use `cargo test --features dev-core --lib` for more stable test runs
-  - See [CLAUDE.md](../../CLAUDE.md) for detailed test status
+### Build Issues
+- **Test Failures**: 18 of 679 tests fail consistently
+  - Detector registry count mismatches (5 tests)
+  - Template loading failures (4 tests)  
+  - Observability initialization (3 tests)
+  - Cache and plugin issues (6 tests)
+  
+- **Build Time**: Can be excessive
+  - `dev-core`: ~13 seconds (no anti-patterns)
+  - `production`: 5-20 minutes (all features)
+  - WSL: May timeout after 500 seconds
 
 ### Platform-Specific Issues
 - **WSL Build Timeouts**: Windows Subsystem for Linux users may experience build timeouts
@@ -177,19 +233,39 @@ cargo build --release --features="alpha"
 chmod +x target/release/uveddi
 ```
 
-## Environment Configuration (Future)
+## Environment Configuration
 
-These will be used when the analysis engine is complete:
+### Working Environment Variables
 ```bash
-# AI provider setup (for future use)
-export OPENAI_API_KEY='your-key'
-export ANTHROPIC_API_KEY='your-key'
+# Logging (actually works)
+export RUST_LOG=debug  # or info, warn, error
+
+# Ollama (experimental, often fails)
 export OLLAMA_API_URL='http://localhost:11434'
+export OLLAMA_MODEL='deepseek-coder:6.7b'
+```
+
+### Non-Functional Variables (Documented but ignored)
+```bash
+# These are in docs but DON'T WORK:
+export OPENAI_API_KEY='your-key'  # ❌ Not implemented
+export ANTHROPIC_API_KEY='your-key'  # ❌ Not implemented
+export UVEDDI_PLUGINS_DIR='/path'  # ❌ Ignored
 ```
 
 ## Next Steps
 
-1. **Test the CLI** - Verify all help commands work
-2. **Report issues** - Any CLI crashes or build problems
-3. **Follow development** - Analysis engine is next milestone
-4. **See [Alpha Testing Guide](../../ALPHA_TESTING_GUIDE.md)** - Complete testing instructions
+1. **Understand limitations** - Read [Known Issues](../known-issues.md)
+2. **Check feature status** - See [Feature Status Matrix](../feature-status-matrix.md)
+3. **Test carefully** - This is alpha software, expect failures
+4. **Report issues** - But check if they're already known first
+5. **Lower expectations** - Many documented features don't work yet
+
+## Getting Help
+
+- **Known Issues**: [docs/known-issues.md](../known-issues.md)
+- **Feature Status**: [docs/feature-status-matrix.md](../feature-status-matrix.md)
+- **GitHub Issues**: https://github.com/org/uveddi/issues
+- **Discord**: Community support (see README for link)
+
+⚠️ **Remember**: This is v0.9.0-alpha, not production software!

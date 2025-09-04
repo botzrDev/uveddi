@@ -33,16 +33,14 @@ impl DatabaseConfigManager {
     /// Create from explicit configuration file
     pub fn from_file<P: AsRef<Path>>(config_path: P) -> Result<Self> {
         let config_content = std::fs::read_to_string(config_path.as_ref())
-            .map_err(|e| UveddiError::io_error(&format!("Failed to read config file: {}", e)))?;
+            .map_err(|e| UveddiError::io_error("read_to_string", &config_path.as_ref().to_string_lossy(), e))?;
         
         let config: DatabaseEnvironmentConfig = match config_path.as_ref().extension().and_then(|s| s.to_str()) {
             Some("toml") => toml::from_str(&config_content)
                 .map_err(|e| UveddiError::configuration_error(&format!("Failed to parse TOML config: {}", e)))?,
             Some("json") => serde_json::from_str(&config_content)
                 .map_err(|e| UveddiError::configuration_error(&format!("Failed to parse JSON config: {}", e)))?,
-            Some("yaml") | Some("yml") => serde_yaml::from_str(&config_content)
-                .map_err(|e| UveddiError::configuration_error(&format!("Failed to parse YAML config: {}", e)))?,
-            _ => return Err(UveddiError::configuration_error("Unsupported config file format")),
+            _ => return Err(UveddiError::configuration_error("Unsupported config file format (only .toml and .json supported)")),
         };
         
         let environment = Self::detect_environment();
@@ -105,7 +103,7 @@ impl DatabaseConfigManager {
             }
         });
         
-        let read_connection_strings = env::var("DATABASE_READ_URLS")
+        let read_connection_strings: Vec<String> = env::var("DATABASE_READ_URLS")
             .map(|urls| urls.split(',').map(|s| s.trim().to_string()).collect())
             .unwrap_or_default();
         
@@ -236,7 +234,7 @@ impl DatabaseConfigManager {
             .map_err(|e| UveddiError::configuration_error(&format!("Failed to serialize template: {}", e)))?;
         
         std::fs::write(output_path.as_ref(), toml_content)
-            .map_err(|e| UveddiError::io_error(&format!("Failed to write template: {}", e)))?;
+            .map_err(|e| UveddiError::io_error("write", &output_path.as_ref().to_string_lossy(), e))?;
         
         info!("Created database configuration template at: {}", output_path.as_ref().display());
         Ok(())

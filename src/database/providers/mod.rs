@@ -18,7 +18,7 @@ use std::sync::atomic::{AtomicU64, AtomicU32, Ordering};
 use std::time::{Duration, Instant};
 
 /// Database configuration for different provider types
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct DatabaseConfig {
     pub provider_type: DatabaseType,
     pub connection_string: String,
@@ -33,7 +33,7 @@ pub struct DatabaseConfig {
     pub pool_timeout: Duration,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub enum DatabaseType {
     SQLite,
     PostgreSQL,
@@ -58,7 +58,7 @@ impl Default for DatabaseConfig {
 }
 
 /// Database health status information
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct DatabaseHealthStatus {
     pub is_healthy: bool,
     pub active_connections: u32,
