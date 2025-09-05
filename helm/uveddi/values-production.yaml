@@ -1,0 +1,215 @@
+# Production environment values for uveddi
+# These values override the defaults in values.yaml for production deployment
+
+environment: production
+
+# Production replica count
+replicaCount: 5
+
+# Production resource allocation
+resources:
+  limits:
+    cpu: 2000m
+    memory: 4Gi
+    ephemeral-storage: 8Gi
+  requests:
+    cpu: 500m
+    memory: 1Gi
+    ephemeral-storage: 2Gi
+
+# Production autoscaling
+autoscaling:
+  enabled: true
+  minReplicas: 5
+  maxReplicas: 20
+  targetCPUUtilizationPercentage: 60
+  targetMemoryUtilizationPercentage: 70
+  
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 600  # More conservative scaling down
+      policies:
+      - type: Percent
+        value: 5
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 30   # Faster scaling up
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 60
+
+# Production PDB - maintain higher availability
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 3
+
+# Production ingress with real domain
+ingress:
+  enabled: true
+  annotations:
+    nginx.ingress.kubernetes.io/rate-limit: "200"  # Higher rate limit for production
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    nginx.ingress.kubernetes.io/proxy-body-size: "20m"  # Larger upload size
+    # Additional production security headers
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      add_header X-Frame-Options "SAMEORIGIN" always;
+      add_header X-Content-Type-Options "nosniff" always;
+      add_header X-XSS-Protection "1; mode=block" always;
+      add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+      add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+      add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' https:; connect-src 'self' https:" always;
+  
+  hosts:
+  - host: uveddi.com  # Production domain
+    paths:
+    - path: /
+      pathType: Prefix
+  - host: api.uveddi.com  # API subdomain
+    paths:
+    - path: /
+      pathType: Prefix
+  
+  tls:
+  - secretName: uveddi-production-tls
+    hosts:
+    - uveddi.com
+    - api.uveddi.com
+
+# Production persistence with larger storage
+persistence:
+  enabled: true
+  size: 50Gi
+  storageClass: "fast-ssd"  # Use high-performance storage
+
+# External managed database for production
+postgresql:
+  enabled: false  # Use external managed PostgreSQL
+  
+# External managed cache for production
+redis:
+  enabled: false  # Use external managed Redis
+
+# Application configuration for production
+app:
+  config:
+    rustLog: "info"
+    rustBacktrace: "0"  # Disable backtrace in production
+    
+    # Production performance configuration
+    maxConnections: 2000
+    workerThreads: 8
+    requestTimeout: "60s"
+    
+    performance:
+      maxMemoryMb: 2048
+      cacheSizeMb: 512
+    
+    # Stricter security for production
+    security:
+      enableCors: false
+      secureHeaders: true
+      enableSandbox: true
+      maxFileSizeMb: 20
+
+# Production monitoring
+monitoring:
+  prometheus:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      interval: 15s  # More frequent metrics collection
+  
+  grafana:
+    enabled: true
+    dashboards:
+      enabled: true
+
+# Production environment variables
+env:
+- name: ENVIRONMENT
+  value: "production"
+- name: LOG_LEVEL
+  value: "info"
+- name: ENABLE_METRICS
+  value: "true"
+- name: RUST_BACKTRACE
+  value: "0"
+
+# External secrets for production
+externalSecrets:
+  enabled: true
+  secretStore:
+    provider: aws
+    region: us-west-2
+  secrets:
+    database-url:
+      key: "production/uveddi/database-url"
+    redis-url:
+      key: "production/uveddi/redis-url"
+    jwt-secret:
+      key: "production/uveddi/jwt-secret"
+    encryption-key:
+      key: "production/uveddi/encryption-key"
+
+# Strict network policies for production
+networkPolicy:
+  enabled: true
+  denyAll: true
+  allowIngress: true
+  allowPrometheusMetrics: true
+
+# Node affinity for production (prefer dedicated nodes)
+affinity:
+  nodeAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 100
+      preference:
+        matchExpressions:
+        - key: "node-type"
+          operator: In
+          values: ["compute-optimized"]
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+    - labelSelector:
+        matchExpressions:
+        - key: app.kubernetes.io/name
+          operator: In
+          values:
+          - uveddi
+      topologyKey: kubernetes.io/hostname
+
+# Production tolerations (for dedicated nodes)
+tolerations:
+- key: "uveddi/dedicated"
+  operator: "Equal"
+  value: "true"
+  effect: "NoSchedule"
+
+# Enhanced probes for production
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 60
+  periodSeconds: 30
+  timeoutSeconds: 10
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: http
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 2
+
+startupProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 10  # Allow more time for startup in production

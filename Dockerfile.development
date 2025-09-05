@@ -1,0 +1,51 @@
+# Development Docker image for Uveddi with hot reload and debugging tools
+FROM rust:1.70
+
+WORKDIR /app
+
+# Install development dependencies
+RUN apt-get update && apt-get install -y \
+    nodejs \
+    npm \
+    postgresql-client \
+    sqlite3 \
+    curl \
+    jq \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Rust development tools
+RUN cargo install cargo-watch cargo-tarpaulin cargo-audit
+
+# Install Node.js dependencies for frontend development
+RUN npm install -g nodemon concurrently
+
+# Create development user
+RUN groupadd -g 1001 devuser && \
+    useradd -r -u 1001 -g devuser devuser
+
+# Copy source code
+COPY . .
+RUN chown -R devuser:devuser /app
+
+# Switch to development user
+USER devuser
+
+# Build with development features for faster compilation
+RUN cargo build --features dev-core
+
+# Configure environment for development
+ENV RUST_LOG=debug
+ENV RUST_BACKTRACE=full
+ENV DATABASE_URL=sqlite:///app/data/uveddi.db
+ENV NODE_ENV=development
+
+# Expose development ports
+EXPOSE 8080 3000 9090
+
+# Development health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+
+# Use cargo watch for hot reloading
+CMD ["cargo", "watch", "-x", "run --features dev-core -- serve --port 8080 --development"]

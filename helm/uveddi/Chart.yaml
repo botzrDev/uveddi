@@ -1,0 +1,63 @@
+apiVersion: v2
+name: uveddi
+description: A Helm chart for Uveddi - Architectural Analysis Tool
+type: application
+version: 0.9.0
+appVersion: "0.9.0-alpha"
+
+keywords:
+- code-analysis
+- architecture
+- rust
+- security
+- static-analysis
+- devtools
+
+home: https://github.com/botzrDev/uveddi
+sources:
+- https://github.com/botzrDev/uveddi
+
+maintainers:
+- name: Uveddi Team
+  email: team@uveddi.dev
+  url: https://uveddi.dev
+
+dependencies:
+- name: postgresql
+  version: "12.12.10"
+  repository: "https://charts.bitnami.com/bitnami"
+  condition: postgresql.enabled
+  tags:
+  - database
+
+- name: redis
+  version: "18.1.5"
+  repository: "https://charts.bitnami.com/bitnami"
+  condition: redis.enabled
+  tags:
+  - cache
+
+- name: prometheus
+  version: "23.4.0"
+  repository: "https://prometheus-community.github.io/helm-charts"
+  condition: monitoring.prometheus.enabled
+  tags:
+  - monitoring
+
+annotations:
+  category: Development Tools
+  licenses: MIT
+  images: |
+    - name: uveddi
+      image: ghcr.io/botzrdev/uveddi:0.9.0-alpha
+  artifacthub.io/changes: |
+    - kind: added
+      description: Initial Helm chart for Uveddi deployment
+    - kind: added 
+      description: Support for production and staging environments
+    - kind: added
+      description: Comprehensive security configuration
+    - kind: added
+      description: Auto-scaling and resource management
+    - kind: added
+      description: Database and cache integration

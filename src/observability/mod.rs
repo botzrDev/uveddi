@@ -53,6 +53,9 @@
 
 pub mod config;
 pub mod dlq;
+pub mod distributed_tracing;
+pub mod health_check;
+pub mod integration;
 pub mod logging;
 #[cfg(feature = "prometheus")]
 pub mod metrics;
@@ -62,7 +65,10 @@ pub mod telemetry;
 pub mod tracing_utils;
 
 pub use config::ObservabilityConfig;
+pub use distributed_tracing::{AnalysisTracer, DistributedTracingManager, SpanContext, TracingConfig};
 pub use dlq::{DeadLetterQueue, DlqRecord, DlqStatistics};
+pub use health_check::{HealthCheckSystem, ServiceStatus, SystemHealthStatus};
+pub use integration::{ObservabilityManager, ObservabilityStatus, ObservabilityHelpers};
 pub use resilience::{InstrumentedCircuitBreaker, InstrumentedFallback, InstrumentedRetry};
 pub use service::ObservabilityService;
 pub use telemetry::{TelemetryCollector, TelemetryEvent};

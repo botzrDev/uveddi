@@ -1,0 +1,108 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: uveddi-migration
+  namespace: uveddi
+  labels:
+    app.kubernetes.io/name: uveddi
+    app.kubernetes.io/component: migration
+    app.kubernetes.io/part-of: uveddi-platform
+  annotations:
+    # Job annotations for cleanup
+    job.kubernetes.io/cleanup-policy: "OnFailure"
+spec:
+  ttlSecondsAfterFinished: 86400  # Clean up after 24 hours
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: uveddi
+        app.kubernetes.io/component: migration
+      annotations:
+        # Disable service mesh sidecar injection
+        sidecar.istio.io/inject: "false"
+    spec:
+      serviceAccountName: uveddi-migrations
+      automountServiceAccountToken: false
+      restartPolicy: OnFailure
+      
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+        seccompProfile:
+          type: RuntimeDefault
+      
+      containers:
+      - name: migration
+        image: ghcr.io/botzrdev/uveddi:latest
+        imagePullPolicy: Always
+        command: ["sh", "-c"]
+        args:
+        - |
+          echo "Starting database migration..."
+          
+          # Check if database exists and is accessible
+          if [ -f "/app/data/uveddi.db" ]; then
+            echo "Database file found, checking schema..."
+          else
+            echo "Creating new database..."
+          fi
+          
+          # Run migration command (implement actual migration logic)
+          /usr/local/bin/uveddi migrate --config /app/config/production.toml
+          
+          echo "Migration completed successfully"
+        
+        envFrom:
+        - configMapRef:
+            name: uveddi-config
+        - secretRef:
+            name: uveddi-secrets
+        
+        env:
+        - name: RUST_LOG
+          value: "info"
+        - name: JOB_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1001
+          runAsGroup: 1001
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+        
+        volumeMounts:
+        - name: config
+          mountPath: /app/config
+          readOnly: true
+        - name: data
+          mountPath: /app/data
+        - name: tmp
+          mountPath: /tmp
+      
+      volumes:
+      - name: config
+        configMap:
+          name: uveddi-config
+      - name: data
+        persistentVolumeClaim:
+          claimName: uveddi-data
+      - name: tmp
+        emptyDir:
+          sizeLimit: 100Mi

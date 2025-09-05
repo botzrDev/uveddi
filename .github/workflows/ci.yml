@@ -1,0 +1,307 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches: [ main, develop, 'release/*', 'feature/*' ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rust-version: [1.70.0, stable]
+        feature-set: 
+          - dev-core
+          - tree-sitter
+          - production
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install Rust toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: ${{ matrix.rust-version }}
+        override: true
+        components: rustfmt, clippy
+        
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+        key: ${{ runner.os }}-cargo-${{ matrix.rust-version }}-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-${{ matrix.rust-version }}-
+          ${{ runner.os }}-cargo-
+    
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          pkg-config \
+          libssl-dev \
+          libsqlite3-dev \
+          nodejs \
+          npm
+          
+    - name: Check code formatting
+      if: matrix.feature-set == 'dev-core'
+      run: cargo fmt --all -- --check
+      
+    - name: Run Clippy
+      run: cargo clippy --features ${{ matrix.feature-set }} --all-targets --all-features -- -D warnings
+      
+    - name: Run tests
+      run: |
+        cargo test --features ${{ matrix.feature-set }} --verbose --lib
+        cargo test --features ${{ matrix.feature-set }} --verbose --test integration
+      timeout-minutes: 30
+      
+    - name: Run security audit
+      if: matrix.feature-set == 'production'
+      uses: actions-rs/audit-check@v1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+  coverage:
+    name: Code Coverage
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install Rust toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        override: true
+        components: llvm-tools-preview
+        
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+        key: coverage-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+        
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y pkg-config libssl-dev libsqlite3-dev
+        
+    - name: Install coverage tools
+      run: |
+        cargo install cargo-tarpaulin --version ^0.27
+        
+    - name: Generate coverage report
+      run: |
+        cargo tarpaulin \
+          --features dev-core \
+          --out xml \
+          --output-dir coverage/ \
+          --skip-clean \
+          --timeout 300
+      timeout-minutes: 20
+      
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: coverage/cobertura.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+
+  security-scan:
+    name: Security Scanning
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install Rust toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        override: true
+        
+    - name: Run cargo audit
+      uses: actions-rs/audit-check@v1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Run Semgrep security scan
+      uses: returntocorp/semgrep-action@v1
+      with:
+        config: >-
+          p/security-audit
+          p/secrets
+          p/rust
+        generateSarif: "1"
+        
+    - name: Upload SARIF file
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: semgrep.sarif
+      if: always()
+
+  build-test:
+    name: Build Test
+    runs-on: ubuntu-latest
+    needs: [test]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Build development image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile.development
+        push: false
+        tags: uveddi:dev-test
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        
+    - name: Build production image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile.production
+        push: false
+        tags: uveddi:prod-test
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        
+    - name: Test production image
+      run: |
+        docker run --rm -d --name uveddi-test uveddi:prod-test
+        sleep 10
+        docker exec uveddi-test /usr/local/bin/uveddi --version
+        docker stop uveddi-test
+
+  helm-lint:
+    name: Helm Chart Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Helm
+      uses: azure/setup-helm@v3
+      with:
+        version: '3.12.0'
+        
+    - name: Add Helm repositories
+      run: |
+        helm repo add bitnami https://charts.bitnami.com/bitnami
+        helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+        helm repo update
+        
+    - name: Lint Helm chart
+      run: |
+        helm dependency build ./helm/uveddi
+        helm lint ./helm/uveddi
+        
+    - name: Validate Helm templates
+      run: |
+        helm template test-release ./helm/uveddi \
+          --values ./helm/uveddi/values-staging.yaml \
+          --output-dir ./helm-output
+        
+        helm template test-release ./helm/uveddi \
+          --values ./helm/uveddi/values-production.yaml \
+          --output-dir ./helm-output
+          
+    - name: Test Helm installation (dry-run)
+      run: |
+        helm install uveddi-test ./helm/uveddi \
+          --values ./helm/uveddi/values-staging.yaml \
+          --dry-run --debug
+
+  performance-test:
+    name: Performance Regression Test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install Rust toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        override: true
+        
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+        key: perf-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+        
+    - name: Build with optimizations
+      run: cargo build --release --features production
+      
+    - name: Run performance benchmarks
+      run: |
+        if [ -f "./scripts/performance-validation.sh" ]; then
+          ./scripts/performance-validation.sh
+        else
+          echo "Performance validation script not found, skipping"
+        fi
+      timeout-minutes: 15
+
+  notification:
+    name: Notification
+    runs-on: ubuntu-latest
+    needs: [test, coverage, security-scan, build-test, helm-lint]
+    if: always() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    
+    steps:
+    - name: Notify on success
+      if: ${{ needs.test.result == 'success' && needs.security-scan.result == 'success' }}
+      run: |
+        echo "✅ CI Pipeline completed successfully"
+        echo "All tests passed and security scans completed"
+        
+    - name: Notify on failure
+      if: ${{ needs.test.result == 'failure' || needs.security-scan.result == 'failure' }}
+      run: |
+        echo "❌ CI Pipeline failed"
+        echo "Check the logs for details"
+        exit 1

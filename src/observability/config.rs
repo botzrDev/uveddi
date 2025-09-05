@@ -18,6 +18,14 @@ pub struct ObservabilityConfig {
     pub resilience: ResilienceConfig,
     /// Security integration configuration
     pub security: SecurityConfig,
+    /// Health check system configuration
+    pub health_check: HealthCheckConfig,
+    /// Distributed tracing configuration
+    pub tracing: TracingConfig,
+    /// Alerting system configuration
+    pub alerting: AlertingConfig,
+    /// Database configuration for observability components
+    pub database: DatabaseConfig,
 }
 
 /// Configuration for structured logging
@@ -176,6 +184,114 @@ pub struct SecurityConfig {
     pub event_sampling_rate: f64,
 }
 
+/// Health check system configuration
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HealthCheckConfig {
+    /// Enable health check system
+    pub enabled: bool,
+    /// Health check interval
+    pub check_interval: Duration,
+    /// Timeout for individual component health checks
+    pub component_timeout: Duration,
+    /// Enable background monitoring
+    pub background_monitoring: bool,
+}
+
+/// Distributed tracing configuration 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TracingConfig {
+    /// Enable distributed tracing
+    pub enabled: bool,
+    /// Service name for tracing
+    pub service_name: String,
+    /// Sampling rate (0.0 to 1.0)
+    pub sampling_rate: f64,
+    /// Maximum spans per trace
+    pub max_spans_per_trace: usize,
+    /// Span timeout in seconds
+    pub span_timeout_seconds: u64,
+    /// Export traces to external system
+    pub export_enabled: bool,
+    /// Jaeger endpoint URL
+    pub jaeger_endpoint: Option<String>,
+}
+
+/// Alerting system configuration
+#[derive(Debug, Clone, Serialize, Deserialize)]  
+pub struct AlertingConfig {
+    /// Enable alerting system
+    pub enabled: bool,
+    /// Default notification channels
+    pub default_channels: Vec<String>,
+    /// Grouping window in minutes
+    pub grouping_window_minutes: u64,
+    /// Maximum alerts per group
+    pub max_alerts_per_group: u32,
+    /// Alert history retention in days
+    pub history_retention_days: u32,
+}
+
+/// Database configuration for observability
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DatabaseConfig {
+    /// Primary database URL
+    pub primary_url: String,
+    /// Read replica URLs
+    pub read_replicas: Vec<String>,
+    /// Connection pool size
+    pub max_connections: u32,
+    /// Connection timeout
+    pub connection_timeout: Duration,
+}
+
+impl Default for HealthCheckConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            check_interval: Duration::from_secs(30),
+            component_timeout: Duration::from_secs(5),
+            background_monitoring: true,
+        }
+    }
+}
+
+impl Default for TracingConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            service_name: "uveddi".to_string(),
+            sampling_rate: 1.0,
+            max_spans_per_trace: 1000,
+            span_timeout_seconds: 300,
+            export_enabled: false,
+            jaeger_endpoint: None,
+        }
+    }
+}
+
+impl Default for AlertingConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            default_channels: vec!["console".to_string()],
+            grouping_window_minutes: 5,
+            max_alerts_per_group: 10,
+            history_retention_days: 30,
+        }
+    }
+}
+
+impl Default for DatabaseConfig {
+    fn default() -> Self {
+        Self {
+            primary_url: "sqlite://uveddi.db".to_string(),
+            read_replicas: vec![],
+            max_connections: 20,
+            connection_timeout: Duration::from_secs(30),
+        }
+    }
+}
+
 impl Default for ObservabilityConfig {
     fn default() -> Self {
         Self {
@@ -183,6 +299,10 @@ impl Default for ObservabilityConfig {
             metrics: MetricsConfig::default(),
             resilience: ResilienceConfig::default(),
             security: SecurityConfig::default(),
+            health_check: HealthCheckConfig::default(),
+            tracing: TracingConfig::default(),
+            alerting: AlertingConfig::default(),
+            database: DatabaseConfig::default(),
         }
     }
 }

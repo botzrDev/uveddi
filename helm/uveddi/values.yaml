@@ -1,0 +1,356 @@
+# Default values for uveddi.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Global configuration
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+  storageClass: ""
+
+# Application configuration
+replicaCount: 3
+
+image:
+  registry: ghcr.io
+  repository: botzrdev/uveddi
+  tag: ""  # Overrides the image tag whose default is the chart appVersion
+  pullPolicy: IfNotPresent
+  pullSecrets: []
+
+# Environment configuration
+environment: production
+
+# Application configuration
+app:
+  name: uveddi
+  version: "0.9.0-alpha"
+  
+  # Feature configuration
+  features:
+    production: true
+    ai: true
+    security: true
+    monitoring: true
+    wasm_plugins: true
+  
+  # Application ports
+  ports:
+    http: 8080
+    metrics: 9090
+    rendering: 3001
+  
+  # Configuration
+  config:
+    rustLog: "info"
+    rustBacktrace: "0"
+    maxConnections: 1000
+    workerThreads: 4
+    requestTimeout: "30s"
+    cacheDir: "/app/cache"
+    logDir: "/app/logs"
+    
+    # Analysis configuration
+    analysis:
+      maxDepth: 10
+      timeoutSeconds: 300
+      languages: ["rust", "python", "javascript", "typescript"]
+    
+    # Security configuration
+    security:
+      enableCors: false
+      secureHeaders: true
+      enableSandbox: true
+      maxFileSizeMb: 50
+      allowedExtensions: ["rs", "py", "js", "ts", "json", "yaml", "toml"]
+    
+    # Performance tuning
+    performance:
+      maxMemoryMb: 1024
+      cacheSizeMb: 256
+
+# Service Account
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+  # Disable automatic mounting of service account token
+  automountServiceAccountToken: false
+
+# Pod annotations
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "9090"
+  prometheus.io/path: "/metrics"
+
+# Pod security context
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1001
+  runAsGroup: 1001
+  fsGroup: 1001
+  seccompProfile:
+    type: RuntimeDefault
+
+# Container security context
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1001
+  runAsGroup: 1001
+  seccompProfile:
+    type: RuntimeDefault
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: http
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9090"
+
+# Headless service for StatefulSet scenarios
+headlessService:
+  enabled: false
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    # Security headers
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      add_header X-Frame-Options "SAMEORIGIN" always;
+      add_header X-Content-Type-Options "nosniff" always;
+      add_header X-XSS-Protection "1; mode=block" always;
+      add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+  
+  hosts:
+  - host: uveddi.example.com
+    paths:
+    - path: /
+      pathType: Prefix
+  
+  tls:
+  - secretName: uveddi-tls
+    hosts:
+    - uveddi.example.com
+
+# Resource configuration
+resources:
+  limits:
+    cpu: 1000m
+    memory: 2Gi
+    ephemeral-storage: 4Gi
+  requests:
+    cpu: 250m
+    memory: 512Mi
+    ephemeral-storage: 1Gi
+
+# Liveness and readiness probes
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 2
+
+startupProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 6
+
+# Autoscaling configuration
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+  
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 60
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 2
+
+# Node selection
+nodeSelector:
+  kubernetes.io/os: linux
+
+tolerations: []
+
+# Anti-affinity configuration
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 100
+      podAffinityTerm:
+        labelSelector:
+          matchExpressions:
+          - key: app.kubernetes.io/name
+            operator: In
+            values:
+            - uveddi
+        topologyKey: kubernetes.io/hostname
+
+# Persistence
+persistence:
+  enabled: true
+  storageClass: ""
+  accessMode: ReadWriteOnce
+  size: 10Gi
+  annotations: {}
+
+# Network Policy
+networkPolicy:
+  enabled: true
+  denyAll: true
+  allowIngress: true
+  allowPrometheusMetrics: true
+  egress:
+    allowDNS: true
+    allowHTTPS: true
+    allowOllama: true
+
+# External dependencies configuration
+postgresql:
+  enabled: false
+  auth:
+    postgresPassword: ""
+    username: uveddi
+    password: ""
+    database: uveddi
+  primary:
+    persistence:
+      enabled: true
+      size: 20Gi
+    service:
+      ports:
+        postgresql: 5432
+
+redis:
+  enabled: false
+  auth:
+    enabled: false
+  master:
+    persistence:
+      enabled: true
+      size: 8Gi
+    service:
+      ports:
+        redis: 6379
+
+# Monitoring configuration
+monitoring:
+  prometheus:
+    enabled: false
+    serviceMonitor:
+      enabled: true
+      interval: 30s
+      path: /metrics
+      port: metrics
+    
+  grafana:
+    enabled: false
+    dashboards:
+      enabled: true
+
+# External secrets (if using external secret management)
+externalSecrets:
+  enabled: false
+  secretStore:
+    provider: aws
+    region: us-west-2
+  secrets: {}
+
+# Init containers
+initContainers:
+  waitForDatabase:
+    enabled: true
+    image: busybox:1.35
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1001
+      runAsGroup: 1001
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+      readOnlyRootFilesystem: true
+
+# Additional volumes
+additionalVolumes: []
+additionalVolumeMounts: []
+
+# Environment variables
+env: []
+
+# Environment variables from ConfigMap
+envFrom: []
+
+# Migration job
+migration:
+  enabled: true
+  image:
+    registry: ghcr.io
+    repository: botzrdev/uveddi
+    tag: ""
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+
+# Tests
+tests:
+  enabled: true
+  image:
+    registry: ghcr.io
+    repository: botzrdev/uveddi
+    tag: ""

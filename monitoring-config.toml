@@ -1,0 +1,306 @@
+# Uveddi Production Monitoring Configuration
+# Complete observability setup for production deployment
+
+[observability]
+# Main observability configuration
+
+[observability.logging]
+# Structured logging configuration
+level = "info"
+format = "json"  # Use JSON format for production log aggregation
+log_dir = "/var/log/uveddi"
+async_logging = true
+
+[observability.logging.pii_redaction]
+# PII redaction for compliance
+enabled = true
+strategy = "mask"
+field_patterns = [
+    ".*password.*",
+    ".*token.*", 
+    ".*secret.*",
+    ".*key.*",
+    ".*email.*",
+    ".*phone.*",
+    ".*ssn.*",
+    ".*credit.*card.*"
+]
+
+[observability.logging.rotation]
+# Log rotation settings
+max_file_size = 104857600  # 100MB
+max_files = 10
+compress = true
+
+[observability.metrics]
+# Prometheus metrics configuration
+enabled = true
+bind_address = "0.0.0.0"
+port = 9090
+endpoint_path = "/metrics"
+collection_interval = "30s"
+
+[observability.metrics.slo_config]
+# Service Level Objectives
+availability_target = 99.9
+latency_p99_target_ms = 2000
+error_budget_window_days = 28
+
+[observability.health_check]
+# Health monitoring configuration
+enabled = true
+check_interval = "30s"
+component_timeout = "5s"
+background_monitoring = true
+
+[observability.tracing]
+# Distributed tracing configuration
+enabled = true
+service_name = "uveddi"
+sampling_rate = 0.1  # Sample 10% of traces in production
+max_spans_per_trace = 1000
+span_timeout_seconds = 300
+export_enabled = true
+jaeger_endpoint = "http://localhost:14268/api/traces"
+
+[observability.alerting]
+# Alert system configuration
+enabled = true
+default_channels = ["slack", "pagerduty"]
+grouping_window_minutes = 5
+max_alerts_per_group = 10
+history_retention_days = 90
+
+[observability.database]
+# Database configuration for observability
+primary_url = "postgresql://uveddi:password@localhost:5432/uveddi"
+read_replicas = ["postgresql://uveddi:password@localhost:5433/uveddi_ro"]
+max_connections = 20
+connection_timeout = "30s"
+
+[observability.resilience.circuit_breaker]
+# Circuit breaker configuration
+failure_rate_threshold = 0.5  # 50% failure rate
+minimum_throughput = 10
+wait_duration = "60s"
+permitted_calls_in_half_open_state = 5
+sliding_window_size = 100
+
+[observability.resilience.retry]
+# Retry configuration
+max_attempts = 3
+initial_delay = "100ms"
+max_delay = "60s"
+backoff_multiplier = 2.0
+jitter = true
+
+[observability.resilience.fallback]
+# Fallback configuration
+enable_cache_fallback = true
+cache_ttl = "300s"  # 5 minutes
+enable_partial_results = true
+
+[observability.security]
+# Security integration
+enable_audit_integration = true
+audit_service_url = "http://localhost:8081/audit"
+export_security_metrics = true
+event_sampling_rate = 1.0
+
+# Alert Rules Configuration
+[[alert_rules]]
+name = "High Memory Usage"
+condition = "memory_usage_percent > 80"
+severity = "warning"
+cooldown = "300s"
+message = "Memory usage is above 80%"
+
+[[alert_rules]]
+name = "Critical Memory Usage"
+condition = "memory_usage_percent > 95"
+severity = "critical"
+cooldown = "60s"
+message = "Memory usage is critically high"
+
+[[alert_rules]]
+name = "High Error Rate"
+condition = "error_rate > 0.1"
+severity = "critical"
+cooldown = "180s"
+message = "Error rate exceeded 10%"
+
+[[alert_rules]]
+name = "Analysis Queue Backlog"
+condition = "analysis_queue_length > 50"
+severity = "warning"
+cooldown = "300s"
+message = "Analysis queue has excessive backlog"
+
+[[alert_rules]]
+name = "Service Unavailable"
+condition = "service_health = 'unhealthy'"
+severity = "critical"
+cooldown = "60s"
+message = "Service is unhealthy"
+
+[[alert_rules]]
+name = "P99 Latency High"
+condition = "latency_p99_ms > 5000"
+severity = "warning"
+cooldown = "300s"
+message = "P99 latency exceeds 5 seconds"
+
+# Notification Channels
+[[notification_channels]]
+name = "slack"
+type = "slack"
+enabled = true
+webhook_url = "https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
+
+[[notification_channels]]
+name = "pagerduty"
+type = "pagerduty" 
+enabled = true
+integration_key = "your-pagerduty-integration-key"
+
+[[notification_channels]]
+name = "email"
+type = "email"
+enabled = false
+smtp_server = "smtp.example.com"
+smtp_port = 587
+username = "alerts@example.com"
+recipients = ["oncall@example.com", "devops@example.com"]
+
+# Escalation Policies
+[[escalation_policies]]
+name = "default"
+enabled = true
+
+[[escalation_policies.levels]]
+level = 1
+delay_minutes = 0
+channels = ["slack"]
+roles = ["on-call"]
+
+[[escalation_policies.levels]]
+level = 2
+delay_minutes = 15
+channels = ["slack", "pagerduty"]
+roles = ["team-lead"]
+
+[[escalation_policies.levels]]
+level = 3
+delay_minutes = 60
+channels = ["pagerduty", "email"]
+roles = ["engineering-manager"]
+
+# Dashboard Configuration
+[dashboards]
+# Operational dashboards
+
+[dashboards.overview]
+# Main overview dashboard
+refresh_interval = "30s"
+panels = [
+    "system_health",
+    "request_rate",
+    "error_rate", 
+    "latency_percentiles",
+    "memory_usage",
+    "cpu_usage"
+]
+
+[dashboards.analysis]
+# Analysis-specific dashboard
+refresh_interval = "60s"
+panels = [
+    "analysis_requests_per_minute",
+    "analysis_duration_distribution",
+    "issues_detected_per_hour",
+    "analysis_queue_depth",
+    "detector_performance",
+    "language_distribution"
+]
+
+[dashboards.security]
+# Security monitoring dashboard
+refresh_interval = "15s"
+panels = [
+    "authentication_failures",
+    "permission_denials",
+    "rate_limit_violations",
+    "security_events",
+    "threat_detection"
+]
+
+[dashboards.performance]
+# Performance monitoring dashboard
+refresh_interval = "30s"
+panels = [
+    "response_time_p50_p90_p99",
+    "throughput_by_endpoint",
+    "database_connection_pool",
+    "cache_hit_rate",
+    "memory_allocation_rate"
+]
+
+# External Integrations
+[integrations]
+
+[integrations.prometheus]
+# Prometheus configuration
+enabled = true
+scrape_interval = "15s"
+retention = "15d"
+external_labels = { environment = "production", service = "uveddi" }
+
+[integrations.grafana]
+# Grafana configuration
+enabled = true
+url = "http://localhost:3000"
+admin_user = "admin"
+dashboards_path = "/etc/grafana/dashboards"
+
+[integrations.jaeger]
+# Jaeger tracing configuration
+enabled = true
+collector_endpoint = "http://localhost:14268/api/traces"
+agent_endpoint = "localhost:6831"
+ui_url = "http://localhost:16686"
+
+[integrations.elasticsearch]
+# Elasticsearch for log aggregation
+enabled = false
+hosts = ["http://localhost:9200"]
+index_prefix = "uveddi-logs"
+retention_days = 30
+
+[integrations.kibana]
+# Kibana for log visualization
+enabled = false
+url = "http://localhost:5601"
+index_pattern = "uveddi-logs-*"
+
+# Development/Testing Overrides
+[environments.development]
+# Development environment overrides
+logging.level = "debug"
+logging.format = "human"
+metrics.enabled = false
+tracing.sampling_rate = 1.0
+alerting.enabled = false
+
+[environments.staging]
+# Staging environment overrides  
+logging.level = "info"
+metrics.enabled = true
+tracing.sampling_rate = 0.5
+alerting.enabled = true
+alerting.default_channels = ["slack"]
+
+[environments.production]
+# Production environment settings (inherits from main config)
+logging.level = "warn"
+tracing.sampling_rate = 0.1
+alerting.enabled = true
