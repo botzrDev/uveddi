@@ -268,9 +268,9 @@ impl AnalysisTracer {
         ).await;
         
         // Add analysis context
-        self.span_tracker.add_tag(context.span_id.clone(), "project.id".to_string(), project_id.to_string()).await;
-        self.span_tracker.add_tag(context.span_id.clone(), "analysis.type".to_string(), analysis_type.to_string()).await;
-        self.span_tracker.add_tag(context.span_id.clone(), "service.name".to_string(), "uveddi".to_string()).await;
+        self.span_tracker.add_tag(&context.span_id, "project.id".to_string(), project_id.to_string()).await;
+        self.span_tracker.add_tag(&context.span_id, "analysis.type".to_string(), analysis_type.to_string()).await;
+        self.span_tracker.add_tag(&context.span_id, "service.name".to_string(), "uveddi".to_string()).await;
         
         let start_time = Instant::now();
         let result = workflow_fn.await;
@@ -278,9 +278,9 @@ impl AnalysisTracer {
         
         match &result {
             Ok(_) => {
-                self.span_tracker.add_tag(context.span_id.clone(), "success".to_string(), "true".to_string()).await;
+                self.span_tracker.add_tag(&context.span_id, "success".to_string(), "true".to_string()).await;
                 self.span_tracker.add_log(
-                    context.span_id.clone(),
+                    &context.span_id,
                     LogLevel::Info,
                     "Analysis completed successfully".to_string(),
                     {
@@ -293,7 +293,7 @@ impl AnalysisTracer {
                 ).await;
             }
             Err(e) => {
-                self.span_tracker.set_error(context.span_id.clone(), e.to_string()).await;
+                self.span_tracker.set_error(&context.span_id, e.to_string()).await;
             }
         }
         
@@ -317,8 +317,8 @@ impl AnalysisTracer {
         ).await;
         
         // Add file parsing context
-        self.span_tracker.add_tag(context.span_id.clone(), "file.path".to_string(), file_path.to_string()).await;
-        self.span_tracker.add_tag(context.span_id.clone(), "file.language".to_string(), language.to_string()).await;
+        self.span_tracker.add_tag(&context.span_id, "file.path".to_string(), file_path.to_string()).await;
+        self.span_tracker.add_tag(&context.span_id, "file.language".to_string(), language.to_string()).await;
         
         let start_time = Instant::now();
         let result = parse_fn.await;
@@ -327,7 +327,7 @@ impl AnalysisTracer {
         match &result {
             Ok(_) => {
                 self.span_tracker.add_log(
-                    context.span_id.clone(),
+                    &context.span_id,
                     LogLevel::Info,
                     format!("File parsed successfully: {}", file_path),
                     {
@@ -340,7 +340,7 @@ impl AnalysisTracer {
                 ).await;
             }
             Err(e) => {
-                self.span_tracker.set_error(context.span_id.clone(), format!("Parsing failed for {}: {}", file_path, e)).await;
+                self.span_tracker.set_error(&context.span_id, format!("Parsing failed for {}: {}", file_path, e)).await;
             }
         }
         
@@ -362,7 +362,7 @@ impl AnalysisTracer {
             Some(parent_context.clone())
         ).await;
         
-        self.span_tracker.add_tag(context.span_id.clone(), "detector.name".to_string(), detector_name.to_string()).await;
+        self.span_tracker.add_tag(&context.span_id, "detector.name".to_string(), detector_name.to_string()).await;
         
         let start_time = Instant::now();
         let result = execution_fn.await;
@@ -371,7 +371,7 @@ impl AnalysisTracer {
         match &result {
             Ok(_) => {
                 self.span_tracker.add_log(
-                    context.span_id.clone(),
+                    &context.span_id,
                     LogLevel::Info,
                     format!("Detector {} executed successfully", detector_name),
                     {
@@ -384,7 +384,7 @@ impl AnalysisTracer {
                 ).await;
             }
             Err(e) => {
-                self.span_tracker.set_error(context.span_id.clone(), format!("Detector {} failed: {}", detector_name, e)).await;
+                self.span_tracker.set_error(&context.span_id, format!("Detector {} failed: {}", detector_name, e)).await;
             }
         }
         
@@ -407,8 +407,8 @@ impl AnalysisTracer {
             Some(parent_context.clone())
         ).await;
         
-        self.span_tracker.add_tag(context.span_id.clone(), "ai.model".to_string(), model_name.to_string()).await;
-        self.span_tracker.add_tag(context.span_id.clone(), "ai.prompt_type".to_string(), prompt_type.to_string()).await;
+        self.span_tracker.add_tag(&context.span_id, "ai.model".to_string(), model_name.to_string()).await;
+        self.span_tracker.add_tag(&context.span_id, "ai.prompt_type".to_string(), prompt_type.to_string()).await;
         
         let start_time = Instant::now();
         let result = ai_fn.await;
@@ -417,7 +417,7 @@ impl AnalysisTracer {
         match &result {
             Ok(_) => {
                 self.span_tracker.add_log(
-                    context.span_id.clone(),
+                    &context.span_id,
                     LogLevel::Info,
                     format!("AI analysis completed with model {}", model_name),
                     {
@@ -431,7 +431,7 @@ impl AnalysisTracer {
                 ).await;
             }
             Err(e) => {
-                self.span_tracker.set_error(context.span_id.clone(), format!("AI analysis failed: {}", e)).await;
+                self.span_tracker.set_error(&context.span_id, format!("AI analysis failed: {}", e)).await;
             }
         }
         
@@ -587,8 +587,8 @@ mod tests {
         assert!(context.parent_span_id.is_none());
         
         // Add tag and log
-        tracker.add_tag(context.span_id.clone(), "test.key".to_string(), "test.value".to_string()).await;
-        tracker.add_log(context.span_id.clone(), LogLevel::Info, "Test message".to_string(), HashMap::new()).await;
+        tracker.add_tag(&context.span_id, "test.key".to_string(), "test.value".to_string()).await;
+        tracker.add_log(&context.span_id, LogLevel::Info, "Test message".to_string(), HashMap::new()).await;
         
         // Finish span
         let span = tracker.finish_span(&context.span_id).await;

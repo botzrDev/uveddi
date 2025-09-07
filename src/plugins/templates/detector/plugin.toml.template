@@ -1,0 +1,103 @@
+# {PLUGIN_NAME} Plugin Manifest
+
+[plugin]
+id = "{PLUGIN_ID}"
+name = "{PLUGIN_NAME}"
+version = "{VERSION}"
+description = "{PLUGIN_DESCRIPTION}"
+author = "{AUTHOR}"
+license = "{LICENSE}"
+homepage = "https://github.com/your-org/plugins/{PLUGIN_ID}"
+repository = "https://github.com/your-org/plugins/{PLUGIN_ID}"
+documentation = "https://docs.your-org.com/plugins/{PLUGIN_ID}"
+
+[plugin.metadata]
+api_version = "1.0"
+plugin_type = "detector"
+category = "quality"  # TODO: Update with appropriate category
+tags = ["quality", "detector", "analysis"]  # TODO: Add relevant tags
+maturity = "beta"
+generated = true
+generation_timestamp = "{GENERATION_TIMESTAMP}"
+generator_version = "1.0.0"
+
+[plugin.support]
+supported_languages = [{SUPPORTED_LANGUAGES}]
+minimum_uveddi_version = "0.9.0"
+tested_uveddi_versions = ["0.9.0", "0.10.0"]
+
+[plugin.capabilities]
+# TODO: Update with your plugin's capabilities
+detectors = [
+    "todo_comment",
+    # Add more detectors here
+]
+
+# TODO: Update with appropriate categories
+categories = ["quality"]
+
+# TODO: Add metrics your plugin provides
+metrics = [
+    "issues_found",
+    "analysis_count",
+    # Add more metrics here
+]
+
+[plugin.configuration]
+default_severity_threshold = "medium"
+default_max_issues_per_file = 50
+
+# TODO: Add configuration options specific to your plugin
+[plugin.configuration.options]
+example_setting = { type = "string", default = "default_value", description = "An example configuration option" }
+# Add more configuration options here
+
+[plugin.permissions]
+required = ["read-files"]
+optional = []  # TODO: Add optional permissions if needed
+
+[plugin.resources]
+max_memory_mb = 64
+max_cpu_percent = 20
+timeout_seconds = 60
+max_file_handles = 5
+
+# TODO: Define your plugin's analysis rules
+[plugin.rules]
+[plugin.rules.TODO001]
+name = "todo_comment"
+severity = "info"
+category = "quality"
+message = "TODO or FIXME comment found"
+enabled = true
+description = "Identifies TODO and FIXME comments that indicate incomplete work"
+
+# Add more rules here
+# [plugin.rules.RULE002]
+# name = "example_rule"
+# severity = "medium"
+# category = "quality"
+# message = "Example rule message"
+# enabled = true
+
+[plugin.build]
+target = "wasm32-wasi"
+build_command = "cargo build --release --target wasm32-wasi"
+artifact_path = "target/wasm32-wasi/release/{PLUGIN_ID_SNAKE}_plugin.wasm"
+
+[plugin.testing]
+# TODO: Add test files and expected results
+test_files = [
+    "examples/fixtures/sample.rs",
+    "examples/fixtures/sample.js",
+]
+
+# TODO: Define expected test results
+expected_issues = [
+    # { file = "sample.rs", rule = "TODO001", count = 1 },
+]
+
+[plugin.documentation]
+user_guide = "docs/user-guide.md"
+developer_guide = "docs/developer-guide.md" 
+examples_directory = "examples/"

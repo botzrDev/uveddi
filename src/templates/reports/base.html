@@ -46,7 +46,7 @@
                 <dd>{{ analysis_run.config_profile | default(value="Default") }}</dd>
                 
                 <dt>Language Detection</dt>
-                <dd>{{ analysis_run.detected_languages | join(", ") | default(value="Auto-detected") }}</dd>
+                <dd>{{ analysis_run.detected_languages | join(sep=", ") | default(value="Auto-detected") }}</dd>
             </dl>
         </div>
     </section>

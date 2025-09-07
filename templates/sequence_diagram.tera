@@ -1,5 +1,5 @@
-{{!-- Sequence Diagram Template --}}
-{{!-- Shows interaction flows between components over time --}}
+{#  Sequence Diagram Template  #}
+{#  Shows interaction flows between components over time  #}
 sequenceDiagram
 {%- for component in components %}
     participant {{ component.id }} as {{ component.name }}

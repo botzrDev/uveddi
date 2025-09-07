@@ -24,7 +24,7 @@ use tree_sitter::{Language, Parser, Tree};
 pub struct ParsedFile {
     pub file_path: Arc<PathBuf>,
     pub language: SourceLanguage,
-    pub tree: Option<Tree>,
+    pub tree: Option<Arc<Tree>>,
     pub source: Arc<String>,
     pub syntax_errors: Vec<SyntaxError>,
     pub custom_ast: Arc<Option<crate::ast::tree_sitter_impl::CustomAst>>,
@@ -145,7 +145,7 @@ impl AstProviderImpl {
         let parsed_file = Arc::new(ParsedFile {
             file_path: Arc::new(file_path.to_path_buf()),
             language,
-            tree: Some(tree),
+            tree: Some(Arc::new(tree)),
             source: Arc::new(source),
             syntax_errors,
             custom_ast: Arc::new(None),
@@ -161,7 +161,7 @@ impl AstProviderImpl {
         {
             if let Err(e) = self
                 .ast_cache
-                .store(file_path, parsed_file.tree.as_ref().unwrap().clone())
+                .store(file_path, parsed_file.tree.as_ref().unwrap().as_ref().clone())
             {
                 warn!("Failed to cache AST for {:?}: {}", file_path, e);
             }
@@ -229,8 +229,8 @@ impl AstProvider for AstProviderImpl {
                 file_path.display()
             );
             if let Some(tree) = &parsed_file.tree {
-                return Ok(Arc::new(tree.clone()));
-            }
+                return Ok(Arc::clone(tree));
+        }
         }
 
         // Check secondary cache (with read lock to allow concurrent reads)
@@ -265,8 +265,8 @@ impl AstProvider for AstProviderImpl {
                 file_path.display()
             );
             if let Some(tree) = &parsed_file.tree {
-                return Ok(Arc::new(tree.clone()));
-            }
+                return Ok(Arc::clone(tree));
+        }
         }
 
         // Parse and cache the file
@@ -283,7 +283,7 @@ impl AstProvider for AstProviderImpl {
 
         // Return the tree from the parsed file
         if let Some(tree) = &parsed_file.tree {
-            Ok(Arc::new(tree.clone()))
+            Ok(Arc::clone(tree))
         } else {
             Err(UveddiError::AstError {
                 file: file_path.to_string_lossy().to_string(),

@@ -1,0 +1,213 @@
+# Code Documentation Analyzer Plugin Manifest
+
+[plugin]
+id = "documentation-analyzer"
+name = "Code Documentation Analyzer"
+version = "1.0.0"
+description = "Analyzes code documentation coverage, quality, and compliance with documentation standards"
+author = "Uveddi Team"
+license = "MIT"
+homepage = "https://github.com/uveddi/plugins/documentation-analyzer"
+repository = "https://github.com/uveddi/plugins/documentation-analyzer"
+documentation = "https://docs.uveddi.dev/plugins/documentation-analyzer"
+
+[plugin.metadata]
+api_version = "1.0"
+plugin_type = "detector"
+category = "documentation"
+tags = ["documentation", "coverage", "quality", "comments", "readme", "api-docs"]
+maturity = "stable"
+
+[plugin.support]
+supported_languages = [
+    "rust", "javascript", "typescript", "python", 
+    "java", "go", "c", "cpp", "csharp", "markdown"
+]
+supported_file_types = [".rs", ".js", ".ts", ".py", ".java", ".go", ".c", ".cpp", ".md", ".rst", ".adoc"]
+minimum_uveddi_version = "0.9.0"
+tested_uveddi_versions = ["0.9.0", "0.10.0"]
+
+[plugin.capabilities]
+# Documentation analysis capabilities
+detectors = [
+    "low_documentation_coverage",
+    "missing_documentation",
+    "documentation_line_too_long",
+    "missing_examples",
+    "missing_parameter_docs",
+    "missing_return_docs",
+    "missing_readme",
+    "short_documentation",
+    "missing_installation_section"
+]
+
+# Analysis categories
+categories = ["documentation", "style", "maintainability"]
+
+# Documentation metrics provided
+metrics = [
+    "documentation_coverage",
+    "documentation_quality_score",
+    "doc_comment_ratio", 
+    "total_functions",
+    "documented_functions",
+    "undocumented_public_items",
+    "documentation_density"
+]
+
+# Documentation standards supported
+standards = ["JSDoc", "Rustdoc", "Sphinx", "Javadoc", "GoDoc"]
+
+[plugin.configuration]
+default_severity_threshold = "low"
+default_max_issues_per_file = 100
+
+[plugin.configuration.options]
+min_coverage = { type = "float", default = 80.0, min = 0.0, max = 100.0, description = "Minimum documentation coverage percentage" }
+min_public_coverage = { type = "float", default = 95.0, min = 0.0, max = 100.0, description = "Minimum coverage for public APIs" }
+require_public_docs = { type = "boolean", default = true, description = "Require documentation for public functions" }
+check_examples = { type = "boolean", default = true, description = "Check for examples in documentation" }
+require_parameter_docs = { type = "boolean", default = true, description = "Require parameter documentation" }
+require_return_docs = { type = "boolean", default = true, description = "Require return value documentation" }
+max_doc_line_length = { type = "integer", default = 80, min = 40, max = 200, description = "Maximum documentation line length" }
+check_readme = { type = "boolean", default = true, description = "Check for README files" }
+allowed_undocumented_patterns = { type = "array", default = ["test_*", "*_test", "internal_*"], description = "Patterns for allowed undocumented items" }
+
+[plugin.permissions]
+required = ["read-files"]
+optional = []
+
+[plugin.resources]
+max_memory_mb = 64
+max_cpu_percent = 15
+timeout_seconds = 60
+max_file_handles = 10
+
+[plugin.language_configs]
+# Language-specific documentation configuration
+[plugin.language_configs.rust]
+doc_patterns = ["///", "//!", "/**"]
+function_patterns = ["fn "]
+struct_patterns = ["struct ", "enum ", "trait "]
+public_patterns = ["pub fn", "pub struct", "pub enum"]
+
+[plugin.language_configs.javascript]
+doc_patterns = ["/**"]
+function_patterns = ["function ", "const ", "let ", "=> "]
+struct_patterns = ["class ", "interface "]
+public_patterns = ["export function", "export class"]
+
+[plugin.language_configs.python]
+doc_patterns = ["\"\"\"", "'''"]
+function_patterns = ["def "]
+struct_patterns = ["class "]
+public_patterns = ["def ", "class "]  # Python doesn't have explicit public
+
+[plugin.language_configs.java]
+doc_patterns = ["/**"]
+function_patterns = ["public ", "private ", "protected "]
+struct_patterns = ["class ", "interface ", "enum "]
+public_patterns = ["public class", "public interface", "public enum"]
+
+[plugin.rules]
+# Documentation Coverage
+[plugin.rules.DOC001]
+name = "low_documentation_coverage"
+severity = "medium"
+category = "documentation"
+message = "Low documentation coverage"
+enabled = true
+threshold = 80.0
+
+[plugin.rules.DOC002]
+name = "missing_documentation"
+severity = "medium"  # for public items, configurable by visibility
+category = "documentation"
+message = "Missing documentation"
+enabled = true
+
+[plugin.rules.DOC003]
+name = "documentation_line_too_long"
+severity = "low"
+category = "style"
+message = "Documentation line too long"
+enabled = true
+threshold = 80
+
+[plugin.rules.DOC004]
+name = "missing_examples"
+severity = "low"
+category = "documentation"
+message = "Missing examples in documentation"
+enabled = true
+
+[plugin.rules.DOC005]
+name = "missing_parameter_docs"
+severity = "low"
+category = "documentation"
+message = "Missing parameter documentation"
+enabled = true
+
+[plugin.rules.DOC006]
+name = "missing_readme"
+severity = "low"
+category = "documentation"
+message = "Missing README file"
+enabled = true
+
+[plugin.rules.DOC007]
+name = "short_documentation"
+severity = "low"
+category = "documentation"
+message = "Documentation file is very short"
+enabled = true
+
+[plugin.rules.DOC008]
+name = "missing_installation_section"
+severity = "low"
+category = "documentation"
+message = "README missing installation section"
+enabled = true
+
+[plugin.build]
+target = "wasm32-wasi"
+build_command = "cargo build --release --target wasm32-wasi"
+artifact_path = "target/wasm32-wasi/release/documentation_analyzer_plugin.wasm"
+
+[plugin.testing]
+test_files = [
+    "tests/fixtures/well_documented.rs",
+    "tests/fixtures/poorly_documented.js", 
+    "tests/fixtures/no_docs.py",
+    "tests/fixtures/missing_readme/main.rs",
+    "tests/fixtures/long_doc_lines.java"
+]
+
+expected_issues = [
+    { file = "well_documented.rs", rule = "DOC001", count = 0 },
+    { file = "poorly_documented.js", rule = "DOC002", count = 3 },
+    { file = "no_docs.py", rule = "DOC001", count = 1 },
+    { file = "no_docs.py", rule = "DOC002", count = 5 },
+    { file = "missing_readme/main.rs", rule = "DOC006", count = 1 },
+    { file = "long_doc_lines.java", rule = "DOC003", count = 2 }
+]
+
+[plugin.output]
+# Documentation analysis output options
+generate_coverage_report = true
+generate_quality_report = true
+export_undocumented_items = true
+include_suggestions = true
+format_options = ["JSON", "HTML", "Markdown", "CSV"]
+
+[plugin.integration]
+# Integration with documentation tools
+supports_rustdoc = true
+supports_jsdoc = true
+supports_sphinx = true
+supports_javadoc = true
+supports_godoc = true
+
+# IDE integration
+vscode_extension = "uveddi.documentation-analyzer"
+idea_plugin = "com.uveddi.documentation-analyzer"

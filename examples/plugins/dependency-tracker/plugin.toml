@@ -1,0 +1,197 @@
+# Dependency Vulnerability Tracker Plugin Manifest
+
+[plugin]
+id = "dependency-tracker"
+name = "Dependency Vulnerability Tracker"
+version = "1.0.0"
+description = "Tracks dependencies across multiple package managers and identifies vulnerabilities, licensing issues, and outdated packages"
+author = "Uveddi Security Team"
+license = "MIT"
+homepage = "https://github.com/uveddi/plugins/dependency-tracker"
+repository = "https://github.com/uveddi/plugins/dependency-tracker"
+documentation = "https://docs.uveddi.dev/plugins/dependency-tracker"
+
+[plugin.metadata]
+api_version = "1.0"
+plugin_type = "detector"
+category = "security"
+tags = ["dependencies", "vulnerability", "security", "licensing", "sbom", "supply-chain"]
+maturity = "stable"
+security_focused = true
+
+[plugin.support]
+supported_languages = ["rust", "javascript", "typescript", "python", "go", "java", "php", "ruby"]
+supported_package_managers = ["cargo", "npm", "yarn", "pip", "pipenv", "go", "maven", "gradle", "composer", "gem"]
+minimum_uveddi_version = "0.9.0"
+tested_uveddi_versions = ["0.9.0", "0.10.0"]
+
+[plugin.capabilities]
+# Dependency tracking capabilities
+detectors = [
+    "vulnerable_dependency",
+    "outdated_dependency", 
+    "deprecated_dependency",
+    "unapproved_license",
+    "license_conflict",
+    "dependency_confusion",
+    "malicious_package",
+    "unmaintained_package"
+]
+
+# Analysis categories
+categories = ["security", "maintainability"]
+
+# Dependency metrics provided
+metrics = [
+    "total_dependencies",
+    "vulnerable_dependencies", 
+    "outdated_dependencies",
+    "deprecated_dependencies",
+    "dependency_depth",
+    "license_diversity",
+    "security_score",
+    "freshness_score",
+    "supply_chain_risk_score"
+]
+
+# Vulnerability databases integrated
+vulnerability_sources = ["OSV", "GitHub Advisory", "NPM Security", "PyPI Safety", "RustSec"]
+
+# License compliance frameworks
+license_frameworks = ["SPDX", "FOSSA", "OSI"]
+
+[plugin.configuration]
+default_severity_threshold = "low"
+default_max_issues_per_file = 200
+
+[plugin.configuration.options]
+check_vulnerabilities = { type = "boolean", default = true, description = "Check for known vulnerabilities" }
+check_licenses = { type = "boolean", default = true, description = "Check license compatibility" }
+check_outdated = { type = "boolean", default = true, description = "Check for outdated packages" }
+check_deprecated = { type = "boolean", default = true, description = "Check for deprecated packages" }
+max_vulnerability_age_days = { type = "integer", default = 30, min = 1, max = 365, description = "Alert on vulnerabilities older than N days" }
+allowed_licenses = { type = "array", default = ["MIT", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause"], description = "List of approved licenses" }
+blocked_licenses = { type = "array", default = ["GPL-3.0", "AGPL-3.0"], description = "List of blocked licenses" }
+update_vulnerability_db = { type = "boolean", default = false, description = "Automatically update vulnerability database" }
+include_dev_dependencies = { type = "boolean", default = false, description = "Include development dependencies in analysis" }
+
+[plugin.permissions]
+required = ["read-files"]
+optional = ["network-access", "system-info"]
+network_access_reason = "Fetch vulnerability data from OSV, GitHub Advisory, and package registries"
+system_info_reason = "Analyze installed package manager versions and configurations"
+
+[plugin.resources]
+max_memory_mb = 512  # Higher memory for dependency graph and vulnerability data
+max_cpu_percent = 40
+timeout_seconds = 300  # Longer timeout for network requests and large dependency trees
+max_file_handles = 20
+
+[plugin.network]
+# Network configuration for vulnerability data
+allowed_hosts = [
+    "api.osv.dev",
+    "api.github.com", 
+    "registry.npmjs.org",
+    "pypi.org",
+    "crates.io",
+    "proxy.golang.org"
+]
+request_timeout_seconds = 30
+max_concurrent_requests = 5
+user_agent = "Uveddi-Dependency-Tracker/1.0"
+
+[plugin.cache]
+# Caching configuration for performance
+vulnerability_cache_ttl_hours = 24
+license_cache_ttl_hours = 168  # 1 week
+package_metadata_cache_ttl_hours = 12
+max_cache_size_mb = 100
+
+[plugin.rules]
+# Vulnerable Dependencies
+[plugin.rules.DEP001]
+name = "vulnerable_dependency"
+severity = "high"
+category = "security"
+message = "Vulnerable dependency detected"
+enabled = true
+description = "Dependency contains known security vulnerabilities"
+
+[plugin.rules.DEP002]
+name = "outdated_dependency"
+severity = "low"
+category = "maintainability"
+message = "Outdated dependency detected"
+enabled = true
+description = "Dependency version is significantly outdated"
+
+[plugin.rules.DEP003]
+name = "deprecated_dependency"
+severity = "medium"
+category = "maintainability" 
+message = "Deprecated dependency detected"
+enabled = true
+description = "Dependency is deprecated and no longer maintained"
+
+[plugin.rules.DEP004]
+name = "unapproved_license"
+severity = "medium"
+category = "security"
+message = "Unapproved license detected"
+enabled = true
+description = "Dependency uses a license not approved for this project"
+
+[plugin.rules.DEP005]
+name = "license_conflict"
+severity = "high"
+category = "security"
+message = "License conflict detected"
+enabled = true
+description = "Conflicting licenses detected in dependency tree"
+
+[plugin.rules.DEP006]
+name = "dependency_confusion"
+severity = "critical"
+category = "security"
+message = "Potential dependency confusion attack"
+enabled = true
+description = "Package may be subject to dependency confusion attacks"
+
+[plugin.build]
+target = "wasm32-wasi"
+build_command = "cargo build --release --target wasm32-wasi"
+artifact_path = "target/wasm32-wasi/release/dependency_tracker_plugin.wasm"
+
+[plugin.testing]
+test_files = [
+    "tests/fixtures/rust/Cargo.toml",
+    "tests/fixtures/node/package.json",
+    "tests/fixtures/python/requirements.txt",
+    "tests/fixtures/go/go.mod",
+    "tests/fixtures/vulnerable/package.json"
+]
+
+expected_issues = [
+    { file = "Cargo.toml", rule = "DEP002", count = 2 },
+    { file = "package.json", rule = "DEP001", count = 1 },
+    { file = "package.json", rule = "DEP003", count = 1 },
+    { file = "requirements.txt", rule = "DEP002", count = 3 },
+    { file = "vulnerable/package.json", rule = "DEP001", count = 2 }
+]
+
+[plugin.integration]
+# Integration with other tools and services
+sbom_export_formats = ["SPDX", "CycloneDX", "SWID"]
+ci_cd_integrations = ["GitHub Actions", "GitLab CI", "Jenkins", "CircleCI"]
+slack_notifications = true
+email_notifications = true
+webhook_support = true
+
+[plugin.reporting]
+# Specialized reporting for dependencies
+generate_sbom = true
+generate_license_report = true 
+generate_vulnerability_report = true
+generate_dependency_graph = true
+export_formats = ["JSON", "XML", "CSV", "YAML"]

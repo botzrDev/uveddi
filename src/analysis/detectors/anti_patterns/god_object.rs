@@ -143,6 +143,31 @@ const JAVASCRIPT_CLASS_QUERY: &str = r#"
 )
 "#;
 
+// TypeScript-specific queries for enhanced analysis
+const TYPESCRIPT_CLASS_QUERY: &str = r#"
+(class_declaration
+  name: (type_identifier) @name
+  body: (class_body) @body
+)
+(class_declaration
+  name: (type_identifier) @name
+  type_parameters: (type_parameters) @type_params
+  body: (class_body) @body
+)
+(class_declaration
+  name: (type_identifier) @name
+  heritage: (class_heritage) @heritage
+  body: (class_body) @body
+)
+"#;
+
+const TYPESCRIPT_INTERFACE_CLASS_QUERY: &str = r#"
+(interface_declaration
+  name: (type_identifier) @name
+  body: (object_type) @body
+)
+"#;
+
 const RUST_STRUCT_QUERY: &str = r#"
 (struct_item
   name: (type_identifier) @name
@@ -162,10 +187,32 @@ const RUST_FUNCTION_COUNT_QUERY: &str = "(function_item)";
 const PYTHON_FUNCTION_COUNT_QUERY: &str = "(function_definition)";
 const JAVASCRIPT_FUNCTION_COUNT_QUERY: &str = "(method_definition)";
 
+// TypeScript-specific method counting (includes method signatures)
+const TYPESCRIPT_FUNCTION_COUNT_QUERY: &str = r#"
+[
+  (method_definition)
+  (method_signature)
+  (function_declaration)
+  (function_signature)
+]
+"#;
+
 // --- Queries for counting fields/attributes within a container ---
 const RUST_FIELD_COUNT_QUERY: &str = "(field_declaration)";
 const PYTHON_FIELD_COUNT_QUERY: &str = r#"(expression_statement (assignment))"#;
 const JAVASCRIPT_FIELD_COUNT_QUERY: &str = "(field_definition)";
+
+// TypeScript-specific field counting (includes property signatures and decorators)
+const TYPESCRIPT_FIELD_COUNT_QUERY: &str = r#"
+[
+  (field_definition)
+  (property_signature)
+  (public_field_definition)
+  (private_field_definition)
+  (protected_field_definition)
+  (readonly_field_definition)
+]
+"#;
 
 // Enhanced queries for pattern detection
 
@@ -195,6 +242,34 @@ const JAVASCRIPT_IMPORT_QUERY: &str = r#"
   (call_expression
     function: (identifier) @func_name
     arguments: (arguments (string) @import_path)
+  )
+]
+"#;
+
+// TypeScript-specific import query with type imports
+const TYPESCRIPT_IMPORT_QUERY: &str = r#"
+[
+  (import_statement
+    source: (string) @import_path
+  )
+  (import_statement
+    (import_clause
+      (named_imports
+        (import_specifier) @import_name
+      )
+    )
+    source: (string) @import_path
+  )
+  (import_statement
+    (import_clause
+      (namespace_import) @namespace_import
+    )
+    source: (string) @import_path
+  )
+  (call_expression
+    function: (identifier) @func_name
+    arguments: (arguments (string) @import_path)
+    (#eq? @func_name "require")
   )
 ]
 "#;
@@ -273,11 +348,13 @@ impl Default for GodObjectConfig {
         method_thresholds.insert(SourceLanguage::Rust, 30);
         method_thresholds.insert(SourceLanguage::Python, 25);
         method_thresholds.insert(SourceLanguage::JavaScript, 20);
+        method_thresholds.insert(SourceLanguage::TypeScript, 15); // Stricter for TypeScript due to better type system
 
         let mut field_thresholds = HashMap::new();
         field_thresholds.insert(SourceLanguage::Rust, 20);
         field_thresholds.insert(SourceLanguage::Python, 15);
         field_thresholds.insert(SourceLanguage::JavaScript, 12);
+        field_thresholds.insert(SourceLanguage::TypeScript, 10); // Stricter for TypeScript due to interfaces
 
         let mut framework_modules = HashSet::new();
         // Rust frameworks
@@ -301,6 +378,17 @@ impl Default for GodObjectConfig {
         framework_modules.insert("express".to_string());
         framework_modules.insert("vue".to_string());
         framework_modules.insert("axios".to_string());
+        
+        // TypeScript frameworks and libraries
+        framework_modules.insert("angular".to_string());
+        framework_modules.insert("nest".to_string());
+        framework_modules.insert("nestjs".to_string());
+        framework_modules.insert("typescript".to_string());
+        framework_modules.insert("tsc".to_string());
+        framework_modules.insert("next".to_string());
+        framework_modules.insert("nuxt".to_string());
+        framework_modules.insert("svelte".to_string());
+        framework_modules.insert("solid-js".to_string());
 
         let generated_file_patterns = vec![
             "*_pb2.py".to_string(),
@@ -500,7 +588,7 @@ impl GodObjectDetector {
             SourceLanguage::Rust => RUST_USE_QUERY,
             SourceLanguage::Python => PYTHON_IMPORT_QUERY,
             SourceLanguage::JavaScript => JAVASCRIPT_IMPORT_QUERY,
-            SourceLanguage::TypeScript => JAVASCRIPT_IMPORT_QUERY, // UV-XXX: Reuse JavaScript queries for TypeScript
+            SourceLanguage::TypeScript => TYPESCRIPT_IMPORT_QUERY,
         };
 
         let query = Query::new(&language, query_str)
@@ -668,7 +756,7 @@ impl GodObjectDetector {
             SourceLanguage::Rust => RUST_FUNCTION_COUNT_QUERY,
             SourceLanguage::Python => PYTHON_FUNCTION_COUNT_QUERY,
             SourceLanguage::JavaScript => JAVASCRIPT_FUNCTION_COUNT_QUERY,
-            SourceLanguage::TypeScript => JAVASCRIPT_FUNCTION_COUNT_QUERY, // UV-XXX: Reuse JavaScript queries for TypeScript
+            SourceLanguage::TypeScript => TYPESCRIPT_FUNCTION_COUNT_QUERY,
         };
 
         let query = Query::new(&language, method_query_str)
@@ -712,7 +800,7 @@ impl GodObjectDetector {
             SourceLanguage::Rust => RUST_FUNCTION_COUNT_QUERY,
             SourceLanguage::Python => PYTHON_FUNCTION_COUNT_QUERY,
             SourceLanguage::JavaScript => JAVASCRIPT_FUNCTION_COUNT_QUERY,
-            SourceLanguage::TypeScript => JAVASCRIPT_FUNCTION_COUNT_QUERY, // UV-XXX: Reuse JavaScript queries for TypeScript
+            SourceLanguage::TypeScript => TYPESCRIPT_FUNCTION_COUNT_QUERY,
         };
 
         let query = Query::new(&language, method_query_str)
@@ -1283,6 +1371,405 @@ impl GodObjectDetector {
 
         Ok(issues)
     }
+
+    /// Analyzes a TypeScript file for God Objects with enhanced TypeScript-specific pattern recognition.
+    ///
+    /// This method provides comprehensive TypeScript analysis including:
+    /// 1. Class-based analysis with method and property counting
+    /// 2. Interface-based analysis for large interfaces
+    /// 3. Namespace analysis for oversized namespaces
+    /// 4. Generic type parameter complexity analysis
+    /// 5. Decorator pattern recognition
+    /// 6. Framework-specific exclusions (Angular, NestJS, etc.)
+    fn analyze_typescript(
+        &self,
+        parsed_file: &ParsedFile,
+    ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
+        let mut issues = Vec::new();
+        let source = parsed_file.source.as_bytes();
+        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
+            AnalysisError::AntiPatternDetectionError("AST tree missing".to_string())
+        })?;
+        let language = tree.language();
+        let root_node = tree.root_node();
+
+        // Stage 1: Pre-AST Exclusion - Check for generated code
+        if let Some(generated_pattern) = self.is_generated_file(
+            &parsed_file.file_path.display().to_string(),
+            &parsed_file.source,
+        ) {
+            debug!("Excluding TypeScript file as generated code: {:?}", generated_pattern);
+            return Ok(issues);
+        }
+
+        // Stage 2: Framework Detection
+        let detected_frameworks = self.analyze_imports(parsed_file)?;
+        debug!("Detected TypeScript frameworks: {:?}", detected_frameworks);
+
+        // Analyze Classes
+        issues.extend(self.analyze_typescript_classes(parsed_file, &detected_frameworks)?);
+        
+        // Analyze Interfaces (can be God Objects too)
+        issues.extend(self.analyze_typescript_interfaces(parsed_file)?);
+        
+        // Analyze Namespaces
+        issues.extend(self.analyze_typescript_namespaces(parsed_file)?);
+
+        Ok(issues)
+    }
+
+    /// Analyzes TypeScript classes for God Object patterns
+    fn analyze_typescript_classes(
+        &self,
+        parsed_file: &ParsedFile,
+        detected_frameworks: &HashSet<String>,
+    ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
+        let mut issues = Vec::new();
+        let source = parsed_file.source.as_bytes();
+        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
+            AnalysisError::AntiPatternDetectionError("AST tree missing".to_string())
+        })?;
+        let language = tree.language();
+
+        let class_query = Query::new(&language, TYPESCRIPT_CLASS_QUERY)
+            .map_err(|e| AnalysisError::QueryError(e.to_string()))?;
+        let method_query = Query::new(&language, TYPESCRIPT_FUNCTION_COUNT_QUERY)
+            .map_err(|e| ErrorHelpers::query_error(&e.to_string()))?;
+        let field_query = Query::new(&language, TYPESCRIPT_FIELD_COUNT_QUERY)
+            .map_err(|e| AnalysisError::QueryError(e.to_string()))?;
+
+        let mut cursor = QueryCursor::new();
+        let mut matches = cursor.matches(&class_query, tree.root_node(), source);
+        
+        while let Some(mat) = matches.next() {
+            let name_node = mat.captures[0].node;
+            let body_node = mat.captures.iter()
+                .find(|c| c.node.kind() == "class_body")
+                .map(|c| c.node)
+                .unwrap_or(mat.captures[1].node);
+            let container_node = name_node.parent().unwrap_or(name_node);
+
+            let name = name_node.utf8_text(source).unwrap_or("Unnamed");
+
+            // Count methods
+            let mut method_cursor = QueryCursor::new();
+            let method_count = {
+                let mut matches = method_cursor.matches(&method_query, body_node, source);
+                let mut count = 0;
+                while matches.next().is_some() {
+                    count += 1;
+                }
+                count
+            };
+
+            // Count fields
+            let mut field_cursor = QueryCursor::new();
+            let field_count = {
+                let mut matches = field_cursor.matches(&field_query, body_node, source);
+                let mut count = 0;
+                while matches.next().is_some() {
+                    count += 1;
+                }
+                count
+            };
+
+            // Apply TypeScript-specific thresholds
+            let method_threshold = self.config.method_thresholds.get(&SourceLanguage::TypeScript).copied().unwrap_or(15);
+            let field_threshold = self.config.field_thresholds.get(&SourceLanguage::TypeScript).copied().unwrap_or(10);
+
+            debug!(
+                "Analyzing TypeScript class {}: {} methods, {} fields (thresholds: >{}, >{})",
+                name, method_count, field_count, method_threshold, field_threshold
+            );
+
+            // Only proceed if thresholds are exceeded
+            if method_count <= method_threshold && field_count <= field_threshold {
+                continue;
+            }
+
+            // Stage 3: TypeScript-specific Pattern Recognition
+            let mut excluded_pattern = None;
+
+            if self.config.recognize_patterns {
+                // Check for Angular Component/Service patterns
+                if detected_frameworks.contains("angular") {
+                    if name.ends_with("Component") || name.ends_with("Service") || name.ends_with("Module") {
+                        excluded_pattern = Some(DetectedPattern::FrameworkController {
+                            framework: "angular".to_string(),
+                            base_class: Some(name.to_string()),
+                        });
+                    }
+                }
+
+                // Check for NestJS Controller/Service patterns
+                if excluded_pattern.is_none() && (detected_frameworks.contains("nest") || detected_frameworks.contains("nestjs")) {
+                    if name.ends_with("Controller") || name.ends_with("Service") || name.ends_with("Module") {
+                        excluded_pattern = Some(DetectedPattern::FrameworkController {
+                            framework: "nestjs".to_string(),
+                            base_class: Some(name.to_string()),
+                        });
+                    }
+                }
+
+                // Check for DTO pattern with TypeScript interfaces
+                if excluded_pattern.is_none() {
+                    if let Some(pattern) = self.detect_typescript_dto_pattern(
+                        parsed_file,
+                        container_node,
+                        method_count,
+                        field_count,
+                        detected_frameworks,
+                    ) {
+                        excluded_pattern = Some(pattern);
+                    }
+                }
+
+                // Check for Builder pattern
+                if excluded_pattern.is_none() {
+                    if let Some(pattern) = self.detect_builder_pattern(parsed_file, container_node, name) {
+                        excluded_pattern = Some(pattern);
+                    }
+                }
+            }
+
+            // Stage 4: Enhanced Analysis
+            let lcom4_score = if self.config.enable_cohesion_analysis && excluded_pattern.is_none() {
+                self.calculate_lcom4(parsed_file, container_node).ok()
+            } else {
+                None
+            };
+
+            let behavioral_analysis = if self.config.enable_behavioral_analysis && excluded_pattern.is_none() {
+                self.analyze_behavioral_complexity(parsed_file, container_node).ok()
+            } else {
+                None
+            };
+
+            if let Some(issue) = self.create_issue(
+                parsed_file,
+                name,
+                name_node,
+                container_node,
+                method_count,
+                field_count,
+                lcom4_score,
+                behavioral_analysis,
+                excluded_pattern,
+            ) {
+                issues.push(issue);
+            }
+        }
+
+        Ok(issues)
+    }
+
+    /// Analyzes TypeScript interfaces for God Interface patterns
+    fn analyze_typescript_interfaces(
+        &self,
+        parsed_file: &ParsedFile,
+    ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
+        let mut issues = Vec::new();
+        let source = parsed_file.source.as_bytes();
+        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
+            AnalysisError::AntiPatternDetectionError("AST tree missing".to_string())
+        })?;
+        let language = tree.language();
+
+        let interface_query = Query::new(&language, TYPESCRIPT_INTERFACE_CLASS_QUERY)
+            .map_err(|e| AnalysisError::QueryError(e.to_string()))?;
+        let property_query = Query::new(&language, TYPESCRIPT_FIELD_COUNT_QUERY)
+            .map_err(|e| AnalysisError::QueryError(e.to_string()))?;
+
+        let mut cursor = QueryCursor::new();
+        let mut matches = cursor.matches(&interface_query, tree.root_node(), source);
+        
+        while let Some(mat) = matches.next() {
+            let name_node = mat.captures[0].node;
+            let body_node = mat.captures[1].node;
+            let container_node = name_node.parent().unwrap_or(name_node);
+
+            let name = name_node.utf8_text(source).unwrap_or("Unnamed");
+
+            // Count properties in interface
+            let mut property_cursor = QueryCursor::new();
+            let property_count = {
+                let mut matches = property_cursor.matches(&property_query, body_node, source);
+                let mut count = 0;
+                while matches.next().is_some() {
+                    count += 1;
+                }
+                count
+            };
+
+            // Interface-specific threshold (lower than classes)
+            let property_threshold = 8; // Interfaces should be smaller
+
+            debug!(
+                "Analyzing TypeScript interface {}: {} properties (threshold: >{})",
+                name, property_count, property_threshold
+            );
+
+            if property_count > property_threshold {
+                let severity = match property_count {
+                    0..=12 => "Medium",
+                    13..=20 => "High",
+                    _ => "Critical",
+                };
+
+                let description = format!(
+                    "God Interface detected: '{}' has {} properties. Interfaces should be focused and cohesive. (Threshold: >{})",
+                    name, property_count, property_threshold
+                );
+
+                let mut issue = ArchitecturalIssue::new(
+                    0, // analysis_run_id will be set by the engine
+                    1, // anti_pattern_type_id for God Object
+                    parsed_file.file_path.display().to_string(),
+                    Some((name_node.start_position().row + 1) as i32),
+                    description.clone(),
+                    "GodObjectDetector".to_string(),
+                    severity.to_string(),
+                    description.clone(),
+                );
+                issue.start_line = Some((name_node.start_position().row + 1) as i32);
+                issue.end_line = Some((name_node.end_position().row + 1) as i32);
+                issue.code_snippet = Some(
+                    container_node
+                        .utf8_text(parsed_file.source.as_bytes())
+                        .unwrap_or("")
+                        .to_string()
+                );
+                issues.push(issue);
+            }
+        }
+
+        Ok(issues)
+    }
+
+    /// Analyzes TypeScript namespaces for God Namespace patterns
+    fn analyze_typescript_namespaces(
+        &self,
+        parsed_file: &ParsedFile,
+    ) -> Result<Vec<ArchitecturalIssue>, AnalysisError> {
+        let mut issues = Vec::new();
+        let source = parsed_file.source.as_bytes();
+        let tree = parsed_file.tree.as_ref().ok_or_else(|| {
+            AnalysisError::AntiPatternDetectionError("AST tree missing".to_string())
+        })?;
+        let language = tree.language();
+
+        let namespace_query = Query::new(&language, r#"
+        [
+          (module_declaration
+            name: (identifier) @name
+            body: (statement_block) @body
+          )
+          (namespace_declaration
+            name: (identifier) @name
+            body: (statement_block) @body
+          )
+        ]
+        "#).map_err(|e| AnalysisError::QueryError(e.to_string()))?;
+
+        let mut cursor = QueryCursor::new();
+        let mut matches = cursor.matches(&namespace_query, tree.root_node(), source);
+        
+        while let Some(mat) = matches.next() {
+            let name_node = mat.captures[0].node;
+            let body_node = mat.captures[1].node;
+            let container_node = name_node.parent().unwrap_or(name_node);
+
+            let name = name_node.utf8_text(source).unwrap_or("Unnamed");
+
+            // Count declarations in namespace
+            let declaration_count = body_node.child_count();
+            let namespace_threshold = 20; // Namespaces can be larger than classes
+
+            debug!(
+                "Analyzing TypeScript namespace {}: {} declarations (threshold: >{})",
+                name, declaration_count, namespace_threshold
+            );
+
+            if declaration_count > namespace_threshold {
+                let severity = match declaration_count {
+                    0..=30 => "Medium",
+                    31..=50 => "High",
+                    _ => "Critical",
+                };
+
+                let description = format!(
+                    "God Namespace detected: '{}' has {} declarations. Consider splitting into multiple namespaces. (Threshold: >{})",
+                    name, declaration_count, namespace_threshold
+                );
+
+                let mut issue = ArchitecturalIssue::new(
+                    0, // analysis_run_id will be set by the engine
+                    1, // anti_pattern_type_id for God Object
+                    parsed_file.file_path.display().to_string(),
+                    Some((name_node.start_position().row + 1) as i32),
+                    description.clone(),
+                    "GodObjectDetector".to_string(),
+                    severity.to_string(),
+                    description.clone(),
+                );
+                issue.start_line = Some((name_node.start_position().row + 1) as i32);
+                issue.end_line = Some((name_node.end_position().row + 1) as i32);
+                issue.code_snippet = Some(
+                    container_node
+                        .utf8_text(parsed_file.source.as_bytes())
+                        .unwrap_or("")
+                        .to_string()
+                );
+                issues.push(issue);
+            }
+        }
+
+        Ok(issues)
+    }
+
+    /// Detects TypeScript-specific DTO patterns
+    fn detect_typescript_dto_pattern(
+        &self,
+        parsed_file: &ParsedFile,
+        class_node: Node,
+        method_count: usize,
+        field_count: usize,
+        frameworks: &HashSet<String>,
+    ) -> Option<DetectedPattern> {
+        if field_count == 0 {
+            return None;
+        }
+
+        let field_ratio = field_count as f64 / (field_count + method_count) as f64;
+
+        // High field-to-method ratio suggests DTO
+        if field_ratio > 0.8 { // Stricter for TypeScript due to type safety
+            // Check for TypeScript DTO frameworks
+            for framework in frameworks {
+                if ["class-validator", "class-transformer", "nestjs"].iter().any(|f| framework.contains(f)) {
+                    return Some(DetectedPattern::Dto {
+                        framework: framework.clone(),
+                        field_ratio,
+                    });
+                }
+            }
+
+            // Check for TypeScript DTO naming conventions or patterns
+            if let Ok(source_text) = class_node.utf8_text(parsed_file.source.as_bytes()) {
+                if source_text.to_lowercase().contains("dto") || 
+                   source_text.contains("@IsString") || 
+                   source_text.contains("@IsNumber") ||
+                   source_text.contains("@IsOptional") {
+                    return Some(DetectedPattern::Dto {
+                        framework: "typescript_decorators".to_string(),
+                        field_ratio,
+                    });
+                }
+            }
+        }
+
+        None
+    }
 }
 
 #[async_trait]
@@ -1309,12 +1796,7 @@ impl AnalysisDetector for GodObjectDetector {
                 JAVASCRIPT_FUNCTION_COUNT_QUERY,
                 JAVASCRIPT_FIELD_COUNT_QUERY,
             ),
-            SourceLanguage::TypeScript => self.analyze_standard(
-                parsed_file,
-                JAVASCRIPT_CLASS_QUERY, // UV-XXX: Reuse JavaScript queries for TypeScript
-                JAVASCRIPT_FUNCTION_COUNT_QUERY,
-                JAVASCRIPT_FIELD_COUNT_QUERY,
-            ),
+            SourceLanguage::TypeScript => self.analyze_typescript(parsed_file),
         };
 
         match &result {

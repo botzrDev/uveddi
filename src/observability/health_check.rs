@@ -252,7 +252,7 @@ impl HealthChecker for MemoryHealthChecker {
         };
         
         let mut health = ComponentHealth {
-            status,
+            status: status.clone(),
             last_check: Utc::now(),
             response_time_ms: response_time,
             error_message: None,
@@ -581,6 +581,12 @@ impl HealthCheckSystem {
             (unhealthy_components as f64 / components.len() as f64) * 100.0
         };
         
+        // Calculate healthy components before move
+        let healthy_components_count = components.len() - degraded_components - unhealthy_components;
+        
+        // Store overall_status for later use
+        let status_for_log = overall_status.clone();
+        
         let health_status = SystemHealthStatus {
             overall_status,
             components,
@@ -607,7 +613,7 @@ impl HealthCheckSystem {
         tracing::info!(
             trace_id = %trace_id,
             overall_status = ?health_status.overall_status,
-            healthy_components = components.len() - degraded_components - unhealthy_components,
+            healthy_components = healthy_components_count,
             degraded_components = degraded_components,
             unhealthy_components = unhealthy_components,
             check_duration_ms = check_duration.as_millis(),
@@ -619,7 +625,7 @@ impl HealthCheckSystem {
         self.metrics.record_request(
             "INTERNAL",
             "/health",
-            if overall_status == ServiceStatus::Healthy { "success" } else { "failure" },
+            if status_for_log == ServiceStatus::Healthy { "success" } else { "failure" },
             check_duration,
         );
         

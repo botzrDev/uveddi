@@ -38,7 +38,7 @@ impl ResourceManager {
     pub fn new(config: ResourceConfig) -> ResourceResult<Self> {
         let config = Arc::new(RwLock::new(config));
         let memory_tracker = Arc::new(MemoryTracker::new(
-            config.blocking_read().max_memory_bytes,
+            config.blocking_read().memory.max_memory_bytes,
         )?);
         
         let monitor = Arc::new(ResourceMonitor::new(
@@ -95,7 +95,7 @@ impl ResourceManager {
         *current = config;
         
         // Update components with new config
-        self.memory_tracker.update_limit(current.max_memory_bytes)?;
+        self.memory_tracker.update_limit(current.memory.max_memory_bytes)?;
         self.orchestrator.update_limits(&*current).await?;
         
         Ok(())

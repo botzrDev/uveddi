@@ -47,7 +47,7 @@ pub struct MermaidGenerator {
 impl MermaidGenerator {
     /// Create a new Mermaid generator with default templates
     pub fn new() -> Result<Self, MermaidGenerationError> {
-        let mut tera = Tera::new("templates/*.tera").unwrap_or_else(|_| Tera::default());
+        let mut tera = Tera::default(); // Temporarily skip external templates
 
         // Register built-in templates
         Self::register_builtin_templates(&mut tera)?;
@@ -484,7 +484,17 @@ impl MermaidGenerator {
             .collect();
 
         context.insert("components", &template_components);
-        context.insert("cycles", cycles);
+        let template_cycle_edges: Vec<Value> = cycle_edges
+            .iter()
+            .map(|(from_id, to_id)| {
+                json!({
+                    "from": from_id.to_string(),
+                    "to": to_id.to_string()
+                })
+            })
+            .collect();
+
+        context.insert("cycle_edges", &template_cycle_edges);
         context.insert("title", "Cyclic Dependencies Detection");
 
         let mermaid_src = self
@@ -661,12 +671,8 @@ classDef normal-component fill:#E6F3FF,stroke:#1E88E5,stroke-width:1px;"#,
     {% endif -%}
 {% endfor %}
 
-{% for cycle in cycles -%}
-    {% for i in range(end=cycle | length) -%}
-        {% set current = cycle[i] -%}
-        {% set next = cycle[(i + 1) % (cycle | length)] -%}
-        {{ current }} ==> {{ next }}
-    {% endfor -%}
+{% for cycle_edges in cycle_edges -%}
+    {{ cycle_edges.from }} ==> {{ cycle_edges.to }}
 {% endfor %}
 
 classDef cycle-critical fill:#FFB3B3,stroke:#FF0000,stroke-width:3px;

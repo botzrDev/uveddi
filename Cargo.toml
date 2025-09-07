@@ -54,6 +54,8 @@ default = ["dev-core"]
 prometheus = ["dep:prometheus"]
 # Production-ready features (previous default behavior)  
 production = ["tree-sitter", "security", "memory-optimization", "web-full", "tui", "wasm-plugins", "prometheus", "dep:rayon", "dep:tokio-stream", "dep:async-stream", "dep:rusqlite", "dep:bincode"]
+# Production-secure features (without openidconnect/RSA vulnerability)
+production-secure = ["tree-sitter", "memory-optimization", "web-full", "tui", "wasm-plugins", "prometheus", "dep:rayon", "dep:tokio-stream", "dep:async-stream", "dep:rusqlite", "dep:bincode"]
 # Chaos engineering and load testing
 chaos = ["dep:fail", "dep:statrs", "dep:ndarray-stats"]
 # Performance regression detection with genetic algorithms
@@ -283,7 +285,7 @@ tower_governor = { version = "0.8.0", optional = true }
 casbin = { version = "2.1", optional = true }
 # Authentication - updated for security (resolves RSA timing attack vulnerability)
 oauth2 = { version = "5.0", optional = true }
-openidconnect = { version = "4.0.1", optional = true }  # Note: RSA vulnerability exists but no fix available yet
+openidconnect = { version = "4.0.1", optional = true }  # SECURITY WARNING: RUSTSEC-2023-0071 (RSA Marvin Attack) - use production-secure feature for production deployments
 jsonwebtoken = { version = "9.3", optional = true }
 # Security
 argon2 = { version = "0.5", optional = true }

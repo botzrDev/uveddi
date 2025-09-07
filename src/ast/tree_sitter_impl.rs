@@ -154,26 +154,22 @@ impl AstParser {
             }
             #[cfg(feature = "typescript-lang")]
             {
-                let typescript_parser = Parser::new();
-                // Use TypeScript grammar; TSX support can be added later if needed
-                #[allow(non_snake_case)]
+                let mut typescript_parser = Parser::new();
+                // Use TypeScript grammar - try TSX first for broader compatibility
+                #[cfg(feature = "tree-sitter")]
                 {
-                    // Depending on crate API, prefer function if constant not available
-                    #[cfg(any())]
-                    typescript_parser.set_language(&tree_sitter_typescript::LANGUAGE_TSX.into())?;
-                }
-                // Fallback attempt using function names (common API)
-                #[allow(unused_must_use)]
-                {
-                    // Try typescript() then tsx() naming conventions; ignore errors silently
-                    // (Exact symbol depends on crate version) - robust fallback
-                    #[allow(unused)]
-                    {
-                        // If functions exist they will compile; otherwise they are ignored by cfg
-                        // These are speculative and may be removed in future refactor.
+                    // Try TSX language first for full TypeScript + JSX support
+                    let tsx_result = typescript_parser.set_language(&tree_sitter_typescript::LANGUAGE_TSX.into());
+                    if tsx_result.is_err() {
+                        // Fallback to TypeScript-only if TSX fails
+                        let ts_result = typescript_parser.set_language(&tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into());
+                        if ts_result.is_err() {
+                            return Err(AstError::Other(
+                                "Failed to initialize TypeScript parser - no compatible language found".to_string()
+                            ));
+                        }
                     }
                 }
-                // NOTE: We accept that set_language may have already succeeded above; if not it will error on parse use.
                 parsers.insert(SourceLanguage::TypeScript, typescript_parser);
             }
         }
@@ -428,7 +424,7 @@ impl AstParser {
                 }
             }
             SourceLanguage::TypeScript => {
-                // Reuse JS logic for now; differentiate later with interfaces, types, etc.
+                // Enhanced TypeScript analysis with interfaces, types, enums, and classes
                 for child in root.children(&mut root.walk()) {
                     match child.kind() {
                         "function_declaration" => {
@@ -453,9 +449,80 @@ impl AstParser {
                                         AstError::Other("Failed to get node text".to_string())
                                     })?
                                     .to_string();
+                                
+                                // Extract class methods for TypeScript classes
+                                let mut methods = Vec::new();
+                                if let Some(body_node) = child.child_by_field_name("body") {
+                                    for member in body_node.children(&mut body_node.walk()) {
+                                        if member.kind() == "method_definition" {
+                                            if let Some(method_name_node) = member.child_by_field_name("name") {
+                                                if let Ok(method_name) = method_name_node.utf8_text(source.as_bytes()) {
+                                                    methods.push(method_name.to_string());
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                
                                 items.push(CustomAst::Struct {
                                     name,
-                                    methods: Vec::new(),
+                                    methods,
+                                });
+                            }
+                        }
+                        "interface_declaration" => {
+                            if let Some(name_node) = child.child_by_field_name("name") {
+                                let name = name_node
+                                    .utf8_text(source.as_bytes())
+                                    .map_err(|_| {
+                                        AstError::Other("Failed to get node text".to_string())
+                                    })?
+                                    .to_string();
+                                items.push(CustomAst::Interface {
+                                    name,
+                                    properties: Vec::new(),
+                                });
+                            }
+                        }
+                        "type_alias_declaration" => {
+                            if let Some(name_node) = child.child_by_field_name("name") {
+                                let name = name_node
+                                    .utf8_text(source.as_bytes())
+                                    .map_err(|_| {
+                                        AstError::Other("Failed to get node text".to_string())
+                                    })?
+                                    .to_string();
+                                items.push(CustomAst::TypeAlias {
+                                    name,
+                                    type_definition: "any".to_string(), // Simplified
+                                });
+                            }
+                        }
+                        "enum_declaration" => {
+                            if let Some(name_node) = child.child_by_field_name("name") {
+                                let name = name_node
+                                    .utf8_text(source.as_bytes())
+                                    .map_err(|_| {
+                                        AstError::Other("Failed to get node text".to_string())
+                                    })?
+                                    .to_string();
+                                items.push(CustomAst::Enum {
+                                    name,
+                                    variants: Vec::new(),
+                                });
+                            }
+                        }
+                        "module_declaration" | "namespace_declaration" => {
+                            if let Some(name_node) = child.child_by_field_name("name") {
+                                let name = name_node
+                                    .utf8_text(source.as_bytes())
+                                    .map_err(|_| {
+                                        AstError::Other("Failed to get node text".to_string())
+                                    })?
+                                    .to_string();
+                                items.push(CustomAst::Namespace {
+                                    name,
+                                    members: Vec::new(),
                                 });
                             }
                         }
@@ -919,6 +986,13 @@ pub enum CustomAst {
     Struct { name: String, methods: Vec<String> },
     Function { name: String, params: Vec<String> },
     Variable { name: String },
+    // TypeScript-specific constructs
+    Interface { name: String, properties: Vec<String> },
+    TypeAlias { name: String, type_definition: String },
+    Enum { name: String, variants: Vec<String> },
+    Namespace { name: String, members: Vec<CustomAst> },
+    Generic { name: String, type_parameters: Vec<String> },
+    Decorator { name: String, target: String },
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]

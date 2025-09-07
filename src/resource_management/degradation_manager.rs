@@ -4,6 +4,7 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
 use serde::{Deserialize, Serialize};
+use tracing::{info, warn, error, debug};
 
 use super::{
     error::{ResourceError, ResourceResult},
@@ -235,7 +236,7 @@ impl GracefulDegradationManager {
         let mut feature_states = self.feature_states.lock().unwrap();
         feature_states.insert(category.clone(), enabled);
         
-        log::info!(
+        info!(
             "Feature {:?} manually {} by administrator",
             category,
             if enabled { "enabled" } else { "disabled" }
@@ -318,7 +319,7 @@ impl GracefulDegradationManager {
         // Apply the degradation actions
         self.execute_degradation_actions(&level).await?;
         
-        log::warn!(
+        warn!(
             "Service level changed to {:?}: {} - {}",
             level,
             level.description(),
@@ -477,7 +478,7 @@ impl GracefulDegradationManager {
     }
     
     async fn emergency_cleanup_actions(&self) -> ResourceResult<()> {
-        log::warn!("Executing emergency cleanup actions");
+        warn!("Executing emergency cleanup actions");
         
         // Clear any cached data
         // self.clear_caches().await?;
@@ -488,7 +489,7 @@ impl GracefulDegradationManager {
         // Force garbage collection if possible
         // This would be language/runtime specific
         
-        log::info!("Emergency cleanup completed");
+        info!("Emergency cleanup completed");
         
         Ok(())
     }

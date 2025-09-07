@@ -5,6 +5,7 @@ use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
 use tokio::time::interval;
 use serde::{Deserialize, Serialize};
+use tracing::{info, warn, error, debug};
 
 use super::{
     error::{ResourceError, ResourceResult},
@@ -334,7 +335,7 @@ impl ResourceMonitor {
         }
         
         if config.monitoring.log_usage {
-            log::info!(
+            info!(
                 "Resource usage - Memory: {:.1}% ({}/{} MB), Active analyses: {}",
                 current_usage.memory.usage_percent,
                 current_usage.memory.current / 1024 / 1024,

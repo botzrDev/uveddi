@@ -1,6 +1,7 @@
 //! Streaming file processor for handling large files with memory constraints
 
 use std::path::{Path, PathBuf};
+use sha2::Digest;
 use std::sync::Arc;
 use tokio::fs::File;
 use tokio::io::{AsyncReadExt, AsyncSeekExt, BufReader};

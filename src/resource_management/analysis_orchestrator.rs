@@ -53,7 +53,7 @@ pub enum AnalysisPriority {
 }
 
 /// Statistics about orchestration performance
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, serde::Serialize, serde::Deserialize)]
 pub struct OrchestrationStats {
     pub total_analyses: u64,
     pub completed_analyses: u64,
@@ -75,9 +75,9 @@ pub struct ConcurrencyLimit {
 }
 
 /// Analysis execution context
-pub struct AnalysisExecution {
+pub struct AnalysisExecution<'a> {
     id: Uuid,
-    permit: Option<SemaphorePermit<'static>>,
+    permit: Option<SemaphorePermit<'a>>,
     memory_guard: Option<MemoryGuard>,
     started_at: Instant,
     orchestrator: Arc<AnalysisOrchestrator>,
@@ -107,12 +107,12 @@ impl AnalysisOrchestrator {
     }
     
     /// Attempts to start a new analysis
-    pub async fn start_analysis(
-        &self,
+    pub async fn start_analysis<'a>(
+        &'a self,
         component: &str,
         estimated_memory: u64,
         priority: AnalysisPriority,
-    ) -> ResourceResult<AnalysisExecution> {
+    ) -> ResourceResult<AnalysisExecution<'a>> {
         let analysis_id = Uuid::new_v4();
         
         // Check if we can start immediately or need to queue
@@ -281,12 +281,12 @@ impl AnalysisOrchestrator {
         true
     }
     
-    async fn execute_analysis(
-        &self,
+    async fn execute_analysis<'a>(
+        &'a self,
         analysis_id: Uuid,
         component: &str,
         estimated_memory: u64,
-    ) -> ResourceResult<AnalysisExecution> {
+    ) -> ResourceResult<AnalysisExecution<'a>> {
         // Acquire concurrency permit
         let permit = self.concurrency_limiter.acquire().await
             .map_err(|_| ResourceError::ResourceUnavailable(
@@ -330,13 +330,13 @@ impl AnalysisOrchestrator {
         })
     }
     
-    async fn queue_analysis(
-        &self,
+    async fn queue_analysis<'a>(
+        &'a self,
         analysis_id: Uuid,
         component: &str,
         estimated_memory: u64,
         priority: AnalysisPriority,
-    ) -> ResourceResult<AnalysisExecution> {
+    ) -> ResourceResult<AnalysisExecution<'a>> {
         let pending = PendingAnalysis {
             id: analysis_id,
             component: component.to_string(),
@@ -392,7 +392,7 @@ impl Clone for AnalysisOrchestrator {
     }
 }
 
-impl AnalysisExecution {
+impl<'a> AnalysisExecution<'a> {
     /// Gets the analysis ID
     pub fn id(&self) -> Uuid {
         self.id
@@ -418,6 +418,9 @@ impl AnalysisExecution {
     }
     
     fn cleanup(&mut self, success: bool, error: Option<ResourceError>) {
+        // Calculate duration before borrowing
+        let duration_ms = self.elapsed().as_millis() as f64;
+        
         // Remove from active analyses
         if let Some(orchestrator) = Arc::get_mut(&mut self.orchestrator) {
             orchestrator.active_analyses.lock().unwrap().remove(&self.id);
@@ -435,7 +438,6 @@ impl AnalysisExecution {
             }
             
             // Update average duration
-            let duration_ms = self.elapsed().as_millis() as f64;
             if stats.completed_analyses > 0 {
                 stats.average_duration_ms = 
                     (stats.average_duration_ms * (stats.completed_analyses - 1) as f64 + duration_ms) 
@@ -451,7 +453,7 @@ impl AnalysisExecution {
     }
 }
 
-impl Drop for AnalysisExecution {
+impl<'a> Drop for AnalysisExecution<'a> {
     fn drop(&mut self) {
         // Ensure cleanup happens even if complete/fail wasn't called
         if self.permit.is_some() || self.memory_guard.is_some() {

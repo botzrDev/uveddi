@@ -116,8 +116,19 @@ impl DatabaseMetrics {
         let failed_queries = self.failed_queries.load(Ordering::Relaxed);
         let active_conn = self.active_connections.load(Ordering::Relaxed);
         
+        // Calculate health status with proper handling for newly initialized databases
+        let is_healthy = if total_queries == 0 {
+            // For newly initialized databases with no queries, consider them healthy
+            true
+        } else {
+            // For databases with queries, check recency and failure rate
+            let query_recency_ok = last_query > 0 && (now - last_query) < 300; // 5min
+            let failure_rate_ok = failed_queries < total_queries / 10; // <10% failure rate
+            query_recency_ok && failure_rate_ok
+        };
+        
         DatabaseHealthStatus {
-            is_healthy: now - last_query < 300 && failed_queries < total_queries / 10, // 5min + <10% failure rate
+            is_healthy,
             active_connections: active_conn,
             pool_utilization: 0.0, // Will be set by pool implementation
             last_successful_query: last_query,

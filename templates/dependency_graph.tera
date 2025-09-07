@@ -1,5 +1,5 @@
-{{!-- Dependency Graph Template --}}
-{{!-- Shows module/component dependencies with highlighting --}}
+{#  Dependency Graph Template  #}
+{#  Shows module/component dependencies with highlighting  #}
 graph {{ layout }}
 
 {%- for component in components %}
@@ -36,7 +36,7 @@ graph {{ layout }}
     classDef {{ style_name }} fill:{{ style.fill_color }},stroke:{{ style.stroke_color }},stroke-width:{{ style.stroke_width }}px{{ style.text_color | default("") | prepend(",color:") }}
   {%- endfor %}
 {%- else %}
-  {{!-- Default dependency graph styles --}}
+  {#  Default dependency graph styles  #}
   classDef highlighted-node fill:#FF4444,stroke:#CC0000,stroke-width:2px,color:#FFF
   classDef normal-node fill:#E8F4F8,stroke:#4A90A4,stroke-width:1px
 {%- endif %}}}

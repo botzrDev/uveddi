@@ -258,6 +258,7 @@ impl InteractiveReportGenerator {
 
         // Enhance demo data with more realistic content
         demo.project.name = "Demo Rust Project".to_string();
+        demo.project.id = "demo".to_string();
         demo.project.languages = vec!["rust".to_string(), "javascript".to_string()];
         demo.project.commit = Some("abc123".to_string());
         demo.project.branch = Some("main".to_string());

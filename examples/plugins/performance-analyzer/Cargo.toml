@@ -1,0 +1,32 @@
+[package]
+name = "performance-analyzer-plugin"
+version = "1.0.0"
+edition = "2021"
+authors = ["Uveddi Team <team@uveddi.dev>"]
+license = "MIT"
+description = "Performance analysis plugin for Uveddi - detects performance anti-patterns and optimization opportunities"
+repository = "https://github.com/uveddi/plugins/performance-analyzer"
+readme = "README.md"
+keywords = ["performance", "optimization", "static-analysis", "code-quality"]
+categories = ["development-tools", "web-programming"]
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+wit-bindgen = "0.30.0"
+
+[package.metadata.component]
+package = "uveddi:performance-analyzer"
+
+[package.metadata.component.dependencies]
+"wasi:cli" = { path = "wit/deps/cli" }
+
+[profile.release]
+lto = true
+strip = true
+codegen-units = 1
+panic = "abort"
+
+[profile.dev]
+opt-level = 1

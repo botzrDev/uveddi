@@ -1,0 +1,196 @@
+# Security Vulnerability Scanner Plugin Manifest
+
+[plugin]
+id = "security-scanner"
+name = "Security Vulnerability Scanner"
+version = "1.0.0"
+description = "Comprehensive security vulnerability scanner for detecting common security issues and compliance violations"
+author = "Uveddi Security Team"
+license = "MIT"
+homepage = "https://github.com/uveddi/plugins/security-scanner"
+repository = "https://github.com/uveddi/plugins/security-scanner"
+documentation = "https://docs.uveddi.dev/plugins/security-scanner"
+
+[plugin.metadata]
+api_version = "1.0"
+plugin_type = "detector"
+category = "security"
+tags = ["security", "vulnerability", "compliance", "injection", "secrets", "crypto"]
+maturity = "stable"
+security_focused = true
+
+[plugin.support]
+supported_languages = [
+    "rust", "javascript", "typescript", "python", 
+    "java", "go", "php", "ruby", "c", "cpp"
+]
+minimum_uveddi_version = "0.9.0"
+tested_uveddi_versions = ["0.9.0", "0.10.0"]
+
+[plugin.capabilities]
+# Security vulnerability detection capabilities
+detectors = [
+    "sql_injection",
+    "xss_vulnerability",
+    "command_injection",
+    "path_traversal",
+    "hardcoded_secrets",
+    "weak_cryptography",
+    "insecure_random",
+    "dangerous_functions",
+    "vulnerable_dependencies",
+    "authentication_bypass",
+    "authorization_issues",
+    "data_exposure"
+]
+
+# Security categories this plugin covers
+categories = ["security"]
+
+# Security metrics provided
+metrics = [
+    "security_score",
+    "critical_vulnerabilities",
+    "secrets_detected",
+    "vulnerability_density",
+    "compliance_score"
+]
+
+# Security standards compliance
+compliance_frameworks = ["OWASP", "CWE", "SANS", "NIST"]
+
+[plugin.configuration]
+default_severity_threshold = "medium"
+default_max_issues_per_file = 100
+
+[plugin.configuration.options]
+check_dependencies = { type = "boolean", default = true, description = "Check for vulnerable dependencies" }
+crypto_validation = { type = "boolean", default = true, description = "Validate cryptographic implementations" }
+sql_injection_detection = { type = "boolean", default = true, description = "Detect SQL injection vulnerabilities" }
+secrets_detection = { type = "boolean", default = true, description = "Detect hardcoded secrets and API keys" }
+network_vulnerability_updates = { type = "boolean", default = false, description = "Fetch latest vulnerability data from network" }
+compliance_level = { type = "string", default = "standard", values = ["minimal", "standard", "strict"], description = "Security compliance level" }
+
+[plugin.permissions]
+required = ["read-files"]
+optional = ["network-access", "system-info"]
+network_access_reason = "Fetch latest vulnerability database and CVE information"
+system_info_reason = "Analyze system configuration for security issues"
+
+[plugin.resources]
+max_memory_mb = 256  # Higher memory for vulnerability database
+max_cpu_percent = 30
+timeout_seconds = 120  # Longer timeout for comprehensive scans
+max_file_handles = 10
+
+[plugin.security]
+# Plugin security configuration
+sandbox_mode = "strict"
+data_encryption = true
+audit_logging = true
+vulnerability_database_url = "https://api.security.uveddi.dev/vulns"
+
+[plugin.rules]
+# SQL Injection Detection
+[plugin.rules.SEC001]
+name = "sql_injection"
+severity = "critical"
+category = "injection"
+message = "Potential SQL injection vulnerability"
+enabled = true
+cwe_id = "CWE-89"
+
+[plugin.rules.SEC002] 
+name = "hardcoded_password"
+severity = "high"
+category = "secrets"
+message = "Hardcoded password detected"
+enabled = true
+cwe_id = "CWE-798"
+
+[plugin.rules.SEC003]
+name = "hardcoded_api_key"
+severity = "high"
+category = "secrets"
+message = "Hardcoded API key detected"
+enabled = true
+cwe_id = "CWE-798"
+
+[plugin.rules.SEC004]
+name = "weak_crypto"
+severity = "medium"
+category = "cryptography"
+message = "Weak cryptographic algorithm detected"
+enabled = true
+cwe_id = "CWE-327"
+
+[plugin.rules.SEC005]
+name = "xss_vulnerability"
+severity = "high"
+category = "injection"
+message = "Potential XSS vulnerability"
+enabled = true
+cwe_id = "CWE-79"
+
+[plugin.rules.SEC006]
+name = "path_traversal"
+severity = "high"
+category = "path_traversal"
+message = "Potential path traversal vulnerability"
+enabled = true
+cwe_id = "CWE-22"
+
+[plugin.rules.SEC007]
+name = "command_injection"
+severity = "critical"
+category = "injection"
+message = "Potential command injection vulnerability"
+enabled = true
+cwe_id = "CWE-78"
+
+[plugin.rules.SEC008]
+name = "insecure_random"
+severity = "low"
+category = "randomness"
+message = "Insecure random number generation"
+enabled = true
+cwe_id = "CWE-338"
+
+[plugin.rules.SEC009]
+name = "dangerous_function"
+severity = "critical"
+category = "code_injection"
+message = "Dangerous function call detected"
+enabled = true
+cwe_id = "CWE-94"
+
+[plugin.rules.SEC010]
+name = "vulnerable_dependency"
+severity = "high"
+category = "dependencies"
+message = "Vulnerable dependency detected"
+enabled = true
+cwe_id = "CWE-1104"
+
+[plugin.build]
+target = "wasm32-wasi"
+build_command = "cargo build --release --target wasm32-wasi"
+artifact_path = "target/wasm32-wasi/release/security_scanner_plugin.wasm"
+
+[plugin.testing]
+test_files = [
+    "tests/fixtures/sql_injection.js",
+    "tests/fixtures/hardcoded_secrets.py",
+    "tests/fixtures/xss_vulnerable.html",
+    "tests/fixtures/weak_crypto.rs",
+    "tests/fixtures/vulnerable_deps/package.json"
+]
+
+expected_issues = [
+    { file = "sql_injection.js", rule = "SEC001", count = 2 },
+    { file = "hardcoded_secrets.py", rule = "SEC002", count = 1 },
+    { file = "hardcoded_secrets.py", rule = "SEC003", count = 1 },
+    { file = "xss_vulnerable.html", rule = "SEC005", count = 1 },
+    { file = "weak_crypto.rs", rule = "SEC004", count = 1 },
+    { file = "package.json", rule = "SEC010", count = 1 }
+]

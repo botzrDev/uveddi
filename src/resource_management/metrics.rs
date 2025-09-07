@@ -223,6 +223,7 @@ impl MetricsHistory {
 }
 
 /// System metrics collector
+#[derive(Clone)]
 pub struct SystemMetricsCollector {
     start_time: Instant,
     last_collection: Option<Instant>,

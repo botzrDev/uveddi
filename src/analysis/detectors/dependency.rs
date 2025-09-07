@@ -299,7 +299,7 @@ impl DependencyExtractor {
             file_path: Arc::clone(&parsed_file.file_path),
             language: parsed_file.language,
             source: Arc::clone(&parsed_file.source),
-            tree: parsed_file.tree.clone(),
+            tree: parsed_file.tree.as_ref().map(|arc| arc.as_ref().clone()),
             custom_ast: Arc::new(None),
             modified_at: crate::analysis::cache::wrappers::ArchivableSystemTime::now(),
         };

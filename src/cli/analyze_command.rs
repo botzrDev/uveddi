@@ -897,6 +897,8 @@ impl AnalyzeCommand {
             memory_limit_gb,
             memory_profile,
             timeout_seconds: self.timeout,
+            enable_resource_management: false, // Default disabled for CLI
+            resource_config: None, // Use default when enabled
         };
 
         // Start parsing phase
@@ -980,6 +982,8 @@ impl AnalyzeCommand {
                         memory_limit_gb: Some(1.0),  // Strict memory limit
                         memory_profile: Some("small".to_string()),
                         timeout_seconds: 60,  // Reduced timeout for degraded analysis
+                        enable_resource_management: false, // Default disabled for CLI
+                        resource_config: None, // Use default when enabled
                     };
 
                     info!("🔄 Retrying analysis with degraded settings: max 100 files, 15s per detector");

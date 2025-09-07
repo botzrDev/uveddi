@@ -245,7 +245,7 @@ impl Drop for MemoryGuard {
 }
 
 /// Memory usage statistics
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct MemoryStats {
     pub current: u64,
     pub peak: u64,
