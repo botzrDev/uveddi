@@ -18,15 +18,15 @@ export function useReport(id: string): UseQueryResult<InteractiveReport, Error> 
 }
 
 /**
- * Hook to fetch the demo report
+ * Hook to fetch the latest analysis report
  */
-export function useDemoReport(): UseQueryResult<InteractiveReport, Error> {
+export function useLatestReport(): UseQueryResult<InteractiveReport, Error> {
   return useQuery({
-    queryKey: ['report', 'demo'],
-    queryFn: () => apiService.getDemoReport(),
-    staleTime: 10 * 60 * 1000, // 10 minutes for demo data
-    gcTime: 30 * 60 * 1000, // 30 minutes
-    retry: 1,
+    queryKey: ['report', 'latest'],
+    queryFn: () => apiService.getLatestReport(),
+    staleTime: 5 * 60 * 1000, // 5 minutes for analysis data
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    retry: 2,
   });
 }
 

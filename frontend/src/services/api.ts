@@ -102,14 +102,14 @@ class ApiService {
   }
 
   /**
-   * Get the demo report for development and testing
+   * Get the latest analysis report
    */
-  async getDemoReport(): Promise<InteractiveReport> {
-    console.log('🔄 Loading demo report from backend API...');
+  async getLatestReport(): Promise<InteractiveReport> {
+    console.log('🔄 Loading latest analysis report from backend API...');
     const response = await this.fetchWithErrorHandling<InteractiveReport>(
-      `${this.baseUrl}/reports/demo`
+      `${this.baseUrl}/reports/latest`
     );
-    console.log('✅ Demo report loaded successfully');
+    console.log('✅ Latest analysis report loaded successfully');
     return response;
   }
 
@@ -136,10 +136,10 @@ class ApiService {
   }
 
   /**
-   * Export the demo report as markdown
+   * Export the latest analysis report as markdown
    */
-  async exportDemoReport(format: 'markdown' | 'pdf' | 'html' = 'markdown'): Promise<Blob> {
-    const response = await fetch(`${this.baseUrl}/reports/demo/export?format=${format}`, {
+  async exportLatestReport(format: 'markdown' | 'pdf' | 'html' = 'markdown'): Promise<Blob> {
+    const response = await fetch(`${this.baseUrl}/reports/latest/export?format=${format}`, {
       headers: {
         'Content-Type': 'application/json',
       },
@@ -148,7 +148,7 @@ class ApiService {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({
         error: 'Export Error',
-        message: `Failed to export demo report with status ${response.status}`,
+        message: `Failed to export latest report with status ${response.status}`,
         timestamp: new Date().toISOString(),
       }));
       throw new Error(`${errorData.error}: ${errorData.message}`);

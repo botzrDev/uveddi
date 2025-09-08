@@ -4,7 +4,7 @@ import FindingsList from '@/components/FindingsList';
 import MermaidDiagram from '@/components/MermaidDiagram';
 import UveddiLoader from '@/components/UveddiLoader';
 // import SecurityOverview from '@/components/dashboard/SecurityOverview';
-import { useDemoReport, useReport } from '@/hooks/useReport';
+import { useLatestReport, useReport } from '@/hooks/useReport';
 import { apiService } from '@/services/api';
 import {
     AccountTreeOutlined,
@@ -35,59 +35,46 @@ function DashboardPage() {
   const { reportId } = useParams<{ reportId: string }>();
   const theme = useTheme();
   
-  // Use demo report for demo route, otherwise fetch by ID
-  const isDemoReport = reportId === 'demo';
-  const reportQuery = useReport(reportId || '');
-  const demoQuery = useDemoReport();
+  // Use latest analysis report for all requests
+  const reportQuery = useLatestReport();
 
-  const handleExportReport = async () => {
-    console.log('🚀 Export button clicked!', { isDemoReport, reportId });
+    const handleExportReport = async () => {
+    console.log('🚀 Export button clicked!');
     setExportStatus('exporting');
     
     try {
       let blob: Blob;
       
       console.log('📊 About to call export service...');
-      if (isDemoReport) {
-        console.log('📋 Calling exportDemoReport...');
-        blob = await apiService.exportDemoReport('markdown');
-      } else if (reportId) {
-        console.log('📄 Calling exportReport with ID:', reportId);
-        blob = await apiService.exportReport(reportId, 'markdown');
-      } else {
-        console.error('❌ No report ID available for export');
-        setExportStatus('error');
-        return;
-      }
+      console.log('� Calling exportLatestReport...');
+      blob = await apiService.exportLatestReport('markdown');
       
-      console.log('✅ Got blob response:', blob.size, 'bytes');
-      
+      console.log('✅ Export successful! Blob size:', blob.size, 'bytes');
+
       // Create download link
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.style.display = 'none';
       a.href = url;
-      a.download = `uveddi-analysis-${isDemoReport ? 'demo' : reportId}.md`;
+      a.download = `uveddi-analysis-latest.md`;
+      
+      console.log('📁 Creating download with filename:', a.download);
+      
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       
-      console.log('🎉 Report exported successfully');
       setExportStatus('success');
-      
-      // Reset to idle after success animation
-      setTimeout(() => setExportStatus('idle'), 3000);
+      console.log('✅ Download initiated successfully!');
     } catch (error) {
-      console.error('💥 Failed to export report:', error);
+      console.error('❌ Export failed:', error);
       setExportStatus('error');
-      
-      // Reset to idle after error display
-      setTimeout(() => setExportStatus('idle'), 3000);
     }
   };
   
-  const query = isDemoReport ? demoQuery : reportQuery;
+  // Use the latest analysis report data
+  const query = reportQuery;
   const { data: report, isLoading, error } = query;
   const [selectedSeverity, setSelectedSeverity] = useState<string | null>(null);
   const [exportStatus, setExportStatus] = useState<'idle' | 'exporting' | 'success' | 'error'>('idle');
@@ -368,22 +355,20 @@ function DashboardPage() {
               }}
             />
           ))}
-          {isDemoReport && (
-            <Chip 
-              label="Demo Data" 
-              size="small"
-              sx={{
-                backgroundColor: (theme) => theme.palette.mode === 'dark'
-                  ? theme.palette.warning.dark
-                  : theme.palette.warning.light,
-                color: (theme) => theme.palette.mode === 'dark'
-                  ? theme.palette.common.white
-                  : theme.palette.warning.dark,
-                fontWeight: 600,
-                border: (theme) => `1px solid ${theme.palette.warning.main}`,
+          <Chip 
+            label="Live Analysis" 
+            size="small"
+            sx={{
+              backgroundColor: (theme) => theme.palette.mode === 'dark'
+                ? theme.palette.success.dark
+                : theme.palette.success.light,
+              color: (theme) => theme.palette.mode === 'dark'
+                ? theme.palette.common.white
+                : theme.palette.success.dark,
+              fontWeight: 600,
+              border: (theme) => `1px solid ${theme.palette.success.main}`,
               }}
-            />
-          )}
+          />
           <Chip
             icon={<BugReportOutlined />}
             label="AI-Enhanced Analysis"

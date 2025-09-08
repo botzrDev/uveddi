@@ -55,7 +55,7 @@ const { convertCliOutputToDashboardFormat } = require('./utils/dataModelConverte
 
 const app = express();
 const server = http.createServer(app);
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 8000;
 
 // Initialize WebSocket server
 setupWebSocketServer(server);
@@ -77,7 +77,13 @@ app.use(helmet({
   }
 }));
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://localhost:3003', 'http://localhost:9998', 'http://localhost:9999'], // Allow frontend ports
+  origin: [
+    'http://localhost:8001', 'http://127.0.0.1:8001',
+    'http://localhost:8002', 'http://127.0.0.1:8002',
+    'http://localhost:8003', 'http://127.0.0.1:8003',
+    'http://localhost:8080', 'http://127.0.0.1:8080',
+    'http://localhost:8082', 'http://127.0.0.1:8082'
+  ], // Allow frontend ports in 8000 range
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
@@ -366,34 +372,54 @@ app.get('/users/me', (req, res) => {
 });
 
 // Report API endpoints for React dashboard
-app.get('/api/v1/reports/demo', async (req, res) => {
+app.get('/api/v1/reports/latest', async (req, res) => {
   try {
-    // Load the actual analysis data
-    const reportPath = path.join(__dirname, '..', 'reports', 'dashboard_data.json');
-    const reportData = await fs.readJson(reportPath);
+    // Load the most recent analysis data
+    const analysisFiles = [
+      'ripgrep_analysis.json',
+      'bat_analysis.json', 
+      'httpie_analysis.json'
+    ];
+    
+    let reportData = null;
+    let analysisSource = null;
+    
+    // Try to find the most recent analysis file
+    for (const filename of analysisFiles) {
+      const reportPath = path.join(__dirname, '..', filename);
+      if (await fs.pathExists(reportPath)) {
+        reportData = await fs.readJson(reportPath);
+        analysisSource = filename.replace('_analysis.json', '');
+        break;
+      }
+    }
+    
+    if (!reportData) {
+      return res.status(404).json({ error: 'No analysis data available' });
+    }
     
     // Transform to expected format for React dashboard
     const transformedReport = {
       schemaVersion: "1.0.0",
       project: {
-        id: "demo-project",
-        name: "Test Analysis Demo",
+        id: `analysis-${analysisSource}`,
+        name: `Uveddi Analysis - ${analysisSource}`,
         languages: ["rust"],
-        path: "test_with_issues.rs",
-        commit: "demo",
-        branch: "demo"
+        path: analysisSource,
+        commit: "latest",
+        branch: "main"
       },
       summary: {
-        timeGenerated: reportData.metadata.timestamp,
+        timeGenerated: reportData.metadata?.timestamp || new Date().toISOString(),
         coverage: 85.0,
-        issuesTotal: reportData.issues.length,
-        filesAnalyzed: 1,
-        componentsAnalyzed: 1,
-        analysisDurationMs: reportData.metadata.durationSeconds * 1000,
-        issuesBySeverity: calculateIssuesBySeverity(reportData.issues),
-        issuesByCategory: calculateIssuesByCategory(reportData.issues)
+        issuesTotal: reportData.issues?.length || 0,
+        filesAnalyzed: getUniqueFiles(reportData.issues).length,
+        componentsAnalyzed: getUniqueFiles(reportData.issues).length,
+        analysisDurationMs: reportData.metadata?.durationSeconds ? reportData.metadata.durationSeconds * 1000 : 0,
+        issuesBySeverity: calculateIssuesBySeverity(reportData.issues || []),
+        issuesByCategory: calculateIssuesByCategory(reportData.issues || [])
       },
-      findings: reportData.issues.map((issue, index) => ({
+      findings: (reportData.issues || []).map((issue, index) => ({
         id: `f-${index + 1}`,
         type: issue.antiPatternType,
         severity: issue.severity.toLowerCase(),
@@ -415,31 +441,23 @@ app.get('/api/v1/reports/demo', async (req, res) => {
       },
       diagrams: [],
       metadata: {
-        generatedAt: reportData.metadata.timestamp,
-        analysisId: "demo-analysis"
+        generatedAt: reportData.metadata?.timestamp || new Date().toISOString(),
+        analysisId: `analysis-${analysisSource}-${Date.now()}`
       }
     };
     
-    res.json({
-      data: transformedReport,
-      timestamp: new Date().toISOString(),
-      schemaVersion: "1.0.0"
-    });
+    res.json(transformedReport);
   } catch (error) {
-    console.error('Error loading demo report:', error);
-    res.status(500).json({ error: 'Failed to load demo report' });
+    console.error('Error loading analysis report:', error);
+    res.status(500).json({ error: 'Failed to load analysis report' });
   }
 });
 
 app.get('/api/v1/reports/:id', async (req, res) => {
   const { id } = req.params;
   
-  // For demo, just redirect to demo report
-  if (id === 'demo' || id === '1') {
-    return res.redirect('/api/v1/reports/demo');
-  }
-  
-  res.status(404).json({ error: 'Report not found' });
+  // Redirect all report requests to latest analysis
+  return res.redirect('/api/v1/reports/latest');
 });
 
 app.get('/api/v1/reports/:id/graphs/dependency', (req, res) => {
@@ -536,22 +554,33 @@ function convertAnalysisToReportData(analysisData) {
   };
 }
 
-// Export demo report (must come before the general /:id/export route)
-app.get('/api/v1/reports/demo/export', async (req, res) => {
+// Export latest analysis report (must come before the general /:id/export route)
+app.get('/api/v1/reports/latest/export', async (req, res) => {
   const format = req.query.format || 'markdown';
 
   try {
     let rawData;
+    let analysisSource;
     
     // Try to load real analysis data first
-    const demoDataPath = path.join(__dirname, '..', 'real-analysis-detectors.json');
-    if (await fs.pathExists(demoDataPath)) {
-      rawData = await fs.readJSON(demoDataPath);
-      console.log('🔍 Loaded real analysis data for export:', rawData.issues?.length || 0, 'issues');
-    } else {
-      const fallbackPath = path.join(__dirname, '..', 'frontend', 'public', 'mock-data', 'demo-report.json');
-      rawData = await fs.readJSON(fallbackPath);
-      console.log('🎭 Using fallback mock data for export');
+    const analysisFiles = [
+      'ripgrep_analysis.json',
+      'bat_analysis.json', 
+      'httpie_analysis.json'
+    ];
+    
+    for (const filename of analysisFiles) {
+      const analysisPath = path.join(__dirname, '..', filename);
+      if (await fs.pathExists(analysisPath)) {
+        rawData = await fs.readJSON(analysisPath);
+        analysisSource = filename.replace('_analysis.json', '');
+        console.log('🔍 Loaded real analysis data for export:', rawData.issues?.length || 0, 'issues from', analysisSource);
+        break;
+      }
+    }
+    
+    if (!rawData) {
+      return res.status(404).json({ error: 'No analysis data available for export' });
     }
 
     // Transform raw analysis data to report format (same as frontend)
@@ -562,14 +591,14 @@ app.get('/api/v1/reports/demo/export', async (req, res) => {
       const markdown = generateMarkdownReport(reportData);
       
       res.setHeader('Content-Type', 'text/markdown');
-      res.setHeader('Content-Disposition', `attachment; filename="uveddi-analysis-demo.md"`);
+      res.setHeader('Content-Disposition', `attachment; filename="uveddi-analysis-${analysisSource}.md"`);
       res.send(markdown);
     } else {
       res.status(400).json({ error: 'Unsupported format. Only markdown is currently supported.' });
     }
   } catch (error) {
-    console.error('Demo export error:', error);
-    res.status(500).json({ error: 'Failed to export demo report' });
+    console.error('Analysis export error:', error);
+    res.status(500).json({ error: 'Failed to export analysis report' });
   }
 });
 
@@ -754,6 +783,16 @@ function calculateIssuesByCategory(issues) {
     counts[category] = (counts[category] || 0) + 1;
   });
   return counts;
+}
+
+function getUniqueFiles(issues) {
+  const files = new Set();
+  issues.forEach(issue => {
+    if (issue.filePath) {
+      files.add(issue.filePath);
+    }
+  });
+  return Array.from(files);
 }
 
 function calculateFindingsBySeverity(findings) {
