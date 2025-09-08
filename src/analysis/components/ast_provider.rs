@@ -51,11 +51,19 @@ impl AstProviderImpl {
         let mut language_map = HashMap::new();
         #[cfg(feature = "tree-sitter")]
         {
+            #[cfg(feature = "rust-lang")]
             language_map.insert(SourceLanguage::Rust, tree_sitter_rust::LANGUAGE.into());
+            #[cfg(feature = "python-lang")]
             language_map.insert(SourceLanguage::Python, tree_sitter_python::LANGUAGE.into());
+            #[cfg(feature = "javascript-lang")]
             language_map.insert(
                 SourceLanguage::JavaScript,
                 tree_sitter_javascript::LANGUAGE.into(),
+            );
+            #[cfg(feature = "typescript-lang")]
+            language_map.insert(
+                SourceLanguage::TypeScript,
+                tree_sitter_typescript::LANGUAGE_TSX.into(),
             );
         }
 
@@ -77,11 +85,19 @@ impl AstProviderImpl {
         let mut language_map = HashMap::new();
         #[cfg(feature = "tree-sitter")]
         {
+            #[cfg(feature = "rust-lang")]
             language_map.insert(SourceLanguage::Rust, tree_sitter_rust::LANGUAGE.into());
+            #[cfg(feature = "python-lang")]
             language_map.insert(SourceLanguage::Python, tree_sitter_python::LANGUAGE.into());
+            #[cfg(feature = "javascript-lang")]
             language_map.insert(
                 SourceLanguage::JavaScript,
                 tree_sitter_javascript::LANGUAGE.into(),
+            );
+            #[cfg(feature = "typescript-lang")]
+            language_map.insert(
+                SourceLanguage::TypeScript,
+                tree_sitter_typescript::LANGUAGE_TSX.into(),
             );
         }
 
@@ -101,7 +117,8 @@ impl AstProviderImpl {
         match path.extension().and_then(|ext| ext.to_str()) {
             Some("rs") => SourceLanguage::Rust,
             Some("py") => SourceLanguage::Python,
-            Some("js") | Some("ts") | Some("jsx") | Some("tsx") => SourceLanguage::JavaScript,
+            Some("js") | Some("jsx") => SourceLanguage::JavaScript,
+            Some("ts") | Some("tsx") => SourceLanguage::TypeScript,
             _ => SourceLanguage::JavaScript, // Default fallback
         }
     }

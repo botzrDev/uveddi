@@ -48,8 +48,8 @@ levenshtein = "1.0"
 
 # Feature flags for modular compilation
 [features]
-# Lightweight default for fast development builds
-default = ["dev-core"]
+# Lightweight default for fast development builds with language parsing
+default = ["dev-core", "tree-sitter"]
 # Prometheus metrics collection
 prometheus = ["dep:prometheus"]
 # Production-ready features (previous default behavior)  

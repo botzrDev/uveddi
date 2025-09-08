@@ -170,6 +170,9 @@ impl ServiceOrchestrator {
             cors_origins: vec![
                 "http://localhost:3000".to_string(),
                 "http://localhost:3001".to_string(),
+                "http://localhost:8082".to_string(),
+                "http://localhost:8081".to_string(),
+                "http://localhost:8080".to_string(),
             ],
             spa_assets_path: frontend_assets_path,
             reports_storage_path: PathBuf::from("./.uveddi/reports"),

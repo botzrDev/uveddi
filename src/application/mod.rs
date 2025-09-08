@@ -1443,13 +1443,25 @@ pub async fn run_app() -> Result<(), UveddiError> {
         } => {
             info!("🚀 Starting Uveddi web services...");
 
+            // Auto-detect frontend assets path if not provided
+            let frontend_assets_path = frontend_assets.or_else(|| {
+                let default_path = std::path::PathBuf::from("frontend/dist");
+                if default_path.exists() && default_path.join("index.html").exists() {
+                    info!("📁 Auto-detected frontend assets at: {}", default_path.display());
+                    Some(default_path)
+                } else {
+                    info!("📁 No frontend assets found at default location: {}", default_path.display());
+                    None
+                }
+            });
+
             let config = OrchestratorConfig {
                 api_port: port,
                 rendering_port,
                 frontend_port,
                 auto_start_services: true,
                 database_path: database_path.clone(),
-                frontend_assets_path: frontend_assets,
+                frontend_assets_path,
                 development_mode: development,
             };
 

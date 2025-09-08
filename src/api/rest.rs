@@ -20,8 +20,8 @@
 //!
 //! # Endpoints
 //!
-//! - `GET /api/v1/reports/:id` - Get interactive report by ID
-//! - `GET /api/v1/reports/:id/graphs/dependency` - Get dependency graph data
+//! - `GET /api/v1/reports/{id}` - Get interactive report by ID
+//! - `GET /api/v1/reports/{id}/graphs/dependency` - Get dependency graph data
 //! - `GET /api/v1/reports` - List available reports
 //! - `GET /health` - Health check (shared with GraphQL)
 //! - `GET /metrics` - Basic metrics (shared with GraphQL)
@@ -81,12 +81,12 @@ impl RestApiService {
         let api_routes = Router::new()
             // Report endpoints
             .route("/reports", get(list_reports))
-            .route("/reports/:id", get(get_report))
-            .route("/reports/:id/graphs/dependency", get(get_dependency_graph))
+            .route("/reports/{id}", get(get_report))
+            .route("/reports/{id}/graphs/dependency", get(get_dependency_graph))
             .route("/reports/demo", get(demo_report_handler))
             // Security endpoints
             .route("/security/issues", get(get_security_issues))
-            .route("/security/issues/:id", get(get_security_issue))
+            .route("/security/issues/{id}", get(get_security_issue))
             .route("/security/summary", get(get_security_summary))
             .route("/security/owasp-coverage", get(get_owasp_coverage))
             .route("/security/taint-flows", get(get_taint_flows))
