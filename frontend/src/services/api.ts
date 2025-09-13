@@ -10,8 +10,8 @@ class ApiService {
   private baseUrl: string;
 
   constructor(baseUrl?: string) {
-    this.baseUrl = baseUrl || 
-                   import.meta.env.VITE_API_URL || 
+    this.baseUrl = baseUrl ||
+                   (import.meta as any).env?.VITE_API_URL ||
                    'http://localhost:8000/api/v1';
   }
 

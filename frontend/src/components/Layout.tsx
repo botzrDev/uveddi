@@ -27,7 +27,7 @@ function Layout({ children, themeMode, onToggleTheme }: LayoutProps) {
   const location = useLocation();
 
   const handleHomeClick = () => {
-    navigate('/dashboard/demo');
+    navigate('/dashboard/5');
   };
 
   const handleReportsClick = () => {

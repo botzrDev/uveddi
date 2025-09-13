@@ -38,7 +38,7 @@ export function RealtimeUpdates({ onNewAnalysis }: RealtimeUpdatesProps) {
   const [isConnected, setIsConnected] = useState(false);
 
   // Check if WebSocket is disabled
-  const isWebSocketDisabled = import.meta.env.VITE_DISABLE_WEBSOCKET === 'true';
+  const isWebSocketDisabled = (import.meta as any).env?.VITE_DISABLE_WEBSOCKET === 'true';
 
   // Initialize WebSocket connection
   useEffect(() => {

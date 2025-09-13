@@ -35,6 +35,7 @@ import { Navigate, Route, BrowserRouter as Router, Routes } from 'react-router-d
 
 // Components
 import ErrorBoundary from '@/components/ErrorBoundary';
+import ApiErrorBoundary from '@/components/ApiErrorBoundary';
 import Layout from '@/components/Layout';
 import RealtimeUpdates from '@/components/RealtimeUpdates';
 import DashboardPage from '@/pages/DashboardPage';
@@ -97,20 +98,22 @@ function App() {
             }}
           >
             <Layout themeMode={themeMode} onToggleTheme={toggleTheme}>
-              <Routes>
-                {/* Default route - redirect to latest real report */}
-                <Route path="/" element={<Navigate to="/dashboard/5" replace />} />
-                
-                {/* Dashboard routes */}
-                <Route path="/dashboard/:reportId" element={<DashboardPage />} />
-                
-                {/* Report detail routes */}
-                <Route path="/reports" element={<ReportsListPage />} />
-                <Route path="/reports/:reportId" element={<ReportPage />} />
-                
-                {/* Catch-all route */}
-                <Route path="*" element={<Navigate to="/dashboard/5" replace />} />
-              </Routes>
+              <ApiErrorBoundary>
+                <Routes>
+                  {/* Default route - redirect to latest real report */}
+                  <Route path="/" element={<Navigate to="/dashboard/5" replace />} />
+
+                  {/* Dashboard routes */}
+                  <Route path="/dashboard/:reportId" element={<DashboardPage />} />
+
+                  {/* Report detail routes */}
+                  <Route path="/reports" element={<ReportsListPage />} />
+                  <Route path="/reports/:reportId" element={<ReportPage />} />
+
+                  {/* Catch-all route */}
+                  <Route path="*" element={<Navigate to="/dashboard/5" replace />} />
+                </Routes>
+              </ApiErrorBoundary>
             </Layout>
           </Router>
         </ThemeProvider>
