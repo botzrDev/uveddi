@@ -453,11 +453,35 @@ app.get('/api/v1/reports/latest', async (req, res) => {
   }
 });
 
+// Specific demo endpoint (must come before the generic :id route)
+app.get('/api/v1/reports/demo', async (req, res) => {
+  try {
+    // Return demo report data - same as latest for now
+    const demoData = await getDemoReportData();
+    res.json(demoData);
+  } catch (error) {
+    res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'Failed to load demo report',
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 app.get('/api/v1/reports/:id', async (req, res) => {
   const { id } = req.params;
   
-  // Redirect all report requests to latest analysis
-  return res.redirect('/api/v1/reports/latest');
+  // For now, redirect non-demo requests to latest analysis
+  // In production, this would load the specific report by ID
+  if (id === 'latest') {
+    return res.redirect('/api/v1/reports/latest');
+  } else {
+    res.status(404).json({
+      error: 'Report Not Found',
+      message: `Report with ID '${id}' not found`,
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
 app.get('/api/v1/reports/:id/graphs/dependency', (req, res) => {
@@ -816,6 +840,87 @@ function calculateFindingsByCategory(findings) {
   return counts;
 }
 
+// Get demo report data
+async function getDemoReportData() {
+  // Return a simplified demo report
+  return {
+    schemaVersion: '1.0',
+    project: {
+      id: 'demo-project',
+      name: 'Demo Analysis Project',
+      languages: ['Rust', 'JavaScript'],
+      path: 'demo-project/'
+    },
+    summary: {
+      timeGenerated: new Date().toISOString(),
+      coverage: 88,
+      issuesTotal: 15,
+      filesAnalyzed: 8,
+      componentsAnalyzed: 12,
+      analysisDurationMs: 1250,
+      issuesBySeverity: {
+        critical: 1,
+        high: 3,
+        medium: 6,
+        low: 5
+      },
+      issuesByCategory: {
+        'god-object': 1,
+        'code-duplication': 3,
+        'dead-code': 2,
+        'long-methods': 4,
+        'magic-values': 5
+      }
+    },
+    findings: [
+      {
+        id: 'demo-1',
+        type: 'God Object',
+        severity: 'critical',
+        title: 'Class has too many responsibilities',
+        message: 'The UserService class handles authentication, database operations, and email notifications.',
+        file: 'src/user_service.rs',
+        startLine: 15,
+        endLine: 180,
+        tags: ['maintainability', 'architecture'],
+        detector: 'uveddi',
+        confidence: 0.95
+      },
+      {
+        id: 'demo-2',
+        type: 'Code Duplication',
+        severity: 'medium',
+        title: 'Duplicated validation logic',
+        message: 'Email validation logic is duplicated across multiple modules.',
+        file: 'src/validators.js',
+        startLine: 42,
+        endLine: 58,
+        tags: ['duplication', 'maintainability'],
+        detector: 'uveddi',
+        confidence: 0.87
+      }
+    ],
+    dependencyGraph: {
+      nodes: [],
+      edges: [],
+      metadata: {
+        nodeCount: 8,
+        edgeCount: 12,
+        hasCycles: false,
+        maxDepth: 4
+      }
+    },
+    metadata: {
+      generatedAt: new Date().toISOString(),
+      uveddiVersion: '0.9.0',
+      configuration: {
+        'analysis.depth': 'full',
+        'detectors.enabled': 'all'
+      }
+    }
+  };
+}
+
 // Mock API endpoints that the frontend might expect
 app.get('/api/analysis/status', (req, res) => {
   res.json({
@@ -832,22 +937,153 @@ app.get('/api/analysis/history', (req, res) => {
   });
 });
 
+// API v1 endpoints that frontend expects
+app.get('/api/v1/health', (req, res) => {
+  res.json({
+    status: 'healthy',
+    service: 'uveddi-api',
+    timestamp: new Date().toISOString(),
+    version: '0.9.0',
+    apiVersion: 'v1'
+  });
+});
+
+app.get('/api/v1/metrics', (req, res) => {
+  res.json({
+    reportsServed: 42,
+    cacheHitRate: 0.85,
+    averageResponseTimeMs: 250,
+    activeConnections: 12
+  });
+});
+
+app.get('/api/v1/reports', (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const sort = req.query.sort || 'generatedAt';
+    const order = req.query.order || 'desc';
+
+    // Mock data - in real implementation this would come from database
+    const reports = [
+      {
+        id: 'latest',
+        name: 'Latest Analysis',
+        path: 'src/',
+        generatedAt: new Date().toISOString(),
+        issuesTotal: 42,
+        status: 'completed',
+        filesAnalyzed: 156
+      },
+      {
+        id: 'demo',
+        name: 'Demo Analysis Report',
+        path: 'test-project/',
+        generatedAt: new Date(Date.now() - 86400000).toISOString(),
+        issuesTotal: 23,
+        status: 'completed',
+        filesAnalyzed: 89
+      }
+    ];
+
+    const total = reports.length;
+    const pages = Math.ceil(total / limit);
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const paginatedReports = reports.slice(startIndex, endIndex);
+
+    res.json({
+      data: {
+        reports: paginatedReports,
+        pagination: {
+          page: page,
+          limit: limit,
+          total: total,
+          pages: pages
+        }
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'Failed to fetch reports',
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+app.get('/api/v1/security/sarif', (req, res) => {
+  try {
+    const sarifReport = {
+      version: '2.1.0',
+      $schema: 'https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json',
+      runs: [
+        {
+          tool: {
+            driver: {
+              name: 'Uveddi',
+              version: '0.9.0',
+              informationUri: 'https://github.com/your-org/uveddi'
+            }
+          },
+          results: [
+            {
+              ruleId: 'god-object',
+              level: 'warning',
+              message: {
+                text: 'God Object detected: excessive responsibilities'
+              },
+              locations: [
+                {
+                  physicalLocation: {
+                    artifactLocation: {
+                      uri: 'src/example.rs'
+                    },
+                    region: {
+                      startLine: 10,
+                      endLine: 50
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    };
+
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', 'attachment; filename="uveddi-security-report.sarif"');
+    res.json(sarifReport);
+  } catch (error) {
+    res.status(500).json({
+      error: 'SARIF Export Error',
+      message: 'Failed to generate SARIF report',
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 // Catch-all for undefined routes
 app.use('*', (req, res) => {
   res.status(404).json({ 
     error: 'Route not found',
     availableEndpoints: [
       'GET /health',
+      'GET /api/v1/health',
+      'GET /api/v1/metrics',
+      'GET /api/v1/reports',
+      'GET /api/v1/reports/latest',
+      'GET /api/v1/reports/:id',
+      'GET /api/v1/reports/:id/graphs/dependency',
+      'GET /api/v1/reports/:id/export?format={format}',
+      'GET /api/v1/reports/latest/export?format={format}',
+      'GET /api/v1/security/sarif',
       'GET /api/docs/structure',
       'GET /api/docs/file/{path}',
       'GET /api/docs/search?q={query}',
       'GET /api/project/info',
       'GET /api/analysis/status',
-      'GET /api/v1/reports/demo',
-      'GET /api/v1/reports/:id',
-      'GET /api/v1/reports/:id/graphs/dependency',
-      'GET /api/v1/reports/:id/export?format={format}',
-      'GET /api/v1/reports/demo/export?format={format}',
       'POST /auth/register',
       'POST /auth/login',
       'POST /auth/logout',

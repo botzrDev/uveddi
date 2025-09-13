@@ -458,3 +458,61 @@ mod tests {
         
         assert!(!detector.has_semantic_coherence(&random_group));
     }
+
+    #[test]
+    fn test_detector_creation() {
+        let detector = DataClumpsDetector::new();
+        assert_eq!(detector.config.min_clump_size, 3);
+        assert_eq!(detector.config.min_occurrences, 2);
+        assert_eq!(detector.config.similarity_threshold, 0.8);
+    }
+
+    #[test]
+    fn test_detector_with_custom_config() {
+        let config = DataClumpsConfig {
+            min_clump_size: 4,
+            min_occurrences: 3,
+            similarity_threshold: 0.9,
+            max_parameter_count: 8,
+        };
+
+        let detector = DataClumpsDetector::with_config(config.clone());
+        assert_eq!(detector.config.min_clump_size, 4);
+        assert_eq!(detector.config.min_occurrences, 3);
+        assert_eq!(detector.config.similarity_threshold, 0.9);
+    }
+
+    #[test]
+    fn test_simulate_address_parameters() {
+        let detector = DataClumpsDetector::new();
+        let params = detector.simulate_parameters("update_user_address");
+
+        assert_eq!(params.len(), 5);
+        assert!(params.iter().any(|(name, _)| name == "street"));
+        assert!(params.iter().any(|(name, _)| name == "city"));
+        assert!(params.iter().any(|(name, _)| name == "state"));
+    }
+
+    #[test]
+    fn test_signature_creation_and_normalization() {
+        let detector = DataClumpsDetector::new();
+
+        let params1 = vec![
+            ("city".to_string(), "String".to_string()),
+            ("street".to_string(), "String".to_string()),
+        ];
+
+        let params2 = vec![
+            ("street".to_string(), "String".to_string()),
+            ("city".to_string(), "String".to_string()),
+        ];
+
+        let sig1 = detector.create_signature(&params1);
+        let sig2 = detector.create_signature(&params2);
+
+        // Should be the same due to sorting
+        assert_eq!(sig1, sig2);
+        assert_eq!(sig1, "city:String|street:String");
+    }
+
+

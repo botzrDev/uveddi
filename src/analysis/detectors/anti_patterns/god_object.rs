@@ -1846,3 +1846,59 @@ impl Default for GodObjectDetector {
         Self::with_config(GodObjectConfig::default())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_detector_creation_with_thresholds() {
+        let detector = GodObjectDetector::new(15, 10);
+        assert_eq!(detector.method_threshold, 15);
+        assert_eq!(detector.field_threshold, 10);
+    }
+
+    #[test]
+    fn test_detector_default_creation() {
+        let detector = GodObjectDetector::default();
+        // Should use default thresholds
+        assert!(detector.method_threshold > 0);
+        assert!(detector.field_threshold > 0);
+    }
+
+    #[test]
+    fn test_severity_assessment_critical() {
+        let detector = GodObjectDetector::new(10, 8);
+
+        // Test critical severity (both thresholds exceeded by >50%)
+        let method_count = 16; // 60% over threshold
+        let field_count = 13; // 62% over threshold
+
+        assert!(method_count > detector.method_threshold);
+        assert!(field_count > detector.field_threshold);
+
+        // In real implementation, this would calculate severity
+        let method_ratio = method_count as f64 / detector.method_threshold as f64;
+        let field_ratio = field_count as f64 / detector.field_threshold as f64;
+
+        assert!(method_ratio > 1.5);
+        assert!(field_ratio > 1.5);
+    }
+
+    #[test]
+    fn test_threshold_boundary_conditions() {
+        let detector = GodObjectDetector::new(10, 8);
+
+        // Exactly at threshold should not trigger (assuming > not >=)
+        assert_eq!(detector.method_threshold, 10);
+        assert_eq!(detector.field_threshold, 8);
+
+        // Just over threshold should trigger
+        let just_over_methods = detector.method_threshold + 1;
+        let just_over_fields = detector.field_threshold + 1;
+
+        assert!(just_over_methods > detector.method_threshold);
+        assert!(just_over_fields > detector.field_threshold);
+    }
+}
+

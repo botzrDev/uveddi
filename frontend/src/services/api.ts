@@ -12,7 +12,7 @@ class ApiService {
   constructor(baseUrl?: string) {
     this.baseUrl = baseUrl || 
                    import.meta.env.VITE_API_URL || 
-                   'http://localhost:8888/api/v1';
+                   'http://localhost:8000/api/v1';
   }
 
   private async fetchWithErrorHandling<T>(url: string, options?: RequestInit): Promise<T> {
