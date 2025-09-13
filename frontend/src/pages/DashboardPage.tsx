@@ -3,6 +3,12 @@ import Sparkline from '@/components/charts/Sparkline';
 import FindingsList from '@/components/FindingsList';
 import MermaidDiagram from '@/components/MermaidDiagram';
 import UveddiLoader from '@/components/UveddiLoader';
+import {
+  calculateRiskLevel,
+  calculateQualityScore,
+  formatIssueCount,
+  getSeverityLevelDescription
+} from '@/utils/severityThresholds';
 // import SecurityOverview from '@/components/dashboard/SecurityOverview';
 import { useLatestReport, useReport } from '@/hooks/useReport';
 import { apiService } from '@/services/api';
@@ -392,28 +398,64 @@ function DashboardPage() {
         <Grid item xs={12} sm={6} lg={3}>
           <SummaryCard
             title="Code Quality"
-            value={`${Math.round(report.summary?.coverage || 0)}%`}
-            sparkData={[(report.summary?.coverage || 0) - 2, (report.summary?.coverage || 0) - 1, report.summary?.coverage || 0]}
-            subtitle="Overall Score"
+            value={`${calculateQualityScore(
+              report.summary?.issuesBySeverity || {},
+              report.summary?.issuesTotal || 0,
+              report.summary?.filesAnalyzed || 1
+            )}%`}
+            sparkData={[85, 87, calculateQualityScore(
+              report.summary?.issuesBySeverity || {},
+              report.summary?.issuesTotal || 0,
+              report.summary?.filesAnalyzed || 1
+            )]}
+            subtitle="Dynamic quality score"
             color="primary"
           />
         </Grid>
         <Grid item xs={12} sm={6} lg={3}>
           <SummaryCard
             title="Total Issues"
-            value={(report.summary?.issuesTotal || 0).toString()}
-            sparkData={[Math.max(0, (report.summary?.issuesTotal || 0) - 5), Math.max(0, (report.summary?.issuesTotal || 0) - 2), report.summary?.issuesTotal || 0]}
-            subtitle={`${report.summary?.filesAnalyzed || 0} files analyzed`}
-            color="error"
+            value={formatIssueCount(report.summary?.issuesTotal || 0)}
+            sparkData={[
+              Math.max(0, (report.summary?.issuesTotal || 0) - 100),
+              Math.max(0, (report.summary?.issuesTotal || 0) - 50),
+              report.summary?.issuesTotal || 0
+            ]}
+            subtitle={`${report.summary?.filesAnalyzed || 0} files • ${Math.round((report.summary?.issuesTotal || 0) / Math.max(report.summary?.filesAnalyzed || 1, 1))} avg/file`}
+            color={calculateRiskLevel(
+              report.summary?.issuesBySeverity || {},
+              report.summary?.issuesTotal || 0
+            ) === 'CRITICAL' ? 'error' : 'info'}
           />
         </Grid>
         <Grid item xs={12} sm={6} lg={3}>
           <SummaryCard
-            title="Components"
-            value={(report.summary?.componentsAnalyzed || 0).toString()}
-            sparkData={[(report.summary?.componentsAnalyzed || 0) - 1, (report.summary?.componentsAnalyzed || 0), (report.summary?.componentsAnalyzed || 0) + 1]}
-            subtitle="Architectural components"
-            color="info"
+            title="Risk Level"
+            value={calculateRiskLevel(
+              report.summary?.issuesBySeverity || {},
+              report.summary?.issuesTotal || 0
+            )}
+            sparkData={[1, 2, calculateRiskLevel(
+              report.summary?.issuesBySeverity || {},
+              report.summary?.issuesTotal || 0
+            ) === 'CRITICAL' ? 4 : calculateRiskLevel(
+              report.summary?.issuesBySeverity || {},
+              report.summary?.issuesTotal || 0
+            ) === 'HIGH' ? 3 : 2]}
+            subtitle={getSeverityLevelDescription(
+              calculateRiskLevel(
+                report.summary?.issuesBySeverity || {},
+                report.summary?.issuesTotal || 0
+              ),
+              report.summary?.issuesTotal || 0
+            ).split(' - ')[1] || 'Assessment'}
+            color={calculateRiskLevel(
+              report.summary?.issuesBySeverity || {},
+              report.summary?.issuesTotal || 0
+            ) === 'CRITICAL' ? 'error' : calculateRiskLevel(
+              report.summary?.issuesBySeverity || {},
+              report.summary?.issuesTotal || 0
+            ) === 'HIGH' ? 'error' : 'success'}
           />
         </Grid>
         <Grid item xs={12} sm={6} lg={3}>
@@ -421,7 +463,7 @@ function DashboardPage() {
             title="Analysis Time"
             value={`${((report.summary?.analysisDurationMs || 0) / 1000).toFixed(1)}s`}
             sparkData={[((report.summary?.analysisDurationMs || 0) / 1000) - 1, ((report.summary?.analysisDurationMs || 0) / 1000) - 0.5, ((report.summary?.analysisDurationMs || 0) / 1000)]}
-            subtitle="Processing time"
+            subtitle={`${Math.round((report.summary?.issuesTotal || 0) / Math.max((report.summary?.analysisDurationMs || 1) / 1000, 1))} issues/sec`}
             color="success"
           />
         </Grid>
@@ -822,14 +864,14 @@ function SummaryCard({ title, value, subtitle, color, sparkData }: SummaryCardPr
           icon: <AssessmentOutlined />,
         };
       case 'error':
-        // Much lighter, more pleasant red - 50% lighter
-        const errorColor = isDark ? '#ffcccb' : '#ff9999'; // Much lighter coral/salmon colors
+        // Adjusted colors based on risk level - more nuanced approach
+        const errorColor = isDark ? '#ff9999' : '#e57373'; // Softer but still visible
         return {
           borderColor: errorColor,
           valueColor: errorColor,
-          bgGradient: isDark 
-            ? 'linear-gradient(135deg, rgba(255, 204, 203, 0.15) 0%, rgba(255, 153, 153, 0.08) 100%)'
-            : 'linear-gradient(135deg, rgba(255, 153, 153, 0.12) 0%, rgba(255, 204, 203, 0.06) 100%)',
+          bgGradient: isDark
+            ? 'linear-gradient(135deg, rgba(255, 153, 153, 0.2) 0%, rgba(229, 115, 115, 0.1) 100%)'
+            : 'linear-gradient(135deg, rgba(229, 115, 115, 0.15) 0%, rgba(255, 153, 153, 0.08) 100%)',
           icon: <BugReportOutlined />,
         };
       case 'success':

@@ -6,10 +6,13 @@ import {
     ExpandMore,
     Info,
     Warning,
+    ChevronLeft,
+    ChevronRight,
 } from '@mui/icons-material';
 import {
     Alert,
     Box,
+    Button,
     Chip,
     Collapse,
     Divider,
@@ -17,18 +20,22 @@ import {
     Grid,
     IconButton,
     InputLabel,
+    LinearProgress,
     List,
     ListItem,
     ListItemButton,
     MenuItem,
+    Pagination,
     Paper,
     Select,
     TextField,
     Typography,
     useTheme
 } from '@mui/material';
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { FixedSizeList as VirtualList } from 'react-window';
 import FindingDetail from './FindingDetail';
+import { formatIssueCount } from '@/utils/severityThresholds';
 
 interface FindingsListProps {
   findings: Finding[];
@@ -42,23 +49,38 @@ export default function FindingsList({ findings, loading, severityOverride }: Fi
   const [searchTerm, setSearchTerm] = useState('');
   const [severityFilter, setSeverityFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(50); // Start with 50 items per page for large datasets
 
   // Filter findings based on search and filters
   const effectiveSeverity = severityFilter === 'all' ? null : severityFilter;
-  const filteredFindings = findings.filter(finding => {
-    const matchesSearch = 
-      finding.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      finding.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      finding.file.toLowerCase().includes(searchTerm.toLowerCase());
-    const activeSeverity = severityOverride || (effectiveSeverity || (severityFilter === 'all' ? null : severityFilter));
-    const matchesSeverity = !activeSeverity || finding.severity === activeSeverity;
-    const matchesType = typeFilter === 'all' || finding.type === typeFilter;
-    
-    return matchesSearch && matchesSeverity && matchesType;
-  });
+  const filteredFindings = useMemo(() => {
+    return findings.filter(finding => {
+      const matchesSearch =
+        finding.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        finding.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        finding.file.toLowerCase().includes(searchTerm.toLowerCase());
+      const activeSeverity = severityOverride || (effectiveSeverity || (severityFilter === 'all' ? null : severityFilter));
+      const matchesSeverity = !activeSeverity || finding.severity === activeSeverity;
+      const matchesType = typeFilter === 'all' || finding.type === typeFilter;
+
+      return matchesSearch && matchesSeverity && matchesType;
+    });
+  }, [findings, searchTerm, severityOverride, effectiveSeverity, severityFilter, typeFilter]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredFindings.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedFindings = filteredFindings.slice(startIndex, endIndex);
+
+  // Reset to first page when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, severityFilter, typeFilter, severityOverride]);
 
   // Get unique types for filter dropdown
-  const uniqueTypes = Array.from(new Set(findings.map(f => f.type)));
+  const uniqueTypes = useMemo(() => Array.from(new Set(findings.map(f => f.type))), [findings]);
 
   const getSeverityIcon = (severity: string) => {
     switch (severity) {
@@ -92,12 +114,12 @@ export default function FindingsList({ findings, loading, severityOverride }: Fi
 
   const getSeverityChipStyle = (severity: string) => {
     const isDark = theme.palette.mode === 'dark';
-    
+
     switch (severity) {
       case 'critical':
         return {
-          backgroundColor: isDark ? '#d32f2f' : '#ffebee',
-          color: isDark ? '#ffffff' : '#c62828',
+          backgroundColor: isDark ? '#d32f2f' : '#ffcccb',
+          color: isDark ? '#ffffff' : '#b71c1c',
         };
       case 'high':
         return {
@@ -165,9 +187,34 @@ export default function FindingsList({ findings, loading, severityOverride }: Fi
           border: (theme) => `1px solid ${theme.palette.divider}`,
         }}
       >
-        <Typography variant="h5" gutterBottom>
-          Analysis Findings ({filteredFindings.length} of {findings.length})
-        </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Typography variant="h5">
+            Analysis Findings ({formatIssueCount(filteredFindings.length)} of {formatIssueCount(findings.length)})
+          </Typography>
+          {filteredFindings.length > 0 && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Typography variant="body2" color="text.secondary">
+                Showing {startIndex + 1}-{Math.min(endIndex, filteredFindings.length)} of {formatIssueCount(filteredFindings.length)}
+              </Typography>
+              <FormControl size="small" sx={{ minWidth: 120 }}>
+                <InputLabel>Per page</InputLabel>
+                <Select
+                  value={itemsPerPage}
+                  label="Per page"
+                  onChange={(e) => {
+                    setItemsPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                >
+                  <MenuItem value={25}>25</MenuItem>
+                  <MenuItem value={50}>50</MenuItem>
+                  <MenuItem value={100}>100</MenuItem>
+                  <MenuItem value={250}>250</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+          )}
+        </Box>
         
         <Grid container spacing={2} sx={{ mb: 2 }}>
           <Grid item xs={12} md={6}>
@@ -224,8 +271,17 @@ export default function FindingsList({ findings, loading, severityOverride }: Fi
           border: (theme) => `1px solid ${theme.palette.divider}`,
         }}
       >
+        {filteredFindings.length > itemsPerPage && (
+          <Box sx={{ p: 2, pt: 0, display: 'flex', justifyContent: 'center' }}>
+            <LinearProgress
+              variant="determinate"
+              value={(currentPage / totalPages) * 100}
+              sx={{ width: '100%', mb: 2 }}
+            />
+          </Box>
+        )}
         <List sx={{ p: 2 }}>
-          {filteredFindings.map((finding, index) => (
+          {paginatedFindings.map((finding, index) => (
             <React.Fragment key={finding.id}>
               <ListItem disablePadding>
                 <ListItemButton
@@ -302,10 +358,30 @@ export default function FindingsList({ findings, loading, severityOverride }: Fi
                 </Box>
               </Collapse>
               
-              {index < filteredFindings.length - 1 && <Divider />}
+              {index < paginatedFindings.length - 1 && <Divider />}
             </React.Fragment>
           ))}
         </List>
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: `1px solid ${theme.palette.divider}` }}>
+            <Typography variant="body2" color="text.secondary">
+              Page {currentPage} of {totalPages} ({formatIssueCount(filteredFindings.length)} total findings)
+            </Typography>
+            <Pagination
+              count={totalPages}
+              page={currentPage}
+              onChange={(event, page) => setCurrentPage(page)}
+              color="primary"
+              size="small"
+              showFirstButton
+              showLastButton
+              siblingCount={1}
+              boundaryCount={1}
+            />
+          </Box>
+        )}
       </Paper>
 
       {filteredFindings.length === 0 && searchTerm && (
