@@ -4,6 +4,16 @@
 //! It supports multiple output formats and includes advanced features like AI explanations,
 //! code snippets, and visual diagrams.
 //!
+//! # Architecture
+//!
+//! The module is split into focused sub-modules for maintainability:
+//! - `html_generator`: HTML report generation with CSS/JS
+//! - `executive_summary`: Business logic for summaries and metrics
+//! - `mermaid_integration`: Mermaid.js diagram handling
+//! - `markdown_generator`: Markdown report generation
+//! - `interactive_generator`: Interactive web reports
+//! - `modern_generator`: Template-based report generation
+//!
 //! # Supported Formats
 //!
 //! ## Markdown Reports
@@ -14,7 +24,7 @@
 //! - Optional code snippets and AI explanations
 //! - Mermaid.js diagrams for architectural visualization
 //!
-//! ## JSON Reports  
+//! ## JSON Reports
 //! Structured data format for:
 //! - Integration with external tools
 //! - Automated processing and analysis
@@ -29,75 +39,6 @@
 //! - **Customizable Content**: Configure inclusion of code snippets, AI explanations, diagrams
 //! - **Performance Optimized**: Efficient processing for large analysis results
 //! - **ERD Compliant**: Follows Entity Relationship Diagram specifications (ER-F-011 to ER-F-014)
-//!
-//! # Usage Examples
-//!
-//! ## Basic Report Generation
-//!
-//! ```rust,no_run
-//! use uveddi::report::ReportGenerator;
-//! use uveddi::database::models::{AnalysisRun, ArchitecturalIssue, AntiPatternType};
-//!
-//! let generator = ReportGenerator::new()
-//!     .with_ai_explanations(true)
-//!     .with_code_snippets(true)
-//!     .with_diagrams(true);
-//!
-//! let run = AnalysisRun { /* ... */ };
-//! let issues = vec![/* ArchitecturalIssue instances */];
-//! let anti_patterns = vec![/* AntiPatternType instances */];
-//!
-//! // Generate markdown report
-//! let markdown = generator.generate_markdown_report(&run, &issues, &anti_patterns)?;
-//!
-//! // Generate JSON report
-//! let json = generator.generate_json_report(&run, &issues, &anti_patterns)?;
-//! # Ok::<(), Box<dyn std::error::Error>>(())
-//! ```
-//!
-//! ## Writing Reports to Files
-//!
-//! ```rust,no_run
-//! # use uveddi::report::ReportGenerator;
-//! # let generator = ReportGenerator::new();
-//! # let markdown_content = String::new();
-//! use std::path::Path;
-//!
-//! // Write markdown report
-//! generator.write_report_to_file(&markdown_content, Path::new("analysis_report.md"))?;
-//!
-//! // Write JSON report  
-//! generator.write_report_to_file(&json_content, Path::new("analysis_report.json"))?;
-//! # Ok::<(), Box<dyn std::error::Error>>(())
-//! ```
-//!
-//! # Report Structure
-//!
-//! ## Markdown Report Sections
-//!
-//! 1. **Executive Summary**: High-level metrics and overview
-//! 2. **Analysis Overview**: Configuration and execution details
-//! 3. **Issues by Severity**: Grouped and prioritized issue lists
-//! 4. **Detailed Analysis**: In-depth issue descriptions
-//! 5. **Architectural Diagrams**: Visual representations (if enabled)
-//! 6. **Recommendations**: AI-generated suggestions (if enabled)
-//!
-//! ## JSON Report Schema
-//!
-//! ```json
-//! {
-//!   "analysis_run": { /* AnalysisRun metadata */ },
-//!   "summary": {
-//!     "total_issues": 42,
-//!     "by_severity": { "critical": 2, "high": 8, "medium": 15, "low": 17 },
-//!     "files_analyzed": 156
-//!   },
-//!   "issues": [ /* Array of ArchitecturalIssue objects */ ],
-//!   "anti_patterns": [ /* Array of AntiPatternType definitions */ ]
-//! }
-//! ```
-
-// use crate::analysis::graph::ComponentNode;
 use crate::analysis::mermaid_generator::{MermaidGenerationError, MermaidGenerator};
 use crate::database::models::{AnalysisRun, AntiPatternType, ArchitecturalIssue};
 use crate::models::visualization::{ArchitecturalComponent, DiagramMetadata, DiagramType};
@@ -159,6 +100,7 @@ pub use interactive_generator::{InteractiveReportConfig, InteractiveReportGenera
 // Export security utilities
 pub use security::{ReportSecurityConfig, ReportSecurityError, ReportSecurityValidator};
 
+// Core report generation modules
 pub mod data_transformer;
 pub mod diagrams;
 pub mod interactive_generator;
@@ -168,6 +110,11 @@ pub mod metrics;
 pub mod modern_generator;
 pub mod security;
 pub mod svg_generator;
+
+// Newly extracted modules for better organization
+pub mod executive_summary;
+pub mod html_generator;
+pub mod mermaid_integration;
 use crate::core::logging::{debug, error, info, warn};
 use crate::report::metrics::{compute_debt_score, compute_issues_by_severity};
 use chrono::{DateTime, Local};
@@ -513,52 +460,6 @@ impl ReportGenerator {
         )
     }
 
-    /// Generate the executive summary section
-    fn generate_executive_summary(
-        &self,
-        analysis_run: &AnalysisRun,
-        issues: &[ArchitecturalIssue],
-        codebase_path: Option<&str>,
-    ) -> String {
-        let total_issues = issues.len();
-        let high_severity = issues
-            .iter()
-            .filter(|i| {
-                i.severity.to_lowercase() == "high" || i.severity.to_lowercase() == "critical"
-            })
-            .count();
-        let medium_severity = issues
-            .iter()
-            .filter(|i| i.severity.to_lowercase() == "medium")
-            .count();
-        let low_severity = issues
-            .iter()
-            .filter(|i| i.severity.to_lowercase() == "low")
-            .count();
-
-        let unique_files = issues
-            .iter()
-            .map(|i| &i.file_path)
-            .collect::<std::collections::HashSet<_>>()
-            .len();
-
-        format!(
-            "This report analyzes the codebase at `{}` and identified **{} architectural issues** across **{} files**.\n\n\
-            - **High Severity**: {} issues\n\
-            - **Medium Severity**: {} issues\n\
-            - **Low Severity**: {} issues\n\n\
-            The analysis took {:.2} seconds to complete.",
-            codebase_path.unwrap_or("Unknown"),
-            total_issues,
-            unique_files,
-            high_severity,
-            medium_severity,
-            low_severity,
-            analysis_run.end_time.and_then(|end|
-                Some((end - analysis_run.start_time).num_seconds() as f64)
-            ).unwrap_or(0.0)
-        )
-    }
 
     /// Generate the severity summary section with tables
     fn generate_severity_summary(&self, issues: &[ArchitecturalIssue]) -> String {
