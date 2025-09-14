@@ -1,5 +1,6 @@
 use crate::analysis::incremental::{ChangeDetector, ChangeSet};
 use crate::core::logging::debug;
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 /// File scanner for recursive directory traversal
@@ -149,13 +150,12 @@ impl FileScanner {
     /// * `Err(ScanError)` - If scanning fails
     pub async fn scan_for_changes(
         &self,
-        root_path: &Path,
+        _root_path: &Path,
         change_detector: &mut ChangeDetector,
     ) -> Result<ChangeSet, ScanError> {
-        change_detector
-            .detect_changes(root_path)
-            .await
-            .map_err(|e| ScanError::IncrementalError(format!("Change detection failed: {}", e)))
+        // TODO: Implement proper change detection with previous state
+        let previous_state = std::collections::HashMap::new();
+        Ok(change_detector.detect_changes(&previous_state))
     }
 
     /// Scans only changed files for incremental analysis

@@ -1,0 +1,256 @@
+╭───────────────────────────────────────────────────╮
+│ ✻ Welcome to Claude Code!                         │
+│                                                   │
+│   /help for help, /status for your current setup  │
+│                                                   │
+│   cwd: /workspaces/uveddi                         │
+╰───────────────────────────────────────────────────╯
+
+ Tips for getting started:
+
+  Use Claude to help with file analysis, editing, bash commands and git
+  Be as specific as you would with another engineer for the best results
+  ✔ Run /init to create a CLAUDE.md file with instructions for Claude
+  ✔ Run /terminal-setup to set up terminal integration
+
+> I want you to help teach me every aspect of this codebase in a logical order of how the data actually flows.  I want 
+  examples from my codebase to teach me exactly what is happening at every step and how the rust code is actually 
+  handling it as im still learning Rust also.  be methodical in your approach so you dont leave out anything but walk me
+   through it one step at a time so i dont get overwhelmed. Ask clarifying questions if needed.
+
+● I'll help you understand the Uveddi codebase by walking through how data flows from start to finish. Let me start by
+   exploring the codebase structure to understand the architecture, then we'll go through it step by step.
+
+● Let me first explore the main structure of the codebase to understand how it's organized:
+
+● Bash(find . -type f -name "Cargo.toml" | head -20)
+  ⎿  ./src/community/plugins/uveddi-policy-engine-plugin/Cargo.toml
+     ./examples/plugins/complexity-analyzer/Cargo.toml
+     ./examples/plugins/security-scanner/Cargo.toml
+     … +8 lines (ctrl+o to expand)
+
+● Read(Cargo.toml)
+  ⎿  Read 437 lines (ctrl+o to expand)
+
+● Now let me look at the main entry point:
+
+● Read(src/main.rs)
+  ⎿  Read 100 lines (ctrl+o to expand)
+
+● Let me continue reading the main.rs file to see how the CLI is set up:
+
+● Read(src/main.rs)
+  ⎿  Read 33 lines (ctrl+o to expand)
+
+● Now let's look at the application module where the CLI commands are defined:
+
+● Read(src/application.rs)
+  ⎿  Error reading file
+
+● Let me find the application module:
+
+● Search(pattern: "**/application.rs")
+  ⎿  Found 1 file (ctrl+o to expand)
+
+● Search(pattern: "src/**/*.rs")
+  ⎿  Found 100 files (ctrl+o to expand)
+
+● Let me look for the cli module:
+
+● Read(src/lib.rs)
+  ⎿  Read 50 lines (ctrl+o to expand)
+
+● Let me continue reading lib.rs to see the module structure:
+
+● Read(src/lib.rs)
+  ⎿  Read 150 lines (ctrl+o to expand)
+
+● Now let me see the actual module declarations:
+
+● Read(src/lib.rs)
+  ⎿  Read 46 lines (ctrl+o to expand)
+
+● Good! Now let me look at the application module to understand how the CLI works:
+
+● Read(src/application/mod.rs)
+  ⎿  Read 200 lines (ctrl+o to expand)
+
+● Now let me look at the CLI module to see how commands are parsed:
+
+● Read(src/cli/mod.rs)
+  ⎿  Read 27 lines (ctrl+o to expand)
+
+● Let me look at the run_app function in the application module:
+
+● Search(pattern: "pub async fn run_app", path: "src")
+  ⎿  Found 1 file (ctrl+o to expand)
+
+
+● Claude Opus limit reached, now using Sonnet 4
+
+● Search(pattern: "pub async fn run_app", path: "src/application/mod.rs", output_mode: "content")
+  ⎿  Found 19 lines (ctrl+o to expand)
+
+● Perfect! Now I have a good understanding of the structure. Let me complete the first todo and start the teaching
+  process:
+
+● Great! Now let me teach you the Uveddi codebase step by step. I'll start with the overall architecture and data
+  flow.
+
+  Step 1: Understanding the Overall Architecture
+
+  Uveddi is a code analysis tool written in Rust that follows a layered architecture. Here's how data flows through
+  the system:
+
+  High-Level Data Flow:
+
+  1. Source Code Input → 2. AST Parsing → 3. Analysis Engine → 4. Storage → 5. Report Generation → 6. Output
+
+  Entry Point:
+
+  When you run uveddi analyze ./src, here's what happens in src/main.rs:62:
+
+  #[tokio::main]
+  async fn main() -> Result<()> {
+      // Initialize logging and error handling
+      color_eyre::install()?;
+      uveddi::core::logging::unified::init_logging_with_config(&log_level, log_format == "json")?;
+
+      // This calls the main application logic
+      uveddi::application::run_app().await
+  }
+
+  The #[tokio::main] attribute is Rust's way of creating an async runtime. Think of it like setting up a JavaScript
+  event loop - it allows the program to handle multiple tasks concurrently without blocking.
+
+  CLI Command Parsing:
+
+  In src/application/mod.rs, the run_app() function uses Clap (Command Line Argument Parser) to understand what
+  command you typed:
+
+  #[derive(Parser)]
+  struct Cli {
+      #[command(subcommand)]
+      command: Commands,
+  }
+
+  #[derive(clap::Subcommand)]
+  enum Commands {
+      Analyze(AnalyzeCommand),    // This handles "uveddi analyze"
+      Config(ConfigCommand),      // This handles "uveddi config"
+      Doctor(DoctorCommand),      // This handles "uveddi doctor"
+      // ... more commands
+  }
+
+  In Rust, an enum is like a union type - it can be one of several variants. The #[derive(Parser)] tells Clap to
+  automatically generate command parsing code.
+
+  Before I continue with the next step, I want to make sure you understand this foundation:
+
+  1. Do you understand how the #[tokio::main] macro works and why async/await is needed?
+  2. Are you clear on how the CLI command parsing works with the enum pattern?
+  3. Would you like me to show you a specific example of running a command to see this in action?
+
+  Let me know if you want me to clarify anything before we move to the next step: AST Parsing and Tree-sitter 
+  Integration.
+
+> yes, walk me through it but I mostly understand
+
+● Perfect! Let's continue with Step 2: AST Parsing and Tree-sitter Integration.
+
+  Step 2: AST Parsing - How Code Becomes Data
+
+● Read(src/ast/mod.rs)
+  ⎿  Read 52 lines (ctrl+o to expand)
+
+● Now let's look at the actual AST parsing implementation:
+
+● Read(src/ast/tree_sitter_impl.rs)
+  ⎿  Read 150 lines (ctrl+o to expand)
+
+● Excellent! Now let me show you how the parsing actually works. Let me find the language detection and parsing logic:
+
+● Search(pattern: "pub fn parse_file", path: "src/ast", output_mode: "content")
+  ⎿  Found 63 lines (ctrl+o to expand)
+
+● Now let me show you the language detection mechanism:
+
+● Search(pattern: "fn detect_language", path: "src/ast", output_mode: "content")
+  ⎿  Found 21 lines (ctrl+o to expand)
+
+● Perfect! Now let me show you the data structures that represent parsed code:
+
+● Search(pattern: "#\[derive.*\].*struct ParsedFile", path: "src/ast", output_mode: "content")
+  ⎿  Found 0 lines 
+
+● Search(pattern: "struct ParsedFile", path: "src/ast", output_mode: "content")
+  ⎿  Found 50 lines (ctrl+o to expand)
+
+● Step 2: AST Parsing - How Code Becomes Data
+
+  Here's how Uveddi transforms your source code into analyzable data structures:
+
+  The Key Data Structures:
+
+  1. ParsedFile - The main result of parsing a file:
+  pub struct ParsedFile {
+      pub file_path: Arc<PathBuf>,    // Path to the source file
+      pub language: SourceLanguage,   // Rust, Python, JavaScript, etc.
+      pub tree: Option<Tree>,         // Tree-sitter AST tree
+      pub source: Arc<String>,        // The actual source code text
+      pub custom_ast: Arc<Option<CustomAst>>, // Uveddi's simplified AST
+  }
+
+  2. SourceLanguage - Supported languages:
+  enum SourceLanguage {
+      Rust,       // .rs files
+      Python,     // .py files  
+      JavaScript, // .js, .jsx files
+      TypeScript, // .ts, .tsx files
+  }
+
+  The Parsing Process:
+
+  When you run uveddi analyze ./src, here's what happens:
+
+  1. File Discovery: Uveddi scans the directory for supported files
+  2. Language Detection: Uses file extension (src/ast/tree_sitter_impl.rs:detect_language)
+  3. Security Validation: Checks file size and type
+  4. Cache Check: Looks for cached AST based on file modification time
+  5. Parse or Retrieve: Either parses fresh or returns cached result
+
+  The Smart Caching System:
+
+  Uveddi uses an LRU (Least Recently Used) cache to avoid re-parsing unchanged files:
+
+  // In src/ast/tree_sitter_impl.rs:parse_file
+  let cache_result = {
+      let mut cache = self.cache.lock()?;
+      if let Some(cached) = cache.get(&path_str) {
+          if cached.modified_at == file_modified_time {
+              // File hasn't changed - use cached AST
+              return cached.clone();
+          } else {
+              // File changed - remove stale cache
+              cache.pop(&path_str);
+          }
+      }
+  };
+
+  Key Rust Concepts Here:
+
+  - Arc<String>: Atomic Reference Counted smart pointer - allows multiple threads to safely share the same string data
+  - Mutex<LruCache>: Thread-safe cache that can be accessed from multiple threads
+  - Option<Tree>: Rust's way of saying "this might exist or might be None" (like nullable in other languages)
+
+  Real Example:
+
+  When you parse main.rs, you get:
+  - file_path: /path/to/main.rs
+  - language: SourceLanguage::Rust
+  - tree: A tree-sitter parse tree with nodes for functions, structs, etc.
+  - source: The actual text content of main.rs
+  - custom_ast: Uveddi's simplified representation for analysis
+
+  Ready for Step 3: The Analysis Engine? This is where the AST gets analyzed for patterns, dependencies, and issues!
+

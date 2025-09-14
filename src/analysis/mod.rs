@@ -160,8 +160,7 @@ pub use engine_builder::AnalysisEngineBuilder;
 pub use errors::AnalysisError;
 pub use graph::{ComponentNode, LocalDependencyGraph, LocalDependencyType};
 pub use incremental::{
-    ChangeDetector, ChangeImpact, ChangeSet, DependencyTracker, IncrementalAnalysisConfig,
-    IncrementalAnalysisEngine, IncrementalConfig, IncrementalStateManager,
+    ChangeDetector, ChangeSet, IncrementalAnalysisEngine, FileState,
 };
 pub use interactive_diagram_generator::{
     ComponentMetrics as InteractiveComponentMetrics, InteractionConfig,
