@@ -62,9 +62,9 @@ impl ReportGenerator {
         let cycle_issues: Vec<&ArchitecturalIssue> = issues
             .iter()
             .filter(|issue| {
-                issue.issue_type.to_lowercase().contains("cyclic")
-                    || issue.issue_type.to_lowercase().contains("circular")
-                    || issue.issue_type.to_lowercase().contains("dependency")
+                issue.description.to_lowercase().contains("cyclic")
+                    || issue.description.to_lowercase().contains("circular")
+                    || issue.description.to_lowercase().contains("dependency")
             })
             .collect();
 
@@ -80,9 +80,9 @@ impl ReportGenerator {
         let god_object_issues: Vec<&ArchitecturalIssue> = issues
             .iter()
             .filter(|issue| {
-                issue.issue_type.to_lowercase().contains("god")
-                    || issue.issue_type.to_lowercase().contains("large")
-                    || issue.issue_type.to_lowercase().contains("complex")
+                issue.description.to_lowercase().contains("god")
+                    || issue.description.to_lowercase().contains("large")
+                    || issue.description.to_lowercase().contains("complex")
             })
             .collect();
 
@@ -178,7 +178,7 @@ impl ReportGenerator {
         for issue in cycle_issues {
             // Extract module names from file paths
             let parts: Vec<&str> = issue.file_path.split('/').collect();
-            let module_name = parts.last().unwrap_or("unknown").replace(".rs", "");
+            let module_name = parts.last().map_or("unknown", |v| v).replace(".rs", "");
             nodes.insert(module_name.clone());
 
             // Create a simple cycle representation
@@ -218,7 +218,7 @@ impl ReportGenerator {
 
         for (i, issue) in god_object_issues.iter().enumerate() {
             let parts: Vec<&str> = issue.file_path.split('/').collect();
-            let module_name = parts.last().unwrap_or("unknown").replace(".rs", "");
+            let module_name = parts.last().map_or("unknown", |v| v).replace(".rs", "");
             let node_id = format!("obj{}", i);
 
             mermaid.push_str(&format!(
@@ -258,7 +258,7 @@ impl ReportGenerator {
         let mut pattern_counts: HashMap<String, usize> = HashMap::new();
 
         for issue in issues {
-            *pattern_counts.entry(issue.issue_type.clone()).or_insert(0) += 1;
+            *pattern_counts.entry(issue.description.clone()).or_insert(0) += 1;
         }
 
         let mut mermaid = String::from("pie title Anti-Pattern Distribution\n");
@@ -288,7 +288,7 @@ impl ReportGenerator {
         if !diagrams.is_empty() {
             for diagram in diagrams {
                 section.push_str(&self.generate_mermaid_only_with_instructions(
-                    &diagram.content,
+                    &diagram.source,
                     &diagram.title,
                 ));
             }
@@ -327,7 +327,7 @@ impl ReportGenerator {
 
             // Add dependencies
             for dep in &component.dependencies {
-                let dep_id = dep.replace("-", "_").replace(" ", "_");
+                let dep_id = format!("{:?}", dep).replace("-", "_").replace(" ", "_");
                 mermaid.push_str(&format!(
                     "    {} --> {}\n",
                     comp_id, dep_id
@@ -342,7 +342,7 @@ impl ReportGenerator {
 
         for component in components {
             let comp_id = component.name.replace("-", "_").replace(" ", "_");
-            let class_name = match component.component_type.to_lowercase().as_str() {
+            let class_name = match component.component_type.as_str() {
                 "service" => "service",
                 "model" => "model",
                 _ => "util",

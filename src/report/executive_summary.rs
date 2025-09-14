@@ -230,7 +230,7 @@ impl ReportGenerator {
             "diagrams": {
                 "total": diagrams.len(),
                 "types": diagrams.iter()
-                    .map(|d| &d.diagram_type)
+                    .map(|d| &d.kind)
                     .collect::<HashSet<_>>()
                     .len()
             }

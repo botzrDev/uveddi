@@ -12,7 +12,7 @@ use std::collections::HashMap;
 
 impl ReportGenerator {
     /// Generate complete HTML report
-    pub fn generate_html_report(
+    pub fn _generate_html_report_disabled(
         &self,
         analysis_run: &AnalysisRun,
         issues: &[ArchitecturalIssue],
@@ -326,7 +326,7 @@ impl ReportGenerator {
         <i class="fas fa-moon"></i>
     </button>
 "#,
-            analysis_run.run_timestamp.format("%B %d, %Y at %H:%M UTC")
+            analysis_run.start_time.format("%B %d, %Y at %H:%M UTC")
         )
     }
 
@@ -390,9 +390,9 @@ impl ReportGenerator {
             total_issues,
             severity_counts.get("Critical").unwrap_or(&0),
             severity_counts.get("High").unwrap_or(&0),
-            analysis_run.files_analyzed,
-            analysis_run.run_timestamp.format("%B %d, %Y"),
-            analysis_run.files_analyzed
+            analysis_run.total_files_analyzed.unwrap_or(0),
+            analysis_run.start_time.format("%B %d, %Y"),
+            analysis_run.total_files_analyzed.unwrap_or(0)
         )
     }
 
@@ -462,7 +462,7 @@ impl ReportGenerator {
                 </div>
             </div>
 "#,
-                issue.issue_type,
+                issue.description,
                 severity_class,
                 issue.severity,
                 issue.description,
