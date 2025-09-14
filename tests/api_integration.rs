@@ -20,7 +20,7 @@ use axum::{
     body::Body,
     extract::State,
     http::{HeaderMap, Request, StatusCode},
-    response::{Json, Response},
+    response::Json,
     routing::get,
     Router,
     extract::Path as AxumPath,
@@ -30,7 +30,7 @@ use std::sync::Arc;
 use tempfile::TempDir;
 use tower::ServiceExt; // for oneshot
 
-use uveddi::api::rest::{RestApiService};
+// use uveddi::api::rest::{RestApiService};
 use uveddi::api::types::RestApiConfig;
 use uveddi::database::Database;
 
@@ -120,7 +120,7 @@ impl ApiTestClient {
         let db_path = temp_dir.path().join("test.db");
         let database = Arc::new(Database::new(Some(&db_path))?);
 
-        let config = RestApiConfig {
+        let _config = RestApiConfig {
             spa_assets_path: None,
             reports_storage_path: temp_dir.path().to_path_buf(),
             enable_cors: true,
@@ -341,7 +341,7 @@ async fn test_get_demo_report() -> TestResult {
 async fn test_get_report_not_found() -> TestResult {
     let client = ApiTestClient::new().await?;
 
-    let (status, _, body) = client.get("/api/v1/reports/nonexistent").await?;
+    let (status, _, _body) = client.get("/api/v1/reports/nonexistent").await?;
 
     assert_eq!(status, StatusCode::NOT_FOUND);
 
@@ -352,7 +352,7 @@ async fn test_get_report_not_found() -> TestResult {
 async fn test_get_report_invalid_id() -> TestResult {
     let client = ApiTestClient::new().await?;
 
-    let (status, _, body) = client.get("/api/v1/reports/invalid-id-format").await?;
+    let (status, _, _body) = client.get("/api/v1/reports/invalid-id-format").await?;
 
     assert_eq!(status, StatusCode::NOT_FOUND);
 
@@ -389,7 +389,7 @@ async fn test_get_dependency_graph_demo() -> TestResult {
 async fn test_get_dependency_graph_not_found() -> TestResult {
     let client = ApiTestClient::new().await?;
 
-    let (status, _, body) = client
+    let (status, _, _body) = client
         .get("/api/v1/reports/nonexistent/graphs/dependency")
         .await?;
 
@@ -618,7 +618,7 @@ async fn test_concurrent_requests() -> TestResult {
     // Spawn multiple concurrent requests
     let mut handles = Vec::new();
 
-    for i in 0..10 {
+    for _i in 0..10 {
         let client = client.clone();
         let handle = tokio::spawn(async move { client.get("/health").await });
         handles.push(handle);
@@ -777,7 +777,7 @@ mod database_integration_tests {
         let client = ApiTestClient::new().await?;
 
         // Test with a high run_id that likely doesn't exist
-        let (status, _, body) = client.get("/api/v1/reports/99999").await?;
+        let (status, _, _body) = client.get("/api/v1/reports/99999").await?;
 
         // Should return 404 or handle gracefully
         assert!(status.is_client_error());

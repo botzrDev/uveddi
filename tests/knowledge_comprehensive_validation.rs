@@ -3,12 +3,11 @@
 //! This test suite implements comprehensive testing and validation of the knowledge library
 //! as specified in UV-339, including performance, accuracy, integration, and scalability testing.
 
-use criterion::{black_box, Criterion};
+// use criterion::{black_box, Criterion};
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use std::thread;
 use std::time::{Duration, Instant};
-use tokio::sync::Semaphore;
 
 // Since the knowledge library has compilation issues, we'll create mock implementations
 // for testing the validation framework itself
@@ -26,7 +25,9 @@ pub struct MockPattern {
     id: String,
     name: String,
     category: String,
+    #[allow(dead_code)]
     impact: String,
+    #[allow(dead_code)]
     confidence: f64,
     relevance: f64,
 }
@@ -189,7 +190,7 @@ mod performance_validation_tests {
                 1 => "magic_numbers",
                 _ => "cyclic_dependencies",
             };
-            black_box(library.get_pattern(pattern_id));
+            std::hint::black_box(library.get_pattern(pattern_id));
         }
 
         let total_duration = start.elapsed();
@@ -285,7 +286,7 @@ mod performance_validation_tests {
                             1 => "magic_numbers",
                             _ => "cyclic_dependencies",
                         };
-                        black_box(lib.get_pattern(pattern_id));
+                        std::hint::black_box(lib.get_pattern(pattern_id));
                     }
                 })
             })
@@ -964,7 +965,7 @@ mod benchmark_tests {
 
         for i in 0..iterations {
             let pattern_id = pattern_ids[i % pattern_ids.len()];
-            black_box(library.get_pattern(pattern_id));
+            std::hint::black_box(library.get_pattern(pattern_id));
         }
 
         let duration = start.elapsed();
@@ -1005,7 +1006,7 @@ mod benchmark_tests {
             };
 
             // Simulate context selection
-            black_box(library.generate_explanation(pattern_id));
+            std::hint::black_box(library.generate_explanation(pattern_id));
         }
 
         let duration = start.elapsed();

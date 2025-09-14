@@ -504,8 +504,8 @@ impl DistributedTracingManager {
     /// Check if a trace should be sampled
     pub fn should_sample(&self) -> bool {
         use rand::Rng;
-        let mut rng = rand::thread_rng();
-        rng.gen::<f64>() < self.config.sampling_rate
+        let mut rng = rand::rng();
+        rng.random::<f64>() < self.config.sampling_rate
     }
 
     /// Create a trace context from HTTP headers (for distributed tracing)

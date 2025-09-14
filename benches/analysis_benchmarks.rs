@@ -32,25 +32,7 @@ use uveddi::{
     database::{
         crud::{AnalysisResultCrud, ArchitecturalIssueCrud},
         models::{AnalysisResult, ArchitecturalIssue},
-    },
-    ast::tree_sitter_impl::{ParsedFile, SourceLanguage},
-};
-
-// Test data generators
-fn generate_large_rust_struct(method_count: usize, field_count: usize) -> String {
-    let mut code = format!(
-        "struct LargeStruct {{\n{}}}",
-        (0..field_count)
-            .map(|i| format!("    field_{}: i32,", i))
-            .collect::<Vec<_>>()
-            .join("\n")
-    );
-
-    code.push_str("\n\nimpl LargeStruct {\n");
-    for i in 0..method_count {
-        code.push_str(&format!(
-            "    fn method_{}(&self) -> i32 {{\n        self.field_{}\n    }}\n",
-            i,
+    // Removed get_functions and get_classes: not in AstProvider trait
             i % field_count
         ));
     }
@@ -140,10 +122,8 @@ impl BenchmarkAstProvider {
         provider.functions.insert("test_file.rs".to_string(), functions);
         provider
     }
-}
-
-impl AstProvider for BenchmarkAstProvider {
-    fn get_functions(&self, file_path: &std::path::Path) -> Result<Vec<crate::parsing::FunctionSignature>, crate::analysis::AnalysisError> {
+            database::crud::{AnalysisResultCrud},
+            analysis::services::AnalysisResult,
         let path_str = file_path.to_string_lossy().to_string();
         Ok(self.functions.get(&path_str)
             .unwrap_or(&vec![])
@@ -161,6 +141,39 @@ impl AstProvider for BenchmarkAstProvider {
 
     fn get_classes(&self, _file_path: &std::path::Path) -> Result<Vec<crate::parsing::ClassSignature>, crate::analysis::AnalysisError> {
         Ok(vec![])
+    }
+
+    // Implement missing trait items
+    fn get_ast<'life0, 'life1, 'async_trait>(
+        &'life0 self,
+        path: &'life1 std::path::Path,
+    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<std::sync::Arc<Tree>, UveddiError>> + Send + 'async_trait>>
+    where
+        'life0: 'async_trait,
+        'life1: 'async_trait,
+        Self: 'async_trait,
+    {
+        Box::pin(async move { todo!() })
+    }
+
+    fn parse_file<'life0, 'life1, 'async_trait>(
+        &'life0 self,
+        path: &'life1 std::path::Path,
+    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<std::sync::Arc<uveddi::analysis::components::ast_provider::ParsedFile>, UveddiError>> + Send + 'async_trait>>
+    where
+        'life0: 'async_trait,
+        'life1: 'async_trait,
+        Self: 'async_trait,
+    {
+        Box::pin(async move { todo!() })
+    }
+
+    fn clear_cache(&self) {
+        todo!()
+    }
+
+    fn get_cache_metrics(&self) -> serde_json::Value {
+        todo!()
     }
 }
 

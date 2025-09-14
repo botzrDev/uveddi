@@ -414,7 +414,7 @@ async fn test_uv249_acceptance_criteria() -> Result<()> {
     println!("✅ Multi-resource correlation analysis working");
 
     // ✅ Automated optimization recommendations generated
-    assert!(analysis.optimization_recommendations.len() >= 0); // Should generate recommendations
+    assert!(!analysis.optimization_recommendations.is_empty()); // Should generate recommendations
     println!("✅ Automated optimization recommendations generated");
 
     // ✅ Performance overhead validation (<5%)

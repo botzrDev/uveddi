@@ -3,22 +3,9 @@ use std::path::PathBuf;
 use tempfile::tempdir;
 use uveddi::cli::analyze_command::AnalyzeCommand;
 
-fn setup() {
-    // Clean up any previous cache files
-    if std::path::Path::new("uveddi_cache.db").exists() {
-        let _ = fs::remove_file("uveddi_cache.db");
-    }
-    if std::path::Path::new("uveddi.db").exists() {
-        let _ = fs::remove_file("uveddi.db");
-    }
-}
-
-#[test]
-fn test_analyze_command_creation() {
-    setup();
-
-    let command = AnalyzeCommand {
-        path: PathBuf::from("test_path"),
+fn create_test_analyze_command(path: PathBuf) -> AnalyzeCommand {
+    AnalyzeCommand {
+        path,
         output_format: "markdown".to_string(),
         output: None,
         enable_ai: false,
@@ -35,7 +22,7 @@ fn test_analyze_command_creation() {
         large_classes_max_lcom: None,
         large_classes_ignore_patterns: None,
         large_classes_min_severity: None,
-        enable_memory_optimization: false,
+        disable_memory_optimization: false,
         memory_limit_gb: None,
         memory_profile: None,
         enable_image_rendering: false,
@@ -43,7 +30,40 @@ fn test_analyze_command_creation() {
         rendering_service_url: "http://localhost:3001".to_string(),
         no_fallback: false,
         check_rendering_service: false,
-    };
+        no_diagrams: false,
+        max_diagrams: 20,
+        diagram_output_dir: None,
+        timeout: 300,
+        verbose: false,
+        progress_format: "terminal".to_string(),
+        progress_details: false,
+        open_dashboard: false,
+        security: false,
+        security_only: false,
+        min_security_confidence: Some(0.5),
+        export_sarif: false,
+        sarif_output: None,
+        enable_taint_analysis: false,
+        taint_analysis_depth: Some(10),
+        owasp_categories: None,
+    }
+}
+
+fn setup() {
+    // Clean up any previous cache files
+    if std::path::Path::new("uveddi_cache.db").exists() {
+        let _ = fs::remove_file("uveddi_cache.db");
+    }
+    if std::path::Path::new("uveddi.db").exists() {
+        let _ = fs::remove_file("uveddi.db");
+    }
+}
+
+#[test]
+fn test_analyze_command_creation() {
+    setup();
+
+    let command = create_test_analyze_command(PathBuf::from("test_path"));
 
     assert_eq!(command.path, PathBuf::from("test_path"));
     assert_eq!(command.output_format, "markdown");
@@ -76,7 +96,7 @@ fn test_analyze_command_with_all_options() {
         large_classes_max_lcom: None,
         large_classes_ignore_patterns: None,
         large_classes_min_severity: None,
-        enable_memory_optimization: false,
+        disable_memory_optimization: false,
         memory_limit_gb: None,
         memory_profile: None,
         enable_image_rendering: false,
@@ -120,7 +140,7 @@ async fn test_execute_with_empty_directory() {
         large_classes_max_lcom: None,
         large_classes_ignore_patterns: None,
         large_classes_min_severity: None,
-        enable_memory_optimization: false,
+        disable_memory_optimization: false,
         memory_limit_gb: None,
         memory_profile: None,
         enable_image_rendering: false,
@@ -173,7 +193,7 @@ fn main() {
         large_classes_max_lcom: None,
         large_classes_ignore_patterns: None,
         large_classes_min_severity: None,
-        enable_memory_optimization: false,
+        disable_memory_optimization: false,
         memory_limit_gb: None,
         memory_profile: None,
         enable_image_rendering: false,
@@ -215,7 +235,7 @@ async fn test_execute_with_output_file() {
         large_classes_max_lcom: None,
         large_classes_ignore_patterns: None,
         large_classes_min_severity: None,
-        enable_memory_optimization: false,
+        disable_memory_optimization: false,
         memory_limit_gb: None,
         memory_profile: None,
         enable_image_rendering: false,
@@ -258,7 +278,7 @@ async fn test_execute_with_json_format() {
         large_classes_max_lcom: None,
         large_classes_ignore_patterns: None,
         large_classes_min_severity: None,
-        enable_memory_optimization: false,
+        disable_memory_optimization: false,
         memory_limit_gb: None,
         memory_profile: None,
         enable_image_rendering: false,
@@ -297,7 +317,7 @@ async fn test_execute_nonexistent_path() {
         large_classes_max_lcom: None,
         large_classes_ignore_patterns: None,
         large_classes_min_severity: None,
-        enable_memory_optimization: false,
+        disable_memory_optimization: false,
         memory_limit_gb: None,
         memory_profile: None,
         enable_image_rendering: false,

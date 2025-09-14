@@ -9,6 +9,8 @@ use tempfile::tempdir;
 use tokio::time::timeout;
 
 use uveddi::resource_management::*;
+use uveddi::resource_management::analysis_orchestrator::AnalysisPriority;
+use uveddi::resource_management::degradation_manager::FeatureCategory;
 
 mod memory_tracker_tests {
     use super::*;
@@ -558,8 +560,8 @@ mod integration_tests {
         let manager = ResourceManager::new(config).unwrap();
         
         // Start monitoring (in real scenario this runs in background)
-        let monitoring_task = {
-            let manager_clone = manager.clone();
+        let _monitoring_task = {
+            let manager_clone = Arc::clone(&manager);
             tokio::spawn(async move {
                 if let Err(e) = manager_clone.start_monitoring().await {
                     eprintln!("Monitoring failed: {}", e);
