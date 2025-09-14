@@ -8,7 +8,9 @@ pub mod anti_patterns;
 pub mod cycle;
 pub mod dependency;
 pub mod security;
+pub mod shared;
 
 pub use cycle::CycleDetector;
 pub use dependency::{Dependency, DependencyExtractor};
 pub use security::{MainSecurityDetector, SecurityConfig, SecurityDetector};
+pub use shared::{TreeSitterQueryHelper, LanguageSpecificExtractor, ExtractedSymbol, SymbolType};
