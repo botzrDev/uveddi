@@ -46,56 +46,38 @@ dirs = "5.0"
 # String similarity for command suggestions
 levenshtein = "1.0"
 
-# Feature flags for modular compilation
+# Feature flags for modular compilation - Optimized for build performance
 [features]
-# Lightweight default for fast development builds with language parsing
-default = ["dev-core", "tree-sitter"]
-# Prometheus metrics collection
-prometheus = ["dep:prometheus"]
-# Production-ready features (previous default behavior)  
-production = ["tree-sitter", "security", "memory-optimization", "web-full", "tui", "wasm-plugins", "prometheus", "dep:rayon", "dep:tokio-stream", "dep:async-stream", "dep:rusqlite", "dep:bincode"]
-# Production-secure features (without openidconnect/RSA vulnerability)
-production-secure = ["tree-sitter", "memory-optimization", "web-full", "tui", "wasm-plugins", "prometheus", "dep:rayon", "dep:tokio-stream", "dep:async-stream", "dep:rusqlite", "dep:bincode"]
-# Chaos engineering and load testing
-chaos = ["dep:fail", "dep:statrs", "dep:ndarray-stats"]
-# Performance regression detection with genetic algorithms
-regression-detection = ["dep:changepoint", "dep:linfa", "dep:influxdb2"]
-# SLA monitoring and validation
-sla-monitoring = ["dep:metrics-exporter-prometheus", "dep:tokio-metrics"]
+# ==================== CORE FEATURE SETS ====================
+# Lightweight default for fast development builds
+default = ["dev-core"]
 
-# Development feature sets for fast builds
-# Minimal development build (only essential deps)
-dev-minimal = ["dep:rusqlite", "dep:bincode"]
-# Ultra-minimal build (absolute minimum dependencies)
-dev-ultra-minimal = []
-# Single-language development builds
-dev-rust-only = ["dev-minimal", "rust-lang"]
-dev-python-only = ["dev-minimal", "python-lang"] 
-dev-js-only = ["dev-minimal", "javascript-lang"]
-dev-ts-only = ["dev-minimal", "typescript-lang"]
-# Fast iteration (no heavy analysis)
-dev-fast = ["dev-minimal"]
-# Core analysis without tree-sitter
-dev-core = ["dev-minimal", "dep:rayon", "dep:tokio-stream", "dep:async-stream", "prometheus"]
+# Ultra-minimal build (absolute minimum for fastest compilation)
+dev-ultra-minimal = ["dep:rusqlite", "dep:bincode"]
 
-# Consolidated dependency groups
-crypto-minimal = []
-crypto-full = ["dep:rustls", "dep:ring", "dep:argon2", "dep:subtle"]
-web-client = []
-web-server = []
-web-full = ["web-client", "web-server", "dep:tower_governor", "dep:tokio-tungstenite"]
+# Minimal development build (essential deps only)
+dev-minimal = ["dev-ultra-minimal", "dep:rayon"]
 
-# Security features (consolidated)
-security = ["crypto-full", "web-full", "dep:casbin", "dep:oauth2", "dep:openidconnect", "dep:jsonwebtoken", "dep:vaultrs", "dep:config"]
-# Tree-sitter parsing functionality (enabled by default)
-# Refactored to allow per-language feature gating (Phase 1 multi-language support, UV-XXX)
-# Existing `tree-sitter` feature now aggregates individual language features for backward compatibility.
-# New granular features: rust-lang, python-lang, javascript-lang, typescript-lang
+# Core development features (recommended for daily development)
+dev-core = ["dev-minimal", "dep:tokio-stream", "dep:async-stream", "prometheus"]
+
+# Full development build (includes parsing capabilities)
+dev-full = ["dev-core", "tree-sitter"]
+
+# ==================== LANGUAGE PARSING ====================
+# Individual language support (granular control)
 rust-lang = ["dep:tree-sitter-rust"]
 python-lang = ["dep:tree-sitter-python"]
 javascript-lang = ["dep:tree-sitter-javascript"]
 typescript-lang = ["dep:tree-sitter-typescript"]
-# Aggregate feature retains prior behavior
+
+# Language combinations for targeted development
+dev-rust-only = ["dev-minimal", "rust-lang", "dep:tree-sitter"]
+dev-python-only = ["dev-minimal", "python-lang", "dep:tree-sitter"]
+dev-js-only = ["dev-minimal", "javascript-lang", "dep:tree-sitter"]
+dev-ts-only = ["dev-minimal", "typescript-lang", "dep:tree-sitter"]
+
+# Full tree-sitter support (all languages)
 tree-sitter = [
     "dep:tree-sitter",
     "rust-lang",
@@ -103,36 +85,91 @@ tree-sitter = [
     "javascript-lang",
     "typescript-lang"
 ]
-# Core analysis features (without tree-sitter by default)
-analysis = [] # No specific dependencies needed here, just a logical grouping
-# AI feature for all AI-related functionality
-ai = []
-# Local AI only (Ollama)
-local-ai = ["ai"]
-# Image rendering service integration
-image-rendering = []
-# WASM plugin system
-wasm-plugins = ["dep:wasmtime", "dep:wasmtime-wasi", "dep:cap-std", "dep:wit-bindgen"]
-# Terminal User Interface
+
+# ==================== PRODUCTION BUILDS ====================
+# Production-ready features (full functionality)
+production = [
+    "tree-sitter",
+    "security",
+    "memory-optimization",
+    "web-full",
+    "tui",
+    "wasm-plugins",
+    "prometheus",
+    "dep:rayon",
+    "dep:tokio-stream",
+    "dep:async-stream",
+    "dep:rusqlite",
+    "dep:bincode"
+]
+
+# Production-secure features (without RSA vulnerability dependencies)
+production-secure = [
+    "tree-sitter",
+    "memory-optimization",
+    "web-full",
+    "tui",
+    "wasm-plugins",
+    "prometheus",
+    "dep:rayon",
+    "dep:tokio-stream",
+    "dep:async-stream",
+    "dep:rusqlite",
+    "dep:bincode"
+]
+
+# ==================== SPECIALIZED FEATURES ====================
+# Metrics and monitoring
+prometheus = ["dep:prometheus"]
+
+# Cryptography and security
+crypto-minimal = []
+crypto-full = ["dep:rustls", "dep:ring", "dep:argon2", "dep:subtle"]
+security = ["crypto-full", "web-full", "dep:casbin", "dep:oauth2", "dep:openidconnect", "dep:jsonwebtoken", "dep:vaultrs", "dep:config"]
+
+# Web infrastructure
+web-client = []
+web-server = []
+web-full = ["web-client", "web-server", "dep:tower_governor", "dep:tokio-tungstenite"]
+
+# User interfaces
 tui = ["dep:ratatui", "dep:crossterm", "dep:tui-input"]
-# Memory optimization features (UV-210, UV-26)
+
+# Plugin and extension systems
+wasm-plugins = ["dep:wasmtime", "dep:wasmtime-wasi", "dep:cap-std", "dep:wit-bindgen"]
+
+# Performance optimizations
 memory-optimization = ["dep:mimalloc", "dep:bumpalo", "dep:bumpalo-herd", "dep:memmap2", "dep:rkyv"]
 
-# Add new feature combinations for common use cases
+# AI and analysis features
+ai = []
+local-ai = ["ai"]
+image-rendering = []
+
+# ==================== TESTING AND DEVELOPMENT ====================
+# Chaos engineering and load testing
+chaos = ["dep:fail", "dep:statrs", "dep:ndarray-stats"]
+regression-detection = ["dep:changepoint", "dep:linfa", "dep:influxdb2"]
+sla-monitoring = ["dep:metrics-exporter-prometheus", "dep:tokio-metrics"]
+
+# ==================== CONVENIENCE COMBINATIONS ====================
 # Zero-cost option (no external services required)
 zero-cost = ["local-ai", "tree-sitter", "memory-optimization"]
+
 # Full-featured option (includes image rendering)
 full-featured = ["local-ai", "tree-sitter", "memory-optimization", "image-rendering", "tui"]
+
 # Enterprise option (all features)
 enterprise = ["local-ai", "tree-sitter", "memory-optimization", "image-rendering", "tui", "wasm-plugins", "chaos", "sla-monitoring"]
-# v1.0 Core features with TUI and essential analysis capabilities
-# Legacy alpha feature (for backward compatibility)
+
+# Legacy compatibility (for backward compatibility)
 alpha = ["tui", "tree-sitter", "local-ai", "security", "memory-optimization"]
+
+# ==================== INTERNAL FLAGS (for dependencies) ====================
+# Cleanup unused flags
 streaming-iterator = []
 tower = []
 tower-http = []
-
-# Missing feature flags (fixing configuration warnings)
 mimalloc = []
 graphql-api = []
 yaml = []
@@ -390,6 +427,21 @@ path = "tests/security_tests.rs"
 
 # Benchmarks removed for Alpha release
 
+# Optimized build profiles for different development scenarios
+
+# Ultra-fast development profile for rapid iteration
+[profile.dev-ultra-fast]
+inherits = "dev"
+opt-level = 0          # No optimization for fastest compilation
+debug = false          # Minimal debug info to reduce memory usage
+debug-assertions = false # Skip debug assertions for speed
+overflow-checks = false  # Skip overflow checks for speed
+lto = false            # No link-time optimization
+panic = 'unwind'       # Standard panic handling
+incremental = true     # Enable incremental compilation
+codegen-units = 256    # Maximum parallelism for compilation speed
+rpath = false          # Disable rpath for faster linking
+
 # Memory-optimized development profile (based on memory hierarchy research)
 [profile.dev-fast]
 inherits = "dev"
@@ -411,12 +463,30 @@ lto = false
 incremental = true
 codegen-units = 8      # Balance between parallelism and optimization
 
+# Test profile optimized for CI/CD speed
+[profile.test-fast]
+inherits = "test"
+opt-level = 0          # Fast compilation for tests
+debug = false          # Minimal debug info for CI
+incremental = true     # Incremental compilation for CI caching
+codegen-units = 16     # Parallel compilation
+
 # Release profile with performance optimizations
 [profile.release]
-opt-level = 3
-lto = true
+opt-level = 3          # Maximum optimization
+lto = "fat"            # Full link-time optimization for production
+codegen-units = 1      # Single codegen unit for best optimization
+panic = "abort"        # Abort on panic for smaller binaries
+strip = true           # Strip debug symbols for smaller binaries
+
+# Optimized release profile for size-constrained environments
+[profile.release-small]
+inherits = "release"
+opt-level = "z"        # Optimize for size
+lto = "fat"
 codegen-units = 1
 panic = "abort"
+strip = true
 
 # Examples
 [[example]]

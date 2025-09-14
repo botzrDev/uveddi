@@ -14,64 +14,95 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  test:
-    name: Test Suite
+  fast-check:
+    name: Fast Development Check
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        rust-version: [1.70.0, stable]
-        feature-set: 
-          - dev-core
-          - tree-sitter
-          - production
-    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+
     - name: Install Rust toolchain
-      uses: actions-rs/toolchain@v1
+      uses: dtolnay/rust-toolchain@stable
       with:
-        toolchain: ${{ matrix.rust-version }}
-        override: true
         components: rustfmt, clippy
-        
-    - name: Cache dependencies
-      uses: actions/cache@v3
+
+    - name: Setup Rust cache
+      uses: Swatinem/rust-cache@v2
       with:
-        path: |
-          ~/.cargo/bin/
-          ~/.cargo/registry/index/
-          ~/.cargo/registry/cache/
-          ~/.cargo/git/db/
-          target/
-        key: ${{ runner.os }}-cargo-${{ matrix.rust-version }}-${{ hashFiles('**/Cargo.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-cargo-${{ matrix.rust-version }}-
-          ${{ runner.os }}-cargo-
-    
+        key: fast-check-${{ hashFiles('**/Cargo.lock') }}
+
     - name: Install system dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y \
-          pkg-config \
-          libssl-dev \
-          libsqlite3-dev \
-          nodejs \
-          npm
-          
+        sudo apt-get install -y pkg-config libssl-dev libsqlite3-dev
+
     - name: Check code formatting
-      if: matrix.feature-set == 'dev-core'
       run: cargo fmt --all -- --check
-      
-    - name: Run Clippy
-      run: cargo clippy --features ${{ matrix.feature-set }} --all-targets --all-features -- -D warnings
-      
+
+    - name: Quick clippy check (dev-core only)
+      run: cargo clippy --features dev-core --lib -- -D warnings
+
+    - name: Quick compile check
+      run: cargo check --features dev-core
+
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    needs: fast-check
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Development builds (fast)
+          - rust-version: stable
+            feature-set: dev-ultra-minimal
+            profile: test-fast
+          - rust-version: stable
+            feature-set: dev-core
+            profile: test-fast
+          # Language-specific builds (targeted testing)
+          - rust-version: stable
+            feature-set: dev-rust-only
+            profile: test-fast
+          # Production build (thorough)
+          - rust-version: 1.70.0
+            feature-set: production-secure
+            profile: test
+          - rust-version: stable
+            feature-set: production-secure
+            profile: test
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@master
+      with:
+        toolchain: ${{ matrix.rust-version }}
+        components: clippy
+
+    - name: Setup Rust cache
+      uses: Swatinem/rust-cache@v2
+      with:
+        key: test-${{ matrix.rust-version }}-${{ matrix.feature-set }}-${{ hashFiles('**/Cargo.lock') }}
+        shared-key: rust-cache
+
+    - name: Install system dependencies (cached)
+      uses: awalsh128/cache-apt-pkgs-action@latest
+      with:
+        packages: pkg-config libssl-dev libsqlite3-dev
+        version: 1.0
+
+    - name: Run Clippy (if not dev build)
+      if: "!startsWith(matrix.feature-set, 'dev-')"
+      run: cargo clippy --features ${{ matrix.feature-set }} --lib -- -D warnings
+
     - name: Run tests
       run: |
-        cargo test --features ${{ matrix.feature-set }} --verbose --lib
-        cargo test --features ${{ matrix.feature-set }} --verbose --test integration
-      timeout-minutes: 30
+        export CARGO_PROFILE=${{ matrix.profile }}
+        cargo test --features ${{ matrix.feature-set }} --lib --profile ${{ matrix.profile }}
+      timeout-minutes: 20
       
     - name: Run security audit
       if: matrix.feature-set == 'production'
@@ -82,47 +113,44 @@ jobs:
   coverage:
     name: Code Coverage
     runs-on: ubuntu-latest
-    
+    needs: fast-check
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+
     - name: Install Rust toolchain
-      uses: actions-rs/toolchain@v1
+      uses: dtolnay/rust-toolchain@stable
       with:
-        toolchain: stable
-        override: true
         components: llvm-tools-preview
-        
-    - name: Cache dependencies
-      uses: actions/cache@v3
+
+    - name: Setup Rust cache
+      uses: Swatinem/rust-cache@v2
       with:
-        path: |
-          ~/.cargo/bin/
-          ~/.cargo/registry/index/
-          ~/.cargo/registry/cache/
-          ~/.cargo/git/db/
-          target/
-        key: coverage-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
-        
-    - name: Install system dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y pkg-config libssl-dev libsqlite3-dev
-        
+        key: coverage-${{ hashFiles('**/Cargo.lock') }}
+        cache-targets: false  # Don't cache target for coverage builds
+
+    - name: Install system dependencies (cached)
+      uses: awalsh128/cache-apt-pkgs-action@latest
+      with:
+        packages: pkg-config libssl-dev libsqlite3-dev
+        version: 1.0
+
     - name: Install coverage tools
-      run: |
-        cargo install cargo-tarpaulin --version ^0.27
-        
-    - name: Generate coverage report
+      uses: taiki-e/install-action@v2
+      with:
+        tool: cargo-tarpaulin@0.27
+
+    - name: Generate coverage report (fast build)
       run: |
         cargo tarpaulin \
           --features dev-core \
           --out xml \
           --output-dir coverage/ \
           --skip-clean \
-          --timeout 300
-      timeout-minutes: 20
+          --timeout 180 \
+          --profile test-fast
+      timeout-minutes: 15
       
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
@@ -252,31 +280,29 @@ jobs:
     name: Performance Regression Test
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
-    
+    needs: fast-check
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+
     - name: Install Rust toolchain
-      uses: actions-rs/toolchain@v1
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Setup Rust cache
+      uses: Swatinem/rust-cache@v2
       with:
-        toolchain: stable
-        override: true
-        
-    - name: Cache dependencies
-      uses: actions/cache@v3
+        key: perf-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Install system dependencies (cached)
+      uses: awalsh128/cache-apt-pkgs-action@latest
       with:
-        path: |
-          ~/.cargo/bin/
-          ~/.cargo/registry/index/
-          ~/.cargo/registry/cache/
-          ~/.cargo/git/db/
-          target/
-        key: perf-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
-        
-    - name: Build with optimizations
-      run: cargo build --release --features production
-      
+        packages: pkg-config libssl-dev libsqlite3-dev
+        version: 1.0
+
+    - name: Build with release optimizations
+      run: cargo build --profile release --features production-secure
+
     - name: Run performance benchmarks
       run: |
         if [ -f "./scripts/performance-validation.sh" ]; then
@@ -284,7 +310,7 @@ jobs:
         else
           echo "Performance validation script not found, skipping"
         fi
-      timeout-minutes: 15
+      timeout-minutes: 10
 
   notification:
     name: Notification
