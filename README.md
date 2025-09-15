@@ -2,6 +2,8 @@
 
 A comprehensive architectural analysis tool that combines static code analysis with AI-powered insights to help developers understand and improve their codebases.
 
+**Current Version**: `0.9.0-alpha` - Ready for community testing and feedback
+
 ## Features
 
 - **Multi-language Support**: Analyze Rust, Python, JavaScript, and TypeScript codebases
@@ -11,39 +13,64 @@ A comprehensive architectural analysis tool that combines static code analysis w
 - **WASM Plugin System**: Extend functionality with secure WebAssembly plugins
 - **Web Dashboard**: Interactive analysis exploration through web UI
 - **Performance Optimized**: Memory-efficient caching and parallel processing for large codebases
+- **Security Hardened**: Zero critical vulnerabilities, production-ready security posture
 
 ## Quick Start
 
 ```bash
-# Install from source
+# Clone the repository
 git clone https://github.com/botzrDev/uveddi.git
 cd uveddi
-cargo build --release --features=production
+
+# Fast development build (recommended for first try)
+cargo build --features dev-core
 
 # Basic analysis
-uveddi analyze ./src
+cargo run -- analyze ./src
+
+# Generate JSON report
+cargo run -- analyze ./src --output-format json
 
 # Generate HTML report
-uveddi analyze ./src --output-format html --output report.html
+cargo run -- analyze ./src --output-format html --output report.html
 
 # With AI insights (requires Ollama)
-uveddi analyze ./src --enable-ai --ollama-model deepseek-coder:6.7b
+cargo run -- analyze ./src --enable-ai --ollama-model deepseek-coder:6.7b
 
 # Start web dashboard
-uveddi serve --port 8888
+cargo run -- serve --port 8888
 ```
 
 ## Installation
 
-### From Source
+### Development Builds (Faster)
 ```bash
-cargo install --path . --features=production
+# Quick development build
+cargo build --features dev-core
+
+# Run directly
+cargo run --features dev-core -- analyze ./src
+```
+
+### Production Builds (Full Features)
+```bash
+# Full feature build (slower but complete)
+cargo build --release --features production
+
+# Install globally
+cargo install --path . --features production
 ```
 
 ### Prerequisites
-- Rust 1.70+ 
+- Rust 1.70+ (required for core functionality)
 - Optional: Ollama for AI features
 - Optional: Node.js 18+ for web dashboard development
+
+### Feature Flags
+- `dev-core`: Fast development builds with core functionality (~14s build time)
+- `production`: Full feature set for production use
+- `security`: Advanced security features and authentication
+- `wasm-plugins`: WebAssembly plugin system support
 
 ## Documentation
 
